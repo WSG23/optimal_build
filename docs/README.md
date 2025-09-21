@@ -10,3 +10,5 @@ codebase so that policy, engineering, and review practices remain in lockstep.
   monitoring expectations for each upstream feed.
 * [`reviewer_sop.md`](reviewer_sop.md) — the checklist followed by data
   reviewers prior to promoting new references to production.
+* [`export_api.md`](export_api.md) — CAD/BIM export endpoint reference for
+  frontend integrations.
