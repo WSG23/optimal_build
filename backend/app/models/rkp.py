@@ -13,24 +13,24 @@ from sqlalchemy import (
     Text,
     CheckConstraint,
     Numeric,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from geoalchemy2 import Geometry
 
 from app.models.base import BaseModel
 
 
 class RefSource(BaseModel):
-    """Reference source model."""
+    """Reference source model for document tracking."""
 
     __tablename__ = "ref_sources"
 
     id = Column(Integer, primary_key=True, index=True)
-    jurisdiction = Column(String(10), nullable=False, index=True)
-    authority = Column(String(50), nullable=False, index=True)
-    topic = Column(String(50), nullable=False, index=True)
+    jurisdiction = Column(String(10), nullable=False, index=True)  # 'SG'
+    authority = Column(String(50), nullable=False, index=True)     # 'SCDF', 'PUB', 'URA', 'BCA'
+    topic = Column(String(50), nullable=False, index=True)         # 'fire', 'plumbing', 'zoning'
     doc_title = Column(Text, nullable=False)
     landing_url = Column(Text, nullable=False)
     fetch_kind = Column(
@@ -38,30 +38,33 @@ class RefSource(BaseModel):
         CheckConstraint("fetch_kind IN ('pdf', 'html', 'sitemap')"),
         default="pdf",
     )
-    update_freq_hint = Column(String(50))
-    selectors = Column(JSONB)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    update_freq_hint = Column(String(50))  # 'annual', 'quarterly'
+    selectors = Column(JSONB)  # CSS selectors for HTML parsing
+    is_active = Column(Boolean, default=True, index=True)
 
     # Relationships
     documents = relationship("RefDocument", back_populates="source", cascade="all, delete-orphan")
     rules = relationship("RefRule", back_populates="source")
 
+    __table_args__ = (
+        Index('idx_ref_sources_jurisdiction_authority', 'jurisdiction', 'authority'),
+    )
+
 
 class RefDocument(BaseModel):
-    """Reference document model."""
+    """Reference document model for version tracking."""
 
     __tablename__ = "ref_documents"
 
     id = Column(Integer, primary_key=True, index=True)
     source_id = Column(Integer, ForeignKey("ref_sources.id", ondelete="CASCADE"), nullable=False)
-    version_label = Column(String(100))
+    version_label = Column(String(100))  # '2024-v1', 'Amendment-3'
     retrieved_at = Column(DateTime(timezone=True), server_default=func.now())
-    storage_path = Column(Text, nullable=False)
-    file_hash = Column(String(64), nullable=False)
+    storage_path = Column(Text, nullable=False)  # S3 path or local path
+    file_hash = Column(String(64), nullable=False, index=True)  # SHA-256 hash
     http_etag = Column(String(200))
     http_last_modified = Column(String(200))
-    suspected_update = Column(Boolean, default=False)
+    suspected_update = Column(Boolean, default=False, index=True)
 
     # Relationships
     source = relationship("RefSource", back_populates="documents")
@@ -70,43 +73,54 @@ class RefDocument(BaseModel):
 
 
 class RefClause(BaseModel):
-    """Reference clause model."""
+    """Reference clause model for extracted text segments."""
 
     __tablename__ = "ref_clauses"
 
     id = Column(Integer, primary_key=True, index=True)
     document_id = Column(Integer, ForeignKey("ref_documents.id", ondelete="CASCADE"), nullable=False)
-    clause_ref = Column(String(50), index=True)
+    clause_ref = Column(String(50), index=True)  # '4.2.1', 'Section A.3'
     section_heading = Column(Text)
     text_span = Column(Text, nullable=False)
     page_from = Column(Integer)
     page_to = Column(Integer)
-    extraction_quality = Column(String(20))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    extraction_quality = Column(String(20))  # 'high', 'medium', 'low'
 
     # Relationships
     document = relationship("RefDocument", back_populates="clauses")
 
+    __table_args__ = (
+        Index('idx_ref_clauses_document_clause', 'document_id', 'clause_ref'),
+    )
+
 
 class RefRule(BaseModel):
-    """Reference rule model."""
+    """Reference rule model - the core building code rules."""
 
     __tablename__ = "ref_rules"
 
     id = Column(Integer, primary_key=True, index=True)
     source_id = Column(Integer, ForeignKey("ref_sources.id", ondelete="SET NULL"))
     document_id = Column(Integer, ForeignKey("ref_documents.id", ondelete="SET NULL"))
-    jurisdiction = Column(String(10), nullable=False, index=True)
-    authority = Column(String(50), nullable=False, index=True)
-    topic = Column(String(50), nullable=False, index=True)
-    clause_ref = Column(String(50), index=True)
-    parameter_key = Column(String(200), nullable=False, index=True)
-    operator = Column(String(10), nullable=False)
-    value = Column(Text, nullable=False)
-    unit = Column(String(20))
-    applicability = Column(JSONB)
-    exceptions = Column(JSONB)
-    source_provenance = Column(JSONB)
+    
+    # Core rule identification
+    jurisdiction = Column(String(10), nullable=False, index=True)  # 'SG'
+    authority = Column(String(50), nullable=False, index=True)     # 'SCDF', 'PUB', 'URA', 'BCA'
+    topic = Column(String(50), nullable=False, index=True)         # 'fire', 'plumbing', 'zoning'
+    clause_ref = Column(String(50), index=True)                    # '4.2.1'
+    
+    # Rule specification
+    parameter_key = Column(String(200), nullable=False, index=True)  # 'egress.corridor.min_width_mm'
+    operator = Column(String(10), nullable=False)                    # '>=', '<=', '='
+    value = Column(Text, nullable=False)                             # '1200'
+    unit = Column(String(20))                                        # 'mm', 'm', '%'
+    
+    # Context and applicability
+    applicability = Column(JSONB)    # {"occupancy": ["residential"], "height": "any"}
+    exceptions = Column(JSONB)       # ["except for existing buildings"]
+    source_provenance = Column(JSONB)  # {"document_id": 123, "pages": [37]}
+    
+    # Review workflow
     review_status = Column(
         String(20),
         CheckConstraint("review_status IN ('needs_review', 'approved', 'rejected')"),
@@ -121,32 +135,59 @@ class RefRule(BaseModel):
     source = relationship("RefSource", back_populates="rules")
     document = relationship("RefDocument", back_populates="rules")
 
+    __table_args__ = (
+        Index('idx_ref_rules_jurisdiction_topic', 'jurisdiction', 'topic'),
+        Index('idx_ref_rules_parameter_key', 'parameter_key'),
+        Index('idx_ref_rules_authority_status', 'authority', 'review_status'),
+    )
+
 
 class RefParcel(BaseModel):
-    """Reference parcel model for GIS data."""
+    """Reference parcel model for land boundaries (simplified without PostGIS for now)."""
 
     __tablename__ = "ref_parcels"
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
-    parcel_ref = Column(String(100), index=True)  # lot id if available
-    geom = Column(Geometry("POLYGON", srid=4326))  # WGS84 coordinate system
+    parcel_ref = Column(String(100), index=True)  # URA lot number
+    
+    # Simplified geometry as JSON for now (will upgrade to PostGIS later)
+    bounds_json = Column(JSONB)  # {"type": "Polygon", "coordinates": [...]}
+    centroid_lat = Column(Numeric(10, 7))
+    centroid_lon = Column(Numeric(10, 7))
     area_m2 = Column(Numeric(12, 2))
+    
     source = Column(String(50))  # 'upload', 'onemap', 'ura'
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index('idx_ref_parcels_centroid', 'centroid_lat', 'centroid_lon'),
+        Index('idx_ref_parcels_jurisdiction_ref', 'jurisdiction', 'parcel_ref'),
+    )
 
 
 class RefZoningLayer(BaseModel):
-    """Reference zoning layer model."""
+    """Reference zoning layer model for URA Master Plan data."""
 
     __tablename__ = "ref_zoning_layers"
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
     layer_name = Column(String(100), index=True)  # 'MasterPlan2019'
-    zone_code = Column(String(20), index=True)  # 'R2', 'C1', 'B1'
-    attributes = Column(JSONB)  # {"far":3.5,"height_m":36,"overlay":["coastal"]}
-    geom = Column(Geometry("MULTIPOLYGON", srid=4326))
+    zone_code = Column(String(20), index=True)    # 'R2', 'C1', 'B1'
+    
+    # Zoning attributes
+    attributes = Column(JSONB)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
+    
+    # Simplified geometry as JSON for now
+    bounds_json = Column(JSONB)  # GeoJSON MultiPolygon
+    
+    effective_date = Column(DateTime(timezone=True))
+    expiry_date = Column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index('idx_ref_zoning_jurisdiction_zone', 'jurisdiction', 'zone_code'),
+        Index('idx_ref_zoning_layer_effective', 'layer_name', 'effective_date'),
+    )
 
 
 class RefGeocodeCache(BaseModel):
@@ -159,75 +200,102 @@ class RefGeocodeCache(BaseModel):
     lat = Column(Numeric(10, 7))
     lon = Column(Numeric(10, 7))
     parcel_id = Column(Integer, ForeignKey("ref_parcels.id"), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    confidence_score = Column(Numeric(3, 2))  # 0.0 to 1.0
+    
+    # Cache management
+    cache_expires_at = Column(DateTime(timezone=True))
+    is_verified = Column(Boolean, default=False)
 
     # Relationships
     parcel = relationship("RefParcel")
 
+    __table_args__ = (
+        Index('idx_geocode_cache_coords', 'lat', 'lon'),
+    )
+
+
+# Phase 2 Models (Standards, Catalog, Ergonomics, Costs)
 
 class RefMaterialStandard(BaseModel):
-    """Material standards reference."""
+    """Material standards reference for Phase 2."""
 
     __tablename__ = "ref_material_standards"
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
-    standard_code = Column(String(50), nullable=False, index=True)
-    material_type = Column(String(100), nullable=False, index=True)
-    property_key = Column(String(200), nullable=False, index=True)
+    standard_code = Column(String(50), nullable=False, index=True)  # 'SS EN 206'
+    material_type = Column(String(100), nullable=False, index=True)  # 'concrete', 'steel'
+    property_key = Column(String(200), nullable=False, index=True)   # 'compressive_strength_mpa'
     value = Column(Text, nullable=False)
     unit = Column(String(20))
-    context = Column(JSONB)  # application context
+    context = Column(JSONB)  # {"grade": "C30", "age_days": 28}
     source_document = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index('idx_material_standards_type_property', 'material_type', 'property_key'),
+    )
 
 
 class RefProduct(BaseModel):
-    """Product catalog reference."""
+    """Product catalog reference for Phase 2."""
 
     __tablename__ = "ref_products"
 
     id = Column(Integer, primary_key=True, index=True)
     vendor = Column(String(100), nullable=False, index=True)
-    category = Column(String(50), nullable=False, index=True)
+    category = Column(String(50), nullable=False, index=True)  # 'toilet', 'basin', 'door'
     product_code = Column(String(100), nullable=False)
     name = Column(String(200), nullable=False)
-    dimensions = Column(JSONB)  # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
-    specifications = Column(JSONB)
+    
+    # Product specifications
+    dimensions = Column(JSONB)      # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
+    specifications = Column(JSONB)  # {"material": "ceramic", "flush_volume_l": 4.8}
     unit_cost = Column(Numeric(10, 2))
     currency = Column(String(3), default="SGD")
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    is_active = Column(Boolean, default=True, index=True)
+
+    __table_args__ = (
+        Index('idx_products_vendor_category', 'vendor', 'category'),
+        Index('idx_products_category_active', 'category', 'is_active'),
+    )
 
 
 class RefErgonomics(BaseModel):
-    """Human factors and ergonomics reference."""
+    """Human factors and ergonomics reference for Phase 2."""
 
     __tablename__ = "ref_ergonomics"
 
     id = Column(Integer, primary_key=True, index=True)
-    metric_key = Column(String(200), nullable=False, index=True)
-    population = Column(String(50), nullable=False, index=True)  # 'adult', 'elderly', 'wheelchair'
-    percentile = Column(String(10))  # '5th', '50th', '95th'
+    metric_key = Column(String(200), nullable=False, index=True)     # 'wheelchair.turning_radius_mm'
+    population = Column(String(50), nullable=False, index=True)      # 'adult', 'elderly', 'wheelchair'
+    percentile = Column(String(10))                                  # '5th', '50th', '95th'
     value = Column(Numeric(8, 2), nullable=False)
     unit = Column(String(20), nullable=False)
-    context = Column(JSONB)
+    context = Column(JSONB)  # {"space_type": "bathroom", "condition": "seated"}
     source = Column(String(100))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index('idx_ergonomics_metric_population', 'metric_key', 'population'),
+    )
 
 
 class RefCostIndex(BaseModel):
-    """Cost benchmark indices."""
+    """Cost benchmark indices for Phase 2."""
 
     __tablename__ = "ref_cost_indices"
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
-    series_name = Column(String(100), nullable=False, index=True)
-    category = Column(String(50), nullable=False, index=True)
-    subcategory = Column(String(100))
-    period = Column(String(20), nullable=False, index=True)  # '2024-Q1'
+    series_name = Column(String(100), nullable=False, index=True)    # 'concrete', 'steel', 'labor'
+    category = Column(String(50), nullable=False, index=True)        # 'material', 'labor', 'equipment'
+    subcategory = Column(String(100))                                # 'ready_mix', 'skilled'
+    period = Column(String(20), nullable=False, index=True)          # '2024-Q1'
     value = Column(Numeric(12, 2), nullable=False)
-    unit = Column(String(50), nullable=False)
+    unit = Column(String(50), nullable=False)                        # 'SGD/m3', 'SGD/hour'
     source = Column(String(100))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index('idx_cost_indices_series_period', 'series_name', 'period'),
+        Index('idx_cost_indices_jurisdiction_category', 'jurisdiction', 'category'),
+    )
