@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { useTranslation } from './i18n'
+import { LocaleSwitcher } from './i18n/LocaleSwitcher'
 import { Link } from './router'
 
 interface HealthStatus {
@@ -7,10 +9,13 @@ interface HealthStatus {
   service: string
 }
 
+type HealthErrorKey = 'backendNotResponding' | 'cannotConnect'
+
 function App() {
+  const { t } = useTranslation()
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<HealthErrorKey | null>(null)
 
   const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/'
   const resolvedBaseUrl = useMemo<URL | null>(() => {
@@ -44,11 +49,12 @@ function App() {
         if (response.ok) {
           const data = await response.json()
           setHealthStatus(data)
+          setError(null)
         } else {
-          setError('Backend not responding')
+          setError('backendNotResponding')
         }
       } catch (err) {
-        setError('Cannot connect to backend')
+        setError('cannotConnect')
       } finally {
         setLoading(false)
       }
@@ -57,19 +63,29 @@ function App() {
     checkHealth()
   }, [buildApiUrl])
 
+  const reasons = useMemo(
+    () => t('app.why.items', { returnObjects: true }) as string[],
+    [t],
+  )
+
+  const nextSteps = useMemo(
+    () => t('app.nextSteps.items', { returnObjects: true }) as string[],
+    [t],
+  )
+
   return (
     <div className="app-shell">
       <header className="app-shell__header">
-        <h1>Optimal Build Studio</h1>
-        <p>
-          Explore automated compliance insights, land intelligence and feasibility analysis for
-          Singapore developments.
-        </p>
+        <div className="app-shell__toolbar">
+          <LocaleSwitcher />
+        </div>
+        <h1>{t('app.title')}</h1>
+        <p>{t('app.tagline')}</p>
       </header>
 
       <nav className="app-shell__nav">
         <Link className="app-shell__nav-link" to="/feasibility">
-          Launch feasibility wizard
+          {t('app.nav.feasibility')}
         </Link>
         <a
           className="app-shell__nav-link"
@@ -77,58 +93,62 @@ function App() {
           target="_blank"
           rel="noreferrer"
         >
-          View API reference
+          {t('app.nav.docs')}
         </a>
       </nav>
 
       <section className="app-shell__section">
-        <h2>System status</h2>
-        {loading && <p>Checking backend connection…</p>}
-        {error && <p style={{ color: '#b91c1c' }}>❌ {error}</p>}
+        <h2>{t('app.status.heading')}</h2>
+        {loading && <p>{t('app.status.loading')}</p>}
+        {error && (
+          <p style={{ color: '#b91c1c' }}>❌ {t(`app.status.errors.${error}`)}</p>
+        )}
         {healthStatus && (
           <p style={{ color: '#15803d' }}>
-            ✅ Backend Status: {healthStatus.status} ({healthStatus.service})
+            {t('app.status.success', {
+              status: healthStatus.status,
+              service: healthStatus.service,
+            })}
           </p>
         )}
       </section>
 
       <section className="app-shell__section">
-        <h2>Quick links</h2>
+        <h2>{t('app.quickLinks.heading')}</h2>
         <ul>
           <li>
             <a href={buildApiUrl('health')} target="_blank" rel="noreferrer">
-              Backend health check
+              {t('app.quickLinks.health')}
             </a>
           </li>
           <li>
             <a href={buildApiUrl('docs')} target="_blank" rel="noreferrer">
-              API documentation
+              {t('app.quickLinks.docs')}
             </a>
           </li>
           <li>
             <a href={buildApiUrl('api/v1/test')} target="_blank" rel="noreferrer">
-              API test endpoint
+              {t('app.quickLinks.test')}
             </a>
           </li>
         </ul>
       </section>
 
       <section className="app-shell__section">
-        <h2>Why start here?</h2>
+        <h2>{t('app.why.heading')}</h2>
         <ul>
-          <li>Capture project basics once and reuse across compliance workflows.</li>
-          <li>Review cross-agency rules synthesised from the knowledge platform.</li>
-          <li>Generate buildability insights with clear next steps for the team.</li>
+          {reasons.map((reason, index) => (
+            <li key={index}>{reason}</li>
+          ))}
         </ul>
       </section>
 
       <section className="app-shell__section">
-        <h2>Next steps</h2>
+        <h2>{t('app.nextSteps.heading')}</h2>
         <ol>
-          <li>✅ Frontend and backend are connected.</li>
-          <li>🔄 Add database integration.</li>
-          <li>🔄 Implement buildable analysis.</li>
-          <li>🔄 Add Singapore building codes.</li>
+          {nextSteps.map((step, index) => (
+            <li key={index}>{step}</li>
+          ))}
         </ol>
       </section>
     </div>

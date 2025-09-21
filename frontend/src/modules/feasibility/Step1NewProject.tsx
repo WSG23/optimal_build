@@ -1,6 +1,8 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { useTranslation } from '../../i18n'
+
 import { landUseOptions, LandUseType, NewFeasibilityProjectInput } from './types'
 
 type Step1FieldKey =
@@ -20,7 +22,16 @@ export interface Step1FormValues {
   buildingHeightMeters: string
 }
 
-type Step1FormErrors = Partial<Record<Step1FieldKey, string>>
+type Step1ErrorKey =
+  | 'nameRequired'
+  | 'siteAddressRequired'
+  | 'siteAreaRequired'
+  | 'siteAreaInvalid'
+  | 'landUseRequired'
+  | 'targetGfaInvalid'
+  | 'heightInvalid'
+
+type Step1FormErrors = Partial<Record<Step1FieldKey, Step1ErrorKey>>
 
 const initialFormState: Step1FormValues = {
   name: '',
@@ -64,6 +75,7 @@ export function Step1NewProject({
   onSubmit,
   isSubmitting = false,
 }: Step1NewProjectProps) {
+  const { t } = useTranslation()
   const [values, setValues] = useState<Step1FormValues>(() => formatDefaultValues(defaultValues))
   const [errors, setErrors] = useState<Step1FormErrors>({})
 
@@ -72,12 +84,7 @@ export function Step1NewProject({
     setErrors({})
   }, [defaultValues])
 
-  const description = useMemo(
-    () =>
-      `Capture the essential site information that powers compliance lookups. ` +
-      `This data will be used to determine zoning, plot ratio and envelope controls before fetching applicable rules.`,
-    [],
-  )
+  const description = useMemo(() => t('wizard.step1.description'), [t])
 
   const handleFieldChange = (field: Step1FieldKey) =>
     (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -90,35 +97,35 @@ export function Step1NewProject({
     const nextErrors: Step1FormErrors = {}
 
     if (!values.name.trim()) {
-      nextErrors.name = 'Project name is required'
+      nextErrors.name = 'nameRequired'
     }
 
     if (!values.siteAddress.trim()) {
-      nextErrors.siteAddress = 'Site address is required'
+      nextErrors.siteAddress = 'siteAddressRequired'
     }
 
     const siteArea = Number.parseFloat(values.siteAreaSqm)
     if (!values.siteAreaSqm.trim()) {
-      nextErrors.siteAreaSqm = 'Site area is required'
+      nextErrors.siteAreaSqm = 'siteAreaRequired'
     } else if (!Number.isFinite(siteArea) || siteArea <= 0) {
-      nextErrors.siteAreaSqm = 'Site area must be greater than zero'
+      nextErrors.siteAreaSqm = 'siteAreaInvalid'
     }
 
     if (!values.landUse) {
-      nextErrors.landUse = 'Select a land use to continue'
+      nextErrors.landUse = 'landUseRequired'
     }
 
     if (values.targetGrossFloorAreaSqm.trim()) {
       const targetGfa = Number.parseFloat(values.targetGrossFloorAreaSqm)
       if (!Number.isFinite(targetGfa) || targetGfa <= 0) {
-        nextErrors.targetGrossFloorAreaSqm = 'Target GFA must be greater than zero'
+        nextErrors.targetGrossFloorAreaSqm = 'targetGfaInvalid'
       }
     }
 
     if (values.buildingHeightMeters.trim()) {
       const height = Number.parseFloat(values.buildingHeightMeters)
       if (!Number.isFinite(height) || height <= 0) {
-        nextErrors.buildingHeightMeters = 'Height must be greater than zero'
+        nextErrors.buildingHeightMeters = 'heightInvalid'
       }
     }
 
@@ -155,94 +162,120 @@ export function Step1NewProject({
 
   return (
     <div className="feasibility-step">
-      <h2 className="feasibility-step__heading">Step 1 · New project details</h2>
+      <h2 className="feasibility-step__heading">{t('wizard.step1.heading')}</h2>
       <p className="feasibility-step__intro">{description}</p>
 
       <form className="feasibility-form" onSubmit={handleSubmit} noValidate>
         <div className="feasibility-form__field">
-          <label htmlFor="name">Project name</label>
+          <label htmlFor="name">{t('wizard.step1.fields.name.label')}</label>
           <input
             id="name"
             type="text"
             value={values.name}
             onChange={handleFieldChange('name')}
-            placeholder="e.g. Riverfront Residences"
+            placeholder={t('wizard.step1.fields.name.placeholder')}
           />
-          {errors.name && <p className="feasibility-form__error">{errors.name}</p>}
+          {errors.name && (
+            <p className="feasibility-form__error">
+              {t(`wizard.step1.errors.${errors.name}`)}
+            </p>
+          )}
         </div>
 
         <div className="feasibility-form__field">
-          <label htmlFor="siteAddress">Site address</label>
+          <label htmlFor="siteAddress">{t('wizard.step1.fields.siteAddress.label')}</label>
           <input
             id="siteAddress"
             type="text"
             value={values.siteAddress}
             onChange={handleFieldChange('siteAddress')}
-            placeholder="e.g. 123 Serangoon Ave 3"
+            placeholder={t('wizard.step1.fields.siteAddress.placeholder')}
           />
-          {errors.siteAddress && <p className="feasibility-form__error">{errors.siteAddress}</p>}
+          {errors.siteAddress && (
+            <p className="feasibility-form__error">
+              {t(`wizard.step1.errors.${errors.siteAddress}`)}
+            </p>
+          )}
         </div>
 
         <div className="feasibility-form__field">
-          <label htmlFor="siteAreaSqm">Site area (sqm)</label>
+          <label htmlFor="siteAreaSqm">{t('wizard.step1.fields.siteAreaSqm.label')}</label>
           <input
             id="siteAreaSqm"
             type="number"
             step="0.01"
             value={values.siteAreaSqm}
             onChange={handleFieldChange('siteAreaSqm')}
-            placeholder="e.g. 4250"
+            placeholder={t('wizard.step1.fields.siteAreaSqm.placeholder')}
           />
-          {errors.siteAreaSqm && <p className="feasibility-form__error">{errors.siteAreaSqm}</p>}
+          {errors.siteAreaSqm && (
+            <p className="feasibility-form__error">
+              {t(`wizard.step1.errors.${errors.siteAreaSqm}`)}
+            </p>
+          )}
         </div>
 
         <div className="feasibility-form__field">
-          <label htmlFor="landUse">Land use</label>
+          <label htmlFor="landUse">{t('wizard.step1.fields.landUse.label')}</label>
           <select id="landUse" value={values.landUse} onChange={handleFieldChange('landUse')}>
-            <option value="">Select a land use</option>
+            <option value="">{t('wizard.step1.fields.landUse.placeholder')}</option>
             {landUseOptions.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(`wizard.step1.landUseOptions.${option.value}`)}
               </option>
             ))}
           </select>
-          {errors.landUse && <p className="feasibility-form__error">{errors.landUse}</p>}
+          {errors.landUse && (
+            <p className="feasibility-form__error">
+              {t(`wizard.step1.errors.${errors.landUse}`)}
+            </p>
+          )}
         </div>
 
         <div className="feasibility-form__grid">
           <div className="feasibility-form__field">
-            <label htmlFor="targetGrossFloorAreaSqm">Target GFA (sqm)</label>
+            <label htmlFor="targetGrossFloorAreaSqm">
+              {t('wizard.step1.fields.targetGrossFloorAreaSqm.label')}
+            </label>
             <input
               id="targetGrossFloorAreaSqm"
               type="number"
               step="0.01"
               value={values.targetGrossFloorAreaSqm}
               onChange={handleFieldChange('targetGrossFloorAreaSqm')}
-              placeholder="Optional"
+              placeholder={t('wizard.step1.fields.targetGrossFloorAreaSqm.placeholder')}
             />
             {errors.targetGrossFloorAreaSqm && (
-              <p className="feasibility-form__error">{errors.targetGrossFloorAreaSqm}</p>
+              <p className="feasibility-form__error">
+                {t(`wizard.step1.errors.${errors.targetGrossFloorAreaSqm}`)}
+              </p>
             )}
           </div>
 
           <div className="feasibility-form__field">
-            <label htmlFor="buildingHeightMeters">Target height (m)</label>
+            <label htmlFor="buildingHeightMeters">
+              {t('wizard.step1.fields.buildingHeightMeters.label')}
+            </label>
             <input
               id="buildingHeightMeters"
               type="number"
               step="0.1"
               value={values.buildingHeightMeters}
               onChange={handleFieldChange('buildingHeightMeters')}
-              placeholder="Optional"
+              placeholder={t('wizard.step1.fields.buildingHeightMeters.placeholder')}
             />
             {errors.buildingHeightMeters && (
-              <p className="feasibility-form__error">{errors.buildingHeightMeters}</p>
+              <p className="feasibility-form__error">
+                {t(`wizard.step1.errors.${errors.buildingHeightMeters}`)}
+              </p>
             )}
           </div>
         </div>
 
         <button className="feasibility-form__submit" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : 'Continue to rules'}
+          {isSubmitting
+            ? t('wizard.step1.actions.saving')
+            : t('wizard.step1.actions.continue')}
         </button>
       </form>
     </div>

@@ -1,12 +1,14 @@
 export const landUseOptions = [
-  { value: 'residential', label: 'Residential' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'mixed_use', label: 'Mixed Use' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'institutional', label: 'Institutional' },
+  { value: 'residential', labelKey: 'wizard.step1.landUseOptions.residential' },
+  { value: 'commercial', labelKey: 'wizard.step1.landUseOptions.commercial' },
+  { value: 'mixed_use', labelKey: 'wizard.step1.landUseOptions.mixed_use' },
+  { value: 'industrial', labelKey: 'wizard.step1.landUseOptions.industrial' },
+  { value: 'institutional', labelKey: 'wizard.step1.landUseOptions.institutional' },
 ] as const
 
-export type LandUseType = (typeof landUseOptions)[number]['value']
+export type LandUseOption = (typeof landUseOptions)[number]
+
+export type LandUseType = LandUseOption['value']
 
 export interface NewFeasibilityProjectInput {
   name: string

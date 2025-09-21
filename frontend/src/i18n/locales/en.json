@@ -1,0 +1,183 @@
+{
+  "common": {
+    "language": {
+      "label": "Language",
+      "options": {
+        "en": "English",
+        "ja": "日本語"
+      }
+    },
+    "fallback": {
+      "dash": "—"
+    }
+  },
+  "app": {
+    "title": "Optimal Build Studio",
+    "tagline": "Explore automated compliance insights, land intelligence and feasibility analysis for Singapore developments.",
+    "nav": {
+      "feasibility": "Launch feasibility wizard",
+      "docs": "View API reference"
+    },
+    "status": {
+      "heading": "System status",
+      "loading": "Checking backend connection…",
+      "success": "✅ Backend Status: {{status}} ({{service}})",
+      "errors": {
+        "backendNotResponding": "Backend not responding",
+        "cannotConnect": "Cannot connect to backend"
+      }
+    },
+    "quickLinks": {
+      "heading": "Quick links",
+      "health": "Backend health check",
+      "docs": "API documentation",
+      "test": "API test endpoint"
+    },
+    "why": {
+      "heading": "Why start here?",
+      "items": [
+        "Capture project basics once and reuse across compliance workflows.",
+        "Review cross-agency rules synthesised from the knowledge platform.",
+        "Generate buildability insights with clear next steps for the team."
+      ]
+    },
+    "nextSteps": {
+      "heading": "Next steps",
+      "items": [
+        "✅ Frontend and backend are connected.",
+        "🔄 Add database integration.",
+        "🔄 Implement buildable analysis.",
+        "🔄 Add Singapore building codes."
+      ]
+    }
+  },
+  "wizard": {
+    "title": "Feasibility assessment",
+    "description": "Evaluate plot potential, identify binding regulations and generate next steps for compliance.",
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    },
+    "steps": {
+      "projectDetails": "Project details",
+      "complianceScope": "Compliance scope",
+      "buildabilityResults": "Buildability results"
+    },
+    "step1": {
+      "heading": "Step 1 · New project details",
+      "description": "Capture the essential site information that powers compliance lookups. This data will be used to determine zoning, plot ratio and envelope controls before fetching applicable rules.",
+      "fields": {
+        "name": {
+          "label": "Project name",
+          "placeholder": "e.g. Riverfront Residences"
+        },
+        "siteAddress": {
+          "label": "Site address",
+          "placeholder": "e.g. 123 Serangoon Ave 3"
+        },
+        "siteAreaSqm": {
+          "label": "Site area (sqm)",
+          "placeholder": "e.g. 4250"
+        },
+        "landUse": {
+          "label": "Land use",
+          "placeholder": "Select a land use"
+        },
+        "targetGrossFloorAreaSqm": {
+          "label": "Target GFA (sqm)",
+          "placeholder": "Optional"
+        },
+        "buildingHeightMeters": {
+          "label": "Target height (m)",
+          "placeholder": "Optional"
+        }
+      },
+      "landUseOptions": {
+        "residential": "Residential",
+        "commercial": "Commercial",
+        "mixed_use": "Mixed Use",
+        "industrial": "Industrial",
+        "institutional": "Institutional"
+      },
+      "errors": {
+        "nameRequired": "Project name is required",
+        "siteAddressRequired": "Site address is required",
+        "siteAreaRequired": "Site area is required",
+        "siteAreaInvalid": "Site area must be greater than zero",
+        "landUseRequired": "Select a land use to continue",
+        "targetGfaInvalid": "Target GFA must be greater than zero",
+        "heightInvalid": "Height must be greater than zero"
+      },
+      "actions": {
+        "saving": "Saving…",
+        "continue": "Continue to rules"
+      }
+    },
+    "step2": {
+      "heading": "Step 2 · Review suggested rules",
+      "description": "We analysed the project details and surfaced the most relevant codes across agencies. You can adjust the scope before running the compliance engine.",
+      "panel": {
+        "title": "Project summary",
+        "subtitleFallback": "Provide a quick confirmation before running the checks.",
+        "metrics": {
+          "siteArea": "Site area",
+          "landUse": "Land use",
+          "targetGfa": "Target GFA",
+          "targetHeight": "Target height"
+        },
+        "units": {
+          "sqm": "m²",
+          "meters": "m"
+        }
+      },
+      "loading": "Loading recommended rules…",
+      "empty": "No rules were found for this project configuration.",
+      "requirement": "Requirement: {{parameterKey}} {{operator}} {{value}}{{unit}}",
+      "actions": {
+        "back": "Back",
+        "evaluate": "Run buildability checks",
+        "evaluating": "Running assessment…"
+      }
+    },
+    "step3": {
+      "heading": "Step 3 · Buildability outlook",
+      "intro": {
+        "loading": "Finalising the analysis…",
+        "ready": "This snapshot summarises the achievable massing and highlights rules that require attention."
+      },
+      "panel": {
+        "title": "Envelope summary",
+        "metrics": {
+          "maxGfa": "Max permissible GFA",
+          "estimatedGfa": "Estimated achievable GFA",
+          "estimatedUnits": "Estimated units",
+          "siteCoverage": "Site coverage"
+        }
+      },
+      "siteEfficiency": "{{percentage}}% of permissible GFA utilised",
+      "allClear": "All tracked rules passed – consider expanding the scope to include more topics.",
+      "table": {
+        "rule": "Rule",
+        "agency": "Agency",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "status": {
+        "pass": "Pass",
+        "fail": "Fail",
+        "warning": "Review"
+      },
+      "recommendations": {
+        "title": "Next steps",
+        "subtitle": "Prioritised guidance to resolve outstanding compliance gaps."
+      },
+      "actions": {
+        "back": "Back to rules",
+        "restart": "Start a new assessment"
+      },
+      "placeholders": {
+        "preparingAssessment": "Preparing assessment…",
+        "pendingProjectName": "pending"
+      }
+    }
+  }
+}
