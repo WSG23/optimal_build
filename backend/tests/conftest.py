@@ -38,11 +38,12 @@ if _MISSING_DEPS:  # pragma: no cover - offline test fallback
 try:  # pragma: no cover - exercised indirectly via tests
     import pytest_asyncio
 except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
-    class _PytestAsyncioStub:
-        def fixture(self, *args: Any, **kwargs: Any):
-            return pytest.fixture(*args, **kwargs)
+    from types import ModuleType
 
-    pytest_asyncio = _PytestAsyncioStub()  # type: ignore[assignment]
+    _pytest_asyncio_stub = ModuleType("pytest_asyncio")
+    _pytest_asyncio_stub.fixture = pytest.fixture  # type: ignore[attr-defined]
+    sys.modules.setdefault("pytest_asyncio", _pytest_asyncio_stub)
+    pytest_asyncio = _pytest_asyncio_stub  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency for API tests
     from httpx import AsyncClient
