@@ -32,12 +32,12 @@ lint: ## Run linting
 	cd frontend && npm run lint
 
 test: ## Run tests
-        cd backend && pytest
-        cd frontend && npm test
+	cd backend && pytest
+	cd frontend && npm test
 
 test-aec: ## Run AEC backend and frontend test suites
-        cd backend && pytest tests/test_workflows/test_aec_pipeline.py
-        cd frontend && npm test
+	cd backend && pytest tests/test_workflows/test_aec_pipeline.py
+	cd frontend && npm test
 
 test-cov: ## Run tests with coverage
 	cd backend && pytest --cov=app --cov-report=html
