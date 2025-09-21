@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test:e2e": "playwright test --config=playwright.config.ts"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -20,6 +21,7 @@
     "typescript": "^5.2.2",
     "vite": "^4.5.0",
     "eslint": "^8.53.0",
+    "@playwright/test": "^1.40.1",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
     "eslint-plugin-react-hooks": "^4.6.0",

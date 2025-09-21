@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 interface HealthStatus {
   status: string;
@@ -11,7 +11,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/';
-  const resolvedBaseUrl = React.useMemo<URL | null>(() => {
+  const resolvedBaseUrl = useMemo<URL | null>(() => {
     if (typeof window === 'undefined') {
       return null;
     }
@@ -24,7 +24,7 @@ function App() {
     }
   }, [rawBaseUrl]);
 
-  const buildApiUrl = React.useCallback(
+  const buildApiUrl = useCallback(
     (path: string) => {
       if (!resolvedBaseUrl) {
         return path;

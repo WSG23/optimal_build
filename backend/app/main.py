@@ -1,35 +1,37 @@
 """Main FastAPI application."""
 
-import logging
+from __future__ import annotations
+
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator, Dict, Optional
 
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
+from app.api.v1 import api_router
 from app.core.config import settings
-from app.core.database import get_session, engine
+from app.core.database import engine, get_session
 from app.models.rkp import RefRule
+from app.utils import metrics
+from app.utils.logging import configure_logging, get_logger, log_event
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+configure_logging()
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
-    # Startup
-    logger.info("🚀 Starting Building Compliance Platform")
-    logger.info(f"📊 Database URL: {settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}")
-    
-    yield
-    
-    # Shutdown
-    await engine.dispose()
-    logger.info("⬇️ Shutting down Building Compliance Platform")
+
+    log_event(logger, "app_starting", environment=settings.ENVIRONMENT)
+    try:
+        yield
+    finally:
+        await engine.dispose()
+        log_event(logger, "app_shutdown")
 
 
 app = FastAPI(
@@ -37,10 +39,9 @@ app = FastAPI(
     version=settings.VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-# Add CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -49,119 +50,152 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
 
 @app.get("/")
-async def root():
+async def root() -> Dict[str, str]:
     """Root endpoint."""
+
+    metrics.REQUEST_COUNTER.labels(endpoint="root").inc()
+    log_event(logger, "root_endpoint")
     return {
-        "message": "Building Compliance Platform API", 
+        "message": "Building Compliance Platform API",
         "version": settings.VERSION,
-        "docs": "/docs"
+        "docs": "/docs",
     }
 
 
 @app.get("/health")
-async def health_check(session: AsyncSession = Depends(get_session)):
+async def health_check(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
     """Health check endpoint with database connectivity."""
+
+    metrics.REQUEST_COUNTER.labels(endpoint="health").inc()
     try:
-        # Test database connection
-        result = await session.execute(select(RefRule).limit(1))
-        rule_count_result = await session.execute(select(RefRule))
-        rule_count = len(list(rule_count_result.scalars().all()))
-        
-        return {
+        rules_count_result = await session.execute(
+            select(func.count()).select_from(RefRule)
+        )
+        rules_count = rules_count_result.scalar_one()
+        payload = {
             "status": "healthy",
-            "service": "building-compliance-platform",
+            "service": settings.PROJECT_NAME,
             "database": "connected",
-            "rules_count": rule_count
+            "rules_count": int(rules_count or 0),
         }
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        log_event(logger, "health_ok", rules_count=int(rules_count or 0))
+        return payload
+    except Exception as exc:  # pragma: no cover - defensive logging
+        log_event(logger, "health_failed", error=str(exc))
         return {
             "status": "degraded",
-            "service": "building-compliance-platform", 
+            "service": settings.PROJECT_NAME,
             "database": "disconnected",
-            "error": str(e)
+            "error": str(exc),
         }
 
 
-@app.get("/api/v1/test")
-async def test_endpoint():
+@app.get("/health/metrics")
+async def health_metrics() -> Response:
+    """Expose Prometheus metrics."""
+
+    metrics_output = metrics.render_latest_metrics()
+    return Response(content=metrics_output, media_type="text/plain; version=0.0.4")
+
+
+@app.get(f"{settings.API_V1_STR}/test")
+async def test_endpoint() -> Dict[str, str]:
     """Test endpoint."""
+
+    metrics.REQUEST_COUNTER.labels(endpoint="test").inc()
     return {"message": "API is working", "version": settings.VERSION}
 
 
-@app.get("/api/v1/rules/test")
-async def test_rules():
-    """Test rules endpoint."""
-    return {"message": "Rules API working"}
-
-
-@app.get("/api/v1/rules/count")
-async def rules_count(session: AsyncSession = Depends(get_session)):
+@app.get(f"{settings.API_V1_STR}/rules/count")
+async def rules_count(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
     """Get count of rules in database."""
+
+    metrics.REQUEST_COUNTER.labels(endpoint="rules_count").inc()
     try:
-        result = await session.execute(select(RefRule))
-        rules = list(result.scalars().all())
-        
-        # Group by authority
-        by_authority = {}
-        for rule in rules:
-            auth = rule.authority
-            if auth not in by_authority:
-                by_authority[auth] = 0
-            by_authority[auth] += 1
-            
-        return {
-            "total_rules": len(rules),
+        total_rules_result = await session.execute(
+            select(func.count()).select_from(RefRule)
+        )
+        total_rules = int(total_rules_result.scalar_one() or 0)
+
+        by_authority_result = await session.execute(
+            select(RefRule.authority, func.count())
+            .group_by(RefRule.authority)
+            .order_by(RefRule.authority)
+        )
+        by_authority: Dict[str, int] = {}
+        for authority, count in by_authority_result.all():
+            key = str(authority) if authority else "unknown"
+            by_authority[key] = int(count or 0)
+
+        sample_rule_result = await session.execute(
+            select(RefRule.parameter_key, RefRule.value, RefRule.unit)
+            .order_by(RefRule.id)
+            .limit(1)
+        )
+        sample_rule = sample_rule_result.mappings().first()
+
+        payload: Dict[str, Any] = {
+            "total_rules": total_rules,
             "by_authority": by_authority,
-            "sample_rule": {
-                "parameter_key": rules[0].parameter_key if rules else None,
-                "value": rules[0].value if rules else None,
-                "unit": rules[0].unit if rules else None
-            } if rules else None
         }
-    except Exception as e:
-        logger.error(f"Failed to count rules: {e}")
-        return {"error": str(e)}
+        if sample_rule:
+            payload["sample_rule"] = {
+                "parameter_key": sample_rule["parameter_key"],
+                "value": sample_rule["value"],
+                "unit": sample_rule["unit"],
+            }
+        log_event(logger, "rules_count_report", total=total_rules)
+        return payload
+    except Exception as exc:  # pragma: no cover - defensive logging
+        log_event(logger, "rules_count_failed", error=str(exc))
+        return {"error": str(exc)}
 
 
-@app.get("/api/v1/database/status")
-async def database_status(session: AsyncSession = Depends(get_session)):
+@app.get(f"{settings.API_V1_STR}/database/status")
+async def database_status(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
     """Get database status and table information."""
+
+    metrics.REQUEST_COUNTER.labels(endpoint="database_status").inc()
     try:
-        from sqlalchemy import text
-        
-        # Get table list
         tables_result = await session.execute(
             text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
         )
         tables = [row[0] for row in tables_result.fetchall()]
-        
-        # Get rules count by topic
-        rules_result = await session.execute(select(RefRule))
-        rules = list(rules_result.scalars().all())
-        
-        by_topic = {}
-        for rule in rules:
-            topic = rule.topic
-            if topic not in by_topic:
-                by_topic[topic] = 0
-            by_topic[topic] += 1
-        
-        return {
+
+        rules_by_topic_result = await session.execute(
+            select(RefRule.topic, func.count())
+            .group_by(RefRule.topic)
+            .order_by(RefRule.topic)
+        )
+        by_topic: Dict[str, int] = {}
+        total_rules = 0
+        for topic, count in rules_by_topic_result.all():
+            key = str(topic) if topic else "unknown"
+            safe_count = int(count or 0)
+            by_topic[key] = safe_count
+            total_rules += safe_count
+
+        payload = {
             "database_connected": True,
             "tables": sorted(tables),
             "rules_by_topic": by_topic,
-            "total_rules": len(rules)
+            "total_rules": total_rules,
         }
-    except Exception as e:
+        log_event(logger, "database_status_ok", table_count=len(tables))
+        return payload
+    except Exception as exc:  # pragma: no cover - defensive logging
+        log_event(logger, "database_status_failed", error=str(exc))
         return {
             "database_connected": False,
-            "error": str(e)
+            "error": str(exc),
         }
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

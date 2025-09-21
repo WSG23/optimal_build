@@ -27,6 +27,7 @@ line_length = 88
 
 [tool.mypy]
 python_version = "3.11"
+plugins = ["sqlalchemy.ext.mypy.plugin"]
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -49,5 +50,5 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --cov=app --cov-report=term-missing --cov-report=html"
+addopts = "-v"
 asyncio_mode = "auto"

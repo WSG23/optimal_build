@@ -5,21 +5,30 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
+    Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
+    JSON,
+    Numeric,
     String,
     Text,
-    CheckConstraint,
-    Numeric,
-    Index,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.models.base import BaseModel
+
+
+def _json_type() -> Any:
+    return JSONB(astext_type=Text()).with_variant(JSON(), "sqlite")  # type: ignore[no-untyped-call]
+
+
+JSONType = _json_type()
 
 
 class RefSource(BaseModel):
@@ -39,7 +48,7 @@ class RefSource(BaseModel):
         default="pdf",
     )
     update_freq_hint = Column(String(50))  # 'annual', 'quarterly'
-    selectors = Column(JSONB)  # CSS selectors for HTML parsing
+    selectors = Column(JSONType)  # CSS selectors for HTML parsing
     is_active = Column(Boolean, default=True, index=True)
 
     # Relationships
@@ -116,9 +125,9 @@ class RefRule(BaseModel):
     unit = Column(String(20))                                        # 'mm', 'm', '%'
     
     # Context and applicability
-    applicability = Column(JSONB)    # {"occupancy": ["residential"], "height": "any"}
-    exceptions = Column(JSONB)       # ["except for existing buildings"]
-    source_provenance = Column(JSONB)  # {"document_id": 123, "pages": [37]}
+    applicability = Column(JSONType)    # {"occupancy": ["residential"], "height": "any"}
+    exceptions = Column(JSONType)       # ["except for existing buildings"]
+    source_provenance = Column(JSONType)  # {"document_id": 123, "pages": [37]}
     
     # Review workflow
     review_status = Column(
@@ -152,7 +161,7 @@ class RefParcel(BaseModel):
     parcel_ref = Column(String(100), index=True)  # URA lot number
     
     # Simplified geometry as JSON for now (will upgrade to PostGIS later)
-    bounds_json = Column(JSONB)  # {"type": "Polygon", "coordinates": [...]}
+    bounds_json = Column(JSONType)  # {"type": "Polygon", "coordinates": [...]}
     centroid_lat = Column(Numeric(10, 7))
     centroid_lon = Column(Numeric(10, 7))
     area_m2 = Column(Numeric(12, 2))
@@ -176,10 +185,10 @@ class RefZoningLayer(BaseModel):
     zone_code = Column(String(20), index=True)    # 'R2', 'C1', 'B1'
     
     # Zoning attributes
-    attributes = Column(JSONB)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
+    attributes = Column(JSONType)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
     
     # Simplified geometry as JSON for now
-    bounds_json = Column(JSONB)  # GeoJSON MultiPolygon
+    bounds_json = Column(JSONType)  # GeoJSON MultiPolygon
     
     effective_date = Column(DateTime(timezone=True))
     expiry_date = Column(DateTime(timezone=True))
@@ -225,10 +234,17 @@ class RefMaterialStandard(BaseModel):
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
     standard_code = Column(String(50), nullable=False, index=True)  # 'SS EN 206'
     material_type = Column(String(100), nullable=False, index=True)  # 'concrete', 'steel'
+    standard_body = Column(String(100), nullable=False, index=True)  # 'ISO', 'BCA'
     property_key = Column(String(200), nullable=False, index=True)   # 'compressive_strength_mpa'
     value = Column(Text, nullable=False)
     unit = Column(String(20))
-    context = Column(JSONB)  # {"grade": "C30", "age_days": 28}
+    context = Column(JSONType)  # {"grade": "C30", "age_days": 28}
+    section = Column(String(100))
+    applicability = Column(JSONType)
+    edition = Column(String(50))
+    effective_date = Column(Date)
+    license_ref = Column(String(100))
+    provenance = Column(JSONType)
     source_document = Column(Text)
 
     __table_args__ = (
@@ -248,8 +264,8 @@ class RefProduct(BaseModel):
     name = Column(String(200), nullable=False)
     
     # Product specifications
-    dimensions = Column(JSONB)      # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
-    specifications = Column(JSONB)  # {"material": "ceramic", "flush_volume_l": 4.8}
+    dimensions = Column(JSONType)      # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
+    specifications = Column(JSONType)  # {"material": "ceramic", "flush_volume_l": 4.8}
     unit_cost = Column(Numeric(10, 2))
     currency = Column(String(3), default="SGD")
     
@@ -272,7 +288,7 @@ class RefErgonomics(BaseModel):
     percentile = Column(String(10))                                  # '5th', '50th', '95th'
     value = Column(Numeric(8, 2), nullable=False)
     unit = Column(String(20), nullable=False)
-    context = Column(JSONB)  # {"space_type": "bathroom", "condition": "seated"}
+    context = Column(JSONType)  # {"space_type": "bathroom", "condition": "seated"}
     source = Column(String(100))
 
     __table_args__ = (
@@ -291,11 +307,83 @@ class RefCostIndex(BaseModel):
     category = Column(String(50), nullable=False, index=True)        # 'material', 'labor', 'equipment'
     subcategory = Column(String(100))                                # 'ready_mix', 'skilled'
     period = Column(String(20), nullable=False, index=True)          # '2024-Q1'
-    value = Column(Numeric(12, 2), nullable=False)
+    value = Column(Numeric(12, 4), nullable=False)
     unit = Column(String(50), nullable=False)                        # 'SGD/m3', 'SGD/hour'
     source = Column(String(100))
+    provider = Column(String(100), nullable=False, index=True, default="internal")
+    methodology = Column(Text)
 
     __table_args__ = (
         Index('idx_cost_indices_series_period', 'series_name', 'period'),
         Index('idx_cost_indices_jurisdiction_category', 'jurisdiction', 'category'),
+    )
+
+
+class RefCostCatalog(BaseModel):
+    """Detailed cost catalog references."""
+
+    __tablename__ = "ref_cost_catalogs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
+    catalog_name = Column(String(100), nullable=False, index=True)
+    category = Column(String(50), index=True)
+    item_code = Column(String(100), nullable=False, index=True)
+    description = Column(Text)
+    unit = Column(String(20))
+    unit_cost = Column(Numeric(12, 2))
+    currency = Column(String(3), default="SGD")
+    effective_date = Column(Date)
+    item_metadata = Column(JSONType)
+    source = Column(String(100))
+
+    __table_args__ = (
+        Index('idx_cost_catalogs_name_code', 'catalog_name', 'item_code'),
+        Index('idx_cost_catalogs_category', 'category'),
+    )
+
+
+class RefIngestionRun(BaseModel):
+    """Prefect ingestion run metadata."""
+
+    __tablename__ = "ref_ingestion_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    run_key = Column(String(100), nullable=False, unique=True, index=True)
+    flow_name = Column(String(100), nullable=False, index=True)
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    finished_at = Column(DateTime(timezone=True))
+    status = Column(String(20), nullable=False, index=True, default="running")
+    records_ingested = Column(Integer, default=0)
+    suspected_updates = Column(Integer, default=0)
+    notes = Column(Text)
+    metrics = Column(JSONType)
+
+    alerts = relationship("RefAlert", back_populates="ingestion_run", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index('idx_ingestion_runs_flow_status', 'flow_name', 'status'),
+    )
+
+
+class RefAlert(BaseModel):
+    """Alert records for ingestion anomalies."""
+
+    __tablename__ = "ref_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    alert_type = Column(String(50), nullable=False, index=True)
+    level = Column(String(20), nullable=False, index=True, default="info")
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    context = Column(JSONType)
+    ingestion_run_id = Column(Integer, ForeignKey("ref_ingestion_runs.id", ondelete="SET NULL"))
+    acknowledged = Column(Boolean, default=False, index=True)
+    acknowledged_at = Column(DateTime(timezone=True))
+    acknowledged_by = Column(String(100))
+
+    ingestion_run = relationship("RefIngestionRun", back_populates="alerts")
+
+    __table_args__ = (
+        Index('idx_alerts_type_level', 'alert_type', 'level'),
     )
