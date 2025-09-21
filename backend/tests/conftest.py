@@ -8,7 +8,107 @@ from contextlib import asynccontextmanager
 import sys
 
 import pytest
-import pytest_asyncio
+
+try:  # pragma: no cover - exercised indirectly via tests
+    import pytest_asyncio
+except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
+    import contextvars
+    import inspect
+    from typing import Any
+
+    from _pytest.fixtures import call_fixture_func
+
+    _ASYNC_FIXTURE_MARKER = "_pytest_asyncio_is_async_fixture"
+    _CURRENT_LOOP: contextvars.ContextVar[asyncio.AbstractEventLoop | None] = (
+        contextvars.ContextVar("pytest_asyncio_current_loop", default=None)
+    )
+
+    class _AsyncioStub:
+        """Minimal stub of :mod:`pytest_asyncio` for offline test execution."""
+
+        @staticmethod
+        def fixture(*dargs: Any, **dkwargs: Any):
+            def decorator(func: Callable[..., Any]):
+                setattr(func, _ASYNC_FIXTURE_MARKER, True)
+                return pytest.fixture(*dargs, **dkwargs)(func)
+
+            return decorator
+
+    pytest_asyncio = _AsyncioStub()
+
+    def _ensure_loop(request: pytest.FixtureRequest) -> asyncio.AbstractEventLoop:
+        try:
+            loop = request.getfixturevalue("event_loop")
+            created = False
+        except pytest.FixtureLookupError:
+            loop = _CURRENT_LOOP.get()
+            created = False
+            if loop is None:
+                loop = asyncio.new_event_loop()
+                created = True
+        asyncio.set_event_loop(loop)
+        if created:
+            request.addfinalizer(loop.close)
+        return loop
+
+    @pytest.hookimpl
+    def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
+        test_function = pyfuncitem.obj
+        if inspect.iscoroutinefunction(test_function):
+            loop = pyfuncitem.funcargs.get("event_loop")
+            created = False
+            if loop is None:
+                loop = _CURRENT_LOOP.get()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    created = True
+            asyncio.set_event_loop(loop)
+            token = _CURRENT_LOOP.set(loop)
+            try:
+                loop.run_until_complete(test_function(**pyfuncitem.funcargs))
+            finally:
+                _CURRENT_LOOP.reset(token)
+                if created:
+                    loop.close()
+            return True
+        return None
+
+    @pytest.hookimpl
+    def pytest_fixture_setup(
+        fixturedef: pytest.FixtureDef[Any], request: pytest.FixtureRequest
+    ) -> Any:
+        func = fixturedef.func
+        if getattr(func, _ASYNC_FIXTURE_MARKER, False) or inspect.iscoroutinefunction(
+            func
+        ) or inspect.isasyncgenfunction(func):
+            kwargs = {name: request.getfixturevalue(name) for name in fixturedef.argnames}
+            result = call_fixture_func(func, request, kwargs)
+            loop = _ensure_loop(request)
+            token = _CURRENT_LOOP.set(loop)
+            try:
+                if inspect.iscoroutine(result):
+                    return loop.run_until_complete(result)
+                if inspect.isasyncgen(result):
+                    async_gen = result
+                    try:
+                        value = loop.run_until_complete(async_gen.__anext__())
+                    except StopAsyncIteration as exc:  # pragma: no cover - defensive
+                        raise RuntimeError(
+                            f"Async fixture {fixturedef.argname} did not yield a value"
+                        ) from exc
+
+                    def _finalizer() -> None:
+                        try:
+                            loop.run_until_complete(async_gen.aclose())
+                        except RuntimeError:
+                            pass
+
+                    request.addfinalizer(_finalizer)
+                    return value
+                return result
+            finally:
+                _CURRENT_LOOP.reset(token)
+        return None
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
