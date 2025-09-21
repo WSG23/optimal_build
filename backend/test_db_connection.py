@@ -1,6 +1,11 @@
 """Test database connection and basic operations."""
 
 import asyncio
+
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from app.core.config import settings
 from app.models.rkp import RefSource, RefRule

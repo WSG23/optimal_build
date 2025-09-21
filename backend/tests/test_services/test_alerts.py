@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+pytest.importorskip("sqlalchemy")
+
 from app.services import alerts, ingestion
 from app.utils import metrics
 
