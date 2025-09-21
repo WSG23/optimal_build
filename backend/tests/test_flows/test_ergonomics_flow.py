@@ -1,6 +1,9 @@
 """Tests for the ergonomics ingestion flow."""
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import select
 
 from app.models.rkp import RefErgonomics

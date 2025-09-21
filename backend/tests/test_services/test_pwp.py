@@ -6,6 +6,8 @@ from decimal import Decimal
 
 import pytest
 
+pytest.importorskip("sqlalchemy")
+
 from app.models.rkp import RefCostIndex
 from app.services.pwp import adjust_pro_forma_cost
 from app.utils import metrics

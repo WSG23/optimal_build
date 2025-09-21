@@ -1,0 +1,30 @@
+{
+  "project": "Mock Tower",
+  "layers": [
+    {
+      "name": "Level 01 - Floor Plan",
+      "type": "floor",
+      "units": [
+        {"id": "01-01", "area_m2": 45.0},
+        {"id": "01-02", "area_m2": 42.5}
+      ],
+      "metadata": {"elevation": 0.0, "discipline": "architecture"}
+    },
+    {
+      "name": "Level 02 - Floor Plan",
+      "type": "floor",
+      "units": [
+        {"id": "02-01", "area_m2": 47.3}
+      ],
+      "metadata": {"elevation": 3.2, "discipline": "architecture"}
+    },
+    {
+      "name": "Site Context",
+      "type": "reference",
+      "metadata": {"elements": 5}
+    }
+  ],
+  "floors": [
+    {"name": "Podium", "units": ["P1", "P2"]}
+  ]
+}
