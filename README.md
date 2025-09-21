@@ -28,3 +28,10 @@ Copy `.env.example` to `.env` at the repository root to configure the FastAPI ba
 | `IMPORTS_BUCKET_NAME`, `EXPORTS_BUCKET_NAME` | `cad-imports`, `cad-exports` | Object-storage buckets used for CAD uploads and generated exports. |
 
 These values are consumed by `backend/app/core/config.py`, which falls back to the defaults above for local development. In staging or production deployments, configure the same variables through your orchestrator (Docker Compose, Kubernetes, managed task queue, etc.) so that the backend API, Celery workers, and any RQ workers share consistent queue and storage names.
+
+## ROI metrics
+
+The frontend ROI dashboard queries `/api/v1/roi/{project_id}` for automation
+insights such as time saved, acceptance rates, and iteration counts. The
+underlying heuristics and instrumentation assumptions are documented in
+[`docs/roi_metrics.md`](docs/roi_metrics.md).
