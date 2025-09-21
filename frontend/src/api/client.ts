@@ -63,6 +63,31 @@ export interface PipelineSuggestion {
   relatedRuleIds: number[]
 }
 
+export interface ExportLayerMapConfig {
+  source?: Record<string, string>
+  overlays?: Record<string, string>
+  styles?: Record<string, Record<string, unknown>>
+  defaultSourceLayer?: string
+  defaultOverlayLayer?: string
+}
+
+export interface ExportRequestOptions {
+  format: 'dxf' | 'dwg' | 'ifc' | 'pdf'
+  includeSource?: boolean
+  includeApprovedOverlays?: boolean
+  includePendingOverlays?: boolean
+  includeRejectedOverlays?: boolean
+  layerMap?: ExportLayerMapConfig
+  pendingWatermark?: string
+}
+
+export interface ExportArtifactResponse {
+  blob: Blob
+  filename: string | null
+  renderer: string | null
+  watermark: string | null
+}
+
 interface BuildableResponse {
   zone_code?: string | null
   overlays?: string[]
@@ -162,6 +187,60 @@ export class ApiClient {
       hints: insights.advisoryHints,
       status: hasInsights ? 'ready' : 'processing',
       message: hasInsights ? undefined : 'Awaiting overlay enrichment',
+    }
+  }
+
+  async exportProject(projectId: number, options: ExportRequestOptions): Promise<ExportArtifactResponse> {
+    const body: Record<string, unknown> = {
+      format: options.format,
+      include_source: options.includeSource ?? true,
+      include_approved_overlays: options.includeApprovedOverlays ?? true,
+      include_pending_overlays: options.includePendingOverlays ?? false,
+      include_rejected_overlays: options.includeRejectedOverlays ?? false,
+    }
+
+    if (options.pendingWatermark !== undefined) {
+      body.pending_watermark = options.pendingWatermark
+    }
+
+    if (options.layerMap) {
+      body.layer_map = {
+        source: options.layerMap.source ?? {},
+        overlays: options.layerMap.overlays ?? {},
+        styles: options.layerMap.styles ?? {},
+        default_source_layer: options.layerMap.defaultSourceLayer,
+        default_overlay_layer: options.layerMap.defaultOverlayLayer,
+      }
+    }
+
+    const response = await fetch(this.buildUrl(`api/v1/export/${projectId}`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      const message = await response.text()
+      throw new Error(message || `Export request failed with status ${response.status}`)
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get('Content-Disposition')
+    let filename: string | null = null
+    if (disposition) {
+      const match = disposition.match(/filename="?([^";]+)"?/i)
+      if (match) {
+        filename = match[1]
+      }
+    }
+
+    return {
+      blob,
+      filename,
+      renderer: response.headers.get('X-Export-Renderer'),
+      watermark: response.headers.get('X-Export-Watermark'),
     }
   }
 
