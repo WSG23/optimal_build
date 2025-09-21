@@ -1,6 +1,6 @@
 import CadUploader from './CadUploader'
 import type { ParseStatusUpdate } from '../../api/client'
-import { LocaleProvider } from '../../i18n/LocaleContext'
+import { TranslationProvider } from '../../i18n'
 
 const meta = {
   title: 'CAD/Uploader',
@@ -19,15 +19,15 @@ const sampleStatus: ParseStatusUpdate = {
 }
 
 export const Ready = () => (
-  <LocaleProvider>
+  <TranslationProvider>
     <div style={{ maxWidth: 960 }}>
       <CadUploader onUpload={console.log} status={sampleStatus} zoneCode="RA" />
     </div>
-  </LocaleProvider>
+  </TranslationProvider>
 )
 
 export const Loading = () => (
-  <LocaleProvider>
+  <TranslationProvider>
     <div style={{ maxWidth: 960 }}>
       <CadUploader
         onUpload={console.log}
@@ -36,5 +36,5 @@ export const Loading = () => (
         zoneCode="RCR"
       />
     </div>
-  </LocaleProvider>
+  </TranslationProvider>
 )

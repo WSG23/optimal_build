@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { type CadParseJob, type ParseStatusUpdate, useApiClient } from '../api/client'
 import { AppLayout } from '../App'
-import { useLocale } from '../i18n/LocaleContext'
+import { useTranslation } from '../i18n'
 import CadUploader from '../modules/cad/CadUploader'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
 
 export function CadUploadPage() {
   const apiClient = useApiClient()
-  const { strings } = useLocale()
+  const { t } = useTranslation()
   const [job, setJob] = useState<CadParseJob | null>(null)
   const [status, setStatus] = useState<ParseStatusUpdate | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -52,20 +52,20 @@ export function CadUploadPage() {
           intervalMs: 2500,
         })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Upload failed')
+        setError(err instanceof Error ? err.message : t('common.errors.uploadFailed'))
       } finally {
         setIsUploading(false)
       }
     },
-    [apiClient, zoneCode],
+    [apiClient, t, zoneCode],
   )
 
   return (
-    <AppLayout title={strings.uploader.title} subtitle={strings.uploader.subtitle}>
+    <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
       <div className="cad-upload">
         <div className="cad-upload__controls">
           <label className="cad-upload__label">
-            <span>{strings.uploader.zone}</span>
+            <span>{t('uploader.zone')}</span>
             <select value={zoneCode} onChange={(event) => setZoneCode(event.target.value)}>
               <option value="RA">RA</option>
               <option value="RCR">RCR</option>

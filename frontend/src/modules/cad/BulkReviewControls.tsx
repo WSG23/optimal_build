@@ -1,4 +1,4 @@
-import { useLocale } from '../../i18n/LocaleContext'
+import { useTranslation } from '../../i18n'
 
 interface BulkReviewControlsProps {
   pendingCount: number
@@ -13,21 +13,23 @@ export function BulkReviewControls({
   onRejectAll,
   disabled = false,
 }: BulkReviewControlsProps) {
-  const { strings } = useLocale()
+  const { t } = useTranslation()
 
   return (
     <section className="cad-panel">
-      <h3>{strings.controls.pending}</h3>
-      <p>{pendingCount} {strings.controls.pending.toLowerCase()}</p>
+      <h3>{t('controls.pending')}</h3>
+      <p>
+        {pendingCount} {t('controls.pending')}
+      </p>
       <div className="cad-bulk-controls">
         <button type="button" onClick={onApproveAll} disabled={disabled || pendingCount === 0}>
-          {strings.controls.approveAll}
+          {t('controls.approveAll')}
         </button>
         <button type="button" onClick={onRejectAll} disabled={disabled || pendingCount === 0}>
-          {strings.controls.rejectAll}
+          {t('controls.rejectAll')}
         </button>
       </div>
-      {disabled && <p className="cad-panel__hint">{strings.controls.locked}</p>}
+      {disabled && <p className="cad-panel__hint">{t('controls.locked')}</p>}
     </section>
   )
 }

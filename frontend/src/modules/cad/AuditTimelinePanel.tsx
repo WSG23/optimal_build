@@ -1,5 +1,5 @@
 import type { AuditEvent } from '../../api/client'
-import { useLocale } from '../../i18n/LocaleContext'
+import { useTranslation } from '../../i18n'
 
 interface AuditTimelinePanelProps {
   events: AuditEvent[]
@@ -7,13 +7,14 @@ interface AuditTimelinePanelProps {
 }
 
 export function AuditTimelinePanel({ events, loading = false }: AuditTimelinePanelProps) {
-  const { strings } = useLocale()
+  const { t } = useTranslation()
+  const fallbackDash = t('common.fallback.dash')
 
   return (
     <section className="cad-panel">
-      <h3>{strings.panels.auditTitle}</h3>
-      {loading && <p>Loading…</p>}
-      {!loading && events.length === 0 && <p>—</p>}
+      <h3>{t('panels.auditTitle')}</h3>
+      {loading && <p>{t('common.loading')}</p>}
+      {!loading && events.length === 0 && <p>{fallbackDash}</p>}
       {!loading && events.length > 0 && (
         <ol className="cad-timeline">
           {events.map((event) => (

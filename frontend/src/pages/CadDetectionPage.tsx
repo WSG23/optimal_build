@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AuditEvent, OverlayInsights } from '../api/client'
 import { AppLayout } from '../App'
 import { useApiClient } from '../api/client'
-import { useLocale } from '../i18n/LocaleContext'
+import { useTranslation } from '../i18n'
 import AuditTimelinePanel from '../modules/cad/AuditTimelinePanel'
 import BulkReviewControls from '../modules/cad/BulkReviewControls'
 import CadDetectionPreview from '../modules/cad/CadDetectionPreview'
@@ -23,7 +23,7 @@ const INITIAL_UNITS: DetectedUnit[] = [
 
 export function CadDetectionPage() {
   const apiClient = useApiClient()
-  const { strings } = useLocale()
+  const { t } = useTranslation()
   const [zoneCode, setZoneCode] = useState('RA')
   const [units, setUnits] = useState<DetectedUnit[]>(INITIAL_UNITS)
   const [activeLayers, setActiveLayers] = useState<DetectionStatus[]>([
@@ -83,7 +83,10 @@ export function CadDetectionPage() {
     }
   }, [apiClient, refreshOverlays, zoneCode])
 
-  const pendingCount = useMemo(() => units.filter((unit) => unit.status === 'pending').length, [units])
+  const pendingCount = useMemo(
+    () => units.filter((unit) => unit.status === 'pending').length,
+    [units],
+  )
 
   const visibleUnits = useMemo(
     () => units.filter((unit) => activeLayers.includes(unit.status)),
@@ -117,10 +120,10 @@ export function CadDetectionPage() {
   }, [])
 
   return (
-    <AppLayout title={strings.detection.title} subtitle={strings.detection.subtitle}>
+    <AppLayout title={t('detection.title')} subtitle={t('detection.subtitle')}>
       <div className="cad-detection__toolbar">
         <label>
-          <span>{strings.uploader.zone}</span>
+          <span>{t('uploader.zone')}</span>
           <select value={zoneCode} onChange={(event) => setZoneCode(event.target.value)} disabled={locked}>
             <option value="RA">RA</option>
             <option value="RCR">RCR</option>

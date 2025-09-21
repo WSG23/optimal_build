@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { OverlayInsights, PipelineSuggestion } from '../api/client'
 import { AppLayout } from '../App'
 import { useApiClient } from '../api/client'
-import { useLocale } from '../i18n/LocaleContext'
+import { useTranslation } from '../i18n'
 import useRules from '../hooks/useRules'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import RoiSummary from '../modules/cad/RoiSummary'
@@ -13,7 +13,7 @@ const DEFAULT_ZONE = 'RA'
 
 export function CadPipelinesPage() {
   const apiClient = useApiClient()
-  const { strings } = useLocale()
+  const { t } = useTranslation()
   const [zoneCode, setZoneCode] = useState(DEFAULT_ZONE)
   const [insights, setInsights] = useState<OverlayInsights | null>(null)
   const [suggestions, setSuggestions] = useState<PipelineSuggestion[]>([])
@@ -40,7 +40,7 @@ export function CadPipelinesPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load suggestions')
+          setError(err instanceof Error ? err.message : t('common.errors.pipelineLoad'))
           setSuggestions([])
         }
       } finally {
@@ -57,7 +57,7 @@ export function CadPipelinesPage() {
     return () => {
       cancelled = true
     }
-  }, [apiClient, zoneCode])
+  }, [apiClient, t, zoneCode])
 
   const roiMetrics = useMemo<RoiMetrics>(() => {
     if (suggestions.length === 0) {
@@ -79,10 +79,10 @@ export function CadPipelinesPage() {
   }, [suggestions])
 
   return (
-    <AppLayout title={strings.pipelines.title} subtitle={strings.pipelines.subtitle}>
+    <AppLayout title={t('pipelines.title')} subtitle={t('pipelines.subtitle')}>
       <div className="cad-pipelines__toolbar">
         <label>
-          <span>{strings.uploader.zone}</span>
+          <span>{t('uploader.zone')}</span>
           <select value={zoneCode} onChange={(event) => setZoneCode(event.target.value)}>
             <option value="RA">RA</option>
             <option value="RCR">RCR</option>
@@ -91,7 +91,7 @@ export function CadPipelinesPage() {
         </label>
         {insights && (
           <p className="cad-pipelines__context">
-            {strings.detection.overlays}: {insights.overlays.join(', ') || '—'}
+            {t('detection.overlays')}: {insights.overlays.join(', ') || t('common.fallback.dash')}
           </p>
         )}
       </div>
@@ -99,9 +99,9 @@ export function CadPipelinesPage() {
       {error && <p className="cad-pipelines__error">{error}</p>}
 
       <section className="cad-pipelines">
-        <h2>{strings.pipelines.suggestionHeading}</h2>
-        {loading && <p>Loading…</p>}
-        {!loading && suggestions.length === 0 && <p>{strings.panels.rulePackEmpty}</p>}
+        <h2>{t('pipelines.suggestionHeading')}</h2>
+        {loading && <p>{t('common.loading')}</p>}
+        {!loading && suggestions.length === 0 && <p>{t('panels.rulePackEmpty')}</p>}
         {!loading && suggestions.length > 0 && (
           <ul>
             {suggestions.map((suggestion) => (
@@ -110,19 +110,19 @@ export function CadPipelinesPage() {
                 <p>{suggestion.description}</p>
                 <dl>
                   <div>
-                    <dt>{strings.pipelines.pipelineFocus}</dt>
+                    <dt>{t('pipelines.pipelineFocus')}</dt>
                     <dd>{suggestion.focus}</dd>
                   </div>
                   <div>
-                    <dt>{strings.pipelines.automationScore}</dt>
+                    <dt>{t('pipelines.automationScore')}</dt>
                     <dd>{Math.round(suggestion.automationScore * 100)}%</dd>
                   </div>
                   <div>
-                    <dt>{strings.pipelines.reviewHours}</dt>
+                    <dt>{t('pipelines.reviewHours')}</dt>
                     <dd>{suggestion.reviewHoursSaved}h</dd>
                   </div>
                   <div>
-                    <dt>{strings.pipelines.savings}</dt>
+                    <dt>{t('pipelines.savings')}</dt>
                     <dd>{suggestion.estimatedSavingsPercent}%</dd>
                   </div>
                 </dl>

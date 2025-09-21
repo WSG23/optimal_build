@@ -1,5 +1,5 @@
 import CadDetectionPreview from './CadDetectionPreview'
-import { LocaleProvider } from '../../i18n/LocaleContext'
+import { TranslationProvider } from '../../i18n'
 import type { DetectedUnit } from './types'
 
 const meta = {
@@ -17,18 +17,18 @@ const units: DetectedUnit[] = [
 ]
 
 export const Default = () => (
-  <LocaleProvider>
+  <TranslationProvider>
     <CadDetectionPreview
       units={units}
       overlays={['fire_access', 'community_facility']}
       hints={['Coordinate with SCDF on staging']}
       zoneCode="RA"
     />
-  </LocaleProvider>
+  </TranslationProvider>
 )
 
 export const Locked = () => (
-  <LocaleProvider>
+  <TranslationProvider>
     <CadDetectionPreview
       units={units.filter((unit) => unit.status !== 'rejected')}
       overlays={[]}
@@ -36,5 +36,5 @@ export const Locked = () => (
       zoneCode="CBD"
       locked
     />
-  </LocaleProvider>
+  </TranslationProvider>
 )

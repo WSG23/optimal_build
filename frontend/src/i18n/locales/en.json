@@ -1,0 +1,232 @@
+{
+  "common": {
+    "language": {
+      "label": "Language",
+      "options": {
+        "en": "English",
+        "ja": "日本語"
+      }
+    },
+    "fallback": {
+      "dash": "—"
+    },
+    "loading": "Loading…",
+    "errors": {
+      "uploadFailed": "Upload failed",
+      "pipelineLoad": "Unable to load suggestions"
+    }
+  },
+  "app": {
+    "title": "Optimal Build Studio",
+    "tagline": "Accelerate compliance and design coordination across your CAD workflows.",
+    "helper": "Switch language"
+  },
+  "nav": {
+    "home": "Overview",
+    "upload": "Upload CAD",
+    "detection": "Floor & unit detection",
+    "pipelines": "Default pipelines",
+    "feasibility": "Feasibility wizard"
+  },
+  "home": {
+    "cards": {
+      "feasibility": {
+        "description": "Kick off planning studies with project context, rule packs and buildability checks."
+      }
+    }
+  },
+  "uploader": {
+    "title": "Upload building layouts",
+    "subtitle": "Drop DXF/DWG files to launch the parse pipeline and monitor overlays in real-time.",
+    "dropHint": "Drag & drop or paste files here",
+    "browseLabel": "Browse files",
+    "latestStatus": "Latest status",
+    "parsing": "Processing CAD layers…",
+    "ready": "Parse completed",
+    "error": "Something went wrong while parsing the CAD file.",
+    "overlays": "Detected overlays",
+    "hints": "Authority hints",
+    "zone": "Zone"
+  },
+  "detection": {
+    "title": "Floor and unit detection preview",
+    "subtitle": "Review detected spaces, approve batches and understand overlay impact.",
+    "overlays": "Overlays in effect",
+    "advisory": "Authority advisory hints",
+    "tableHeading": "Detected units",
+    "unit": "Unit",
+    "floor": "Floor",
+    "area": "Area (sqm)",
+    "status": "Status",
+    "empty": "No units match the current filters.",
+    "locked": "Zone is locked. Unlock to update review status.",
+    "exportCta": "Export review pack",
+    "summary": {
+      "floors": "{{count}} floors",
+      "units": "{{count}} units",
+      "zone": "Zone {{code}}"
+    }
+  },
+  "pipelines": {
+    "title": "Default pipeline suggestions",
+    "subtitle": "Leverage rule packs tailored to the detected overlays and topics.",
+    "suggestionHeading": "Suggested automation pipelines",
+    "pipelineFocus": "Focus",
+    "automationScore": "Automation score",
+    "reviewHours": "Manual review hours saved",
+    "savings": "Estimated compliance savings",
+    "payback": "Payback",
+    "weeks": "{{count}} weeks"
+  },
+  "controls": {
+    "source": "Source",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "showLayer": "Show layer",
+    "hideLayer": "Hide layer",
+    "approveAll": "Approve all pending",
+    "rejectAll": "Reject all pending",
+    "lockZone": "Lock zone",
+    "unlockZone": "Unlock zone",
+    "locked": "Zone locked"
+  },
+  "panels": {
+    "rulePackTitle": "Rule pack explanation",
+    "rulePackEmpty": "Rules will appear after the first overlays are processed.",
+    "auditTitle": "Audit timeline",
+    "exportTitle": "Export options",
+    "exportSubtitle": "Deliver CAD overlays and compliance notes in preferred formats.",
+    "roiTitle": "ROI snapshot",
+    "roiSubtitle": "Quantify effort saved through automation."
+  },
+  "wizard": {
+    "title": "Feasibility assessment",
+    "description": "Evaluate plot potential, identify binding regulations and generate next steps for compliance.",
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    },
+    "steps": {
+      "projectDetails": "Project details",
+      "complianceScope": "Compliance scope",
+      "buildabilityResults": "Buildability results"
+    },
+    "step1": {
+      "heading": "Step 1 · New project details",
+      "description": "Capture the essential site information that powers compliance lookups. This data will be used to determine zoning, plot ratio and envelope controls before fetching applicable rules.",
+      "fields": {
+        "name": {
+          "label": "Project name",
+          "placeholder": "e.g. Riverfront Residences"
+        },
+        "siteAddress": {
+          "label": "Site address",
+          "placeholder": "e.g. 123 Serangoon Ave 3"
+        },
+        "siteAreaSqm": {
+          "label": "Site area (sqm)",
+          "placeholder": "e.g. 4250"
+        },
+        "landUse": {
+          "label": "Land use",
+          "placeholder": "Select a land use"
+        },
+        "targetGrossFloorAreaSqm": {
+          "label": "Target GFA (sqm)",
+          "placeholder": "Optional"
+        },
+        "buildingHeightMeters": {
+          "label": "Target height (m)",
+          "placeholder": "Optional"
+        }
+      },
+      "landUseOptions": {
+        "residential": "Residential",
+        "commercial": "Commercial",
+        "mixed_use": "Mixed Use",
+        "industrial": "Industrial",
+        "institutional": "Institutional"
+      },
+      "errors": {
+        "nameRequired": "Project name is required",
+        "siteAddressRequired": "Site address is required",
+        "siteAreaRequired": "Site area is required",
+        "siteAreaInvalid": "Site area must be greater than zero",
+        "landUseRequired": "Select a land use to continue",
+        "targetGfaInvalid": "Target GFA must be greater than zero",
+        "heightInvalid": "Height must be greater than zero"
+      },
+      "actions": {
+        "saving": "Saving…",
+        "continue": "Continue to rules"
+      }
+    },
+    "step2": {
+      "heading": "Step 2 · Review suggested rules",
+      "description": "We analysed the project details and surfaced the most relevant codes across agencies. You can adjust the scope before running the compliance engine.",
+      "panel": {
+        "title": "Project summary",
+        "subtitleFallback": "Provide a quick confirmation before running the checks.",
+        "metrics": {
+          "siteArea": "Site area",
+          "landUse": "Land use",
+          "targetGfa": "Target GFA",
+          "targetHeight": "Target height"
+        },
+        "units": {
+          "sqm": "m²",
+          "meters": "m"
+        }
+      },
+      "loading": "Loading recommended rules…",
+      "empty": "No rules were found for this project configuration.",
+      "requirement": "Requirement: {{parameterKey}} {{operator}} {{value}}{{unit}}",
+      "actions": {
+        "back": "Back",
+        "evaluate": "Run buildability checks",
+        "evaluating": "Running assessment…"
+      }
+    },
+    "step3": {
+      "heading": "Step 3 · Buildability outlook",
+      "intro": {
+        "loading": "Finalising the analysis…",
+        "ready": "This snapshot summarises the achievable massing and highlights rules that require attention."
+      },
+      "panel": {
+        "title": "Envelope summary",
+        "metrics": {
+          "maxGfa": "Max permissible GFA",
+          "estimatedGfa": "Estimated achievable GFA",
+          "estimatedUnits": "Estimated units",
+          "siteCoverage": "Site coverage"
+        }
+      },
+      "siteEfficiency": "{{percentage}}% of permissible GFA utilised",
+      "allClear": "All tracked rules passed – consider expanding the scope to include more topics.",
+      "table": {
+        "rule": "Rule",
+        "agency": "Agency",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "status": {
+        "pass": "Pass",
+        "fail": "Fail",
+        "warning": "Review"
+      },
+      "recommendations": {
+        "title": "Next steps",
+        "subtitle": "Prioritised guidance to resolve outstanding compliance gaps."
+      },
+      "actions": {
+        "back": "Back to rules",
+        "restart": "Start a new assessment"
+      },
+      "placeholders": {
+        "preparingAssessment": "Preparing assessment…",
+        "pendingProjectName": "pending"
+      }
+    }
+  }
+}

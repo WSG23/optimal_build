@@ -1,4 +1,4 @@
-import { useLocale } from '../../i18n/LocaleContext'
+import { useTranslation } from '../../i18n'
 
 interface ZoneLockControlsProps {
   locked: boolean
@@ -6,16 +6,16 @@ interface ZoneLockControlsProps {
 }
 
 export function ZoneLockControls({ locked, onToggle }: ZoneLockControlsProps) {
-  const { strings } = useLocale()
-  const label = locked ? strings.controls.unlockZone : strings.controls.lockZone
+  const { t } = useTranslation()
+  const label = locked ? t('controls.unlockZone') : t('controls.lockZone')
 
   return (
     <section className="cad-panel">
-      <h3>{strings.controls.locked}</h3>
+      <h3>{t('controls.locked')}</h3>
       <button type="button" onClick={() => onToggle(!locked)}>
         {label}
       </button>
-      {locked && <p className="cad-panel__hint">{strings.detection.locked}</p>}
+      {locked && <p className="cad-panel__hint">{t('detection.locked')}</p>}
     </section>
   )
 }
