@@ -9,9 +9,32 @@ sqlalchemy[asyncio]==2.0.23
 asyncpg==0.29.0
 alembic==1.13.0
 
+# Workflows and orchestration
+prefect==2.14.21; python_version < "3.12"
+
+# Object storage
+boto3==1.34.34; python_version < "3.12"
+minio==7.2.2; python_version < "3.12"
+
 # GIS and spatial data (we'll add PostGIS later)
 # geoalchemy2==0.14.2
 # shapely==2.0.2
+
+# Document parsing and OCR
+PyMuPDF==1.23.8
+pdfminer.six==20221105
+pytesseract==0.3.10
+pillow==10.1.0
+readability-lxml==0.8.1
+beautifulsoup4==4.12.2
+
+# Natural language and units
+spacy==3.7.2
+pint==0.23
+
+# Logging and observability
+structlog==23.2.0
+prometheus_client==0.19.0
 
 # Authentication
 python-jose[cryptography]==3.3.0

@@ -1,0 +1,69 @@
+{
+  "parcel": {
+    "jurisdiction": "SG",
+    "parcel_ref": "MK21-12345A",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [103.8515, 1.2840],
+          [103.8524, 1.2840],
+          [103.8524, 1.2843],
+          [103.8515, 1.2843],
+          [103.8515, 1.2840]
+        ]
+      ]
+    },
+    "centroid": [103.85195, 1.28415],
+    "area_m2": 4500.0,
+    "zoning_layers": [
+      {
+        "zone_code": "CBD",
+        "layer_name": "MasterPlan2025",
+        "jurisdiction": "SG",
+        "effective_date": "2024-01-01T00:00:00",
+        "attributes": {
+          "plot_ratio": 12.0,
+          "max_site_coverage": 0.7,
+          "parcel_refs": ["MK21-12345A"],
+          "max_height_m": 160
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [103.8514, 1.2839],
+              [103.8525, 1.2839],
+              [103.8525, 1.2844],
+              [103.8514, 1.2844],
+              [103.8514, 1.2839]
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "addresses": [
+    {
+      "address": "1 Marina Boulevard, Singapore",
+      "lat": 1.28415,
+      "lon": 103.85195,
+      "confidence": 0.95,
+      "parcel_ref": "MK21-12345A"
+    },
+    {
+      "address": "9 North Buona Vista Drive, Singapore",
+      "lat": 1.29923,
+      "lon": 103.78743,
+      "confidence": 0.92,
+      "parcel_ref": "MK21-12345A"
+    },
+    {
+      "address": "1 Kim Seng Promenade, Singapore",
+      "lat": 1.2935,
+      "lon": 103.8358,
+      "confidence": 0.9,
+      "parcel_ref": "MK21-12345A"
+    }
+  ]
+}

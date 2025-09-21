@@ -4,13 +4,14 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import get_session, engine
+from app.api.v1 import api_router
 from app.models.rkp import RefRule
 
 # Setup logging
@@ -48,6 +49,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
