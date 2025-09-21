@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 import sys
 
 import pytest
+from typing import Any
 
 try:  # pragma: no cover - exercised indirectly via tests
     import pytest_asyncio
@@ -109,8 +110,177 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
             finally:
                 _CURRENT_LOOP.reset(token)
         return None
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+try:  # pragma: no cover - httpx may be unavailable in offline test environments
+    from httpx import AsyncClient  # type: ignore  # noqa: F401
+except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
+    import json
+    from dataclasses import dataclass
+    from typing import Any, Dict, Mapping, Optional
+    from urllib.parse import urlencode, urljoin, urlparse, urlunparse
+
+    @dataclass
+    class _StubResponse:
+        status_code: int
+        headers: list[tuple[str, str]]
+        body: bytes
+
+        def json(self) -> Any:
+            if not self.body:
+                return None
+            return json.loads(self.body.decode("utf-8"))
+
+        def text(self) -> str:
+            return self.body.decode("utf-8")
+
+    class AsyncClient:  # type: ignore[override]
+        def __init__(
+            self,
+            *,
+            app: Any,
+            base_url: str = "http://testserver",
+        ) -> None:
+            if app is None:
+                raise RuntimeError("AsyncClient stub requires an ASGI application.")
+            parsed = urlparse(base_url.rstrip("/") or "http://testserver")
+            self._app = app
+            self._scheme = parsed.scheme or "http"
+            self._netloc = parsed.netloc or "testserver"
+            self._base_url = f"{self._scheme}://{self._netloc}"
+            self._closed = False
+
+        async def __aenter__(self) -> "AsyncClient":
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb) -> None:
+            await self.aclose()
+
+        async def aclose(self) -> None:
+            self._closed = True
+
+        async def get(
+            self, url: str, params: Optional[Mapping[str, Any]] = None
+        ) -> _StubResponse:
+            return await self._request("GET", url, params=params)
+
+        async def post(
+            self,
+            url: str,
+            *,
+            json: Any | None = None,
+            params: Optional[Mapping[str, Any]] = None,
+        ) -> _StubResponse:
+            payload = b""
+            headers: Dict[str, str] = {}
+            if json is not None:
+                payload = json_dumps(json)
+                headers["content-type"] = "application/json"
+            return await self._request(
+                "POST",
+                url,
+                params=params,
+                body=payload,
+                headers=headers,
+            )
+
+        async def _request(
+            self,
+            method: str,
+            url: str,
+            *,
+            params: Optional[Mapping[str, Any]] = None,
+            body: bytes = b"",
+            headers: Optional[Mapping[str, str]] = None,
+        ) -> _StubResponse:
+            if self._closed:
+                raise RuntimeError("Client session is closed")
+
+            full_url = self._merge_url(url, params)
+            parsed = urlparse(full_url)
+
+            header_items = [(b"host", self._netloc.encode("latin-1"))]
+            if headers:
+                for key, value in headers.items():
+                    header_items.append((key.encode("latin-1"), str(value).encode("latin-1")))
+
+            scope = {
+                "type": "http",
+                "asgi": {"version": "3.0"},
+                "http_version": "1.1",
+                "method": method.upper(),
+                "scheme": parsed.scheme or self._scheme,
+                "path": parsed.path or "/",
+                "raw_path": (parsed.path or "/").encode("latin-1"),
+                "query_string": (parsed.query or "").encode("latin-1"),
+                "headers": header_items,
+            }
+
+            receive_called = False
+
+            async def receive() -> Dict[str, Any]:
+                nonlocal receive_called
+                if not receive_called:
+                    receive_called = True
+                    return {"type": "http.request", "body": body, "more_body": False}
+                await asyncio.sleep(0)
+                return {"type": "http.disconnect"}
+
+            status_code = 500
+            response_headers: list[tuple[bytes, bytes]] = []
+            body_parts: list[bytes] = []
+
+            async def send(message: Mapping[str, Any]) -> None:
+                nonlocal status_code, response_headers
+                message_type = message.get("type")
+                if message_type == "http.response.start":
+                    status_code = int(message.get("status", 500))
+                    response_headers = list(message.get("headers") or [])
+                elif message_type == "http.response.body":
+                    chunk = message.get("body", b"")
+                    if chunk:
+                        body_parts.append(chunk)
+
+            await self._app(scope, receive, send)
+
+            decoded_headers = [
+                (key.decode("latin-1"), value.decode("latin-1"))
+                for key, value in response_headers
+            ]
+            return _StubResponse(status_code, decoded_headers, b"".join(body_parts))
+
+        def _merge_url(
+            self, url: str, params: Optional[Mapping[str, Any]] = None
+        ) -> str:
+            if url.startswith("http://") or url.startswith("https://"):
+                base = url
+            else:
+                base = urljoin(self._base_url + "/", url.lstrip("/"))
+            parsed = urlparse(base)
+            query_parts = [parsed.query]
+            if params:
+                query_parts.append(urlencode(params, doseq=True))
+            merged_query = "&".join(filter(None, query_parts))
+            return urlunparse(
+                (
+                    parsed.scheme,
+                    parsed.netloc,
+                    parsed.path,
+                    parsed.params,
+                    merged_query,
+                    parsed.fragment,
+                )
+            )
+
+    def json_dumps(payload: Any) -> bytes:
+        return json.dumps(payload, separators=(",", ":")).encode("utf-8")
+try:  # pragma: no cover - SQLAlchemy may be unavailable in offline test environments
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+    _SQLALCHEMY_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover - degrade gracefully without SQLAlchemy
+    AsyncSession = Any  # type: ignore[assignment]
+    async_sessionmaker = None  # type: ignore[assignment]
+    create_async_engine = None  # type: ignore[assignment]
+    _SQLALCHEMY_AVAILABLE = False
 
 try:  # pragma: no cover - structlog is optional in the test environment
     import structlog  # type: ignore  # noqa: F401  (imported for side effects)
@@ -240,10 +410,26 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
     sys.modules.setdefault("structlog.processors", processors_module)
     sys.modules.setdefault("structlog.stdlib", stdlib_module)
 
-from app.core.database import get_session
-from app.main import app
-from app.models.base import BaseModel
 from app.utils import metrics
+
+if _SQLALCHEMY_AVAILABLE:
+    from app.core.database import get_session
+    from app.main import app
+    from app.models.base import BaseModel
+else:  # pragma: no cover - lightweight ASGI app for offline testing
+    try:
+        from fastapi import FastAPI
+    except ModuleNotFoundError:  # pragma: no cover - FastAPI unavailable
+        class _FallbackApp:
+            async def __call__(self, scope, receive, send) -> None:  # pragma: no cover
+                raise RuntimeError("FastAPI is not installed in this environment")
+
+        app = _FallbackApp()
+    else:
+        from app.api.v1.rulesets import router as rulesets_router
+
+        app = FastAPI()
+        app.include_router(rulesets_router, prefix="/api/v1")
 
 
 @pytest.fixture(scope="session")
@@ -253,16 +439,24 @@ def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
     loop.close()
 
 
-@pytest_asyncio.fixture
-async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
-    async with engine.begin() as conn:
-        await conn.run_sync(BaseModel.metadata.create_all)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    try:
-        yield factory
-    finally:
-        await engine.dispose()
+if _SQLALCHEMY_AVAILABLE:
+
+    @pytest_asyncio.fixture
+    async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+        async with engine.begin() as conn:
+            await conn.run_sync(BaseModel.metadata.create_all)
+        factory = async_sessionmaker(engine, expire_on_commit=False)
+        try:
+            yield factory
+        finally:
+            await engine.dispose()
+
+else:  # pragma: no cover - fixtures skipped when SQLAlchemy unavailable
+
+    @pytest.fixture
+    def async_session_factory() -> AsyncGenerator[None, None]:
+        raise pytest.SkipTest("SQLAlchemy is not available in the test environment")
 
 
 @pytest.fixture(autouse=True)
@@ -272,38 +466,58 @@ def reset_metrics() -> Iterator[None]:
     metrics.reset_metrics()
 
 
-@pytest_asyncio.fixture
-async def session(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_factory() as session:
-        try:
-            yield session
-        finally:
-            await session.rollback()
-            for table in reversed(BaseModel.metadata.sorted_tables):
-                await session.execute(table.delete())
-            await session.commit()
+if _SQLALCHEMY_AVAILABLE:
 
-
-@pytest.fixture
-def session_factory(async_session_factory: async_sessionmaker[AsyncSession]) -> Callable[[], AsyncGenerator[AsyncSession, None]]:
-    @asynccontextmanager
-    async def _context() -> AsyncGenerator[AsyncSession, None]:
+    @pytest_asyncio.fixture
+    async def session(
+        async_session_factory: async_sessionmaker[AsyncSession],
+    ) -> AsyncGenerator[AsyncSession, None]:
         async with async_session_factory() as session:
-            yield session
+            try:
+                yield session
+            finally:
+                await session.rollback()
+                for table in reversed(BaseModel.metadata.sorted_tables):
+                    await session.execute(table.delete())
+                await session.commit()
 
-    def _factory() -> AsyncGenerator[AsyncSession, None]:
-        return _context()
+    @pytest.fixture
+    def session_factory(
+        async_session_factory: async_sessionmaker[AsyncSession],
+    ) -> Callable[[], AsyncGenerator[AsyncSession, None]]:
+        @asynccontextmanager
+        async def _context() -> AsyncGenerator[AsyncSession, None]:
+            async with async_session_factory() as session:
+                yield session
 
-    return _factory
+        def _factory() -> AsyncGenerator[AsyncSession, None]:
+            return _context()
 
+        return _factory
 
-@pytest_asyncio.fixture
-async def client(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncGenerator[AsyncClient, None]:
-    async def _get_session() -> AsyncGenerator[AsyncSession, None]:
-        async with async_session_factory() as session:
-            yield session
+    @pytest_asyncio.fixture
+    async def client(
+        async_session_factory: async_sessionmaker[AsyncSession],
+    ) -> AsyncGenerator[AsyncClient, None]:
+        async def _get_session() -> AsyncGenerator[AsyncSession, None]:
+            async with async_session_factory() as session:
+                yield session
 
-    app.dependency_overrides[get_session] = _get_session
-    async with AsyncClient(app=app, base_url="http://testserver") as http_client:
-        yield http_client
-    app.dependency_overrides.pop(get_session, None)
+        app.dependency_overrides[get_session] = _get_session
+        async with AsyncClient(app=app, base_url="http://testserver") as http_client:
+            yield http_client
+        app.dependency_overrides.pop(get_session, None)
+
+else:  # pragma: no cover - fixtures skipped when SQLAlchemy unavailable
+
+    @pytest.fixture
+    def session() -> AsyncGenerator[None, None]:
+        raise pytest.SkipTest("SQLAlchemy is not available in the test environment")
+
+    @pytest.fixture
+    def session_factory() -> Callable[[], AsyncGenerator[None, None]]:
+        raise pytest.SkipTest("SQLAlchemy is not available in the test environment")
+
+    @pytest_asyncio.fixture
+    async def client() -> AsyncGenerator[AsyncClient, None]:
+        raise pytest.SkipTest("SQLAlchemy is not available in the test environment")
