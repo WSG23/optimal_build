@@ -4,20 +4,23 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Mapping
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
+from app.services.storage import get_storage_service
+from app.utils.logging import get_logger
 from jobs import job_queue
 from jobs.parse_cad import parse_import_job
-from app.services.storage import get_storage_service
+from jobs.raster_vector import vectorize_floorplan
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 def _extract_unit_id(unit: Any) -> str | None:
@@ -121,9 +124,50 @@ def _analyse_payload(data: bytes) -> tuple[List[Dict[str, Any]], List[str], List
     return floors, ordered_units, layer_metadata
 
 
+def _is_vectorizable(filename: str | None, content_type: str | None) -> bool:
+    """Return ``True`` if a file is eligible for raster vector processing."""
+
+    name = (filename or "").lower()
+    media_type = (content_type or "").lower()
+    if name.endswith(".pdf") or "pdf" in media_type:
+        return True
+    if name.endswith(".svg") or "svg" in media_type:
+        return True
+    return False
+
+
+def _summarise_vector_payload(
+    payload: Mapping[str, Any],
+    *,
+    infer_walls: bool,
+    requested: bool,
+) -> Dict[str, Any]:
+    """Generate a compact summary describing extracted vector geometry."""
+
+    options_raw = payload.get("options")
+    bitmap_flag = False
+    infer_flag = infer_walls
+    if isinstance(options_raw, Mapping):
+        bitmap_flag = bool(options_raw.get("bitmap_walls"))
+        infer_flag = bool(options_raw.get("infer_walls", infer_walls))
+    return {
+        "paths": len(payload.get("paths") or []),
+        "walls": len(payload.get("walls") or []),
+        "source": payload.get("source"),
+        "bounds": payload.get("bounds"),
+        "options": {
+            "requested": requested,
+            "infer_walls": infer_flag,
+            "bitmap_walls": bitmap_flag,
+        },
+    }
+
+
 @router.post("/import", response_model=ImportResult, status_code=status.HTTP_201_CREATED)
 async def upload_import(
     file: UploadFile = File(...),
+    enable_raster_processing: bool = Form(True),
+    infer_walls: bool = Form(False),
     session: AsyncSession = Depends(get_session),
 ) -> ImportResult:
     """Persist an uploaded CAD/BIM payload and return detection metadata."""
@@ -147,14 +191,55 @@ async def upload_import(
         detected_units=detected_units,
     )
 
+    vector_payload: Dict[str, Any] | None = None
+    vector_summary: Dict[str, Any] | None = None
+    if enable_raster_processing and _is_vectorizable(record.filename, record.content_type):
+        try:
+            dispatch = await job_queue.enqueue(
+                vectorize_floorplan,
+                payload=raw_payload,
+                content_type=record.content_type or "",
+                filename=record.filename,
+                infer_walls=infer_walls,
+            )
+            if dispatch.result and isinstance(dispatch.result, Mapping):
+                vector_payload = dict(dispatch.result)
+            elif dispatch.status != "completed":
+                inline_result = await vectorize_floorplan(
+                    raw_payload,
+                    content_type=record.content_type or "",
+                    filename=record.filename,
+                    infer_walls=infer_walls,
+                )
+                if isinstance(inline_result, Mapping):
+                    vector_payload = dict(inline_result)
+        except Exception as exc:  # pragma: no cover - defensive logging surface
+            logger.warning(
+                "vectorization_failed",
+                import_id=import_id,
+                filename=record.filename,
+                error=str(exc),
+            )
+
+        if vector_payload is not None:
+            vector_summary = _summarise_vector_payload(
+                vector_payload,
+                infer_walls=infer_walls,
+                requested=True,
+            )
+
     storage_service = get_storage_service()
     storage_result = await storage_service.store_import_file(
         import_id=import_id,
         filename=record.filename,
         payload=raw_payload,
         layer_metadata=stored_layer_metadata,
+        vector_payload=vector_payload,
     )
     record.storage_path = storage_result.uri
+    record.vector_storage_path = storage_result.vector_data_uri
+    if vector_summary is not None:
+        record.vector_summary = vector_summary
 
     session.add(record)
     await session.commit()
@@ -166,10 +251,12 @@ async def upload_import(
         content_type=record.content_type,
         size_bytes=record.size_bytes,
         storage_path=record.storage_path,
+        vector_storage_path=record.vector_storage_path,
         uploaded_at=record.uploaded_at,
         layer_metadata=record.layer_metadata or [],
         detected_floors=[DetectedFloor(**floor) for floor in record.detected_floors or []],
         detected_units=record.detected_units or [],
+        vector_summary=record.vector_summary or vector_summary,
         parse_status=record.parse_status,
     )
 

@@ -7,7 +7,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, Mapping, Optional
 
 
 @dataclass(slots=True)
@@ -19,6 +19,7 @@ class StorageResult:
     uri: str
     bytes_written: int
     layer_metadata_uri: Optional[str]
+    vector_data_uri: Optional[str]
 
 
 class StorageService:
@@ -48,6 +49,7 @@ class StorageService:
         filename: str,
         payload: bytes,
         layer_metadata: Iterable[Dict[str, Any]] | None = None,
+        vector_payload: Mapping[str, Any] | None = None,
     ) -> StorageResult:
         """Persist the payload and optional metadata."""
 
@@ -59,11 +61,18 @@ class StorageService:
         await asyncio.to_thread(file_path.write_bytes, payload)
 
         layer_metadata_uri: Optional[str] = None
+        vector_data_uri: Optional[str] = None
         if layer_metadata is not None:
             metadata_path = file_path.with_suffix(file_path.suffix + ".layers.json")
             json_payload = json.dumps(list(layer_metadata), indent=2, sort_keys=True)
             await asyncio.to_thread(metadata_path.write_text, json_payload)
             layer_metadata_uri = self._to_uri(metadata_path.relative_to(self.local_base_path))
+
+        if vector_payload is not None:
+            vector_path = file_path.with_suffix(file_path.suffix + ".vectors.json")
+            vector_json = json.dumps(vector_payload, indent=2, sort_keys=True)
+            await asyncio.to_thread(vector_path.write_text, vector_json)
+            vector_data_uri = self._to_uri(vector_path.relative_to(self.local_base_path))
 
         return StorageResult(
             bucket=self.bucket,
@@ -71,6 +80,7 @@ class StorageService:
             uri=self._to_uri(relative_key),
             bytes_written=len(payload),
             layer_metadata_uri=layer_metadata_uri,
+            vector_data_uri=vector_data_uri,
         )
 
     def _to_uri(self, relative_path: os.PathLike[str] | str) -> str:

@@ -23,10 +23,16 @@ class ImportResult(BaseModel):
     content_type: Optional[str]
     size_bytes: int
     storage_path: str
+    vector_storage_path: Optional[str] = Field(
+        default=None, description="URI of stored vectorised geometry derived from the upload"
+    )
     uploaded_at: datetime
     layer_metadata: List[Dict[str, Any]]
     detected_floors: List[DetectedFloor]
     detected_units: List[str]
+    vector_summary: Optional[Dict[str, Any]] = Field(
+        default=None, description="Summary of extracted vector paths and inferred walls"
+    )
     parse_status: str
 
     class Config:

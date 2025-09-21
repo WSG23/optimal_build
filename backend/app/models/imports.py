@@ -26,6 +26,8 @@ class ImportRecord(BaseModel):
     layer_metadata = Column(FlexibleJSONB, default=list)
     detected_floors = Column(FlexibleJSONB, default=list)
     detected_units = Column(FlexibleJSONB, default=list)
+    vector_storage_path = Column(Text)
+    vector_summary = Column(FlexibleJSONB)
 
     parse_status = Column(String(32), nullable=False, default="pending")
     parse_requested_at = Column(DateTime(timezone=True))
