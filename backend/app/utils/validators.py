@@ -42,8 +42,8 @@ def validate_singapore_address(address: str) -> bool:
     for pattern in patterns:
         if re.search(pattern, address):
             return True
-    
-    return True
+
+    return False
 
 
 def validate_postal_code(postal_code: str) -> bool:
