@@ -292,3 +292,6 @@ docs/_build/
 /site/
 
 # End of https://www.gitignore.io/api/python,node
+
+# Frontend test artifacts
+frontend/.tmp-e2e-*/
