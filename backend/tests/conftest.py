@@ -8,9 +8,46 @@ from contextlib import asynccontextmanager
 import sys
 
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+try:
+    import pytest_asyncio
+except ModuleNotFoundError:  # pragma: no cover - optional dependency for async fixtures
+    class _PytestAsyncioStub:
+        def fixture(self, *args, **kwargs):
+            return pytest.fixture(*args, **kwargs)
+
+    pytest_asyncio = _PytestAsyncioStub()  # type: ignore[assignment]
+try:
+    from httpx import AsyncClient
+except ModuleNotFoundError:  # pragma: no cover - optional dependency for API tests
+    class AsyncClient:  # type: ignore[no-redef]
+        """Fallback stub used when httpx is not installed."""
+
+        def __init__(self, *args, **kwargs) -> None:  # noqa: D401 - simple stub
+            self._error = ModuleNotFoundError(
+                "The optional dependency 'httpx' is required for AsyncClient fixtures. "
+                "Install httpx to run API client tests."
+            )
+
+        async def __aenter__(self) -> "AsyncClient":
+            raise self._error
+
+        async def __aexit__(self, exc_type, exc, tb) -> bool:
+            return False
+try:
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+except ModuleNotFoundError:  # pragma: no cover - optional dependency for database fixtures
+    class AsyncSession:  # type: ignore[no-redef]
+        """Stub used when SQLAlchemy is unavailable."""
+
+    def async_sessionmaker(*args, **kwargs):  # type: ignore[no-redef]
+        raise ModuleNotFoundError(
+            "SQLAlchemy is required for database fixtures. Install 'sqlalchemy' to run database tests."
+        )
+
+    def create_async_engine(*args, **kwargs):  # type: ignore[no-redef]
+        raise ModuleNotFoundError(
+            "SQLAlchemy is required for database fixtures. Install 'sqlalchemy' to run database tests."
+        )
 
 try:  # pragma: no cover - structlog is optional in the test environment
     import structlog  # type: ignore  # noqa: F401  (imported for side effects)
@@ -140,9 +177,36 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
     sys.modules.setdefault("structlog.processors", processors_module)
     sys.modules.setdefault("structlog.stdlib", stdlib_module)
 
-from app.core.database import get_session
-from app.main import app
-from app.models.base import BaseModel
+_APP_IMPORT_ERROR: ModuleNotFoundError | None = None
+
+try:
+    from app.core.database import get_session
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency for database fixtures
+    _APP_IMPORT_ERROR = exc
+
+    async def get_session(*args, **kwargs):  # type: ignore[no-redef]
+        raise exc
+
+try:
+    from app.main import app
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency for API tests
+    if _APP_IMPORT_ERROR is None:
+        _APP_IMPORT_ERROR = exc
+    app = None  # type: ignore[assignment]
+try:
+    from app.models.base import BaseModel
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency for database fixtures
+    if _APP_IMPORT_ERROR is None:
+        _APP_IMPORT_ERROR = exc
+
+    class _BaseModelMetadataStub:
+        sorted_tables: list = []
+
+        def create_all(self, *args, **kwargs):
+            raise exc
+
+    class BaseModel:  # type: ignore[no-redef]
+        metadata = _BaseModelMetadataStub()
 from app.utils import metrics
 
 
@@ -199,6 +263,11 @@ def session_factory(async_session_factory: async_sessionmaker[AsyncSession]) -> 
 
 @pytest_asyncio.fixture
 async def client(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncGenerator[AsyncClient, None]:
+    if app is None:  # pragma: no cover - triggered only when optional deps missing
+        raise ModuleNotFoundError(
+            "FastAPI application dependencies are unavailable. Install optional dependencies to run API tests."
+        ) from _APP_IMPORT_ERROR
+
     async def _get_session() -> AsyncGenerator[AsyncSession, None]:
         async with async_session_factory() as session:
             yield session
