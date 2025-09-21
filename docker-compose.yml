@@ -16,6 +16,44 @@ services:
       timeout: 5s
       retries: 5
 
+  backend-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:password@postgres:5432/building_compliance
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: documents
+      OBJECT_STORAGE_ACCESS_KEY: minioadmin
+      OBJECT_STORAGE_SECRET_KEY: minioadmin
+      OBJECT_STORAGE_REGION: us-east-1
+      OBJECT_STORAGE_USE_SSL: "false"
+      PREFECT_API_URL: http://prefect:4200/api
+    depends_on:
+      - postgres
+      - minio
+    ports:
+      - "8000:8000"
+
+  backend-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["prefect", "agent", "start", "-q", "default"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:password@postgres:5432/building_compliance
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: documents
+      OBJECT_STORAGE_ACCESS_KEY: minioadmin
+      OBJECT_STORAGE_SECRET_KEY: minioadmin
+      OBJECT_STORAGE_REGION: us-east-1
+      OBJECT_STORAGE_USE_SSL: "false"
+      PREFECT_API_URL: http://prefect:4200/api
+    depends_on:
+      - prefect
+      - postgres
+      - minio
+
   redis:
     image: redis:7-alpine
     ports:
@@ -44,6 +82,16 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+
+  prefect:
+    image: prefecthq/prefect:2.14-python3.11
+    command: ["prefect", "server", "start", "--host", "0.0.0.0"]
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://postgres:password@postgres:5432/building_compliance
+    ports:
+      - "4200:4200"
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:
