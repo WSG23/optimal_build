@@ -1,25 +1,31 @@
 """Reference Knowledge Platform (RKP) models."""
 
-from datetime import datetime
-from typing import Any, Dict, Optional
+from __future__ import annotations
+
+from datetime import date, datetime
+from typing import Any, Dict
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
+    Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
+    Numeric,
     String,
     Text,
-    CheckConstraint,
-    Numeric,
-    Index,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.models.base import BaseModel
 from app.models.types import FlexibleJSONB
+
+
+JSONType = FlexibleJSONB
 
 
 class RefSource(BaseModel):
@@ -29,8 +35,8 @@ class RefSource(BaseModel):
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True)  # 'SG'
-    authority = Column(String(50), nullable=False, index=True)     # 'SCDF', 'PUB', 'URA', 'BCA'
-    topic = Column(String(50), nullable=False, index=True)         # 'fire', 'plumbing', 'zoning'
+    authority = Column(String(50), nullable=False, index=True)  # 'SCDF', 'PUB', 'URA', 'BCA'
+    topic = Column(String(50), nullable=False, index=True)  # 'fire', 'plumbing', 'zoning'
     doc_title = Column(Text, nullable=False)
     landing_url = Column(Text, nullable=False)
     fetch_kind = Column(
@@ -39,7 +45,7 @@ class RefSource(BaseModel):
         default="pdf",
     )
     update_freq_hint = Column(String(50))  # 'annual', 'quarterly'
-    selectors = Column(FlexibleJSONB)  # CSS selectors for HTML parsing
+    selectors = Column(JSONType)  # CSS selectors for HTML parsing
     is_active = Column(Boolean, default=True, index=True)
 
     # Relationships
@@ -47,7 +53,7 @@ class RefSource(BaseModel):
     rules = relationship("RefRule", back_populates="source")
 
     __table_args__ = (
-        Index('idx_ref_sources_jurisdiction_authority', 'jurisdiction', 'authority'),
+        Index("idx_ref_sources_jurisdiction_authority", "jurisdiction", "authority"),
     )
 
 
@@ -90,7 +96,7 @@ class RefClause(BaseModel):
     document = relationship("RefDocument", back_populates="clauses")
 
     __table_args__ = (
-        Index('idx_ref_clauses_document_clause', 'document_id', 'clause_ref'),
+        Index("idx_ref_clauses_document_clause", "document_id", "clause_ref"),
     )
 
 
@@ -102,24 +108,24 @@ class RefRule(BaseModel):
     id = Column(Integer, primary_key=True, index=True)
     source_id = Column(Integer, ForeignKey("ref_sources.id", ondelete="SET NULL"))
     document_id = Column(Integer, ForeignKey("ref_documents.id", ondelete="SET NULL"))
-    
+
     # Core rule identification
     jurisdiction = Column(String(10), nullable=False, index=True)  # 'SG'
-    authority = Column(String(50), nullable=False, index=True)     # 'SCDF', 'PUB', 'URA', 'BCA'
-    topic = Column(String(50), nullable=False, index=True)         # 'fire', 'plumbing', 'zoning'
-    clause_ref = Column(String(50), index=True)                    # '4.2.1'
-    
+    authority = Column(String(50), nullable=False, index=True)  # 'SCDF', 'PUB', 'URA', 'BCA'
+    topic = Column(String(50), nullable=False, index=True)  # 'fire', 'plumbing', 'zoning'
+    clause_ref = Column(String(50), index=True)  # '4.2.1'
+
     # Rule specification
     parameter_key = Column(String(200), nullable=False, index=True)  # 'egress.corridor.min_width_mm'
-    operator = Column(String(10), nullable=False)                    # '>=', '<=', '='
-    value = Column(Text, nullable=False)                             # '1200'
-    unit = Column(String(20))                                        # 'mm', 'm', '%'
-    
+    operator = Column(String(10), nullable=False)  # '>=', '<=', '='
+    value = Column(Text, nullable=False)  # '1200'
+    unit = Column(String(20))  # 'mm', 'm', '%'
+
     # Context and applicability
-    applicability = Column(FlexibleJSONB)    # {"occupancy": ["residential"], "height": "any"}
-    exceptions = Column(FlexibleJSONB)       # ["except for existing buildings"]
-    source_provenance = Column(FlexibleJSONB)  # {"document_id": 123, "pages": [37]}
-    
+    applicability = Column(JSONType)  # {"occupancy": ["residential"], "height": "any"}
+    exceptions = Column(JSONType)  # ["except for existing buildings"]
+    source_provenance = Column(JSONType)  # {"document_id": 123, "pages": [37]}
+
     # Review workflow
     review_status = Column(
         String(20),
@@ -138,9 +144,9 @@ class RefRule(BaseModel):
     document = relationship("RefDocument", back_populates="rules")
 
     __table_args__ = (
-        Index('idx_ref_rules_jurisdiction_topic', 'jurisdiction', 'topic'),
-        Index('idx_ref_rules_parameter_key', 'parameter_key'),
-        Index('idx_ref_rules_authority_status', 'authority', 'review_status'),
+        Index("idx_ref_rules_jurisdiction_topic", "jurisdiction", "topic"),
+        Index("idx_ref_rules_parameter_key", "parameter_key"),
+        Index("idx_ref_rules_authority_status", "authority", "review_status"),
     )
 
 
@@ -152,18 +158,18 @@ class RefParcel(BaseModel):
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
     parcel_ref = Column(String(100), index=True)  # URA lot number
-    
+
     # Simplified geometry as JSON for now (will upgrade to PostGIS later)
-    bounds_json = Column(FlexibleJSONB)  # {"type": "Polygon", "coordinates": [...]}
+    bounds_json = Column(JSONType)  # {"type": "Polygon", "coordinates": [...]}  
     centroid_lat = Column(Numeric(10, 7))
     centroid_lon = Column(Numeric(10, 7))
     area_m2 = Column(Numeric(12, 2))
-    
+
     source = Column(String(50))  # 'upload', 'onemap', 'ura'
 
     __table_args__ = (
-        Index('idx_ref_parcels_centroid', 'centroid_lat', 'centroid_lon'),
-        Index('idx_ref_parcels_jurisdiction_ref', 'jurisdiction', 'parcel_ref'),
+        Index("idx_ref_parcels_centroid", "centroid_lat", "centroid_lon"),
+        Index("idx_ref_parcels_jurisdiction_ref", "jurisdiction", "parcel_ref"),
     )
 
 
@@ -175,20 +181,20 @@ class RefZoningLayer(BaseModel):
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
     layer_name = Column(String(100), index=True)  # 'MasterPlan2019'
-    zone_code = Column(String(20), index=True)    # 'R2', 'C1', 'B1'
-    
+    zone_code = Column(String(20), index=True)  # 'R2', 'C1', 'B1'
+
     # Zoning attributes
-    attributes = Column(FlexibleJSONB)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
-    
+    attributes = Column(JSONType)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
+
     # Simplified geometry as JSON for now
-    bounds_json = Column(FlexibleJSONB)  # GeoJSON MultiPolygon
-    
+    bounds_json = Column(JSONType)  # GeoJSON MultiPolygon
+
     effective_date = Column(DateTime(timezone=True))
     expiry_date = Column(DateTime(timezone=True))
 
     __table_args__ = (
-        Index('idx_ref_zoning_jurisdiction_zone', 'jurisdiction', 'zone_code'),
-        Index('idx_ref_zoning_layer_effective', 'layer_name', 'effective_date'),
+        Index("idx_ref_zoning_jurisdiction_zone", "jurisdiction", "zone_code"),
+        Index("idx_ref_zoning_layer_effective", "layer_name", "effective_date"),
     )
 
 
@@ -203,7 +209,7 @@ class RefGeocodeCache(BaseModel):
     lon = Column(Numeric(10, 7))
     parcel_id = Column(Integer, ForeignKey("ref_parcels.id"), nullable=True)
     confidence_score = Column(Numeric(3, 2))  # 0.0 to 1.0
-    
+
     # Cache management
     cache_expires_at = Column(DateTime(timezone=True))
     is_verified = Column(Boolean, default=False)
@@ -212,11 +218,12 @@ class RefGeocodeCache(BaseModel):
     parcel = relationship("RefParcel")
 
     __table_args__ = (
-        Index('idx_geocode_cache_coords', 'lat', 'lon'),
+        Index("idx_geocode_cache_coords", "lat", "lon"),
     )
 
 
 # Phase 2 Models (Standards, Catalog, Ergonomics, Costs)
+
 
 class RefMaterialStandard(BaseModel):
     """Material standards reference for Phase 2."""
@@ -227,14 +234,21 @@ class RefMaterialStandard(BaseModel):
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
     standard_code = Column(String(50), nullable=False, index=True)  # 'SS EN 206'
     material_type = Column(String(100), nullable=False, index=True)  # 'concrete', 'steel'
-    property_key = Column(String(200), nullable=False, index=True)   # 'compressive_strength_mpa'
+    standard_body = Column(String(100), nullable=False, index=True)
+    property_key = Column(String(200), nullable=False, index=True)  # 'compressive_strength_mpa'
     value = Column(Text, nullable=False)
     unit = Column(String(20))
-    context = Column(FlexibleJSONB)  # {"grade": "C30", "age_days": 28}
+    context = Column(JSONType)
+    section = Column(String(100))
+    applicability = Column(JSONType)
+    edition = Column(String(50))
+    effective_date = Column(Date)
+    license_ref = Column(String(100))
+    provenance = Column(JSONType)
     source_document = Column(Text)
 
     __table_args__ = (
-        Index('idx_material_standards_type_property', 'material_type', 'property_key'),
+        Index("idx_material_standards_type_property", "material_type", "property_key"),
     )
 
 
@@ -253,8 +267,8 @@ class RefProduct(BaseModel):
     sku = Column(String(100), index=True)
 
     # Product specifications
-    dimensions = Column(FlexibleJSONB)      # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
-    specifications = Column(FlexibleJSONB)  # {"material": "ceramic", "flush_volume_l": 4.8}
+    dimensions = Column(JSONType)  # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
+    specifications = Column(JSONType)  # {"material": "ceramic", "flush_volume_l": 4.8}
     bim_uri = Column(Text)
     spec_uri = Column(Text)
     unit_cost = Column(Numeric(10, 2))
@@ -263,8 +277,8 @@ class RefProduct(BaseModel):
     is_active = Column(Boolean, default=True, index=True)
 
     __table_args__ = (
-        Index('idx_products_vendor_category', 'vendor', 'category'),
-        Index('idx_products_category_active', 'category', 'is_active'),
+        Index("idx_products_vendor_category", "vendor", "category"),
+        Index("idx_products_category_active", "category", "is_active"),
     )
 
 
@@ -274,17 +288,17 @@ class RefErgonomics(BaseModel):
     __tablename__ = "ref_ergonomics"
 
     id = Column(Integer, primary_key=True, index=True)
-    metric_key = Column(String(200), nullable=False, index=True)     # 'wheelchair.turning_radius_mm'
-    population = Column(String(50), nullable=False, index=True)      # 'adult', 'elderly', 'wheelchair'
-    percentile = Column(String(10))                                  # '5th', '50th', '95th'
+    metric_key = Column(String(200), nullable=False, index=True)  # 'wheelchair.turning_radius_mm'
+    population = Column(String(50), nullable=False, index=True)  # 'adult', 'elderly', 'wheelchair'
+    percentile = Column(String(10))  # '5th', '50th', '95th'
     value = Column(Numeric(8, 2), nullable=False)
     unit = Column(String(20), nullable=False)
-    context = Column(FlexibleJSONB)  # {"space_type": "bathroom", "condition": "seated"}
+    context = Column(JSONType)  # {"space_type": "bathroom", "condition": "seated"}
     notes = Column(Text)
     source = Column(String(100))
 
     __table_args__ = (
-        Index('idx_ergonomics_metric_population', 'metric_key', 'population'),
+        Index("idx_ergonomics_metric_population", "metric_key", "population"),
     )
 
 
@@ -295,15 +309,87 @@ class RefCostIndex(BaseModel):
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
-    series_name = Column(String(100), nullable=False, index=True)    # 'concrete', 'steel', 'labor'
-    category = Column(String(50), nullable=False, index=True)        # 'material', 'labor', 'equipment'
-    subcategory = Column(String(100))                                # 'ready_mix', 'skilled'
-    period = Column(String(20), nullable=False, index=True)          # '2024-Q1'
-    value = Column(Numeric(12, 2), nullable=False)
-    unit = Column(String(50), nullable=False)                        # 'SGD/m3', 'SGD/hour'
+    series_name = Column(String(100), nullable=False, index=True)  # 'concrete', 'steel', 'labor'
+    category = Column(String(50), nullable=False, index=True)  # 'material', 'labor', 'equipment'
+    subcategory = Column(String(100))  # 'ready_mix', 'skilled'
+    period = Column(String(20), nullable=False, index=True)  # '2024-Q1'
+    value = Column(Numeric(12, 4), nullable=False)
+    unit = Column(String(50), nullable=False)  # 'SGD/m3', 'SGD/hour'
+    source = Column(String(100))
+    provider = Column(String(100), nullable=False, index=True, default="internal")
+    methodology = Column(Text)
+
+    __table_args__ = (
+        Index("idx_cost_indices_series_period", "series_name", "period"),
+        Index("idx_cost_indices_jurisdiction_category", "jurisdiction", "category"),
+    )
+
+
+class RefCostCatalog(BaseModel):
+    """Detailed cost catalog references."""
+
+    __tablename__ = "ref_cost_catalogs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
+    catalog_name = Column(String(100), nullable=False, index=True)
+    category = Column(String(50), index=True)
+    item_code = Column(String(100), nullable=False, index=True)
+    description = Column(Text)
+    unit = Column(String(20))
+    unit_cost = Column(Numeric(12, 2))
+    currency = Column(String(3), default="SGD")
+    effective_date = Column(Date)
+    item_metadata = Column(JSONType)
     source = Column(String(100))
 
     __table_args__ = (
-        Index('idx_cost_indices_series_period', 'series_name', 'period'),
-        Index('idx_cost_indices_jurisdiction_category', 'jurisdiction', 'category'),
+        Index("idx_cost_catalogs_name_code", "catalog_name", "item_code"),
+        Index("idx_cost_catalogs_category", "category"),
+    )
+
+
+class RefIngestionRun(BaseModel):
+    """Prefect ingestion run metadata."""
+
+    __tablename__ = "ref_ingestion_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    run_key = Column(String(100), nullable=False, unique=True, index=True)
+    flow_name = Column(String(100), nullable=False, index=True)
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    finished_at = Column(DateTime(timezone=True))
+    status = Column(String(20), nullable=False, index=True, default="running")
+    records_ingested = Column(Integer, default=0)
+    suspected_updates = Column(Integer, default=0)
+    notes = Column(Text)
+    metrics = Column(JSONType)
+
+    alerts = relationship("RefAlert", back_populates="ingestion_run", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_ingestion_runs_flow_status", "flow_name", "status"),
+    )
+
+
+class RefAlert(BaseModel):
+    """Alert records for ingestion anomalies."""
+
+    __tablename__ = "ref_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    alert_type = Column(String(50), nullable=False, index=True)
+    level = Column(String(20), nullable=False, index=True, default="info")
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    context = Column(JSONType)
+    ingestion_run_id = Column(Integer, ForeignKey("ref_ingestion_runs.id", ondelete="SET NULL"))
+    acknowledged = Column(Boolean, default=False, index=True)
+    acknowledged_at = Column(DateTime(timezone=True))
+    acknowledged_by = Column(String(100))
+
+    ingestion_run = relationship("RefIngestionRun", back_populates="alerts")
+
+    __table_args__ = (
+        Index("idx_alerts_type_level", "alert_type", "level"),
     )
