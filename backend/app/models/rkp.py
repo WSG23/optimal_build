@@ -15,11 +15,11 @@ from sqlalchemy import (
     Numeric,
     Index,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.models.base import BaseModel
+from app.models.types import FlexibleJSONB
 
 
 class RefSource(BaseModel):
@@ -39,7 +39,7 @@ class RefSource(BaseModel):
         default="pdf",
     )
     update_freq_hint = Column(String(50))  # 'annual', 'quarterly'
-    selectors = Column(JSONB)  # CSS selectors for HTML parsing
+    selectors = Column(FlexibleJSONB)  # CSS selectors for HTML parsing
     is_active = Column(Boolean, default=True, index=True)
 
     # Relationships
@@ -116,9 +116,9 @@ class RefRule(BaseModel):
     unit = Column(String(20))                                        # 'mm', 'm', '%'
     
     # Context and applicability
-    applicability = Column(JSONB)    # {"occupancy": ["residential"], "height": "any"}
-    exceptions = Column(JSONB)       # ["except for existing buildings"]
-    source_provenance = Column(JSONB)  # {"document_id": 123, "pages": [37]}
+    applicability = Column(FlexibleJSONB)    # {"occupancy": ["residential"], "height": "any"}
+    exceptions = Column(FlexibleJSONB)       # ["except for existing buildings"]
+    source_provenance = Column(FlexibleJSONB)  # {"document_id": 123, "pages": [37]}
     
     # Review workflow
     review_status = Column(
@@ -130,6 +130,8 @@ class RefRule(BaseModel):
     reviewer = Column(String(100))
     reviewed_at = Column(DateTime(timezone=True))
     notes = Column(Text)
+    is_published = Column(Boolean, default=False, index=True)
+    published_at = Column(DateTime(timezone=True))
 
     # Relationships
     source = relationship("RefSource", back_populates="rules")
@@ -152,7 +154,7 @@ class RefParcel(BaseModel):
     parcel_ref = Column(String(100), index=True)  # URA lot number
     
     # Simplified geometry as JSON for now (will upgrade to PostGIS later)
-    bounds_json = Column(JSONB)  # {"type": "Polygon", "coordinates": [...]}
+    bounds_json = Column(FlexibleJSONB)  # {"type": "Polygon", "coordinates": [...]}
     centroid_lat = Column(Numeric(10, 7))
     centroid_lon = Column(Numeric(10, 7))
     area_m2 = Column(Numeric(12, 2))
@@ -176,10 +178,10 @@ class RefZoningLayer(BaseModel):
     zone_code = Column(String(20), index=True)    # 'R2', 'C1', 'B1'
     
     # Zoning attributes
-    attributes = Column(JSONB)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
+    attributes = Column(FlexibleJSONB)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
     
     # Simplified geometry as JSON for now
-    bounds_json = Column(JSONB)  # GeoJSON MultiPolygon
+    bounds_json = Column(FlexibleJSONB)  # GeoJSON MultiPolygon
     
     effective_date = Column(DateTime(timezone=True))
     expiry_date = Column(DateTime(timezone=True))
@@ -228,7 +230,7 @@ class RefMaterialStandard(BaseModel):
     property_key = Column(String(200), nullable=False, index=True)   # 'compressive_strength_mpa'
     value = Column(Text, nullable=False)
     unit = Column(String(20))
-    context = Column(JSONB)  # {"grade": "C30", "age_days": 28}
+    context = Column(FlexibleJSONB)  # {"grade": "C30", "age_days": 28}
     source_document = Column(Text)
 
     __table_args__ = (
@@ -246,13 +248,18 @@ class RefProduct(BaseModel):
     category = Column(String(50), nullable=False, index=True)  # 'toilet', 'basin', 'door'
     product_code = Column(String(100), nullable=False)
     name = Column(String(200), nullable=False)
-    
+    brand = Column(String(100), index=True)
+    model_number = Column(String(100), index=True)
+    sku = Column(String(100), index=True)
+
     # Product specifications
-    dimensions = Column(JSONB)      # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
-    specifications = Column(JSONB)  # {"material": "ceramic", "flush_volume_l": 4.8}
+    dimensions = Column(FlexibleJSONB)      # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
+    specifications = Column(FlexibleJSONB)  # {"material": "ceramic", "flush_volume_l": 4.8}
+    bim_uri = Column(Text)
+    spec_uri = Column(Text)
     unit_cost = Column(Numeric(10, 2))
     currency = Column(String(3), default="SGD")
-    
+
     is_active = Column(Boolean, default=True, index=True)
 
     __table_args__ = (
@@ -272,7 +279,8 @@ class RefErgonomics(BaseModel):
     percentile = Column(String(10))                                  # '5th', '50th', '95th'
     value = Column(Numeric(8, 2), nullable=False)
     unit = Column(String(20), nullable=False)
-    context = Column(JSONB)  # {"space_type": "bathroom", "condition": "seated"}
+    context = Column(FlexibleJSONB)  # {"space_type": "bathroom", "condition": "seated"}
+    notes = Column(Text)
     source = Column(String(100))
 
     __table_args__ = (
