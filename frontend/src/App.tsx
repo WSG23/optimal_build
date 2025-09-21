@@ -1,114 +1,136 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
+import { Link } from './router'
 
 interface HealthStatus {
-  status: string;
-  service: string;
+  status: string
+  service: string
 }
 
 function App() {
-  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/';
-  const resolvedBaseUrl = React.useMemo<URL | null>(() => {
+  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/'
+  const resolvedBaseUrl = useMemo<URL | null>(() => {
     if (typeof window === 'undefined') {
-      return null;
+      return null
     }
 
     try {
-      return new URL(rawBaseUrl, window.location.origin);
+      return new URL(rawBaseUrl, window.location.origin)
     } catch (err) {
-      console.error('Invalid VITE_API_BASE_URL, falling back to window.location.origin', err);
-      return new URL(window.location.origin);
+      console.error('Invalid VITE_API_BASE_URL, falling back to window.location.origin', err)
+      return new URL(window.location.origin)
     }
-  }, [rawBaseUrl]);
+  }, [rawBaseUrl])
 
-  const buildApiUrl = React.useCallback(
+  const buildApiUrl = useCallback(
     (path: string) => {
       if (!resolvedBaseUrl) {
-        return path;
+        return path
       }
 
-      return new URL(path, resolvedBaseUrl).toString();
+      return new URL(path, resolvedBaseUrl).toString()
     },
-    [resolvedBaseUrl]
-  );
+    [resolvedBaseUrl],
+  )
 
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch(buildApiUrl('health'));
+        const response = await fetch(buildApiUrl('health'))
         if (response.ok) {
-          const data = await response.json();
-          setHealthStatus(data);
+          const data = await response.json()
+          setHealthStatus(data)
         } else {
-          setError('Backend not responding');
+          setError('Backend not responding')
         }
       } catch (err) {
-        setError('Cannot connect to backend');
+        setError('Cannot connect to backend')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    checkHealth();
-  }, [buildApiUrl]);
+    checkHealth()
+  }, [buildApiUrl])
 
   return (
-    <div style={{ 
-      padding: '40px', 
-      fontFamily: 'Arial, sans-serif',
-      maxWidth: '800px',
-      margin: '0 auto'
-    }}>
-      <h1 style={{ color: '#2563eb', marginBottom: '20px' }}>
-        🏗️ Building Compliance Platform
-      </h1>
-      
-      <div style={{ 
-        background: '#f8fafc', 
-        padding: '20px', 
-        borderRadius: '8px',
-        marginBottom: '20px'
-      }}>
-        <h2>System Status</h2>
-        {loading && <p>Checking backend connection...</p>}
-        {error && <p style={{ color: 'red' }}>❌ {error}</p>}
+    <div className="app-shell">
+      <header className="app-shell__header">
+        <h1>Optimal Build Studio</h1>
+        <p>
+          Explore automated compliance insights, land intelligence and feasibility analysis for
+          Singapore developments.
+        </p>
+      </header>
+
+      <nav className="app-shell__nav">
+        <Link className="app-shell__nav-link" to="/feasibility">
+          Launch feasibility wizard
+        </Link>
+        <a
+          className="app-shell__nav-link"
+          href={buildApiUrl('docs')}
+          target="_blank"
+          rel="noreferrer"
+        >
+          View API reference
+        </a>
+      </nav>
+
+      <section className="app-shell__section">
+        <h2>System status</h2>
+        {loading && <p>Checking backend connection…</p>}
+        {error && <p style={{ color: '#b91c1c' }}>❌ {error}</p>}
         {healthStatus && (
-          <p style={{ color: 'green' }}>
+          <p style={{ color: '#15803d' }}>
             ✅ Backend Status: {healthStatus.status} ({healthStatus.service})
           </p>
         )}
-      </div>
+      </section>
 
-      <div style={{ 
-        background: '#f0f9ff', 
-        padding: '20px', 
-        borderRadius: '8px',
-        marginBottom: '20px'
-      }}>
-        <h2>Quick Links</h2>
+      <section className="app-shell__section">
+        <h2>Quick links</h2>
         <ul>
-          <li><a href={buildApiUrl('health')} target="_blank" rel="noreferrer">Backend Health Check</a></li>
-          <li><a href={buildApiUrl('docs')} target="_blank" rel="noreferrer">API Documentation</a></li>
-          <li><a href={buildApiUrl('api/v1/test')} target="_blank" rel="noreferrer">API Test Endpoint</a></li>
+          <li>
+            <a href={buildApiUrl('health')} target="_blank" rel="noreferrer">
+              Backend health check
+            </a>
+          </li>
+          <li>
+            <a href={buildApiUrl('docs')} target="_blank" rel="noreferrer">
+              API documentation
+            </a>
+          </li>
+          <li>
+            <a href={buildApiUrl('api/v1/test')} target="_blank" rel="noreferrer">
+              API test endpoint
+            </a>
+          </li>
         </ul>
-      </div>
+      </section>
 
-      <div style={{ 
-        background: '#fefce8', 
-        padding: '20px', 
-        borderRadius: '8px'
-      }}>
-        <h2>Next Steps</h2>
+      <section className="app-shell__section">
+        <h2>Why start here?</h2>
+        <ul>
+          <li>Capture project basics once and reuse across compliance workflows.</li>
+          <li>Review cross-agency rules synthesised from the knowledge platform.</li>
+          <li>Generate buildability insights with clear next steps for the team.</li>
+        </ul>
+      </section>
+
+      <section className="app-shell__section">
+        <h2>Next steps</h2>
         <ol>
-          <li>✅ Frontend and Backend are connected</li>
-          <li>🔄 Add database integration</li>
-          <li>🔄 Implement buildable analysis</li>
-          <li>🔄 Add Singapore building codes</li>
+          <li>✅ Frontend and backend are connected.</li>
+          <li>🔄 Add database integration.</li>
+          <li>🔄 Implement buildable analysis.</li>
+          <li>🔄 Add Singapore building codes.</li>
         </ol>
-      </div>
+      </section>
     </div>
   )
 }
