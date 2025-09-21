@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 import structlog
-from structlog import BoundLogger
+from structlog.stdlib import BoundLogger
 
 from app.core.config import settings
 
