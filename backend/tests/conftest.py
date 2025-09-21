@@ -3,18 +3,80 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
+import sys
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import asynccontextmanager
+from types import ModuleType
+from typing import Any
 
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+_sqlalchemy_asyncio = pytest.importorskip(
+    "sqlalchemy.ext.asyncio",
+    reason=(
+        "SQLAlchemy is required for database integration tests; install optional test dependencies to run these checks."
+    ),
+)
+
+AsyncSession = _sqlalchemy_asyncio.AsyncSession
+async_sessionmaker = _sqlalchemy_asyncio.async_sessionmaker
+create_async_engine = _sqlalchemy_asyncio.create_async_engine
+
+try:
+    from httpx import AsyncClient
+except ModuleNotFoundError:  # pragma: no cover - fallback for minimal test envs
+    class AsyncClient:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401 - simple stub
+            raise RuntimeError("httpx is required for HTTP client tests")
 
 from app.core.database import get_session
 from app.main import app
 from app.models.base import BaseModel
 from app.utils import metrics
+
+
+_PYTEST_ASYNCIO_STUB_INSTALLED = False
+try:
+    import pytest_asyncio  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - fallback for minimal test envs
+    pytest_asyncio = ModuleType("pytest_asyncio")  # type: ignore[assignment]
+    pytest_asyncio.fixture = pytest.fixture  # type: ignore[attr-defined]
+    sys.modules["pytest_asyncio"] = pytest_asyncio
+    _PYTEST_ASYNCIO_STUB_INSTALLED = True
+
+
+def _noop_prefect_flow(
+    *args: Any, **kwargs: Any
+) -> Callable[[Callable[..., Any]], Callable[..., Any]] | Callable[..., Any]:
+    """Provide a lightweight stand-in for ``prefect.flow`` during tests."""
+
+    if args and callable(args[0]) and len(args) == 1 and not kwargs:
+        return args[0]
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        return func
+
+    return decorator
+
+
+@pytest.fixture(autouse=True)
+def _ensure_prefect_flow(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Provide a minimal ``prefect.flow`` decorator when Prefect isn't installed."""
+
+    try:
+        prefect_module = importlib.import_module("prefect")
+    except ModuleNotFoundError:  # pragma: no cover - exercised when Prefect isn't installed
+        prefect_module = ModuleType("prefect")
+        monkeypatch.setitem(sys.modules, "prefect", prefect_module)
+    if not hasattr(prefect_module, "flow"):
+        monkeypatch.setattr(prefect_module, "flow", _noop_prefect_flow, raising=False)
+    yield
+
+
+def pytest_unconfigure(config: pytest.Config) -> None:  # pragma: no cover - test cleanup
+    if _PYTEST_ASYNCIO_STUB_INSTALLED and sys.modules.get("pytest_asyncio") is pytest_asyncio:
+        sys.modules.pop("pytest_asyncio", None)
 
 
 @pytest.fixture(scope="session")
