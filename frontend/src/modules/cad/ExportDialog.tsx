@@ -6,13 +6,19 @@ interface ExportDialogProps {
   formats?: string[]
   onExport?: (format: string) => void
   disabled?: boolean
+  defaultOpen?: boolean
 }
 
 const DEFAULT_FORMATS = ['DXF', 'GeoJSON', 'CSV']
 
-export function ExportDialog({ formats = DEFAULT_FORMATS, onExport, disabled = false }: ExportDialogProps) {
+export function ExportDialog({
+  formats = DEFAULT_FORMATS,
+  onExport,
+  disabled = false,
+  defaultOpen = false,
+}: ExportDialogProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
 
   const handleExport = (format: string) => {
     onExport?.(format)

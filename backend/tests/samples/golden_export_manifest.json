@@ -1,0 +1,140 @@
+{
+  "format": "dwg",
+  "renderer": "fallback",
+  "options": {
+    "include_source": true,
+    "include_approved_overlays": true,
+    "include_pending_overlays": true,
+    "include_rejected_overlays": false
+  },
+  "layers": {
+    "SITE": [
+      {
+        "layer": "SITE",
+        "id": "site-root",
+        "kind": "site",
+        "properties": {
+          "project": "Mock Tower",
+          "elements": 5,
+          "heritage_zone": true,
+          "flood_zone": "coastal",
+          "site_area_sqm": 12500,
+          "advisory_hints": [
+            "Submit heritage impact assessment"
+          ],
+          "overlays": [
+            "heritage_conservation",
+            "coastal_protection"
+          ]
+        }
+      }
+    ],
+    "A-FLOOR": [
+      {
+        "layer": "A-FLOOR",
+        "id": "L01",
+        "kind": "floor",
+        "properties": {
+          "name": "Level 01 - Floor Plan",
+          "unit_count": 2,
+          "elevation": 0.0
+        }
+      },
+      {
+        "layer": "A-FLOOR",
+        "id": "L02",
+        "kind": "floor",
+        "properties": {
+          "name": "Level 02 - Floor Plan",
+          "unit_count": 1,
+          "elevation": 3.2
+        }
+      }
+    ],
+    "UNIT": [
+      {
+        "layer": "UNIT",
+        "id": "L01-U01",
+        "kind": "unit",
+        "properties": {
+          "label": "01-01",
+          "area_m2": 45.0,
+          "status": "pending",
+          "height_m": 52.5
+        }
+      },
+      {
+        "layer": "UNIT",
+        "id": "L01-U02",
+        "kind": "unit",
+        "properties": {
+          "label": "01-02",
+          "area_m2": 42.5,
+          "status": "approved"
+        }
+      },
+      {
+        "layer": "UNIT",
+        "id": "L02-U01",
+        "kind": "unit",
+        "properties": {
+          "label": "02-01",
+          "area_m2": 47.3,
+          "status": "pending"
+        }
+      }
+    ]
+  },
+  "overlays": {
+    "A-OVER-HERITAGE": [
+      {
+        "layer": "A-OVER-HERITAGE",
+        "code": "heritage_conservation",
+        "title": "Heritage conservation review",
+        "status": "pending",
+        "severity": "high",
+        "style": {},
+        "nodes": [
+          "L01"
+        ]
+      }
+    ],
+    "A-OVER-PENDING": [
+      {
+        "layer": "A-OVER-PENDING",
+        "code": "flood_mitigation",
+        "title": "Flood mitigation measures",
+        "status": "pending",
+        "severity": "medium",
+        "style": {},
+        "nodes": [
+          "L01"
+        ]
+      },
+      {
+        "layer": "A-OVER-PENDING",
+        "code": "large_site_review",
+        "title": "Large site planning review",
+        "status": "pending",
+        "severity": "medium",
+        "style": {},
+        "nodes": [
+          "L01"
+        ]
+      },
+      {
+        "layer": "A-OVER-PENDING",
+        "code": "tall_building_review",
+        "title": "Tall building impact assessment",
+        "status": "pending",
+        "severity": "medium",
+        "style": {},
+        "nodes": [
+          "L01-U01"
+        ]
+      }
+    ]
+  },
+  "watermark": "PRELIMINARY – Pending overlay approvals",
+  "project_id": 401
+}

@@ -399,6 +399,129 @@ class GeometryGraph:
         )
 
 
+@dataclass
+class GeometryNode:
+    """Tree node representing canonical geometry elements."""
+
+    node_id: str
+    kind: str
+    properties: Dict[str, Any] = field(default_factory=dict)
+    children: List["GeometryNode"] = field(default_factory=list)
+
+    def add_child(self, node: "GeometryNode") -> "GeometryNode":
+        """Append ``node`` as a child and return it."""
+
+        self.children.append(node)
+        return node
+
+    def iter_nodes(self) -> Iterator["GeometryNode"]:
+        """Yield the current node followed by all descendants."""
+
+        yield self
+        for child in self.children:
+            yield from child.iter_nodes()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialise the node to a JSON-compatible mapping."""
+
+        payload: Dict[str, Any] = {
+            "id": self.node_id,
+            "kind": self.kind,
+            "properties": dict(self.properties),
+        }
+        if self.children:
+            payload["children"] = [child.to_dict() for child in self.children]
+        return payload
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "GeometryNode":
+        """Instantiate a node from a mapping, tolerating partial data."""
+
+        if not isinstance(payload, Mapping):
+            raise TypeError("GeometryNode payload must be a mapping")
+        node_id = str(payload.get("id") or payload.get("node_id") or payload.get("name") or "node")
+        kind = str(payload.get("kind") or payload.get("type") or "entity")
+        properties_raw = payload.get("properties")
+        if isinstance(properties_raw, Mapping):
+            properties = dict(properties_raw)
+        else:
+            metadata = payload.get("metadata")
+            properties = dict(metadata) if isinstance(metadata, Mapping) else {}
+        children_payload = payload.get("children") or []
+        children: List[GeometryNode] = []
+        for item in children_payload:
+            if isinstance(item, Mapping):
+                children.append(cls.from_dict(item))
+        return cls(node_id=node_id, kind=kind, properties=properties, children=children)
+
+
+@dataclass
+class CanonicalGeometry:
+    """Canonical representation combining a tree and raw graph payload."""
+
+    root: GeometryNode
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    graph: Dict[str, Any] = field(default_factory=dict)
+
+    def iter_nodes(self) -> Iterator[GeometryNode]:
+        """Iterate over the canonical geometry tree."""
+
+        yield from self.root.iter_nodes()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialise the canonical representation for persistence."""
+
+        payload: Dict[str, Any] = {"root": self.root.to_dict()}
+        if self.metadata:
+            payload["metadata"] = dict(self.metadata)
+        for key, value in self.graph.items():
+            payload[key] = value
+        return payload
+
+    def fingerprint(self) -> str:
+        """Return a deterministic fingerprint for change detection."""
+
+        raw = json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "CanonicalGeometry":
+        """Rehydrate a :class:`CanonicalGeometry` instance from ``payload``."""
+
+        if not isinstance(payload, Mapping):
+            raise TypeError("CanonicalGeometry payload must be a mapping")
+
+        root_payload = payload.get("root")
+        if not isinstance(root_payload, Mapping):
+            root_payload = {
+                "id": "root",
+                "kind": str(payload.get("kind", "site")),
+                "properties": dict(payload.get("metadata", {}))
+                if isinstance(payload.get("metadata"), Mapping)
+                else {},
+                "children": [],
+            }
+        root = GeometryNode.from_dict(root_payload)
+
+        metadata_raw = payload.get("metadata")
+        metadata = dict(metadata_raw) if isinstance(metadata_raw, Mapping) else {}
+
+        graph_keys = ("levels", "spaces", "walls", "doors", "fixtures", "relationships")
+        graph_section: Dict[str, Any] = {}
+
+        nested_graph = payload.get("graph")
+        if isinstance(nested_graph, Mapping):
+            for key in graph_keys:
+                if key in nested_graph:
+                    graph_section[key] = nested_graph[key]
+
+        for key in graph_keys:
+            if key in payload:
+                graph_section[key] = payload[key]
+
+        return cls(root=root, metadata=metadata, graph=graph_section)
+
+
 def _point_from_sequence(data: Sequence[Any]) -> Point2D:
     if len(data) != 2:
         raise ValueError(f"Expected a 2D point, received: {data!r}")
