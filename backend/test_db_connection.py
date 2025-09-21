@@ -1,8 +1,7 @@
 """Test database connection and basic operations."""
 
 import asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from app.core.config import settings
 from app.models.rkp import RefSource, RefRule
 
@@ -12,7 +11,7 @@ async def test_database():
     
     # Create engine and session
     engine = create_async_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-    AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
     
     async with AsyncSessionLocal() as session:
         try:

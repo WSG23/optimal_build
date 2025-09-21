@@ -1,11 +1,17 @@
-"""Base model class."""
+"""Base model class utilities."""
 
-from sqlalchemy.ext.declarative import declarative_base
+from __future__ import annotations
 
-Base = declarative_base()
+from sqlalchemy.orm import DeclarativeBase
 
 
-class BaseModel(Base):
-    """Base model class."""
-    
+class BaseModel(DeclarativeBase):
+    """Declarative base class for SQLAlchemy models."""
+
     __abstract__ = True
+
+
+# Re-export a `Base` alias for compatibility with migration tooling.
+Base = BaseModel
+
+__all__ = ["Base", "BaseModel"]
