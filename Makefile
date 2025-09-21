@@ -1,4 +1,4 @@
-.PHONY: help install format lint test test-cov clean build deploy init-db seed-data logs down reset dev-start dev-stop
+.PHONY: help install format lint test test-cov clean build deploy init-db seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -12,6 +12,12 @@ BACKEND_CMD ?= uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 FRONTEND_CMD ?= npm run dev
 ADMIN_CMD ?= npm run dev
 INCLUDE_ADMIN ?= 1
+
+AEC_SAMPLE ?= tests/samples/sample_floorplan.json
+AEC_PROJECT_ID ?= 101
+AEC_EXPORT_FORMAT ?= pdf
+AEC_DECIDED_BY ?= Planner Bot
+AEC_APPROVAL_NOTES ?= Approved via make export-approved
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -35,7 +41,22 @@ test: ## Run tests
 	cd backend && pytest
 	cd frontend && npm test
 
-test-aec: ## Run AEC backend and frontend test suites
+import-sample: ## Upload the bundled sample payload and seed overlay geometry
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) python -m scripts.aec_flow import-sample --sample $(AEC_SAMPLE) --project-id $(AEC_PROJECT_ID)
+
+run-overlay: ## Execute the overlay engine using the inline worker queue
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) python -m scripts.aec_flow run-overlay --project-id $(AEC_PROJECT_ID)
+
+export-approved: ## Approve overlays and generate a CAD/BIM export artefact
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) python -m scripts.aec_flow export-approved --project-id $(AEC_PROJECT_ID) --format $(AEC_EXPORT_FORMAT) --decided-by "$(AEC_DECIDED_BY)" --notes "$(AEC_APPROVAL_NOTES)"
+
+test-aec: ## Run sample import, overlay, export flows and regression tests
+	$(MAKE) import-sample
+	$(MAKE) run-overlay
+	$(MAKE) export-approved
 	cd backend && pytest tests/test_workflows/test_aec_pipeline.py
 	cd frontend && npm test
 

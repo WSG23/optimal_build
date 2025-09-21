@@ -100,5 +100,5 @@ jobs:
         run: npm ci
         working-directory: frontend
 
-      - name: Run AEC test suite
+      - name: Run AEC flow commands and tests
         run: make test-aec
