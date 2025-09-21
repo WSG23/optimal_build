@@ -29,6 +29,38 @@ Copy `.env.example` to `.env` at the repository root to configure the FastAPI ba
 
 These values are consumed by `backend/app/core/config.py`. When only `REDIS_URL` is provided the backend reuses the same host and credentials for Celery and RQ while automatically splitting work across database indices `0`, `1`, and `2`. In staging or production deployments, configure the same variables through your orchestrator (Docker Compose, Kubernetes, managed task queue, etc.) so that the backend API, Celery workers, and any RQ workers share consistent queue and storage names.
 
+## Running the AEC sample flow
+
+The repository ships with a lightweight CLI (`backend/scripts/aec_flow.py`) and Make
+targets that exercise the import, overlay, and export pipeline end-to-end using the
+sample fixtures checked into the test suite. Each command boots the FastAPI
+application in-process, configures an inline job queue, and stores artefacts under
+`.devstack/` by default (override with `AEC_RUNTIME_DIR=/custom/path`).
+
+1. `make import-sample` — uploads `tests/samples/sample_floorplan.json` through the
+   `/api/v1/import` endpoint, triggers parsing, and seeds an `OverlaySourceGeometry`
+   record for `AEC_PROJECT_ID` (defaults to `101`). The command writes a summary to
+   `.devstack/import_sample.json` so that subsequent steps can inspect the import ID
+   and detection metadata.
+2. `make run-overlay` — invokes `/api/v1/overlay/{project_id}/run` via the inline
+   queue, materialising overlay suggestions and storing them in
+   `.devstack/overlay_run.json` for review. Re-running the command updates existing
+   suggestions to reflect any geometry changes.
+3. `make export-approved` — approves the highest-severity suggestion (customise the
+   reviewer identity with `AEC_DECIDED_BY`/`AEC_APPROVAL_NOTES`) and downloads a CAD
+   export using `/api/v1/export/{project_id}`. The artefact lands in
+   `.devstack/exports/` alongside a JSON manifest when optional CAD dependencies are
+   unavailable. Set `AEC_EXPORT_FORMAT` to switch between `pdf`, `dxf`, `dwg`, or
+   `ifc` payloads.
+4. `make test-aec` — chains the three commands above before running the dedicated
+   backend regression (`pytest tests/test_workflows/test_aec_pipeline.py`) and the
+   frontend test suite. CI reuses this target to validate the AEC flow.
+
+Override `AEC_SAMPLE`, `AEC_PROJECT_ID`, and related variables to experiment with
+different fixtures or project identifiers. All commands stream human-readable JSON
+summaries to stdout so that the flow can be incorporated into local scripts or
+monitoring jobs.
+
 ## ROI metrics
 
 The frontend ROI dashboard queries `/api/v1/roi/{project_id}` for automation
