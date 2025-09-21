@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from . import costs, ergonomics, overlay, products, review, rules, screen, standards
+from . import costs, ergonomics, imports, overlay, products, review, rules, screen, standards
 
 api_router = APIRouter()
 api_router.include_router(review.router)
@@ -13,5 +13,6 @@ api_router.include_router(products.router)
 api_router.include_router(standards.router)
 api_router.include_router(costs.router)
 api_router.include_router(overlay.router)
+api_router.include_router(imports.router)
 
 __all__ = ["api_router"]

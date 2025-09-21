@@ -1,6 +1,9 @@
 """Tests for the vendor product sync flow."""
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import select
 
 from app.models.rkp import RefProduct

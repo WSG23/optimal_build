@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+pytest.importorskip("fastapi")
+pytest.importorskip("pydantic")
+pytest.importorskip("sqlalchemy")
+
 from app.models.rkp import RefCostIndex
 from app.utils import metrics
 

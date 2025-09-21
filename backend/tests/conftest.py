@@ -5,9 +5,21 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import asynccontextmanager
+import importlib.util
 import sys
 
 import pytest
+
+_MISSING_DEPS = [
+    name
+    for name in ("fastapi", "pydantic", "sqlalchemy")
+    if importlib.util.find_spec(name) is None
+]
+
+if _MISSING_DEPS:  # pragma: no cover - offline test fallback
+    pytestmark = pytest.mark.skip(
+        reason=f"Required dependencies missing: {', '.join(sorted(_MISSING_DEPS))}"
+    )
 
 try:  # pragma: no cover - exercised indirectly via tests
     import pytest_asyncio
@@ -109,8 +121,23 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
             finally:
                 _CURRENT_LOOP.reset(token)
         return None
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+if not _MISSING_DEPS:
+    from httpx import AsyncClient
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+else:  # pragma: no cover - lightweight placeholders to satisfy type checkers
+    from typing import Any
+
+    class AsyncClient:  # type: ignore[no-redef]
+        ...
+
+    class AsyncSession:  # type: ignore[no-redef]
+        ...
+
+    def async_sessionmaker(*args: Any, **kwargs: Any):  # type: ignore[no-redef]
+        raise RuntimeError("sqlalchemy is required for these tests")
+
+    def create_async_engine(*args: Any, **kwargs: Any):  # type: ignore[no-redef]
+        raise RuntimeError("sqlalchemy is required for these tests")
 
 try:  # pragma: no cover - structlog is optional in the test environment
     import structlog  # type: ignore  # noqa: F401  (imported for side effects)
@@ -240,9 +267,33 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
     sys.modules.setdefault("structlog.processors", processors_module)
     sys.modules.setdefault("structlog.stdlib", stdlib_module)
 
-from app.core.database import get_session
-from app.main import app
-from app.models.base import BaseModel
+if not _MISSING_DEPS:
+    from app.core.database import get_session
+    from app.main import app
+    from app.models.base import BaseModel
+    from app.services.storage import get_storage_service, reset_storage_service
+else:  # pragma: no cover - fallback stubs for offline testing
+    from typing import Any
+
+    def get_session():  # type: ignore[no-redef]
+        raise RuntimeError("sqlalchemy is required for these tests")
+
+    class _StubApp:  # type: ignore[no-redef]
+        dependency_overrides: dict[str, Any] = {}
+
+    app = _StubApp()  # type: ignore[assignment]
+
+    class _StubBaseModel:  # type: ignore[no-redef]
+        metadata = type("Meta", (), {"create_all": staticmethod(lambda _: None), "sorted_tables": []})
+
+    BaseModel = _StubBaseModel  # type: ignore[assignment]
+
+    def get_storage_service():  # type: ignore[no-redef]
+        raise RuntimeError("fastapi and sqlalchemy are required for these tests")
+
+    def reset_storage_service():  # type: ignore[no-redef]
+        return None
+
 from app.utils import metrics
 
 
@@ -297,8 +348,28 @@ def session_factory(async_session_factory: async_sessionmaker[AsyncSession]) -> 
     return _factory
 
 
+@pytest.fixture
+def storage_service(tmp_path, monkeypatch):
+    if _MISSING_DEPS:
+        pytest.skip("Storage service tests require fastapi, pydantic, and sqlalchemy")
+    base_path = tmp_path / "storage"
+    base_path.mkdir()
+    monkeypatch.setenv("STORAGE_LOCAL_PATH", str(base_path))
+    reset_storage_service()
+    service = get_storage_service()
+    try:
+        yield service
+    finally:
+        reset_storage_service()
+
+
 @pytest_asyncio.fixture
-async def client(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    async_session_factory: async_sessionmaker[AsyncSession],
+    storage_service,
+) -> AsyncGenerator[AsyncClient, None]:
+    if _MISSING_DEPS:
+        pytest.skip("API client tests require fastapi, pydantic, and sqlalchemy")
     async def _get_session() -> AsyncGenerator[AsyncSession, None]:
         async with async_session_factory() as session:
             yield session
