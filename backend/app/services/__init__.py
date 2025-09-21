@@ -1,5 +1,13 @@
-"""Service layer exports."""
+"""Service layer package."""
 
-from . import alerts, costs, ingestion, normalize, products, pwp, standards  # noqa: F401
-
-__all__ = ["alerts", "costs", "ingestion", "normalize", "products", "pwp", "standards"]
+__all__ = [
+    "alerts",
+    "costs",
+    "ingestion",
+    "normalize",
+    "products",
+    "pwp",
+    "standards",
+    "buildable_screening",
+    "rules_logic",
+]

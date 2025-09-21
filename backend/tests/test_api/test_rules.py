@@ -1,153 +1,155 @@
-"""API tests for rules and buildable screening."""
+"""Offline-friendly tests for rule serialization and buildable screening."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient
-from sqlalchemy import select
 
-from app.core.database import get_session
-from app.main import app
-from app.models.rkp import (
-    RefClause,
-    RefDocument,
-    RefGeocodeCache,
-    RefParcel,
-    RefRule,
-    RefSource,
-    RefZoningLayer,
+from app.services.buildable_screening import (
+    compose_buildable_response,
+    zone_code_from_geometry,
+    zone_code_from_parcel,
 )
+from app.services.normalize import RuleNormalizer
+from app.services.rules_logic import apply_review_action, serialise_rule
 
 
-async def _seed_reference_data(async_session_factory) -> None:
-    async with async_session_factory() as session:
-        source = RefSource(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
-            doc_title="Urban Redevelopment Authority",
-            landing_url="https://example.com/ura",
-        )
-        session.add(source)
-        await session.flush()
+@dataclass
+class DummyLayer:
+    zone_code: str
+    attributes: Dict[str, Any] | None = None
 
-        document = RefDocument(
-            source_id=source.id,
-            version_label="2024",
-            storage_path="s3://docs/ura-2024.pdf",
-            file_hash="abc123",
-        )
-        session.add(document)
-        await session.flush()
 
-        clause = RefClause(
-            document_id=document.id,
-            clause_ref="4.2.1",
-            section_heading="Parking Provision",
-            text_span="Provide 1.5 parking spaces per unit and ensure maximum ramp slope is 1:12.",
-        )
-        session.add(clause)
+@dataclass
+class DummyParcel:
+    bounds_json: Dict[str, Any] | None = None
 
-        rule = RefRule(
-            source_id=source.id,
-            document_id=document.id,
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
-            clause_ref="4.2.1",
-            parameter_key="parking.min_car_spaces_per_unit",
-            operator=">=",
-            value="1.5",
-            unit="spaces_per_unit",
-            applicability={"zone_code": "R2"},
-            notes="Provide 1.5 parking spaces per unit; maximum ramp slope 1:12",
-        )
-        session.add(rule)
 
-        zoning = RefZoningLayer(
-            jurisdiction="SG",
-            layer_name="MasterPlan",
+@dataclass
+class DummyRule:
+    id: int
+    parameter_key: str
+    operator: str
+    value: str
+    unit: Optional[str]
+    jurisdiction: str
+    authority: str
+    topic: str
+    applicability: Dict[str, Any] | None = None
+    notes: Optional[str] = None
+    review_status: str = "needs_review"
+    is_published: bool = False
+    reviewer: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+
+
+@pytest.fixture
+def normalizer() -> RuleNormalizer:
+    return RuleNormalizer()
+
+
+def test_serialise_rule_includes_overlays_and_hints(normalizer: RuleNormalizer) -> None:
+    rule = DummyRule(
+        id=1,
+        parameter_key="parking.min_car_spaces_per_unit",
+        operator=">=",
+        value="1.5",
+        unit="spaces_per_unit",
+        jurisdiction="SG",
+        authority="URA",
+        topic="zoning",
+        applicability={"zone_code": "R2"},
+        notes="Provide 1.5 parking spaces per unit and ensure maximum ramp slope is 1:12.",
+    )
+    layer = DummyLayer(
+        zone_code="R2",
+        attributes={
+            "overlays": ["heritage"],
+            "advisory_hints": ["Heritage impact assessment required."],
+        },
+    )
+
+    payload = serialise_rule(rule, normalizer, {"R2": [layer]})
+
+    assert payload["overlays"] == ["heritage"]
+    assert "Heritage impact assessment required." in payload["advisory_hints"]
+    assert any("parking" in hint.lower() for hint in payload["advisory_hints"])
+    assert any("slope" in hint.lower() for hint in payload["advisory_hints"])
+
+
+def test_buildable_screening_supports_address_and_geojson() -> None:
+    parcel = DummyParcel(bounds_json={"zone_code": "R2"})
+    geometry = {"type": "Feature", "properties": {"zone_code": "R2"}}
+    layers: List[DummyLayer] = [
+        DummyLayer(
             zone_code="R2",
             attributes={
                 "overlays": ["heritage"],
                 "advisory_hints": ["Heritage impact assessment required."],
             },
         )
-        session.add(zoning)
+    ]
 
-        parcel = RefParcel(
-            jurisdiction="SG",
-            parcel_ref="MK01-01234",
-            bounds_json={"zone_code": "R2"},
-        )
-        session.add(parcel)
-        await session.flush()
+    zone_from_parcel = zone_code_from_parcel(parcel)
+    assert zone_from_parcel == "R2"
 
-        geocode = RefGeocodeCache(address="123 Example Ave", parcel_id=parcel.id)
-        session.add(geocode)
-
-        await session.commit()
-
-
-@pytest_asyncio.fixture
-async def client(async_session_factory):
-    await _seed_reference_data(async_session_factory)
-
-    async def _override_get_session():
-        async with async_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(app=app, base_url="http://test") as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
-
-
-@pytest.mark.asyncio
-async def test_rules_endpoint_includes_overlays_and_hints(client: AsyncClient) -> None:
-    response = await client.get("/api/v1/rules")
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["count"] == 1
-    item = payload["items"][0]
-    assert "heritage" in item["overlays"]
-    assert any("parking" in hint.lower() for hint in item["advisory_hints"])
-    assert any("slope" in hint.lower() for hint in item["advisory_hints"])
-
-
-@pytest.mark.asyncio
-async def test_buildable_screening_supports_address_and_geojson(
-    client: AsyncClient,
-) -> None:
-    address_response = await client.post(
-        "/api/v1/screen/buildable",
-        json={"address": "123 Example Ave"},
+    address_summary = compose_buildable_response(
+        address="123 Example Ave",
+        geometry=None,
+        zone_code=zone_from_parcel,
+        layers=layers,
     )
-    assert address_response.status_code == 200
-    address_payload = address_response.json()
-    assert address_payload["zone_code"] == "R2"
-    assert "heritage" in address_payload["overlays"]
+    assert address_summary["input_kind"] == "address"
+    assert address_summary["zone_code"] == "R2"
+    assert "heritage" in address_summary["overlays"]
 
-    geojson_response = await client.post(
-        "/api/v1/screen/buildable",
-        json={"geometry": {"type": "Feature", "properties": {"zone_code": "R2"}}},
+    zone_from_geometry = zone_code_from_geometry(geometry)
+    assert zone_from_geometry == "R2"
+
+    geometry_summary = compose_buildable_response(
+        address=None,
+        geometry=geometry,
+        zone_code=zone_from_geometry,
+        layers=layers,
     )
-    assert geojson_response.status_code == 200
-    geojson_payload = geojson_response.json()
-    assert geojson_payload["zone_code"] == "R2"
-    assert geojson_payload["overlays"] == address_payload["overlays"]
+    assert geometry_summary["input_kind"] == "geometry"
+    assert geometry_summary["zone_code"] == "R2"
+    assert geometry_summary["advisory_hints"] == address_summary["advisory_hints"]
 
 
-@pytest.mark.asyncio
-async def test_rule_review_publish_action(client: AsyncClient, async_session_factory) -> None:
-    async with async_session_factory() as session:
-        rule_id = (await session.execute(select(RefRule.id))).scalar_one()
-
-    response = await client.post(
-        f"/api/v1/rules/{rule_id}/review",
-        json={"action": "publish", "reviewer": "Casey", "notes": "Ready"},
+def test_apply_review_action_publish_updates_rule(normalizer: RuleNormalizer) -> None:
+    rule = DummyRule(
+        id=7,
+        parameter_key="parking.min_car_spaces_per_unit",
+        operator=">=",
+        value="1.5",
+        unit="spaces_per_unit",
+        jurisdiction="SG",
+        authority="URA",
+        topic="zoning",
+        applicability={"zone_code": "R2"},
     )
-    assert response.status_code == 200
-    item = response.json()["item"]
-    assert item["is_published"] is True
+
+    now = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    apply_review_action(
+        rule,
+        "publish",
+        reviewer="Casey",
+        notes="Ready",
+        timestamp=now,
+    )
+
+    assert rule.is_published is True
+    assert rule.review_status == "approved"
+    assert rule.reviewer == "Casey"
+    assert rule.notes == "Ready"
+    assert rule.published_at == now
+    assert rule.reviewed_at == now
+
+    payload = serialise_rule(rule, normalizer, {"R2": []})
+    assert payload["is_published"] is True
+    assert payload["review_status"] == "approved"

@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
-
+from app.services.buildable_screening import (
+    compose_buildable_response,
+    zone_code_from_geometry,
+    zone_code_from_parcel,
+)
 
 router = APIRouter(prefix="/screen")
 
@@ -34,22 +38,13 @@ async def screen_buildable(
     session: AsyncSession = Depends(get_session),
 ) -> Dict[str, object]:
     zone_code = await _resolve_zone_code(session, payload)
-    overlays: List[str] = []
-    hints: List[str] = []
-    if zone_code:
-        zoning_lookup = await _load_layers_for_zone(session, zone_code)
-        for layer in zoning_lookup:
-            attributes = layer.attributes or {}
-            overlays.extend(attributes.get("overlays", []))
-            hints.extend(attributes.get("advisory_hints", []))
-    overlays = list(dict.fromkeys(filter(None, overlays)))
-    hints = list(dict.fromkeys(filter(None, hints)))
-    return {
-        "input_kind": "address" if payload.address else "geometry",
-        "zone_code": zone_code,
-        "overlays": overlays,
-        "advisory_hints": hints,
-    }
+    layers = await _load_layers_for_zone(session, zone_code) if zone_code else []
+    return compose_buildable_response(
+        address=payload.address,
+        geometry=payload.geometry,
+        zone_code=zone_code,
+        layers=layers,
+    )
 
 
 async def _resolve_zone_code(
@@ -60,15 +55,10 @@ async def _resolve_zone_code(
         geocode = (await session.execute(stmt)).scalar_one_or_none()
         if geocode and geocode.parcel_id:
             parcel = await session.get(RefParcel, geocode.parcel_id)
-            if parcel and isinstance(parcel.bounds_json, dict):
-                zone_code = parcel.bounds_json.get("zone_code")
-                if zone_code:
-                    return str(zone_code)
-    if payload.geometry and isinstance(payload.geometry, dict):
-        properties = payload.geometry.get("properties")
-        if isinstance(properties, dict) and properties.get("zone_code"):
-            return str(properties["zone_code"])
-    return None
+            zone = zone_code_from_parcel(parcel)
+            if zone:
+                return zone
+    return zone_code_from_geometry(payload.geometry)
 
 
 async def _load_layers_for_zone(
