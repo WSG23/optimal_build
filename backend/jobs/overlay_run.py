@@ -4,13 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, List
+import time
+from typing import Any, Dict, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.models.geometry import CanonicalGeometry, deserialize_geometry
+from app.core.geometry import GeometrySerializer
+from app.core.metrics import OVERLAY_BASELINE_SECONDS
+from app.core.models.geometry import GeometryGraph
+from app.models.audit import AuditLog
 from app.models.overlay import (
     OverlayRunLock,
     OverlaySourceGeometry,
@@ -50,8 +54,9 @@ async def run_overlay_for_project(
     if not records:
         return result
 
+    started_at = time.perf_counter()
     for source in records:
-        geometry = deserialize_geometry(source.graph)
+        geometry = GeometrySerializer.from_export(source.graph)
         fingerprint = geometry.fingerprint()
         source.checksum = fingerprint
         lock = _acquire_lock(session, source)
@@ -93,6 +98,20 @@ async def run_overlay_for_project(
         finally:
             lock.is_active = False
             lock.released_at = datetime.now(timezone.utc)
+    duration = time.perf_counter() - started_at
+    baseline_seconds = float(result.evaluated) * OVERLAY_BASELINE_SECONDS
+    log = AuditLog(
+        project_id=project_id,
+        event_type="overlay_run",
+        baseline_seconds=baseline_seconds if baseline_seconds > 0 else None,
+        actual_seconds=duration,
+        context={
+            "evaluated": result.evaluated,
+            "created": result.created,
+            "updated": result.updated,
+        },
+    )
+    session.add(log)
     await session.commit()
     return result
 
@@ -119,13 +138,14 @@ def _acquire_lock(session: AsyncSession, source: OverlaySourceGeometry) -> Overl
     return lock
 
 
-def _evaluate_geometry(geometry: CanonicalGeometry) -> List[Dict[str, object]]:
+def _evaluate_geometry(geometry: GeometryGraph) -> List[Dict[str, object]]:
     """Simple heuristic feasibility engine that produces overlay suggestions."""
 
-    root = geometry.root
     suggestions: Dict[str, Dict[str, object]] = {}
+    site_level_id = next(iter(geometry.levels.keys()), None)
+    site_metadata = _collect_site_metadata(geometry)
 
-    if root.get("heritage_zone"):
+    if site_metadata.get("heritage_zone"):
         suggestions["heritage_conservation"] = {
             "code": "heritage_conservation",
             "title": "Heritage conservation review",
@@ -134,11 +154,11 @@ def _evaluate_geometry(geometry: CanonicalGeometry) -> List[Dict[str, object]]:
             "score": 0.9,
             "engine_payload": {
                 "triggers": ["heritage_zone"],
-                "nodes": [root.node_id],
+                "nodes": [site_level_id] if site_level_id else [],
             },
         }
 
-    flood_zone = root.get("flood_zone")
+    flood_zone = site_metadata.get("flood_zone")
     if isinstance(flood_zone, str) and flood_zone.lower() in {"coastal", "river", "flood"}:
         suggestions["flood_mitigation"] = {
             "code": "flood_mitigation",
@@ -149,11 +169,11 @@ def _evaluate_geometry(geometry: CanonicalGeometry) -> List[Dict[str, object]]:
             "engine_payload": {
                 "triggers": ["flood_zone"],
                 "value": flood_zone,
-                "nodes": [root.node_id],
+                "nodes": [site_level_id] if site_level_id else [],
             },
         }
 
-    site_area = root.get("site_area_sqm") or root.get("site_area")
+    site_area = site_metadata.get("site_area_sqm") or site_metadata.get("site_area")
     try:
         site_area_value = float(site_area) if site_area is not None else None
     except (TypeError, ValueError):
@@ -168,7 +188,7 @@ def _evaluate_geometry(geometry: CanonicalGeometry) -> List[Dict[str, object]]:
             "engine_payload": {
                 "triggers": ["site_area"],
                 "value": site_area_value,
-                "nodes": [root.node_id],
+                "nodes": [site_level_id] if site_level_id else [],
             },
         }
 
@@ -183,7 +203,7 @@ def _evaluate_geometry(geometry: CanonicalGeometry) -> List[Dict[str, object]]:
             "engine_payload": {
                 "triggers": ["building_height"],
                 "value": tall_building_trigger["height"],
-                "nodes": [tall_building_trigger["node_id"]],
+                "nodes": [tall_building_trigger["entity_id"]],
             },
         }
 
@@ -191,14 +211,25 @@ def _evaluate_geometry(geometry: CanonicalGeometry) -> List[Dict[str, object]]:
     return [suggestions[code] for code in ordered_codes]
 
 
-def _find_tall_building_trigger(geometry: CanonicalGeometry) -> Dict[str, object] | None:
+def _find_tall_building_trigger(geometry: GeometryGraph) -> Dict[str, object] | None:
     """Locate a tall building node, if any."""
 
-    for node in geometry.find_nodes(kind="building"):
-        height = _coerce_float(node.get("height_m") or node.get("height"))
+    for space in geometry.spaces.values():
+        height = _coerce_float(space.metadata.get("height_m") or space.metadata.get("height"))
         if height is not None and height > 45:
-            return {"node_id": node.node_id, "height": height}
+            return {"entity_id": space.id, "height": height}
+    for fixture in geometry.fixtures.values():
+        height = _coerce_float(fixture.metadata.get("height_m") or fixture.metadata.get("height"))
+        if height is not None and height > 45:
+            return {"entity_id": fixture.id, "height": height}
     return None
+
+
+def _collect_site_metadata(geometry: GeometryGraph) -> Dict[str, Any]:
+    metadata: Dict[str, Any] = {}
+    for level in geometry.levels.values():
+        metadata.update(level.metadata)
+    return metadata
 
 
 def _coerce_float(value: object) -> float | None:

@@ -10,12 +10,15 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Mapping
+import time
 import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.metrics import EXPORT_BASELINE_SECONDS
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
+from app.models.audit import AuditLog
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 
 try:  # pragma: no cover - optional dependency
@@ -462,6 +465,7 @@ async def generate_project_export(
 ) -> ExportArtifact:
     """Generate an export artefact for the given project."""
 
+    started_at = time.perf_counter()
     result = await session.execute(
         select(OverlaySourceGeometry).where(OverlaySourceGeometry.project_id == project_id)
     )
@@ -508,6 +512,25 @@ async def generate_project_export(
         payload=payload,
         manifest=manifest,
     )
+    approved_count = sum(
+        1 for overlay in overlay_suggestions if (overlay.status or "pending").lower() == "approved"
+    )
+    duration = time.perf_counter() - started_at
+    baseline_seconds = max(1, approved_count) * EXPORT_BASELINE_SECONDS
+    log = AuditLog(
+        project_id=project_id,
+        event_type="export_generated",
+        baseline_seconds=baseline_seconds,
+        actual_seconds=duration,
+        context={
+            "format": options.format.value,
+            "accepted_suggestions": approved_count,
+            "include_pending": options.include_pending_overlays,
+            "include_rejected": options.include_rejected_overlays,
+        },
+    )
+    session.add(log)
+    await session.commit()
     return artifact
 
 

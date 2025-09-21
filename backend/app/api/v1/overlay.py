@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_session
+from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
+from app.models.audit import AuditLog
 from app.models.overlay import OverlayDecision, OverlaySuggestion
 from app.schemas.overlay import OverlayDecisionPayload, OverlaySuggestion as OverlaySuggestionSchema
 from jobs.overlay_run import OverlayRunResult, run_overlay_for_project
@@ -105,6 +107,25 @@ async def decide_overlay(
     suggestion.decided_at = timestamp
     suggestion.decided_by = payload.decided_by
     suggestion.decision_notes = payload.notes
+
+    created_at = suggestion.created_at
+    if created_at:
+        actual_seconds = max((timestamp - created_at).total_seconds(), 0.0)
+    else:
+        actual_seconds = None
+    log = AuditLog(
+        project_id=project_id,
+        event_type="overlay_decision",
+        baseline_seconds=DECISION_REVIEW_BASELINE_SECONDS,
+        actual_seconds=actual_seconds,
+        context={
+            "suggestion_id": suggestion.id,
+            "decision": decision_value,
+            "accepted": decision_value == "approved",
+            "decided_by": payload.decided_by,
+        },
+    )
+    session.add(log)
 
     await session.commit()
     await session.refresh(suggestion)
