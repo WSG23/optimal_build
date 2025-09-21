@@ -59,9 +59,15 @@ async function loadAppComponent() {
 test('App renders the expected headline', async () => {
   const App = await loadAppComponent()
   const html = renderToString(React.createElement(App))
+  const expectedHeadingCopy = 'Optimal Build Studio'
+  const expectedHeadingPattern = new RegExp(
+    `<h1[^>]*>\\s*${expectedHeadingCopy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*<\\/h1>`,
+    'i',
+  )
+
   assert.match(
     html,
-    /<h1[^>]*>\s*Optimal Build Studio\s*<\/h1>/i,
-    'Expected heading to contain "Optimal Build Studio"',
+    expectedHeadingPattern,
+    `Expected heading to contain "${expectedHeadingCopy}"`,
   )
 })
