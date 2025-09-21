@@ -157,3 +157,19 @@ async def test_rule_review_publish_action(client: AsyncClient, async_session_fac
     assert response.status_code == 200
     item = response.json()["item"]
     assert item["is_published"] is True
+    assert item["review_notes"] == "Ready"
+
+    # The review notes are exposed via the list endpoint without altering the canonical text.
+    list_response = await client.get("/api/v1/rules")
+    assert list_response.status_code == 200
+    list_payload = list_response.json()
+    assert list_payload["items"][0]["review_notes"] == "Ready"
+
+    async with async_session_factory() as session:
+        rule = await session.get(RefRule, rule_id)
+        assert rule is not None
+        assert (
+            rule.notes
+            == "Provide 1.5 parking spaces per unit; maximum ramp slope 1:12"
+        )
+        assert rule.review_notes == "Ready"
