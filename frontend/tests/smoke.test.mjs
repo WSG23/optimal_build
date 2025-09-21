@@ -14,7 +14,23 @@ const projectRoot = path.resolve(__dirname, '..')
 
 async function loadAppComponent() {
   const result = await build({
-    entryPoints: [path.join(projectRoot, 'src', 'App.tsx')],
+    stdin: {
+      contents: `import React from 'react';
+import App from './src/App.tsx';
+import { LocaleProvider } from './src/i18n/LocaleContext.tsx';
+
+export default function WrappedApp() {
+  return (
+    <LocaleProvider>
+      <App />
+    </LocaleProvider>
+  );
+}
+`,
+      loader: 'tsx',
+      resolveDir: projectRoot,
+      sourcefile: 'AppWrapper.tsx',
+    },
     absWorkingDir: projectRoot,
     bundle: true,
     format: 'esm',

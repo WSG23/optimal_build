@@ -1,138 +1,112 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 
-import { Link } from './router'
+import { Link, useRouterPath } from './router'
+import { useLocale } from './i18n/LocaleContext'
+import type { Locale } from './i18n/strings'
 
-interface HealthStatus {
-  status: string
-  service: string
+export interface AppLayoutProps {
+  title: string
+  subtitle?: string
+  actions?: ReactNode
+  children: ReactNode
 }
 
-function App() {
-  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps) {
+  const { locale, strings, setLocale } = useLocale()
+  const path = useRouterPath()
 
-  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/'
-  const resolvedBaseUrl = useMemo<URL | null>(() => {
-    if (typeof window === 'undefined') {
-      return null
-    }
-
-    try {
-      return new URL(rawBaseUrl, window.location.origin)
-    } catch (err) {
-      console.error('Invalid VITE_API_BASE_URL, falling back to window.location.origin', err)
-      return new URL(window.location.origin)
-    }
-  }, [rawBaseUrl])
-
-  const buildApiUrl = useCallback(
-    (path: string) => {
-      if (!resolvedBaseUrl) {
-        return path
-      }
-
-      return new URL(path, resolvedBaseUrl).toString()
-    },
-    [resolvedBaseUrl],
-  )
-
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const response = await fetch(buildApiUrl('health'))
-        if (response.ok) {
-          const data = await response.json()
-          setHealthStatus(data)
-        } else {
-          setError('Backend not responding')
-        }
-      } catch (err) {
-        setError('Cannot connect to backend')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkHealth()
-  }, [buildApiUrl])
+  const navItems = [
+    { path: '/', label: strings.nav.home },
+    { path: '/cad/upload', label: strings.nav.upload },
+    { path: '/cad/detection', label: strings.nav.detection },
+    { path: '/cad/pipelines', label: strings.nav.pipelines },
+    { path: '/feasibility', label: strings.nav.feasibility },
+  ]
 
   return (
-    <div className="app-shell">
-      <header className="app-shell__header">
-        <h1>Optimal Build Studio</h1>
-        <p>
-          Explore automated compliance insights, land intelligence and feasibility analysis for
-          Singapore developments.
-        </p>
-      </header>
-
-      <nav className="app-shell__nav">
-        <Link className="app-shell__nav-link" to="/feasibility">
-          Launch feasibility wizard
-        </Link>
-        <a
-          className="app-shell__nav-link"
-          href={buildApiUrl('docs')}
-          target="_blank"
-          rel="noreferrer"
-        >
-          View API reference
-        </a>
-      </nav>
-
-      <section className="app-shell__section">
-        <h2>System status</h2>
-        {loading && <p>Checking backend connection…</p>}
-        {error && <p style={{ color: '#b91c1c' }}>❌ {error}</p>}
-        {healthStatus && (
-          <p style={{ color: '#15803d' }}>
-            ✅ Backend Status: {healthStatus.status} ({healthStatus.service})
-          </p>
-        )}
-      </section>
-
-      <section className="app-shell__section">
-        <h2>Quick links</h2>
-        <ul>
-          <li>
-            <a href={buildApiUrl('health')} target="_blank" rel="noreferrer">
-              Backend health check
-            </a>
-          </li>
-          <li>
-            <a href={buildApiUrl('docs')} target="_blank" rel="noreferrer">
-              API documentation
-            </a>
-          </li>
-          <li>
-            <a href={buildApiUrl('api/v1/test')} target="_blank" rel="noreferrer">
-              API test endpoint
-            </a>
-          </li>
-        </ul>
-      </section>
-
-      <section className="app-shell__section">
-        <h2>Why start here?</h2>
-        <ul>
-          <li>Capture project basics once and reuse across compliance workflows.</li>
-          <li>Review cross-agency rules synthesised from the knowledge platform.</li>
-          <li>Generate buildability insights with clear next steps for the team.</li>
-        </ul>
-      </section>
-
-      <section className="app-shell__section">
-        <h2>Next steps</h2>
-        <ol>
-          <li>✅ Frontend and backend are connected.</li>
-          <li>🔄 Add database integration.</li>
-          <li>🔄 Implement buildable analysis.</li>
-          <li>🔄 Add Singapore building codes.</li>
-        </ol>
-      </section>
+    <div className="app-layout">
+      <aside className="app-layout__nav">
+        <div className="app-layout__brand">
+          <h1>{strings.app.title}</h1>
+          <p>{strings.app.tagline}</p>
+        </div>
+        <nav>
+          <ul>
+            {navItems.map((item) => {
+              const isActive = item.path === '/' ? path === '/' : path.startsWith(item.path)
+              return (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`app-layout__nav-link${isActive ? ' app-layout__nav-link--active' : ''}`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+      </aside>
+      <main className="app-layout__main">
+        <header className="app-layout__header">
+          <div>
+            <h2>{title}</h2>
+            {subtitle && <p>{subtitle}</p>}
+          </div>
+          <div className="app-layout__toolbar">
+            <label className="app-layout__locale">
+              <span className="sr-only">{strings.app.helper}</span>
+              <select value={locale} onChange={(event) => setLocale(event.target.value as Locale)}>
+                <option value="en">EN</option>
+                <option value="zh">中文</option>
+              </select>
+            </label>
+            {actions}
+          </div>
+        </header>
+        <div className="app-layout__content">{children}</div>
+      </main>
     </div>
   )
 }
 
-export default App
+export function HomeOverview() {
+  const { strings } = useLocale()
+  return (
+    <AppLayout title={strings.nav.home} subtitle={strings.app.tagline}>
+      <section className="app-home">
+        <article className="app-home__card">
+          <h3>{strings.nav.upload}</h3>
+          <p>{strings.uploader.subtitle}</p>
+          <Link to="/cad/upload" className="app-home__cta">
+            {strings.nav.upload}
+          </Link>
+        </article>
+        <article className="app-home__card">
+          <h3>{strings.nav.detection}</h3>
+          <p>{strings.detection.subtitle}</p>
+          <Link to="/cad/detection" className="app-home__cta">
+            {strings.nav.detection}
+          </Link>
+        </article>
+        <article className="app-home__card">
+          <h3>{strings.nav.pipelines}</h3>
+          <p>{strings.pipelines.subtitle}</p>
+          <Link to="/cad/pipelines" className="app-home__cta">
+            {strings.nav.pipelines}
+          </Link>
+        </article>
+        <article className="app-home__card">
+          <h3>{strings.nav.feasibility}</h3>
+          <p>Kick off planning studies with project context, rule packs and buildability checks.</p>
+          <Link to="/feasibility" className="app-home__cta">
+            {strings.nav.feasibility}
+          </Link>
+        </article>
+      </section>
+    </AppLayout>
+  )
+}
+
+export default HomeOverview

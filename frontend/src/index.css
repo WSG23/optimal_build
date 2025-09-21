@@ -36,46 +36,544 @@ h1, h2, h3 {
   line-height: 1.1;
 }
 
-.app-shell {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.app-layout__nav {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 2.5rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.app-shell__header h1 {
-  margin-bottom: 0.5rem;
-  font-size: 2.5rem;
+.app-layout__brand h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  color: #ffffff;
 }
 
-.app-shell__nav {
+.app-layout__brand p {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 0.95rem;
+}
+
+.app-layout__nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.app-shell__nav-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border-radius: 9999px;
-  background-color: #2563eb;
+.app-layout__nav-link {
+  display: block;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  color: inherit;
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.app-layout__nav-link--active {
+  background: #2563eb;
   color: #ffffff;
   font-weight: 600;
 }
 
-.app-shell__nav-link + .app-shell__nav-link {
-  background-color: #0f172a;
+.app-layout__main {
+  padding: 2.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.app-shell__section ul {
-  padding-left: 1.25rem;
+.app-layout__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  background: #ffffff;
+  border-radius: 1.5rem;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.app-layout__header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 2rem;
+}
+
+.app-layout__header p {
   margin: 0;
+  color: #475569;
+  max-width: 540px;
+}
+
+.app-layout__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-layout__locale select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5f5;
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.app-layout__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.app-home {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.app-home__card {
+  background: #ffffff;
+  padding: 1.75rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 24px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.app-home__card h3 {
+  margin: 0;
+}
+
+.app-home__card p {
+  margin: 0;
+  color: #475569;
+  flex: 1;
+}
+
+.app-home__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.cad-uploader {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: stretch;
+}
+
+.cad-uploader__dropzone {
+  border: 2px dashed rgba(37, 99, 235, 0.4);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  text-align: center;
+  background: rgba(37, 99, 235, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.cad-uploader__dropzone--dragging {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: #2563eb;
+}
+
+.cad-uploader__input {
+  display: none;
+}
+
+.cad-uploader__hint {
+  margin: 0;
+  font-weight: 600;
+}
+
+.cad-uploader__browse {
+  align-self: center;
+  padding: 0.65rem 1.5rem;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cad-uploader__status {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.cad-uploader__status h3 {
+  margin-top: 0;
+}
+
+.cad-uploader__meta {
   display: grid;
   gap: 0.75rem;
+  margin: 1.5rem 0 0;
+}
+
+.cad-uploader__meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cad-uploader__meta dt {
+  font-weight: 600;
+}
+
+.cad-uploader__message {
+  color: #b91c1c;
+  margin: 0.75rem 0 0;
+}
+
+.cad-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cad-upload__controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cad-upload__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.cad-upload__label select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5f5;
+}
+
+.cad-upload__error {
+  color: #b91c1c;
+}
+
+.cad-preview {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cad-preview__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.cad-preview__summary {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.cad-preview__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.cad-preview__panel {
+  background: #f1f5f9;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.cad-preview__panel h3 {
+  margin-top: 0;
+}
+
+.cad-preview__panel ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.cad-preview__lock-indicator {
+  margin: 0;
+  color: #b45309;
+  font-weight: 600;
+}
+
+.cad-preview__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.cad-preview__table caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 0 1rem 0.75rem;
+}
+
+.cad-preview__table th,
+.cad-preview__table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.cad-status {
+  font-weight: 600;
+}
+
+.cad-status--source {
+  color: #334155;
+}
+
+.cad-status--pending {
+  color: #b45309;
+}
+
+.cad-status--approved {
+  color: #15803d;
+}
+
+.cad-status--rejected {
+  color: #b91c1c;
+}
+
+.cad-panel {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cad-panel h3 {
+  margin: 0;
+}
+
+.cad-panel__hint {
+  margin: 0;
+  color: #b45309;
+}
+
+.cad-layer-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cad-layer-toggle__button {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5f5;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.cad-layer-toggle__button--active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.cad-bulk-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cad-bulk-controls button,
+.cad-panel button,
+.cad-uploader__browse,
+.cad-detection__toolbar select,
+.cad-upload__label select,
+.cad-pipelines__toolbar select {
+  font-family: inherit;
+}
+
+.cad-bulk-controls button,
+.cad-panel button,
+.cad-export button,
+.cad-pipelines__toolbar select {
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5f5;
+  background: #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.cad-bulk-controls button:disabled,
+.cad-panel button:disabled,
+.cad-export button:disabled {
+  background: #cbd5f5;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.cad-detection__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cad-detection__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.cad-rulepack {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cad-rulepack > li {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.cad-rulepack__overlay {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: #2563eb;
+}
+
+.cad-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.cad-timeline__baseline {
+  margin: 0;
+  color: #475569;
+}
+
+.cad-export {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cad-export button {
+  width: 100%;
+}
+
+.cad-roi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.cad-roi dt {
+  font-weight: 600;
+}
+
+.cad-roi dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.35rem;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.cad-pipelines__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.cad-pipelines__context {
+  margin: 0;
+  color: #475569;
+}
+
+.cad-pipelines__error {
+  color: #b91c1c;
+}
+
+.cad-pipelines ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.cad-pipelines__item {
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.cad-pipelines__item dl {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.cad-pipelines__item dt {
+  font-weight: 600;
+}
+
+.cad-pipelines__item dd {
+  margin: 0.25rem 0 0;
 }
 
 .feasibility-wizard {
