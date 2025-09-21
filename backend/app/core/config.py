@@ -4,6 +4,7 @@ import json
 import os
 import secrets
 from typing import Iterable, List
+from urllib.parse import urlparse, urlunparse
 
 _DEFAULT_ALLOWED_ORIGINS = ("http://localhost:3000", "http://localhost:5173")
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
@@ -50,6 +51,23 @@ def _load_allowed_hosts() -> List[str]:
         return list(_DEFAULT_ALLOWED_HOSTS)
 
     return list(dict.fromkeys(hosts))
+
+
+def _derive_redis_url(base_url: str, db: int) -> str:
+    """Return ``base_url`` pointing at a specific Redis database index.
+
+    If ``base_url`` looks like a standard redis/rediss URL, adjust the path so the
+    caller receives an address for the requested database while preserving other
+    components (authentication, host, query string, etc.). If the URL uses an
+    unexpected scheme or structure, fall back to returning it unchanged so the
+    caller can decide how to handle custom connection syntaxes.
+    """
+
+    parsed = urlparse(base_url)
+    if parsed.scheme not in {"redis", "rediss"} or not parsed.netloc:
+        return base_url
+
+    return urlunparse(parsed._replace(path=f"/{db}"))
 
 
 class Settings:
@@ -115,9 +133,18 @@ class Settings:
         )
 
         self.REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-        self.CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", self.REDIS_URL)
-        self.CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", self.REDIS_URL)
-        self.RQ_REDIS_URL = os.getenv("RQ_REDIS_URL", self.REDIS_URL)
+        redis_base = self.REDIS_URL or "redis://localhost:6379"
+        default_celery_broker = _derive_redis_url(redis_base, 0)
+        default_celery_backend = _derive_redis_url(redis_base, 1)
+        default_rq_url = _derive_redis_url(redis_base, 2)
+
+        self.CELERY_BROKER_URL = os.getenv(
+            "CELERY_BROKER_URL", default_celery_broker
+        )
+        self.CELERY_RESULT_BACKEND = os.getenv(
+            "CELERY_RESULT_BACKEND", default_celery_backend
+        )
+        self.RQ_REDIS_URL = os.getenv("RQ_REDIS_URL", default_rq_url)
 
         self.ODA_LICENSE_KEY = os.getenv("ODA_LICENSE_KEY", "")
 
