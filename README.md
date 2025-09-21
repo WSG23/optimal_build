@@ -14,3 +14,17 @@ The frontend reads API locations from the `VITE_API_BASE_URL` variable that is l
 | Staging/production on a dedicated API domain | `https://api.example.com/` | Use a fully-qualified URL when the API is hosted on a different domain. |
 
 Set the variable in the environment that builds the frontend (e.g., `frontend/.env`, `.env.production`, Docker/CI environment variables, or hosting provider settings). Because the variable name starts with `VITE_`, it is inlined at build time and no additional runtime configuration is required.
+
+## Backend environment configuration
+
+Copy `.env.example` to `.env` at the repository root to configure the FastAPI backend and background workers. The template now includes the following groups of variables:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `ODA_LICENSE_KEY` | _(empty)_ | Inject the proprietary license string issued by the Open Design Alliance (or other CAD SDK vendor). Provide the real value via your local `.env`, container secrets, or CI/CD secret store — never commit the key. |
+| `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | `redis://localhost:6379/0` and `/1` | Connection strings used by Celery for task dispatch and result storage. Override if your Redis deployment lives elsewhere or you use a different broker. |
+| `RQ_REDIS_URL` | `redis://localhost:6379/2` | Redis connection used by any RQ workers. |
+| `OVERLAY_QUEUE_LOW`, `OVERLAY_QUEUE_DEFAULT`, `OVERLAY_QUEUE_HIGH` | `overlay:low`, `overlay:default`, `overlay:high` | Named queues for overlay-processing jobs so workers can prioritise workloads. |
+| `IMPORTS_BUCKET_NAME`, `EXPORTS_BUCKET_NAME` | `cad-imports`, `cad-exports` | Object-storage buckets used for CAD uploads and generated exports. |
+
+These values are consumed by `backend/app/core/config.py`, which falls back to the defaults above for local development. In staging or production deployments, configure the same variables through your orchestrator (Docker Compose, Kubernetes, managed task queue, etc.) so that the backend API, Celery workers, and any RQ workers share consistent queue and storage names.
