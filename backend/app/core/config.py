@@ -6,6 +6,7 @@ import secrets
 from typing import Iterable, List
 
 _DEFAULT_ALLOWED_ORIGINS = ("http://localhost:3000", "http://localhost:5173")
+_DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 
 
 def _load_allowed_origins() -> List[str]:
@@ -37,29 +38,112 @@ def _load_allowed_origins() -> List[str]:
     return list(dict.fromkeys(cleaned))
 
 
+def _load_allowed_hosts() -> List[str]:
+    """Retrieve allowed hosts from the environment."""
+
+    raw_hosts = os.getenv("ALLOWED_HOSTS")
+    if not raw_hosts:
+        return list(_DEFAULT_ALLOWED_HOSTS)
+
+    hosts = [host.strip() for host in raw_hosts.split(",") if host.strip()]
+    if not hosts:
+        return list(_DEFAULT_ALLOWED_HOSTS)
+
+    return list(dict.fromkeys(hosts))
+
+
 class Settings:
     """Application settings."""
-    
-    PROJECT_NAME: str = "Building Compliance Platform"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = secrets.token_urlsafe(32)
-    ENVIRONMENT: str = "development"
-    
-    # Database
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "password"
-    POSTGRES_DB: str = "building_compliance"
-    POSTGRES_PORT: str = "5432"
-    SQLALCHEMY_DATABASE_URI: str = "postgresql+asyncpg://postgres:password@localhost:5432/building_compliance"
-    
-    # CORS
-    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
-    ALLOWED_ORIGINS: List[str] = _load_allowed_origins()
-    
-    # Logging
-    LOG_LEVEL: str = "INFO"
+
+    PROJECT_NAME: str
+    VERSION: str
+    API_V1_STR: str
+    SECRET_KEY: str
+    ENVIRONMENT: str
+
+    POSTGRES_SERVER: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_PORT: str
+    SQLALCHEMY_DATABASE_URI: str
+
+    REDIS_URL: str
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
+    RQ_REDIS_URL: str
+
+    ODA_LICENSE_KEY: str
+
+    OVERLAY_QUEUE_LOW: str
+    OVERLAY_QUEUE_DEFAULT: str
+    OVERLAY_QUEUE_HIGH: str
+
+    S3_ENDPOINT: str
+    S3_ACCESS_KEY: str
+    S3_SECRET_KEY: str
+    IMPORTS_BUCKET_NAME: str
+    EXPORTS_BUCKET_NAME: str
+
+    FIRST_SUPERUSER: str
+    FIRST_SUPERUSER_PASSWORD: str
+
+    ALLOWED_HOSTS: List[str]
+    ALLOWED_ORIGINS: List[str]
+
+    LOG_LEVEL: str
+
+    def __init__(self) -> None:
+        self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
+        self.VERSION = os.getenv("PROJECT_VERSION", "1.0.0")
+        self.API_V1_STR = "/api/v1"
+        self.SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
+        self.ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+        self.POSTGRES_SERVER = os.getenv("POSTGRES_SERVER", "localhost")
+        self.POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+        self.POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+        self.POSTGRES_DB = os.getenv("POSTGRES_DB", "building_compliance")
+        self.POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+
+        default_db_uri = (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+        self.SQLALCHEMY_DATABASE_URI = os.getenv(
+            "SQLALCHEMY_DATABASE_URI", default_db_uri
+        )
+
+        self.REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self.CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", self.REDIS_URL)
+        self.CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", self.REDIS_URL)
+        self.RQ_REDIS_URL = os.getenv("RQ_REDIS_URL", self.REDIS_URL)
+
+        self.ODA_LICENSE_KEY = os.getenv("ODA_LICENSE_KEY", "")
+
+        self.OVERLAY_QUEUE_LOW = os.getenv("OVERLAY_QUEUE_LOW", "overlay:low")
+        self.OVERLAY_QUEUE_DEFAULT = os.getenv(
+            "OVERLAY_QUEUE_DEFAULT", "overlay:default"
+        )
+        self.OVERLAY_QUEUE_HIGH = os.getenv("OVERLAY_QUEUE_HIGH", "overlay:high")
+
+        self.S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://localhost:9000")
+        self.S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "minioadmin")
+        self.S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "minioadmin")
+        self.IMPORTS_BUCKET_NAME = os.getenv("IMPORTS_BUCKET_NAME", "cad-imports")
+        self.EXPORTS_BUCKET_NAME = os.getenv("EXPORTS_BUCKET_NAME", "cad-exports")
+
+        self.FIRST_SUPERUSER = os.getenv(
+            "FIRST_SUPERUSER", "admin@buildingcompliance.com"
+        )
+        self.FIRST_SUPERUSER_PASSWORD = os.getenv(
+            "FIRST_SUPERUSER_PASSWORD", "changeme"
+        )
+
+        self.ALLOWED_HOSTS = _load_allowed_hosts()
+        self.ALLOWED_ORIGINS = _load_allowed_origins()
+
+        self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 
 settings = Settings()

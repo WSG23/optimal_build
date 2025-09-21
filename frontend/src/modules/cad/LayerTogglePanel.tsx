@@ -1,6 +1,6 @@
+import { useTranslation } from '../../i18n'
 import { DetectionStatus } from './types'
 import { computeNextLayers } from './layerToggle'
-import { useLocale } from '../../i18n/LocaleContext'
 
 interface LayerTogglePanelProps {
   activeLayers: DetectionStatus[]
@@ -9,9 +9,15 @@ interface LayerTogglePanelProps {
 }
 
 const ORDER: DetectionStatus[] = ['source', 'pending', 'approved', 'rejected']
+const LABEL_KEYS: Record<DetectionStatus, string> = {
+  source: 'controls.source',
+  pending: 'controls.pending',
+  approved: 'controls.approved',
+  rejected: 'controls.rejected',
+}
 
 export function LayerTogglePanel({ activeLayers, onToggle, disabled = false }: LayerTogglePanelProps) {
-  const { strings } = useLocale()
+  const { t } = useTranslation()
 
   const handleToggle = (status: DetectionStatus) => {
     if (disabled) {
@@ -21,16 +27,9 @@ export function LayerTogglePanel({ activeLayers, onToggle, disabled = false }: L
     onToggle(status, next)
   }
 
-  const labels: Record<DetectionStatus, string> = {
-    source: strings.controls.source,
-    pending: strings.controls.pending,
-    approved: strings.controls.approved,
-    rejected: strings.controls.rejected,
-  }
-
   return (
     <section className="cad-panel">
-      <h3>{strings.controls.showLayer}</h3>
+      <h3>{t('controls.showLayer')}</h3>
       <div className="cad-layer-toggle">
         {ORDER.map((status) => {
           const isActive = activeLayers.includes(status)
@@ -43,7 +42,7 @@ export function LayerTogglePanel({ activeLayers, onToggle, disabled = false }: L
               aria-pressed={isActive}
               disabled={disabled}
             >
-              {labels[status]}
+              {t(LABEL_KEYS[status])}
             </button>
           )
         })}

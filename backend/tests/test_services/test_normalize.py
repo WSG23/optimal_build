@@ -2,6 +2,10 @@
 
 from pytest import approx
 
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from app.services.normalize import RuleNormalizer
 
 

@@ -1,7 +1,7 @@
 import { ChangeEvent, DragEvent, useRef, useState } from 'react'
 
 import type { ParseStatusUpdate } from '../../api/client'
-import { useLocale } from '../../i18n/LocaleContext'
+import { useTranslation } from '../../i18n'
 
 interface CadUploaderProps {
   onUpload: (file: File) => void
@@ -11,7 +11,7 @@ interface CadUploaderProps {
 }
 
 export function CadUploader({ onUpload, isUploading = false, status, zoneCode }: CadUploaderProps) {
-  const { strings } = useLocale()
+  const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -47,12 +47,14 @@ export function CadUploader({ onUpload, isUploading = false, status, zoneCode }:
   }
 
   const latestStatus = status?.status === 'ready'
-    ? strings.uploader.ready
+    ? t('uploader.ready')
     : status?.status === 'error'
-      ? strings.uploader.error
+      ? t('uploader.error')
       : status
-        ? strings.uploader.parsing
+        ? t('uploader.parsing')
         : null
+
+  const fallbackDash = t('common.fallback.dash')
 
   return (
     <div className="cad-uploader">
@@ -71,28 +73,28 @@ export function CadUploader({ onUpload, isUploading = false, status, zoneCode }:
           onChange={handleChange}
           disabled={isUploading}
         />
-        <p className="cad-uploader__hint">{strings.uploader.dropHint}</p>
+        <p className="cad-uploader__hint">{t('uploader.dropHint')}</p>
         <button type="button" className="cad-uploader__browse" onClick={handleBrowse} disabled={isUploading}>
-          {strings.uploader.browseLabel}
+          {t('uploader.browseLabel')}
         </button>
       </div>
 
       <aside className="cad-uploader__status">
-        <h3>{strings.uploader.latestStatus}</h3>
-        {latestStatus ? <p>{latestStatus}</p> : <p>{strings.uploader.parsing}</p>}
+        <h3>{t('uploader.latestStatus')}</h3>
+        {latestStatus ? <p>{latestStatus}</p> : <p>{t('uploader.parsing')}</p>}
         {status?.message && <p className="cad-uploader__message">{status.message}</p>}
         <dl className="cad-uploader__meta">
           <div>
-            <dt>{strings.uploader.zone}</dt>
-            <dd>{zoneCode ?? status?.zoneCode ?? '—'}</dd>
+            <dt>{t('uploader.zone')}</dt>
+            <dd>{zoneCode ?? status?.zoneCode ?? fallbackDash}</dd>
           </div>
           <div>
-            <dt>{strings.uploader.overlays}</dt>
-            <dd>{status?.overlays?.length ? status.overlays.join(', ') : '—'}</dd>
+            <dt>{t('uploader.overlays')}</dt>
+            <dd>{status?.overlays?.length ? status.overlays.join(', ') : fallbackDash}</dd>
           </div>
           <div>
-            <dt>{strings.uploader.hints}</dt>
-            <dd>{status?.hints?.length ? status.hints.join(', ') : '—'}</dd>
+            <dt>{t('uploader.hints')}</dt>
+            <dd>{status?.hints?.length ? status.hints.join(', ') : fallbackDash}</dd>
           </div>
         </dl>
       </aside>

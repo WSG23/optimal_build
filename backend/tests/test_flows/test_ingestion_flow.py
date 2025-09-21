@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import select
 
 from app.flows.ingestion import material_standard_ingestion_flow

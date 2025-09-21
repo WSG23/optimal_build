@@ -163,6 +163,30 @@ h1, h2, h3 {
   gap: 1rem;
 }
 
+.locale-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.locale-switcher__label {
+  font-weight: 600;
+}
+
+.locale-switcher__select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5f5;
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.locale-switcher__select:focus {
+  outline: 2px solid #2563eb;
+  border-color: #2563eb;
+}
+
 .app-home__card h3 {
   margin: 0;
 }

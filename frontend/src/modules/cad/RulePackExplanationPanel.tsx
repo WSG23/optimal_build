@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
+
+import { useTranslation } from '../../i18n'
 import type { RuleSummary } from '../../api/client'
-import { useLocale } from '../../i18n/LocaleContext'
 
 interface RulePackExplanationPanelProps {
   rules: RuleSummary[]
@@ -7,21 +9,25 @@ interface RulePackExplanationPanelProps {
 }
 
 export function RulePackExplanationPanel({ rules, loading = false }: RulePackExplanationPanelProps) {
-  const { strings } = useLocale()
+  const { t } = useTranslation()
 
-  const grouped = rules.reduce<Record<string, RuleSummary[]>>((acc, rule) => {
-    const key = rule.authority || rule.topic || 'general'
-    acc[key] = [...(acc[key] ?? []), rule]
-    return acc
-  }, {})
+  const grouped = useMemo(
+    () =>
+      rules.reduce<Record<string, RuleSummary[]>>((acc, rule) => {
+        const key = rule.authority || rule.topic || 'general'
+        acc[key] = [...(acc[key] ?? []), rule]
+        return acc
+      }, {}),
+    [rules],
+  )
 
-  const keys = Object.keys(grouped).sort()
+  const keys = useMemo(() => Object.keys(grouped).sort(), [grouped])
 
   return (
     <section className="cad-panel">
-      <h3>{strings.panels.rulePackTitle}</h3>
-      {loading && <p>Loading…</p>}
-      {!loading && keys.length === 0 && <p>{strings.panels.rulePackEmpty}</p>}
+      <h3>{t('panels.rulePackTitle')}</h3>
+      {loading && <p>{t('common.loading')}</p>}
+      {!loading && keys.length === 0 && <p>{t('panels.rulePackEmpty')}</p>}
       {!loading && keys.length > 0 && (
         <ul className="cad-rulepack">
           {keys.map((key) => (
