@@ -3,13 +3,215 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import asynccontextmanager
 import sys
 
+from typing import TYPE_CHECKING, Any
+
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient
+
+try:  # pragma: no cover - optional dependency
+    import pytest_asyncio  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - shim for offline testing
+    from types import ModuleType
+
+    _pytest_asyncio = ModuleType("pytest_asyncio")
+
+    def _async_fixture(*fixture_args: Any, **fixture_kwargs: Any):
+        return pytest.fixture(*fixture_args, **fixture_kwargs)
+
+    _pytest_asyncio.fixture = _async_fixture  # type: ignore[attr-defined]
+
+    sys.modules.setdefault("pytest_asyncio", _pytest_asyncio)
+    pytest_asyncio = _pytest_asyncio  # type: ignore[assignment]
+
+    def _get_event_loop(request: pytest.FixtureRequest) -> asyncio.AbstractEventLoop:
+        return request.getfixturevalue("event_loop")
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_configure(config: pytest.Config) -> None:
+        config.addinivalue_line(
+            "markers",
+            "asyncio: mark test coroutine for execution when pytest-asyncio is unavailable.",
+        )
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
+        test_function = pyfuncitem.obj
+        marker = pyfuncitem.get_closest_marker("asyncio")
+        if inspect.iscoroutinefunction(test_function) or marker is not None:
+            request = getattr(pyfuncitem, "_request", None)
+            if request is None:
+                return None
+            loop = _get_event_loop(request)
+            result = test_function(**pyfuncitem.funcargs)
+            if inspect.isawaitable(result):
+                loop.run_until_complete(result)
+            return True
+        return None
+
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_fixture_setup(
+        fixturedef: pytest.FixtureDef[Any], request: pytest.FixtureRequest
+    ) -> Any:
+        func = fixturedef.func
+        if inspect.isasyncgenfunction(func):
+            loop = _get_event_loop(request)
+            dependencies = {
+                name: request.getfixturevalue(name) for name in fixturedef.argnames
+            }
+            async_gen = func(**dependencies)
+            value = loop.run_until_complete(async_gen.__anext__())
+
+            def _finalize() -> None:
+                loop.run_until_complete(async_gen.aclose())
+
+            request.addfinalizer(_finalize)
+            return value
+        if inspect.iscoroutinefunction(func):
+            loop = _get_event_loop(request)
+            dependencies = {
+                name: request.getfixturevalue(name) for name in fixturedef.argnames
+            }
+            return loop.run_until_complete(func(**dependencies))
+        return None
+
+try:  # pragma: no cover - optional dependency
+    import httpx  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - shim for offline testing
+    from types import ModuleType
+
+    try:
+        from fastapi.testclient import TestClient
+    except ModuleNotFoundError:  # pragma: no cover - optional dependency missing
+        pytest.skip(
+            "HTTPX is unavailable and FastAPI's TestClient is required for the async client shim.",
+            allow_module_level=True,
+        )
+
+    class _StubResponse:
+        """Minimal shim compatible with the subset of httpx.Response used in tests."""
+
+        def __init__(self, response: Any) -> None:
+            self._response = response
+
+        @property
+        def status_code(self) -> int:
+            return self._response.status_code
+
+        @property
+        def headers(self) -> Any:
+            return self._response.headers
+
+        @property
+        def text(self) -> str:
+            return self._response.text
+
+        def json(self) -> Any:
+            return self._response.json()
+
+        def raise_for_status(self) -> None:
+            self._response.raise_for_status()
+
+        def __getattr__(self, name: str) -> Any:
+            return getattr(self._response, name)
+
+    class _AsyncClient:
+        """Async-compatible facade over FastAPI's synchronous TestClient."""
+
+        def __init__(
+            self,
+            *,
+            app: Any,
+            base_url: str | None = None,
+            follow_redirects: bool | None = None,
+            headers: Any | None = None,
+            cookies: Any | None = None,
+            raise_server_exceptions: bool | None = None,
+            root_path: str | None = None,
+            **_: Any,
+        ) -> None:
+            client_options: dict[str, Any] = {}
+            if base_url is not None:
+                client_options["base_url"] = base_url
+            if follow_redirects is not None:
+                client_options["follow_redirects"] = follow_redirects
+            if headers is not None:
+                client_options["headers"] = headers
+            if cookies is not None:
+                client_options["cookies"] = cookies
+            if raise_server_exceptions is not None:
+                client_options["raise_server_exceptions"] = raise_server_exceptions
+            if root_path is not None:
+                client_options["root_path"] = root_path
+
+            self._client = TestClient(app=app, **client_options)
+            self._entered = False
+
+        async def __aenter__(self) -> "_AsyncClient":
+            self._client.__enter__()
+            self._entered = True
+            return self
+
+        async def __aexit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            traceback: Any,
+        ) -> None:
+            self._exit(exc_type, exc, traceback)
+
+        async def aclose(self) -> None:
+            self._exit(None, None, None)
+
+        def _exit(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            traceback: Any,
+        ) -> None:
+            if self._entered:
+                self._client.__exit__(exc_type, exc, traceback)
+                self._entered = False
+            else:
+                self._client.close()
+
+        async def request(self, method: str, url: str, **kwargs: Any) -> _StubResponse:
+            response = self._client.request(method, url, **kwargs)
+            return _StubResponse(response)
+
+        async def get(self, url: str, **kwargs: Any) -> _StubResponse:
+            return await self.request("GET", url, **kwargs)
+
+        async def post(self, url: str, **kwargs: Any) -> _StubResponse:
+            return await self.request("POST", url, **kwargs)
+
+        async def put(self, url: str, **kwargs: Any) -> _StubResponse:
+            return await self.request("PUT", url, **kwargs)
+
+        async def delete(self, url: str, **kwargs: Any) -> _StubResponse:
+            return await self.request("DELETE", url, **kwargs)
+
+        async def patch(self, url: str, **kwargs: Any) -> _StubResponse:
+            return await self.request("PATCH", url, **kwargs)
+
+        def __getattr__(self, name: str) -> Any:
+            return getattr(self._client, name)
+
+    _httpx = ModuleType("httpx")
+    _httpx.AsyncClient = _AsyncClient  # type: ignore[attr-defined]
+    _httpx.__all__ = ["AsyncClient"]  # type: ignore[attr-defined]
+
+    sys.modules.setdefault("httpx", _httpx)
+    httpx = _httpx  # type: ignore[assignment]
+
+if TYPE_CHECKING:
+    from httpx import AsyncClient  # pragma: no cover
+else:
+    AsyncClient = httpx.AsyncClient  # type: ignore[attr-defined]
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 try:  # pragma: no cover - structlog is optional in the test environment
