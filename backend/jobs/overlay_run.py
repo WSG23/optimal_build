@@ -11,15 +11,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.database import AsyncSessionLocal
 from app.core.geometry import GeometrySerializer
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
+from app.core.config import settings
 from app.models.audit import AuditLog
 from app.models.overlay import (
     OverlayRunLock,
     OverlaySourceGeometry,
     OverlaySuggestion,
 )
+from jobs import job
 
 ENGINE_VERSION = "2024.1"
 
@@ -32,6 +35,16 @@ class OverlayRunResult:
     evaluated: int = 0
     created: int = 0
     updated: int = 0
+
+    def as_dict(self) -> Dict[str, Any]:
+        """Return a serialisable representation."""
+
+        return {
+            "project_id": self.project_id,
+            "evaluated": self.evaluated,
+            "created": self.created,
+            "updated": self.updated,
+        }
 
 
 async def run_overlay_for_project(
@@ -245,4 +258,18 @@ def _coerce_float(value: object) -> float | None:
         return None
 
 
-__all__ = ["run_overlay_for_project", "OverlayRunResult", "ENGINE_VERSION"]
+@job(name="jobs.overlay_run.run_for_project", queue=settings.OVERLAY_QUEUE_DEFAULT)
+async def run_overlay_job(project_id: int) -> Dict[str, Any]:
+    """Job wrapper that executes the overlay engine using a standalone session."""
+
+    async with AsyncSessionLocal() as session:
+        result = await run_overlay_for_project(session, project_id=project_id)
+        return {"status": "completed", **result.as_dict()}
+
+
+__all__ = [
+    "run_overlay_for_project",
+    "OverlayRunResult",
+    "ENGINE_VERSION",
+    "run_overlay_job",
+]

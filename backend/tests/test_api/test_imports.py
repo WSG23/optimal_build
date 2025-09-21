@@ -15,6 +15,7 @@ from httpx import AsyncClient
 
 from app.models.imports import ImportRecord
 from app.services.storage import get_storage_service
+from jobs import job_queue
 
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 
@@ -63,8 +64,20 @@ async def test_upload_import_persists_metadata(
 @pytest.mark.asyncio
 async def test_parse_endpoints_return_summary(
     client: AsyncClient,
+    monkeypatch,
 ) -> None:
     sample_path = SAMPLES_DIR / "sample_floorplan.json"
+
+    calls = []
+
+    original_enqueue = job_queue.enqueue
+
+    async def tracking_enqueue(*args, **kwargs):
+        calls.append(args)
+        return await original_enqueue(*args, **kwargs)
+
+    monkeypatch.setattr(job_queue, "enqueue", tracking_enqueue)
+
     with sample_path.open("rb") as handle:
         upload_response = await client.post(
             "/api/v1/import",
@@ -78,6 +91,11 @@ async def test_parse_endpoints_return_summary(
     assert parse_payload["status"] == "completed"
     assert parse_payload["result"]["floors"] == 3
     assert parse_payload["result"]["units"] == 5
+    assert parse_payload["job_id"] is None
+
+    assert calls
+    job_callable, *_ = calls[0]
+    assert getattr(job_callable, "job_name", "").endswith("parse_import")
 
     poll_response = await client.get(f"/api/v1/parse/{import_payload['import_id']}")
     assert poll_response.status_code == 200

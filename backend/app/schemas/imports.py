@@ -44,6 +44,7 @@ class ParseStatusResponse(BaseModel):
     completed_at: Optional[datetime]
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+    job_id: Optional[str] = None
 
     class Config:
         """Model configuration."""
