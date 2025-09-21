@@ -6,6 +6,7 @@ from . import (
     costs,
     ergonomics,
     export,
+    imports,
     overlay,
     products,
     review,
@@ -26,5 +27,6 @@ api_router.include_router(costs.router)
 api_router.include_router(overlay.router)
 api_router.include_router(export.router)
 api_router.include_router(roi.router)
+api_router.include_router(imports.router)
 
 __all__ = ["api_router"]

@@ -15,7 +15,8 @@ from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
 from app.models.audit import AuditLog
 from app.models.overlay import OverlayDecision, OverlaySuggestion
 from app.schemas.overlay import OverlayDecisionPayload, OverlaySuggestion as OverlaySuggestionSchema
-from jobs.overlay_run import OverlayRunResult, run_overlay_for_project
+from jobs import job_queue
+from jobs.overlay_run import run_overlay_job
 
 
 router = APIRouter(prefix="/overlay")
@@ -28,14 +29,16 @@ async def run_overlay(
 ) -> Dict[str, object]:
     """Execute the overlay feasibility engine for a project."""
 
-    result: OverlayRunResult = await run_overlay_for_project(session, project_id=project_id)
-    return {
-        "status": "completed",
+    dispatch = await job_queue.enqueue(run_overlay_job, project_id=project_id)
+    if dispatch.result and isinstance(dispatch.result, dict):
+        return dispatch.result
+    payload: Dict[str, object] = {
+        "status": dispatch.status,
         "project_id": project_id,
-        "evaluated": result.evaluated,
-        "created": result.created,
-        "updated": result.updated,
     }
+    if dispatch.task_id:
+        payload["job_id"] = dispatch.task_id
+    return payload
 
 
 @router.get("/{project_id}")

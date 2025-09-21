@@ -22,6 +22,7 @@ from app.models.overlay import (
     OverlaySourceGeometry,
     OverlaySuggestion,
 )
+from jobs import job_queue
 
 PROJECT_ID = 4120
 
@@ -81,8 +82,21 @@ async def overlay_client(async_session_factory):
 
 
 @pytest.mark.asyncio
-async def test_overlay_run_and_decisions(overlay_client, async_session_factory) -> None:
+async def test_overlay_run_and_decisions(
+    overlay_client,
+    async_session_factory,
+    monkeypatch,
+) -> None:
     client, source_id = overlay_client
+
+    calls = []
+    original_enqueue = job_queue.enqueue
+
+    async def tracking_enqueue(*args, **kwargs):
+        calls.append(args)
+        return await original_enqueue(*args, **kwargs)
+
+    monkeypatch.setattr(job_queue, "enqueue", tracking_enqueue)
 
     run_response = await client.post(f"/api/v1/overlay/{PROJECT_ID}/run")
     assert run_response.status_code == 200
@@ -145,6 +159,10 @@ async def test_overlay_run_and_decisions(overlay_client, async_session_factory) 
     assert final_status["heritage_conservation"] == "approved"
     assert final_status["flood_mitigation"] == "rejected"
     assert final_status["tall_building_review"] == "pending"
+
+    assert calls
+    job_callable, *_ = calls[0]
+    assert getattr(job_callable, "job_name", "").endswith("run_for_project")
 
     async with async_session_factory() as session:
         source = await session.get(OverlaySourceGeometry, source_id)

@@ -13,6 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
+from jobs import job_queue
+from jobs.parse_cad import parse_import_job
 from app.services.storage import get_storage_service
 
 router = APIRouter()
@@ -172,18 +174,6 @@ async def upload_import(
     )
 
 
-def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
-    """Compute a lightweight parse summary from the stored detection data."""
-
-    floors = record.detected_floors or []
-    units = record.detected_units or []
-    return {
-        "floors": len(floors),
-        "units": len(units),
-        "floor_breakdown": floors,
-    }
-
-
 @router.post("/parse/{import_id}", response_model=ParseStatusResponse)
 async def enqueue_parse(
     import_id: str,
@@ -196,29 +186,27 @@ async def enqueue_parse(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import not found")
 
     record.parse_requested_at = datetime.now(timezone.utc)
-    try:
-        result = _build_parse_summary(record)
-        record.parse_result = result
-        record.parse_status = "completed"
-        record.parse_error = None
-        record.parse_completed_at = datetime.now(timezone.utc)
-    except Exception as exc:  # pragma: no cover - defensive guard
-        record.parse_status = "failed"
-        record.parse_error = str(exc)
-        record.parse_result = None
-        record.parse_completed_at = datetime.now(timezone.utc)
-
+    record.parse_status = "queued"
     await session.commit()
+
+    dispatch = await job_queue.enqueue(parse_import_job, import_id=import_id)
+
+    # Refresh to reflect changes applied by the job if it ran inline.
     await session.refresh(record)
 
-    return ParseStatusResponse(
+    response = ParseStatusResponse(
         import_id=record.id,
         status=record.parse_status,
         requested_at=record.parse_requested_at,
         completed_at=record.parse_completed_at,
         result=record.parse_result,
         error=record.parse_error,
+        job_id=dispatch.task_id,
     )
+    if dispatch.result and isinstance(dispatch.result, dict):
+        response.result = dispatch.result
+        response.status = "completed"
+    return response
 
 
 @router.get("/parse/{import_id}", response_model=ParseStatusResponse)
@@ -239,6 +227,7 @@ async def get_parse_status(
         completed_at=record.parse_completed_at,
         result=record.parse_result,
         error=record.parse_error,
+        job_id=None,
     )
 
 
