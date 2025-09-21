@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import time
 from typing import Any, Dict, List
 
 from sqlalchemy import select
@@ -11,7 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.geometry import GeometrySerializer
+from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
+from app.models.audit import AuditLog
 from app.models.overlay import (
     OverlayRunLock,
     OverlaySourceGeometry,
@@ -51,6 +54,7 @@ async def run_overlay_for_project(
     if not records:
         return result
 
+    started_at = time.perf_counter()
     for source in records:
         geometry = GeometrySerializer.from_export(source.graph)
         fingerprint = geometry.fingerprint()
@@ -94,6 +98,20 @@ async def run_overlay_for_project(
         finally:
             lock.is_active = False
             lock.released_at = datetime.now(timezone.utc)
+    duration = time.perf_counter() - started_at
+    baseline_seconds = float(result.evaluated) * OVERLAY_BASELINE_SECONDS
+    log = AuditLog(
+        project_id=project_id,
+        event_type="overlay_run",
+        baseline_seconds=baseline_seconds if baseline_seconds > 0 else None,
+        actual_seconds=duration,
+        context={
+            "evaluated": result.evaluated,
+            "created": result.created,
+            "updated": result.updated,
+        },
+    )
+    session.add(log)
     await session.commit()
     return result
 
