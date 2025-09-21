@@ -80,6 +80,52 @@ export function RouterProvider({ router }: RouterProviderProps) {
   return <RouterContext.Provider value={contextValue}>{activeElement}</RouterContext.Provider>
 }
 
+type LinkMouseEvent = Parameters<MouseEventHandler<HTMLAnchorElement>>[0]
+
+export function shouldHandleLinkClick(
+  event: Pick<LinkMouseEvent, 'button' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>,
+  target: string | null | undefined,
+) {
+  if (event.button !== 0) {
+    return false
+  }
+
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return false
+  }
+
+  if (target === '_blank') {
+    return false
+  }
+
+  return true
+}
+
+export function createLinkClickHandler(
+  context: RouterContextValue | null,
+  to: string,
+  onClick?: MouseEventHandler<HTMLAnchorElement>,
+): MouseEventHandler<HTMLAnchorElement> {
+  return (event) => {
+    if (onClick) {
+      onClick(event)
+    }
+
+    if (event.defaultPrevented) {
+      return
+    }
+
+    if (!shouldHandleLinkClick(event, event.currentTarget?.target)) {
+      return
+    }
+
+    event.preventDefault()
+    if (context) {
+      context.navigate(to)
+    }
+  }
+}
+
 interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   to: string
   children: ReactNode
@@ -88,21 +134,8 @@ interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
 export function Link({ to, children, onClick, ...rest }: LinkProps) {
   const context = useContext(RouterContext)
 
-  const handleClick: MouseEventHandler<HTMLAnchorElement> = useCallback(
-    (event) => {
-      if (onClick) {
-        onClick(event)
-      }
-
-      if (event.defaultPrevented) {
-        return
-      }
-
-      event.preventDefault()
-      if (context) {
-        context.navigate(to)
-      }
-    },
+  const handleClick = useMemo<MouseEventHandler<HTMLAnchorElement>>(
+    () => createLinkClickHandler(context, to, onClick),
     [context, onClick, to],
   )
 
