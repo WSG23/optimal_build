@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { useLocale } from '../../i18n/LocaleContext'
+import { useTranslation } from '../../i18n'
 
 interface ExportDialogProps {
   formats?: string[]
@@ -11,7 +11,7 @@ interface ExportDialogProps {
 const DEFAULT_FORMATS = ['DXF', 'GeoJSON', 'CSV']
 
 export function ExportDialog({ formats = DEFAULT_FORMATS, onExport, disabled = false }: ExportDialogProps) {
-  const { strings } = useLocale()
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
   const handleExport = (format: string) => {
@@ -21,10 +21,10 @@ export function ExportDialog({ formats = DEFAULT_FORMATS, onExport, disabled = f
 
   return (
     <section className="cad-panel">
-      <h3>{strings.panels.exportTitle}</h3>
-      <p>{strings.panels.exportSubtitle}</p>
+      <h3>{t('panels.exportTitle')}</h3>
+      <p>{t('panels.exportSubtitle')}</p>
       <button type="button" onClick={() => setOpen((value) => !value)} disabled={disabled}>
-        {strings.detection.exportCta}
+        {t('detection.exportCta')}
       </button>
       {open && (
         <ul className="cad-export">

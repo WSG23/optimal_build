@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from './router'
 import HomeOverview from './App'
-import { LocaleProvider } from './i18n/LocaleContext'
+import { TranslationProvider } from './i18n'
 import CadDetectionPage from './pages/CadDetectionPage'
 import CadPipelinesPage from './pages/CadPipelinesPage'
 import CadUploadPage from './pages/CadUploadPage'
@@ -34,8 +34,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <LocaleProvider>
+    <TranslationProvider>
       <RouterProvider router={router} />
-    </LocaleProvider>
+    </TranslationProvider>
   </React.StrictMode>,
 )

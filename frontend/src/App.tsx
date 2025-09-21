@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
+import { LocaleSwitcher } from './i18n/LocaleSwitcher'
+import { useTranslation } from './i18n'
 import { Link, useRouterPath } from './router'
-import { useLocale } from './i18n/LocaleContext'
-import type { Locale } from './i18n/strings'
 
 export interface AppLayoutProps {
   title: string
@@ -12,23 +12,23 @@ export interface AppLayoutProps {
 }
 
 export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps) {
-  const { locale, strings, setLocale } = useLocale()
+  const { t } = useTranslation()
   const path = useRouterPath()
 
   const navItems = [
-    { path: '/', label: strings.nav.home },
-    { path: '/cad/upload', label: strings.nav.upload },
-    { path: '/cad/detection', label: strings.nav.detection },
-    { path: '/cad/pipelines', label: strings.nav.pipelines },
-    { path: '/feasibility', label: strings.nav.feasibility },
+    { path: '/', label: t('nav.home') },
+    { path: '/cad/upload', label: t('nav.upload') },
+    { path: '/cad/detection', label: t('nav.detection') },
+    { path: '/cad/pipelines', label: t('nav.pipelines') },
+    { path: '/feasibility', label: t('nav.feasibility') },
   ]
 
   return (
     <div className="app-layout">
       <aside className="app-layout__nav">
         <div className="app-layout__brand">
-          <h1>{strings.app.title}</h1>
-          <p>{strings.app.tagline}</p>
+          <h1>{t('app.title')}</h1>
+          <p>{t('app.tagline')}</p>
         </div>
         <nav>
           <ul>
@@ -38,7 +38,9 @@ export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`app-layout__nav-link${isActive ? ' app-layout__nav-link--active' : ''}`}
+                    className={`app-layout__nav-link${
+                      isActive ? ' app-layout__nav-link--active' : ''
+                    }`}
                   >
                     {item.label}
                   </Link>
@@ -55,13 +57,7 @@ export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps
             {subtitle && <p>{subtitle}</p>}
           </div>
           <div className="app-layout__toolbar">
-            <label className="app-layout__locale">
-              <span className="sr-only">{strings.app.helper}</span>
-              <select value={locale} onChange={(event) => setLocale(event.target.value as Locale)}>
-                <option value="en">EN</option>
-                <option value="zh">中文</option>
-              </select>
-            </label>
+            <LocaleSwitcher />
             {actions}
           </div>
         </header>
@@ -72,36 +68,36 @@ export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps
 }
 
 export function HomeOverview() {
-  const { strings } = useLocale()
+  const { t } = useTranslation()
   return (
-    <AppLayout title={strings.nav.home} subtitle={strings.app.tagline}>
+    <AppLayout title={t('nav.home')} subtitle={t('app.tagline')}>
       <section className="app-home">
         <article className="app-home__card">
-          <h3>{strings.nav.upload}</h3>
-          <p>{strings.uploader.subtitle}</p>
+          <h3>{t('nav.upload')}</h3>
+          <p>{t('uploader.subtitle')}</p>
           <Link to="/cad/upload" className="app-home__cta">
-            {strings.nav.upload}
+            {t('nav.upload')}
           </Link>
         </article>
         <article className="app-home__card">
-          <h3>{strings.nav.detection}</h3>
-          <p>{strings.detection.subtitle}</p>
+          <h3>{t('nav.detection')}</h3>
+          <p>{t('detection.subtitle')}</p>
           <Link to="/cad/detection" className="app-home__cta">
-            {strings.nav.detection}
+            {t('nav.detection')}
           </Link>
         </article>
         <article className="app-home__card">
-          <h3>{strings.nav.pipelines}</h3>
-          <p>{strings.pipelines.subtitle}</p>
+          <h3>{t('nav.pipelines')}</h3>
+          <p>{t('pipelines.subtitle')}</p>
           <Link to="/cad/pipelines" className="app-home__cta">
-            {strings.nav.pipelines}
+            {t('nav.pipelines')}
           </Link>
         </article>
         <article className="app-home__card">
-          <h3>{strings.nav.feasibility}</h3>
-          <p>Kick off planning studies with project context, rule packs and buildability checks.</p>
+          <h3>{t('nav.feasibility')}</h3>
+          <p>{t('home.cards.feasibility.description')}</p>
           <Link to="/feasibility" className="app-home__cta">
-            {strings.nav.feasibility}
+            {t('nav.feasibility')}
           </Link>
         </article>
       </section>

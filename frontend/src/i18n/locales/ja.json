@@ -1,0 +1,232 @@
+{
+  "common": {
+    "language": {
+      "label": "表示言語",
+      "options": {
+        "en": "English",
+        "ja": "日本語"
+      }
+    },
+    "fallback": {
+      "dash": "—"
+    },
+    "loading": "読み込み中…",
+    "errors": {
+      "uploadFailed": "アップロードに失敗しました",
+      "pipelineLoad": "提案を読み込めませんでした"
+    }
+  },
+  "app": {
+    "title": "Optimal Build Studio",
+    "tagline": "CAD ワークフローのコンプライアンスと設計調整を加速します。",
+    "helper": "言語を切り替える"
+  },
+  "nav": {
+    "home": "概要",
+    "upload": "CAD をアップロード",
+    "detection": "階層とユニットの検出",
+    "pipelines": "デフォルトパイプライン",
+    "feasibility": "フィージビリティウィザード"
+  },
+  "home": {
+    "cards": {
+      "feasibility": {
+        "description": "プロジェクトの文脈、ルールパック、建築可能性チェックで計画検討を開始しましょう。"
+      }
+    }
+  },
+  "uploader": {
+    "title": "建物レイアウトをアップロード",
+    "subtitle": "DXF/DWG ファイルをドロップして解析パイプラインを起動し、リアルタイムでオーバーレイを確認します。",
+    "dropHint": "ここにファイルをドラッグ＆ドロップまたは貼り付け",
+    "browseLabel": "ファイルを選択",
+    "latestStatus": "最新ステータス",
+    "parsing": "CAD レイヤーを処理しています…",
+    "ready": "解析が完了しました",
+    "error": "CAD ファイルの解析中に問題が発生しました。",
+    "overlays": "検出されたオーバーレイ",
+    "hints": "当局からのヒント",
+    "zone": "ゾーン"
+  },
+  "detection": {
+    "title": "階層とユニットの検出プレビュー",
+    "subtitle": "検出されたスペースを確認し、バッチ承認とオーバーレイの影響を把握します。",
+    "overlays": "適用中のオーバーレイ",
+    "advisory": "当局からの助言",
+    "tableHeading": "検出されたユニット",
+    "unit": "ユニット",
+    "floor": "階",
+    "area": "面積 (㎡)",
+    "status": "ステータス",
+    "empty": "現在のフィルターに一致するユニットはありません。",
+    "locked": "ゾーンがロックされています。ステータスを更新するにはロックを解除してください。",
+    "exportCta": "レビュー資料をエクスポート",
+    "summary": {
+      "floors": "{{count}} 階",
+      "units": "{{count}} ユニット",
+      "zone": "ゾーン {{code}}"
+    }
+  },
+  "pipelines": {
+    "title": "推奨デフォルトパイプライン",
+    "subtitle": "検出されたオーバーレイとトピックに合わせてルールパックを活用しましょう。",
+    "suggestionHeading": "自動化パイプラインの提案",
+    "pipelineFocus": "重点",
+    "automationScore": "自動化スコア",
+    "reviewHours": "削減されるレビュー工数",
+    "savings": "推定コンプライアンス効果",
+    "payback": "回収期間",
+    "weeks": "{{count}} 週間"
+  },
+  "controls": {
+    "source": "原本",
+    "pending": "保留",
+    "approved": "承認済み",
+    "rejected": "却下",
+    "showLayer": "レイヤーを表示",
+    "hideLayer": "レイヤーを非表示",
+    "approveAll": "保留を一括承認",
+    "rejectAll": "保留を一括却下",
+    "lockZone": "ゾーンをロック",
+    "unlockZone": "ゾーンのロックを解除",
+    "locked": "ゾーンはロック中"
+  },
+  "panels": {
+    "rulePackTitle": "ルールパックの説明",
+    "rulePackEmpty": "最初のオーバーレイが処理されるとルールが表示されます。",
+    "auditTitle": "監査タイムライン",
+    "exportTitle": "エクスポートオプション",
+    "exportSubtitle": "CAD オーバーレイとコンプライアンスノートを希望の形式で提供します。",
+    "roiTitle": "ROI スナップショット",
+    "roiSubtitle": "自動化で削減された作業量を定量化します。"
+  },
+  "wizard": {
+    "title": "フィージビリティ評価",
+    "description": "区画のポテンシャルを評価し、制約となる規制を特定して、コンプライアンス対応の次のステップを作成します。",
+    "errors": {
+      "generic": "エラーが発生しました。もう一度お試しください。"
+    },
+    "steps": {
+      "projectDetails": "プロジェクト詳細",
+      "complianceScope": "規制範囲",
+      "buildabilityResults": "建築可能性の結果"
+    },
+    "step1": {
+      "heading": "ステップ1・新規プロジェクトの詳細",
+      "description": "コンプライアンス検索を支えるサイト情報を入力してください。このデータを基に、ゾーニング、プロット比率、建築ボリューム制限を判定して適用可能な規制を取得します。",
+      "fields": {
+        "name": {
+          "label": "プロジェクト名",
+          "placeholder": "例：Riverfront Residences"
+        },
+        "siteAddress": {
+          "label": "敷地住所",
+          "placeholder": "例：123 Serangoon Ave 3"
+        },
+        "siteAreaSqm": {
+          "label": "敷地面積（平方メートル）",
+          "placeholder": "例：4250"
+        },
+        "landUse": {
+          "label": "用途地域",
+          "placeholder": "用途を選択してください"
+        },
+        "targetGrossFloorAreaSqm": {
+          "label": "目標延床面積（平方メートル）",
+          "placeholder": "任意"
+        },
+        "buildingHeightMeters": {
+          "label": "目標高さ（メートル）",
+          "placeholder": "任意"
+        }
+      },
+      "landUseOptions": {
+        "residential": "住宅",
+        "commercial": "商業",
+        "mixed_use": "複合用途",
+        "industrial": "工業",
+        "institutional": "公共"
+      },
+      "errors": {
+        "nameRequired": "プロジェクト名は必須です",
+        "siteAddressRequired": "敷地住所は必須です",
+        "siteAreaRequired": "敷地面積は必須です",
+        "siteAreaInvalid": "敷地面積は0より大きい値を入力してください",
+        "landUseRequired": "用途を選択してください",
+        "targetGfaInvalid": "目標延床面積は0より大きい値を入力してください",
+        "heightInvalid": "高さは0より大きい値を入力してください"
+      },
+      "actions": {
+        "saving": "保存中…",
+        "continue": "規制の確認に進む"
+      }
+    },
+    "step2": {
+      "heading": "ステップ2・推奨規制の確認",
+      "description": "入力したプロジェクト情報を分析し、関係機関の主要な規制を抽出しました。評価を実行する前に対象範囲を調整できます。",
+      "panel": {
+        "title": "プロジェクト概要",
+        "subtitleFallback": "チェックを実行する前に内容を確認してください。",
+        "metrics": {
+          "siteArea": "敷地面積",
+          "landUse": "用途地域",
+          "targetGfa": "目標延床面積",
+          "targetHeight": "目標高さ"
+        },
+        "units": {
+          "sqm": "㎡",
+          "meters": "m"
+        }
+      },
+      "loading": "推奨規制を読み込み中…",
+      "empty": "このプロジェクト設定に該当する規制は見つかりませんでした。",
+      "requirement": "要件: {{parameterKey}} {{operator}} {{value}}{{unit}}",
+      "actions": {
+        "back": "戻る",
+        "evaluate": "建築可能性チェックを実行",
+        "evaluating": "評価を実行中…"
+      }
+    },
+    "step3": {
+      "heading": "ステップ3・建築可能性の見通し",
+      "intro": {
+        "loading": "分析結果をまとめています…",
+        "ready": "達成可能なボリュームを要約し、注意が必要な規制をハイライトします。"
+      },
+      "panel": {
+        "title": "ボリュームサマリー",
+        "metrics": {
+          "maxGfa": "許容最大延床面積",
+          "estimatedGfa": "推定達成延床面積",
+          "estimatedUnits": "推定戸数",
+          "siteCoverage": "建蔽率"
+        }
+      },
+      "siteEfficiency": "許容延床面積の{{percentage}}%を活用",
+      "allClear": "すべての監視規制を満たしています。対象範囲を広げることも検討してください。",
+      "table": {
+        "rule": "規制",
+        "agency": "所管機関",
+        "status": "ステータス",
+        "notes": "メモ"
+      },
+      "status": {
+        "pass": "適合",
+        "fail": "不適合",
+        "warning": "要確認"
+      },
+      "recommendations": {
+        "title": "次のステップ",
+        "subtitle": "残っているコンプライアンスギャップを解消するための優先度付きガイダンスです。"
+      },
+      "actions": {
+        "back": "規制に戻る",
+        "restart": "新しい評価を開始"
+      },
+      "placeholders": {
+        "preparingAssessment": "評価を準備しています…",
+        "pendingProjectName": "準備中"
+      }
+    }
+  }
+}

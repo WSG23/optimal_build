@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
 
+import { useTranslation } from '../../i18n'
+
+import type { RuleAssessmentResult } from './types'
 import { FeasibilityAssessmentResponse } from './types'
 
 interface Step3BuildableProps {
@@ -9,71 +12,89 @@ interface Step3BuildableProps {
   isLoading?: boolean
 }
 
-const statusLabels = {
-  pass: 'Pass',
-  fail: 'Fail',
-  warning: 'Review',
-} as const
-
 export function Step3Buildable({
   assessment,
   onBack,
   onRestart,
   isLoading = false,
 }: Step3BuildableProps) {
+  const { t, i18n } = useTranslation()
   const { summary, rules, recommendations } = assessment
 
   const siteEfficiency = useMemo(() => {
     if (!summary.maxPermissibleGfaSqm) {
-      return '—'
+      return t('common.fallback.dash')
     }
 
     const ratio = summary.estimatedAchievableGfaSqm / summary.maxPermissibleGfaSqm
     if (!Number.isFinite(ratio)) {
-      return '—'
+      return t('common.fallback.dash')
     }
 
-    return `${Math.round(ratio * 100)}% of permissible GFA utilised`
-  }, [summary])
+    return t('wizard.step3.siteEfficiency', { percentage: Math.round(ratio * 100) })
+  }, [summary, t])
+
+  const numberFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(i18n.language, {
+        maximumFractionDigits: 0,
+      }),
+    [i18n.language],
+  )
+
+  const decimalFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(i18n.language, {
+        maximumFractionDigits: 1,
+        minimumFractionDigits: 1,
+      }),
+    [i18n.language],
+  )
 
   return (
     <div className="feasibility-step">
-      <h2 className="feasibility-step__heading">Step 3 · Buildability outlook</h2>
+      <h2 className="feasibility-step__heading">{t('wizard.step3.heading')}</h2>
       <p className="feasibility-step__intro">
-        {isLoading
-          ? 'Finalising the analysis…'
-          : 'This snapshot summarises the achievable massing and highlights rules that require attention.'}
+        {isLoading ? t('wizard.step3.intro.loading') : t('wizard.step3.intro.ready')}
       </p>
 
       <section className="feasibility-panel">
         <header className="feasibility-panel__header">
           <div>
-            <h3 className="feasibility-panel__title">Envelope summary</h3>
+            <h3 className="feasibility-panel__title">{t('wizard.step3.panel.title')}</h3>
             <p className="feasibility-panel__subtitle">{summary.remarks ?? siteEfficiency}</p>
           </div>
           <div className="feasibility-panel__metrics">
             <div>
-              <span className="feasibility-panel__metric-label">Max permissible GFA</span>
+              <span className="feasibility-panel__metric-label">
+                {t('wizard.step3.panel.metrics.maxGfa')}
+              </span>
               <span className="feasibility-panel__metric-value">
-                {summary.maxPermissibleGfaSqm.toLocaleString()} m²
+                {numberFormatter.format(summary.maxPermissibleGfaSqm)} {t('wizard.step2.panel.units.sqm')}
               </span>
             </div>
             <div>
-              <span className="feasibility-panel__metric-label">Estimated achievable GFA</span>
+              <span className="feasibility-panel__metric-label">
+                {t('wizard.step3.panel.metrics.estimatedGfa')}
+              </span>
               <span className="feasibility-panel__metric-value">
-                {summary.estimatedAchievableGfaSqm.toLocaleString()} m²
+                {numberFormatter.format(summary.estimatedAchievableGfaSqm)} {t('wizard.step2.panel.units.sqm')}
               </span>
             </div>
             <div>
-              <span className="feasibility-panel__metric-label">Estimated units</span>
+              <span className="feasibility-panel__metric-label">
+                {t('wizard.step3.panel.metrics.estimatedUnits')}
+              </span>
               <span className="feasibility-panel__metric-value">
-                {summary.estimatedUnitCount.toLocaleString()}
+                {numberFormatter.format(summary.estimatedUnitCount)}
               </span>
             </div>
             <div>
-              <span className="feasibility-panel__metric-label">Site coverage</span>
+              <span className="feasibility-panel__metric-label">
+                {t('wizard.step3.panel.metrics.siteCoverage')}
+              </span>
               <span className="feasibility-panel__metric-value">
-                {summary.siteCoveragePercent.toFixed(1)}%
+                {decimalFormatter.format(summary.siteCoveragePercent)}%
               </span>
             </div>
           </div>
@@ -81,19 +102,19 @@ export function Step3Buildable({
 
         <div className="feasibility-panel__content">
           {rules.length === 0 ? (
-            <p>All tracked rules passed – consider expanding the scope to include more topics.</p>
+            <p>{t('wizard.step3.allClear')}</p>
           ) : (
             <table className="feasibility-results">
               <thead>
                 <tr>
-                  <th scope="col">Rule</th>
-                  <th scope="col">Agency</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Notes</th>
+                  <th scope="col">{t('wizard.step3.table.rule')}</th>
+                  <th scope="col">{t('wizard.step3.table.agency')}</th>
+                  <th scope="col">{t('wizard.step3.table.status')}</th>
+                  <th scope="col">{t('wizard.step3.table.notes')}</th>
                 </tr>
               </thead>
               <tbody>
-                {rules.map((rule) => (
+                {rules.map((rule: RuleAssessmentResult) => (
                   <tr
                     key={rule.id}
                     className={`feasibility-results__row feasibility-results__row--${rule.status}`}
@@ -112,11 +133,11 @@ export function Step3Buildable({
                       <span
                         className={`feasibility-results__status feasibility-results__status--${rule.status}`}
                       >
-                        {statusLabels[rule.status]}
+                        {t(`wizard.step3.status.${rule.status}`)}
                       </span>
                     </td>
                     <td>
-                      <span>{rule.notes ?? rule.actualValue ?? '—'}</span>
+                      <span>{rule.notes ?? rule.actualValue ?? t('common.fallback.dash')}</span>
                     </td>
                   </tr>
                 ))}
@@ -130,15 +151,17 @@ export function Step3Buildable({
         <section className="feasibility-panel">
           <header className="feasibility-panel__header">
             <div>
-              <h3 className="feasibility-panel__title">Next steps</h3>
+              <h3 className="feasibility-panel__title">
+                {t('wizard.step3.recommendations.title')}
+              </h3>
               <p className="feasibility-panel__subtitle">
-                Prioritised guidance to resolve outstanding compliance gaps.
+                {t('wizard.step3.recommendations.subtitle')}
               </p>
             </div>
           </header>
           <div className="feasibility-panel__content">
             <ol className="feasibility-recommendations">
-              {recommendations.map((item, index) => (
+              {recommendations.map((item: string, index: number) => (
                 <li key={index}>{item}</li>
               ))}
             </ol>
@@ -148,10 +171,10 @@ export function Step3Buildable({
 
       <div className="feasibility-actions">
         <button type="button" className="feasibility-actions__secondary" onClick={onBack}>
-          Back to rules
+          {t('wizard.step3.actions.back')}
         </button>
         <button type="button" className="feasibility-actions__primary" onClick={onRestart}>
-          Start a new assessment
+          {t('wizard.step3.actions.restart')}
         </button>
       </div>
     </div>

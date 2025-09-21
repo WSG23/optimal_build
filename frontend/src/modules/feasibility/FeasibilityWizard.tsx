@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { useTranslation } from '../../i18n'
+
 import {
   FeasibilityAssessmentRequest,
   FeasibilityAssessmentResponse,
@@ -12,24 +14,28 @@ import Step1NewProject from './Step1NewProject'
 import Step2Rules from './Step2Rules'
 import Step3Buildable from './Step3Buildable'
 
-const steps = ['Project details', 'Compliance scope', 'Buildability results']
+const stepKeys = ['projectDetails', 'complianceScope', 'buildabilityResults'] as const
+type StepKey = (typeof stepKeys)[number]
 
-function extractErrorMessage(error: unknown) {
+type ExtractedError = 'default' | string
+
+function extractErrorMessage(error: unknown): ExtractedError {
   if (error instanceof Error && error.message) {
     return error.message
   }
-  return 'Something went wrong. Please try again.'
+  return 'default'
 }
 
 export function FeasibilityWizard() {
+  const { t } = useTranslation()
   const [currentStep, setCurrentStep] = useState(0)
   const [project, setProject] = useState<NewFeasibilityProjectInput | null>(null)
   const [selectedRuleIds, setSelectedRuleIds] = useState<string[]>([])
   const [assessment, setAssessment] = useState<FeasibilityAssessmentResponse | null>(null)
-  const [assessmentError, setAssessmentError] = useState<string | null>(null)
+  const [assessmentError, setAssessmentError] = useState<ExtractedError | null>(null)
   const [rulesData, setRulesData] = useState<FeasibilityRulesResponse | null>(null)
   const [isRulesLoading, setIsRulesLoading] = useState(false)
-  const [rulesError, setRulesError] = useState<string | null>(null)
+  const [rulesError, setRulesError] = useState<ExtractedError | null>(null)
   const [isAssessmentLoading, setIsAssessmentLoading] = useState(false)
 
   useEffect(() => {
@@ -130,9 +136,10 @@ export function FeasibilityWizard() {
   }, [])
 
   const stepIndicator = useMemo(() => {
+    const stepLabels = stepKeys.map((key: StepKey) => t(`wizard.steps.${key}`))
     return (
       <ol className="feasibility-progress">
-        {steps.map((label, index) => {
+        {stepLabels.map((label, index) => {
           const isActive = index === currentStep
           const isCompleted = index < currentStep
           return (
@@ -149,7 +156,7 @@ export function FeasibilityWizard() {
         })}
       </ol>
     )
-  }, [currentStep])
+  }, [currentStep, t])
 
   const renderStep = () => {
     switch (currentStep) {
@@ -171,7 +178,13 @@ export function FeasibilityWizard() {
             rules={rulesData?.rules ?? []}
             summary={rulesData?.summary}
             isLoading={isRulesLoading}
-            error={rulesError}
+            error={
+              rulesError
+                ? rulesError === 'default'
+                  ? t('wizard.errors.generic')
+                  : rulesError
+                : null
+            }
             selectedRuleIds={selectedRuleIds}
             onSelectionChange={setSelectedRuleIds}
             onBack={() => setCurrentStep(0)}
@@ -184,13 +197,13 @@ export function FeasibilityWizard() {
           return (
             <Step3Buildable
               assessment={{
-                projectId: project?.name ?? 'pending',
+                projectId: project?.name ?? t('wizard.step3.placeholders.pendingProjectName'),
                 summary: {
                   maxPermissibleGfaSqm: project?.targetGrossFloorAreaSqm ?? 0,
                   estimatedAchievableGfaSqm: project?.targetGrossFloorAreaSqm ?? 0,
                   estimatedUnitCount: 0,
                   siteCoveragePercent: 0,
-                  remarks: 'Preparing assessment…',
+                  remarks: t('wizard.step3.placeholders.preparingAssessment'),
                 },
                 rules: [],
                 recommendations: [],
@@ -217,12 +230,16 @@ export function FeasibilityWizard() {
   return (
     <div className="feasibility-wizard">
       <header className="feasibility-wizard__header">
-        <h1>Feasibility assessment</h1>
-        <p>Evaluate plot potential, identify binding regulations and generate next steps for compliance.</p>
+        <h1>{t('wizard.title')}</h1>
+        <p>{t('wizard.description')}</p>
         {stepIndicator}
       </header>
 
-      {assessmentError && <p className="feasibility-wizard__error">{assessmentError}</p>}
+      {assessmentError && (
+        <p className="feasibility-wizard__error">
+          {assessmentError === 'default' ? t('wizard.errors.generic') : assessmentError}
+        </p>
+      )}
 
       <main>{renderStep()}</main>
     </div>
