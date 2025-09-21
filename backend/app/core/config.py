@@ -1,7 +1,40 @@
 """Application configuration."""
 
+import json
+import os
 import secrets
-from typing import List, Optional
+from typing import Iterable, List
+
+_DEFAULT_ALLOWED_ORIGINS = ("http://localhost:3000", "http://localhost:5173")
+
+
+def _load_allowed_origins() -> List[str]:
+    """Retrieve allowed CORS origins from the environment."""
+
+    raw_origins = os.getenv("BACKEND_ALLOWED_ORIGINS")
+    if not raw_origins:
+        return list(_DEFAULT_ALLOWED_ORIGINS)
+
+    origins: Iterable[str]
+    try:
+        parsed = json.loads(raw_origins)
+    except json.JSONDecodeError:
+        parsed = raw_origins
+
+    if isinstance(parsed, str):
+        origins = parsed.split(",")
+    elif isinstance(parsed, (list, tuple, set)):
+        origins = parsed
+    else:
+        return list(_DEFAULT_ALLOWED_ORIGINS)
+
+    cleaned = [str(origin).strip() for origin in origins if str(origin).strip()]
+    # Fall back to defaults if the environment variable produces no valid entries.
+    if not cleaned:
+        return list(_DEFAULT_ALLOWED_ORIGINS)
+
+    # Preserve ordering while removing duplicates.
+    return list(dict.fromkeys(cleaned))
 
 
 class Settings:
@@ -23,7 +56,7 @@ class Settings:
     
     # CORS
     ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: List[str] = _load_allowed_origins()
     
     # Logging
     LOG_LEVEL: str = "INFO"
