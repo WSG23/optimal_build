@@ -5,139 +5,53 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import asynccontextmanager
-import importlib.util
 import sys
+from typing import Any
 
 import pytest
 
-_MISSING_DEPS = [
-    name
-    for name in ("fastapi", "pydantic", "sqlalchemy")
-    if importlib.util.find_spec(name) is None
-]
-
-if _MISSING_DEPS:  # pragma: no cover - offline test fallback
-    pytestmark = pytest.mark.skip(
-        reason=f"Required dependencies missing: {', '.join(sorted(_MISSING_DEPS))}"
-    )
-
-try:  # pragma: no cover - exercised indirectly via tests
+try:  # pragma: no cover - optional dependency for async fixtures
     import pytest_asyncio
 except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
-    import contextvars
-    import inspect
-    from typing import Any
+    class _PytestAsyncioStub:
+        def fixture(self, *args: Any, **kwargs: Any):
+            return pytest.fixture(*args, **kwargs)
 
-    from _pytest.fixtures import call_fixture_func
+    pytest_asyncio = _PytestAsyncioStub()  # type: ignore[assignment]
 
-    _ASYNC_FIXTURE_MARKER = "_pytest_asyncio_is_async_fixture"
-    _CURRENT_LOOP: contextvars.ContextVar[asyncio.AbstractEventLoop | None] = (
-        contextvars.ContextVar("pytest_asyncio_current_loop", default=None)
-    )
-
-    class _AsyncioStub:
-        """Minimal stub of :mod:`pytest_asyncio` for offline test execution."""
-
-        @staticmethod
-        def fixture(*dargs: Any, **dkwargs: Any):
-            def decorator(func: Callable[..., Any]):
-                setattr(func, _ASYNC_FIXTURE_MARKER, True)
-                return pytest.fixture(*dargs, **dkwargs)(func)
-
-            return decorator
-
-    pytest_asyncio = _AsyncioStub()
-
-    def _ensure_loop(request: pytest.FixtureRequest) -> asyncio.AbstractEventLoop:
-        try:
-            loop = request.getfixturevalue("event_loop")
-            created = False
-        except pytest.FixtureLookupError:
-            loop = _CURRENT_LOOP.get()
-            created = False
-            if loop is None:
-                loop = asyncio.new_event_loop()
-                created = True
-        asyncio.set_event_loop(loop)
-        if created:
-            request.addfinalizer(loop.close)
-        return loop
-
-    @pytest.hookimpl
-    def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
-        test_function = pyfuncitem.obj
-        if inspect.iscoroutinefunction(test_function):
-            loop = pyfuncitem.funcargs.get("event_loop")
-            created = False
-            if loop is None:
-                loop = _CURRENT_LOOP.get()
-                if loop is None:
-                    loop = asyncio.new_event_loop()
-                    created = True
-            asyncio.set_event_loop(loop)
-            token = _CURRENT_LOOP.set(loop)
-            try:
-                loop.run_until_complete(test_function(**pyfuncitem.funcargs))
-            finally:
-                _CURRENT_LOOP.reset(token)
-                if created:
-                    loop.close()
-            return True
-        return None
-
-    @pytest.hookimpl
-    def pytest_fixture_setup(
-        fixturedef: pytest.FixtureDef[Any], request: pytest.FixtureRequest
-    ) -> Any:
-        func = fixturedef.func
-        if getattr(func, _ASYNC_FIXTURE_MARKER, False) or inspect.iscoroutinefunction(
-            func
-        ) or inspect.isasyncgenfunction(func):
-            kwargs = {name: request.getfixturevalue(name) for name in fixturedef.argnames}
-            result = call_fixture_func(func, request, kwargs)
-            loop = _ensure_loop(request)
-            token = _CURRENT_LOOP.set(loop)
-            try:
-                if inspect.iscoroutine(result):
-                    return loop.run_until_complete(result)
-                if inspect.isasyncgen(result):
-                    async_gen = result
-                    try:
-                        value = loop.run_until_complete(async_gen.__anext__())
-                    except StopAsyncIteration as exc:  # pragma: no cover - defensive
-                        raise RuntimeError(
-                            f"Async fixture {fixturedef.argname} did not yield a value"
-                        ) from exc
-
-                    def _finalizer() -> None:
-                        try:
-                            loop.run_until_complete(async_gen.aclose())
-                        except RuntimeError:
-                            pass
-
-                    request.addfinalizer(_finalizer)
-                    return value
-                return result
-            finally:
-                _CURRENT_LOOP.reset(token)
-        return None
-if not _MISSING_DEPS:
+try:  # pragma: no cover - optional dependency for API tests
     from httpx import AsyncClient
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-else:  # pragma: no cover - lightweight placeholders to satisfy type checkers
-    from typing import Any
-
+except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
     class AsyncClient:  # type: ignore[no-redef]
-        ...
+        """Fallback stub used when httpx is not installed."""
 
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401 - simple stub
+            self._error = ModuleNotFoundError(
+                "The optional dependency 'httpx' is required for AsyncClient fixtures. "
+                "Install httpx to run API client tests."
+            )
+
+        async def __aenter__(self) -> "AsyncClient":  # pragma: no cover - invoked in tests
+            raise self._error
+
+        async def __aexit__(self, exc_type, exc, tb) -> bool:  # pragma: no cover - invoked in tests
+            return False
+
+try:  # pragma: no cover - optional dependency for database fixtures
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+except ModuleNotFoundError as exc:  # pragma: no cover - fallback stub for offline testing
     class AsyncSession:  # type: ignore[no-redef]
-        ...
+        """Stub used when SQLAlchemy is unavailable."""
 
     def async_sessionmaker(*args: Any, **kwargs: Any):  # type: ignore[no-redef]
-        raise RuntimeError("sqlalchemy is required for these tests")
+        raise ModuleNotFoundError(
+            "SQLAlchemy is required for database fixtures. Install 'sqlalchemy' to run database tests."
+        )
 
     def create_async_engine(*args: Any, **kwargs: Any):  # type: ignore[no-redef]
-        raise RuntimeError("sqlalchemy is required for these tests")
+        raise ModuleNotFoundError(
+            "SQLAlchemy is required for database fixtures. Install 'sqlalchemy' to run database tests."
+        )
 
 try:  # pragma: no cover - structlog is optional in the test environment
     import structlog  # type: ignore  # noqa: F401  (imported for side effects)
@@ -146,7 +60,6 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
     import logging
     from datetime import datetime, timezone
     from types import ModuleType
-    from typing import Any
 
     _STRUCTLOG_CONFIG: dict[str, Any] = {
         "processors": [],
@@ -267,29 +180,45 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
     sys.modules.setdefault("structlog.processors", processors_module)
     sys.modules.setdefault("structlog.stdlib", stdlib_module)
 
-if not _MISSING_DEPS:
+_APP_IMPORT_ERROR: ModuleNotFoundError | None = None
+
+try:  # pragma: no cover - optional dependency for database fixtures
     from app.core.database import get_session
+except ModuleNotFoundError as exc:  # pragma: no cover - fallback stub for offline testing
+    _APP_IMPORT_ERROR = exc
+
+    async def get_session(*args: Any, **kwargs: Any):  # type: ignore[no-redef]
+        raise exc
+
+try:  # pragma: no cover - optional dependency for API fixtures
     from app.main import app
+except ModuleNotFoundError as exc:  # pragma: no cover - fallback stub for offline testing
+    if _APP_IMPORT_ERROR is None:
+        _APP_IMPORT_ERROR = exc
+    app = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency for database fixtures
     from app.models.base import BaseModel
+except ModuleNotFoundError as exc:  # pragma: no cover - fallback stub for offline testing
+    if _APP_IMPORT_ERROR is None:
+        _APP_IMPORT_ERROR = exc
+
+    class _BaseModelMetadataStub:
+        sorted_tables: list = []
+
+        def create_all(self, *args: Any, **kwargs: Any) -> None:
+            raise exc
+
+    class BaseModel:  # type: ignore[no-redef]
+        metadata = _BaseModelMetadataStub()
+
+try:  # pragma: no cover - optional dependency for storage fixtures
     from app.services.storage import get_storage_service, reset_storage_service
-else:  # pragma: no cover - fallback stubs for offline testing
-    from typing import Any
-
-    def get_session():  # type: ignore[no-redef]
-        raise RuntimeError("sqlalchemy is required for these tests")
-
-    class _StubApp:  # type: ignore[no-redef]
-        dependency_overrides: dict[str, Any] = {}
-
-    app = _StubApp()  # type: ignore[assignment]
-
-    class _StubBaseModel:  # type: ignore[no-redef]
-        metadata = type("Meta", (), {"create_all": staticmethod(lambda _: None), "sorted_tables": []})
-
-    BaseModel = _StubBaseModel  # type: ignore[assignment]
-
+except ModuleNotFoundError:  # pragma: no cover - fallback stubs for offline testing
     def get_storage_service():  # type: ignore[no-redef]
-        raise RuntimeError("fastapi and sqlalchemy are required for these tests")
+        raise ModuleNotFoundError(
+            "Storage service dependencies are unavailable. Install optional dependencies to run storage tests."
+        )
 
     def reset_storage_service():  # type: ignore[no-redef]
         return None
@@ -306,7 +235,11 @@ def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
 
 @pytest_asyncio.fixture
 async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    try:
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    except ModuleNotFoundError as exc:  # pragma: no cover - triggered when sqlalchemy missing
+        pytest.skip(str(exc))
+        raise
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
     factory = async_sessionmaker(engine, expire_on_commit=False)
@@ -350,13 +283,15 @@ def session_factory(async_session_factory: async_sessionmaker[AsyncSession]) -> 
 
 @pytest.fixture
 def storage_service(tmp_path, monkeypatch):
-    if _MISSING_DEPS:
-        pytest.skip("Storage service tests require fastapi, pydantic, and sqlalchemy")
-    base_path = tmp_path / "storage"
-    base_path.mkdir()
-    monkeypatch.setenv("STORAGE_LOCAL_PATH", str(base_path))
-    reset_storage_service()
-    service = get_storage_service()
+    try:
+        base_path = tmp_path / "storage"
+        base_path.mkdir()
+        monkeypatch.setenv("STORAGE_LOCAL_PATH", str(base_path))
+        reset_storage_service()
+        service = get_storage_service()
+    except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency missing
+        pytest.skip(str(exc))
+        return None
     try:
         yield service
     finally:
@@ -364,12 +299,12 @@ def storage_service(tmp_path, monkeypatch):
 
 
 @pytest_asyncio.fixture
-async def client(
-    async_session_factory: async_sessionmaker[AsyncSession],
-    storage_service,
-) -> AsyncGenerator[AsyncClient, None]:
-    if _MISSING_DEPS:
-        pytest.skip("API client tests require fastapi, pydantic, and sqlalchemy")
+async def client(async_session_factory: async_sessionmaker[AsyncSession], storage_service) -> AsyncGenerator[AsyncClient, None]:
+    if app is None:  # pragma: no cover - triggered only when optional deps missing
+        raise ModuleNotFoundError(
+            "FastAPI application dependencies are unavailable. Install optional dependencies to run API tests."
+        ) from _APP_IMPORT_ERROR
+
     async def _get_session() -> AsyncGenerator[AsyncSession, None]:
         async with async_session_factory() as session:
             yield session

@@ -14,7 +14,8 @@ from httpx import AsyncClient
 from sqlalchemy import select
 
 from app.core.database import get_session
-from app.core.models.geometry import CanonicalGeometry, GeometryNode, serialize_geometry
+from app.core.geometry import GeometrySerializer
+from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
 from app.main import app
 from app.models.overlay import (
     OverlayRunLock,
@@ -29,26 +30,32 @@ PROJECT_ID = 4120
 async def overlay_client(async_session_factory):
     """Seed canonical geometry and provide a test client."""
 
-    geometry = CanonicalGeometry(
-        root=GeometryNode(
-            node_id="site-001",
-            kind="site",
-            properties={
-                "heritage_zone": True,
-                "flood_zone": "coastal",
-                "site_area_sqm": 12500,
-            },
-            children=[
-                GeometryNode(
-                    node_id="tower-01",
-                    kind="building",
-                    properties={"height_m": 52},
-                )
-            ],
-        ),
-        metadata={"source": "test"},
+    geometry = GeometryGraph(
+        levels=[
+            Level(
+                id="L1",
+                name="Ground",
+                elevation=0.0,
+                metadata={
+                    "heritage_zone": True,
+                    "flood_zone": "coastal",
+                    "site_area_sqm": 12500,
+                },
+            )
+        ],
+        spaces=[
+            Space(
+                id="tower-01",
+                name="Tower",
+                level_id="L1",
+                metadata={"height_m": 52},
+            )
+        ],
+        relationships=[
+            Relationship(rel_type="contains", source_id="L1", target_id="tower-01"),
+        ],
     )
-    serialized = serialize_geometry(geometry)
+    serialized = GeometrySerializer.to_export(geometry)
     checksum = geometry.fingerprint()
 
     async with async_session_factory() as session:
