@@ -10,10 +10,35 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/';
+  const resolvedBaseUrl = React.useMemo<URL | null>(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    try {
+      return new URL(rawBaseUrl, window.location.origin);
+    } catch (err) {
+      console.error('Invalid VITE_API_BASE_URL, falling back to window.location.origin', err);
+      return new URL(window.location.origin);
+    }
+  }, [rawBaseUrl]);
+
+  const buildApiUrl = React.useCallback(
+    (path: string) => {
+      if (!resolvedBaseUrl) {
+        return path;
+      }
+
+      return new URL(path, resolvedBaseUrl).toString();
+    },
+    [resolvedBaseUrl]
+  );
+
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('http://localhost:8000/health');
+        const response = await fetch(buildApiUrl('health'));
         if (response.ok) {
           const data = await response.json();
           setHealthStatus(data);
@@ -28,7 +53,7 @@ function App() {
     };
 
     checkHealth();
-  }, []);
+  }, [buildApiUrl]);
 
   return (
     <div style={{ 
@@ -65,9 +90,9 @@ function App() {
       }}>
         <h2>Quick Links</h2>
         <ul>
-          <li><a href="http://localhost:8000/health" target="_blank">Backend Health Check</a></li>
-          <li><a href="http://localhost:8000/docs" target="_blank">API Documentation</a></li>
-          <li><a href="http://localhost:8000/api/v1/test" target="_blank">API Test Endpoint</a></li>
+          <li><a href={buildApiUrl('health')} target="_blank" rel="noreferrer">Backend Health Check</a></li>
+          <li><a href={buildApiUrl('docs')} target="_blank" rel="noreferrer">API Documentation</a></li>
+          <li><a href={buildApiUrl('api/v1/test')} target="_blank" rel="noreferrer">API Test Endpoint</a></li>
         </ul>
       </div>
 
