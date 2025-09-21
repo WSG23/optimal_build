@@ -1,10 +1,25 @@
-"""Core data model helpers."""
+"""Core models used by geometry helpers."""
 
-from .geometry import CanonicalGeometry, GeometryNode, serialize_geometry, deserialize_geometry
+from .geometry import (
+    Door,
+    Fixture,
+    GeometryEntity,
+    GeometryGraph,
+    Level,
+    Relationship,
+    SourceReference,
+    Space,
+    Wall,
+)
 
 __all__ = [
-    "CanonicalGeometry",
-    "GeometryNode",
-    "serialize_geometry",
-    "deserialize_geometry",
+    "Door",
+    "Fixture",
+    "GeometryEntity",
+    "GeometryGraph",
+    "Level",
+    "Relationship",
+    "SourceReference",
+    "Space",
+    "Wall",
 ]
