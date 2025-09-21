@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 import importlib.util
 import sys
 
@@ -16,7 +17,19 @@ _MISSING_DEPS = [
     if importlib.util.find_spec(name) is None
 ]
 
+if "sqlalchemy" not in _MISSING_DEPS:
+    try:  # pragma: no cover - only exercised when the stub is present
+        import sqlalchemy as _sqlalchemy
+    except ModuleNotFoundError:  # pragma: no cover - defensive
+        pass
+    else:
+        if getattr(_sqlalchemy, "root_missing_error", None) is not None:
+            _MISSING_DEPS.append("sqlalchemy")
+
 if _MISSING_DEPS:  # pragma: no cover - offline test fallback
+    _PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    if str(_PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(_PROJECT_ROOT))
     pytestmark = pytest.mark.skip(
         reason=f"Required dependencies missing: {', '.join(sorted(_MISSING_DEPS))}"
     )
@@ -304,16 +317,23 @@ def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
     loop.close()
 
 
-@pytest_asyncio.fixture
-async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
-    async with engine.begin() as conn:
-        await conn.run_sync(BaseModel.metadata.create_all)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    try:
-        yield factory
-    finally:
-        await engine.dispose()
+if _MISSING_DEPS:
+    @pytest.fixture
+    def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+        pytest.skip("Database fixtures require fastapi, pydantic, and sqlalchemy")
+        yield  # pragma: no cover
+else:
+
+    @pytest_asyncio.fixture
+    async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+        async with engine.begin() as conn:
+            await conn.run_sync(BaseModel.metadata.create_all)
+        factory = async_sessionmaker(engine, expire_on_commit=False)
+        try:
+            yield factory
+        finally:
+            await engine.dispose()
 
 
 @pytest.fixture(autouse=True)
@@ -323,16 +343,23 @@ def reset_metrics() -> Iterator[None]:
     metrics.reset_metrics()
 
 
-@pytest_asyncio.fixture
-async def session(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_factory() as session:
-        try:
-            yield session
-        finally:
-            await session.rollback()
-            for table in reversed(BaseModel.metadata.sorted_tables):
-                await session.execute(table.delete())
-            await session.commit()
+if _MISSING_DEPS:
+    @pytest.fixture
+    def session(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncGenerator[AsyncSession, None]:
+        pytest.skip("Database fixtures require fastapi, pydantic, and sqlalchemy")
+        yield  # pragma: no cover
+else:
+
+    @pytest_asyncio.fixture
+    async def session(async_session_factory: async_sessionmaker[AsyncSession]) -> AsyncGenerator[AsyncSession, None]:
+        async with async_session_factory() as session:
+            try:
+                yield session
+            finally:
+                await session.rollback()
+                for table in reversed(BaseModel.metadata.sorted_tables):
+                    await session.execute(table.delete())
+                await session.commit()
 
 
 @pytest.fixture
