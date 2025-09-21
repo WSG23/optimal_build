@@ -15,6 +15,7 @@ function loadModule(modulePath) {
     define: {
       'import.meta.env.VITE_API_BASE_URL': '""',
     },
+    external: ['react', 'react-dom', 'react/jsx-runtime'],
     loader: {
       '.ts': 'ts',
       '.tsx': 'tsx',
