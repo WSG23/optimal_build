@@ -66,6 +66,7 @@ def _serialise_rule(
         "authority": rule.authority,
         "topic": rule.topic,
         "review_status": rule.review_status,
+        "review_notes": rule.review_notes,
         "is_published": rule.is_published,
         "overlays": overlays,
         "advisory_hints": hints,
@@ -130,8 +131,8 @@ async def review_rule(
 
     if payload.reviewer:
         rule.reviewer = payload.reviewer
-    if payload.notes:
-        rule.notes = payload.notes
+    if payload.notes is not None:
+        rule.review_notes = payload.notes
 
     await session.commit()
     await session.refresh(rule)

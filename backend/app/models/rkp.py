@@ -136,6 +136,7 @@ class RefRule(BaseModel):
     reviewer = Column(String(100))
     reviewed_at = Column(DateTime(timezone=True))
     notes = Column(Text)
+    review_notes = Column(Text)
     is_published = Column(Boolean, default=False, index=True)
     published_at = Column(DateTime(timezone=True))
 
