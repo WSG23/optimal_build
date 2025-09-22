@@ -1,4 +1,4 @@
-.PHONY: help install format lint test test-cov clean build deploy init-db seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec
+.PHONY: help install format lint test test-cov clean build deploy init-db seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -152,3 +152,9 @@ dev-stop: ## Stop services started with dev-start (excluding docker-compose)
 	else \
 		echo "Admin UI is not running."; \
 	fi
+
+seed-nonreg:
+	python scripts/seed_nonreg.py
+
+sync-products:
+	python -m backend.flows.sync_products --csv-path vendor.csv
