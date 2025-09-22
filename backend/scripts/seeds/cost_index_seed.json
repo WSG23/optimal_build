@@ -1,0 +1,13 @@
+[
+  {
+    "jurisdiction": "SG",
+    "provider": "Public",
+    "series_name": "construction_all_in",
+    "category": "composite",
+    "period": "2025-09-01",
+    "value": 112.3,
+    "unit": "index",
+    "methodology": "seed",
+    "source": "seed"
+  }
+]

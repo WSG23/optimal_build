@@ -1,0 +1,32 @@
+[
+  {
+    "jurisdiction": "JP",
+    "standard_body": "JIS",
+    "standard_code": "JIS A 6511",
+    "section": "Partitions",
+    "material_type": "partition",
+    "property_key": "wall.partition.thickness_mm_min",
+    "value": "100",
+    "unit": "mm",
+    "applicability": { "assembly": "stud" },
+    "edition": "2017",
+    "effective_date": "2017-01-01",
+    "license_ref": "internal-note",
+    "provenance": { "note": "seed" }
+  },
+  {
+    "jurisdiction": "EU",
+    "standard_body": "EN",
+    "standard_code": "EN 1991-1-1",
+    "section": "Imposed Loads",
+    "material_type": "structure",
+    "property_key": "structure.live_load.kN_m2_min",
+    "value": "2.0",
+    "unit": "kN/m2",
+    "applicability": { "use": "residential" },
+    "edition": "2002",
+    "effective_date": "2002-01-01",
+    "license_ref": "internal-note",
+    "provenance": { "note": "seed" }
+  }
+]
