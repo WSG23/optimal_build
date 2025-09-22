@@ -99,9 +99,10 @@ async def list_rules(
     parameter_key: Optional[str] = Query(None),
     authority: Optional[str] = Query(None),
     topic: Optional[str] = Query(None),
+    review_status: Optional[str] = Query("approved"),
     session: AsyncSession = Depends(get_session),
 ) -> Dict[str, object]:
-    stmt = select(RefRule).where(RefRule.review_status == "approved")
+    stmt = select(RefRule)
 
     if jurisdiction:
         stmt = stmt.where(RefRule.jurisdiction == jurisdiction)
@@ -111,6 +112,22 @@ async def list_rules(
         stmt = stmt.where(RefRule.authority == authority)
     if topic:
         stmt = stmt.where(RefRule.topic == topic)
+
+    include_all_statuses = False
+    status_filter: Optional[str] = None
+    if review_status is None:
+        include_all_statuses = True
+    else:
+        candidate = review_status.strip()
+        if not candidate:
+            status_filter = "approved"
+        elif candidate.lower() in {"all", "any", "*"}:
+            include_all_statuses = True
+        else:
+            status_filter = candidate
+
+    if not include_all_statuses:
+        stmt = stmt.where(RefRule.review_status == (status_filter or "approved"))
 
     result = await session.execute(stmt)
     rules = result.scalars().all()

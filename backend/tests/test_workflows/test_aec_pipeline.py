@@ -372,7 +372,10 @@ async def test_ruleset_serialisation_includes_overlays(async_session_factory, cl
         session.add_all([layer, rule])
         await session.commit()
 
-    response = await client.get("/api/v1/rules")
+    response = await client.get(
+        "/api/v1/rules",
+        params={"review_status": "needs_review"},
+    )
     assert response.status_code == 200
     payload = response.json()
     items = payload.get("items", [])

@@ -32,7 +32,7 @@ class AsyncSession:
             rows = statement._apply(self._database)
             return Result(rows)
         if isinstance(statement, DeleteStatement):
-            self._database.delete_all(statement.model)
+            self._database.delete(statement.model, statement.conditions)
             return Result(())
         if isinstance(statement, TextClause):
             return Result(())

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
-from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
+from app.models.rkp import RefDocument, RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
 
 
 @dataclass
@@ -73,6 +73,10 @@ _SAMPLE_REF_SOURCES: Sequence[Dict[str, object]] = (
         "update_freq_hint": "annual",
     },
 )
+
+_SEED_REFERENCE_FILE_HASH = "329368fb60fdbee7c0a791b5994196664014d45df5627e6697188a115df4ad4e"
+_SEED_REFERENCE_ETAG = "seed-initial-etag"
+_SEED_REFERENCE_LAST_MODIFIED = "Wed, 01 Jan 2024 00:00:00 GMT"
 
 
 _SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
@@ -257,6 +261,28 @@ async def ensure_schema() -> None:
 
 async def _upsert_ref_sources(session: AsyncSession) -> List[RefSource]:
     sources: List[RefSource] = []
+    sample_keys = {
+        (
+            payload["jurisdiction"],
+            payload["authority"],
+            payload["topic"],
+        )
+        for payload in _SAMPLE_REF_SOURCES
+    }
+    existing_sources = (
+        await session.execute(select(RefSource))
+    ).scalars().all()
+    stale_source_ids = [
+        record.id
+        for record in existing_sources
+        if (record.jurisdiction, record.authority, record.topic) not in sample_keys
+        and record.id is not None
+    ]
+    if stale_source_ids:
+        delete_stmt = RefSource.__table__.delete().where(
+            RefSource.id.in_(stale_source_ids)
+        )
+        await session.execute(delete_stmt)
     for payload in _SAMPLE_REF_SOURCES:
         stmt = select(RefSource).where(
             RefSource.jurisdiction == payload["jurisdiction"],
@@ -359,6 +385,7 @@ async def seed_screening_sample_data(
     zoning_layers = await _upsert_zoning_layers(session)
     parcels = await _upsert_parcels(session)
     geocodes = await _upsert_geocode_entries(session, parcels)
+    await _ensure_reference_documents(session, sources)
 
     if commit:
         await session.commit()
@@ -369,6 +396,31 @@ async def seed_screening_sample_data(
         zoning_layers=len(zoning_layers),
         sources=len(sources),
     )
+
+
+async def _ensure_reference_documents(
+    session: AsyncSession, sources: Iterable[RefSource]
+) -> None:
+    """Create placeholder reference documents for sources lacking one."""
+
+    for source in sources:
+        stmt = select(RefDocument).where(RefDocument.source_id == source.id).limit(1)
+        existing = (await session.execute(stmt)).scalar_one_or_none()
+        if existing is not None:
+            continue
+
+        document = RefDocument(
+            source_id=source.id,
+            version_label="seed-placeholder",
+            storage_path=f"ref-documents/source-{source.id}/seed-placeholder.pdf",
+            file_hash=_SEED_REFERENCE_FILE_HASH,
+            http_etag=_SEED_REFERENCE_ETAG,
+            http_last_modified=_SEED_REFERENCE_LAST_MODIFIED,
+            suspected_update=False,
+        )
+        session.add(document)
+
+    await session.flush()
 
 
 async def _cli_main() -> SeedSummary:

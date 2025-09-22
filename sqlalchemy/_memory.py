@@ -238,6 +238,17 @@ class DeleteStatement:
 
     def __init__(self, model: type) -> None:
         self.model = model
+        self._conditions: List[Condition] = []
+
+    def where(self, *conditions: Condition) -> "DeleteStatement":
+        for condition in conditions:
+            if condition is not None:
+                self._conditions.append(condition)
+        return self
+
+    @property
+    def conditions(self) -> Sequence[Condition]:
+        return tuple(self._conditions)
 
 
 class Table:
@@ -457,6 +468,20 @@ class InMemoryDatabase:
             if getattr(row, pk_name, None) == pk:
                 return row
         return None
+
+    def delete(self, model: type, conditions: Sequence[Condition]) -> None:
+        if not conditions:
+            self.delete_all(model)
+            return
+
+        rows = list(self._data.get(model, []))
+        remaining = []
+        for row in rows:
+            if all(condition.evaluate(row) for condition in conditions):
+                continue
+            remaining.append(row)
+
+        self._data[model] = remaining
 
     def delete_all(self, model: type) -> None:
         self._data[model] = []
