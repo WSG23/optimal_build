@@ -13,11 +13,11 @@ from app.services import standards as standards_service
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
 
-router = APIRouter(prefix="/standards", tags=["standards"])
+router = APIRouter(tags=["standards"])
 logger = get_logger(__name__)
 
 
-@router.get("", response_model=List[MaterialStandard])
+@router.get("/standards", response_model=List[MaterialStandard])
 async def list_material_standards(
     standard_code: Optional[str] = Query(default=None),
     standard_body: Optional[str] = Query(default=None),

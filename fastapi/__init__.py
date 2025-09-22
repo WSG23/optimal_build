@@ -554,8 +554,15 @@ async def _serialise_response(route: _Route, result: Any) -> Tuple[int, Dict[str
         headers.update(result.headers)
         return result.status_code, headers, payload
 
-    if route.response_model is not None and not isinstance(result, route.response_model):
-        if hasattr(route.response_model, "model_validate"):
+    if route.response_model is not None:
+        try:
+            model_type = route.response_model
+            origin = get_origin(model_type)
+            check_type = origin or model_type
+            needs_conversion = not isinstance(result, check_type)
+        except TypeError:
+            needs_conversion = True
+        if needs_conversion and hasattr(route.response_model, "model_validate"):
             result = route.response_model.model_validate(result)
 
     if hasattr(result, "model_dump"):

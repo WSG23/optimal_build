@@ -69,12 +69,13 @@ def _decision_metrics(suggestions: Sequence[OverlaySuggestion]) -> tuple[float, 
 
     for suggestion in suggestions:
         decision = (suggestion.status or "").lower()
-        if suggestion.decision is not None:
+        is_decided = suggestion.decision is not None or decision not in {"", "pending"}
+        if is_decided:
             decided += 1
             if decision == "approved":
                 accepted += 1
             created_at: datetime | None = suggestion.created_at
-            decided_at: datetime | None = suggestion.decided_at
+            decided_at: datetime | None = suggestion.decided_at or suggestion.updated_at
             if created_at and decided_at:
                 elapsed = (decided_at - created_at).total_seconds()
                 decision_seconds += max(elapsed, 0.0)

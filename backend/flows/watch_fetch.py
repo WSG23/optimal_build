@@ -30,12 +30,20 @@ async def watch_reference_sources(
     async with session_factory() as session:
         sources = (
             await session.execute(
-                select(RefSource).where(RefSource.is_active.is_(True)).order_by(RefSource.id)
+                select(RefSource)
+                .where(RefSource.is_active.is_(True))
+                .where(RefSource.update_freq_hint.is_(None))
+                .where(RefSource.fetch_kind == "pdf")
+                .order_by(RefSource.id)
             )
         ).scalars().all()
 
         for source in sources:
             latest = await _latest_document(session, source.id)
+            if latest and latest.suspected_update:
+                # Skip sources that already have an unprocessed update to avoid
+                # repeatedly flagging the same document across flow runs.
+                continue
             fetched = await fetcher.fetch(source, latest)
             if fetched is None:
                 continue

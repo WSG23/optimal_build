@@ -99,21 +99,35 @@ async def list_rules(
     parameter_key: Optional[str] = Query(None),
     authority: Optional[str] = Query(None),
     topic: Optional[str] = Query(None),
+    review_status: Optional[str] = Query(None),
     session: AsyncSession = Depends(get_session),
 ) -> Dict[str, object]:
-    stmt = select(RefRule).where(RefRule.review_status == "approved")
-
+    stmt = select(RefRule)
+    has_filters = False
     if jurisdiction:
         stmt = stmt.where(RefRule.jurisdiction == jurisdiction)
+        has_filters = True
     if parameter_key:
         stmt = stmt.where(RefRule.parameter_key == parameter_key)
+        has_filters = True
     if authority:
         stmt = stmt.where(RefRule.authority == authority)
+        has_filters = True
     if topic:
         stmt = stmt.where(RefRule.topic == topic)
+        has_filters = True
+
+    if review_status:
+        stmt = stmt.where(RefRule.review_status == review_status)
+    else:
+        stmt = stmt.where(RefRule.review_status == "approved")
 
     result = await session.execute(stmt)
     rules = result.scalars().all()
+    if not rules and review_status is None and not has_filters:
+        fallback_stmt = select(RefRule).where(RefRule.review_status != "rejected")
+        result = await session.execute(fallback_stmt)
+        rules = result.scalars().all()
     zone_codes = [_extract_zone_code(rule) for rule in rules]
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
     normalizer = RuleNormalizer()

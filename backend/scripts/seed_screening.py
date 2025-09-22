@@ -257,21 +257,12 @@ async def ensure_schema() -> None:
 
 async def _upsert_ref_sources(session: AsyncSession) -> List[RefSource]:
     sources: List[RefSource] = []
+    await session.execute(RefSource.__table__.delete())
+
     for payload in _SAMPLE_REF_SOURCES:
-        stmt = select(RefSource).where(
-            RefSource.jurisdiction == payload["jurisdiction"],
-            RefSource.authority == payload["authority"],
-            RefSource.topic == payload["topic"],
-        )
-        existing = (await session.execute(stmt)).scalar_one_or_none()
-        if existing:
-            for key, value in payload.items():
-                setattr(existing, key, value)
-            sources.append(existing)
-        else:
-            source = RefSource(**payload)
-            session.add(source)
-            sources.append(source)
+        source = RefSource(**payload)
+        session.add(source)
+        sources.append(source)
     await session.flush()
     return sources
 

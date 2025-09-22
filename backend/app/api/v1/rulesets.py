@@ -52,7 +52,7 @@ async def list_rulesets(session: AsyncSession = Depends(get_session)) -> Ruleset
     stmt: Select[RulePack] = select(RulePack).order_by(RulePack.slug, RulePack.version.desc())
     result = await session.execute(stmt)
     packs = result.scalars().all()
-    items = [RulePackSchema.model_validate(pack) for pack in packs]
+    items = [RulePackSchema.model_validate(pack, from_attributes=True) for pack in packs]
     return RulesetListResponse(items=items, count=len(items))
 
 
@@ -80,7 +80,7 @@ async def validate_ruleset(
 
     results = [RuleEvaluationResult.model_validate(item) for item in evaluation.get("results", [])]
     summary = RulesetEvaluationSummary.model_validate(evaluation.get("summary", {}))
-    ruleset_summary = RulePackSummary.model_validate(ruleset)
+    ruleset_summary = RulePackSummary.model_validate(ruleset, from_attributes=True)
 
     citations: List[Dict[str, object]] = []
     seen: set[str] = set()
