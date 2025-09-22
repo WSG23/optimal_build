@@ -46,7 +46,7 @@ async def calculate_buildable(
     attributes = _merge_layer_attributes(resolved.zone_layers)
     rules, overrides = await _load_rules_for_zone(session, resolved.zone_code)
     if overrides.front_setback_m is not None:
-        attributes.setdefault("front_setback_min_m", overrides.front_setback_m)
+        attributes["front_setback_min_m"] = overrides.front_setback_m
 
     area_m2 = _parcel_area(resolved.parcel) or defaults.site_area_m2
     plot_ratio = overrides.plot_ratio
@@ -107,7 +107,10 @@ async def _load_rules_for_zone(
     if not zone_code:
         return [], _RuleOverrides()
 
-    stmt = select(RefRule).where(RefRule.review_status == "approved")
+    stmt = select(RefRule).where(
+        RefRule.review_status == "approved",
+        RefRule.topic == "zoning",
+    )
     result = await session.execute(stmt)
 
     overrides = _RuleOverrides()
@@ -354,7 +357,10 @@ def _normalise_percentage(value: float, unit: str) -> Optional[float]:
     if value <= 0:
         return None
     percent_units = {"%", "percent", "percentage", "pct"}
-    if unit in percent_units or value > 1:
+    if unit in percent_units:
+        if value > 1:
+            value = value / 100.0
+    elif value > 1:
         value = value / 100.0
     return max(0.0, min(value, 1.0))
 
