@@ -183,8 +183,8 @@ def _compile_path(path: str) -> Tuple[re.Pattern[str], Dict[str, Callable[[str],
             pattern += rf"/(?P<{name}>[^/]+)"
         else:
             pattern += "/" + re.escape(segment)
-    if path.endswith("/"):
-        pattern += "/"
+    pattern = pattern.rstrip("/")
+    pattern += "/?"
     pattern += "$"
     return re.compile(pattern), converters
 
