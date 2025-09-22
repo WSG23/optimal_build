@@ -49,6 +49,7 @@ async def _seed_reference_data(async_session_factory) -> None:
             text_span="Provide 1.5 parking spaces per unit and ensure maximum ramp slope is 1:12.",
         )
         session.add(clause)
+        await session.flush()
 
         rule = RefRule(
             source_id=source.id,
@@ -65,8 +66,34 @@ async def _seed_reference_data(async_session_factory) -> None:
             notes="Provide 1.5 parking spaces per unit; maximum ramp slope 1:12",
             review_status="approved",
             is_published=True,
+            source_provenance={
+                "document_id": document.id,
+                "clause_id": clause.id,
+                "pages": [5],
+            },
         )
         session.add(rule)
+
+        pending_rule = RefRule(
+            source_id=source.id,
+            document_id=document.id,
+            jurisdiction="SG",
+            authority="URA",
+            topic="zoning",
+            clause_ref="4.2.2",
+            parameter_key="parking.max_ramp_slope_ratio",
+            operator="<=",
+            value="1:10",
+            unit="slope_ratio",
+            applicability={"zone_code": "R2"},
+            review_status="needs_review",
+            source_provenance={
+                "document_id": document.id,
+                "clause_id": clause.id,
+                "pages": [6],
+            },
+        )
+        session.add(pending_rule)
 
         await session.commit()
 
@@ -96,6 +123,51 @@ async def test_rules_endpoint_includes_overlays_and_hints(client: AsyncClient) -
     assert {"heritage", "daylight"} <= overlays
     assert any("parking" in hint.lower() for hint in item["advisory_hints"])
     assert any("slope" in hint.lower() for hint in item["advisory_hints"])
+    assert item["clause_ref"] == "4.2.1"
+    assert item["document_id"] is not None
+    assert item["source_id"] is not None
+    provenance = item["source_provenance"]
+    assert provenance["document_id"] == item["document_id"]
+    assert provenance["clause_id"] is not None
+    assert provenance["pages"] == [5]
+
+
+@pytest.mark.asyncio
+async def test_rules_endpoint_filters_by_query_params(client: AsyncClient) -> None:
+    response = await client.get(
+        "/api/v1/rules",
+        params={
+            "jurisdiction": "SG",
+            "authority": "URA",
+            "topic": "zoning",
+            "parameter_key": "parking.min_car_spaces_per_unit",
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["count"] >= 1
+    assert all(item["parameter_key"] == "parking.min_car_spaces_per_unit" for item in payload["items"])
+    assert all(item["authority"] == "URA" for item in payload["items"])
+    assert all(item["topic"] == "zoning" for item in payload["items"])
+    assert all(item["jurisdiction"] == "SG" for item in payload["items"])
+    assert all(item["review_status"] == "approved" for item in payload["items"])
+    assert any(item["source_provenance"]["pages"] == [5] for item in payload["items"])
+
+    # Non-approved rules are excluded even if filters would otherwise match.
+    pending_response = await client.get(
+        "/api/v1/rules",
+        params={"parameter_key": "parking.max_ramp_slope_ratio"},
+    )
+    assert pending_response.status_code == 200
+    assert pending_response.json()["count"] == 0
+
+    # Filters that do not match should return an empty result set.
+    empty_response = await client.get(
+        "/api/v1/rules",
+        params={"authority": "PUB"},
+    )
+    assert empty_response.status_code == 200
+    assert empty_response.json()["count"] == 0
 
 
 @pytest.mark.asyncio
