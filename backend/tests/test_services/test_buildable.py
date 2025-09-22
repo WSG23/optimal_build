@@ -78,60 +78,49 @@ async def test_calculate_buildable_applies_rule_overrides(session) -> None:
         input_kind="geometry",
     )
 
+    approved_rule_defaults = {
+        "jurisdiction": "SG",
+        "authority": "URA",
+        "topic": "zoning",
+        "applicability": {"zone_code": "R-OVR"},
+        "review_status": "approved",
+        "is_published": True,
+    }
+
     approved_rules = [
         RefRule(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
             parameter_key="zoning.max_far",
             operator="<=",
             value="4.2",
-            applicability={"zone_code": "R-OVR"},
-            review_status="approved",
+            **approved_rule_defaults,
         ),
         RefRule(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
             parameter_key="zoning.site_coverage.max_percent",
             operator="<=",
             value="65%",
             unit="percent",
-            applicability={"zone_code": "R-OVR"},
-            review_status="approved",
+            **approved_rule_defaults,
         ),
         RefRule(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
             parameter_key="zoning.max_building_height_m",
             operator="<=",
             value="24",
             unit="m",
-            applicability={"zone_code": "R-OVR"},
-            review_status="approved",
+            **approved_rule_defaults,
         ),
         RefRule(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
             parameter_key="zoning.max_building_height_m",
             operator="<=",
             value="8",
             unit="storeys",
-            applicability={"zone_code": "R-OVR"},
-            review_status="approved",
+            **approved_rule_defaults,
         ),
         RefRule(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
             parameter_key="zoning.setback.front_min_m",
             operator=">=",
             value="7.5",
             unit="m",
-            applicability={"zone_code": "R-OVR"},
-            review_status="approved",
+            **approved_rule_defaults,
         ),
     ]
 
@@ -182,9 +171,60 @@ async def test_calculate_buildable_ignores_unapproved_rules(session) -> None:
         value="4.5",
         applicability={"zone_code": "R-NOAPP"},
         review_status="needs_review",
+        is_published=True,
     )
 
     session.add(pending_rule)
+    await session.flush()
+
+    calculation = await calculate_buildable(session, resolved, defaults)
+
+    metrics = calculation.metrics
+    assert metrics.gfa_cap_m2 == 1800
+    assert metrics.footprint_m2 == 550
+    assert metrics.floors_max == 4
+    assert metrics.nsa_est_m2 == 1350
+    assert not calculation.rules
+
+
+@pytest.mark.asyncio
+async def test_calculate_buildable_ignores_unpublished_rules(session) -> None:
+    defaults = BuildableDefaults(
+        plot_ratio=2.2,
+        site_area_m2=1000.0,
+        site_coverage=0.4,
+        floor_height_m=3.0,
+        efficiency_factor=0.75,
+    )
+    resolved = ResolvedZone(
+        zone_code="R-NOPUB",
+        parcel=None,
+        zone_layers=[
+            _LayerStub(
+                {
+                    "plot_ratio": 1.8,
+                    "site_coverage_percent": 55,
+                    "height_m": 12.0,
+                    "floors_max": 6,
+                }
+            )
+        ],
+        input_kind="geometry",
+    )
+
+    unpublished_rule = RefRule(
+        jurisdiction="SG",
+        authority="URA",
+        topic="zoning",
+        parameter_key="zoning.max_far",
+        operator="<=",
+        value="4.5",
+        applicability={"zone_code": "R-NOPUB"},
+        review_status="approved",
+        is_published=False,
+    )
+
+    session.add(unpublished_rule)
     await session.flush()
 
     calculation = await calculate_buildable(session, resolved, defaults)

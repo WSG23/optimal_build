@@ -110,12 +110,13 @@ async def _load_rules_for_zone(
     stmt = select(RefRule).where(
         RefRule.review_status == "approved",
         RefRule.topic == "zoning",
+        RefRule.is_published.is_(True),
     )
     result = await session.execute(stmt)
 
     overrides = _RuleOverrides()
     rules: List[BuildableRule] = []
-    for record in result.scalars().all():
+    for record in result.scalars():
         if not _zone_matches(record.applicability, zone_code):
             continue
         _apply_rule_override(overrides, record)
