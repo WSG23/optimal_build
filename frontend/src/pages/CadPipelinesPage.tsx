@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import type { OverlayInsights, PipelineSuggestion } from '../api/client'
+import type { OverlaySuggestion, PipelineSuggestion, ProjectRoiMetrics } from '../api/client'
 import { AppLayout } from '../App'
 import { useApiClient } from '../api/client'
 import { useTranslation } from '../i18n'
@@ -9,14 +9,15 @@ import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import RoiSummary from '../modules/cad/RoiSummary'
 import type { RoiMetrics } from '../modules/cad/types'
 
-const DEFAULT_ZONE = 'RA'
+const DEFAULT_PROJECT_ID = 5821
 
 export function CadPipelinesPage() {
   const apiClient = useApiClient()
   const { t } = useTranslation()
-  const [zoneCode, setZoneCode] = useState(DEFAULT_ZONE)
-  const [insights, setInsights] = useState<OverlayInsights | null>(null)
+  const [projectId, setProjectId] = useState<number>(DEFAULT_PROJECT_ID)
+  const [overlaySuggestions, setOverlaySuggestions] = useState<OverlaySuggestion[]>([])
   const [suggestions, setSuggestions] = useState<PipelineSuggestion[]>([])
+  const [roi, setRoi] = useState<ProjectRoiMetrics | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { rules, loading: rulesLoading } = useRules(apiClient)
@@ -27,16 +28,20 @@ export function CadPipelinesPage() {
       setLoading(true)
       setError(null)
       try {
-        const overlay = await apiClient.getOverlayInsights({ zoneCode })
+        const overlays = await apiClient.listOverlaySuggestions(projectId)
         if (!cancelled) {
-          setInsights(overlay)
+          setOverlaySuggestions(overlays)
+          const pipeline = await apiClient.getDefaultPipelineSuggestions({
+            overlays: overlays.map((item) => item.code),
+            hints: overlays.map((item) => item.rationale).filter((value): value is string => Boolean(value)),
+          })
+          if (!cancelled) {
+            setSuggestions(pipeline)
+          }
         }
-        const pipeline = await apiClient.getDefaultPipelineSuggestions({
-          overlays: overlay.overlays,
-          hints: overlay.advisoryHints,
-        })
+        const roiMetrics = await apiClient.getProjectRoi(projectId)
         if (!cancelled) {
-          setSuggestions(pipeline)
+          setRoi(roiMetrics)
         }
       } catch (err) {
         if (!cancelled) {
@@ -57,41 +62,42 @@ export function CadPipelinesPage() {
     return () => {
       cancelled = true
     }
-  }, [apiClient, t, zoneCode])
+  }, [apiClient, projectId, t])
+
+  const overlayCodes = useMemo(() => overlaySuggestions.map((item) => item.code), [overlaySuggestions])
 
   const roiMetrics = useMemo<RoiMetrics>(() => {
-    if (suggestions.length === 0) {
+    if (!roi) {
       return {
-        automationScore: 0.5,
-        savingsPercent: 18,
-        reviewHoursSaved: 6,
-        paybackWeeks: 8,
+        automationScore: 0,
+        savingsPercent: 0,
+        reviewHoursSaved: 0,
+        paybackWeeks: 0,
       }
     }
-    const best = suggestions[0]
-    const totalHours = suggestions.reduce((sum, suggestion) => sum + suggestion.reviewHoursSaved, 0)
     return {
-      automationScore: best.automationScore,
-      savingsPercent: Math.min(45, best.estimatedSavingsPercent + suggestions.length * 4),
-      reviewHoursSaved: totalHours,
-      paybackWeeks: Math.max(2, Math.round(12 - best.estimatedSavingsPercent / 5)),
+      automationScore: roi.automationScore,
+      savingsPercent: roi.savingsPercent,
+      reviewHoursSaved: Number(roi.reviewHoursSaved.toFixed(1)),
+      paybackWeeks: roi.paybackWeeks,
     }
-  }, [suggestions])
+  }, [roi])
 
   return (
     <AppLayout title={t('pipelines.title')} subtitle={t('pipelines.subtitle')}>
       <div className="cad-pipelines__toolbar">
         <label>
-          <span>{t('uploader.zone')}</span>
-          <select value={zoneCode} onChange={(event) => setZoneCode(event.target.value)}>
-            <option value="RA">RA</option>
-            <option value="RCR">RCR</option>
-            <option value="CBD">CBD</option>
-          </select>
+          <span>{t('pipelines.projectLabel')}</span>
+          <input
+            type="number"
+            min={1}
+            value={projectId}
+            onChange={(event) => setProjectId(Number(event.target.value) || DEFAULT_PROJECT_ID)}
+          />
         </label>
-        {insights && (
+        {overlayCodes.length > 0 && (
           <p className="cad-pipelines__context">
-            {t('detection.overlays')}: {insights.overlays.join(', ') || t('common.fallback.dash')}
+            {t('detection.overlays')}: {overlayCodes.join(', ')}
           </p>
         )}
       </div>

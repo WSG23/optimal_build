@@ -65,7 +65,15 @@
       "floors": "{{count}} 階",
       "units": "{{count}} ユニット",
       "zone": "ゾーン {{code}}"
-    }
+    },
+    "projectSummary": "プロジェクト #{{id}} のオーバーレイレビュー",
+    "loadError": "オーバーレイ提案を読み込めませんでした",
+    "decisionError": "オーバーレイの決定を保存できませんでした",
+    "exportError": "エクスポートに失敗しました",
+    "auditError": "監査ログを読み込めませんでした",
+    "auditBaseline": "基準時間: {{minutes}} 分",
+    "auditActual": "実績: {{minutes}} 分",
+    "auditContext": "コンテキスト: {{text}}"
   },
   "pipelines": {
     "title": "推奨デフォルトパイプライン",
@@ -76,7 +84,8 @@
     "reviewHours": "削減されるレビュー工数",
     "savings": "推定コンプライアンス効果",
     "payback": "回収期間",
-    "weeks": "{{count}} 週間"
+    "weeks": "{{count}} 週間",
+    "projectLabel": "プロジェクトID"
   },
   "controls": {
     "source": "原本",
