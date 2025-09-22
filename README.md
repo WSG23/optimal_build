@@ -29,6 +29,13 @@ Copy `.env.example` to `.env` at the repository root to configure the FastAPI ba
 
 These values are consumed by `backend/app/core/config.py`. When only `REDIS_URL` is provided the backend reuses the same host and credentials for Celery and RQ while automatically splitting work across database indices `0`, `1`, and `2`. In staging or production deployments, configure the same variables through your orchestrator (Docker Compose, Kubernetes, managed task queue, etc.) so that the backend API, Celery workers, and any RQ workers share consistent queue and storage names.
 
+### Database migrations
+
+Apply the Alembic migrations before booting the API or background workers. The
+`init-db` make target runs `alembic upgrade head` inside the backend container,
+while local environments can execute `cd backend && alembic upgrade head` to
+create and update the schema.
+
 ## Running the AEC sample flow
 
 The repository ships with a lightweight CLI (`backend/scripts/aec_flow.py`) and Make

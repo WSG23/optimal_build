@@ -71,7 +71,7 @@ clean: ## Clean build artifacts
 build: ## Build production images
 	docker-compose build
 
-init-db: ## Initialize database
+init-db: ## Apply Alembic migrations
 	docker-compose exec backend alembic upgrade head
 
 seed-data: ## Seed initial data
