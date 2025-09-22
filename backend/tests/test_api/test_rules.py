@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from decimal import Decimal, ROUND_HALF_UP
+
 import pytest
 
 pytest.importorskip("fastapi")
@@ -13,6 +15,8 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
+from app.api.v1.screen import DEFAULT_PLOT_RATIO
+from app.core.config import settings
 from app.core.database import get_session
 from app.main import app
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
@@ -107,6 +111,26 @@ async def test_buildable_screening_supports_address_and_geojson(
     address_payload = address_response.json()
     assert address_payload["zone_code"] == "R2"
     assert "heritage" in address_payload["overlays"]
+    metrics = address_payload["buildable_metrics"]
+    assert metrics is not None
+    expected_gross = int(
+        Decimal(1250.0 * DEFAULT_PLOT_RATIO).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    )
+    expected_net = int(
+        Decimal(expected_gross * settings.BUILDABLE_EFFICIENCY_RATIO)
+        .quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    )
+    assert metrics["gross_floor_area_sqm"] == expected_gross
+    assert metrics["net_floor_area_sqm"] == expected_net
+    assert metrics["estimated_storeys"] == int(
+        Decimal(expected_gross / 1250.0).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    )
+    expected_height = metrics["estimated_storeys"] * settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M
+    assert metrics["estimated_height_m"] == pytest.approx(expected_height, rel=1e-6)
+    assert metrics["efficiency_ratio"] == pytest.approx(settings.BUILDABLE_EFFICIENCY_RATIO)
+    assert metrics["typ_floor_to_floor_m"] == pytest.approx(
+        settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M
+    )
 
     geojson_response = await client.post(
         "/api/v1/screen/buildable",
@@ -116,6 +140,31 @@ async def test_buildable_screening_supports_address_and_geojson(
     geojson_payload = geojson_response.json()
     assert geojson_payload["zone_code"] == "R2"
     assert geojson_payload["overlays"] == address_payload["overlays"]
+    assert geojson_payload["buildable_metrics"] is None
+
+
+@pytest.mark.asyncio
+async def test_buildable_screening_allows_metric_overrides(client: AsyncClient) -> None:
+    response = await client.post(
+        "/api/v1/screen/buildable",
+        json={
+            "address": "123 Example Ave",
+            "typ_floor_to_floor_m": 3.2,
+            "efficiency_ratio": 0.7,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    metrics = payload["buildable_metrics"]
+    assert metrics is not None
+    expected_gross = int(
+        Decimal(1250.0 * DEFAULT_PLOT_RATIO).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    )
+    expected_net = int(Decimal(expected_gross * 0.7).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    assert metrics["gross_floor_area_sqm"] == expected_gross
+    assert metrics["net_floor_area_sqm"] == expected_net
+    assert metrics["typ_floor_to_floor_m"] == pytest.approx(3.2)
+    assert metrics["efficiency_ratio"] == pytest.approx(0.7)
 
 
 @pytest.mark.asyncio

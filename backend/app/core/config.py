@@ -53,6 +53,18 @@ def _load_allowed_hosts() -> List[str]:
     return list(dict.fromkeys(hosts))
 
 
+def _load_float(name: str, default: float) -> float:
+    """Load a floating point configuration value from the environment."""
+
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
 def _derive_redis_url(base_url: str, db: int) -> str:
     """Return ``base_url`` pointing at a specific Redis database index.
 
@@ -110,6 +122,9 @@ class Settings:
     ALLOWED_ORIGINS: List[str]
 
     LOG_LEVEL: str
+
+    BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
+    BUILDABLE_EFFICIENCY_RATIO: float
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -171,6 +186,13 @@ class Settings:
         self.ALLOWED_ORIGINS = _load_allowed_origins()
 
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+        self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_float(
+            "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 3.6
+        )
+        self.BUILDABLE_EFFICIENCY_RATIO = _load_float(
+            "BUILDABLE_EFFICIENCY_RATIO", 0.82
+        )
 
 
 settings = Settings()

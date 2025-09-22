@@ -2,6 +2,7 @@
 
 from . import (  # noqa: F401
     alerts,
+    buildable,
     costs,
     ingestion,
     normalize,
@@ -14,6 +15,7 @@ from . import (  # noqa: F401
 
 __all__ = [
     "alerts",
+    "buildable",
     "costs",
     "ingestion",
     "normalize",

@@ -41,7 +41,13 @@ export const ReviewAPI = {
     }),
   getDiffs: (ruleId?: number) =>
     fetchJson<{ items: DiffRecord[] }>(ruleId ? `/review/diffs?rule_id=${ruleId}` : '/review/diffs'),
-  screenBuildable: (payload: { address?: string; geometry?: object }) =>
+  screenBuildable: (payload: {
+    address?: string;
+    geometry?: object;
+    project_type?: string;
+    typ_floor_to_floor_m?: number;
+    efficiency_ratio?: number;
+  }) =>
     fetchJson<BuildableScreeningResponse>('/screen/buildable', {
       method: 'POST',
       body: JSON.stringify(payload)

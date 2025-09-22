@@ -60,6 +60,19 @@ export interface BuildableScreeningResponse {
   zone_code: string | null;
   overlays: string[];
   advisory_hints: string[];
+  buildable_metrics: BuildableMetrics | null;
+}
+
+export interface BuildableMetrics {
+  site_area_sqm: number;
+  plot_ratio: number;
+  assumed_floorplate_sqm: number;
+  gross_floor_area_sqm: number;
+  net_floor_area_sqm: number;
+  estimated_storeys: number;
+  estimated_height_m: number;
+  efficiency_ratio: number;
+  typ_floor_to_floor_m: number;
 }
 
 export interface ProductRecord {
