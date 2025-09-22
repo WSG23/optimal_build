@@ -163,6 +163,99 @@ def _summarise_vector_payload(
     }
 
 
+def _normalise_units(units: object) -> List[str]:
+    """Return a list of unit identifiers from diverse representations."""
+
+    collected: List[str] = []
+    if isinstance(units, Mapping):
+        iterable = list(units.values())
+    elif isinstance(units, (list, tuple, set)):
+        iterable = list(units)
+    elif units in (None, ""):
+        iterable = []
+    else:
+        iterable = [units]
+    for entry in iterable:
+        unit_id = _extract_unit_id(entry)
+        if unit_id is None:
+            continue
+        collected.append(unit_id)
+    return collected
+
+
+def _coerce_mapping_payload(value: object) -> Mapping[str, Any] | None:
+    """Best-effort conversion of model instances into dictionaries."""
+
+    if isinstance(value, Mapping):
+        return value
+    for attr in ("model_dump", "dict"):
+        if hasattr(value, attr):
+            method = getattr(value, attr)
+            try:
+                result = method()
+            except TypeError:
+                result = method(mode="python") if attr == "model_dump" else method()
+            except Exception:  # pragma: no cover - defensive
+                return None
+            if isinstance(result, Mapping):
+                return result
+    return None
+
+
+def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
+    """Aggregate import detection metadata for downstream consumers."""
+
+    floors_raw = record.detected_floors or []
+    floor_breakdown: List[Dict[str, Any]] = []
+    seen_units: Dict[str, None] = {}
+
+    for index, entry in enumerate(floors_raw, start=1):
+        data = _coerce_mapping_payload(entry)
+        if data is None:
+            name = str(entry) if entry not in (None, "") else f"Floor {index}"
+            unit_ids: List[str] = []
+        else:
+            name = str(
+                data.get("name")
+                or data.get("label")
+                or data.get("id")
+                or f"Floor {index}"
+            )
+            raw_units = data.get("unit_ids") or data.get("units")
+            unit_ids = _normalise_units(raw_units)
+        for unit_id in unit_ids:
+            if unit_id not in seen_units:
+                seen_units[unit_id] = None
+        floor_breakdown.append(
+            {
+                "name": name,
+                "unit_count": len(unit_ids),
+                "unit_ids": unit_ids,
+            }
+        )
+
+    units_raw = record.detected_units or []
+    if isinstance(units_raw, list):
+        iterable_units = units_raw
+    else:
+        iterable_units = [units_raw]
+    for unit in iterable_units:
+        unit_id = _extract_unit_id(unit)
+        if unit_id and unit_id not in seen_units:
+            seen_units[unit_id] = None
+
+    summary: Dict[str, Any] = {
+        "floors": len(floor_breakdown),
+        "units": len(seen_units),
+        "floor_breakdown": floor_breakdown,
+    }
+    if record.layer_metadata:
+        summary["layers"] = len(record.layer_metadata)
+    if record.parse_status:
+        summary["status"] = record.parse_status
+    return summary
+
+
 @router.post("/import", response_model=ImportResult, status_code=status.HTTP_201_CREATED)
 async def upload_import(
     file: UploadFile = File(...),

@@ -39,20 +39,28 @@ async def _seed_project(async_session_factory, project_id: int = 1) -> int:
             project_id=project_id,
             source_geometry_id=source.id,
             code="heritage_conservation",
+            type="review",
             title="Heritage conservation review",
             status="approved",
             severity="high",
             engine_payload={"nodes": ["bldg-1"]},
+            target_ids=["bldg-1"],
+            props={"score": 0.95},
+            rule_refs=["heritage.review"],
             geometry_checksum=checksum,
         )
         pending = OverlaySuggestion(
             project_id=project_id,
             source_geometry_id=source.id,
             code="tall_building_review",
+            type="assessment",
             title="Tall building review",
             status="pending",
             severity="medium",
             engine_payload={"nodes": ["bldg-1"]},
+            target_ids=["bldg-1"],
+            props={"score": 0.75},
+            rule_refs=["building.height"],
             geometry_checksum=checksum,
         )
         session.add_all([approved, pending])
@@ -93,6 +101,9 @@ async def test_generate_export_creates_files_per_format(format_, async_session_f
     overlay_entries = manifest["overlays"]["A-OVER-HERITAGE"]
     assert all(entry["status"] == "approved" for entry in overlay_entries)
     assert overlay_entries[0]["style"].get("color") == "red"
+    assert overlay_entries[0]["target_ids"] == ["bldg-1"]
+    assert overlay_entries[0]["rule_refs"] == ["heritage.review"]
+    assert overlay_entries[0]["props"].get("score") == 0.95
     assert manifest.get("watermark"), "Watermark should be applied when pending overlays exist"
 
     with artifact.open() as stream:
