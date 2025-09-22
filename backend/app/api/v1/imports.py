@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+from collections import Counter
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Mapping
+from typing import Any, Dict, Iterable, List, Mapping, Tuple
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -17,7 +19,7 @@ from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
 from jobs import job_queue
-from jobs.parse_cad import parse_import_job
+from jobs.parse_cad import detect_dxf_metadata, detect_ifc_metadata, parse_import_job
 from jobs.raster_vector import vectorize_floorplan
 
 router = APIRouter()
@@ -54,18 +56,8 @@ def _normalise_floor(
     return {"name": name, "unit_ids": collected}
 
 
-def _analyse_payload(data: bytes) -> tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
-    """Parse the uploaded payload to determine floors, units and layer metadata."""
-
-    try:
-        decoded = data.decode("utf-8")
-    except UnicodeDecodeError:
-        return [], [], []
-
-    try:
-        payload = json.loads(decoded)
-    except json.JSONDecodeError:
-        return [], [], []
+def _detect_json_payload(payload: Mapping[str, Any]) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+    """Inspect a JSON payload and extract quick-look floor and unit metadata."""
 
     floors: List[Dict[str, Any]] = []
     seen_units: Dict[str, None] = {}
@@ -76,7 +68,7 @@ def _analyse_payload(data: bytes) -> tuple[List[Dict[str, Any]], List[str], List
         for layer in raw_layers:
             if not isinstance(layer, dict):
                 continue
-            layer_metadata.append(layer)
+            layer_metadata.append(dict(layer))
             layer_type = str(layer.get("type", "")).lower()
             if layer_type not in {"floor", "level", "storey", "story"}:
                 continue
@@ -125,6 +117,44 @@ def _analyse_payload(data: bytes) -> tuple[List[Dict[str, Any]], List[str], List
     return floors, ordered_units, layer_metadata
 
 
+def _detect_import_metadata(
+    filename: str | None,
+    content_type: str | None,
+    payload: bytes,
+) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+    """Determine floors, units and layer metadata for diverse import payloads."""
+
+    name = (filename or "").lower()
+    media_type = (content_type or "").lower()
+
+    if name.endswith(".json") or "json" in media_type:
+        try:
+            decoded = payload.decode("utf-8")
+        except UnicodeDecodeError:
+            return [], [], []
+        try:
+            json_payload = json.loads(decoded)
+        except json.JSONDecodeError:
+            return [], [], []
+        if isinstance(json_payload, Mapping):
+            return _detect_json_payload(json_payload)
+        return [], [], []
+
+    if name.endswith(".dxf") or "dxf" in media_type:
+        try:
+            return detect_dxf_metadata(payload)
+        except Exception:  # pragma: no cover - optional dependency guard
+            return [], [], []
+
+    if name.endswith(".ifc") or "ifc" in media_type:
+        try:
+            return detect_ifc_metadata(payload)
+        except Exception:  # pragma: no cover - optional dependency guard
+            return [], [], []
+
+    return [], [], []
+
+
 def _is_vectorizable(filename: str | None, content_type: str | None) -> bool:
     """Return ``True`` if a file is eligible for raster vector processing."""
 
@@ -162,6 +192,25 @@ def _summarise_vector_payload(
             "bitmap_walls": bitmap_flag,
         },
     }
+
+
+def _derive_vector_layers(payload: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """Derive layer metadata from vectorized PDF payloads."""
+
+    layer_counts: Counter[str] = Counter()
+    paths = payload.get("paths")
+    if isinstance(paths, list):
+        for entry in paths:
+            if not isinstance(entry, Mapping):
+                continue
+            layer_name = entry.get("layer")
+            if layer_name in (None, ""):
+                continue
+            layer_counts[str(layer_name)] += 1
+    return [
+        {"name": name, "path_count": count, "source": "vector_paths"}
+        for name, count in sorted(layer_counts.items())
+    ]
 
 
 def _normalise_units(units: object) -> List[str]:
@@ -206,7 +255,9 @@ def _coerce_mapping_payload(value: object) -> Mapping[str, Any] | None:
 def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
     """Aggregate import detection metadata for downstream consumers."""
 
-    floors_raw = record.detected_floors or []
+    parse_metadata = _coerce_mapping_payload(record.parse_result) or {}
+
+    floors_raw = record.detected_floors or parse_metadata.get("detected_floors") or []
     floor_breakdown: List[Dict[str, Any]] = []
     seen_units: Dict[str, None] = {}
 
@@ -235,7 +286,7 @@ def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
             }
         )
 
-    units_raw = record.detected_units or []
+    units_raw = record.detected_units or parse_metadata.get("detected_units") or []
     if isinstance(units_raw, list):
         iterable_units = units_raw
     else:
@@ -250,8 +301,13 @@ def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
         "units": len(seen_units),
         "floor_breakdown": floor_breakdown,
     }
-    if record.layer_metadata:
-        summary["layers"] = len(record.layer_metadata)
+    layer_metadata = record.layer_metadata or parse_metadata.get("layer_metadata") or []
+    if layer_metadata:
+        if isinstance(layer_metadata, list):
+            layer_count = len(layer_metadata)
+        else:
+            layer_count = 1
+        summary["layers"] = layer_count
     if record.parse_status:
         summary["status"] = record.parse_status
     return summary
@@ -271,30 +327,37 @@ async def upload_import(
     if not raw_payload:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty upload payload")
 
-    detected_floors, detected_units, layer_metadata = _analyse_payload(raw_payload)
-    stored_layer_metadata = layer_metadata or detected_floors
+    filename = file.filename or "upload.bin"
+    content_type = file.content_type
+
+    detected_floors, detected_units, layer_metadata = await asyncio.to_thread(
+        _detect_import_metadata,
+        filename,
+        content_type,
+        raw_payload,
+    )
 
     import_id = str(uuid4())
 
     record = ImportRecord(
         id=import_id,
-        filename=file.filename or "upload.bin",
-        content_type=file.content_type,
+        filename=filename,
+        content_type=content_type,
         size_bytes=len(raw_payload),
-        layer_metadata=stored_layer_metadata,
+        layer_metadata=[],
         detected_floors=detected_floors,
         detected_units=detected_units,
     )
 
     vector_payload: Dict[str, Any] | None = None
     vector_summary: Dict[str, Any] | None = None
-    if enable_raster_processing and _is_vectorizable(record.filename, record.content_type):
+    if enable_raster_processing and _is_vectorizable(filename, content_type):
         try:
             dispatch = await job_queue.enqueue(
                 vectorize_floorplan,
                 payload=raw_payload,
-                content_type=record.content_type or "",
-                filename=record.filename,
+                content_type=content_type or "",
+                filename=filename,
                 infer_walls=infer_walls,
             )
             if dispatch.result and isinstance(dispatch.result, Mapping):
@@ -302,8 +365,8 @@ async def upload_import(
             elif dispatch.status != "completed":
                 inline_result = await vectorize_floorplan(
                     raw_payload,
-                    content_type=record.content_type or "",
-                    filename=record.filename,
+                    content_type=content_type or "",
+                    filename=filename,
                     infer_walls=infer_walls,
                 )
                 if isinstance(inline_result, Mapping):
@@ -322,6 +385,13 @@ async def upload_import(
                 infer_walls=infer_walls,
                 requested=True,
             )
+            if not layer_metadata:
+                derived_layers = _derive_vector_layers(vector_payload)
+                if derived_layers:
+                    layer_metadata = derived_layers
+
+    stored_layer_metadata = layer_metadata or detected_floors
+    record.layer_metadata = stored_layer_metadata
 
     storage_service = get_storage_service()
     storage_result = await storage_service.store_import_file(

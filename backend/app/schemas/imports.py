@@ -27,9 +27,18 @@ class ImportResult(BaseModel):
         default=None, description="URI of stored vectorised geometry derived from the upload"
     )
     uploaded_at: datetime
-    layer_metadata: List[Dict[str, Any]]
-    detected_floors: List[DetectedFloor]
-    detected_units: List[str]
+    layer_metadata: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Layer metadata detected during upload or derived from vectorization",
+    )
+    detected_floors: List[DetectedFloor] = Field(
+        default_factory=list,
+        description="Floors detected during upload for quick-look summaries",
+    )
+    detected_units: List[str] = Field(
+        default_factory=list,
+        description="Unit identifiers detected during upload",
+    )
     vector_summary: Optional[Dict[str, Any]] = Field(
         default=None, description="Summary of extracted vector paths and inferred walls"
     )
