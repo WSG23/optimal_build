@@ -23,6 +23,7 @@ from typing import (
     Union,
     get_args,
     get_origin,
+    get_type_hints,
 )
 
 T = TypeVar("T")
@@ -42,6 +43,11 @@ class FieldInfo:
     default: Any = Undefined
     default_factory: Optional[Callable[[], Any]] = None
     description: Optional[str] = None
+    extra: Dict[str, Any] | None = None
+
+    def __post_init__(self) -> None:  # pragma: no cover - trivial initialiser
+        if self.extra is None:
+            self.extra = {}
 
 
 def Field(
@@ -49,13 +55,19 @@ def Field(
     *,
     default_factory: Optional[Callable[[], Any]] = None,
     description: Optional[str] = None,
-    **_: Any,
+    **kwargs: Any,
+
 ) -> FieldInfo:
     """Return metadata describing a model field."""
 
     if default is ...:
         default = Undefined
-    return FieldInfo(default=default, default_factory=default_factory, description=description)
+    return FieldInfo(
+        default=default,
+        default_factory=default_factory,
+        description=description,
+        extra=dict(kwargs) if kwargs else {},
+    )
 
 
 class ValidationError(ValueError):
@@ -82,6 +94,7 @@ def _build_field(type_annotation: Any, field: FieldInfo) -> FieldInfo:
         default=field.default,
         default_factory=field.default_factory,
         description=field.description,
+        extra=dict(field.extra or {}),
     )
     field.annotation = type_annotation
     field.required = field.default is Undefined and field.default_factory is None and not _is_optional(type_annotation)
@@ -194,9 +207,14 @@ class BaseModelMeta(type):
 
         for base in reversed(bases):
             if hasattr(base, "model_fields"):
-                fields.update(base.model_fields)  # type: ignore[attr-defined]
+                for field_name, field_info in getattr(base, "model_fields", {}).items():
+                    if field_name.startswith("model_") or field_name.startswith("__"):
+                        continue
+                    fields[field_name] = field_info
 
         for field_name, annotation in annotations.items():
+            if field_name.startswith("model_") or field_name.startswith("__"):
+                continue
             default_value = namespace.get(field_name, Undefined)
             if isinstance(default_value, FieldInfo):
                 field_info = default_value
@@ -244,7 +262,18 @@ class BaseModelMeta(type):
         namespace["__model_validators__"] = model_validators
         namespace["model_config"] = model_config
 
-        return super().__new__(mcls, name, bases, namespace, **kwargs)
+        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
+
+        try:
+            resolved = get_type_hints(cls)
+        except Exception:
+            resolved = {}
+        for field_name, annotation in resolved.items():
+            field = cls.model_fields.get(field_name)
+            if field is not None:
+                field.annotation = annotation
+
+        return cls
 
 
 class BaseModel(metaclass=BaseModelMeta):

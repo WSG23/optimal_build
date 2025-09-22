@@ -1,34 +1,19 @@
-"""Minimal stub of :mod:`pytest_asyncio` for asynchronous test support."""
+"""Minimal ``pytest_asyncio`` shim providing async fixtures and marks."""
 
 from __future__ import annotations
 
+import functools
+import inspect
+from typing import Any, Callable, TypeVar
+
 import pytest
-import _pytest.config
-import _pytest.fixtures
-import _pytest.python
 
 from . import plugin as _plugin
 
-pytest_plugins = ["pytest_asyncio.plugin"]
+import _pytest.python
 
 
-def fixture(*args, **kwargs):  # type: ignore[override]
-    """Proxy to :func:`pytest.fixture` used by async fixtures."""
-
-    return pytest.fixture(*args, **kwargs)
-
-
-def _install_hooks() -> None:
-    try:
-        config = _pytest.config.get_config()
-    except Exception:  # pragma: no cover - fallback when config unavailable
-        config = None
-    if config is not None:
-        try:
-            _plugin.pytest_configure(config)
-        except Exception:  # pragma: no cover - defensive
-            pass
-
+def _install_pyfunc_patch() -> None:
     original_runtest = _pytest.python.Function.runtest
 
     def _patched_runtest(self: _pytest.python.Function) -> None:
@@ -39,18 +24,78 @@ def _install_hooks() -> None:
 
     _pytest.python.Function.runtest = _patched_runtest  # type: ignore[assignment]
 
-    original_execute = _pytest.fixtures.FixtureDef.execute
 
-    def _patched_execute(self, request):
-        outcome = _plugin.pytest_fixture_setup(self, request)
-        if outcome is not None:
-            return outcome
-        return original_execute(self, request)
+_install_pyfunc_patch()
 
-    _pytest.fixtures.FixtureDef.execute = _patched_execute  # type: ignore[assignment]
+pytest_plugins = ["pytest_asyncio.plugin"]
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
-_install_hooks()
+def fixture(*decorator_args: Any, **decorator_kwargs: Any):  # type: ignore[override]
+    """Wrap coroutine and async generator fixtures so pytest can consume them."""
+
+    if (
+        decorator_args
+        and callable(decorator_args[0])
+        and len(decorator_args) == 1
+        and not decorator_kwargs
+    ):
+        func = decorator_args[0]
+        return fixture()(func)  # type: ignore[misc]
+
+    def _decorate(func: F) -> F:
+        parameter_names = list(inspect.signature(func).parameters)
+
+        request_signature = inspect.Signature(
+            [inspect.Parameter("request", inspect.Parameter.POSITIONAL_OR_KEYWORD)]
+        )
+
+        if inspect.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            def _wrapped(request: pytest.FixtureRequest):
+                loop = _plugin._ensure_loop(request)
+                kwargs = {name: request.getfixturevalue(name) for name in parameter_names}
+                return loop.run_until_complete(func(**kwargs))
+
+            _wrapped.__signature__ = request_signature  # type: ignore[attr-defined]
+            return pytest.fixture(*decorator_args, **decorator_kwargs)(_wrapped)  # type: ignore[return-value]
+
+        if inspect.isasyncgenfunction(func):
+
+            @functools.wraps(func)
+            def _generator(request: pytest.FixtureRequest):
+                loop = _plugin._ensure_loop(request)
+                kwargs = {name: request.getfixturevalue(name) for name in parameter_names}
+                agen = func(**kwargs)
+                value = loop.run_until_complete(agen.__anext__())
+                try:
+                    yield value
+                finally:
+                    try:
+                        loop.run_until_complete(agen.__anext__())
+                    except StopAsyncIteration:
+                        pass
+                    loop.run_until_complete(agen.aclose())
+
+            _generator.__signature__ = request_signature  # type: ignore[attr-defined]
+            return pytest.fixture(*decorator_args, **decorator_kwargs)(_generator)  # type: ignore[return-value]
+
+        return pytest.fixture(*decorator_args, **decorator_kwargs)(func)  # type: ignore[return-value]
+
+    return _decorate
 
 
 __all__ = ["fixture", "pytest_plugins"]
+
+
+def pytest_configure(config: pytest.Config) -> None:  # pragma: no cover - pytest hook
+    if not config.pluginmanager.has_plugin("pytest_asyncio_stub"):
+        config.pluginmanager.register(_plugin, "pytest_asyncio_stub")
+    _plugin.pytest_configure(config)
+
+
+def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:  # pragma: no cover
+    return _plugin.pytest_pyfunc_call(pyfuncitem)
+

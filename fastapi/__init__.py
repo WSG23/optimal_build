@@ -6,10 +6,24 @@ import asyncio
 from dataclasses import dataclass
 from dataclasses import dataclass
 from datetime import date, datetime
+from functools import lru_cache
 import inspect
 import json
 import re
-from typing import Any, Awaitable, Callable, Dict, Iterable, Mapping, Optional, Tuple, Union, get_args, get_origin
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterable,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from . import status  # noqa: F401  (re-exported)
 
@@ -382,7 +396,7 @@ async def _build_arguments(
 
     body_consumed = False
     for name, parameter in signature.parameters.items():
-        annotation = parameter.annotation
+        annotation = _resolve_annotation(endpoint, name, parameter.annotation)
         default = parameter.default
 
         if name in path_params:
@@ -477,6 +491,19 @@ async def _resolve_dependency(
     return result, None
 
 
+@lru_cache(maxsize=None)
+def _type_hints_for(endpoint: Callable[..., Any]) -> Dict[str, Any]:
+    try:
+        return get_type_hints(endpoint)
+    except Exception:
+        return {}
+
+
+def _resolve_annotation(endpoint: Callable[..., Any], name: str, default: Any) -> Any:
+    hints = _type_hints_for(endpoint)
+    return hints.get(name, default)
+
+
 def _coerce_type(value: Any, annotation: Any) -> Any:
     if annotation is inspect._empty or value is None:
         return value
@@ -509,8 +536,10 @@ def _coerce_type(value: Any, annotation: Any) -> Any:
 def _convert_path_param(value: str, endpoint: Callable[..., Any], name: str) -> Any:
     signature = inspect.signature(endpoint)
     parameter = signature.parameters.get(name)
-    if parameter and parameter.annotation in {int, float}:
-        return parameter.annotation(value)
+    if parameter:
+        annotation = _resolve_annotation(endpoint, name, parameter.annotation)
+        if annotation in {int, float}:
+            return annotation(value)
     return value
 
 

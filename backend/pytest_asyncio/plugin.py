@@ -22,7 +22,13 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
             loop = asyncio.new_event_loop()
             cleanup_loop = True
         try:
-            loop.run_until_complete(testfunction(**pyfuncitem.funcargs))
+            signature = inspect.signature(testfunction)
+            kwargs = {
+                name: pyfuncitem.funcargs[name]
+                for name in signature.parameters
+                if name in pyfuncitem.funcargs
+            }
+            loop.run_until_complete(testfunction(**kwargs))
         finally:
             if cleanup_loop:
                 loop.close()
