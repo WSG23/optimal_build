@@ -195,3 +195,30 @@ async def test_calculate_buildable_ignores_unapproved_rules(session) -> None:
     assert metrics.floors_max == 4
     assert metrics.nsa_est_m2 == 1350
     assert not calculation.rules
+
+
+@pytest.mark.asyncio
+async def test_calculate_buildable_without_rule_overrides(async_session_factory) -> None:
+    defaults = BuildableDefaults(
+        plot_ratio=3.0,
+        site_area_m2=750.0,
+        site_coverage=0.5,
+        floor_height_m=3.2,
+        efficiency_factor=0.65,
+    )
+    resolved = ResolvedZone(
+        zone_code="R-EMPTY",
+        parcel=None,
+        zone_layers=[_LayerStub({})],
+        input_kind="geometry",
+    )
+
+    async with async_session_factory() as session:
+        calculation = await calculate_buildable(session, resolved, defaults)
+
+    metrics = calculation.metrics
+    assert metrics.gfa_cap_m2 == 2250
+    assert metrics.footprint_m2 == 375
+    assert metrics.floors_max == 6
+    assert metrics.nsa_est_m2 == 1463
+    assert not calculation.rules
