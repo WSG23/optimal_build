@@ -85,6 +85,36 @@ _SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
             ],
         },
     },
+    {
+        "jurisdiction": "SG",
+        "layer_name": "MasterPlan",
+        "zone_code": "MX1",
+        "attributes": {
+            "label": "Mixed Use (MX1)",
+            "overlays": ["innovation", "mixed_use"],
+            "advisory_hints": [
+                "Coordinate with URA for mixed-use developments.",
+                "Ensure adequate public realm activation.",
+            ],
+            "plot_ratio": 4.5,
+            "site_coverage": 0.4,
+            "height_m": 44.0,
+            "floors_max": 10,
+        },
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "MX1",
+            "coordinates": [
+                [
+                    [103.8540, 1.3035],
+                    [103.8551, 1.3038],
+                    [103.8549, 1.3049],
+                    [103.8537, 1.3046],
+                    [103.8540, 1.3035],
+                ]
+            ],
+        },
+    },
 )
 
 _SAMPLE_PARCELS: Sequence[Dict[str, object]] = (
@@ -130,6 +160,27 @@ _SAMPLE_PARCELS: Sequence[Dict[str, object]] = (
         "area_m2": 980.0,
         "source": "sample_loader",
     },
+    {
+        "jurisdiction": "SG",
+        "parcel_ref": "MK03-04567",
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "MX1",
+            "coordinates": [
+                [
+                    [103.8542, 1.3039],
+                    [103.8548, 1.3041],
+                    [103.8546, 1.3047],
+                    [103.8540, 1.3045],
+                    [103.8542, 1.3039],
+                ]
+            ],
+        },
+        "centroid_lat": 1.3043,
+        "centroid_lon": 103.8544,
+        "area_m2": 1500.0,
+        "source": "sample_loader",
+    },
 )
 
 _SAMPLE_GEOCODES: Sequence[Dict[str, object]] = (
@@ -147,6 +198,14 @@ _SAMPLE_GEOCODES: Sequence[Dict[str, object]] = (
         "lon": 103.8525,
         "parcel_ref": "MK02-00021",
         "confidence_score": 0.87,
+    },
+    {
+        "address": "789 Innovation Drive",
+        "lat": 1.3043,
+        "lon": 103.8544,
+        "parcel_ref": "MK03-04567",
+        "confidence_score": 0.9,
+        "is_verified": True,
     },
 )
 

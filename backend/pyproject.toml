@@ -51,3 +51,6 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v"
 asyncio_mode = "auto"
+markers = [
+    "asyncio: mark tests that run with an asyncio event loop",
+]
