@@ -1,7 +1,7 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { fetchBuildable, type BuildableResponse } from '../../api/buildable'
+import { fetchBuildable, type BuildableSummary } from '../../api/buildable'
 import { useTranslation } from '../../i18n'
 
 const DEFAULT_ASSUMPTIONS = {
@@ -53,7 +53,7 @@ export function FeasibilityWizard() {
   const [assumptionErrors, setAssumptionErrors] = useState<AssumptionErrors>({})
   const [appliedAssumptions, setAppliedAssumptions] = useState({ ...DEFAULT_ASSUMPTIONS })
   const [payload, setPayload] = useState<PendingPayload | null>(null)
-  const [result, setResult] = useState<BuildableResponse | null>(null)
+  const [result, setResult] = useState<BuildableSummary | null>(null)
   const [status, setStatus] = useState<WizardStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [liveAnnouncement, setLiveAnnouncement] = useState('')
@@ -319,7 +319,7 @@ export function FeasibilityWizard() {
     return <p className="feasibility-assumptions__error">{t(messageKey)}</p>
   }
 
-  const renderProvenanceBadge = (provenance: BuildableResponse['rules'][number]['provenance']) => {
+  const renderProvenanceBadge = (provenance: BuildableSummary['rules'][number]['provenance']) => {
     if (provenance.documentId && provenance.pages && provenance.pages.length > 0) {
       return (
         <span className="feasibility-citation__badge">
@@ -356,25 +356,25 @@ export function FeasibilityWizard() {
         key: 'gfaCapM2',
         label: t('wizard.results.metrics.gfaCap'),
         value: numberFormatter.format(result.metrics.gfaCapM2),
-        testId: 'metric-gfa',
+        testId: 'gfa-cap',
       },
       {
         key: 'floorsMax',
         label: t('wizard.results.metrics.floorsMax'),
         value: numberFormatter.format(result.metrics.floorsMax),
-        testId: 'metric-floors',
+        testId: 'floors-max',
       },
       {
         key: 'footprintM2',
         label: t('wizard.results.metrics.footprint'),
         value: numberFormatter.format(result.metrics.footprintM2),
-        testId: 'metric-footprint',
+        testId: 'footprint',
       },
       {
         key: 'nsaEstM2',
         label: t('wizard.results.metrics.nsa'),
         value: numberFormatter.format(result.metrics.nsaEstM2),
-        testId: 'metric-nsa',
+        testId: 'nsa-est',
       },
     ]
     return (
@@ -432,11 +432,16 @@ export function FeasibilityWizard() {
                 value={addressInput}
                 onChange={handleAddressChange}
                 placeholder={t('wizard.form.addressPlaceholder')}
+                data-testid="address-input"
               />
               {addressError && <p className="feasibility-form__error">{addressError}</p>}
             </div>
             <div className="feasibility-form__actions">
-              <button type="submit" className="feasibility-form__submit">
+              <button
+                type="submit"
+                className="feasibility-form__submit"
+                data-testid="compute-button"
+              >
                 {status === 'loading'
                   ? t('wizard.form.submitLoading')
                   : t('wizard.form.submitLabel')}
@@ -461,6 +466,7 @@ export function FeasibilityWizard() {
                   min={0}
                   value={assumptionInputs.typFloorToFloorM}
                   onChange={handleAssumptionChange('typFloorToFloorM')}
+                  data-testid="assumption-floor"
                 />
                 <p className="feasibility-assumptions__hint">
                   {t('wizard.assumptions.fields.typFloorToFloor.hint', {
@@ -559,7 +565,7 @@ export function FeasibilityWizard() {
               )}
 
               {result.rules.length > 0 && (
-                <section className="feasibility-citations">
+                <section className="feasibility-citations" data-testid="citations">
                   <h3>{t('wizard.citations.title')}</h3>
                   <ul>
                     {result.rules.map((rule) => (

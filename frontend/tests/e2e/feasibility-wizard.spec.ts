@@ -32,16 +32,16 @@ test.describe('Feasibility wizard', () => {
       expect(new Set(overlayTexts)).toEqual(new Set(expectedOverlays))
 
       const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
-      await expect(page.getByTestId('metric-gfa')).toHaveText(
+      await expect(page.getByTestId('gfa-cap')).toHaveText(
         numberFormatter.format(body.metrics.gfa_cap_m2),
       )
-      await expect(page.getByTestId('metric-floors')).toHaveText(
+      await expect(page.getByTestId('floors-max')).toHaveText(
         numberFormatter.format(body.metrics.floors_max),
       )
-      await expect(page.getByTestId('metric-footprint')).toHaveText(
+      await expect(page.getByTestId('footprint')).toHaveText(
         numberFormatter.format(body.metrics.footprint_m2),
       )
-      await expect(page.getByTestId('metric-nsa')).toHaveText(
+      await expect(page.getByTestId('nsa-est')).toHaveText(
         numberFormatter.format(body.metrics.nsa_est_m2),
       )
 
@@ -85,7 +85,7 @@ test.describe('Feasibility wizard', () => {
     await page.goto('/feasibility')
     await page.getByLabel('Site address').fill(address)
     await page.getByRole('button', { name: 'Compute feasibility' }).click()
-    await expect(page.getByTestId('metric-nsa')).toHaveText(
+    await expect(page.getByTestId('nsa-est')).toHaveText(
       new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
         initialBody.metrics.nsa_est_m2,
       ),
@@ -103,7 +103,7 @@ test.describe('Feasibility wizard', () => {
     expect(lastEvent.status).toBe('success')
     expect(lastEvent.durationMs).toBeLessThan(500)
 
-    await expect(page.getByTestId('metric-nsa')).toHaveText(
+    await expect(page.getByTestId('nsa-est')).toHaveText(
       new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
         updatedBody.metrics.nsa_est_m2,
       ),
