@@ -1,4 +1,4 @@
-"""Bridge module exposing the project-level httpx stub."""
+"""Bridge module exposing the project-level Starlette stub."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-_package = "httpx"
+_package = __name__.split(".", 1)[-1]
 _current_file = Path(__file__).resolve()
-_root = _current_file.parents[1]
+_root = _current_file.parents[2]
 _target_dir = _root / _package
 _target_file = _target_dir / "__init__.py"
 
@@ -37,6 +37,7 @@ if _needs_reload(_module):
         raise ImportError(f"Unable to load stub package '{_package}' from {_target_file}")
     _module = importlib.util.module_from_spec(_spec)
     sys.modules[_package] = _module
+    sys.modules[__name__] = _module
     _spec.loader.exec_module(_module)  # type: ignore[arg-type]
 
 sys.modules[__name__] = _module

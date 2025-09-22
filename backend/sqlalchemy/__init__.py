@@ -1,4 +1,4 @@
-"""Delegate to the repository-level SQLAlchemy stub when running from backend."""
+"""Bridge module exposing the project-level SQLAlchemy stub."""
 
 from __future__ import annotations
 
@@ -7,27 +7,37 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+_package = __name__.split(".", 1)[-1]
+_current_file = Path(__file__).resolve()
+_root = _current_file.parents[2]
+_target_dir = _root / _package
+_target_file = _target_dir / "__init__.py"
 
-def _load_stub() -> ModuleType:
-    repo_root = Path(__file__).resolve().parents[2]
-    stub_init = repo_root / "sqlalchemy" / "__init__.py"
-    if not stub_init.exists():
-        raise ModuleNotFoundError(
-            "No module named 'sqlalchemy' and SQLAlchemy stub missing in repository root"
-        )
 
-    spec = importlib.util.spec_from_file_location(
-        __name__,
-        stub_init,
-        submodule_search_locations=[str(stub_init.parent)],
+def _needs_reload(module: ModuleType | None) -> bool:
+    if module is None:
+        return True
+    module_file = getattr(module, "__file__", None)
+    if module_file is None:
+        return True
+    try:
+        return Path(module_file).resolve() == _current_file
+    except OSError:
+        return True
+
+
+_module = sys.modules.get(_package)
+if _needs_reload(_module):
+    _spec = importlib.util.spec_from_file_location(
+        _package,
+        _target_file,
+        submodule_search_locations=[str(_target_dir)],
     )
-    if spec is None or spec.loader is None:
-        raise ModuleNotFoundError("Unable to load SQLAlchemy stub module")
+    if _spec is None or _spec.loader is None:
+        raise ImportError(f"Unable to load stub package '{_package}' from {_target_file}")
+    _module = importlib.util.module_from_spec(_spec)
+    sys.modules[_package] = _module
+    sys.modules[__name__] = _module
+    _spec.loader.exec_module(_module)  # type: ignore[arg-type]
 
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[__name__] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-globals().update(_load_stub().__dict__)
+sys.modules[__name__] = _module
