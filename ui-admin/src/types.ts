@@ -55,11 +55,46 @@ export interface DiffRecord {
   updated: string;
 }
 
+export interface BuildableRuleProvenance {
+  rule_id: number;
+  clause_ref: string | null;
+  document_id: number | null;
+  seed_tag: string | null;
+}
+
+export interface BuildableRuleRecord {
+  id: number;
+  parameter_key: string;
+  operator: string;
+  value: string;
+  unit: string | null;
+  provenance: BuildableRuleProvenance;
+}
+
+export interface BuildableMetrics {
+  gfa_cap_m2: number;
+  floors_max: number;
+  footprint_m2: number;
+  nsa_est_m2: number;
+}
+
+export interface ZoneSourceInfo {
+  kind: 'parcel' | 'geometry' | 'unknown';
+  layer_name: string | null;
+  jurisdiction: string | null;
+  parcel_ref: string | null;
+  parcel_source: string | null;
+  note: string | null;
+}
+
 export interface BuildableScreeningResponse {
   input_kind: 'address' | 'geometry';
   zone_code: string | null;
   overlays: string[];
   advisory_hints: string[];
+  metrics: BuildableMetrics;
+  zone_source: ZoneSourceInfo;
+  rules: BuildableRuleRecord[];
 }
 
 export interface ProductRecord {
