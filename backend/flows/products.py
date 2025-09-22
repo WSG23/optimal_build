@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional
 
-from prefect import flow
+try:  # pragma: no cover - exercised only when Prefect is installed
+    from prefect import flow
+except ModuleNotFoundError:  # pragma: no cover - fallback for lightweight test environments
+    def flow(*_args, **_kwargs):  # type: ignore[misc]
+        def _decorator(func):
+            return func
+
+        return _decorator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 

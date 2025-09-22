@@ -349,3 +349,10 @@ async def client(async_session_factory: async_sessionmaker[AsyncSession], storag
     async with AsyncClient(app=app, base_url="http://testserver") as http_client:
         yield http_client
     app.dependency_overrides.pop(get_session, None)
+
+
+@pytest_asyncio.fixture
+async def app_client(client: AsyncClient) -> AsyncGenerator[AsyncClient, None]:
+    """Alias around the default API client fixture used in reference tests."""
+
+    yield client

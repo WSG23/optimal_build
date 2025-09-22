@@ -68,6 +68,7 @@ async def lookup_material_standards(
     standard_body: Optional[str] = None,
     material_type: Optional[str] = None,
     section: Optional[str] = None,
+    property_key: Optional[str] = None,
 ) -> List[RefMaterialStandard]:
     """Retrieve standards matching the provided filters."""
 
@@ -80,6 +81,8 @@ async def lookup_material_standards(
         stmt = stmt.where(RefMaterialStandard.material_type == material_type)
     if section:
         stmt = stmt.where(RefMaterialStandard.section == section)
+    if property_key:
+        stmt = stmt.where(RefMaterialStandard.property_key == property_key)
 
     stmt = stmt.order_by(RefMaterialStandard.standard_code, RefMaterialStandard.property_key)
     results = await session.execute(stmt)
@@ -90,6 +93,7 @@ async def lookup_material_standards(
         standard_code=standard_code,
         standard_body=standard_body,
         material_type=material_type,
+        property_key=property_key,
         count=len(records),
     )
     return records
