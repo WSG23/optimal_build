@@ -7,7 +7,7 @@ const { renderToStaticMarkup } = require('react-dom/server')
 
 const { loadModule } = require('./helpers/loadModule.cjs')
 
-const { TranslationProvider } = loadModule(path.resolve(__dirname, '../src/i18n/index.tsx'))
+const { TranslationProvider } = loadModule(path.resolve(__dirname, '../src/i18n/index.ts'))
 const { CadUploader } = loadModule(path.resolve(__dirname, '../src/modules/cad/CadUploader.tsx'))
 const { LayerTogglePanel } = loadModule(path.resolve(__dirname, '../src/modules/cad/LayerTogglePanel.tsx'))
 const { BulkReviewControls } = loadModule(path.resolve(__dirname, '../src/modules/cad/BulkReviewControls.tsx'))

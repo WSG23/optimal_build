@@ -1,32 +1,8 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react'
+import { resources, supportedLanguages, type SupportedLanguage } from './resources'
 
-import en from './locales/en.json'
-import ja from './locales/ja.json'
-
-export const resources = {
-  en: { translation: en },
-  ja: { translation: ja },
-} as const
-
-export const supportedLanguages = [
-  { value: 'en', labelKey: 'common.language.options.en' },
-  { value: 'ja', labelKey: 'common.language.options.ja' },
-] as const
-
-export type SupportedLanguage = (typeof supportedLanguages)[number]['value']
-
-interface TranslationOptions {
+export interface TranslationOptions {
   ns?: string
   defaultValue?: string
-  returnObjects?: boolean
   [key: string]: unknown
 }
 
@@ -215,7 +191,7 @@ class I18n {
     })
   }
 
-  t(key: string, options: TranslationOptions = {}): any {
+  t(key: string, options: TranslationOptions = {}): string {
     const namespace = options.ns ?? 'translation'
     const languagesToCheck: SupportedLanguage[] = []
     if (this.resolvedLanguage) {
@@ -228,14 +204,11 @@ class I18n {
     for (const language of languagesToCheck) {
       const resource = this.getResource(language, namespace)
       const rawValue = this.getValue(resource, key)
-      if (rawValue !== undefined) {
-        if (options.returnObjects && typeof rawValue !== 'string') {
-          return rawValue
-        }
-        if (typeof rawValue === 'string') {
-          return this.interpolate(rawValue, options)
-        }
-        return rawValue
+      if (typeof rawValue === 'string') {
+        return this.interpolate(rawValue, options)
+      }
+      if (rawValue !== undefined && rawValue !== null) {
+        return String(rawValue)
       }
     }
 
@@ -243,7 +216,7 @@ class I18n {
       return options.defaultValue
     }
 
-    return options.returnObjects ? null : key
+    return key
   }
 }
 
@@ -259,26 +232,6 @@ const i18n = new I18n({
   storageKey: STORAGE_KEY,
 })
 
-const I18nContext = createContext<I18n>(i18n)
-
-export function TranslationProvider({ children }: { children: ReactNode }) {
-  return <I18nContext.Provider value={i18n}>{children}</I18nContext.Provider>
-}
-
-export function useTranslation() {
-  const instance = useContext(I18nContext)
-  const [, forceUpdate] = useState(0)
-
-  useEffect(() => instance.subscribe(() => forceUpdate((value) => value + 1)), [instance])
-
-  const translate = useCallback(
-    (key: string, options?: TranslationOptions) => instance.t(key, options),
-    [instance],
-  )
-
-  return useMemo(() => ({ t: translate, i18n: instance }), [instance, translate])
-}
-
 export const i18nReady = Promise.resolve(i18n)
 
 declare global {
@@ -286,8 +239,9 @@ declare global {
     __APP_I18N__?: I18n
   }
 
-  // eslint-disable-next-line no-var
-  var __APP_I18N__: I18n | undefined
+  interface GlobalThis {
+    __APP_I18N__?: I18n
+  }
 }
 
 if (isBrowser()) {
@@ -296,4 +250,5 @@ if (isBrowser()) {
   globalThis.__APP_I18N__ = i18n
 }
 
+export { I18n }
 export default i18n

@@ -95,16 +95,55 @@ class _Sample:
         self._value.value = value
 
 
+class _HistogramSample(_Sample):
+    def __init__(self) -> None:
+        super().__init__()
+        self._count = _ValueHolder()
+
+    def observe(self, amount: float) -> None:
+        self._count.value += 1.0
+        self._value.value += amount
+
+    def count(self) -> float:
+        return self._count.get()
+
+    def sum(self) -> float:
+        return self._value.get()
+
+
 class Counter(_MetricBase):
     """Counter metric stub."""
 
     _type = "counter"
+
+    def inc(self, amount: float = 1.0) -> None:
+        self.labels().inc(amount)
 
 
 class Gauge(_MetricBase):
     """Gauge metric stub."""
 
     _type = "gauge"
+
+    def set(self, value: float) -> None:
+        self.labels().set(value)
+
+
+class Histogram(_MetricBase):
+    """Histogram metric stub supporting sum and count."""
+
+    _type = "histogram"
+
+    def labels(self, **labels: str) -> _HistogramSample:  # type: ignore[override]
+        key = tuple(labels.get(label, "") for label in self._labelnames)
+        if key not in self._metrics:
+            self._metrics[key] = _HistogramSample()
+        sample = self._metrics[key]
+        assert isinstance(sample, _HistogramSample)
+        return sample
+
+    def observe(self, amount: float) -> None:
+        self.labels().observe(amount)
 
 
 def generate_latest(registry: CollectorRegistry) -> bytes:
@@ -115,6 +154,15 @@ def generate_latest(registry: CollectorRegistry) -> bytes:
         lines.append(f"# HELP {metric._name} {metric._documentation}")
         lines.append(f"# TYPE {metric._name} {metric._type}")
         for label_map, sample in metric._iter_samples():
+            if metric._type == "histogram" and isinstance(sample, _HistogramSample):
+                if label_map:
+                    labels = ",".join(f"{k}=\"{v}\"" for k, v in label_map.items())
+                    lines.append(f"{metric._name}_sum{{{labels}}} {sample.sum()}")
+                    lines.append(f"{metric._name}_count{{{labels}}} {sample.count()}")
+                else:
+                    lines.append(f"{metric._name}_sum {sample.sum()}")
+                    lines.append(f"{metric._name}_count {sample.count()}")
+                continue
             if label_map:
                 labels = ",".join(f"{k}=\"{v}\"" for k, v in label_map.items())
                 lines.append(f"{metric._name}{{{labels}}} {sample._value.get()}")
@@ -127,5 +175,6 @@ __all__ = [
     "CollectorRegistry",
     "Counter",
     "Gauge",
+    "Histogram",
     "generate_latest",
 ]

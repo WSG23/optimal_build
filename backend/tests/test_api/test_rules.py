@@ -16,6 +16,7 @@ from sqlalchemy import select
 from app.core.database import get_session
 from app.main import app
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
+from app.utils import metrics
 from scripts.seed_screening import seed_screening_sample_data
 
 
@@ -99,6 +100,7 @@ async def _seed_reference_data(async_session_factory) -> None:
 
 @pytest_asyncio.fixture
 async def client(async_session_factory):
+    metrics.reset_metrics()
     await _seed_reference_data(async_session_factory)
 
     async def _override_get_session():
@@ -179,14 +181,15 @@ async def test_buildable_screening_supports_address_and_geojson(
     )
     assert address_response.status_code == 200
     address_payload = address_response.json()
+    assert metrics.counter_value(metrics.PWP_BUILDABLE_TOTAL, {}) == 1.0
     assert address_payload["zone_code"] == "R2"
     assert set(address_payload["overlays"]) == {"heritage", "daylight"}
     assert address_payload["input_kind"] == "address"
-    metrics = address_payload["metrics"]
-    assert metrics["gfa_cap_m2"] == 4375
-    assert metrics["floors_max"] == 8
-    assert metrics["footprint_m2"] == 563
-    assert metrics["nsa_est_m2"] == 3588
+    metrics_payload = address_payload["metrics"]
+    assert metrics_payload["gfa_cap_m2"] == 4375
+    assert metrics_payload["floors_max"] == 8
+    assert metrics_payload["footprint_m2"] == 563
+    assert metrics_payload["nsa_est_m2"] == 3588
     zone_source = address_payload["zone_source"]
     assert zone_source["kind"] == "parcel"
     assert zone_source["parcel_ref"] == "MK01-01234"
@@ -194,12 +197,17 @@ async def test_buildable_screening_supports_address_and_geojson(
     rules = address_payload["rules"]
     assert rules, "Expected buildable screening to surface applicable rules"
     first_rule = rules[0]
+    assert first_rule["authority"] == "URA"
     assert first_rule["parameter_key"] == "parking.min_car_spaces_per_unit"
     provenance = first_rule["provenance"]
     assert provenance["rule_id"] == first_rule["id"]
     assert provenance["clause_ref"] == "4.2.1"
     assert provenance["document_id"] is not None
+    assert provenance["pages"] == [5]
     assert provenance["seed_tag"] == "zoning"
+
+    metrics_output = metrics.render_latest_metrics().decode()
+    assert "pwp_buildable_duration_ms" in metrics_output
 
     geojson_response = await client.post(
         "/api/v1/screen/buildable",
@@ -213,7 +221,7 @@ async def test_buildable_screening_supports_address_and_geojson(
     assert geojson_payload["zone_code"] == "R2"
     assert set(geojson_payload["overlays"]) == {"heritage", "daylight"}
     assert geojson_payload["input_kind"] == "geometry"
-    assert geojson_payload["metrics"] == metrics
+    assert geojson_payload["metrics"] == metrics_payload
     assert geojson_payload["zone_source"]["kind"] == "geometry"
     assert geojson_payload["rules"] == rules
 
@@ -278,6 +286,6 @@ async def test_buildable_screening_respects_efficiency_override(
     )
     assert response.status_code == 200
     payload = response.json()
-    metrics = payload["metrics"]
-    assert metrics["gfa_cap_m2"] == 4375
-    assert metrics["nsa_est_m2"] == 2188
+    metrics_payload = payload["metrics"]
+    assert metrics_payload["gfa_cap_m2"] == 4375
+    assert metrics_payload["nsa_est_m2"] == 2188

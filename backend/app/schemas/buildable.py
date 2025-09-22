@@ -117,6 +117,7 @@ class BuildableRuleProvenance(BaseModel):
     rule_id: int
     clause_ref: Optional[str] = None
     document_id: Optional[int] = None
+    pages: Optional[List[int]] = None
     seed_tag: Optional[str] = None
 
 
@@ -124,6 +125,7 @@ class BuildableRule(BaseModel):
     """Rule entry surfaced in buildable screening."""
 
     id: int
+    authority: str
     parameter_key: str
     operator: str
     value: str

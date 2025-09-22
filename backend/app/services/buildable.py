@@ -124,11 +124,13 @@ async def _load_rules_for_zone(
             rule_id=record.id,
             clause_ref=record.clause_ref,
             document_id=record.document_id,
+            pages=_determine_pages(record),
             seed_tag=_determine_seed_tag(record),
         )
         rules.append(
             BuildableRule(
                 id=record.id,
+                authority=record.authority,
                 parameter_key=record.parameter_key,
                 operator=record.operator,
                 value=record.value,
@@ -145,6 +147,23 @@ def _determine_seed_tag(rule: RefRule) -> Optional[str]:
     if provenance and isinstance(provenance.get("seed_tag"), str):
         return provenance["seed_tag"]
     return rule.topic
+
+
+def _determine_pages(rule: RefRule) -> Optional[List[int]]:
+    provenance = rule.source_provenance if isinstance(rule.source_provenance, dict) else None
+    if not provenance:
+        return None
+    pages = provenance.get("pages")
+    if not isinstance(pages, (list, tuple)):
+        return None
+    result: List[int] = []
+    for item in pages:
+        try:
+            number = int(item)
+        except (TypeError, ValueError):
+            continue
+        result.append(number)
+    return result or None
 
 
 def _merge_layer_attributes(layers: Sequence[RefZoningLayer]) -> Dict[str, Any]:
