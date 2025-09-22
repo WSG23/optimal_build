@@ -32,6 +32,7 @@ async def create_alert(
         message=message,
         context=context or {},
         ingestion_run=ingestion_run,
+        ingestion_run_id=ingestion_run.id if ingestion_run is not None else None,
     )
     session.add(record)
     await session.flush()

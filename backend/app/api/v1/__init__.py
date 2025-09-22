@@ -3,9 +3,11 @@
 from fastapi import APIRouter
 
 from . import (
+    audit,
     costs,
     ergonomics,
     export,
+    feasibility,
     imports,
     overlay,
     products,
@@ -30,5 +32,7 @@ api_router.include_router(overlay.router)
 api_router.include_router(export.router)
 api_router.include_router(roi.router)
 api_router.include_router(imports.router)
+api_router.include_router(audit.router)
+api_router.include_router(feasibility.router)
 
 __all__ = ["api_router"]

@@ -389,7 +389,7 @@ class RefAlert(BaseModel):
     acknowledged_at = Column(DateTime(timezone=True))
     acknowledged_by = Column(String(100))
 
-    ingestion_run = relationship("RefIngestionRun", back_populates="alerts")
+    ingestion_run = relationship("RefIngestionRun", back_populates="alerts", uselist=False)
 
     __table_args__ = (
         Index("idx_alerts_type_level", "alert_type", "level"),

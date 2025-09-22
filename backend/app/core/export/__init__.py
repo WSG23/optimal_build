@@ -289,7 +289,7 @@ def _group_by_layer(features: Iterable[Dict[str, Any]]) -> Dict[str, List[Dict[s
     for feature in features:
         layer = feature.get("layer", "MODEL")
         payload = dict(feature)
-        payload.pop("layer", None)
+        payload.setdefault("layer", layer)
         grouped.setdefault(layer, []).append(payload)
     return grouped
 
@@ -529,6 +529,8 @@ async def generate_project_export(
     payload, manifest = writer.render(geometry_features, overlay_features, watermark)
     manifest.setdefault("project_id", project_id)
     manifest.setdefault("generated_at", datetime.utcnow().isoformat())
+    if manifest.get("renderer") == "fallback":
+        payload = json.dumps(manifest, sort_keys=True).encode("utf-8")
 
     storage_backend = storage or LocalExportStorage()
     artifact = storage_backend.store(
