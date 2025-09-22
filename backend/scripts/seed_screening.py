@@ -40,10 +40,10 @@ _SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
         "zone_code": "R2",
         "attributes": {
             "label": "Residential (R2)",
-            "overlays": ["heritage"],
+            "overlays": ["heritage", "daylight"],
             "advisory_hints": [
-                "Heritage impact assessment required.",
-                "Consult URA conservation guidelines before redevelopment.",
+                "Heritage impact assessment required before façade alterations.",
+                "Respect daylight plane controls along the street frontage.",
             ],
         },
         "bounds_json": {
@@ -66,9 +66,9 @@ _SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
         "zone_code": "C1",
         "attributes": {
             "label": "Commercial (C1)",
-            "overlays": ["transport"],
+            "overlays": ["airport"],
             "advisory_hints": [
-                "Coordinate with LTA for access management.",
+                "Coordinate with CAAS on height limits under the airport safeguarding zone.",
             ],
         },
         "bounds_json": {
@@ -81,6 +81,32 @@ _SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
                     [103.8530, 1.3026],
                     [103.8518, 1.3022],
                     [103.8521, 1.3011],
+                ]
+            ],
+        },
+    },
+    {
+        "jurisdiction": "SG",
+        "layer_name": "MasterPlan",
+        "zone_code": "B1",
+        "attributes": {
+            "label": "Business Park (B1)",
+            "overlays": ["coastal"],
+            "advisory_hints": [
+                "Implement coastal flood resilience measures for ground floors.",
+                "Consult PUB on shoreline protection obligations.",
+            ],
+        },
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "B1",
+            "coordinates": [
+                [
+                    [103.8535, 1.3032],
+                    [103.8546, 1.3035],
+                    [103.8544, 1.3047],
+                    [103.8532, 1.3043],
+                    [103.8535, 1.3032],
                 ]
             ],
         },
@@ -130,6 +156,27 @@ _SAMPLE_PARCELS: Sequence[Dict[str, object]] = (
         "area_m2": 980.0,
         "source": "sample_loader",
     },
+    {
+        "jurisdiction": "SG",
+        "parcel_ref": "MK03-04567",
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "B1",
+            "coordinates": [
+                [
+                    [103.8537, 1.3036],
+                    [103.8543, 1.3037],
+                    [103.8541, 1.3043],
+                    [103.8534, 1.3041],
+                    [103.8537, 1.3036],
+                ]
+            ],
+        },
+        "centroid_lat": 1.3039,
+        "centroid_lon": 103.8539,
+        "area_m2": 1120.0,
+        "source": "sample_loader",
+    },
 )
 
 _SAMPLE_GEOCODES: Sequence[Dict[str, object]] = (
@@ -147,6 +194,14 @@ _SAMPLE_GEOCODES: Sequence[Dict[str, object]] = (
         "lon": 103.8525,
         "parcel_ref": "MK02-00021",
         "confidence_score": 0.87,
+    },
+    {
+        "address": "789 Coastal Way",
+        "lat": 1.3039,
+        "lon": 103.8539,
+        "parcel_ref": "MK03-04567",
+        "confidence_score": 0.9,
+        "is_verified": True,
     },
 )
 
