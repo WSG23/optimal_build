@@ -111,131 +111,69 @@
   },
   "wizard": {
     "title": "フィージビリティ評価",
-    "description": "区画のポテンシャルを評価し、制約となる規制を特定して、コンプライアンス対応の次のステップを作成します。",
+    "description": "住所からゾーニングとオーバーレイを照合し、想定可能な建物規模と根拠条文を可視化します。",
     "errors": {
-      "generic": "エラーが発生しました。もう一度お試しください。"
+      "generic": "問題が発生しました。もう一度お試しください。"
     },
-    "steps": {
-      "projectDetails": "プロジェクト詳細",
-      "complianceScope": "規制範囲",
-      "buildabilityResults": "建築可能性の結果"
-    },
-    "step1": {
-      "heading": "ステップ1・新規プロジェクトの詳細",
-      "description": "コンプライアンス検索を支えるサイト情報を入力してください。このデータを基に、ゾーニング、プロット比率、建築ボリューム制限を判定して適用可能な規制を取得します。",
-      "fields": {
-        "name": {
-          "label": "プロジェクト名",
-          "placeholder": "例：Riverfront Residences"
-        },
-        "siteAddress": {
-          "label": "敷地住所",
-          "placeholder": "例：123 Serangoon Ave 3"
-        },
-        "siteAreaSqm": {
-          "label": "敷地面積（平方メートル）",
-          "placeholder": "例：4250"
-        },
-        "landUse": {
-          "label": "用途地域",
-          "placeholder": "用途を選択してください"
-        },
-        "targetGrossFloorAreaSqm": {
-          "label": "目標延床面積（平方メートル）",
-          "placeholder": "任意"
-        },
-        "buildingHeightMeters": {
-          "label": "目標高さ（メートル）",
-          "placeholder": "任意"
-        }
+    "form": {
+      "addressLabel": "敷地住所",
+      "addressPlaceholder": "例：123 Example Ave",
+      "submitLabel": "フィージビリティを計算",
+      "submitLoading": "計算中…",
+      "errors": {
+        "addressRequired": "住所を入力してください。"
       },
-      "landUseOptions": {
-        "residential": "住宅",
-        "commercial": "商業",
-        "mixed_use": "複合用途",
-        "industrial": "工業",
-        "institutional": "公共"
+      "copyRequest": "リクエストJSONをコピー",
+      "copySuccess": "コピーしました",
+      "copyError": "コピーに失敗しました"
+    },
+    "assumptions": {
+      "title": "前提条件",
+      "subtitle": "高さ制限や有効床を算出する際に使用する前提値を調整できます。",
+      "fields": {
+        "typFloorToFloor": {
+          "label": "標準階高 (m)",
+          "hint": "既定値 {{value}} m"
+        },
+        "efficiency": {
+          "label": "効率係数",
+          "hint": "既定値 {{value}}"
+        }
       },
       "errors": {
-        "nameRequired": "プロジェクト名は必須です",
-        "siteAddressRequired": "敷地住所は必須です",
-        "siteAreaRequired": "敷地面積は必須です",
-        "siteAreaInvalid": "敷地面積は0より大きい値を入力してください",
-        "landUseRequired": "用途を選択してください",
-        "targetGfaInvalid": "目標延床面積は0より大きい値を入力してください",
-        "heightInvalid": "高さは0より大きい値を入力してください"
+        "required": "値を入力してください。",
+        "invalid": "0より大きい数値を入力してください。",
+        "range": "効率係数は0〜1の範囲で入力してください。"
       },
-      "actions": {
-        "saving": "保存中…",
-        "continue": "規制の確認に進む"
+      "reset": "既定値にリセット"
+    },
+    "states": {
+      "idle": "ゾーニングを読み込むにはシード済みの住所を入力してください。",
+      "empty": "この住所に対応するシード済み地番が見つかりませんでした。",
+      "partial": "ゾーンは解決しましたが公開済みルールが紐付いていません。"
+    },
+    "results": {
+      "zone": "ゾーン",
+      "zoneUnknown": "不明",
+      "overlays": "オーバーレイ",
+      "none": "なし",
+      "metrics": {
+        "gfaCap": "延床面積上限",
+        "floorsMax": "最大階数",
+        "footprint": "許容建築面積",
+        "nsa": "販売可能床面積"
       }
     },
-    "step2": {
-      "heading": "ステップ2・推奨規制の確認",
-      "description": "入力したプロジェクト情報を分析し、関係機関の主要な規制を抽出しました。評価を実行する前に対象範囲を調整できます。",
-      "panel": {
-        "title": "プロジェクト概要",
-        "subtitleFallback": "チェックを実行する前に内容を確認してください。",
-        "metrics": {
-          "siteArea": "敷地面積",
-          "landUse": "用途地域",
-          "targetGfa": "目標延床面積",
-          "targetHeight": "目標高さ"
-        },
-        "units": {
-          "sqm": "㎡",
-          "meters": "m"
-        }
-      },
-      "loading": "推奨規制を読み込み中…",
-      "empty": "このプロジェクト設定に該当する規制は見つかりませんでした。",
-      "requirement": "要件: {{parameterKey}} {{operator}} {{value}}{{unit}}",
-      "actions": {
-        "back": "戻る",
-        "evaluate": "建築可能性チェックを実行",
-        "evaluating": "評価を実行中…"
-      }
+    "citations": {
+      "title": "根拠条文",
+      "documentWithPages": "資料 {{id}}、{{pages}} ページ",
+      "document": "資料 {{id}}",
+      "seedTag": "シード：{{tag}}",
+      "unknownClause": "条文不明"
     },
-    "step3": {
-      "heading": "ステップ3・建築可能性の見通し",
-      "intro": {
-        "loading": "分析結果をまとめています…",
-        "ready": "達成可能なボリュームを要約し、注意が必要な規制をハイライトします。"
-      },
-      "panel": {
-        "title": "ボリュームサマリー",
-        "metrics": {
-          "maxGfa": "許容最大延床面積",
-          "estimatedGfa": "推定達成延床面積",
-          "estimatedUnits": "推定戸数",
-          "siteCoverage": "建蔽率"
-        }
-      },
-      "siteEfficiency": "許容延床面積の{{percentage}}%を活用",
-      "allClear": "すべての監視規制を満たしています。対象範囲を広げることも検討してください。",
-      "table": {
-        "rule": "規制",
-        "agency": "所管機関",
-        "status": "ステータス",
-        "notes": "メモ"
-      },
-      "status": {
-        "pass": "適合",
-        "fail": "不適合",
-        "warning": "要確認"
-      },
-      "recommendations": {
-        "title": "次のステップ",
-        "subtitle": "残っているコンプライアンスギャップを解消するための優先度付きガイダンスです。"
-      },
-      "actions": {
-        "back": "規制に戻る",
-        "restart": "新しい評価を開始"
-      },
-      "placeholders": {
-        "preparingAssessment": "評価を準備しています…",
-        "pendingProjectName": "準備中"
-      }
+    "accessibility": {
+      "noZone": "この住所に対応するゾーンが見つかりません。",
+      "updated": "ゾーン {{zone}}（オーバーレイ {{overlays}} 件）で結果を更新しました。"
     }
   }
 }

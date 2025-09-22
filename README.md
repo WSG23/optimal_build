@@ -36,6 +36,35 @@ Apply the Alembic migrations before booting the API or background workers. The
 while local environments can execute `cd backend && alembic upgrade head` to
 create and update the schema.
 
+## Feasibility Wizard
+
+The frontend Feasibility Wizard screens seeded parcels against the
+`POST /api/v1/screen/buildable` endpoint. Configure the following environment
+variables before running `pnpm dev` or building for production:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `VITE_API_BASE_URL` | `/` | Base URL for API requests. Override when the backend runs on a different host/port. |
+| `VITE_FEASIBILITY_USE_MOCKS` | `false` | Force the wizard to serve mock data without hitting the backend. Useful for offline UI work. |
+
+The wizard form accepts an address plus two adjustable assumptions:
+
+* `typFloorToFloorM` – default `3.4`. Controls the conversion between height
+  limits and maximum storeys.
+* `efficiencyRatio` – default `0.8`. Multiplies gross floor area to estimate
+  net saleable area. Values must stay within `0 < ratio ≤ 1`.
+
+Requests are debounced by 300 ms. While the debounce timer runs the wizard keeps
+an in-flight `fetch` abort handle so that subsequent changes cancel the earlier
+request before it reaches the backend. UI states include loading skeletons,
+empty/partial results when no zone or rules are returned, and a typed error
+state when the backend responds with a non-200 status.
+
+Use the “Copy request JSON” control in the toolbar to capture the most recent
+payload for debugging. Telemetry events (`feasibility.compute`) log anonymised
+address previews plus success/failure status and duration; raw addresses are not
+persisted client-side.
+
 ## Running the AEC sample flow
 
 The repository ships with a lightweight CLI (`backend/scripts/aec_flow.py`) and Make

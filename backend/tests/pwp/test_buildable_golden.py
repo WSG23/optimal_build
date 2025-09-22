@@ -79,7 +79,7 @@ async def _seed_reference_data(async_session_factory) -> dict[str, object]:
             value="1.5",
             unit="spaces_per_unit",
             applicability={"zone_code": "R2"},
-            source_provenance={"seed_tag": "zoning"},
+            source_provenance={"seed_tag": "zoning", "pages": [7]},
             review_status="approved",
             is_published=True,
         )
@@ -93,6 +93,7 @@ async def _seed_reference_data(async_session_factory) -> dict[str, object]:
             "rule_id": rule.id,
             "clause_ref": clause.clause_ref,
             "document_id": document.id,
+            "pages": [7],
             "seed_tag": "zoning",
         },
     }
@@ -197,6 +198,7 @@ async def test_buildable_golden_addresses(buildable_client):
                 None,
             )
             assert target_rule is not None, "Expected seeded zoning rule to appear in response"
+            assert target_rule["authority"] == "URA"
             assert target_rule["parameter_key"] == context["rule_parameter_key"]
             assert target_rule["provenance"] == context["provenance"]
         else:

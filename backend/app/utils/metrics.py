@@ -5,12 +5,19 @@ from __future__ import annotations
 from typing import Dict
 
 try:  # pragma: no cover - exercised when dependency is available
-    from prometheus_client import CollectorRegistry, Counter, Gauge, generate_latest
+    from prometheus_client import (
+        CollectorRegistry,
+        Counter,
+        Gauge,
+        Histogram,
+        generate_latest,
+    )
 except ModuleNotFoundError:  # pragma: no cover - fallback for offline tests
     from app.utils._prometheus_stub import (  # type: ignore
         CollectorRegistry,
         Counter,
         Gauge,
+        Histogram,
         generate_latest,
     )
 
@@ -21,6 +28,8 @@ INGESTION_RUN_COUNTER: Counter
 INGESTED_RECORD_COUNTER: Counter
 ALERT_COUNTER: Counter
 COST_ADJUSTMENT_GAUGE: Gauge
+PWP_BUILDABLE_TOTAL: Counter
+PWP_BUILDABLE_DURATION_MS: Histogram
 
 
 def _initialize_metrics() -> None:
@@ -32,6 +41,8 @@ def _initialize_metrics() -> None:
     global INGESTED_RECORD_COUNTER
     global ALERT_COUNTER
     global COST_ADJUSTMENT_GAUGE
+    global PWP_BUILDABLE_TOTAL
+    global PWP_BUILDABLE_DURATION_MS
 
     REGISTRY = CollectorRegistry(auto_describe=True)
 
@@ -67,6 +78,20 @@ def _initialize_metrics() -> None:
         "pwp_cost_adjustment_scalar",
         "Latest cost index scalar applied to PWP pro-forma adjustments.",
         labelnames=("series",),
+        registry=REGISTRY,
+    )
+
+    PWP_BUILDABLE_TOTAL = Counter(
+        "pwp_buildable_total",
+        "Number of buildable screening requests processed.",
+        labelnames=(),
+        registry=REGISTRY,
+    )
+
+    PWP_BUILDABLE_DURATION_MS = Histogram(
+        "pwp_buildable_duration_ms",
+        "Duration of buildable screening computations in milliseconds.",
+        labelnames=(),
         registry=REGISTRY,
     )
 

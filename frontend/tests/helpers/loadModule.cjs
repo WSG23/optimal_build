@@ -14,6 +14,7 @@ function loadModule(modulePath) {
     sourcemap: false,
     define: {
       'import.meta.env.VITE_API_BASE_URL': '""',
+      'import.meta.env.VITE_FEASIBILITY_USE_MOCKS': '"false"',
     },
     external: ['react', 'react-dom', 'react/jsx-runtime'],
     loader: {
@@ -40,6 +41,8 @@ function loadModule(modulePath) {
     URL,
     URLSearchParams,
     FormData: global.FormData,
+    Array,
+    Object,
   }
   vm.runInNewContext(code, context)
   return module.exports

@@ -111,131 +111,69 @@
   },
   "wizard": {
     "title": "Feasibility assessment",
-    "description": "Evaluate plot potential, identify binding regulations and generate next steps for compliance.",
+    "description": "Screen an address against zoning overlays, calculate buildable capacity and surface the clauses that drive the result.",
     "errors": {
       "generic": "Something went wrong. Please try again."
     },
-    "steps": {
-      "projectDetails": "Project details",
-      "complianceScope": "Compliance scope",
-      "buildabilityResults": "Buildability results"
-    },
-    "step1": {
-      "heading": "Step 1 · New project details",
-      "description": "Capture the essential site information that powers compliance lookups. This data will be used to determine zoning, plot ratio and envelope controls before fetching applicable rules.",
-      "fields": {
-        "name": {
-          "label": "Project name",
-          "placeholder": "e.g. Riverfront Residences"
-        },
-        "siteAddress": {
-          "label": "Site address",
-          "placeholder": "e.g. 123 Serangoon Ave 3"
-        },
-        "siteAreaSqm": {
-          "label": "Site area (sqm)",
-          "placeholder": "e.g. 4250"
-        },
-        "landUse": {
-          "label": "Land use",
-          "placeholder": "Select a land use"
-        },
-        "targetGrossFloorAreaSqm": {
-          "label": "Target GFA (sqm)",
-          "placeholder": "Optional"
-        },
-        "buildingHeightMeters": {
-          "label": "Target height (m)",
-          "placeholder": "Optional"
-        }
+    "form": {
+      "addressLabel": "Site address",
+      "addressPlaceholder": "e.g. 123 Example Ave",
+      "submitLabel": "Compute feasibility",
+      "submitLoading": "Computing…",
+      "errors": {
+        "addressRequired": "Enter an address to continue."
       },
-      "landUseOptions": {
-        "residential": "Residential",
-        "commercial": "Commercial",
-        "mixed_use": "Mixed Use",
-        "industrial": "Industrial",
-        "institutional": "Institutional"
+      "copyRequest": "Copy request JSON",
+      "copySuccess": "Copied",
+      "copyError": "Copy failed"
+    },
+    "assumptions": {
+      "title": "Assumptions",
+      "subtitle": "Tweak the inputs the engine uses to derive height limits and net saleable area.",
+      "fields": {
+        "typFloorToFloor": {
+          "label": "Typical floor-to-floor (m)",
+          "hint": "Default {{value}} m"
+        },
+        "efficiency": {
+          "label": "Efficiency ratio",
+          "hint": "Default {{value}}"
+        }
       },
       "errors": {
-        "nameRequired": "Project name is required",
-        "siteAddressRequired": "Site address is required",
-        "siteAreaRequired": "Site area is required",
-        "siteAreaInvalid": "Site area must be greater than zero",
-        "landUseRequired": "Select a land use to continue",
-        "targetGfaInvalid": "Target GFA must be greater than zero",
-        "heightInvalid": "Height must be greater than zero"
+        "required": "Enter a value to update the estimate.",
+        "invalid": "Enter a number greater than zero.",
+        "range": "Efficiency must be between 0 and 1."
       },
-      "actions": {
-        "saving": "Saving…",
-        "continue": "Continue to rules"
+      "reset": "Reset to defaults"
+    },
+    "states": {
+      "idle": "Enter a seeded address to load the zoning profile.",
+      "empty": "We could not match this address to a seeded parcel yet.",
+      "partial": "Zone resolved but no published rules are tagged to this parcel."
+    },
+    "results": {
+      "zone": "Zone",
+      "zoneUnknown": "Unknown",
+      "overlays": "Overlays",
+      "none": "None",
+      "metrics": {
+        "gfaCap": "Gross floor area cap",
+        "floorsMax": "Maximum floors",
+        "footprint": "Max footprint",
+        "nsa": "Net saleable area"
       }
     },
-    "step2": {
-      "heading": "Step 2 · Review suggested rules",
-      "description": "We analysed the project details and surfaced the most relevant codes across agencies. You can adjust the scope before running the compliance engine.",
-      "panel": {
-        "title": "Project summary",
-        "subtitleFallback": "Provide a quick confirmation before running the checks.",
-        "metrics": {
-          "siteArea": "Site area",
-          "landUse": "Land use",
-          "targetGfa": "Target GFA",
-          "targetHeight": "Target height"
-        },
-        "units": {
-          "sqm": "m²",
-          "meters": "m"
-        }
-      },
-      "loading": "Loading recommended rules…",
-      "empty": "No rules were found for this project configuration.",
-      "requirement": "Requirement: {{parameterKey}} {{operator}} {{value}}{{unit}}",
-      "actions": {
-        "back": "Back",
-        "evaluate": "Run buildability checks",
-        "evaluating": "Running assessment…"
-      }
+    "citations": {
+      "title": "Citations",
+      "documentWithPages": "Document {{id}}, page {{pages}}",
+      "document": "Document {{id}}",
+      "seedTag": "Seed: {{tag}}",
+      "unknownClause": "Clause unknown"
     },
-    "step3": {
-      "heading": "Step 3 · Buildability outlook",
-      "intro": {
-        "loading": "Finalising the analysis…",
-        "ready": "This snapshot summarises the achievable massing and highlights rules that require attention."
-      },
-      "panel": {
-        "title": "Envelope summary",
-        "metrics": {
-          "maxGfa": "Max permissible GFA",
-          "estimatedGfa": "Estimated achievable GFA",
-          "estimatedUnits": "Estimated units",
-          "siteCoverage": "Site coverage"
-        }
-      },
-      "siteEfficiency": "{{percentage}}% of permissible GFA utilised",
-      "allClear": "All tracked rules passed – consider expanding the scope to include more topics.",
-      "table": {
-        "rule": "Rule",
-        "agency": "Agency",
-        "status": "Status",
-        "notes": "Notes"
-      },
-      "status": {
-        "pass": "Pass",
-        "fail": "Fail",
-        "warning": "Review"
-      },
-      "recommendations": {
-        "title": "Next steps",
-        "subtitle": "Prioritised guidance to resolve outstanding compliance gaps."
-      },
-      "actions": {
-        "back": "Back to rules",
-        "restart": "Start a new assessment"
-      },
-      "placeholders": {
-        "preparingAssessment": "Preparing assessment…",
-        "pendingProjectName": "pending"
-      }
+    "accessibility": {
+      "noZone": "No zone resolved for this address.",
+      "updated": "Feasibility updated for zone {{zone}} with {{overlays}} overlays."
     }
   }
 }

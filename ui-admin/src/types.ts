@@ -59,11 +59,13 @@ export interface BuildableRuleProvenance {
   rule_id: number;
   clause_ref: string | null;
   document_id: number | null;
+  pages: number[] | null;
   seed_tag: string | null;
 }
 
 export interface BuildableRuleRecord {
   id: number;
+  authority: string;
   parameter_key: string;
   operator: string;
   value: string;

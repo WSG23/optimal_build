@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends
@@ -13,6 +14,7 @@ from app.core.database import get_session
 from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
 from app.schemas.buildable import BuildableRequest, BuildableResponse
 from app.services.buildable import ResolvedZone, calculate_buildable
+from app.utils import metrics
 
 
 router = APIRouter(prefix="/screen")
@@ -33,36 +35,42 @@ async def screen_buildable(
     payload: BuildableRequest,
     session: AsyncSession = Depends(get_session),
 ) -> BuildableResponse:
-    resolution = await _resolve_zone_resolution(session, payload)
-    zone_layers = (
-        await _load_layers_for_zone(session, resolution.zone_code)
-        if resolution.zone_code
-        else []
-    )
-    overlays, hints = _collect_zone_metadata(zone_layers)
-    resolved = ResolvedZone(
-        zone_code=resolution.zone_code,
-        parcel=resolution.parcel,
-        zone_layers=zone_layers,
-        input_kind=resolution.input_kind,
-        geometry_properties=resolution.geometry_properties,
-    )
-    calculation = await calculate_buildable(
-        session=session,
-        resolved=resolved,
-        defaults=payload.defaults,
-        typ_floor_to_floor_m=payload.typ_floor_to_floor_m,
-        efficiency_ratio=payload.efficiency_ratio,
-    )
-    return BuildableResponse(
-        input_kind=resolution.input_kind,
-        zone_code=resolution.zone_code,
-        overlays=overlays,
-        advisory_hints=hints,
-        metrics=calculation.metrics,
-        zone_source=calculation.zone_source,
-        rules=calculation.rules,
-    )
+    start_time = perf_counter()
+    metrics.PWP_BUILDABLE_TOTAL.inc()
+    try:
+        resolution = await _resolve_zone_resolution(session, payload)
+        zone_layers = (
+            await _load_layers_for_zone(session, resolution.zone_code)
+            if resolution.zone_code
+            else []
+        )
+        overlays, hints = _collect_zone_metadata(zone_layers)
+        resolved = ResolvedZone(
+            zone_code=resolution.zone_code,
+            parcel=resolution.parcel,
+            zone_layers=zone_layers,
+            input_kind=resolution.input_kind,
+            geometry_properties=resolution.geometry_properties,
+        )
+        calculation = await calculate_buildable(
+            session=session,
+            resolved=resolved,
+            defaults=payload.defaults,
+            typ_floor_to_floor_m=payload.typ_floor_to_floor_m,
+            efficiency_ratio=payload.efficiency_ratio,
+        )
+        return BuildableResponse(
+            input_kind=resolution.input_kind,
+            zone_code=resolution.zone_code,
+            overlays=overlays,
+            advisory_hints=hints,
+            metrics=calculation.metrics,
+            zone_source=calculation.zone_source,
+            rules=calculation.rules,
+        )
+    finally:
+        duration_ms = (perf_counter() - start_time) * 1000.0
+        metrics.PWP_BUILDABLE_DURATION_MS.observe(duration_ms)
 
 
 async def _resolve_zone_resolution(
