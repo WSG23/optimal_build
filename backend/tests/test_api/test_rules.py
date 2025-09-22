@@ -90,7 +90,8 @@ async def test_rules_endpoint_includes_overlays_and_hints(client: AsyncClient) -
     payload = response.json()
     assert payload["count"] == 1
     item = payload["items"][0]
-    assert "heritage" in item["overlays"]
+    overlays = set(item["overlays"])
+    assert {"heritage", "daylight"} <= overlays
     assert any("parking" in hint.lower() for hint in item["advisory_hints"])
     assert any("slope" in hint.lower() for hint in item["advisory_hints"])
 
@@ -106,7 +107,7 @@ async def test_buildable_screening_supports_address_and_geojson(
     assert address_response.status_code == 200
     address_payload = address_response.json()
     assert address_payload["zone_code"] == "R2"
-    assert "heritage" in address_payload["overlays"]
+    assert set(address_payload["overlays"]) == {"heritage", "daylight"}
     assert address_payload["input_kind"] == "address"
     metrics = address_payload["metrics"]
     assert metrics["gfa_cap_m2"] == 4375
@@ -137,11 +138,28 @@ async def test_buildable_screening_supports_address_and_geojson(
     assert geojson_response.status_code == 200
     geojson_payload = geojson_response.json()
     assert geojson_payload["zone_code"] == "R2"
-    assert geojson_payload["overlays"] == address_payload["overlays"]
+    assert set(geojson_payload["overlays"]) == {"heritage", "daylight"}
     assert geojson_payload["input_kind"] == "geometry"
     assert geojson_payload["metrics"] == metrics
     assert geojson_payload["zone_source"]["kind"] == "geometry"
     assert geojson_payload["rules"] == rules
+
+    for address, expected_zone, expected_overlays, parcel_ref in (
+        ("456 River Road", "C1", {"airport"}, "MK02-00021"),
+        ("789 Coastal Way", "B1", {"coastal"}, "MK03-04567"),
+    ):
+        response = await client.post(
+            "/api/v1/screen/buildable",
+            json={"address": address},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["zone_code"] == expected_zone
+        assert set(payload["overlays"]) == expected_overlays
+        assert payload["input_kind"] == "address"
+        zone_source = payload["zone_source"]
+        assert zone_source["kind"] == "parcel"
+        assert zone_source["parcel_ref"] == parcel_ref
 
 
 @pytest.mark.asyncio
