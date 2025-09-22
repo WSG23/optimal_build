@@ -15,19 +15,14 @@ from sqlalchemy import select
 
 from app.core.database import get_session
 from app.main import app
-from app.models.rkp import (
-    RefClause,
-    RefDocument,
-    RefGeocodeCache,
-    RefParcel,
-    RefRule,
-    RefSource,
-    RefZoningLayer,
-)
+from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
+from scripts.seed_screening import seed_screening_sample_data
 
 
 async def _seed_reference_data(async_session_factory) -> None:
     async with async_session_factory() as session:
+        await seed_screening_sample_data(session, commit=False)
+
         source = RefSource(
             jurisdiction="SG",
             authority="URA",
@@ -70,28 +65,6 @@ async def _seed_reference_data(async_session_factory) -> None:
             notes="Provide 1.5 parking spaces per unit; maximum ramp slope 1:12",
         )
         session.add(rule)
-
-        zoning = RefZoningLayer(
-            jurisdiction="SG",
-            layer_name="MasterPlan",
-            zone_code="R2",
-            attributes={
-                "overlays": ["heritage"],
-                "advisory_hints": ["Heritage impact assessment required."],
-            },
-        )
-        session.add(zoning)
-
-        parcel = RefParcel(
-            jurisdiction="SG",
-            parcel_ref="MK01-01234",
-            bounds_json={"zone_code": "R2"},
-        )
-        session.add(parcel)
-        await session.flush()
-
-        geocode = RefGeocodeCache(address="123 Example Ave", parcel_id=parcel.id)
-        session.add(geocode)
 
         await session.commit()
 
@@ -148,7 +121,10 @@ async def test_buildable_screening_supports_address_and_geojson(
 @pytest.mark.asyncio
 async def test_rule_review_publish_action(client: AsyncClient, async_session_factory) -> None:
     async with async_session_factory() as session:
-        rule_id = (await session.execute(select(RefRule.id))).scalar_one()
+        result = await session.execute(select(RefRule))
+        rule = result.scalars().first()
+        assert rule is not None
+        rule_id = rule.id
 
     response = await client.post(
         f"/api/v1/rules/{rule_id}/review",

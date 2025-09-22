@@ -74,8 +74,8 @@ build: ## Build production images
 init-db: ## Initialize database
 	docker-compose exec backend alembic upgrade head
 
-seed-data: ## Seed initial data
-	docker-compose exec backend python scripts/seed-data.py
+seed-data: ## Seed screening reference data for buildable overlays
+        docker-compose exec backend python -m scripts.seed_screening
 
 logs: ## Show application logs
 	docker-compose logs -f backend frontend
