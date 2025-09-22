@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,15 +44,29 @@ async def calculate_buildable(
     """Compute buildable metrics and surface applicable rules."""
 
     attributes = _merge_layer_attributes(resolved.zone_layers)
+    rules, overrides = await _load_rules_for_zone(session, resolved.zone_code)
+    if overrides.front_setback_m is not None:
+        attributes.setdefault("front_setback_min_m", overrides.front_setback_m)
+
     area_m2 = _parcel_area(resolved.parcel) or defaults.site_area_m2
-    plot_ratio = _extract_plot_ratio(attributes) or defaults.plot_ratio
-    site_coverage = _extract_site_coverage(attributes) or defaults.site_coverage
+    plot_ratio = overrides.plot_ratio
+    if plot_ratio is None:
+        plot_ratio = _extract_plot_ratio(attributes) or defaults.plot_ratio
+
+    site_coverage = overrides.site_coverage
+    if site_coverage is None:
+        site_coverage = _extract_site_coverage(attributes) or defaults.site_coverage
     site_coverage = max(0.0, min(site_coverage, 1.0))
     gfa_cap = _round_half_up(area_m2 * plot_ratio) if area_m2 else 0
     footprint = _round_half_up(area_m2 * site_coverage) if area_m2 else 0
 
-    storey_limit = _extract_storey_limit(attributes)
-    height_limit = _extract_height_limit(attributes)
+    storey_limit = overrides.storey_limit
+    if storey_limit is None:
+        storey_limit = _extract_storey_limit(attributes)
+
+    height_limit = overrides.height_limit_m
+    if height_limit is None:
+        height_limit = _extract_height_limit(attributes)
     floor_height = (
         typ_floor_to_floor_m
         if typ_floor_to_floor_m is not None and typ_floor_to_floor_m > 0
@@ -75,7 +90,6 @@ async def calculate_buildable(
     nsa_est = _round_half_up(gfa_cap * efficiency_factor) if gfa_cap else 0
 
     zone_source = _build_zone_source(resolved)
-    rules = await _load_rules_for_zone(session, resolved.zone_code)
 
     metrics = BuildableMetrics(
         gfa_cap_m2=gfa_cap,
@@ -87,15 +101,21 @@ async def calculate_buildable(
     return BuildableCalculation(metrics=metrics, zone_source=zone_source, rules=rules)
 
 
-async def _load_rules_for_zone(session: AsyncSession, zone_code: Optional[str]) -> List[BuildableRule]:
+async def _load_rules_for_zone(
+    session: AsyncSession, zone_code: Optional[str]
+) -> Tuple[List[BuildableRule], "_RuleOverrides"]:
     if not zone_code:
-        return []
+        return [], _RuleOverrides()
 
-    result = await session.execute(select(RefRule))
+    stmt = select(RefRule).where(RefRule.review_status == "approved")
+    result = await session.execute(stmt)
+
+    overrides = _RuleOverrides()
     rules: List[BuildableRule] = []
     for record in result.scalars().all():
         if not _zone_matches(record.applicability, zone_code):
             continue
+        _apply_rule_override(overrides, record)
         provenance = BuildableRuleProvenance(
             rule_id=record.id,
             clause_ref=record.clause_ref,
@@ -113,7 +133,7 @@ async def _load_rules_for_zone(session: AsyncSession, zone_code: Optional[str]) 
             )
         )
     rules.sort(key=lambda item: (item.parameter_key, item.id))
-    return rules
+    return rules, overrides
 
 
 def _determine_seed_tag(rule: RefRule) -> Optional[str]:
@@ -265,6 +285,87 @@ def _zone_matches(applicability: Any, zone_code: str) -> bool:
                     if isinstance(item, str) and item.lower() == zone_code_normalised:
                         return True
     return False
+
+
+@dataclass
+class _RuleOverrides:
+    plot_ratio: Optional[float] = None
+    site_coverage: Optional[float] = None
+    height_limit_m: Optional[float] = None
+    storey_limit: Optional[int] = None
+    front_setback_m: Optional[float] = None
+
+
+_NUMBER_PATTERN = re.compile(r"[-+]?(?:\d+\.?\d*|\d*\.?\d+)(?:[eE][-+]?\d+)?")
+
+
+def _apply_rule_override(overrides: _RuleOverrides, rule: RefRule) -> None:
+    parameter_key = (rule.parameter_key or "").lower()
+    value = _coerce_rule_float(rule.value)
+    if value is None or value <= 0:
+        return
+
+    unit = (rule.unit or "").strip().lower()
+    if parameter_key == "zoning.max_far":
+        if overrides.plot_ratio is None or value < overrides.plot_ratio:
+            overrides.plot_ratio = value
+    elif parameter_key == "zoning.site_coverage.max_percent":
+        fraction = _normalise_percentage(value, unit)
+        if fraction is not None:
+            if overrides.site_coverage is None or fraction < overrides.site_coverage:
+                overrides.site_coverage = fraction
+    elif parameter_key == "zoning.max_building_height_m":
+        if unit in {"storey", "storeys", "story", "stories"}:
+            storeys = int(math.floor(value))
+            if storeys > 0 and (
+                overrides.storey_limit is None or storeys < overrides.storey_limit
+            ):
+                overrides.storey_limit = storeys
+        else:
+            if overrides.height_limit_m is None or value < overrides.height_limit_m:
+                overrides.height_limit_m = value
+    elif parameter_key == "zoning.setback.front_min_m":
+        metres = _convert_to_metres(value, unit)
+        if metres is not None:
+            if (
+                overrides.front_setback_m is None
+                or metres > overrides.front_setback_m
+            ):
+                overrides.front_setback_m = metres
+
+
+def _coerce_rule_float(value: Any) -> Optional[float]:
+    if isinstance(value, (int, float)):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+    if isinstance(value, str):
+        match = _NUMBER_PATTERN.search(value.replace(",", ""))
+        if match:
+            try:
+                return float(match.group())
+            except ValueError:
+                return None
+    return None
+
+
+def _normalise_percentage(value: float, unit: str) -> Optional[float]:
+    if value <= 0:
+        return None
+    percent_units = {"%", "percent", "percentage", "pct"}
+    if unit in percent_units or value > 1:
+        value = value / 100.0
+    return max(0.0, min(value, 1.0))
+
+
+def _convert_to_metres(value: float, unit: str) -> Optional[float]:
+    if value <= 0:
+        return None
+    metre_units = {"m", "metre", "metres", "meter", "meters"}
+    if not unit or unit in metre_units:
+        return value
+    return None
 
 
 __all__ = ["ResolvedZone", "calculate_buildable"]

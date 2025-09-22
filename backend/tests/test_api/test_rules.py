@@ -63,6 +63,7 @@ async def _seed_reference_data(async_session_factory) -> None:
             unit="spaces_per_unit",
             applicability={"zone_code": "R2"},
             notes="Provide 1.5 parking spaces per unit; maximum ramp slope 1:12",
+            review_status="approved",
         )
         session.add(rule)
 
