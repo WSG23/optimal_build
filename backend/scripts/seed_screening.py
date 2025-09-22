@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
-from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
+from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
 
 
 @dataclass
@@ -22,6 +22,7 @@ class SeedSummary:
     parcels: int
     geocode_cache: int
     zoning_layers: int
+    sources: int
 
     def as_dict(self) -> Dict[str, int]:
         """Return the summary as a dictionary for logging or testing."""
@@ -30,7 +31,48 @@ class SeedSummary:
             "parcels": self.parcels,
             "geocode_cache": self.geocode_cache,
             "zoning_layers": self.zoning_layers,
+            "sources": self.sources,
         }
+
+
+_SAMPLE_REF_SOURCES: Sequence[Dict[str, object]] = (
+    {
+        "jurisdiction": "SG",
+        "authority": "URA",
+        "topic": "zoning",
+        "doc_title": "URA Master Plan Planning Parameters",
+        "landing_url": "https://www.ura.gov.sg/Corporate/Planning/Master-Plan",
+        "fetch_kind": "pdf",
+        "update_freq_hint": "biennial",
+    },
+    {
+        "jurisdiction": "SG",
+        "authority": "BCA",
+        "topic": "building",
+        "doc_title": "BCA Building Control Regulations",
+        "landing_url": "https://www1.bca.gov.sg/buildsg/bca-codes/building-control-act",
+        "fetch_kind": "pdf",
+        "update_freq_hint": "annual",
+    },
+    {
+        "jurisdiction": "SG",
+        "authority": "SCDF",
+        "topic": "fire",
+        "doc_title": "SCDF Fire Code 2018",
+        "landing_url": "https://www.scdf.gov.sg/home/fire-safety/fire-code",
+        "fetch_kind": "pdf",
+        "update_freq_hint": "biennial",
+    },
+    {
+        "jurisdiction": "SG",
+        "authority": "PUB",
+        "topic": "drainage",
+        "doc_title": "PUB Code of Practice on Surface Water Drainage",
+        "landing_url": "https://www.pub.gov.sg/Documents/COP_SurfaceWaterDrainage.pdf",
+        "fetch_kind": "pdf",
+        "update_freq_hint": "annual",
+    },
+)
 
 
 _SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
@@ -213,6 +255,28 @@ async def ensure_schema() -> None:
         await conn.run_sync(BaseModel.metadata.create_all)
 
 
+async def _upsert_ref_sources(session: AsyncSession) -> List[RefSource]:
+    sources: List[RefSource] = []
+    for payload in _SAMPLE_REF_SOURCES:
+        stmt = select(RefSource).where(
+            RefSource.jurisdiction == payload["jurisdiction"],
+            RefSource.authority == payload["authority"],
+            RefSource.topic == payload["topic"],
+            RefSource.doc_title == payload["doc_title"],
+        )
+        existing = (await session.execute(stmt)).scalar_one_or_none()
+        if existing:
+            for key, value in payload.items():
+                setattr(existing, key, value)
+            sources.append(existing)
+        else:
+            source = RefSource(**payload)
+            session.add(source)
+            sources.append(source)
+    await session.flush()
+    return sources
+
+
 async def _upsert_zoning_layers(session: AsyncSession) -> List[RefZoningLayer]:
     layers: List[RefZoningLayer] = []
     for payload in _SAMPLE_ZONING_LAYERS:
@@ -292,6 +356,7 @@ async def seed_screening_sample_data(
 ) -> SeedSummary:
     """Seed the reference tables required for buildable screening."""
 
+    sources = await _upsert_ref_sources(session)
     zoning_layers = await _upsert_zoning_layers(session)
     parcels = await _upsert_parcels(session)
     geocodes = await _upsert_geocode_entries(session, parcels)
@@ -303,6 +368,7 @@ async def seed_screening_sample_data(
         parcels=len(parcels),
         geocode_cache=len(geocodes),
         zoning_layers=len(zoning_layers),
+        sources=len(sources),
     )
 
 
@@ -330,7 +396,8 @@ def main(argv: Optional[Sequence[str]] = None) -> SeedSummary:
         "Seeded screening sample data:",
         f"{summary.zoning_layers} zoning layers,",
         f"{summary.parcels} parcels,",
-        f"{summary.geocode_cache} geocode cache entries",
+        f"{summary.geocode_cache} geocode cache entries,",
+        f"{summary.sources} reference sources",
     )
     return summary
 

@@ -148,6 +148,100 @@ class RuleNormalizer:
             )
         )
 
+        # Singapore zoning controls
+        far_pattern = re.compile(
+            r"(?:max(?:imum)?\s+)?(?:gross\s+plot\s+ratio|plot\s+ratio|gpr|far)"
+            r"(?:\s*(?:limit|allowance|control)?)?\D*(?P<value>\d+(?:\.\d+)?)",
+            re.IGNORECASE,
+        )
+
+        def far_transform(match: re.Match[str]) -> float:
+            return float(match.group("value"))
+
+        self.register_template(
+            RuleTemplate(
+                parameter_key="zoning.max_far",
+                operator="<=",
+                unit="ratio",
+                pattern=far_pattern,
+                value_transform=far_transform,
+                hint_template="Gross plot ratio must not exceed {value}.",
+            )
+        )
+
+        height_pattern = re.compile(
+            r"(?:max(?:imum)?\s+)?(?:building\s+height|height\s+limit)\D*"
+            r"(?P<value>\d+(?:\.\d+)?)\s*(?:m|metres?|meters?)",
+            re.IGNORECASE,
+        )
+
+        def height_transform(match: re.Match[str]) -> float:
+            return float(match.group("value"))
+
+        self.register_template(
+            RuleTemplate(
+                parameter_key="zoning.max_building_height_m",
+                operator="<=",
+                unit="m",
+                pattern=height_pattern,
+                value_transform=height_transform,
+                hint_template="Building height limited to {value} m.",
+            )
+        )
+
+        site_coverage_pattern = re.compile(
+            r"(?:max(?:imum)?|allowable|permissible)\s+site\s+coverage\D*(?P<value>\d+(?:\.\d+)?)"
+            r"\s*(?:%|percent(?:age)?|per\s*cent)?"
+            r"|site\s+coverage\s+(?:shall|must)\s+not\s+exceed\D*(?P<value_alt>\d+(?:\.\d+)?)"
+            r"\s*(?:%|percent(?:age)?|per\s*cent)?"
+            r"|site\s+coverage\s+(?:limited|capped)\s+to\D*(?P<value_cap>\d+(?:\.\d+)?)"
+            r"\s*(?:%|percent(?:age)?|per\s*cent)?",
+            re.IGNORECASE,
+        )
+
+        def site_coverage_transform(match: re.Match[str]) -> float:
+            raw_value = (
+                match.group("value")
+                or match.group("value_alt")
+                or match.group("value_cap")
+            )
+            value = float(raw_value)
+            matched_text = match.group(0)
+            if not re.search(r"%|percent|per\s*cent", matched_text, re.IGNORECASE) and value <= 1:
+                value *= 100
+            return round(value, 4)
+
+        self.register_template(
+            RuleTemplate(
+                parameter_key="zoning.site_coverage.max_percent",
+                operator="<=",
+                unit="percent",
+                pattern=site_coverage_pattern,
+                value_transform=site_coverage_transform,
+                hint_template="Site coverage must not exceed {value}%.",
+            )
+        )
+
+        front_setback_pattern = re.compile(
+            r"(?:(?:minimum|min\.?)+\s+front\s+setback|front\s+setback(?:\s*(?:minimum|min\.?))?)"
+            r"\D*(?P<value>\d+(?:\.\d+)?)\s*(?:m|metres?|meters?)",
+            re.IGNORECASE,
+        )
+
+        def front_setback_transform(match: re.Match[str]) -> float:
+            return float(match.group("value"))
+
+        self.register_template(
+            RuleTemplate(
+                parameter_key="zoning.setback.front_min_m",
+                operator=">=",
+                unit="m",
+                pattern=front_setback_pattern,
+                value_transform=front_setback_transform,
+                hint_template="Provide at least {value} m front setback.",
+            )
+        )
+
 
 __all__ = [
     "NormalizedRule",
