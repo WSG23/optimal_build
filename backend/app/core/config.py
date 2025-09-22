@@ -10,6 +10,34 @@ _DEFAULT_ALLOWED_ORIGINS = ("http://localhost:3000", "http://localhost:5173")
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 
 
+def _load_positive_float(name: str, default: float) -> float:
+    """Return a positive floating point value from the environment."""
+
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        candidate = float(raw_value)
+    except (TypeError, ValueError):
+        return default
+    return candidate if candidate > 0 else default
+
+
+def _load_fractional_float(name: str, default: float) -> float:
+    """Return a fractional floating point value between 0 and 1."""
+
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        candidate = float(raw_value)
+    except (TypeError, ValueError):
+        return default
+    if 0 < candidate <= 1:
+        return candidate
+    return default
+
+
 def _load_allowed_origins() -> List[str]:
     """Retrieve allowed CORS origins from the environment."""
 
@@ -111,6 +139,9 @@ class Settings:
 
     LOG_LEVEL: str
 
+    BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
+    BUILDABLE_EFFICIENCY_RATIO: float
+
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
         self.VERSION = os.getenv("PROJECT_VERSION", "1.0.0")
@@ -171,6 +202,13 @@ class Settings:
         self.ALLOWED_ORIGINS = _load_allowed_origins()
 
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+        self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
+            "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0
+        )
+        self.BUILDABLE_EFFICIENCY_RATIO = _load_fractional_float(
+            "BUILDABLE_EFFICIENCY_RATIO", 0.82
+        )
 
 
 settings = Settings()
