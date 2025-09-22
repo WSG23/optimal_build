@@ -175,3 +175,18 @@ async def test_rule_review_publish_action(client: AsyncClient, async_session_fac
             == "Provide 1.5 parking spaces per unit; maximum ramp slope 1:12"
         )
         assert rule.review_notes == "Ready"
+
+
+@pytest.mark.asyncio
+async def test_buildable_screening_respects_efficiency_override(
+    client: AsyncClient,
+) -> None:
+    response = await client.post(
+        "/api/v1/screen/buildable",
+        json={"address": "123 Example Ave", "efficiency_ratio": 0.5},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    metrics = payload["metrics"]
+    assert metrics["gfa_cap_m2"] == 4375
+    assert metrics["nsa_est_m2"] == 2188

@@ -51,6 +51,8 @@ async def screen_buildable(
         session=session,
         resolved=resolved,
         defaults=payload.defaults,
+        typ_floor_to_floor_m=payload.typ_floor_to_floor_m,
+        efficiency_ratio=payload.efficiency_ratio,
     )
     return BuildableResponse(
         input_kind=resolution.input_kind,

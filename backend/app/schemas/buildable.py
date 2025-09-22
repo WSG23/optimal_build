@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.core.config import settings
+
 
 class BuildableDefaults(BaseModel):
     """Default assumptions for buildable calculations."""
@@ -13,8 +15,12 @@ class BuildableDefaults(BaseModel):
     plot_ratio: float = Field(default=3.5, gt=0)
     site_area_m2: float = Field(default=1000.0, gt=0)
     site_coverage: float = Field(default=0.45, gt=0)
-    floor_height_m: float = Field(default=4.0, gt=0)
-    efficiency_factor: float = Field(default=0.82, gt=0)
+    floor_height_m: float = Field(
+        default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M, gt=0
+    )
+    efficiency_factor: float = Field(
+        default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0
+    )
 
     @field_validator("site_coverage")
     @classmethod
@@ -40,6 +46,12 @@ class BuildableRequest(BaseModel):
     geometry: Optional[Dict[str, Any]] = None
     project_type: Optional[str] = None
     defaults: BuildableDefaults = Field(default_factory=BuildableDefaults)
+    typ_floor_to_floor_m: Optional[float] = Field(
+        default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M, gt=0
+    )
+    efficiency_ratio: Optional[float] = Field(
+        default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0
+    )
 
     @field_validator("geometry")
     @classmethod
@@ -71,6 +83,15 @@ class BuildableRequest(BaseModel):
             return None
         cleaned = value.strip()
         return cleaned or None
+
+    @field_validator("efficiency_ratio")
+    @classmethod
+    def _limit_efficiency_ratio(cls, value: Optional[float]) -> Optional[float]:
+        """Ensure the efficiency ratio remains within a sensible range."""
+
+        if value is None:
+            return None
+        return max(0.0, min(value, 1.0)) or None
 
     @model_validator(mode="after")
     def _require_location(cls, instance: "BuildableRequest") -> "BuildableRequest":

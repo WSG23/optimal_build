@@ -36,6 +36,9 @@ async def calculate_buildable(
     session: AsyncSession,
     resolved: ResolvedZone,
     defaults: BuildableDefaults,
+    *,
+    typ_floor_to_floor_m: Optional[float] = None,
+    efficiency_ratio: Optional[float] = None,
 ) -> BuildableCalculation:
     """Compute buildable metrics and surface applicable rules."""
 
@@ -49,7 +52,12 @@ async def calculate_buildable(
 
     storey_limit = _extract_storey_limit(attributes)
     height_limit = _extract_height_limit(attributes)
-    floors_from_height = _floors_from_height(height_limit, defaults.floor_height_m)
+    floor_height = (
+        typ_floor_to_floor_m
+        if typ_floor_to_floor_m is not None and typ_floor_to_floor_m > 0
+        else defaults.floor_height_m
+    )
+    floors_from_height = _floors_from_height(height_limit, floor_height)
     floors_from_ratio = _floors_from_ratio(gfa_cap, footprint)
 
     floor_candidates = [
@@ -58,7 +66,13 @@ async def calculate_buildable(
         if value is not None and value > 0
     ]
     floors_max = min(floor_candidates) if floor_candidates else 0
-    nsa_est = _round_half_up(gfa_cap * defaults.efficiency_factor) if gfa_cap else 0
+    efficiency_factor = (
+        efficiency_ratio
+        if efficiency_ratio is not None and efficiency_ratio > 0
+        else defaults.efficiency_factor
+    )
+    efficiency_factor = max(0.0, min(efficiency_factor, 1.0))
+    nsa_est = _round_half_up(gfa_cap * efficiency_factor) if gfa_cap else 0
 
     zone_source = _build_zone_source(resolved)
     rules = await _load_rules_for_zone(session, resolved.zone_code)
