@@ -107,15 +107,41 @@ async def test_buildable_screening_supports_address_and_geojson(
     address_payload = address_response.json()
     assert address_payload["zone_code"] == "R2"
     assert "heritage" in address_payload["overlays"]
+    assert address_payload["input_kind"] == "address"
+    metrics = address_payload["metrics"]
+    assert metrics["gfa_cap_m2"] == 4375
+    assert metrics["floors_max"] == 8
+    assert metrics["footprint_m2"] == 563
+    assert metrics["nsa_est_m2"] == 3588
+    zone_source = address_payload["zone_source"]
+    assert zone_source["kind"] == "parcel"
+    assert zone_source["parcel_ref"] == "MK01-01234"
+    assert zone_source["layer_name"] == "MasterPlan"
+    rules = address_payload["rules"]
+    assert rules, "Expected buildable screening to surface applicable rules"
+    first_rule = rules[0]
+    assert first_rule["parameter_key"] == "parking.min_car_spaces_per_unit"
+    provenance = first_rule["provenance"]
+    assert provenance["rule_id"] == first_rule["id"]
+    assert provenance["clause_ref"] == "4.2.1"
+    assert provenance["document_id"] is not None
+    assert provenance["seed_tag"] == "zoning"
 
     geojson_response = await client.post(
         "/api/v1/screen/buildable",
-        json={"geometry": {"type": "Feature", "properties": {"zone_code": "R2"}}},
+        json={
+            "geometry": {"type": "Feature", "properties": {"zone_code": "R2"}},
+            "defaults": {"site_area_m2": 1250.0},
+        },
     )
     assert geojson_response.status_code == 200
     geojson_payload = geojson_response.json()
     assert geojson_payload["zone_code"] == "R2"
     assert geojson_payload["overlays"] == address_payload["overlays"]
+    assert geojson_payload["input_kind"] == "geometry"
+    assert geojson_payload["metrics"] == metrics
+    assert geojson_payload["zone_source"]["kind"] == "geometry"
+    assert geojson_payload["rules"] == rules
 
 
 @pytest.mark.asyncio
