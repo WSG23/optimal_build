@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Dict, Iterable, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,6 +58,8 @@ def _serialise_rule(
 
     return {
         "id": rule.id,
+        "source_id": rule.source_id,
+        "document_id": rule.document_id,
         "parameter_key": rule.parameter_key,
         "operator": rule.operator,
         "value": rule.value,
@@ -65,9 +67,11 @@ def _serialise_rule(
         "jurisdiction": rule.jurisdiction,
         "authority": rule.authority,
         "topic": rule.topic,
+        "clause_ref": rule.clause_ref,
         "review_status": rule.review_status,
         "review_notes": rule.review_notes,
         "is_published": rule.is_published,
+        "source_provenance": rule.source_provenance,
         "overlays": overlays,
         "advisory_hints": hints,
         "normalized": [match.as_dict() for match in normalized],
@@ -90,8 +94,25 @@ async def _load_zoning_lookup(
 
 
 @router.get("/rules")
-async def list_rules(session: AsyncSession = Depends(get_session)) -> Dict[str, object]:
-    result = await session.execute(select(RefRule))
+async def list_rules(
+    jurisdiction: Optional[str] = Query(None),
+    parameter_key: Optional[str] = Query(None),
+    authority: Optional[str] = Query(None),
+    topic: Optional[str] = Query(None),
+    session: AsyncSession = Depends(get_session),
+) -> Dict[str, object]:
+    stmt = select(RefRule).where(RefRule.review_status == "approved")
+
+    if jurisdiction:
+        stmt = stmt.where(RefRule.jurisdiction == jurisdiction)
+    if parameter_key:
+        stmt = stmt.where(RefRule.parameter_key == parameter_key)
+    if authority:
+        stmt = stmt.where(RefRule.authority == authority)
+    if topic:
+        stmt = stmt.where(RefRule.topic == topic)
+
+    result = await session.execute(stmt)
     rules = result.scalars().all()
     zone_codes = [_extract_zone_code(rule) for rule in rules]
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
