@@ -42,7 +42,7 @@ _SAMPLE_REF_SOURCES: Sequence[Dict[str, object]] = (
         "topic": "zoning",
         "doc_title": "URA Master Plan Planning Parameters",
         "landing_url": "https://www.ura.gov.sg/Corporate/Planning/Master-Plan",
-        "fetch_kind": "pdf",
+        "fetch_kind": "html",
         "update_freq_hint": "biennial",
     },
     {
@@ -262,7 +262,6 @@ async def _upsert_ref_sources(session: AsyncSession) -> List[RefSource]:
             RefSource.jurisdiction == payload["jurisdiction"],
             RefSource.authority == payload["authority"],
             RefSource.topic == payload["topic"],
-            RefSource.doc_title == payload["doc_title"],
         )
         existing = (await session.execute(stmt)).scalar_one_or_none()
         if existing:

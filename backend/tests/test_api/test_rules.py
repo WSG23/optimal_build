@@ -23,15 +23,14 @@ async def _seed_reference_data(async_session_factory) -> None:
     async with async_session_factory() as session:
         await seed_screening_sample_data(session, commit=False)
 
-        source = RefSource(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
-            doc_title="Urban Redevelopment Authority",
-            landing_url="https://example.com/ura",
-        )
-        session.add(source)
-        await session.flush()
+        source = (
+            await session.execute(
+                select(RefSource)
+                .where(RefSource.jurisdiction == "SG")
+                .where(RefSource.authority == "URA")
+                .where(RefSource.topic == "zoning")
+            )
+        ).scalar_one()
 
         document = RefDocument(
             source_id=source.id,
