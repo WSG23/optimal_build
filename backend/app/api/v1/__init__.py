@@ -7,6 +7,7 @@ from . import (
     costs,
     ergonomics,
     export,
+    feasibility,
     imports,
     overlay,
     products,
@@ -27,6 +28,7 @@ api_router.include_router(ergonomics.router)
 api_router.include_router(products.router)
 api_router.include_router(standards.router)
 api_router.include_router(costs.router)
+api_router.include_router(feasibility.router)
 api_router.include_router(overlay.router)
 api_router.include_router(export.router)
 api_router.include_router(roi.router)
