@@ -11,6 +11,7 @@ pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
 from httpx import AsyncClient
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import get_session
@@ -36,15 +37,14 @@ async def _seed_reference_data(async_session_factory) -> dict[str, object]:
     async with async_session_factory() as session:
         await seed_screening_sample_data(session, commit=False)
 
-        source = RefSource(
-            jurisdiction="SG",
-            authority="URA",
-            topic="zoning",
-            doc_title="Urban Redevelopment Authority",
-            landing_url="https://example.com/ura",
-        )
-        session.add(source)
-        await session.flush()
+        source = (
+            await session.execute(
+                select(RefSource)
+                .where(RefSource.jurisdiction == "SG")
+                .where(RefSource.authority == "URA")
+                .where(RefSource.topic == "zoning")
+            )
+        ).scalar_one()
 
         document = RefDocument(
             source_id=source.id,
@@ -192,8 +192,12 @@ async def test_buildable_golden_addresses(buildable_client):
         rules = body["rules"]
         if expected["zone_code"] == "R2":
             assert rules, "Expected R2 buildable screening to include zoning rules"
-            first_rule = rules[0]
-            assert first_rule["parameter_key"] == context["rule_parameter_key"]
-            assert first_rule["provenance"] == context["provenance"]
+            target_rule = next(
+                (item for item in rules if item["id"] == context["provenance"]["rule_id"]),
+                None,
+            )
+            assert target_rule is not None, "Expected seeded zoning rule to appear in response"
+            assert target_rule["parameter_key"] == context["rule_parameter_key"]
+            assert target_rule["provenance"] == context["provenance"]
         else:
             assert rules == []
