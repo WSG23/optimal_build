@@ -1,0 +1,284 @@
+"""Seed sample screening data for buildable overlays."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from dataclasses import dataclass
+from typing import Dict, Iterable, List, Optional, Sequence
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import AsyncSessionLocal, engine
+from app.models.base import BaseModel
+from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
+
+
+@dataclass
+class SeedSummary:
+    """Summary of seeded reference records."""
+
+    parcels: int
+    geocode_cache: int
+    zoning_layers: int
+
+    def as_dict(self) -> Dict[str, int]:
+        """Return the summary as a dictionary for logging or testing."""
+
+        return {
+            "parcels": self.parcels,
+            "geocode_cache": self.geocode_cache,
+            "zoning_layers": self.zoning_layers,
+        }
+
+
+_SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
+    {
+        "jurisdiction": "SG",
+        "layer_name": "MasterPlan",
+        "zone_code": "R2",
+        "attributes": {
+            "label": "Residential (R2)",
+            "overlays": ["heritage"],
+            "advisory_hints": [
+                "Heritage impact assessment required.",
+                "Consult URA conservation guidelines before redevelopment.",
+            ],
+        },
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "R2",
+            "coordinates": [
+                [
+                    [103.8495, 1.2988],
+                    [103.8506, 1.2991],
+                    [103.8504, 1.3002],
+                    [103.8492, 1.2998],
+                    [103.8495, 1.2988],
+                ]
+            ],
+        },
+    },
+    {
+        "jurisdiction": "SG",
+        "layer_name": "MasterPlan",
+        "zone_code": "C1",
+        "attributes": {
+            "label": "Commercial (C1)",
+            "overlays": ["transport"],
+            "advisory_hints": [
+                "Coordinate with LTA for access management.",
+            ],
+        },
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "C1",
+            "coordinates": [
+                [
+                    [103.8521, 1.3011],
+                    [103.8532, 1.3014],
+                    [103.8530, 1.3026],
+                    [103.8518, 1.3022],
+                    [103.8521, 1.3011],
+                ]
+            ],
+        },
+    },
+)
+
+_SAMPLE_PARCELS: Sequence[Dict[str, object]] = (
+    {
+        "jurisdiction": "SG",
+        "parcel_ref": "MK01-01234",
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "R2",
+            "coordinates": [
+                [
+                    [103.8496, 1.2990],
+                    [103.8503, 1.2991],
+                    [103.8502, 1.2997],
+                    [103.8494, 1.2996],
+                    [103.8496, 1.2990],
+                ]
+            ],
+        },
+        "centroid_lat": 1.2994,
+        "centroid_lon": 103.8499,
+        "area_m2": 1250.0,
+        "source": "sample_loader",
+    },
+    {
+        "jurisdiction": "SG",
+        "parcel_ref": "MK02-00021",
+        "bounds_json": {
+            "type": "Polygon",
+            "zone_code": "C1",
+            "coordinates": [
+                [
+                    [103.8523, 1.3015],
+                    [103.8529, 1.3017],
+                    [103.8527, 1.3021],
+                    [103.8521, 1.3019],
+                    [103.8523, 1.3015],
+                ]
+            ],
+        },
+        "centroid_lat": 1.3018,
+        "centroid_lon": 103.8525,
+        "area_m2": 980.0,
+        "source": "sample_loader",
+    },
+)
+
+_SAMPLE_GEOCODES: Sequence[Dict[str, object]] = (
+    {
+        "address": "123 Example Ave",
+        "lat": 1.2994,
+        "lon": 103.8499,
+        "parcel_ref": "MK01-01234",
+        "confidence_score": 0.95,
+        "is_verified": True,
+    },
+    {
+        "address": "456 River Road",
+        "lat": 1.3018,
+        "lon": 103.8525,
+        "parcel_ref": "MK02-00021",
+        "confidence_score": 0.87,
+    },
+)
+
+
+async def ensure_schema() -> None:
+    """Ensure all database tables exist prior to seeding."""
+
+    async with engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.create_all)
+
+
+async def _upsert_zoning_layers(session: AsyncSession) -> List[RefZoningLayer]:
+    layers: List[RefZoningLayer] = []
+    for payload in _SAMPLE_ZONING_LAYERS:
+        stmt = select(RefZoningLayer).where(
+            RefZoningLayer.layer_name == payload["layer_name"],
+            RefZoningLayer.zone_code == payload["zone_code"],
+        )
+        existing = (await session.execute(stmt)).scalar_one_or_none()
+        if existing:
+            for key, value in payload.items():
+                setattr(existing, key, value)
+            layers.append(existing)
+        else:
+            layer = RefZoningLayer(**payload)
+            session.add(layer)
+            layers.append(layer)
+    await session.flush()
+    return layers
+
+
+async def _upsert_parcels(session: AsyncSession) -> List[RefParcel]:
+    parcels: List[RefParcel] = []
+    for payload in _SAMPLE_PARCELS:
+        stmt = select(RefParcel).where(RefParcel.parcel_ref == payload["parcel_ref"])
+        existing = (await session.execute(stmt)).scalar_one_or_none()
+        if existing:
+            for key, value in payload.items():
+                setattr(existing, key, value)
+            parcels.append(existing)
+        else:
+            parcel = RefParcel(**payload)
+            session.add(parcel)
+            parcels.append(parcel)
+    await session.flush()
+    return parcels
+
+
+async def _upsert_geocode_entries(
+    session: AsyncSession, parcels: Iterable[RefParcel]
+) -> List[RefGeocodeCache]:
+    parcel_lookup = {parcel.parcel_ref: parcel.id for parcel in parcels}
+    geocodes: List[RefGeocodeCache] = []
+    missing_parcels: List[str] = []
+
+    for payload in _SAMPLE_GEOCODES:
+        entry = dict(payload)
+        parcel_ref = entry.pop("parcel_ref", None)
+        parcel_id = parcel_lookup.get(parcel_ref) if parcel_ref else None
+        if parcel_ref and parcel_id is None:
+            missing_parcels.append(parcel_ref)
+        entry["parcel_id"] = parcel_id
+
+        stmt = select(RefGeocodeCache).where(RefGeocodeCache.address == entry["address"])
+        existing = (await session.execute(stmt)).scalar_one_or_none()
+        if existing:
+            for key, value in entry.items():
+                setattr(existing, key, value)
+            geocodes.append(existing)
+        else:
+            geocode = RefGeocodeCache(**entry)
+            session.add(geocode)
+            geocodes.append(geocode)
+
+    if missing_parcels:
+        raise RuntimeError(
+            "Missing parcel references for geocode entries: " + ", ".join(sorted(set(missing_parcels)))
+        )
+
+    await session.flush()
+    return geocodes
+
+
+async def seed_screening_sample_data(
+    session: AsyncSession,
+    *,
+    commit: bool = True,
+) -> SeedSummary:
+    """Seed the reference tables required for buildable screening."""
+
+    zoning_layers = await _upsert_zoning_layers(session)
+    parcels = await _upsert_parcels(session)
+    geocodes = await _upsert_geocode_entries(session, parcels)
+
+    if commit:
+        await session.commit()
+
+    return SeedSummary(
+        parcels=len(parcels),
+        geocode_cache=len(geocodes),
+        zoning_layers=len(zoning_layers),
+    )
+
+
+async def _cli_main() -> SeedSummary:
+    await ensure_schema()
+    async with AsyncSessionLocal() as session:
+        summary = await seed_screening_sample_data(session, commit=True)
+    return summary
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Seed sample parcels, geocodes, and zoning layers for buildable screening.",
+    )
+    return parser
+
+
+def main(argv: Optional[Sequence[str]] = None) -> SeedSummary:
+    """Entry point for command-line execution."""
+
+    parser = _build_parser()
+    parser.parse_args(argv)
+    summary = asyncio.run(_cli_main())
+    print(
+        "Seeded screening sample data:",
+        f"{summary.zoning_layers} zoning layers,",
+        f"{summary.parcels} parcels,",
+        f"{summary.geocode_cache} geocode cache entries",
+    )
+    return summary
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    main()
