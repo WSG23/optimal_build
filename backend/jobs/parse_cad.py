@@ -28,6 +28,7 @@ from app.core.database import AsyncSessionLocal
 from app.core.geometry import GeometrySerializer, GraphBuilder
 from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
+from app.services.overlay_ingest import ingest_parsed_import_geometry
 from app.services.storage import get_storage_service
 from jobs import job
 
@@ -395,6 +396,11 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
     unit_ids: List[str] = []
     seen_units: Dict[str, None] = {}
 
+    site_metadata: Dict[str, Any] = {}
+    project_name = data.get("project")
+    if project_name not in (None, ""):
+        site_metadata["project"] = project_name
+
     raw_layers = data.get("layers") if isinstance(data.get("layers"), Sequence) else []
     layer_metadata: List[Dict[str, Any]] = []
     floor_layers: List[Mapping[str, Any]] = []
@@ -404,6 +410,11 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
         layer_payload = dict(item)
         layer_metadata.append(layer_payload)
         layer_type = str(item.get("type", "")).lower()
+        if layer_type in {"site", "reference", "context"}:
+            layer_metadata = item.get("metadata")
+            if isinstance(layer_metadata, Mapping):
+                for key, value in layer_metadata.items():
+                    site_metadata[key] = value
         if layer_type in {"floor", "level", "storey", "story"}:
             floor_layers.append(item)
 
@@ -417,11 +428,17 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
     for index, entry in enumerate(entries, start=1):
         floor_name = _normalise_name(entry.get("name"), f"Floor {index}")
         level_id = _normalise_name(entry.get("id") or floor_name, f"L{index:02d}")
+        level_metadata = dict(site_metadata)
+        entry_metadata = entry.get("metadata")
+        if isinstance(entry_metadata, Mapping):
+            level_metadata.update(entry_metadata)
+        level_metadata.setdefault("layer_type", str(entry.get("type", "")))
+
         level_payload = {
             "id": level_id,
             "name": floor_name,
             "elevation": float(entry.get("metadata", {}).get("elevation", (index - 1) * 3.5)),
-            "metadata": dict(entry.get("metadata", {})),
+            "metadata": level_metadata,
         }
         builder.add_level(level_payload)
 
@@ -445,15 +462,23 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
                 area_float = None
 
             boundary = _estimate_space_geometry(offset_x, offset_y, area_float)
+            space_metadata: Dict[str, Any] = {"source_floor": floor_name}
+            if isinstance(raw_unit, Mapping):
+                for key, value in raw_unit.items():
+                    if key in {"id", "name", "label"}:
+                        continue
+                    if key in {"area", "area_m2"}:
+                        continue
+                    space_metadata[key] = value
+            if area_float is not None:
+                space_metadata.setdefault("area_sqm", area_float)
+
             space_payload = {
                 "id": unit_id,
                 "name": unit_id,
                 "level_id": level_id,
                 "boundary": boundary,
-                "metadata": {
-                    "source_floor": floor_name,
-                    "area_sqm": area_float,
-                },
+                "metadata": space_metadata,
             }
             builder.add_space(space_payload)
             builder.add_relationship(
@@ -623,9 +648,9 @@ async def _persist_result(session, record: ImportRecord, parsed: ParsedGeometry)
         record.detected_units = parsed.units
     record.parse_error = None
     record.parse_completed_at = datetime.now(timezone.utc)
-    await session.commit()
-    await session.refresh(record)
-    return record.parse_result or {}
+    await session.flush()
+    result = record.parse_result or {}
+    return dict(result)
 
 
 @job(name="jobs.parse_cad.parse_import", queue="imports:parse")
@@ -642,7 +667,30 @@ async def parse_import_job(import_id: str) -> Dict[str, Any]:
         try:
             payload = await _load_payload(record)
             parsed = await asyncio.to_thread(_parse_payload, record, payload)
-            return await _persist_result(session, record, parsed)
+            result = await _persist_result(session, record, parsed)
+            if getattr(record, "project_id", None) is not None:
+                overlay_record = await ingest_parsed_import_geometry(
+                    session,
+                    project_id=int(record.project_id),
+                    import_record=record,
+                    parse_payload=result,
+                )
+                if isinstance(result, dict):
+                    enriched = dict(result)
+                    metadata_section = dict(enriched.get("metadata") or {})
+                    metadata_section.update(
+                        {
+                            "overlay_source_id": overlay_record.id,
+                            "overlay_checksum": overlay_record.checksum,
+                            "source_geometry_key": overlay_record.source_geometry_key,
+                        }
+                    )
+                    enriched["metadata"] = metadata_section
+                    record.parse_result = enriched
+                    result = enriched
+            await session.commit()
+            await session.refresh(record)
+            return result
         except Exception as exc:  # pragma: no cover - defensive logging surface
             record.parse_status = "failed"
             record.parse_error = str(exc)
