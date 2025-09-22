@@ -10,6 +10,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
@@ -168,6 +169,7 @@ async def upload_import(
     file: UploadFile = File(...),
     enable_raster_processing: bool = Form(True),
     infer_walls: bool = Form(False),
+    project_id: int | None = Form(default=None),
     session: AsyncSession = Depends(get_session),
 ) -> ImportResult:
     """Persist an uploaded CAD/BIM payload and return detection metadata."""
@@ -242,6 +244,22 @@ async def upload_import(
         record.vector_summary = vector_summary
 
     session.add(record)
+
+    if project_id is not None:
+        await append_event(
+            session,
+            project_id=project_id,
+            event_type="import_uploaded",
+            context={
+                "import_id": record.id,
+                "filename": record.filename,
+                "size_bytes": record.size_bytes,
+                "detected_floors": len(record.detected_floors or []),
+                "detected_units": len(record.detected_units or []),
+                "vectorized": vector_summary is not None,
+            },
+        )
+
     await session.commit()
     await session.refresh(record)
 

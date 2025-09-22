@@ -10,10 +10,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
-from app.models.audit import AuditLog
-from app.models.overlay import OverlayDecision, OverlaySuggestion
+from app.models.overlay import (
+    OverlayDecision,
+    OverlaySuggestion,
+)
 from app.schemas.overlay import OverlayDecisionPayload, OverlaySuggestion as OverlaySuggestionSchema
 from jobs import job_queue
 from jobs.overlay_run import run_overlay_job
@@ -31,7 +34,13 @@ async def run_overlay(
 
     dispatch = await job_queue.enqueue(run_overlay_job, project_id=project_id)
     if dispatch.result and isinstance(dispatch.result, dict):
-        return dispatch.result
+        payload = dict(dispatch.result)
+        if "project_id" in payload:
+            try:
+                payload["project_id"] = int(payload["project_id"])
+            except (TypeError, ValueError):
+                pass
+        return payload
     payload: Dict[str, object] = {
         "status": dispatch.status,
         "project_id": project_id,
@@ -116,7 +125,8 @@ async def decide_overlay(
         actual_seconds = max((timestamp - created_at).total_seconds(), 0.0)
     else:
         actual_seconds = None
-    log = AuditLog(
+    await append_event(
+        session,
         project_id=project_id,
         event_type="overlay_decision",
         baseline_seconds=DECISION_REVIEW_BASELINE_SECONDS,
@@ -128,7 +138,6 @@ async def decide_overlay(
             "decided_by": payload.decided_by,
         },
     )
-    session.add(log)
 
     await session.commit()
     await session.refresh(suggestion)

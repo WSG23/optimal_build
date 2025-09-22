@@ -16,7 +16,7 @@ from app.core.geometry import GeometrySerializer
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
 from app.core.config import settings
-from app.models.audit import AuditLog
+from app.core.audit.ledger import append_event
 from app.models.overlay import (
     OverlayRunLock,
     OverlaySourceGeometry,
@@ -113,7 +113,8 @@ async def run_overlay_for_project(
             lock.released_at = datetime.now(timezone.utc)
     duration = time.perf_counter() - started_at
     baseline_seconds = float(result.evaluated) * OVERLAY_BASELINE_SECONDS
-    log = AuditLog(
+    await append_event(
+        session,
         project_id=project_id,
         event_type="overlay_run",
         baseline_seconds=baseline_seconds if baseline_seconds > 0 else None,
@@ -124,7 +125,6 @@ async def run_overlay_for_project(
             "updated": result.updated,
         },
     )
-    session.add(log)
     await session.commit()
     return result
 
@@ -229,11 +229,11 @@ def _find_tall_building_trigger(geometry: GeometryGraph) -> Dict[str, object] | 
 
     for space in geometry.spaces.values():
         height = _coerce_float(space.metadata.get("height_m") or space.metadata.get("height"))
-        if height is not None and height > 45:
+        if height is not None and height >= 45:
             return {"entity_id": space.id, "height": height}
     for fixture in geometry.fixtures.values():
         height = _coerce_float(fixture.metadata.get("height_m") or fixture.metadata.get("height"))
-        if height is not None and height > 45:
+        if height is not None and height >= 45:
             return {"entity_id": fixture.id, "height": height}
     return None
 

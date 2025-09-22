@@ -1,4 +1,4 @@
-"""Minimal SQLAlchemy stub used for test environments without the dependency."""
+"""Minimal SQLAlchemy-compatible interface backed by an in-memory store."""
 
 from __future__ import annotations
 
@@ -6,28 +6,30 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Iterable
 
+from ._memory import (
+    ColumnDescriptor,
+    MetaData,
+    SelectStatement,
+    TextClause,
+)
+
 __all__ = [
+    "Boolean",
     "Column",
     "DateTime",
+    "Float",
+    "ForeignKey",
+    "Index",
     "Integer",
-    "Select",
+    "SelectStatement",
     "String",
     "Text",
+    "UniqueConstraint",
     "select",
     "text",
     "func",
     "pool",
 ]
-
-
-class _MissingSQLAlchemy(RuntimeError):
-    """Error raised when a SQLAlchemy feature is used without the dependency."""
-
-    def __init__(self, feature: str) -> None:
-        super().__init__(
-            "SQLAlchemy is required for "
-            f"{feature}. Install the 'sqlalchemy' package to enable full functionality."
-        )
 
 
 class _Type:
@@ -39,100 +41,97 @@ class _Type:
 
 
 class Integer(_Type):
-    """Placeholder for :class:`sqlalchemy.Integer`."""
+    """Placeholder representing :class:`sqlalchemy.Integer`."""
+
+
+class Float(_Type):
+    """Placeholder representing :class:`sqlalchemy.Float`."""
+
+
+class Boolean(_Type):
+    """Placeholder representing :class:`sqlalchemy.Boolean`."""
 
 
 class String(_Type):
-    """Placeholder for :class:`sqlalchemy.String`."""
+    """Placeholder representing :class:`sqlalchemy.String`."""
 
 
 class Text(_Type):
-    """Placeholder for :class:`sqlalchemy.Text`."""
+    """Placeholder representing :class:`sqlalchemy.Text`."""
 
 
 class DateTime(_Type):
-    """Placeholder for :class:`sqlalchemy.DateTime`."""
+    """Placeholder representing :class:`sqlalchemy.DateTime`."""
 
 
 class Column:
-    """Simplified representation of :class:`sqlalchemy.Column`."""
+    """Factory mirroring :func:`sqlalchemy.Column` behaviour."""
 
-    def __init__(self, column_type: Any, *args: Any, **kwargs: Any) -> None:
-        self.type = column_type
+    def __new__(
+        cls,
+        *args: Any,
+        primary_key: bool = False,
+        default: Any = None,
+        server_default: Any = None,
+        onupdate: Any = None,
+        **_: Any,
+    ) -> ColumnDescriptor:
+        return ColumnDescriptor(
+            primary_key=primary_key,
+            default=default,
+            server_default=server_default,
+            onupdate=onupdate,
+        )
+
+
+class ForeignKey:
+    """Placeholder for :func:`sqlalchemy.ForeignKey`."""
+
+    def __init__(self, target: str, *args: Any, **kwargs: Any) -> None:
+        self.target = target
         self.args = args
         self.kwargs = kwargs
 
 
-@dataclass
-class _TextClause:
-    text: str
+class UniqueConstraint:
+    """Placeholder for :func:`sqlalchemy.UniqueConstraint`."""
 
-    def bindparams(self, *args: Any, **kwargs: Any) -> "_TextClause":
+    def __init__(self, *columns: Any, **kwargs: Any) -> None:
+        self.columns = columns
+        self.kwargs = kwargs
+
+
+class Index:
+    """Placeholder for :func:`sqlalchemy.Index`."""
+
+    def __init__(self, name: str, *columns: Any, **kwargs: Any) -> None:
+        self.name = name
+        self.columns = columns
+        self.kwargs = kwargs
+
+
+@dataclass
+class _Text:
+    statement: str
+
+    def bindparams(self, *args: Any, **kwargs: Any) -> "_Text":  # noqa: D401 - passthrough
         return self
 
 
-class Select:
-    """Chainable stub mimicking :class:`sqlalchemy.sql.Select`."""
+def select(*entities: Any) -> SelectStatement:
+    """Return a selectable over ``entities`` evaluated against the in-memory store."""
 
-    def __init__(self, entities: Iterable[Any]) -> None:
-        self.entities = tuple(entities)
-        self._modifiers: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
-
-    def _clone(self) -> "Select":
-        clone = Select(self.entities)
-        clone._modifiers = list(self._modifiers)
-        return clone
-
-    def where(self, *criteria: Any) -> "Select":
-        stmt = self._clone()
-        stmt._modifiers.append(("where", criteria, {}))
-        return stmt
-
-    def limit(self, value: int) -> "Select":
-        stmt = self._clone()
-        stmt._modifiers.append(("limit", (value,), {}))
-        return stmt
-
-    def offset(self, value: int) -> "Select":
-        stmt = self._clone()
-        stmt._modifiers.append(("offset", (value,), {}))
-        return stmt
-
-    def order_by(self, *criteria: Any) -> "Select":
-        stmt = self._clone()
-        stmt._modifiers.append(("order_by", criteria, {}))
-        return stmt
-
-    def options(self, *opts: Any) -> "Select":
-        stmt = self._clone()
-        stmt._modifiers.append(("options", opts, {}))
-        return stmt
-
-    def join(self, *args: Any, **kwargs: Any) -> "Select":
-        stmt = self._clone()
-        stmt._modifiers.append(("join", args, kwargs))
-        return stmt
-
-    def outerjoin(self, *args: Any, **kwargs: Any) -> "Select":
-        stmt = self._clone()
-        stmt._modifiers.append(("outerjoin", args, kwargs))
-        return stmt
+    return SelectStatement(entities)
 
 
-def select(*entities: Any) -> Select:
-    """Return a chainable :class:`Select` stub."""
+def text(statement: str) -> TextClause:
+    """Return a :class:`TextClause` compatible object."""
 
-    return Select(entities)
-
-
-def text(statement: str) -> _TextClause:
-    """Return a placeholder for :func:`sqlalchemy.text`."""
-
-    return _TextClause(statement)
+    return TextClause(statement)
 
 
 class _FunctionCall:
-    """Placeholder representing a lazily evaluated SQL function call."""
+    """Placeholder object representing ``func.<name>(...)`` expressions."""
 
     def __init__(self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
         self.name = name
@@ -144,8 +143,6 @@ class _FunctionCall:
 
 
 class _SQLFunction:
-    """Callable proxy returned for attributes accessed via :data:`func`."""
-
     def __init__(self, name: str) -> None:
         self._name = name
 
@@ -154,13 +151,11 @@ class _SQLFunction:
 
 
 class _FuncProxy:
-    """Object returning lightweight SQL function call placeholders."""
-
-    def __getattr__(self, name: str) -> _SQLFunction:  # noqa: D401 - simple factory
+    def __getattr__(self, name: str) -> _SQLFunction:  # noqa: D401 - factory proxy
         return _SQLFunction(name)
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        raise _MissingSQLAlchemy("func")
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover - defensive
+        raise RuntimeError("SQL function objects cannot be called directly")
 
 
 func = _FuncProxy()
@@ -169,35 +164,27 @@ func = _FuncProxy()
 pool = SimpleNamespace(NullPool=object())
 
 
-root_missing_error = _MissingSQLAlchemy
+root_missing_error = None
 
-class _GenericConstruct:
-    """Generic stand-in for SQLAlchemy constructs instantiated at import time."""
 
+__metadata__ = MetaData()
+
+
+class _GenericPlaceholder:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.args = args
         self.kwargs = kwargs
 
 
-_GENERATED_CONSTRUCTS: dict[str, type[_GenericConstruct]] = {}
+_DYNAMIC_TYPES: dict[str, type] = {}
 
 
-def __getattr__(name: str) -> Any:  # noqa: D401 - module level dynamic fallback
-    if name in _GENERATED_CONSTRUCTS:
-        return _GENERATED_CONSTRUCTS[name]
+def __getattr__(name: str) -> Any:
+    if name in _DYNAMIC_TYPES:
+        return _DYNAMIC_TYPES[name]
     if name and name[0].isupper():
-        placeholder = type(name, (_GenericConstruct,), {})
-        _GENERATED_CONSTRUCTS[name] = placeholder
+        placeholder = type(name, (_GenericPlaceholder,), {})
+        _DYNAMIC_TYPES[name] = placeholder
         return placeholder
     raise AttributeError(f"module 'sqlalchemy' has no attribute {name!r}")
 
-
-# Re-export commonly imported submodules so that ``import sqlalchemy.ext.asyncio`` works
-from . import engine  # noqa: E402  (imported for side effects)
-from . import ext  # noqa: E402  (imported for side effects)
-from . import orm  # noqa: E402  (imported for side effects)
-from . import sql  # noqa: E402  (imported for side effects)
-from . import types  # noqa: E402  (imported for side effects)
-from . import dialects  # noqa: E402  (imported for side effects)
-
-__all__.extend(["engine", "ext", "orm", "sql", "types", "dialects", "root_missing_error"])

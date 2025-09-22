@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.metrics import EXPORT_BASELINE_SECONDS
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
-from app.models.audit import AuditLog
+from app.core.audit.ledger import append_event
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 
 try:  # pragma: no cover - optional dependency
@@ -517,7 +517,8 @@ async def generate_project_export(
     )
     duration = time.perf_counter() - started_at
     baseline_seconds = max(1, approved_count) * EXPORT_BASELINE_SECONDS
-    log = AuditLog(
+    await append_event(
+        session,
         project_id=project_id,
         event_type="export_generated",
         baseline_seconds=baseline_seconds,
@@ -529,7 +530,6 @@ async def generate_project_export(
             "include_rejected": options.include_rejected_overlays,
         },
     )
-    session.add(log)
     await session.commit()
     return artifact
 
