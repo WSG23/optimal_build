@@ -75,7 +75,7 @@ init-db: ## Apply Alembic migrations
 	docker-compose exec backend alembic upgrade head
 
 seed-data: ## Seed screening reference data for buildable overlays
-        docker-compose exec backend python -m scripts.seed_screening
+	docker-compose exec backend python -m scripts.seed_screening
 
 logs: ## Show application logs
 	docker-compose logs -f backend frontend
