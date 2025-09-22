@@ -278,6 +278,7 @@ async def upload_import(
 
     record = ImportRecord(
         id=import_id,
+        project_id=project_id,
         filename=file.filename or "upload.bin",
         content_type=file.content_type,
         size_bytes=len(raw_payload),

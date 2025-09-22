@@ -1,93 +1,80 @@
-"""Overlay API integration tests."""
-
 from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
-pytest.importorskip("pytest_asyncio")
 
-import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from app.core.database import get_session
-from app.core.geometry import GeometrySerializer
-from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
-from app.main import app
-from app.models.overlay import (
-    OverlayRunLock,
-    OverlaySourceGeometry,
-    OverlaySuggestion,
-)
+from app.models.audit import AuditLog
+from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
 from jobs import job_queue
 
 PROJECT_ID = 4120
-
-
-@pytest_asyncio.fixture
-async def overlay_client(async_session_factory):
-    """Seed canonical geometry and provide a test client."""
-
-    geometry = GeometryGraph(
-        levels=[
-            Level(
-                id="L1",
-                name="Ground",
-                elevation=0.0,
-                metadata={
-                    "heritage_zone": True,
-                    "flood_zone": "coastal",
-                    "site_area_sqm": 12500,
-                },
-            )
-        ],
-        spaces=[
-            Space(
-                id="tower-01",
-                name="Tower",
-                level_id="L1",
-                metadata={"height_m": 52},
-            )
-        ],
-        relationships=[
-            Relationship(rel_type="contains", source_id="L1", target_id="tower-01"),
-        ],
-    )
-    serialized = GeometrySerializer.to_export(geometry)
-    checksum = geometry.fingerprint()
-
-    async with async_session_factory() as session:
-        record = OverlaySourceGeometry(
-            project_id=PROJECT_ID,
-            source_geometry_key="site-001",
-            graph=serialized,
-            metadata={"ingest": "fixture"},
-            checksum=checksum,
-        )
-        session.add(record)
-        await session.commit()
-        source_id = record.id
-
-    async def _override_get_session():
-        async with async_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        yield client, source_id
-    app.dependency_overrides.pop(get_session, None)
+SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 
 
 @pytest.mark.asyncio
 async def test_overlay_run_and_decisions(
-    overlay_client,
+    client: AsyncClient,
     async_session_factory,
     monkeypatch,
 ) -> None:
-    client, source_id = overlay_client
+    sample_path = SAMPLES_DIR / "sample_floorplan.json"
+
+    with sample_path.open("rb") as handle:
+        upload_response = await client.post(
+            "/api/v1/import",
+            files={"file": (sample_path.name, handle, "application/json")},
+            data={"project_id": str(PROJECT_ID)},
+        )
+
+    assert upload_response.status_code == 201
+    import_payload = upload_response.json()
+
+    parse_response = await client.post(f"/api/v1/parse/{import_payload['import_id']}")
+    assert parse_response.status_code == 200
+    parse_payload = parse_response.json()
+    assert parse_payload["status"] == "completed"
+    assert parse_payload["result"]
+
+    async with async_session_factory() as session:
+        sources = (
+            await session.execute(
+                select(OverlaySourceGeometry).where(OverlaySourceGeometry.project_id == PROJECT_ID)
+            )
+        ).scalars().all()
+        assert len(sources) == 1
+        source = sources[0]
+        assert source.source_geometry_key.endswith(import_payload["import_id"])
+        assert source.metadata["import_id"] == import_payload["import_id"]
+        assert source.metadata["floors"] == parse_payload["result"]["floors"]
+        assert source.metadata["units"] == parse_payload["result"]["units"]
+        assert source.metadata["parser"] == parse_payload["result"]["metadata"]["source"]
+        assert source.checksum
+
+        events = (
+            await session.execute(
+                select(AuditLog)
+                .where(AuditLog.project_id == PROJECT_ID)
+                .order_by(AuditLog.version)
+            )
+        ).scalars().all()
+        assert events
+        event_types = [event.event_type for event in events]
+        assert "geometry_ingested" in event_types
+        geometry_event = next(event for event in events if event.event_type == "geometry_ingested")
+        assert geometry_event.context["overlay_source_id"] == source.id
+        source_id = source.id
+
+    metadata_section = parse_payload["result"].get("metadata", {})
+    assert metadata_section.get("overlay_source_id") == source_id
+    assert metadata_section.get("overlay_checksum") == source.checksum
 
     calls = []
     original_enqueue = job_queue.enqueue
@@ -171,6 +158,20 @@ async def test_overlay_run_and_decisions(
     assert calls
     job_callable, *_ = calls[0]
     assert getattr(job_callable, "job_name", "").endswith("run_for_project")
+
+    export_response = await client.post(
+        f"/api/v1/export/{PROJECT_ID}",
+        json={
+            "format": "pdf",
+            "include_source": True,
+            "include_approved_overlays": True,
+            "include_pending_overlays": True,
+            "include_rejected_overlays": True,
+        },
+    )
+    assert export_response.status_code == 200
+    export_payload = await export_response.aread()
+    assert export_payload
 
     async with async_session_factory() as session:
         source = await session.get(OverlaySourceGeometry, source_id)
