@@ -242,18 +242,43 @@ def _normalise_overlays(
             continue
         layer = mapping.map_overlay(overlay.code, status=status)
         payload = overlay.engine_payload or {}
-        nodes = payload.get("nodes")
-        if not isinstance(nodes, list):
-            nodes = []
+        nodes_raw = payload.get("nodes")
+        if isinstance(nodes_raw, (list, tuple, set)):
+            nodes_iter = nodes_raw
+        elif nodes_raw in (None, ""):
+            nodes_iter = []
+        else:
+            nodes_iter = [nodes_raw]
+        normalised_nodes = [
+            str(node)
+            for node in nodes_iter
+            if node not in (None, "")
+        ]
+        normalised_nodes = list(dict.fromkeys(normalised_nodes))
+        target_ids = overlay.target_ids or normalised_nodes
+        target_ids = [str(item) for item in target_ids if item not in (None, "")]
+        target_ids = list(dict.fromkeys(target_ids))
+        rule_refs = overlay.rule_refs or payload.get("rule_refs") or []
+        if not isinstance(rule_refs, (list, tuple, set)):
+            rule_refs = [rule_refs] if rule_refs not in (None, "") else []
+        rule_refs = [str(ref) for ref in rule_refs if ref not in (None, "")]
+        rule_refs = list(dict.fromkeys(rule_refs))
+        props = overlay.props or {}
+        if not isinstance(props, dict):
+            props = {}
         features.append(
             {
                 "layer": layer,
                 "code": overlay.code,
                 "title": overlay.title,
+                "type": overlay.type,
                 "status": status,
                 "severity": overlay.severity,
                 "style": mapping.style_for(overlay.code, overlay.severity),
-                "nodes": list(dict.fromkeys(str(node) for node in nodes)),
+                "nodes": normalised_nodes,
+                "target_ids": target_ids,
+                "rule_refs": rule_refs,
+                "props": props,
             }
         )
     return features

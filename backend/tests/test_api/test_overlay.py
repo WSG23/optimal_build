@@ -104,19 +104,26 @@ async def test_overlay_run_and_decisions(
     assert run_payload["status"] == "completed"
     assert run_payload["project_id"] == PROJECT_ID
     assert run_payload["evaluated"] == 1
-    assert run_payload["created"] >= 3
+    assert run_payload["created"] >= 5
 
     list_response = await client.get(f"/api/v1/overlay/{PROJECT_ID}")
     assert list_response.status_code == 200
     payload = list_response.json()
-    assert payload["count"] >= 3
+    assert payload["count"] >= 5
     codes = {item["code"] for item in payload["items"]}
     assert "heritage_conservation" in codes
     assert "flood_mitigation" in codes
     assert "tall_building_review" in codes
+    assert "coastal_evacuation_plan" in codes
     assert all(item["status"] == "pending" for item in payload["items"])
+    assert all(isinstance(item["target_ids"], list) for item in payload["items"])
+    assert all(isinstance(item["props"], dict) for item in payload["items"])
+    assert all(isinstance(item["rule_refs"], list) for item in payload["items"])
 
     heritage = next(item for item in payload["items"] if item["code"] == "heritage_conservation")
+    assert heritage["type"] == "review"
+    assert heritage["target_ids"]
+    assert "heritage.zone.compliance" in heritage["rule_refs"]
     approve_response = await client.post(
         f"/api/v1/overlay/{PROJECT_ID}/decision",
         json={
@@ -150,7 +157,7 @@ async def test_overlay_run_and_decisions(
     assert second_run.status_code == 200
     rerun_payload = second_run.json()
     assert rerun_payload["created"] == 0
-    assert rerun_payload["updated"] >= 3
+    assert rerun_payload["updated"] >= 5
     assert rerun_payload["evaluated"] == 1
 
     final_response = await client.get(f"/api/v1/overlay/{PROJECT_ID}")
@@ -159,6 +166,7 @@ async def test_overlay_run_and_decisions(
     assert final_status["heritage_conservation"] == "approved"
     assert final_status["flood_mitigation"] == "rejected"
     assert final_status["tall_building_review"] == "pending"
+    assert final_status["coastal_evacuation_plan"] == "pending"
 
     assert calls
     job_callable, *_ = calls[0]

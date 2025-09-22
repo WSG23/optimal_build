@@ -221,7 +221,13 @@ async def test_overlay_generation_from_sample(async_session_factory):
             )
         ).scalars().all()
     codes = {suggestion.code for suggestion in suggestions}
-    assert {"heritage_conservation", "flood_mitigation", "large_site_review", "tall_building_review"}.issubset(
+    assert {
+        "heritage_conservation",
+        "flood_mitigation",
+        "large_site_review",
+        "tall_building_review",
+        "coastal_evacuation_plan",
+    }.issubset(
         codes
     )
 
@@ -331,7 +337,7 @@ async def test_roi_snapshot_reports_saved_hours(async_session_factory):
 
     async with async_session_factory() as session:
         snapshot = await compute_project_roi(session, project_id=project_id)
-    assert snapshot.total_suggestions >= 4
+    assert snapshot.total_suggestions >= 5
     assert snapshot.decided_suggestions == 1
     assert snapshot.acceptance_rate == 1.0
     assert snapshot.review_hours_saved >= 0.0
