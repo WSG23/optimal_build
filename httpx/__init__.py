@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, Dict, Iterable, Optional
-from urllib.parse import urlencode, urlsplit
+from typing import Any, Dict, Iterable, MutableMapping, Optional
+from urllib.parse import parse_qs, urlencode, urlsplit
 
 
 class Response:
@@ -51,8 +51,38 @@ class AsyncClient:
         *,
         params: Optional[Dict[str, Any]] = None,
         json: Any = None,
+        data: Optional[Dict[str, Any]] = None,
+        files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
     ) -> Response:
         path, query = _normalise_url(url)
+        query_params = _merge_query(query, params)
+
+        prepared_files: Dict[str, tuple[str, bytes, str]] = {}
+        if files:
+            for key, (filename, payload, content_type) in files.items():
+                if hasattr(payload, "read"):
+                    content = payload.read()
+                else:
+                    content = payload
+                if isinstance(content, str):
+                    content = content.encode("utf-8")
+                prepared_files[key] = (
+                    filename,
+                    content if isinstance(content, (bytes, bytearray)) else bytes(content),
+                    content_type or "application/octet-stream",
+                )
+
+        if hasattr(self._app, "handle_request"):
+            status_code, headers, payload = await self._app.handle_request(
+                method=method,
+                path=path,
+                query_params=query_params,
+                json_body=json,
+                form_data=dict(data or {}),
+                files=prepared_files,
+            )
+            return Response(status_code, payload, dict(headers))
+
         if params:
             extra = urlencode(params, doseq=True)
             query = f"{query}&{extra}" if query else extra
@@ -99,8 +129,15 @@ class AsyncClient:
     async def get(self, url: str, *, params: Optional[Dict[str, Any]] = None) -> Response:
         return await self.request("GET", url, params=params)
 
-    async def post(self, url: str, *, json: Any = None) -> Response:
-        return await self.request("POST", url, json=json)
+    async def post(
+        self,
+        url: str,
+        *,
+        json: Any = None,
+        data: Optional[Dict[str, Any]] = None,
+        files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+    ) -> Response:
+        return await self.request("POST", url, json=json, data=data, files=files)
 
 
 def _normalise_url(url: str) -> tuple[str, str]:
@@ -112,6 +149,16 @@ def _normalise_url(url: str) -> tuple[str, str]:
 
 def _json_bytes(payload: Any) -> bytes:
     return json.dumps(payload).encode("utf-8")
+
+
+def _merge_query(query: str, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    combined: Dict[str, Any] = {
+        key: values[0] if len(values) == 1 else values
+        for key, values in parse_qs(query, keep_blank_values=True).items()
+    }
+    if params:
+        combined.update(params)
+    return combined
 
 
 __all__ = ["AsyncClient", "Response"]
