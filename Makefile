@@ -72,10 +72,10 @@ build: ## Build production images
 	docker-compose build
 
 init-db: ## Initialize database
-	docker-compose exec backend alembic upgrade head
+    cd backend && alembic -c alembic.ini upgrade head
 
 seed-data: ## Seed initial data
-	docker-compose exec backend python scripts/seed-data.py
+    cd backend && python scripts/seed-data.py
 
 logs: ## Show application logs
 	docker-compose logs -f backend frontend

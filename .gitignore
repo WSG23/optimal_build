@@ -273,6 +273,7 @@ target/
 
 # Alembic
 alembic.ini
+!backend/alembic.ini
 
 # FastAPI specific
 instance/

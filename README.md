@@ -29,6 +29,16 @@ Copy `.env.example` to `.env` at the repository root to configure the FastAPI ba
 
 These values are consumed by `backend/app/core/config.py`. When only `REDIS_URL` is provided the backend reuses the same host and credentials for Celery and RQ while automatically splitting work across database indices `0`, `1`, and `2`. In staging or production deployments, configure the same variables through your orchestrator (Docker Compose, Kubernetes, managed task queue, etc.) so that the backend API, Celery workers, and any RQ workers share consistent queue and storage names.
 
+## Database bootstrapping
+
+The development Docker Compose files now start PostgreSQL, Redis, and MinIO without mounting an initialization SQL file. Instead, the schema is created through Alembic migrations that live under `backend/migrations/` and are configured via `backend/alembic.ini`.
+
+1. Run `make dev-start` to launch the supporting containers. The command no longer fails due to a missing `scripts/init-db.sql` file.
+2. Execute `make init-db` from the repository root after the containers are healthy. This target calls `alembic -c alembic.ini upgrade head` inside the `backend/` directory so that the full schema is created (or upgraded) against the running PostgreSQL instance.
+3. Optionally invoke `make seed-data` to load any sample fixtures once the schema exists.
+
+Alembic migrations are idempotent: the new base revision creates all SQLAlchemy models if the database is empty, and later revisions check for existing columns before attempting to add them. This allows developers to reset their environment with `make reset` without juggling manual SQL scripts.
+
 ## Running the AEC sample flow
 
 The repository ships with a lightweight CLI (`backend/scripts/aec_flow.py`) and Make
