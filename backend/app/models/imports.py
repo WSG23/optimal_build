@@ -17,6 +17,7 @@ class ImportRecord(BaseModel):
     __tablename__ = "imports"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    project_id = Column(Integer, index=True)
     filename = Column(String(255), nullable=False)
     content_type = Column(String(100))
     size_bytes = Column(Integer, nullable=False)

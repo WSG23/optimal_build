@@ -1,12 +1,23 @@
 """Service layer exports."""
 
-from . import alerts, costs, ingestion, normalize, products, pwp, standards, storage  # noqa: F401
+from . import (  # noqa: F401
+    alerts,
+    costs,
+    ingestion,
+    normalize,
+    overlay_ingest,
+    products,
+    pwp,
+    standards,
+    storage,
+)
 
 __all__ = [
     "alerts",
     "costs",
     "ingestion",
     "normalize",
+    "overlay_ingest",
     "products",
     "pwp",
     "standards",
