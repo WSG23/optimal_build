@@ -1,34 +1,36 @@
-const API_PREFIX = 'api/v1/screen/buildable'
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL
-const apiBaseUrl = rawApiBaseUrl && rawApiBaseUrl.trim() !== '' ? rawApiBaseUrl : '/'
-const useMockData = import.meta.env.VITE_FEASIBILITY_USE_MOCKS === 'true'
-
-interface RawBuildableMetrics {
-  gfa_cap_m2: number
-  floors_max: number
-  footprint_m2: number
-  nsa_est_m2: number
+function normaliseBaseUrl(value: string | undefined | null): string {
+  if (!value) {
+    return '/'
+  }
+  const trimmed = value.trim()
+  return trimmed === '' ? '/' : trimmed
 }
 
-interface RawBuildableRuleProvenance {
+const API_PREFIX = 'api/v1/screen/buildable'
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
+const useMockData = import.meta.env.VITE_FEASIBILITY_USE_MOCKS === 'true'
+
+export type RuleProvenance = {
   rule_id: number
   clause_ref?: string | null
   document_id?: number | null
   pages?: number[] | null
   seed_tag?: string | null
+  source?: string | null
 }
 
-interface RawBuildableRule {
+export type RuleItem = {
   id: number
   authority: string
   parameter_key: string
   operator: string
   value: string
   unit?: string | null
-  provenance: RawBuildableRuleProvenance
+  provenance: RuleProvenance
 }
 
-interface RawZoneSource {
+export type ZoneSource = {
   kind: 'parcel' | 'geometry' | 'unknown'
   layer_name?: string | null
   jurisdiction?: string | null
@@ -37,14 +39,19 @@ interface RawZoneSource {
   note?: string | null
 }
 
-interface RawBuildableResponse {
+export type BuildableResponse = {
   input_kind: 'address' | 'geometry'
   zone_code: string | null
   overlays: string[]
   advisory_hints: string[]
-  metrics: RawBuildableMetrics
-  zone_source: RawZoneSource
-  rules: RawBuildableRule[]
+  metrics: {
+    gfa_cap_m2: number
+    floors_max: number
+    footprint_m2: number
+    nsa_est_m2: number
+  }
+  zone_source: ZoneSource
+  rules: RuleItem[]
 }
 
 export interface BuildableRequest {
@@ -87,7 +94,7 @@ export interface ZoneSourceInfo {
   note?: string
 }
 
-export interface BuildableResponse {
+export interface BuildableSummary {
   inputKind: 'address' | 'geometry'
   zoneCode: string | null
   overlays: string[]
@@ -97,11 +104,11 @@ export interface BuildableResponse {
   rules: BuildableRule[]
 }
 
-interface FetchOptions {
+export interface BuildableRequestOptions {
   signal?: AbortSignal
 }
 
-const MOCK_RESPONSES: Record<string, RawBuildableResponse> = {
+const MOCK_RESPONSES: Record<string, BuildableResponse> = {
   '123 example ave': {
     input_kind: 'address',
     zone_code: 'R2',
@@ -190,12 +197,12 @@ function normaliseAddress(address: string): string {
   return address.trim().toLowerCase()
 }
 
-function buildUrl(path: string) {
+function buildUrl(path: string, base: string = apiBaseUrl) {
   if (/^https?:/i.test(path)) {
     return path
   }
   const trimmed = path.startsWith('/') ? path.slice(1) : path
-  const root = apiBaseUrl || '/'
+  const root = normaliseBaseUrl(base)
   if (/^https?:/i.test(root)) {
     return new URL(trimmed, root.endsWith('/') ? root : `${root}/`).toString()
   }
@@ -203,7 +210,7 @@ function buildUrl(path: string) {
   return `${normalisedRoot}${trimmed}`
 }
 
-function mapRule(rule: RawBuildableRule): BuildableRule {
+function mapRule(rule: RuleItem): BuildableRule {
   return {
     id: rule.id,
     authority: rule.authority,
@@ -221,7 +228,7 @@ function mapRule(rule: RawBuildableRule): BuildableRule {
   }
 }
 
-function mapResponse(payload: RawBuildableResponse): BuildableResponse {
+function mapResponse(payload: BuildableResponse): BuildableSummary {
   return {
     inputKind: payload.input_kind,
     zoneCode: payload.zone_code,
@@ -245,7 +252,7 @@ function mapResponse(payload: RawBuildableResponse): BuildableResponse {
   }
 }
 
-function selectMockResponse(address: string): RawBuildableResponse {
+function selectMockResponse(address: string): BuildableResponse {
   const key = normaliseAddress(address)
   return (
     MOCK_RESPONSES[key] ?? {
@@ -272,21 +279,18 @@ function selectMockResponse(address: string): RawBuildableResponse {
   )
 }
 
-export async function fetchBuildable(
-  request: BuildableRequest,
-  options: FetchOptions = {},
+export async function postBuildable(
+  baseUrl: string,
+  body: BuildableRequest,
+  options: BuildableRequestOptions = {},
 ): Promise<BuildableResponse> {
-  if (useMockData) {
-    return mapResponse(selectMockResponse(request.address))
-  }
-
-  const response = await fetch(buildUrl(API_PREFIX), {
+  const response = await fetch(buildUrl(API_PREFIX, baseUrl), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      address: request.address,
-      typ_floor_to_floor_m: request.typFloorToFloorM,
-      efficiency_ratio: request.efficiencyRatio,
+      address: body.address,
+      typ_floor_to_floor_m: body.typFloorToFloorM,
+      efficiency_ratio: body.efficiencyRatio,
     }),
     signal: options.signal,
   })
@@ -295,19 +299,32 @@ export async function fetchBuildable(
 
   if (!response.ok) {
     if (contentType.includes('application/json')) {
-      const body = (await response.json()) as { detail?: unknown; error?: unknown }
-      const detail = typeof body.detail === 'string' ? body.detail : undefined
-      const error = typeof body.error === 'string' ? body.error : undefined
-      throw new Error(detail ?? error ?? `Request to ${API_PREFIX} failed with ${response.status}`)
+      const payload = (await response.json()) as { detail?: unknown; error?: unknown }
+      const detail = typeof payload.detail === 'string' ? payload.detail : undefined
+      const error = typeof payload.error === 'string' ? payload.error : undefined
+      throw new Error(
+        detail ?? error ?? `Request to /${API_PREFIX} failed with ${response.status}`,
+      )
     }
     const message = await response.text()
-    throw new Error(message || `Request to ${API_PREFIX} failed with ${response.status}`)
+    throw new Error(message || `Request to /${API_PREFIX} failed with ${response.status}`)
   }
 
   if (!contentType.includes('application/json')) {
-    throw new Error(`Expected JSON response from ${API_PREFIX}`)
+    throw new Error(`Expected JSON response from /${API_PREFIX}`)
   }
 
-  const payload = (await response.json()) as RawBuildableResponse
+  return (await response.json()) as BuildableResponse
+}
+
+export async function fetchBuildable(
+  request: BuildableRequest,
+  options: BuildableRequestOptions = {},
+): Promise<BuildableSummary> {
+  if (useMockData) {
+    return mapResponse(selectMockResponse(request.address))
+  }
+
+  const payload = await postBuildable(apiBaseUrl, request, options)
   return mapResponse(payload)
 }
