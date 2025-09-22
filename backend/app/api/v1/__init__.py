@@ -12,6 +12,7 @@ from . import (
     review,
     roi,
     rules,
+    rulesets,
     screen,
     standards,
 )
@@ -19,6 +20,7 @@ from . import (
 api_router = APIRouter()
 api_router.include_router(review.router)
 api_router.include_router(rules.router)
+api_router.include_router(rulesets.router)
 api_router.include_router(screen.router)
 api_router.include_router(ergonomics.router)
 api_router.include_router(products.router)
