@@ -107,7 +107,10 @@ async def _load_rules_for_zone(
     if not zone_code:
         return [], _RuleOverrides()
 
-    stmt = select(RefRule).where(RefRule.review_status == "approved")
+    stmt = select(RefRule).where(
+        RefRule.review_status == "approved",
+        RefRule.is_published.is_(True),
+    )
     result = await session.execute(stmt)
 
     overrides = _RuleOverrides()

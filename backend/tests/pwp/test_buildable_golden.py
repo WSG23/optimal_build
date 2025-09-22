@@ -192,8 +192,11 @@ async def test_buildable_golden_addresses(buildable_client):
         rules = body["rules"]
         if expected["zone_code"] == "R2":
             assert rules, "Expected R2 buildable screening to include zoning rules"
-            first_rule = rules[0]
-            assert first_rule["parameter_key"] == context["rule_parameter_key"]
-            assert first_rule["provenance"] == context["provenance"]
+            matching = next(
+                (rule for rule in rules if rule["provenance"] == context["provenance"]),
+                None,
+            )
+            assert matching is not None, "Expected seeded R2 rule to be present"
+            assert matching["parameter_key"] == context["rule_parameter_key"]
         else:
             assert rules == []

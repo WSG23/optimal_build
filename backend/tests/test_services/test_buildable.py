@@ -88,6 +88,7 @@ async def test_calculate_buildable_applies_rule_overrides(session) -> None:
             value="4.2",
             applicability={"zone_code": "R-OVR"},
             review_status="approved",
+            is_published=True,
         ),
         RefRule(
             jurisdiction="SG",
@@ -99,6 +100,7 @@ async def test_calculate_buildable_applies_rule_overrides(session) -> None:
             unit="percent",
             applicability={"zone_code": "R-OVR"},
             review_status="approved",
+            is_published=True,
         ),
         RefRule(
             jurisdiction="SG",
@@ -110,6 +112,7 @@ async def test_calculate_buildable_applies_rule_overrides(session) -> None:
             unit="m",
             applicability={"zone_code": "R-OVR"},
             review_status="approved",
+            is_published=True,
         ),
         RefRule(
             jurisdiction="SG",
@@ -121,6 +124,7 @@ async def test_calculate_buildable_applies_rule_overrides(session) -> None:
             unit="storeys",
             applicability={"zone_code": "R-OVR"},
             review_status="approved",
+            is_published=True,
         ),
         RefRule(
             jurisdiction="SG",
@@ -132,6 +136,7 @@ async def test_calculate_buildable_applies_rule_overrides(session) -> None:
             unit="m",
             applicability={"zone_code": "R-OVR"},
             review_status="approved",
+            is_published=True,
         ),
     ]
 
@@ -182,9 +187,21 @@ async def test_calculate_buildable_ignores_unapproved_rules(session) -> None:
         value="4.5",
         applicability={"zone_code": "R-NOAPP"},
         review_status="needs_review",
+        is_published=False,
+    )
+    unpublished_rule = RefRule(
+        jurisdiction="SG",
+        authority="URA",
+        topic="zoning",
+        parameter_key="zoning.site_coverage.max_percent",
+        operator="<=",
+        value="70%",
+        applicability={"zone_code": "R-NOAPP"},
+        review_status="approved",
+        is_published=False,
     )
 
-    session.add(pending_rule)
+    session.add_all([pending_rule, unpublished_rule])
     await session.flush()
 
     calculation = await calculate_buildable(session, resolved, defaults)
