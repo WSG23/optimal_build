@@ -18,7 +18,7 @@ router = APIRouter(prefix="/ergonomics")
 @router.get("/")
 async def list_ergonomics(
     session: AsyncSession = Depends(get_session),
-) -> Dict[str, List[Dict[str, object]]]:
+) -> List[Dict[str, object]]:
     result = await session.execute(select(RefErgonomics))
     items = [
         {
@@ -33,7 +33,7 @@ async def list_ergonomics(
         }
         for metric in result.scalars().all()
     ]
-    return {"items": items, "count": len(items)}
+    return items
 
 
 __all__ = ["router"]

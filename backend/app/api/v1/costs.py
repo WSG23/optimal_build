@@ -19,17 +19,28 @@ logger = get_logger(__name__)
 
 @router.get("/indices/latest", response_model=CostIndex)
 async def get_latest_index(
-    series_name: str = Query(..., description="Cost index series name"),
+    index_name: Optional[str] = Query(
+        None,
+        description="Cost index series name",
+    ),
+    series_name: Optional[str] = Query(
+        None,
+        description="Deprecated name for the cost index series.",
+    ),
     jurisdiction: str = Query("SG"),
     provider: Optional[str] = Query(default=None),
     session: AsyncSession = Depends(get_session),
 ) -> CostIndex:
     """Return the latest cost index entry for the requested series."""
 
+    resolved_series = series_name or index_name
+    if not resolved_series:
+        raise HTTPException(status_code=422, detail="index_name is required")
+
     metrics.REQUEST_COUNTER.labels(endpoint="cost_index_latest").inc()
     record = await costs_service.get_latest_cost_index(
         session,
-        series_name=series_name,
+        series_name=resolved_series,
         jurisdiction=jurisdiction,
         provider=provider,
     )
@@ -37,7 +48,7 @@ async def get_latest_index(
         log_event(
             logger,
             "cost_index_not_found",
-            series=series_name,
+            series=resolved_series,
             jurisdiction=jurisdiction,
             provider=provider,
         )
@@ -46,7 +57,7 @@ async def get_latest_index(
     log_event(
         logger,
         "cost_index_returned",
-        series=series_name,
+        series=resolved_series,
         jurisdiction=jurisdiction,
         provider=provider,
         period=record.period,

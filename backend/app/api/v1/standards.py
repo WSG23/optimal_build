@@ -23,6 +23,7 @@ async def list_material_standards(
     standard_body: Optional[str] = Query(default=None),
     material_type: Optional[str] = Query(default=None),
     section: Optional[str] = Query(default=None),
+    property_key: Optional[str] = Query(default=None),
     session: AsyncSession = Depends(get_session),
 ) -> List[MaterialStandard]:
     """Return material standards matching the provided filters."""
@@ -34,6 +35,7 @@ async def list_material_standards(
         standard_body=standard_body,
         material_type=material_type,
         section=section,
+        property_key=property_key,
     )
     log_event(
         logger,
@@ -41,6 +43,7 @@ async def list_material_standards(
         standard_code=standard_code,
         standard_body=standard_body,
         material_type=material_type,
+        property_key=property_key,
         count=len(records),
     )
     return [MaterialStandard.model_validate(record, from_attributes=True) for record in records]
