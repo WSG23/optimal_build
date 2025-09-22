@@ -249,6 +249,20 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stubs for offline tes
     def reset_storage_service():  # type: ignore[no-redef]
         return None
 
+try:  # pragma: no cover - optional dependency for reference document storage fixtures
+    from app.services.ref_documents import (
+        get_document_storage_service,
+        reset_document_storage_service,
+    )
+except ModuleNotFoundError:  # pragma: no cover - fallback stubs for offline testing
+    def get_document_storage_service():  # type: ignore[no-redef]
+        raise ModuleNotFoundError(
+            "Reference document storage dependencies are unavailable. Install optional dependencies to run reference flows."
+        )
+
+    def reset_document_storage_service():  # type: ignore[no-redef]
+        return None
+
 from app.utils import metrics
 
 
@@ -332,6 +346,23 @@ def storage_service(tmp_path, monkeypatch):
         yield service
     finally:
         reset_storage_service()
+
+
+@pytest.fixture
+def ref_storage_service(tmp_path, monkeypatch):
+    try:
+        base_path = tmp_path / "ref-storage"
+        base_path.mkdir()
+        monkeypatch.setenv("REF_STORAGE_LOCAL_PATH", str(base_path))
+        reset_document_storage_service()
+        service = get_document_storage_service()
+    except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency missing
+        pytest.skip(str(exc))
+        return None
+    try:
+        yield service
+    finally:
+        reset_document_storage_service()
 
 
 @pytest_asyncio.fixture

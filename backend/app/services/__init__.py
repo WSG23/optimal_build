@@ -9,6 +9,9 @@ from . import (  # noqa: F401
     overlay_ingest,
     products,
     pwp,
+    ref_documents,
+    ref_fetcher,
+    ref_parsers,
     standards,
     storage,
 )
@@ -22,6 +25,9 @@ __all__ = [
     "overlay_ingest",
     "products",
     "pwp",
+    "ref_documents",
+    "ref_fetcher",
+    "ref_parsers",
     "standards",
     "storage",
 ]
