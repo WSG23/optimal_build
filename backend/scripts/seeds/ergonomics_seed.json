@@ -1,0 +1,34 @@
+[
+  {
+    "population": "adult",
+    "metric_key": "accessibility.turning_radius_mm_min",
+    "value": 1500,
+    "unit": "mm",
+    "source": "Neufert",
+    "notes": "seed"
+  },
+  {
+    "population": "adult",
+    "metric_key": "ergonomics.reach_forward_mm_typical",
+    "value": 700,
+    "unit": "mm",
+    "source": "AGS",
+    "notes": "seed"
+  },
+  {
+    "population": "adult",
+    "metric_key": "counter.height_mm_range",
+    "value": 900,
+    "unit": "mm",
+    "source": "Neufert",
+    "notes": "seed"
+  },
+  {
+    "population": "wheelchair",
+    "metric_key": "accessibility.ramp.max_slope_ratio",
+    "value": 0.0833,
+    "unit": "ratio",
+    "source": "BCA",
+    "notes": "seed"
+  }
+]
