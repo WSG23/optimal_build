@@ -25,6 +25,7 @@ def test_ifc_sample_detects_multiple_storeys() -> None:
     assert {"Ground Floor", "Level 02"} <= floor_names
     assert len(parsed.units) == 3
     assert parsed.metadata["source"] == "ifc"
+    assert isinstance(parsed.layers, list)
 
 
 def test_dxf_sample_exposes_layered_units() -> None:
@@ -38,6 +39,9 @@ def test_dxf_sample_exposes_layered_units() -> None:
 
     assert len(parsed.units) == 2
     assert parsed.metadata["entities"] == 2
+    assert parsed.layers
+    parsed_layer_names = {entry["name"].upper() for entry in parsed.layers}
+    assert {"LEVEL_01", "LEVEL_02"}.issubset(parsed_layer_names)
 
     import ezdxf  # type: ignore  # noqa: WPS433
 
