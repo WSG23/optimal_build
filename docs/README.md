@@ -12,5 +12,7 @@ codebase so that policy, engineering, and review practices remain in lockstep.
   reviewers prior to promoting new references to production.
 * [`export_api.md`](export_api.md) — CAD/BIM export endpoint reference for
   frontend integrations.
+* [`feasibility_workflows.md`](feasibility_workflows.md) — feasibility wizard
+  endpoints, payloads, and regression coverage.
 * [`sample_fixtures.md`](sample_fixtures.md) — provenance and guidance for the
   repository's CAD/BIM fixtures used in automated tests.
