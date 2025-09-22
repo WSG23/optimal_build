@@ -9,7 +9,7 @@ interface ExportDialogProps {
   defaultOpen?: boolean
 }
 
-const DEFAULT_FORMATS = ['DXF', 'GeoJSON', 'CSV']
+const DEFAULT_FORMATS = ['DXF', 'DWG', 'IFC', 'PDF']
 
 export function ExportDialog({
   formats = DEFAULT_FORMATS,

@@ -39,6 +39,7 @@ function loadModule(modulePath) {
     fetch: (...args) => global.fetch(...args),
     URL,
     URLSearchParams,
+    FormData: global.FormData,
   }
   vm.runInNewContext(code, context)
   return module.exports
