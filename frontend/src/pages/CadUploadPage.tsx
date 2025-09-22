@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { type CadParseJob, type ParseStatusUpdate, useApiClient } from '../api/client'
+import { type CadImportSummary, type ParseStatusUpdate, useApiClient } from '../api/client'
 import { AppLayout } from '../App'
 import { useTranslation } from '../i18n'
 import CadUploader from '../modules/cad/CadUploader'
@@ -10,10 +10,9 @@ import useRules from '../hooks/useRules'
 export function CadUploadPage() {
   const apiClient = useApiClient()
   const { t } = useTranslation()
-  const [job, setJob] = useState<CadParseJob | null>(null)
+  const [job, setJob] = useState<CadImportSummary | null>(null)
   const [status, setStatus] = useState<ParseStatusUpdate | null>(null)
   const [isUploading, setIsUploading] = useState(false)
-  const [zoneCode, setZoneCode] = useState('RA')
   const [error, setError] = useState<string | null>(null)
   const cancelRef = useRef<(() => void) | null>(null)
   const { rules, loading } = useRules(apiClient)
@@ -30,22 +29,23 @@ export function CadUploadPage() {
       setIsUploading(true)
       setError(null)
       try {
-        const nextJob = await apiClient.uploadCadDrawing(file, { zoneCode })
-        setJob(nextJob)
-        const initial: ParseStatusUpdate = {
-          jobId: nextJob.jobId,
-          status: nextJob.status === 'ready' ? 'ready' : 'processing',
-          overlays: nextJob.overlays,
-          hints: nextJob.hints,
-          zoneCode: nextJob.zoneCode,
-          updatedAt: new Date().toISOString(),
-          message: nextJob.message,
-        }
+        const summary = await apiClient.uploadCadDrawing(file)
+        setJob(summary)
+        setStatus({
+          importId: summary.importId,
+          status: summary.parseStatus,
+          requestedAt: null,
+          completedAt: null,
+          jobId: null,
+          detectedFloors: summary.detectedFloors,
+          detectedUnits: summary.detectedUnits,
+          metadata: summary.vectorSummary ?? null,
+          error: null,
+        })
+        const initial = await apiClient.triggerParse(summary.importId)
         setStatus(initial)
-
         cancelRef.current = apiClient.pollParseStatus({
-          jobId: nextJob.jobId,
-          zoneCode: nextJob.zoneCode ?? zoneCode,
+          importId: summary.importId,
           onUpdate: (update) => {
             setStatus(update)
           },
@@ -57,29 +57,19 @@ export function CadUploadPage() {
         setIsUploading(false)
       }
     },
-    [apiClient, t, zoneCode],
+    [apiClient, t],
   )
 
   return (
     <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
       <div className="cad-upload">
-        <div className="cad-upload__controls">
-          <label className="cad-upload__label">
-            <span>{t('uploader.zone')}</span>
-            <select value={zoneCode} onChange={(event) => setZoneCode(event.target.value)}>
-              <option value="RA">RA</option>
-              <option value="RCR">RCR</option>
-              <option value="CBD">CBD</option>
-            </select>
-          </label>
-          {error && <p className="cad-upload__error">{error}</p>}
-        </div>
+        {error && <p className="cad-upload__error">{error}</p>}
 
         <CadUploader
           onUpload={handleUpload}
           isUploading={isUploading}
           status={status}
-          zoneCode={job?.zoneCode ?? zoneCode}
+          summary={job}
         />
       </div>
 

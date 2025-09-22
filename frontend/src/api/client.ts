@@ -1,9 +1,73 @@
 import { useMemo } from 'react'
 
-export interface OverlayInsights {
-  zoneCode: string | null
-  overlays: string[]
-  advisoryHints: string[]
+export interface DetectedFloorSummary {
+  name: string
+  unitIds: string[]
+}
+
+export interface CadImportSummary {
+  importId: string
+  fileName: string
+  contentType: string | null
+  sizeBytes: number
+  uploadedAt: string
+  parseStatus: ParseJobStatus
+  detectedFloors: DetectedFloorSummary[]
+  detectedUnits: string[]
+  vectorSummary: Record<string, unknown> | null
+}
+
+export type ParseJobStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed'
+
+export interface ParseStatusUpdate {
+  importId: string
+  status: ParseJobStatus
+  requestedAt: string | null
+  completedAt: string | null
+  jobId: string | null
+  detectedFloors: DetectedFloorSummary[]
+  detectedUnits: string[]
+  metadata: Record<string, unknown> | null
+  error?: string | null
+}
+
+export interface OverlayDecisionRecord {
+  id: number
+  decision: string
+  decidedBy: string | null
+  decidedAt: string
+  notes: string | null
+}
+
+export interface OverlaySuggestion {
+  id: number
+  projectId: number
+  sourceGeometryId: number
+  code: string
+  title: string
+  rationale: string | null
+  severity: string | null
+  status: string
+  engineVersion: string | null
+  enginePayload: Record<string, unknown>
+  score: number | null
+  geometryChecksum: string
+  createdAt: string
+  updatedAt: string
+  decidedAt: string | null
+  decidedBy: string | null
+  decisionNotes: string | null
+  decision: OverlayDecisionRecord | null
+}
+
+export interface AuditEvent {
+  id: number
+  projectId: number
+  eventType: string
+  recordedAt: string
+  baselineSeconds: number | null
+  actualSeconds: number | null
+  context: Record<string, unknown>
 }
 
 export interface RuleMatch {
@@ -24,32 +88,6 @@ export interface RuleSummary {
   overlays: string[]
   advisoryHints: string[]
   normalized: RuleMatch[]
-}
-
-export interface AuditEvent {
-  ruleId: number
-  baseline: string
-  updated: string
-}
-
-export interface CadParseJob {
-  jobId: string
-  fileName: string
-  zoneCode: string | null
-  overlays: string[]
-  hints: string[]
-  status: 'queued' | 'processing' | 'ready' | 'error'
-  message?: string
-}
-
-export interface ParseStatusUpdate {
-  jobId: string
-  status: 'processing' | 'ready' | 'error'
-  overlays: string[]
-  hints: string[]
-  zoneCode: string | null
-  updatedAt: string
-  message?: string
 }
 
 export interface PipelineSuggestion {
@@ -88,18 +126,128 @@ export interface ExportArtifactResponse {
   watermark: string | null
 }
 
-interface BuildableResponse {
-  zone_code?: string | null
-  overlays?: string[]
-  advisory_hints?: string[]
+export interface ProjectRoiMetrics {
+  projectId: number
+  iterations: number
+  totalSuggestions: number
+  decidedSuggestions: number
+  acceptedSuggestions: number
+  acceptanceRate: number
+  reviewHoursSaved: number
+  automationScore: number
+  savingsPercent: number
+  paybackWeeks: number
+  baselineHours: number
+  actualHours: number
+}
+
+interface ImportResultResponse {
+  import_id: string
+  filename: string
+  content_type: string | null
+  size_bytes: number
+  storage_path: string
+  vector_storage_path: string | null
+  uploaded_at: string
+  layer_metadata: unknown[]
+  detected_floors: { name: string; unit_ids: string[] }[] | null
+  detected_units: string[] | null
+  vector_summary: Record<string, unknown> | null
+  parse_status: ParseJobStatus
+}
+
+interface ParseStatusResponse {
+  import_id: string
+  status: ParseJobStatus
+  requested_at: string | null
+  completed_at: string | null
+  result?: {
+    detected_floors?: { name: string; unit_ids: string[] }[]
+    detected_units?: string[]
+    metadata?: Record<string, unknown>
+    [key: string]: unknown
+  } | null
+  error?: string | null
+  job_id?: string | null
+}
+
+interface OverlaySuggestionResponse {
+  id: number
+  project_id: number
+  source_geometry_id: number
+  code: string
+  title: string
+  rationale: string | null
+  severity: string | null
+  status: string
+  engine_version: string | null
+  engine_payload: Record<string, unknown>
+  score: number | null
+  geometry_checksum: string
+  created_at: string
+  updated_at: string
+  decided_at: string | null
+  decided_by: string | null
+  decision_notes: string | null
+  decision: {
+    id: number
+    decision: string
+    decided_by: string | null
+    decided_at: string
+    notes: string | null
+  } | null
+}
+
+interface OverlayListingResponse {
+  items: OverlaySuggestionResponse[]
+  count: number
+}
+
+interface OverlayDecisionResponse {
+  item: OverlaySuggestionResponse
+}
+
+interface OverlayRunResponse {
+  status: string
+  project_id: number
+  job_id?: string | null
+  created?: number
+  updated?: number
+  evaluated?: number
 }
 
 interface RulesResponse {
   items: RuleSummary[]
 }
 
+interface AuditLogResponse {
+  id: number
+  project_id: number
+  event_type: string
+  baseline_seconds: number | null
+  actual_seconds: number | null
+  context: Record<string, unknown> | null
+  recorded_at: string
+}
+
 interface AuditResponse {
-  items: { rule_id: number; baseline: string; updated: string }[]
+  items: AuditLogResponse[]
+  count: number
+}
+
+interface RoiResponse {
+  project_id: number
+  iterations: number
+  total_suggestions: number
+  decided_suggestions: number
+  accepted_suggestions: number
+  acceptance_rate: number
+  review_hours_saved: number
+  automation_score: number
+  savings_percent: number
+  payback_weeks: number
+  baseline_hours: number
+  actual_hours: number
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -132,29 +280,240 @@ export class ApiClient {
     return (await response.json()) as T
   }
 
-  async getOverlayInsights(input: { zoneCode?: string; address?: string }): Promise<OverlayInsights> {
-    const payload = input.address
-      ? { address: input.address }
-      : {
-          geometry: {
-            type: 'Feature',
-            properties: {
-              zone_code: input.zoneCode ?? 'RA',
-            },
-          },
-        }
-    const data = await this.request<BuildableResponse>('api/v1/screen/buildable', {
+  private mapImportResult(payload: ImportResultResponse): CadImportSummary {
+    return {
+      importId: payload.import_id,
+      fileName: payload.filename,
+      contentType: payload.content_type,
+      sizeBytes: payload.size_bytes,
+      uploadedAt: payload.uploaded_at,
+      parseStatus: payload.parse_status,
+      detectedFloors: (payload.detected_floors ?? []).map((floor) => ({
+        name: floor.name,
+        unitIds: floor.unit_ids ?? [],
+      })),
+      detectedUnits: payload.detected_units ?? [],
+      vectorSummary: payload.vector_summary ?? null,
+    }
+  }
+
+  private mapParseStatus(payload: ParseStatusResponse): ParseStatusUpdate {
+    const result = payload.result ?? {}
+    const detectedFloors = (result?.detected_floors ?? []).map((floor) => ({
+      name: floor.name,
+      unitIds: floor.unit_ids ?? [],
+    }))
+    const detectedUnits = result?.detected_units ?? []
+    const metadata = (result?.metadata as Record<string, unknown> | undefined) ?? null
+
+    return {
+      importId: payload.import_id,
+      status: payload.status,
+      requestedAt: payload.requested_at,
+      completedAt: payload.completed_at,
+      jobId: payload.job_id ?? null,
+      detectedFloors,
+      detectedUnits,
+      metadata,
+      error: payload.error ?? null,
+    }
+  }
+
+  private mapOverlaySuggestion(payload: OverlaySuggestionResponse): OverlaySuggestion {
+    return {
+      id: payload.id,
+      projectId: payload.project_id,
+      sourceGeometryId: payload.source_geometry_id,
+      code: payload.code,
+      title: payload.title,
+      rationale: payload.rationale,
+      severity: payload.severity,
+      status: payload.status,
+      engineVersion: payload.engine_version,
+      enginePayload: payload.engine_payload ?? {},
+      score: payload.score,
+      geometryChecksum: payload.geometry_checksum,
+      createdAt: payload.created_at,
+      updatedAt: payload.updated_at,
+      decidedAt: payload.decided_at,
+      decidedBy: payload.decided_by,
+      decisionNotes: payload.decision_notes,
+      decision: payload.decision
+        ? {
+            id: payload.decision.id,
+            decision: payload.decision.decision,
+            decidedBy: payload.decision.decided_by,
+            decidedAt: payload.decision.decided_at,
+            notes: payload.decision.notes,
+          }
+        : null,
+    }
+  }
+
+  async uploadCadDrawing(
+    file: File | Blob,
+    options: { inferWalls?: boolean } = {},
+  ): Promise<CadImportSummary> {
+    const formData = new FormData()
+    const fileName = 'name' in file ? (file as File).name : 'upload.dxf'
+    formData.append('file', file, fileName)
+    if (options.inferWalls) {
+      formData.append('infer_walls', 'true')
+    }
+
+    const response = await fetch(this.buildUrl('api/v1/import'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const message = await response.text()
+      throw new Error(message || `Import request failed with status ${response.status}`)
+    }
+
+    const payload = (await response.json()) as ImportResultResponse
+    return this.mapImportResult(payload)
+  }
+
+  async triggerParse(importId: string): Promise<ParseStatusUpdate> {
+    const payload = await this.request<ParseStatusResponse>(`api/v1/parse/${importId}`, {
+      method: 'POST',
+    })
+    return this.mapParseStatus(payload)
+  }
+
+  async fetchParseStatus(importId: string): Promise<ParseStatusUpdate> {
+    const payload = await this.request<ParseStatusResponse>(`api/v1/parse/${importId}`)
+    return this.mapParseStatus(payload)
+  }
+
+  pollParseStatus(options: {
+    importId: string
+    onUpdate: (update: ParseStatusUpdate) => void
+    intervalMs?: number
+    timeoutMs?: number
+  }) {
+    const { importId, onUpdate, intervalMs = 2000, timeoutMs = 60000 } = options
+    let cancelled = false
+    const startedAt = Date.now()
+
+    const loop = async () => {
+      while (!cancelled) {
+        try {
+          const update = await this.fetchParseStatus(importId)
+          onUpdate(update)
+          if (update.status === 'completed' || update.status === 'failed') {
+            break
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          onUpdate({
+            importId,
+            status: 'failed',
+            requestedAt: null,
+            completedAt: null,
+            jobId: null,
+            detectedFloors: [],
+            detectedUnits: [],
+            metadata: null,
+            error: message,
+          })
+          break
+        }
+
+        if (timeoutMs && Date.now() - startedAt >= timeoutMs) {
+          onUpdate({
+            importId,
+            status: 'failed',
+            requestedAt: null,
+            completedAt: null,
+            jobId: null,
+            detectedFloors: [],
+            detectedUnits: [],
+            metadata: null,
+            error: 'Polling timed out',
+          })
+          break
+        }
+
+        await delay(intervalMs)
+      }
+    }
+
+    loop().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      onUpdate({
+        importId,
+        status: 'failed',
+        requestedAt: null,
+        completedAt: null,
+        jobId: null,
+        detectedFloors: [],
+        detectedUnits: [],
+        metadata: null,
+        error: message,
+      })
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }
+
+  async listOverlaySuggestions(projectId: number): Promise<OverlaySuggestion[]> {
+    const payload = await this.request<OverlayListingResponse>(`api/v1/overlay/${projectId}`)
+    return payload.items.map((item) => this.mapOverlaySuggestion(item))
+  }
+
+  async runOverlay(projectId: number): Promise<{ status: string; projectId: number; jobId: string | null; created?: number; updated?: number; evaluated?: number }> {
+    const payload = await this.request<OverlayRunResponse>(`api/v1/overlay/${projectId}/run`, {
+      method: 'POST',
     })
     return {
-      zoneCode: data.zone_code ?? input.zoneCode ?? null,
-      overlays: data.overlays ?? [],
-      advisoryHints: data.advisory_hints ?? [],
+      status: payload.status,
+      projectId: payload.project_id,
+      jobId: payload.job_id ?? null,
+      created: payload.created,
+      updated: payload.updated,
+      evaluated: payload.evaluated,
     }
+  }
+
+  async decideOverlay(
+    projectId: number,
+    input: { suggestionId: number; decision: 'approved' | 'rejected'; decidedBy?: string; notes?: string },
+  ): Promise<OverlaySuggestion> {
+    const payload = await this.request<OverlayDecisionResponse>(`api/v1/overlay/${projectId}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        suggestion_id: input.suggestionId,
+        decision: input.decision,
+        decided_by: input.decidedBy,
+        notes: input.notes,
+      }),
+    })
+    return this.mapOverlaySuggestion(payload.item)
+  }
+
+  async listAuditTrail(projectId: number, options: { eventType?: string } = {}): Promise<AuditEvent[]> {
+    const searchParams = new URLSearchParams()
+    if (options.eventType) {
+      searchParams.set('event_type', options.eventType)
+    }
+    const path = searchParams.size
+      ? `api/v1/audit/${projectId}?${searchParams.toString()}`
+      : `api/v1/audit/${projectId}`
+    const payload = await this.request<AuditResponse>(path)
+    return payload.items.map((item) => ({
+      id: item.id,
+      projectId: item.project_id,
+      eventType: item.event_type,
+      recordedAt: item.recorded_at,
+      baselineSeconds: item.baseline_seconds,
+      actualSeconds: item.actual_seconds,
+      context: item.context ?? {},
+    }))
   }
 
   async listRules(): Promise<RuleSummary[]> {
@@ -162,31 +521,21 @@ export class ApiClient {
     return data.items
   }
 
-  async listAuditTrail(ruleId?: number): Promise<AuditEvent[]> {
-    const url = ruleId ? `api/v1/review/diffs?rule_id=${ruleId}` : 'api/v1/review/diffs'
-    const data = await this.request<AuditResponse>(url)
-    return data.items.map((item) => ({
-      ruleId: item.rule_id,
-      baseline: item.baseline,
-      updated: item.updated,
-    }))
-  }
-
-  async uploadCadDrawing(
-    file: Pick<File, 'name' | 'size'>,
-    options: { zoneCode?: string; address?: string } = {},
-  ): Promise<CadParseJob> {
-    const insights = await this.getOverlayInsights({ zoneCode: options.zoneCode, address: options.address })
-    const jobId = `cad-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`
-    const hasInsights = insights.overlays.length > 0 || insights.advisoryHints.length > 0
+  async getProjectRoi(projectId: number): Promise<ProjectRoiMetrics> {
+    const payload = await this.request<RoiResponse>(`api/v1/roi/${projectId}`)
     return {
-      jobId,
-      fileName: file.name,
-      zoneCode: insights.zoneCode,
-      overlays: insights.overlays,
-      hints: insights.advisoryHints,
-      status: hasInsights ? 'ready' : 'processing',
-      message: hasInsights ? undefined : 'Awaiting overlay enrichment',
+      projectId: payload.project_id,
+      iterations: payload.iterations,
+      totalSuggestions: payload.total_suggestions,
+      decidedSuggestions: payload.decided_suggestions,
+      acceptedSuggestions: payload.accepted_suggestions,
+      acceptanceRate: payload.acceptance_rate,
+      reviewHoursSaved: payload.review_hours_saved,
+      automationScore: payload.automation_score,
+      savingsPercent: payload.savings_percent,
+      paybackWeeks: payload.payback_weeks,
+      baselineHours: payload.baseline_hours,
+      actualHours: payload.actual_hours,
     }
   }
 
@@ -241,117 +590,6 @@ export class ApiClient {
       filename,
       renderer: response.headers.get('X-Export-Renderer'),
       watermark: response.headers.get('X-Export-Watermark'),
-    }
-  }
-
-  pollParseStatus(options: {
-    jobId: string
-    zoneCode?: string | null
-    onUpdate: (update: ParseStatusUpdate) => void
-    intervalMs?: number
-    timeoutMs?: number
-  }) {
-    const { jobId, zoneCode = null, onUpdate, intervalMs = 2000, timeoutMs = 15000 } = options
-    let cancelled = false
-    const startedAt = Date.now()
-
-    const loop = async () => {
-      while (!cancelled) {
-        try {
-          const insight = zoneCode ? await this.getOverlayInsights({ zoneCode }) : null
-          const status: ParseStatusUpdate = {
-            jobId,
-            status: insight && insight.overlays.length > 0 ? 'ready' : 'processing',
-            overlays: insight?.overlays ?? [],
-            hints: insight?.advisoryHints ?? [],
-            zoneCode: insight?.zoneCode ?? zoneCode,
-            updatedAt: new Date().toISOString(),
-          }
-          onUpdate(status)
-          if (status.status === 'ready') {
-            break
-          }
-        } catch (error) {
-          onUpdate({
-            jobId,
-            status: 'error',
-            overlays: [],
-            hints: [],
-            zoneCode,
-            updatedAt: new Date().toISOString(),
-            message: error instanceof Error ? error.message : 'Unknown error',
-          })
-          break
-        }
-
-        if (timeoutMs && Date.now() - startedAt >= timeoutMs) {
-          onUpdate({
-            jobId,
-            status: 'error',
-            overlays: [],
-            hints: [],
-            zoneCode,
-            updatedAt: new Date().toISOString(),
-            message: 'Polling timed out',
-          })
-          break
-        }
-
-        await delay(intervalMs)
-      }
-    }
-
-    loop().catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      onUpdate({
-        jobId,
-        status: 'error',
-        overlays: [],
-        hints: [],
-        zoneCode,
-        updatedAt: new Date().toISOString(),
-        message,
-      })
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }
-
-  subscribeToOverlayUpdates(options: {
-    zoneCode: string
-    onUpdate: (insights: OverlayInsights) => void
-    intervalMs?: number
-  }) {
-    const { zoneCode, onUpdate, intervalMs = 5000 } = options
-    let cancelled = false
-
-    const loop = async () => {
-      while (!cancelled) {
-        try {
-          const insight = await this.getOverlayInsights({ zoneCode })
-          onUpdate(insight)
-        } catch (error) {
-          onUpdate({
-            zoneCode,
-            overlays: [],
-            advisoryHints: [
-              error instanceof Error ? error.message : 'Unable to refresh overlays at the moment.',
-            ],
-          })
-          break
-        }
-        await delay(intervalMs)
-      }
-    }
-
-    loop().catch(() => {
-      /* no-op: consumers already notified through onUpdate */
-    })
-
-    return () => {
-      cancelled = true
     }
   }
 

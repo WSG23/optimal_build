@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, field_validator
 
@@ -30,12 +30,16 @@ class OverlaySuggestion(BaseModel):
     project_id: int
     source_geometry_id: int
     code: str
+    type: Optional[str] = None
     title: str
     rationale: Optional[str] = None
     severity: Optional[str] = None
     status: str
     engine_version: Optional[str] = None
     engine_payload: Dict[str, Any]
+    target_ids: List[str] = []
+    props: Dict[str, Any] = {}
+    rule_refs: List[str] = []
     score: Optional[float] = None
     geometry_checksum: str
     created_at: datetime
@@ -49,6 +53,37 @@ class OverlaySuggestion(BaseModel):
         """Pydantic configuration."""
 
         from_attributes = True
+
+    @field_validator("target_ids", mode="before")
+    @classmethod
+    def _ensure_target_ids(cls, value: object) -> List[str]:
+        """Coerce target identifiers to a list of strings."""
+
+        if value is None:
+            return []
+        if isinstance(value, (list, tuple, set)):
+            return [str(item) for item in value if item not in (None, "")]
+        return [str(value)]
+
+    @field_validator("props", mode="before")
+    @classmethod
+    def _ensure_props(cls, value: object) -> Dict[str, Any]:
+        """Ensure a dictionary of properties is always returned."""
+
+        if isinstance(value, dict):
+            return dict(value)
+        return {}
+
+    @field_validator("rule_refs", mode="before")
+    @classmethod
+    def _ensure_rule_refs(cls, value: object) -> List[str]:
+        """Coerce rule references to a list of strings."""
+
+        if value is None:
+            return []
+        if isinstance(value, (list, tuple, set)):
+            return [str(item) for item in value if item not in (None, "")]
+        return [str(value)]
 
 
 class OverlayDecisionPayload(BaseModel):

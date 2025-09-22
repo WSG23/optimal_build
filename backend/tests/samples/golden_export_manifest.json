@@ -91,47 +91,118 @@
         "layer": "A-OVER-HERITAGE",
         "code": "heritage_conservation",
         "title": "Heritage conservation review",
+        "type": "review",
         "status": "pending",
         "severity": "high",
         "style": {},
         "nodes": [
           "L01"
-        ]
+        ],
+        "target_ids": [
+          "L01"
+        ],
+        "rule_refs": [
+          "heritage.zone.compliance"
+        ],
+        "props": {
+          "trigger": "heritage_zone",
+          "heritage_zone": true
+        }
       }
     ],
     "A-OVER-PENDING": [
       {
         "layer": "A-OVER-PENDING",
+        "code": "coastal_evacuation_plan",
+        "title": "Coastal evacuation planning",
+        "type": "preparedness",
+        "status": "pending",
+        "severity": "medium",
+        "style": {},
+        "nodes": [
+          "L01",
+          "L01-U01"
+        ],
+        "target_ids": [
+          "L01",
+          "L01-U01"
+        ],
+        "rule_refs": [
+          "safety.coastal_evacuation.guidance"
+        ],
+        "props": {
+          "trigger": "flood_zone+building_height",
+          "flood_zone": "coastal",
+          "height_m": 52.5
+        }
+      },
+      {
+        "layer": "A-OVER-PENDING",
         "code": "flood_mitigation",
         "title": "Flood mitigation measures",
+        "type": "mitigation",
         "status": "pending",
         "severity": "medium",
         "style": {},
         "nodes": [
           "L01"
-        ]
+        ],
+        "target_ids": [
+          "L01"
+        ],
+        "rule_refs": [
+          "water.management.flood_zone"
+        ],
+        "props": {
+          "trigger": "flood_zone",
+          "flood_zone": "coastal"
+        }
       },
       {
         "layer": "A-OVER-PENDING",
         "code": "large_site_review",
         "title": "Large site planning review",
+        "type": "review",
         "status": "pending",
         "severity": "medium",
         "style": {},
         "nodes": [
           "L01"
-        ]
+        ],
+        "target_ids": [
+          "L01"
+        ],
+        "rule_refs": [
+          "planning.large_site.threshold"
+        ],
+        "props": {
+          "trigger": "site_area",
+          "site_area_sqm": 12500.0,
+          "threshold_sqm": 10000
+        }
       },
       {
         "layer": "A-OVER-PENDING",
         "code": "tall_building_review",
         "title": "Tall building impact assessment",
+        "type": "assessment",
         "status": "pending",
         "severity": "medium",
         "style": {},
         "nodes": [
           "L01-U01"
-        ]
+        ],
+        "target_ids": [
+          "L01-U01"
+        ],
+        "rule_refs": [
+          "building.height.trigger"
+        ],
+        "props": {
+          "trigger": "building_height",
+          "height_m": 52.5,
+          "threshold_m": 45
+        }
       }
     ]
   },

@@ -78,12 +78,16 @@ class OverlaySuggestion(BaseModel):
         index=True,
     )
     code: Mapped[str] = mapped_column(String(100), nullable=False)
+    type: Mapped[str | None] = mapped_column(String(50))
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     rationale: Mapped[str | None] = mapped_column(Text)
     severity: Mapped[str | None] = mapped_column(String(20))
     status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
     engine_version: Mapped[str | None] = mapped_column(String(50))
     engine_payload: Mapped[dict] = mapped_column(JSONType, default=dict)
+    target_ids: Mapped[list[str]] = mapped_column(JSONType, default=list)
+    props: Mapped[dict] = mapped_column(JSONType, default=dict)
+    rule_refs: Mapped[list[str]] = mapped_column(JSONType, default=list)
     score: Mapped[float | None] = mapped_column(Float)
     geometry_checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(

@@ -65,7 +65,15 @@
       "floors": "{{count}} floors",
       "units": "{{count}} units",
       "zone": "Zone {{code}}"
-    }
+    },
+    "projectSummary": "Project #{{id}} overlay review",
+    "loadError": "Unable to load overlay suggestions",
+    "decisionError": "Saving the overlay decision failed",
+    "exportError": "Export failed",
+    "auditError": "Unable to load audit entries",
+    "auditBaseline": "Baseline: {{minutes}} min",
+    "auditActual": "Actual: {{minutes}} min",
+    "auditContext": "Context: {{text}}"
   },
   "pipelines": {
     "title": "Default pipeline suggestions",
@@ -76,7 +84,8 @@
     "reviewHours": "Manual review hours saved",
     "savings": "Estimated compliance savings",
     "payback": "Payback",
-    "weeks": "{{count}} weeks"
+    "weeks": "{{count}} weeks",
+    "projectLabel": "Project ID"
   },
   "controls": {
     "source": "Source",
