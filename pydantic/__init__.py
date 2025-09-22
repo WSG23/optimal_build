@@ -29,6 +29,42 @@ from typing import (
 T = TypeVar("T")
 
 
+class HttpUrl(str):
+    """Simplified representation of :class:`pydantic.HttpUrl`."""
+
+
+def _build_constrained_number(
+    base_type: type[T], *, ge: float | None = None, le: float | None = None
+) -> type[T]:
+    class Constrained(base_type):  # type: ignore[misc]
+        def __new__(cls, value: Any) -> T:  # type: ignore[override]
+            try:
+                converted = base_type(value)  # type: ignore[arg-type]
+            except Exception as exc:  # pragma: no cover - defensive
+                raise ValidationError(str(exc)) from exc
+            if ge is not None and converted < ge:
+                raise ValidationError(f"value must be >= {ge}")
+            if le is not None and converted > le:
+                raise ValidationError(f"value must be <= {le}")
+            return base_type.__new__(cls, converted)  # type: ignore[call-arg]
+
+    Constrained.ge = ge  # type: ignore[attr-defined]
+    Constrained.le = le  # type: ignore[attr-defined]
+    return Constrained
+
+
+def conint(*, ge: int | None = None, le: int | None = None) -> type[int]:
+    """Return a constrained integer type."""
+
+    return _build_constrained_number(int, ge=ge, le=le)
+
+
+def confloat(*, ge: float | None = None, le: float | None = None) -> type[float]:
+    """Return a constrained float type."""
+
+    return _build_constrained_number(float, ge=ge, le=le)
+
+
 class _Undefined:
     """Sentinel used to represent unspecified defaults."""
 
@@ -386,6 +422,9 @@ def model_validator(*, mode: str = "after") -> Callable[[Callable[..., Any]], cl
 
 __all__ = [
     "BaseModel",
+    "confloat",
+    "conint",
+    "HttpUrl",
     "Field",
     "ValidationError",
     "field_validator",
