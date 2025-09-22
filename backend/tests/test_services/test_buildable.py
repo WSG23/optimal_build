@@ -162,6 +162,18 @@ async def test_calculate_buildable_ignores_unapproved_rules(session) -> None:
         input_kind="geometry",
     )
 
+    approved_rule = RefRule(
+        jurisdiction="SG",
+        authority="URA",
+        topic="zoning",
+        parameter_key="zoning.setback.front_min_m",
+        operator=">=",
+        value="7.5",
+        unit="m",
+        applicability={"zone_code": "R-NOAPP"},
+        review_status="approved",
+        is_published=True,
+    )
     pending_rule = RefRule(
         jurisdiction="SG",
         authority="URA",
@@ -174,7 +186,7 @@ async def test_calculate_buildable_ignores_unapproved_rules(session) -> None:
         is_published=True,
     )
 
-    session.add(pending_rule)
+    session.add_all([approved_rule, pending_rule])
     await session.flush()
 
     calculation = await calculate_buildable(session, resolved, defaults)
@@ -184,7 +196,10 @@ async def test_calculate_buildable_ignores_unapproved_rules(session) -> None:
     assert metrics.footprint_m2 == 550
     assert metrics.floors_max == 4
     assert metrics.nsa_est_m2 == 1350
-    assert not calculation.rules
+    assert len(calculation.rules) == 1
+    rule = calculation.rules[0]
+    assert rule.id == approved_rule.id
+    assert rule.parameter_key == approved_rule.parameter_key
 
 
 @pytest.mark.asyncio
