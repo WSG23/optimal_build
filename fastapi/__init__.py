@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping as MappingABC
+from collections.abc import Sequence as SequenceABC
 from dataclasses import dataclass
 from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import Decimal
 from functools import lru_cache
 import inspect
 import json
@@ -21,10 +24,13 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    Literal,
     get_args,
     get_origin,
     get_type_hints,
 )
+
+from pydantic import BaseModel
 
 from . import status  # noqa: F401  (re-exported)
 
@@ -159,6 +165,182 @@ def _json_default(value: Any) -> Any:
     if hasattr(value, "model_dump"):
         return value.model_dump(mode="json")
     return str(value)
+
+
+def _is_undefined(value: Any) -> bool:
+    """Return True when a value corresponds to pydantic's undefined sentinel."""
+
+    return getattr(value.__class__, "__name__", "") == "_Undefined"
+
+
+def _normalise_example(value: Any) -> Any:
+    """Convert example values into JSON-friendly types."""
+
+    if isinstance(value, BaseModel):
+        return _normalise_example(value.model_dump(mode="json"))
+    if isinstance(value, dict):
+        return {str(key): _normalise_example(val) for key, val in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_normalise_example(item) for item in value]
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Enum):
+        return getattr(value, "value", value.name)
+    return value
+
+
+def _build_model_example(annotation: Any) -> Any:
+    """Return a representative example for the supplied type annotation."""
+
+    if annotation is inspect._empty or annotation is Any:
+        return None
+
+    origin = get_origin(annotation)
+    if origin is Union:
+        for arg in get_args(annotation):
+            if arg is type(None):
+                continue
+            example = _build_model_example(arg)
+            if example is not None:
+                return example
+        return None
+    if origin is not None:
+        if (
+            isinstance(origin, type)
+            and issubclass(origin, SequenceABC)
+            and not issubclass(origin, (str, bytes))
+        ) or origin in {list, set, tuple}:
+            args = get_args(annotation)
+            item_type = args[0] if args else Any
+            item_example = _build_model_example(item_type)
+            if item_example is None:
+                return []
+            return _normalise_example([item_example])
+        if (
+            isinstance(origin, type)
+            and issubclass(origin, MappingABC)
+        ) or origin in {dict, Dict, Mapping}:
+            args = get_args(annotation)
+            key_type = args[0] if len(args) >= 1 else str
+            value_type = args[1] if len(args) >= 2 else Any
+            key_example = _build_model_example(key_type)
+            if isinstance(key_example, (dict, list, set, tuple)) or key_example is None:
+                key_example = "key"
+            value_example = _build_model_example(value_type)
+            return {str(key_example): _normalise_example(value_example)}
+    if origin is Literal:
+        values = get_args(annotation)
+        if values:
+            return _normalise_example(values[0])
+
+    if inspect.isclass(annotation):
+        if issubclass(annotation, BaseModel):
+            return _build_base_model_example(annotation)
+        if issubclass(annotation, Enum):
+            try:
+                first = next(iter(annotation))  # type: ignore[arg-type]
+            except StopIteration:
+                return None
+            return _normalise_example(getattr(first, "value", first))
+        if annotation is str:
+            return "string"
+        if annotation is int:
+            return 0
+        if annotation is float:
+            return 0.0
+        if annotation is bool:
+            return True
+        if annotation is datetime:
+            return datetime.now().isoformat()
+        if annotation is date:
+            return date.today().isoformat()
+        if annotation is Decimal:
+            return "0"
+
+    return None
+
+
+def _build_base_model_example(model: type[BaseModel]) -> Any:
+    """Create a JSON-serialisable example for a pydantic model."""
+
+    data: Dict[str, Any] = {}
+    for name, field in getattr(model, "model_fields", {}).items():
+        annotation = getattr(field, "annotation", Any)
+        value: Any
+        default_factory = getattr(field, "default_factory", None)
+        default = getattr(field, "default", None)
+        if callable(default_factory):
+            try:
+                value = default_factory()
+            except Exception:
+                value = None
+        elif default is not None and not _is_undefined(default):
+            value = default
+        elif getattr(field, "required", False):
+            value = _build_model_example(annotation)
+        else:
+            value = _build_model_example(annotation)
+        data[name] = value
+
+    try:
+        instance = model(**data)
+        payload = instance.model_dump(mode="json")
+    except Exception:
+        payload = data
+    return _normalise_example(payload)
+
+
+def _is_pydantic_model_type(annotation: Any) -> bool:
+    """Determine whether an annotation represents a pydantic model."""
+
+    if annotation is inspect._empty:
+        return False
+    if inspect.isclass(annotation) and issubclass(annotation, BaseModel):
+        return True
+
+    origin = get_origin(annotation)
+    if origin is Union:
+        return any(
+            _is_pydantic_model_type(arg)
+            for arg in get_args(annotation)
+            if arg is not type(None)
+        )
+    if origin is not None:
+        if (
+            isinstance(origin, type)
+            and issubclass(origin, SequenceABC)
+            and not issubclass(origin, (str, bytes))
+        ) or origin in {list, set, tuple}:
+            return any(_is_pydantic_model_type(arg) for arg in get_args(annotation))
+        if (
+            isinstance(origin, type)
+            and issubclass(origin, MappingABC)
+        ) or origin in {dict, Dict, Mapping}:
+            args = get_args(annotation)
+            if len(args) >= 2:
+                return _is_pydantic_model_type(args[1])
+    return False
+
+
+def _extract_request_model(route: "_Route") -> Any:
+    """Return the request body model associated with the route if present."""
+
+    endpoint = route.endpoint
+    signature = inspect.signature(endpoint)
+    for name, parameter in signature.parameters.items():
+        if route.path and f"{{{name}}}" in route.path:
+            continue
+        default = parameter.default
+        if isinstance(default, (Depends, Query, Header, Form, File)):
+            continue
+        annotation = _resolve_annotation(endpoint, name, parameter.annotation)
+        if _is_pydantic_model_type(annotation):
+            return annotation
+    return None
 
 
 class _Route:
@@ -305,14 +487,23 @@ class APIRouter:
 class FastAPI:
     """Small subset of FastAPI used in the test suite."""
 
-    def __init__(self, *, title: str | None = None, version: str | None = None, lifespan: Any = None, **_: Any) -> None:
-        self.title = title
-        self.version = version
+    def __init__(
+        self,
+        *,
+        title: str | None = None,
+        version: str | None = None,
+        lifespan: Any = None,
+        **extra: Any,
+    ) -> None:
+        self.title = title or "FastAPI"
+        self.version = version or "0.1.0"
         self.router = APIRouter()
         self.routes: list[_Route] = []
         self.dependency_overrides: Dict[Callable[..., Any], Callable[..., Any]] = {}
         self._middleware: list[tuple[Any, dict[str, Any]]] = []
         self._lifespan = lifespan
+        self.openapi_tags: list[dict[str, Any]] = list(extra.get("openapi_tags", []))
+        self._openapi_schema: Dict[str, Any] | None = None
 
     def add_middleware(self, middleware_cls: Any, **options: Any) -> None:  # pragma: no cover - middleware ignored
         self._middleware.append((middleware_cls, options))
@@ -329,9 +520,17 @@ class FastAPI:
                 status_code=route.status_code,
             )
             self.routes.append(combined)
+        self._openapi_schema = None
 
     def get(self, path: str, *, response_model: Optional[type] = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self.router.get(path, response_model=response_model)
+        decorator = self.router.get(path, response_model=response_model)
+
+        def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+            result = decorator(func)
+            self._openapi_schema = None
+            return result
+
+        return wrapper
 
     def post(
         self,
@@ -340,7 +539,18 @@ class FastAPI:
         response_model: Optional[type] = None,
         status_code: Optional[int] = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self.router.post(path, response_model=response_model, status_code=status_code)
+        decorator = self.router.post(
+            path,
+            response_model=response_model,
+            status_code=status_code,
+        )
+
+        def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+            result = decorator(func)
+            self._openapi_schema = None
+            return result
+
+        return wrapper
 
     async def handle_request(
         self,
@@ -385,6 +595,58 @@ class FastAPI:
             if route.match(path) is not None:
                 return route
         return None
+
+    def openapi(self) -> Dict[str, Any]:
+        """Return a cached OpenAPI representation of the registered routes."""
+
+        if self._openapi_schema is not None:
+            return self._openapi_schema
+
+        schema: Dict[str, Any] = {
+            "openapi": "3.1.0",
+            "info": {"title": self.title, "version": self.version},
+            "paths": {},
+        }
+        if self.openapi_tags:
+            schema["tags"] = self.openapi_tags
+
+        for route in self.routes + self.router.routes:
+            path_item = schema["paths"].setdefault(route.path, {})
+            request_model = _extract_request_model(route)
+            summary = inspect.getdoc(route.endpoint)
+            for method in sorted(route.methods):
+                operation: Dict[str, Any] = {}
+                if summary:
+                    operation["summary"] = summary.splitlines()[0]
+
+                if request_model is not None:
+                    request_example = _build_model_example(request_model)
+                    if request_example is not None:
+                        operation["requestBody"] = {
+                            "content": {
+                                "application/json": {
+                                    "example": request_example
+                                }
+                            }
+                        }
+
+                status_code = route.status_code or status.HTTP_200_OK
+                responses: Dict[str, Any] = {
+                    str(status_code): {"description": "Successful Response"}
+                }
+                response_model = route.response_model
+                if response_model is not None:
+                    response_example = _build_model_example(response_model)
+                    if response_example is not None:
+                        responses[str(status_code)]["content"] = {
+                            "application/json": {"example": response_example}
+                        }
+
+                operation["responses"] = responses
+                path_item[method.lower()] = operation
+
+        self._openapi_schema = schema
+        return schema
 
 
 async def _execute_route(
