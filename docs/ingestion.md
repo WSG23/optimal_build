@@ -20,3 +20,16 @@ which re-exports callables that can be awaited during tests.
 When Prefect is installed the actual package will supply richer behaviour,
 including orchestration and state management. The shim is only intended for
 offline testing and should not be used in production deployments.
+
+## How Buildable consumes ref_rules
+
+The buildable service queries `RefRule` records tagged with the `zoning`
+topic whenever a zoning code is resolved. Only rules that are approved and
+published are considered, and each matching rule is surfaced in the response
+payload so downstream consumers can see the exact text that informed the
+calculation. When multiple rules apply to the same zoning parameter, the
+service keeps the most restrictive value – lower plot ratios, tighter site
+coverage fractions, and larger front setbacks take precedence over any
+defaults that may also be present in the dataset. The override values are
+captured before defaults are merged, ensuring that seed data cannot relax an
+ingested requirement if both are present for the same zone.
