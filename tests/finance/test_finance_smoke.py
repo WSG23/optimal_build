@@ -20,6 +20,10 @@ from app.utils import metrics
 from backend.scripts.seed_finance_demo import seed_finance_demo
 
 
+REVIEWER_HEADERS = {"X-Role": "reviewer"}
+VIEWER_HEADERS = {"X-Role": "viewer"}
+
+
 def _wrap_model_validator(func):
     def _wrapper(*args, **kwargs):
         if args:
@@ -174,7 +178,11 @@ async def test_finance_feasibility_and_export_metrics(async_session_factory, app
     baseline_feasibility = metrics.counter_value(metrics.FINANCE_FEASIBILITY_TOTAL, {})
     baseline_export = metrics.counter_value(metrics.FINANCE_EXPORT_TOTAL, {})
 
-    response = await app_client.post("/api/v1/finance/feasibility", json=scenario_payload)
+    response = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=scenario_payload,
+        headers=REVIEWER_HEADERS,
+    )
     assert response.status_code == 200
     body = response.json()
 
@@ -215,6 +223,7 @@ async def test_finance_feasibility_and_export_metrics(async_session_factory, app
     export_response = await app_client.get(
         "/api/v1/finance/export",
         params={"scenario_id": scenario_id},
+        headers=VIEWER_HEADERS,
     )
     assert export_response.status_code == 200
     assert export_response.headers["content-type"].startswith("text/csv")

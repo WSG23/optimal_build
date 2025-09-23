@@ -2,8 +2,9 @@
 
 The finance service exposes endpoints used by the feasibility workflow to
 persist model runs and to provide downloadable summaries for finance teams.
-Requests are authenticated with the same mechanisms as the rest of the
-`/api/v1` namespace.
+Include an `X-Role: reviewer` header when submitting scenarios and an
+`X-Role: viewer` header when downloading exports so that the backend can
+enforce reviewer-only mutations while allowing read access to viewers.
 
 ## Run a finance scenario
 

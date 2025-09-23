@@ -11,6 +11,7 @@ from fastapi.responses import Response
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.api.v1 import TAGS_METADATA, api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
@@ -102,7 +103,7 @@ async def health_metrics() -> Response:
 
 
 @app.get(f"{settings.API_V1_STR}/test")
-async def test_endpoint() -> Dict[str, str]:
+async def test_endpoint(_: str = Depends(require_viewer)) -> Dict[str, str]:
     """Test endpoint."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="test").inc()
@@ -110,7 +111,10 @@ async def test_endpoint() -> Dict[str, str]:
 
 
 @app.get(f"{settings.API_V1_STR}/rules/count")
-async def rules_count(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
+async def rules_count(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
+) -> Dict[str, Any]:
     """Get count of rules in database."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="rules_count").inc()
@@ -153,7 +157,10 @@ async def rules_count(session: AsyncSession = Depends(get_session)) -> Dict[str,
 
 
 @app.get(f"{settings.API_V1_STR}/database/status")
-async def database_status(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
+async def database_status(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
+) -> Dict[str, Any]:
     """Get database status and table information."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="database_status").inc()

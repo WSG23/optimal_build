@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.finance import FinProject, FinResult, FinScenario
 from app.models.rkp import RefCostIndex
@@ -196,6 +197,7 @@ def _iter_results_csv(
 async def run_finance_feasibility(
     payload: FinanceFeasibilityRequest,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_reviewer),
 ) -> FinanceFeasibilityResponse:
     """Execute the full finance pipeline for the submitted scenario.
 
@@ -431,6 +433,7 @@ async def run_finance_feasibility(
 async def export_finance_scenario(
     scenario_id: int = Query(...),
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> StreamingResponse:
     """Stream a CSV export describing the requested finance scenario.
 

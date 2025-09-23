@@ -30,6 +30,8 @@ DEFAULT_REQUEST_OVERRIDES = {
     "efficiency_ratio": 0.82,
 }
 
+VIEWER_HEADERS = {"X-Role": "viewer"}
+
 
 def _extract_histogram_buckets(
     metrics_text: str, metric_name: str
@@ -99,7 +101,11 @@ async def test_buildable_latency_p90(
     }
 
     for _ in range(5):
-        response = await app_client.post("/api/v1/screen/buildable", json=payload)
+        response = await app_client.post(
+            "/api/v1/screen/buildable",
+            json=payload,
+            headers=VIEWER_HEADERS,
+        )
         assert response.status_code == 200
 
     metrics_response = await app_client.get("/health/metrics")

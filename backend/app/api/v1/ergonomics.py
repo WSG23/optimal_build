@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefErgonomics
 
@@ -20,6 +21,7 @@ async def list_ergonomics(
     metric_key: str | None = Query(default=None),
     population: str | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> List[Dict[str, Any]]:
     stmt = select(RefErgonomics)
     if metric_key:

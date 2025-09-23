@@ -27,6 +27,8 @@ DEFAULT_REQUEST_OVERRIDES = {
     "efficiency_ratio": 0.82,
 }
 
+VIEWER_HEADERS = {"X-Role": "viewer"}
+
 
 def _metric_value(metrics_text: str, metric_name: str) -> float:
     """Extract a Prometheus sample value from text output."""
@@ -75,7 +77,11 @@ async def test_buildable_metrics_increment(
         baseline_metrics.text, "pwp_buildable_duration_ms_count"
     )
 
-    response = await app_client.post("/api/v1/screen/buildable", json=payload)
+    response = await app_client.post(
+        "/api/v1/screen/buildable",
+        json=payload,
+        headers=VIEWER_HEADERS,
+    )
     assert response.status_code == 200
 
     assert metrics.counter_value(metrics.PWP_BUILDABLE_TOTAL, {}) == pytest.approx(
@@ -92,3 +98,20 @@ async def test_buildable_metrics_increment(
 
     assert total_after == pytest.approx(total_before + 1.0)
     assert duration_count_after == pytest.approx(duration_count_before + 1.0)
+
+
+@pytest.mark.asyncio
+async def test_buildable_rejects_invalid_role(app_client: AsyncClient) -> None:
+    payload = {
+        "address": "403 Role St",
+        "defaults": dict(DEFAULT_REQUEST_DEFAULTS),
+        **DEFAULT_REQUEST_OVERRIDES,
+    }
+
+    response = await app_client.post(
+        "/api/v1/screen/buildable",
+        json=payload,
+        headers={"X-Role": "guest"},
+    )
+
+    assert response.status_code == 403

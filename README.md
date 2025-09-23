@@ -99,6 +99,16 @@ payload for debugging. Telemetry events (`feasibility.compute`) log anonymised
 address previews plus success/failure status and duration; raw addresses are not
 persisted client-side.
 
+## API roles and headers
+
+All `/api/v1` endpoints require an `X-Role` header so the backend can enforce
+role-based access control. Read-only operations such as `POST
+/api/v1/screen/buildable`, `GET /api/v1/finance/export`, or the reference data
+lookups accept `viewer`, `reviewer`, or `admin`. Endpoints that persist or
+mutate data – for example `/api/v1/finance/feasibility`, `/api/v1/import`, and
+the overlay decision routes – enforce reviewer/admin roles. Omit the header or
+send an invalid role and the API responds with `403 Forbidden`.
+
 ## Running the AEC sample flow
 
 The repository ships with a lightweight CLI (`backend/scripts/aec_flow.py`) and Make
@@ -163,6 +173,7 @@ demo data:
 ```bash
 curl -X POST http://localhost:8000/api/v1/finance/feasibility \
   -H "Content-Type: application/json" \
+  -H "X-Role: reviewer" \
   -d '{
     "project_id": 401,
     "project_name": "Finance Demo Development",
@@ -207,6 +218,7 @@ to retrieve a CSV summary of the persisted metrics:
 
 ```bash
 curl -L -o finance_scenario.csv \
+  -H "X-Role: viewer" \
   "http://localhost:8000/api/v1/finance/export?scenario_id=<SCENARIO_ID>"
 ```
 

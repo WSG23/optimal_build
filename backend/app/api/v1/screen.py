@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
 from app.schemas.buildable import BuildableRequest, BuildableResponse
@@ -38,6 +39,7 @@ class ZoneResolution:
 async def screen_buildable(
     payload: BuildableRequest,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> BuildableResponse:
     start_time = perf_counter()
     metrics.PWP_BUILDABLE_TOTAL.inc()

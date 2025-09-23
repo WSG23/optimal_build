@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.core.metrics import RoiSnapshot, compute_project_roi
 
@@ -37,6 +38,7 @@ class RoiMetricsResponse(BaseModel):
 async def get_project_roi(
     project_id: int,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> dict[str, object]:
     """Return the ROI snapshot for the requested project."""
 

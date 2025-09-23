@@ -30,6 +30,10 @@ from app.schemas.finance import DscrInputs
 from backend.scripts.seed_finance_demo import seed_finance_demo
 
 
+REVIEWER_HEADERS = {"X-Role": "reviewer"}
+VIEWER_HEADERS = {"X-Role": "viewer"}
+
+
 def _wrap_model_validator(func):
     def _wrapper(*args, **kwargs):
         if args:
@@ -159,7 +163,11 @@ async def test_finance_feasibility_and_export_endpoints(
         },
     }
 
-    response = await app_client.post("/api/v1/finance/feasibility", json=scenario_payload)
+    response = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=scenario_payload,
+        headers=REVIEWER_HEADERS,
+    )
     assert response.status_code == 200
     body = response.json()
 
@@ -213,6 +221,7 @@ async def test_finance_feasibility_and_export_endpoints(
     export_response = await app_client.get(
         "/api/v1/finance/export",
         params={"scenario_id": scenario_id},
+        headers=VIEWER_HEADERS,
     )
     assert export_response.status_code == 200
     assert export_response.headers["content-type"].startswith("text/csv")
@@ -240,3 +249,50 @@ async def test_finance_feasibility_and_export_endpoints(
             assert dscr_value == ""
         else:
             assert dscr_value == expected["dscr"]
+
+
+@pytest.mark.asyncio
+async def test_finance_feasibility_requires_reviewer_role(
+    app_client: AsyncClient,
+) -> None:
+    payload = {
+        "project_id": 123,
+        "project_name": "RBAC Test",
+        "fin_project_id": None,
+        "scenario": {
+            "name": "Role Validation",
+            "description": "",
+            "currency": "SGD",
+            "is_primary": False,
+            "cost_escalation": {
+                "amount": "1000.00",
+                "base_period": "2024-Q1",
+                "series_name": "construction_all_in",
+                "jurisdiction": "SG",
+            },
+            "cash_flow": {
+                "discount_rate": "0.08",
+                "cash_flows": ["-1000", "500"],
+            },
+        },
+    }
+
+    missing_header = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=payload,
+    )
+    assert missing_header.status_code == 403
+
+    viewer_header = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=payload,
+        headers=VIEWER_HEADERS,
+    )
+    assert viewer_header.status_code == 403
+
+    export_forbidden = await app_client.get(
+        "/api/v1/finance/export",
+        params={"scenario_id": 1},
+        headers={"X-Role": "guest"},
+    )
+    assert export_forbidden.status_code == 403
