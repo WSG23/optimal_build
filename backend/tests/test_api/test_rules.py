@@ -95,6 +95,24 @@ async def _seed_reference_data(async_session_factory) -> None:
         )
         session.add(pending_rule)
 
+        approved_without_provenance = RefRule(
+            source_id=source.id,
+            document_id=document.id,
+            jurisdiction="SG",
+            authority="URA",
+            topic="zoning",
+            clause_ref="4.2.3",
+            parameter_key="parking.bicycle_spaces_per_unit",
+            operator=">=",
+            value="1",
+            unit="spaces_per_unit",
+            applicability={"zone_code": "R2"},
+            review_status="approved",
+            notes="Provide at least one bicycle space per unit.",
+            source_provenance=None,
+        )
+        session.add(approved_without_provenance)
+
         await session.commit()
 
 
@@ -118,8 +136,12 @@ async def test_rules_endpoint_includes_overlays_and_hints(client: AsyncClient) -
     response = await client.get("/api/v1/rules")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["count"] == 1
-    item = payload["items"][0]
+    assert payload["count"] >= 1
+    item = next(
+        rule
+        for rule in payload["items"]
+        if rule["parameter_key"] == "parking.min_car_spaces_per_unit"
+    )
     overlays = set(item["overlays"])
     assert {"heritage", "daylight"} <= overlays
     assert any("parking" in hint.lower() for hint in item["advisory_hints"])
@@ -169,6 +191,55 @@ async def test_rules_endpoint_filters_by_query_params(client: AsyncClient) -> No
     )
     assert empty_response.status_code == 200
     assert empty_response.json()["count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_rules_endpoint_supports_review_status_filter(client: AsyncClient) -> None:
+    default_response = await client.get("/api/v1/rules")
+    assert default_response.status_code == 200
+    default_payload = default_response.json()
+    assert default_payload["count"] >= 1
+    assert {item["review_status"] for item in default_payload["items"]} == {"approved"}
+
+    response = await client.get(
+        "/api/v1/rules",
+        params={"review_status": "needs_review"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["count"] >= 1
+    statuses = {item["review_status"] for item in payload["items"]}
+    assert statuses == {"needs_review"}
+    assert any(
+        item["parameter_key"] == "parking.max_ramp_slope_ratio" for item in payload["items"]
+    )
+
+    multi_status_response = await client.get(
+        "/api/v1/rules",
+        params={"review_status": "approved,needs_review"},
+    )
+    assert multi_status_response.status_code == 200
+    multi_payload = multi_status_response.json()
+    multi_statuses = {item["review_status"] for item in multi_payload["items"]}
+    assert multi_statuses >= {"needs_review", "approved"}
+
+
+@pytest.mark.asyncio
+async def test_rules_endpoint_populates_provenance_for_approved_rules(
+    client: AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/rules")
+    assert response.status_code == 200
+    payload = response.json()
+    target = next(
+        item
+        for item in payload["items"]
+        if item["parameter_key"] == "parking.bicycle_spaces_per_unit"
+    )
+    provenance = target["source_provenance"]
+    assert provenance["document_id"] == target["document_id"]
+    assert "clause_id" in provenance
+    assert provenance["pages"] == []
 
 
 @pytest.mark.asyncio
