@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict, Iterable, List, Literal, Optional
+from typing import Dict, Iterable, List, Literal, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -56,6 +56,17 @@ def _serialise_rule(
     overlays = list(dict.fromkeys(filter(None, overlays)))
     hints = list(dict.fromkeys(filter(None, hints)))
 
+    provenance: Dict[str, object]
+    if isinstance(rule.source_provenance, dict):
+        provenance = dict(rule.source_provenance)
+    else:
+        provenance = {}
+
+    if rule.review_status == "approved":
+        provenance.setdefault("document_id", rule.document_id)
+        provenance.setdefault("clause_id", None)
+        provenance.setdefault("pages", [])
+
     return {
         "id": rule.id,
         "source_id": rule.source_id,
@@ -71,7 +82,7 @@ def _serialise_rule(
         "review_status": rule.review_status,
         "review_notes": rule.review_notes,
         "is_published": rule.is_published,
-        "source_provenance": rule.source_provenance,
+        "source_provenance": provenance,
         "overlays": overlays,
         "advisory_hints": hints,
         "normalized": [match.as_dict() for match in normalized],
@@ -99,7 +110,7 @@ async def list_rules(
     parameter_key: Optional[str] = Query(None),
     authority: Optional[str] = Query(None),
     topic: Optional[str] = Query(None),
-    review_status: Optional[str] = Query(None),
+    review_status: Optional[Union[str, List[str]]] = Query(None),
     session: AsyncSession = Depends(get_session),
 ) -> Dict[str, object]:
     stmt = select(RefRule)
@@ -118,16 +129,20 @@ async def list_rules(
         has_filters = True
 
     if review_status:
-        stmt = stmt.where(RefRule.review_status == review_status)
+        if isinstance(review_status, str):
+            raw_statuses = review_status.split(",")
+        else:
+            raw_statuses = review_status
+        statuses = [status.strip() for status in raw_statuses if status and status.strip()]
+        if len(statuses) == 1:
+            stmt = stmt.where(RefRule.review_status == statuses[0])
+        elif statuses:
+            stmt = stmt.where(RefRule.review_status.in_(statuses))
     else:
         stmt = stmt.where(RefRule.review_status == "approved")
 
     result = await session.execute(stmt)
     rules = result.scalars().all()
-    if not rules and review_status is None and not has_filters:
-        fallback_stmt = select(RefRule).where(RefRule.review_status != "rejected")
-        result = await session.execute(fallback_stmt)
-        rules = result.scalars().all()
     zone_codes = [_extract_zone_code(rule) for rule in rules]
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
     normalizer = RuleNormalizer()
