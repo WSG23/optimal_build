@@ -8,6 +8,7 @@ from . import (
     ergonomics,
     export,
     feasibility,
+    finance,
     imports,
     overlay,
     products,
@@ -34,5 +35,6 @@ api_router.include_router(roi.router)
 api_router.include_router(imports.router)
 api_router.include_router(audit.router)
 api_router.include_router(feasibility.router)
+api_router.include_router(finance.router)
 
 __all__ = ["api_router"]
