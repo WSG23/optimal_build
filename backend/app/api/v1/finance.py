@@ -225,6 +225,11 @@ async def run_finance_feasibility(
             fin_project = await session.get(FinProject, payload.fin_project_id)
             if fin_project is None:
                 raise HTTPException(status_code=404, detail="Finance project not found")
+            if fin_project.project_id != payload.project_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Finance project does not belong to the requested project",
+                )
         else:
             stmt = (
                 select(FinProject)
