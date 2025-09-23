@@ -5,6 +5,20 @@
 * Docker with the Compose plugin (or the legacy `docker-compose` binary) for targets that manage services such as `make dev-start`, `make init-db`, `make reset`, `make build`, and `make logs`. The Makefile auto-detects whichever CLI is available and surfaces a descriptive error when neither is present.
 * A local Python interpreter with the backend dependencies installed (e.g., `pip install -r backend/requirements-dev.txt`) so that Python fallbacks like `make seed-data` and `make db.upgrade` can talk to the database when Docker is unavailable.
 
+## Bootstrap
+
+Before running any `make` targets, install the backend runtime dependencies so Alembic and other CLI entry points are available locally:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+If you plan to run linting or tests directly, follow up with the development extras:
+
+```bash
+pip install -r backend/requirements-dev.txt
+```
+
 ## Frontend environment configuration
 
 The frontend reads API locations from the `VITE_API_BASE_URL` variable that is loaded by Vite at build time. The value is resolved with `new URL(path, base)` so that links behave correctly whether the backend is exposed on the same origin, via a sub-path proxy, or through a separate host. For local development we provide a default of `/` in `frontend/.env` (copy `frontend/.env.example`) so the app talks to whichever host serves the frontend.
