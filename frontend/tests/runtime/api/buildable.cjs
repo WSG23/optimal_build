@@ -1,16 +1,22 @@
 const { snakeCase, camelCase, joinUrl } = require('../shared.cjs')
 
-async function fetchBuildable(input, options = {}) {
-  const baseUrl = options.baseUrl ?? '/api/v1/'
+async function postBuildable(baseUrl, input, options = {}) {
   const response = await fetch(joinUrl(baseUrl, 'buildable'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(snakeCase(input)),
+    signal: options.signal,
   })
   if (!response.ok) {
     throw new Error(`Buildable request failed with status ${response.status}`)
   }
-  const payload = await response.json()
+  return response.json()
+}
+
+async function fetchBuildable(input, options = {}) {
+  const transport = options.transport ?? postBuildable
+  const baseUrl = options.baseUrl ?? '/api/v1/'
+  const payload = await transport(baseUrl, input, { signal: options.signal })
   const data = camelCase(payload)
   return {
     inputKind: data.inputKind,
@@ -31,4 +37,4 @@ async function fetchBuildable(input, options = {}) {
   }
 }
 
-module.exports = { fetchBuildable }
+module.exports = { fetchBuildable, postBuildable }
