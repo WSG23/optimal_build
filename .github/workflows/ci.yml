@@ -328,8 +328,11 @@ PY
           restore-keys: |
             playwright-${{ runner.os }}-
 
-      - name: Install Playwright browsers
-        run: pnpm -C frontend exec playwright install --with-deps
+      - name: Sync Playwright browsers
+        run: |
+          mkdir -p "$HOME/.cache/ms-playwright"
+          rsync -a --delete .playwright-browsers/ "$HOME/.cache/ms-playwright/"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> "$GITHUB_ENV"
 
       - name: Run frontend end-to-end tests
         run: pnpm -C frontend test:e2e
