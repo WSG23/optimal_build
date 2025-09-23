@@ -103,87 +103,9 @@ jobs:
             exit 1
           fi
 
-      - name: Run database migrations
+      - name: Run backend smoke suite
         run: |
-          cd backend
-          alembic upgrade head
-
-      - name: Seed reference data
-        run: |
-          cd backend
-          python -m scripts.seed_screening
-          python -m scripts.seed_finance_demo
-          python -m scripts.seed_nonreg
-
-      - name: Prepare artifact directory
-        run: mkdir -p "$CI_ARTIFACTS"
-
-      - name: RKP ingestion smoke
-        env:
-          STORAGE_DIR: ${{ runner.temp }}/rkp-storage
-        run: |
-          set -euo pipefail
-          mkdir -p "$STORAGE_DIR" "$CI_ARTIFACTS"
-          python -m backend.flows.watch_fetch --once --offline --storage-path "$STORAGE_DIR" --summary-path "$CI_ARTIFACTS/watch_fetch_summary.json"
-          python -m backend.flows.parse_segment --once --storage-path "$STORAGE_DIR" --summary-path "$CI_ARTIFACTS/parse_segment_summary.json"
-
-      - name: Backend API smoke
-        env:
-          STORAGE_DIR: ${{ runner.temp }}/rkp-storage
-        run: |
-          set -euo pipefail
-          cd backend
-          uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-          UVICORN_PID=$!
-          trap "kill $UVICORN_PID; wait $UVICORN_PID || true" EXIT
-          api_ready=false
-          for attempt in $(seq 1 40); do
-            if curl -sSf http://127.0.0.1:8000/health > /dev/null; then
-              api_ready=true
-              break
-            fi
-            sleep 2
-          done
-          if [ "$api_ready" != "true" ]; then
-            echo "Backend API failed health check" >&2
-            exit 1
-          fi
-          python - <<'PY'
-import json
-import os
-import sys
-import time
-
-import httpx
-
-payload = {
-    "address": "123 Example Ave",
-    "typ_floor_to_floor_m": 3.4,
-    "efficiency_ratio": 0.8,
-}
-for attempt in range(30):
-    try:
-        response = httpx.post("http://127.0.0.1:8000/api/v1/screen/buildable", json=payload, timeout=30.0)
-        response.raise_for_status()
-        data = response.json()
-        break
-    except Exception:
-        time.sleep(1.0)
-else:
-    raise SystemExit("Failed to contact buildable screening endpoint.")
-
-metrics = data.get("metrics") or {}
-if "zone_code" not in data:
-    raise SystemExit("Buildable smoke failed: missing zone_code.")
-if "gfa_cap_m2" not in metrics:
-    raise SystemExit("Buildable smoke failed: missing metrics.gfa_cap_m2.")
-
-artifacts_dir = os.path.join(os.environ["CI_ARTIFACTS"])
-os.makedirs(artifacts_dir, exist_ok=True)
-with open(os.path.join(artifacts_dir, "buildable_response.json"), "w", encoding="utf-8") as handle:
-    json.dump(data, handle, indent=2, sort_keys=True)
-PY
-          curl -sSf http://127.0.0.1:8000/openapi.json > "$CI_ARTIFACTS/openapi.json"
+          python -m backend.scripts.run_smokes --artifacts "$CI_ARTIFACTS"
 
       - name: Run backend tests
         run: |
