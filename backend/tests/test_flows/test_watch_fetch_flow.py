@@ -12,9 +12,10 @@ pytest.importorskip("sqlalchemy")
 from sqlalchemy import select
 
 from app.models.rkp import RefDocument, RefSource
-from app.services.reference_sources import HTTPResponse, ReferenceSourceFetcher
+from app.services.reference_sources import FetchedDocument, HTTPResponse, ReferenceSourceFetcher
 from app.services.reference_storage import ReferenceStorage
 from flows.watch_fetch import watch_reference_sources
+from scripts.seed_screening import seed_screening_sample_data
 
 
 class FakeHTTPClient:
@@ -151,3 +152,78 @@ async def test_watch_fetch_skips_when_not_modified(async_session_factory, tmp_pa
             await session.execute(select(RefDocument).where(RefDocument.source_id == updated.source_id))
         ).scalars().all()
         assert len(documents) == 1
+
+
+class _StubFetcher:
+    def __init__(self, payloads: Mapping[str, tuple[bytes, str]]) -> None:
+        self.payloads = dict(payloads)
+        self.fetch_calls: list[int] = []
+
+    async def fetch(self, source: RefSource, existing: RefDocument | None = None) -> FetchedDocument | None:
+        self.fetch_calls.append(source.id)
+        payload = self.payloads.get(source.authority)
+        if not payload:
+            return None
+        content, content_type = payload
+        authority_key = source.authority.lower()
+        return FetchedDocument(
+            content=content,
+            etag=f"{authority_key}-etag",
+            last_modified=f"{authority_key}-last-modified",
+            content_type=content_type,
+        )
+
+
+@pytest.mark.asyncio
+async def test_watch_fetch_persists_seeded_html_and_pdf_sources(async_session_factory, tmp_path) -> None:
+    storage = ReferenceStorage(base_path=tmp_path, bucket="")
+
+    async with async_session_factory() as session:
+        await seed_screening_sample_data(session, commit=True)
+
+    payloads: Mapping[str, tuple[bytes, str]] = {
+        "URA": (b"<html><body>URA Master Plan</body></html>", "text/html"),
+        "BCA": (b"%PDF-1.4\nBCA Regulations", "application/pdf"),
+    }
+    fetcher = _StubFetcher(payloads)
+
+    results = await watch_reference_sources(async_session_factory, fetcher=fetcher, storage=storage)
+    assert len(results) >= len(payloads)
+    results_by_source = {item["source_id"]: item for item in results}
+
+    async with async_session_factory() as session:
+        ura_source = (
+            await session.execute(
+                select(RefSource).where(RefSource.authority == "URA")
+            )
+        ).scalars().first()
+        bca_source = (
+            await session.execute(
+                select(RefSource).where(RefSource.authority == "BCA")
+            )
+        ).scalars().first()
+
+        assert ura_source is not None
+        assert bca_source is not None
+
+        assert ura_source.id in results_by_source
+        assert bca_source.id in results_by_source
+
+        ura_document = await session.get(RefDocument, results_by_source[ura_source.id]["document_id"])
+        bca_document = await session.get(RefDocument, results_by_source[bca_source.id]["document_id"])
+
+        assert ura_document is not None
+        assert bca_document is not None
+
+        assert ura_document.storage_path.endswith(".html")
+        assert bca_document.storage_path.endswith(".pdf")
+
+        ura_content = await storage.read_document(ura_document.storage_path)
+        bca_content = await storage.read_document(bca_document.storage_path)
+        assert ura_content == payloads["URA"][0]
+        assert bca_content == payloads["BCA"][0]
+
+        all_documents = (await session.execute(select(RefDocument))).scalars().all()
+        for document in all_documents:
+            document.suspected_update = False
+        await session.commit()

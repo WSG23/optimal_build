@@ -72,14 +72,21 @@ class ReferenceSourceFetcher:
     ) -> Optional[FetchedDocument]:
         """Fetch ``source`` if it has been updated since ``existing``."""
 
+        fetch_kind = (getattr(source, "fetch_kind", None) or "pdf").lower()
         conditional_headers = self._conditional_headers(existing)
         head_response: Optional[HTTPResponse] = None
-        if source.fetch_kind == "pdf":
-            head_response = await self._safe_head(source.landing_url, headers=conditional_headers)
+        if fetch_kind in {"pdf", "html", "sitemap"}:
+            head_response = await self._safe_head(
+                source.landing_url,
+                headers=conditional_headers or None,
+            )
             if head_response and self._is_not_modified(head_response, existing):
                 return None
-        else:
-            head_response = await self._safe_head(source.landing_url, headers=conditional_headers)
+        elif conditional_headers:
+            head_response = await self._safe_head(
+                source.landing_url,
+                headers=conditional_headers or None,
+            )
             if head_response and head_response.status_code == 304:
                 return None
 

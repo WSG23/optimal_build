@@ -14,6 +14,9 @@ from app.services.reference_sources import FetchedDocument, ReferenceSourceFetch
 from app.services.reference_storage import ReferenceStorage
 
 
+SUPPORTED_FETCH_KINDS = {"pdf", "html", "sitemap"}
+
+
 @flow(name="watch-reference-sources")
 async def watch_reference_sources(
     session_factory: "async_sessionmaker[AsyncSession]",
@@ -32,13 +35,14 @@ async def watch_reference_sources(
             await session.execute(
                 select(RefSource)
                 .where(RefSource.is_active.is_(True))
-                .where(RefSource.update_freq_hint.is_(None))
-                .where(RefSource.fetch_kind == "pdf")
                 .order_by(RefSource.id)
             )
         ).scalars().all()
 
         for source in sources:
+            fetch_kind = (source.fetch_kind or "pdf").lower()
+            if fetch_kind not in SUPPORTED_FETCH_KINDS:
+                continue
             latest = await _latest_document(session, source.id)
             if latest and latest.suspected_update:
                 # Skip sources that already have an unprocessed update to avoid
@@ -57,7 +61,7 @@ async def watch_reference_sources(
                 await session.flush()
                 continue
 
-            suffix = _determine_suffix(source.fetch_kind, fetched)
+            suffix = _determine_suffix(fetch_kind, fetched)
             location = await storage.write_document(
                 source_id=source.id,
                 payload=fetched.content,
