@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const frontendDir = path.resolve(repoRoot, 'frontend');
 const defaultCache = path.join(repoRoot, '.playwright-browsers');
+const homeCache = path.join(os.homedir(), '.cache', 'ms-playwright');
 const env = { ...process.env };
 const backendDir = path.resolve(repoRoot, 'backend');
 const sqlitePath = path.resolve(repoRoot, '.playwright-e2e.db');
@@ -25,23 +27,63 @@ if (env.PYTHONPATH && env.PYTHONPATH.trim() !== '') {
 }
 env.PYTHONPATH = pythonPathParts.filter(Boolean).join(path.delimiter);
 
+function hasBrowserMetadata(directory) {
+  return fs.existsSync(path.join(directory, 'browsers.json'));
+}
+
 if (!env.PLAYWRIGHT_BROWSERS_PATH || env.PLAYWRIGHT_BROWSERS_PATH.trim() === '') {
-  env.PLAYWRIGHT_BROWSERS_PATH = defaultCache;
+  if (hasBrowserMetadata(defaultCache)) {
+    env.PLAYWRIGHT_BROWSERS_PATH = defaultCache;
+  } else if (hasBrowserMetadata(homeCache)) {
+    env.PLAYWRIGHT_BROWSERS_PATH = homeCache;
+  } else {
+    env.PLAYWRIGHT_BROWSERS_PATH = defaultCache;
+  }
 }
 
 const cachePath = env.PLAYWRIGHT_BROWSERS_PATH;
 
 const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 
-let shouldSkipInstall = false;
-if (env.PLAYWRIGHT_SKIP_BROWSER_INSTALL && env.PLAYWRIGHT_SKIP_BROWSER_INSTALL.trim() !== '') {
-  const normalized = env.PLAYWRIGHT_SKIP_BROWSER_INSTALL.trim().toLowerCase();
-  shouldSkipInstall = ['1', 'true', 'yes'].includes(normalized);
+function parseBoolean(value, defaultValue = false) {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === '') {
+    return defaultValue;
+  }
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+  if (['0', 'false', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+  return defaultValue;
 }
+
+const shouldSkipInstall = parseBoolean(env.PLAYWRIGHT_SKIP_BROWSER_INSTALL);
+let installWithDeps = parseBoolean(env.PLAYWRIGHT_INSTALL_WITH_DEPS, true);
 
 if (!shouldSkipInstall) {
   fs.mkdirSync(cachePath, { recursive: true });
-  const installArgs = ['exec', 'playwright', 'install', '--with-deps'];
+
+  if (installWithDeps && process.platform === 'linux') {
+    const aptProbe = spawnSync('apt-get', ['--version'], {
+      stdio: 'ignore',
+    });
+    if (aptProbe.status !== 0) {
+      console.warn('apt-get not available; skipping Playwright --with-deps install.');
+      installWithDeps = false;
+    }
+  } else if (installWithDeps && process.platform !== 'linux') {
+    installWithDeps = false;
+  }
+
+  const installArgs = ['exec', 'playwright', 'install'];
+  if (installWithDeps) {
+    installArgs.push('--with-deps');
+  }
   const installResult = spawnSync(pnpmCommand, installArgs, {
     stdio: 'inherit',
     cwd: frontendDir,
@@ -61,8 +103,8 @@ if (!shouldSkipInstall) {
 if (!fs.existsSync(cachePath)) {
   console.error(`Playwright browser cache not found at ${cachePath}.`);
   console.error('Populate the directory by running the install command on a machine with internet access:');
-  console.error('  pnpm -C frontend exec playwright install --with-deps');
-  console.error('Then copy the contents of ~/.cache/ms-playwright into .playwright-browsers/.');
+  console.error('  PLAYWRIGHT_BROWSERS_PATH="$(pwd)/.playwright-browsers" pnpm -C frontend exec playwright install');
+  console.error('Then copy the contents of that directory (or ~/.cache/ms-playwright) into the target environment.');
   process.exit(1);
 }
 
