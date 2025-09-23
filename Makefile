@@ -1,4 +1,4 @@
-.PHONY: help install format lint test test-cov smoke-buildable clean build deploy init-db seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products
+.PHONY: help install format lint test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -12,6 +12,19 @@ BACKEND_CMD ?= uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 FRONTEND_CMD ?= npm run dev
 ADMIN_CMD ?= npm run dev
 INCLUDE_ADMIN ?= 1
+
+DOCKER_COMPOSE ?= $(shell \
+if command -v docker >/dev/null 2>&1; then \
+if docker compose version >/dev/null 2>&1; then \
+printf '%s' 'docker compose'; \
+exit 0; \
+fi; \
+fi; \
+if command -v docker-compose >/dev/null 2>&1; then \
+printf '%s' 'docker-compose'; \
+exit 0; \
+fi; \
+)
 
 AEC_SAMPLE ?= tests/samples/sample_floorplan.json
 AEC_PROJECT_ID ?= 101
@@ -72,30 +85,63 @@ clean: ## Clean build artifacts
 	cd frontend && rm -rf dist node_modules/.cache
 
 build: ## Build production images
-	docker-compose build
+        @if [ -n "$(DOCKER_COMPOSE)" ]; then \
+                $(DOCKER_COMPOSE) build; \
+        else \
+                echo "Docker Compose is required to build container images."; \
+                exit 1; \
+        fi
 
 init-db: ## Apply Alembic migrations
-	docker-compose exec backend alembic upgrade head
+        @if [ -n "$(DOCKER_COMPOSE)" ]; then \
+                $(DOCKER_COMPOSE) exec backend python -m backend.migrations upgrade head; \
+        else \
+                $(MAKE) db.upgrade; \
+        fi
+
+db.upgrade: ## Apply Alembic migrations in the current Python environment
+        python -m backend.migrations upgrade head
 
 seed-data: ## Seed screening data and finance demo scenarios
-	docker-compose exec backend python -m scripts.seed_screening
-	docker-compose exec backend python -m scripts.seed_finance_demo
+        @if [ -n "$(DOCKER_COMPOSE)" ]; then \
+                $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_screening; \
+                $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_finance_demo; \
+        else \
+                python -m backend.scripts.seed_screening; \
+                python -m backend.scripts.seed_finance_demo; \
+        fi
 
 logs: ## Show application logs
-	docker-compose logs -f backend frontend
+        @if [ -n "$(DOCKER_COMPOSE)" ]; then \
+                $(DOCKER_COMPOSE) logs -f backend frontend; \
+        else \
+                echo "Docker Compose is not available; skipping container logs."; \
+        fi
 
 down: ## Stop all services
-	docker-compose down
+        @if [ -n "$(DOCKER_COMPOSE)" ]; then \
+                $(DOCKER_COMPOSE) down; \
+        else \
+                echo "Docker Compose is not available; nothing to stop."; \
+        fi
 
 reset: ## Reset development environment
-	docker-compose down -v
-	docker-compose up -d
-	make init-db
-	make seed-data
+        @if [ -n "$(DOCKER_COMPOSE)" ]; then \
+                $(DOCKER_COMPOSE) down -v; \
+                $(DOCKER_COMPOSE) up -d; \
+        else \
+                echo "Docker Compose is not available; skipping container reset."; \
+        fi
+        $(MAKE) init-db
+        $(MAKE) seed-data
 
 dev-start: ## Start supporting services, the backend API, and frontends
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	@docker-compose up -d
+        @mkdir -p $(DEV_RUNTIME_DIR_ABS)
+        @if [ -n "$(DOCKER_COMPOSE)" ]; then \
+                $(DOCKER_COMPOSE) up -d; \
+        else \
+                echo "Docker Compose is not available; skipping container startup."; \
+        fi
 	@if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
 		echo "Backend API already running (PID $$(cat $(DEV_BACKEND_PID)))."; \
 	else \

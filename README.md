@@ -1,5 +1,16 @@
 # Optimal Build
 
+## Prerequisites
+
+Most make targets expect Docker Compose to be available. Install the Docker CLI
+with the Compose plugin (`docker compose`) or the standalone
+`docker-compose` binary. When Docker isn't present, the Makefile falls back to
+running the Alembic migrations and seed scripts directly via Python (for
+example, `python -m backend.migrations upgrade head` and
+`python -m backend.scripts.seed_screening`). Ensure a local Python 3.11+
+environment has the backend dependencies installed to use these in-process
+commands.
+
 ## Frontend environment configuration
 
 The frontend reads API locations from the `VITE_API_BASE_URL` variable that is loaded by Vite at build time. The value is resolved with `new URL(path, base)` so that links behave correctly whether the backend is exposed on the same origin, via a sub-path proxy, or through a separate host. For local development we provide a default of `/` in `frontend/.env` (copy `frontend/.env.example`) so the app talks to whichever host serves the frontend.
@@ -32,9 +43,10 @@ These values are consumed by `backend/app/core/config.py`. When only `REDIS_URL`
 ### Database migrations
 
 Apply the Alembic migrations before booting the API or background workers. The
-`init-db` make target runs `alembic upgrade head` inside the backend container,
-while local environments can execute `cd backend && alembic upgrade head` to
-create and update the schema.
+`make init-db` target runs `python -m backend.migrations upgrade head` inside the
+backend container when Docker Compose is available. Without Docker you can call
+`make db.upgrade` (or invoke `python -m backend.migrations upgrade head`
+directly) to create and update the schema from the host environment.
 
 The Postgres service defined in `docker-compose.yml` mounts
 [`scripts/init-db.sql`](scripts/init-db.sql) into
@@ -43,7 +55,7 @@ The Postgres service defined in `docker-compose.yml` mounts
 repository defaults) before provisioning the database and enabling the UUID
 helper extensions the application expects. When migrations introduce new
 extensions or other global prerequisites, update the SQL bootstrap script and
-run `alembic upgrade head` so the declarative schema and the on-disk database
+run `python -m backend.migrations upgrade head` so the declarative schema and the on-disk database
 stay aligned. Because the script only executes when the Postgres data directory
 is empty, run `docker compose down -v` (or remove the `postgres_data` volume)
 to rebuild the database after changing the bootstrap logic.
@@ -130,18 +142,22 @@ underlying heuristics and instrumentation assumptions are documented in
 ## Finance feasibility demo
 
 Run `make seed-data` after applying migrations to populate both the screening
-fixtures and a finance feasibility workspace. The make target now executes the
-finance demo seeder (`python -m scripts.seed_finance_demo`) inside the backend
-container, which creates:
+fixtures and a finance feasibility workspace. The target executes the screen and
+finance seeders inside the backend container when Docker is available and
+automatically falls back to the local Python entry points
+(`python -m backend.scripts.seed_screening` and
+`python -m backend.scripts.seed_finance_demo`) otherwise. The finance demo
+seeder creates:
 
 * a finance project linked to `project_id=401` named “Finance Demo Development”,
 * three scenarios (A/B/C) with escalated cost assumptions and cash-flow inputs,
 * cost line items and monthly cash-flow schedules for each scenario, and
 * persisted results mirroring the `/api/v1/finance/feasibility` response payload.
 
-To run the seeder outside Docker, execute `python scripts/seed_finance_demo.py`
-from the repository root. The CLI accepts `--project-id`, `--project-name`, and
-`--currency` options plus `--keep-existing` to retain previous demo rows.
+To run the seeder manually, execute
+`python -m backend.scripts.seed_finance_demo` from the repository root. The CLI
+accepts `--project-id`, `--project-name`, and `--currency` options plus
+`--keep-existing` to retain previous demo rows.
 
 After seeding, call the finance API with the scenario definition baked into the
 demo data:
