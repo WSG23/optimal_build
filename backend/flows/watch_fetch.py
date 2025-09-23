@@ -49,6 +49,8 @@ async def watch_reference_sources(
     fetcher = fetcher or ReferenceSourceFetcher()
     storage = storage or ReferenceStorage()
     results: List[Dict[str, Any]] = []
+    seen_hashes: set[tuple[int, str]] = set()
+    seen_document_ids: set[int] = set()
 
     async with session_factory() as session:
         sources = (
@@ -79,6 +81,8 @@ async def watch_reference_sources(
                 duplicate.http_last_modified = fetched.last_modified or duplicate.http_last_modified
                 duplicate.suspected_update = False
                 await session.flush()
+                seen_hashes.add((source.id, file_hash))
+                seen_document_ids.add(duplicate.id)
                 continue
 
             suffix = _determine_suffix(fetch_kind, fetched)
@@ -98,6 +102,11 @@ async def watch_reference_sources(
             )
             session.add(document)
             await session.flush()
+            document_identity = (source.id, document.file_hash)
+            if document_identity in seen_hashes or document.id in seen_document_ids:
+                continue
+            seen_hashes.add(document_identity)
+            seen_document_ids.add(document.id)
             results.append(
                 {
                     "document_id": document.id,
@@ -306,7 +315,13 @@ async def _summarise_ingestion(
         source_count = await session.scalar(select(func.count()).select_from(RefSource))
         summary["document_count"] = int(document_count or 0)
         summary["source_count"] = int(source_count or 0)
-    summary["inserted"] = len(summary["results"])
+    unique_document_ids = {
+        item.get("document_id")
+        for item in summary["results"]
+        if item.get("document_id") is not None
+    }
+    summary["inserted_unique"] = len(unique_document_ids)
+    summary["inserted"] = summary["inserted_unique"]
     return summary
 
 
