@@ -23,10 +23,10 @@ _MISSING_DEPS = [
 ]
 
 if "sqlalchemy" not in _MISSING_DEPS:
-    try:  # pragma: no cover - only exercised when the stub is present
+    try:  # pragma: no cover - ensures we use the real package
         import sqlalchemy as _sqlalchemy
     except ModuleNotFoundError:  # pragma: no cover - defensive
-        pass
+        _MISSING_DEPS.append("sqlalchemy")
     else:
         if getattr(_sqlalchemy, "root_missing_error", None) is not None:
             _MISSING_DEPS.append("sqlalchemy")
