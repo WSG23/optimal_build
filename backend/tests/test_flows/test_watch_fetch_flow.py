@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import collections.abc
 import hashlib
+import inspect
 from typing import Mapping
 
 import pytest
@@ -16,6 +18,17 @@ from app.services.reference_sources import FetchedDocument, HTTPResponse, Refere
 from app.services.reference_storage import ReferenceStorage
 from flows.watch_fetch import watch_reference_sources
 from scripts.seed_screening import seed_screening_sample_data
+
+
+def test_watch_fetch_flow_exposed_as_callable() -> None:
+    """The Prefect shim should preserve the original coroutine signature."""
+
+    assert isinstance(watch_reference_sources, collections.abc.Callable)
+    signature = inspect.signature(watch_reference_sources)
+    assert "session_factory" in signature.parameters
+    with_options = getattr(watch_reference_sources, "with_options", None)
+    assert callable(with_options)
+    assert with_options() is watch_reference_sources
 
 
 class FakeHTTPClient:
