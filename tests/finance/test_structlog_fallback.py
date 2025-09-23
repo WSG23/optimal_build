@@ -41,6 +41,12 @@ def test_seed_finance_demo_uses_structlog_fallback(
     logger = logging_module.get_logger("structlog-fallback")
     logger.info("structlog_stub_event", detail="ok")
 
+    caplog.clear()
+    with caplog.at_level(logging.WARNING):
+        logger.warning("structlog_stub_warning", detail="warn")
+
+    assert any("structlog_stub_warning" in record.getMessage() for record in caplog.records)
+
     project_root = Path(__file__).resolve().parents[2]
     script_path = project_root / "scripts" / "seed_finance_demo.py"
     spec = importlib.util.spec_from_file_location("tests.structlog_cli", script_path)

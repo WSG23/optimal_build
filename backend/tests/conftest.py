@@ -12,6 +12,11 @@ from typing import Any
 
 import pytest
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+if importlib.util.find_spec("structlog") is None and str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 _MISSING_DEPS = [
     name
     for name in ("fastapi", "pydantic", "sqlalchemy")
@@ -28,9 +33,6 @@ if "sqlalchemy" not in _MISSING_DEPS:
             _MISSING_DEPS.append("sqlalchemy")
 
 if _MISSING_DEPS:  # pragma: no cover - offline test fallback
-    _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-    if str(_PROJECT_ROOT) not in sys.path:
-        sys.path.insert(0, str(_PROJECT_ROOT))
     pytestmark = pytest.mark.skip(
         reason=f"Required dependencies missing: {', '.join(sorted(_MISSING_DEPS))}"
     )

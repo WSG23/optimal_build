@@ -16,6 +16,7 @@ from ._internal import (
 )
 
 __all__ = [
+    "BoundLogger",
     "configure",
     "get_logger",
     "make_filtering_bound_logger",
