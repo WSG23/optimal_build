@@ -16,10 +16,16 @@ depends_on = None
 def upgrade() -> None:
     """Apply the migration."""
 
-    op.add_column("ref_rules", sa.Column("review_notes", sa.Text(), nullable=True))
+    op.execute("""
+ALTER TABLE ref_rules
+ADD COLUMN IF NOT EXISTS review_notes TEXT
+""")
 
 
 def downgrade() -> None:
     """Revert the migration."""
 
-    op.drop_column("ref_rules", "review_notes")
+    op.execute("""
+ALTER TABLE ref_rules
+DROP COLUMN IF EXISTS review_notes
+""")
