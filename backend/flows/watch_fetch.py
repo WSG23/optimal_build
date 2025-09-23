@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import argparse
+import asyncio
 import hashlib
-from typing import Any, Dict, List, Optional
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from prefect import flow
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefDocument, RefSource
 from app.services.reference_sources import FetchedDocument, ReferenceSourceFetcher
 from app.services.reference_storage import ReferenceStorage
@@ -137,4 +143,191 @@ def _derive_version_label(fetched: FetchedDocument, file_hash: str) -> str:
     return file_hash[:12]
 
 
-__all__ = ["watch_reference_sources"]
+@dataclass(slots=True)
+class OfflineReferenceFixture:
+    """Sample payload returned by the offline reference fetcher."""
+
+    content: bytes
+    content_type: str
+    etag_suffix: str
+
+
+class OfflineReferenceFetcher:
+    """Serve deterministic reference payloads without performing HTTP requests."""
+
+    def __init__(
+        self,
+        fixtures: Optional[Mapping[str, OfflineReferenceFixture]] = None,
+    ) -> None:
+        default_fixtures = _default_offline_fixtures()
+        self._fixtures: Dict[str, OfflineReferenceFixture] = {
+            key.upper(): value for key, value in (fixtures or default_fixtures).items()
+        }
+
+    async def fetch(
+        self,
+        source: RefSource,
+        existing: Optional[RefDocument] = None,
+    ) -> Optional[FetchedDocument]:
+        if not getattr(source, "is_active", True):
+            return None
+
+        authority = (source.authority or "").upper()
+        fixture = self._fixtures.get(authority)
+        if not fixture:
+            return None
+
+        etag = f"{fixture.etag_suffix}-offline"
+        return FetchedDocument(
+            content=fixture.content,
+            etag=etag,
+            last_modified=f"{fixture.etag_suffix}-offline",
+            content_type=fixture.content_type,
+        )
+
+
+def _default_offline_fixtures() -> Mapping[str, OfflineReferenceFixture]:
+    html_payload = b"""
+    <html>
+      <body>
+        <h2>Section 5.1 Height Controls</h2>
+        <p>Maximum height is governed by the surrounding heritage character.</p>
+        <h3>5.2 Daylight Plane</h3>
+        <p>Maintain a 45 degree daylight plane from the opposite property line.</p>
+      </body>
+    </html>
+    """
+    pdf_payload = (
+        "1.1 Fire Safety Obligations\n"
+        "Provide active fire protection systems in accordance with Table 3.\n"
+        "1.2 Egress Provision\n"
+        "Buildings must support two independent means of egress.\n"
+    ).encode("utf-8")
+    drainage_payload = (
+        "2.1 Stormwater Capacity\n"
+        "Design attenuation tanks to accommodate a 100-year storm event.\n"
+    ).encode("utf-8")
+    return {
+        "URA": OfflineReferenceFixture(
+            content=html_payload,
+            content_type="text/html; charset=utf-8",
+            etag_suffix="ura",
+        ),
+        "BCA": OfflineReferenceFixture(
+            content=pdf_payload,
+            content_type="application/pdf",
+            etag_suffix="bca",
+        ),
+        "SCDF": OfflineReferenceFixture(
+            content=pdf_payload,
+            content_type="application/pdf",
+            etag_suffix="scdf",
+        ),
+        "PUB": OfflineReferenceFixture(
+            content=drainage_payload,
+            content_type="application/pdf",
+            etag_suffix="pub",
+        ),
+    }
+
+
+def _build_cli_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run the watch_reference_sources flow once and optionally emit a summary."
+        ),
+    )
+    parser.add_argument(
+        "--storage-path",
+        type=Path,
+        default=None,
+        help="Directory used by ReferenceStorage (defaults to REF_STORAGE_LOCAL_PATH).",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Use deterministic offline fixtures instead of performing HTTP requests.",
+    )
+    parser.add_argument(
+        "--summary-path",
+        type=Path,
+        default=None,
+        help="Optional path to write a JSON summary of the ingestion run.",
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Present for CLI parity; the flow always runs once.",
+    )
+    parser.add_argument(
+        "--min-documents",
+        type=int,
+        default=1,
+        help="Fail the run if fewer than this number of documents exist after execution.",
+    )
+    return parser
+
+
+async def _run_once(
+    *,
+    storage: ReferenceStorage,
+    fetcher: Optional[ReferenceSourceFetcher] = None,
+) -> List[Dict[str, Any]]:
+    return await watch_reference_sources(
+        AsyncSessionLocal,
+        fetcher=fetcher,
+        storage=storage,
+    )
+
+
+async def _summarise_ingestion(
+    results: Iterable[Dict[str, Any]],
+) -> Dict[str, Any]:
+    summary: Dict[str, Any] = {
+        "results": list(results),
+    }
+    async with AsyncSessionLocal() as session:
+        document_count = await session.scalar(select(func.count()).select_from(RefDocument))
+        source_count = await session.scalar(select(func.count()).select_from(RefSource))
+        summary["document_count"] = int(document_count or 0)
+        summary["source_count"] = int(source_count or 0)
+    summary["inserted"] = len(summary["results"])
+    return summary
+
+
+def main(argv: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+    """CLI entry point used by CI smoke tests."""
+
+    parser = _build_cli_parser()
+    args = parser.parse_args(argv)
+    storage = ReferenceStorage(
+        base_path=args.storage_path if args.storage_path is not None else None,
+    )
+
+    fetcher: Optional[ReferenceSourceFetcher]
+    if args.offline:
+        fetcher = OfflineReferenceFetcher()  # type: ignore[assignment]
+    else:
+        fetcher = ReferenceSourceFetcher()
+
+    results = asyncio.run(_run_once(storage=storage, fetcher=fetcher))
+    summary = asyncio.run(_summarise_ingestion(results))
+
+    if summary["document_count"] < args.min_documents:
+        raise SystemExit(
+            f"Expected at least {args.min_documents} documents after ingestion; "
+            f"observed {summary['document_count']}."
+        )
+
+    if args.summary_path:
+        args.summary_path.parent.mkdir(parents=True, exist_ok=True)
+        args.summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True))
+
+    return summary
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    main()
+
+
+__all__ = ["OfflineReferenceFetcher", "OfflineReferenceFixture", "watch_reference_sources"]

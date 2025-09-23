@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+import argparse
+import asyncio
+import json
+from pathlib import Path
+from typing import List, Optional, Sequence
 
 from prefect import flow
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
+from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_parsers import ClauseParser, ParsedClause
 from app.services.reference_storage import ReferenceStorage
@@ -87,6 +92,97 @@ async def _resolve_fetch_kind(session: AsyncSession, document: RefDocument) -> s
     if source_row and getattr(source_row, "fetch_kind", None):
         return source_row.fetch_kind
     return "pdf"
+
+
+def _build_cli_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Parse reference documents that are marked for updates.",
+    )
+    parser.add_argument(
+        "--storage-path",
+        type=Path,
+        default=None,
+        help="Directory where reference documents are stored.",
+    )
+    parser.add_argument(
+        "--summary-path",
+        type=Path,
+        default=None,
+        help="Optional path to write a JSON summary after parsing.",
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Present for CLI parity; the flow always runs once.",
+    )
+    parser.add_argument(
+        "--min-clauses",
+        type=int,
+        default=1,
+        help="Minimum number of clauses required for a successful run.",
+    )
+    parser.add_argument(
+        "--min-documents",
+        type=int,
+        default=1,
+        help="Minimum number of documents required for a successful run.",
+    )
+    return parser
+
+
+async def _run_once(
+    *, storage: ReferenceStorage, parser: Optional[ClauseParser] = None
+) -> List[int]:
+    return await parse_reference_documents(
+        AsyncSessionLocal,
+        storage=storage,
+        parser=parser,
+    )
+
+
+async def _collect_counts() -> tuple[int, int]:
+    async with AsyncSessionLocal() as session:
+        document_count = await session.scalar(select(func.count()).select_from(RefDocument))
+        clause_count = await session.scalar(select(func.count()).select_from(RefClause))
+    return int(document_count or 0), int(clause_count or 0)
+
+
+def main(argv: Optional[Sequence[str]] = None) -> dict[str, int | List[int]]:
+    parser = _build_cli_parser()
+    args = parser.parse_args(argv)
+    storage = ReferenceStorage(
+        base_path=args.storage_path if args.storage_path is not None else None,
+    )
+
+    processed = asyncio.run(_run_once(storage=storage))
+    document_count, clause_count = asyncio.run(_collect_counts())
+
+    summary: dict[str, int | List[int]] = {
+        "processed_documents": processed,
+        "document_count": document_count,
+        "clause_count": clause_count,
+    }
+
+    if document_count < args.min_documents:
+        raise SystemExit(
+            f"Expected at least {args.min_documents} reference documents; "
+            f"observed {document_count}."
+        )
+    if clause_count < args.min_clauses:
+        raise SystemExit(
+            f"Expected at least {args.min_clauses} reference clauses; "
+            f"observed {clause_count}."
+        )
+
+    if args.summary_path:
+        args.summary_path.parent.mkdir(parents=True, exist_ok=True)
+        args.summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True))
+
+    return summary
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    main()
 
 
 __all__ = ["parse_reference_documents"]
