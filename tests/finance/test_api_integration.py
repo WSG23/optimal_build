@@ -279,6 +279,7 @@ async def test_finance_feasibility_requires_reviewer_role(
 
     missing_header = await app_client.post(
         "/api/v1/finance/feasibility",
+        headers={"X-Role": "viewer"},
         json=payload,
     )
     assert missing_header.status_code == 403

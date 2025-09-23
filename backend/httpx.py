@@ -49,12 +49,19 @@ class _AsyncResponse:
 class AsyncClient:
     """Minimal async-compatible client delegating to FastAPI's TestClient."""
 
-    def __init__(self, *, app: Any, base_url: str = "http://testserver") -> None:
+    def __init__(
+        self,
+        *,
+        app: Any,
+        base_url: str = "http://testserver",
+        headers: dict[str, str] | None = None,
+    ) -> None:
         if TestClient is None:
             raise ModuleNotFoundError(
                 "fastapi is required to use the AsyncClient test stub"
             )
         self._test_client = TestClient(app, base_url=base_url)
+        self._default_headers = dict(headers or {})
 
     async def __aenter__(self) -> "AsyncClient":
         return self
@@ -66,22 +73,37 @@ class AsyncClient:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._test_client.close)
 
+    def _apply_headers(self, kwargs: dict[str, Any]) -> dict[str, Any]:
+        if not self._default_headers:
+            return kwargs
+        combined = dict(self._default_headers)
+        extra = kwargs.get("headers")
+        if extra:
+            combined.update(extra)
+        updated = dict(kwargs)
+        updated["headers"] = combined
+        return updated
+
     async def get(self, url: str, **kwargs: Any):
+        kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, partial(self._test_client.get, url, **kwargs))
         return _AsyncResponse(response)
 
     async def post(self, url: str, **kwargs: Any):
+        kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, partial(self._test_client.post, url, **kwargs))
         return _AsyncResponse(response)
 
     async def put(self, url: str, **kwargs: Any):
+        kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, partial(self._test_client.put, url, **kwargs))
         return _AsyncResponse(response)
 
     async def delete(self, url: str, **kwargs: Any):
+        kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, partial(self._test_client.delete, url, **kwargs))
         return _AsyncResponse(response)

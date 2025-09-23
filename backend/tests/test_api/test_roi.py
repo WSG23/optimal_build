@@ -69,7 +69,11 @@ async def roi_client(async_session_factory):
             yield session
 
     app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(
+        app=app,
+        base_url="http://testserver",
+        headers={"X-Role": "admin"},
+    ) as client:
         yield client
     app.dependency_overrides.pop(get_session, None)
 

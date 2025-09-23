@@ -126,7 +126,11 @@ async def client(async_session_factory):
             yield session
 
     app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(app=app, base_url="http://test") as test_client:
+    async with AsyncClient(
+        app=app,
+        base_url="http://test",
+        headers={"X-Role": "admin"},
+    ) as test_client:
         yield test_client
     app.dependency_overrides.clear()
 

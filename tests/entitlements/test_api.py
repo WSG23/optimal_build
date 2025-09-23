@@ -52,6 +52,7 @@ async def test_entitlements_workflow(async_session_factory, app_client: AsyncCli
     }
     forbidden_response = await app_client.post(
         f"/api/v1/entitlements/{PROJECT_ID}/studies",
+        headers={"X-Role": "viewer"},
         json=study_payload,
     )
     assert forbidden_response.status_code == 403
