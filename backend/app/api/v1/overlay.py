@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.api.deps import require_reviewer, require_viewer
 from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
@@ -29,6 +30,7 @@ router = APIRouter(prefix="/overlay")
 async def run_overlay(
     project_id: int,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_reviewer),
 ) -> Dict[str, object]:
     """Execute the overlay feasibility engine for a project."""
 
@@ -54,6 +56,7 @@ async def run_overlay(
 async def list_project_overlays(
     project_id: int,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> Dict[str, object]:
     """Return overlay suggestions for the requested project."""
 
@@ -87,6 +90,7 @@ async def decide_overlay(
     project_id: int,
     payload: OverlayDecisionPayload,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_reviewer),
 ) -> Dict[str, object]:
     """Persist a decision on a generated overlay suggestion."""
 

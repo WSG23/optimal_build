@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.background import BackgroundTask
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.core.export import (
     DEFAULT_PENDING_WATERMARK,
@@ -72,6 +73,7 @@ async def export_project(
     project_id: int,
     payload: ExportRequestPayload,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> StreamingResponse:
     """Generate and stream a CAD/BIM export for the given project."""
 

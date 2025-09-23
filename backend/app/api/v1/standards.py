@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefMaterialStandard
 from app.utils import metrics
@@ -23,6 +24,7 @@ async def list_standards(
     standard_code: str | None = Query(default=None),
     section: str | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> List[Dict[str, Any]]:
     metrics.REQUEST_COUNTER.labels(endpoint="standards_lookup").inc()
     stmt = select(RefMaterialStandard)

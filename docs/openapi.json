@@ -1,0 +1,1234 @@
+{
+  "info": {
+    "title": "Building Compliance Platform",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Root endpoint."
+      }
+    },
+    "/api/v1/audit/{project_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return audit ledger entries for a project with validation status."
+      }
+    },
+    "/api/v1/audit/{project_id}/diff/{version_a}/{version_b}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return a diff between two ledger entries for the project."
+      }
+    },
+    "/api/v1/costs/indices/latest": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/database/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get database status and table information."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/export": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export entitlement information in CSV, HTML, or PDF formats."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/legal": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [],
+                  "limit": 0,
+                  "offset": 0,
+                  "total": 0
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return paginated legal instruments."
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "attachments": [],
+                "effective_date": "2025-09-23",
+                "expiry_date": "2025-09-23",
+                "instrument_type": "agreement",
+                "metadata": {},
+                "name": "string",
+                "project_id": 0,
+                "reference_code": "string",
+                "status": "draft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "attachments": [],
+                  "created_at": "2025-09-23T11:01:14.143104",
+                  "effective_date": "2025-09-23",
+                  "expiry_date": "2025-09-23",
+                  "id": 0,
+                  "instrument_type": "agreement",
+                  "metadata": {},
+                  "name": "string",
+                  "project_id": 0,
+                  "reference_code": "string",
+                  "status": "draft",
+                  "updated_at": "2025-09-23T11:01:14.143110"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Persist a new legal instrument."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/legal/{instrument_id}": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete the specified legal instrument."
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "attachments": [
+                  {
+                    "string": null
+                  }
+                ],
+                "effective_date": "2025-09-23",
+                "expiry_date": "2025-09-23",
+                "instrument_type": "agreement",
+                "metadata": {
+                  "string": null
+                },
+                "name": "string",
+                "reference_code": "string",
+                "status": "draft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "attachments": [],
+                  "created_at": "2025-09-23T11:01:14.143732",
+                  "effective_date": "2025-09-23",
+                  "expiry_date": "2025-09-23",
+                  "id": 0,
+                  "instrument_type": "agreement",
+                  "metadata": {},
+                  "name": "string",
+                  "project_id": 0,
+                  "reference_code": "string",
+                  "status": "draft",
+                  "updated_at": "2025-09-23T11:01:14.143737"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Update an existing legal instrument."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/roadmap": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [],
+                  "limit": 0,
+                  "offset": 0,
+                  "total": 0
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return paginated roadmap items for the supplied project."
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "actual_decision_date": "2025-09-23",
+                "actual_submission_date": "2025-09-23",
+                "approval_type_id": 0,
+                "metadata": {},
+                "notes": "string",
+                "project_id": 0,
+                "sequence_order": 0,
+                "status": "planned",
+                "status_changed_at": "2025-09-23T11:01:14.138981",
+                "target_decision_date": "2025-09-23",
+                "target_submission_date": "2025-09-23"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "actual_decision_date": "2025-09-23",
+                  "actual_submission_date": "2025-09-23",
+                  "approval_type_id": 0,
+                  "created_at": "2025-09-23T11:01:14.139297",
+                  "id": 0,
+                  "metadata": {},
+                  "notes": "string",
+                  "project_id": 0,
+                  "sequence_order": 0,
+                  "status": "planned",
+                  "status_changed_at": "2025-09-23T11:01:14.139226",
+                  "target_decision_date": "2025-09-23",
+                  "target_submission_date": "2025-09-23",
+                  "updated_at": "2025-09-23T11:01:14.139301"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Insert a new roadmap item for the project."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/roadmap/{item_id}": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Remove the specified roadmap entry."
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "actual_decision_date": "2025-09-23",
+                "actual_submission_date": "2025-09-23",
+                "approval_type_id": 0,
+                "metadata": {
+                  "string": null
+                },
+                "notes": "string",
+                "sequence_order": 0,
+                "status": "planned",
+                "target_decision_date": "2025-09-23",
+                "target_submission_date": "2025-09-23"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "actual_decision_date": "2025-09-23",
+                  "actual_submission_date": "2025-09-23",
+                  "approval_type_id": 0,
+                  "created_at": "2025-09-23T11:01:14.139918",
+                  "id": 0,
+                  "metadata": {},
+                  "notes": "string",
+                  "project_id": 0,
+                  "sequence_order": 0,
+                  "status": "planned",
+                  "status_changed_at": "2025-09-23T11:01:14.139866",
+                  "target_decision_date": "2025-09-23",
+                  "target_submission_date": "2025-09-23",
+                  "updated_at": "2025-09-23T11:01:14.139934"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Update an existing roadmap item."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/stakeholders": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [],
+                  "limit": 0,
+                  "offset": 0,
+                  "total": 0
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return stakeholder engagements for the project."
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "contact_email": "string",
+                "contact_phone": "string",
+                "engagement_type": "agency",
+                "meetings": [],
+                "metadata": {},
+                "name": "string",
+                "notes": "string",
+                "organisation": "string",
+                "project_id": 0,
+                "status": "planned"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "contact_email": "string",
+                  "contact_phone": "string",
+                  "created_at": "2025-09-23T11:01:14.141908",
+                  "engagement_type": "agency",
+                  "id": 0,
+                  "meetings": [],
+                  "metadata": {},
+                  "name": "string",
+                  "notes": "string",
+                  "organisation": "string",
+                  "project_id": 0,
+                  "status": "planned",
+                  "updated_at": "2025-09-23T11:01:14.141916"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Record a new stakeholder engagement."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/stakeholders/{engagement_id}": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Remove an engagement record."
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "contact_email": "string",
+                "contact_phone": "string",
+                "engagement_type": "agency",
+                "meetings": [
+                  {
+                    "string": null
+                  }
+                ],
+                "metadata": {
+                  "string": null
+                },
+                "name": "string",
+                "notes": "string",
+                "organisation": "string",
+                "status": "planned"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "contact_email": "string",
+                  "contact_phone": "string",
+                  "created_at": "2025-09-23T11:01:14.142433",
+                  "engagement_type": "agency",
+                  "id": 0,
+                  "meetings": [],
+                  "metadata": {},
+                  "name": "string",
+                  "notes": "string",
+                  "organisation": "string",
+                  "project_id": 0,
+                  "status": "planned",
+                  "updated_at": "2025-09-23T11:01:14.142441"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Modify an existing engagement record."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/studies": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [],
+                  "limit": 0,
+                  "offset": 0,
+                  "total": 0
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return paginated entitlement studies."
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "attachments": [],
+                "completed_at": "2025-09-23T11:01:14.140486",
+                "consultant": "string",
+                "due_date": "2025-09-23",
+                "metadata": {},
+                "name": "string",
+                "project_id": 0,
+                "status": "draft",
+                "study_type": "traffic",
+                "summary": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "attachments": [],
+                  "completed_at": "2025-09-23T11:01:14.140610",
+                  "consultant": "string",
+                  "created_at": "2025-09-23T11:01:14.140617",
+                  "due_date": "2025-09-23",
+                  "id": 0,
+                  "metadata": {},
+                  "name": "string",
+                  "project_id": 0,
+                  "status": "draft",
+                  "study_type": "traffic",
+                  "summary": "string",
+                  "updated_at": "2025-09-23T11:01:14.140621"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Persist a new entitlement study."
+      }
+    },
+    "/api/v1/entitlements/{project_id}/studies/{study_id}": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete the specified study."
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "attachments": [
+                  {
+                    "string": null
+                  }
+                ],
+                "completed_at": "2025-09-23T11:01:14.141092",
+                "consultant": "string",
+                "due_date": "2025-09-23",
+                "metadata": {
+                  "string": null
+                },
+                "name": "string",
+                "status": "draft",
+                "study_type": "traffic",
+                "summary": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "attachments": [],
+                  "completed_at": "2025-09-23T11:01:14.141238",
+                  "consultant": "string",
+                  "created_at": "2025-09-23T11:01:14.141249",
+                  "due_date": "2025-09-23",
+                  "id": 0,
+                  "metadata": {},
+                  "name": "string",
+                  "project_id": 0,
+                  "status": "draft",
+                  "study_type": "traffic",
+                  "summary": "string",
+                  "updated_at": "2025-09-23T11:01:14.141255"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Modify an existing entitlement study."
+      }
+    },
+    "/api/v1/ergonomics/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/export/{project_id}": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "format": "string",
+                "include_approved_overlays": true,
+                "include_pending_overlays": false,
+                "include_rejected_overlays": false,
+                "include_source": true,
+                "layer_map": null,
+                "pending_watermark": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Generate and stream a CAD/BIM export for the given project."
+      }
+    },
+    "/api/v1/feasibility/assessment": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "project_id": "string",
+                  "recommendations": [
+                    "string"
+                  ],
+                  "rules": [
+                    {
+                      "actual_value": "string",
+                      "authority": "string",
+                      "default_selected": false,
+                      "description": "string",
+                      "id": "string",
+                      "notes": "string",
+                      "operator": "string",
+                      "parameter_key": "string",
+                      "severity": "critical",
+                      "status": "pass",
+                      "title": "string",
+                      "topic": "string",
+                      "unit": "string",
+                      "value": "string"
+                    }
+                  ],
+                  "summary": {
+                    "estimated_achievable_gfa_sqm": 0,
+                    "estimated_unit_count": 0,
+                    "max_permissible_gfa_sqm": 0,
+                    "remarks": "string",
+                    "site_coverage_percent": 0.0
+                  }
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Evaluate the feasibility assessment for the selected rules."
+      }
+    },
+    "/api/v1/feasibility/rules": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "project_id": "string",
+                  "recommended_rule_ids": [
+                    "string"
+                  ],
+                  "rules": [
+                    {
+                      "authority": "string",
+                      "default_selected": false,
+                      "description": "string",
+                      "id": "string",
+                      "operator": "string",
+                      "parameter_key": "string",
+                      "severity": "critical",
+                      "title": "string",
+                      "topic": "string",
+                      "unit": "string",
+                      "value": "string"
+                    }
+                  ],
+                  "summary": {
+                    "compliance_focus": "string",
+                    "notes": "string"
+                  }
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return the recommended rules for the submitted project."
+      }
+    },
+    "/api/v1/finance/export": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stream a CSV export describing the requested finance scenario."
+      }
+    },
+    "/api/v1/finance/feasibility": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "fin_project_id": 0,
+                "project_id": 0,
+                "project_name": "string",
+                "scenario": {
+                  "cash_flow": {
+                    "cash_flows": [
+                      "0"
+                    ],
+                    "discount_rate": "0"
+                  },
+                  "cost_escalation": {
+                    "amount": "0",
+                    "base_period": "string",
+                    "jurisdiction": "SG",
+                    "provider": "string",
+                    "series_name": "string"
+                  },
+                  "currency": "SGD",
+                  "description": "string",
+                  "dscr": {
+                    "debt_services": [
+                      "0"
+                    ],
+                    "net_operating_incomes": [
+                      "0"
+                    ],
+                    "period_labels": [
+                      "string"
+                    ]
+                  },
+                  "is_primary": false,
+                  "name": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cost_index": {
+                    "base_index": {
+                      "methodology": "string",
+                      "period": "string",
+                      "provider": "string",
+                      "source": "string",
+                      "unit": "string",
+                      "value": "0"
+                    },
+                    "base_period": "string",
+                    "jurisdiction": "string",
+                    "latest_index": {
+                      "methodology": "string",
+                      "period": "string",
+                      "provider": "string",
+                      "source": "string",
+                      "unit": "string",
+                      "value": "0"
+                    },
+                    "latest_period": "string",
+                    "provider": "string",
+                    "scalar": "0",
+                    "series_name": "string"
+                  },
+                  "currency": "string",
+                  "dscr_timeline": [],
+                  "escalated_cost": "0",
+                  "fin_project_id": 0,
+                  "project_id": 0,
+                  "results": [
+                    {
+                      "metadata": {},
+                      "name": null,
+                      "unit": null,
+                      "value": null
+                    }
+                  ],
+                  "scenario_id": 0,
+                  "scenario_name": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Execute the full finance pipeline for the submitted scenario."
+      }
+    },
+    "/api/v1/import": {
+      "post": {
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "content_type": "string",
+                  "detected_floors": [],
+                  "detected_units": [],
+                  "filename": "string",
+                  "import_id": "string",
+                  "layer_metadata": [],
+                  "parse_status": "string",
+                  "size_bytes": 0,
+                  "storage_path": "string",
+                  "uploaded_at": "2025-09-23T11:01:14.134518",
+                  "vector_storage_path": "string",
+                  "vector_summary": {
+                    "string": null
+                  }
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Persist an uploaded CAD/BIM payload and return detection metadata."
+      }
+    },
+    "/api/v1/overlay/{project_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return overlay suggestions for the requested project."
+      }
+    },
+    "/api/v1/overlay/{project_id}/decision": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "decided_by": "string",
+                "decision": "string",
+                "notes": "string",
+                "suggestion_id": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Persist a decision on a generated overlay suggestion."
+      }
+    },
+    "/api/v1/overlay/{project_id}/run": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Execute the overlay feasibility engine for a project."
+      }
+    },
+    "/api/v1/parse/{import_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "completed_at": "2025-09-23T11:01:14.135057",
+                  "error": "string",
+                  "import_id": "string",
+                  "job_id": "string",
+                  "requested_at": "2025-09-23T11:01:14.135052",
+                  "result": {
+                    "string": null
+                  },
+                  "status": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Retrieve the status of a parse job."
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "completed_at": "2025-09-23T11:01:14.134831",
+                  "error": "string",
+                  "import_id": "string",
+                  "job_id": "string",
+                  "requested_at": "2025-09-23T11:01:14.134824",
+                  "result": {
+                    "string": null
+                  },
+                  "status": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Trigger parsing of an uploaded model."
+      }
+    },
+    "/api/v1/products/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/review/clauses": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/review/diffs": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/review/documents": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/review/queue": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/review/sources": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/roi/{project_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return the ROI snapshot for the requested project."
+      }
+    },
+    "/api/v1/rules": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/rules/count": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get count of rules in database."
+      }
+    },
+    "/api/v1/rules/{rule_id}/review": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "action": "approve",
+                "notes": "string",
+                "reviewer": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/rulesets": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "count": 0,
+                  "items": [
+                    {
+                      "authority": "string",
+                      "created_at": "2025-09-23T11:01:14.130874",
+                      "definition": {
+                        "string": null
+                      },
+                      "description": "string",
+                      "id": 0,
+                      "is_active": true,
+                      "jurisdiction": "string",
+                      "metadata": {},
+                      "name": "string",
+                      "slug": "string",
+                      "updated_at": "2025-09-23T11:01:14.130893",
+                      "version": 0
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return stored rule packs ordered by slug and version."
+      }
+    },
+    "/api/v1/rulesets/validate": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "geometry": {},
+                "ruleset_id": 0,
+                "ruleset_slug": "string",
+                "ruleset_version": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "citations": [],
+                  "results": [
+                    {
+                      "checked": 0,
+                      "citation": {
+                        "string": null
+                      },
+                      "passed": true,
+                      "rule_id": "string",
+                      "target": "string",
+                      "title": "string",
+                      "violations": []
+                    }
+                  ],
+                  "ruleset": {
+                    "authority": "string",
+                    "description": "string",
+                    "id": 0,
+                    "jurisdiction": "string",
+                    "name": "string",
+                    "slug": "string",
+                    "version": 0
+                  },
+                  "summary": {
+                    "checked_entities": 0,
+                    "evaluated_rules": 0,
+                    "total_rules": 0,
+                    "violations": 0
+                  }
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Validate a geometry payload against the requested rule pack."
+      }
+    },
+    "/api/v1/screen/buildable": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "address": "string",
+                "defaults": {
+                  "efficiency_factor": 0.82,
+                  "floor_height_m": 4.0,
+                  "plot_ratio": 3.5,
+                  "site_area_m2": 1000.0,
+                  "site_coverage": 0.45
+                },
+                "efficiency_ratio": 0.82,
+                "geometry": {
+                  "string": null
+                },
+                "project_type": "string",
+                "typ_floor_to_floor_m": 4.0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "advisory_hints": [
+                    "string"
+                  ],
+                  "input_kind": "address",
+                  "metrics": {
+                    "floors_max": 0,
+                    "footprint_m2": 0,
+                    "gfa_cap_m2": 0,
+                    "nsa_est_m2": 0
+                  },
+                  "overlays": [
+                    "string"
+                  ],
+                  "rules": [
+                    {
+                      "authority": "string",
+                      "id": 0,
+                      "operator": "string",
+                      "parameter_key": "string",
+                      "provenance": {
+                        "clause_ref": "string",
+                        "document_id": 0,
+                        "pages": [
+                          0
+                        ],
+                        "rule_id": 0,
+                        "seed_tag": "string"
+                      },
+                      "unit": "string",
+                      "value": "string"
+                    }
+                  ],
+                  "zone_code": "string",
+                  "zone_source": {
+                    "jurisdiction": "string",
+                    "kind": "parcel",
+                    "layer_name": "string",
+                    "note": "string",
+                    "parcel_ref": "string",
+                    "parcel_source": "string"
+                  }
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/standards": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/v1/test": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Test endpoint."
+      }
+    },
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health check endpoint with database connectivity."
+      }
+    },
+    "/health/metrics": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Expose Prometheus metrics."
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Roadmaps, studies, stakeholder engagements, and legal instruments captured for entitlement delivery.",
+      "name": "entitlements"
+    }
+  ]
+}

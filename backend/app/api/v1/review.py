@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 
@@ -16,7 +17,10 @@ router = APIRouter(prefix="/review")
 
 
 @router.get("/sources")
-async def list_sources(session: AsyncSession = Depends(get_session)) -> Dict[str, object]:
+async def list_sources(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
+) -> Dict[str, object]:
     result = await session.execute(select(RefSource))
     items = [
         {
@@ -36,6 +40,7 @@ async def list_sources(session: AsyncSession = Depends(get_session)) -> Dict[str
 async def list_documents(
     session: AsyncSession = Depends(get_session),
     source_id: Optional[int] = Query(default=None),
+    _: str = Depends(require_viewer),
 ) -> Dict[str, object]:
     stmt = select(RefDocument)
     if source_id is not None:
@@ -60,6 +65,7 @@ async def list_documents(
 async def list_clauses(
     session: AsyncSession = Depends(get_session),
     document_id: Optional[int] = Query(default=None),
+    _: str = Depends(require_viewer),
 ) -> Dict[str, object]:
     stmt = select(RefClause)
     if document_id is not None:
@@ -84,6 +90,7 @@ async def list_clauses(
 async def list_diffs(
     session: AsyncSession = Depends(get_session),
     rule_id: Optional[int] = Query(default=None),
+    _: str = Depends(require_viewer),
 ) -> Dict[str, object]:
     stmt = select(RefRule)
     if rule_id is not None:

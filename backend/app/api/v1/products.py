@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefProduct
 
@@ -22,6 +23,7 @@ async def list_products(
     width_mm_min: int | None = Query(default=None),
     width_mm_max: int | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> List[Dict[str, Any]]:
     stmt = select(RefProduct)
     if brand:

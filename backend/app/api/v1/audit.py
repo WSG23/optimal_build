@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.audit.ledger import diff_logs, serialise_log, verify_chain
 from app.core.database import get_session
 
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/audit", tags=["audit"])
 async def list_project_audit(
     project_id: int,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> dict[str, object]:
     """Return audit ledger entries for a project with validation status."""
 
@@ -34,6 +36,7 @@ async def diff_project_audit(
     version_a: int,
     version_b: int,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> dict[str, object]:
     """Return a diff between two ledger entries for the project."""
 

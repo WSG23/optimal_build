@@ -3,7 +3,8 @@
 The export service allows CAD overlays and source geometry to be downloaded in
 DWG, DXF, IFC, or PDF formats. The endpoint streams a binary payload and exposes
 metadata via HTTP headers so that the frontend can surface rendering and
-watermark details.
+watermark details. Include an `X-Role: viewer` header when requesting exports to
+authenticate as a read-only caller.
 
 ## Endpoint
 

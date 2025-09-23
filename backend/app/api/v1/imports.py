@@ -12,6 +12,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_reviewer, require_viewer
 from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.models.imports import ImportRecord
@@ -320,6 +321,7 @@ async def upload_import(
     infer_walls: bool = Form(False),
     project_id: int | None = Form(default=None),
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_reviewer),
 ) -> ImportResult:
     """Persist an uploaded CAD/BIM payload and return detection metadata."""
 
@@ -448,6 +450,7 @@ async def upload_import(
 async def enqueue_parse(
     import_id: str,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_reviewer),
 ) -> ParseStatusResponse:
     """Trigger parsing of an uploaded model."""
 
@@ -483,6 +486,7 @@ async def enqueue_parse(
 async def get_parse_status(
     import_id: str,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> ParseStatusResponse:
     """Retrieve the status of a parse job."""
 

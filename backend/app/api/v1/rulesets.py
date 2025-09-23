@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.core.geometry import GeometrySerializer
 from app.core.rules import RulesEngine
@@ -46,7 +47,10 @@ async def _load_ruleset(
 
 
 @router.get("/rulesets", response_model=RulesetListResponse)
-async def list_rulesets(session: AsyncSession = Depends(get_session)) -> RulesetListResponse:
+async def list_rulesets(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
+) -> RulesetListResponse:
     """Return stored rule packs ordered by slug and version."""
 
     stmt: Select[RulePack] = select(RulePack).order_by(RulePack.slug, RulePack.version.desc())
@@ -60,6 +64,7 @@ async def list_rulesets(session: AsyncSession = Depends(get_session)) -> Ruleset
 async def validate_ruleset(
     payload: RulesetValidationRequest,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> RulesetValidationResponse:
     """Validate a geometry payload against the requested rule pack."""
 

@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefRule, RefZoningLayer
 from app.services.normalize import NormalizedRule, RuleNormalizer
@@ -112,6 +113,7 @@ async def list_rules(
     topic: Optional[str] = Query(None),
     review_status: Optional[Union[str, List[str]]] = Query(None),
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
 ) -> Dict[str, object]:
     stmt = select(RefRule)
     has_filters = False
@@ -161,6 +163,7 @@ async def review_rule(
     rule_id: int,
     payload: ReviewAction,
     session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_reviewer),
 ) -> Dict[str, object]:
     rule = await session.get(RefRule, rule_id)
     if rule is None:
@@ -193,7 +196,10 @@ async def review_rule(
 
 
 @router.get("/review/queue")
-async def review_queue(session: AsyncSession = Depends(get_session)) -> Dict[str, object]:
+async def review_queue(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
+) -> Dict[str, object]:
     stmt = select(RefRule).where(RefRule.review_status == "needs_review")
     rules = (await session.execute(stmt)).scalars().all()
     zoning_lookup = await _load_zoning_lookup(session, [_extract_zone_code(rule) for rule in rules])

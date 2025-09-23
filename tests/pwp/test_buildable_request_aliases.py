@@ -75,6 +75,7 @@ async def test_buildable_endpoint_accepts_camel_case(
                 "efficiencyFactor": 0.73,
             },
         },
+        headers={"X-Role": "viewer"},
     )
 
     assert response.status_code == 200
