@@ -89,6 +89,7 @@ init-db: ## Apply Alembic migrations inside Docker
 	$(DOCKER_COMPOSE) exec backend python -m backend.migrations alembic upgrade head
 
 db.upgrade: ## Apply Alembic migrations locally
+	python scripts/ensure_alembic.py
 	python -m backend.migrations alembic upgrade head
 
 seed-data: ## Seed screening data and finance demo scenarios
