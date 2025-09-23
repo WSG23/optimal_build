@@ -39,3 +39,18 @@ normalise them automatically:
 
 Both payloads resolve to the same `BuildableRequest` object, ensuring the API
 remains backwards compatible with older Feasibility Wizard builds.
+
+## Observability
+
+The buildable screening service exposes Prometheus metrics to track throughput
+and performance:
+
+* `pwp_buildable_total` &mdash; increments for every successful buildable
+  screening request processed.
+* `pwp_buildable_duration_ms` &mdash; histogram measuring the time spent computing
+  a response in milliseconds.
+
+Both metrics are included in the `/health/metrics` endpoint and in the output of
+`app.utils.metrics.render_latest_metrics()`, enabling dashboards and alerts to
+verify that requests are flowing and that latency stays within expected
+thresholds.
