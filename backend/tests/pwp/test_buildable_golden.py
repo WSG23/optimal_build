@@ -111,7 +111,11 @@ async def buildable_client(async_session_factory, monkeypatch):
             yield session
 
     app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(
+        app=app,
+        base_url="http://test",
+        headers={"X-Role": "admin"},
+    ) as client:
         yield client, context
     app.dependency_overrides.clear()
 

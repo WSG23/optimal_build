@@ -36,7 +36,7 @@ strict_optional = true
 exclude = "frontend|ui-admin|tests"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "../tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

@@ -32,11 +32,18 @@ class Response:
 class AsyncClient:
     """Very small subset of :class:`httpx.AsyncClient` used in tests."""
 
-    def __init__(self, *, app, base_url: str = "http://testserver") -> None:
+    def __init__(
+        self,
+        *,
+        app,
+        base_url: str = "http://testserver",
+        headers: Optional[Dict[str, str]] = None,
+    ) -> None:
         if app is None:
             raise RuntimeError("AsyncClient stub requires an ASGI app instance")
         self._app = app
         self.base_url = base_url
+        self._default_headers = _prepare_headers(headers, json_payload=None)
 
     async def __aenter__(self) -> "AsyncClient":
         return self
@@ -57,7 +64,7 @@ class AsyncClient:
     ) -> Response:
         path, query = _normalise_url(url)
         query_params = _merge_query(query, params)
-        prepared_headers = _prepare_headers(headers, json)
+        prepared_headers = _prepare_headers(headers, json, base=self._default_headers)
 
         prepared_files: Dict[str, tuple[str, bytes, str]] = {}
         if files:
@@ -198,8 +205,10 @@ def _merge_query(query: str, params: Optional[Dict[str, Any]]) -> Dict[str, Any]
 def _prepare_headers(
     headers: Optional[Dict[str, str]],
     json_payload: Any,
+    *,
+    base: Optional[Dict[str, str]] = None,
 ) -> Dict[str, str]:
-    prepared: Dict[str, str] = {}
+    prepared: Dict[str, str] = dict(base or {})
     if headers:
         for key, value in headers.items():
             prepared[key.lower()] = str(value)
