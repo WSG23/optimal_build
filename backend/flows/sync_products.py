@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import sys
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -10,9 +11,12 @@ from prefect import flow, task
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+if str(Path(__file__).resolve().parents[1]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefProduct
-from flows.adapters.products_csv_validator import ProductRow, validate_csv
+from backend.flows.adapters.products_csv_validator import ProductRow, validate_csv
 
 
 def _table_column_names() -> set[str]:

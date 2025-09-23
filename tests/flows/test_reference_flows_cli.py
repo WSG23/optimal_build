@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Dict
 
@@ -192,3 +196,51 @@ def test_parse_segment_cli_parses_watch_fetch_results(
     assert all(document.suspected_update is False for document in documents)
     assert {document.id for document in documents} == set(processed)
     assert clauses, "Expected reference clauses to be persisted"
+
+
+def test_watch_fetch_cli_invocation_via_python_m(tmp_path: Path) -> None:
+    """The flow should be executable via ``python -m`` without import failures."""
+
+    database_path = tmp_path / "cli.sqlite"
+    database_uri = f"sqlite+aiosqlite:///{database_path}"
+    engine = create_async_engine(database_uri, future=True)
+
+    asyncio.run(_initialise_schema(engine))
+
+    storage_path = tmp_path / "storage"
+    summary_path = tmp_path / "summary.json"
+
+    env = os.environ.copy()
+    env["SQLALCHEMY_DATABASE_URI"] = database_uri
+    project_root = Path(__file__).resolve().parents[2]
+    python_path_entries = [
+        str(project_root),
+        str(project_root / "backend"),
+        env.get("PYTHONPATH"),
+    ]
+    env["PYTHONPATH"] = os.pathsep.join(
+        [entry for entry in python_path_entries if entry]
+    )
+
+    command = [
+        sys.executable,
+        "-m",
+        "backend.flows.watch_fetch",
+        "--once",
+        "--offline",
+        "--storage-path",
+        str(storage_path),
+        "--summary-path",
+        str(summary_path),
+        "--min-documents",
+        "0",
+    ]
+
+    subprocess.run(command, check=True, cwd=project_root, env=env)
+
+    assert summary_path.exists(), "Expected CLI to write a summary payload"
+    summary = json.loads(summary_path.read_text())
+    assert "document_count" in summary
+    assert "results" in summary
+
+    asyncio.run(engine.dispose())
