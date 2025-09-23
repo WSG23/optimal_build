@@ -174,3 +174,27 @@ curl -L -o finance_scenario.csv \
 ```
 
 Replace `<SCENARIO_ID>` with the identifier returned by the feasibility call.
+
+## Entitlements roadmap seeding
+
+Run `python scripts/seed_entitlements_sg.py --project-id 90301 --reset` to seed the
+Singapore entitlement authorities, approval types, and a default roadmap for a
+project. The script provisions Urban Redevelopment Authority, BCA, LTA, and NEA
+approvals before inserting the baseline roadmap sequence for the supplied
+project identifier.
+
+After seeding, the following API endpoints expose entitlement information:
+
+- `GET /api/v1/entitlements/{project_id}/roadmap` – list sequenced roadmap items.
+- `POST /api/v1/entitlements/{project_id}/studies` – create a study entry
+  (requires an `X-Role: admin` or `X-Role: reviewer` header).
+- `POST /api/v1/entitlements/{project_id}/stakeholders` – create stakeholder
+  engagements with contact details.
+- `POST /api/v1/entitlements/{project_id}/legal` – register legal instruments.
+- `GET /api/v1/entitlements/{project_id}/export` – download CSV, HTML, or PDF
+  exports of roadmap, study, stakeholder, and legal registers.
+
+All read-only endpoints accept `limit` and `offset` query parameters for
+pagination, while mutating endpoints enforce reviewer/admin roles via the
+`X-Role` header. Prometheus metrics exposed at `/health/metrics` include the new
+`entitlements_*_requests_total` counters so operators can monitor adoption.

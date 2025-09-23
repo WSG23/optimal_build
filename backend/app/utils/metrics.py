@@ -34,6 +34,11 @@ FINANCE_FEASIBILITY_TOTAL: Counter
 FINANCE_FEASIBILITY_DURATION_MS: Histogram
 FINANCE_EXPORT_TOTAL: Counter
 FINANCE_EXPORT_DURATION_MS: Histogram
+ENTITLEMENTS_ROADMAP_COUNTER: Counter
+ENTITLEMENTS_STUDY_COUNTER: Counter
+ENTITLEMENTS_ENGAGEMENT_COUNTER: Counter
+ENTITLEMENTS_LEGAL_COUNTER: Counter
+ENTITLEMENTS_EXPORT_COUNTER: Counter
 
 
 def _initialize_metrics() -> None:
@@ -51,6 +56,11 @@ def _initialize_metrics() -> None:
     global FINANCE_FEASIBILITY_DURATION_MS
     global FINANCE_EXPORT_TOTAL
     global FINANCE_EXPORT_DURATION_MS
+    global ENTITLEMENTS_ROADMAP_COUNTER
+    global ENTITLEMENTS_STUDY_COUNTER
+    global ENTITLEMENTS_ENGAGEMENT_COUNTER
+    global ENTITLEMENTS_LEGAL_COUNTER
+    global ENTITLEMENTS_EXPORT_COUNTER
 
     REGISTRY = CollectorRegistry(auto_describe=True)
 
@@ -128,6 +138,41 @@ def _initialize_metrics() -> None:
         "finance_export_duration_ms",
         "Duration of finance scenario exports in milliseconds.",
         labelnames=(),
+        registry=REGISTRY,
+    )
+
+    ENTITLEMENTS_ROADMAP_COUNTER = Counter(
+        "entitlements_roadmap_requests_total",
+        "Entitlements roadmap endpoint operations by type.",
+        labelnames=("operation",),
+        registry=REGISTRY,
+    )
+
+    ENTITLEMENTS_STUDY_COUNTER = Counter(
+        "entitlements_study_requests_total",
+        "Entitlements study endpoint operations by type.",
+        labelnames=("operation",),
+        registry=REGISTRY,
+    )
+
+    ENTITLEMENTS_ENGAGEMENT_COUNTER = Counter(
+        "entitlements_engagement_requests_total",
+        "Entitlements engagement endpoint operations by type.",
+        labelnames=("operation",),
+        registry=REGISTRY,
+    )
+
+    ENTITLEMENTS_LEGAL_COUNTER = Counter(
+        "entitlements_legal_requests_total",
+        "Entitlements legal instrument endpoint operations by type.",
+        labelnames=("operation",),
+        registry=REGISTRY,
+    )
+
+    ENTITLEMENTS_EXPORT_COUNTER = Counter(
+        "entitlements_export_requests_total",
+        "Entitlements export requests processed by format.",
+        labelnames=("format",),
         registry=REGISTRY,
     )
 

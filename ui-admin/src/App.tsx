@@ -5,6 +5,7 @@ import DocumentsPage from './pages/DocumentsPage';
 import ClausesPage from './pages/ClausesPage';
 import RulesReviewPage from './pages/RulesReviewPage';
 import DiffsPage from './pages/DiffsPage';
+import EntitlementsPage from './pages/EntitlementsPage';
 import 'diff2html/bundles/css/diff2html.min.css';
 
 const App = () => {
@@ -18,6 +19,7 @@ const App = () => {
           <Route path="/clauses" element={<ClausesPage />} />
           <Route path="/rules" element={<RulesReviewPage />} />
           <Route path="/diffs" element={<DiffsPage />} />
+          <Route path="/entitlements" element={<EntitlementsPage />} />
         </Routes>
       </main>
     </div>

@@ -32,6 +32,13 @@ class _AsyncResponse:
     def json(self) -> Any:
         return self._response.json()
 
+    @property
+    def text(self) -> str:
+        payload = getattr(self._response, "content", b"")
+        if isinstance(payload, bytes):
+            return payload.decode("utf-8")
+        return str(payload)
+
     def read(self) -> bytes:
         return getattr(self._response, "content", b"")
 
