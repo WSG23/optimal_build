@@ -36,6 +36,24 @@ Apply the Alembic migrations before booting the API or background workers. The
 while local environments can execute `cd backend && alembic upgrade head` to
 create and update the schema.
 
+### Seeding entitlement data
+
+The FastAPI surface now exposes entitlement management under
+`/api/v1/entitlements`. Seed the reference authorities, approval types, and the
+default Singapore roadmap with:
+
+```
+python -m scripts.seed_entitlements_sg 101
+```
+
+Replace `101` with the project identifier you want to prepare. Use
+`--dry-run` to preview the changes without committing and `--skip-roadmap` to
+omit the default milestones. After seeding you can retrieve roadmap items via
+`GET /api/v1/entitlements/roadmap/{project_id}` and manage studies, stakeholder
+engagements, legal instruments, and exports through the companion endpoints.
+See [`docs/entitlements.md`](docs/entitlements.md) for the complete API and
+dashboard overview.
+
 ## Feasibility Wizard
 
 The frontend Feasibility Wizard screens seeded parcels against the

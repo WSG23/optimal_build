@@ -4,6 +4,10 @@ import type {
   DiffRecord,
   DocumentRecord,
   ErgonomicsMetric,
+  EntLegalInstrument,
+  EntRoadmapItem,
+  EntStakeholder,
+  EntStudy,
   ProductRecord,
   RuleRecord,
   SourceRecord
@@ -48,4 +52,23 @@ export const ReviewAPI = {
     }),
   getProducts: () => fetchJson<{ items: ProductRecord[] }>('/products/'),
   getErgonomics: () => fetchJson<{ items: ErgonomicsMetric[] }>('/ergonomics/')
+};
+
+export const EntitlementsAPI = {
+  getRoadmap: (projectId: number) =>
+    fetchJson<{ items: EntRoadmapItem[]; total: number }>(
+      `/entitlements/roadmap/${projectId}?limit=100`
+    ),
+  getStudies: (projectId: number) =>
+    fetchJson<{ items: EntStudy[]; total: number }>(
+      `/entitlements/studies/${projectId}?limit=100`
+    ),
+  getStakeholders: (projectId: number) =>
+    fetchJson<{ items: EntStakeholder[]; total: number }>(
+      `/entitlements/stakeholders/${projectId}?limit=100`
+    ),
+  getLegal: (projectId: number) =>
+    fetchJson<{ items: EntLegalInstrument[]; total: number }>(
+      `/entitlements/legal/${projectId}?limit=100`
+    )
 };

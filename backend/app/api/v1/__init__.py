@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from . import (
     audit,
     costs,
+    entitlements,
     ergonomics,
     export,
     feasibility,
@@ -18,6 +19,13 @@ from . import (
     screen,
     standards,
 )
+
+TAGS_METADATA = [
+    {
+        "name": "Entitlements",
+        "description": "Manage authorities, roadmap milestones, supporting studies, stakeholder engagements, and legal instruments for entitlement tracking.",
+    }
+]
 
 api_router = APIRouter()
 api_router.include_router(review.router)
@@ -34,5 +42,6 @@ api_router.include_router(roi.router)
 api_router.include_router(imports.router)
 api_router.include_router(audit.router)
 api_router.include_router(feasibility.router)
+api_router.include_router(entitlements.router)
 
-__all__ = ["api_router"]
+__all__ = ["TAGS_METADATA", "api_router"]

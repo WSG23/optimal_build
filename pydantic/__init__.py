@@ -322,9 +322,11 @@ class BaseModel(metaclass=BaseModelMeta):
 
     def __init__(self, **data: Any) -> None:
         values: Dict[str, Any] = {}
+        fields_set: set[str] = set()
         for name, field in self.model_fields.items():
             if name in data:
                 value = data[name]
+                fields_set.add(name)
             elif field.default_factory is not None:
                 value = field.default_factory()
             elif field.default is not Undefined:
@@ -343,6 +345,7 @@ class BaseModel(metaclass=BaseModelMeta):
             values[name] = value
 
         object.__setattr__(self, "__dict__", values)
+        object.__setattr__(self, "__fields_set__", fields_set)
         _apply_model_validators(type(self), self)
 
     def __setattr__(self, key: str, value: Any) -> None:
@@ -372,10 +375,19 @@ class BaseModel(metaclass=BaseModelMeta):
             raise ValidationError("Unsupported object for validation")
         return cls(**data)
 
-    def model_dump(self, *, mode: str = "python") -> Dict[str, Any]:
+    def model_dump(
+        self,
+        *,
+        mode: str = "python",
+        exclude_unset: bool = False,
+    ) -> Dict[str, Any]:
+        selected = self.__dict__.items()
+        if exclude_unset:
+            selected = ((name, value) for name, value in selected if name in self.__fields_set__)
         return {
-            name: _dump_value(getattr(self, name), mode)
-            for name in self.model_fields
+            name: _dump_value(value, mode)
+            for name, value in selected
+            if not name.startswith("_")
         }
 
     def __repr__(self) -> str:  # pragma: no cover - human-readable convenience

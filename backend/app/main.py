@@ -11,7 +11,7 @@ from fastapi.responses import Response
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1 import api_router
+from app.api.v1 import TAGS_METADATA, api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
 from app.models.rkp import RefRule
@@ -39,6 +39,7 @@ app = FastAPI(
     version=settings.VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_tags=TAGS_METADATA,
     lifespan=lifespan,
 )
 

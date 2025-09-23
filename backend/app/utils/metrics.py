@@ -30,6 +30,8 @@ ALERT_COUNTER: Counter
 COST_ADJUSTMENT_GAUGE: Gauge
 PWP_BUILDABLE_TOTAL: Counter
 PWP_BUILDABLE_DURATION_MS: Histogram
+ENTITLEMENTS_REQUEST_COUNTER: Counter
+ENTITLEMENTS_EXPORT_COUNTER: Counter
 
 
 def _initialize_metrics() -> None:
@@ -43,6 +45,8 @@ def _initialize_metrics() -> None:
     global COST_ADJUSTMENT_GAUGE
     global PWP_BUILDABLE_TOTAL
     global PWP_BUILDABLE_DURATION_MS
+    global ENTITLEMENTS_REQUEST_COUNTER
+    global ENTITLEMENTS_EXPORT_COUNTER
 
     REGISTRY = CollectorRegistry(auto_describe=True)
 
@@ -92,6 +96,20 @@ def _initialize_metrics() -> None:
         "pwp_buildable_duration_ms",
         "Duration of buildable screening computations in milliseconds.",
         labelnames=(),
+        registry=REGISTRY,
+    )
+
+    ENTITLEMENTS_REQUEST_COUNTER = Counter(
+        "entitlements_requests_total",
+        "Total entitlement API requests processed by resource and HTTP method.",
+        labelnames=("resource", "method"),
+        registry=REGISTRY,
+    )
+
+    ENTITLEMENTS_EXPORT_COUNTER = Counter(
+        "entitlements_exports_total",
+        "Number of entitlement exports generated grouped by format and fallback usage.",
+        labelnames=("format", "fallback"),
         registry=REGISTRY,
     )
 

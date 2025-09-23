@@ -483,10 +483,16 @@ def register_model(model: type, table_name: str) -> None:
 def register_column(model: type, name: str, column: ColumnDescriptor) -> None:
     if column.primary_key:
         setattr(model, "__primary_key__", name)
-    mapped = getattr(model, "__mapped_columns__", None)
+
+    # Avoid mutating ``__mapped_columns__`` dictionaries defined on mixins or
+    # parent classes. The declarative mixins used in the test suite share this
+    # attribute and our earlier implementation caused every mapped column to be
+    # registered against the mixin itself, leaking attributes between models.
+    mapped = model.__dict__.get("__mapped_columns__")
     if mapped is None:
-        mapped = {}
+        mapped = dict(getattr(model, "__mapped_columns__", {}))
         setattr(model, "__mapped_columns__", mapped)
+
     mapped[name] = column
     GLOBAL_DATABASE.register_column(model, column)
 

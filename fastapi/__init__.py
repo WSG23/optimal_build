@@ -45,9 +45,15 @@ class Depends:
 
 
 class Query:
-    def __init__(self, default: Any = None, *, description: str | None = None) -> None:
+    def __init__(self, default: Any = None, *, description: str | None = None, **_: Any) -> None:
         self.default = default
         self.description = description
+
+
+class Header:
+    def __init__(self, default: Any = None, *, alias: str | None = None) -> None:
+        self.default = default
+        self.alias = alias
 
 
 class Form:
@@ -209,6 +215,7 @@ class APIRouter:
         methods: Iterable[str],
         response_model: Optional[type] = None,
         status_code: Optional[int] = None,
+        **_: Any,
     ) -> None:
         full_path = f"{self.prefix}{path}" if path.startswith("/") else f"{self.prefix}/{path}"
         route = _Route(
@@ -220,8 +227,17 @@ class APIRouter:
         )
         self.routes.append(route)
 
-    def get(self, path: str, *, response_model: Optional[type] = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self._decorator(path, methods=["GET"], response_model=response_model)
+    def get(
+        self,
+        path: str,
+        *,
+        response_model: Optional[type] = None,
+        status_code: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return self._decorator(
+            path, methods=["GET"], response_model=response_model, status_code=status_code, **kwargs
+        )
 
     def post(
         self,
@@ -229,8 +245,47 @@ class APIRouter:
         *,
         response_model: Optional[type] = None,
         status_code: Optional[int] = None,
+        **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self._decorator(path, methods=["POST"], response_model=response_model, status_code=status_code)
+        return self._decorator(
+            path,
+            methods=["POST"],
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
+
+    def put(
+        self,
+        path: str,
+        *,
+        response_model: Optional[type] = None,
+        status_code: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return self._decorator(
+            path,
+            methods=["PUT"],
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
+
+    def delete(
+        self,
+        path: str,
+        *,
+        response_model: Optional[type] = None,
+        status_code: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return self._decorator(
+            path,
+            methods=["DELETE"],
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
 
     def include_router(self, router: "APIRouter") -> None:
         for route in router.routes:
@@ -243,9 +298,17 @@ class APIRouter:
         methods: Iterable[str],
         response_model: Optional[type] = None,
         status_code: Optional[int] = None,
+        **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
-            self.add_api_route(path, func, methods=methods, response_model=response_model, status_code=status_code)
+            self.add_api_route(
+                path,
+                func,
+                methods=methods,
+                response_model=response_model,
+                status_code=status_code,
+                **kwargs,
+            )
             return func
 
         return wrapper
@@ -300,12 +363,14 @@ class FastAPI:
         json_body: Any = None,
         form_data: Mapping[str, Any] | None = None,
         files: Mapping[str, Tuple[str, bytes, str]] | None = None,
+        headers: Mapping[str, str] | None = None,
     ) -> Tuple[int, Dict[str, str], bytes]:
         route = self._match_route(method, path)
         if route is None:
             return status.HTTP_404_NOT_FOUND, {"content-type": "application/json"}, json.dumps({"detail": "Not Found"}).encode("utf-8")
 
         try:
+            header_map = {key.lower(): value for key, value in (headers or {}).items()}
             body = await _execute_route(
                 self,
                 route,
@@ -315,6 +380,7 @@ class FastAPI:
                 json_body=json_body,
                 form_data=form_data or {},
                 files=files or {},
+                headers=header_map,
             )
             status_code, headers, payload = body
             return status_code, headers, payload
@@ -343,6 +409,7 @@ async def _execute_route(
     json_body: Any,
     form_data: Mapping[str, Any],
     files: Mapping[str, Tuple[str, bytes, str]],
+    headers: Mapping[str, str],
 ) -> Tuple[int, Dict[str, str], bytes]:
     path_params = route.match(path) or {}
     converted_params = {
@@ -359,6 +426,7 @@ async def _execute_route(
             json_body,
             form_data,
             files,
+            headers,
             cleanup_callbacks,
         )
         result = route.endpoint(**arguments)
@@ -389,6 +457,7 @@ async def _build_arguments(
     json_body: Any,
     form_data: Mapping[str, Any],
     files: Mapping[str, Tuple[str, bytes, str]],
+    headers: Mapping[str, str],
     cleanup_callbacks: list[Callable[[], Awaitable[None] | None]],
 ) -> Dict[str, Any]:
     signature = inspect.signature(endpoint)
@@ -405,7 +474,17 @@ async def _build_arguments(
 
         if isinstance(default, Depends):
             dependency = app.dependency_overrides.get(default.dependency, default.dependency)
-            resolved, cleanup = await _resolve_dependency(dependency)
+            resolved, cleanup = await _resolve_dependency(
+                dependency,
+                app=app,
+                headers=headers,
+                query_params=query_params,
+                path_params=path_params,
+                json_body=json_body,
+                form_data=form_data,
+                files=files,
+                cleanup_callbacks=cleanup_callbacks,
+            )
             arguments[name] = resolved
             if cleanup is not None:
                 cleanup_callbacks.append(cleanup)
@@ -416,6 +495,17 @@ async def _build_arguments(
                 if name not in query_params:
                     raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Missing query parameter {name}")
             value = query_params.get(name, default.default)
+            arguments[name] = _coerce_type(value, annotation)
+            continue
+
+        if isinstance(default, Header):
+            header_name = (default.alias or name).lower()
+            if header_name in headers:
+                value = headers[header_name]
+            elif default.default is ...:
+                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Missing header {header_name}")
+            else:
+                value = default.default
             arguments[name] = _coerce_type(value, annotation)
             continue
 
@@ -460,9 +550,30 @@ async def _build_arguments(
 
 
 async def _resolve_dependency(
-    dependency: Callable[..., Any]
+    dependency: Callable[..., Any],
+    *,
+    app: FastAPI,
+    headers: Mapping[str, str],
+    query_params: Mapping[str, Any],
+    path_params: Mapping[str, Any],
+    json_body: Any,
+    form_data: Mapping[str, Any],
+    files: Mapping[str, Tuple[str, bytes, str]],
+    cleanup_callbacks: list[Callable[[], Awaitable[None] | None]],
 ) -> Tuple[Any, Optional[Callable[[], Awaitable[None] | None]]]:
-    result = dependency()
+    dependency_cleanups: list[Callable[[], Awaitable[None] | None]] = []
+    arguments = await _build_arguments(
+        app,
+        dependency,
+        path_params,
+        query_params,
+        json_body,
+        form_data,
+        files,
+        headers,
+        dependency_cleanups,
+    )
+    result = dependency(**arguments)
     if inspect.isawaitable(result):
         result = await result
     if inspect.isasyncgen(result):
@@ -475,19 +586,22 @@ async def _resolve_dependency(
             except StopAsyncIteration:
                 pass
             await agen.aclose()
+            await _run_cleanups(dependency_cleanups)
 
         return value, _cleanup
     if inspect.isgenerator(result):  # pragma: no cover - rarely used
         gen = result
         value = next(gen)
 
-        def _cleanup_sync() -> None:
+        async def _cleanup_sync() -> None:
             try:
                 next(gen)
             except StopIteration:
                 pass
+            await _run_cleanups(dependency_cleanups)
 
         return value, _cleanup_sync
+    cleanup_callbacks.extend(dependency_cleanups)
     return result, None
 
 
@@ -563,7 +677,7 @@ async def _serialise_response(route: _Route, result: Any) -> Tuple[int, Dict[str
         except TypeError:
             needs_conversion = True
         if needs_conversion and hasattr(route.response_model, "model_validate"):
-            result = route.response_model.model_validate(result)
+            result = route.response_model.model_validate(result, from_attributes=True)
 
     if hasattr(result, "model_dump"):
         payload = json.dumps(result.model_dump(mode="json"), default=_json_default).encode("utf-8")

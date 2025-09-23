@@ -123,3 +123,73 @@ export interface ErgonomicsMetric {
   context: Record<string, unknown>;
   notes: string | null;
 }
+
+export interface EntApprovalSummary {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface EntRoadmapItem {
+  id: number;
+  project_id: number;
+  approval_type_id: number;
+  approval_type?: EntApprovalSummary | null;
+  sequence: number;
+  status: string;
+  target_submission_date?: string | null;
+  actual_submission_date?: string | null;
+  decision_date?: string | null;
+  notes?: string | null;
+  attachments?: Record<string, unknown>[];
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntStudy {
+  id: number;
+  project_id: number;
+  name: string;
+  study_type: string;
+  status: string;
+  consultant?: string | null;
+  submission_date?: string | null;
+  approval_date?: string | null;
+  report_uri?: string | null;
+  findings?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntStakeholder {
+  id: number;
+  project_id: number;
+  stakeholder_name: string;
+  stakeholder_type: string;
+  status: string;
+  contact_email?: string | null;
+  meeting_date?: string | null;
+  summary?: string | null;
+  next_steps?: string[];
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntLegalInstrument {
+  id: number;
+  project_id: number;
+  title: string;
+  instrument_type: string;
+  status: string;
+  reference_code?: string | null;
+  effective_date?: string | null;
+  expiry_date?: string | null;
+  storage_uri?: string | null;
+  attachments?: Record<string, unknown>[];
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}

@@ -113,21 +113,17 @@ async def list_rules(
     review_status: Optional[Union[str, List[str]]] = Query(None),
     session: AsyncSession = Depends(get_session),
 ) -> Dict[str, object]:
-    stmt = select(RefRule)
-    has_filters = False
+    filters: List[object] = []
     if jurisdiction:
-        stmt = stmt.where(RefRule.jurisdiction == jurisdiction)
-        has_filters = True
+        filters.append(RefRule.jurisdiction == jurisdiction)
     if parameter_key:
-        stmt = stmt.where(RefRule.parameter_key == parameter_key)
-        has_filters = True
+        filters.append(RefRule.parameter_key == parameter_key)
     if authority:
-        stmt = stmt.where(RefRule.authority == authority)
-        has_filters = True
+        filters.append(RefRule.authority == authority)
     if topic:
-        stmt = stmt.where(RefRule.topic == topic)
-        has_filters = True
+        filters.append(RefRule.topic == topic)
 
+    default_review_filter = False
     if review_status:
         if isinstance(review_status, str):
             raw_statuses = review_status.split(",")
@@ -135,14 +131,30 @@ async def list_rules(
             raw_statuses = review_status
         statuses = [status.strip() for status in raw_statuses if status and status.strip()]
         if len(statuses) == 1:
-            stmt = stmt.where(RefRule.review_status == statuses[0])
+            filters.append(RefRule.review_status == statuses[0])
         elif statuses:
-            stmt = stmt.where(RefRule.review_status.in_(statuses))
+            filters.append(RefRule.review_status.in_(statuses))
     else:
-        stmt = stmt.where(RefRule.review_status == "approved")
+        filters.append(RefRule.review_status == "approved")
+        default_review_filter = True
+
+    stmt = select(RefRule)
+    for condition in filters:
+        stmt = stmt.where(condition)
 
     result = await session.execute(stmt)
     rules = result.scalars().all()
+
+    if default_review_filter and not rules:
+        fallback_stmt = select(RefRule)
+        for condition in filters:
+            if getattr(condition, "attribute", None) == "review_status":
+                continue
+            fallback_stmt = fallback_stmt.where(condition)
+        fallback_stmt = fallback_stmt.where(
+            RefRule.review_status.in_(["approved", "needs_review"])
+        )
+        rules = (await session.execute(fallback_stmt)).scalars().all()
     zone_codes = [_extract_zone_code(rule) for rule in rules]
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
     normalizer = RuleNormalizer()

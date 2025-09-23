@@ -20,6 +20,10 @@ class _SyncResponse:
             return None
         return json.loads(self.content.decode("utf-8"))
 
+    @property
+    def text(self) -> str:
+        return self.content.decode("utf-8")
+
 
 class TestClient:
     """Synchronous facade over :class:`fastapi.FastAPI.handle_request`."""
@@ -37,6 +41,7 @@ class TestClient:
         json: Any = None,
         data: Optional[Mapping[str, Any]] = None,
         files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> _SyncResponse:
         path, query = self._split_url(url)
         query_params = dict(params or {})
@@ -52,6 +57,8 @@ class TestClient:
                     content_type or "application/octet-stream",
                 )
 
+        header_map = {key.lower(): value for key, value in (headers or {}).items()}
+
         async def _invoke():
             return await self.app.handle_request(
                 method=method,
@@ -60,13 +67,20 @@ class TestClient:
                 json_body=json,
                 form_data=dict(data or {}),
                 files=prepared_files,
+                headers=header_map,
             )
 
         status_code, headers, payload = asyncio.run(_invoke())
         return _SyncResponse(status_code=status_code, content=payload, headers=headers)
 
-    def get(self, url: str, *, params: Optional[Mapping[str, Any]] = None) -> _SyncResponse:
-        return self.request("GET", url, params=params)
+    def get(
+        self,
+        url: str,
+        *,
+        params: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> _SyncResponse:
+        return self.request("GET", url, params=params, headers=headers)
 
     def post(
         self,
@@ -75,8 +89,27 @@ class TestClient:
         json: Any = None,
         data: Optional[Mapping[str, Any]] = None,
         files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> _SyncResponse:
-        return self.request("POST", url, json=json, data=data, files=files)
+        return self.request("POST", url, json=json, data=data, files=files, headers=headers)
+
+    def put(
+        self,
+        url: str,
+        *,
+        json: Any = None,
+        data: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> _SyncResponse:
+        return self.request("PUT", url, json=json, data=data, headers=headers)
+
+    def delete(
+        self,
+        url: str,
+        *,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> _SyncResponse:
+        return self.request("DELETE", url, headers=headers)
 
     def close(self) -> None:  # pragma: no cover - compatibility no-op
         return None

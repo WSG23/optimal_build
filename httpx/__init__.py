@@ -53,6 +53,7 @@ class AsyncClient:
         json: Any = None,
         data: Optional[Dict[str, Any]] = None,
         files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Response:
         path, query = _normalise_url(url)
         query_params = _merge_query(query, params)
@@ -72,6 +73,8 @@ class AsyncClient:
                     content_type or "application/octet-stream",
                 )
 
+        header_map = {key.lower(): value for key, value in (headers or {}).items()}
+
         if hasattr(self._app, "handle_request"):
             status_code, headers, payload = await self._app.handle_request(
                 method=method,
@@ -80,6 +83,7 @@ class AsyncClient:
                 json_body=json,
                 form_data=dict(data or {}),
                 files=prepared_files,
+                headers=header_map,
             )
             return Response(status_code, payload, dict(headers))
 
@@ -98,7 +102,10 @@ class AsyncClient:
         if json is not None:
             body = _json_bytes(json)
             scope["headers"].append((b"content-type", b"application/json"))
-        scope["headers"].append((b"host", self.base_url.encode("utf-8")))
+        scope_headers = {"host": self.base_url}
+        scope_headers.update({key: value for key, value in header_map.items()})
+        for name, value in scope_headers.items():
+            scope["headers"].append((name.encode("utf-8"), value.encode("utf-8")))
 
         receive_messages = [{"type": "http.request", "body": body, "more_body": False}]
         sent_messages: list[dict[str, Any]] = []
@@ -126,8 +133,14 @@ class AsyncClient:
                 payload += message.get("body", b"")
         return Response(status_code, payload, headers)
 
-    async def get(self, url: str, *, params: Optional[Dict[str, Any]] = None) -> Response:
-        return await self.request("GET", url, params=params)
+    async def get(
+        self,
+        url: str,
+        *,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> Response:
+        return await self.request("GET", url, params=params, headers=headers)
 
     async def post(
         self,
@@ -136,8 +149,9 @@ class AsyncClient:
         json: Any = None,
         data: Optional[Dict[str, Any]] = None,
         files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Response:
-        return await self.request("POST", url, json=json, data=data, files=files)
+        return await self.request("POST", url, json=json, data=data, files=files, headers=headers)
 
 
 def _normalise_url(url: str) -> tuple[str, str]:
