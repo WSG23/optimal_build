@@ -5,7 +5,7 @@ from __future__ import annotations
 import collections.abc
 import hashlib
 import inspect
-from typing import Mapping
+from typing import Mapping, Sequence
 
 import pytest
 
@@ -185,6 +185,101 @@ class _StubFetcher:
             last_modified=f"{authority_key}-last-modified",
             content_type=content_type,
         )
+
+
+class _DuplicatePayloadFetcher:
+    def __init__(
+        self,
+        payload: bytes,
+        *,
+        etags: Sequence[str],
+        target_source_id: int | None = None,
+        content_type: str = "application/pdf",
+    ) -> None:
+        self._payload = payload
+        self._etags = list(etags)
+        self._content_type = content_type
+        self._target_source_id = target_source_id
+        self.fetch_calls: list[int] = []
+
+    async def fetch(
+        self,
+        source: RefSource,
+        existing: RefDocument | None = None,
+    ) -> FetchedDocument | None:
+        if self._target_source_id is not None and source.id != self._target_source_id:
+            return None
+        if not self._etags:
+            return None
+        self.fetch_calls.append(source.id)
+        etag = self._etags.pop(0)
+        return FetchedDocument(
+            content=self._payload,
+            etag=etag,
+            last_modified=f"{etag}-last-modified",
+            content_type=self._content_type,
+        )
+
+
+@pytest.mark.asyncio
+async def test_watch_fetch_deduplicates_identical_payloads(async_session_factory, tmp_path) -> None:
+    storage = ReferenceStorage(base_path=tmp_path, bucket="")
+    payload = b"%PDF-1.4\nIdentical payload"
+
+    async with async_session_factory() as session:
+        source = RefSource(
+            jurisdiction="SG",
+            authority="BCA",
+            topic="fire",
+            doc_title="Fire Code",
+            landing_url="https://example.com/fire-latest.pdf",
+            fetch_kind="pdf",
+            is_active=True,
+        )
+        session.add(source)
+        await session.commit()
+        source_id = source.id
+
+    fetcher = _DuplicatePayloadFetcher(
+        payload,
+        etags=["etag-v1", "etag-v2"],
+        target_source_id=source_id,
+    )
+
+    first_results = await watch_reference_sources(
+        async_session_factory,
+        fetcher=fetcher,
+        storage=storage,
+    )
+    assert len(first_results) == 1
+    assert fetcher.fetch_calls == [source_id]
+    document_id = first_results[0]["document_id"]
+
+    async with async_session_factory() as session:
+        document = await session.get(RefDocument, document_id)
+        assert document is not None
+        assert document.http_etag == "etag-v1"
+        assert document.storage_path.endswith(".pdf")
+        original_storage_path = document.storage_path
+        document.suspected_update = False
+        await session.commit()
+
+    second_results = await watch_reference_sources(
+        async_session_factory,
+        fetcher=fetcher,
+        storage=storage,
+    )
+    assert second_results == []
+    assert fetcher.fetch_calls == [source_id, source_id]
+
+    async with async_session_factory() as session:
+        updated = await session.get(RefDocument, document_id)
+        assert updated is not None
+        assert updated.id == document_id
+        assert updated.storage_path == original_storage_path
+        assert updated.http_etag == "etag-v2"
+        assert updated.http_last_modified == "etag-v2-last-modified"
+        assert updated.suspected_update is False
 
 
 @pytest.mark.asyncio
