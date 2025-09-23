@@ -871,10 +871,7 @@ def downgrade() -> None:
 
     op.execute("DROP INDEX IF EXISTS ix_overlay_source_geometries_created_at")
     op.execute("DROP INDEX IF EXISTS ix_overlay_source_geometries_checksum")
-    op.drop_index(
-        "ix_overlay_source_geometries_project_id",
-        table_name="overlay_source_geometries",
-    )
+    op.execute("DROP INDEX IF EXISTS ix_overlay_source_geometries_project_id")
     op.execute("DROP TABLE IF EXISTS overlay_source_geometries CASCADE")
 
     op.execute("DROP INDEX IF EXISTS ix_imports_project_id")
