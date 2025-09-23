@@ -231,8 +231,8 @@ jobs:
             tests/test_flows/test_watch_fetch_flow.py \
             tests/test_flows/test_parse_segment_flow.py \
             ../tests/finance/test_finance_smoke.py \
-            ../tests/pwp/test_buildable_latency.py \
-            ../tests/pwp/test_buildable_metrics.py
+            tests/pwp/test_buildable_latency.py \
+            tests/pwp/test_buildable_metrics.py
 
       - name: Collect coverage artifact
         run: |

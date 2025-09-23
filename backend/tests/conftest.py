@@ -65,6 +65,12 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
             return False
 
 try:  # pragma: no cover - optional dependency for database fixtures
+    from sqlalchemy._memory import GLOBAL_DATABASE as _GLOBAL_DATABASE
+except ModuleNotFoundError:  # pragma: no cover - running against real SQLAlchemy
+    _GLOBAL_DATABASE = None
+
+
+try:  # pragma: no cover - optional dependency for database fixtures
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 except ModuleNotFoundError as exc:  # pragma: no cover - fallback stub for offline testing
     class AsyncSession:  # type: ignore[no-redef]
@@ -150,6 +156,14 @@ else:
 
     @pytest_asyncio.fixture
     async def async_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+        if _GLOBAL_DATABASE is not None:  # pragma: no cover - offline stub cleanup
+            from app.models.base import BaseModel
+
+            for table in BaseModel.metadata.sorted_tables:
+                model = _GLOBAL_DATABASE.resolve_table(table.name)
+                if model is not None:
+                    _GLOBAL_DATABASE.delete_all(model)
+
         engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
         async with engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.create_all)
@@ -158,6 +172,13 @@ else:
             yield factory
         finally:
             await engine.dispose()
+            if _GLOBAL_DATABASE is not None:  # pragma: no cover - ensure clean slate between tests
+                from app.models.base import BaseModel
+
+                for table in BaseModel.metadata.sorted_tables:
+                    model = _GLOBAL_DATABASE.resolve_table(table.name)
+                    if model is not None:
+                        _GLOBAL_DATABASE.delete_all(model)
 
 
 @pytest.fixture(autouse=True)

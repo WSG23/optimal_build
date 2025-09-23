@@ -114,20 +114,32 @@ async def list_rules(
     session: AsyncSession = Depends(get_session),
 ) -> Dict[str, object]:
     stmt = select(RefRule)
+    filter_conditions: List[object] = []
     has_filters = False
     if jurisdiction:
-        stmt = stmt.where(RefRule.jurisdiction == jurisdiction)
+        condition = RefRule.jurisdiction == jurisdiction
+        stmt = stmt.where(condition)
+        filter_conditions.append(condition)
         has_filters = True
     if parameter_key:
-        stmt = stmt.where(RefRule.parameter_key == parameter_key)
+        condition = RefRule.parameter_key == parameter_key
+        stmt = stmt.where(condition)
+        filter_conditions.append(condition)
         has_filters = True
     if authority:
-        stmt = stmt.where(RefRule.authority == authority)
+        condition = RefRule.authority == authority
+        stmt = stmt.where(condition)
+        filter_conditions.append(condition)
         has_filters = True
     if topic:
-        stmt = stmt.where(RefRule.topic == topic)
+        condition = RefRule.topic == topic
+        stmt = stmt.where(condition)
+        filter_conditions.append(condition)
         has_filters = True
 
+    fallback_stmt = select(RefRule)
+    for condition in filter_conditions:
+        fallback_stmt = fallback_stmt.where(condition)
     if review_status:
         if isinstance(review_status, str):
             raw_statuses = review_status.split(",")
@@ -143,6 +155,9 @@ async def list_rules(
 
     result = await session.execute(stmt)
     rules = result.scalars().all()
+    if not rules and review_status is None and not filter_conditions:
+        result = await session.execute(fallback_stmt)
+        rules = result.scalars().all()
     zone_codes = [_extract_zone_code(rule) for rule in rules]
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
     normalizer = RuleNormalizer()
