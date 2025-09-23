@@ -175,6 +175,13 @@ curl -L -o finance_scenario.csv \
 
 Replace `<SCENARIO_ID>` with the identifier returned by the feasibility call.
 
+## Non-regulatory reference seeding
+
+Run `make seed-nonreg` to populate ergonomics, material standards, and cost
+index reference tables. The Makefile target executes `python -m
+backend.scripts.seed_nonreg`, which you can also invoke directly from the
+repository root when seeding outside Docker.
+
 ## Entitlements roadmap seeding
 
 Run `python scripts/seed_entitlements_sg.py --project-id 90301 --reset` to seed the
