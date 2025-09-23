@@ -117,10 +117,21 @@ async def _load_rules_for_zone(
 
     overrides = _RuleOverrides()
     rules: List[BuildableRule] = []
+    matched: List[Tuple[RefRule, int]] = []
     for record in result.scalars():
         if not _zone_matches(record.applicability, zone_code):
             continue
-        _apply_rule_override(overrides, record)
+        priority = _rule_override_priority(record)
+        matched.append((record, priority))
+
+    for record, priority in sorted(
+        matched,
+        key=lambda item: (item[1], item[0].id or 0),
+        reverse=True,
+    ):
+        _apply_rule_override(overrides, record, priority)
+
+    for record, _priority in matched:
         provenance = BuildableRuleProvenance(
             rule_id=record.id,
             clause_ref=record.clause_ref,
@@ -314,16 +325,21 @@ def _zone_matches(applicability: Any, zone_code: str) -> bool:
 @dataclass
 class _RuleOverrides:
     plot_ratio: Optional[float] = None
+    plot_ratio_priority: int = -1
     site_coverage: Optional[float] = None
+    site_coverage_priority: int = -1
     height_limit_m: Optional[float] = None
+    height_limit_priority: int = -1
     storey_limit: Optional[int] = None
+    storey_limit_priority: int = -1
     front_setback_m: Optional[float] = None
+    front_setback_priority: int = -1
 
 
 _NUMBER_PATTERN = re.compile(r"[-+]?(?:\d+\.?\d*|\d*\.?\d+)(?:[eE][-+]?\d+)?")
 
 
-def _apply_rule_override(overrides: _RuleOverrides, rule: RefRule) -> None:
+def _apply_rule_override(overrides: _RuleOverrides, rule: RefRule, priority: int) -> None:
     parameter_key = (rule.parameter_key or "").lower()
     value = _coerce_rule_float(rule.value)
     if value is None or value <= 0:
@@ -331,31 +347,88 @@ def _apply_rule_override(overrides: _RuleOverrides, rule: RefRule) -> None:
 
     unit = (rule.unit or "").strip().lower()
     if parameter_key == "zoning.max_far":
-        if overrides.plot_ratio is None or value < overrides.plot_ratio:
+        if overrides.plot_ratio is None or priority > overrides.plot_ratio_priority:
+            overrides.plot_ratio = value
+            overrides.plot_ratio_priority = priority
+        elif priority == overrides.plot_ratio_priority == 0 and value < overrides.plot_ratio:
             overrides.plot_ratio = value
     elif parameter_key == "zoning.site_coverage.max_percent":
         fraction = _normalise_percentage(value, unit)
         if fraction is not None:
-            if overrides.site_coverage is None or fraction < overrides.site_coverage:
+            if (
+                overrides.site_coverage is None
+                or priority > overrides.site_coverage_priority
+            ):
+                overrides.site_coverage = fraction
+                overrides.site_coverage_priority = priority
+            elif (
+                priority == overrides.site_coverage_priority == 0
+                and fraction < overrides.site_coverage
+            ):
                 overrides.site_coverage = fraction
     elif parameter_key == "zoning.max_building_height_m":
         if unit in {"storey", "storeys", "story", "stories"}:
             storeys = int(math.floor(value))
             if storeys > 0 and (
-                overrides.storey_limit is None or storeys < overrides.storey_limit
+                overrides.storey_limit is None
+                or priority > overrides.storey_limit_priority
+            ):
+                overrides.storey_limit = storeys
+                overrides.storey_limit_priority = priority
+            elif (
+                priority == overrides.storey_limit_priority == 0
+                and storeys < overrides.storey_limit
             ):
                 overrides.storey_limit = storeys
         else:
-            if overrides.height_limit_m is None or value < overrides.height_limit_m:
+            if (
+                overrides.height_limit_m is None
+                or priority > overrides.height_limit_priority
+            ):
+                overrides.height_limit_m = value
+                overrides.height_limit_priority = priority
+            elif (
+                priority == overrides.height_limit_priority == 0
+                and value < overrides.height_limit_m
+            ):
                 overrides.height_limit_m = value
     elif parameter_key == "zoning.setback.front_min_m":
         metres = _convert_to_metres(value, unit)
         if metres is not None:
             if (
                 overrides.front_setback_m is None
-                or metres > overrides.front_setback_m
+                or priority > overrides.front_setback_priority
             ):
                 overrides.front_setback_m = metres
+                overrides.front_setback_priority = priority
+            elif (
+                priority == overrides.front_setback_priority == 0
+                and metres > overrides.front_setback_m
+            ):
+                overrides.front_setback_m = metres
+
+
+def _rule_override_priority(rule: RefRule) -> int:
+    provenance = (
+        rule.source_provenance
+        if isinstance(rule.source_provenance, dict)
+        else None
+    )
+    if provenance:
+        raw_priority = provenance.get("override_priority")
+        if isinstance(raw_priority, (int, float)):
+            try:
+                return int(raw_priority)
+            except (TypeError, ValueError):
+                pass
+        seed_tag = provenance.get("seed_tag")
+        if isinstance(seed_tag, str):
+            tag = seed_tag.strip().lower()
+            if tag:
+                if tag in {"zoning", "zoning_defaults", "defaults", "seed"}:
+                    return 0
+                return 1
+    return 0
 
 
 def _coerce_rule_float(value: Any) -> Optional[float]:
