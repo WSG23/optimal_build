@@ -1,6 +1,7 @@
 """Add review notes column to ref_rules."""
 
 from __future__ import annotations
+from sqlalchemy.dialects import postgresql
 
 from alembic import op
 import sqlalchemy as sa

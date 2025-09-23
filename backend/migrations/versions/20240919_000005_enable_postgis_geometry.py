@@ -1,6 +1,7 @@
 """Add optional PostGIS geometry columns for parcels and zoning layers."""
 
 from __future__ import annotations
+from sqlalchemy.dialects import postgresql
 
 import os
 
