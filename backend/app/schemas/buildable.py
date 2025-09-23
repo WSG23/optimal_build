@@ -9,6 +9,29 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from app.core.config import settings
 
 
+_REQUEST_ALIAS_MAP: Dict[str, str] = {
+    "typFloorToFloorM": "typ_floor_to_floor_m",
+    "efficiencyRatio": "efficiency_ratio",
+    "defaults": "defaults",
+}
+
+_DEFAULTS_ALIAS_MAP: Dict[str, str] = {
+    "plotRatio": "plot_ratio",
+    "siteAreaM2": "site_area_m2",
+    "siteCoverage": "site_coverage",
+    "floorHeightM": "floor_height_m",
+    "efficiencyFactor": "efficiency_factor",
+}
+
+
+def _apply_aliases(data: Dict[str, Any], aliases: Mapping[str, str]) -> None:
+    """Populate canonical field names from known aliases."""
+
+    for alias, field_name in aliases.items():
+        if alias in data and field_name not in data:
+            data[field_name] = data.pop(alias)
+
+
 class BuildableDefaults(BaseModel):
     """Default assumptions for buildable calculations."""
 
@@ -61,28 +84,11 @@ class BuildableRequest(BaseModel):
 
         if isinstance(obj, Mapping):
             data = dict(obj)
-            aliases = {
-                "typFloorToFloorM": "typ_floor_to_floor_m",
-                "efficiencyRatio": "efficiency_ratio",
-                "defaults": "defaults",
-            }
-            for alias, field_name in aliases.items():
-                if alias in data and field_name not in data:
-                    data[field_name] = data.pop(alias)
-
+            _apply_aliases(data, _REQUEST_ALIAS_MAP)
             defaults_value = data.get("defaults")
             if isinstance(defaults_value, Mapping):
-                defaults_aliases = {
-                    "plotRatio": "plot_ratio",
-                    "siteAreaM2": "site_area_m2",
-                    "siteCoverage": "site_coverage",
-                    "floorHeightM": "floor_height_m",
-                    "efficiencyFactor": "efficiency_factor",
-                }
                 normalised_defaults = dict(defaults_value)
-                for alias, field_name in defaults_aliases.items():
-                    if alias in normalised_defaults and field_name not in normalised_defaults:
-                        normalised_defaults[field_name] = normalised_defaults.pop(alias)
+                _apply_aliases(normalised_defaults, _DEFAULTS_ALIAS_MAP)
                 data["defaults"] = normalised_defaults
 
             obj = data

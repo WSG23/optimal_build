@@ -158,9 +158,9 @@ async def _run_once(
 
 async def _collect_counts() -> tuple[int, int]:
     async with AsyncSessionLocal() as session:
-        document_count = await session.scalar(select(func.count()).select_from(RefDocument))
-        clause_count = await session.scalar(select(func.count()).select_from(RefClause))
-    return int(document_count or 0), int(clause_count or 0)
+        documents = (await session.execute(select(RefDocument))).scalars().all()
+        clauses = (await session.execute(select(RefClause))).scalars().all()
+    return len(documents), len(clauses)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> dict[str, int | List[int]]:

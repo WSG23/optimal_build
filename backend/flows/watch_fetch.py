@@ -51,6 +51,7 @@ async def watch_reference_sources(
     results: List[Dict[str, Any]] = []
     seen_hashes: set[tuple[int, str]] = set()
     seen_document_ids: set[int] = set()
+    seen_file_hashes: set[str] = set()
 
     async with session_factory() as session:
         sources = (
@@ -83,6 +84,7 @@ async def watch_reference_sources(
                 await session.flush()
                 seen_hashes.add((source.id, file_hash))
                 seen_document_ids.add(duplicate.id)
+                seen_file_hashes.add(file_hash)
                 continue
 
             suffix = _determine_suffix(fetch_kind, fetched)
@@ -107,6 +109,9 @@ async def watch_reference_sources(
                 continue
             seen_hashes.add(document_identity)
             seen_document_ids.add(document.id)
+            if document.file_hash in seen_file_hashes:
+                continue
+            seen_file_hashes.add(document.file_hash)
             results.append(
                 {
                     "document_id": document.id,
@@ -311,10 +316,10 @@ async def _summarise_ingestion(
         "results": list(results),
     }
     async with AsyncSessionLocal() as session:
-        document_count = await session.scalar(select(func.count()).select_from(RefDocument))
-        source_count = await session.scalar(select(func.count()).select_from(RefSource))
-        summary["document_count"] = int(document_count or 0)
-        summary["source_count"] = int(source_count or 0)
+        documents = (await session.execute(select(RefDocument))).scalars().all()
+        sources = (await session.execute(select(RefSource))).scalars().all()
+        summary["document_count"] = len(documents)
+        summary["source_count"] = len(sources)
     unique_document_ids = {
         item.get("document_id")
         for item in summary["results"]

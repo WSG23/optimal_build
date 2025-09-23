@@ -1,12 +1,15 @@
-# Python Wheels Mirror
+# Python dependencies
 
-This directory is a placeholder for the pre-downloaded Python wheels that the CI
-workflow installs with `--no-index`. Refresh the contents whenever
-`backend/requirements-dev.txt` changes by running:
+Python dependencies are installed from the pinned requirement files using the
+standard `pip install` flow. SQLAlchemy is resolved from
+`backend/requirements.txt`, so there is no longer a vendored wheel committed in
+this directory.
+
+To install the backend dependencies for development or CI, run:
 
 ```bash
-pip download --dest third_party/python -r backend/requirements-dev.txt
+pip install -r backend/requirements-dev.txt
 ```
 
-Make sure the resulting wheels are committed to the repository so CI jobs can
-install dependencies without reaching external package indexes.
+The directory remains in the repository as a placeholder should we need to add
+future offline mirrors, but it is intentionally empty.

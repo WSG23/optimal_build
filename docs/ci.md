@@ -1,18 +1,22 @@
 # Continuous Integration
 
-## Dependency mirror maintenance
+## Dependency installation
 
-CI installs both Python and frontend dependencies from mirrors committed to the
-repository so that workflows do not reach public package registries. When any
-Python or Node dependency changes, refresh the mirrors before pushing:
+CI and local development environments install Python dependencies directly from
+the pinned requirement files instead of pre-downloaded wheels. Run the standard
+installation command whenever the backend requirements change:
 
 ```bash
-pip download --dest third_party/python -r backend/requirements-dev.txt
+pip install -r backend/requirements-dev.txt
+```
+
+Frontend dependencies continue to use the cached pnpm store that lives under
+`third_party/pnpm-store`. Refresh the cache when Node dependencies change:
+
+```bash
 pnpm fetch
 cp -r node_modules/.pnpm-store third_party/pnpm-store
 ```
 
-Commit the updated `third_party/python` wheels and the contents of
-`third_party/pnpm-store` together with the dependency lockfile updates. This
-keeps the GitHub Actions workflows functioning in offline mode and ensures that
-local developers can reproduce the CI environment.
+Commit the updated pnpm store together with the dependency lockfile updates so
+GitHub Actions workflows can continue to run without reaching public registries.

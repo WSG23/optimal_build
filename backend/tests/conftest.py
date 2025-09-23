@@ -12,6 +12,10 @@ from typing import Any
 
 import pytest
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 _MISSING_DEPS = [
     name
     for name in ("fastapi", "pydantic", "sqlalchemy")
@@ -19,18 +23,15 @@ _MISSING_DEPS = [
 ]
 
 if "sqlalchemy" not in _MISSING_DEPS:
-    try:  # pragma: no cover - only exercised when the stub is present
+    try:  # pragma: no cover - ensures we use the real package
         import sqlalchemy as _sqlalchemy
     except ModuleNotFoundError:  # pragma: no cover - defensive
-        pass
+        _MISSING_DEPS.append("sqlalchemy")
     else:
         if getattr(_sqlalchemy, "root_missing_error", None) is not None:
             _MISSING_DEPS.append("sqlalchemy")
 
 if _MISSING_DEPS:  # pragma: no cover - offline test fallback
-    _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-    if str(_PROJECT_ROOT) not in sys.path:
-        sys.path.insert(0, str(_PROJECT_ROOT))
     pytestmark = pytest.mark.skip(
         reason=f"Required dependencies missing: {', '.join(sorted(_MISSING_DEPS))}"
     )

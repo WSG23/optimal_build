@@ -1,5 +1,10 @@
 # Optimal Build
 
+## Prerequisites
+
+* Docker with the Compose plugin (or the legacy `docker-compose` binary) for targets that manage services such as `make dev-start`, `make init-db`, `make reset`, `make build`, and `make logs`. The Makefile auto-detects whichever CLI is available and surfaces a descriptive error when neither is present.
+* A local Python interpreter with the backend dependencies installed (e.g., `pip install -r backend/requirements-dev.txt`) so that Python fallbacks like `make seed-data` and `make db.upgrade` can talk to the database when Docker is unavailable.
+
 ## Frontend environment configuration
 
 The frontend reads API locations from the `VITE_API_BASE_URL` variable that is loaded by Vite at build time. The value is resolved with `new URL(path, base)` so that links behave correctly whether the backend is exposed on the same origin, via a sub-path proxy, or through a separate host. For local development we provide a default of `/` in `frontend/.env` (copy `frontend/.env.example`) so the app talks to whichever host serves the frontend.
@@ -31,22 +36,28 @@ These values are consumed by `backend/app/core/config.py`. When only `REDIS_URL`
 
 ### Database migrations
 
-Apply the Alembic migrations before booting the API or background workers. The
-`init-db` make target runs `alembic upgrade head` inside the backend container,
-while local environments can execute `cd backend && alembic upgrade head` to
-create and update the schema.
+Apply the Alembic migrations before booting the API or background workers. Use
+`make db.upgrade` to run `python -m backend.migrations alembic upgrade head`
+directly against your local environment. Docker-driven setups can call
+`make init-db`, which executes the same module inside the backend container
+once the Compose CLI is available.
 
 The Postgres service defined in `docker-compose.yml` mounts
 [`scripts/init-db.sql`](scripts/init-db.sql) into
 `/docker-entrypoint-initdb.d/`. The script reads the `POSTGRES_DB` and
 `POSTGRES_USER` values from the container environment (falling back to the
-repository defaults) before provisioning the database and enabling the UUID
-helper extensions the application expects. When migrations introduce new
-extensions or other global prerequisites, update the SQL bootstrap script and
-run `alembic upgrade head` so the declarative schema and the on-disk database
-stay aligned. Because the script only executes when the Postgres data directory
-is empty, run `docker compose down -v` (or remove the `postgres_data` volume)
-to rebuild the database after changing the bootstrap logic.
+repository defaults of `building_compliance` and `postgres`) before
+provisioning the database. It always enables the `pgcrypto` and `uuid-ossp`
+extensions, and when `BUILDABLE_USE_POSTGIS` is set to a truthy value **and**
+the container exposes the PostGIS extension files, it installs `postgis` so
+geometry-aware migrations can run without manual intervention. When migrations
+introduce new extensions or other global prerequisites, update the SQL
+bootstrap script and run `alembic upgrade head` so the declarative schema and
+the on-disk database stay aligned. Because the script only executes when the
+Postgres data directory is empty, run `docker compose down -v` (or remove the
+`postgres_data` volume) — or the equivalent `docker-compose down -v` command —
+to rebuild the database after changing the bootstrap logic. Document any new assumptions in this README so local and CI environments
+stay in sync.
 
 ## CI Smokes
 
@@ -130,16 +141,19 @@ underlying heuristics and instrumentation assumptions are documented in
 ## Finance feasibility demo
 
 Run `make seed-data` after applying migrations to populate both the screening
-fixtures and a finance feasibility workspace. The make target now executes the
-finance demo seeder (`python -m scripts.seed_finance_demo`) inside the backend
-container, which creates:
+fixtures and a finance feasibility workspace. When Docker Compose is available
+the target executes `python -m backend.scripts.seed_screening` and
+`python -m backend.scripts.seed_finance_demo` inside the backend container. If
+Compose is missing, the Makefile falls back to running the same modules
+locally, so ensure your Python environment can reach the configured database.
+The seeding process creates:
 
 * a finance project linked to `project_id=401` named “Finance Demo Development”,
 * three scenarios (A/B/C) with escalated cost assumptions and cash-flow inputs,
 * cost line items and monthly cash-flow schedules for each scenario, and
 * persisted results mirroring the `/api/v1/finance/feasibility` response payload.
 
-To run the seeder outside Docker, execute `python scripts/seed_finance_demo.py`
+To run the seeder outside Docker, execute `python -m backend.scripts.seed_finance_demo`
 from the repository root. The CLI accepts `--project-id`, `--project-name`, and
 `--currency` options plus `--keep-existing` to retain previous demo rows.
 

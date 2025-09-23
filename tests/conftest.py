@@ -31,6 +31,14 @@ from app.core import database as app_database
 from backend.scripts.seed_nonreg import seed_nonregulated_reference_data
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    """Register project-specific markers to silence pytest warnings."""
+
+    config.addinivalue_line(
+        "markers", "asyncio: mark test as requiring asyncio event loop support"
+    )
+
+
 @pytest_asyncio.fixture(autouse=True)
 async def _override_app_database(async_session_factory, monkeypatch):
     """Ensure application session factories use the in-memory test database."""

@@ -20,7 +20,14 @@ frontend README. Either casing may be used for the request body:
 ```
 
 Legacy clients may continue sending camelCase keys and the backend will
-normalise them automatically:
+normalise them automatically. The service recognises the following aliases:
+
+* `typFloorToFloorM` → `typ_floor_to_floor_m`
+* `efficiencyRatio` → `efficiency_ratio`
+* `defaults` → `defaults` (including nested keys like `plotRatio`,
+  `siteAreaM2`, `siteCoverage`, `floorHeightM`, and `efficiencyFactor`)
+
+For example:
 
 ```json
 {
@@ -53,4 +60,7 @@ and performance:
 Both metrics are included in the `/health/metrics` endpoint and in the output of
 `app.utils.metrics.render_latest_metrics()`, enabling dashboards and alerts to
 verify that requests are flowing and that latency stays within expected
-thresholds.
+thresholds. After a buildable request succeeds, reloading `/health/metrics`
+will show `pwp_buildable_total` incremented by one and the histogram's
+`pwp_buildable_duration_ms_count` advancing, confirming the instrumentation is
+capturing new work.

@@ -41,10 +41,11 @@ def _write_json(path: Path, payload: Any) -> None:
 def _augment_pythonpath(env: MutableMapping[str, str], backend_dir: Path) -> None:
     current = env.get("PYTHONPATH")
     parts = [part for part in (current.split(os.pathsep) if current else []) if part]
-    backend_str = str(backend_dir)
-    if backend_str not in parts:
-        parts.append(backend_str)
-    env["PYTHONPATH"] = os.pathsep.join(parts) if parts else backend_str
+    for candidate in (backend_dir, backend_dir.parent):
+        candidate_str = str(candidate)
+        if candidate_str not in parts:
+            parts.append(candidate_str)
+    env["PYTHONPATH"] = os.pathsep.join(parts) if parts else str(backend_dir)
 
 
 def run_alembic_upgrades(backend_dir: Path) -> None:

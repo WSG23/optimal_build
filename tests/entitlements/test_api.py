@@ -10,6 +10,7 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
+from app.utils import metrics
 from backend.scripts.seed_entitlements_sg import seed_entitlements
 
 
@@ -120,3 +121,41 @@ async def test_entitlements_workflow(async_session_factory, app_client: AsyncCli
     metrics_body = metrics_response.text
     assert "entitlements_study_requests_total" in metrics_body
     assert "entitlements_export_requests_total" in metrics_body
+
+
+@pytest.mark.asyncio
+async def test_entitlements_export_smoke(
+    async_session_factory, app_client: AsyncClient
+) -> None:
+    """Exports should stream CSV payloads with appropriate headers."""
+
+    metrics.reset_metrics()
+
+    async with async_session_factory() as session:
+        await seed_entitlements(session, project_id=PROJECT_ID)
+        await session.commit()
+
+    response = await app_client.get(f"/api/v1/entitlements/{PROJECT_ID}/export")
+    assert response.status_code == 200
+
+    content_type = response.headers.get("content-type", "")
+    assert content_type.startswith("text/csv")
+
+    disposition = response.headers.get("content-disposition") or response.headers.get(
+        "Content-Disposition"
+    )
+    assert disposition is not None
+    assert disposition.startswith("attachment; filename=project-")
+
+    body = response.text
+    assert "Entitlements roadmap for project" in body
+    assert str(PROJECT_ID) in body
+
+    export_counter = metrics.counter_value(
+        metrics.ENTITLEMENTS_EXPORT_COUNTER, {"format": "csv"}
+    )
+    request_counter = metrics.counter_value(
+        metrics.REQUEST_COUNTER, {"endpoint": "entitlements_export"}
+    )
+    assert export_counter == pytest.approx(1.0)
+    assert request_counter == pytest.approx(1.0)
