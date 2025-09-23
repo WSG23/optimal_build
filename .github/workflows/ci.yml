@@ -6,13 +6,14 @@ on:
       - main
   pull_request:
 
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
 jobs:
-  backend:
-    name: Backend Tests
+  lint:
+    name: Lint & Format
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,59 +21,39 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
           cache-dependency-path: backend/requirements-dev.txt
 
-      - name: Install dependencies
+      - name: Install lint dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          pip install -r backend/requirements-dev.txt
 
-      - name: Lint backend
-        run: flake8 app tests
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
 
-      - name: Type-check backend
-        run: mypy app
-
-      - name: Run tests
-        run: pytest
-
-  frontend:
-    name: Frontend Lint and Build
+  backend:
+    name: Backend Smokes & Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint frontend
-        run: npm run lint
-
-      - name: Build application
-        run: npm run build
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
-      - name: Run Playwright tests
-        run: npm run test:e2e
-
-  aec-tests:
-    name: AEC Integration Tests
-    runs-on: ubuntu-latest
+    needs: lint
+    env:
+      POSTGRES_SERVER: 127.0.0.1
+      POSTGRES_DB: building_compliance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: '5432'
+      REDIS_URL: redis://127.0.0.1:6379
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/1
+      RQ_REDIS_URL: redis://127.0.0.1:6379/2
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      IMPORTS_BUCKET_NAME: cad-imports
+      EXPORTS_BUCKET_NAME: cad-exports
+      PYTHONPATH: backend
+      CI_ARTIFACTS: ${{ github.workspace }}/artifacts
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -80,7 +61,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
           cache-dependency-path: backend/requirements-dev.txt
 
@@ -89,16 +70,280 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
 
+      - name: Start backing services
+        run: |
+          docker compose -f docker-compose.yml up -d postgres redis minio
+
+      - name: Wait for services
+        run: |
+          set -euo pipefail
+          postgres_ready=false
+          for attempt in $(seq 1 30); do
+            if docker compose -f docker-compose.yml exec -T postgres pg_isready -U "$POSTGRES_USER"; then
+              postgres_ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$postgres_ready" != "true" ]; then
+            echo "Postgres did not become ready in time" >&2
+            exit 1
+          fi
+          docker compose -f docker-compose.yml exec -T redis redis-cli ping
+          minio_ready=false
+          for attempt in $(seq 1 30); do
+            if curl -sSf http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              minio_ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$minio_ready" != "true" ]; then
+            echo "Minio did not become ready in time" >&2
+            exit 1
+          fi
+
+      - name: Run database migrations
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Seed reference data
+        run: |
+          cd backend
+          python -m scripts.seed_screening
+          python -m scripts.seed_finance_demo
+          python -m scripts.seed_nonreg
+
+      - name: Prepare artifact directory
+        run: mkdir -p "$CI_ARTIFACTS"
+
+      - name: RKP ingestion smoke
+        env:
+          STORAGE_DIR: ${{ runner.temp }}/rkp-storage
+        run: |
+          set -euo pipefail
+          mkdir -p "$STORAGE_DIR" "$CI_ARTIFACTS"
+          python -m backend.flows.watch_fetch --once --offline --storage-path "$STORAGE_DIR" --summary-path "$CI_ARTIFACTS/watch_fetch_summary.json"
+          python -m backend.flows.parse_segment --once --storage-path "$STORAGE_DIR" --summary-path "$CI_ARTIFACTS/parse_segment_summary.json"
+
+      - name: Backend API smoke
+        env:
+          STORAGE_DIR: ${{ runner.temp }}/rkp-storage
+        run: |
+          set -euo pipefail
+          cd backend
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          UVICORN_PID=$!
+          trap "kill $UVICORN_PID; wait $UVICORN_PID || true" EXIT
+          api_ready=false
+          for attempt in $(seq 1 40); do
+            if curl -sSf http://127.0.0.1:8000/health > /dev/null; then
+              api_ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$api_ready" != "true" ]; then
+            echo "Backend API failed health check" >&2
+            exit 1
+          fi
+          python - <<'PY'
+import json
+import os
+import sys
+import time
+
+import httpx
+
+payload = {
+    "address": "123 Example Ave",
+    "typ_floor_to_floor_m": 3.4,
+    "efficiency_ratio": 0.8,
+}
+for attempt in range(30):
+    try:
+        response = httpx.post("http://127.0.0.1:8000/api/v1/screen/buildable", json=payload, timeout=30.0)
+        response.raise_for_status()
+        data = response.json()
+        break
+    except Exception:
+        time.sleep(1.0)
+else:
+    raise SystemExit("Failed to contact buildable screening endpoint.")
+
+metrics = data.get("metrics") or {}
+if "zone_code" not in data:
+    raise SystemExit("Buildable smoke failed: missing zone_code.")
+if "gfa_cap_m2" not in metrics:
+    raise SystemExit("Buildable smoke failed: missing metrics.gfa_cap_m2.")
+
+artifacts_dir = os.path.join(os.environ["CI_ARTIFACTS"])
+os.makedirs(artifacts_dir, exist_ok=True)
+with open(os.path.join(artifacts_dir, "buildable_response.json"), "w", encoding="utf-8") as handle:
+    json.dump(data, handle, indent=2, sort_keys=True)
+PY
+          curl -sSf http://127.0.0.1:8000/openapi.json > "$CI_ARTIFACTS/openapi.json"
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          pytest -q --maxfail=1 --cov=app --cov-report=xml \
+            tests/test_api/test_rules.py \
+            tests/test_flows/test_watch_fetch_flow.py \
+            tests/test_flows/test_parse_segment_flow.py
+
+      - name: Collect coverage artifact
+        run: |
+          mkdir -p "$CI_ARTIFACTS"
+          if [ -f backend/coverage.xml ]; then
+            cp backend/coverage.xml "$CI_ARTIFACTS/backend-coverage.xml"
+          fi
+
+      - name: Stop services
+        if: always()
+        run: docker compose -f docker-compose.yml down --volumes
+
+      - name: Upload backend artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifacts
+          path: artifacts
+          if-no-files-found: warn
+
+  frontend-e2e:
+    name: Frontend E2E
+    runs-on: ubuntu-latest
+    needs: backend
+    env:
+      POSTGRES_SERVER: 127.0.0.1
+      POSTGRES_DB: building_compliance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_PORT: '5432'
+      REDIS_URL: redis://127.0.0.1:6379
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/1
+      RQ_REDIS_URL: redis://127.0.0.1:6379/2
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      IMPORTS_BUCKET_NAME: cad-imports
+      EXPORTS_BUCKET_NAME: cad-exports
+      PYTHONPATH: backend
+      VITE_API_BASE_URL: http://127.0.0.1:8000/
+      CI: 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-store.outputs.store-path }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.txt
+
+      - name: Start backing services
+        run: |
+          docker compose -f docker-compose.yml up -d postgres redis minio
+
+      - name: Wait for services
+        run: |
+          set -euo pipefail
+          postgres_ready=false
+          for attempt in $(seq 1 30); do
+            if docker compose -f docker-compose.yml exec -T postgres pg_isready -U "$POSTGRES_USER"; then
+              postgres_ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$postgres_ready" != "true" ]; then
+            echo "Postgres did not become ready in time" >&2
+            exit 1
+          fi
+          docker compose -f docker-compose.yml exec -T redis redis-cli ping
+          minio_ready=false
+          for attempt in $(seq 1 30); do
+            if curl -sSf http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              minio_ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$minio_ready" != "true" ]; then
+            echo "Minio did not become ready in time" >&2
+            exit 1
+          fi
+
+      - name: Run database migrations
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Seed reference data
+        run: |
+          cd backend
+          python -m scripts.seed_screening
+          python -m scripts.seed_finance_demo
+          python -m scripts.seed_nonreg
 
       - name: Install frontend dependencies
-        run: npm ci
-        working-directory: frontend
+        run: pnpm -C frontend install --no-frozen-lockfile
 
-      - name: Run AEC flow commands and tests
-        run: make test-aec
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers
+        run: pnpm -C frontend exec playwright install --with-deps
+
+      - name: Run frontend end-to-end tests
+        run: pnpm -C frontend test:e2e
+
+      - name: Stop services
+        if: always()
+        run: docker compose -f docker-compose.yml down --volumes
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-playwright
+          path: |
+            frontend/test-results
+            frontend/playwright-report
+          if-no-files-found: warn
