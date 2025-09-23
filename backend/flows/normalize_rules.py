@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from prefect import flow
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+if str(Path(__file__).resolve().parents[1]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from app.services.normalize import NormalizedRule, RuleNormalizer

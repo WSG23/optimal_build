@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, TypeVar, cast
@@ -14,9 +15,15 @@ from prefect import flow
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+if str(Path(__file__).resolve().parents[1]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefDocument, RefSource
-from app.services.reference_sources import FetchedDocument, ReferenceSourceFetcher
+from app.services.reference_sources import (
+    FetchedDocument,
+    ReferenceSourceFetcher,
+)
 from app.services.reference_storage import ReferenceStorage
 
 
