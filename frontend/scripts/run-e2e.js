@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
+const frontendDir = path.resolve(repoRoot, 'frontend');
 const defaultCache = path.join(repoRoot, '.playwright-browsers');
 const env = { ...process.env };
 const backendDir = path.resolve(repoRoot, 'backend');
@@ -29,6 +30,33 @@ if (!env.PLAYWRIGHT_BROWSERS_PATH || env.PLAYWRIGHT_BROWSERS_PATH.trim() === '')
 }
 
 const cachePath = env.PLAYWRIGHT_BROWSERS_PATH;
+
+const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+
+let shouldSkipInstall = false;
+if (env.PLAYWRIGHT_SKIP_BROWSER_INSTALL && env.PLAYWRIGHT_SKIP_BROWSER_INSTALL.trim() !== '') {
+  const normalized = env.PLAYWRIGHT_SKIP_BROWSER_INSTALL.trim().toLowerCase();
+  shouldSkipInstall = ['1', 'true', 'yes'].includes(normalized);
+}
+
+if (!shouldSkipInstall) {
+  fs.mkdirSync(cachePath, { recursive: true });
+  const installArgs = ['exec', 'playwright', 'install', '--with-deps'];
+  const installResult = spawnSync(pnpmCommand, installArgs, {
+    stdio: 'inherit',
+    cwd: frontendDir,
+    env,
+  });
+
+  if (installResult.status !== 0) {
+    console.warn(
+      `Playwright browser installation exited with code ${installResult.status ?? 'unknown'}.`
+    );
+    console.warn('Continuing with existing browser cache.');
+  }
+} else {
+  console.log('PLAYWRIGHT_SKIP_BROWSER_INSTALL set; skipping Playwright install step.');
+}
 
 if (!fs.existsSync(cachePath)) {
   console.error(`Playwright browser cache not found at ${cachePath}.`);
