@@ -193,6 +193,20 @@ async def database_status(session: AsyncSession = Depends(get_session)) -> Dict[
 
 
 if __name__ == "__main__":  # pragma: no cover
-    import uvicorn
+    import argparse
+    import json
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    parser = argparse.ArgumentParser(description="Application smoke test entry point.")
+    parser.add_argument(
+        "--dump-openapi",
+        action="store_true",
+        help="Output the generated OpenAPI schema and exit.",
+    )
+    args = parser.parse_args()
+
+    if args.dump_openapi:
+        print(json.dumps(app.openapi(), indent=2, sort_keys=True))
+    else:
+        import uvicorn
+
+        uvicorn.run(app, host="0.0.0.0", port=8000)
