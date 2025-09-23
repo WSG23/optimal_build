@@ -1,4 +1,4 @@
-.PHONY: help install format lint test test-cov clean build deploy init-db seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products
+.PHONY: help install format lint test test-cov smoke-buildable clean build deploy init-db seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -40,6 +40,9 @@ lint: ## Run linting
 test: ## Run tests
 	cd backend && pytest
 	cd frontend && npm test
+
+smoke-buildable: ## Run the buildable latency smoke test and report the observed P90
+	cd backend && pytest -s tests/pwp/test_buildable_latency.py
 
 import-sample: ## Upload the bundled sample payload and seed overlay geometry
 	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
