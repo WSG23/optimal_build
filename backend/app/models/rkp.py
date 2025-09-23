@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, Optional
 
 from sqlalchemy import (
     Boolean,
@@ -324,6 +324,28 @@ class RefCostIndex(BaseModel):
         Index("idx_cost_indices_series_period", "series_name", "period"),
         Index("idx_cost_indices_jurisdiction_category", "jurisdiction", "category"),
     )
+
+    @classmethod
+    def latest(
+        cls,
+        indices: Iterable["RefCostIndex"],
+        *,
+        series_name: Optional[str] = None,
+        jurisdiction: Optional[str] = None,
+        provider: Optional[str] = None,
+    ) -> Optional["RefCostIndex"]:
+        """Select the latest index from ``indices`` matching the provided filters."""
+
+        candidates = [
+            index
+            for index in indices
+            if (series_name is None or index.series_name == series_name)
+            and (jurisdiction is None or index.jurisdiction == jurisdiction)
+            and (provider is None or index.provider == provider)
+        ]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda item: (str(item.period), getattr(item, "id", 0)))
 
 
 class RefCostCatalog(BaseModel):
