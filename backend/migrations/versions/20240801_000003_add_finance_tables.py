@@ -123,12 +123,12 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # Drop in reverse order of dependencies
-    op.drop_index("ix_fin_scenarios_is_primary", table_name="fin_scenarios")
-    op.drop_index("ix_fin_scenarios_fin_project_id", table_name="fin_scenarios")
-    op.drop_index("ix_fin_scenarios_project_id", table_name="fin_scenarios")
-    op.drop_table("fin_scenarios")
+    op.execute("DROP INDEX IF EXISTS ix_fin_scenarios_is_primary")
+    op.execute("DROP INDEX IF EXISTS ix_fin_scenarios_fin_project_id")
+    op.execute("DROP INDEX IF EXISTS ix_fin_scenarios_project_id")
+    op.execute("DROP TABLE IF EXISTS fin_scenarios CASCADE")
 
-    op.drop_index("idx_fin_projects_project_name", table_name="fin_projects")
-    op.drop_index("ix_fin_projects_created_at", table_name="fin_projects")
-    op.drop_index("ix_fin_projects_project_id", table_name="fin_projects")
-    op.drop_table("fin_projects")
+    op.execute("DROP INDEX IF EXISTS idx_fin_projects_project_name")
+    op.execute("DROP INDEX IF EXISTS ix_fin_projects_created_at")
+    op.execute("DROP INDEX IF EXISTS ix_fin_projects_project_id")
+    op.execute("DROP TABLE IF EXISTS fin_projects CASCADE")

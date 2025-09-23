@@ -57,5 +57,5 @@ def downgrade() -> None:  # pragma: no cover - executed via Alembic migrations
     if not _should_run():
         return
 
-    op.drop_column("ref_zoning_layers", "geometry")
-    op.drop_column("ref_parcels", "geometry")
+    op.execute("ALTER TABLE IF EXISTS ref_zoning_layers DROP COLUMN IF EXISTS geometry CASCADE")
+    op.execute("ALTER TABLE IF EXISTS ref_parcels DROP COLUMN IF EXISTS geometry CASCADE")

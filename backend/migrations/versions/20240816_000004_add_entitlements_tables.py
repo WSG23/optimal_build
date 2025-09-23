@@ -359,30 +359,30 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Rollback the migration."""
 
-    op.drop_index("ix_ent_legal_instruments_created_at", table_name="ent_legal_instruments")
-    op.drop_index("ix_ent_legal_instruments_project", table_name="ent_legal_instruments")
-    op.drop_table("ent_legal_instruments")
+    op.execute("DROP INDEX IF EXISTS ix_ent_legal_instruments_created_at")
+    op.execute("DROP INDEX IF EXISTS ix_ent_legal_instruments_project")
+    op.execute("DROP TABLE IF EXISTS ent_legal_instruments CASCADE")
 
-    op.drop_index("ix_ent_engagements_created_at", table_name="ent_engagements")
-    op.drop_index("ix_ent_engagements_project", table_name="ent_engagements")
-    op.drop_table("ent_engagements")
+    op.execute("DROP INDEX IF EXISTS ix_ent_engagements_created_at")
+    op.execute("DROP INDEX IF EXISTS ix_ent_engagements_project")
+    op.execute("DROP TABLE IF EXISTS ent_engagements CASCADE")
 
-    op.drop_index("ix_ent_studies_created_at", table_name="ent_studies")
-    op.drop_index("ix_ent_studies_project", table_name="ent_studies")
-    op.drop_table("ent_studies")
+    op.execute("DROP INDEX IF EXISTS ix_ent_studies_created_at")
+    op.execute("DROP INDEX IF EXISTS ix_ent_studies_project")
+    op.execute("DROP TABLE IF EXISTS ent_studies CASCADE")
 
-    op.drop_index("idx_ent_roadmap_project_sequence", table_name="ent_roadmap_items")
-    op.drop_index("ix_ent_roadmap_items_approval", table_name="ent_roadmap_items")
-    op.drop_index("ix_ent_roadmap_items_project", table_name="ent_roadmap_items")
-    op.drop_table("ent_roadmap_items")
+    op.execute("DROP INDEX IF EXISTS idx_ent_roadmap_project_sequence")
+    op.execute("DROP INDEX IF EXISTS ix_ent_roadmap_items_approval")
+    op.execute("DROP INDEX IF EXISTS ix_ent_roadmap_items_project")
+    op.execute("DROP TABLE IF EXISTS ent_roadmap_items CASCADE")
 
-    op.drop_index("ix_ent_approval_types_created_at", table_name="ent_approval_types")
-    op.drop_index("ix_ent_approval_types_authority", table_name="ent_approval_types")
-    op.drop_table("ent_approval_types")
+    op.execute("DROP INDEX IF EXISTS ix_ent_approval_types_created_at")
+    op.execute("DROP INDEX IF EXISTS ix_ent_approval_types_authority")
+    op.execute("DROP TABLE IF EXISTS ent_approval_types CASCADE")
 
-    op.drop_index("ix_ent_authorities_created_at", table_name="ent_authorities")
-    op.drop_index("ix_ent_authorities_jurisdiction", table_name="ent_authorities")
-    op.drop_table("ent_authorities")
+    op.execute("DROP INDEX IF EXISTS ix_ent_authorities_created_at")
+    op.execute("DROP INDEX IF EXISTS ix_ent_authorities_jurisdiction")
+    op.execute("DROP TABLE IF EXISTS ent_authorities CASCADE")
 
     for enum in (
         LEGAL_INSTRUMENT_STATUS_ENUM,
