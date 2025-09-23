@@ -10,6 +10,21 @@ _DEFAULT_ALLOWED_ORIGINS = ("http://localhost:3000", "http://localhost:5173")
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 
 
+def _load_bool(name: str, default: bool) -> bool:
+    """Return a boolean configuration flag from the environment."""
+
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+
+    normalised = raw_value.strip().lower()
+    if normalised in {"1", "true", "yes", "on"}:
+        return True
+    if normalised in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
 def _load_positive_float(name: str, default: float) -> float:
     """Return a positive floating point value from the environment."""
 
@@ -141,6 +156,7 @@ class Settings:
 
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
     BUILDABLE_EFFICIENCY_RATIO: float
+    BUILDABLE_USE_POSTGIS: bool
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -209,6 +225,7 @@ class Settings:
         self.BUILDABLE_EFFICIENCY_RATIO = _load_fractional_float(
             "BUILDABLE_EFFICIENCY_RATIO", 0.82
         )
+        self.BUILDABLE_USE_POSTGIS = _load_bool("BUILDABLE_USE_POSTGIS", False)
 
 
 settings = Settings()

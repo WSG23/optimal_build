@@ -21,8 +21,18 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
+from app.core.config import settings
 from app.models.base import BaseModel
 from app.models.types import FlexibleJSONB
+
+
+try:  # pragma: no cover - geometry support is optional in test environments
+    if settings.BUILDABLE_USE_POSTGIS:
+        from geoalchemy2 import Geometry  # type: ignore[import-not-found]
+    else:  # pragma: no cover - simple guard
+        Geometry = None  # type: ignore[assignment]
+except ModuleNotFoundError:  # pragma: no cover - geoalchemy2 not installed
+    Geometry = None  # type: ignore[assignment]
 
 
 JSONType = FlexibleJSONB
@@ -161,7 +171,11 @@ class RefParcel(BaseModel):
     parcel_ref = Column(String(100), index=True)  # URA lot number
 
     # Simplified geometry as JSON for now (will upgrade to PostGIS later)
-    bounds_json = Column(JSONType)  # {"type": "Polygon", "coordinates": [...]}  
+    bounds_json = Column(JSONType)  # {"type": "Polygon", "coordinates": [...]}
+    if Geometry is not None:
+        geometry = Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
+    else:  # pragma: no cover - exercised when PostGIS is disabled
+        geometry = None  # type: ignore[assignment]
     centroid_lat = Column(Numeric(10, 7))
     centroid_lon = Column(Numeric(10, 7))
     area_m2 = Column(Numeric(12, 2))
@@ -189,6 +203,10 @@ class RefZoningLayer(BaseModel):
 
     # Simplified geometry as JSON for now
     bounds_json = Column(JSONType)  # GeoJSON MultiPolygon
+    if Geometry is not None:
+        geometry = Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
+    else:  # pragma: no cover - exercised when PostGIS is disabled
+        geometry = None  # type: ignore[assignment]
 
     effective_date = Column(DateTime(timezone=True))
     expiry_date = Column(DateTime(timezone=True))

@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.rkp import RefParcel, RefRule, RefZoningLayer
 from app.schemas.buildable import (
     BuildableCalculation,
@@ -48,7 +49,9 @@ async def calculate_buildable(
     if overrides.front_setback_m is not None:
         attributes["front_setback_min_m"] = overrides.front_setback_m
 
-    area_m2 = _parcel_area(resolved.parcel) or defaults.site_area_m2
+    area_m2 = await _parcel_area(session, resolved.parcel)
+    if area_m2 is None:
+        area_m2 = defaults.site_area_m2
     plot_ratio = overrides.plot_ratio
     if plot_ratio is None:
         plot_ratio = _extract_plot_ratio(attributes) or defaults.plot_ratio
@@ -175,13 +178,41 @@ def _merge_layer_attributes(layers: Sequence[RefZoningLayer]) -> Dict[str, Any]:
     return merged
 
 
-def _parcel_area(parcel: Optional[RefParcel]) -> Optional[float]:
+async def _parcel_area(
+    session: AsyncSession, parcel: Optional[RefParcel]
+) -> Optional[float]:
+    if settings.BUILDABLE_USE_POSTGIS:
+        from app.services.postgis import parcel_area as _parcel_area_postgis
+
+        return await _parcel_area_postgis(session, parcel)
+
     if parcel is None or parcel.area_m2 is None:
         return None
     try:
         return float(parcel.area_m2)
     except (TypeError, ValueError):
         return None
+
+
+async def _load_layers_for_zone(
+    session: AsyncSession, zone_code: str
+) -> List[RefZoningLayer]:
+    if settings.BUILDABLE_USE_POSTGIS:
+        from app.services.postgis import load_layers_for_zone as _load_layers_postgis
+
+        return await _load_layers_postgis(session, zone_code)
+
+    stmt = select(RefZoningLayer).where(RefZoningLayer.zone_code == zone_code)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def load_layers_for_zone(
+    session: AsyncSession, zone_code: str
+) -> List[RefZoningLayer]:
+    """Public wrapper around :func:`_load_layers_for_zone` for API usage."""
+
+    return await _load_layers_for_zone(session, zone_code)
 
 
 def _extract_plot_ratio(attributes: Dict[str, Any]) -> Optional[float]:
@@ -395,4 +426,4 @@ def _convert_to_metres(value: float, unit: str) -> Optional[float]:
     return None
 
 
-__all__ = ["ResolvedZone", "calculate_buildable"]
+__all__ = ["ResolvedZone", "calculate_buildable", "load_layers_for_zone"]

@@ -13,7 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
 from app.schemas.buildable import BuildableRequest, BuildableResponse
-from app.services.buildable import ResolvedZone, calculate_buildable
+from app.services.buildable import (
+    ResolvedZone,
+    calculate_buildable,
+    load_layers_for_zone,
+)
 from app.utils import metrics
 
 
@@ -40,7 +44,7 @@ async def screen_buildable(
     try:
         resolution = await _resolve_zone_resolution(session, payload)
         zone_layers = (
-            await _load_layers_for_zone(session, resolution.zone_code)
+            await load_layers_for_zone(session, resolution.zone_code)
             if resolution.zone_code
             else []
         )
@@ -104,14 +108,6 @@ async def _resolve_zone_resolution(
         geometry_properties=geometry_properties,
         input_kind=input_kind,
     )
-
-
-async def _load_layers_for_zone(
-    session: AsyncSession, zone_code: str
-) -> List[RefZoningLayer]:
-    stmt = select(RefZoningLayer).where(RefZoningLayer.zone_code == zone_code)
-    result = await session.execute(stmt)
-    return list(result.scalars().all())
 
 
 def _collect_zone_metadata(
