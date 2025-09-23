@@ -306,3 +306,8 @@ docs/_build/
 
 # Frontend test artifacts
 frontend/.tmp-e2e-*/
+
+# Playwright offline browsers (tracked cache)
+!.playwright-browsers/
+!.playwright-browsers/**
+!.playwright-browsers.tar.gz

@@ -9,14 +9,19 @@ Our CI pipeline keeps a checked-in `.playwright-browsers/` directory so Playwrig
    rm -rf .playwright-browsers
    mkdir -p .playwright-browsers
    ```
-2. Install the browsers into the local cache:
+2. Install the browsers into the local cache and confirm the metadata file was produced:
    ```bash
    PLAYWRIGHT_BROWSERS_PATH=$(pwd)/.playwright-browsers pnpm -C frontend exec playwright install --with-deps
+   ls .playwright-browsers/browsers.json
    ```
 3. Package the cache into a tarball that can be uploaded to the artifact store or committed alongside the directory:
    ```bash
    tar -C .playwright-browsers -czf .playwright-browsers.tar.gz .
    ```
-4. Commit the refreshed `.playwright-browsers/` directory and updated tarball, then push the changes.
+4. Verify the cached bundle works without touching the network:
+   ```bash
+   PLAYWRIGHT_BROWSERS_PATH=$(pwd)/.playwright-browsers pnpm -C frontend test:e2e
+   ```
+5. Commit the refreshed `.playwright-browsers/` directory and updated tarball, then push the changes.
 
 This ensures the synced browsers match the version expected by the GitHub Actions workflow and keeps the offline cache reproducible.
