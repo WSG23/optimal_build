@@ -242,6 +242,40 @@ def histogram_percentile(
     )
 
 
+def histogram_percentile_from_bucket_counts(
+    buckets: Sequence[Tuple[float, float]], percentile: float
+) -> HistogramPercentile:
+    """Compute a percentile from exported histogram bucket counts.
+
+    Parameters
+    ----------
+    buckets:
+        An iterable of ``(upper_bound, cumulative_count)`` pairs. Bucket
+        boundaries should be numeric (``float("inf")`` is accepted for the
+        terminal bucket) and counts should represent cumulative observation
+        totals as emitted by Prometheus' text exposition format.
+    percentile:
+        Desired percentile expressed as a floating point value between 0 and 1
+        (e.g. ``0.9`` for the 90th percentile).
+    """
+
+    if not 0.0 <= percentile <= 1.0:
+        raise ValueError("Percentile must be expressed as a value between 0 and 1")
+
+    normalized = [
+        (float(upper), float(count))
+        for upper, count in buckets
+    ]
+    if not normalized:
+        raise RuntimeError("No bucket counts were provided for percentile calculation")
+
+    normalized.sort(key=lambda item: item[0])
+    value = _percentile_from_buckets(normalized, percentile)
+    return HistogramPercentile(
+        percentile=percentile, value=value, buckets=tuple(normalized)
+    )
+
+
 def _normalize_histogram_labels(
     histogram: Histogram, labels: Dict[str, str]
 ) -> Dict[str, str]:
