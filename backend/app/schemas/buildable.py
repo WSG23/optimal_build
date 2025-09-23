@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Mapping, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -52,6 +52,42 @@ class BuildableRequest(BaseModel):
     efficiency_ratio: Optional[float] = Field(
         default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0
     )
+
+    @classmethod
+    def model_validate(
+        cls, obj: Any, *args: Any, **kwargs: Any
+    ) -> "BuildableRequest":
+        """Normalise known camelCase keys before delegating to Pydantic."""
+
+        if isinstance(obj, Mapping):
+            data = dict(obj)
+            aliases = {
+                "typFloorToFloorM": "typ_floor_to_floor_m",
+                "efficiencyRatio": "efficiency_ratio",
+                "defaults": "defaults",
+            }
+            for alias, field_name in aliases.items():
+                if alias in data and field_name not in data:
+                    data[field_name] = data.pop(alias)
+
+            defaults_value = data.get("defaults")
+            if isinstance(defaults_value, Mapping):
+                defaults_aliases = {
+                    "plotRatio": "plot_ratio",
+                    "siteAreaM2": "site_area_m2",
+                    "siteCoverage": "site_coverage",
+                    "floorHeightM": "floor_height_m",
+                    "efficiencyFactor": "efficiency_factor",
+                }
+                normalised_defaults = dict(defaults_value)
+                for alias, field_name in defaults_aliases.items():
+                    if alias in normalised_defaults and field_name not in normalised_defaults:
+                        normalised_defaults[field_name] = normalised_defaults.pop(alias)
+                data["defaults"] = normalised_defaults
+
+            obj = data
+
+        return super().model_validate(obj, *args, **kwargs)
 
     @field_validator("geometry")
     @classmethod
