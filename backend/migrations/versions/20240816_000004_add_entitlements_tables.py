@@ -17,78 +17,21 @@ depends_on = None
 JSONB_TYPE = postgresql.JSONB(astext_type=sa.Text())
 
 
-APPROVAL_CATEGORY_ENUM = sa.Enum(
-    "planning",
-    "building",
-    "environmental",
-    "transport",
-    "utilities",
-    name="ent_approval_category",
-)
+APPROVAL_CATEGORY_ENUM = postgresql.ENUM('planning', 'building', 'environmental', 'transport', 'utilities', name='ent_approval_category', create_type=False)
 
-ROADMAP_STATUS_ENUM = sa.Enum(
-    "planned",
-    "in_progress",
-    "submitted",
-    "approved",
-    "rejected",
-    "blocked",
-    "complete",
-    name="ent_roadmap_status",
-)
+ROADMAP_STATUS_ENUM = postgresql.ENUM('planned', 'in_progress', 'submitted', 'approved', 'rejected', 'blocked', 'complete', name='ent_roadmap_status', create_type=False)
 
-STUDY_TYPE_ENUM = sa.Enum(
-    "traffic",
-    "environmental",
-    "heritage",
-    "utilities",
-    "community",
-    name="ent_study_type",
-)
+STUDY_TYPE_ENUM = postgresql.ENUM('traffic', 'environmental', 'heritage', 'utilities', 'community', name='ent_study_type', create_type=False)
 
-STUDY_STATUS_ENUM = sa.Enum(
-    "draft",
-    "scope_defined",
-    "in_progress",
-    "submitted",
-    "accepted",
-    "rejected",
-    name="ent_study_status",
-)
+STUDY_STATUS_ENUM = postgresql.ENUM('draft', 'scope_defined', 'in_progress', 'submitted', 'accepted', 'rejected', name='ent_study_status', create_type=False)
 
-ENGAGEMENT_TYPE_ENUM = sa.Enum(
-    "agency",
-    "community",
-    "political",
-    "private_partner",
-    "regulator",
-    name="ent_engagement_type",
-)
+ENGAGEMENT_TYPE_ENUM = postgresql.ENUM('agency', 'community', 'political', 'private_partner', 'regulator', name='ent_engagement_type', create_type=False)
 
-ENGAGEMENT_STATUS_ENUM = sa.Enum(
-    "planned",
-    "active",
-    "completed",
-    "blocked",
-    name="ent_engagement_status",
-)
+ENGAGEMENT_STATUS_ENUM = postgresql.ENUM('planned', 'active', 'completed', 'blocked', name='ent_engagement_status', create_type=False)
 
-LEGAL_INSTRUMENT_TYPE_ENUM = sa.Enum(
-    "agreement",
-    "licence",
-    "memorandum",
-    "waiver",
-    "variation",
-    name="ent_legal_instrument_type",
-)
+LEGAL_INSTRUMENT_TYPE_ENUM = postgresql.ENUM('agreement', 'licence', 'memorandum', 'waiver', 'variation', name='ent_legal_instrument_type', create_type=False)
 
-LEGAL_INSTRUMENT_STATUS_ENUM = sa.Enum(
-    "draft",
-    "in_review",
-    "executed",
-    "expired",
-    name="ent_legal_instrument_status",
-)
+LEGAL_INSTRUMENT_STATUS_ENUM = postgresql.ENUM('draft', 'in_review', 'executed', 'expired', name='ent_legal_instrument_status', create_type=False)
 
 
 def _create_enum(enum: sa.Enum) -> None:
@@ -105,6 +48,18 @@ def _drop_enum(enum: sa.Enum) -> None:
 
 def upgrade() -> None:
     """Apply the migration."""
+
+
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_approval_category') THEN
+                CREATE TYPE ent_approval_category AS ENUM ('planning','building','environmental','transport','utilities');
+            END IF;
+        END$$;
+        """
+    )
 
     for enum in (
         APPROVAL_CATEGORY_ENUM,
