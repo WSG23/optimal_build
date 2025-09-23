@@ -1,4 +1,4 @@
-"""Compatibility layer for Prefect stubs used in backend tests."""
+"""Lightweight Prefect flow shim used in offline environments."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ def _attach_with_options(func: F) -> F:
 
 
 def flow(_func: F | None = None, *, name: str | None = None) -> F | Callable[[F], F]:
-    """Return a no-op decorator mimicking :func:`prefect.flow`."""
+    """Return a no-op decorator that preserves the wrapped coroutine."""
 
     def decorator(func: F) -> F:
         wrapped = _attach_with_options(func)
