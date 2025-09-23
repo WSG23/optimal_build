@@ -27,8 +27,7 @@ jobs:
 
       - name: Install lint dependencies
         run: |
-          pip install --no-index --find-links third_party/python \
-            -r backend/requirements-dev.txt
+          pip install -r backend/requirements-dev.txt
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
@@ -54,6 +53,7 @@ jobs:
       EXPORTS_BUCKET_NAME: cad-exports
       PYTHONPATH: backend
       CI_ARTIFACTS: ${{ github.workspace }}/artifacts
+      REFERENCE_STORAGE: ${{ github.workspace }}/artifacts/reference_storage
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -67,8 +67,7 @@ jobs:
 
       - name: Install backend dependencies
         run: |
-          pip install --no-index --find-links third_party/python \
-            -r backend/requirements-dev.txt
+          pip install -r backend/requirements-dev.txt
 
       - name: Start backing services
         run: |
@@ -103,9 +102,126 @@ jobs:
             exit 1
           fi
 
-      - name: Run backend smoke suite
+      - name: Prepare smoke artifacts
         run: |
-          python -m backend.scripts.run_smokes --artifacts "$CI_ARTIFACTS"
+          mkdir -p "$CI_ARTIFACTS"
+          mkdir -p "$REFERENCE_STORAGE"
+
+      - name: Run database migrations
+        run: make db.upgrade
+
+      - name: Seed reference data
+        run: make seed-data
+
+      - name: Seed non-regulatory datasets
+        run: |
+          if make -n seed-nonreg >/dev/null 2>&1; then
+            make seed-nonreg
+          else
+            echo "seed-nonreg target not present; skipping"
+          fi
+
+      - name: Run watch_fetch ingestion smoke
+        run: |
+          python -m backend.flows.watch_fetch \
+            --once \
+            --offline \
+            --storage-path "$REFERENCE_STORAGE" \
+            --summary-path "$CI_ARTIFACTS/watch_fetch_summary.json"
+
+      - name: Run parse_segment ingestion smoke
+        run: |
+          python -m backend.flows.parse_segment \
+            --once \
+            --storage-path "$REFERENCE_STORAGE" \
+            --summary-path "$CI_ARTIFACTS/parse_segment_summary.json" \
+            --min-documents 1 \
+            --min-clauses 1
+
+      - name: Verify ingestion artifacts
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          artifacts = Path(os.environ["CI_ARTIFACTS"])
+          watch_summary = json.loads((artifacts / "watch_fetch_summary.json").read_text())
+          if watch_summary.get("document_count", 0) <= 0:
+              raise SystemExit("watch_fetch ingestion produced no documents")
+
+          parse_summary = json.loads((artifacts / "parse_segment_summary.json").read_text())
+          if parse_summary.get("clause_count", 0) <= 0:
+              raise SystemExit("parse_segment ingestion produced no clauses")
+          PY
+
+      - name: Launch backend API for smokes
+        run: |
+          python -m uvicorn app.main:app \
+            --host 0.0.0.0 \
+            --port 8000 \
+            --log-level warning &
+          echo $! > "$RUNNER_TEMP/backend-e2e.pid"
+        working-directory: backend
+
+      - name: Wait for backend readiness
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            if curl -sSf http://127.0.0.1:8000/health > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend API did not become ready in time" >&2
+          exit 1
+
+      - name: Run buildable screening smoke
+        run: |
+          set -euo pipefail
+          payload='{"address":"123 Example Ave","typ_floor_to_floor_m":3.4,"efficiency_ratio":0.8}'
+          curl -sSf -X POST http://127.0.0.1:8000/api/v1/screen/buildable \
+            -H 'content-type: application/json' \
+            -d "$payload" \
+            -o "$CI_ARTIFACTS/buildable_response.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          artifacts = Path(os.environ["CI_ARTIFACTS"])
+          data = json.loads((artifacts / "buildable_response.json").read_text())
+          metrics = data.get("metrics") or {}
+          if "zone_code" not in data:
+              raise SystemExit("zone_code missing from buildable response")
+          if "gfa_cap_m2" not in metrics:
+              raise SystemExit("gfa_cap_m2 missing from buildable metrics")
+          PY
+
+      - name: Fetch OpenAPI schema
+        run: |
+          curl -sSf http://127.0.0.1:8000/openapi.json -o "$CI_ARTIFACTS/openapi.json"
+
+      - name: Stop backend API
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/backend-e2e.pid" ]; then
+            PID=$(cat "$RUNNER_TEMP/backend-e2e.pid")
+            if ps -p "$PID" > /dev/null 2>&1; then
+              kill "$PID"
+              for attempt in $(seq 1 15); do
+                if ps -p "$PID" > /dev/null 2>&1; then
+                  sleep 1
+                else
+                  break
+                fi
+              done
+              if ps -p "$PID" > /dev/null 2>&1; then
+                kill -9 "$PID" || true
+              fi
+            fi
+            rm -f "$RUNNER_TEMP/backend-e2e.pid"
+          fi
 
       - name: Run backend tests
         run: |
@@ -164,7 +280,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -178,7 +294,7 @@ jobs:
         run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.store-path }}
           key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
@@ -194,8 +310,7 @@ jobs:
 
       - name: Install backend dependencies
         run: |
-          pip install --no-index --find-links third_party/python \
-            -r backend/requirements-dev.txt
+          pip install -r backend/requirements-dev.txt
 
       - name: Start backing services
         run: |
@@ -231,39 +346,79 @@ jobs:
           fi
 
       - name: Run database migrations
-        run: |
-          cd backend
-          alembic upgrade head
+        run: make db.upgrade
 
       - name: Seed reference data
+        run: make seed-data
+
+      - name: Seed non-regulatory datasets
         run: |
-          cd backend
-          python -m scripts.seed_screening
-          python -m scripts.seed_finance_demo
-          python -m scripts.seed_nonreg
+          if make -n seed-nonreg >/dev/null 2>&1; then
+            make seed-nonreg
+          else
+            echo "seed-nonreg target not present; skipping"
+          fi
 
       - name: Install frontend dependencies
-        run: pnpm -C frontend install --offline --store-dir ../third_party/pnpm-store
+        run: pnpm -C frontend install --frozen-lockfile
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
           restore-keys: |
             playwright-${{ runner.os }}-
 
-      - name: Sync Playwright browsers
-        run: |
-          mkdir -p "$HOME/.cache/ms-playwright"
-          rsync -a --delete .playwright-browsers/ "$HOME/.cache/ms-playwright/"
-          echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> "$GITHUB_ENV"
-
       - name: Install Playwright browsers
         run: pnpm -C frontend exec playwright install --with-deps
 
+      - name: Launch backend API for E2E
+        run: |
+          python -m uvicorn app.main:app \
+            --host 0.0.0.0 \
+            --port 8000 \
+            --log-level warning &
+          echo $! > "$RUNNER_TEMP/backend-e2e.pid"
+        working-directory: backend
+
+      - name: Wait for backend readiness
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            if curl -sSf http://127.0.0.1:8000/health > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend API did not become ready in time" >&2
+          exit 1
+
       - name: Run frontend end-to-end tests
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_INSTALL: '1'
         run: pnpm -C frontend test:e2e
+
+      - name: Stop backend API
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/backend-e2e.pid" ]; then
+            PID=$(cat "$RUNNER_TEMP/backend-e2e.pid")
+            if ps -p "$PID" > /dev/null 2>&1; then
+              kill "$PID"
+              for attempt in $(seq 1 15); do
+                if ps -p "$PID" > /dev/null 2>&1; then
+                  sleep 1
+                else
+                  break
+                fi
+              done
+              if ps -p "$PID" > /dev/null 2>&1; then
+                kill -9 "$PID" || true
+              fi
+            fi
+            rm -f "$RUNNER_TEMP/backend-e2e.pid"
+          fi
 
       - name: Stop services
         if: always()
