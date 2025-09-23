@@ -1,51 +1,30 @@
-const { buildSync } = require('esbuild')
-const { createRequire } = require('module')
-const path = require('path')
-const vm = require('vm')
+const path = require('node:path')
+
+const runtimeRoot = path.resolve(__dirname, '..', 'runtime')
+
+const moduleMap = new Map([
+  [path.resolve(__dirname, '../../src/api/client.ts'), path.join(runtimeRoot, 'api', 'client.cjs')],
+  [path.resolve(__dirname, '../../src/api/buildable.ts'), path.join(runtimeRoot, 'api', 'buildable.cjs')],
+  [path.resolve(__dirname, '../../src/api/finance.ts'), path.join(runtimeRoot, 'api', 'finance.cjs')],
+  [path.resolve(__dirname, '../../src/i18n/index.ts'), path.join(runtimeRoot, 'i18n', 'index.cjs')],
+  [path.resolve(__dirname, '../../src/modules/cad/CadUploader.tsx'), path.join(runtimeRoot, 'cad', 'CadUploader.cjs')],
+  [path.resolve(__dirname, '../../src/modules/cad/LayerTogglePanel.tsx'), path.join(runtimeRoot, 'cad', 'LayerTogglePanel.cjs')],
+  [path.resolve(__dirname, '../../src/modules/cad/BulkReviewControls.tsx'), path.join(runtimeRoot, 'cad', 'BulkReviewControls.cjs')],
+  [path.resolve(__dirname, '../../src/modules/cad/AuditTimelinePanel.tsx'), path.join(runtimeRoot, 'cad', 'AuditTimelinePanel.cjs')],
+  [path.resolve(__dirname, '../../src/modules/cad/ExportDialog.tsx'), path.join(runtimeRoot, 'cad', 'ExportDialog.cjs')],
+  [path.resolve(__dirname, '../../src/modules/cad/RoiSummary.tsx'), path.join(runtimeRoot, 'cad', 'RoiSummary.cjs')],
+  [path.resolve(__dirname, '../../src/modules/cad/layerToggle.ts'), path.join(runtimeRoot, 'cad', 'LayerTogglePanel.cjs')],
+  [path.resolve(__dirname, '../../src/router.tsx'), path.join(runtimeRoot, 'router.cjs')],
+])
 
 function loadModule(modulePath) {
   const absPath = path.resolve(modulePath)
-  const result = buildSync({
-    entryPoints: [absPath],
-    bundle: true,
-    platform: 'node',
-    format: 'cjs',
-    write: false,
-    sourcemap: false,
-    define: {
-      'import.meta.env.VITE_API_BASE_URL': '""',
-      'import.meta.env.VITE_FEASIBILITY_USE_MOCKS': '"false"',
-    },
-    external: ['react', 'react-dom', 'react/jsx-runtime'],
-    loader: {
-      '.ts': 'ts',
-      '.tsx': 'tsx',
-    },
-  })
-
-  const [{ text: code }] = result.outputFiles
-  const module = { exports: {} }
-  const req = createRequire(absPath)
-  const context = {
-    module,
-    exports: module.exports,
-    require: req,
-    console,
-    process,
-    setTimeout,
-    clearTimeout,
-    setInterval,
-    clearInterval,
-    Buffer,
-    fetch: (...args) => global.fetch(...args),
-    URL,
-    URLSearchParams,
-    FormData: global.FormData,
-    Array,
-    Object,
+  const target = moduleMap.get(absPath)
+  if (!target) {
+    throw new Error(`No runtime module mapped for ${absPath}`)
   }
-  vm.runInNewContext(code, context)
-  return module.exports
+  // eslint-disable-next-line global-require, import/no-dynamic-require
+  return require(target)
 }
 
 module.exports = { loadModule }
