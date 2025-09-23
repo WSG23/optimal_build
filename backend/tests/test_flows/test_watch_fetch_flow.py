@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Mapping
+from typing import Mapping, Sequence
 
 import pytest
 
@@ -14,7 +14,7 @@ from sqlalchemy import select
 from app.models.rkp import RefDocument, RefSource
 from app.services.reference_sources import FetchedDocument, HTTPResponse, ReferenceSourceFetcher
 from app.services.reference_storage import ReferenceStorage
-from flows.watch_fetch import watch_reference_sources
+from flows.watch_fetch import _process_source, watch_reference_sources
 from scripts.seed_screening import seed_screening_sample_data
 
 
@@ -174,6 +174,22 @@ class _StubFetcher:
         )
 
 
+class _SequentialFetcher:
+    def __init__(self, responses: Sequence[FetchedDocument]) -> None:
+        self._responses = list(responses)
+        self.fetch_calls: list[int] = []
+
+    async def fetch(
+        self,
+        source: RefSource,
+        existing: RefDocument | None = None,
+    ) -> FetchedDocument | None:
+        self.fetch_calls.append(source.id)
+        if not self._responses:
+            return None
+        return self._responses.pop(0)
+
+
 @pytest.mark.asyncio
 async def test_watch_fetch_persists_seeded_html_and_pdf_sources(async_session_factory, tmp_path) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
@@ -227,3 +243,92 @@ async def test_watch_fetch_persists_seeded_html_and_pdf_sources(async_session_fa
         for document in all_documents:
             document.suspected_update = False
         await session.commit()
+
+
+@pytest.mark.asyncio
+async def test_watch_fetch_deduplicates_identical_payloads(async_session_factory, tmp_path) -> None:
+    storage = ReferenceStorage(base_path=tmp_path, bucket="")
+
+    async with async_session_factory() as session:
+        source = RefSource(
+            jurisdiction="SG",
+            authority="BCA",
+            topic="fire",
+            doc_title="Fire Code",
+            landing_url="https://example.com/fire-code.pdf",
+            fetch_kind="pdf",
+            is_active=True,
+        )
+        session.add(source)
+        await session.commit()
+        source_id = source.id
+
+    payload = b"%PDF-1.4\nIdentical payload"
+    responses = [
+        FetchedDocument(
+            content=payload,
+            etag="etag-v1",
+            last_modified="Wed, 01 Jan 2024 00:00:00 GMT",
+            content_type="application/pdf",
+        ),
+        FetchedDocument(
+            content=payload,
+            etag="etag-v2",
+            last_modified="Mon, 01 Apr 2024 00:00:00 GMT",
+            content_type="application/pdf",
+        ),
+    ]
+    fetcher = _SequentialFetcher(responses)
+    results: list[dict[str, object]] = []
+    seen_document_ids: set[int] = set()
+    seen_hashes: dict[tuple[int, str], int] = {}
+
+    async with async_session_factory() as session:
+        source = await session.get(RefSource, source_id)
+        assert source is not None
+
+        await _process_source(
+            session,
+            source,
+            fetcher,
+            storage,
+            results,
+            seen_document_ids,
+            seen_hashes,
+        )
+
+        assert len(results) == 1
+        document_id = results[0]["document_id"]
+        document = await session.get(RefDocument, document_id)
+        assert document is not None
+        original_path = document.storage_path
+        assert document.http_etag == "etag-v1"
+        assert document.http_last_modified == "Wed, 01 Jan 2024 00:00:00 GMT"
+
+        document.suspected_update = False
+        await session.flush()
+
+        await _process_source(
+            session,
+            source,
+            fetcher,
+            storage,
+            results,
+            seen_document_ids,
+            seen_hashes,
+        )
+
+        updated = await session.get(RefDocument, document_id)
+        assert updated is not None
+        assert updated.http_etag == "etag-v2"
+        assert updated.http_last_modified == "Mon, 01 Apr 2024 00:00:00 GMT"
+        assert updated.storage_path == original_path
+        assert updated.suspected_update is False
+
+        await session.commit()
+
+    expected_hash = hashlib.sha256(payload).hexdigest()
+    assert len(results) == 1
+    assert fetcher.fetch_calls == [source_id, source_id]
+    assert seen_document_ids == {document_id}
+    assert seen_hashes == {(source_id, expected_hash): document_id}
