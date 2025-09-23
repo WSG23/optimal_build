@@ -26,12 +26,16 @@
     "upload": "Upload CAD",
     "detection": "Floor & unit detection",
     "pipelines": "Default pipelines",
-    "feasibility": "Feasibility wizard"
+    "feasibility": "Feasibility wizard",
+    "finance": "Finance workspace"
   },
   "home": {
     "cards": {
       "feasibility": {
         "description": "Kick off planning studies with project context, rule packs and buildability checks."
+      },
+      "finance": {
+        "description": "Explore finance scenarios with escalated cost, NPV and IRR metrics."
       }
     }
   },
@@ -86,6 +90,28 @@
     "payback": "Payback",
     "weeks": "{{count}} weeks",
     "projectLabel": "Project ID"
+  },
+  "finance": {
+    "title": "Finance feasibility",
+    "subtitle": "Compare escalated cost, NPV, IRR and DSCR metrics across seeded scenarios.",
+    "actions": {
+      "refresh": "Recompute scenarios",
+      "refreshing": "Recomputing…"
+    },
+    "errors": {
+      "generic": "Unable to load finance scenarios."
+    },
+    "table": {
+      "caption": "Finance scenario comparison",
+      "headers": {
+        "scenario": "Scenario",
+        "escalatedCost": "Escalated cost",
+        "npv": "Net present value",
+        "irr": "Internal rate of return",
+        "minDscr": "Minimum DSCR"
+      },
+      "empty": "No finance scenarios are available."
+    }
   },
   "controls": {
     "source": "Source",

@@ -7,15 +7,16 @@ import CadDetectionPage from './pages/CadDetectionPage'
 import CadPipelinesPage from './pages/CadPipelinesPage'
 import CadUploadPage from './pages/CadUploadPage'
 import FeasibilityWizard from './modules/feasibility/FeasibilityWizard'
+import FinanceWorkspace from './modules/finance'
 import './index.css'
 
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: <FeasibilityWizard />,
+    path: '/home',
+    element: <HomeOverview />,
   },
   {
-    path: '/home',
+    path: '/',
     element: <HomeOverview />,
   },
   {
@@ -33,6 +34,10 @@ const router = createBrowserRouter([
   {
     path: '/feasibility',
     element: <FeasibilityWizard />,
+  },
+  {
+    path: '/finance',
+    element: <FinanceWorkspace />,
   },
 ])
 

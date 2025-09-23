@@ -26,12 +26,16 @@
     "upload": "CAD をアップロード",
     "detection": "階層とユニットの検出",
     "pipelines": "デフォルトパイプライン",
-    "feasibility": "フィージビリティウィザード"
+    "feasibility": "フィージビリティウィザード",
+    "finance": "ファイナンスワークスペース"
   },
   "home": {
     "cards": {
       "feasibility": {
         "description": "プロジェクトの文脈、ルールパック、建築可能性チェックで計画検討を開始しましょう。"
+      },
+      "finance": {
+        "description": "財務シナリオを比較し、NPVやIRR、DSCRを把握しましょう。"
       }
     }
   },
@@ -86,6 +90,28 @@
     "payback": "回収期間",
     "weeks": "{{count}} 週間",
     "projectLabel": "プロジェクトID"
+  },
+  "finance": {
+    "title": "財務フィージビリティ",
+    "subtitle": "シード済みシナリオのエスカレーションコスト、NPV、IRR、DSCRを比較できます。",
+    "actions": {
+      "refresh": "シナリオを再計算",
+      "refreshing": "再計算中…"
+    },
+    "errors": {
+      "generic": "財務シナリオを読み込めませんでした。"
+    },
+    "table": {
+      "caption": "財務シナリオ比較",
+      "headers": {
+        "scenario": "シナリオ",
+        "escalatedCost": "エスカレーション後コスト",
+        "npv": "正味現在価値",
+        "irr": "内部収益率",
+        "minDscr": "最低DSCR"
+      },
+      "empty": "利用可能な財務シナリオがありません。"
+    }
   },
   "controls": {
     "source": "原本",
