@@ -1,15 +1,8 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.11.0
+  - repo: local
     hooks:
-      - id: black
-        language_version: python3.11
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.7
-    hooks:
-      - id: ruff
-        args: ["--fix"]
+      - id: audit-migrations
+        name: audit-migrations
+        entry: python3 scripts/audit_migrations.py
+        language: system
+        pass_filenames: false
