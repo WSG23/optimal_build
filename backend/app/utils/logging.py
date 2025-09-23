@@ -5,10 +5,38 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+try:  # pragma: no cover - importlib_metadata fallback only for older Python versions
+    from importlib import metadata as importlib_metadata
+except ImportError:  # pragma: no cover - Python < 3.8
+    try:  # pragma: no cover - optional backport may be unavailable
+        import importlib_metadata  # type: ignore[import-not-found]
+    except ImportError:  # pragma: no cover - no metadata helpers available
+        importlib_metadata = None  # type: ignore[assignment]
+
 import structlog
 from structlog.stdlib import BoundLogger
 
 from app.core.config import settings
+
+
+def _structlog_distribution_present() -> bool:
+    """Return ``True`` when the real ``structlog`` package is installed."""
+
+    if importlib_metadata is None:  # type: ignore[comparison-overlap]
+        return False
+    try:
+        importlib_metadata.version("structlog")
+    except importlib_metadata.PackageNotFoundError:  # type: ignore[attr-defined]
+        return False
+    except Exception:  # pragma: no cover - defensive against metadata issues
+        return False
+    return True
+
+
+if getattr(structlog, "_IS_VENDORED_STRUCTLOG", False) and not _structlog_distribution_present():
+    logging.getLogger(__name__).warning(
+        "structlog distribution not installed; using vendored fallback stub."
+    )
 
 
 def configure_logging() -> None:
