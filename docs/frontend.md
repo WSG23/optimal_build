@@ -11,7 +11,7 @@ Our CI pipeline keeps a checked-in `.playwright-browsers/` directory so Playwrig
    ```
 2. Install the browsers into the local cache and confirm the metadata file was produced:
    ```bash
-   PLAYWRIGHT_BROWSERS_PATH=$(pwd)/.playwright-browsers pnpm -C frontend exec playwright install --with-deps
+   PLAYWRIGHT_BROWSERS_PATH="$(pwd)/.playwright-browsers" pnpm --dir frontend exec playwright install --with-deps
    ls .playwright-browsers/browsers.json
    ```
 3. Package the cache into a tarball that can be uploaded to the artifact store or committed alongside the directory:
@@ -20,7 +20,7 @@ Our CI pipeline keeps a checked-in `.playwright-browsers/` directory so Playwrig
    ```
 4. Verify the cached bundle works without touching the network:
    ```bash
-   PLAYWRIGHT_BROWSERS_PATH=$(pwd)/.playwright-browsers pnpm -C frontend test:e2e
+   PLAYWRIGHT_BROWSERS_PATH="$(pwd)/.playwright-browsers" pnpm --dir frontend test:e2e
    ```
 5. Commit the refreshed `.playwright-browsers/` directory and updated tarball, then push the changes.
 
