@@ -8,7 +8,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from prefect import flow
 from sqlalchemy import func, select
@@ -35,6 +35,8 @@ async def watch_reference_sources(
     fetcher = fetcher or ReferenceSourceFetcher()
     storage = storage or ReferenceStorage()
     results: List[Dict[str, Any]] = []
+    seen_document_ids: set[int] = set()
+    seen_hashes: Dict[Tuple[int, str], int] = {}
 
     async with session_factory() as session:
         sources = (
@@ -46,56 +48,95 @@ async def watch_reference_sources(
         ).scalars().all()
 
         for source in sources:
-            fetch_kind = (source.fetch_kind or "pdf").lower()
-            if fetch_kind not in SUPPORTED_FETCH_KINDS:
-                continue
-            latest = await _latest_document(session, source.id)
-            if latest and latest.suspected_update:
-                # Skip sources that already have an unprocessed update to avoid
-                # repeatedly flagging the same document across flow runs.
-                continue
-            fetched = await fetcher.fetch(source, latest)
-            if fetched is None:
-                continue
-
-            file_hash = hashlib.sha256(fetched.content).hexdigest()
-            duplicate = await _document_by_hash(session, source.id, file_hash)
-            if duplicate:
-                duplicate.http_etag = fetched.etag or duplicate.http_etag
-                duplicate.http_last_modified = fetched.last_modified or duplicate.http_last_modified
-                duplicate.suspected_update = False
-                await session.flush()
-                continue
-
-            suffix = _determine_suffix(fetch_kind, fetched)
-            location = await storage.write_document(
-                source_id=source.id,
-                payload=fetched.content,
-                suffix=suffix,
-            )
-            document = RefDocument(
-                source_id=source.id,
-                version_label=_derive_version_label(fetched, file_hash),
-                storage_path=location.storage_path,
-                file_hash=file_hash,
-                http_etag=fetched.etag,
-                http_last_modified=fetched.last_modified,
-                suspected_update=True,
-            )
-            session.add(document)
-            await session.flush()
-            results.append(
-                {
-                    "document_id": document.id,
-                    "source_id": source.id,
-                    "storage_path": document.storage_path,
-                    "uri": location.uri,
-                }
+            await _process_source(
+                session,
+                source,
+                fetcher,
+                storage,
+                results,
+                seen_document_ids,
+                seen_hashes,
             )
 
         await session.commit()
 
     return results
+
+
+async def _process_source(
+    session: AsyncSession,
+    source: RefSource,
+    fetcher: ReferenceSourceFetcher,
+    storage: ReferenceStorage,
+    results: List[Dict[str, Any]],
+    seen_document_ids: set[int],
+    seen_hashes: Dict[Tuple[int, str], int],
+) -> None:
+    fetch_kind = (source.fetch_kind or "pdf").lower()
+    if fetch_kind not in SUPPORTED_FETCH_KINDS:
+        return
+    latest = await _latest_document(session, source.id)
+    if latest and latest.suspected_update:
+        # Skip sources that already have an unprocessed update to avoid
+        # repeatedly flagging the same document across flow runs.
+        return
+    fetched = await fetcher.fetch(source, latest)
+    if fetched is None:
+        return
+
+    file_hash = hashlib.sha256(fetched.content).hexdigest()
+    dedupe_key = (source.id, file_hash)
+    existing_id = seen_hashes.get(dedupe_key)
+    if existing_id is not None:
+        existing_document = await session.get(RefDocument, existing_id)
+        if existing_document:
+            existing_document.http_etag = fetched.etag or existing_document.http_etag
+            existing_document.http_last_modified = (
+                fetched.last_modified or existing_document.http_last_modified
+            )
+            existing_document.suspected_update = False
+            await session.flush()
+        return
+
+    duplicate = await _document_by_hash(session, source.id, file_hash)
+    if duplicate:
+        duplicate.http_etag = fetched.etag or duplicate.http_etag
+        duplicate.http_last_modified = fetched.last_modified or duplicate.http_last_modified
+        duplicate.suspected_update = False
+        await session.flush()
+        seen_hashes[dedupe_key] = duplicate.id
+        seen_document_ids.add(duplicate.id)
+        return
+
+    suffix = _determine_suffix(fetch_kind, fetched)
+    location = await storage.write_document(
+        source_id=source.id,
+        payload=fetched.content,
+        suffix=suffix,
+    )
+    document = RefDocument(
+        source_id=source.id,
+        version_label=_derive_version_label(fetched, file_hash),
+        storage_path=location.storage_path,
+        file_hash=file_hash,
+        http_etag=fetched.etag,
+        http_last_modified=fetched.last_modified,
+        suspected_update=True,
+    )
+    session.add(document)
+    await session.flush()
+    seen_hashes[dedupe_key] = document.id
+    if document.id in seen_document_ids:
+        return
+    seen_document_ids.add(document.id)
+    results.append(
+        {
+            "document_id": document.id,
+            "source_id": source.id,
+            "storage_path": document.storage_path,
+            "uri": location.uri,
+        }
+    )
 
 
 async def _latest_document(session: AsyncSession, source_id: int) -> Optional[RefDocument]:
@@ -291,7 +332,14 @@ async def _summarise_ingestion(
         source_count = await session.scalar(select(func.count()).select_from(RefSource))
         summary["document_count"] = int(document_count or 0)
         summary["source_count"] = int(source_count or 0)
-    summary["inserted"] = len(summary["results"])
+    unique_document_ids = {
+        item.get("document_id")
+        for item in summary["results"]
+        if item.get("document_id") is not None
+    }
+    summary["inserted_unique"] = len(unique_document_ids)
+    summary["results_total"] = len(summary["results"])
+    summary["inserted"] = summary["inserted_unique"]
     return summary
 
 
