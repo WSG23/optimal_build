@@ -7,6 +7,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Dict, Iterable
 
+import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
