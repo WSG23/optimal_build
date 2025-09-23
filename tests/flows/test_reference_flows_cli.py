@@ -1,0 +1,194 @@
+"""Integration tests for Prefect-compatible reference flows."""
+
+from __future__ import annotations
+
+import asyncio
+from pathlib import Path
+from typing import Dict
+
+import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+import app.core.database as app_database
+from app.models.base import BaseModel
+from app.models.rkp import RefClause, RefDocument, RefSource
+from backend.flows import parse_segment as parse_segment_flow
+from backend.flows import watch_fetch as watch_fetch_flow
+
+
+async def _initialise_schema(engine) -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.create_all)
+
+
+async def _seed_offline_sources(
+    session_factory: async_sessionmaker,
+) -> Dict[str, int]:
+    async with session_factory() as session:
+        ura = RefSource(
+            jurisdiction="SG",
+            authority="URA",
+            topic="planning",
+            doc_title="URA Master Plan",
+            landing_url="https://example.com/ura.html",
+            fetch_kind="html",
+            is_active=True,
+        )
+        bca = RefSource(
+            jurisdiction="SG",
+            authority="BCA",
+            topic="fire",
+            doc_title="BCA Fire Code",
+            landing_url="https://example.com/bca.pdf",
+            fetch_kind="pdf",
+            is_active=True,
+        )
+        scdf = RefSource(
+            jurisdiction="SG",
+            authority="SCDF",
+            topic="fire",
+            doc_title="SCDF Fire Code",
+            landing_url="https://example.com/scdf.pdf",
+            fetch_kind="pdf",
+            is_active=True,
+        )
+        session.add_all([ura, bca, scdf])
+        await session.commit()
+        return {source.authority: source.id for source in (ura, bca, scdf)}
+
+
+@pytest.fixture
+def flow_session_factory(monkeypatch):
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    asyncio.run(_initialise_schema(engine))
+
+    memory_db = None
+    try:  # pragma: no cover - only executed when using the in-memory stub
+        from sqlalchemy._memory import GLOBAL_DATABASE  # type: ignore
+    except ModuleNotFoundError:  # pragma: no cover - real SQLAlchemy handles isolation
+        memory_db = None
+    else:
+        memory_db = GLOBAL_DATABASE
+        for model in (RefClause, RefDocument, RefSource):
+            memory_db.delete_all(model)
+
+    monkeypatch.setattr(app_database, "AsyncSessionLocal", session_factory, raising=False)
+    monkeypatch.setattr(watch_fetch_flow, "AsyncSessionLocal", session_factory, raising=False)
+    monkeypatch.setattr(parse_segment_flow, "AsyncSessionLocal", session_factory, raising=False)
+
+    try:
+        yield session_factory
+    finally:
+        if memory_db is not None:
+            for model in (RefClause, RefDocument, RefSource):
+                memory_db.delete_all(model)
+
+        asyncio.run(engine.dispose())
+
+
+def test_prefect_shim_flow_decorator_preserves_callable() -> None:
+    """The vendored Prefect shim should expose usable flow decorators."""
+
+    import prefect
+
+    captured: list[int] = []
+
+    @prefect.flow(name="shim-test")
+    async def sample(value: int) -> int:
+        captured.append(value)
+        return value
+
+    assert sample.name == "shim-test"
+    assert sample.with_options() is sample
+
+    result = asyncio.run(sample(3))
+    assert result == 3
+    assert captured == [3]
+
+
+def test_watch_fetch_cli_offline_deduplicates_summary(
+    flow_session_factory: async_sessionmaker,
+    tmp_path: Path,
+) -> None:
+    authority_ids = asyncio.run(_seed_offline_sources(flow_session_factory))
+
+    summary = watch_fetch_flow.main(
+        [
+            "--storage-path",
+            str(tmp_path),
+            "--offline",
+            "--min-documents",
+            "0",
+        ]
+    )
+
+    assert summary["document_count"] == 3
+    assert len(summary["results"]) == 2
+    seen_document_ids = {entry["document_id"] for entry in summary["results"]}
+    assert len(seen_document_ids) == len(summary["results"])
+
+    async def _load_documents() -> list[RefDocument]:
+        async with flow_session_factory() as session:
+            rows = await session.execute(select(RefDocument).order_by(RefDocument.id))
+            return list(rows.scalars())
+
+    documents = asyncio.run(_load_documents())
+    assert len(documents) == 3
+    file_hashes = {document.file_hash for document in documents}
+    assert len(file_hashes) == 2
+
+    docs_by_source = {document.source_id: document for document in documents}
+    assert authority_ids["BCA"] in docs_by_source
+    assert authority_ids["SCDF"] in docs_by_source
+
+    # Only one of the duplicate hashes should be present in the summary payload.
+    duplicate_source_ids = {authority_ids["BCA"], authority_ids["SCDF"]}
+    assert len(duplicate_source_ids & {entry["source_id"] for entry in summary["results"]}) == 1
+
+
+def test_parse_segment_cli_parses_watch_fetch_results(
+    flow_session_factory: async_sessionmaker,
+    tmp_path: Path,
+) -> None:
+    asyncio.run(_seed_offline_sources(flow_session_factory))
+
+    watch_fetch_flow.main(
+        [
+            "--storage-path",
+            str(tmp_path),
+            "--offline",
+            "--min-documents",
+            "0",
+        ]
+    )
+
+    summary = parse_segment_flow.main(
+        [
+            "--storage-path",
+            str(tmp_path),
+            "--min-documents",
+            "0",
+            "--min-clauses",
+            "0",
+        ]
+    )
+
+    processed = summary.get("processed_documents", [])
+    assert len(processed) == 3
+    assert summary.get("document_count") == 3
+    assert summary.get("clause_count", 0) > 0
+
+    async def _load_state():
+        async with flow_session_factory() as session:
+            documents = (
+                await session.execute(select(RefDocument).order_by(RefDocument.id))
+            ).scalars().all()
+            clauses = (await session.execute(select(RefClause))).scalars().all()
+            return documents, clauses
+
+    documents, clauses = asyncio.run(_load_state())
+    assert all(document.suspected_update is False for document in documents)
+    assert {document.id for document in documents} == set(processed)
+    assert clauses, "Expected reference clauses to be persisted"
