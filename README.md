@@ -36,6 +36,17 @@ Apply the Alembic migrations before booting the API or background workers. The
 while local environments can execute `cd backend && alembic upgrade head` to
 create and update the schema.
 
+## CI Smokes
+
+Before pushing changes, run `python -m backend.scripts.run_smokes --artifacts artifacts/`
+from the repository root. The helper mirrors the CI backend job by applying
+Alembic upgrades, seeding the screening/finance/non-regulatory/entitlements
+fixtures, executing the offline reference ingestion flows, and issuing smoke
+requests to the buildable, finance, and entitlements endpoints. Artefacts (JSON
+summaries, CSV exports, the OpenAPI schema, etc.) are written to the supplied
+directory – defaulting to `artifacts/` – so you can inspect the same outputs
+that CI collects.
+
 ## Feasibility Wizard
 
 The frontend Feasibility Wizard screens seeded parcels against the
