@@ -2,6 +2,19 @@ import { defineConfig } from '@playwright/test'
 import path from 'node:path'
 
 const rootDir = path.resolve(__dirname, '..')
+const backendDir = path.resolve(rootDir, 'backend')
+const pythonPathEntries = [backendDir, rootDir]
+if (process.env.PYTHONPATH && process.env.PYTHONPATH.trim() !== '') {
+  pythonPathEntries.push(process.env.PYTHONPATH)
+}
+const pythonPath = pythonPathEntries.filter(Boolean).join(path.delimiter)
+
+const defaultDbPath = path.resolve(rootDir, '.playwright-e2e.db')
+const defaultDbUrl = `sqlite+aiosqlite:///${defaultDbPath.replace(/\\/g, '/')}`
+const configuredDbUrl =
+  process.env.SQLALCHEMY_DATABASE_URI ?? process.env.PLAYWRIGHT_E2E_DB_URL ?? defaultDbUrl
+const e2eDbUrl = process.env.PLAYWRIGHT_E2E_DB_URL ?? configuredDbUrl
+const buildableUsePostgis = process.env.BUILDABLE_USE_POSTGIS ?? '0'
 
 export default defineConfig({
   testDir: path.resolve(__dirname, 'tests/e2e'),
@@ -10,15 +23,18 @@ export default defineConfig({
     timeout: 10_000,
   },
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
   },
   webServer: [
     {
-      command: 'uvicorn app.main:app --host 127.0.0.1 --port 8000',
-      cwd: path.resolve(rootDir, 'backend'),
+      command: 'python -m uvicorn app.main:app --host 127.0.0.1 --port 8000',
+      cwd: backendDir,
       env: {
-        PYTHONPATH: path.resolve(rootDir, 'backend'),
+        PYTHONPATH: pythonPath,
+        SQLALCHEMY_DATABASE_URI: configuredDbUrl,
+        PLAYWRIGHT_E2E_DB_URL: e2eDbUrl,
+        BUILDABLE_USE_POSTGIS: buildableUsePostgis,
       },
       port: 8000,
       reuseExistingServer: !process.env.CI,
@@ -27,12 +43,12 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: 'pnpm dev -- --host 127.0.0.1 --port 4173',
+      command: 'pnpm dev -- --host 127.0.0.1 --port 3000',
       cwd: path.resolve(rootDir, 'frontend'),
       env: {
         VITE_API_BASE_URL: process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/',
       },
-      port: 4173,
+      port: 3000,
       reuseExistingServer: !process.env.CI,
       stdout: 'pipe',
       stderr: 'pipe',
