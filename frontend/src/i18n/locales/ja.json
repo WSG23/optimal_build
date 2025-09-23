@@ -162,6 +162,9 @@
         "floorsMax": "最大階数",
         "footprint": "許容建築面積",
         "nsa": "販売可能床面積"
+      },
+      "advisory": {
+        "title": "当局からの助言"
       }
     },
     "citations": {

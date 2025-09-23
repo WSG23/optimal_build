@@ -43,7 +43,7 @@ export type BuildableResponse = {
   input_kind: 'address' | 'geometry'
   zone_code: string | null
   overlays: string[]
-  advisory_hints: string[]
+  advisory_hints?: string[] | null
   metrics: {
     gfa_cap_m2: number
     floors_max: number
@@ -229,11 +229,15 @@ function mapRule(rule: RuleItem): BuildableRule {
 }
 
 function mapResponse(payload: BuildableResponse): BuildableSummary {
+  const advisoryHints = Array.isArray(payload.advisory_hints)
+    ? payload.advisory_hints.filter((hint): hint is string => typeof hint === 'string')
+    : []
+
   return {
     inputKind: payload.input_kind,
     zoneCode: payload.zone_code,
     overlays: [...payload.overlays],
-    advisoryHints: [...payload.advisory_hints],
+    advisoryHints: [...advisoryHints],
     metrics: {
       gfaCapM2: payload.metrics.gfa_cap_m2,
       floorsMax: payload.metrics.floors_max,

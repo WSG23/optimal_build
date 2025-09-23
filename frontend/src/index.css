@@ -885,6 +885,33 @@ h1, h2, h3 {
   font-weight: 600;
 }
 
+.feasibility-advisory {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background-color: rgba(15, 23, 42, 0.45);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.85rem;
+}
+
+.feasibility-advisory h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.feasibility-advisory ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.feasibility-advisory li {
+  line-height: 1.45;
+}
+
 .feasibility-citations {
   display: flex;
   flex-direction: column;

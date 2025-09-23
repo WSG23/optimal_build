@@ -45,6 +45,16 @@ test.describe('Feasibility wizard', () => {
         numberFormatter.format(body.metrics.nsa_est_m2),
       )
 
+      const advisoryHints = Array.isArray(body.advisory_hints) ? body.advisory_hints : []
+      const advisoryLocator = page.getByTestId('advisory-hints')
+      if (advisoryHints.length > 0) {
+        await expect(advisoryLocator).toBeVisible()
+        const hints = await advisoryLocator.locator('li').allTextContents()
+        expect(new Set(hints)).toEqual(new Set(advisoryHints))
+      } else {
+        await expect(advisoryLocator).toHaveCount(0)
+      }
+
       if (body.rules.length > 0) {
         const firstRule = body.rules[0]
         await expect(page.getByText(firstRule.authority)).toBeVisible()

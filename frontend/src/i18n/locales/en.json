@@ -162,6 +162,9 @@
         "floorsMax": "Maximum floors",
         "footprint": "Max footprint",
         "nsa": "Net saleable area"
+      },
+      "advisory": {
+        "title": "Authority advisory hints"
       }
     },
     "citations": {

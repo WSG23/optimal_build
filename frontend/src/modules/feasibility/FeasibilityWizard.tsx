@@ -389,6 +389,23 @@ export function FeasibilityWizard() {
     )
   }, [numberFormatter, result, t])
 
+  const advisoryView = useMemo(() => {
+    const hints = result?.advisoryHints ?? []
+    if (hints.length === 0) {
+      return null
+    }
+    return (
+      <section className="feasibility-advisory" data-testid="advisory-hints">
+        <h3>{t('wizard.results.advisory.title')}</h3>
+        <ul>
+          {hints.map((hint, index) => (
+            <li key={`${hint}-${index}`}>{hint}</li>
+          ))}
+        </ul>
+      </section>
+    )
+  }, [result, t])
+
   return (
     <div className="feasibility-wizard" data-testid="feasibility-wizard">
       <header className="feasibility-wizard__header">
@@ -555,6 +572,8 @@ export function FeasibilityWizard() {
               </header>
 
               {metricsView}
+
+              {advisoryView}
 
               {status === 'empty' && (
                 <p className="feasibility-results__empty">{t('wizard.states.empty')}</p>
