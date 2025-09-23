@@ -34,6 +34,8 @@ api_router.include_router(export.router)
 api_router.include_router(roi.router)
 api_router.include_router(imports.router)
 api_router.include_router(audit.router)
+# Finance flows rely on both feasibility and export endpoints being present in the
+# main application so that the interactive documentation exposes them.
 api_router.include_router(feasibility.router)
 api_router.include_router(finance.router)
 
