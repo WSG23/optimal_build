@@ -119,3 +119,34 @@ test('fetchBuildable maps response to camelCase fields', async () => {
   assert.strictEqual(result.rules[0].authority, 'URA')
   assert.deepEqual(result.rules[0].provenance.pages, [7])
 })
+
+test('fetchBuildable can be mocked with createMockBuildableOptions', async () => {
+  let calls = 0
+  const originalFetch = global.fetch
+  global.fetch = async () => {
+    calls += 1
+    throw new Error('fetch should not run when using mock transport')
+  }
+
+  const { fetchBuildable } = loadModule(
+    path.resolve(__dirname, '../src/api/buildable.ts'),
+  )
+  const { createMockBuildableOptions } = loadModule(
+    path.resolve(__dirname, '../src/mocks/buildable.ts'),
+  )
+
+  const result = await fetchBuildable(
+    {
+      address: '456 River Road',
+      typFloorToFloorM: 3.4,
+      efficiencyRatio: 0.8,
+    },
+    createMockBuildableOptions(),
+  )
+
+  restoreFetch(originalFetch)
+
+  assert.strictEqual(calls, 0)
+  assert.strictEqual(result.zoneCode, 'C1')
+  assert.deepEqual([...result.overlays], ['airport'])
+})
