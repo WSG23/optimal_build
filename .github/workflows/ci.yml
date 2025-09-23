@@ -27,8 +27,8 @@ jobs:
 
       - name: Install lint dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements-dev.txt
+          pip install --no-index --find-links third_party/python \
+            -r backend/requirements-dev.txt
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
@@ -67,8 +67,8 @@ jobs:
 
       - name: Install backend dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements-dev.txt
+          pip install --no-index --find-links third_party/python \
+            -r backend/requirements-dev.txt
 
       - name: Start backing services
         run: |
@@ -192,8 +192,8 @@ jobs:
 
       - name: Install backend dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements-dev.txt
+          pip install --no-index --find-links third_party/python \
+            -r backend/requirements-dev.txt
 
       - name: Start backing services
         run: |
@@ -241,7 +241,7 @@ jobs:
           python -m scripts.seed_nonreg
 
       - name: Install frontend dependencies
-        run: pnpm -C frontend install --no-frozen-lockfile
+        run: pnpm -C frontend install --offline --store-dir ../third_party/pnpm-store
 
       - name: Cache Playwright browsers
         uses: actions/cache@v3
