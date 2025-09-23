@@ -119,7 +119,7 @@ class EntAuthority(BaseModel):
     slug: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)
     website: Mapped[str | None] = mapped_column(String(255))
     contact_email: Mapped[str | None] = mapped_column(String(120))
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
@@ -155,7 +155,7 @@ class EntApprovalType(BaseModel):
     requirements: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
     processing_time_days: Mapped[int | None] = mapped_column(Integer)
     is_mandatory: Mapped[bool] = mapped_column(default=True, nullable=False)
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
@@ -196,7 +196,7 @@ class EntRoadmapItem(BaseModel):
     actual_submission_date: Mapped[date | None] = mapped_column(Date)
     actual_decision_date: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(Text)
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -234,7 +234,7 @@ class EntStudy(BaseModel):
     due_date: Mapped[date | None] = mapped_column(Date)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     attachments: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -265,7 +265,7 @@ class EntEngagement(BaseModel):
     contact_phone: Mapped[str | None] = mapped_column(String(40))
     meetings: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text)
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -295,7 +295,7 @@ class EntLegalInstrument(BaseModel):
     effective_date: Mapped[date | None] = mapped_column(Date)
     expiry_date: Mapped[date | None] = mapped_column(Date)
     attachments: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

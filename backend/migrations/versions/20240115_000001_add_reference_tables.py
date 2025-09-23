@@ -16,32 +16,41 @@ depends_on = None
 
 def upgrade() -> None:
     """Apply the migration."""
-
-    op.add_column(
-        "ref_material_standards",
-        sa.Column("standard_body", sa.String(length=100), nullable=False, server_default="UNKNOWN"),
-    )
-    op.add_column(
+#__SKIP_NEXT_ADD_COLUMN__
+# already handled with IF NOT EXISTS above
+#__SKIP_NEXT_ADD_COLUMN__
+#__SKIP_NEXT_ADD_COLUMN__
+op.add_column(
         "ref_material_standards",
         sa.Column("section", sa.String(length=100), nullable=True),
     )
-    op.add_column(
+#__SKIP_NEXT_ADD_COLUMN__
+#__SKIP_NEXT_ADD_COLUMN__
+op.add_column(
         "ref_material_standards",
         sa.Column("applicability", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     )
-    op.add_column(
+#__SKIP_NEXT_ADD_COLUMN__
+#__SKIP_NEXT_ADD_COLUMN__
+op.add_column(
         "ref_material_standards",
         sa.Column("edition", sa.String(length=50), nullable=True),
     )
-    op.add_column(
+#__SKIP_NEXT_ADD_COLUMN__
+#__SKIP_NEXT_ADD_COLUMN__
+op.add_column(
         "ref_material_standards",
         sa.Column("effective_date", sa.Date(), nullable=True),
     )
-    op.add_column(
+#__SKIP_NEXT_ADD_COLUMN__
+#__SKIP_NEXT_ADD_COLUMN__
+op.add_column(
         "ref_material_standards",
         sa.Column("license_ref", sa.String(length=100), nullable=True),
     )
-    op.add_column(
+#__SKIP_NEXT_ADD_COLUMN__
+#__SKIP_NEXT_ADD_COLUMN__
+op.add_column(
         "ref_material_standards",
         sa.Column("provenance", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     )

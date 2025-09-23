@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import (
     Boolean,
@@ -35,7 +35,7 @@ class OverlaySourceGeometry(BaseModel):
     project_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
     source_geometry_key: Mapped[str] = mapped_column(String(100), nullable=False)
     graph: Mapped[dict] = mapped_column(JSONType, nullable=False)
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict)
     checksum: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
@@ -103,7 +103,7 @@ class OverlaySuggestion(BaseModel):
     source_geometry: Mapped[OverlaySourceGeometry] = relationship(
         "OverlaySourceGeometry", back_populates="suggestions"
     )
-    decision: Mapped["OverlayDecision" | None] = relationship(
+    decision: Mapped[Optional["OverlayDecision"]] = relationship(
         "OverlayDecision",
         back_populates="suggestion",
         uselist=False,

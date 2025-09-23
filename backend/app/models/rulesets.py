@@ -28,7 +28,7 @@ class RulePack(BaseModel):
     authority: Mapped[str | None] = mapped_column(String(128))
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     definition: Mapped[dict] = mapped_column(JSONType, nullable=False)
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True

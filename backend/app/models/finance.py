@@ -42,7 +42,7 @@ class FinProject(BaseModel):
     discount_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
     total_development_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     total_gross_profit: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
@@ -129,7 +129,7 @@ class FinCostItem(BaseModel):
     quantity: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     total_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
 
     scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="cost_items")
 
@@ -156,7 +156,7 @@ class FinSchedule(BaseModel):
     revenue: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     cash_flow: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     cumulative_cash_flow: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
 
     scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="schedules")
 
@@ -183,7 +183,7 @@ class FinCapitalStack(BaseModel):
     amount: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     rate: Mapped[Decimal | None] = mapped_column(Numeric(8, 4))
     equity_share: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
 
     scenario: Mapped[FinScenario] = relationship(
         "FinScenario", back_populates="capital_stack"
@@ -209,7 +209,7 @@ class FinResult(BaseModel):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     value: Mapped[Decimal | None] = mapped_column(Numeric(16, 4))
     unit: Mapped[str | None] = mapped_column(String(20))
-    metadata: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
 
     scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="results")
 
