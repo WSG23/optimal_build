@@ -197,7 +197,14 @@ async def run_finance_feasibility(
     payload: FinanceFeasibilityRequest,
     session: AsyncSession = Depends(get_session),
 ) -> FinanceFeasibilityResponse:
-    """Compute feasibility metrics, persist results and return a summary."""
+    """Execute the full finance pipeline for the submitted scenario.
+
+    The endpoint escalates base construction costs, calculates NPV and IRR
+    figures, optionally derives a DSCR timeline, persists the scenario to the
+    database, and returns a structured summary that the frontend can render.
+    A ``404`` error is returned if the referenced finance project cannot be
+    located.
+    """
 
     metrics.REQUEST_COUNTER.labels(endpoint="finance_feasibility").inc()
     metrics.FINANCE_FEASIBILITY_TOTAL.inc()
@@ -425,7 +432,15 @@ async def export_finance_scenario(
     scenario_id: int = Query(...),
     session: AsyncSession = Depends(get_session),
 ) -> StreamingResponse:
-    """Stream a CSV export describing the requested finance scenario."""
+    """Stream a CSV export describing the requested finance scenario.
+
+    The export is optimised for spreadsheet workflows and mirrors the data that
+    is persisted after running the feasibility analysis. Consumers receive the
+    same escalated cost provenance, headline ratios, and the optional DSCR
+    timeline that appear in the UI. A ``400`` error is raised for non-positive
+    scenario identifiers while a ``404`` is returned when the scenario cannot be
+    found.
+    """
 
     metrics.REQUEST_COUNTER.labels(endpoint="finance_export").inc()
     metrics.FINANCE_EXPORT_TOTAL.inc()
