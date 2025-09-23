@@ -20,7 +20,14 @@ frontend README. Either casing may be used for the request body:
 ```
 
 Legacy clients may continue sending camelCase keys and the backend will
-normalise them automatically:
+normalise them automatically. The service recognises the following aliases:
+
+* `typFloorToFloorM` → `typ_floor_to_floor_m`
+* `efficiencyRatio` → `efficiency_ratio`
+* `defaults` → `defaults` (including nested keys like `plotRatio`,
+  `siteAreaM2`, `siteCoverage`, `floorHeightM`, and `efficiencyFactor`)
+
+For example:
 
 ```json
 {
