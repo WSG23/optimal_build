@@ -40,13 +40,18 @@ The Postgres service defined in `docker-compose.yml` mounts
 [`scripts/init-db.sql`](scripts/init-db.sql) into
 `/docker-entrypoint-initdb.d/`. The script reads the `POSTGRES_DB` and
 `POSTGRES_USER` values from the container environment (falling back to the
-repository defaults) before provisioning the database and enabling the UUID
-helper extensions the application expects. When migrations introduce new
-extensions or other global prerequisites, update the SQL bootstrap script and
-run `alembic upgrade head` so the declarative schema and the on-disk database
-stay aligned. Because the script only executes when the Postgres data directory
-is empty, run `docker compose down -v` (or remove the `postgres_data` volume)
-to rebuild the database after changing the bootstrap logic.
+repository defaults of `building_compliance` and `postgres`) before
+provisioning the database. It always enables the `pgcrypto` and `uuid-ossp`
+extensions, and when `BUILDABLE_USE_POSTGIS` is set to a truthy value **and**
+the container exposes the PostGIS extension files, it installs `postgis` so
+geometry-aware migrations can run without manual intervention. When migrations
+introduce new extensions or other global prerequisites, update the SQL
+bootstrap script and run `alembic upgrade head` so the declarative schema and
+the on-disk database stay aligned. Because the script only executes when the
+Postgres data directory is empty, run `docker compose down -v` (or remove the
+`postgres_data` volume) to rebuild the database after changing the bootstrap
+logic. Document any new assumptions in this README so local and CI environments
+stay in sync.
 
 ## CI Smokes
 
