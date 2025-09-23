@@ -2,12 +2,38 @@
 
 from __future__ import annotations
 
+import importlib.machinery
 import importlib.util
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, Iterable
+
+
+def _load_installed_sqlalchemy() -> ModuleType | None:
+    """Attempt to import the real SQLAlchemy package if it is installed."""
+
+    stub_path = Path(__file__).resolve().parent
+    backend_root = stub_path.parent
+    repo_root = stub_path.parents[2]
+    repo_stub_path = repo_root / "sqlalchemy"
+    excluded_paths = {backend_root.resolve(), repo_root.resolve(), repo_stub_path.resolve()}
+
+    search_paths = [
+        entry
+        for entry in sys.path
+        if Path(entry).resolve() not in excluded_paths
+    ]
+
+    spec = importlib.machinery.PathFinder.find_spec(__name__, search_paths)
+    if spec is None or spec.loader is None:
+        return None
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[__name__] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def _load_repository_stub() -> ModuleType:
@@ -437,7 +463,11 @@ def _create_inline_stub() -> ModuleType:
     return module
 
 
-def _load_stub() -> ModuleType:
+def _load_sqlalchemy() -> ModuleType:
+    module = _load_installed_sqlalchemy()
+    if module is not None:
+        return module
+
     try:
         return _load_repository_stub()
     except ModuleNotFoundError:
@@ -446,4 +476,4 @@ def _load_stub() -> ModuleType:
         return module
 
 
-globals().update(_load_stub().__dict__)
+globals().update(_load_sqlalchemy().__dict__)
