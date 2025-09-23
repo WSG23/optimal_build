@@ -21,6 +21,7 @@ export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps
     { path: '/cad/detection', label: t('nav.detection') },
     { path: '/cad/pipelines', label: t('nav.pipelines') },
     { path: '/feasibility', label: t('nav.feasibility') },
+    { path: '/finance', label: t('nav.finance') },
   ]
 
   return (
@@ -98,6 +99,13 @@ export function HomeOverview() {
           <p>{t('home.cards.feasibility.description')}</p>
           <Link to="/feasibility" className="app-home__cta">
             {t('nav.feasibility')}
+          </Link>
+        </article>
+        <article className="app-home__card">
+          <h3>{t('nav.finance')}</h3>
+          <p>{t('home.cards.finance.description')}</p>
+          <Link to="/finance" className="app-home__cta">
+            {t('nav.finance')}
           </Link>
         </article>
       </section>
