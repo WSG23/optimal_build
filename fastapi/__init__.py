@@ -10,6 +10,7 @@ from functools import lru_cache
 import inspect
 import json
 import re
+from enum import Enum
 from typing import (
     Any,
     Awaitable,
@@ -45,9 +46,20 @@ class Depends:
 
 
 class Query:
-    def __init__(self, default: Any = None, *, description: str | None = None) -> None:
+    def __init__(
+        self,
+        default: Any = None,
+        *,
+        description: str | None = None,
+        **_: Any,
+    ) -> None:
         self.default = default
         self.description = description
+
+
+class Header:
+    def __init__(self, default: Any = None) -> None:
+        self.default = default
 
 
 class Form:
@@ -220,8 +232,14 @@ class APIRouter:
         )
         self.routes.append(route)
 
-    def get(self, path: str, *, response_model: Optional[type] = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self._decorator(path, methods=["GET"], response_model=response_model)
+    def get(
+        self,
+        path: str,
+        *,
+        response_model: Optional[type] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return self._decorator(path, methods=["GET"], response_model=response_model, **kwargs)
 
     def post(
         self,
@@ -229,8 +247,40 @@ class APIRouter:
         *,
         response_model: Optional[type] = None,
         status_code: Optional[int] = None,
+        **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self._decorator(path, methods=["POST"], response_model=response_model, status_code=status_code)
+        return self._decorator(
+            path,
+            methods=["POST"],
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
+
+    def put(
+        self,
+        path: str,
+        *,
+        response_model: Optional[type] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return self._decorator(path, methods=["PUT"], response_model=response_model, **kwargs)
+
+    def delete(
+        self,
+        path: str,
+        *,
+        response_model: Optional[type] = None,
+        status_code: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return self._decorator(
+            path,
+            methods=["DELETE"],
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
 
     def include_router(self, router: "APIRouter") -> None:
         for route in router.routes:
@@ -243,6 +293,7 @@ class APIRouter:
         methods: Iterable[str],
         response_model: Optional[type] = None,
         status_code: Optional[int] = None,
+        **_: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
             self.add_api_route(path, func, methods=methods, response_model=response_model, status_code=status_code)
@@ -300,12 +351,14 @@ class FastAPI:
         json_body: Any = None,
         form_data: Mapping[str, Any] | None = None,
         files: Mapping[str, Tuple[str, bytes, str]] | None = None,
+        headers: Mapping[str, str] | None = None,
     ) -> Tuple[int, Dict[str, str], bytes]:
         route = self._match_route(method, path)
         if route is None:
             return status.HTTP_404_NOT_FOUND, {"content-type": "application/json"}, json.dumps({"detail": "Not Found"}).encode("utf-8")
 
         try:
+            header_map = {key.lower(): value for key, value in (headers or {}).items()}
             body = await _execute_route(
                 self,
                 route,
@@ -315,6 +368,7 @@ class FastAPI:
                 json_body=json_body,
                 form_data=form_data or {},
                 files=files or {},
+                headers=header_map,
             )
             status_code, headers, payload = body
             return status_code, headers, payload
@@ -343,6 +397,7 @@ async def _execute_route(
     json_body: Any,
     form_data: Mapping[str, Any],
     files: Mapping[str, Tuple[str, bytes, str]],
+    headers: Mapping[str, str],
 ) -> Tuple[int, Dict[str, str], bytes]:
     path_params = route.match(path) or {}
     converted_params = {
@@ -359,6 +414,7 @@ async def _execute_route(
             json_body,
             form_data,
             files,
+            headers,
             cleanup_callbacks,
         )
         result = route.endpoint(**arguments)
@@ -389,6 +445,7 @@ async def _build_arguments(
     json_body: Any,
     form_data: Mapping[str, Any],
     files: Mapping[str, Tuple[str, bytes, str]],
+    headers: Mapping[str, str],
     cleanup_callbacks: list[Callable[[], Awaitable[None] | None]],
 ) -> Dict[str, Any]:
     signature = inspect.signature(endpoint)
@@ -405,10 +462,34 @@ async def _build_arguments(
 
         if isinstance(default, Depends):
             dependency = app.dependency_overrides.get(default.dependency, default.dependency)
-            resolved, cleanup = await _resolve_dependency(dependency)
+            resolved = await _resolve_dependency(
+                app,
+                dependency,
+                path_params,
+                query_params,
+                json_body,
+                form_data,
+                files,
+                headers,
+                cleanup_callbacks,
+            )
             arguments[name] = resolved
-            if cleanup is not None:
-                cleanup_callbacks.append(cleanup)
+            continue
+
+        if isinstance(default, Header):
+            header_name = name.replace("_", "-")
+            header_key = header_name.lower()
+            value = headers.get(header_key)
+            if value is None:
+                value = headers.get(name.lower())
+            if value is None:
+                if default.default is ...:
+                    raise HTTPException(
+                        status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        f"Missing required header {header_name}",
+                    )
+                value = default.default
+            arguments[name] = _coerce_type(value, annotation)
             continue
 
         if isinstance(default, Query):
@@ -460,23 +541,50 @@ async def _build_arguments(
 
 
 async def _resolve_dependency(
-    dependency: Callable[..., Any]
-) -> Tuple[Any, Optional[Callable[[], Awaitable[None] | None]]]:
-    result = dependency()
+    app: FastAPI,
+    dependency: Callable[..., Any],
+    path_params: Mapping[str, Any],
+    query_params: Mapping[str, Any],
+    json_body: Any,
+    form_data: Mapping[str, Any],
+    files: Mapping[str, Tuple[str, bytes, str]],
+    headers: Mapping[str, str],
+    cleanup_callbacks: list[Callable[[], Awaitable[None] | None]],
+) -> Any:
+    nested_cleanups: list[Callable[[], Awaitable[None] | None]] = []
+    signature = inspect.signature(dependency)
+    if signature.parameters:
+        arguments = await _build_arguments(
+            app,
+            dependency,
+            path_params,
+            query_params,
+            json_body,
+            form_data,
+            files,
+            headers,
+            nested_cleanups,
+        )
+    else:
+        arguments = {}
+
+    result = dependency(**arguments)
     if inspect.isawaitable(result):
         result = await result
     if inspect.isasyncgen(result):
         agen = result
         value = await agen.__anext__()
 
-        async def _cleanup() -> None:
+        async def _cleanup_async_gen() -> None:
             try:
                 await agen.__anext__()
             except StopAsyncIteration:
                 pass
             await agen.aclose()
 
-        return value, _cleanup
+        cleanup_callbacks.extend(nested_cleanups)
+        cleanup_callbacks.append(_cleanup_async_gen)
+        return value
     if inspect.isgenerator(result):  # pragma: no cover - rarely used
         gen = result
         value = next(gen)
@@ -487,8 +595,12 @@ async def _resolve_dependency(
             except StopIteration:
                 pass
 
-        return value, _cleanup_sync
-    return result, None
+        cleanup_callbacks.extend(nested_cleanups)
+        cleanup_callbacks.append(_cleanup_sync)
+        return value
+
+    cleanup_callbacks.extend(nested_cleanups)
+    return result
 
 
 @lru_cache(maxsize=None)
@@ -513,6 +625,10 @@ def _coerce_type(value: Any, annotation: Any) -> Any:
         if args:
             return _coerce_type(value, args[0])
         return value
+    if inspect.isclass(annotation) and issubclass(annotation, Enum):
+        if isinstance(value, annotation):
+            return value
+        return annotation(value)
     if inspect.isclass(annotation) and hasattr(annotation, "model_validate"):
         if isinstance(value, annotation):
             return value

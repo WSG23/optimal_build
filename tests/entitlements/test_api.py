@@ -1,0 +1,122 @@
+"""Integration tests for the entitlements API."""
+
+from __future__ import annotations
+
+import pytest
+
+pytest.importorskip("fastapi")
+pytest.importorskip("pydantic")
+pytest.importorskip("sqlalchemy")
+
+from httpx import AsyncClient
+
+from backend.scripts.seed_entitlements_sg import seed_entitlements
+
+
+PROJECT_ID = 90301
+
+
+@pytest.mark.asyncio
+async def test_entitlements_workflow(async_session_factory, app_client: AsyncClient) -> None:
+    """Seeding and API interactions should manage entitlements end-to-end."""
+
+    async with async_session_factory() as session:
+        summary = await seed_entitlements(session, project_id=PROJECT_ID, reset_existing=True)
+        await session.commit()
+
+    assert summary.roadmap_items > 0
+
+    roadmap_response = await app_client.get(
+        f"/api/v1/entitlements/{PROJECT_ID}/roadmap"
+    )
+    assert roadmap_response.status_code == 200
+    roadmap_body = roadmap_response.json()
+    assert roadmap_body["total"] == summary.roadmap_items
+    first_item_id = roadmap_body["items"][0]["id"]
+
+    paged_response = await app_client.get(
+        f"/api/v1/entitlements/{PROJECT_ID}/roadmap?limit=1&offset=1"
+    )
+    assert paged_response.status_code == 200
+    assert len(paged_response.json()["items"]) <= 1
+
+    study_payload = {
+        "project_id": PROJECT_ID,
+        "name": "Traffic Impact Study",
+        "study_type": "traffic",
+        "status": "draft",
+        "consultant": "Acme Transport",
+        "due_date": "2024-11-01",
+        "attachments": [{"label": "Report", "url": "https://example.com/traffic-study.pdf"}],
+    }
+    forbidden_response = await app_client.post(
+        f"/api/v1/entitlements/{PROJECT_ID}/studies",
+        json=study_payload,
+    )
+    assert forbidden_response.status_code == 403
+
+    create_study = await app_client.post(
+        f"/api/v1/entitlements/{PROJECT_ID}/studies",
+        headers={"X-Role": "admin"},
+        json=study_payload,
+    )
+    assert create_study.status_code == 201
+    study_body = create_study.json()
+    assert study_body["name"] == study_payload["name"]
+    assert study_body["attachments"][0]["url"].startswith("https://example.com")
+
+    update_roadmap = await app_client.put(
+        f"/api/v1/entitlements/{PROJECT_ID}/roadmap/{first_item_id}",
+        headers={"X-Role": "admin"},
+        json={"status": "in_progress"},
+    )
+    assert update_roadmap.status_code == 200
+    assert update_roadmap.json()["status"] == "in_progress"
+
+    stakeholder_payload = {
+        "project_id": PROJECT_ID,
+        "name": "Urban Redevelopment Authority",
+        "organisation": "URA",
+        "engagement_type": "agency",
+        "status": "active",
+        "contact_email": "planner@example.gov",
+        "notes": "Monthly coordination meeting established.",
+    }
+    stakeholder_response = await app_client.post(
+        f"/api/v1/entitlements/{PROJECT_ID}/stakeholders",
+        headers={"X-Role": "admin"},
+        json=stakeholder_payload,
+    )
+    assert stakeholder_response.status_code == 201
+
+    legal_payload = {
+        "project_id": PROJECT_ID,
+        "name": "Development Agreement",
+        "instrument_type": "agreement",
+        "status": "draft",
+        "reference_code": "DA-2024-01",
+        "attachments": [
+            {"label": "Agreement", "url": "https://example.com/development-agreement.pdf"}
+        ],
+    }
+    legal_response = await app_client.post(
+        f"/api/v1/entitlements/{PROJECT_ID}/legal",
+        headers={"X-Role": "admin"},
+        json=legal_payload,
+    )
+    assert legal_response.status_code == 201
+
+    export_response = await app_client.get(
+        f"/api/v1/entitlements/{PROJECT_ID}/export?format=pdf"
+    )
+    assert export_response.status_code == 200
+    assert export_response.headers["content-type"] in {"application/pdf", "text/html"}
+    assert export_response.headers["content-disposition"].startswith(
+        "attachment; filename=project-"
+    )
+
+    metrics_response = await app_client.get("/health/metrics")
+    assert metrics_response.status_code == 200
+    metrics_body = metrics_response.text
+    assert "entitlements_study_requests_total" in metrics_body
+    assert "entitlements_export_requests_total" in metrics_body

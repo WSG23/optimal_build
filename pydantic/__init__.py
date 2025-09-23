@@ -321,6 +321,7 @@ class BaseModel(metaclass=BaseModelMeta):
     model_config: Dict[str, Any]
 
     def __init__(self, **data: Any) -> None:
+        provided_fields = set(data.keys())
         values: Dict[str, Any] = {}
         for name, field in self.model_fields.items():
             if name in data:
@@ -343,6 +344,7 @@ class BaseModel(metaclass=BaseModelMeta):
             values[name] = value
 
         object.__setattr__(self, "__dict__", values)
+        object.__setattr__(self, "__provided_fields__", provided_fields)
         _apply_model_validators(type(self), self)
 
     def __setattr__(self, key: str, value: Any) -> None:
@@ -372,11 +374,25 @@ class BaseModel(metaclass=BaseModelMeta):
             raise ValidationError("Unsupported object for validation")
         return cls(**data)
 
-    def model_dump(self, *, mode: str = "python") -> Dict[str, Any]:
-        return {
-            name: _dump_value(getattr(self, name), mode)
-            for name in self.model_fields
-        }
+    def model_dump(
+        self,
+        *,
+        mode: str = "python",
+        exclude_unset: bool = False,
+    ) -> Dict[str, Any]:
+        if exclude_unset:
+            provided = getattr(self, "__provided_fields__", set())
+            items = (
+                (name, getattr(self, name))
+                for name in self.model_fields
+                if name in provided
+            )
+        else:
+            items = (
+                (name, getattr(self, name))
+                for name in self.model_fields
+            )
+        return {name: _dump_value(value, mode) for name, value in items}
 
     def __repr__(self) -> str:  # pragma: no cover - human-readable convenience
         fields = ", ".join(f"{key}={value!r}" for key, value in self.__dict__.items())

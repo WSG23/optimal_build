@@ -123,3 +123,74 @@ export interface ErgonomicsMetric {
   context: Record<string, unknown>;
   notes: string | null;
 }
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface EntRoadmapItemRecord {
+  id: number;
+  project_id: number;
+  approval_type_id: number | null;
+  sequence_order: number;
+  status: string;
+  status_changed_at: string | null;
+  target_submission_date: string | null;
+  target_decision_date: string | null;
+  actual_submission_date: string | null;
+  actual_decision_date: string | null;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntStudyRecord {
+  id: number;
+  project_id: number;
+  name: string;
+  study_type: string;
+  status: string;
+  summary: string | null;
+  consultant: string | null;
+  due_date: string | null;
+  completed_at: string | null;
+  attachments: Record<string, unknown>[];
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntEngagementRecord {
+  id: number;
+  project_id: number;
+  name: string;
+  organisation: string | null;
+  engagement_type: string;
+  status: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  meetings: Record<string, unknown>[];
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EntLegalInstrumentRecord {
+  id: number;
+  project_id: number;
+  name: string;
+  instrument_type: string;
+  status: string;
+  reference_code: string | null;
+  effective_date: string | null;
+  expiry_date: string | null;
+  attachments: Record<string, unknown>[];
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}

@@ -50,12 +50,14 @@ class AsyncClient:
         url: str,
         *,
         params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
         json: Any = None,
         data: Optional[Dict[str, Any]] = None,
         files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
     ) -> Response:
         path, query = _normalise_url(url)
         query_params = _merge_query(query, params)
+        prepared_headers = _prepare_headers(headers, json)
 
         prepared_files: Dict[str, tuple[str, bytes, str]] = {}
         if files:
@@ -80,6 +82,7 @@ class AsyncClient:
                 json_body=json,
                 form_data=dict(data or {}),
                 files=prepared_files,
+                headers=prepared_headers,
             )
             return Response(status_code, payload, dict(headers))
 
@@ -97,8 +100,13 @@ class AsyncClient:
         body = b""
         if json is not None:
             body = _json_bytes(json)
-            scope["headers"].append((b"content-type", b"application/json"))
-        scope["headers"].append((b"host", self.base_url.encode("utf-8")))
+        if prepared_headers:
+            for key, value in prepared_headers.items():
+                scope["headers"].append((key.encode("utf-8"), str(value).encode("utf-8")))
+        else:
+            scope["headers"].append((b"host", self.base_url.encode("utf-8")))
+        if not any(key == b"host" for key, _ in scope["headers"]):
+            scope["headers"].append((b"host", self.base_url.encode("utf-8")))
 
         receive_messages = [{"type": "http.request", "body": body, "more_body": False}]
         sent_messages: list[dict[str, Any]] = []
@@ -126,18 +134,44 @@ class AsyncClient:
                 payload += message.get("body", b"")
         return Response(status_code, payload, headers)
 
-    async def get(self, url: str, *, params: Optional[Dict[str, Any]] = None) -> Response:
-        return await self.request("GET", url, params=params)
+    async def get(
+        self,
+        url: str,
+        *,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> Response:
+        return await self.request("GET", url, params=params, headers=headers)
 
     async def post(
         self,
         url: str,
         *,
+        headers: Optional[Dict[str, str]] = None,
         json: Any = None,
         data: Optional[Dict[str, Any]] = None,
         files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
     ) -> Response:
-        return await self.request("POST", url, json=json, data=data, files=files)
+        return await self.request("POST", url, headers=headers, json=json, data=data, files=files)
+
+    async def put(
+        self,
+        url: str,
+        *,
+        headers: Optional[Dict[str, str]] = None,
+        json: Any = None,
+        data: Optional[Dict[str, Any]] = None,
+    ) -> Response:
+        return await self.request("PUT", url, headers=headers, json=json, data=data)
+
+    async def delete(
+        self,
+        url: str,
+        *,
+        headers: Optional[Dict[str, str]] = None,
+        json: Any = None,
+    ) -> Response:
+        return await self.request("DELETE", url, headers=headers, json=json)
 
 
 def _normalise_url(url: str) -> tuple[str, str]:
@@ -159,6 +193,19 @@ def _merge_query(query: str, params: Optional[Dict[str, Any]]) -> Dict[str, Any]
     if params:
         combined.update(params)
     return combined
+
+
+def _prepare_headers(
+    headers: Optional[Dict[str, str]],
+    json_payload: Any,
+) -> Dict[str, str]:
+    prepared: Dict[str, str] = {}
+    if headers:
+        for key, value in headers.items():
+            prepared[key.lower()] = str(value)
+    if json_payload is not None and "content-type" not in prepared:
+        prepared["content-type"] = "application/json"
+    return prepared
 
 
 __all__ = ["AsyncClient", "Response"]

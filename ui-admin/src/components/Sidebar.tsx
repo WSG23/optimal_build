@@ -5,7 +5,8 @@ const navItems = [
   { to: '/documents', label: 'Documents' },
   { to: '/clauses', label: 'Clauses' },
   { to: '/rules', label: 'Rules Review' },
-  { to: '/diffs', label: 'Diffs' }
+  { to: '/diffs', label: 'Diffs' },
+  { to: '/entitlements', label: 'Entitlements' }
 ];
 
 const Sidebar = () => {
