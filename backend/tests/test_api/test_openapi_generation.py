@@ -8,6 +8,8 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from fastapi.testclient import TestClient
+
 from app.api.v1 import TAGS_METADATA  # noqa: E402  (import after dependency checks)
 from app.core.config import settings  # noqa: E402
 from app.main import app  # noqa: E402
@@ -45,3 +47,15 @@ def test_openapi_includes_expected_paths() -> None:
     finance_response = finance_post["responses"]["200"]["content"]["application/json"]["example"]
     assert finance_response["cost_index"]["base_index"]["value"] == "0"
     assert finance_response["results"][0]["metadata"] == {}
+
+
+def test_openapi_endpoint_returns_cached_schema() -> None:
+    """The generated OpenAPI schema is exposed via the HTTP route."""
+
+    schema = app.openapi()
+    client = TestClient(app)
+    response = client.get("/openapi.json")
+    assert response.status_code == 200
+    assert response.json() == schema
+    # Route should return the cached object rather than rebuilding.
+    assert app.openapi() is schema
