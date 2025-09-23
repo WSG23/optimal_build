@@ -30,6 +30,10 @@ ALERT_COUNTER: Counter
 COST_ADJUSTMENT_GAUGE: Gauge
 PWP_BUILDABLE_TOTAL: Counter
 PWP_BUILDABLE_DURATION_MS: Histogram
+FINANCE_FEASIBILITY_TOTAL: Counter
+FINANCE_FEASIBILITY_DURATION_MS: Histogram
+FINANCE_EXPORT_TOTAL: Counter
+FINANCE_EXPORT_DURATION_MS: Histogram
 
 
 def _initialize_metrics() -> None:
@@ -43,6 +47,10 @@ def _initialize_metrics() -> None:
     global COST_ADJUSTMENT_GAUGE
     global PWP_BUILDABLE_TOTAL
     global PWP_BUILDABLE_DURATION_MS
+    global FINANCE_FEASIBILITY_TOTAL
+    global FINANCE_FEASIBILITY_DURATION_MS
+    global FINANCE_EXPORT_TOTAL
+    global FINANCE_EXPORT_DURATION_MS
 
     REGISTRY = CollectorRegistry(auto_describe=True)
 
@@ -91,6 +99,34 @@ def _initialize_metrics() -> None:
     PWP_BUILDABLE_DURATION_MS = Histogram(
         "pwp_buildable_duration_ms",
         "Duration of buildable screening computations in milliseconds.",
+        labelnames=(),
+        registry=REGISTRY,
+    )
+
+    FINANCE_FEASIBILITY_TOTAL = Counter(
+        "finance_feasibility_total",
+        "Number of finance feasibility calculations processed.",
+        labelnames=(),
+        registry=REGISTRY,
+    )
+
+    FINANCE_FEASIBILITY_DURATION_MS = Histogram(
+        "finance_feasibility_duration_ms",
+        "Duration of finance feasibility calculations in milliseconds.",
+        labelnames=(),
+        registry=REGISTRY,
+    )
+
+    FINANCE_EXPORT_TOTAL = Counter(
+        "finance_export_total",
+        "Number of finance scenario exports processed.",
+        labelnames=(),
+        registry=REGISTRY,
+    )
+
+    FINANCE_EXPORT_DURATION_MS = Histogram(
+        "finance_export_duration_ms",
+        "Duration of finance scenario exports in milliseconds.",
         labelnames=(),
         registry=REGISTRY,
     )
