@@ -53,4 +53,7 @@ and performance:
 Both metrics are included in the `/health/metrics` endpoint and in the output of
 `app.utils.metrics.render_latest_metrics()`, enabling dashboards and alerts to
 verify that requests are flowing and that latency stays within expected
-thresholds.
+thresholds. After triggering `POST /api/v1/screen/buildable`, fetching
+`/health/metrics` again will show `pwp_buildable_total` incrementing by one and
+`pwp_buildable_duration_ms_count` increasing to reflect the observed latency for
+that request.

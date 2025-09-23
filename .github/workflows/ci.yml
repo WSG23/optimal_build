@@ -114,6 +114,7 @@ jobs:
             tests/test_api/test_rules.py \
             tests/test_flows/test_watch_fetch_flow.py \
             tests/test_flows/test_parse_segment_flow.py \
+            ../tests/pwp/test_buildable_metrics.py \
             ../tests/finance/test_finance_smoke.py
 
       - name: Collect coverage artifact
