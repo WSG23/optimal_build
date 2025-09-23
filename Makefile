@@ -158,7 +158,7 @@ dev-stop: ## Stop services started with dev-start (excluding docker-compose)
 	fi
 
 seed-nonreg:
-	python scripts/seed_nonreg.py
+	python -m backend.scripts.seed_nonreg
 
 sync-products:
 	python -m backend.flows.sync_products --csv-path vendor.csv
