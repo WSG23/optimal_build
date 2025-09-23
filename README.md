@@ -103,3 +103,74 @@ The frontend ROI dashboard queries `/api/v1/roi/{project_id}` for automation
 insights such as time saved, acceptance rates, and iteration counts. The
 underlying heuristics and instrumentation assumptions are documented in
 [`docs/roi_metrics.md`](docs/roi_metrics.md).
+
+## Finance feasibility demo
+
+Run `make seed-data` after applying migrations to populate both the screening
+fixtures and a finance feasibility workspace. The make target now executes the
+finance demo seeder (`python -m scripts.seed_finance_demo`) inside the backend
+container, which creates:
+
+* a finance project linked to `project_id=401` named “Finance Demo Development”,
+* three scenarios (A/B/C) with escalated cost assumptions and cash-flow inputs,
+* cost line items and monthly cash-flow schedules for each scenario, and
+* persisted results mirroring the `/api/v1/finance/feasibility` response payload.
+
+To run the seeder outside Docker, execute `python scripts/seed_finance_demo.py`
+from the repository root. The CLI accepts `--project-id`, `--project-name`, and
+`--currency` options plus `--keep-existing` to retain previous demo rows.
+
+After seeding, call the finance API with the scenario definition baked into the
+demo data:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/finance/feasibility \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": 401,
+    "project_name": "Finance Demo Development",
+    "scenario": {
+      "name": "Scenario A – Base Case",
+      "description": "Baseline absorption with phased sales releases.",
+      "currency": "SGD",
+      "is_primary": true,
+      "cost_escalation": {
+        "amount": "38950000",
+        "base_period": "2024-Q1",
+        "series_name": "construction_all_in",
+        "jurisdiction": "SG",
+        "provider": "Public"
+      },
+      "cash_flow": {
+        "discount_rate": "0.08",
+        "cash_flows": [
+          "-2500000",
+          "-4100000",
+          "-4650000",
+          "-200000",
+          "4250000",
+          "10200000"
+        ]
+      },
+      "dscr": {
+        "net_operating_incomes": [
+          "0", "0", "3800000", "5600000", "7200000", "7800000"
+        ],
+        "debt_services": [
+          "0", "0", "3200000", "3300000", "3400000", "3400000"
+        ],
+        "period_labels": ["M1", "M2", "M3", "M4", "M5", "M6"]
+      }
+    }
+  }'
+```
+
+The response includes `scenario_id`, which can be passed to the export endpoint
+to retrieve a CSV summary of the persisted metrics:
+
+```bash
+curl -L -o finance_scenario.csv \
+  "http://localhost:8000/api/v1/finance/export?scenario_id=<SCENARIO_ID>"
+```
+
+Replace `<SCENARIO_ID>` with the identifier returned by the feasibility call.
