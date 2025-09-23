@@ -159,6 +159,24 @@ class StreamingResponse(Response):
         return payload
 
 
+class JSONResponse(Response):
+    """Static JSON response wrapper used for schema endpoints."""
+
+    def __init__(
+        self,
+        content: Any,
+        *,
+        status_code: int = status.HTTP_200_OK,
+        headers: Optional[Mapping[str, str]] = None,
+    ) -> None:
+        super().__init__(
+            content,
+            status_code=status_code,
+            media_type="application/json",
+            headers=headers,
+        )
+
+
 def _json_default(value: Any) -> Any:
     if isinstance(value, (datetime, date)):
         return value.isoformat()
@@ -493,6 +511,7 @@ class FastAPI:
         title: str | None = None,
         version: str | None = None,
         lifespan: Any = None,
+        openapi_url: str | None = "/openapi.json",
         **extra: Any,
     ) -> None:
         self.title = title or "FastAPI"
@@ -504,6 +523,21 @@ class FastAPI:
         self._lifespan = lifespan
         self.openapi_tags: list[dict[str, Any]] = list(extra.get("openapi_tags", []))
         self._openapi_schema: Dict[str, Any] | None = None
+        self.openapi_url = openapi_url
+
+        if self.openapi_url:
+            openapi_path = (
+                self.openapi_url
+                if self.openapi_url.startswith("/")
+                else f"/{self.openapi_url}"
+            )
+
+            async def _openapi_handler() -> JSONResponse:
+                return JSONResponse(self.openapi())
+
+            self.routes.append(
+                _Route(openapi_path, endpoint=_openapi_handler, methods=["GET"])
+            )
 
     def add_middleware(self, middleware_cls: Any, **options: Any) -> None:  # pragma: no cover - middleware ignored
         self._middleware.append((middleware_cls, options))
@@ -962,6 +996,7 @@ __all__ = [
     "File",
     "Form",
     "HTTPException",
+    "JSONResponse",
     "Query",
     "Response",
     "StreamingResponse",
