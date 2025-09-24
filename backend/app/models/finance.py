@@ -19,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, MetadataProxy
 from app.models.types import FlexibleJSONB
 
 
@@ -56,6 +56,7 @@ class FinProject(BaseModel):
     scenarios: Mapped[List["FinScenario"]] = relationship(
         "FinScenario", back_populates="fin_project", cascade="all, delete-orphan"
     )
+    metadata = MetadataProxy()
 
     __table_args__ = (
         Index("idx_fin_projects_project_name", "project_id", "name"),
@@ -132,6 +133,7 @@ class FinCostItem(BaseModel):
     metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
 
     scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="cost_items")
+    metadata = MetadataProxy()
 
     __table_args__ = (
         Index("idx_fin_cost_items_project_name", "project_id", "name"),
@@ -159,6 +161,7 @@ class FinSchedule(BaseModel):
     metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
 
     scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="schedules")
+    metadata = MetadataProxy()
 
     __table_args__ = (
         Index("idx_fin_schedules_project_month", "project_id", "month_index"),
@@ -188,6 +191,7 @@ class FinCapitalStack(BaseModel):
     scenario: Mapped[FinScenario] = relationship(
         "FinScenario", back_populates="capital_stack"
     )
+    metadata = MetadataProxy()
 
     __table_args__ = (
         Index("idx_fin_capital_stacks_project_name", "project_id", "name"),
@@ -214,6 +218,7 @@ class FinResult(BaseModel):
     scenario: Mapped[FinScenario] = relationship(
         "FinScenario", back_populates="results", uselist=False
     )
+    metadata = MetadataProxy()
 
     __table_args__ = (
         Index("idx_fin_results_project_name", "project_id", "name"),

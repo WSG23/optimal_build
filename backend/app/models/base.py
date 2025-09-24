@@ -42,4 +42,20 @@ class BaseModel(DeclarativeBase):
 # Re-export a `Base` alias for compatibility with migration tooling.
 Base = BaseModel
 
-__all__ = ["Base", "BaseModel"]
+class MetadataProxy:
+    """Expose ``metadata_json`` via the conventional ``metadata`` attribute."""
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return BaseModel.metadata
+        value = getattr(instance, "metadata_json", None)
+        if value is None:
+            value = {}
+            setattr(instance, "metadata_json", value)
+        return value
+
+    def __set__(self, instance, value):
+        setattr(instance, "metadata_json", value or {})
+
+
+__all__ = ["Base", "BaseModel", "MetadataProxy"]

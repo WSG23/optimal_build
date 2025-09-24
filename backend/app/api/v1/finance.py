@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 from time import perf_counter
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from typing import Iterator, List, Optional
+from typing import Any, Iterator, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -41,6 +42,12 @@ def _decimal_from_value(value: object) -> Decimal:
     if isinstance(value, Decimal):
         return value
     return Decimal(str(value))
+
+
+def _json_safe(value: Any) -> Any:
+    """Convert nested data into JSON-serialisable Python primitives."""
+
+    return json.loads(json.dumps(value, default=str))
 
 
 def _build_cost_index_snapshot(index: RefCostIndex | None) -> CostIndexSnapshot | None:
@@ -345,7 +352,7 @@ async def run_finance_feasibility(
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
             dscr_entries = [_convert_dscr_entry(entry) for entry in timeline]
             dscr_metadata = {
-                "entries": [entry.model_dump(mode="json") for entry in dscr_entries],
+                "entries": [_json_safe(entry.model_dump(mode="json")) for entry in dscr_entries],
             }
 
         results: List[FinResult] = [
@@ -358,7 +365,7 @@ async def run_finance_feasibility(
                 metadata={
                     "base_amount": str(cost_input.amount),
                     "base_period": cost_input.base_period,
-                    "cost_index": cost_provenance.model_dump(mode="json"),
+                    "cost_index": _json_safe(cost_provenance.model_dump(mode="json")),
                 },
             ),
             FinResult(

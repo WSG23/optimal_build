@@ -23,9 +23,18 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub when plugin miss
     pytest_asyncio.fixture = pytest.fixture  # type: ignore[attr-defined]
     sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
 
-import backend.tests.conftest  # noqa: F401 - ensure fallback stubs are registered
+from backend.tests import conftest as backend_conftest  # noqa: F401 - ensure fallback stubs are registered
 
 pytest_plugins = ["backend.tests.conftest"]
+
+# Re-export backend fixtures in this namespace for pytest discovery.
+flow_session_factory = backend_conftest.flow_session_factory
+async_session_factory = backend_conftest.async_session_factory
+session = backend_conftest.session
+session_factory = backend_conftest.session_factory
+reset_metrics = backend_conftest.reset_metrics
+app_client = backend_conftest.app_client
+client = backend_conftest.client_fixture
 
 from backend.app.core import database as app_database
 from backend.scripts.seed_nonreg import seed_nonregulated_reference_data

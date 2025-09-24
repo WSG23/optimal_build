@@ -7,6 +7,8 @@ import sys
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import import_module
+import importlib.machinery
+from types import ModuleType
 from pathlib import Path
 
 import pytest
@@ -22,8 +24,28 @@ def _find_repo_root(current: Path) -> Path:
 
 
 _REPO_ROOT = _find_repo_root(Path(__file__).resolve())
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+
+
+def _ensure_namespace_package(name: str, location: Path) -> None:
+    """Register a namespace style package without mutating ``sys.path``."""
+
+    if name in sys.modules:
+        return
+
+    package_dir = location / name.split(".")[-1]
+    if not package_dir.exists():
+        return
+
+    spec = importlib.machinery.ModuleSpec(name, loader=None, is_package=True)
+    module = ModuleType(name)
+    module.__file__ = str(package_dir / "__init__.py")
+    module.__path__ = [str(package_dir)]
+    spec.submodule_search_locations = module.__path__
+    module.__spec__ = spec
+    sys.modules[name] = module
+
+
+_ensure_namespace_package("backend", _REPO_ROOT)
 
 try:  # pragma: no cover - async plugin is optional when running unit tests
     import pytest_asyncio  # type: ignore[import-not-found]
@@ -148,6 +170,19 @@ async def flow_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSessi
 
 
 @pytest_asyncio.fixture(autouse=True)
+async def _cleanup_flow_session_factory(
+    flow_session_factory: async_sessionmaker[AsyncSession],
+) -> AsyncGenerator[None, None]:
+    """Ensure the shared flow database starts empty for every test."""
+
+    await _reset_database(flow_session_factory)
+    try:
+        yield
+    finally:
+        await _reset_database(flow_session_factory)
+
+
+@pytest_asyncio.fixture(autouse=True)
 async def _override_async_session_factory(
     flow_session_factory: async_sessionmaker[AsyncSession],
     monkeypatch: pytest.MonkeyPatch,
@@ -172,13 +207,17 @@ async def _override_async_session_factory(
     yield
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def async_session_factory(
     flow_session_factory: async_sessionmaker[AsyncSession],
-) -> async_sessionmaker[AsyncSession]:
-    """Alias for the shared async session factory."""
+) -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+    """Yield the shared session factory with a clean database state."""
 
-    return flow_session_factory
+    await _reset_database(flow_session_factory)
+    try:
+        yield flow_session_factory
+    finally:
+        await _reset_database(flow_session_factory)
 
 
 @pytest_asyncio.fixture
@@ -203,10 +242,7 @@ def session_factory(
     @asynccontextmanager
     async def _factory() -> AsyncGenerator[AsyncSession, None]:
         async with async_session_factory() as db_session:
-            try:
-                yield db_session
-            finally:
-                await _truncate_all(db_session)
+            yield db_session
 
     return _factory
 

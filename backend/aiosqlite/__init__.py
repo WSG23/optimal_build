@@ -31,6 +31,18 @@ class Cursor:
         self.rowcount = self._cursor.rowcount
         return self
 
+    async def executemany(
+        self, sql: str, parameters: Iterable[Iterable[Any]] | None = None
+    ) -> "Cursor":
+        self._cursor.executemany(sql, list(parameters or ()))
+        self.rowcount = self._cursor.rowcount
+        return self
+
+    async def executescript(self, sql: str) -> "Cursor":
+        self._cursor.executescript(sql)
+        self.rowcount = self._cursor.rowcount
+        return self
+
     async def fetchone(self) -> Optional[tuple[Any, ...]]:
         return self._cursor.fetchone()
 

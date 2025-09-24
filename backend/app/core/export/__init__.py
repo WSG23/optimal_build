@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import io
 import json
@@ -179,7 +179,7 @@ class LocalExportStorage(ArtifactStorage):
         manifest: Mapping[str, Any],
         filename: str | None = None,
     ) -> ExportArtifact:
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         suffix = filename or f"project-{project_id}-{timestamp}-{uuid.uuid4().hex[:8]}.{fmt.extension}"
         target = self.base_dir / suffix
         with target.open("wb") as stream:
@@ -528,7 +528,7 @@ async def generate_project_export(
     writer = get_writer(options.format, options=options)
     payload, manifest = writer.render(geometry_features, overlay_features, watermark)
     manifest.setdefault("project_id", project_id)
-    manifest.setdefault("generated_at", datetime.utcnow().isoformat())
+    manifest.setdefault("generated_at", datetime.now(timezone.utc).isoformat())
     if manifest.get("renderer") == "fallback":
         payload = json.dumps(manifest, sort_keys=True).encode("utf-8")
 
