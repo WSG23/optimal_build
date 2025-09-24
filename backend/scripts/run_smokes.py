@@ -124,7 +124,7 @@ def running_backend(backend_dir: Path, host: str, port: int) -> Iterator[str]:
     command = [
         sys.executable,
         "-m",
-        "uvicorn",
+        "backend.uvicorn",
         "app.main:app",
         "--host",
         host,
