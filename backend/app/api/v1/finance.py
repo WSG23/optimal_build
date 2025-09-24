@@ -386,7 +386,7 @@ async def run_finance_feasibility(
             results.append(
                 FinResult(
                     project_id=payload.project_id,
-                    scenario_id=scenario.id,
+                    scenario=scenario,
                     name="dscr_timeline",
                     value=None,
                     unit=None,

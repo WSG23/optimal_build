@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 try:  # pragma: no cover - exercised when dependency is available
     from prometheus_client import (
@@ -191,11 +191,20 @@ def reset_metrics() -> None:
 def counter_value(counter: Counter, labels: Dict[str, str]) -> float:
     """Return the current value for a labelled counter."""
 
-    label_names: Iterable[str] = getattr(counter, "_labelnames", ())
-    if label_names:
-        sample = counter.labels(**labels)
-    else:
+    label_names: Iterable[str] = tuple(getattr(counter, "_labelnames", ()))
+    labels = labels or {}
+    sample: Any | None = None
+    labels_fn = getattr(counter, "labels", None)
+    if callable(labels_fn):
+        try:
+            sample = labels_fn(**labels)
+        except TypeError:
+            # Some client libraries expect positional values; fall back to that ordering.
+            positional = [labels[name] for name in label_names if name in labels]
+            sample = labels_fn(*positional)
+    if sample is None:
         sample = counter
+
     value_holder = getattr(sample, "_value", None)
     if value_holder is not None and hasattr(value_holder, "get"):
         return float(value_holder.get())

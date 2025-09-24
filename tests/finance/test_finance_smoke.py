@@ -16,7 +16,7 @@ from httpx import AsyncClient
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
 from backend.app.services.finance import calculator
-from backend.app.utils import metrics
+from app.utils import metrics
 from backend.scripts.seed_finance_demo import seed_finance_demo
 
 

@@ -64,13 +64,17 @@ class DscrInputs(BaseModel):
     period_labels: Optional[List[str]] = None
 
     @model_validator(mode="after")
-    def _validate_lengths(self) -> "DscrInputs":
-        incomes_len = len(self.net_operating_incomes)
-        if len(self.debt_services) != incomes_len:
+    def _validate_lengths(
+        cls, instance: "DscrInputs"
+    ) -> "DscrInputs":
+        """Ensure DSCR timelines share a consistent length."""
+
+        incomes_len = len(instance.net_operating_incomes)
+        if len(instance.debt_services) != incomes_len:
             raise ValueError("net_operating_incomes and debt_services must be the same length")
-        if self.period_labels is not None and len(self.period_labels) != incomes_len:
+        if instance.period_labels is not None and len(instance.period_labels) != incomes_len:
             raise ValueError("period_labels must be the same length as net_operating_incomes")
-        return self
+        return instance
 
 
 class FinanceScenarioInput(BaseModel):
