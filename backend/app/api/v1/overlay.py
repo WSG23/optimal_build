@@ -94,7 +94,14 @@ async def decide_overlay(
 ) -> Dict[str, object]:
     """Persist a decision on a generated overlay suggestion."""
 
-    suggestion = await session.get(OverlaySuggestion, payload.suggestion_id)
+    stmt = (
+        select(OverlaySuggestion)
+        .where(OverlaySuggestion.id == payload.suggestion_id)
+        .options(selectinload(OverlaySuggestion.decision))
+        .limit(1)
+    )
+    result = await session.execute(stmt)
+    suggestion = result.scalar_one_or_none()
     if suggestion is None or suggestion.project_id != project_id:
         raise HTTPException(status_code=404, detail="Overlay suggestion not found")
 
