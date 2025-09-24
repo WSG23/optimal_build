@@ -1,4 +1,4 @@
-.PHONY: help install format lint test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev-start dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products
+.PHONY: help install format lint test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -8,7 +8,16 @@ DEV_ADMIN_PID ?= $(DEV_RUNTIME_DIR_ABS)/ui-admin.pid
 DEV_BACKEND_LOG ?= $(DEV_RUNTIME_DIR_ABS)/backend.log
 DEV_FRONTEND_LOG ?= $(DEV_RUNTIME_DIR_ABS)/frontend.log
 DEV_ADMIN_LOG ?= $(DEV_RUNTIME_DIR_ABS)/ui-admin.log
-BACKEND_CMD ?= uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# --- Python / venv -----------------------------------------------------------
+VENV ?= .venv
+VENV_ABS := $(abspath $(VENV))
+PY ?= $(VENV_ABS)/bin/python
+PIP ?= $(VENV_ABS)/bin/pip
+UVICORN ?= $(VENV_ABS)/bin/uvicorn
+PRE_COMMIT ?= $(VENV_ABS)/bin/pre-commit
+
+# Use fully-qualified module path and uvicorn from the venv
+BACKEND_CMD ?= $(UVICORN) backend.app.main:app --reload --host 0.0.0.0 --port 8000
 FRONTEND_CMD ?= npm run dev
 ADMIN_CMD ?= npm run dev
 INCLUDE_ADMIN ?= 1
@@ -34,46 +43,52 @@ help: ## Show this help message
 	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-install: ## Install dependencies
-	cd backend && pip install -r requirements-dev.txt
-	cd frontend && npm install
+venv: ## Create venv & install backend+frontend deps
+        @[ -d $(VENV) ] || python3 -m venv $(VENV)
+        @$(PY) -m pip install --upgrade pip
+        @if [ -f backend/requirements.txt ]; then $(PIP) install -r backend/requirements.txt; fi
+        @if [ -f backend/requirements-dev.txt ]; then $(PIP) install -r backend/requirements-dev.txt; fi
+        @cd frontend && npm install
+        @command -v $(PRE_COMMIT) >/dev/null 2>&1 && $(PRE_COMMIT) install || true
+
+install: venv ## Install dependencies (alias)
 
 format: ## Format code
-	cd backend && black . && isort .
-	cd frontend && npm run format
+        cd backend && $(PY) -m black . && $(PY) -m isort .
+        cd frontend && npm run format
 
 lint: ## Run linting
-	cd backend && flake8 app tests && mypy app
-	cd frontend && npm run lint
+        cd backend && $(PY) -m flake8 app tests && $(PY) -m mypy app
+        cd frontend && npm run lint
 
 test: ## Run tests
-	cd backend && pytest
-	cd frontend && npm test
+        cd backend && $(PY) -m pytest
+        cd frontend && npm test
 
 smoke-buildable: ## Run the buildable latency smoke test and report the observed P90
-	cd backend && pytest -s tests/pwp/test_buildable_latency.py
+        cd backend && $(PY) -m pytest -s tests/pwp/test_buildable_latency.py
 
 import-sample: ## Upload the bundled sample payload and seed overlay geometry
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) python -m scripts.aec_flow import-sample --sample $(AEC_SAMPLE) --project-id $(AEC_PROJECT_ID)
+        @mkdir -p $(DEV_RUNTIME_DIR_ABS)
+        cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow import-sample --sample $(AEC_SAMPLE) --project-id $(AEC_PROJECT_ID)
 
 run-overlay: ## Execute the overlay engine using the inline worker queue
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) python -m scripts.aec_flow run-overlay --project-id $(AEC_PROJECT_ID)
+        @mkdir -p $(DEV_RUNTIME_DIR_ABS)
+        cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow run-overlay --project-id $(AEC_PROJECT_ID)
 
 export-approved: ## Approve overlays and generate a CAD/BIM export artefact
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) python -m scripts.aec_flow export-approved --project-id $(AEC_PROJECT_ID) --format $(AEC_EXPORT_FORMAT) --decided-by "$(AEC_DECIDED_BY)" --notes "$(AEC_APPROVAL_NOTES)"
+        @mkdir -p $(DEV_RUNTIME_DIR_ABS)
+        cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow export-approved --project-id $(AEC_PROJECT_ID) --format $(AEC_EXPORT_FORMAT) --decided-by "$(AEC_DECIDED_BY)" --notes "$(AEC_APPROVAL_NOTES)"
 
 test-aec: ## Run sample import, overlay, export flows and regression tests
-	$(MAKE) import-sample
-	$(MAKE) run-overlay
-	$(MAKE) export-approved
-	cd backend && pytest tests/test_workflows/test_aec_pipeline.py
-	cd frontend && npm test
+        $(MAKE) import-sample
+        $(MAKE) run-overlay
+        $(MAKE) export-approved
+        cd backend && $(PY) -m pytest tests/test_workflows/test_aec_pipeline.py
+        cd frontend && npm test
 
 test-cov: ## Run tests with coverage
-	cd backend && pytest --cov=app --cov-report=html
+        cd backend && $(PY) -m pytest --cov=app --cov-report=html
 	@echo "Coverage report: backend/htmlcov/index.html"
 
 clean: ## Clean build artifacts
@@ -89,18 +104,19 @@ init-db: ## Apply Alembic migrations inside Docker
 	$(DOCKER_COMPOSE) exec backend python -m backend.migrations alembic upgrade head
 
 db.upgrade: ## Apply Alembic migrations locally
-	python scripts/ensure_alembic.py
-	python -m backend.migrations alembic upgrade head
+        @[ -n "$$DATABASE_URL" ] || export DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/building_compliance"; \
+        $(PY) scripts/ensure_alembic.py; \
+        $(PY) -m backend.migrations alembic upgrade head
 
 seed-data: ## Seed screening data and finance demo scenarios
 	@if [ -n "$(DOCKER_COMPOSE)" ]; then \
 	        $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_screening; \
 	        $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_finance_demo; \
 	else \
-	        echo "Docker Compose CLI not detected; running seeders locally."; \
-	        python -m backend.scripts.seed_screening; \
-	        python -m backend.scripts.seed_finance_demo; \
-	fi
+                echo "Docker Compose CLI not detected; running seeders locally."; \
+                $(PY) -m backend.scripts.seed_screening; \
+                $(PY) -m backend.scripts.seed_finance_demo; \
+        fi
 
 logs: ## Show application logs
 	$(REQUIRE_DOCKER_COMPOSE)
@@ -117,13 +133,14 @@ reset: ## Reset development environment
 	$(MAKE) init-db
 	$(MAKE) seed-data
 
-dev-start: ## Start supporting services, the backend API, and frontends
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	@if [ -z "$(DOCKER_COMPOSE)" ]; then \
-	        echo "Error: Docker Compose CLI not found. Install Docker (with the compose plugin) or docker-compose."; \
-	        exit 1; \
-	fi
-	@$(DOCKER_COMPOSE) up -d
+dev: ## Start supporting services, the backend API, and frontends
+        @mkdir -p $(DEV_RUNTIME_DIR_ABS)
+        @if [ -d uvicorn ]; then echo "WARNING: './uvicorn/' package detected; it will shadow the real uvicorn. Rename or remove it." >&2; fi
+        @if [ -z "$(DOCKER_COMPOSE)" ]; then \
+                echo "Error: Docker Compose CLI not found. Install Docker (with the compose plugin) or docker-compose."; \
+                exit 1; \
+        fi
+        @$(DOCKER_COMPOSE) up -d
 	@if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
 		echo "Backend API already running (PID $$(cat $(DEV_BACKEND_PID)))."; \
 	else \
@@ -153,7 +170,7 @@ dev-start: ## Start supporting services, the backend API, and frontends
 		echo "Skipping admin UI (INCLUDE_ADMIN=0)."; \
 	fi
 
-dev-stop: ## Stop services started with dev-start (excluding docker-compose)
+dev-stop: ## Stop services started with dev (excluding docker-compose)
 	@if [ -f $(DEV_BACKEND_PID) ]; then \
 		PID=$$(cat $(DEV_BACKEND_PID)); \
 		if kill -0 $$PID 2>/dev/null; then \
@@ -186,7 +203,15 @@ dev-stop: ## Stop services started with dev-start (excluding docker-compose)
 	fi
 
 seed-nonreg:
-	python -m backend.scripts.seed_nonreg
+        $(PY) -m backend.scripts.seed_nonreg
 
 sync-products:
-	python -m backend.flows.sync_products --csv-path vendor.csv
+        $(PY) -m backend.flows.sync_products --csv-path vendor.csv
+
+env-check: ## Quick sanity: ensure imports & tests compile
+        @cd backend && $(PY) -m compileall -q tests && \
+        $(PY) - <<'PY'
+import importlib.util as u
+mods = ["backend.app.main","backend.app.core.database","backend.app.models.base"]
+for m in mods: print(m, "=>", bool(u.find_spec(m)))
+PY
