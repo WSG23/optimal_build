@@ -13,8 +13,8 @@ import pytest_asyncio  # noqa: F401
 
 from httpx import AsyncClient
 
-from backend.app.core.config import settings
-from backend.app.schemas.buildable import (
+from app.core.config import settings
+from app.schemas.buildable import (
     BuildableCalculation,
     BuildableDefaults,
     BuildableMetrics,
@@ -58,7 +58,7 @@ async def test_buildable_request_accepts_camel_case(
         )
 
     monkeypatch.setattr(
-        "backend.app.api.v1.screen.calculate_buildable", _fake_calculate_buildable
+        "app.api.v1.screen.calculate_buildable", _fake_calculate_buildable
     )
 
     response = await app_client.post(

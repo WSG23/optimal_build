@@ -8,8 +8,8 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from backend.app.models.rkp import RefMaterialStandard
-from backend.app.utils import metrics
+from app.models.rkp import RefMaterialStandard
+from app.utils import metrics
 
 
 @pytest.mark.asyncio

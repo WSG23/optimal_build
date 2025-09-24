@@ -6,8 +6,8 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from backend.app.services import alerts, ingestion
-from backend.app.utils import metrics
+from app.services import alerts, ingestion
+from app.utils import metrics
 
 
 @pytest.mark.asyncio

@@ -11,8 +11,8 @@ pytest.importorskip("sqlalchemy")
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from backend.app.models.audit import AuditLog
-from backend.app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
+from app.models.audit import AuditLog
+from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
 from backend.jobs import job_queue
 
 PROJECT_ID = 4120

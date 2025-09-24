@@ -33,7 +33,11 @@ def _ensure_sqlalchemy() -> None:
             "types",
             "pool",
         ):
-            sys.modules.setdefault(f"sqlalchemy.{name}", import_module(f"sqlalchemy_pkg_backup.{name}"))
+            try:
+                module = import_module(f"sqlalchemy_pkg_backup.{name}")
+            except ModuleNotFoundError:
+                continue
+            sys.modules.setdefault(f"sqlalchemy.{name}", module)
 
 
 _ensure_sqlalchemy()
@@ -49,13 +53,13 @@ except (ImportError, AttributeError):  # pragma: no cover - fallback for stub im
         pass
 
 
-from backend.app import models as app_models
-from backend.app.core.database import get_session
-from backend.app.main import app
-from backend.app.models.base import BaseModel
-from backend.app.utils import metrics
+from app import models as app_models
+from app.core.database import get_session
+from app.main import app
+from app.models.base import BaseModel
+from app.utils import metrics
 
-# Importing ``backend.app.models`` ensures all model metadata is registered.
+# Importing ``app.models`` ensures all model metadata is registered.
 _ = app_models
 
 _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)

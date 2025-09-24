@@ -8,9 +8,9 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from backend.app.models.rkp import RefCostIndex
-from backend.app.services.pwp import adjust_pro_forma_cost
-from backend.app.utils import metrics
+from app.models.rkp import RefCostIndex
+from app.services.pwp import adjust_pro_forma_cost
+from app.utils import metrics
 
 
 @pytest.mark.asyncio
