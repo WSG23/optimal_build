@@ -12,12 +12,12 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
-from app.models.finance import FinProject
+from backend.app.models.finance import FinProject
 
 
 @pytest.mark.asyncio
 async def test_finance_feasibility_rejects_foreign_fin_project(
-    client: AsyncClient, async_session_factory
+    app_client: AsyncClient, async_session_factory
 ) -> None:
     async with async_session_factory() as setup_session:
         local_project = FinProject(
@@ -61,7 +61,7 @@ async def test_finance_feasibility_rejects_foreign_fin_project(
         },
     }
 
-    response = await client.post("/api/v1/finance/feasibility", json=payload)
+    response = await app_client.post("/api/v1/finance/feasibility", json=payload)
     assert response.status_code in (403, 404)
 
     async with async_session_factory() as verify_session:

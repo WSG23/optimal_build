@@ -13,10 +13,10 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from app.core.database import get_session
-from app.main import app
-from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
-from app.utils import metrics
+from backend.app.core.database import get_session
+from backend.app.main import app
+from backend.app.models.rkp import RefClause, RefDocument, RefRule, RefSource
+from backend.app.utils import metrics
 from scripts.seed_screening import seed_screening_sample_data
 
 
@@ -117,7 +117,7 @@ async def _seed_reference_data(async_session_factory) -> None:
 
 
 @pytest_asyncio.fixture
-async def client(async_session_factory):
+async def rules_app_client(async_session_factory):
     metrics.reset_metrics()
     await _seed_reference_data(async_session_factory)
 
@@ -136,8 +136,10 @@ async def client(async_session_factory):
 
 
 @pytest.mark.asyncio
-async def test_rules_endpoint_includes_overlays_and_hints(client: AsyncClient) -> None:
-    response = await client.get("/api/v1/rules")
+async def test_rules_endpoint_includes_overlays_and_hints(
+    rules_app_client: AsyncClient,
+) -> None:
+    response = await rules_app_client.get("/api/v1/rules")
     assert response.status_code == 200
     payload = response.json()
     assert payload["count"] >= 1
@@ -160,8 +162,10 @@ async def test_rules_endpoint_includes_overlays_and_hints(client: AsyncClient) -
 
 
 @pytest.mark.asyncio
-async def test_rules_endpoint_filters_by_query_params(client: AsyncClient) -> None:
-    response = await client.get(
+async def test_rules_endpoint_filters_by_query_params(
+    rules_app_client: AsyncClient,
+) -> None:
+    response = await rules_app_client.get(
         "/api/v1/rules",
         params={
             "jurisdiction": "SG",
@@ -181,7 +185,7 @@ async def test_rules_endpoint_filters_by_query_params(client: AsyncClient) -> No
     assert any(item["source_provenance"]["pages"] == [5] for item in payload["items"])
 
     # Non-approved rules are excluded even if filters would otherwise match.
-    pending_response = await client.get(
+    pending_response = await rules_app_client.get(
         "/api/v1/rules",
         params={"parameter_key": "parking.max_ramp_slope_ratio"},
     )
@@ -189,7 +193,7 @@ async def test_rules_endpoint_filters_by_query_params(client: AsyncClient) -> No
     assert pending_response.json()["count"] == 0
 
     # Filters that do not match should return an empty result set.
-    empty_response = await client.get(
+    empty_response = await rules_app_client.get(
         "/api/v1/rules",
         params={"authority": "PUB"},
     )
@@ -198,14 +202,16 @@ async def test_rules_endpoint_filters_by_query_params(client: AsyncClient) -> No
 
 
 @pytest.mark.asyncio
-async def test_rules_endpoint_supports_review_status_filter(client: AsyncClient) -> None:
-    default_response = await client.get("/api/v1/rules")
+async def test_rules_endpoint_supports_review_status_filter(
+    rules_app_client: AsyncClient,
+) -> None:
+    default_response = await rules_app_client.get("/api/v1/rules")
     assert default_response.status_code == 200
     default_payload = default_response.json()
     assert default_payload["count"] >= 1
     assert {item["review_status"] for item in default_payload["items"]} == {"approved"}
 
-    response = await client.get(
+    response = await rules_app_client.get(
         "/api/v1/rules",
         params={"review_status": "needs_review"},
     )
@@ -218,7 +224,7 @@ async def test_rules_endpoint_supports_review_status_filter(client: AsyncClient)
         item["parameter_key"] == "parking.max_ramp_slope_ratio" for item in payload["items"]
     )
 
-    multi_status_response = await client.get(
+    multi_status_response = await rules_app_client.get(
         "/api/v1/rules",
         params={"review_status": "approved,needs_review"},
     )
@@ -230,9 +236,9 @@ async def test_rules_endpoint_supports_review_status_filter(client: AsyncClient)
 
 @pytest.mark.asyncio
 async def test_rules_endpoint_populates_provenance_for_approved_rules(
-    client: AsyncClient,
+    rules_app_client: AsyncClient,
 ) -> None:
-    response = await client.get("/api/v1/rules")
+    response = await rules_app_client.get("/api/v1/rules")
     assert response.status_code == 200
     payload = response.json()
     target = next(
@@ -248,9 +254,9 @@ async def test_rules_endpoint_populates_provenance_for_approved_rules(
 
 @pytest.mark.asyncio
 async def test_buildable_screening_supports_address_and_geojson(
-    client: AsyncClient,
+    rules_app_client: AsyncClient,
 ) -> None:
-    address_response = await client.post(
+    address_response = await rules_app_client.post(
         "/api/v1/screen/buildable",
         json={"address": "123 Example Ave"},
     )
@@ -284,7 +290,7 @@ async def test_buildable_screening_supports_address_and_geojson(
     metrics_output = metrics.render_latest_metrics().decode()
     assert "pwp_buildable_duration_ms" in metrics_output
 
-    geojson_response = await client.post(
+    geojson_response = await rules_app_client.post(
         "/api/v1/screen/buildable",
         json={
             "geometry": {"type": "Feature", "properties": {"zone_code": "R2"}},
@@ -304,7 +310,7 @@ async def test_buildable_screening_supports_address_and_geojson(
         ("456 River Road", "C1", {"airport"}, "MK02-00021"),
         ("789 Coastal Way", "B1", {"coastal"}, "MK03-04567"),
     ):
-        response = await client.post(
+        response = await rules_app_client.post(
             "/api/v1/screen/buildable",
             json={"address": address},
         )
@@ -319,14 +325,16 @@ async def test_buildable_screening_supports_address_and_geojson(
 
 
 @pytest.mark.asyncio
-async def test_rule_review_publish_action(client: AsyncClient, async_session_factory) -> None:
+async def test_rule_review_publish_action(
+    rules_app_client: AsyncClient, async_session_factory
+) -> None:
     async with async_session_factory() as session:
         result = await session.execute(select(RefRule))
         rule = result.scalars().first()
         assert rule is not None
         rule_id = rule.id
 
-    response = await client.post(
+    response = await rules_app_client.post(
         f"/api/v1/rules/{rule_id}/review",
         json={"action": "publish", "reviewer": "Casey", "notes": "Ready"},
     )
@@ -336,7 +344,7 @@ async def test_rule_review_publish_action(client: AsyncClient, async_session_fac
     assert item["review_notes"] == "Ready"
 
     # The review notes are exposed via the list endpoint without altering the canonical text.
-    list_response = await client.get("/api/v1/rules")
+    list_response = await rules_app_client.get("/api/v1/rules")
     assert list_response.status_code == 200
     list_payload = list_response.json()
     assert list_payload["items"][0]["review_notes"] == "Ready"
@@ -353,9 +361,9 @@ async def test_rule_review_publish_action(client: AsyncClient, async_session_fac
 
 @pytest.mark.asyncio
 async def test_buildable_screening_respects_efficiency_override(
-    client: AsyncClient,
+    rules_app_client: AsyncClient,
 ) -> None:
-    response = await client.post(
+    response = await rules_app_client.post(
         "/api/v1/screen/buildable",
         json={"address": "123 Example Ave", "efficiency_ratio": 0.5},
     )

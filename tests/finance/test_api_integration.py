@@ -24,9 +24,9 @@ if _PYDANTIC_MAJOR < 2:
 
 from httpx import AsyncClient
 
-from app.models.rkp import RefCostIndex
-from app.services.finance import calculator
-from app.schemas.finance import DscrInputs
+from backend.app.models.rkp import RefCostIndex
+from backend.app.services.finance import calculator
+from backend.app.schemas.finance import DscrInputs
 from backend.scripts.seed_finance_demo import seed_finance_demo
 
 

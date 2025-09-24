@@ -21,8 +21,8 @@ SELECTED_RULE_IDS = ["ura-plot-ratio", "bca-site-coverage", "scdf-access"]
 
 
 @pytest.mark.asyncio
-async def test_fetch_feasibility_rules(client: AsyncClient) -> None:
-    response = await client.post("/api/v1/feasibility/rules", json=PROJECT_PAYLOAD)
+async def test_fetch_feasibility_rules(app_client: AsyncClient) -> None:
+    response = await app_client.post("/api/v1/feasibility/rules", json=PROJECT_PAYLOAD)
     assert response.status_code == 200
     payload = response.json()
 
@@ -42,13 +42,13 @@ async def test_fetch_feasibility_rules(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_submit_feasibility_assessment(client: AsyncClient) -> None:
+async def test_submit_feasibility_assessment(app_client: AsyncClient) -> None:
     payload = {
         "project": PROJECT_PAYLOAD,
         "selectedRuleIds": SELECTED_RULE_IDS,
     }
 
-    response = await client.post("/api/v1/feasibility/assessment", json=payload)
+    response = await app_client.post("/api/v1/feasibility/assessment", json=payload)
     assert response.status_code == 200
     assessment = response.json()
 
@@ -77,13 +77,13 @@ async def test_submit_feasibility_assessment(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_submit_assessment_with_unknown_rule(client: AsyncClient) -> None:
+async def test_submit_assessment_with_unknown_rule(app_client: AsyncClient) -> None:
     payload = {
         "project": PROJECT_PAYLOAD,
         "selectedRuleIds": ["unknown-rule"],
     }
 
-    response = await client.post("/api/v1/feasibility/assessment", json=payload)
+    response = await app_client.post("/api/v1/feasibility/assessment", json=payload)
     assert response.status_code == 400
     detail = response.json()["detail"]
     assert "Unknown rule identifiers" in detail

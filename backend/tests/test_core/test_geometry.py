@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from app.core.geometry import GeometrySerializer, GraphBuilder
-from app.core.models.geometry import Fixture, GeometryGraph, Relationship, Space
-from app.core.overlay import merge_graphs
+from backend.app.core.geometry import GeometrySerializer, GraphBuilder
+from backend.app.core.models.geometry import Fixture, GeometryGraph, Relationship, Space
+from backend.app.core.overlay import merge_graphs
 
 
 @pytest.fixture

@@ -13,9 +13,9 @@ pytest.importorskip("sqlalchemy")
 
 from sqlalchemy import select
 
-from app.models.rkp import RefDocument, RefSource
-from app.services.reference_sources import FetchedDocument, HTTPResponse, ReferenceSourceFetcher
-from app.services.reference_storage import ReferenceStorage
+from backend.app.models.rkp import RefDocument, RefSource
+from backend.app.services.reference_sources import FetchedDocument, HTTPResponse, ReferenceSourceFetcher
+from backend.app.services.reference_storage import ReferenceStorage
 from flows.watch_fetch import watch_reference_sources
 from scripts.seed_screening import seed_screening_sample_data
 

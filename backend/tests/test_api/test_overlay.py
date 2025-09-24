@@ -11,9 +11,9 @@ pytest.importorskip("sqlalchemy")
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from app.models.audit import AuditLog
-from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
-from jobs import job_queue
+from backend.app.models.audit import AuditLog
+from backend.app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
+from backend.jobs import job_queue
 
 PROJECT_ID = 4120
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
@@ -21,14 +21,14 @@ SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 
 @pytest.mark.asyncio
 async def test_overlay_run_and_decisions(
-    client: AsyncClient,
+    app_client: AsyncClient,
     async_session_factory,
     monkeypatch,
 ) -> None:
     sample_path = SAMPLES_DIR / "sample_floorplan.json"
 
     with sample_path.open("rb") as handle:
-        upload_response = await client.post(
+        upload_response = await app_client.post(
             "/api/v1/import",
             files={"file": (sample_path.name, handle, "application/json")},
             data={"project_id": str(PROJECT_ID)},
@@ -37,7 +37,7 @@ async def test_overlay_run_and_decisions(
     assert upload_response.status_code == 201
     import_payload = upload_response.json()
 
-    parse_response = await client.post(f"/api/v1/parse/{import_payload['import_id']}")
+    parse_response = await app_client.post(f"/api/v1/parse/{import_payload['import_id']}")
     assert parse_response.status_code == 200
     parse_payload = parse_response.json()
     assert parse_payload["status"] == "completed"
@@ -85,7 +85,7 @@ async def test_overlay_run_and_decisions(
 
     monkeypatch.setattr(job_queue, "enqueue", tracking_enqueue)
 
-    run_response = await client.post(f"/api/v1/overlay/{PROJECT_ID}/run")
+    run_response = await app_client.post(f"/api/v1/overlay/{PROJECT_ID}/run")
     assert run_response.status_code == 200
     run_payload = run_response.json()
     assert run_payload["status"] == "completed"
@@ -93,7 +93,7 @@ async def test_overlay_run_and_decisions(
     assert run_payload["evaluated"] == 1
     assert run_payload["created"] >= 5
 
-    list_response = await client.get(f"/api/v1/overlay/{PROJECT_ID}")
+    list_response = await app_client.get(f"/api/v1/overlay/{PROJECT_ID}")
     assert list_response.status_code == 200
     payload = list_response.json()
     assert payload["count"] >= 5
@@ -111,7 +111,7 @@ async def test_overlay_run_and_decisions(
     assert heritage["type"] == "review"
     assert heritage["target_ids"]
     assert "heritage.zone.compliance" in heritage["rule_refs"]
-    approve_response = await client.post(
+    approve_response = await app_client.post(
         f"/api/v1/overlay/{PROJECT_ID}/decision",
         json={
             "suggestion_id": heritage["id"],
@@ -126,7 +126,7 @@ async def test_overlay_run_and_decisions(
     assert approved_item["decision"]["decision"] == "approved"
 
     flood = next(item for item in payload["items"] if item["code"] == "flood_mitigation")
-    reject_response = await client.post(
+    reject_response = await app_client.post(
         f"/api/v1/overlay/{PROJECT_ID}/decision",
         json={
             "suggestion_id": flood["id"],
@@ -140,14 +140,14 @@ async def test_overlay_run_and_decisions(
     assert rejected_item["status"] == "rejected"
     assert rejected_item["decision"]["decision"] == "rejected"
 
-    second_run = await client.post(f"/api/v1/overlay/{PROJECT_ID}/run")
+    second_run = await app_client.post(f"/api/v1/overlay/{PROJECT_ID}/run")
     assert second_run.status_code == 200
     rerun_payload = second_run.json()
     assert rerun_payload["created"] == 0
     assert rerun_payload["updated"] >= 5
     assert rerun_payload["evaluated"] == 1
 
-    final_response = await client.get(f"/api/v1/overlay/{PROJECT_ID}")
+    final_response = await app_client.get(f"/api/v1/overlay/{PROJECT_ID}")
     final_payload = final_response.json()
     final_status = {item["code"]: item["status"] for item in final_payload["items"]}
     assert final_status["heritage_conservation"] == "approved"
@@ -159,7 +159,7 @@ async def test_overlay_run_and_decisions(
     job_callable, *_ = calls[0]
     assert getattr(job_callable, "job_name", "").endswith("run_for_project")
 
-    export_response = await client.post(
+    export_response = await app_client.post(
         f"/api/v1/export/{PROJECT_ID}",
         json={
             "format": "pdf",

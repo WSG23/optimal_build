@@ -13,9 +13,9 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
-from app.models.imports import ImportRecord
-from app.services.storage import get_storage_service
-from jobs import job_queue
+from backend.app.models.imports import ImportRecord
+from backend.app.services.storage import get_storage_service
+from backend.jobs import job_queue
 
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 GLOBAL_SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
@@ -23,12 +23,12 @@ GLOBAL_SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
 
 @pytest.mark.asyncio
 async def test_upload_import_persists_metadata(
-    client: AsyncClient,
+    app_client: AsyncClient,
     async_session_factory,
 ) -> None:
     sample_path = SAMPLES_DIR / "sample_floorplan.json"
     with sample_path.open("rb") as handle:
-        response = await client.post(
+        response = await app_client.post(
             "/api/v1/import",
             files={"file": (sample_path.name, handle, "application/json")},
         )
@@ -75,12 +75,12 @@ async def test_upload_import_persists_metadata(
 
 
 @pytest.mark.asyncio
-async def test_upload_dxf_emits_detection(client: AsyncClient) -> None:
+async def test_upload_dxf_emits_detection(app_client: AsyncClient) -> None:
     pytest.importorskip("ezdxf", reason="ezdxf is required for DXF detection")
 
     sample_path = GLOBAL_SAMPLES_DIR / "dxf" / "flat_two_bed.dxf"
     with sample_path.open("rb") as handle:
-        response = await client.post(
+        response = await app_client.post(
             "/api/v1/import",
             files={"file": (sample_path.name, handle, "application/dxf")},
         )
@@ -97,12 +97,12 @@ async def test_upload_dxf_emits_detection(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_upload_ifc_surfaces_storeys(client: AsyncClient) -> None:
+async def test_upload_ifc_surfaces_storeys(app_client: AsyncClient) -> None:
     pytest.importorskip("ifcopenshell", reason="ifcopenshell is required for IFC detection")
 
     sample_path = GLOBAL_SAMPLES_DIR / "ifc" / "office_small.ifc"
     with sample_path.open("rb") as handle:
-        response = await client.post(
+        response = await app_client.post(
             "/api/v1/import",
             files={"file": (sample_path.name, handle, "application/octet-stream")},
         )
@@ -117,7 +117,7 @@ async def test_upload_ifc_surfaces_storeys(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_parse_endpoints_return_summary(
-    client: AsyncClient,
+    app_client: AsyncClient,
     monkeypatch,
 ) -> None:
     sample_path = SAMPLES_DIR / "sample_floorplan.json"
@@ -133,13 +133,13 @@ async def test_parse_endpoints_return_summary(
     monkeypatch.setattr(job_queue, "enqueue", tracking_enqueue)
 
     with sample_path.open("rb") as handle:
-        upload_response = await client.post(
+        upload_response = await app_client.post(
             "/api/v1/import",
             files={"file": (sample_path.name, handle, "application/json")},
         )
     import_payload = upload_response.json()
 
-    parse_response = await client.post(f"/api/v1/parse/{import_payload['import_id']}")
+    parse_response = await app_client.post(f"/api/v1/parse/{import_payload['import_id']}")
     assert parse_response.status_code == 200
     parse_payload = parse_response.json()
     assert parse_payload["status"] == "completed"
@@ -151,7 +151,7 @@ async def test_parse_endpoints_return_summary(
     job_callable, *_ = calls[0]
     assert getattr(job_callable, "job_name", "").endswith("parse_import")
 
-    poll_response = await client.get(f"/api/v1/parse/{import_payload['import_id']}")
+    poll_response = await app_client.get(f"/api/v1/parse/{import_payload['import_id']}")
     assert poll_response.status_code == 200
     poll_payload = poll_response.json()
     assert poll_payload == parse_payload
@@ -159,14 +159,14 @@ async def test_parse_endpoints_return_summary(
 
 @pytest.mark.asyncio
 async def test_upload_pdf_vectorizes_when_enabled(
-    client: AsyncClient,
+    app_client: AsyncClient,
     async_session_factory,
 ) -> None:
     pytest.importorskip("fitz")
 
     pdf_path = Path(__file__).resolve().parents[3] / "samples" / "pdf" / "floor_simple.pdf"
     with pdf_path.open("rb") as handle:
-        response = await client.post(
+        response = await app_client.post(
             "/api/v1/import",
             files={"file": (pdf_path.name, handle, "application/pdf")},
             data={"infer_walls": "true"},

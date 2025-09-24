@@ -1,8 +1,8 @@
 import pytest
 
-from app.core.export import ExportFormat, ExportOptions, LayerMapping, LocalExportStorage, generate_project_export
-from app.core.models.geometry import CanonicalGeometry, GeometryNode
-from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
+from backend.app.core.export import ExportFormat, ExportOptions, LayerMapping, LocalExportStorage, generate_project_export
+from backend.app.core.models.geometry import CanonicalGeometry, GeometryNode
+from backend.app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 
 
 async def _seed_project(async_session_factory, project_id: int = 1) -> int:

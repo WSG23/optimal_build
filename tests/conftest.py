@@ -27,7 +27,7 @@ import backend.tests.conftest  # noqa: F401 - ensure fallback stubs are register
 
 pytest_plugins = ["backend.tests.conftest"]
 
-from app.core import database as app_database
+from backend.app.core import database as app_database
 from backend.scripts.seed_nonreg import seed_nonregulated_reference_data
 
 
@@ -46,14 +46,17 @@ async def _override_app_database(async_session_factory, monkeypatch):
     monkeypatch.setattr(app_database, "AsyncSessionLocal", async_session_factory, raising=False)
 
     sync_products = import_module("backend.flows.sync_products")
-    monkeypatch.setattr(sync_products, "AsyncSessionLocal", async_session_factory, raising=False)
+    watch_fetch = import_module("backend.flows.watch_fetch")
+    parse_segment = import_module("backend.flows.parse_segment")
+
+    for module in (sync_products, watch_fetch, parse_segment):
+        monkeypatch.setattr(module, "AsyncSessionLocal", async_session_factory, raising=False)
     yield
 
 
 @pytest_asyncio.fixture
-async def app_client(client, async_session_factory):
-    """Seed reference data before returning the shared API client."""
+async def reference_data(async_session_factory):
+    """Populate non-regulated reference data for tests that require it."""
 
     async with async_session_factory() as session:
         await seed_nonregulated_reference_data(session, commit=True)
-    yield client
