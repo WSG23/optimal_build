@@ -191,6 +191,21 @@ def reset_metrics() -> None:
 def counter_value(counter: Counter, labels: Dict[str, str]) -> float:
     """Return the current value for a labelled counter."""
 
+    label_names = getattr(counter, "_labelnames", None) or ()
+    if not label_names:
+        if labels:
+            raise ValueError("Labels provided for a counter without labels")
+        value_holder = getattr(counter, "_value", None)
+        if value_holder is not None and hasattr(value_holder, "get"):
+            return float(value_holder.get())
+        sample_getter = getattr(REGISTRY, "get_sample_value", None)
+        counter_name = getattr(counter, "_name", "")
+        if callable(sample_getter) and counter_name:
+            value = sample_getter(counter_name, labels)
+            if value is not None:
+                return float(value)
+        raise RuntimeError("Unable to read counter value from Prometheus metric")
+
     sample = counter.labels(**labels)
     value_holder = getattr(sample, "_value", None)
     if value_holder is not None and hasattr(value_holder, "get"):

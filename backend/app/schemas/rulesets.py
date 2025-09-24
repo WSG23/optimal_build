@@ -19,7 +19,7 @@ class RulePackSchema(BaseModel):
     authority: Optional[str] = None
     version: int
     definition: Dict[str, Any]
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_json")
     is_active: bool = True
     created_at: datetime
     updated_at: datetime

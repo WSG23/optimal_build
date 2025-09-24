@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.database import AsyncSessionLocal
+from app.core import database
 from app.core.geometry import GeometrySerializer
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
@@ -363,7 +363,8 @@ def _coerce_mapping(value: object) -> Dict[str, Any]:
 async def run_overlay_job(project_id: int) -> Dict[str, Any]:
     """Job wrapper that executes the overlay engine using a standalone session."""
 
-    async with AsyncSessionLocal() as session:
+    session_factory = database.AsyncSessionLocal
+    async with session_factory() as session:
         result = await run_overlay_for_project(session, project_id=project_id)
         return {"status": "completed", **result.as_dict()}
 

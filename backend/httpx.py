@@ -4,12 +4,28 @@ from __future__ import annotations
 
 import asyncio
 from functools import partial
+from pathlib import Path
+import sys
 from typing import Any
 
-try:  # pragma: no cover - optional dependency for offline test runs
-    from fastapi.testclient import TestClient
-except ModuleNotFoundError:  # pragma: no cover - handled lazily
-    TestClient = None  # type: ignore[assignment]
+def _load_test_client() -> Any:
+    """Return the FastAPI TestClient, importing the local stub if required."""
+
+    try:  # pragma: no cover - optional dependency for offline test runs
+        from fastapi.testclient import TestClient  # type: ignore
+        return TestClient
+    except ModuleNotFoundError:  # pragma: no cover - handled lazily
+        repo_root = Path(__file__).resolve().parents[1]
+        if str(repo_root) not in sys.path:
+            sys.path.insert(0, str(repo_root))
+        try:
+            from fastapi.testclient import TestClient  # type: ignore
+            return TestClient
+        except ModuleNotFoundError:
+            return None
+
+
+TestClient = _load_test_client()
 
 
 class _AsyncResponse:

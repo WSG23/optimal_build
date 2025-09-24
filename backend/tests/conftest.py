@@ -72,6 +72,7 @@ except (ImportError, AttributeError):  # pragma: no cover - fallback for stub im
 
 
 from app import models as app_models
+from app.core import database as database_module
 from app.core.database import get_session
 from app.main import app
 from app.models.base import BaseModel
@@ -202,14 +203,18 @@ async def app_client(
         async with async_session_factory() as db_session:
             yield db_session
 
+    original_session_factory = database_module.AsyncSessionLocal
+    database_module.AsyncSessionLocal = async_session_factory
     app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(
-        app=app,
-        base_url="http://testserver",
-        headers={"X-Role": "admin"},
-    ) as client:
-        yield client
-
-    app.dependency_overrides.pop(get_session, None)
-    await _reset_database(async_session_factory)
+    try:
+        async with AsyncClient(
+            app=app,
+            base_url="http://testserver",
+            headers={"X-Role": "admin"},
+        ) as client:
+            yield client
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+        database_module.AsyncSessionLocal = original_session_factory
+        await _reset_database(async_session_factory)
 

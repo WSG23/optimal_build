@@ -24,7 +24,7 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     ifcopenshell = None  # type: ignore[assignment]
 
-from app.core.database import AsyncSessionLocal
+from app.core import database
 from app.core.geometry import GeometrySerializer, GraphBuilder
 from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
@@ -657,7 +657,8 @@ async def _persist_result(session, record: ImportRecord, parsed: ParsedGeometry)
 async def parse_import_job(import_id: str) -> Dict[str, Any]:
     """Parse an uploaded import payload and persist the resulting geometry."""
 
-    async with AsyncSessionLocal() as session:
+    session_factory = database.AsyncSessionLocal
+    async with session_factory() as session:
         record = await session.get(ImportRecord, import_id)
         if record is None:
             raise RuntimeError(f"Import '{import_id}' not found")
