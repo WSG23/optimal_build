@@ -27,7 +27,7 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
 
 from app.core.database import AsyncSessionLocal
 from app.models.base import BaseModel
-from app.models.rkp import RefDocument, RefSource
+from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_sources import (
     FetchedDocument,
     ReferenceSourceFetcher,
@@ -414,8 +414,18 @@ async def _ensure_database_schema(
     if engine is None or not hasattr(engine, "begin"):
         return
 
+    reference_tables = (
+        RefSource.__table__,
+        RefDocument.__table__,
+        RefClause.__table__,
+    )
+
     async with engine.begin() as connection:  # type: ignore[call-arg]
-        await connection.run_sync(BaseModel.metadata.create_all)
+        await connection.run_sync(
+            lambda sync_connection: BaseModel.metadata.create_all(
+                sync_connection, tables=reference_tables
+            )
+        )
 
 
 def main(argv: Optional[Sequence[str]] = None) -> Dict[str, Any]:
