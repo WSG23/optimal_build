@@ -9,7 +9,12 @@ from contextlib import asynccontextmanager
 from importlib import import_module
 
 import pytest
-import pytest_asyncio
+
+try:  # pragma: no cover - executed when pytest-asyncio is not installed
+    import pytest_asyncio  # type: ignore[import-not-found]
+except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
+    pytest_asyncio = import_module("backend.pytest_asyncio")  # type: ignore[assignment]
+    sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
 from httpx import AsyncClient
 
 
@@ -133,6 +138,16 @@ async def async_session_factory(
     return flow_session_factory
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def clean_database(async_session_factory: async_sessionmaker[AsyncSession]):
+    """Reset the database after each test to maintain isolation."""
+
+    try:
+        yield
+    finally:
+        await _reset_database(async_session_factory)
+
+
 @pytest_asyncio.fixture
 async def session(
     async_session_factory: async_sessionmaker[AsyncSession],
@@ -159,6 +174,17 @@ def session_factory(
                 yield db_session
             finally:
                 await _truncate_all(db_session)
+
+    @asynccontextmanager
+    async def _preserving_factory() -> AsyncGenerator[AsyncSession, None]:
+        async with async_session_factory() as db_session:
+            await _truncate_all(db_session)
+            try:
+                yield db_session
+            finally:
+                await db_session.rollback()
+
+    setattr(_factory, "preserve", _preserving_factory)
 
     return _factory
 
@@ -194,4 +220,11 @@ async def app_client(
 
     app.dependency_overrides.pop(get_session, None)
     await _reset_database(async_session_factory)
+
+
+@pytest_asyncio.fixture
+async def client(app_client: AsyncClient) -> AsyncGenerator[AsyncClient, None]:
+    """Backward-compatible alias for tests expecting a ``client`` fixture."""
+
+    yield app_client
 

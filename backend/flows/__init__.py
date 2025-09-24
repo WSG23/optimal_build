@@ -19,6 +19,8 @@ def ensure_backend_path() -> None:
 
 ensure_backend_path()
 
+import app  # noqa: F401  pylint: disable=unused-import
+
 from backend.flows.ergonomics import (  # noqa: E402  pylint: disable=wrong-import-position
     fetch_seeded_metrics,
     seed_ergonomics_metrics as _seed_ergonomics_metrics,

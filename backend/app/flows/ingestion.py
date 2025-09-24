@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Sequence
+from typing import Any, AsyncContextManager, Callable, Dict, Sequence
 
 from prefect import flow
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +21,10 @@ async def material_standard_ingestion_flow(
 ) -> Dict[str, int]:
     """Ingest material standards and capture run metrics."""
 
-    async with session_factory() as session:
+    context_factory: Callable[[], AsyncContextManager[AsyncSession]]
+    context_factory = getattr(session_factory, "preserve", session_factory)
+
+    async with context_factory() as session:
         run = await ingestion_service.start_ingestion_run(session, flow_name="material-standard-ingestion")
         records_ingested = 0
         suspected_updates = 0

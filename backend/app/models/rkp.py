@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+import sys
 from typing import Any, Dict, Iterable, Optional
 
 from sqlalchemy import (
@@ -434,3 +435,7 @@ class RefAlert(BaseModel):
     __table_args__ = (
         Index("idx_alerts_type_level", "alert_type", "level"),
     )
+if __name__.startswith("backend.app"):
+    sys.modules["app.models.rkp"] = sys.modules[__name__]
+else:  # pragma: no cover - executed when imported via the compatibility alias
+    sys.modules["backend.app.models.rkp"] = sys.modules[__name__]

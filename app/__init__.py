@@ -44,6 +44,9 @@ def _ensure_sqlalchemy() -> None:
 _ensure_sqlalchemy()
 
 _backend_app = import_module("backend.app")
+_backend_pkg = sys.modules.get("backend")
+if _backend_pkg is not None:
+    setattr(_backend_pkg, "app", _backend_app)
 
 # Expose ``backend.app`` under the historical ``app`` module name.  Using the
 # existing module instance ensures submodules such as ``app.core`` resolve to

@@ -64,13 +64,13 @@ class DscrInputs(BaseModel):
     period_labels: Optional[List[str]] = None
 
     @model_validator(mode="after")
-    def _validate_lengths(self) -> "DscrInputs":
-        incomes_len = len(self.net_operating_incomes)
-        if len(self.debt_services) != incomes_len:
+    def _validate_lengths(cls, values: "DscrInputs") -> "DscrInputs":
+        incomes_len = len(values.net_operating_incomes)
+        if len(values.debt_services) != incomes_len:
             raise ValueError("net_operating_incomes and debt_services must be the same length")
-        if self.period_labels is not None and len(self.period_labels) != incomes_len:
+        if values.period_labels is not None and len(values.period_labels) != incomes_len:
             raise ValueError("period_labels must be the same length as net_operating_incomes")
-        return self
+        return values
 
 
 class FinanceScenarioInput(BaseModel):

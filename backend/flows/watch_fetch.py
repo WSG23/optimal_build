@@ -11,12 +11,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, TypeVar, cast
 
+if str(Path(__file__).resolve().parents[1]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import app  # noqa: F401  pylint: disable=unused-import
+
 from prefect import flow
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
-if str(Path(__file__).resolve().parents[1]) not in sys.path:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefDocument, RefSource
@@ -56,9 +58,8 @@ async def watch_reference_sources(
     fetcher = fetcher or ReferenceSourceFetcher()
     storage = storage or ReferenceStorage()
     results: List[Dict[str, Any]] = []
-    seen_hashes: set[tuple[int, str]] = set()
-    seen_document_ids: set[int] = set()
     seen_file_hashes: set[str] = set()
+    seen_document_ids: set[int] = set()
 
     async with session_factory() as session:
         sources = (
@@ -89,9 +90,8 @@ async def watch_reference_sources(
                 duplicate.http_last_modified = fetched.last_modified or duplicate.http_last_modified
                 duplicate.suspected_update = False
                 await session.flush()
-                seen_hashes.add((source.id, file_hash))
-                seen_document_ids.add(duplicate.id)
                 seen_file_hashes.add(file_hash)
+                seen_document_ids.add(duplicate.id)
                 continue
 
             suffix = _determine_suffix(fetch_kind, fetched)
@@ -111,14 +111,10 @@ async def watch_reference_sources(
             )
             session.add(document)
             await session.flush()
-            document_identity = (source.id, document.file_hash)
-            if document_identity in seen_hashes or document.id in seen_document_ids:
-                continue
-            seen_hashes.add(document_identity)
             seen_document_ids.add(document.id)
-            if document.file_hash in seen_file_hashes:
+            if file_hash in seen_file_hashes:
                 continue
-            seen_file_hashes.add(document.file_hash)
+            seen_file_hashes.add(file_hash)
             results.append(
                 {
                     "document_id": document.id,

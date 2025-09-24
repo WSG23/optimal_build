@@ -5,8 +5,16 @@ from __future__ import annotations
 import asyncio
 import inspect
 import os
+import sys
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, Mapping, Optional, Tuple
+
+
+_MODULE = sys.modules[__name__]
+if __name__ == "jobs":
+    sys.modules.setdefault("backend.jobs", _MODULE)
+else:
+    sys.modules.setdefault("jobs", _MODULE)
 
 try:  # pragma: no cover - optional dependency, available in some deployments
     from celery import Celery  # type: ignore

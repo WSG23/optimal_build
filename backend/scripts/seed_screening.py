@@ -10,9 +10,14 @@ from typing import Dict, Iterable, List, Optional, Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import AsyncSessionLocal, engine
-from app.models.base import BaseModel
-from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
+try:  # pragma: no cover - maintain compatibility with historical import paths
+    from backend.app.core.database import AsyncSessionLocal, engine
+    from backend.app.models.base import BaseModel
+    from backend.app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
+except ModuleNotFoundError:  # pragma: no cover - fallback when backend package not available
+    from app.core.database import AsyncSessionLocal, engine
+    from app.models.base import BaseModel
+    from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
 
 
 @dataclass
