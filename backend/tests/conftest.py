@@ -58,9 +58,21 @@ from app.core.database import get_session
 from app.main import app
 from app.models.base import BaseModel
 from app.utils import metrics
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 # Importing ``app.models`` ensures all model metadata is registered.
 _ = app_models
+
+
+if "projects" not in getattr(BaseModel.metadata, "tables", {}):
+    class _ProjectStub(BaseModel):
+        """Minimal project table used for tests that only require an ID."""
+
+        __tablename__ = "projects"
+
+        id: Mapped[int] = mapped_column(Integer, primary_key=True)
+        name: Mapped[str] = mapped_column(String(120), nullable=False, default="Test Project")
 
 _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
 
