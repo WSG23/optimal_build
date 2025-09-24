@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from math import ceil
 from typing import Iterable, Sequence
 
@@ -59,7 +59,19 @@ class RoiSnapshot:
         }
 
 
-def _decision_metrics(suggestions: Sequence[OverlaySuggestion]) -> tuple[float, float, int, int, int]:
+def _as_utc(timestamp: datetime | None) -> datetime | None:
+    """Normalise timestamps to timezone-aware UTC values."""
+
+    if timestamp is None:
+        return None
+    if timestamp.tzinfo is None:
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.astimezone(timezone.utc)
+
+
+def _decision_metrics(
+    suggestions: Sequence[OverlaySuggestion],
+) -> tuple[float, float, int, int, int]:
     """Compute decision timing, acceptance counts and totals."""
 
     decision_seconds = 0.0
@@ -74,8 +86,8 @@ def _decision_metrics(suggestions: Sequence[OverlaySuggestion]) -> tuple[float, 
             decided += 1
             if decision == "approved":
                 accepted += 1
-            created_at: datetime | None = suggestion.created_at
-            decided_at: datetime | None = suggestion.decided_at or suggestion.updated_at
+            created_at = _as_utc(suggestion.created_at)
+            decided_at = _as_utc(suggestion.decided_at or suggestion.updated_at)
             if created_at and decided_at:
                 elapsed = (decided_at - created_at).total_seconds()
                 decision_seconds += max(elapsed, 0.0)

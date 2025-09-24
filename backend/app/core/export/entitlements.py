@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import io
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, Iterable, List, Tuple
 
@@ -157,7 +157,7 @@ async def build_snapshot(session: AsyncSession, project_id: int) -> Entitlements
                 "expiry_date",
             ),
         ),
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(timezone.utc),
     )
     return snapshot
 

@@ -106,9 +106,14 @@ frontend/node_modules/react/*
 !frontend/node_modules/react/index.js
 !frontend/node_modules/react/jsx-runtime.js
 !frontend/node_modules/react/package.json
+!frontend/node_modules/react/cjs/
+frontend/node_modules/react/cjs/*
+!frontend/node_modules/react/cjs/react.development.js
+!frontend/node_modules/react/cjs/react.production.min.js
 !frontend/node_modules/react-dom/
 frontend/node_modules/react-dom/*
 !frontend/node_modules/react-dom/server.js
+!frontend/node_modules/react-dom/server.node.js
 !frontend/node_modules/react-dom/package.json
 npm-debug.log*
 yarn-debug.log*

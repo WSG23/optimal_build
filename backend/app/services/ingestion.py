@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, cast
 from uuid import uuid4
 
@@ -28,7 +28,7 @@ async def start_ingestion_run(
         flow_name=flow_name,
         run_key=run_key or str(uuid4()),
         status="running",
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
         notes=notes,
     )
     session.add(record)
@@ -51,7 +51,7 @@ async def complete_ingestion_run(
 
     run_record = cast(Any, run)
     run_record.status = status
-    run_record.finished_at = datetime.utcnow()
+    run_record.finished_at = datetime.now(timezone.utc)
     run_record.records_ingested = records_ingested
     run_record.suspected_updates = suspected_updates
     run_record.metrics = extra_metrics or {}

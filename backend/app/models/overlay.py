@@ -19,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, MetadataProxy
 from app.models.types import FlexibleJSONB
 
 
@@ -59,6 +59,7 @@ class OverlaySourceGeometry(BaseModel):
         back_populates="source_geometry",
         cascade="all, delete-orphan",
     )
+    metadata = MetadataProxy()
 
     __table_args__ = (
         UniqueConstraint("project_id", "source_geometry_key", name="uq_overlay_source_key"),

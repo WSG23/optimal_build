@@ -16,6 +16,16 @@ from app.core.config import settings
 from app.models.audit import AuditLog
 
 
+def _as_utc(timestamp: datetime | None) -> datetime | None:
+    """Return a timezone-aware UTC timestamp suitable for hashing."""
+
+    if timestamp is None:
+        return None
+    if timestamp.tzinfo is None:
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.astimezone(timezone.utc)
+
+
 def _coerce_float(value: Any) -> float | None:
     """Normalise numeric values to floats for hashing and storage."""
 
@@ -38,7 +48,7 @@ def _normalise_context(context: Mapping[str, Any] | None) -> Dict[str, Any]:
 def _payload_for_hash(log: AuditLog) -> Dict[str, Any]:
     """Build a canonical payload for hashing and signing."""
 
-    recorded_at: datetime | None = log.recorded_at
+    recorded_at = _as_utc(log.recorded_at)
     timestamp = recorded_at.isoformat() if recorded_at else None
     payload = {
         "project_id": int(log.project_id),
@@ -96,7 +106,7 @@ async def append_event(
     previous = await _latest_entry(session, project_id)
     version = 1 if previous is None else previous.version + 1
     prev_hash = previous.hash if previous is not None else None
-    timestamp = recorded_at or datetime.now(timezone.utc)
+    timestamp = _as_utc(recorded_at) or datetime.now(timezone.utc)
 
     normalised_context = _normalise_context(context)
     log = AuditLog(

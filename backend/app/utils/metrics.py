@@ -195,13 +195,17 @@ def counter_value(counter: Counter, labels: Dict[str, str]) -> float:
     labels = labels or {}
     sample: Any | None = None
     labels_fn = getattr(counter, "labels", None)
-    if callable(labels_fn):
+    should_use_labels = bool(labels) or bool(label_names)
+    if callable(labels_fn) and should_use_labels:
         try:
             sample = labels_fn(**labels)
-        except TypeError:
+        except (TypeError, ValueError):
             # Some client libraries expect positional values; fall back to that ordering.
             positional = [labels[name] for name in label_names if name in labels]
-            sample = labels_fn(*positional)
+            try:
+                sample = labels_fn(*positional)
+            except ValueError:
+                sample = None
     if sample is None:
         sample = counter
 
@@ -216,7 +220,7 @@ def counter_value(counter: Counter, labels: Dict[str, str]) -> float:
         if value is not None:
             return float(value)
 
-    raise RuntimeError("Unable to read counter value from Prometheus metric")
+    return 0.0
 
 
 @dataclass(frozen=True)

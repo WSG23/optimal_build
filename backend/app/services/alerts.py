@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, cast
 
 from sqlalchemy import Select, select
@@ -71,7 +71,7 @@ async def acknowledge_alert(
     alert_db = cast(RefAlert, alert)
     alert_record = cast(Any, alert_db)
     alert_record.acknowledged = True
-    alert_record.acknowledged_at = datetime.utcnow()
+    alert_record.acknowledged_at = datetime.now(timezone.utc)
     alert_record.acknowledged_by = acknowledged_by
     await session.flush()
     log_event(logger, "alert_acknowledged", alert_id=alert_id, acknowledged_by=acknowledged_by)

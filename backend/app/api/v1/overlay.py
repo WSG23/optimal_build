@@ -131,7 +131,7 @@ async def decide_overlay(
     suggestion.decided_by = payload.decided_by
     suggestion.decision_notes = payload.notes
 
-    created_at = suggestion.created_at
+    created_at = _as_utc(suggestion.created_at)
     if created_at:
         actual_seconds = max((timestamp - created_at).total_seconds(), 0.0)
     else:
@@ -157,3 +157,13 @@ async def decide_overlay(
 
 
 __all__ = ["router"]
+def _as_utc(timestamp: datetime | None) -> datetime | None:
+    """Return a timezone-aware UTC timestamp for arithmetic operations."""
+
+    if timestamp is None:
+        return None
+    if timestamp.tzinfo is None:
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.astimezone(timezone.utc)
+
+

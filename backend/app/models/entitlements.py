@@ -20,7 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, MetadataProxy
 from app.models.types import FlexibleJSONB
 
 
@@ -133,6 +133,7 @@ class EntAuthority(BaseModel):
     approval_types: Mapped[List["EntApprovalType"]] = relationship(
         back_populates="authority", cascade="all, delete-orphan"
     )
+    metadata = MetadataProxy()
 
     __table_args__ = (Index("ix_ent_authority_slug", "slug"),)
 
@@ -170,6 +171,7 @@ class EntApprovalType(BaseModel):
     roadmap_items: Mapped[List["EntRoadmapItem"]] = relationship(
         back_populates="approval_type"
     )
+    metadata = MetadataProxy()
 
     __table_args__ = (
         Index("uq_ent_approval_type_code", "authority_id", "code", unique=True),
@@ -208,6 +210,7 @@ class EntRoadmapItem(BaseModel):
     )
 
     approval_type: Mapped[EntApprovalType | None] = relationship(back_populates="roadmap_items")
+    metadata = MetadataProxy()
 
     __table_args__ = (
         Index("idx_ent_roadmap_project_sequence", "project_id", "sequence_order", unique=True),
@@ -244,6 +247,7 @@ class EntStudy(BaseModel):
         onupdate=func.now(),
         nullable=False,
     )
+    metadata = MetadataProxy()
 
 
 class EntEngagement(BaseModel):
@@ -275,6 +279,7 @@ class EntEngagement(BaseModel):
         onupdate=func.now(),
         nullable=False,
     )
+    metadata = MetadataProxy()
 
 
 class EntLegalInstrument(BaseModel):
@@ -305,6 +310,7 @@ class EntLegalInstrument(BaseModel):
         onupdate=func.now(),
         nullable=False,
     )
+    metadata = MetadataProxy()
 
 
 __all__ = [

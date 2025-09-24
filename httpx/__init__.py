@@ -21,12 +21,19 @@ class Response:
             return None
         return json.loads(self._body.decode("utf-8"))
 
+    @property
     def text(self) -> str:
         return self._body.decode("utf-8")
 
     @property
     def content(self) -> bytes:
         return self._body
+
+    def read(self) -> bytes:
+        return self.content
+
+    async def aread(self) -> bytes:
+        return self.content
 
 
 class AsyncClient:
