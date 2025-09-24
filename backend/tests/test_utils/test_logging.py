@@ -7,8 +7,8 @@ import logging
 
 import pytest
 
-from app.core.config import settings
-from app.utils.logging import configure_logging, get_logger, log_event
+from backend.app.core.config import settings
+from backend.app.utils.logging import configure_logging, get_logger, log_event
 
 
 def test_log_event_emits_json_with_timestamp(caplog: pytest.LogCaptureFixture) -> None:

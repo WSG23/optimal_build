@@ -6,7 +6,7 @@ pytest.importorskip("sqlalchemy")
 
 from sqlalchemy import select
 
-from app.models.rkp import RefErgonomics
+from backend.app.models.rkp import RefErgonomics
 from flows.ergonomics import DEFAULT_ERGONOMICS_METRICS, fetch_seeded_metrics, seed_ergonomics_metrics
 
 

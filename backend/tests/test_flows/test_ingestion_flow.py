@@ -8,9 +8,9 @@ pytest.importorskip("sqlalchemy")
 
 from sqlalchemy import select
 
-from app.flows.ingestion import material_standard_ingestion_flow
-from app.models.rkp import RefAlert, RefMaterialStandard
-from app.utils import metrics
+from backend.app.flows.ingestion import material_standard_ingestion_flow
+from backend.app.models.rkp import RefAlert, RefMaterialStandard
+from backend.app.utils import metrics
 
 
 @pytest.mark.asyncio

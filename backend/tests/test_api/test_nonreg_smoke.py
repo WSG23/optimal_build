@@ -15,13 +15,13 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from scripts import seed_nonreg
-from app.models.rkp import RefProduct
+from backend.scripts import seed_nonreg
+from backend.app.models.rkp import RefProduct
 
 
 @pytest.mark.asyncio
 async def test_nonreg_reference_endpoints_expose_provenance(
-    client, async_session_factory
+    app_client, async_session_factory
 ) -> None:
     """Endpoints should return seeded data with provenance metadata."""
 
@@ -41,13 +41,13 @@ async def test_nonreg_reference_endpoints_expose_provenance(
         )
         await session.commit()
 
-    ergonomics_response = await client.get("/api/v1/ergonomics")
+    ergonomics_response = await app_client.get("/api/v1/ergonomics")
     assert ergonomics_response.status_code == 200
     ergonomics_payload = ergonomics_response.json()
     assert len(ergonomics_payload) >= 1
     assert any(entry.get("source") for entry in ergonomics_payload)
 
-    products_response = await client.get("/api/v1/products", params={"category": "bathroom"})
+    products_response = await app_client.get("/api/v1/products", params={"category": "bathroom"})
     assert products_response.status_code == 200
     products_payload = products_response.json()
     assert len(products_payload) == 1
@@ -55,13 +55,13 @@ async def test_nonreg_reference_endpoints_expose_provenance(
     assert product["vendor"] == "Acme Fixtures"
     assert product["specifications"].get("provenance") == {"catalog": "2024"}
 
-    standards_response = await client.get("/api/v1/standards")
+    standards_response = await app_client.get("/api/v1/standards")
     assert standards_response.status_code == 200
     standards_payload = standards_response.json()
     assert len(standards_payload) >= 1
     assert any(entry.get("provenance") for entry in standards_payload)
 
-    cost_response = await client.get(
+    cost_response = await app_client.get(
         "/api/v1/costs/indices/latest",
         params={"series_name": "construction_all_in", "provider": "Public"},
     )

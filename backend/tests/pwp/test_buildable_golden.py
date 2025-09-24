@@ -13,10 +13,8 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from app.core.config import settings
-from app.core.database import get_session
-from app.main import app
-from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
+from backend.app.core.config import settings
+from backend.app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from scripts.seed_screening import seed_screening_sample_data
 
 
@@ -100,24 +98,13 @@ async def _seed_reference_data(async_session_factory) -> dict[str, object]:
 
 
 @pytest_asyncio.fixture
-async def buildable_client(async_session_factory, monkeypatch):
+async def buildable_client(async_session_factory, monkeypatch, app_client: AsyncClient):
     context = await _seed_reference_data(async_session_factory)
 
     monkeypatch.setattr(settings, "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0)
     monkeypatch.setattr(settings, "BUILDABLE_EFFICIENCY_RATIO", 0.82)
 
-    async def _override_get_session():
-        async with async_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(
-        app=app,
-        base_url="http://test",
-        headers={"X-Role": "admin"},
-    ) as client:
-        yield client, context
-    app.dependency_overrides.clear()
+    return app_client, context
 
 
 @pytest.mark.asyncio

@@ -10,8 +10,8 @@ pytest.importorskip("sqlalchemy")
 
 from sqlalchemy import select
 
-from app.models.rkp import RefClause, RefDocument, RefSource
-from app.services.reference_storage import ReferenceStorage
+from backend.app.models.rkp import RefClause, RefDocument, RefSource
+from backend.app.services.reference_storage import ReferenceStorage
 from flows.parse_segment import parse_reference_documents
 
 

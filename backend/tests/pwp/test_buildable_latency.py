@@ -12,10 +12,8 @@ pytest.importorskip("pytest_asyncio")
 import pytest_asyncio
 from httpx import AsyncClient
 
-from app.core.config import settings
-from app.core.database import get_session
-from app.main import app
-from app.utils import metrics
+from backend.app.core.config import settings
+from backend.app.utils import metrics
 from scripts.seed_screening import seed_screening_sample_data
 
 
@@ -39,24 +37,13 @@ async def _seed_screening_data(async_session_factory) -> None:
 
 
 @pytest_asyncio.fixture
-async def buildable_client(async_session_factory, monkeypatch):
+async def buildable_client(async_session_factory, monkeypatch, app_client: AsyncClient):
     await _seed_screening_data(async_session_factory)
 
     monkeypatch.setattr(settings, "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0)
     monkeypatch.setattr(settings, "BUILDABLE_EFFICIENCY_RATIO", 0.82)
 
-    async def _override_get_session():
-        async with async_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(
-        app=app,
-        base_url="http://testserver",
-        headers={"X-Role": "admin"},
-    ) as client:
-        yield client
-    app.dependency_overrides.clear()
+    return app_client
 
 
 @pytest.mark.asyncio

@@ -11,7 +11,7 @@ from sqlalchemy import Column, DateTime, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-from flows import sync_products as sync_products_flow
+from backend.flows import sync_products as sync_products_flow
 
 
 class Base(DeclarativeBase):
@@ -32,7 +32,7 @@ class Product(Base):
 
 
 @pytest_asyncio.fixture
-async def session_factory() -> async_sessionmaker[AsyncSession]:
+async def product_session_factory() -> async_sessionmaker[AsyncSession]:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -55,13 +55,15 @@ IkeaBrand,NewSeat,SKU-4,chair,650,520,410,11.2,18.5,https://example.com/bim4,htt
 
 @pytest.mark.asyncio
 async def test_sync_products_marks_missing_skus(
-    tmp_path: Path, session_factory: async_sessionmaker[AsyncSession], monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    product_session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Products absent from a vendor feed should be deprecated without touching others."""
 
     monkeypatch.setattr(sync_products_flow, "RefProduct", Product, raising=False)
 
-    async with session_factory() as session:
+    async with product_session_factory() as session:
         session.add_all(
             [
                 Product(vendor="ikea", sku="SKU-1", data_source="csv"),
@@ -76,7 +78,7 @@ async def test_sync_products_marks_missing_skus(
     _write_sample_csv(csv_path)
 
     result = await sync_products_flow.sync_products_csv_once(
-        str(csv_path), vendor="ikea", session_factory=session_factory
+        str(csv_path), vendor="ikea", session_factory=product_session_factory
     )
 
     assert result == {
@@ -87,7 +89,7 @@ async def test_sync_products_marks_missing_skus(
     }
     assert result["report"]["failed"] == 0
 
-    async with session_factory() as session:
+    async with product_session_factory() as session:
         rows = (
             await session.execute(select(Product).order_by(Product.sku))
         ).scalars().all()

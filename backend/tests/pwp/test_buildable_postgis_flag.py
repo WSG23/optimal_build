@@ -7,10 +7,10 @@ pytest.importorskip("pytest_asyncio")
 
 from sqlalchemy import select
 
-from app.core.config import settings
-from app.models.rkp import RefParcel
-from app.schemas.buildable import BuildableDefaults
-from app.services.buildable import ResolvedZone, calculate_buildable, load_layers_for_zone
+from backend.app.core.config import settings
+from backend.app.models.rkp import RefParcel
+from backend.app.schemas.buildable import BuildableDefaults
+from backend.app.services.buildable import ResolvedZone, calculate_buildable, load_layers_for_zone
 from scripts.seed_screening import seed_screening_sample_data
 
 

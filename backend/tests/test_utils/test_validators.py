@@ -8,7 +8,7 @@ BACKEND_ROOT = str(Path(__file__).resolve().parents[2])
 if BACKEND_ROOT not in sys.path:
     sys.path.append(BACKEND_ROOT)
 
-from app.utils.validators import validate_singapore_address
+from backend.app.utils.validators import validate_singapore_address
 
 
 @pytest.mark.parametrize(

@@ -8,10 +8,8 @@ pytest.importorskip("pytest_asyncio")
 import pytest_asyncio
 from httpx import AsyncClient
 
-from app.core.database import get_session
-from app.core.models.geometry import Door, GeometryGraph, Level, Space
-from app.main import app
-from app.models.rulesets import RulePack
+from backend.app.core.models.geometry import Door, GeometryGraph, Level, Space
+from backend.app.models.rulesets import RulePack
 
 
 PACK_DEFINITION = {
@@ -92,43 +90,26 @@ def _geometry_payload() -> dict:
 
 
 @pytest_asyncio.fixture
-async def ruleset_client(async_session_factory):
-    async def _override_session():
-        async with async_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_session] = _override_session
-    async with AsyncClient(
-        app=app,
-        base_url="http://testserver",
-        headers={"X-Role": "admin"},
-    ) as client:
-        yield client
-    app.dependency_overrides.pop(get_session, None)
-
-
-@pytest_asyncio.fixture
-async def seeded_ruleset(async_session_factory) -> dict:
-    async with async_session_factory() as session:
-        pack = RulePack(
-            slug="sg-residential",
-            name="Singapore Residential Compliance",
-            description="Minimum bedroom and door clearances",
-            jurisdiction="SG",
-            authority="URA",
-            version=1,
-            definition=PACK_DEFINITION,
-            metadata={"topics": ["space", "door"]},
-        )
-        session.add(pack)
-        await session.commit()
-        await session.refresh(pack)
-        return {"id": pack.id, "slug": pack.slug, "version": pack.version}
+async def seeded_ruleset(session) -> dict:
+    pack = RulePack(
+        slug="sg-residential",
+        name="Singapore Residential Compliance",
+        description="Minimum bedroom and door clearances",
+        jurisdiction="SG",
+        authority="URA",
+        version=1,
+        definition=PACK_DEFINITION,
+        metadata={"topics": ["space", "door"]},
+    )
+    session.add(pack)
+    await session.commit()
+    await session.refresh(pack)
+    return {"id": pack.id, "slug": pack.slug, "version": pack.version}
 
 
 @pytest.mark.asyncio
-async def test_list_rulesets_returns_catalogue(ruleset_client: AsyncClient, seeded_ruleset) -> None:
-    response = await ruleset_client.get("/api/v1/rulesets")
+async def test_list_rulesets_returns_catalogue(app_client: AsyncClient, seeded_ruleset) -> None:
+    response = await app_client.get("/api/v1/rulesets")
     assert response.status_code == 200
     payload = response.json()
     assert payload["count"] == 1
@@ -141,11 +122,11 @@ async def test_list_rulesets_returns_catalogue(ruleset_client: AsyncClient, seed
 
 @pytest.mark.asyncio
 async def test_validate_ruleset_reports_citations_and_violations(
-    ruleset_client: AsyncClient,
+    app_client: AsyncClient,
     seeded_ruleset,
 ) -> None:
     geometry_payload = _geometry_payload()
-    response = await ruleset_client.post(
+    response = await app_client.post(
         "/api/v1/rulesets/validate",
         json={"ruleset_slug": seeded_ruleset["slug"], "geometry": geometry_payload},
     )

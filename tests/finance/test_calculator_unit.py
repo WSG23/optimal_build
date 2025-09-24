@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.services.finance import calculator
+from backend.app.services.finance import calculator
 
 
 def test_npv_handles_negative_cashflow_months() -> None:

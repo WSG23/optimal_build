@@ -12,17 +12,15 @@ pytest.importorskip("pytest_asyncio")
 import pytest_asyncio
 from httpx import AsyncClient
 
-from app.core.database import get_session
-from app.core.geometry import GeometrySerializer
-from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
-from app.main import app
-from app.models.overlay import OverlaySourceGeometry
+from backend.app.core.geometry import GeometrySerializer
+from backend.app.core.models.geometry import GeometryGraph, Level, Relationship, Space
+from backend.app.models.overlay import OverlaySourceGeometry
 
 PROJECT_ID = 5821
 
 
 @pytest_asyncio.fixture
-async def roi_client(async_session_factory):
+async def roi_client(app_client: AsyncClient, async_session_factory):
     """Seed overlay source geometry and provide a configured API client."""
 
     geometry = GeometryGraph(
@@ -64,18 +62,7 @@ async def roi_client(async_session_factory):
         session.add(record)
         await session.commit()
 
-    async def _override_get_session():
-        async with async_session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(
-        app=app,
-        base_url="http://testserver",
-        headers={"X-Role": "admin"},
-    ) as client:
-        yield client
-    app.dependency_overrides.pop(get_session, None)
+    return app_client
 
 
 @pytest.mark.asyncio

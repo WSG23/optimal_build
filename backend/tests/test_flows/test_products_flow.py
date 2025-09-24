@@ -6,7 +6,7 @@ pytest.importorskip("sqlalchemy")
 
 from sqlalchemy import select
 
-from app.models.rkp import RefProduct
+from backend.app.models.rkp import RefProduct
 from flows.products import sync_vendor_products
 
 

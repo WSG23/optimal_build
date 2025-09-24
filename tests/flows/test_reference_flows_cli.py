@@ -14,9 +14,8 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-import app.core.database as app_database
-from app.models.base import BaseModel
-from app.models.rkp import RefClause, RefDocument, RefSource
+from backend.app.models.base import BaseModel
+from backend.app.models.rkp import RefClause, RefDocument, RefSource
 from backend.flows import parse_segment as parse_segment_flow
 from backend.flows import watch_fetch as watch_fetch_flow
 
@@ -60,36 +59,6 @@ async def _seed_offline_sources(
         session.add_all([ura, bca, scdf])
         await session.commit()
         return {source.authority: source.id for source in (ura, bca, scdf)}
-
-
-@pytest.fixture
-def flow_session_factory(monkeypatch):
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    asyncio.run(_initialise_schema(engine))
-
-    memory_db = None
-    try:  # pragma: no cover - only executed when using the in-memory stub
-        from sqlalchemy._memory import GLOBAL_DATABASE  # type: ignore
-    except ModuleNotFoundError:  # pragma: no cover - real SQLAlchemy handles isolation
-        memory_db = None
-    else:
-        memory_db = GLOBAL_DATABASE
-        for model in (RefClause, RefDocument, RefSource):
-            memory_db.delete_all(model)
-
-    monkeypatch.setattr(app_database, "AsyncSessionLocal", session_factory, raising=False)
-    monkeypatch.setattr(watch_fetch_flow, "AsyncSessionLocal", session_factory, raising=False)
-    monkeypatch.setattr(parse_segment_flow, "AsyncSessionLocal", session_factory, raising=False)
-
-    try:
-        yield session_factory
-    finally:
-        if memory_db is not None:
-            for model in (RefClause, RefDocument, RefSource):
-                memory_db.delete_all(model)
-
-        asyncio.run(engine.dispose())
 
 
 def test_prefect_shim_flow_decorator_preserves_callable() -> None:

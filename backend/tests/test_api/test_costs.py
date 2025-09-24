@@ -8,12 +8,12 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from app.models.rkp import RefCostIndex
-from app.utils import metrics
+from backend.app.models.rkp import RefCostIndex
+from backend.app.utils import metrics
 
 
 @pytest.mark.asyncio
-async def test_latest_cost_index(client, session):
+async def test_latest_cost_index(app_client, session):
     """Latest cost index endpoint returns the most recent period."""
 
     session.add_all(
@@ -44,7 +44,7 @@ async def test_latest_cost_index(client, session):
     )
     await session.commit()
 
-    response = await client.get(
+    response = await app_client.get(
         "/api/v1/costs/indices/latest",
         params={"series_name": "concrete", "provider": "official"},
     )
@@ -58,10 +58,10 @@ async def test_latest_cost_index(client, session):
 
 
 @pytest.mark.asyncio
-async def test_latest_cost_index_not_found(client):
+async def test_latest_cost_index_not_found(app_client):
     """A 404 is returned when the series is absent."""
 
-    response = await client.get(
+    response = await app_client.get(
         "/api/v1/costs/indices/latest",
         params={"series_name": "missing"},
     )

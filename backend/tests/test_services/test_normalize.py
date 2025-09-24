@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from app.services.normalize import NormalizedRule, RuleNormalizer
+from backend.app.services.normalize import NormalizedRule, RuleNormalizer
 
 
 def test_rule_normalizer_extracts_parking_and_slope() -> None:

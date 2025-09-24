@@ -16,7 +16,9 @@ VIEWER_HEADERS = {"X-Role": "viewer"}
 
 
 @pytest.mark.asyncio
-async def test_ergonomics_requires_valid_role(app_client: AsyncClient) -> None:
+async def test_ergonomics_requires_valid_role(
+    app_client: AsyncClient, reference_data
+) -> None:
     ok_response = await app_client.get(
         "/api/v1/ergonomics/",
         headers=VIEWER_HEADERS,
@@ -31,7 +33,9 @@ async def test_ergonomics_requires_valid_role(app_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_cost_indices_require_valid_role(app_client: AsyncClient) -> None:
+async def test_cost_indices_require_valid_role(
+    app_client: AsyncClient, reference_data
+) -> None:
     params = {"series_name": "construction_all_in", "jurisdiction": "SG"}
 
     ok_response = await app_client.get(

@@ -9,7 +9,7 @@ from typing import Dict
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.models.base import BaseModel
+from backend.app.models.base import BaseModel
 from backend.scripts import seed_nonreg
 
 

@@ -13,8 +13,8 @@ import pytest_asyncio  # noqa: F401
 
 from httpx import AsyncClient
 
-from app.core.config import settings
-from app.schemas.buildable import (
+from backend.app.core.config import settings
+from backend.app.schemas.buildable import (
     BuildableCalculation,
     BuildableDefaults,
     BuildableMetrics,
@@ -24,7 +24,7 @@ from app.schemas.buildable import (
 
 @pytest.mark.asyncio
 async def test_buildable_request_accepts_camel_case(
-    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    app_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(settings, "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.8)
     monkeypatch.setattr(settings, "BUILDABLE_EFFICIENCY_RATIO", 0.79)
@@ -58,10 +58,10 @@ async def test_buildable_request_accepts_camel_case(
         )
 
     monkeypatch.setattr(
-        "app.api.v1.screen.calculate_buildable", _fake_calculate_buildable
+        "backend.app.api.v1.screen.calculate_buildable", _fake_calculate_buildable
     )
 
-    response = await client.post(
+    response = await app_client.post(
         "/api/v1/screen/buildable",
         json={
             "address": "123 Example Ave",

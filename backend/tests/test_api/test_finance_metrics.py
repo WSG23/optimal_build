@@ -12,12 +12,12 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
-from app.models.rkp import RefCostIndex
-from app.utils import metrics
+from backend.app.models.rkp import RefCostIndex
+from backend.app.utils import metrics
 
 
 @pytest.mark.asyncio
-async def test_finance_metrics_surface_in_health(client: AsyncClient, session) -> None:
+async def test_finance_metrics_surface_in_health(app_client: AsyncClient, session) -> None:
     session.add_all(
         [
             RefCostIndex(
@@ -68,7 +68,7 @@ async def test_finance_metrics_surface_in_health(client: AsyncClient, session) -
         },
     }
 
-    response = await client.post("/api/v1/finance/feasibility", json=payload)
+    response = await app_client.post("/api/v1/finance/feasibility", json=payload)
     assert response.status_code == 200
     body = response.json()
 
@@ -78,7 +78,7 @@ async def test_finance_metrics_surface_in_health(client: AsyncClient, session) -
 
     scenario_id = body["scenario_id"]
 
-    export_response = await client.get(
+    export_response = await app_client.get(
         "/api/v1/finance/export",
         params={"scenario_id": scenario_id},
     )
@@ -89,7 +89,7 @@ async def test_finance_metrics_surface_in_health(client: AsyncClient, session) -
     metrics_output = metrics.render_latest_metrics().decode()
     assert "finance_export_duration_ms" in metrics_output
 
-    health_response = await client.get("/health/metrics")
+    health_response = await app_client.get("/health/metrics")
     assert health_response.status_code == 200
     metrics_text = health_response.read().decode()
     assert "finance_feasibility_total" in metrics_text
