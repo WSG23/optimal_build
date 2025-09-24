@@ -26,6 +26,7 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.database import AsyncSessionLocal
+from app.models.base import BaseModel
 from app.models.rkp import RefDocument, RefSource
 from app.services.reference_sources import (
     FetchedDocument,
@@ -397,8 +398,24 @@ async def _run_flow(
 ) -> Dict[str, Any]:
     """Execute the ingestion flow and derive a summary in one event loop."""
 
+    await _ensure_database_schema(AsyncSessionLocal)
     results = await _run_once(storage=storage, fetcher=fetcher)
     return await _summarise_ingestion(results)
+
+
+async def _ensure_database_schema(
+    session_factory: "async_sessionmaker[AsyncSession]",
+) -> None:
+    """Guarantee ``BaseModel`` tables exist for the active session factory."""
+
+    engine = getattr(session_factory, "bind", None)
+    if engine is None:
+        engine = getattr(session_factory, "kw", {}).get("bind")  # type: ignore[attr-defined]
+    if engine is None or not hasattr(engine, "begin"):
+        return
+
+    async with engine.begin() as connection:  # type: ignore[call-arg]
+        await connection.run_sync(BaseModel.metadata.create_all)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> Dict[str, Any]:
