@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from functools import wraps
-from importlib import util
+import importlib.util
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Callable, cast
@@ -18,10 +18,10 @@ def _find_repo_root(current: Path) -> Path:
 
 
 def _load_module(name: str, file_path: Path) -> ModuleType:
-    spec = util.spec_from_file_location(name, file_path)
+    spec = importlib.util.spec_from_file_location(name, file_path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot load {name!r} from {file_path}")
-    module = util.module_from_spec(spec)
+    module = importlib.util.module_from_spec(spec)
     loader = cast(Any, spec.loader)
     loader.exec_module(module)
     sys.modules[name] = module
