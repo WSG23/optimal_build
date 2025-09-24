@@ -191,7 +191,11 @@ def reset_metrics() -> None:
 def counter_value(counter: Counter, labels: Dict[str, str]) -> float:
     """Return the current value for a labelled counter."""
 
-    sample = counter.labels(**labels)
+    label_names: Iterable[str] = getattr(counter, "_labelnames", ())
+    if label_names:
+        sample = counter.labels(**labels)
+    else:
+        sample = counter
     value_holder = getattr(sample, "_value", None)
     if value_holder is not None and hasattr(value_holder, "get"):
         return float(value_holder.get())

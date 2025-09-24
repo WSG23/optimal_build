@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import inspect
 import time
-from typing import Any, Dict, List
+from typing import Any, AsyncIterator, Callable, Dict, List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.database import AsyncSessionLocal
+from app.core.database import get_session
 from app.core.geometry import GeometrySerializer
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
@@ -359,11 +361,69 @@ def _coerce_mapping(value: object) -> Dict[str, Any]:
     return {}
 
 
+def _resolve_session_dependency() -> Callable[[], Any]:
+    """Return the dependency callable used to acquire database sessions."""
+
+    try:  # pragma: no cover - FastAPI is optional in some environments
+        from app.main import app as fastapi_app  # type: ignore
+    except Exception:  # pragma: no cover - fallback when app isn't available
+        fastapi_app = None
+
+    if fastapi_app is not None:
+        override = fastapi_app.dependency_overrides.get(get_session)
+        if override is not None:
+            return override
+    return get_session
+
+
+@asynccontextmanager
+async def _job_session() -> AsyncIterator[AsyncSession]:
+    """Yield a session using the active dependency overrides when available."""
+
+    dependency = _resolve_session_dependency()
+    resource = dependency()
+
+    if inspect.isasyncgen(resource):
+        generator = resource
+        try:
+            session = await anext(generator)  # type: ignore[arg-type]
+        except StopAsyncIteration as exc:  # pragma: no cover - defensive guard
+            raise RuntimeError("Session dependency did not yield a session") from exc
+        try:
+            yield session
+        finally:
+            await generator.aclose()
+        return
+
+    if inspect.isawaitable(resource):
+        session = await resource
+        try:
+            yield session
+        finally:
+            close = getattr(session, "close", None)
+            if callable(close):
+                result = close()
+                if inspect.isawaitable(result):
+                    await result
+        return
+
+    if isinstance(resource, AsyncSession):
+        try:
+            yield resource
+        finally:
+            await resource.close()
+        return
+
+    raise TypeError(
+        "Session dependency must return an AsyncSession, coroutine, or async generator"
+    )
+
+
 @job(name="jobs.overlay_run.run_for_project", queue=settings.OVERLAY_QUEUE_DEFAULT)
 async def run_overlay_job(project_id: int) -> Dict[str, Any]:
     """Job wrapper that executes the overlay engine using a standalone session."""
 
-    async with AsyncSessionLocal() as session:
+    async with _job_session() as session:
         result = await run_overlay_for_project(session, project_id=project_id)
         return {"status": "completed", **result.as_dict()}
 
