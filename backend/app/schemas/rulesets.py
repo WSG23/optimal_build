@@ -29,6 +29,31 @@ class RulePackSchema(BaseModel):
 
         from_attributes = True
 
+    @classmethod
+    def model_validate(
+        cls,
+        obj: Any,
+        *,
+        from_attributes: bool = False,
+    ) -> "RulePackSchema":
+        if from_attributes and not isinstance(obj, dict):
+            data: Dict[str, Any] = {}
+            for name in cls.model_fields:
+                if name == "metadata":
+                    if hasattr(obj, "metadata_json"):
+                        value = getattr(obj, "metadata_json")
+                    else:
+                        value = getattr(obj, "metadata", {})
+                    if isinstance(value, dict):
+                        data[name] = dict(value)
+                    else:
+                        data[name] = {}
+                    continue
+                if hasattr(obj, name):
+                    data[name] = getattr(obj, name)
+            return cls(**data)
+        return super().model_validate(obj, from_attributes=from_attributes)
+
 
 class RulePackSummary(BaseModel):
     """Compact metadata about a rule pack."""
