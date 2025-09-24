@@ -147,6 +147,31 @@ async def flow_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSessi
         await engine.dispose()
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def _override_async_session_factory(
+    flow_session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncGenerator[None, None]:
+    """Ensure application code reuses the in-memory test database."""
+
+    targets = [
+        import_module("app.core.database"),
+        import_module("backend.flows.watch_fetch"),
+        import_module("backend.flows.parse_segment"),
+        import_module("backend.flows.sync_products"),
+    ]
+
+    for module in targets:
+        monkeypatch.setattr(
+            module,
+            "AsyncSessionLocal",
+            flow_session_factory,
+            raising=False,
+        )
+
+    yield
+
+
 @pytest_asyncio.fixture(scope="session")
 async def async_session_factory(
     flow_session_factory: async_sessionmaker[AsyncSession],
