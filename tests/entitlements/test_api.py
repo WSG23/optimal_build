@@ -10,7 +10,7 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
-from backend.app.utils import metrics
+from app.utils import metrics
 from backend.scripts.seed_entitlements_sg import seed_entitlements
 
 
@@ -64,16 +64,29 @@ async def test_entitlements_workflow(async_session_factory, app_client: AsyncCli
     )
     assert create_study.status_code == 201
     study_body = create_study.json()
+    study_id = study_body["id"]
     assert study_body["name"] == study_payload["name"]
     assert study_body["attachments"][0]["url"].startswith("https://example.com")
 
     update_roadmap = await app_client.put(
         f"/api/v1/entitlements/{PROJECT_ID}/roadmap/{first_item_id}",
         headers={"X-Role": "admin"},
-        json={"status": "in_progress"},
+        json={
+            "status": "in_progress",
+            "target_submission_date": "2024-11-15",
+        },
     )
     assert update_roadmap.status_code == 200
     assert update_roadmap.json()["status"] == "in_progress"
+    assert update_roadmap.json()["target_submission_date"] == "2024-11-15"
+
+    clear_submission = await app_client.put(
+        f"/api/v1/entitlements/{PROJECT_ID}/roadmap/{first_item_id}",
+        headers={"X-Role": "admin"},
+        json={"target_submission_date": None},
+    )
+    assert clear_submission.status_code == 200
+    assert clear_submission.json()["target_submission_date"] is None
 
     stakeholder_payload = {
         "project_id": PROJECT_ID,
@@ -90,6 +103,8 @@ async def test_entitlements_workflow(async_session_factory, app_client: AsyncCli
         json=stakeholder_payload,
     )
     assert stakeholder_response.status_code == 201
+    stakeholder_body = stakeholder_response.json()
+    engagement_id = stakeholder_body["id"]
 
     legal_payload = {
         "project_id": PROJECT_ID,
@@ -107,6 +122,32 @@ async def test_entitlements_workflow(async_session_factory, app_client: AsyncCli
         json=legal_payload,
     )
     assert legal_response.status_code == 201
+    legal_body = legal_response.json()
+    instrument_id = legal_body["id"]
+
+    clear_consultant = await app_client.put(
+        f"/api/v1/entitlements/{PROJECT_ID}/studies/{study_id}",
+        headers={"X-Role": "admin"},
+        json={"consultant": None},
+    )
+    assert clear_consultant.status_code == 200
+    assert clear_consultant.json()["consultant"] is None
+
+    clear_engagement_notes = await app_client.put(
+        f"/api/v1/entitlements/{PROJECT_ID}/stakeholders/{engagement_id}",
+        headers={"X-Role": "admin"},
+        json={"notes": None},
+    )
+    assert clear_engagement_notes.status_code == 200
+    assert clear_engagement_notes.json()["notes"] is None
+
+    clear_reference_code = await app_client.put(
+        f"/api/v1/entitlements/{PROJECT_ID}/legal/{instrument_id}",
+        headers={"X-Role": "admin"},
+        json={"reference_code": None},
+    )
+    assert clear_reference_code.status_code == 200
+    assert clear_reference_code.json()["reference_code"] is None
 
     export_response = await app_client.get(
         f"/api/v1/entitlements/{PROJECT_ID}/export?format=pdf"

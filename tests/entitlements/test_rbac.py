@@ -11,7 +11,7 @@ pytest.importorskip("sqlalchemy")
 from httpx import AsyncClient
 
 from backend.app.services.entitlements import EntitlementsService
-from backend.app.utils import metrics
+from app.utils import metrics
 from backend.scripts.seed_entitlements_sg import seed_entitlements
 
 

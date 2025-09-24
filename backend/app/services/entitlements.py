@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable, List, Optional, Sequence
+from typing import Any, Iterable, List, Optional, Sequence
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -240,44 +240,40 @@ class EntitlementsService:
         *,
         item_id: int,
         project_id: int,
-        approval_type_id: Optional[int] = None,
-        sequence_order: Optional[int] = None,
-        status=None,
-        target_submission_date=None,
-        target_decision_date=None,
-        actual_submission_date=None,
-        actual_decision_date=None,
-        notes: Optional[str] = None,
-        metadata: Optional[dict] = None,
+        **updates: Any,
     ) -> EntRoadmapItem:
         items = await self._load_full_roadmap(project_id)
         target = next((entry for entry in items if entry.id == item_id), None)
         if target is None:
             raise ValueError(f"Roadmap item {item_id} not found for project {project_id}")
 
-        if approval_type_id is not None:
-            target.approval_type_id = approval_type_id
-        if notes is not None:
-            target.notes = notes
-        if metadata is not None:
-            target.metadata = metadata
-        if target_submission_date is not None:
-            target.target_submission_date = target_submission_date
-        if target_decision_date is not None:
-            target.target_decision_date = target_decision_date
-        if actual_submission_date is not None:
-            target.actual_submission_date = actual_submission_date
-        if actual_decision_date is not None:
-            target.actual_decision_date = actual_decision_date
-        if status is not None and target.status != status:
-            target.status = status
-            target.status_changed_at = datetime.now(timezone.utc)
+        if "approval_type_id" in updates:
+            target.approval_type_id = updates["approval_type_id"]
+        if "notes" in updates:
+            target.notes = updates["notes"]
+        if "metadata" in updates:
+            target.metadata = updates["metadata"]
+        if "target_submission_date" in updates:
+            target.target_submission_date = updates["target_submission_date"]
+        if "target_decision_date" in updates:
+            target.target_decision_date = updates["target_decision_date"]
+        if "actual_submission_date" in updates:
+            target.actual_submission_date = updates["actual_submission_date"]
+        if "actual_decision_date" in updates:
+            target.actual_decision_date = updates["actual_decision_date"]
+        if "status" in updates:
+            new_status = updates["status"]
+            if new_status is not None and target.status != new_status:
+                target.status = new_status
+                target.status_changed_at = datetime.now(timezone.utc)
 
-        if sequence_order is not None and sequence_order > 0:
-            items = [entry for entry in items if entry.id != target.id]
-            insert_index = min(sequence_order - 1, len(items))
-            items.insert(insert_index, target)
-            self._reindex(items)
+        if "sequence_order" in updates:
+            sequence_order = updates["sequence_order"]
+            if sequence_order is not None and sequence_order > 0:
+                items = [entry for entry in items if entry.id != target.id]
+                insert_index = min(sequence_order - 1, len(items))
+                items.insert(insert_index, target)
+                self._reindex(items)
 
         await self.session.flush()
         return target
@@ -333,8 +329,7 @@ class EntitlementsService:
         if record is None:
             raise ValueError(f"Study {study_id} not found for project {project_id}")
         for key, value in updates.items():
-            if value is not None:
-                setattr(record, key, value)
+            setattr(record, key, value)
         await self.session.flush()
         return record
 
@@ -395,8 +390,7 @@ class EntitlementsService:
                 f"Engagement {engagement_id} not found for project {project_id}"
             )
         for key, value in updates.items():
-            if value is not None:
-                setattr(record, key, value)
+            setattr(record, key, value)
         await self.session.flush()
         return record
 
@@ -456,8 +450,7 @@ class EntitlementsService:
                 f"Legal instrument {instrument_id} not found for project {project_id}"
             )
         for key, value in updates.items():
-            if value is not None:
-                setattr(record, key, value)
+            setattr(record, key, value)
         await self.session.flush()
         return record
 
