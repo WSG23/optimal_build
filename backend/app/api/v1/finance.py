@@ -5,13 +5,10 @@ from __future__ import annotations
 import csv
 import io
 import json
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from time import perf_counter
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Iterator, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -30,7 +27,9 @@ from app.schemas.finance import (
 from app.services.finance import calculator
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
-
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
+from sqlalchemy import select
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)
@@ -89,7 +88,9 @@ def _convert_dscr_entry(entry: calculator.DscrEntry) -> DscrEntrySchema:
         if dscr_value.is_infinite():
             dscr_repr = str(dscr_value)
         else:
-            dscr_repr = str(dscr_value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
+            dscr_repr = str(
+                dscr_value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            )
     elif dscr_value is None:
         dscr_repr = None
     else:
@@ -115,9 +116,7 @@ def _flush_buffer(stream: io.StringIO) -> Optional[bytes]:
     return data.encode("utf-8")
 
 
-def _iter_results_csv(
-    scenario: FinScenario, *, currency: str
-) -> Iterator[bytes]:
+def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes]:
     """Yield CSV rows describing a scenario and its persisted results."""
 
     buffer = io.StringIO()
@@ -127,7 +126,9 @@ def _iter_results_csv(
     if chunk:
         yield chunk
 
-    ordered_results = sorted(scenario.results, key=lambda item: getattr(item, "id", 0) or 0)
+    ordered_results = sorted(
+        scenario.results, key=lambda item: getattr(item, "id", 0) or 0
+    )
     for result in ordered_results:
         value = result.value
         value_repr = "" if value is None else str(value)
@@ -164,7 +165,9 @@ def _iter_results_csv(
                     if chunk:
                         yield chunk
 
-    escalated = next((item for item in ordered_results if item.name == "escalated_cost"), None)
+    escalated = next(
+        (item for item in ordered_results if item.name == "escalated_cost"), None
+    )
     cost_meta = None
     if escalated is not None and isinstance(escalated.metadata, dict):
         cost_meta = escalated.metadata.get("cost_index")
@@ -336,7 +339,9 @@ async def run_finance_feasibility(
             irr_raw = calculator.irr(cash_inputs.cash_flows)
             irr_value = irr_raw.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         except ValueError:
-            irr_metadata["warning"] = "IRR could not be computed for the provided cash flows"
+            irr_metadata[
+                "warning"
+            ] = "IRR could not be computed for the provided cash flows"
 
         dscr_entries: List[DscrEntrySchema] = []
         dscr_metadata: dict[str, List[dict[str, object]]] = {}
@@ -352,7 +357,9 @@ async def run_finance_feasibility(
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
             dscr_entries = [_convert_dscr_entry(entry) for entry in timeline]
             dscr_metadata = {
-                "entries": [_json_safe(entry.model_dump(mode="json")) for entry in dscr_entries],
+                "entries": [
+                    _json_safe(entry.model_dump(mode="json")) for entry in dscr_entries
+                ],
             }
 
         results: List[FinResult] = [
@@ -478,7 +485,9 @@ async def export_finance_scenario(
             raise HTTPException(status_code=404, detail="Finance scenario not found")
 
         assumptions = scenario.assumptions or {}
-        currency = assumptions.get("currency") or getattr(scenario.fin_project, "currency", "USD")
+        currency = assumptions.get("currency") or getattr(
+            scenario.fin_project, "currency", "USD"
+        )
 
         iterator = _iter_results_csv(scenario, currency=str(currency))
         filename = f"finance_scenario_{scenario.id}.csv"
@@ -495,4 +504,3 @@ async def export_finance_scenario(
 
 
 __all__ = ["router"]
-

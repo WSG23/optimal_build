@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.core.metrics import RoiSnapshot, compute_project_roi
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/roi", tags=["roi"])
 

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20240801_000003"
@@ -56,7 +56,9 @@ def upgrade() -> None:
         sa.Column("discount_rate", sa.Numeric(5, 4), nullable=True),
         sa.Column("total_development_cost", sa.Numeric(16, 2), nullable=True),
         sa.Column("total_gross_profit", sa.Numeric(16, 2), nullable=True),
-        sa.Column("metadata", JSONB_TYPE, nullable=False, server_default=sa.text("'{}'")),
+        sa.Column(
+            "metadata", JSONB_TYPE, nullable=False, server_default=sa.text("'{}'")
+        ),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -96,7 +98,9 @@ def upgrade() -> None:
         ),
         sa.Column("name", sa.String(length=120), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("assumptions", JSONB_TYPE, nullable=False, server_default=sa.text("'{}'")),
+        sa.Column(
+            "assumptions", JSONB_TYPE, nullable=False, server_default=sa.text("'{}'")
+        ),
         sa.Column(
             "is_primary",
             sa.Boolean(),
@@ -117,7 +121,9 @@ def upgrade() -> None:
         ),
     )
     op.create_index("ix_fin_scenarios_project_id", "fin_scenarios", ["project_id"])
-    op.create_index("ix_fin_scenarios_fin_project_id", "fin_scenarios", ["fin_project_id"])
+    op.create_index(
+        "ix_fin_scenarios_fin_project_id", "fin_scenarios", ["fin_project_id"]
+    )
     op.create_index("ix_fin_scenarios_is_primary", "fin_scenarios", ["is_primary"])
 
 

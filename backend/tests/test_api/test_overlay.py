@@ -8,12 +8,11 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from httpx import AsyncClient
-from sqlalchemy import select
-
 from app.models.audit import AuditLog
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
 from backend.jobs import job_queue
+from httpx import AsyncClient
+from sqlalchemy import select
 
 PROJECT_ID = 4120
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
@@ -37,7 +36,9 @@ async def test_overlay_run_and_decisions(
     assert upload_response.status_code == 201
     import_payload = upload_response.json()
 
-    parse_response = await app_client.post(f"/api/v1/parse/{import_payload['import_id']}")
+    parse_response = await app_client.post(
+        f"/api/v1/parse/{import_payload['import_id']}"
+    )
     assert parse_response.status_code == 200
     parse_payload = parse_response.json()
     assert parse_payload["status"] == "completed"
@@ -45,30 +46,44 @@ async def test_overlay_run_and_decisions(
 
     async with async_session_factory() as session:
         sources = (
-            await session.execute(
-                select(OverlaySourceGeometry).where(OverlaySourceGeometry.project_id == PROJECT_ID)
+            (
+                await session.execute(
+                    select(OverlaySourceGeometry).where(
+                        OverlaySourceGeometry.project_id == PROJECT_ID
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(sources) == 1
         source = sources[0]
         assert source.source_geometry_key.endswith(import_payload["import_id"])
         assert source.metadata["import_id"] == import_payload["import_id"]
         assert source.metadata["floors"] == parse_payload["result"]["floors"]
         assert source.metadata["units"] == parse_payload["result"]["units"]
-        assert source.metadata["parser"] == parse_payload["result"]["metadata"]["source"]
+        assert (
+            source.metadata["parser"] == parse_payload["result"]["metadata"]["source"]
+        )
         assert source.checksum
 
         events = (
-            await session.execute(
-                select(AuditLog)
-                .where(AuditLog.project_id == PROJECT_ID)
-                .order_by(AuditLog.version)
+            (
+                await session.execute(
+                    select(AuditLog)
+                    .where(AuditLog.project_id == PROJECT_ID)
+                    .order_by(AuditLog.version)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert events
         event_types = [event.event_type for event in events]
         assert "geometry_ingested" in event_types
-        geometry_event = next(event for event in events if event.event_type == "geometry_ingested")
+        geometry_event = next(
+            event for event in events if event.event_type == "geometry_ingested"
+        )
         assert geometry_event.context["overlay_source_id"] == source.id
         source_id = source.id
 
@@ -107,7 +122,9 @@ async def test_overlay_run_and_decisions(
     assert all(isinstance(item["props"], dict) for item in payload["items"])
     assert all(isinstance(item["rule_refs"], list) for item in payload["items"])
 
-    heritage = next(item for item in payload["items"] if item["code"] == "heritage_conservation")
+    heritage = next(
+        item for item in payload["items"] if item["code"] == "heritage_conservation"
+    )
     assert heritage["type"] == "review"
     assert heritage["target_ids"]
     assert "heritage.zone.compliance" in heritage["rule_refs"]
@@ -125,7 +142,9 @@ async def test_overlay_run_and_decisions(
     assert approved_item["status"] == "approved"
     assert approved_item["decision"]["decision"] == "approved"
 
-    flood = next(item for item in payload["items"] if item["code"] == "flood_mitigation")
+    flood = next(
+        item for item in payload["items"] if item["code"] == "flood_mitigation"
+    )
     reject_response = await app_client.post(
         f"/api/v1/overlay/{PROJECT_ID}/decision",
         json={
@@ -177,16 +196,28 @@ async def test_overlay_run_and_decisions(
         source = await session.get(OverlaySourceGeometry, source_id)
         assert source is not None
         suggestions = (
-            await session.execute(
-                select(OverlaySuggestion).where(OverlaySuggestion.project_id == PROJECT_ID)
+            (
+                await session.execute(
+                    select(OverlaySuggestion).where(
+                        OverlaySuggestion.project_id == PROJECT_ID
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for suggestion in suggestions:
             assert suggestion.geometry_checksum == source.checksum
         locks = (
-            await session.execute(
-                select(OverlayRunLock).where(OverlayRunLock.source_geometry_id == source_id)
+            (
+                await session.execute(
+                    select(OverlayRunLock).where(
+                        OverlayRunLock.source_geometry_id == source_id
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert locks
         assert all(lock.is_active is False for lock in locks)

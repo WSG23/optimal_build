@@ -33,7 +33,10 @@ def _structlog_distribution_present() -> bool:
     return True
 
 
-if getattr(structlog, "_IS_VENDORED_STRUCTLOG", False) and not _structlog_distribution_present():
+if (
+    getattr(structlog, "_IS_VENDORED_STRUCTLOG", False)
+    and not _structlog_distribution_present()
+):
     logging.getLogger(__name__).warning(
         "structlog distribution not installed; using vendored fallback stub."
     )

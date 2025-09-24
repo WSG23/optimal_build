@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Mapping, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-
 from app.core.config import settings
-
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 _REQUEST_ALIAS_MAP: Dict[str, str] = {
     "typFloorToFloorM": "typ_floor_to_floor_m",
@@ -38,12 +36,8 @@ class BuildableDefaults(BaseModel):
     plot_ratio: float = Field(default=3.5, gt=0)
     site_area_m2: float = Field(default=1000.0, gt=0)
     site_coverage: float = Field(default=0.45, gt=0)
-    floor_height_m: float = Field(
-        default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M, gt=0
-    )
-    efficiency_factor: float = Field(
-        default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0
-    )
+    floor_height_m: float = Field(default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M, gt=0)
+    efficiency_factor: float = Field(default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0)
 
     @field_validator("site_coverage")
     @classmethod
@@ -77,9 +71,7 @@ class BuildableRequest(BaseModel):
     )
 
     @classmethod
-    def model_validate(
-        cls, obj: Any, *args: Any, **kwargs: Any
-    ) -> "BuildableRequest":
+    def model_validate(cls, obj: Any, *args: Any, **kwargs: Any) -> "BuildableRequest":
         """Normalise known camelCase keys before delegating to Pydantic."""
 
         if isinstance(obj, Mapping):
@@ -97,7 +89,9 @@ class BuildableRequest(BaseModel):
 
     @field_validator("geometry")
     @classmethod
-    def _ensure_geojson_dict(cls, value: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    def _ensure_geojson_dict(
+        cls, value: Optional[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
         """Only accept dictionaries for GeoJSON payloads."""
 
         if value is None:

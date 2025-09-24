@@ -7,12 +7,12 @@ import asyncio
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Sequence
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
+from sqlalchemy import select
 
 
 @dataclass
@@ -319,7 +319,9 @@ async def _upsert_geocode_entries(
             missing_parcels.append(parcel_ref)
         entry["parcel_id"] = parcel_id
 
-        stmt = select(RefGeocodeCache).where(RefGeocodeCache.address == entry["address"])
+        stmt = select(RefGeocodeCache).where(
+            RefGeocodeCache.address == entry["address"]
+        )
         existing = (await session.execute(stmt)).scalar_one_or_none()
         if existing:
             for key, value in entry.items():
@@ -332,7 +334,8 @@ async def _upsert_geocode_entries(
 
     if missing_parcels:
         raise RuntimeError(
-            "Missing parcel references for geocode entries: " + ", ".join(sorted(set(missing_parcels)))
+            "Missing parcel references for geocode entries: "
+            + ", ".join(sorted(set(missing_parcels)))
         )
 
     await session.flush()

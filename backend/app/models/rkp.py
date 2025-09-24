@@ -5,6 +5,12 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Dict, Iterable, Optional
 
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
+from app.core.config import settings
+from app.models.base import BaseModel
+from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -18,13 +24,6 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-
-from app.core.config import settings
-from app.models.base import BaseModel
-from app.models.types import FlexibleJSONB
-
 
 try:  # pragma: no cover - geometry support is optional in test environments
     if settings.BUILDABLE_USE_POSTGIS:
@@ -45,8 +44,12 @@ class RefSource(BaseModel):
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True)  # 'SG'
-    authority = Column(String(50), nullable=False, index=True)  # 'SCDF', 'PUB', 'URA', 'BCA'
-    topic = Column(String(50), nullable=False, index=True)  # 'fire', 'plumbing', 'zoning'
+    authority = Column(
+        String(50), nullable=False, index=True
+    )  # 'SCDF', 'PUB', 'URA', 'BCA'
+    topic = Column(
+        String(50), nullable=False, index=True
+    )  # 'fire', 'plumbing', 'zoning'
     doc_title = Column(Text, nullable=False)
     landing_url = Column(Text, nullable=False)
     fetch_kind = Column(
@@ -59,7 +62,9 @@ class RefSource(BaseModel):
     is_active = Column(Boolean, default=True, index=True)
 
     # Relationships
-    documents = relationship("RefDocument", back_populates="source", cascade="all, delete-orphan")
+    documents = relationship(
+        "RefDocument", back_populates="source", cascade="all, delete-orphan"
+    )
     rules = relationship("RefRule", back_populates="source")
 
     __table_args__ = (
@@ -73,7 +78,9 @@ class RefDocument(BaseModel):
     __tablename__ = "ref_documents"
 
     id = Column(Integer, primary_key=True, index=True)
-    source_id = Column(Integer, ForeignKey("ref_sources.id", ondelete="CASCADE"), nullable=False)
+    source_id = Column(
+        Integer, ForeignKey("ref_sources.id", ondelete="CASCADE"), nullable=False
+    )
     version_label = Column(String(100))  # '2024-v1', 'Amendment-3'
     retrieved_at = Column(DateTime(timezone=True), server_default=func.now())
     storage_path = Column(Text, nullable=False)  # S3 path or local path
@@ -84,7 +91,9 @@ class RefDocument(BaseModel):
 
     # Relationships
     source = relationship("RefSource", back_populates="documents")
-    clauses = relationship("RefClause", back_populates="document", cascade="all, delete-orphan")
+    clauses = relationship(
+        "RefClause", back_populates="document", cascade="all, delete-orphan"
+    )
     rules = relationship("RefRule", back_populates="document")
 
 
@@ -94,7 +103,9 @@ class RefClause(BaseModel):
     __tablename__ = "ref_clauses"
 
     id = Column(Integer, primary_key=True, index=True)
-    document_id = Column(Integer, ForeignKey("ref_documents.id", ondelete="CASCADE"), nullable=False)
+    document_id = Column(
+        Integer, ForeignKey("ref_documents.id", ondelete="CASCADE"), nullable=False
+    )
     clause_ref = Column(String(50), index=True)  # '4.2.1', 'Section A.3'
     section_heading = Column(Text)
     text_span = Column(Text, nullable=False)
@@ -121,12 +132,18 @@ class RefRule(BaseModel):
 
     # Core rule identification
     jurisdiction = Column(String(10), nullable=False, index=True)  # 'SG'
-    authority = Column(String(50), nullable=False, index=True)  # 'SCDF', 'PUB', 'URA', 'BCA'
-    topic = Column(String(50), nullable=False, index=True)  # 'fire', 'plumbing', 'zoning'
+    authority = Column(
+        String(50), nullable=False, index=True
+    )  # 'SCDF', 'PUB', 'URA', 'BCA'
+    topic = Column(
+        String(50), nullable=False, index=True
+    )  # 'fire', 'plumbing', 'zoning'
     clause_ref = Column(String(50), index=True)  # '4.2.1'
 
     # Rule specification
-    parameter_key = Column(String(200), nullable=False, index=True)  # 'egress.corridor.min_width_mm'
+    parameter_key = Column(
+        String(200), nullable=False, index=True
+    )  # 'egress.corridor.min_width_mm'
     operator = Column(String(10), nullable=False)  # '>=', '<=', '='
     value = Column(Text, nullable=False)  # '1200'
     unit = Column(String(20))  # 'mm', 'm', '%'
@@ -199,7 +216,9 @@ class RefZoningLayer(BaseModel):
     zone_code = Column(String(20), index=True)  # 'R2', 'C1', 'B1'
 
     # Zoning attributes
-    attributes = Column(JSONType)  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
+    attributes = Column(
+        JSONType
+    )  # {"far": 3.5, "height_m": 36, "overlays": ["coastal"]}
 
     # Simplified geometry as JSON for now
     bounds_json = Column(JSONType)  # GeoJSON MultiPolygon
@@ -236,9 +255,7 @@ class RefGeocodeCache(BaseModel):
     # Relationships
     parcel = relationship("RefParcel")
 
-    __table_args__ = (
-        Index("idx_geocode_cache_coords", "lat", "lon"),
-    )
+    __table_args__ = (Index("idx_geocode_cache_coords", "lat", "lon"),)
 
 
 # Phase 2 Models (Standards, Catalog, Ergonomics, Costs)
@@ -252,9 +269,13 @@ class RefMaterialStandard(BaseModel):
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
     standard_code = Column(String(50), nullable=False, index=True)  # 'SS EN 206'
-    material_type = Column(String(100), nullable=False, index=True)  # 'concrete', 'steel'
+    material_type = Column(
+        String(100), nullable=False, index=True
+    )  # 'concrete', 'steel'
     standard_body = Column(String(100), nullable=False, index=True)
-    property_key = Column(String(200), nullable=False, index=True)  # 'compressive_strength_mpa'
+    property_key = Column(
+        String(200), nullable=False, index=True
+    )  # 'compressive_strength_mpa'
     value = Column(Text, nullable=False)
     unit = Column(String(20))
     context = Column(JSONType)
@@ -278,7 +299,9 @@ class RefProduct(BaseModel):
 
     id = Column(Integer, primary_key=True, index=True)
     vendor = Column(String(100), nullable=False, index=True)
-    category = Column(String(50), nullable=False, index=True)  # 'toilet', 'basin', 'door'
+    category = Column(
+        String(50), nullable=False, index=True
+    )  # 'toilet', 'basin', 'door'
     product_code = Column(String(100), nullable=False)
     name = Column(String(200), nullable=False)
     brand = Column(String(100), index=True)
@@ -286,7 +309,9 @@ class RefProduct(BaseModel):
     sku = Column(String(100), index=True)
 
     # Product specifications
-    dimensions = Column(JSONType)  # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
+    dimensions = Column(
+        JSONType
+    )  # {"width_mm": 600, "depth_mm": 400, "height_mm": 850}
     specifications = Column(JSONType)  # {"material": "ceramic", "flush_volume_l": 4.8}
     bim_uri = Column(Text)
     spec_uri = Column(Text)
@@ -307,8 +332,12 @@ class RefErgonomics(BaseModel):
     __tablename__ = "ref_ergonomics"
 
     id = Column(Integer, primary_key=True, index=True)
-    metric_key = Column(String(200), nullable=False, index=True)  # 'wheelchair.turning_radius_mm'
-    population = Column(String(50), nullable=False, index=True)  # 'adult', 'elderly', 'wheelchair'
+    metric_key = Column(
+        String(200), nullable=False, index=True
+    )  # 'wheelchair.turning_radius_mm'
+    population = Column(
+        String(50), nullable=False, index=True
+    )  # 'adult', 'elderly', 'wheelchair'
     percentile = Column(String(10))  # '5th', '50th', '95th'
     value = Column(Numeric(8, 2), nullable=False)
     unit = Column(String(20), nullable=False)
@@ -328,8 +357,12 @@ class RefCostIndex(BaseModel):
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
-    series_name = Column(String(100), nullable=False, index=True)  # 'concrete', 'steel', 'labor'
-    category = Column(String(50), nullable=False, index=True)  # 'material', 'labor', 'equipment'
+    series_name = Column(
+        String(100), nullable=False, index=True
+    )  # 'concrete', 'steel', 'labor'
+    category = Column(
+        String(50), nullable=False, index=True
+    )  # 'material', 'labor', 'equipment'
     subcategory = Column(String(100))  # 'ready_mix', 'skilled'
     period = Column(String(20), nullable=False, index=True)  # '2024-Q1'
     value = Column(Numeric(12, 4), nullable=False)
@@ -363,7 +396,9 @@ class RefCostIndex(BaseModel):
         ]
         if not candidates:
             return None
-        return max(candidates, key=lambda item: (str(item.period), getattr(item, "id", 0)))
+        return max(
+            candidates, key=lambda item: (str(item.period), getattr(item, "id", 0))
+        )
 
 
 class RefCostCatalog(BaseModel):
@@ -406,11 +441,11 @@ class RefIngestionRun(BaseModel):
     notes = Column(Text)
     metrics = Column(JSONType)
 
-    alerts = relationship("RefAlert", back_populates="ingestion_run", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        Index("idx_ingestion_runs_flow_status", "flow_name", "status"),
+    alerts = relationship(
+        "RefAlert", back_populates="ingestion_run", cascade="all, delete-orphan"
     )
+
+    __table_args__ = (Index("idx_ingestion_runs_flow_status", "flow_name", "status"),)
 
 
 class RefAlert(BaseModel):
@@ -424,13 +459,15 @@ class RefAlert(BaseModel):
     message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     context = Column(JSONType)
-    ingestion_run_id = Column(Integer, ForeignKey("ref_ingestion_runs.id", ondelete="SET NULL"))
+    ingestion_run_id = Column(
+        Integer, ForeignKey("ref_ingestion_runs.id", ondelete="SET NULL")
+    )
     acknowledged = Column(Boolean, default=False, index=True)
     acknowledged_at = Column(DateTime(timezone=True))
     acknowledged_by = Column(String(100))
 
-    ingestion_run = relationship("RefIngestionRun", back_populates="alerts", uselist=False)
-
-    __table_args__ = (
-        Index("idx_alerts_type_level", "alert_type", "level"),
+    ingestion_run = relationship(
+        "RefIngestionRun", back_populates="alerts", uselist=False
     )
+
+    __table_args__ = (Index("idx_alerts_type_level", "alert_type", "level"),)

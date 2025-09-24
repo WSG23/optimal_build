@@ -11,13 +11,16 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.models.rkp import RefDocument, RefSource
-from app.services.reference_sources import FetchedDocument, HTTPResponse, ReferenceSourceFetcher
+from app.services.reference_sources import (
+    FetchedDocument,
+    HTTPResponse,
+    ReferenceSourceFetcher,
+)
 from app.services.reference_storage import ReferenceStorage
 from flows.watch_fetch import watch_reference_sources
 from scripts.seed_screening import seed_screening_sample_data
+from sqlalchemy import select
 
 
 def test_watch_fetch_flow_exposed_as_callable() -> None:
@@ -57,7 +60,9 @@ class FakeHTTPClient:
 
 
 @pytest.mark.asyncio
-async def test_watch_fetch_records_new_document(async_session_factory, tmp_path) -> None:
+async def test_watch_fetch_records_new_document(
+    async_session_factory, tmp_path
+) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
 
     async with async_session_factory() as session:
@@ -88,7 +93,9 @@ async def test_watch_fetch_records_new_document(async_session_factory, tmp_path)
     fake_client = FakeHTTPClient(head_response=head_response, get_response=get_response)
     fetcher = ReferenceSourceFetcher(http_client=fake_client)
 
-    results = await watch_reference_sources(async_session_factory, fetcher=fetcher, storage=storage)
+    results = await watch_reference_sources(
+        async_session_factory, fetcher=fetcher, storage=storage
+    )
     assert len(results) == 1
     document_id = results[0]["document_id"]
 
@@ -111,7 +118,9 @@ async def test_watch_fetch_records_new_document(async_session_factory, tmp_path)
 
 
 @pytest.mark.asyncio
-async def test_watch_fetch_skips_when_not_modified(async_session_factory, tmp_path) -> None:
+async def test_watch_fetch_skips_when_not_modified(
+    async_session_factory, tmp_path
+) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
     existing_payload = b"Existing PDF payload"
 
@@ -127,7 +136,9 @@ async def test_watch_fetch_skips_when_not_modified(async_session_factory, tmp_pa
         )
         session.add(source)
         await session.flush()
-        location = await storage.write_document(source_id=source.id, payload=existing_payload, suffix=".pdf")
+        location = await storage.write_document(
+            source_id=source.id, payload=existing_payload, suffix=".pdf"
+        )
         document = RefDocument(
             source_id=source.id,
             version_label="v1",
@@ -146,14 +157,14 @@ async def test_watch_fetch_skips_when_not_modified(async_session_factory, tmp_pa
     fake_client = FakeHTTPClient(head_response=head_response, get_response=get_response)
     fetcher = ReferenceSourceFetcher(http_client=fake_client)
 
-    results = await watch_reference_sources(async_session_factory, fetcher=fetcher, storage=storage)
+    results = await watch_reference_sources(
+        async_session_factory, fetcher=fetcher, storage=storage
+    )
     assert results == []
     assert len(fake_client.get_calls) == 0
     assert fake_client.head_calls
     matching_headers = [
-        headers
-        for url, headers in fake_client.head_calls
-        if "fire-latest.pdf" in url
+        headers for url, headers in fake_client.head_calls if "fire-latest.pdf" in url
     ]
     assert matching_headers, "expected HEAD call for the updated source"
     assert matching_headers[0].get("If-None-Match") == "etag-existing"
@@ -162,8 +173,16 @@ async def test_watch_fetch_skips_when_not_modified(async_session_factory, tmp_pa
         updated = await session.get(RefDocument, document_id)
         assert updated is not None
         documents = (
-            await session.execute(select(RefDocument).where(RefDocument.source_id == updated.source_id))
-        ).scalars().all()
+            (
+                await session.execute(
+                    select(RefDocument).where(
+                        RefDocument.source_id == updated.source_id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
         assert len(documents) == 1
 
 
@@ -172,7 +191,9 @@ class _StubFetcher:
         self.payloads = dict(payloads)
         self.fetch_calls: list[int] = []
 
-    async def fetch(self, source: RefSource, existing: RefDocument | None = None) -> FetchedDocument | None:
+    async def fetch(
+        self, source: RefSource, existing: RefDocument | None = None
+    ) -> FetchedDocument | None:
         self.fetch_calls.append(source.id)
         payload = self.payloads.get(source.authority)
         if not payload:
@@ -222,7 +243,9 @@ class _DuplicatePayloadFetcher:
 
 
 @pytest.mark.asyncio
-async def test_watch_fetch_deduplicates_identical_payloads(async_session_factory, tmp_path) -> None:
+async def test_watch_fetch_deduplicates_identical_payloads(
+    async_session_factory, tmp_path
+) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
     payload = b"%PDF-1.4\nIdentical payload"
 
@@ -283,7 +306,9 @@ async def test_watch_fetch_deduplicates_identical_payloads(async_session_factory
 
 
 @pytest.mark.asyncio
-async def test_watch_fetch_persists_seeded_html_and_pdf_sources(async_session_factory, tmp_path) -> None:
+async def test_watch_fetch_persists_seeded_html_and_pdf_sources(
+    async_session_factory, tmp_path
+) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
 
     async with async_session_factory() as session:
@@ -295,21 +320,31 @@ async def test_watch_fetch_persists_seeded_html_and_pdf_sources(async_session_fa
     }
     fetcher = _StubFetcher(payloads)
 
-    results = await watch_reference_sources(async_session_factory, fetcher=fetcher, storage=storage)
+    results = await watch_reference_sources(
+        async_session_factory, fetcher=fetcher, storage=storage
+    )
     assert len(results) >= len(payloads)
     results_by_source = {item["source_id"]: item for item in results}
 
     async with async_session_factory() as session:
         ura_source = (
-            await session.execute(
-                select(RefSource).where(RefSource.authority == "URA")
+            (
+                await session.execute(
+                    select(RefSource).where(RefSource.authority == "URA")
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         bca_source = (
-            await session.execute(
-                select(RefSource).where(RefSource.authority == "BCA")
+            (
+                await session.execute(
+                    select(RefSource).where(RefSource.authority == "BCA")
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
 
         assert ura_source is not None
         assert bca_source is not None
@@ -317,8 +352,12 @@ async def test_watch_fetch_persists_seeded_html_and_pdf_sources(async_session_fa
         assert ura_source.id in results_by_source
         assert bca_source.id in results_by_source
 
-        ura_document = await session.get(RefDocument, results_by_source[ura_source.id]["document_id"])
-        bca_document = await session.get(RefDocument, results_by_source[bca_source.id]["document_id"])
+        ura_document = await session.get(
+            RefDocument, results_by_source[ura_source.id]["document_id"]
+        )
+        bca_document = await session.get(
+            RefDocument, results_by_source[bca_source.id]["document_id"]
+        )
 
         assert ura_document is not None
         assert bca_document is not None

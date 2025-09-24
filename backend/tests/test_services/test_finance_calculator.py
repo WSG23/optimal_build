@@ -24,7 +24,9 @@ def test_irr_newton_with_fallback() -> None:
 def test_dscr_timeline_handles_zero_debt() -> None:
     incomes = [Decimal("1200.00"), Decimal("1000.00")]
     debts = [Decimal("1000.00"), Decimal("0")]
-    timeline = calculator.dscr_timeline(incomes, debts, period_labels=["Y1", "Y2"], currency="SGD")
+    timeline = calculator.dscr_timeline(
+        incomes, debts, period_labels=["Y1", "Y2"], currency="SGD"
+    )
     assert timeline[0].noi == Decimal("1200.00")
     assert timeline[0].dscr == Decimal("1.2000")
     assert timeline[0].currency == "SGD"

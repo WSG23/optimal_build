@@ -5,10 +5,6 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict
 
-from fastapi import Depends, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
-from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -18,6 +14,10 @@ from app.core.database import engine, get_session
 from app.models.rkp import RefRule
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from sqlalchemy import func, select, text
 
 configure_logging()
 logger = get_logger(__name__)
@@ -74,7 +74,9 @@ async def health_check(session: AsyncSession = Depends(get_session)) -> Dict[str
 
     metrics.REQUEST_COUNTER.labels(endpoint="health").inc()
     try:
-        rules_count_result = await session.execute(select(func.count()).select_from(RefRule))
+        rules_count_result = await session.execute(
+            select(func.count()).select_from(RefRule)
+        )
         rules_count = rules_count_result.scalar_one()
         payload = {
             "status": "healthy",
@@ -119,7 +121,9 @@ async def rules_count(
 
     metrics.REQUEST_COUNTER.labels(endpoint="rules_count").inc()
     try:
-        total_rules_result = await session.execute(select(func.count()).select_from(RefRule))
+        total_rules_result = await session.execute(
+            select(func.count()).select_from(RefRule)
+        )
         total_rules = int(total_rules_result.scalar_one() or 0)
 
         by_authority_result = await session.execute(

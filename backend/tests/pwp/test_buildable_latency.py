@@ -10,12 +10,10 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
-from httpx import AsyncClient
-
 from app.core.config import settings
 from app.utils import metrics
+from httpx import AsyncClient
 from scripts.seed_screening import seed_screening_sample_data
-
 
 DEFAULT_REQUEST_DEFAULTS = {
     "plot_ratio": 3.5,
@@ -60,9 +58,7 @@ async def test_buildable_latency_p90(buildable_client):
         response = await client.post("/api/v1/screen/buildable", json=payload)
         assert response.status_code == 200
 
-    snapshot = metrics.histogram_percentile(
-        metrics.PWP_BUILDABLE_DURATION_MS, 0.90
-    )
+    snapshot = metrics.histogram_percentile(metrics.PWP_BUILDABLE_DURATION_MS, 0.90)
 
     assert snapshot.buckets, "Expected histogram buckets to be recorded"
     assert snapshot.buckets[-1][1] == pytest.approx(5.0)

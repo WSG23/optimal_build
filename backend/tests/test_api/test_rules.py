@@ -10,14 +10,13 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
-from httpx import AsyncClient
-from sqlalchemy import select
-
 from app.core.database import get_session
 from app.main import app
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from app.utils import metrics
+from httpx import AsyncClient
 from scripts.seed_screening import seed_screening_sample_data
+from sqlalchemy import select
 
 
 async def _seed_reference_data(async_session_factory) -> None:
@@ -177,7 +176,10 @@ async def test_rules_endpoint_filters_by_query_params(
     assert response.status_code == 200
     payload = response.json()
     assert payload["count"] >= 1
-    assert all(item["parameter_key"] == "parking.min_car_spaces_per_unit" for item in payload["items"])
+    assert all(
+        item["parameter_key"] == "parking.min_car_spaces_per_unit"
+        for item in payload["items"]
+    )
     assert all(item["authority"] == "URA" for item in payload["items"])
     assert all(item["topic"] == "zoning" for item in payload["items"])
     assert all(item["jurisdiction"] == "SG" for item in payload["items"])
@@ -221,7 +223,8 @@ async def test_rules_endpoint_supports_review_status_filter(
     statuses = {item["review_status"] for item in payload["items"]}
     assert statuses == {"needs_review"}
     assert any(
-        item["parameter_key"] == "parking.max_ramp_slope_ratio" for item in payload["items"]
+        item["parameter_key"] == "parking.max_ramp_slope_ratio"
+        for item in payload["items"]
     )
 
     multi_status_response = await rules_app_client.get(
@@ -353,8 +356,7 @@ async def test_rule_review_publish_action(
         rule = await session.get(RefRule, rule_id)
         assert rule is not None
         assert (
-            rule.notes
-            == "Provide 1.5 parking spaces per unit; maximum ramp slope 1:12"
+            rule.notes == "Provide 1.5 parking spaces per unit; maximum ramp slope 1:12"
         )
         assert rule.review_notes == "Ready"
 

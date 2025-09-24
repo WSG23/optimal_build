@@ -6,12 +6,12 @@ import datetime as dt
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
-from sqlalchemy import Column, DateTime, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
+import pytest_asyncio
 from backend.flows import sync_products as sync_products_flow
+from sqlalchemy import Column, DateTime, Integer, String, select
 
 
 class Base(DeclarativeBase):
@@ -91,8 +91,10 @@ async def test_sync_products_marks_missing_skus(
 
     async with product_session_factory() as session:
         rows = (
-            await session.execute(select(Product).order_by(Product.sku))
-        ).scalars().all()
+            (await session.execute(select(Product).order_by(Product.sku)))
+            .scalars()
+            .all()
+        )
 
     by_sku = {row.sku: row for row in rows}
 
@@ -104,4 +106,3 @@ async def test_sync_products_marks_missing_skus(
     assert by_sku["SKU-5"].deprecated_at is None  # non-csv source untouched
     assert by_sku["SKU-4"].vendor == "ikea"
     assert by_sku["SKU-4"].data_source == "csv"
-

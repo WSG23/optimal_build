@@ -94,25 +94,33 @@ class AsyncClient:
     async def get(self, url: str, **kwargs: Any):
         kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(None, partial(self._test_client.get, url, **kwargs))
+        response = await loop.run_in_executor(
+            None, partial(self._test_client.get, url, **kwargs)
+        )
         return _AsyncResponse(response)
 
     async def post(self, url: str, **kwargs: Any):
         kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(None, partial(self._test_client.post, url, **kwargs))
+        response = await loop.run_in_executor(
+            None, partial(self._test_client.post, url, **kwargs)
+        )
         return _AsyncResponse(response)
 
     async def put(self, url: str, **kwargs: Any):
         kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(None, partial(self._test_client.put, url, **kwargs))
+        response = await loop.run_in_executor(
+            None, partial(self._test_client.put, url, **kwargs)
+        )
         return _AsyncResponse(response)
 
     async def delete(self, url: str, **kwargs: Any):
         kwargs = self._apply_headers(kwargs)
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(None, partial(self._test_client.delete, url, **kwargs))
+        response = await loop.run_in_executor(
+            None, partial(self._test_client.delete, url, **kwargs)
+        )
         return _AsyncResponse(response)
 
 

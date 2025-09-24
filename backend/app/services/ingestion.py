@@ -57,7 +57,9 @@ async def complete_ingestion_run(
     run_record.metrics = extra_metrics or {}
     await session.flush()
 
-    metrics.INGESTED_RECORD_COUNTER.labels(flow=run_record.flow_name).inc(records_ingested)
+    metrics.INGESTED_RECORD_COUNTER.labels(flow=run_record.flow_name).inc(
+        records_ingested
+    )
     log_event(
         logger,
         "ingestion_run_completed",

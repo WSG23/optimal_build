@@ -11,11 +11,10 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from httpx import AsyncClient
-
 from app.models.imports import ImportRecord
 from app.services.storage import get_storage_service
 from backend.jobs import job_queue
+from httpx import AsyncClient
 
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 GLOBAL_SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
@@ -98,7 +97,9 @@ async def test_upload_dxf_emits_detection(app_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_upload_ifc_surfaces_storeys(app_client: AsyncClient) -> None:
-    pytest.importorskip("ifcopenshell", reason="ifcopenshell is required for IFC detection")
+    pytest.importorskip(
+        "ifcopenshell", reason="ifcopenshell is required for IFC detection"
+    )
 
     sample_path = GLOBAL_SAMPLES_DIR / "ifc" / "office_small.ifc"
     with sample_path.open("rb") as handle:
@@ -139,7 +140,9 @@ async def test_parse_endpoints_return_summary(
         )
     import_payload = upload_response.json()
 
-    parse_response = await app_client.post(f"/api/v1/parse/{import_payload['import_id']}")
+    parse_response = await app_client.post(
+        f"/api/v1/parse/{import_payload['import_id']}"
+    )
     assert parse_response.status_code == 200
     parse_payload = parse_response.json()
     assert parse_payload["status"] == "completed"
@@ -164,7 +167,9 @@ async def test_upload_pdf_vectorizes_when_enabled(
 ) -> None:
     pytest.importorskip("fitz")
 
-    pdf_path = Path(__file__).resolve().parents[3] / "samples" / "pdf" / "floor_simple.pdf"
+    pdf_path = (
+        Path(__file__).resolve().parents[3] / "samples" / "pdf" / "floor_simple.pdf"
+    )
     with pdf_path.open("rb") as handle:
         response = await app_client.post(
             "/api/v1/import",

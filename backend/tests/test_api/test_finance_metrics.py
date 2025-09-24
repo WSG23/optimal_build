@@ -10,14 +10,15 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from httpx import AsyncClient
-
 from app.models.rkp import RefCostIndex
 from app.utils import metrics
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_finance_metrics_surface_in_health(app_client: AsyncClient, session) -> None:
+async def test_finance_metrics_surface_in_health(
+    app_client: AsyncClient, session
+) -> None:
     session.add_all(
         [
             RefCostIndex(

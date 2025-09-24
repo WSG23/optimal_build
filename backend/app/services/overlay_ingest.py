@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, Mapping
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit.ledger import append_event
@@ -13,6 +12,7 @@ from app.core.geometry import GeometrySerializer
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry
 from app.utils.logging import get_logger
+from sqlalchemy import select
 
 logger = get_logger(__name__)
 

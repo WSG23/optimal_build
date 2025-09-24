@@ -5,10 +5,9 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -21,6 +20,7 @@ from app.schemas.buildable import (
     BuildableRuleProvenance,
     ZoneSource,
 )
+from sqlalchemy import select
 
 
 @dataclass
@@ -147,14 +147,18 @@ async def _load_rules_for_zone(
 
 
 def _determine_seed_tag(rule: RefRule) -> Optional[str]:
-    provenance = rule.source_provenance if isinstance(rule.source_provenance, dict) else None
+    provenance = (
+        rule.source_provenance if isinstance(rule.source_provenance, dict) else None
+    )
     if provenance and isinstance(provenance.get("seed_tag"), str):
         return provenance["seed_tag"]
     return rule.topic
 
 
 def _determine_pages(rule: RefRule) -> Optional[List[int]]:
-    provenance = rule.source_provenance if isinstance(rule.source_provenance, dict) else None
+    provenance = (
+        rule.source_provenance if isinstance(rule.source_provenance, dict) else None
+    )
     if not provenance:
         return None
     pages = provenance.get("pages")
@@ -216,23 +220,29 @@ async def load_layers_for_zone(
 
 
 def _extract_plot_ratio(attributes: Dict[str, Any]) -> Optional[float]:
-    return _first_positive(attributes, [
-        "plot_ratio",
-        "gross_plot_ratio",
-        "max_plot_ratio",
-        "floor_area_ratio",
-        "far",
-    ])
+    return _first_positive(
+        attributes,
+        [
+            "plot_ratio",
+            "gross_plot_ratio",
+            "max_plot_ratio",
+            "floor_area_ratio",
+            "far",
+        ],
+    )
 
 
 def _extract_site_coverage(attributes: Dict[str, Any]) -> Optional[float]:
-    coverage = _first_positive(attributes, [
-        "site_coverage",
-        "site_coverage_ratio",
-        "site_coverage_fraction",
-        "site_coverage_pct",
-        "site_coverage_percent",
-    ])
+    coverage = _first_positive(
+        attributes,
+        [
+            "site_coverage",
+            "site_coverage_ratio",
+            "site_coverage_fraction",
+            "site_coverage_pct",
+            "site_coverage_percent",
+        ],
+    )
     if coverage is None:
         return None
     if coverage > 1:
@@ -241,23 +251,29 @@ def _extract_site_coverage(attributes: Dict[str, Any]) -> Optional[float]:
 
 
 def _extract_storey_limit(attributes: Dict[str, Any]) -> Optional[int]:
-    value = _first_positive(attributes, [
-        "floors_max",
-        "max_storeys",
-        "storey_limit",
-        "storeys",
-        "max_floors",
-    ])
+    value = _first_positive(
+        attributes,
+        [
+            "floors_max",
+            "max_storeys",
+            "storey_limit",
+            "storeys",
+            "max_floors",
+        ],
+    )
     return int(value) if value else None
 
 
 def _extract_height_limit(attributes: Dict[str, Any]) -> Optional[float]:
-    return _first_positive(attributes, [
-        "height_m",
-        "max_height_m",
-        "height_limit_m",
-        "building_height_m",
-    ])
+    return _first_positive(
+        attributes,
+        [
+            "height_m",
+            "max_height_m",
+            "height_limit_m",
+            "building_height_m",
+        ],
+    )
 
 
 def _first_positive(attributes: Dict[str, Any], keys: Iterable[str]) -> Optional[float]:
@@ -284,7 +300,9 @@ def _round_half_up(value: float) -> int:
     return int(Decimal(value).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
-def _floors_from_height(height_limit: Optional[float], floor_height: float) -> Optional[int]:
+def _floors_from_height(
+    height_limit: Optional[float], floor_height: float
+) -> Optional[int]:
     if not height_limit or height_limit <= 0 or floor_height <= 0:
         return None
     floors = int(math.floor(height_limit / floor_height))
@@ -299,7 +317,11 @@ def _floors_from_ratio(gfa_cap: int, footprint: int) -> Optional[int]:
 
 def _build_zone_source(resolved: ResolvedZone) -> ZoneSource:
     layer = resolved.zone_layers[0] if resolved.zone_layers else None
-    kind = "parcel" if resolved.parcel else ("geometry" if resolved.input_kind == "geometry" else "unknown")
+    kind = (
+        "parcel"
+        if resolved.parcel
+        else ("geometry" if resolved.input_kind == "geometry" else "unknown")
+    )
     note: Optional[str] = None
     if resolved.input_kind == "geometry" and resolved.geometry_properties:
         if isinstance(resolved.geometry_properties.get("note"), str):
@@ -382,10 +404,7 @@ def _apply_rule_override(overrides: _RuleOverrides, rule: RefRule) -> None:
     elif parameter_key == "zoning.setback.front_min_m":
         metres = _convert_to_metres(value, unit)
         if metres is not None:
-            if (
-                overrides.front_setback_m is None
-                or metres > overrides.front_setback_m
-            ):
+            if overrides.front_setback_m is None or metres > overrides.front_setback_m:
                 overrides.front_setback_m = metres
 
 

@@ -5,6 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.models.base import BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -16,12 +21,6 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-
-from app.models.base import BaseModel, MetadataProxy
-from app.models.types import FlexibleJSONB
-
 
 JSONType = FlexibleJSONB
 
@@ -62,7 +61,9 @@ class OverlaySourceGeometry(BaseModel):
     metadata = MetadataProxy()
 
     __table_args__ = (
-        UniqueConstraint("project_id", "source_geometry_key", name="uq_overlay_source_key"),
+        UniqueConstraint(
+            "project_id", "source_geometry_key", name="uq_overlay_source_key"
+        ),
     )
 
 
@@ -152,9 +153,7 @@ class OverlayDecision(BaseModel):
         "OverlaySourceGeometry", back_populates="decisions"
     )
 
-    __table_args__ = (
-        Index("idx_overlay_decisions_project", "project_id", "decision"),
-    )
+    __table_args__ = (Index("idx_overlay_decisions_project", "project_id", "decision"),)
 
 
 class OverlayRunLock(BaseModel):

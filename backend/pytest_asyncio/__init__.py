@@ -6,11 +6,10 @@ import functools
 import inspect
 from typing import Any, Callable, TypeVar
 
+import _pytest.python
 import pytest
 
 from . import plugin as _plugin
-
-import _pytest.python
 
 
 def _install_pyfunc_patch() -> None:
@@ -56,7 +55,9 @@ def fixture(*decorator_args: Any, **decorator_kwargs: Any):  # type: ignore[over
             @functools.wraps(func)
             def _wrapped(request: pytest.FixtureRequest):
                 loop = _plugin._ensure_loop(request)
-                kwargs = {name: request.getfixturevalue(name) for name in parameter_names}
+                kwargs = {
+                    name: request.getfixturevalue(name) for name in parameter_names
+                }
                 return loop.run_until_complete(func(**kwargs))
 
             _wrapped.__signature__ = request_signature  # type: ignore[attr-defined]
@@ -67,7 +68,9 @@ def fixture(*decorator_args: Any, **decorator_kwargs: Any):  # type: ignore[over
             @functools.wraps(func)
             def _generator(request: pytest.FixtureRequest):
                 loop = _plugin._ensure_loop(request)
-                kwargs = {name: request.getfixturevalue(name) for name in parameter_names}
+                kwargs = {
+                    name: request.getfixturevalue(name) for name in parameter_names
+                }
                 agen = func(**kwargs)
                 value = loop.run_until_complete(agen.__anext__())
                 try:
@@ -98,4 +101,3 @@ def pytest_configure(config: pytest.Config) -> None:  # pragma: no cover - pytes
 
 def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:  # pragma: no cover
     return _plugin.pytest_pyfunc_call(pyfuncitem)
-

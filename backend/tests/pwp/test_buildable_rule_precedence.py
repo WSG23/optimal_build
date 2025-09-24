@@ -14,7 +14,10 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 import pytest_asyncio  # noqa: F401  # Ensure plugin is registered for async fixtures
 
-if "structlog" not in sys.modules:  # pragma: no cover - test shim for optional dependency
+if (
+    "structlog" not in sys.modules
+):  # pragma: no cover - test shim for optional dependency
+
     class _StubBoundLogger:
         def bind(self, **kwargs):
             return self
@@ -59,7 +62,9 @@ if "structlog" not in sys.modules:  # pragma: no cover - test shim for optional 
     structlog_module.processors = _StubProcessors()
     structlog_module.configure = _noop
     structlog_module.get_logger = lambda *args, **kwargs: _StubBoundLogger()
-    structlog_module.make_filtering_bound_logger = lambda *args, **kwargs: _StubBoundLogger
+    structlog_module.make_filtering_bound_logger = (
+        lambda *args, **kwargs: _StubBoundLogger
+    )
     structlog_module.stdlib = _StubStdLib("structlog.stdlib")
     structlog_module.stdlib.LoggerFactory = _StubStdLib.LoggerFactory
     structlog_module.stdlib.BoundLogger = _StubStdLib.BoundLogger

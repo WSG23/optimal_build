@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
 from app.models.base import BaseModel
 from app.models.types import FlexibleJSONB
+from sqlalchemy import Column, DateTime, Integer, String, Text
 
 
 class ImportRecord(BaseModel):
@@ -22,7 +22,9 @@ class ImportRecord(BaseModel):
     content_type = Column(String(100))
     size_bytes = Column(Integer, nullable=False)
     storage_path = Column(Text, nullable=False)
-    uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    uploaded_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     layer_metadata = Column(FlexibleJSONB, default=list)
     detected_floors = Column(FlexibleJSONB, default=list)

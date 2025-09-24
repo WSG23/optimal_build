@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional
 
-from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefMaterialStandard
 from app.utils.logging import get_logger, log_event
+from sqlalchemy import Select, select
 
 logger = get_logger(__name__)
 
@@ -28,7 +28,9 @@ STANDARD_UPDATE_FIELDS: Iterable[str] = (
 )
 
 
-async def upsert_material_standard(session: AsyncSession, payload: Dict[str, Any]) -> RefMaterialStandard:
+async def upsert_material_standard(
+    session: AsyncSession, payload: Dict[str, Any]
+) -> RefMaterialStandard:
     """Insert or update a material standard entry."""
 
     filters = [
@@ -57,7 +59,12 @@ async def upsert_material_standard(session: AsyncSession, payload: Dict[str, Any
         action = "updated"
 
     await session.flush()
-    log_event(logger, "material_standard_upserted", action=action, standard_code=record.standard_code)
+    log_event(
+        logger,
+        "material_standard_upserted",
+        action=action,
+        standard_code=record.standard_code,
+    )
     return record
 
 
@@ -81,7 +88,9 @@ async def lookup_material_standards(
     if section:
         stmt = stmt.where(RefMaterialStandard.section == section)
 
-    stmt = stmt.order_by(RefMaterialStandard.standard_code, RefMaterialStandard.property_key)
+    stmt = stmt.order_by(
+        RefMaterialStandard.standard_code, RefMaterialStandard.property_key
+    )
     results = await session.execute(stmt)
     records = list(results.scalars().all())
     log_event(

@@ -28,12 +28,16 @@ async def test_standards_lookup(app_client, session):
     session.add(record)
     await session.commit()
 
-    response = await app_client.get("/api/v1/standards", params={"standard_code": "SS EN 206"})
+    response = await app_client.get(
+        "/api/v1/standards", params={"standard_code": "SS EN 206"}
+    )
     assert response.status_code == 200
     payload = response.json()
     assert len(payload) == 1
     assert payload[0]["standard_body"] == "BCA"
     assert payload[0]["section"] == "4.2"
 
-    count = metrics.counter_value(metrics.REQUEST_COUNTER, {"endpoint": "standards_lookup"})
+    count = metrics.counter_value(
+        metrics.REQUEST_COUNTER, {"endpoint": "standards_lookup"}
+    )
     assert count == 1.0

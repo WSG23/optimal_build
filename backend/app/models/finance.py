@@ -6,6 +6,11 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List
 
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.models.base import BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -16,12 +21,6 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-
-from app.models.base import BaseModel, MetadataProxy
-from app.models.types import FlexibleJSONB
-
 
 JSONType = FlexibleJSONB
 
@@ -42,7 +41,9 @@ class FinProject(BaseModel):
     discount_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
     total_development_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     total_gross_profit: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
@@ -58,9 +59,7 @@ class FinProject(BaseModel):
     )
     metadata = MetadataProxy()
 
-    __table_args__ = (
-        Index("idx_fin_projects_project_name", "project_id", "name"),
-    )
+    __table_args__ = (Index("idx_fin_projects_project_name", "project_id", "name"),)
 
 
 class FinScenario(BaseModel):
@@ -107,9 +106,7 @@ class FinScenario(BaseModel):
         "FinResult", back_populates="scenario", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (
-        Index("idx_fin_scenarios_project_name", "project_id", "name"),
-    )
+    __table_args__ = (Index("idx_fin_scenarios_project_name", "project_id", "name"),)
 
 
 class FinCostItem(BaseModel):
@@ -130,14 +127,16 @@ class FinCostItem(BaseModel):
     quantity: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
     total_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
 
-    scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="cost_items")
+    scenario: Mapped[FinScenario] = relationship(
+        "FinScenario", back_populates="cost_items"
+    )
     metadata = MetadataProxy()
 
-    __table_args__ = (
-        Index("idx_fin_cost_items_project_name", "project_id", "name"),
-    )
+    __table_args__ = (Index("idx_fin_cost_items_project_name", "project_id", "name"),)
 
 
 class FinSchedule(BaseModel):
@@ -158,9 +157,13 @@ class FinSchedule(BaseModel):
     revenue: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     cash_flow: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     cumulative_cash_flow: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
 
-    scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="schedules")
+    scenario: Mapped[FinScenario] = relationship(
+        "FinScenario", back_populates="schedules"
+    )
     metadata = MetadataProxy()
 
     __table_args__ = (
@@ -186,7 +189,9 @@ class FinCapitalStack(BaseModel):
     amount: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
     rate: Mapped[Decimal | None] = mapped_column(Numeric(8, 4))
     equity_share: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
-    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
 
     scenario: Mapped[FinScenario] = relationship(
         "FinScenario", back_populates="capital_stack"
@@ -213,16 +218,16 @@ class FinResult(BaseModel):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     value: Mapped[Decimal | None] = mapped_column(Numeric(16, 4))
     unit: Mapped[str | None] = mapped_column(String(20))
-    metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
 
     scenario: Mapped[FinScenario] = relationship(
         "FinScenario", back_populates="results", uselist=False
     )
     metadata = MetadataProxy()
 
-    __table_args__ = (
-        Index("idx_fin_results_project_name", "project_id", "name"),
-    )
+    __table_args__ = (Index("idx_fin_results_project_name", "project_id", "name"),)
 
 
 __all__ = [

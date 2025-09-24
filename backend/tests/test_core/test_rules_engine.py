@@ -3,7 +3,6 @@ import pytest
 from app.core.models.geometry import Door, GeometryGraph, Level, Space
 from app.core.rules.engine import RulesEngine
 
-
 RULE_PACK = {
     "metadata": {"jurisdiction": "SG", "version": 1},
     "rules": [
@@ -13,7 +12,11 @@ RULE_PACK = {
             "target": "spaces",
             "where": {
                 "all": [
-                    {"field": "metadata.category", "operator": "==", "value": "bedroom"},
+                    {
+                        "field": "metadata.category",
+                        "operator": "==",
+                        "value": "bedroom",
+                    },
                     {"field": "level_id", "operator": "==", "value": "L1"},
                 ]
             },
@@ -29,7 +32,11 @@ RULE_PACK = {
             "id": "bedroom-ventilation",
             "title": "Bedrooms require natural light or mechanical ventilation",
             "target": "spaces",
-            "where": {"field": "metadata.category", "operator": "==", "value": "bedroom"},
+            "where": {
+                "field": "metadata.category",
+                "operator": "==",
+                "value": "bedroom",
+            },
             "predicate": {
                 "any": [
                     {"field": "metadata.window_count", "operator": ">=", "value": 1},
@@ -64,7 +71,11 @@ def geometry_graph() -> GeometryGraph:
                 name="Bedroom A",
                 level_id="L1",
                 boundary=[(0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)],
-                metadata={"category": "bedroom", "window_count": 0, "has_mechanical_ventilation": False},
+                metadata={
+                    "category": "bedroom",
+                    "window_count": 0,
+                    "has_mechanical_ventilation": False,
+                },
             ),
             Space(
                 id="S2",
@@ -108,7 +119,9 @@ def test_rules_engine_reports_rule_outcomes(geometry_graph: GeometryGraph) -> No
     assert area_result["violations"]
     area_violation = area_result["violations"][0]
     assert area_violation["entity_id"] == "S1"
-    assert any("bedroom area" in message.lower() for message in area_violation["messages"])
+    assert any(
+        "bedroom area" in message.lower() for message in area_violation["messages"]
+    )
     area_fact = area_violation["facts"][0]
     assert area_fact["field"] == "computed.area"
     assert pytest.approx(area_fact["actual"], rel=1e-6) == 9.0
@@ -117,7 +130,9 @@ def test_rules_engine_reports_rule_outcomes(geometry_graph: GeometryGraph) -> No
     ventilation_result = results_by_id["bedroom-ventilation"]
     ventilation_violation = ventilation_result["violations"][0]
     assert ventilation_violation["entity_id"] == "S1"
-    assert any("window" in message.lower() for message in ventilation_violation["messages"])
+    assert any(
+        "window" in message.lower() for message in ventilation_violation["messages"]
+    )
     assert ventilation_violation["facts"]
 
     door_result = results_by_id["door-clearance"]

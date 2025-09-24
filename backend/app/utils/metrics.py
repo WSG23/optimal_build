@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 try:  # pragma: no cover - exercised when dependency is available
@@ -279,10 +279,7 @@ def histogram_percentile_from_bucket_counts(
     if not 0.0 <= percentile <= 1.0:
         raise ValueError("Percentile must be expressed as a value between 0 and 1")
 
-    normalized = [
-        (float(upper), float(count))
-        for upper, count in buckets
-    ]
+    normalized = [(float(upper), float(count)) for upper, count in buckets]
     if not normalized:
         raise RuntimeError("No bucket counts were provided for percentile calculation")
 
@@ -315,8 +312,7 @@ def _collect_histogram_data(
             bucket_method = getattr(sample, "bucket_counts", None)
             if callable(bucket_method):
                 buckets = [
-                    (float(bound), float(count))
-                    for bound, count in bucket_method()
+                    (float(bound), float(count)) for bound, count in bucket_method()
                 ]
             observation_method = getattr(sample, "observations", None)
             if callable(observation_method):

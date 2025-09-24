@@ -5,16 +5,15 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Dict, Iterable, List, Literal, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefRule, RefZoningLayer
 from app.services.normalize import NormalizedRule, RuleNormalizer
-
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import select
 
 router = APIRouter()
 
@@ -143,7 +142,9 @@ async def list_rules(
             raw_statuses = review_status.split(",")
         else:
             raw_statuses = review_status
-        statuses = [status.strip() for status in raw_statuses if status and status.strip()]
+        statuses = [
+            status.strip() for status in raw_statuses if status and status.strip()
+        ]
         if len(statuses) == 1:
             stmt = stmt.where(RefRule.review_status == statuses[0])
         elif statuses:
@@ -213,7 +214,9 @@ async def review_queue(
 ) -> Dict[str, object]:
     stmt = select(RefRule).where(RefRule.review_status == "needs_review")
     rules = (await session.execute(stmt)).scalars().all()
-    zoning_lookup = await _load_zoning_lookup(session, [_extract_zone_code(rule) for rule in rules])
+    zoning_lookup = await _load_zoning_lookup(
+        session, [_extract_zone_code(rule) for rule in rules]
+    )
     normalizer = RuleNormalizer()
     items = [_serialise_rule(rule, normalizer, zoning_lookup) for rule in rules]
     return {"items": items, "count": len(items)}

@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import os
+from importlib.util import find_spec
+from pathlib import Path
 from typing import AsyncGenerator
 
-from importlib.util import find_spec
-import os
-from pathlib import Path
-
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.core.config import settings
 
@@ -35,9 +39,7 @@ engine: AsyncEngine = create_async_engine(
 )
 
 # Create session factory
-AsyncSessionLocal = async_sessionmaker[
-    AsyncSession
-](
+AsyncSessionLocal = async_sessionmaker[AsyncSession](
     bind=engine,
     expire_on_commit=False,
 )

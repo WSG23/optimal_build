@@ -5,10 +5,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
@@ -17,12 +16,12 @@ from app.models.finance import (
     FinCostItem,
     FinProject,
     FinResult,
-    FinSchedule,
     FinScenario,
+    FinSchedule,
 )
 from app.models.rkp import RefCostIndex
 from app.services.finance import calculator
-
+from sqlalchemy import select
 
 DEMO_PROJECT_ID = 401
 DEMO_PROJECT_NAME = "Finance Demo Development"
@@ -547,9 +546,9 @@ async def _seed_scenario(
         irr_raw = calculator.irr(cash_flows)
         irr_value = irr_raw.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
     except ValueError:
-        irr_metadata["warning"] = (
-            "IRR could not be computed because the cash flows lack a sign change"
-        )
+        irr_metadata[
+            "warning"
+        ] = "IRR could not be computed because the cash flows lack a sign change"
 
     dscr_entries: List[calculator.DscrEntry] = []
     dscr_metadata: Dict[str, Any] = {}
@@ -672,10 +671,14 @@ async def seed_finance_demo(
 
     scenario_results: List[ScenarioSeedResult] = []
     for definition in SCENARIO_DEFINITIONS:
-        result = await _seed_scenario(session, fin_project=fin_project, definition=definition)
+        result = await _seed_scenario(
+            session, fin_project=fin_project, definition=definition
+        )
         scenario_results.append(result)
 
-    primary = next((item for item in scenario_results if item.scenario.is_primary), None)
+    primary = next(
+        (item for item in scenario_results if item.scenario.is_primary), None
+    )
     if primary is None and scenario_results:
         primary = scenario_results[0]
 
@@ -718,7 +721,9 @@ async def _cli_main(args: argparse.Namespace) -> FinanceDemoSummary:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Seed finance demo scenarios and metrics.")
+    parser = argparse.ArgumentParser(
+        description="Seed finance demo scenarios and metrics."
+    )
     parser.add_argument(
         "--project-id",
         type=int,

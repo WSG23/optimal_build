@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -20,7 +18,8 @@ from app.services.buildable import (
     load_layers_for_zone,
 )
 from app.utils import metrics
-
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
 
 router = APIRouter(prefix="/screen")
 

@@ -31,7 +31,12 @@ async def adjust_pro_forma_cost(
         provider=provider,
     )
     if index is None:
-        log_event(logger, "pro_forma_cost_no_index", series=series_name, jurisdiction=jurisdiction)
+        log_event(
+            logger,
+            "pro_forma_cost_no_index",
+            series=series_name,
+            jurisdiction=jurisdiction,
+        )
         return base_cost
 
     scalar = Decimal(cast(Any, index).value)

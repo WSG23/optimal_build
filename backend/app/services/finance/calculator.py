@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation, localcontext
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 from app.models.rkp import RefCostIndex
@@ -58,7 +58,12 @@ def _normalise_cash_flows(cash_flows: Sequence[NumberLike]) -> Tuple[Decimal, ..
     return tuple(_to_decimal(cash) for cash in cash_flows)
 
 
-def npv(rate: NumberLike, cash_flows: Sequence[NumberLike], *, precision: int = DEFAULT_PRECISION) -> Decimal:
+def npv(
+    rate: NumberLike,
+    cash_flows: Sequence[NumberLike],
+    *,
+    precision: int = DEFAULT_PRECISION,
+) -> Decimal:
     """Compute the net present value of ``cash_flows`` discounted by ``rate``.
 
     Parameters
@@ -80,12 +85,16 @@ def npv(rate: NumberLike, cash_flows: Sequence[NumberLike], *, precision: int = 
         for period, cash in enumerate(cash_values):
             discount_factor = (one + discount_rate) ** period
             if discount_factor == 0:
-                raise ZeroDivisionError("Discount factor evaluated to zero; rate cannot be -1 for positive periods.")
+                raise ZeroDivisionError(
+                    "Discount factor evaluated to zero; rate cannot be -1 for positive periods."
+                )
             npv_total += cash / discount_factor
     return npv_total
 
 
-def _npv_derivative(rate: Decimal, cash_flows: Sequence[Decimal], precision: int) -> Decimal:
+def _npv_derivative(
+    rate: Decimal, cash_flows: Sequence[Decimal], precision: int
+) -> Decimal:
     """Derivative of NPV with respect to ``rate`` for Newton iterations."""
 
     one = Decimal("1")
@@ -97,7 +106,9 @@ def _npv_derivative(rate: Decimal, cash_flows: Sequence[Decimal], precision: int
                 continue
             denominator = (one + rate) ** (period + 1)
             if denominator == 0:
-                raise ZeroDivisionError("Encountered zero denominator while differentiating NPV.")
+                raise ZeroDivisionError(
+                    "Encountered zero denominator while differentiating NPV."
+                )
             derivative -= (period * cash) / denominator
     return derivative
 
@@ -187,7 +198,9 @@ def dscr_timeline(
     incomes = _normalise_cash_flows(net_operating_incomes)
     services = _normalise_cash_flows(debt_services)
     if len(incomes) != len(services):
-        raise ValueError("net_operating_incomes and debt_services must be of equal length.")
+        raise ValueError(
+            "net_operating_incomes and debt_services must be of equal length."
+        )
     if period_labels and len(period_labels) != len(incomes):
         raise ValueError("period_labels must match the length of the cash flow series.")
 
@@ -207,7 +220,9 @@ def dscr_timeline(
                 else:
                     dscr_value = None
             else:
-                dscr_value = (noi / debt).quantize(DSCR_QUANTIZER, rounding=ROUND_HALF_UP)
+                dscr_value = (noi / debt).quantize(
+                    DSCR_QUANTIZER, rounding=ROUND_HALF_UP
+                )
             entries.append(
                 DscrEntry(
                     period=period,
@@ -304,7 +319,9 @@ def escalate_amount(
             latest_value = _to_decimal(latest.value)
             base_value_index = _to_decimal(base_index.value)
             if base_value_index == 0:
-                raise ZeroDivisionError("Base index value cannot be zero for escalation.")
+                raise ZeroDivisionError(
+                    "Base index value cannot be zero for escalation."
+                )
             scalar = latest_value / base_value_index
             return _quantize_currency(base_value * scalar)
     except (InvalidOperation, ZeroDivisionError):

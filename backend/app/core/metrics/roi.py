@@ -7,12 +7,12 @@ from datetime import datetime, timezone
 from math import ceil
 from typing import Iterable, Sequence
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.audit import AuditLog
 from app.models.overlay import OverlaySuggestion
+from sqlalchemy import select
 
 # Baseline timing assumptions (in seconds) used when estimating automation ROI.
 # These constants are shared with the instrumentation hooks that populate the
@@ -127,14 +127,18 @@ async def compute_project_roi(session: AsyncSession, *, project_id: int) -> RoiS
         .options(selectinload(OverlaySuggestion.decision))
     )
     suggestion_result = await session.execute(suggestion_stmt)
-    suggestions: Sequence[OverlaySuggestion] = list(suggestion_result.scalars().unique())
+    suggestions: Sequence[OverlaySuggestion] = list(
+        suggestion_result.scalars().unique()
+    )
 
     audit_stmt = select(AuditLog).where(AuditLog.project_id == project_id)
     audit_result = await session.execute(audit_stmt)
     audit_logs = list(audit_result.scalars().all())
 
     audit_baseline, audit_actual, iterations = _aggregate_audit_metrics(audit_logs)
-    decision_baseline, decision_actual, total, decided, accepted = _decision_metrics(suggestions)
+    decision_baseline, decision_actual, total, decided, accepted = _decision_metrics(
+        suggestions
+    )
 
     total_baseline = audit_baseline + decision_baseline
     total_actual = audit_actual + decision_actual

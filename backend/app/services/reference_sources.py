@@ -23,10 +23,14 @@ class HTTPResponse:
 class SimpleHTTPClient:
     """Minimal HTTP client using ``urllib`` for asynchronous flows."""
 
-    async def head(self, url: str, headers: Optional[Mapping[str, str]] = None) -> HTTPResponse:
+    async def head(
+        self, url: str, headers: Optional[Mapping[str, str]] = None
+    ) -> HTTPResponse:
         return await self._request("HEAD", url, headers=headers)
 
-    async def get(self, url: str, headers: Optional[Mapping[str, str]] = None) -> HTTPResponse:
+    async def get(
+        self, url: str, headers: Optional[Mapping[str, str]] = None
+    ) -> HTTPResponse:
         return await self._request("GET", url, headers=headers)
 
     async def _request(
@@ -39,12 +43,20 @@ class SimpleHTTPClient:
         def _perform_request() -> HTTPResponse:
             request = Request(url, method=method, headers=dict(headers or {}))
             try:
-                with urlopen(request) as response:  # nosec B310 - used for controlled fetches
+                with urlopen(
+                    request
+                ) as response:  # nosec B310 - used for controlled fetches
                     payload = b"" if method == "HEAD" else response.read()
-                    return HTTPResponse(response.status, dict(response.headers.items()), payload)
-            except HTTPError as exc:  # pragma: no cover - network errors exercised in tests
+                    return HTTPResponse(
+                        response.status, dict(response.headers.items()), payload
+                    )
+            except (
+                HTTPError
+            ) as exc:  # pragma: no cover - network errors exercised in tests
                 payload = exc.read() if hasattr(exc, "read") else b""
-                return HTTPResponse(exc.code, dict(getattr(exc, "headers", {}) or {}), payload)
+                return HTTPResponse(
+                    exc.code, dict(getattr(exc, "headers", {}) or {}), payload
+                )
 
         return await asyncio.to_thread(_perform_request)
 
@@ -90,7 +102,9 @@ class ReferenceSourceFetcher:
             if head_response and head_response.status_code == 304:
                 return None
 
-        response = await self._http.get(source.landing_url, headers=conditional_headers or None)
+        response = await self._http.get(
+            source.landing_url, headers=conditional_headers or None
+        )
         if response.status_code == 304:
             return None
         if response.status_code >= 400:
@@ -124,7 +138,9 @@ class ReferenceSourceFetcher:
             return None
         return response
 
-    def _conditional_headers(self, existing: Optional[RefDocument]) -> Mapping[str, str]:
+    def _conditional_headers(
+        self, existing: Optional[RefDocument]
+    ) -> Mapping[str, str]:
         headers: dict[str, str] = {}
         if existing and existing.http_etag:
             headers["If-None-Match"] = existing.http_etag
@@ -145,7 +161,11 @@ class ReferenceSourceFetcher:
         if etag and existing.http_etag and etag == existing.http_etag:
             return True
         last_modified = _get_header(response.headers, "last-modified")
-        if last_modified and existing.http_last_modified and last_modified == existing.http_last_modified:
+        if (
+            last_modified
+            and existing.http_last_modified
+            and last_modified == existing.http_last_modified
+        ):
             return True
         return False
 
@@ -158,4 +178,9 @@ def _get_header(headers: Mapping[str, str], key: str) -> Optional[str]:
     return None
 
 
-__all__ = ["FetchedDocument", "HTTPResponse", "ReferenceSourceFetcher", "SimpleHTTPClient"]
+__all__ = [
+    "FetchedDocument",
+    "HTTPResponse",
+    "ReferenceSourceFetcher",
+    "SimpleHTTPClient",
+]

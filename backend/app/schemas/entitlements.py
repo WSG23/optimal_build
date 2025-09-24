@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel, Field
-
 from app.models.entitlements import (
     EntApprovalCategory,
     EntEngagementStatus,
@@ -17,6 +15,7 @@ from app.models.entitlements import (
     EntStudyStatus,
     EntStudyType,
 )
+from pydantic import BaseModel, Field
 
 
 class EntAuthorityBase(BaseModel):
@@ -310,9 +309,7 @@ class EntEngagementCollection(PaginatedCollection[EntEngagementSchema]):
     """Paginated engagement response."""
 
 
-class EntLegalInstrumentCollection(
-    PaginatedCollection[EntLegalInstrumentSchema]
-):
+class EntLegalInstrumentCollection(PaginatedCollection[EntLegalInstrumentSchema]):
     """Paginated legal instrument response."""
 
 
@@ -349,4 +346,3 @@ __all__ = [
     "EntLegalInstrumentStatus",
     "EntLegalInstrumentType",
 ]
-

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Iterable, List, Optional, Sequence
 
-from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -19,7 +18,7 @@ from app.models.entitlements import (
     EntRoadmapItem,
     EntStudy,
 )
-
+from sqlalchemy import Select, func, select
 
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
@@ -121,7 +120,9 @@ class EntitlementsService:
         is_mandatory: bool | None = None,
         metadata: Optional[dict] = None,
     ) -> EntApprovalType:
-        approval_type = await self.get_approval_type(authority_id=authority.id, code=code)
+        approval_type = await self.get_approval_type(
+            authority_id=authority.id, code=code
+        )
         if approval_type is None:
             approval_type = EntApprovalType(
                 authority_id=authority.id,
@@ -150,9 +151,7 @@ class EntitlementsService:
         await self.session.flush()
         return approval_type
 
-    async def list_approval_types(
-        self, *, authority_id: int
-    ) -> List[EntApprovalType]:
+    async def list_approval_types(self, *, authority_id: int) -> List[EntApprovalType]:
         stmt = (
             select(EntApprovalType)
             .where(EntApprovalType.authority_id == authority_id)
@@ -245,7 +244,9 @@ class EntitlementsService:
         items = await self._load_full_roadmap(project_id)
         target = next((entry for entry in items if entry.id == item_id), None)
         if target is None:
-            raise ValueError(f"Roadmap item {item_id} not found for project {project_id}")
+            raise ValueError(
+                f"Roadmap item {item_id} not found for project {project_id}"
+            )
 
         if "approval_type_id" in updates:
             target.approval_type_id = updates["approval_type_id"]
@@ -473,4 +474,3 @@ class EntitlementsService:
 
 
 __all__ = ["EntitlementsService", "PageResult"]
-

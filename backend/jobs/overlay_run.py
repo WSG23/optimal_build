@@ -2,29 +2,25 @@
 
 from __future__ import annotations
 
+import inspect
+import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import inspect
-import time
 from typing import Any, AsyncIterator, Callable, Dict, List
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.audit.ledger import append_event
+from app.core.config import settings
 from app.core.database import get_session
 from app.core.geometry import GeometrySerializer
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
-from app.core.config import settings
-from app.core.audit.ledger import append_event
-from app.models.overlay import (
-    OverlayRunLock,
-    OverlaySourceGeometry,
-    OverlaySuggestion,
-)
+from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
 from backend.jobs import job
+from sqlalchemy import select
 
 ENGINE_VERSION = "2024.1"
 
@@ -142,7 +138,9 @@ async def run_overlay_for_project(
     return result
 
 
-def _acquire_lock(session: AsyncSession, source: OverlaySourceGeometry) -> OverlayRunLock:
+def _acquire_lock(
+    session: AsyncSession, source: OverlaySourceGeometry
+) -> OverlayRunLock:
     """Create or refresh a lock for the geometry run."""
 
     now = datetime.now(timezone.utc)
@@ -193,7 +191,11 @@ def _evaluate_geometry(geometry: GeometryGraph) -> List[Dict[str, object]]:
         }
 
     flood_zone = site_metadata.get("flood_zone")
-    if isinstance(flood_zone, str) and flood_zone.lower() in {"coastal", "river", "flood"}:
+    if isinstance(flood_zone, str) and flood_zone.lower() in {
+        "coastal",
+        "river",
+        "flood",
+    }:
         target_ids = _string_list(site_level_id)
         suggestions["flood_mitigation"] = {
             "code": "flood_mitigation",
@@ -268,7 +270,9 @@ def _evaluate_geometry(geometry: GeometryGraph) -> List[Dict[str, object]]:
         }
 
         if isinstance(flood_zone, str) and flood_zone.lower() == "coastal":
-            coastal_targets = _string_list(site_level_id, tall_building_trigger["entity_id"])
+            coastal_targets = _string_list(
+                site_level_id, tall_building_trigger["entity_id"]
+            )
             suggestions["coastal_evacuation_plan"] = {
                 "code": "coastal_evacuation_plan",
                 "type": "preparedness",
@@ -301,11 +305,15 @@ def _find_tall_building_trigger(geometry: GeometryGraph) -> Dict[str, object] | 
     """Locate a tall building node, if any."""
 
     for space in geometry.spaces.values():
-        height = _coerce_float(space.metadata.get("height_m") or space.metadata.get("height"))
+        height = _coerce_float(
+            space.metadata.get("height_m") or space.metadata.get("height")
+        )
         if height is not None and height >= 45:
             return {"entity_id": space.id, "height": height}
     for fixture in geometry.fixtures.values():
-        height = _coerce_float(fixture.metadata.get("height_m") or fixture.metadata.get("height"))
+        height = _coerce_float(
+            fixture.metadata.get("height_m") or fixture.metadata.get("height")
+        )
         if height is not None and height >= 45:
             return {"entity_id": fixture.id, "height": height}
     return None

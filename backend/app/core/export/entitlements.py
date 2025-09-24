@@ -14,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.entitlements import EntitlementsService
 from app.utils.render import render_html_to_pdf
 
-
 EXPORT_PAGE_SIZE = 200
 
 
@@ -70,7 +69,9 @@ def _serialise_roadmap(records) -> List[Dict[str, object]]:
         serialised.append(
             {
                 "sequence": item.sequence_order,
-                "status": item.status.value if hasattr(item.status, "value") else str(item.status),
+                "status": item.status.value
+                if hasattr(item.status, "value")
+                else str(item.status),
                 "approval_type_id": item.approval_type_id,
                 "target_submission": item.target_submission_date.isoformat()
                 if item.target_submission_date
@@ -90,7 +91,9 @@ def _serialise_roadmap(records) -> List[Dict[str, object]]:
     return serialised
 
 
-def _serialise_simple(records: Iterable, fields: Tuple[str, ...]) -> List[Dict[str, object]]:
+def _serialise_simple(
+    records: Iterable, fields: Tuple[str, ...]
+) -> List[Dict[str, object]]:
     serialised: List[Dict[str, object]] = []
     for record in records:
         payload: Dict[str, object] = {}
@@ -106,7 +109,9 @@ def _serialise_simple(records: Iterable, fields: Tuple[str, ...]) -> List[Dict[s
     return serialised
 
 
-async def build_snapshot(session: AsyncSession, project_id: int) -> EntitlementsSnapshot:
+async def build_snapshot(
+    session: AsyncSession, project_id: int
+) -> EntitlementsSnapshot:
     """Collect a project snapshot for export."""
 
     service = EntitlementsService(session)
@@ -259,7 +264,9 @@ def _render_csv(snapshot: EntitlementsSnapshot) -> bytes:
 
 
 def _render_html(snapshot: EntitlementsSnapshot) -> str:
-    def _render_section(title: str, headers: List[str], rows: List[List[object]]) -> str:
+    def _render_section(
+        title: str, headers: List[str], rows: List[List[object]]
+    ) -> str:
         header_html = "".join(f"<th>{header}</th>" for header in headers)
         rows_html = "".join(
             "<tr>"
@@ -412,7 +419,11 @@ async def generate_entitlements_export(
 
     snapshot = await build_snapshot(session, project_id)
     payload, media_type = render_export_payload(snapshot, fmt)
-    extension = fmt.value if media_type == fmt.media_type else EntitlementsExportFormat.HTML.value
+    extension = (
+        fmt.value
+        if media_type == fmt.media_type
+        else EntitlementsExportFormat.HTML.value
+    )
     filename = f"project-{project_id}-entitlements.{extension}"
     return payload, media_type, filename
 
@@ -424,4 +435,3 @@ __all__ = [
     "render_export_payload",
     "generate_entitlements_export",
 ]
-

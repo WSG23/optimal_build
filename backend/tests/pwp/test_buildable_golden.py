@@ -10,13 +10,11 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
-from httpx import AsyncClient
-from sqlalchemy import select
-
 from app.core.config import settings
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
+from httpx import AsyncClient
 from scripts.seed_screening import seed_screening_sample_data
-
+from sqlalchemy import select
 
 DEFAULT_REQUEST_DEFAULTS = {
     "plot_ratio": 3.5,
@@ -185,10 +183,16 @@ async def test_buildable_golden_addresses(buildable_client):
         if expected["zone_code"] == "R2":
             assert rules, "Expected R2 buildable screening to include zoning rules"
             target_rule = next(
-                (item for item in rules if item["id"] == context["provenance"]["rule_id"]),
+                (
+                    item
+                    for item in rules
+                    if item["id"] == context["provenance"]["rule_id"]
+                ),
                 None,
             )
-            assert target_rule is not None, "Expected seeded zoning rule to appear in response"
+            assert (
+                target_rule is not None
+            ), "Expected seeded zoning rule to appear in response"
             assert target_rule["authority"] == "URA"
             assert target_rule["parameter_key"] == context["rule_parameter_key"]
             assert target_rule["provenance"] == context["provenance"]

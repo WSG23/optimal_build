@@ -85,13 +85,19 @@ class GraphBuilder:
             raise ValueError("Space payload missing level reference")
         level_id = str(level_id)
         if level_id not in self.graph.levels:
-            raise ValueError(f"Space '{space_id}' references unknown level '{level_id}'")
+            raise ValueError(
+                f"Space '{space_id}' references unknown level '{level_id}'"
+            )
         boundary_raw = payload.get("boundary") or payload.get("polygon") or []
         boundary = [_as_point(point) for point in boundary_raw]
-        wall_ids = [str(item) for item in payload.get("wall_ids", payload.get("walls", []))]
+        wall_ids = [
+            str(item) for item in payload.get("wall_ids", payload.get("walls", []))
+        ]
         for wall_id in wall_ids:
             if wall_id not in self.graph.walls:
-                raise ValueError(f"Space '{space_id}' references unknown wall '{wall_id}'")
+                raise ValueError(
+                    f"Space '{space_id}' references unknown wall '{wall_id}'"
+                )
         space = Space(
             id=space_id,
             name=payload.get("name"),
@@ -114,8 +120,12 @@ class GraphBuilder:
         if level_id is not None:
             level_id = str(level_id)
             if level_id not in self.graph.levels:
-                raise ValueError(f"Wall '{wall_id}' references unknown level '{level_id}'")
-        space_ids = [str(item) for item in payload.get("space_ids", payload.get("spaces", []))]
+                raise ValueError(
+                    f"Wall '{wall_id}' references unknown level '{level_id}'"
+                )
+        space_ids = [
+            str(item) for item in payload.get("space_ids", payload.get("spaces", []))
+        ]
         wall = Wall(
             id=wall_id,
             name=payload.get("name"),
@@ -138,12 +148,16 @@ class GraphBuilder:
         if wall_id:
             wall_id = str(wall_id)
             if wall_id not in self.graph.walls:
-                raise ValueError(f"Door '{door_id}' references unknown wall '{wall_id}'")
+                raise ValueError(
+                    f"Door '{door_id}' references unknown wall '{wall_id}'"
+                )
         level_id = payload.get("level_id") or payload.get("level")
         if level_id is not None:
             level_id = str(level_id)
             if level_id not in self.graph.levels:
-                raise ValueError(f"Door '{door_id}' references unknown level '{level_id}'")
+                raise ValueError(
+                    f"Door '{door_id}' references unknown level '{level_id}'"
+                )
         door = Door(
             id=door_id,
             name=payload.get("name"),
@@ -166,7 +180,9 @@ class GraphBuilder:
         if level_id is not None:
             level_id = str(level_id)
             if level_id not in self.graph.levels:
-                raise ValueError(f"Fixture '{fixture_id}' references unknown level '{level_id}'")
+                raise ValueError(
+                    f"Fixture '{fixture_id}' references unknown level '{level_id}'"
+                )
         location = payload.get("location") or payload.get("point")
         fixture = Fixture(
             id=fixture_id,
@@ -184,8 +200,12 @@ class GraphBuilder:
         rel_type = payload.get("type") or payload.get("relationship")
         if not rel_type:
             raise ValueError("Relationship payload missing type")
-        source_id = str(payload.get("source_id") or payload.get("source") or payload.get("from"))
-        target_id = str(payload.get("target_id") or payload.get("target") or payload.get("to"))
+        source_id = str(
+            payload.get("source_id") or payload.get("source") or payload.get("from")
+        )
+        target_id = str(
+            payload.get("target_id") or payload.get("target") or payload.get("to")
+        )
         if not self.graph.get_entity(source_id):
             raise ValueError(f"Relationship references unknown source '{source_id}'")
         if not self.graph.get_entity(target_id):
@@ -227,27 +247,41 @@ class GraphBuilder:
 
         for space in self.graph.spaces.values():
             if space.level_id not in self.graph.levels:
-                raise ValueError(f"Space '{space.id}' references unknown level '{space.level_id}'")
+                raise ValueError(
+                    f"Space '{space.id}' references unknown level '{space.level_id}'"
+                )
             for wall_id in space.wall_ids:
                 if wall_id not in self.graph.walls:
-                    raise ValueError(f"Space '{space.id}' references unknown wall '{wall_id}'")
+                    raise ValueError(
+                        f"Space '{space.id}' references unknown wall '{wall_id}'"
+                    )
 
         for wall in self.graph.walls.values():
             if wall.level_id and wall.level_id not in self.graph.levels:
-                raise ValueError(f"Wall '{wall.id}' references unknown level '{wall.level_id}'")
+                raise ValueError(
+                    f"Wall '{wall.id}' references unknown level '{wall.level_id}'"
+                )
             for space_id in wall.space_ids:
                 if space_id not in self.graph.spaces:
-                    raise ValueError(f"Wall '{wall.id}' references unknown space '{space_id}'")
+                    raise ValueError(
+                        f"Wall '{wall.id}' references unknown space '{space_id}'"
+                    )
 
         for door in self.graph.doors.values():
             if door.wall_id and door.wall_id not in self.graph.walls:
-                raise ValueError(f"Door '{door.id}' references unknown wall '{door.wall_id}'")
+                raise ValueError(
+                    f"Door '{door.id}' references unknown wall '{door.wall_id}'"
+                )
             if door.level_id and door.level_id not in self.graph.levels:
-                raise ValueError(f"Door '{door.id}' references unknown level '{door.level_id}'")
+                raise ValueError(
+                    f"Door '{door.id}' references unknown level '{door.level_id}'"
+                )
 
         for fixture in self.graph.fixtures.values():
             if fixture.level_id and fixture.level_id not in self.graph.levels:
-                raise ValueError(f"Fixture '{fixture.id}' references unknown level '{fixture.level_id}'")
+                raise ValueError(
+                    f"Fixture '{fixture.id}' references unknown level '{fixture.level_id}'"
+                )
 
         for relationship in self.graph.relationships:
             if not self.graph.get_entity(relationship.source_id):

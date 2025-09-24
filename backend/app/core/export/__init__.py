@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
 import io
 import json
 import os
-from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Mapping
 import time
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, Iterable, Iterator, List, Mapping
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audit.ledger import append_event
 from app.core.metrics import EXPORT_BASELINE_SECONDS
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
-from app.core.audit.ledger import append_event
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
+from sqlalchemy import select
 
 try:  # pragma: no cover - optional dependency
     import ezdxf  # type: ignore
@@ -89,7 +89,11 @@ class LayerMapping:
             return self.overlays[code]
         if status and status in self.overlays:
             return self.overlays[status]
-        return f"{self.default_overlay_layer}:{code}" if code else self.default_overlay_layer
+        return (
+            f"{self.default_overlay_layer}:{code}"
+            if code
+            else self.default_overlay_layer
+        )
 
     def style_for(self, code: str, severity: str | None) -> Dict[str, Any]:
         """Lookup a style configuration for a layer."""
@@ -180,7 +184,10 @@ class LocalExportStorage(ArtifactStorage):
         filename: str | None = None,
     ) -> ExportArtifact:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        suffix = filename or f"project-{project_id}-{timestamp}-{uuid.uuid4().hex[:8]}.{fmt.extension}"
+        suffix = (
+            filename
+            or f"project-{project_id}-{timestamp}-{uuid.uuid4().hex[:8]}.{fmt.extension}"
+        )
         target = self.base_dir / suffix
         with target.open("wb") as stream:
             stream.write(payload)
@@ -249,11 +256,7 @@ def _normalise_overlays(
             nodes_iter = []
         else:
             nodes_iter = [nodes_raw]
-        normalised_nodes = [
-            str(node)
-            for node in nodes_iter
-            if node not in (None, "")
-        ]
+        normalised_nodes = [str(node) for node in nodes_iter if node not in (None, "")]
         normalised_nodes = list(dict.fromkeys(normalised_nodes))
         target_ids = overlay.target_ids or normalised_nodes
         target_ids = [str(item) for item in target_ids if item not in (None, "")]
@@ -284,7 +287,9 @@ def _normalise_overlays(
     return features
 
 
-def _group_by_layer(features: Iterable[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+def _group_by_layer(
+    features: Iterable[Dict[str, Any]]
+) -> Dict[str, List[Dict[str, Any]]]:
     grouped: Dict[str, List[Dict[str, Any]]] = {}
     for feature in features:
         layer = feature.get("layer", "MODEL")
@@ -353,7 +358,9 @@ class DXFWriter(BaseWriter):
         overlays: List[Dict[str, Any]],
         watermark: str | None,
     ) -> tuple[bytes, Dict[str, Any]]:
-        manifest = self._build_manifest(geometry=geometry, overlays=overlays, watermark=watermark)
+        manifest = self._build_manifest(
+            geometry=geometry, overlays=overlays, watermark=watermark
+        )
         if ezdxf is not None:  # pragma: no cover - exercised when dependency available
             try:
                 doc = ezdxf.new()
@@ -376,7 +383,9 @@ class DXFWriter(BaseWriter):
                 doc.write(buffer)
                 manifest["renderer"] = "ezdxf"
                 return buffer.getvalue(), manifest
-            except Exception:  # pragma: no cover - fallback for unexpected writer errors
+            except (
+                Exception
+            ):  # pragma: no cover - fallback for unexpected writer errors
                 pass
         payload = json.dumps(manifest, sort_keys=True).encode("utf-8")
         return payload, manifest
@@ -391,7 +400,9 @@ class DWGWriter(BaseWriter):
         overlays: List[Dict[str, Any]],
         watermark: str | None,
     ) -> tuple[bytes, Dict[str, Any]]:
-        manifest = self._build_manifest(geometry=geometry, overlays=overlays, watermark=watermark)
+        manifest = self._build_manifest(
+            geometry=geometry, overlays=overlays, watermark=watermark
+        )
         manifest.setdefault("renderer", "fallback")
         return json.dumps(manifest, sort_keys=True).encode("utf-8"), manifest
 
@@ -405,8 +416,12 @@ class IFCWriter(BaseWriter):
         overlays: List[Dict[str, Any]],
         watermark: str | None,
     ) -> tuple[bytes, Dict[str, Any]]:
-        manifest = self._build_manifest(geometry=geometry, overlays=overlays, watermark=watermark)
-        if ifcopenshell is not None:  # pragma: no cover - exercised when dependency available
+        manifest = self._build_manifest(
+            geometry=geometry, overlays=overlays, watermark=watermark
+        )
+        if (
+            ifcopenshell is not None
+        ):  # pragma: no cover - exercised when dependency available
             try:
                 model = ifcopenshell.file(schema="IFC4")
                 for entities in manifest["layers"].values():
@@ -421,7 +436,9 @@ class IFCWriter(BaseWriter):
                 buffer.write(model.to_string().encode("utf-8"))
                 manifest["renderer"] = "ifcopenshell"
                 return buffer.getvalue(), manifest
-            except Exception:  # pragma: no cover - fallback for optional dependency failure
+            except (
+                Exception
+            ):  # pragma: no cover - fallback for optional dependency failure
                 pass
         return json.dumps(manifest, sort_keys=True).encode("utf-8"), manifest
 
@@ -435,8 +452,12 @@ class PDFWriter(BaseWriter):
         overlays: List[Dict[str, Any]],
         watermark: str | None,
     ) -> tuple[bytes, Dict[str, Any]]:
-        manifest = self._build_manifest(geometry=geometry, overlays=overlays, watermark=watermark)
-        if pdf_canvas is not None:  # pragma: no cover - exercised when dependency available
+        manifest = self._build_manifest(
+            geometry=geometry, overlays=overlays, watermark=watermark
+        )
+        if (
+            pdf_canvas is not None
+        ):  # pragma: no cover - exercised when dependency available
             try:
                 buffer = io.BytesIO()
                 pdf = pdf_canvas.Canvas(buffer)
@@ -459,7 +480,9 @@ class PDFWriter(BaseWriter):
                 buffer.seek(0)
                 manifest["renderer"] = "reportlab"
                 return buffer.getvalue(), manifest
-            except Exception:  # pragma: no cover - fallback for optional dependency failure
+            except (
+                Exception
+            ):  # pragma: no cover - fallback for optional dependency failure
                 pass
         return json.dumps(manifest, sort_keys=True).encode("utf-8"), manifest
 
@@ -492,11 +515,15 @@ async def generate_project_export(
 
     started_at = time.perf_counter()
     result = await session.execute(
-        select(OverlaySourceGeometry).where(OverlaySourceGeometry.project_id == project_id)
+        select(OverlaySourceGeometry).where(
+            OverlaySourceGeometry.project_id == project_id
+        )
     )
     records = list(result.scalars().unique())
     if not records:
-        raise ProjectGeometryMissing(f"No source geometry found for project {project_id}")
+        raise ProjectGeometryMissing(
+            f"No source geometry found for project {project_id}"
+        )
 
     geometries: List[CanonicalGeometry] = []
     for record in records:
@@ -504,7 +531,9 @@ async def generate_project_export(
         if isinstance(payload, dict):
             geometries.append(CanonicalGeometry.from_dict(payload))
     if not geometries:
-        raise ProjectGeometryMissing(f"Source geometry payload missing for project {project_id}")
+        raise ProjectGeometryMissing(
+            f"Source geometry payload missing for project {project_id}"
+        )
 
     overlay_result = await session.execute(
         select(OverlaySuggestion).where(OverlaySuggestion.project_id == project_id)
@@ -513,7 +542,9 @@ async def generate_project_export(
 
     geometry_features: List[Dict[str, Any]] = []
     if options.include_source:
-        geometry_features = _normalise_geometry(geometries, mapping=options.layer_mapping)
+        geometry_features = _normalise_geometry(
+            geometries, mapping=options.layer_mapping
+        )
 
     overlay_features = _normalise_overlays(
         overlay_suggestions,
@@ -523,7 +554,9 @@ async def generate_project_export(
         include_rejected=options.include_rejected_overlays,
     )
 
-    watermark = options.pending_watermark if _pending_failures(overlay_suggestions) else None
+    watermark = (
+        options.pending_watermark if _pending_failures(overlay_suggestions) else None
+    )
 
     writer = get_writer(options.format, options=options)
     payload, manifest = writer.render(geometry_features, overlay_features, watermark)
@@ -540,7 +573,9 @@ async def generate_project_export(
         manifest=manifest,
     )
     approved_count = sum(
-        1 for overlay in overlay_suggestions if (overlay.status or "pending").lower() == "approved"
+        1
+        for overlay in overlay_suggestions
+        if (overlay.status or "pending").lower() == "approved"
     )
     duration = time.perf_counter() - started_at
     baseline_seconds = max(1, approved_count) * EXPORT_BASELINE_SECONDS

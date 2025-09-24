@@ -15,9 +15,7 @@ from typing import Any, Dict, Iterable, Iterator, MutableMapping, Optional
 import httpx
 
 from ..flows import parse_segment, watch_fetch
-from . import seed_finance_demo, seed_nonreg, seed_screening
-from . import seed_entitlements_sg
-
+from . import seed_entitlements_sg, seed_finance_demo, seed_nonreg, seed_screening
 
 DEFAULT_ARTIFACT_DIR = Path("artifacts")
 BACKEND_HOST = "127.0.0.1"
@@ -57,7 +55,9 @@ def run_alembic_upgrades(backend_dir: Path) -> None:
     )
 
 
-def run_seeders() -> tuple[Dict[str, Dict[str, int]], seed_finance_demo.FinanceDemoSummary]:
+def run_seeders() -> (
+    tuple[Dict[str, Dict[str, int]], seed_finance_demo.FinanceDemoSummary]
+):
     _log("Seeding screening reference data")
     screening_summary = seed_screening.main([])
 
@@ -179,7 +179,9 @@ def _retry_request(
         except Exception as exc:  # pragma: no cover - retries for flaky readiness
             last_error = exc
             time.sleep(delay)
-    raise SmokeError(f"Request to {url} failed after {retries} attempts") from last_error
+    raise SmokeError(
+        f"Request to {url} failed after {retries} attempts"
+    ) from last_error
 
 
 def run_buildable_smoke(client: httpx.Client, artifacts_dir: Path) -> Dict[str, Any]:
@@ -256,7 +258,9 @@ def run_finance_smoke(
             },
         },
     }
-    response = _retry_request(client, "POST", "/api/v1/finance/feasibility", json=payload)
+    response = _retry_request(
+        client, "POST", "/api/v1/finance/feasibility", json=payload
+    )
     data = response.json()
 
     if "scenario_id" not in data:
@@ -308,7 +312,9 @@ def orchestrate_smokes(artifacts_dir: Path) -> Dict[str, Any]:
     seed_summaries, finance_summary = run_seeders()
     _write_json(artifacts_dir / "seed_summary.json", seed_summaries)
 
-    ingestion = run_reference_ingestion(artifacts_dir / "reference_storage", artifacts_dir)
+    ingestion = run_reference_ingestion(
+        artifacts_dir / "reference_storage", artifacts_dir
+    )
 
     with running_backend(backend_dir, BACKEND_HOST, BACKEND_PORT) as base_url:
         with httpx.Client(base_url=base_url, timeout=30.0) as client:

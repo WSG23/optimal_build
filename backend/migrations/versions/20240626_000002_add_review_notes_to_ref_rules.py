@@ -1,11 +1,11 @@
 """Add review notes column to ref_rules."""
 
 from __future__ import annotations
-from sqlalchemy.dialects import postgresql
 
 from alembic import op
-import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20240626_000002"
@@ -17,16 +17,20 @@ depends_on = None
 def upgrade() -> None:
     """Apply the migration."""
 
-    op.execute("""
+    op.execute(
+        """
 ALTER TABLE ref_rules
 ADD COLUMN IF NOT EXISTS review_notes TEXT
-""")
+"""
+    )
 
 
 def downgrade() -> None:
     """Revert the migration."""
 
-    op.execute("""
+    op.execute(
+        """
 ALTER TABLE ref_rules
 DROP COLUMN IF EXISTS review_notes
-""")
+"""
+    )

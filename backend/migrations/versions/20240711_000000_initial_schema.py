@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20240711_000000"
@@ -38,7 +38,9 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.UniqueConstraint("project_id", "version", name="uq_audit_logs_project_version"),
+        sa.UniqueConstraint(
+            "project_id", "version", name="uq_audit_logs_project_version"
+        ),
     )
     op.create_index("ix_audit_logs_project_id", "audit_logs", ["project_id"])
     op.create_index("ix_audit_logs_event_type", "audit_logs", ["event_type"])
@@ -172,7 +174,9 @@ def upgrade() -> None:
             name="uq_overlay_suggestion_code",
         ),
     )
-    op.create_index("ix_overlay_suggestions_project_id", "overlay_suggestions", ["project_id"])
+    op.create_index(
+        "ix_overlay_suggestions_project_id", "overlay_suggestions", ["project_id"]
+    )
     op.create_index(
         "ix_overlay_suggestions_source_geometry_id",
         "overlay_suggestions",
@@ -221,7 +225,9 @@ def upgrade() -> None:
         sa.Column("notes", sa.Text(), nullable=True),
         sa.UniqueConstraint("suggestion_id", name="uq_overlay_decision_suggestion"),
     )
-    op.create_index("ix_overlay_decisions_project_id", "overlay_decisions", ["project_id"])
+    op.create_index(
+        "ix_overlay_decisions_project_id", "overlay_decisions", ["project_id"]
+    )
     op.create_index(
         "ix_overlay_decisions_source_geometry_id",
         "overlay_decisions",
@@ -266,13 +272,17 @@ def upgrade() -> None:
             name="uq_overlay_lock",
         ),
     )
-    op.create_index("ix_overlay_run_locks_project_id", "overlay_run_locks", ["project_id"])
+    op.create_index(
+        "ix_overlay_run_locks_project_id", "overlay_run_locks", ["project_id"]
+    )
     op.create_index(
         "ix_overlay_run_locks_source_geometry_id",
         "overlay_run_locks",
         ["source_geometry_id"],
     )
-    op.create_index("ix_overlay_run_locks_is_active", "overlay_run_locks", ["is_active"])
+    op.create_index(
+        "ix_overlay_run_locks_is_active", "overlay_run_locks", ["is_active"]
+    )
     op.create_index(
         "idx_overlay_locks_active",
         "overlay_run_locks",
@@ -460,9 +470,15 @@ def upgrade() -> None:
         sa.Column("effective_date", sa.DateTime(timezone=True), nullable=True),
         sa.Column("expiry_date", sa.DateTime(timezone=True), nullable=True),
     )
-    op.create_index("ix_ref_zoning_layers_jurisdiction", "ref_zoning_layers", ["jurisdiction"])
-    op.create_index("ix_ref_zoning_layers_layer_name", "ref_zoning_layers", ["layer_name"])
-    op.create_index("ix_ref_zoning_layers_zone_code", "ref_zoning_layers", ["zone_code"])
+    op.create_index(
+        "ix_ref_zoning_layers_jurisdiction", "ref_zoning_layers", ["jurisdiction"]
+    )
+    op.create_index(
+        "ix_ref_zoning_layers_layer_name", "ref_zoning_layers", ["layer_name"]
+    )
+    op.create_index(
+        "ix_ref_zoning_layers_zone_code", "ref_zoning_layers", ["zone_code"]
+    )
     op.create_index(
         "idx_ref_zoning_jurisdiction_zone",
         "ref_zoning_layers",
@@ -521,11 +537,31 @@ def upgrade() -> None:
         sa.Column("provenance", JSONB_TYPE, nullable=True),
         sa.Column("source_document", sa.Text(), nullable=True),
     )
-    op.create_index("ix_ref_material_standards_jurisdiction", "ref_material_standards", ["jurisdiction"])
-    op.create_index("ix_ref_material_standards_standard_code", "ref_material_standards", ["standard_code"])
-    op.create_index("ix_ref_material_standards_material_type", "ref_material_standards", ["material_type"])
-    op.create_index("ix_ref_material_standards_standard_body", "ref_material_standards", ["standard_body"])
-    op.create_index("ix_ref_material_standards_property_key", "ref_material_standards", ["property_key"])
+    op.create_index(
+        "ix_ref_material_standards_jurisdiction",
+        "ref_material_standards",
+        ["jurisdiction"],
+    )
+    op.create_index(
+        "ix_ref_material_standards_standard_code",
+        "ref_material_standards",
+        ["standard_code"],
+    )
+    op.create_index(
+        "ix_ref_material_standards_material_type",
+        "ref_material_standards",
+        ["material_type"],
+    )
+    op.create_index(
+        "ix_ref_material_standards_standard_body",
+        "ref_material_standards",
+        ["standard_body"],
+    )
+    op.create_index(
+        "ix_ref_material_standards_property_key",
+        "ref_material_standards",
+        ["property_key"],
+    )
     op.create_index(
         "idx_material_standards_type_property",
         "ref_material_standards",
@@ -601,8 +637,12 @@ def upgrade() -> None:
         sa.Column("provider", sa.String(length=100), nullable=False),
         sa.Column("methodology", sa.Text(), nullable=True),
     )
-    op.create_index("ix_ref_cost_indices_jurisdiction", "ref_cost_indices", ["jurisdiction"])
-    op.create_index("ix_ref_cost_indices_series_name", "ref_cost_indices", ["series_name"])
+    op.create_index(
+        "ix_ref_cost_indices_jurisdiction", "ref_cost_indices", ["jurisdiction"]
+    )
+    op.create_index(
+        "ix_ref_cost_indices_series_name", "ref_cost_indices", ["series_name"]
+    )
     op.create_index("ix_ref_cost_indices_category", "ref_cost_indices", ["category"])
     op.create_index("ix_ref_cost_indices_period", "ref_cost_indices", ["period"])
     op.create_index("ix_ref_cost_indices_provider", "ref_cost_indices", ["provider"])
@@ -632,10 +672,16 @@ def upgrade() -> None:
         sa.Column("item_metadata", JSONB_TYPE, nullable=True),
         sa.Column("source", sa.String(length=100), nullable=True),
     )
-    op.create_index("ix_ref_cost_catalogs_jurisdiction", "ref_cost_catalogs", ["jurisdiction"])
-    op.create_index("ix_ref_cost_catalogs_catalog_name", "ref_cost_catalogs", ["catalog_name"])
+    op.create_index(
+        "ix_ref_cost_catalogs_jurisdiction", "ref_cost_catalogs", ["jurisdiction"]
+    )
+    op.create_index(
+        "ix_ref_cost_catalogs_catalog_name", "ref_cost_catalogs", ["catalog_name"]
+    )
     op.create_index("ix_ref_cost_catalogs_category", "ref_cost_catalogs", ["category"])
-    op.create_index("ix_ref_cost_catalogs_item_code", "ref_cost_catalogs", ["item_code"])
+    op.create_index(
+        "ix_ref_cost_catalogs_item_code", "ref_cost_catalogs", ["item_code"]
+    )
     op.create_index(
         "idx_cost_catalogs_name_code",
         "ref_cost_catalogs",
@@ -666,8 +712,12 @@ def upgrade() -> None:
         sa.Column("metrics", JSONB_TYPE, nullable=True),
         sa.UniqueConstraint("run_key", name="uq_ref_ingestion_runs_run_key"),
     )
-    op.create_index("ix_ref_ingestion_runs_run_key", "ref_ingestion_runs", ["run_key"], unique=True)
-    op.create_index("ix_ref_ingestion_runs_flow_name", "ref_ingestion_runs", ["flow_name"])
+    op.create_index(
+        "ix_ref_ingestion_runs_run_key", "ref_ingestion_runs", ["run_key"], unique=True
+    )
+    op.create_index(
+        "ix_ref_ingestion_runs_flow_name", "ref_ingestion_runs", ["flow_name"]
+    )
     op.create_index("ix_ref_ingestion_runs_status", "ref_ingestion_runs", ["status"])
     op.create_index(
         "idx_ingestion_runs_flow_status",

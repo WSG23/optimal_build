@@ -22,7 +22,6 @@ except ModuleNotFoundError:  # pragma: no cover - keep inline fallback working
 
 from app.core.config import settings
 
-
 JobFunc = Callable[..., Awaitable[Any] | Any]
 
 
@@ -105,7 +104,9 @@ class _InlineBackend(_BaseBackend):
         )
 
 
-class _CeleryBackend(_BaseBackend):  # pragma: no cover - executed when celery is installed
+class _CeleryBackend(
+    _BaseBackend
+):  # pragma: no cover - executed when celery is installed
     name = "celery"
 
     def __init__(self) -> None:
@@ -150,7 +151,9 @@ class _CeleryBackend(_BaseBackend):  # pragma: no cover - executed when celery i
         )
 
 
-class _RQBackend(_BaseBackend):  # pragma: no cover - executed when rq/redis are installed
+class _RQBackend(
+    _BaseBackend
+):  # pragma: no cover - executed when rq/redis are installed
     name = "rq"
 
     def __init__(self) -> None:
@@ -224,7 +227,10 @@ class JobQueue:
         """Allow tests to replace ``enqueue`` without mutating the class."""
 
         if name == "enqueue":
-            if hasattr(value, "__func__") and getattr(value, "__func__", None) is type(self).enqueue:
+            if (
+                hasattr(value, "__func__")
+                and getattr(value, "__func__", None) is type(self).enqueue
+            ):
                 self.__dict__.pop("enqueue", None)
             else:
                 self.__dict__["enqueue"] = value
@@ -284,13 +290,17 @@ class JobQueue:
                 job_name = f"{job.__module__}.{job.__qualname__}"
         else:
             job_name = job
-        return await self._backend.enqueue(job_name, queue or self._queues.get(job_name), args, kwargs)
+        return await self._backend.enqueue(
+            job_name, queue or self._queues.get(job_name), args, kwargs
+        )
 
 
 job_queue = JobQueue()
 
 
-def job(name: Optional[str] = None, *, queue: Optional[str] = None) -> Callable[[JobFunc], JobFunc]:
+def job(
+    name: Optional[str] = None, *, queue: Optional[str] = None
+) -> Callable[[JobFunc], JobFunc]:
     """Decorator used to register job functions with the active backend."""
 
     def decorator(func: JobFunc) -> JobFunc:
@@ -303,7 +313,9 @@ def job(name: Optional[str] = None, *, queue: Optional[str] = None) -> Callable[
     return decorator
 
 
-celery_app = job_queue._backend.app if isinstance(job_queue._backend, _CeleryBackend) else None
+celery_app = (
+    job_queue._backend.app if isinstance(job_queue._backend, _CeleryBackend) else None
+)
 
 
 __all__ = ["JobDispatch", "JobQueue", "job", "job_queue", "celery_app"]

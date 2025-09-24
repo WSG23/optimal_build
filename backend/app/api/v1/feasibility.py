@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends
-
 from app.api.deps import require_viewer
 from app.schemas.feasibility import (
     FeasibilityAssessmentRequest,
@@ -17,6 +15,7 @@ from app.services.feasibility import (
     generate_feasibility_rules,
     run_feasibility_assessment,
 )
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/feasibility", tags=["feasibility"])
 

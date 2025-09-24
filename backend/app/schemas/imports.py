@@ -12,7 +12,9 @@ class DetectedFloor(BaseModel):
     """Summary of a detected floor and its units."""
 
     name: str = Field(..., description="Human readable floor name")
-    unit_ids: List[str] = Field(default_factory=list, description="Units located on this floor")
+    unit_ids: List[str] = Field(
+        default_factory=list, description="Units located on this floor"
+    )
 
 
 class ImportResult(BaseModel):
@@ -24,7 +26,8 @@ class ImportResult(BaseModel):
     size_bytes: int
     storage_path: str
     vector_storage_path: Optional[str] = Field(
-        default=None, description="URI of stored vectorised geometry derived from the upload"
+        default=None,
+        description="URI of stored vectorised geometry derived from the upload",
     )
     uploaded_at: datetime
     layer_metadata: List[Dict[str, Any]] = Field(

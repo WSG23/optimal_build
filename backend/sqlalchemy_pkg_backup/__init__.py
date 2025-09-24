@@ -18,7 +18,11 @@ def _load_installed_sqlalchemy() -> ModuleType | None:
     backend_root = stub_path.parent
     repo_root = stub_path.parents[2]
     repo_stub_path = repo_root / "sqlalchemy"
-    excluded_paths = {backend_root.resolve(), repo_root.resolve(), repo_stub_path.resolve()}
+    excluded_paths = {
+        backend_root.resolve(),
+        repo_root.resolve(),
+        repo_stub_path.resolve(),
+    }
 
     original_sys_path = list(sys.path)
     search_paths = [
@@ -58,7 +62,7 @@ def _load_repository_stub() -> ModuleType:
 def _create_inline_stub() -> ModuleType:
     module = ModuleType(__name__)
     module.__dict__["__path__"] = [str(Path(__file__).parent)]
-    module.__dict__.setdefault('__builtins__', __builtins__)
+    module.__dict__.setdefault("__builtins__", __builtins__)
 
     class _MissingSQLAlchemy(RuntimeError):
         def __init__(self, feature: str) -> None:
@@ -149,7 +153,9 @@ def _create_inline_stub() -> ModuleType:
         return _TextClause(statement)
 
     class _FunctionCall:
-        def __init__(self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
+        def __init__(
+            self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]
+        ) -> None:
             self.name = name
             self.args = args
             self.kwargs = kwargs

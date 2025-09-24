@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.audit.ledger import diff_logs, serialise_log, verify_chain
 from app.core.database import get_session
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/audit", tags=["audit"])
 

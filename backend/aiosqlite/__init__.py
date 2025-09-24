@@ -26,7 +26,9 @@ class Cursor:
         self._cursor = cursor
         self.rowcount = -1
 
-    async def execute(self, sql: str, parameters: Iterable[Any] | None = None) -> "Cursor":
+    async def execute(
+        self, sql: str, parameters: Iterable[Any] | None = None
+    ) -> "Cursor":
         self._cursor.execute(sql, tuple(parameters or ()))
         self.rowcount = self._cursor.rowcount
         return self
@@ -79,7 +81,9 @@ class Connection:
     async def cursor(self) -> Cursor:
         return Cursor(self._connection.cursor())
 
-    async def execute(self, sql: str, parameters: Iterable[Any] | None = None) -> Cursor:
+    async def execute(
+        self, sql: str, parameters: Iterable[Any] | None = None
+    ) -> Cursor:
         cursor = await self.cursor()
         await cursor.execute(sql, parameters)
         return cursor

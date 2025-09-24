@@ -4,11 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.background import BackgroundTask
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
@@ -21,6 +17,10 @@ from app.core.export import (
     ProjectGeometryMissing,
     generate_project_export,
 )
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field, field_validator
+from starlette.background import BackgroundTask
 
 router = APIRouter(prefix="/export", tags=["export"])
 
@@ -63,8 +63,10 @@ def _build_layer_mapping(payload: LayerMapPayload | None) -> LayerMapping:
         source=dict(payload.source),
         overlays=dict(payload.overlays),
         styles={key: dict(value) for key, value in payload.styles.items()},
-        default_source_layer=payload.default_source_layer or base_mapping.default_source_layer,
-        default_overlay_layer=payload.default_overlay_layer or base_mapping.default_overlay_layer,
+        default_source_layer=payload.default_source_layer
+        or base_mapping.default_source_layer,
+        default_overlay_layer=payload.default_overlay_layer
+        or base_mapping.default_overlay_layer,
     )
 
 
@@ -80,7 +82,9 @@ async def export_project(
     try:
         fmt = ExportFormat(payload.format)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Unsupported export format") from exc
+        raise HTTPException(
+            status_code=400, detail="Unsupported export format"
+        ) from exc
 
     layer_mapping = _build_layer_mapping(payload.layer_map)
     options = ExportOptions(
@@ -110,7 +114,9 @@ async def export_project(
         media_type=artifact.media_type,
         background=BackgroundTask(stream.close),
     )
-    response.headers["Content-Disposition"] = f'attachment; filename="{artifact.filename}"'
+    response.headers[
+        "Content-Disposition"
+    ] = f'attachment; filename="{artifact.filename}"'
     renderer = artifact.manifest.get("renderer")
     if renderer:
         response.headers["X-Export-Renderer"] = str(renderer)

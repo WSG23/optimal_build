@@ -1,0 +1,37 @@
+{
+  "project": "Mock Tower",
+  "layers": [
+    {
+      "name": "Level 01 - Floor Plan",
+      "type": "floor",
+      "units": [
+        {"id": "01-01", "area_m2": 45.0, "height_m": 52.5, "status": "pending"},
+        {"id": "01-02", "area_m2": 42.5, "status": "approved"}
+      ],
+      "metadata": {"elevation": 0.0, "discipline": "architecture"}
+    },
+    {
+      "name": "Level 02 - Floor Plan",
+      "type": "floor",
+      "units": [
+        {"id": "02-01", "area_m2": 47.3, "status": "pending"}
+      ],
+      "metadata": {"elevation": 3.2, "discipline": "architecture"}
+    },
+    {
+      "name": "Site Context",
+      "type": "reference",
+      "metadata": {
+        "elements": 5,
+        "heritage_zone": true,
+        "flood_zone": "coastal",
+        "site_area_sqm": 12500,
+        "advisory_hints": ["Submit heritage impact assessment"],
+        "overlays": ["heritage_conservation", "coastal_protection"]
+      }
+    }
+  ],
+  "floors": [
+    {"name": "Podium", "units": ["P1", "P2"]}
+  ]
+}

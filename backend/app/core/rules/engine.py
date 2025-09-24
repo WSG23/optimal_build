@@ -24,7 +24,9 @@ class RulesEngine:
         self._pack = dict(pack)
         rules = self._pack.get("rules", [])
         if not isinstance(rules, Sequence):
-            raise TypeError("Rule pack definition must include a sequence under 'rules'")
+            raise TypeError(
+                "Rule pack definition must include a sequence under 'rules'"
+            )
         self._rules: List[Mapping[str, Any]] = [dict(rule) for rule in rules]
 
     # ------------------------------------------------------------------
@@ -75,11 +77,14 @@ class RulesEngine:
                     continue
             checked += 1
 
-            passed, messages, facts = self._evaluate_predicate(predicate, entity, context)
+            passed, messages, facts = self._evaluate_predicate(
+                predicate, entity, context
+            )
             if not passed:
                 violation = {
                     "entity_id": str(getattr(entity, "id", "")),
-                    "messages": messages or [f"Rule '{rule.get('id')}' was not satisfied"],
+                    "messages": messages
+                    or [f"Rule '{rule.get('id')}' was not satisfied"],
                     "facts": facts,
                     "attributes": self._build_violation_attributes(entity, target),
                 }
@@ -118,11 +123,17 @@ class RulesEngine:
         context: _EvaluationContext,
     ) -> tuple[bool, List[str], List[Dict[str, Any]]]:
         if "all" in predicate:
-            return self._evaluate_all(predicate["all"], entity, context, predicate.get("message"))
+            return self._evaluate_all(
+                predicate["all"], entity, context, predicate.get("message")
+            )
         if "any" in predicate:
-            return self._evaluate_any(predicate["any"], entity, context, predicate.get("message"))
+            return self._evaluate_any(
+                predicate["any"], entity, context, predicate.get("message")
+            )
         if "not" in predicate:
-            return self._evaluate_not(predicate["not"], entity, context, predicate.get("message"))
+            return self._evaluate_not(
+                predicate["not"], entity, context, predicate.get("message")
+            )
         if "exists" in predicate:
             field = str(predicate["exists"])
             value = self._resolve_field(entity, field, context)
@@ -151,7 +162,9 @@ class RulesEngine:
         messages: List[str] = []
         facts: List[Dict[str, Any]] = []
         for item in predicates:
-            passed, child_messages, child_facts = self._evaluate_predicate(item, entity, context)
+            passed, child_messages, child_facts = self._evaluate_predicate(
+                item, entity, context
+            )
             if not passed:
                 all_passed = False
                 messages.extend(child_messages)
@@ -172,7 +185,9 @@ class RulesEngine:
         failure_messages: List[str] = []
         failure_facts: List[Dict[str, Any]] = []
         for item in predicates:
-            passed, child_messages, child_facts = self._evaluate_predicate(item, entity, context)
+            passed, child_messages, child_facts = self._evaluate_predicate(
+                item, entity, context
+            )
             if passed:
                 return True, [], []
             failure_messages.extend(child_messages)
@@ -187,7 +202,9 @@ class RulesEngine:
         context: _EvaluationContext,
         message: str | None,
     ) -> tuple[bool, List[str], List[Dict[str, Any]]]:
-        passed, child_messages, child_facts = self._evaluate_predicate(predicate, entity, context)
+        passed, child_messages, child_facts = self._evaluate_predicate(
+            predicate, entity, context
+        )
         if passed:
             failure_message = message or "Negated predicate evaluated to true"
             return False, [failure_message, *child_messages], child_facts
@@ -204,17 +221,24 @@ class RulesEngine:
         actual = self._resolve_field(entity, field, context)
 
         if "value_field" in predicate:
-            expected = self._resolve_field(entity, str(predicate["value_field"]), context)
+            expected = self._resolve_field(
+                entity, str(predicate["value_field"]), context
+            )
         elif "value_path" in predicate:
-            expected = self._resolve_field(entity, str(predicate["value_path"]), context)
+            expected = self._resolve_field(
+                entity, str(predicate["value_path"]), context
+            )
         else:
             expected = predicate.get("value")
         if isinstance(expected, str) and expected.startswith("$"):
             expected = self._resolve_field(entity, expected[1:], context)
 
-        comparison, normalised_actual, normalised_expected, reason = self._apply_operator(
-            operator, actual, expected
-        )
+        (
+            comparison,
+            normalised_actual,
+            normalised_expected,
+            reason,
+        ) = self._apply_operator(operator, actual, expected)
         if comparison:
             return True, [], []
 
@@ -223,7 +247,9 @@ class RulesEngine:
             if reason:
                 message = reason
             else:
-                message = self._format_failure_message(field, operator, normalised_expected, normalised_actual)
+                message = self._format_failure_message(
+                    field, operator, normalised_expected, normalised_actual
+                )
         fact: Dict[str, Any] = {
             "field": field,
             "operator": operator,
@@ -239,7 +265,9 @@ class RulesEngine:
     ) -> tuple[bool, Any, Any, str | None]:
         op = operator.lower()
         if op in {">", ">=", "<", "<="}:
-            numeric_actual, numeric_expected, comparable = self._coerce_numeric_pair(actual, expected)
+            numeric_actual, numeric_expected, comparable = self._coerce_numeric_pair(
+                actual, expected
+            )
             if not comparable:
                 reason = f"Cannot compare values using '{operator}': {actual!r} and {expected!r}"
                 return False, actual, expected, reason
@@ -261,37 +289,88 @@ class RulesEngine:
             if op == "in":
                 container = expected
                 if container is None:
-                    return False, actual, expected, "Expected a container for 'in' comparison"
-                if not isinstance(container, (str, bytes)) and not isinstance(container, Iterable):
-                    return False, actual, expected, "Right-hand side of 'in' must be iterable"
+                    return (
+                        False,
+                        actual,
+                        expected,
+                        "Expected a container for 'in' comparison",
+                    )
+                if not isinstance(container, (str, bytes)) and not isinstance(
+                    container, Iterable
+                ):
+                    return (
+                        False,
+                        actual,
+                        expected,
+                        "Right-hand side of 'in' must be iterable",
+                    )
                 return bool(actual in container), actual, expected, None
             if op == "not_in":
                 container = expected
                 if container is None:
-                    return False, actual, expected, "Expected a container for 'not_in' comparison"
-                if not isinstance(container, (str, bytes)) and not isinstance(container, Iterable):
-                    return False, actual, expected, "Right-hand side of 'not_in' must be iterable"
+                    return (
+                        False,
+                        actual,
+                        expected,
+                        "Expected a container for 'not_in' comparison",
+                    )
+                if not isinstance(container, (str, bytes)) and not isinstance(
+                    container, Iterable
+                ):
+                    return (
+                        False,
+                        actual,
+                        expected,
+                        "Right-hand side of 'not_in' must be iterable",
+                    )
                 return bool(actual not in container), actual, expected, None
             if op == "contains":
                 if actual is None:
-                    return False, actual, expected, "Left-hand side of 'contains' is empty"
+                    return (
+                        False,
+                        actual,
+                        expected,
+                        "Left-hand side of 'contains' is empty",
+                    )
                 if isinstance(actual, Mapping):
-                    return bool(expected in actual or expected in actual.values()), actual, expected, None
+                    return (
+                        bool(expected in actual or expected in actual.values()),
+                        actual,
+                        expected,
+                        None,
+                    )
                 if isinstance(actual, (str, bytes)):
                     return bool(str(expected) in actual), actual, expected, None
                 if isinstance(actual, Iterable):
                     return bool(expected in actual), actual, expected, None
-                return False, actual, expected, "Left-hand side of 'contains' must be iterable"
+                return (
+                    False,
+                    actual,
+                    expected,
+                    "Left-hand side of 'contains' must be iterable",
+                )
             if op == "not_contains":
                 if actual is None:
                     return True, actual, expected, None
                 if isinstance(actual, Mapping):
-                    return bool(expected not in actual and expected not in actual.values()), actual, expected, None
+                    return (
+                        bool(
+                            expected not in actual and expected not in actual.values()
+                        ),
+                        actual,
+                        expected,
+                        None,
+                    )
                 if isinstance(actual, (str, bytes)):
                     return bool(str(expected) not in actual), actual, expected, None
                 if isinstance(actual, Iterable):
                     return bool(expected not in actual), actual, expected, None
-                return False, actual, expected, "Left-hand side of 'not_contains' must be iterable"
+                return (
+                    False,
+                    actual,
+                    expected,
+                    "Left-hand side of 'not_contains' must be iterable",
+                )
             if op == "is_truthy":
                 return bool(actual), actual, expected, None
             if op == "is_falsy":
@@ -344,7 +423,10 @@ class RulesEngine:
         return value
 
     def _resolve_computed(
-        self, segments: Sequence[str], entity: GeometryEntity, context: _EvaluationContext
+        self,
+        segments: Sequence[str],
+        entity: GeometryEntity,
+        context: _EvaluationContext,
     ) -> Any:
         if not segments:
             return None
@@ -430,7 +512,9 @@ class RulesEngine:
             f"{operator} {expected!r}"
         )
 
-    def _build_violation_attributes(self, entity: GeometryEntity, target: str) -> Dict[str, Any]:
+    def _build_violation_attributes(
+        self, entity: GeometryEntity, target: str
+    ) -> Dict[str, Any]:
         attributes: Dict[str, Any] = {"target": target}
         name = getattr(entity, "name", None)
         if name:

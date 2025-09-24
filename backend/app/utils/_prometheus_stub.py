@@ -208,17 +208,15 @@ def generate_latest(registry: CollectorRegistry) -> bytes:
                     bucket_labels["le"] = bound_label
                     if bucket_labels:
                         labels = ",".join(
-                            f"{k}=\"{v}\"" for k, v in bucket_labels.items()
+                            f'{k}="{v}"' for k, v in bucket_labels.items()
                         )
-                        lines.append(
-                            f"{metric._name}_bucket{{{labels}}} {value}"
-                        )
+                        lines.append(f"{metric._name}_bucket{{{labels}}} {value}")
                     else:
                         lines.append(
-                            f"{metric._name}_bucket{{le=\"{bound_label}\"}} {value}"
+                            f'{metric._name}_bucket{{le="{bound_label}"}} {value}'
                         )
                 if label_map:
-                    labels = ",".join(f"{k}=\"{v}\"" for k, v in label_map.items())
+                    labels = ",".join(f'{k}="{v}"' for k, v in label_map.items())
                     lines.append(f"{metric._name}_sum{{{labels}}} {sample.sum()}")
                     lines.append(f"{metric._name}_count{{{labels}}} {sample.count()}")
                 else:
@@ -226,7 +224,7 @@ def generate_latest(registry: CollectorRegistry) -> bytes:
                     lines.append(f"{metric._name}_count {sample.count()}")
                 continue
             if label_map:
-                labels = ",".join(f"{k}=\"{v}\"" for k, v in label_map.items())
+                labels = ",".join(f'{k}="{v}"' for k, v in label_map.items())
                 lines.append(f"{metric._name}{{{labels}}} {sample._value.get()}")
             else:
                 lines.append(f"{metric._name} {sample._value.get()}")

@@ -253,7 +253,9 @@ async def test_calculate_buildable_ignores_unpublished_rules(session) -> None:
 
 
 @pytest.mark.asyncio
-async def test_calculate_buildable_without_rule_overrides(async_session_factory) -> None:
+async def test_calculate_buildable_without_rule_overrides(
+    async_session_factory,
+) -> None:
     defaults = BuildableDefaults(
         plot_ratio=3.0,
         site_area_m2=750.0,

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefParcel, RefZoningLayer
+from sqlalchemy import Select, func, select
 
 
 def _coerce_float(value: object) -> Optional[float]:
@@ -26,7 +26,9 @@ def _coerce_float(value: object) -> Optional[float]:
         return None
 
 
-async def parcel_area(session: AsyncSession, parcel: Optional[RefParcel]) -> Optional[float]:
+async def parcel_area(
+    session: AsyncSession, parcel: Optional[RefParcel]
+) -> Optional[float]:
     """Return the parcel area using PostGIS geometry columns when available."""
 
     if parcel is None:
@@ -78,4 +80,3 @@ async def load_layers_for_zone(
 
 
 __all__ = ["load_layers_for_zone", "parcel_area"]
-

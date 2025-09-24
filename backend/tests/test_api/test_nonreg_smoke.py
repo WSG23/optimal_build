@@ -15,8 +15,8 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from backend.scripts import seed_nonreg
 from app.models.rkp import RefProduct
+from backend.scripts import seed_nonreg
 
 
 @pytest.mark.asyncio
@@ -47,7 +47,9 @@ async def test_nonreg_reference_endpoints_expose_provenance(
     assert len(ergonomics_payload) >= 1
     assert any(entry.get("source") for entry in ergonomics_payload)
 
-    products_response = await app_client.get("/api/v1/products", params={"category": "bathroom"})
+    products_response = await app_client.get(
+        "/api/v1/products", params={"category": "bathroom"}
+    )
     assert products_response.status_code == 200
     products_payload = products_response.json()
     assert len(products_payload) == 1

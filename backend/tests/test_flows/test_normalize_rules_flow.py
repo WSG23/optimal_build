@@ -6,14 +6,15 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from flows.normalize_rules import normalize_reference_rules
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
-async def test_normalize_reference_rules_extracts_zoning_metrics(async_session_factory) -> None:
+async def test_normalize_reference_rules_extracts_zoning_metrics(
+    async_session_factory,
+) -> None:
     async with async_session_factory() as session:
         source = RefSource(
             jurisdiction="SG",
@@ -58,8 +59,10 @@ async def test_normalize_reference_rules_extracts_zoning_metrics(async_session_f
 
     async with async_session_factory() as session:
         rules = (
-            await session.execute(select(RefRule).order_by(RefRule.parameter_key))
-        ).scalars().all()
+            (await session.execute(select(RefRule).order_by(RefRule.parameter_key)))
+            .scalars()
+            .all()
+        )
 
     assert {rule.parameter_key for rule in rules} == {
         "zoning.max_building_height_m",
@@ -99,7 +102,12 @@ async def test_normalize_reference_rules_extracts_zoning_metrics(async_session_f
 
     async with async_session_factory() as session:
         total_rules = (
-            await session.execute(select(RefRule).where(RefRule.document_id == document_id))
-        ).scalars().all()
+            (
+                await session.execute(
+                    select(RefRule).where(RefRule.document_id == document_id)
+                )
+            )
+            .scalars()
+            .all()
+        )
     assert len(total_rules) == 4
-

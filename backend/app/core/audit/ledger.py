@@ -9,11 +9,11 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.audit import AuditLog
+from sqlalchemy import select
 
 
 def _as_utc(timestamp: datetime | None) -> datetime | None:
@@ -66,7 +66,9 @@ def _payload_for_hash(log: AuditLog) -> Dict[str, Any]:
 def compute_event_hash(payload: Mapping[str, Any]) -> str:
     """Compute a SHA-256 hash for the supplied payload."""
 
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    canonical = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
@@ -155,7 +157,9 @@ def _diff_value(value_a: Any, value_b: Any) -> Dict[str, Any] | None:
     return {"from": value_a, "to": value_b}
 
 
-def _diff_context(context_a: Mapping[str, Any], context_b: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
+def _diff_context(
+    context_a: Mapping[str, Any], context_b: Mapping[str, Any]
+) -> Dict[str, Dict[str, Any]]:
     """Compute added/removed/changed keys between two context payloads."""
 
     added: Dict[str, Any] = {}
@@ -181,14 +185,20 @@ def diff_logs(log_a: AuditLog, log_b: AuditLog) -> Dict[str, Any]:
     context_b = _normalise_context(log_b.context)
     diff = {
         "event_type": _diff_value(log_a.event_type, log_b.event_type),
-        "baseline_seconds": _diff_value(_coerce_float(log_a.baseline_seconds), _coerce_float(log_b.baseline_seconds)),
-        "actual_seconds": _diff_value(_coerce_float(log_a.actual_seconds), _coerce_float(log_b.actual_seconds)),
+        "baseline_seconds": _diff_value(
+            _coerce_float(log_a.baseline_seconds), _coerce_float(log_b.baseline_seconds)
+        ),
+        "actual_seconds": _diff_value(
+            _coerce_float(log_a.actual_seconds), _coerce_float(log_b.actual_seconds)
+        ),
         "context": _diff_context(context_a, context_b),
     }
     return diff
 
 
-async def verify_chain(session: AsyncSession, project_id: int) -> Tuple[bool, list[AuditLog]]:
+async def verify_chain(
+    session: AsyncSession, project_id: int
+) -> Tuple[bool, list[AuditLog]]:
     """Validate the audit chain for ``project_id`` and return ordered entries."""
 
     stmt = (

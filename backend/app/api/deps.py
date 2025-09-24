@@ -6,7 +6,6 @@ from typing import Literal
 
 from fastapi import Depends, Header, HTTPException, status
 
-
 Role = Literal["viewer", "reviewer", "admin"]
 
 _VIEWER_ROLES: set[str] = {"viewer", "reviewer", "admin"}
@@ -43,4 +42,3 @@ async def require_reviewer(role: Role = Depends(get_request_role)) -> Role:
 
 
 __all__ = ["get_request_role", "require_viewer", "require_reviewer", "Role"]
-

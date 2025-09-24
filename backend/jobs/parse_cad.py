@@ -142,7 +142,9 @@ def _read_dxf_document(payload: bytes):
             pass
 
 
-def _extract_dxf_layer_metadata(doc) -> List[Dict[str, Any]]:  # pragma: no cover - depends on ezdxf
+def _extract_dxf_layer_metadata(
+    doc,
+) -> List[Dict[str, Any]]:  # pragma: no cover - depends on ezdxf
     metadata: List[Dict[str, Any]] = []
     layers = getattr(doc, "layers", None)
     if layers is None:
@@ -185,7 +187,11 @@ def _extract_dxf_layer_metadata(doc) -> List[Dict[str, Any]]:  # pragma: no cove
     return metadata
 
 
-def _collect_dxf_space_candidates(doc) -> Tuple[List[DxfSpaceCandidate], Dict[str, List[str]]]:  # pragma: no cover - depends on ezdxf
+def _collect_dxf_space_candidates(
+    doc,
+) -> Tuple[
+    List[DxfSpaceCandidate], Dict[str, List[str]]
+]:  # pragma: no cover - depends on ezdxf
     candidates: List[DxfSpaceCandidate] = []
     layer_units: Dict[str, List[str]] = {}
     modelspace = doc.modelspace()
@@ -210,7 +216,9 @@ def _collect_dxf_space_candidates(doc) -> Tuple[List[DxfSpaceCandidate], Dict[st
         layer_name = str(getattr(entity.dxf, "layer", "") or "").strip() or None
         if layer_name:
             layer_units.setdefault(layer_name.lower(), []).append(space_id)
-        candidates.append(DxfSpaceCandidate(identifier=space_id, boundary=points, layer=layer_name))
+        candidates.append(
+            DxfSpaceCandidate(identifier=space_id, boundary=points, layer=layer_name)
+        )
     return candidates, layer_units
 
 
@@ -251,10 +259,14 @@ def _prepare_dxf_quicklook(payload: bytes) -> DxfQuicklook:
     candidates, layer_units = _collect_dxf_space_candidates(doc)
     unit_ids = [candidate.identifier for candidate in candidates]
     floors = _derive_dxf_floors(layer_metadata, unit_ids, layer_units)
-    return DxfQuicklook(candidates=candidates, floors=floors, units=unit_ids, layers=layer_metadata)
+    return DxfQuicklook(
+        candidates=candidates, floors=floors, units=unit_ids, layers=layer_metadata
+    )
 
 
-def detect_dxf_metadata(payload: bytes) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+def detect_dxf_metadata(
+    payload: bytes,
+) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
     quicklook = _prepare_dxf_quicklook(payload)
     return quicklook.floors, quicklook.units, quicklook.layers
 
@@ -266,7 +278,9 @@ def _load_ifc_model(payload: bytes):
     return ifcopenshell.file.from_string(text)  # type: ignore[attr-defined]
 
 
-def _extract_ifc_layer_metadata(model) -> List[Dict[str, Any]]:  # pragma: no cover - depends on ifcopenshell
+def _extract_ifc_layer_metadata(
+    model,
+) -> List[Dict[str, Any]]:  # pragma: no cover - depends on ifcopenshell
     metadata: List[Dict[str, Any]] = []
     try:
         assignments = model.by_type("IfcPresentationLayerAssignment")
@@ -274,7 +288,9 @@ def _extract_ifc_layer_metadata(model) -> List[Dict[str, Any]]:  # pragma: no co
         assignments = []
     seen: Dict[str, int] = {}
     for assignment in assignments:
-        name = getattr(assignment, "Name", None) or getattr(assignment, "Description", None)
+        name = getattr(assignment, "Name", None) or getattr(
+            assignment, "Description", None
+        )
         base_name = str(name) if name else f"Layer-{assignment.id()}"
         candidate = base_name
         counter = 1
@@ -287,7 +303,9 @@ def _extract_ifc_layer_metadata(model) -> List[Dict[str, Any]]:  # pragma: no co
             {
                 "name": candidate,
                 "item_count": len(assigned_items),
-                "type": assignment.is_a() if hasattr(assignment, "is_a") else "IfcPresentationLayerAssignment",
+                "type": assignment.is_a()
+                if hasattr(assignment, "is_a")
+                else "IfcPresentationLayerAssignment",
             }
         )
     return metadata
@@ -301,8 +319,12 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
     units: List[str] = []
     seen_units: Dict[str, None] = {}
 
-    for storey in model.by_type("IfcBuildingStorey"):  # pragma: no cover - depends on ifcopenshell
-        level_id = _normalise_name(getattr(storey, "GlobalId", None), f"Level-{storey.id()}")
+    for storey in model.by_type(
+        "IfcBuildingStorey"
+    ):  # pragma: no cover - depends on ifcopenshell
+        level_id = _normalise_name(
+            getattr(storey, "GlobalId", None), f"Level-{storey.id()}"
+        )
         floor_name = _normalise_name(getattr(storey, "Name", None), level_id)
         elevation_raw = getattr(storey, "Elevation", 0.0)
         try:
@@ -314,7 +336,9 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
                 "id": level_id,
                 "name": floor_name,
                 "elevation": elevation,
-                "metadata": {"ifc_type": storey.is_a()} if hasattr(storey, "is_a") else {},
+                "metadata": {"ifc_type": storey.is_a()}
+                if hasattr(storey, "is_a")
+                else {},
             }
         )
 
@@ -324,7 +348,9 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
             for element in getattr(rel, "RelatedElements", []) or []:
                 if not hasattr(element, "is_a") or not element.is_a("IfcSpace"):
                     continue
-                space_id = _normalise_name(getattr(element, "GlobalId", None), f"Space-{element.id()}")
+                space_id = _normalise_name(
+                    getattr(element, "GlobalId", None), f"Space-{element.id()}"
+                )
                 if space_id not in seen_units:
                     seen_units[space_id] = None
                     units.append(space_id)
@@ -339,10 +365,14 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
                 )
         floors_summary.append({"name": floor_name, "unit_ids": floor_units})
 
-    for element in model.by_type("IfcSpace"):  # pragma: no cover - depends on ifcopenshell
+    for element in model.by_type(
+        "IfcSpace"
+    ):  # pragma: no cover - depends on ifcopenshell
         if not hasattr(element, "is_a") or not element.is_a("IfcSpace"):
             continue
-        space_id = _normalise_name(getattr(element, "GlobalId", None), f"Space-{element.id()}")
+        space_id = _normalise_name(
+            getattr(element, "GlobalId", None), f"Space-{element.id()}"
+        )
         if space_id in seen_units:
             continue
         seen_units[space_id] = None
@@ -373,12 +403,16 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
     )
 
 
-def detect_ifc_metadata(payload: bytes) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+def detect_ifc_metadata(
+    payload: bytes,
+) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
     quicklook = _prepare_ifc_quicklook(payload)
     return quicklook.floors, quicklook.units, quicklook.layers
 
 
-def _estimate_space_geometry(offset_x: float, offset_y: float, area: Optional[float]) -> List[Dict[str, float]]:
+def _estimate_space_geometry(
+    offset_x: float, offset_y: float, area: Optional[float]
+) -> List[Dict[str, float]]:
     side = max(math.sqrt(area) if area and area > 0 else 4.0, 3.0)
     width = side
     height = max(area / width if area else side, 3.0)
@@ -419,7 +453,9 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
             floor_layers.append(item)
 
     entries: List[Mapping[str, Any]] = list(floor_layers)
-    extra_floors = data.get("floors") if isinstance(data.get("floors"), Sequence) else []
+    extra_floors = (
+        data.get("floors") if isinstance(data.get("floors"), Sequence) else []
+    )
     for item in extra_floors:  # type: ignore[assignment]
         if isinstance(item, Mapping):
             entries.append(item)
@@ -437,22 +473,33 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
         level_payload = {
             "id": level_id,
             "name": floor_name,
-            "elevation": float(entry.get("metadata", {}).get("elevation", (index - 1) * 3.5)),
+            "elevation": float(
+                entry.get("metadata", {}).get("elevation", (index - 1) * 3.5)
+            ),
             "metadata": level_metadata,
         }
         builder.add_level(level_payload)
 
-        floor_units: Iterable[Any] = entry.get("units", []) if isinstance(entry.get("units"), Iterable) else []
+        floor_units: Iterable[Any] = (
+            entry.get("units", []) if isinstance(entry.get("units"), Iterable) else []
+        )
         floor_summary_units: List[str] = []
         offset_x = 0.0
         for raw_unit in floor_units:
             if isinstance(raw_unit, Mapping):
-                unit_identifier = raw_unit.get("id") or raw_unit.get("name") or raw_unit.get("label")
+                unit_identifier = (
+                    raw_unit.get("id") or raw_unit.get("name") or raw_unit.get("label")
+                )
                 area_value = raw_unit.get("area_m2") or raw_unit.get("area")
             else:
                 unit_identifier = raw_unit
                 area_value = None
-            unit_id = _ensure_unique(_normalise_name(unit_identifier, f"{level_id}-unit-{len(unit_ids) + 1}"), seen_units)
+            unit_id = _ensure_unique(
+                _normalise_name(
+                    unit_identifier, f"{level_id}-unit-{len(unit_ids) + 1}"
+                ),
+                seen_units,
+            )
             unit_ids.append(unit_id)
             floor_summary_units.append(unit_id)
 
@@ -517,7 +564,10 @@ def _parse_json_payload(data: Mapping[str, Any]) -> ParsedGeometry:
     graph = builder.graph
     return ParsedGeometry(
         graph=graph,
-        floors=[{"name": level.name or level.id, "unit_ids": []} for level in graph.levels.values()],
+        floors=[
+            {"name": level.name or level.id, "unit_ids": []}
+            for level in graph.levels.values()
+        ],
         units=list(graph.spaces.keys()),
         layers=[],
         metadata={"source": "json_geometry", "floors": len(graph.levels)},
@@ -575,13 +625,17 @@ def _parse_ifc_payload(payload: bytes) -> ParsedGeometry:
     default_level_id: Optional[str] = None
     if not added_levels and quicklook.units:
         default_level_id = "DefaultStorey"
-        builder.add_level({"id": default_level_id, "name": "Default Storey", "elevation": 0.0})
+        builder.add_level(
+            {"id": default_level_id, "name": "Default Storey", "elevation": 0.0}
+        )
         added_levels[default_level_id] = None
 
     if any(space.level_id is None for space in quicklook.spaces):
         default_level_id = default_level_id or "Unassigned"
         if default_level_id not in added_levels:
-            builder.add_level({"id": default_level_id, "name": "Unassigned", "elevation": 0.0})
+            builder.add_level(
+                {"id": default_level_id, "name": "Unassigned", "elevation": 0.0}
+            )
             added_levels[default_level_id] = None
 
     for candidate in quicklook.spaces:  # pragma: no cover - depends on ifcopenshell
@@ -628,7 +682,9 @@ def _parse_payload(record: ImportRecord, payload: bytes) -> ParsedGeometry:
     raise RuntimeError(f"Unsupported import format for '{record.filename}'")
 
 
-async def _persist_result(session, record: ImportRecord, parsed: ParsedGeometry) -> Dict[str, Any]:
+async def _persist_result(
+    session, record: ImportRecord, parsed: ParsedGeometry
+) -> Dict[str, Any]:
     graph_payload = GeometrySerializer.to_export(parsed.graph)
     record.parse_status = "completed"
     record.parse_result = {

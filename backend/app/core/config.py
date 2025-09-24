@@ -185,9 +185,7 @@ class Settings:
         default_celery_backend = _derive_redis_url(redis_base, 1)
         default_rq_url = _derive_redis_url(redis_base, 2)
 
-        self.CELERY_BROKER_URL = os.getenv(
-            "CELERY_BROKER_URL", default_celery_broker
-        )
+        self.CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", default_celery_broker)
         self.CELERY_RESULT_BACKEND = os.getenv(
             "CELERY_RESULT_BACKEND", default_celery_backend
         )

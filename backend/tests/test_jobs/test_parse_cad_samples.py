@@ -15,7 +15,9 @@ SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
 def test_ifc_sample_detects_multiple_storeys() -> None:
     """The IFC fixture should surface distinct storeys and associated spaces."""
 
-    pytest.importorskip("ifcopenshell", reason="ifcopenshell is required for IFC parsing")
+    pytest.importorskip(
+        "ifcopenshell", reason="ifcopenshell is required for IFC parsing"
+    )
 
     payload = (SAMPLES_DIR / "ifc" / "office_small.ifc").read_bytes()
     parsed = _parse_ifc_payload(payload)

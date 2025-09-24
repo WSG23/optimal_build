@@ -121,7 +121,9 @@ def test_overlay_merge_preserves_sources(geometry_graph: GeometryGraph) -> None:
         doors=[],
         walls=[],
         levels=[],
-        relationships=[Relationship(rel_type="contains", source_id="L1", target_id="F2")],
+        relationships=[
+            Relationship(rel_type="contains", source_id="L1", target_id="F2")
+        ],
     )
 
     merged = merge_graphs(geometry_graph, overlay_graph)

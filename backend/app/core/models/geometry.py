@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import hashlib
 import json
+from dataclasses import dataclass, field
 from typing import (
     Any,
     Dict,
@@ -18,7 +18,6 @@ from typing import (
     Tuple,
     TypeVar,
 )
-
 
 Point2D = Tuple[float, float]
 
@@ -39,7 +38,9 @@ class SourceReference:
         return data
 
     @staticmethod
-    def from_mapping(payload: Optional[MutableMapping[str, Any]]) -> Optional["SourceReference"]:
+    def from_mapping(
+        payload: Optional[MutableMapping[str, Any]]
+    ) -> Optional["SourceReference"]:
         """Create a reference from an arbitrary mapping.
 
         The method is defensive: it tolerates missing keys and additional metadata
@@ -228,7 +229,9 @@ class GeometryGraph:
         self.spaces: Dict[str, Space] = {entity.id: entity for entity in spaces or []}
         self.walls: Dict[str, Wall] = {entity.id: entity for entity in walls or []}
         self.doors: Dict[str, Door] = {entity.id: entity for entity in doors or []}
-        self.fixtures: Dict[str, Fixture] = {entity.id: entity for entity in fixtures or []}
+        self.fixtures: Dict[str, Fixture] = {
+            entity.id: entity for entity in fixtures or []
+        }
         self.relationships: List[Relationship] = list(relationships or [])
 
     def copy(self) -> "GeometryGraph":
@@ -271,26 +274,42 @@ class GeometryGraph:
 
     def get_entity(self, entity_id: str) -> Optional[GeometryEntity]:
         """Return the entity with the provided identifier if present."""
-        for collection in (self.levels, self.spaces, self.walls, self.doors, self.fixtures):
+        for collection in (
+            self.levels,
+            self.spaces,
+            self.walls,
+            self.doors,
+            self.fixtures,
+        ):
             if entity_id in collection:
                 return collection[entity_id]
         return None
 
     def iter_entities(self) -> Iterator[GeometryEntity]:
         """Iterate over every entity in the graph."""
-        for collection in (self.levels, self.spaces, self.walls, self.doors, self.fixtures):
+        for collection in (
+            self.levels,
+            self.spaces,
+            self.walls,
+            self.doors,
+            self.fixtures,
+        ):
             yield from collection.values()
 
     def add_relationship(self, relationship: Relationship) -> Relationship:
         """Add a new relationship if it is not already present."""
-        existing = self.find_relationship(relationship.rel_type, relationship.source_id, relationship.target_id)
+        existing = self.find_relationship(
+            relationship.rel_type, relationship.source_id, relationship.target_id
+        )
         if existing:
             existing.attributes.update(relationship.attributes)
             return existing
         self.relationships.append(relationship)
         return relationship
 
-    def find_relationship(self, rel_type: str, source_id: str, target_id: str) -> Optional[Relationship]:
+    def find_relationship(
+        self, rel_type: str, source_id: str, target_id: str
+    ) -> Optional[Relationship]:
         """Retrieve an existing relationship matching the key."""
         key = (rel_type, source_id, target_id)
         for relationship in self.relationships:
@@ -298,7 +317,9 @@ class GeometryGraph:
                 return relationship
         return None
 
-    def remove_relationship(self, rel_type: str, source_id: str, target_id: str) -> None:
+    def remove_relationship(
+        self, rel_type: str, source_id: str, target_id: str
+    ) -> None:
         """Remove a relationship from the graph if present."""
         key = (rel_type, source_id, target_id)
         self.relationships = [rel for rel in self.relationships if rel.key() != key]
@@ -311,7 +332,9 @@ class GeometryGraph:
             "walls": [wall.to_dict() for wall in self.walls.values()],
             "doors": [door.to_dict() for door in self.doors.values()],
             "fixtures": [fixture.to_dict() for fixture in self.fixtures.values()],
-            "relationships": [relationship.to_dict() for relationship in self.relationships],
+            "relationships": [
+                relationship.to_dict() for relationship in self.relationships
+            ],
         }
 
     @classmethod
@@ -335,7 +358,10 @@ class GeometryGraph:
                 source=SourceReference.from_mapping(item.get("source")),
                 metadata=item.get("metadata", {}),
                 level_id=item.get("level_id", ""),
-                boundary=[(float(point[0]), float(point[1])) for point in item.get("boundary", [])],
+                boundary=[
+                    (float(point[0]), float(point[1]))
+                    for point in item.get("boundary", [])
+                ],
                 wall_ids=list(item.get("wall_ids", [])),
             )
             for item in payload.get("spaces", [])
@@ -439,7 +465,9 @@ class GeometryNode:
 
         if not isinstance(payload, Mapping):
             raise TypeError("GeometryNode payload must be a mapping")
-        node_id = str(payload.get("id") or payload.get("node_id") or payload.get("name") or "node")
+        node_id = str(
+            payload.get("id") or payload.get("node_id") or payload.get("name") or "node"
+        )
         kind = str(payload.get("kind") or payload.get("type") or "entity")
         properties_raw = payload.get("properties")
         if isinstance(properties_raw, Mapping):

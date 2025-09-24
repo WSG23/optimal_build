@@ -1,8 +1,7 @@
 """Tests for the rule normalisation helpers."""
 
-from pytest import approx
-
 import pytest
+from pytest import approx
 
 pytest.importorskip("sqlalchemy")
 

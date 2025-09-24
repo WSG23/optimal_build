@@ -7,18 +7,16 @@ import asyncio
 from dataclasses import dataclass
 from typing import Dict, Iterable
 
-import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from app.core.database import AsyncSessionLocal, engine
-from app.models import entitlements as ent_models  # noqa: F401  pylint: disable=unused-import
-from app.models.base import BaseModel
-from app.models.entitlements import (
-    EntApprovalCategory,
-    EntRoadmapStatus,
+from app.models import (  # noqa: F401  pylint: disable=unused-import
+    entitlements as ent_models,
 )
+from app.models.base import BaseModel
+from app.models.entitlements import EntApprovalCategory, EntRoadmapStatus
 from app.services.entitlements import EntitlementsService
-
 
 AUTHORITIES: Iterable[Dict[str, str | None]] = (
     {
@@ -210,11 +208,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> EntitlementsSeedSummary:
     parser = build_parser()
     args = parser.parse_args(argv)
-    summary = asyncio.run(_run_async(project_id=args.project_id, reset_existing=args.reset))
+    summary = asyncio.run(
+        _run_async(project_id=args.project_id, reset_existing=args.reset)
+    )
     print(summary.as_dict())  # noqa: T201 - user facing CLI output
     return summary
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
     main()
-

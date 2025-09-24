@@ -5,14 +5,16 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
-from sqlalchemy import select
-
 from app.core.config import settings
 from app.models.rkp import RefParcel
 from app.schemas.buildable import BuildableDefaults
-from app.services.buildable import ResolvedZone, calculate_buildable, load_layers_for_zone
+from app.services.buildable import (
+    ResolvedZone,
+    calculate_buildable,
+    load_layers_for_zone,
+)
 from scripts.seed_screening import seed_screening_sample_data
-
+from sqlalchemy import select
 
 PARCEL_ZONE_CASES = (
     ("MK01-01234", "R2"),
@@ -34,7 +36,9 @@ async def test_buildable_postgis_flag_consistency(async_session_factory, monkeyp
         efficiency_factor=0.82,
     )
 
-    async def _compute_metrics(use_postgis: bool, parcel_ref: str, zone_code: str) -> dict:
+    async def _compute_metrics(
+        use_postgis: bool, parcel_ref: str, zone_code: str
+    ) -> dict:
         monkeypatch.setattr(settings, "BUILDABLE_USE_POSTGIS", use_postgis)
         async with async_session_factory() as session:
             parcel = (
@@ -62,4 +66,3 @@ async def test_buildable_postgis_flag_consistency(async_session_factory, monkeyp
         baseline = await _compute_metrics(False, parcel_ref, zone_code)
         with_postgis = await _compute_metrics(True, parcel_ref, zone_code)
         assert with_postgis == baseline
-

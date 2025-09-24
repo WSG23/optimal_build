@@ -35,7 +35,7 @@ def load_package_stub(module_name: str, package: str, friendly_name: str) -> Mod
     module.__spec__ = None
 
     sys.modules[module_name] = module
-    module.__dict__.setdefault('__builtins__', __builtins__)
+    module.__dict__.setdefault("__builtins__", __builtins__)
     code = compile(stub_init.read_text(encoding="utf-8"), str(stub_init), "exec")
     exec(code, module.__dict__)
     return module
@@ -47,7 +47,7 @@ def load_module_from_path(module_name: str, path: Path) -> ModuleType:
     module = ModuleType(module_name)
     module.__file__ = str(path)
     sys.modules[module_name] = module
-    module.__dict__.setdefault('__builtins__', __builtins__)
+    module.__dict__.setdefault("__builtins__", __builtins__)
     code = compile(path.read_text(encoding="utf-8"), str(path), "exec")
     exec(code, module.__dict__)
     return module

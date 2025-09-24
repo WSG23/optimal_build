@@ -17,7 +17,6 @@ except ModuleNotFoundError:  # pragma: no cover - available in production enviro
 
 from backend.jobs import job
 
-
 Point = Tuple[float, float]
 
 
@@ -79,7 +78,10 @@ class RasterVectorResult:
     def to_payload(self) -> Dict[str, Any]:
         bounds_payload: Optional[Dict[str, float]] = None
         if self.bounds is not None:
-            bounds_payload = {"width": float(self.bounds[0]), "height": float(self.bounds[1])}
+            bounds_payload = {
+                "width": float(self.bounds[0]),
+                "height": float(self.bounds[1]),
+            }
         return {
             "source": self.source,
             "paths": [path.to_payload() for path in self.paths],
@@ -111,7 +113,9 @@ def _parse_svg_length(raw: Optional[str]) -> Optional[float]:
 
 def _parse_svg_points(raw: str) -> List[Point]:
     points: List[Point] = []
-    tokens = [token.strip() for token in raw.replace("\n", " ").split(" ") if token.strip()]
+    tokens = [
+        token.strip() for token in raw.replace("\n", " ").split(" ") if token.strip()
+    ]
     for token in tokens:
         if "," in token:
             x_str, y_str = token.split(",", 1)
@@ -240,7 +244,13 @@ def detect_baseline_walls(
             if length < minimum_length:
                 continue
             thickness = path.stroke_width or 0.2
-            confidence = min(1.0, max(thickness / max(minimum_length, 0.1), length / max(minimum_length * 3.0, 1.0)))
+            confidence = min(
+                1.0,
+                max(
+                    thickness / max(minimum_length, 0.1),
+                    length / max(minimum_length * 3.0, 1.0),
+                ),
+            )
             walls.append(
                 WallCandidate(
                     start=start,
@@ -308,11 +318,20 @@ def _detect_walls_from_binary(
 
     scale_x = width / pixel_width if pixel_width else 1.0
     scale_y = height / pixel_height if pixel_height else 1.0
-    min_horizontal = max(3, int(math.ceil(options.minimum_wall_length / max(scale_x, 1e-6))))
-    min_vertical = max(3, int(math.ceil(options.minimum_wall_length / max(scale_y, 1e-6))))
+    min_horizontal = max(
+        3, int(math.ceil(options.minimum_wall_length / max(scale_x, 1e-6)))
+    )
+    min_vertical = max(
+        3, int(math.ceil(options.minimum_wall_length / max(scale_y, 1e-6)))
+    )
 
-    def make_candidate(start_point: Point, end_point: Point, length_units: float) -> WallCandidate:
-        confidence = min(1.0, length_units / max(options.minimum_wall_length * 4.0, max(width, height)))
+    def make_candidate(
+        start_point: Point, end_point: Point, length_units: float
+    ) -> WallCandidate:
+        confidence = min(
+            1.0,
+            length_units / max(options.minimum_wall_length * 4.0, max(width, height)),
+        )
         thickness = max(scale_x, scale_y)
         ordered_start, ordered_end = _normalise_segment(start_point, end_point)
         return WallCandidate(
@@ -367,7 +386,9 @@ def _detect_walls_from_binary(
     return list(dedup.values())
 
 
-def _detect_bitmap_walls(page: "fitz.Page", options: RasterVectorOptions) -> List[WallCandidate]:
+def _detect_bitmap_walls(
+    page: "fitz.Page", options: RasterVectorOptions
+) -> List[WallCandidate]:
     try:
         pixmap = page.get_pixmap(alpha=False)
     except Exception:  # pragma: no cover - defensive guard
@@ -403,7 +424,9 @@ def _extract_pdf_page_paths(page: "fitz.Page", page_index: int) -> List[VectorPa
     layer = f"page-{page_index + 1}"
     for drawing in page.get_drawings():  # pragma: no cover - depends on pymupdf
         stroke_raw = drawing.get("width")
-        stroke_width = float(stroke_raw) if isinstance(stroke_raw, (int, float)) else None
+        stroke_width = (
+            float(stroke_raw) if isinstance(stroke_raw, (int, float)) else None
+        )
         segments: List[List[Point]] = []
         current: List[Point] = []
         for command in drawing["items"]:
@@ -446,7 +469,9 @@ def _extract_pdf_page_paths(page: "fitz.Page", page_index: int) -> List[VectorPa
     return paths
 
 
-def _extract_pdf_paths(pdf_payload: bytes, options: RasterVectorOptions) -> RasterVectorResult:
+def _extract_pdf_paths(
+    pdf_payload: bytes, options: RasterVectorOptions
+) -> RasterVectorResult:
     if fitz is None:  # pragma: no cover - optional dependency
         raise RuntimeError("PDF vectorization requires PyMuPDF (fitz)")
     document = fitz.open(stream=pdf_payload, filetype="pdf")  # type: ignore[arg-type]
@@ -458,7 +483,9 @@ def _extract_pdf_paths(pdf_payload: bytes, options: RasterVectorOptions) -> Rast
         page_paths = _extract_pdf_page_paths(page, index)
         paths.extend(page_paths)
         vector_walls.extend(
-            detect_baseline_walls(page_paths, minimum_length=options.minimum_wall_length, source="vector")
+            detect_baseline_walls(
+                page_paths, minimum_length=options.minimum_wall_length, source="vector"
+            )
         )
         if options.infer_walls:
             bitmap_walls.extend(_detect_bitmap_walls(page, options))
@@ -466,23 +493,35 @@ def _extract_pdf_paths(pdf_payload: bytes, options: RasterVectorOptions) -> Rast
             rect = page.rect
             bounds = (float(rect.width), float(rect.height))
     merged_walls = _merge_walls(vector_walls, bitmap_walls)
-    return RasterVectorResult(paths=paths, walls=merged_walls, bounds=bounds, source="pdf", options=options)
+    return RasterVectorResult(
+        paths=paths, walls=merged_walls, bounds=bounds, source="pdf", options=options
+    )
 
 
-def _extract_svg_result(svg_payload: bytes, options: RasterVectorOptions) -> RasterVectorResult:
+def _extract_svg_result(
+    svg_payload: bytes, options: RasterVectorOptions
+) -> RasterVectorResult:
     content = svg_payload.decode("utf-8")
     root = ET.fromstring(content)
     paths = _extract_svg_paths(root)
     bounds = _parse_svg_bounds(root)
-    walls = detect_baseline_walls(paths, minimum_length=options.minimum_wall_length, source="vector")
-    return RasterVectorResult(paths=paths, walls=walls, bounds=bounds, source="svg", options=options)
+    walls = detect_baseline_walls(
+        paths, minimum_length=options.minimum_wall_length, source="vector"
+    )
+    return RasterVectorResult(
+        paths=paths, walls=walls, bounds=bounds, source="svg", options=options
+    )
 
 
-def _vectorize_pdf(pdf_payload: bytes, options: RasterVectorOptions) -> RasterVectorResult:
+def _vectorize_pdf(
+    pdf_payload: bytes, options: RasterVectorOptions
+) -> RasterVectorResult:
     return _extract_pdf_paths(pdf_payload, options)
 
 
-def _vectorize_svg(svg_payload: bytes, options: RasterVectorOptions) -> RasterVectorResult:
+def _vectorize_svg(
+    svg_payload: bytes, options: RasterVectorOptions
+) -> RasterVectorResult:
     return _extract_svg_result(svg_payload, options)
 
 
@@ -497,7 +536,9 @@ async def vectorize_floorplan(
 ) -> Dict[str, Any]:
     """Convert a PDF/SVG payload into vector paths and baseline walls."""
 
-    options = RasterVectorOptions(infer_walls=infer_walls, minimum_wall_length=minimum_wall_length)
+    options = RasterVectorOptions(
+        infer_walls=infer_walls, minimum_wall_length=minimum_wall_length
+    )
     content_type = (content_type or "").lower()
     name = (filename or "").lower()
     loop = asyncio.get_running_loop()

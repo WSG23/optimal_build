@@ -22,8 +22,6 @@ if _ALIAS and _ALIAS in sys.modules:
     globals().update(_existing.__dict__)
     sys.modules[__name__] = _existing
 else:
-    from .base import Base  # noqa: F401
-
     # Import model modules so their metadata is registered with SQLAlchemy.
     from . import (  # noqa: F401  pylint: disable=unused-import
         audit,
@@ -34,6 +32,7 @@ else:
         rkp,
         rulesets,
     )
+    from .base import Base  # noqa: F401
 
     _SUBMODULES: dict[str, ModuleType] = {
         "audit": audit,

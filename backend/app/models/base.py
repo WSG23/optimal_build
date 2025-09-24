@@ -42,6 +42,7 @@ class BaseModel(DeclarativeBase):
 # Re-export a `Base` alias for compatibility with migration tooling.
 Base = BaseModel
 
+
 class MetadataProxy:
     """Expose ``metadata_json`` via the conventional ``metadata`` attribute."""
 

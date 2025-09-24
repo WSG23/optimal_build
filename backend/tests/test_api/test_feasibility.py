@@ -59,7 +59,9 @@ async def test_submit_feasibility_assessment(app_client: AsyncClient) -> None:
     assert statuses["bca-site-coverage"] == "fail"
     assert statuses["ura-plot-ratio"] == "warning"
 
-    gross_plot_rule = next(rule for rule in assessment["rules"] if rule["id"] == "ura-plot-ratio")
+    gross_plot_rule = next(
+        rule for rule in assessment["rules"] if rule["id"] == "ura-plot-ratio"
+    )
     assert gross_plot_rule["actual_value"] == "2.80"
     assert "compliance buffer" in (gross_plot_rule.get("notes") or "")
 

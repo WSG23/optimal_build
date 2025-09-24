@@ -4,15 +4,14 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefCostIndex
 from app.utils import metrics
-
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 
 router = APIRouter(prefix="/costs", tags=["costs"])
 
@@ -29,7 +28,9 @@ async def latest_index(
     metrics.REQUEST_COUNTER.labels(endpoint="cost_index_latest").inc()
     lookup_name = index_name or series_name
     if lookup_name is None:
-        raise HTTPException(status_code=422, detail="series_name or index_name is required")
+        raise HTTPException(
+            status_code=422, detail="series_name or index_name is required"
+        )
     stmt = select(RefCostIndex).where(
         RefCostIndex.jurisdiction == jurisdiction,
         RefCostIndex.series_name == lookup_name,

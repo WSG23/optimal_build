@@ -8,15 +8,16 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_storage import ReferenceStorage
 from flows.parse_segment import parse_reference_documents
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
-async def test_parse_reference_documents_from_pdf(async_session_factory, tmp_path) -> None:
+async def test_parse_reference_documents_from_pdf(
+    async_session_factory, tmp_path
+) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
     payload = b"1.1 Scope\nThe scope clause describes the coverage.\n\n1.2 Requirements\nAll exits must remain unobstructed."
 
@@ -32,7 +33,9 @@ async def test_parse_reference_documents_from_pdf(async_session_factory, tmp_pat
         )
         session.add(source)
         await session.flush()
-        location = await storage.write_document(source_id=source.id, payload=payload, suffix=".pdf")
+        location = await storage.write_document(
+            source_id=source.id, payload=payload, suffix=".pdf"
+        )
         assert storage.resolve_path(location.storage_path).exists()
         assert await storage.read_document(location.storage_path) == payload
         document = RefDocument(
@@ -59,10 +62,16 @@ async def test_parse_reference_documents_from_pdf(async_session_factory, tmp_pat
         assert document is not None
         assert document.suspected_update is False
         clauses = (
-            await session.execute(
-                select(RefClause).where(RefClause.document_id == document_id).order_by(RefClause.clause_ref)
+            (
+                await session.execute(
+                    select(RefClause)
+                    .where(RefClause.document_id == document_id)
+                    .order_by(RefClause.clause_ref)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(clauses) == 2
         assert clauses[0].clause_ref == "1.1"
         assert "scope" in clauses[0].section_heading.lower()
@@ -72,7 +81,9 @@ async def test_parse_reference_documents_from_pdf(async_session_factory, tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_parse_reference_documents_from_html(async_session_factory, tmp_path) -> None:
+async def test_parse_reference_documents_from_html(
+    async_session_factory, tmp_path
+) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
     html_payload = (
         b"<html><body>"
@@ -96,7 +107,9 @@ async def test_parse_reference_documents_from_html(async_session_factory, tmp_pa
         )
         session.add(source)
         await session.flush()
-        location = await storage.write_document(source_id=source.id, payload=html_payload, suffix=".html")
+        location = await storage.write_document(
+            source_id=source.id, payload=html_payload, suffix=".html"
+        )
         assert storage.resolve_path(location.storage_path).exists()
         assert await storage.read_document(location.storage_path) == html_payload
         document = RefDocument(
@@ -122,10 +135,16 @@ async def test_parse_reference_documents_from_html(async_session_factory, tmp_pa
         assert document is not None
         assert document.suspected_update is False
         clauses = (
-            await session.execute(
-                select(RefClause).where(RefClause.document_id == document_id).order_by(RefClause.clause_ref)
+            (
+                await session.execute(
+                    select(RefClause)
+                    .where(RefClause.document_id == document_id)
+                    .order_by(RefClause.clause_ref)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(clauses) == 2
         assert clauses[0].clause_ref == "2.1"
         assert "fire resistance" in clauses[0].section_heading.lower()

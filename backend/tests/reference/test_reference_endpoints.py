@@ -13,7 +13,9 @@ async def _seed_reference_data(async_session_factory) -> None:
         await seed_nonreg.seed_nonregulated_reference_data(session, commit=True)
 
 
-async def test_ergonomics_endpoint_returns_seeded_metrics(async_session_factory, client) -> None:
+async def test_ergonomics_endpoint_returns_seeded_metrics(
+    async_session_factory, client
+) -> None:
     await _seed_reference_data(async_session_factory)
 
     response = await client.get("/api/v1/ergonomics")
@@ -28,7 +30,9 @@ async def test_ergonomics_endpoint_returns_seeded_metrics(async_session_factory,
     assert observed_pairs == expected_pairs
 
 
-async def test_products_endpoint_handles_seeded_database(async_session_factory, client) -> None:
+async def test_products_endpoint_handles_seeded_database(
+    async_session_factory, client
+) -> None:
     await _seed_reference_data(async_session_factory)
 
     response = await client.get("/api/v1/products")
@@ -38,7 +42,9 @@ async def test_products_endpoint_handles_seeded_database(async_session_factory, 
     assert isinstance(payload, list)
 
 
-async def test_standards_endpoint_includes_metadata(async_session_factory, client) -> None:
+async def test_standards_endpoint_includes_metadata(
+    async_session_factory, client
+) -> None:
     await _seed_reference_data(async_session_factory)
 
     response = await client.get("/api/v1/standards")
@@ -54,7 +60,9 @@ async def test_standards_endpoint_includes_metadata(async_session_factory, clien
         assert record.get("edition")
 
 
-async def test_cost_indices_latest_endpoint_returns_seeded_index(async_session_factory, client) -> None:
+async def test_cost_indices_latest_endpoint_returns_seeded_index(
+    async_session_factory, client
+) -> None:
     await _seed_reference_data(async_session_factory)
 
     params = {"series_name": "construction_all_in", "jurisdiction": "SG"}

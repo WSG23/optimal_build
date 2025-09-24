@@ -6,11 +6,10 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.flows.ingestion import material_standard_ingestion_flow
 from app.models.rkp import RefAlert, RefMaterialStandard
 from app.utils import metrics
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
@@ -37,7 +36,11 @@ async def test_material_standard_ingestion_flow(session_factory, session):
     alerts = (await session.execute(select(RefAlert))).scalars().all()
     assert len(alerts) == 1
 
-    run_counter = metrics.counter_value(metrics.INGESTION_RUN_COUNTER, {"flow": "material-standard-ingestion"})
+    run_counter = metrics.counter_value(
+        metrics.INGESTION_RUN_COUNTER, {"flow": "material-standard-ingestion"}
+    )
     assert run_counter == 1.0
-    ingested_counter = metrics.counter_value(metrics.INGESTED_RECORD_COUNTER, {"flow": "material-standard-ingestion"})
+    ingested_counter = metrics.counter_value(
+        metrics.INGESTED_RECORD_COUNTER, {"flow": "material-standard-ingestion"}
+    )
     assert ingested_counter == 1.0

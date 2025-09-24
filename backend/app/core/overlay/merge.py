@@ -6,13 +6,22 @@ import copy
 from dataclasses import fields, replace
 from typing import Dict
 
-from app.core.models.geometry import Door, Fixture, GeometryEntity, GeometryGraph, Level, Space, Wall
-
+from app.core.models.geometry import (
+    Door,
+    Fixture,
+    GeometryEntity,
+    GeometryGraph,
+    Level,
+    Space,
+    Wall,
+)
 
 _ENTITY_TYPES = (Level, Space, Wall, Door, Fixture)
 
 
-def _merge_entities(existing: GeometryEntity, incoming: GeometryEntity) -> GeometryEntity:
+def _merge_entities(
+    existing: GeometryEntity, incoming: GeometryEntity
+) -> GeometryEntity:
     if type(existing) is not type(incoming):  # noqa: E721 - dataclass type comparison
         raise TypeError(
             f"Cannot merge entity '{existing.id}' of type {type(existing).__name__} "
@@ -45,7 +54,9 @@ def merge_graphs(base: GeometryGraph, overlay: GeometryGraph) -> GeometryGraph:
 
     for entity_type in _ENTITY_TYPES:
         overlay_collection = {
-            entity.id: entity for entity in overlay.iter_entities() if isinstance(entity, entity_type)
+            entity.id: entity
+            for entity in overlay.iter_entities()
+            if isinstance(entity, entity_type)
         }
         for entity in overlay_collection.values():
             existing = result.get_entity(entity.id)

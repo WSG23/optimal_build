@@ -9,16 +9,11 @@ from typing import Dict, Iterable, Tuple
 
 import pytest
 
-pytest.importorskip('fastapi')
-pytest.importorskip('pydantic')
-pytest.importorskip('sqlalchemy')
-
-from sqlalchemy import select
+pytest.importorskip("fastapi")
+pytest.importorskip("pydantic")
+pytest.importorskip("sqlalchemy")
 
 from app.api.v1.imports import _build_parse_summary
-from app.core.geometry.builder import GraphBuilder
-from app.core.metrics.roi import compute_project_roi
-from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.core.export import (
     ExportFormat,
     ExportOptions,
@@ -26,14 +21,20 @@ from app.core.export import (
     LocalExportStorage,
     generate_project_export,
 )
+from app.core.geometry.builder import GraphBuilder
+from app.core.metrics.roi import compute_project_roi
+from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.models.audit import AuditLog
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 from app.models.rkp import RefRule, RefZoningLayer
 from backend.jobs.overlay_run import run_overlay_for_project
+from sqlalchemy import select
 
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "samples" / "sample_floorplan.json"
-GOLDEN_MANIFEST_PATH = Path(__file__).resolve().parents[1] / "samples" / "golden_export_manifest.json"
+GOLDEN_MANIFEST_PATH = (
+    Path(__file__).resolve().parents[1] / "samples" / "golden_export_manifest.json"
+)
 
 
 def _load_sample_payload() -> Dict[str, object]:
@@ -67,7 +68,7 @@ def _build_geometry_from_sample(
                 continue
             space_id = f"{level_id}-U{unit_index:02d}"
             area = float(unit.get("area_m2", 1.0))
-            side = max(area ** 0.5, 1.0)
+            side = max(area**0.5, 1.0)
             boundary = [
                 {"x": 0.0, "y": 0.0},
                 {"x": side, "y": 0.0},
@@ -143,7 +144,9 @@ def _build_geometry_from_sample(
     return canonical, level_lookup
 
 
-async def _seed_overlay_project(async_session_factory, canonical: CanonicalGeometry, *, project_id: int = 101) -> int:
+async def _seed_overlay_project(
+    async_session_factory, canonical: CanonicalGeometry, *, project_id: int = 101
+) -> int:
     async with async_session_factory() as session:
         source = OverlaySourceGeometry(
             project_id=project_id,
@@ -158,10 +161,16 @@ async def _seed_overlay_project(async_session_factory, canonical: CanonicalGeome
     async with async_session_factory() as session:
         await run_overlay_for_project(session, project_id=project_id)
         suggestions = (
-            await session.execute(
-                select(OverlaySuggestion).where(OverlaySuggestion.project_id == project_id)
+            (
+                await session.execute(
+                    select(OverlaySuggestion).where(
+                        OverlaySuggestion.project_id == project_id
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         ten_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=10)
         for suggestion in suggestions:
             suggestion.created_at = ten_minutes_ago
@@ -173,7 +182,10 @@ async def _seed_overlay_project(async_session_factory, canonical: CanonicalGeome
 async def test_import_parse_summary_uses_sample_fixture(session):
     sample = _load_sample_payload()
     floors = [
-        {"name": layer.get("name"), "units": [unit.get("id") for unit in layer.get("units", [])]}
+        {
+            "name": layer.get("name"),
+            "units": [unit.get("id") for unit in layer.get("units", [])],
+        }
         for layer in sample.get("layers", [])
         if isinstance(layer, dict) and layer.get("type") == "floor"
     ]
@@ -212,14 +224,22 @@ async def test_import_parse_summary_uses_sample_fixture(session):
 async def test_overlay_generation_from_sample(async_session_factory):
     sample = _load_sample_payload()
     canonical, _ = _build_geometry_from_sample(sample)
-    project_id = await _seed_overlay_project(async_session_factory, canonical, project_id=201)
+    project_id = await _seed_overlay_project(
+        async_session_factory, canonical, project_id=201
+    )
 
     async with async_session_factory() as session:
         suggestions = (
-            await session.execute(
-                select(OverlaySuggestion).where(OverlaySuggestion.project_id == project_id)
+            (
+                await session.execute(
+                    select(OverlaySuggestion).where(
+                        OverlaySuggestion.project_id == project_id
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     codes = {suggestion.code for suggestion in suggestions}
     assert {
         "heritage_conservation",
@@ -227,25 +247,29 @@ async def test_overlay_generation_from_sample(async_session_factory):
         "large_site_review",
         "tall_building_review",
         "coastal_evacuation_plan",
-    }.issubset(
-        codes
-    )
+    }.issubset(codes)
 
 
 @pytest.mark.asyncio
 async def test_decision_handling_records_audit(async_session_factory, client):
     sample = _load_sample_payload()
     canonical, _ = _build_geometry_from_sample(sample)
-    project_id = await _seed_overlay_project(async_session_factory, canonical, project_id=301)
+    project_id = await _seed_overlay_project(
+        async_session_factory, canonical, project_id=301
+    )
 
     async with async_session_factory() as session:
         first_suggestion = (
-            await session.execute(
-                select(OverlaySuggestion)
-                .where(OverlaySuggestion.project_id == project_id)
-                .order_by(OverlaySuggestion.id)
+            (
+                await session.execute(
+                    select(OverlaySuggestion)
+                    .where(OverlaySuggestion.project_id == project_id)
+                    .order_by(OverlaySuggestion.id)
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         assert first_suggestion is not None
 
     payload = {
@@ -262,20 +286,30 @@ async def test_decision_handling_records_audit(async_session_factory, client):
         assert refreshed is not None
         assert refreshed.status == "approved"
         logs = (
-            await session.execute(
-                select(AuditLog).where(AuditLog.project_id == project_id).order_by(AuditLog.id)
+            (
+                await session.execute(
+                    select(AuditLog)
+                    .where(AuditLog.project_id == project_id)
+                    .order_by(AuditLog.id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     events = {log.event_type for log in logs}
     assert "overlay_run" in events
     assert "overlay_decision" in events
 
 
 @pytest.mark.asyncio
-async def test_export_roundtrip_matches_golden_manifest(async_session_factory, tmp_path):
+async def test_export_roundtrip_matches_golden_manifest(
+    async_session_factory, tmp_path
+):
     sample = _load_sample_payload()
     canonical, _ = _build_geometry_from_sample(sample)
-    project_id = await _seed_overlay_project(async_session_factory, canonical, project_id=401)
+    project_id = await _seed_overlay_project(
+        async_session_factory, canonical, project_id=401
+    )
 
     async with async_session_factory() as session:
         options = ExportOptions(
@@ -283,7 +317,10 @@ async def test_export_roundtrip_matches_golden_manifest(async_session_factory, t
             include_pending_overlays=True,
             layer_mapping=LayerMapping(
                 source={"floor": "A-FLOOR"},
-                overlays={"heritage_conservation": "A-OVER-HERITAGE", "pending": "A-OVER-PENDING"},
+                overlays={
+                    "heritage_conservation": "A-OVER-HERITAGE",
+                    "pending": "A-OVER-PENDING",
+                },
             ),
         )
         storage = LocalExportStorage(base_dir=tmp_path)
@@ -308,10 +345,16 @@ async def test_export_roundtrip_matches_golden_manifest(async_session_factory, t
 
     async with async_session_factory() as session:
         audit_events = (
-            await session.execute(
-                select(AuditLog).where(AuditLog.project_id == project_id).order_by(AuditLog.id)
+            (
+                await session.execute(
+                    select(AuditLog)
+                    .where(AuditLog.project_id == project_id)
+                    .order_by(AuditLog.id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
     assert any(log.event_type == "export_generated" for log in audit_events)
 
 
@@ -319,16 +362,22 @@ async def test_export_roundtrip_matches_golden_manifest(async_session_factory, t
 async def test_roi_snapshot_reports_saved_hours(async_session_factory):
     sample = _load_sample_payload()
     canonical, _ = _build_geometry_from_sample(sample)
-    project_id = await _seed_overlay_project(async_session_factory, canonical, project_id=501)
+    project_id = await _seed_overlay_project(
+        async_session_factory, canonical, project_id=501
+    )
 
     async with async_session_factory() as session:
         first = (
-            await session.execute(
-                select(OverlaySuggestion)
-                .where(OverlaySuggestion.project_id == project_id)
-                .order_by(OverlaySuggestion.id)
+            (
+                await session.execute(
+                    select(OverlaySuggestion)
+                    .where(OverlaySuggestion.project_id == project_id)
+                    .order_by(OverlaySuggestion.id)
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         assert first is not None
         first.status = "approved"
         first.decided_by = "pytest"

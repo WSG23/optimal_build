@@ -6,11 +6,9 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
-from httpx import AsyncClient
-
 from app.core.models.geometry import Door, GeometryGraph, Level, Space
 from app.models.rulesets import RulePack
-
+from httpx import AsyncClient
 
 PACK_DEFINITION = {
     "metadata": {"jurisdiction": "SG", "version": 1},
@@ -21,7 +19,11 @@ PACK_DEFINITION = {
             "target": "spaces",
             "where": {
                 "all": [
-                    {"field": "metadata.category", "operator": "==", "value": "bedroom"},
+                    {
+                        "field": "metadata.category",
+                        "operator": "==",
+                        "value": "bedroom",
+                    },
                     {"field": "level_id", "operator": "==", "value": "L1"},
                 ]
             },
@@ -37,7 +39,11 @@ PACK_DEFINITION = {
             "id": "bedroom-ventilation",
             "title": "Bedrooms require natural light or mechanical ventilation",
             "target": "spaces",
-            "where": {"field": "metadata.category", "operator": "==", "value": "bedroom"},
+            "where": {
+                "field": "metadata.category",
+                "operator": "==",
+                "value": "bedroom",
+            },
             "predicate": {
                 "any": [
                     {"field": "metadata.window_count", "operator": ">=", "value": 1},
@@ -71,7 +77,11 @@ def _geometry_payload() -> dict:
                 name="Bedroom A",
                 level_id="L1",
                 boundary=[(0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)],
-                metadata={"category": "bedroom", "window_count": 0, "has_mechanical_ventilation": False},
+                metadata={
+                    "category": "bedroom",
+                    "window_count": 0,
+                    "has_mechanical_ventilation": False,
+                },
             ),
             Space(
                 id="S2",
@@ -108,7 +118,9 @@ async def seeded_ruleset(session) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_list_rulesets_returns_catalogue(app_client: AsyncClient, seeded_ruleset) -> None:
+async def test_list_rulesets_returns_catalogue(
+    app_client: AsyncClient, seeded_ruleset
+) -> None:
     response = await app_client.get("/api/v1/rulesets")
     assert response.status_code == 200
     payload = response.json()
@@ -138,9 +150,17 @@ async def test_validate_ruleset_reports_citations_and_violations(
     assert payload["citations"]
     assert any(citation.get("code") == "RES-12.4" for citation in payload["citations"])
 
-    area_result = next(item for item in payload["results"] if item["rule_id"] == "min-bedroom-area")
+    area_result = next(
+        item for item in payload["results"] if item["rule_id"] == "min-bedroom-area"
+    )
     assert area_result["violations"][0]["entity_id"] == "S1"
-    assert any("bedroom" in msg.lower() for msg in area_result["violations"][0]["messages"])
+    assert any(
+        "bedroom" in msg.lower() for msg in area_result["violations"][0]["messages"]
+    )
 
-    door_result = next(item for item in payload["results"] if item["rule_id"] == "door-clearance")
-    assert any(violation["entity_id"] == "D1" for violation in door_result["violations"])
+    door_result = next(
+        item for item in payload["results"] if item["rule_id"] == "door-clearance"
+    )
+    assert any(
+        violation["entity_id"] == "D1" for violation in door_result["violations"]
+    )

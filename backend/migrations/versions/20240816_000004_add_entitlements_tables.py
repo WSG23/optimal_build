@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20240816_000004"
@@ -17,21 +17,86 @@ depends_on = None
 JSONB_TYPE = postgresql.JSONB(astext_type=sa.Text())
 
 
-APPROVAL_CATEGORY_ENUM = postgresql.ENUM('planning', 'building', 'environmental', 'transport', 'utilities', name='ent_approval_category', create_type=False)
+APPROVAL_CATEGORY_ENUM = postgresql.ENUM(
+    "planning",
+    "building",
+    "environmental",
+    "transport",
+    "utilities",
+    name="ent_approval_category",
+    create_type=False,
+)
 
-ROADMAP_STATUS_ENUM = postgresql.ENUM('planned', 'in_progress', 'submitted', 'approved', 'rejected', 'blocked', 'complete', name='ent_roadmap_status', create_type=False)
+ROADMAP_STATUS_ENUM = postgresql.ENUM(
+    "planned",
+    "in_progress",
+    "submitted",
+    "approved",
+    "rejected",
+    "blocked",
+    "complete",
+    name="ent_roadmap_status",
+    create_type=False,
+)
 
-STUDY_TYPE_ENUM = postgresql.ENUM('traffic', 'environmental', 'heritage', 'utilities', 'community', name='ent_study_type', create_type=False)
+STUDY_TYPE_ENUM = postgresql.ENUM(
+    "traffic",
+    "environmental",
+    "heritage",
+    "utilities",
+    "community",
+    name="ent_study_type",
+    create_type=False,
+)
 
-STUDY_STATUS_ENUM = postgresql.ENUM('draft', 'scope_defined', 'in_progress', 'submitted', 'accepted', 'rejected', name='ent_study_status', create_type=False)
+STUDY_STATUS_ENUM = postgresql.ENUM(
+    "draft",
+    "scope_defined",
+    "in_progress",
+    "submitted",
+    "accepted",
+    "rejected",
+    name="ent_study_status",
+    create_type=False,
+)
 
-ENGAGEMENT_TYPE_ENUM = postgresql.ENUM('agency', 'community', 'political', 'private_partner', 'regulator', name='ent_engagement_type', create_type=False)
+ENGAGEMENT_TYPE_ENUM = postgresql.ENUM(
+    "agency",
+    "community",
+    "political",
+    "private_partner",
+    "regulator",
+    name="ent_engagement_type",
+    create_type=False,
+)
 
-ENGAGEMENT_STATUS_ENUM = postgresql.ENUM('planned', 'active', 'completed', 'blocked', name='ent_engagement_status', create_type=False)
+ENGAGEMENT_STATUS_ENUM = postgresql.ENUM(
+    "planned",
+    "active",
+    "completed",
+    "blocked",
+    name="ent_engagement_status",
+    create_type=False,
+)
 
-LEGAL_INSTRUMENT_TYPE_ENUM = postgresql.ENUM('agreement', 'licence', 'memorandum', 'waiver', 'variation', name='ent_legal_instrument_type', create_type=False)
+LEGAL_INSTRUMENT_TYPE_ENUM = postgresql.ENUM(
+    "agreement",
+    "licence",
+    "memorandum",
+    "waiver",
+    "variation",
+    name="ent_legal_instrument_type",
+    create_type=False,
+)
 
-LEGAL_INSTRUMENT_STATUS_ENUM = postgresql.ENUM('draft', 'in_review', 'executed', 'expired', name='ent_legal_instrument_status', create_type=False)
+LEGAL_INSTRUMENT_STATUS_ENUM = postgresql.ENUM(
+    "draft",
+    "in_review",
+    "executed",
+    "expired",
+    name="ent_legal_instrument_status",
+    create_type=False,
+)
 
 
 def _create_enum(enum: sa.Enum) -> None:
@@ -48,7 +113,6 @@ def _drop_enum(enum: sa.Enum) -> None:
 
 def upgrade() -> None:
     """Apply the migration."""
-
 
     op.execute(
         """
@@ -395,4 +459,3 @@ def downgrade() -> None:
         APPROVAL_CATEGORY_ENUM,
     ):
         _drop_enum(enum)
-

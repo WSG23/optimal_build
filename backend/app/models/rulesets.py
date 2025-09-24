@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.models.base import BaseModel
 from app.models.types import FlexibleJSONB
-
+from sqlalchemy import Boolean, DateTime, Integer, String, Text, UniqueConstraint
 
 JSONType = FlexibleJSONB
 
@@ -34,7 +33,10 @@ class RulePack(BaseModel):
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     __table_args__ = (

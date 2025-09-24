@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import re
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Optional, Pattern
 
 
@@ -207,7 +207,10 @@ class RuleNormalizer:
             )
             value = float(raw_value)
             matched_text = match.group(0)
-            if not re.search(r"%|percent|per\s*cent", matched_text, re.IGNORECASE) and value <= 1:
+            if (
+                not re.search(r"%|percent|per\s*cent", matched_text, re.IGNORECASE)
+                and value <= 1
+            ):
                 value *= 100
             return round(value, 4)
 

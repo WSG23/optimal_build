@@ -7,9 +7,10 @@ import sys
 from pathlib import Path
 from typing import Iterable, Sequence
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from prefect import flow, task
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -26,7 +27,9 @@ def _table_column_names() -> set[str]:
     if mapped:
         return set(mapped.keys())
     table = getattr(RefProduct, "__table__", None)
-    if table is None:  # pragma: no cover - defensive; RefProduct is declarative in practice
+    if (
+        table is None
+    ):  # pragma: no cover - defensive; RefProduct is declarative in practice
         return set()
     if hasattr(table, "columns"):
         return {column.name for column in table.columns}
@@ -43,7 +46,9 @@ def _normalise_optional_url(value: str | None) -> str | None:
     return str(value)
 
 
-def _build_product_values(row: ProductRow, vendor: str, now: dt.datetime) -> dict[str, object]:
+def _build_product_values(
+    row: ProductRow, vendor: str, now: dt.datetime
+) -> dict[str, object]:
     """Construct a mapping of column values for a ``RefProduct`` upsert."""
 
     columns = _table_column_names()
@@ -76,7 +81,9 @@ def _build_product_values(row: ProductRow, vendor: str, now: dt.datetime) -> dic
             maybe_set(key, value)
 
     if "weight_kg" in columns:
-        maybe_set("weight_kg", float(row.weight_kg) if row.weight_kg is not None else None)
+        maybe_set(
+            "weight_kg", float(row.weight_kg) if row.weight_kg is not None else None
+        )
     if "power_w" in columns:
         maybe_set("power_w", float(row.power_w) if row.power_w is not None else None)
     maybe_set("bim_uri", _normalise_optional_url(row.bim_uri))
@@ -203,7 +210,9 @@ async def sync_products_csv_once(
         mark_callable = getattr(mark_deprecated, "fn", mark_deprecated)
         inserted = await upsert_callable(session, vendor, rows_list)
         await session.commit()
-        deprecated = await mark_callable(session, vendor, {row.sku for row in rows_list})
+        deprecated = await mark_callable(
+            session, vendor, {row.sku for row in rows_list}
+        )
         await session.commit()
     return {
         "ok": True,
@@ -214,4 +223,3 @@ async def sync_products_csv_once(
 
 
 __all__ = ["sync_products_csv_once", "upsert_products", "mark_deprecated"]
-

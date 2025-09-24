@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -23,7 +21,8 @@ from app.schemas.rulesets import (
     RulesetValidationRequest,
     RulesetValidationResponse,
 )
-
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import Select, select
 
 router = APIRouter()
 
@@ -53,10 +52,14 @@ async def list_rulesets(
 ) -> RulesetListResponse:
     """Return stored rule packs ordered by slug and version."""
 
-    stmt: Select[RulePack] = select(RulePack).order_by(RulePack.slug, RulePack.version.desc())
+    stmt: Select[RulePack] = select(RulePack).order_by(
+        RulePack.slug, RulePack.version.desc()
+    )
     result = await session.execute(stmt)
     packs = result.scalars().all()
-    items = [RulePackSchema.model_validate(pack, from_attributes=True) for pack in packs]
+    items = [
+        RulePackSchema.model_validate(pack, from_attributes=True) for pack in packs
+    ]
     return RulesetListResponse(items=items, count=len(items))
 
 
@@ -78,12 +81,17 @@ async def validate_ruleset(
     try:
         graph = GeometrySerializer.from_export(payload.geometry)
     except Exception as exc:  # pragma: no cover - defensive guard for invalid payloads
-        raise HTTPException(status_code=400, detail=f"Invalid geometry payload: {exc}") from exc
+        raise HTTPException(
+            status_code=400, detail=f"Invalid geometry payload: {exc}"
+        ) from exc
 
     engine = RulesEngine(ruleset.definition)
     evaluation = engine.evaluate(graph)
 
-    results = [RuleEvaluationResult.model_validate(item) for item in evaluation.get("results", [])]
+    results = [
+        RuleEvaluationResult.model_validate(item)
+        for item in evaluation.get("results", [])
+    ]
     summary = RulesetEvaluationSummary.model_validate(evaluation.get("summary", {}))
     ruleset_summary = RulePackSummary.model_validate(ruleset, from_attributes=True)
 

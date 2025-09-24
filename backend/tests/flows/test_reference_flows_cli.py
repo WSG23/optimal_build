@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import importlib.util
 import sys
 from functools import wraps
-import importlib.util
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Callable, cast
@@ -50,4 +50,3 @@ for _name in dir(_IMPL):
         globals()[_name] = _mirror(getattr(_IMPL, _name))
 
 __all__ = [name for name in globals() if name.startswith("test_")]
-

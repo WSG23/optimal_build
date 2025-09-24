@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.machinery
 import sys
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import import_module
-import importlib.machinery
-from types import ModuleType
 from pathlib import Path
+from types import ModuleType
+from typing import Any, cast
 
 import pytest
+
 from httpx import AsyncClient
-from typing import Any, cast
 
 
 def _find_repo_root(current: Path) -> Path:
@@ -89,35 +90,45 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
     from sqlalchemy.pool import StaticPool as _StaticPool
-except (ImportError, AttributeError):  # pragma: no cover - fallback for stub implementation
+except (
+    ImportError,
+    AttributeError,
+):  # pragma: no cover - fallback for stub implementation
+
     class _StaticPool:  # type: ignore[too-many-ancestors]
         """Placeholder used when running against the in-repo SQLAlchemy stub."""
 
         pass
 
+
 StaticPool: type[Any] = _StaticPool
 
 
+from sqlalchemy.orm import Mapped, mapped_column
+
 import app.models as app_models
+import app.utils.metrics as metrics
 from app.core.database import get_session
 from app.main import app
 from app.models.base import BaseModel
-import app.utils.metrics as metrics
 from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
 
 # Importing ``app.models`` ensures all model metadata is registered.
 _ = app_models
 
 
 if "projects" not in getattr(BaseModel.metadata, "tables", {}):
+
     class _ProjectStub(BaseModel):
         """Minimal project table used for tests that only require an ID."""
 
         __tablename__ = "projects"
 
         id: Mapped[int] = mapped_column(Integer, primary_key=True)
-        name: Mapped[str] = mapped_column(String(120), nullable=False, default="Test Project")
+        name: Mapped[str] = mapped_column(
+            String(120), nullable=False, default="Test Project"
+        )
+
 
 _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
 
@@ -150,7 +161,9 @@ async def _reset_database(factory: async_sessionmaker[AsyncSession]) -> None:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def flow_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+async def flow_session_factory() -> AsyncGenerator[
+    async_sessionmaker[AsyncSession], None
+]:
     """Provide a shared async session factory backed by SQLite."""
 
     engine = create_async_engine(
@@ -287,4 +300,3 @@ async def client_fixture(
     """Compatibility alias exposing the app client under the traditional name."""
 
     yield app_client
-

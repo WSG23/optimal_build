@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,14 +12,15 @@ from app.api.deps import require_reviewer, require_viewer
 from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
-from app.models.overlay import (
-    OverlayDecision,
-    OverlaySuggestion,
+from app.models.overlay import OverlayDecision, OverlaySuggestion
+from app.schemas.overlay import (
+    OverlayDecisionPayload,
+    OverlaySuggestion as OverlaySuggestionSchema,
 )
-from app.schemas.overlay import OverlayDecisionPayload, OverlaySuggestion as OverlaySuggestionSchema
 from backend.jobs import job_queue
 from backend.jobs.overlay_run import run_overlay_job
-
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 
 router = APIRouter(prefix="/overlay")
 
@@ -157,6 +156,8 @@ async def decide_overlay(
 
 
 __all__ = ["router"]
+
+
 def _as_utc(timestamp: datetime | None) -> datetime | None:
     """Return a timezone-aware UTC timestamp for arithmetic operations."""
 
@@ -165,5 +166,3 @@ def _as_utc(timestamp: datetime | None) -> datetime | None:
     if timestamp.tzinfo is None:
         return timestamp.replace(tzinfo=timezone.utc)
     return timestamp.astimezone(timezone.utc)
-
-

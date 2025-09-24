@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Mapping, Tuple
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
@@ -20,11 +19,17 @@ from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
 from backend.jobs import job_queue
-from backend.jobs.parse_cad import detect_dxf_metadata, detect_ifc_metadata, parse_import_job
+from backend.jobs.parse_cad import (
+    detect_dxf_metadata,
+    detect_ifc_metadata,
+    parse_import_job,
+)
 from backend.jobs.raster_vector import vectorize_floorplan
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 router = APIRouter()
 logger = get_logger(__name__)
+
 
 def _extract_unit_id(unit: Any) -> str | None:
     """Return a unit identifier from diverse payload representations."""
@@ -56,7 +61,9 @@ def _normalise_floor(
     return {"name": name, "unit_ids": collected}
 
 
-def _detect_json_payload(payload: Mapping[str, Any]) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+def _detect_json_payload(
+    payload: Mapping[str, Any]
+) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
     """Inspect a JSON payload and extract quick-look floor and unit metadata."""
 
     floors: List[Dict[str, Any]] = []
@@ -73,10 +80,7 @@ def _detect_json_payload(payload: Mapping[str, Any]) -> Tuple[List[Dict[str, Any
             if layer_type not in {"floor", "level", "storey", "story"}:
                 continue
             floor_name = str(
-                layer.get("name")
-                or layer.get("label")
-                or layer.get("id")
-                or "Floor"
+                layer.get("name") or layer.get("label") or layer.get("id") or "Floor"
             )
             unit_ids = []
             for unit in layer.get("units", []):
@@ -92,7 +96,12 @@ def _detect_json_payload(payload: Mapping[str, Any]) -> Tuple[List[Dict[str, Any
     if isinstance(raw_floors, list):
         for entry in raw_floors:
             if isinstance(entry, dict):
-                name = str(entry.get("name") or entry.get("label") or entry.get("id") or "Floor")
+                name = str(
+                    entry.get("name")
+                    or entry.get("label")
+                    or entry.get("id")
+                    or "Floor"
+                )
                 units = []
                 for unit in entry.get("units", []):
                     unit_id = _extract_unit_id(unit)
@@ -313,7 +322,9 @@ def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
     return summary
 
 
-@router.post("/import", response_model=ImportResult, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/import", response_model=ImportResult, status_code=status.HTTP_201_CREATED
+)
 async def upload_import(
     file: UploadFile = File(...),
     enable_raster_processing: bool = Form(True),
@@ -326,7 +337,9 @@ async def upload_import(
 
     raw_payload = await file.read()
     if not raw_payload:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty upload payload")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Empty upload payload"
+        )
 
     filename = file.filename or "upload.bin"
     content_type = file.content_type
@@ -342,7 +355,6 @@ async def upload_import(
 
     record = ImportRecord(
         id=import_id,
-
         project_id=project_id,
         filename=file.filename or "upload.bin",
         content_type=file.content_type,
@@ -438,7 +450,9 @@ async def upload_import(
         vector_storage_path=record.vector_storage_path,
         uploaded_at=record.uploaded_at,
         layer_metadata=record.layer_metadata or [],
-        detected_floors=[DetectedFloor(**floor) for floor in record.detected_floors or []],
+        detected_floors=[
+            DetectedFloor(**floor) for floor in record.detected_floors or []
+        ],
         detected_units=record.detected_units or [],
         vector_summary=record.vector_summary or vector_summary,
         parse_status=record.parse_status,
@@ -455,7 +469,9 @@ async def enqueue_parse(
 
     record = await session.get(ImportRecord, import_id)
     if record is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Import not found"
+        )
 
     record.parse_requested_at = datetime.now(timezone.utc)
     record.parse_status = "queued"
@@ -491,7 +507,9 @@ async def get_parse_status(
 
     record = await session.get(ImportRecord, import_id)
     if record is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Import not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Import not found"
+        )
 
     return ParseStatusResponse(
         import_id=record.id,

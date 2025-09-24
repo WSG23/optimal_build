@@ -9,10 +9,11 @@ import sys
 from pathlib import Path
 from typing import Awaitable, Callable, List, Optional, Sequence, TypeVar, cast
 
-from prefect import flow
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
+
+from prefect import flow
+from sqlalchemy import func, select
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -21,7 +22,6 @@ from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_parsers import ClauseParser, ParsedClause
 from app.services.reference_storage import ReferenceStorage
-
 
 _ResultT = TypeVar("_ResultT")
 
@@ -53,13 +53,17 @@ async def parse_reference_documents(
 
     async with session_factory() as session:
         documents = (
-            await session.execute(
-                select(RefDocument)
-                .options(selectinload(RefDocument.source))
-                .where(RefDocument.suspected_update.is_(True))
-                .order_by(RefDocument.id)
+            (
+                await session.execute(
+                    select(RefDocument)
+                    .options(selectinload(RefDocument.source))
+                    .where(RefDocument.suspected_update.is_(True))
+                    .order_by(RefDocument.id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         for document in documents:
             payload = await storage.read_document(document.storage_path)
@@ -80,8 +84,14 @@ async def _replace_clauses(
     clauses: List[ParsedClause],
 ) -> None:
     existing = (
-        await session.execute(select(RefClause).where(RefClause.document_id == document.id))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(RefClause).where(RefClause.document_id == document.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
     for clause_row in existing:
         await session.delete(clause_row)
     for clause in clauses:

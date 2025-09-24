@@ -9,7 +9,9 @@ from typing import Any
 import pytest
 
 
-def pytest_configure(config: pytest.Config) -> None:  # pragma: no cover - configuration hook
+def pytest_configure(
+    config: pytest.Config,
+) -> None:  # pragma: no cover - configuration hook
     config.addinivalue_line("markers", "asyncio: mark test as running in an event loop")
 
 
@@ -46,7 +48,9 @@ def _ensure_loop(request: pytest.FixtureRequest) -> asyncio.AbstractEventLoop:
     return loop
 
 
-def pytest_fixture_setup(fixturedef: pytest.FixtureDef[Any], request: pytest.FixtureRequest) -> Any:
+def pytest_fixture_setup(
+    fixturedef: pytest.FixtureDef[Any], request: pytest.FixtureRequest
+) -> Any:
     func = fixturedef.func
     if inspect.iscoroutinefunction(func):
         loop = _ensure_loop(request)

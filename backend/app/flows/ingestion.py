@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, Sequence
 
-from prefect import flow
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.services import alerts, ingestion as ingestion_service, standards
 from app.utils.logging import get_logger, log_event
+from prefect import flow
 
 logger = get_logger(__name__)
 
@@ -22,7 +22,9 @@ async def material_standard_ingestion_flow(
     """Ingest material standards and capture run metrics."""
 
     async with session_factory() as session:
-        run = await ingestion_service.start_ingestion_run(session, flow_name="material-standard-ingestion")
+        run = await ingestion_service.start_ingestion_run(
+            session, flow_name="material-standard-ingestion"
+        )
         records_ingested = 0
         suspected_updates = 0
 
@@ -73,4 +75,7 @@ async def material_standard_ingestion_flow(
         records_ingested=records_ingested,
         suspected_updates=suspected_updates,
     )
-    return {"records_ingested": records_ingested, "suspected_updates": suspected_updates}
+    return {
+        "records_ingested": records_ingested,
+        "suspected_updates": suspected_updates,
+    }

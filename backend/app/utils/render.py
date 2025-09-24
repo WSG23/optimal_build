@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-
 try:  # pragma: no cover - optional dependency
     from weasyprint import HTML  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - graceful fallback when unavailable
@@ -24,4 +23,3 @@ def render_html_to_pdf(html: str) -> Optional[bytes]:
 
 
 __all__ = ["render_html_to_pdf"]
-

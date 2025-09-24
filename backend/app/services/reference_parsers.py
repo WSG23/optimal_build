@@ -97,7 +97,9 @@ class ClauseParser:
         clauses: List[ParsedClause] = []
         seen_refs: set[str] = set()
         for index, (heading, body) in enumerate(sections, start=1):
-            clause_ref = self._extract_clause_ref(heading) or self._extract_clause_ref(body)
+            clause_ref = self._extract_clause_ref(heading) or self._extract_clause_ref(
+                body
+            )
             if not clause_ref or clause_ref in seen_refs:
                 continue
             seen_refs.add(clause_ref)

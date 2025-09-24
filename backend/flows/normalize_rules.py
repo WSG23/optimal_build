@@ -6,9 +6,10 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from prefect import flow
 from sqlalchemy import Select, select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -71,10 +72,12 @@ async def normalize_reference_rules(
 
             for match in matches:
                 rule = await _upsert_rule(session, clause, document, source, match)
-                results.append({
-                    "clause_id": clause.id,
-                    "parameter_key": rule.parameter_key,
-                })
+                results.append(
+                    {
+                        "clause_id": clause.id,
+                        "parameter_key": rule.parameter_key,
+                    }
+                )
 
         await session.commit()
 
@@ -121,7 +124,9 @@ def _build_provenance(clause: RefClause, document: RefDocument) -> Dict[str, Any
         provenance["clause_ref"] = clause.clause_ref
     if getattr(document, "version_label", None):
         provenance["document_version"] = document.version_label
-    return {key: value for key, value in provenance.items() if value not in (None, [], "")}
+    return {
+        key: value for key, value in provenance.items() if value not in (None, [], "")
+    }
 
 
 async def _upsert_rule(

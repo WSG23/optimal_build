@@ -66,13 +66,17 @@ class StorageService:
             metadata_path = file_path.with_suffix(file_path.suffix + ".layers.json")
             json_payload = json.dumps(list(layer_metadata), indent=2, sort_keys=True)
             await asyncio.to_thread(metadata_path.write_text, json_payload)
-            layer_metadata_uri = self._to_uri(metadata_path.relative_to(self.local_base_path))
+            layer_metadata_uri = self._to_uri(
+                metadata_path.relative_to(self.local_base_path)
+            )
 
         if vector_payload is not None:
             vector_path = file_path.with_suffix(file_path.suffix + ".vectors.json")
             vector_json = json.dumps(vector_payload, indent=2, sort_keys=True)
             await asyncio.to_thread(vector_path.write_text, vector_json)
-            vector_data_uri = self._to_uri(vector_path.relative_to(self.local_base_path))
+            vector_data_uri = self._to_uri(
+                vector_path.relative_to(self.local_base_path)
+            )
 
         return StorageResult(
             bucket=self.bucket,
@@ -123,4 +127,9 @@ def reset_storage_service() -> None:
     _storage_service = None
 
 
-__all__ = ["StorageResult", "StorageService", "get_storage_service", "reset_storage_service"]
+__all__ = [
+    "StorageResult",
+    "StorageService",
+    "get_storage_service",
+    "reset_storage_service",
+]

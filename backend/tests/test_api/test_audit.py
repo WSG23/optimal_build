@@ -10,11 +10,10 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
-from httpx import AsyncClient
-
 from app.core.geometry import GeometrySerializer
 from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
 from app.models.overlay import OverlaySourceGeometry
+from httpx import AsyncClient
 
 PROJECT_ID = 5812
 
@@ -41,7 +40,9 @@ async def seeded_project(async_session_factory):
             )
         ],
         relationships=[
-            Relationship(rel_type="contains", source_id="level-01", target_id="tower-a"),
+            Relationship(
+                rel_type="contains", source_id="level-01", target_id="tower-a"
+            ),
         ],
     )
     serialized = GeometrySerializer.to_export(geometry)
@@ -93,7 +94,11 @@ async def test_audit_chain_and_diffs(
 
     export_response = await app_client.post(
         f"/api/v1/export/{project_id}",
-        json={"format": "pdf", "include_source": True, "include_approved_overlays": True},
+        json={
+            "format": "pdf",
+            "include_source": True,
+            "include_approved_overlays": True,
+        },
     )
     assert export_response.status_code == 200
     await export_response.aread()
@@ -130,7 +135,5 @@ async def test_audit_chain_and_diffs(
     assert set(context_diff) == {"added", "removed", "changed"}
     assert context_diff["added"] or context_diff["removed"] or context_diff["changed"]
 
-    missing_response = await app_client.get(
-        f"/api/v1/audit/{project_id}/diff/999/1000"
-    )
+    missing_response = await app_client.get(f"/api/v1/audit/{project_id}/diff/999/1000")
     assert missing_response.status_code == 404

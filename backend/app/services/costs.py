@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Optional
 
-from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefCostCatalog, RefCostIndex
 from app.utils.logging import get_logger, log_event
+from sqlalchemy import Select, select
 
 logger = get_logger(__name__)
 
@@ -24,14 +24,20 @@ COST_INDEX_UPDATE_FIELDS: Iterable[str] = (
 )
 
 
-async def upsert_cost_index(session: AsyncSession, payload: Dict[str, Any]) -> RefCostIndex:
+async def upsert_cost_index(
+    session: AsyncSession, payload: Dict[str, Any]
+) -> RefCostIndex:
     """Insert or update a cost index value."""
 
-    stmt: Select[Any] = select(RefCostIndex).where(
-        RefCostIndex.jurisdiction == payload.get("jurisdiction", "SG"),
-        RefCostIndex.series_name == payload["series_name"],
-        RefCostIndex.period == payload["period"],
-    ).limit(1)
+    stmt: Select[Any] = (
+        select(RefCostIndex)
+        .where(
+            RefCostIndex.jurisdiction == payload.get("jurisdiction", "SG"),
+            RefCostIndex.series_name == payload["series_name"],
+            RefCostIndex.period == payload["period"],
+        )
+        .limit(1)
+    )
 
     result = await session.execute(stmt)
     record = result.scalar_one_or_none()
@@ -47,7 +53,13 @@ async def upsert_cost_index(session: AsyncSession, payload: Dict[str, Any]) -> R
         action = "updated"
 
     await session.flush()
-    log_event(logger, "cost_index_upserted", action=action, series=record.series_name, period=record.period)
+    log_event(
+        logger,
+        "cost_index_upserted",
+        action=action,
+        series=record.series_name,
+        period=record.period,
+    )
     return record
 
 
@@ -81,13 +93,20 @@ async def get_latest_cost_index(
     return record
 
 
-async def add_cost_catalog_item(session: AsyncSession, payload: Dict[str, Any]) -> RefCostCatalog:
+async def add_cost_catalog_item(
+    session: AsyncSession, payload: Dict[str, Any]
+) -> RefCostCatalog:
     """Insert a new entry in the cost catalog."""
 
     record = RefCostCatalog(**payload)
     session.add(record)
     await session.flush()
-    log_event(logger, "cost_catalog_item_added", catalog=record.catalog_name, item_code=record.item_code)
+    log_event(
+        logger,
+        "cost_catalog_item_added",
+        catalog=record.catalog_name,
+        item_code=record.item_code,
+    )
     return record
 
 
@@ -107,5 +126,11 @@ async def list_cost_catalog(
 
     result = await session.execute(stmt.order_by(RefCostCatalog.item_code))
     entries = list(result.scalars().all())
-    log_event(logger, "cost_catalog_listed", catalog=catalog_name, category=category, count=len(entries))
+    log_event(
+        logger,
+        "cost_catalog_listed",
+        catalog=catalog_name,
+        category=category,
+        count=len(entries),
+    )
     return entries

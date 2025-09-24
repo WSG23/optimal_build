@@ -1,6 +1,12 @@
 import pytest
 
-from app.core.export import ExportFormat, ExportOptions, LayerMapping, LocalExportStorage, generate_project_export
+from app.core.export import (
+    ExportFormat,
+    ExportOptions,
+    LayerMapping,
+    LocalExportStorage,
+    generate_project_export,
+)
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 
@@ -68,9 +74,13 @@ async def _seed_project(async_session_factory, project_id: int = 1) -> int:
     return project_id
 
 
-@pytest.mark.parametrize("format_", [ExportFormat.DXF, ExportFormat.IFC, ExportFormat.PDF])
+@pytest.mark.parametrize(
+    "format_", [ExportFormat.DXF, ExportFormat.IFC, ExportFormat.PDF]
+)
 @pytest.mark.asyncio
-async def test_generate_export_creates_files_per_format(format_, async_session_factory, tmp_path):
+async def test_generate_export_creates_files_per_format(
+    format_, async_session_factory, tmp_path
+):
     project_id = await _seed_project(async_session_factory)
     storage_root = tmp_path / format_.value
     storage = LocalExportStorage(base_dir=storage_root)
@@ -104,7 +114,9 @@ async def test_generate_export_creates_files_per_format(format_, async_session_f
     assert overlay_entries[0]["target_ids"] == ["bldg-1"]
     assert overlay_entries[0]["rule_refs"] == ["heritage.review"]
     assert overlay_entries[0]["props"].get("score") == 0.95
-    assert manifest.get("watermark"), "Watermark should be applied when pending overlays exist"
+    assert manifest.get(
+        "watermark"
+    ), "Watermark should be applied when pending overlays exist"
 
     with artifact.open() as stream:
         payload = stream.read()
@@ -112,7 +124,9 @@ async def test_generate_export_creates_files_per_format(format_, async_session_f
 
 
 @pytest.mark.asyncio
-async def test_pending_overlays_mapped_to_separate_layers(async_session_factory, tmp_path):
+async def test_pending_overlays_mapped_to_separate_layers(
+    async_session_factory, tmp_path
+):
     project_id = await _seed_project(async_session_factory)
     storage = LocalExportStorage(base_dir=tmp_path / "dwg")
 
@@ -140,13 +154,19 @@ async def test_pending_overlays_mapped_to_separate_layers(async_session_factory,
     assert overlays, "Pending overlays should be present in the export manifest"
     pending_layers = set(overlays.keys())
     assert any(layer.startswith("A-OVER") for layer in pending_layers)
-    all_statuses = {entry["status"] for entries in overlays.values() for entry in entries}
-    assert all_statuses == {"pending"}, "Only pending overlays should be exported when toggled"
+    all_statuses = {
+        entry["status"] for entries in overlays.values() for entry in entries
+    }
+    assert all_statuses == {
+        "pending"
+    }, "Only pending overlays should be exported when toggled"
     for entries in overlays.values():
         codes = {entry["code"] for entry in entries}
         assert "heritage_conservation" not in codes
     assert manifest["layers"], "Source geometry layers should still be included"
-    assert manifest.get("watermark"), "Watermark should flag presence of pending overlays"
+    assert manifest.get(
+        "watermark"
+    ), "Watermark should flag presence of pending overlays"
 
     with artifact.open() as stream:
         payload = stream.read()

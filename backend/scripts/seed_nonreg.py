@@ -7,16 +7,16 @@ import asyncio
 import json
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefCostIndex, RefErgonomics, RefMaterialStandard
+from sqlalchemy import Select, select
 
 SEED_ROOT = Path(__file__).parent / "seeds"
 ERGONOMICS_SEED = SEED_ROOT / "ergonomics_seed.json"
@@ -93,7 +93,9 @@ def _prepare_ergonomics(records: Iterable[Dict[str, Any]]) -> List[Dict[str, Any
     for record in records:
         metric = dict(record)
         if "metric_key" not in metric or "population" not in metric:
-            raise KeyError("Ergonomics seed entries require 'metric_key' and 'population'.")
+            raise KeyError(
+                "Ergonomics seed entries require 'metric_key' and 'population'."
+            )
         if "value" in metric:
             metric["value"] = _to_decimal(metric["value"], places=2)
         metric.setdefault("context", {})
@@ -128,7 +130,9 @@ def _prepare_cost_indices(records: Iterable[Dict[str, Any]]) -> List[Dict[str, A
         if "series_name" not in entry:
             index_name = entry.get("index_name")
             if not index_name:
-                raise KeyError("Cost index seed entries require 'series_name' or 'index_name'.")
+                raise KeyError(
+                    "Cost index seed entries require 'series_name' or 'index_name'."
+                )
             entry["series_name"] = index_name
         entry.pop("index_name", None)
         entry.setdefault("category", "composite")
@@ -138,7 +142,9 @@ def _prepare_cost_indices(records: Iterable[Dict[str, Any]]) -> List[Dict[str, A
     return prepared
 
 
-async def _upsert_ergonomics(session: AsyncSession, metrics: Iterable[Dict[str, Any]]) -> int:
+async def _upsert_ergonomics(
+    session: AsyncSession, metrics: Iterable[Dict[str, Any]]
+) -> int:
     processed = 0
     for metric in metrics:
         stmt: Select[RefErgonomics] = (
@@ -161,7 +167,9 @@ async def _upsert_ergonomics(session: AsyncSession, metrics: Iterable[Dict[str, 
     return processed
 
 
-async def _upsert_standards(session: AsyncSession, standards: Iterable[Dict[str, Any]]) -> int:
+async def _upsert_standards(
+    session: AsyncSession, standards: Iterable[Dict[str, Any]]
+) -> int:
     processed = 0
     for payload in standards:
         stmt: Select[RefMaterialStandard] = select(RefMaterialStandard).where(
@@ -194,7 +202,9 @@ async def _upsert_standards(session: AsyncSession, standards: Iterable[Dict[str,
     return processed
 
 
-async def _upsert_cost_indices(session: AsyncSession, indices: Iterable[Dict[str, Any]]) -> int:
+async def _upsert_cost_indices(
+    session: AsyncSession, indices: Iterable[Dict[str, Any]]
+) -> int:
     processed = 0
     for payload in indices:
         stmt: Select[RefCostIndex] = select(RefCostIndex).where(
@@ -258,7 +268,9 @@ async def _cli_main() -> NonRegSeedSummary:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Seed non-regulatory reference tables.")
+    parser = argparse.ArgumentParser(
+        description="Seed non-regulatory reference tables."
+    )
     return parser
 
 

@@ -6,15 +6,15 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from prefect import flow
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.models.rkp import RefErgonomics
-
 
 DEFAULT_ERGONOMICS_METRICS: List[Dict[str, Any]] = [
     {
@@ -101,4 +101,8 @@ async def fetch_seeded_metrics(
     return metrics
 
 
-__all__ = ["seed_ergonomics_metrics", "fetch_seeded_metrics", "DEFAULT_ERGONOMICS_METRICS"]
+__all__ = [
+    "seed_ergonomics_metrics",
+    "fetch_seeded_metrics",
+    "DEFAULT_ERGONOMICS_METRICS",
+]

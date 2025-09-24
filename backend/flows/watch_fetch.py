@@ -9,7 +9,20 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar, cast
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 from prefect import flow
 
@@ -19,8 +32,9 @@ except ModuleNotFoundError:  # pragma: no cover - fallback to bundled stub for C
     import app as _app_for_sqlalchemy_stub  # noqa: F401  pylint: disable=unused-import
     import sqlalchemy  # type: ignore[import-not-found]
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from sqlalchemy import func, select
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -28,12 +42,8 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
 from app.core.database import AsyncSessionLocal
 from app.models.base import BaseModel
 from app.models.rkp import RefClause, RefDocument, RefSource
-from app.services.reference_sources import (
-    FetchedDocument,
-    ReferenceSourceFetcher,
-)
+from app.services.reference_sources import FetchedDocument, ReferenceSourceFetcher
 from app.services.reference_storage import ReferenceStorage
-
 
 SUPPORTED_FETCH_KINDS = {"pdf", "html", "sitemap"}
 
@@ -88,7 +98,9 @@ async def watch_reference_sources(
             duplicate = await _document_by_hash(session, source.id, file_hash)
             if duplicate:
                 duplicate.http_etag = fetched.etag or duplicate.http_etag
-                duplicate.http_last_modified = fetched.last_modified or duplicate.http_last_modified
+                duplicate.http_last_modified = (
+                    fetched.last_modified or duplicate.http_last_modified
+                )
                 duplicate.suspected_update = False
                 await session.flush()
                 seen_hashes.add((source.id, file_hash))
@@ -134,7 +146,9 @@ async def watch_reference_sources(
     return results
 
 
-async def _latest_document(session: AsyncSession, source_id: int) -> Optional[RefDocument]:
+async def _latest_document(
+    session: AsyncSession, source_id: int
+) -> Optional[RefDocument]:
     stmt = (
         select(RefDocument)
         .where(RefDocument.source_id == source_id)
@@ -162,9 +176,7 @@ async def _active_sources(session: AsyncSession) -> List[RefSource]:
     """Return active sources while pruning superseded duplicates."""
 
     rows = await session.execute(
-        select(RefSource)
-        .where(RefSource.is_active.is_(True))
-        .order_by(RefSource.id)
+        select(RefSource).where(RefSource.is_active.is_(True)).order_by(RefSource.id)
     )
     sources = list(rows.scalars())
     if not sources:
@@ -182,7 +194,9 @@ async def _active_sources(session: AsyncSession) -> List[RefSource]:
     return list(seen.values())
 
 
-def _prune_stub_state(session: AsyncSession, sources: List[RefSource]) -> List[RefSource]:
+def _prune_stub_state(
+    session: AsyncSession, sources: List[RefSource]
+) -> List[RefSource]:
     """Normalise duplicate sources when using the in-repo SQLAlchemy stub."""
 
     database = getattr(session, "_database", None)
@@ -197,7 +211,9 @@ def _prune_stub_state(session: AsyncSession, sources: List[RefSource]) -> List[R
             keep_map[key] = source
 
     keep_sources = set(keep_map.values())
-    database._data[RefSource] = [source for source in database.select_all(RefSource) if source in keep_sources]
+    database._data[RefSource] = [
+        source for source in database.select_all(RefSource) if source in keep_sources
+    ]
     source_ids = {source.id for source in keep_sources}
     database._data[RefDocument] = [
         document
@@ -374,10 +390,14 @@ async def _summarise_ingestion(
     }
     async with AsyncSessionLocal() as session:
         documents = (
-            await session.execute(
-                select(RefDocument).where(RefDocument.suspected_update.is_(True))
+            (
+                await session.execute(
+                    select(RefDocument).where(RefDocument.suspected_update.is_(True))
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         sources = (await session.execute(select(RefSource))).scalars().all()
         summary["document_count"] = len(documents)
         summary["source_count"] = len(sources)
@@ -462,4 +482,8 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
     main()
 
 
-__all__ = ["OfflineReferenceFetcher", "OfflineReferenceFixture", "watch_reference_sources"]
+__all__ = [
+    "OfflineReferenceFetcher",
+    "OfflineReferenceFixture",
+    "watch_reference_sources",
+]

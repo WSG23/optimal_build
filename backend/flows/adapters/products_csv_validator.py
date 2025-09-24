@@ -12,8 +12,8 @@ from pydantic import (
     Field,
     HttpUrl,
     ValidationError,
-    conint,
     confloat,
+    conint,
     field_validator,
 )
 
@@ -82,7 +82,9 @@ def read_csv(path: Path) -> Iterator[Mapping[str, Optional[str]]]:
         for row in reader:
             if not row:
                 continue
-            if all((value is None or str(value).strip() == "") for value in row.values()):
+            if all(
+                (value is None or str(value).strip() == "") for value in row.values()
+            ):
                 continue
             yield {
                 key: value.strip() if isinstance(value, str) else value
@@ -102,7 +104,11 @@ def _format_validation_error(line_number: int, error: ValidationError) -> str:
         else:
             details.append(message)
     joined = "; ".join(details)
-    return f"line {line_number}: {joined}" if joined else f"line {line_number}: invalid row"
+    return (
+        f"line {line_number}: {joined}"
+        if joined
+        else f"line {line_number}: invalid row"
+    )
 
 
 def validate_csv(path: Path) -> tuple[ValidationReport, list[ProductRow]]:

@@ -5,12 +5,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, cast
 
-from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefAlert, RefIngestionRun
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
+from sqlalchemy import Select, select
 
 logger = get_logger(__name__)
 
@@ -37,11 +37,15 @@ async def create_alert(
     session.add(record)
     await session.flush()
     metrics.ALERT_COUNTER.labels(level=level).inc()
-    log_event(logger, "alert_created", alert_type=alert_type, level=level, alert_id=record.id)
+    log_event(
+        logger, "alert_created", alert_type=alert_type, level=level, alert_id=record.id
+    )
     return record
 
 
-async def list_alerts(session: AsyncSession, *, alert_type: Optional[str] = None) -> list[RefAlert]:
+async def list_alerts(
+    session: AsyncSession, *, alert_type: Optional[str] = None
+) -> list[RefAlert]:
     """Return alerts optionally filtered by type."""
 
     stmt: Select[Any] = select(RefAlert)
@@ -74,5 +78,7 @@ async def acknowledge_alert(
     alert_record.acknowledged_at = datetime.now(timezone.utc)
     alert_record.acknowledged_by = acknowledged_by
     await session.flush()
-    log_event(logger, "alert_acknowledged", alert_id=alert_id, acknowledged_by=acknowledged_by)
+    log_event(
+        logger, "alert_acknowledged", alert_id=alert_id, acknowledged_by=acknowledged_by
+    )
     return alert_db

@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Dict, Iterable, List, Sequence
-
-from fastapi import HTTPException
 
 from app.schemas.feasibility import (
     BuildableAreaSummary,
@@ -17,6 +15,7 @@ from app.schemas.feasibility import (
     NewFeasibilityProjectInput,
     RuleAssessmentResult,
 )
+from fastapi import HTTPException
 
 _BASE_RULES: Sequence[Dict[str, object]] = (
     {
@@ -104,7 +103,9 @@ def _build_rules() -> List[FeasibilityRule]:
     return [FeasibilityRule.model_validate(item) for item in _BASE_RULES]
 
 
-def generate_feasibility_rules(project: NewFeasibilityProjectInput) -> FeasibilityRulesResponse:
+def generate_feasibility_rules(
+    project: NewFeasibilityProjectInput,
+) -> FeasibilityRulesResponse:
     """Return feasibility rules and recommendations for the project."""
 
     rules = _build_rules()
@@ -192,7 +193,9 @@ def run_feasibility_assessment(
     missing = [identifier for identifier in normalised_ids if identifier not in lookup]
     if missing:
         message = ", ".join(sorted(missing))
-        raise HTTPException(status_code=400, detail=f"Unknown rule identifiers: {message}")
+        raise HTTPException(
+            status_code=400, detail=f"Unknown rule identifiers: {message}"
+        )
 
     evaluated = [
         _evaluate_rule(lookup[identifier], index, payload.project)
