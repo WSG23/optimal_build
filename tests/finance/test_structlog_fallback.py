@@ -2,14 +2,32 @@
 
 from __future__ import annotations
 
-import importlib
 import logging
 import sys
 from importlib import metadata
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
+
+def _import_module(name: str):
+    module = __import__(name)
+    for part in name.split('.')[1:]:
+        module = getattr(module, part)
+    return module
+
+
+def _load_module_from_path(name: str, path: Path) -> ModuleType:
+    module = ModuleType(name)
+    module.__file__ = str(path)
+    package = name.rpartition('.')[0]
+    module.__package__ = package or None
+    module.__dict__['__builtins__'] = __builtins__
+    sys.modules[name] = module
+    code = compile(path.read_text(encoding='utf-8'), str(path), 'exec')
+    exec(code, module.__dict__)
+    return module
 
 def test_seed_finance_demo_uses_structlog_fallback(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
@@ -34,7 +52,7 @@ def test_seed_finance_demo_uses_structlog_fallback(
 
     caplog.clear()
     with caplog.at_level(logging.WARNING):
-        logging_module = importlib.import_module("backend.app.utils.logging")
+        logging_module = _import_module("backend.app.utils.logging")
     assert any("vendored fallback" in record.getMessage() for record in caplog.records)
 
     logging_module.configure_logging()
@@ -49,11 +67,9 @@ def test_seed_finance_demo_uses_structlog_fallback(
 
     project_root = Path(__file__).resolve().parents[2]
     script_path = project_root / "scripts" / "seed_finance_demo.py"
-    spec = importlib.util.spec_from_file_location("tests.structlog_cli", script_path)
-    assert spec and spec.loader, "Failed to load scripts/seed_finance_demo.py"
-    cli_module = importlib.util.module_from_spec(spec)
-    monkeypatch.setitem(sys.modules, spec.name, cli_module)
-    spec.loader.exec_module(cli_module)
+    module_name = "tests.structlog_cli"
+    cli_module = _load_module_from_path(module_name, script_path)
+    monkeypatch.setitem(sys.modules, module_name, cli_module)
 
     captured: dict[str, list[str] | None] = {}
 
