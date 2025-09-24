@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from jobs.parse_cad import _parse_dxf_payload, _parse_ifc_payload
-from jobs.raster_vector import _vectorize_pdf
+from backend.jobs.parse_cad import _parse_dxf_payload, _parse_ifc_payload
+from backend.jobs.raster_vector import _vectorize_pdf
 
 SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
 

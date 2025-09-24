@@ -15,11 +15,11 @@ backend.
 
 from __future__ import annotations
 
-from jobs import celery_app, job_queue  # noqa: F401  (re-exported for workers)
+from backend.jobs import celery_app, job_queue  # noqa: F401  (re-exported for workers)
 
 # Import job modules to register tasks with the configured backend.
-from jobs import overlay_run as _overlay_run  # noqa: F401
-from jobs import parse_cad as _parse_cad  # noqa: F401
-from jobs import raster_vector as _raster_vector  # noqa: F401
+from backend.jobs import overlay_run as _overlay_run  # noqa: F401
+from backend.jobs import parse_cad as _parse_cad  # noqa: F401
+from backend.jobs import raster_vector as _raster_vector  # noqa: F401
 
 __all__ = ["celery_app", "job_queue"]

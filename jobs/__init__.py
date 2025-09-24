@@ -1,4 +1,4 @@
-"""Compatibility wrapper exposing :mod:`backend.jobs` as :mod:`jobs`."""
+"""Compatibility shim that exposes :mod:`backend.jobs` as ``jobs``."""
 
 from __future__ import annotations
 
@@ -7,6 +7,6 @@ import sys
 
 _backend_jobs = import_module("backend.jobs")
 
-# Reuse the backend implementation so imports like ``from jobs import job``
-# continue to resolve without installing the package.
+# Replace this module entry so ``import jobs`` returns ``backend.jobs`` directly.
 sys.modules[__name__] = _backend_jobs
+

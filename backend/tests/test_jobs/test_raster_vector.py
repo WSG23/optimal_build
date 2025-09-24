@@ -9,7 +9,7 @@ import pytest
 
 pytest.importorskip("fitz")
 
-from jobs.raster_vector import vectorize_floorplan
+from backend.jobs.raster_vector import vectorize_floorplan
 
 SAMPLE_PDF = Path(__file__).resolve().parents[3] / "samples" / "pdf" / "floor_simple.pdf"
 

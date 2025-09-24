@@ -19,8 +19,8 @@ from app.models.overlay import (
     OverlaySuggestion,
 )
 from app.schemas.overlay import OverlayDecisionPayload, OverlaySuggestion as OverlaySuggestionSchema
-from jobs import job_queue
-from jobs.overlay_run import run_overlay_job
+from backend.jobs import job_queue
+from backend.jobs.overlay_run import run_overlay_job
 
 
 router = APIRouter(prefix="/overlay")

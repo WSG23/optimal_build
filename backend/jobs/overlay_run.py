@@ -22,7 +22,7 @@ from app.models.overlay import (
     OverlaySourceGeometry,
     OverlaySuggestion,
 )
-from jobs import job
+from backend.jobs import job
 
 ENGINE_VERSION = "2024.1"
 
