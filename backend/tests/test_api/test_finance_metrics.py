@@ -12,8 +12,8 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
-from backend.app.models.rkp import RefCostIndex
-from backend.app.utils import metrics
+from app.models.rkp import RefCostIndex
+from app.utils import metrics
 
 
 @pytest.mark.asyncio

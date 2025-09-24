@@ -12,7 +12,7 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
-from backend.app.models.finance import FinProject
+from app.models.finance import FinProject
 
 
 @pytest.mark.asyncio

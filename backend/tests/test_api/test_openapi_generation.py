@@ -10,9 +10,9 @@ pytest.importorskip("sqlalchemy")
 
 from fastapi.testclient import TestClient
 
-from backend.app.api.v1 import TAGS_METADATA  # noqa: E402  (import after dependency checks)
-from backend.app.core.config import settings  # noqa: E402
-from backend.app.main import app  # noqa: E402
+from app.api.v1 import TAGS_METADATA  # noqa: E402  (import after dependency checks)
+from app.core.config import settings  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 def test_openapi_includes_expected_paths() -> None:

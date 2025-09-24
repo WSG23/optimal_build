@@ -8,8 +8,8 @@ pytest.importorskip("pytest_asyncio")
 import pytest_asyncio
 from httpx import AsyncClient
 
-from backend.app.core.models.geometry import Door, GeometryGraph, Level, Space
-from backend.app.models.rulesets import RulePack
+from app.core.models.geometry import Door, GeometryGraph, Level, Space
+from app.models.rulesets import RulePack
 
 
 PACK_DEFINITION = {

@@ -13,10 +13,10 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from backend.app.core.database import get_session
-from backend.app.main import app
-from backend.app.models.rkp import RefClause, RefDocument, RefRule, RefSource
-from backend.app.utils import metrics
+from app.core.database import get_session
+from app.main import app
+from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
+from app.utils import metrics
 from scripts.seed_screening import seed_screening_sample_data
 
 

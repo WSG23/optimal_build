@@ -12,9 +12,9 @@ pytest.importorskip("pytest_asyncio")
 import pytest_asyncio
 from httpx import AsyncClient
 
-from backend.app.core.geometry import GeometrySerializer
-from backend.app.core.models.geometry import GeometryGraph, Level, Relationship, Space
-from backend.app.models.overlay import OverlaySourceGeometry
+from app.core.geometry import GeometrySerializer
+from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
+from app.models.overlay import OverlaySourceGeometry
 
 PROJECT_ID = 5812
 

@@ -15,21 +15,21 @@ pytest.importorskip('sqlalchemy')
 
 from sqlalchemy import select
 
-from backend.app.api.v1.imports import _build_parse_summary
-from backend.app.core.geometry.builder import GraphBuilder
-from backend.app.core.metrics.roi import compute_project_roi
-from backend.app.core.models.geometry import CanonicalGeometry, GeometryNode
-from backend.app.core.export import (
+from app.api.v1.imports import _build_parse_summary
+from app.core.geometry.builder import GraphBuilder
+from app.core.metrics.roi import compute_project_roi
+from app.core.models.geometry import CanonicalGeometry, GeometryNode
+from app.core.export import (
     ExportFormat,
     ExportOptions,
     LayerMapping,
     LocalExportStorage,
     generate_project_export,
 )
-from backend.app.models.audit import AuditLog
-from backend.app.models.imports import ImportRecord
-from backend.app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
-from backend.app.models.rkp import RefRule, RefZoningLayer
+from app.models.audit import AuditLog
+from app.models.imports import ImportRecord
+from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
+from app.models.rkp import RefRule, RefZoningLayer
 from jobs.overlay_run import run_overlay_for_project
 
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "samples" / "sample_floorplan.json"

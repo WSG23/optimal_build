@@ -4,8 +4,8 @@ from decimal import Decimal
 
 import pytest
 
-from backend.app.models.rkp import RefCostIndex
-from backend.app.services.finance import calculator
+from app.models.rkp import RefCostIndex
+from app.services.finance import calculator
 
 
 def test_npv_basic_case() -> None:

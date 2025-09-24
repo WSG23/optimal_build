@@ -13,8 +13,8 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from backend.app.core.config import settings
-from backend.app.models.rkp import RefClause, RefDocument, RefRule, RefSource
+from app.core.config import settings
+from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from scripts.seed_screening import seed_screening_sample_data
 
 

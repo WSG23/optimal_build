@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from backend.app.models.rkp import RefRule
-from backend.app.schemas.buildable import BuildableDefaults
-from backend.app.services.buildable import ResolvedZone, calculate_buildable
+from app.models.rkp import RefRule
+from app.schemas.buildable import BuildableDefaults
+from app.services.buildable import ResolvedZone, calculate_buildable
 
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")

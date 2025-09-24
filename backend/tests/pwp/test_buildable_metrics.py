@@ -62,7 +62,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
     sys.modules.setdefault("structlog.processors", processors_module)
     sys.modules.setdefault("structlog.stdlib", stdlib_module)
 
-from backend.app.utils import metrics
+from app.utils import metrics
 
 from backend.tests.pwp.test_buildable_golden import (
     DEFAULT_REQUEST_DEFAULTS,

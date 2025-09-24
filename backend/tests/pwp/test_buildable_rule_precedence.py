@@ -69,9 +69,9 @@ if "structlog" not in sys.modules:  # pragma: no cover - test shim for optional 
     sys.modules.setdefault("structlog.processors", structlog_module.processors)
     sys.modules.setdefault("structlog.stdlib", structlog_module.stdlib)
 
-from backend.app.models.rkp import RefParcel, RefRule, RefZoningLayer
-from backend.app.schemas.buildable import BuildableDefaults
-from backend.app.services.buildable import ResolvedZone, calculate_buildable
+from app.models.rkp import RefParcel, RefRule, RefZoningLayer
+from app.schemas.buildable import BuildableDefaults
+from app.services.buildable import ResolvedZone, calculate_buildable
 
 
 def test_ingested_rule_overrides_seed_defaults(session_factory) -> None:

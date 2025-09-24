@@ -13,8 +13,8 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
-from backend.app.models.imports import ImportRecord
-from backend.app.services.storage import get_storage_service
+from app.models.imports import ImportRecord
+from app.services.storage import get_storage_service
 from backend.jobs import job_queue
 
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"

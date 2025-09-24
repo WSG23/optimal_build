@@ -1,7 +1,7 @@
 import pytest
 
-from backend.app.core.models.geometry import Door, GeometryGraph, Level, Space
-from backend.app.core.rules.engine import RulesEngine
+from app.core.models.geometry import Door, GeometryGraph, Level, Space
+from app.core.rules.engine import RulesEngine
 
 
 RULE_PACK = {
