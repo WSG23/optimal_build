@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 import os
 import subprocess
 import sys
@@ -11,6 +10,15 @@ from typing import Iterable
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_REQUIREMENTS = _REPO_ROOT / "backend" / "requirements.txt"
+
+def _module_exists(name: str) -> bool:
+    try:
+        __import__(name)
+    except ModuleNotFoundError:
+        return False
+    except ImportError:
+        return False
+    return True
 
 
 def _print_error(lines: Iterable[str]) -> None:
@@ -54,7 +62,7 @@ def _install_requirements(requirements: Path) -> None:
 def ensure_alembic(requirements: Path | None = None) -> None:
     """Install or prompt for Alembic when it's missing."""
 
-    if importlib.util.find_spec("alembic") is not None:
+    if _module_exists("alembic"):
         return
 
     requirements_path = Path(requirements) if requirements else _DEFAULT_REQUIREMENTS
@@ -89,7 +97,7 @@ def ensure_alembic(requirements: Path | None = None) -> None:
             )
             raise SystemExit(exc.returncode)
 
-        if importlib.util.find_spec("alembic") is None:
+        if not _module_exists("alembic"):
             _print_error(
                 [
                     "Alembic is still unavailable after installing backend requirements.",

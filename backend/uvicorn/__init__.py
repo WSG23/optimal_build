@@ -1,33 +1,18 @@
-"""Delegate to the repository-level uvicorn stub when available."""
+"""Delegate to the repository-level Uvicorn stub when running backend tests."""
 
 from __future__ import annotations
 
-import importlib.util
-import sys
-from pathlib import Path
 from types import ModuleType
+
+from backend._stub_loader import load_package_stub
 
 
 def _load_stub() -> ModuleType:
-    repo_root = Path(__file__).resolve().parents[2]
-    stub_init = repo_root / "uvicorn" / "__init__.py"
-    if not stub_init.exists():
-        raise ModuleNotFoundError(
-            "No module named 'uvicorn' and uvicorn stub missing in repository root"
-        )
-
-    spec = importlib.util.spec_from_file_location(
+    return load_package_stub(
         __name__,
-        stub_init,
-        submodule_search_locations=[str(stub_init.parent)],
+        "uvicorn",
+        "Uvicorn",
     )
-    if spec is None or spec.loader is None:
-        raise ModuleNotFoundError("Unable to load uvicorn stub module")
-
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[__name__] = module
-    spec.loader.exec_module(module)
-    return module
 
 
 globals().update(_load_stub().__dict__)

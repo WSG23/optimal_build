@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import importlib.machinery
-import importlib.util
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, Iterable
+
+from backend._stub_loader import load_package_stub
 
 
 def _load_installed_sqlalchemy() -> ModuleType | None:
@@ -20,45 +20,45 @@ def _load_installed_sqlalchemy() -> ModuleType | None:
     repo_stub_path = repo_root / "sqlalchemy"
     excluded_paths = {backend_root.resolve(), repo_root.resolve(), repo_stub_path.resolve()}
 
+    original_sys_path = list(sys.path)
     search_paths = [
         entry
-        for entry in sys.path
+        for entry in original_sys_path
         if Path(entry).resolve() not in excluded_paths
     ]
 
-    spec = importlib.machinery.PathFinder.find_spec(__name__, search_paths)
-    if spec is None or spec.loader is None:
+    removed_modules: dict[str, ModuleType] = {}
+    for name in list(sys.modules):
+        if name == "sqlalchemy" or name.startswith("sqlalchemy."):
+            removed_modules[name] = sys.modules.pop(name)
+
+    try:
+        sys.path = search_paths
+        module = __import__("sqlalchemy")
+    except ModuleNotFoundError:
+        module = None
+    except ImportError:
+        module = None
+    finally:
+        sys.path = original_sys_path
+        if module is None:
+            sys.modules.update(removed_modules)
+
+    if module is None:
         return None
 
-    module = importlib.util.module_from_spec(spec)
     sys.modules[__name__] = module
-    spec.loader.exec_module(module)
     return module
 
 
 def _load_repository_stub() -> ModuleType:
-    repo_root = Path(__file__).resolve().parents[2]
-    stub_init = repo_root / "sqlalchemy" / "__init__.py"
-    if not stub_init.exists():
-        raise ModuleNotFoundError
-
-    spec = importlib.util.spec_from_file_location(
-        __name__,
-        stub_init,
-        submodule_search_locations=[str(stub_init.parent)],
-    )
-    if spec is None or spec.loader is None:
-        raise ModuleNotFoundError("Unable to load SQLAlchemy stub module")
-
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[__name__] = module
-    spec.loader.exec_module(module)
-    return module
+    return load_package_stub(__name__, "sqlalchemy_pkg_backup", "SQLAlchemy")
 
 
 def _create_inline_stub() -> ModuleType:
     module = ModuleType(__name__)
     module.__dict__["__path__"] = [str(Path(__file__).parent)]
+    module.__dict__.setdefault('__builtins__', __builtins__)
 
     class _MissingSQLAlchemy(RuntimeError):
         def __init__(self, feature: str) -> None:
