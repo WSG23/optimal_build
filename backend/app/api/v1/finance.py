@@ -351,7 +351,7 @@ async def run_finance_feasibility(
         results: List[FinResult] = [
             FinResult(
                 project_id=payload.project_id,
-                scenario_id=scenario.id,
+                scenario=scenario,
                 name="escalated_cost",
                 value=escalated_cost,
                 unit=payload.scenario.currency,
@@ -363,7 +363,7 @@ async def run_finance_feasibility(
             ),
             FinResult(
                 project_id=payload.project_id,
-                scenario_id=scenario.id,
+                scenario=scenario,
                 name="npv",
                 value=npv_rounded,
                 unit=payload.scenario.currency,
@@ -374,7 +374,7 @@ async def run_finance_feasibility(
             ),
             FinResult(
                 project_id=payload.project_id,
-                scenario_id=scenario.id,
+                scenario=scenario,
                 name="irr",
                 value=irr_value,
                 unit="ratio",
@@ -395,7 +395,6 @@ async def run_finance_feasibility(
             )
 
         session.add_all(results)
-        scenario.results.extend(results)
 
         await session.flush()
         await session.commit()

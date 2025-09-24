@@ -7,6 +7,13 @@ from pathlib import Path
 from collections.abc import Callable
 from typing import Any, cast
 
+
+try:  # pragma: no cover - exercised when SQLAlchemy is unavailable
+    import sqlalchemy  # type: ignore[import-not-found]
+except ModuleNotFoundError:  # pragma: no cover - fallback to bundled stub for CLI entrypoints
+    import app as _app_for_sqlalchemy_stub  # noqa: F401  pylint: disable=unused-import
+    import sqlalchemy  # type: ignore[import-not-found]
+
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 
