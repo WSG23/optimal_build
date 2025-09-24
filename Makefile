@@ -112,6 +112,10 @@ lint: ## Run linting
 	cd frontend && npm run lint
 
 test: ## Run tests
+	@if [ ! -x $(PY) ]; then \
+		echo "Virtualenv not found; running 'make venv'..."; \
+		$(MAKE) venv; \
+	fi
 	cd backend && $(PY) -m pytest tests
 	cd backend && $(PY) -m pytest ../tests
 	cd frontend && npm test
