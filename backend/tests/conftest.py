@@ -7,10 +7,28 @@ import sys
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import asynccontextmanager
 from importlib import import_module
+from pathlib import Path
 
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
+
+
+def _find_repo_root(current: Path) -> Path:
+    for parent in current.parents:
+        if (parent / ".git").exists():
+            return parent
+    return current.parents[-1]
+
+
+_REPO_ROOT = _find_repo_root(Path(__file__).resolve())
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+try:  # pragma: no cover - async plugin is optional when running unit tests
+    import pytest_asyncio
+except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
+    pytest_asyncio = import_module("backend.pytest_asyncio")
+    sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
 
 
 def _ensure_sqlalchemy() -> None:
