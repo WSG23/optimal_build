@@ -134,15 +134,7 @@ async def update_roadmap_item(
     item = await service.update_roadmap_item(
         item_id=item_id,
         project_id=project_id,
-        approval_type_id=data.get("approval_type_id"),
-        sequence_order=data.get("sequence_order"),
-        status=data.get("status"),
-        target_submission_date=data.get("target_submission_date"),
-        target_decision_date=data.get("target_decision_date"),
-        actual_submission_date=data.get("actual_submission_date"),
-        actual_decision_date=data.get("actual_decision_date"),
-        notes=data.get("notes"),
-        metadata=data.get("metadata"),
+        **data,
     )
     await session.commit()
     await session.refresh(item)
