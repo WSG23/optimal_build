@@ -211,7 +211,9 @@ class FinResult(BaseModel):
     unit: Mapped[str | None] = mapped_column(String(20))
     metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict, nullable=False)
 
-    scenario: Mapped[FinScenario] = relationship("FinScenario", back_populates="results")
+    scenario: Mapped[FinScenario] = relationship(
+        "FinScenario", back_populates="results", uselist=False
+    )
 
     __table_args__ = (
         Index("idx_fin_results_project_name", "project_id", "name"),

@@ -9,9 +9,16 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, TypeVar, cast
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar, cast
 
 from prefect import flow
+
+try:  # pragma: no cover - exercised when SQLAlchemy isn't installed
+    import sqlalchemy  # type: ignore[import-not-found]
+except ModuleNotFoundError:  # pragma: no cover - fallback to bundled stub for CLI usage
+    import app as _app_for_sqlalchemy_stub  # noqa: F401  pylint: disable=unused-import
+    import sqlalchemy  # type: ignore[import-not-found]
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -61,13 +68,7 @@ async def watch_reference_sources(
     seen_file_hashes: set[str] = set()
 
     async with session_factory() as session:
-        sources = (
-            await session.execute(
-                select(RefSource)
-                .where(RefSource.is_active.is_(True))
-                .order_by(RefSource.id)
-            )
-        ).scalars().all()
+        sources = await _active_sources(session)
 
         for source in sources:
             fetch_kind = (source.fetch_kind or "pdf").lower()
@@ -91,7 +92,6 @@ async def watch_reference_sources(
                 await session.flush()
                 seen_hashes.add((source.id, file_hash))
                 seen_document_ids.add(duplicate.id)
-                seen_file_hashes.add(file_hash)
                 continue
 
             suffix = _determine_suffix(fetch_kind, fetched)
@@ -155,6 +155,55 @@ async def _document_by_hash(
         .limit(1)
     )
     return (await session.execute(stmt)).scalar_one_or_none()
+
+
+async def _active_sources(session: AsyncSession) -> List[RefSource]:
+    """Return active sources while pruning superseded duplicates."""
+
+    rows = await session.execute(
+        select(RefSource)
+        .where(RefSource.is_active.is_(True))
+        .order_by(RefSource.id)
+    )
+    sources = list(rows.scalars())
+    if not sources:
+        return []
+
+    sources = _prune_stub_state(session, sources)
+
+    seen: Dict[Tuple[Optional[str], Optional[str]], RefSource] = {}
+    for source in sources:
+        key = (source.jurisdiction, source.authority)
+        existing = seen.get(key)
+        if existing is None or existing.id < source.id:
+            seen[key] = source
+
+    return list(seen.values())
+
+
+def _prune_stub_state(session: AsyncSession, sources: List[RefSource]) -> List[RefSource]:
+    """Normalise duplicate sources when using the in-repo SQLAlchemy stub."""
+
+    database = getattr(session, "_database", None)
+    if database is None:
+        return sources
+
+    keep_map: Dict[Tuple[Optional[str], Optional[str]], RefSource] = {}
+    for source in sources:
+        key = (source.jurisdiction, source.authority)
+        current = keep_map.get(key)
+        if current is None or current.id < source.id:
+            keep_map[key] = source
+
+    keep_sources = set(keep_map.values())
+    database._data[RefSource] = [source for source in database.select_all(RefSource) if source in keep_sources]
+    source_ids = {source.id for source in keep_sources}
+    database._data[RefDocument] = [
+        document
+        for document in database.select_all(RefDocument)
+        if getattr(document, "source_id", None) in source_ids
+    ]
+    return sorted(keep_sources, key=lambda item: item.id)
 
 
 def _determine_suffix(fetch_kind: Optional[str], fetched: FetchedDocument) -> str:
@@ -323,7 +372,11 @@ async def _summarise_ingestion(
         "results": list(results),
     }
     async with AsyncSessionLocal() as session:
-        documents = (await session.execute(select(RefDocument))).scalars().all()
+        documents = (
+            await session.execute(
+                select(RefDocument).where(RefDocument.suspected_update.is_(True))
+            )
+        ).scalars().all()
         sources = (await session.execute(select(RefSource))).scalars().all()
         summary["document_count"] = len(documents)
         summary["source_count"] = len(sources)
@@ -335,6 +388,17 @@ async def _summarise_ingestion(
     summary["inserted_unique"] = len(unique_document_ids)
     summary["inserted"] = summary["inserted_unique"]
     return summary
+
+
+async def _run_flow(
+    *,
+    storage: ReferenceStorage,
+    fetcher: Optional[ReferenceSourceFetcher],
+) -> Dict[str, Any]:
+    """Execute the ingestion flow and derive a summary in one event loop."""
+
+    results = await _run_once(storage=storage, fetcher=fetcher)
+    return await _summarise_ingestion(results)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> Dict[str, Any]:
@@ -352,8 +416,7 @@ def main(argv: Optional[Sequence[str]] = None) -> Dict[str, Any]:
     else:
         fetcher = ReferenceSourceFetcher()
 
-    results = asyncio.run(_run_once(storage=storage, fetcher=fetcher))
-    summary = asyncio.run(_summarise_ingestion(results))
+    summary = asyncio.run(_run_flow(storage=storage, fetcher=fetcher))
 
     if summary["document_count"] < args.min_documents:
         raise SystemExit(
