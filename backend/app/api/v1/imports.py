@@ -19,13 +19,12 @@ from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
-from jobs import job_queue
-from jobs.parse_cad import detect_dxf_metadata, detect_ifc_metadata, parse_import_job
-from jobs.raster_vector import vectorize_floorplan
+from backend.jobs import job_queue
+from backend.jobs.parse_cad import detect_dxf_metadata, detect_ifc_metadata, parse_import_job
+from backend.jobs.raster_vector import vectorize_floorplan
 
 router = APIRouter()
 logger = get_logger(__name__)
-
 
 def _extract_unit_id(unit: Any) -> str | None:
     """Return a unit identifier from diverse payload representations."""

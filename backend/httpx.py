@@ -9,7 +9,14 @@ from typing import Any
 try:  # pragma: no cover - optional dependency for offline test runs
     from fastapi.testclient import TestClient
 except ModuleNotFoundError:  # pragma: no cover - handled lazily
-    TestClient = None  # type: ignore[assignment]
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.append(str(repo_root))
+
+    from fastapi.testclient import TestClient  # type: ignore[assignment]
 
 
 class _AsyncResponse:

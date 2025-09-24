@@ -15,7 +15,7 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     fitz = None  # type: ignore[assignment]
 
-from jobs import job
+from backend.jobs import job
 
 
 Point = Tuple[float, float]

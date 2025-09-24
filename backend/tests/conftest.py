@@ -5,12 +5,13 @@ from __future__ import annotations
 import asyncio
 import sys
 from collections.abc import AsyncGenerator, Callable, Iterator
-from contextlib import asynccontextmanager
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import import_module
 from pathlib import Path
 
 import pytest
 from httpx import AsyncClient
+from typing import Any, cast
 
 
 def _find_repo_root(current: Path) -> Path:
@@ -25,10 +26,12 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 try:  # pragma: no cover - async plugin is optional when running unit tests
-    import pytest_asyncio
+    import pytest_asyncio  # type: ignore[import-not-found]
 except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
     pytest_asyncio = import_module("backend.pytest_asyncio")
     sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
+
+pytest_asyncio = cast(Any, pytest_asyncio)
 
 
 def _ensure_sqlalchemy() -> None:
@@ -63,19 +66,21 @@ _ensure_sqlalchemy()
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
-    from sqlalchemy.pool import StaticPool
+    from sqlalchemy.pool import StaticPool as _StaticPool
 except (ImportError, AttributeError):  # pragma: no cover - fallback for stub implementation
-    class StaticPool:  # type: ignore[too-many-ancestors]
+    class _StaticPool:  # type: ignore[too-many-ancestors]
         """Placeholder used when running against the in-repo SQLAlchemy stub."""
 
         pass
 
+StaticPool: type[Any] = _StaticPool
 
-from app import models as app_models
+
+import app.models as app_models
 from app.core.database import get_session
 from app.main import app
 from app.models.base import BaseModel
-from app.utils import metrics
+import app.utils.metrics as metrics
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -167,7 +172,7 @@ async def session(
 @pytest.fixture
 def session_factory(
     async_session_factory: async_sessionmaker[AsyncSession],
-) -> Callable[[], AsyncGenerator[AsyncSession, None]]:
+) -> Callable[[], AbstractAsyncContextManager[AsyncSession]]:
     """Return an async context manager that yields a clean session."""
 
     @asynccontextmanager
@@ -212,4 +217,13 @@ async def app_client(
 
     app.dependency_overrides.pop(get_session, None)
     await _reset_database(async_session_factory)
+
+
+@pytest_asyncio.fixture(name="client")
+async def client_fixture(
+    app_client: AsyncClient,
+) -> AsyncGenerator[AsyncClient, None]:
+    """Compatibility alias exposing the app client under the traditional name."""
+
+    yield app_client
 

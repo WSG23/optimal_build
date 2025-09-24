@@ -30,7 +30,7 @@ from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
 from app.services.overlay_ingest import ingest_parsed_import_geometry
 from app.services.storage import get_storage_service
-from jobs import job
+from backend.jobs import job
 
 
 @dataclass(slots=True)

@@ -216,8 +216,33 @@ class JobQueue:
     """Facade encapsulating dispatch to the configured backend."""
 
     def __init__(self) -> None:
+        object.__setattr__(self, "_enqueue_proxy_depth", 0)
         self._backend = _select_backend()
         self._queues: Dict[str, Optional[str]] = {}
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Allow tests to replace ``enqueue`` without mutating the class."""
+
+        if name == "enqueue":
+            if hasattr(value, "__func__") and getattr(value, "__func__", None) is type(self).enqueue:
+                self.__dict__.pop("enqueue", None)
+            else:
+                self.__dict__["enqueue"] = value
+            return
+        object.__setattr__(self, name, value)
+
+    def __getattribute__(self, name: str) -> Any:
+        if name == "enqueue":
+            instance_value = self.__dict__.get("enqueue")
+            if instance_value is not None:
+                return instance_value
+        return object.__getattribute__(self, name)
+
+    def __delattr__(self, name: str) -> None:
+        if name == "enqueue":
+            self.__dict__.pop("enqueue", None)
+            return
+        object.__delattr__(self, name)
 
     @property
     def backend_name(self) -> str:
@@ -241,6 +266,18 @@ class JobQueue:
     ) -> JobDispatch:
         """Enqueue a job identified by name or by callable."""
 
+        proxy = self.__dict__.get("enqueue")
+        if proxy is not None:
+            depth = object.__getattribute__(self, "_enqueue_proxy_depth")
+            if depth == 0:
+                object.__setattr__(self, "_enqueue_proxy_depth", depth + 1)
+                try:
+                    result = proxy(job, *args, queue=queue, **kwargs)
+                    if inspect.isawaitable(result):
+                        result = await result  # type: ignore[assignment]
+                    return result  # type: ignore[return-value]
+                finally:
+                    object.__setattr__(self, "_enqueue_proxy_depth", depth)
         if callable(job):
             job_name = getattr(job, "job_name", None)
             if not job_name:

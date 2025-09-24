@@ -30,7 +30,7 @@ from app.models.audit import AuditLog
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 from app.models.rkp import RefRule, RefZoningLayer
-from jobs.overlay_run import run_overlay_for_project
+from backend.jobs.overlay_run import run_overlay_for_project
 
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "samples" / "sample_floorplan.json"
 GOLDEN_MANIFEST_PATH = Path(__file__).resolve().parents[1] / "samples" / "golden_export_manifest.json"
