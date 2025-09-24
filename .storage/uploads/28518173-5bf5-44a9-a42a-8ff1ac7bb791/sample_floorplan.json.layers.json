@@ -1,0 +1,55 @@
+[
+  {
+    "metadata": {
+      "discipline": "architecture",
+      "elevation": 0.0
+    },
+    "name": "Level 01 - Floor Plan",
+    "type": "floor",
+    "units": [
+      {
+        "area_m2": 45.0,
+        "height_m": 52.5,
+        "id": "01-01",
+        "status": "pending"
+      },
+      {
+        "area_m2": 42.5,
+        "id": "01-02",
+        "status": "approved"
+      }
+    ]
+  },
+  {
+    "metadata": {
+      "discipline": "architecture",
+      "elevation": 3.2
+    },
+    "name": "Level 02 - Floor Plan",
+    "type": "floor",
+    "units": [
+      {
+        "area_m2": 47.3,
+        "id": "02-01",
+        "status": "pending"
+      }
+    ]
+  },
+  {
+    "metadata": {
+      "advisory_hints": [
+        "Submit heritage impact assessment"
+      ],
+      "elements": 5,
+      "flood_zone": "coastal",
+      "heritage_zone": true,
+      "overlays": [
+        "heritage_conservation",
+        "coastal_protection"
+      ],
+      "site_area_sqm": 12500
+    },
+    "name": "Site Context",
+    "type": "reference"
+  }
+]
