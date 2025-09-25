@@ -116,9 +116,17 @@ lint: ## Run linting (tests only)
 	@[ -d tests ] && flake8 tests || true
 
 lint-prod: ## Run linting for backend production code (optional)
-	@[ -d backend/app ] && flake8 backend/app || true
-	@[ -d backend/flows ] && flake8 backend/flows || true
-	@[ -d backend/jobs ] && flake8 backend/jobs || true
+	@targets=""; \
+	for path in backend/app backend/flows backend/jobs; do \
+		if [ -d $$path ]; then \
+			targets="$$targets $$path"; \
+		fi; \
+	done; \
+	if [ -n "$$targets" ]; then \
+		flake8 $$targets || { echo "::warning::flake8 found issues in production code. Review output above."; true; }; \
+	else \
+		echo "No production directories found to lint."; \
+	fi
 
 test: ## Run tests (tests only)
 	pytest -q
