@@ -219,8 +219,8 @@ dev: ## Start supporting services, the backend API, and frontends
 		echo "Backend API already running (PID $$(cat $(DEV_BACKEND_PID)))."; \
 	else \
 		rm -f $(DEV_BACKEND_PID); \
-		: > $(DEV_BACKEND_LOG); \
-		# Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file.
+                : > $(DEV_BACKEND_LOG); \
+                : "Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file."; \
 		(cd backend; \
 			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
 			SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
