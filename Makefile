@@ -14,7 +14,12 @@ VENV ?= .venv
 VENV_ABS := $(abspath $(VENV))
 PY ?= $(VENV_ABS)/bin/python
 PIP ?= $(VENV_ABS)/bin/pip
-UVICORN ?= $(VENV_ABS)/bin/uvicorn
+UVICORN_BIN ?= $(VENV_ABS)/bin/uvicorn
+ifeq ($(wildcard $(UVICORN_BIN)),)
+UVICORN ?= $(PY) -m backend.uvicorn_stub
+else
+UVICORN ?= $(UVICORN_BIN)
+endif
 PRE_COMMIT ?= $(VENV_ABS)/bin/pre-commit
 
 PYENV ?= $(shell command -v pyenv 2>/dev/null)
@@ -40,7 +45,12 @@ FRONTEND_PORT ?= 4400
 ADMIN_PORT ?= 4401
 
 UVICORN_INTERFACE ?= asgi3
-BACKEND_CMD ?= $(UVICORN) --interface $(UVICORN_INTERFACE) backend.app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+BACKEND_APP ?= backend.app.main:app
+ifeq ($(UVICORN),$(PY) -m backend.uvicorn_stub)
+BACKEND_CMD ?= $(UVICORN) $(BACKEND_APP) --host 0.0.0.0 --port $(BACKEND_PORT)
+else
+BACKEND_CMD ?= $(UVICORN) --interface $(UVICORN_INTERFACE) $(BACKEND_APP) --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+endif
 FRONTEND_CMD ?= npm run dev -- --port $(FRONTEND_PORT)
 ADMIN_CMD ?= npm run dev -- --port $(ADMIN_PORT)
 INCLUDE_ADMIN ?= 1
