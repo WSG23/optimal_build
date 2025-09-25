@@ -221,10 +221,12 @@ dev: ## Start supporting services, the backend API, and frontends
 		rm -f $(DEV_BACKEND_PID); \
 		: > $(DEV_BACKEND_LOG); \
 		# Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file.
-		(cd backend && EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)} \
-			SQLALCHEMY_DATABASE_URI=$$EFFECTIVE_DB_URL \
-			DATABASE_URL=$$EFFECTIVE_DB_URL \
-			nohup $(BACKEND_CMD) > $(DEV_BACKEND_LOG) 2>&1 & echo $$! > $(DEV_BACKEND_PID)); \
+		(cd backend; \
+			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
+			SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
+			nohup $(BACKEND_CMD) > "$(DEV_BACKEND_LOG)" 2>&1 & \
+			echo $$! > "$(DEV_BACKEND_PID)" \
+		); \
 		echo "Backend API started (PID $$(cat $(DEV_BACKEND_PID))). Logs: $(DEV_BACKEND_LOG)"; \
 	fi
 	@if [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
