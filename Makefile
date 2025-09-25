@@ -39,7 +39,8 @@ BACKEND_PORT ?= 9400
 FRONTEND_PORT ?= 4400
 ADMIN_PORT ?= 4401
 
-BACKEND_CMD ?= $(UVICORN) --app-dir backend app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+UVICORN_INTERFACE ?= asgi3
+BACKEND_CMD ?= $(UVICORN) --interface $(UVICORN_INTERFACE) backend.app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
 FRONTEND_CMD ?= npm run dev -- --port $(FRONTEND_PORT)
 ADMIN_CMD ?= npm run dev -- --port $(ADMIN_PORT)
 INCLUDE_ADMIN ?= 1
