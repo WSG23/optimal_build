@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import asyncio
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
@@ -24,6 +25,18 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub when plugin miss
     sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
 
 from backend.tests import conftest as backend_conftest  # noqa: F401 - ensure fallback stubs are registered
+
+
+@pytest_asyncio.fixture(scope="session")
+def event_loop():
+    """Provide a session-scoped event loop compatible with session fixtures."""
+
+    loop = asyncio.new_event_loop()
+    try:
+        yield loop
+    finally:
+        loop.close()
+
 
 pytest_plugins = ["backend.tests.conftest"]
 
