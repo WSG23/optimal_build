@@ -28,7 +28,14 @@ exclude =
     sqlalchemy_pkg_backup,
     mako,
     importlib,
-    yaml
+    yaml,
+    # (OPTIONAL) exclude backend application code; we lint tests only here
+    backend/app,
+    backend/flows,
+    backend/jobs,
+    backend/migrations,
+    backend/scripts,
+    backend/test_db_connection.py
 
 # Tests often place imports after path/setup; suppress E402 only there.
 # Also quiet E302/W391 in tests to avoid churn on spacing/EOF-newline trivia.

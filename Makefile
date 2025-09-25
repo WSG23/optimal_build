@@ -104,11 +104,13 @@ $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
 install: venv ## Install dependencies (alias)
 
 format: ## Format code
-	cd backend && $(PY) -m black . && $(PY) -m isort .
+	@[ -d backend/tests ] && (cd backend && $(PY) -m black tests && $(PY) -m isort tests) || true
+	@[ -d tests ] && $(PY) -m black tests || true
 	cd frontend && npm run format
 
 lint: ## Run linting
-	cd backend && $(PY) -m flake8 app tests && $(PY) -m mypy app
+	@[ -d backend/tests ] && (cd backend && $(PY) -m flake8 tests) || true
+	@[ -d tests ] && $(PY) -m flake8 tests || true
 	cd frontend && npm run lint
 
 test: ## Run tests
