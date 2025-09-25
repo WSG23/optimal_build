@@ -37,10 +37,15 @@ def _wrap_model_validator(func):
 
 if getattr(DscrInputs, "__model_validators__", None):
     DscrInputs.__model_validators__ = [
-        _wrap_model_validator(validator) for validator in DscrInputs.__model_validators__
+        _wrap_model_validator(validator)
+        for validator in DscrInputs.__model_validators__
     ]
     original_validator = DscrInputs.__dict__["_validate_lengths"].__func__
-    setattr(DscrInputs, "_validate_lengths", classmethod(_wrap_model_validator(original_validator)))
+    setattr(
+        DscrInputs,
+        "_validate_lengths",
+        classmethod(_wrap_model_validator(original_validator)),
+    )
 
 
 async def _seed_cost_indices(session, entries: Iterable[RefCostIndex]) -> None:
@@ -68,7 +73,9 @@ def _serialise_dscr_entries(
         elif dscr_value.is_infinite():
             dscr_repr = str(dscr_value)
         else:
-            dscr_repr = str(dscr_value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
+            dscr_repr = str(
+                dscr_value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            )
         serialised.append(
             {
                 "period": str(entry.period),
@@ -99,7 +106,9 @@ def _parse_metric_samples(metrics_text: str) -> dict[str, list[float]]:
 
 
 @pytest.mark.asyncio
-async def test_finance_feasibility_and_export_metrics(async_session_factory, app_client: AsyncClient) -> None:
+async def test_finance_feasibility_and_export_metrics(
+    async_session_factory, app_client: AsyncClient
+) -> None:
     metrics.reset_metrics()
 
     project_id = 24680
@@ -216,7 +225,9 @@ async def test_finance_feasibility_and_export_metrics(async_session_factory, app
     assert metrics_response.status_code == 200
     metrics_text = metrics_response.text
     metric_samples = _parse_metric_samples(metrics_text)
-    assert metric_samples["finance_feasibility_total"][0] == pytest.approx(feasibility_total)
+    assert metric_samples["finance_feasibility_total"][0] == pytest.approx(
+        feasibility_total
+    )
     assert metric_samples["finance_feasibility_duration_ms_count"][0] >= 1.0
 
     scenario_id = body["scenario_id"]

@@ -18,11 +18,15 @@ PROJECT_ID = 90301
 
 
 @pytest.mark.asyncio
-async def test_entitlements_workflow(async_session_factory, app_client: AsyncClient) -> None:
+async def test_entitlements_workflow(
+    async_session_factory, app_client: AsyncClient
+) -> None:
     """Seeding and API interactions should manage entitlements end-to-end."""
 
     async with async_session_factory() as session:
-        summary = await seed_entitlements(session, project_id=PROJECT_ID, reset_existing=True)
+        summary = await seed_entitlements(
+            session, project_id=PROJECT_ID, reset_existing=True
+        )
         await session.commit()
 
     assert summary.roadmap_items > 0
@@ -48,7 +52,9 @@ async def test_entitlements_workflow(async_session_factory, app_client: AsyncCli
         "status": "draft",
         "consultant": "Acme Transport",
         "due_date": "2024-11-01",
-        "attachments": [{"label": "Report", "url": "https://example.com/traffic-study.pdf"}],
+        "attachments": [
+            {"label": "Report", "url": "https://example.com/traffic-study.pdf"}
+        ],
     }
     forbidden_response = await app_client.post(
         f"/api/v1/entitlements/{PROJECT_ID}/studies",
@@ -113,7 +119,10 @@ async def test_entitlements_workflow(async_session_factory, app_client: AsyncCli
         "status": "draft",
         "reference_code": "DA-2024-01",
         "attachments": [
-            {"label": "Agreement", "url": "https://example.com/development-agreement.pdf"}
+            {
+                "label": "Agreement",
+                "url": "https://example.com/development-agreement.pdf",
+            }
         ],
     }
     legal_response = await app_client.post(

@@ -41,15 +41,21 @@ def _wrap_model_validator(func):
         else:
             instance = kwargs.get("values") or kwargs.get("self")
         return func(instance)
+
     return _wrapper
 
 
 if getattr(DscrInputs, "__model_validators__", None):
     DscrInputs.__model_validators__ = [
-        _wrap_model_validator(validator) for validator in DscrInputs.__model_validators__
+        _wrap_model_validator(validator)
+        for validator in DscrInputs.__model_validators__
     ]
     original_validator = DscrInputs.__dict__["_validate_lengths"].__func__
-    setattr(DscrInputs, "_validate_lengths", classmethod(_wrap_model_validator(original_validator)))
+    setattr(
+        DscrInputs,
+        "_validate_lengths",
+        classmethod(_wrap_model_validator(original_validator)),
+    )
 
 
 async def _seed_cost_indices(session, entries: Iterable[RefCostIndex]) -> None:
@@ -70,7 +76,9 @@ def _expected_dscr_entries() -> list[calculator.DscrEntry]:
     )
 
 
-def _serialise_dscr_entries(entries: Iterable[calculator.DscrEntry]) -> list[dict[str, object]]:
+def _serialise_dscr_entries(
+    entries: Iterable[calculator.DscrEntry],
+) -> list[dict[str, object]]:
     """Convert calculator entries into the API's serialised representation."""
 
     serialised: list[dict[str, object]] = []
@@ -81,7 +89,9 @@ def _serialise_dscr_entries(entries: Iterable[calculator.DscrEntry]) -> list[dic
         elif dscr_value.is_infinite():
             dscr_repr = str(dscr_value)
         else:
-            dscr_repr = str(dscr_value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
+            dscr_repr = str(
+                dscr_value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+            )
         serialised.append(
             {
                 "period": str(entry.period),
@@ -231,14 +241,22 @@ async def test_finance_feasibility_and_export_endpoints(
     rows = [row for row in reader if row]
     assert rows[0] == ["Metric", "Value", "Unit"]
 
-    exported_metrics = {row[0]: row for row in rows if row and row[0] in {"escalated_cost", "npv", "irr"}}
+    exported_metrics = {
+        row[0]: row
+        for row in rows
+        if row and row[0] in {"escalated_cost", "npv", "irr"}
+    }
     assert "npv" in exported_metrics
     assert Decimal(exported_metrics["npv"][1]) == expected_npv
 
     timeline_header_index = next(
-        index for index, row in enumerate(rows) if row == ["Period", "NOI", "Debt Service", "DSCR", "Currency"]
+        index
+        for index, row in enumerate(rows)
+        if row == ["Period", "NOI", "Debt Service", "DSCR", "Currency"]
     )
-    exported_timeline = rows[timeline_header_index + 1 : timeline_header_index + 1 + len(serialised_expected)]
+    exported_timeline = rows[
+        timeline_header_index + 1 : timeline_header_index + 1 + len(serialised_expected)
+    ]
     for exported_row, expected in zip(exported_timeline, serialised_expected):
         period, noi, debt_service, dscr_value, currency = exported_row
         assert period == expected["period"]

@@ -117,7 +117,10 @@ def test_watch_fetch_cli_offline_deduplicates_summary(
 
     # Only one of the duplicate hashes should be present in the summary payload.
     duplicate_source_ids = {authority_ids["BCA"], authority_ids["SCDF"]}
-    assert len(duplicate_source_ids & {entry["source_id"] for entry in summary["results"]}) == 1
+    assert (
+        len(duplicate_source_ids & {entry["source_id"] for entry in summary["results"]})
+        == 1
+    )
 
 
 def test_parse_segment_cli_parses_watch_fetch_results(
@@ -155,8 +158,10 @@ def test_parse_segment_cli_parses_watch_fetch_results(
     async def _load_state():
         async with flow_session_factory() as session:
             documents = (
-                await session.execute(select(RefDocument).order_by(RefDocument.id))
-            ).scalars().all()
+                (await session.execute(select(RefDocument).order_by(RefDocument.id)))
+                .scalars()
+                .all()
+            )
             clauses = (await session.execute(select(RefClause))).scalars().all()
             return documents, clauses
 

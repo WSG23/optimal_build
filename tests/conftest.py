@@ -24,7 +24,9 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub when plugin miss
     pytest_asyncio.fixture = pytest.fixture  # type: ignore[attr-defined]
     sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
 
-from backend.tests import conftest as backend_conftest  # noqa: F401 - ensure fallback stubs are registered
+from backend.tests import (
+    conftest as backend_conftest,
+)  # noqa: F401 - ensure fallback stubs are registered
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -65,14 +67,18 @@ def pytest_configure(config: pytest.Config) -> None:
 async def _override_app_database(async_session_factory, monkeypatch):
     """Ensure application session factories use the in-memory test database."""
 
-    monkeypatch.setattr(app_database, "AsyncSessionLocal", async_session_factory, raising=False)
+    monkeypatch.setattr(
+        app_database, "AsyncSessionLocal", async_session_factory, raising=False
+    )
 
     sync_products = import_module("backend.flows.sync_products")
     watch_fetch = import_module("backend.flows.watch_fetch")
     parse_segment = import_module("backend.flows.parse_segment")
 
     for module in (sync_products, watch_fetch, parse_segment):
-        monkeypatch.setattr(module, "AsyncSessionLocal", async_session_factory, raising=False)
+        monkeypatch.setattr(
+            module, "AsyncSessionLocal", async_session_factory, raising=False
+        )
     yield
 
 

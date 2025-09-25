@@ -51,10 +51,9 @@ async def test_mutation_role_checks_and_metrics(
         json=study_payload,
     )
     assert forbidden_study.status_code == 403
-    assert (
-        metrics.counter_value(metrics.ENTITLEMENTS_STUDY_COUNTER, {"operation": "create"})
-        == pytest.approx(study_counter_before)
-    )
+    assert metrics.counter_value(
+        metrics.ENTITLEMENTS_STUDY_COUNTER, {"operation": "create"}
+    ) == pytest.approx(study_counter_before)
 
     permitted_study = await app_client.post(
         f"/api/v1/entitlements/{PROJECT_ID}/studies",
@@ -64,10 +63,9 @@ async def test_mutation_role_checks_and_metrics(
     assert permitted_study.status_code == 201
     created_study = permitted_study.json()
     assert created_study["name"] == study_payload["name"]
-    assert (
-        metrics.counter_value(metrics.ENTITLEMENTS_STUDY_COUNTER, {"operation": "create"})
-        == pytest.approx(study_counter_before + 1.0)
-    )
+    assert metrics.counter_value(
+        metrics.ENTITLEMENTS_STUDY_COUNTER, {"operation": "create"}
+    ) == pytest.approx(study_counter_before + 1.0)
 
     update_payload = {"status": "in_progress"}
 
@@ -77,10 +75,9 @@ async def test_mutation_role_checks_and_metrics(
         json=update_payload,
     )
     assert forbidden_update.status_code == 403
-    assert (
-        metrics.counter_value(metrics.ENTITLEMENTS_ROADMAP_COUNTER, {"operation": "update"})
-        == pytest.approx(roadmap_counter_before)
-    )
+    assert metrics.counter_value(
+        metrics.ENTITLEMENTS_ROADMAP_COUNTER, {"operation": "update"}
+    ) == pytest.approx(roadmap_counter_before)
 
     permitted_update = await app_client.put(
         f"/api/v1/entitlements/{PROJECT_ID}/roadmap/{roadmap_item_id}",
@@ -89,16 +86,15 @@ async def test_mutation_role_checks_and_metrics(
     )
     assert permitted_update.status_code == 200
     assert permitted_update.json()["status"] == "in_progress"
-    assert (
-        metrics.counter_value(metrics.ENTITLEMENTS_ROADMAP_COUNTER, {"operation": "update"})
-        == pytest.approx(roadmap_counter_before + 1.0)
-    )
+    assert metrics.counter_value(
+        metrics.ENTITLEMENTS_ROADMAP_COUNTER, {"operation": "update"}
+    ) == pytest.approx(roadmap_counter_before + 1.0)
 
     metrics_response = await app_client.get("/health/metrics")
     assert metrics_response.status_code == 200
     metrics_body = metrics_response.text
-    assert "entitlements_study_requests_total{operation=\"create\"}" in metrics_body
-    assert "entitlements_roadmap_requests_total{operation=\"update\"}" in metrics_body
+    assert 'entitlements_study_requests_total{operation="create"}' in metrics_body
+    assert 'entitlements_roadmap_requests_total{operation="update"}' in metrics_body
 
 
 @pytest.mark.asyncio
@@ -119,7 +115,9 @@ async def test_roadmap_creation_requires_reviewer_and_records_metrics(
 
     counter_labels = {"operation": "create"}
     request_labels = {"endpoint": "entitlements_roadmap_create"}
-    counter_before = metrics.counter_value(metrics.ENTITLEMENTS_ROADMAP_COUNTER, counter_labels)
+    counter_before = metrics.counter_value(
+        metrics.ENTITLEMENTS_ROADMAP_COUNTER, counter_labels
+    )
     request_before = metrics.counter_value(metrics.REQUEST_COUNTER, request_labels)
 
     payload = {
@@ -135,14 +133,12 @@ async def test_roadmap_creation_requires_reviewer_and_records_metrics(
         json=payload,
     )
     assert viewer_response.status_code == 403
-    assert (
-        metrics.counter_value(metrics.ENTITLEMENTS_ROADMAP_COUNTER, counter_labels)
-        == pytest.approx(counter_before)
-    )
-    assert (
-        metrics.counter_value(metrics.REQUEST_COUNTER, request_labels)
-        == pytest.approx(request_before)
-    )
+    assert metrics.counter_value(
+        metrics.ENTITLEMENTS_ROADMAP_COUNTER, counter_labels
+    ) == pytest.approx(counter_before)
+    assert metrics.counter_value(
+        metrics.REQUEST_COUNTER, request_labels
+    ) == pytest.approx(request_before)
 
     reviewer_response = await app_client.post(
         f"/api/v1/entitlements/{PROJECT_ID}/roadmap",
@@ -154,11 +150,9 @@ async def test_roadmap_creation_requires_reviewer_and_records_metrics(
     assert created_item["project_id"] == PROJECT_ID
     assert created_item["sequence_order"] == next_sequence
     assert created_item["approval_type_id"] == approval_type_id
-    assert (
-        metrics.counter_value(metrics.ENTITLEMENTS_ROADMAP_COUNTER, counter_labels)
-        == pytest.approx(counter_before + 1.0)
-    )
-    assert (
-        metrics.counter_value(metrics.REQUEST_COUNTER, request_labels)
-        == pytest.approx(request_before + 1.0)
-    )
+    assert metrics.counter_value(
+        metrics.ENTITLEMENTS_ROADMAP_COUNTER, counter_labels
+    ) == pytest.approx(counter_before + 1.0)
+    assert metrics.counter_value(
+        metrics.REQUEST_COUNTER, request_labels
+    ) == pytest.approx(request_before + 1.0)

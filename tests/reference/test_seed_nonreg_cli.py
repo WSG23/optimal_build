@@ -32,7 +32,9 @@ def test_seed_nonreg_cli_summary(monkeypatch) -> None:
 
     asyncio.run(_initialise_schema())
 
-    monkeypatch.setattr(seed_nonreg, "AsyncSessionLocal", session_factory, raising=False)
+    monkeypatch.setattr(
+        seed_nonreg, "AsyncSessionLocal", session_factory, raising=False
+    )
     monkeypatch.setattr(seed_nonreg, "engine", engine, raising=False)
 
     summary = seed_nonreg.main([])
