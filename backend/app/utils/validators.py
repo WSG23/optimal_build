@@ -1,7 +1,6 @@
 """Validation utilities."""
 
 import re
-from typing import Optional
 
 
 def validate_singapore_address(address: str) -> bool:
