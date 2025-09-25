@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
-from sqlalchemy import select
+from sqlalchemy import Column, Integer, String, Table, select, text
 
 
 @dataclass
@@ -251,8 +251,26 @@ _SAMPLE_GEOCODES: Sequence[Dict[str, object]] = (
 async def ensure_schema() -> None:
     """Ensure all database tables exist prior to seeding."""
 
+    _ensure_stub_tables()
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
+
+
+def _ensure_stub_tables() -> None:
+    """Inject lightweight tables required by foreign keys when absent."""
+
+    if "projects" not in BaseModel.metadata.tables:
+        Table(
+            "projects",
+            BaseModel.metadata,
+            Column("id", Integer, primary_key=True),
+            Column(
+                "name",
+                String(120),
+                nullable=False,
+                server_default=text("'Sample Project'"),
+            ),
+        )
 
 
 async def _upsert_ref_sources(session: AsyncSession) -> List[RefSource]:
