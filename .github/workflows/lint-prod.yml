@@ -1,0 +1,30 @@
+name: Lint (production)
+
+on:
+  pull_request:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  lint-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dev tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Lint production code (advisory)
+        run: |
+          set +e
+          make lint-prod
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "::warning::lint-prod reported issues. Review the output above."
+          else
+            echo "::warning::lint-prod is advisory; review output for warnings."
+          fi
+          exit 0
