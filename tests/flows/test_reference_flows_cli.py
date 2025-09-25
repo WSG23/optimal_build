@@ -10,7 +10,6 @@ import sys
 from pathlib import Path
 from typing import Dict
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
