@@ -6,17 +6,34 @@ import asyncio
 from functools import partial
 from typing import Any
 
-try:  # pragma: no cover - optional dependency for offline test runs
-    from fastapi.testclient import TestClient
-except ModuleNotFoundError:  # pragma: no cover - handled lazily
-    import sys
-    from pathlib import Path
+_TEST_CLIENT: Any | None = None
 
-    repo_root = Path(__file__).resolve().parents[1]
-    if str(repo_root) not in sys.path:
-        sys.path.append(str(repo_root))
 
-    from fastapi.testclient import TestClient  # type: ignore[assignment]
+def _get_test_client() -> Any:
+    """Import FastAPI's TestClient lazily to avoid circular imports."""
+
+    global _TEST_CLIENT
+    if _TEST_CLIENT is not None:
+        return _TEST_CLIENT
+
+    try:  # pragma: no cover - optional dependency for offline test runs
+        from fastapi.testclient import TestClient
+    except ModuleNotFoundError:  # pragma: no cover - handled lazily
+        import sys
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[1]
+        if str(repo_root) not in sys.path:
+            sys.path.append(str(repo_root))
+
+        try:
+            from fastapi.testclient import TestClient  # type: ignore[assignment]
+        except ModuleNotFoundError as fallback_exc:  # pragma: no cover - propagate meaningful error
+            raise ModuleNotFoundError(
+                "fastapi is required to use the AsyncClient test stub"
+            ) from fallback_exc
+    _TEST_CLIENT = TestClient
+    return TestClient
 
 
 class _AsyncResponse:
@@ -63,11 +80,8 @@ class AsyncClient:
         base_url: str = "http://testserver",
         headers: dict[str, str] | None = None,
     ) -> None:
-        if TestClient is None:
-            raise ModuleNotFoundError(
-                "fastapi is required to use the AsyncClient test stub"
-            )
-        self._test_client = TestClient(app, base_url=base_url)
+        test_client = _get_test_client()
+        self._test_client = test_client(app, base_url=base_url)
         self._default_headers = dict(headers or {})
 
     async def __aenter__(self) -> "AsyncClient":

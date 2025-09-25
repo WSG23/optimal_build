@@ -1,18 +1,22 @@
-"""Delegate to the repository-level Starlette stub when running backend tests."""
+"""Expose Starlette via a bundled stub when available, fall back to the real package."""
 
 from __future__ import annotations
 
 from types import ModuleType
 
-from backend._stub_loader import load_package_stub
+import sys
+
+from backend._stub_loader import load_optional_package
 
 
-def _load_stub() -> ModuleType:
-    return load_package_stub(
+def _load_module() -> ModuleType:
+    return load_optional_package(
         __name__,
         "starlette",
         "Starlette",
     )
 
 
-globals().update(_load_stub().__dict__)
+_starlette = _load_module()
+globals().update(_starlette.__dict__)
+sys.modules[__name__] = _starlette
