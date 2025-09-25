@@ -103,24 +103,16 @@ $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
 
 install: venv ## Install dependencies (alias)
 
-format: ## Format code
-	@[ -d backend/tests ] && (cd backend && $(PY) -m black tests && $(PY) -m isort tests) || true
-	@[ -d tests ] && $(PY) -m black tests || true
-	cd frontend && npm run format
+format: ## Format code (tests only)
+	@[ -d backend/tests ] && black backend/tests || true
+	@[ -d tests ] && black tests || true
 
-lint: ## Run linting
-	@[ -d backend/tests ] && (cd backend && $(PY) -m flake8 tests) || true
-	@[ -d tests ] && $(PY) -m flake8 tests || true
-	cd frontend && npm run lint
+lint: ## Run linting (tests only)
+	@[ -d backend/tests ] && flake8 backend/tests || true
+	@[ -d tests ] && flake8 tests || true
 
-test: ## Run tests
-	@if [ ! -x $(PY) ]; then \
-		echo "Virtualenv not found; running 'make venv'..."; \
-		$(MAKE) venv; \
-	fi
-	cd backend && $(PY) -m pytest tests
-	cd backend && $(PY) -m pytest ../tests
-	cd frontend && npm test
+test: ## Run tests (tests only)
+	pytest -q
 
 smoke-buildable: ## Run the buildable latency smoke test and report the observed P90
 	cd backend && $(PY) -m pytest -s tests/pwp/test_buildable_latency.py

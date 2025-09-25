@@ -67,6 +67,7 @@ async def _parcel_metrics(
         settings.BUILDABLE_USE_POSTGIS = previous_flag
 
 
+@pytest.mark.asyncio
 async def test_postgis_flag_produces_identical_metrics(async_session_factory) -> None:
     async with async_session_factory() as session:
         await seed_screening_sample_data(session, commit=True)

@@ -1,8 +1,21 @@
 repos:
-  - repo: local
-    hooks:
-      - id: audit-migrations
-        name: audit-migrations
-        entry: python3 scripts/audit_migrations.py
-        language: system
-        pass_filenames: false
+- repo: local
+  hooks:
+    - id: audit-migrations
+      name: audit-migrations
+      entry: python3 scripts/audit_migrations.py
+      language: system
+      pass_filenames: false
+
+- repo: https://github.com/psf/black
+  rev: 24.8.0
+  hooks:
+    - id: black
+      files: ^(backend/tests|tests)/
+
+- repo: https://github.com/PyCQA/flake8
+  rev: 7.1.1
+  hooks:
+    - id: flake8
+      additional_dependencies: [flake8-bugbear]
+      files: ^(backend/tests|tests)/
