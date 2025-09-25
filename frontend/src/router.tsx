@@ -1,14 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { AnchorHTMLAttributes, MouseEventHandler, ReactNode } from 'react'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 interface RouteDefinition {
   path: string
@@ -43,8 +35,7 @@ interface RouterProviderProps {
 
 export function RouterProvider({ router }: RouterProviderProps) {
   const [path, setPath] = useState<string>(() => getInitialPath())
-  const routesRef = useRef(router.routes)
-  routesRef.current = router.routes
+  const routes = router?.routes ?? []
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -67,13 +58,13 @@ export function RouterProvider({ router }: RouterProviderProps) {
   }, [])
 
   const activeElement = useMemo(() => {
-    const exactMatch = routesRef.current.find((route) => route.path === path)
+    const exactMatch = routes.find((route) => route.path === path)
     if (exactMatch) {
       return exactMatch.element
     }
 
-    return routesRef.current.find((route) => route.path === '/')?.element ?? null
-  }, [path])
+    return routes.find((route) => route.path === '/')?.element ?? null
+  }, [path, routes])
 
   const contextValue = useMemo<RouterContextValue>(() => ({ path, navigate }), [path, navigate])
 

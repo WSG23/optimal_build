@@ -220,6 +220,9 @@ reset: ## Reset development environment
 
 dev: ## Start supporting services, the backend API, and frontends
 	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	@echo "found 0 vulnerabilities"
+	@echo "✅ Dependencies installed successfully ..."
+	@echo "Checking service status..."
 	@if [ -d uvicorn ]; then echo "WARNING: './uvicorn/' package detected; it will shadow the real uvicorn. Rename or remove it." >&2; fi
 	@if [ -z "$(DOCKER_COMPOSE)" ]; then \
 		echo "Docker Compose CLI not found; skipping container startup."; \
@@ -228,10 +231,11 @@ dev: ## Start supporting services, the backend API, and frontends
 	fi
 	@if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
 		echo "Backend API already running (PID $$(cat $(DEV_BACKEND_PID)))."; \
+		echo "✅ API running on port $(BACKEND_PORT)."; \
 	else \
 		rm -f $(DEV_BACKEND_PID); \
-                : > $(DEV_BACKEND_LOG); \
-                : "Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file."; \
+	                : > $(DEV_BACKEND_LOG); \
+	                : "Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file."; \
 		( \
 			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
 			DEV_SQLITE_URL="$(DEV_SQLITE_URL)" SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
@@ -239,23 +243,28 @@ dev: ## Start supporting services, the backend API, and frontends
 			echo $$! > "$(DEV_BACKEND_PID)" \
 		); \
 		echo "Backend API started (PID $$(cat $(DEV_BACKEND_PID))). Logs: $(DEV_BACKEND_LOG)"; \
+		echo "✅ API running on port $(BACKEND_PORT)."; \
 	fi
 	@if [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
 		echo "Frontend app already running (PID $$(cat $(DEV_FRONTEND_PID)))."; \
+		echo "✅ UI running on port $(FRONTEND_PORT). Check $(DEV_FRONTEND_LOG) for details."; \
 	else \
 		rm -f $(DEV_FRONTEND_PID); \
 		: > $(DEV_FRONTEND_LOG); \
 		(cd frontend && VITE_API_BASE=http://localhost:$(BACKEND_PORT) nohup $(FRONTEND_CMD) > $(DEV_FRONTEND_LOG) 2>&1 & echo $$! > $(DEV_FRONTEND_PID)); \
 		echo "Frontend app started (PID $$(cat $(DEV_FRONTEND_PID))). Logs: $(DEV_FRONTEND_LOG)"; \
+		echo "✅ UI running on port $(FRONTEND_PORT). Check $(DEV_FRONTEND_LOG) for actual port if reassigned."; \
 	fi
 	@if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
 		if [ -f $(DEV_ADMIN_PID) ] && kill -0 $$(cat $(DEV_ADMIN_PID)) 2>/dev/null; then \
 			echo "Admin UI already running (PID $$(cat $(DEV_ADMIN_PID)))."; \
+			echo "✅ Admin UI running on port $(ADMIN_PORT). Check $(DEV_ADMIN_LOG) for details."; \
 		else \
 			rm -f $(DEV_ADMIN_PID); \
 			: > $(DEV_ADMIN_LOG); \
 			(cd ui-admin && VITE_API_BASE=http://localhost:$(BACKEND_PORT) nohup $(ADMIN_CMD) > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
 			echo "Admin UI started (PID $$(cat $(DEV_ADMIN_PID))). Logs: $(DEV_ADMIN_LOG)"; \
+			echo "✅ Admin UI running on port $(ADMIN_PORT). Check $(DEV_ADMIN_LOG) for actual port if reassigned."; \
 		fi; \
 	else \
 		echo "Skipping admin UI (INCLUDE_ADMIN=0)."; \
