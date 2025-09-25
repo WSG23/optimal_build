@@ -129,7 +129,12 @@ class _StubAsyncClient:
                 files=prepared_files,
                 headers=prepared_headers,
             )
-            return _StubResponse(status_code, payload, dict(resp_headers))
+            header_map = {
+                str(key).lower(): str(value)
+                for key, value in dict(resp_headers).items()
+            }
+            _normalise_content_type(header_map)
+            return _StubResponse(status_code, payload, header_map)
 
         if params:
             extra = urlencode(params, doseq=True)
@@ -173,13 +178,19 @@ class _StubAsyncClient:
         for message in sent_messages:
             if message["type"] == "http.response.start":
                 status_code = message.get("status", 500)
-                raw_headers: Iterable[tuple[bytes, bytes]] = message.get("headers", [])
+                raw_headers: Iterable[tuple[bytes, bytes]] = message.get(
+                    "headers", []
+                )
                 resp_headers = {
-                    key.decode("utf-8"): value.decode("utf-8")
+                    key.decode("utf-8").lower(): value.decode("utf-8")
                     for key, value in raw_headers
                 }
+                _normalise_content_type(resp_headers)
             elif message["type"] == "http.response.body":
                 payload += message.get("body", b"")
+        if "export" in path:
+            print("sent_messages", sent_messages)
+            print("payload", payload)
         return _StubResponse(status_code, payload, resp_headers)
 
     async def get(
@@ -385,6 +396,12 @@ def _prepare_headers(
     if json_payload is not None and "content-type" not in prepared:
         prepared["content-type"] = "application/json"
     return prepared
+
+
+def _normalise_content_type(headers: Dict[str, str]) -> None:
+    value = headers.get("content-type")
+    if value and ";" in value:
+        headers["content-type"] = value.split(";", 1)[0]
 
 
 def _json_bytes(payload: Any) -> bytes:
