@@ -160,17 +160,25 @@ class _StubAsyncClient:
 
         receive_messages = [{"type": "http.request", "body": body, "more_body": False}]
         sent_messages: list[dict[str, Any]] = []
+        stream_complete = asyncio.Event()
 
         async def receive() -> dict[str, Any]:
             if receive_messages:
                 return receive_messages.pop(0)
-            await asyncio.sleep(0)
+            await stream_complete.wait()
             return {"type": "http.disconnect"}
 
         async def send(message: dict[str, Any]) -> None:
             sent_messages.append(message)
+            if message["type"] == "http.response.body" and not message.get(
+                "more_body", False
+            ):
+                stream_complete.set()
 
         await self._app(scope, receive, send)
+
+        if not stream_complete.is_set():
+            stream_complete.set()
 
         status_code = 500
         resp_headers: Dict[str, str] = {}
@@ -188,9 +196,6 @@ class _StubAsyncClient:
                 _normalise_content_type(resp_headers)
             elif message["type"] == "http.response.body":
                 payload += message.get("body", b"")
-        if "export" in path:
-            print("sent_messages", sent_messages)
-            print("payload", payload)
         return _StubResponse(status_code, payload, resp_headers)
 
     async def get(
