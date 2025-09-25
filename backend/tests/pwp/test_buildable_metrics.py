@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from importlib import import_module
 from types import ModuleType
 
 import pytest
@@ -12,8 +13,10 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
+pytest_plugins = ("backend.tests.pwp.test_buildable_golden",)
+
 try:  # pragma: no cover - structlog is optional in the test environment
-    import structlog  # type: ignore[import-not-found]
+    import_module("structlog")
 except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
     structlog_module = ModuleType("structlog")
     processors_module = ModuleType("structlog.processors")
@@ -66,7 +69,6 @@ from app.utils import metrics
 from backend.tests.pwp.test_buildable_golden import (
     DEFAULT_REQUEST_DEFAULTS,
     DEFAULT_REQUEST_OVERRIDES,
-    buildable_client,
 )
 
 
