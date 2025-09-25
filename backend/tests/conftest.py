@@ -162,7 +162,8 @@ async def _reset_database(factory: async_sessionmaker[AsyncSession]) -> None:
 
 @pytest_asyncio.fixture(scope="session")
 async def flow_session_factory() -> AsyncGenerator[
-    async_sessionmaker[AsyncSession], None
+    async_sessionmaker[AsyncSession],
+    None,
 ]:
     """Provide a shared async session factory backed by SQLite."""
 
