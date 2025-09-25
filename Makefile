@@ -39,17 +39,17 @@ PIP_INSTALL_FLAGS += --no-index --find-links $(PIP_WHEEL_DIR_ABS)
 endif
 
 # Run from repo root, add backend/ to import path, and import app.main:app
+# Use fully-qualified module path, force ASGI3
 # Configurable dev ports (avoid conflicts with 8000/5173 and anything in the 5100s)
 BACKEND_PORT ?= 9400
 FRONTEND_PORT ?= 4400
 ADMIN_PORT ?= 4401
 
-UVICORN_INTERFACE ?= asgi3
 BACKEND_APP ?= backend.app.main:app
 ifeq ($(UVICORN),$(PY) -m backend.uvicorn_stub)
 BACKEND_CMD ?= $(UVICORN) $(BACKEND_APP) --host 0.0.0.0 --port $(BACKEND_PORT)
 else
-BACKEND_CMD ?= $(UVICORN) --interface $(UVICORN_INTERFACE) $(BACKEND_APP) --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+BACKEND_CMD ?= $(UVICORN) --interface asgi3 $(BACKEND_APP) --reload --host 0.0.0.0 --port $(BACKEND_PORT)
 endif
 FRONTEND_CMD ?= npm run dev -- --port $(FRONTEND_PORT)
 ADMIN_CMD ?= npm run dev -- --port $(ADMIN_PORT)
