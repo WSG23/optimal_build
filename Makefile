@@ -34,9 +34,14 @@ PIP_INSTALL_FLAGS += --no-index --find-links $(PIP_WHEEL_DIR_ABS)
 endif
 
 # Use fully-qualified module path and uvicorn from the venv
-BACKEND_CMD ?= $(UVICORN) backend.app.main:app --reload --host 0.0.0.0 --port 8000
-FRONTEND_CMD ?= npm run dev
-ADMIN_CMD ?= npm run dev
+# Configurable dev ports (avoid conflicts with 8000/5173 and anything in the 5100s)
+BACKEND_PORT ?= 9400
+FRONTEND_PORT ?= 4400
+ADMIN_PORT ?= 4401
+
+BACKEND_CMD ?= $(UVICORN) backend.app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+FRONTEND_CMD ?= npm run dev -- --port $(FRONTEND_PORT)
+ADMIN_CMD ?= npm run dev -- --port $(ADMIN_PORT)
 INCLUDE_ADMIN ?= 1
 
 DOCKER_COMPOSE := $(shell \
@@ -223,7 +228,7 @@ dev: ## Start supporting services, the backend API, and frontends
 	else \
 		rm -f $(DEV_FRONTEND_PID); \
 		: > $(DEV_FRONTEND_LOG); \
-		(cd frontend && nohup $(FRONTEND_CMD) > $(DEV_FRONTEND_LOG) 2>&1 & echo $$! > $(DEV_FRONTEND_PID)); \
+		(cd frontend && VITE_API_BASE=http://localhost:$(BACKEND_PORT) nohup $(FRONTEND_CMD) > $(DEV_FRONTEND_LOG) 2>&1 & echo $$! > $(DEV_FRONTEND_PID)); \
 		echo "Frontend app started (PID $$(cat $(DEV_FRONTEND_PID))). Logs: $(DEV_FRONTEND_LOG)"; \
 	fi
 	@if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
@@ -232,7 +237,7 @@ dev: ## Start supporting services, the backend API, and frontends
 		else \
 			rm -f $(DEV_ADMIN_PID); \
 			: > $(DEV_ADMIN_LOG); \
-			(cd ui-admin && nohup $(ADMIN_CMD) > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
+			(cd ui-admin && VITE_API_BASE=http://localhost:$(BACKEND_PORT) nohup $(ADMIN_CMD) > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
 			echo "Admin UI started (PID $$(cat $(DEV_ADMIN_PID))). Logs: $(DEV_ADMIN_LOG)"; \
 		fi; \
 	else \
