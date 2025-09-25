@@ -1,0 +1,12 @@
+[flake8]
+# Keep style consistent with Black while avoiding the W503/E203 conflicts.
+extend-ignore = E203,W503
+
+# Relax for tests: allow up to 130 chars to reduce noisy wrapping.
+max-line-length = 130
+
+# Tests often place imports after local path/setup; suppress E402 only there.
+per-file-ignores =
+    backend/tests/*:E402
+    tests/*:E402
+
