@@ -33,13 +33,13 @@ PIP_WHEEL_DIR_ABS := $(abspath $(PIP_WHEEL_DIR))
 PIP_INSTALL_FLAGS += --no-index --find-links $(PIP_WHEEL_DIR_ABS)
 endif
 
-# Use fully-qualified module path and uvicorn from the venv
+# Run from repo root, add backend/ to import path, and import app.main:app
 # Configurable dev ports (avoid conflicts with 8000/5173 and anything in the 5100s)
 BACKEND_PORT ?= 9400
 FRONTEND_PORT ?= 4400
 ADMIN_PORT ?= 4401
 
-BACKEND_CMD ?= $(UVICORN) backend.app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+BACKEND_CMD ?= $(UVICORN) --app-dir backend app.main:app --reload --host 0.0.0.0 --port $(BACKEND_PORT)
 FRONTEND_CMD ?= npm run dev -- --port $(FRONTEND_PORT)
 ADMIN_CMD ?= npm run dev -- --port $(ADMIN_PORT)
 INCLUDE_ADMIN ?= 1
@@ -221,10 +221,10 @@ dev: ## Start supporting services, the backend API, and frontends
 		rm -f $(DEV_BACKEND_PID); \
                 : > $(DEV_BACKEND_LOG); \
                 : "Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file."; \
-		(cd backend; \
+		( \
 			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
-			SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
-			nohup $(BACKEND_CMD) > "$(DEV_BACKEND_LOG)" 2>&1 & \
+			DEV_SQLITE_URL="$(DEV_SQLITE_URL)" SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
+				nohup $(BACKEND_CMD) > "$(DEV_BACKEND_LOG)" 2>&1 & \
 			echo $$! > "$(DEV_BACKEND_PID)" \
 		); \
 		echo "Backend API started (PID $$(cat $(DEV_BACKEND_PID))). Logs: $(DEV_BACKEND_LOG)"; \
