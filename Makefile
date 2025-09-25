@@ -1,4 +1,4 @@
-.PHONY: help install format lint test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check
+.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -107,12 +107,26 @@ format: ## Format code (tests only)
 	@[ -d backend/tests ] && black backend/tests || true
 	@[ -d tests ] && black tests || true
 
+format-check: ## Check formatting (tests only)
+	@[ -d backend/tests ] && black --check backend/tests || true
+	@[ -d tests ] && black --check tests || true
+
 lint: ## Run linting (tests only)
 	@[ -d backend/tests ] && flake8 backend/tests || true
 	@[ -d tests ] && flake8 tests || true
 
+lint-prod: ## Run linting for backend production code (optional)
+	@[ -d backend/app ] && flake8 backend/app || true
+	@[ -d backend/flows ] && flake8 backend/flows || true
+	@[ -d backend/jobs ] && flake8 backend/jobs || true
+
 test: ## Run tests (tests only)
 	pytest -q
+
+verify: ## Run formatting checks, linting, and tests
+	$(MAKE) format-check
+	$(MAKE) lint
+	$(MAKE) test
 
 smoke-buildable: ## Run the buildable latency smoke test and report the observed P90
 	cd backend && $(PY) -m pytest -s tests/pwp/test_buildable_latency.py
