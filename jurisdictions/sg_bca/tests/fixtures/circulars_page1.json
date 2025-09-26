@@ -1,0 +1,21 @@
+{
+  "result": {
+    "total": 3,
+    "records": [
+      {
+        "circular_no": "BCA-2025-001",
+        "circular_date": "2025-03-15T09:00:00",
+        "subject": "Fire alarm upgrades for residential buildings",
+        "weblink": "https://www1.bca.gov.sg/circulars/bca-2025-001",
+        "description": "Details on required smoke alarm installations."
+      },
+      {
+        "circular_no": "BCA-2025-002",
+        "circular_date": "2025-02-10T15:30:00",
+        "subject": "Fire safety inspection schedule",
+        "weblink": "https://www1.bca.gov.sg/circulars/bca-2025-002",
+        "description": "Inspection details for 2025."
+      }
+    ]
+  }
+}

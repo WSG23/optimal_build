@@ -1,0 +1,14 @@
+{
+  "result": {
+    "total": 3,
+    "records": [
+      {
+        "circular_no": "BCA-2023-099",
+        "circular_date": "2023-08-01",
+        "subject": "Legacy ventilation notice",
+        "weblink": "https://www1.bca.gov.sg/circulars/bca-2023-099",
+        "description": "Superseded ventilation requirements."
+      }
+    ]
+  }
+}

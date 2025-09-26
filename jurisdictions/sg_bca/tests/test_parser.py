@@ -1,7 +1,5 @@
-"""Tests for the SG BCA plug-in."""
-from __future__ import annotations
-
-from datetime import date
+import json
+from datetime import timedelta
 
 from sqlalchemy import select
 
@@ -9,111 +7,72 @@ from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.util import create_session_factory, get_engine, session_scope
 from jurisdictions.sg_bca.parse import PARSER
-from jurisdictions.sg_bca import fetch
+from jurisdictions.sg_bca.tests._helpers import fetch_records_from_fixtures
 
 
-def test_parse_and_persist(monkeypatch):
+def test_parser_produces_expected_canonical_regs(monkeypatch):
+    provenance_records = fetch_records_from_fixtures(monkeypatch)
+    regulations = list(PARSER.parse(provenance_records))
+
+    assert len(regulations) == 2
+    assert {reg.external_id for reg in regulations} == {"BCA-2025-001", "BCA-2025-002"}
+
+    for reg in regulations:
+        assert reg.jurisdiction_code == PARSER.code
+        assert reg.title == "Smoke detector requirements"
+        raw_row = json.loads(
+            next(
+                record.raw_content
+                for record in provenance_records
+                if record.regulation_external_id == reg.external_id
+            )
+        )
+        assert reg.metadata == {"source_uri": raw_row["weblink"]}
+        assert reg.global_tags == ["fire_safety"]
+
+
+def test_ingestion_upsert_deduplicates_provenance_entries(monkeypatch):
+    provenance_records = fetch_records_from_fixtures(monkeypatch)
+    regulations = load_and_apply_mappings(
+        list(PARSER.parse(provenance_records)), PARSER.map_overrides_path()
+    )
+
     engine = get_engine("sqlite:///:memory:")
     canonical_models.RegstackBase.metadata.create_all(engine)
     session_factory = create_session_factory(engine)
 
-    since = date(2025, 1, 1)
-    raw_records = list(_run_fetch(monkeypatch, since))
-    regs = list(PARSER.parse(raw_records))
-    mapped = load_and_apply_mappings(regs, PARSER.map_overrides_path())
+    with session_scope(session_factory) as session:
+        session.add(canonical_models.JurisdictionORM(code=PARSER.code, name="SG BCA"))
+        from scripts.ingest import upsert_regulations
+
+        upsert_regulations(session, regulations, provenance_records)
 
     with session_scope(session_factory) as session:
-        session.add(
-            canonical_models.JurisdictionORM(code=PARSER.code, name="SG BCA")
-        )
-        _persist(session, mapped, raw_records)
+        regs = session.execute(select(canonical_models.RegulationORM)).scalars().all()
+        provenance = session.execute(select(canonical_models.ProvenanceORM)).scalars().all()
 
-    with session_scope(session_factory) as session:
-        stored = session.execute(
-            select(canonical_models.RegulationORM).limit(1)
-        ).scalar_one()
-        count = len(
-            session.execute(select(canonical_models.RegulationORM)).all()
-        )
+    assert len(regs) == 2
+    assert len(provenance) == 2
 
-    assert count == 1
-    assert stored.global_tags == ["fire_safety"]
-
-
-def _persist(
-    session: Session,
-    regs: list[canonical_models.CanonicalReg],
-    raw_records: list[canonical_models.ProvenanceRecord],
-) -> None:
-    from scripts.ingest import upsert_regulations
-
-    upsert_regulations(session, regs, raw_records)
-
-
-def _run_fetch(monkeypatch, since: date):
-    sample_rows = [
-        {
-            "circular_no": "2025-01",
-            "circular_date": "2025-02-02",
-            "subject": "Smoke detector requirements",
-            "weblink": "https://www1.bca.gov.sg/circulars/2025-01",
-            "description": "Section 1.1 Fire Safety - A smoke detector must be installed.",
-        },
-        {
-            "circular_no": "2024-10",
-            "circular_date": "2024-12-15",
-            "subject": "Legacy guidance",
-            "weblink": "https://www1.bca.gov.sg/circulars/2024-10",
-            "description": "Archived guidance",
-        },
+    later_records = [
+        record.model_copy(update={"fetched_at": record.fetched_at + timedelta(hours=1)})
+        for record in provenance_records
     ]
-
-    total = len(sample_rows)
-
-    class DummyResponse:
-        def __init__(self, payload: dict) -> None:
-            self._payload = payload
-
-        def raise_for_status(self) -> None:
-            return None
-
-        def json(self) -> dict:
-            return self._payload
-
-    class DummyClient:
-        def __init__(self, *_, **__):
-            self.calls: list[dict[str, object]] = []
-
-        def __enter__(self) -> "DummyClient":
-            return self
-
-        def __exit__(self, exc_type, exc, tb) -> None:
-            return None
-
-        def get(self, url: str, params: dict[str, object]):
-            self.calls.append(params)
-            offset = int(params.get("offset", 0) or 0)
-            limit = int(params.get("limit", 100) or 100)
-            page = sample_rows[offset : offset + limit]
-            return DummyResponse(
-                {
-                    "result": {
-                        "records": page,
-                        "total": total,
-                    }
-                }
-            )
-
-    test_config = fetch.FetchConfig(
-        resource_id="test-resource",
-        page_size=1,
+    later_regs = load_and_apply_mappings(
+        list(PARSER.parse(later_records)), PARSER.map_overrides_path()
     )
 
-    class MockedFetcher(fetch.Fetcher):
-        def __init__(self, config: fetch.FetchConfig | None = None) -> None:
-            super().__init__(config=config or test_config)
+    with session_scope(session_factory) as session:
+        from scripts.ingest import upsert_regulations
 
-    monkeypatch.setattr(fetch, "Fetcher", MockedFetcher)
-    monkeypatch.setattr(fetch.httpx, "Client", DummyClient, raising=False)
+        upsert_regulations(session, later_regs, later_records)
 
-    return PARSER.fetch_raw(since)
+    with session_scope(session_factory) as session:
+        regs = session.execute(select(canonical_models.RegulationORM)).scalars().all()
+        provenance = session.execute(select(canonical_models.ProvenanceORM)).scalars().all()
+
+    assert len(regs) == 2
+    assert len(provenance) == 2
+    fetched_at_values = {entry.fetched_at for entry in provenance}
+    expected_times = {record.fetched_at for record in later_records}
+    assert fetched_at_values == expected_times
