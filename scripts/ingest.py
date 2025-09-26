@@ -55,13 +55,25 @@ def upsert_regulations(
     regulations: Iterable[canonical_models.CanonicalReg],
     provenance_records: List[canonical_models.ProvenanceRecord],
 ) -> None:
-    """Upsert regulations and provenance into the database."""
+    """Upsert regulations and provenance into the database.
+
+    Duplicate regulations are coalesced by ``external_id`` so that only the
+    most recent representation is persisted. Provenance entries are likewise
+    deduplicated to avoid storing duplicate fetch metadata when the same
+    regulation is encountered multiple times during a run.
+    """
 
     provenance_by_ext = {
         record.regulation_external_id: record for record in provenance_records
     }
 
+    deduped_regs: dict[str, canonical_models.CanonicalReg] = {}
     for reg in regulations:
+        deduped_regs[reg.external_id] = reg
+
+    persisted_provenance: set[str] = set()
+
+    for external_id, reg in deduped_regs.items():
         stmt = select(canonical_models.RegulationORM).where(
             canonical_models.RegulationORM.jurisdiction_code == reg.jurisdiction_code,
             canonical_models.RegulationORM.external_id == reg.external_id,
@@ -90,8 +102,8 @@ def upsert_regulations(
             session.add(existing)
             session.flush()
 
-        provenance = provenance_by_ext.get(reg.external_id)
-        if provenance:
+        provenance = provenance_by_ext.get(external_id)
+        if provenance and external_id not in persisted_provenance:
             session.add(
                 canonical_models.ProvenanceORM(
                     regulation_id=existing.id,
@@ -101,6 +113,7 @@ def upsert_regulations(
                     raw_content=provenance.raw_content,
                 )
             )
+            persisted_provenance.add(external_id)
 
 
 def main() -> None:

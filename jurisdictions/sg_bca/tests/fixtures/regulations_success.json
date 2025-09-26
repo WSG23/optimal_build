@@ -1,0 +1,24 @@
+{
+  "regulations": [
+    {
+      "id": "BCA-CP83-4-2",
+      "title": "Clause 4.2 Fire Alarm Systems",
+      "section": "4.2",
+      "issued_on": "2024-06-01",
+      "effective_on": "2024-09-01",
+      "detail_url": "https://example.gov.sg/bca/cp83/4-2",
+      "html_body": "<h1>Clause 4.2 Fire Alarm Systems</h1><p>Each residential unit must install interconnected smoke detectors capable of alerting adjacent units.</p><p>The alarm system shall comply with the latest SS 645 standard.</p>",
+      "tags": ["Fire Safety", "Smoke Detection"]
+    },
+    {
+      "id": "BCA-CP83-5-1",
+      "title": "Clause 5.1 Emergency Lighting",
+      "section": "5.1",
+      "issued_on": "2023-12-15",
+      "effective_on": null,
+      "detail_url": "https://example.gov.sg/bca/cp83/5-1",
+      "html_body": "<h1>Clause 5.1 Emergency Lighting</h1><p>Maintain emergency lighting for a minimum duration of 60 minutes during evacuation scenarios.</p>",
+      "tags": ["Fire Safety"]
+    }
+  ]
+}
