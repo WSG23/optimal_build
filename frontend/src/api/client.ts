@@ -402,9 +402,13 @@ export class ApiClient {
       formData.append('infer_walls', 'true')
     }
 
+    const headers = new Headers()
+    headers.set('X-Role', this.defaultRole ?? 'admin')
+
     const response = await fetch(this.buildUrl('api/v1/import'), {
       method: 'POST',
       body: formData,
+      headers,
     })
 
     if (!response.ok) {
