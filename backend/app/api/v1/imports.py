@@ -497,7 +497,28 @@ async def enqueue_parse(
     record.parse_status = "queued"
     await session.commit()
 
-    dispatch = await job_queue.enqueue(parse_import_job, import_id=import_id)
+    try:
+        dispatch = await job_queue.enqueue(parse_import_job, import_id=import_id)
+    except Exception as exc:  # pragma: no cover - defensive inline failure path
+        logger.exception(
+            "parse_enqueue_failed",
+            import_id=import_id,
+            error=str(exc),
+        )
+        await session.refresh(record)
+        if record.parse_status != "failed":
+            record.parse_status = "failed"
+            record.parse_error = record.parse_error or str(exc)
+            await session.commit()
+        return ParseStatusResponse(
+            import_id=record.id,
+            status=record.parse_status or "failed",
+            requested_at=record.parse_requested_at,
+            completed_at=record.parse_completed_at,
+            result=record.parse_result,
+            error=record.parse_error or str(exc),
+            job_id=None,
+        )
 
     # Refresh to reflect changes applied by the job if it ran inline.
     await session.refresh(record)
