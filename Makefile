@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify
+.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify status
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -279,6 +279,43 @@ dev: ## Start supporting services, the backend API, and frontends
 		fi; \
 	else \
 		echo "Skipping admin UI (INCLUDE_ADMIN=0)."; \
+	fi
+
+status: ## Show running status for dev services
+	@echo "Backend API:"; \
+	if [ -f $(DEV_BACKEND_PID) ]; then \
+		PID=$$(cat $(DEV_BACKEND_PID)); \
+		if kill -0 $$PID 2>/dev/null; then \
+			echo "  running (PID $$PID, port $(BACKEND_PORT))"; \
+		else \
+			echo "  stopped (stale PID $$PID in $(DEV_BACKEND_PID))"; \
+		fi; \
+	else \
+		echo "  stopped"; \
+	fi
+	@echo "Frontend app:"; \
+	if [ -f $(DEV_FRONTEND_PID) ]; then \
+		PID=$$(cat $(DEV_FRONTEND_PID)); \
+		if kill -0 $$PID 2>/dev/null; then \
+			echo "  running (PID $$PID, port $(FRONTEND_PORT))"; \
+		else \
+			echo "  stopped (stale PID $$PID in $(DEV_FRONTEND_PID))"; \
+		fi; \
+	else \
+		echo "  stopped"; \
+	fi
+	@if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
+		echo "Admin UI:"; \
+		if [ -f $(DEV_ADMIN_PID) ]; then \
+			PID=$$(cat $(DEV_ADMIN_PID)); \
+			if kill -0 $$PID 2>/dev/null; then \
+				echo "  running (PID $$PID, port $(ADMIN_PORT))"; \
+			else \
+				echo "  stopped (stale PID $$PID in $(DEV_ADMIN_PID))"; \
+			fi; \
+		else \
+			echo "  stopped"; \
+		fi; \
 	fi
 
 stop: ## Stop services started with dev (excluding docker-compose)
