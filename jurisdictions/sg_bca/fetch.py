@@ -122,12 +122,9 @@ class Fetcher:
                     "offset": offset,
                 }
                 payload = self._request_with_retry(client, params)
-                result = payload.get("result") or {}
-                rows: Sequence[MutableMapping[str, object]] = result.get(
-                    "records", []
-                )
+                rows, page_total = self._extract_rows(payload.get("result"), offset)
                 if total is None:
-                    total = result.get("total")
+                    total = page_total
 
                 if not rows:
                     break
@@ -202,6 +199,41 @@ class Fetcher:
             if sleep_for > 0:
                 time_module.sleep(sleep_for)
         self._last_request = time_module.monotonic()
+
+    def _extract_rows(
+        self,
+        result: MutableMapping[str, object] | None,
+        offset: int,
+    ) -> tuple[list[MutableMapping[str, object]], int | None]:
+        if result is None or not isinstance(result, MutableMapping):
+            raise FetchError("SG BCA payload missing 'result' object")
+
+        raw_rows = result.get("records")
+        if raw_rows in (None, []):
+            return [], self._coerce_total(result.get("total"))
+        if not isinstance(raw_rows, Sequence):
+            raise FetchError("SG BCA payload 'records' must be a sequence")
+
+        rows: list[MutableMapping[str, object]] = []
+        for index, row in enumerate(raw_rows):
+            if not isinstance(row, MutableMapping):
+                raise FetchError(
+                    "SG BCA payload row at offset "
+                    f"{offset + index} is not a JSON object"
+                )
+            rows.append(row)
+
+        return rows, self._coerce_total(result.get("total"))
+
+    def _coerce_total(self, value: object) -> int | None:
+        if value is None:
+            return None
+        try:
+            total = int(value)
+        except (TypeError, ValueError):
+            self._logger.warning("sg_bca.fetch.invalid_total", raw=value)
+            return None
+        return max(total, 0)
 
     def _normalise_row(
         self, row: MutableMapping[str, object]

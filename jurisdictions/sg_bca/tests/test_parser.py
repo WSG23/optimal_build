@@ -1,8 +1,9 @@
-"""Tests for the SG BCA plug-in."""
+"""Tests for the SG BCA fetcher and parser."""
 from __future__ import annotations
 
 import json
 from datetime import date, datetime
+from pathlib import Path
 
 import pytest
 from sqlalchemy import select
@@ -10,46 +11,167 @@ from sqlalchemy import select
 from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.util import create_session_factory, get_engine, session_scope
-from jurisdictions.sg_bca.parse import PARSER, ParserError
 from jurisdictions.sg_bca import fetch
+from jurisdictions.sg_bca.parse import PARSER, ParserError
 
 
-def test_parse_and_persist(monkeypatch):
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+
+
+def test_fetcher_and_parser_against_recorded_fixtures(monkeypatch):
+    since = date(2025, 1, 1)
+    fixture_fetcher = _build_fixture_fetcher(monkeypatch)
+
+    raw_records = fixture_fetcher.fetch_raw(since)
+
+    assert [record.regulation_external_id for record in raw_records] == [
+        "2025-04",
+        "2025-03",
+    ]
+    assert all("resource_id" in record.fetch_parameters for record in raw_records)
+    assert all(record.fetch_parameters["since"] == since.isoformat() for record in raw_records)
+
+    first_payload = json.loads(raw_records[0].raw_content)
+    assert first_payload["subject"] == "Revisions to accessible fire exits"
+
+    canonical_regs = list(PARSER.parse(raw_records))
+    assert [reg.external_id for reg in canonical_regs] == ["2025-04", "2025-03"]
+
+    first = canonical_regs[0]
+    assert first.title == "Revisions to accessible fire exits"
+    assert first.text.startswith("Section 1.1 Fire Safety")
+    assert first.issued_on == date(2025, 4, 10)
+    assert first.effective_on == date(2025, 5, 1)
+    assert first.metadata["source_uri"] == "https://www1.bca.gov.sg/circulars/2025-04"
+    assert first.metadata["agency"] == "Building and Construction Authority"
+    assert first.global_tags == ["accessibility", "fire_safety"]
+
+    second = canonical_regs[1]
+    assert second.title == "Updated inspection regime for mechanical ventilation"
+    assert second.effective_on == date(2025, 3, 20)
+    assert second.metadata["document_type"] == "Circular"
+    assert second.metadata["source_uri"] == "https://www1.bca.gov.sg/circulars/2025-03"
+    assert second.global_tags == ["fire_safety"]
+
+
+def test_fetcher_raises_for_bad_credentials(monkeypatch):
+    class UnauthorizedResponse:
+        status_code = 401
+
+        def raise_for_status(self) -> None:
+            raise RuntimeError("HTTP 401")
+
+        def json(self) -> dict:
+            return {"success": False, "error": {"message": "Invalid API key"}}
+
+    class UnauthorizedClient:
+        def __init__(self, *_, **__):
+            pass
+
+        def __enter__(self) -> "UnauthorizedClient":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def get(self, url: str, params: dict[str, object]):
+            return UnauthorizedResponse()
+
+    monkeypatch.setattr(fetch.httpx, "Client", UnauthorizedClient, raising=False)
+    config = fetch.FetchConfig(
+        resource_id="realistic-resource-id",
+        max_retries=2,
+        backoff_factor=0.0,
+    )
+    fixture_fetcher = fetch.Fetcher(config=config)
+
+    with pytest.raises(fetch.FetchError) as excinfo:
+        fixture_fetcher.fetch_raw(date(2025, 1, 1))
+
+    assert "Failed to fetch" in str(excinfo.value)
+
+
+def test_fetcher_rejects_malformed_payload(monkeypatch):
+    class MalformedResponse:
+        status_code = 200
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {"result": {"records": "not-a-list"}}
+
+    class MalformedClient:
+        def __init__(self, *_, **__):
+            pass
+
+        def __enter__(self) -> "MalformedClient":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def get(self, url: str, params: dict[str, object]):
+            return MalformedResponse()
+
+    monkeypatch.setattr(fetch.httpx, "Client", MalformedClient, raising=False)
+    config = fetch.FetchConfig(
+        resource_id="realistic-resource-id",
+        max_retries=1,
+        backoff_factor=0.0,
+    )
+
+    fixture_fetcher = fetch.Fetcher(config=config)
+
+    with pytest.raises(fetch.FetchError) as excinfo:
+        fixture_fetcher.fetch_raw(date(2025, 1, 1))
+
+    assert "json object" in str(excinfo.value).lower()
+
+
+def test_ingestion_deduplicates_provenance_entries(monkeypatch):
     engine = get_engine("sqlite:///:memory:")
     canonical_models.RegstackBase.metadata.create_all(engine)
     session_factory = create_session_factory(engine)
 
     since = date(2025, 1, 1)
-    raw_records = list(_run_fetch(monkeypatch, since))
-    regs = list(PARSER.parse(raw_records))
-    mapped = load_and_apply_mappings(regs, PARSER.map_overrides_path())
+
+    first_fetcher = _build_fixture_fetcher(monkeypatch)
+    first_records = first_fetcher.fetch_raw(since)
+    first_regs = list(PARSER.parse(first_records))
+    mapped_first = load_and_apply_mappings(first_regs, PARSER.map_overrides_path())
 
     with session_scope(session_factory) as session:
-        session.add(
-            canonical_models.JurisdictionORM(code=PARSER.code, name="SG BCA")
-        )
-        _persist(session, mapped, raw_records)
+        session.add(canonical_models.JurisdictionORM(code=PARSER.code, name="SG BCA"))
+        _persist(session, mapped_first, first_records)
 
     with session_scope(session_factory) as session:
-        stored = session.execute(
-            select(canonical_models.RegulationORM).limit(1)
-        ).scalar_one()
-        count = len(
-            session.execute(select(canonical_models.RegulationORM)).all()
-        )
+        regs_in_db = session.execute(select(canonical_models.RegulationORM)).scalars().all()
+        provenance_in_db = session.execute(
+            select(canonical_models.ProvenanceORM)
+        ).scalars().all()
 
-    assert count == 1
-    assert regs[0].title == "Smoke detector requirements"
-    assert regs[0].text.startswith("Section 1.1 Fire Safety")
-    assert regs[0].issued_on == date(2025, 2, 2)
-    assert regs[0].effective_on == date(2025, 3, 1)
-    assert regs[0].version == "Revision 2"
-    assert regs[0].metadata["category"] == "Fire Safety"
-    assert regs[0].metadata["keywords"] == [
-        "Smoke detector",
-        "Universal Design",
-    ]
-    assert stored.global_tags == ["accessibility", "fire_safety"]
+    assert len(regs_in_db) == 2
+    assert len(provenance_in_db) == 2
+
+    second_fetcher = _build_fixture_fetcher(monkeypatch)
+    second_records = second_fetcher.fetch_raw(since)
+    second_regs = list(PARSER.parse(second_records))
+    mapped_second = load_and_apply_mappings(second_regs, PARSER.map_overrides_path())
+
+    with session_scope(session_factory) as session:
+        _persist(session, mapped_second, second_records)
+
+    with session_scope(session_factory) as session:
+        regs_after_second = session.execute(
+            select(canonical_models.RegulationORM)
+        ).scalars().all()
+        provenance_after_second = session.execute(
+            select(canonical_models.ProvenanceORM)
+        ).scalars().all()
+
+    assert len(regs_after_second) == 2
+    assert len(provenance_after_second) == 2
 
 
 def test_parse_missing_title_raises():
@@ -69,7 +191,7 @@ def test_parse_missing_title_raises():
 
 
 def _persist(
-    session: Session,
+    session,
     regs: list[canonical_models.CanonicalReg],
     raw_records: list[canonical_models.ProvenanceRecord],
 ) -> None:
@@ -78,76 +200,72 @@ def _persist(
     upsert_regulations(session, regs, raw_records)
 
 
-def _run_fetch(monkeypatch, since: date):
-    sample_rows = [
+def _build_fixture_fetcher(monkeypatch) -> fetch.Fetcher:
+    _patch_client_with_pages(
+        monkeypatch,
         {
-            "circular_no": "2025-01",
-            "circular_date": "2025-02-02",
-            "effective_date": "2025-03-01",
-            "subject": "Smoke detector requirements",
-            "weblink": "https://www1.bca.gov.sg/circulars/2025-01",
-            "description": "Section 1.1 Fire Safety - A smoke detector must be installed.",
-            "version": "Revision 2",
-            "category": "Fire Safety",
-            "keywords": ["Smoke detector", "Universal Design"],
-            "tags": "Fire Safety;Regulation",
-            "agency": "BCA",
+            0: "datastore_page_1.json",
+            2: "datastore_page_2.json",
         },
-        {
-            "circular_no": "2024-10",
-            "circular_date": "2024-12-15",
-            "subject": "Legacy guidance",
-            "weblink": "https://www1.bca.gov.sg/circulars/2024-10",
-            "description": "Archived guidance",
-        },
-    ]
+    )
+    config = fetch.FetchConfig(
+        resource_id="realistic-resource-id",
+        page_size=2,
+        max_retries=1,
+        backoff_factor=0.0,
+    )
+    return fetch.Fetcher(config=config)
 
-    total = len(sample_rows)
 
-    class DummyResponse:
-        def __init__(self, payload: dict) -> None:
+def _patch_client_with_pages(
+    monkeypatch: pytest.MonkeyPatch, fixtures_by_offset: dict[int, str]
+) -> None:
+    payloads = {
+        offset: _load_fixture(filename)
+        for offset, filename in fixtures_by_offset.items()
+    }
+    default_payload = {"result": {"records": []}}
+    first_payload = next(iter(payloads.values()), None)
+    if first_payload is not None:
+        total = first_payload.get("result", {}).get("total")
+        if total is not None:
+            default_payload["result"]["total"] = total
+
+    class FixtureResponse:
+        def __init__(self, payload: dict, status_code: int = 200) -> None:
             self._payload = payload
+            self.status_code = status_code
 
         def raise_for_status(self) -> None:
-            return None
+            if self.status_code >= 400:
+                raise RuntimeError(f"HTTP {self.status_code}")
 
         def json(self) -> dict:
             return self._payload
 
-    class DummyClient:
+    class FixtureClient:
         def __init__(self, *_, **__):
-            self.calls: list[dict[str, object]] = []
+            pass
 
-        def __enter__(self) -> "DummyClient":
+        def __enter__(self) -> "FixtureClient":
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:
             return None
 
         def get(self, url: str, params: dict[str, object]):
-            self.calls.append(params)
-            offset = int(params.get("offset", 0) or 0)
-            limit = int(params.get("limit", 100) or 100)
-            page = sample_rows[offset : offset + limit]
-            return DummyResponse(
-                {
-                    "result": {
-                        "records": page,
-                        "total": total,
-                    }
-                }
-            )
+            offset_raw = params.get("offset", 0)
+            try:
+                offset = int(offset_raw) if offset_raw is not None else 0
+            except (TypeError, ValueError):
+                offset = 0
+            payload = payloads.get(offset, default_payload)
+            return FixtureResponse(payload)
 
-    test_config = fetch.FetchConfig(
-        resource_id="test-resource",
-        page_size=1,
-    )
+    monkeypatch.setattr(fetch.httpx, "Client", FixtureClient, raising=False)
 
-    class MockedFetcher(fetch.Fetcher):
-        def __init__(self, config: fetch.FetchConfig | None = None) -> None:
-            super().__init__(config=config or test_config)
 
-    monkeypatch.setattr(fetch, "Fetcher", MockedFetcher)
-    monkeypatch.setattr(fetch.httpx, "Client", DummyClient, raising=False)
-
-    return PARSER.fetch_raw(since)
+def _load_fixture(name: str) -> dict:
+    fixture_path = FIXTURES_DIR / name
+    with fixture_path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
