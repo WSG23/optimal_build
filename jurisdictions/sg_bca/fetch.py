@@ -48,6 +48,7 @@ class FetchConfig:
     max_retries: int = 3
     backoff_factor: float = 0.5
     rate_limit_per_minute: int | None = None
+    user_agent: str = "optimal-build/sg-bca-fetcher"
     date_field: str = "circular_date"
     external_id_field: str = "circular_no"
 
@@ -76,6 +77,7 @@ class FetchConfig:
                 if (rate := env.get("SG_BCA_RATE_LIMIT_PER_MINUTE"))
                 else None
             ),
+            user_agent=env.get("SG_BCA_USER_AGENT", cls.user_agent),
             date_field=env.get("SG_BCA_DATE_FIELD", cls.date_field),
             external_id_field=env.get(
                 "SG_BCA_EXTERNAL_ID_FIELD", cls.external_id_field
@@ -153,7 +155,7 @@ class Fetcher:
 
     # ------------------------------------------------------------------
     def _create_client(self) -> httpx.Client:
-        headers = {"User-Agent": "optimal-build/sg-bca-fetcher"}
+        headers = {"User-Agent": self.config.user_agent}
         if self.config.api_key and self.config.api_key_header:
             headers[self.config.api_key_header] = self.config.api_key
         return httpx.Client(
@@ -177,10 +179,11 @@ class Fetcher:
                     "sg_bca.fetch.page",
                     attempt=attempt,
                     offset=params["offset"],
+                    status_code=response.status_code,
                     received=len((payload.get("result") or {}).get("records", [])),
                 )
                 return payload
-            except Exception as exc:  # pragma: no cover - exception branch
+            except Exception as exc:  # pragma: no cover - specific exceptions depend on httpx
                 last_exc = exc
                 wait_time = self.config.backoff_factor * (2 ** (attempt - 1))
                 self._logger.warning(
@@ -194,7 +197,7 @@ class Fetcher:
                 if wait_time > 0:
                     time_module.sleep(wait_time)
 
-        raise FetchError("Failed to fetch SG BCA data") from last_exc
+        raise FetchError(f"Failed to fetch SG BCA data: {last_exc}") from last_exc
 
     def _enforce_rate_limit(self) -> None:
         if not self.config.rate_limit_per_minute:

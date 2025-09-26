@@ -17,6 +17,7 @@ The fetcher reads its configuration from the following environment variables:
 | `SG_BCA_MAX_RETRIES` | Number of retry attempts for transient errors. Defaults to `3`. |
 | `SG_BCA_BACKOFF_FACTOR` | Exponential backoff base (seconds). Defaults to `0.5`. |
 | `SG_BCA_RATE_LIMIT_PER_MINUTE` | Optional throttle for outbound requests. |
+| `SG_BCA_USER_AGENT` | Optional override for the User-Agent header. Defaults to `optimal-build/sg-bca-fetcher`. |
 | `SG_BCA_DATE_FIELD` | Optional override for the date field in the dataset (defaults to `circular_date`). |
 | `SG_BCA_EXTERNAL_ID_FIELD` | Optional override for the external identifier field (defaults to `circular_no`). |
 
