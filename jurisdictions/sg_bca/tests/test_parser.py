@@ -55,6 +55,34 @@ def test_fetcher_and_parser_against_recorded_fixtures(monkeypatch):
     assert second.global_tags == ["fire_safety"]
 
 
+def test_parser_iterates_all_regulations_from_page_payload():
+    payload = _load_fixture("datastore_page_1.json")
+    record = canonical_models.ProvenanceRecord(
+        regulation_external_id="page-1",
+        source_uri="https://data.gov.sg/api/action/datastore_search",
+        fetched_at=datetime(2025, 4, 12, 10, 0, 0, tzinfo=timezone.utc),
+        fetch_parameters={"offset": 0},
+        raw_content=json.dumps(payload),
+    )
+
+    regulations = list(PARSER.parse([record]))
+
+    assert [reg.external_id for reg in regulations] == ["2025-04", "2025-03"]
+
+    first = regulations[0]
+    assert first.title == "Revisions to accessible fire exits"
+    assert first.issued_on == date(2025, 4, 10)
+    assert first.effective_on == date(2025, 5, 1)
+    assert first.version == "Revision 4"
+    assert first.metadata["source_uri"] == "https://www1.bca.gov.sg/circulars/2025-04"
+    assert first.metadata["category"] == "Fire Safety"
+    assert first.global_tags == ["accessibility", "fire_safety"]
+
+    second = regulations[1]
+    assert second.metadata["source_uri"] == "https://www1.bca.gov.sg/circulars/2025-03"
+    assert second.global_tags == ["fire_safety"]
+
+
 def test_fetcher_raises_for_bad_credentials(monkeypatch):
     class UnauthorizedResponse:
         status_code = 401
@@ -134,6 +162,24 @@ def test_fetcher_rejects_malformed_payload(monkeypatch):
         fixture_fetcher.fetch_raw(date(2025, 1, 1))
 
     assert "json object" in str(excinfo.value).lower()
+
+
+def test_parser_reports_missing_external_identifier_from_page_payload():
+    payload = _load_fixture("datastore_page_2.json")
+    record = canonical_models.ProvenanceRecord(
+        regulation_external_id="page-2",
+        source_uri="https://data.gov.sg/api/action/datastore_search",
+        fetched_at=datetime(2025, 4, 12, 10, 5, 0, tzinfo=timezone.utc),
+        fetch_parameters={"offset": 2},
+        raw_content=json.dumps(payload),
+    )
+
+    with pytest.raises(ParserError) as excinfo:
+        list(PARSER.parse([record]))
+
+    message = str(excinfo.value)
+    assert "missing a circular number" in message
+    assert "page-2 result.records[0]" in message
 
 
 def test_fetcher_normalises_timezone_aware_issue_dates(monkeypatch):
