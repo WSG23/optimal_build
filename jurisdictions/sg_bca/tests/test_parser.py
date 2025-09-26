@@ -235,6 +235,62 @@ def test_ingestion_persists_multiple_sources_for_single_regulation():
     }
 
 
+def test_ingestion_deduplicates_identical_provenance_records():
+    engine = get_engine("sqlite:///:memory:")
+    canonical_models.RegstackBase.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+
+    regulation = canonical_models.CanonicalReg(
+        jurisdiction_code=PARSER.code,
+        external_id="dedupe-provenance-reg",
+        title="Regulation with duplicated provenance",
+        text="Example content",
+        issued_on=date(2025, 1, 3),
+        effective_on=date(2025, 1, 4),
+        metadata={},
+        global_tags=["example"],
+    )
+
+    duplicate_payload = {"id": "source-a", "payload": "first"}
+    provenance_records = [
+        canonical_models.ProvenanceRecord(
+            regulation_external_id="dedupe-provenance-reg",
+            source_uri="https://example.invalid/source-a",
+            fetched_at=datetime(2025, 1, 10, 12, 0, 0),
+            fetch_parameters={"page": 1},
+            raw_content=json.dumps(duplicate_payload),
+        ),
+        canonical_models.ProvenanceRecord(
+            regulation_external_id="dedupe-provenance-reg",
+            source_uri="https://example.invalid/source-a",
+            fetched_at=datetime(2025, 1, 10, 12, 30, 0),
+            fetch_parameters={"page": 1},
+            raw_content=json.dumps(duplicate_payload),
+        ),
+    ]
+
+    with session_scope(session_factory) as session:
+        session.add(canonical_models.JurisdictionORM(code=PARSER.code, name="SG BCA"))
+        _persist(session, [regulation], provenance_records)
+
+    with session_scope(session_factory) as session:
+        regulation_in_db = session.execute(
+            select(canonical_models.RegulationORM).where(
+                canonical_models.RegulationORM.external_id
+                == "dedupe-provenance-reg"
+            )
+        ).scalar_one()
+
+        provenance_in_db = session.execute(
+            select(canonical_models.ProvenanceORM).where(
+                canonical_models.ProvenanceORM.regulation_id == regulation_in_db.id
+            )
+        ).scalars().all()
+
+    assert len(provenance_in_db) == 1
+    assert provenance_in_db[0].source_uri == "https://example.invalid/source-a"
+
+
 def test_parse_missing_title_raises():
     record = canonical_models.ProvenanceRecord(
         regulation_external_id="missing-title",
