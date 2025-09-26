@@ -94,6 +94,11 @@ test('runFinanceFeasibility serialises payloads and maps responses', async () =>
     assert.strictEqual(calls.length, 1)
     assert.strictEqual(calls[0].input, '/api/v1/finance/feasibility')
 
+    assert.deepEqual(calls[0].init.headers, {
+      'Content-Type': 'application/json',
+      'X-Role': 'admin',
+    })
+
     const body = JSON.parse(calls[0].init.body)
     assert.deepEqual(body, {
       project_id: 401,
