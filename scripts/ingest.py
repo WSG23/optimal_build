@@ -4,8 +4,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import logging
+from collections import defaultdict
 from datetime import date
-from typing import Iterable, List
+from typing import Dict, Iterable, List
 
 from sqlalchemy import select
 
@@ -62,9 +63,9 @@ def upsert_regulations(
 ) -> None:
     """Upsert regulations and provenance into the database."""
 
-    provenance_by_ext = {
-        record.regulation_external_id: record for record in provenance_records
-    }
+    provenance_by_ext: Dict[str, List[canonical_models.ProvenanceRecord]] = defaultdict(list)
+    for record in provenance_records:
+        provenance_by_ext[record.regulation_external_id].append(record)
 
     for reg in regulations:
         stmt = select(canonical_models.RegulationORM).where(
@@ -95,8 +96,7 @@ def upsert_regulations(
             session.add(existing)
             session.flush()
 
-        provenance = provenance_by_ext.get(reg.external_id)
-        if provenance:
+        for provenance in provenance_by_ext.get(reg.external_id, []):
             content_checksum = hashlib.sha256(
                 provenance.raw_content.encode("utf-8")
             ).hexdigest()
