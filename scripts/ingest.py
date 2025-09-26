@@ -105,27 +105,31 @@ def upsert_regulations(
             content_checksum = hashlib.sha256(
                 provenance.raw_content.encode("utf-8")
             ).hexdigest()
-            prov_stmt = select(canonical_models.ProvenanceORM).where(
-                canonical_models.ProvenanceORM.regulation_id == existing.id,
-                canonical_models.ProvenanceORM.source_uri == provenance.source_uri,
-                canonical_models.ProvenanceORM.content_checksum == content_checksum,
-            )
-            existing_provenance = session.execute(prov_stmt).scalar_one_or_none()
-            if existing_provenance:
+            matched_provenance = session.execute(
+                select(canonical_models.ProvenanceORM).where(
+                    canonical_models.ProvenanceORM.regulation_id == existing.id,
+                    canonical_models.ProvenanceORM.source_uri
+                    == provenance.source_uri,
+                    canonical_models.ProvenanceORM.content_checksum
+                    == content_checksum,
+                )
+            ).scalar_one_or_none()
+
+            if matched_provenance:
                 updated_fields = []
-                if existing_provenance.fetched_at != provenance.fetched_at:
-                    existing_provenance.fetched_at = provenance.fetched_at
+                if matched_provenance.fetched_at != provenance.fetched_at:
+                    matched_provenance.fetched_at = provenance.fetched_at
                     updated_fields.append("fetched_at")
                 if (
-                    existing_provenance.fetch_parameters
+                    matched_provenance.fetch_parameters
                     != provenance.fetch_parameters
                 ):
-                    existing_provenance.fetch_parameters = (
+                    matched_provenance.fetch_parameters = (
                         provenance.fetch_parameters
                     )
                     updated_fields.append("fetch_parameters")
-                if existing_provenance.raw_content != provenance.raw_content:
-                    existing_provenance.raw_content = provenance.raw_content
+                if matched_provenance.raw_content != provenance.raw_content:
+                    matched_provenance.raw_content = provenance.raw_content
                     updated_fields.append("raw_content")
 
                 if updated_fields:
@@ -141,22 +145,52 @@ def upsert_regulations(
                         reg.external_id,
                         provenance.source_uri,
                     )
-            else:
-                session.add(
-                    canonical_models.ProvenanceORM(
-                        regulation_id=existing.id,
-                        source_uri=provenance.source_uri,
-                        fetched_at=provenance.fetched_at,
-                        fetch_parameters=provenance.fetch_parameters,
-                        raw_content=provenance.raw_content,
-                        content_checksum=content_checksum,
-                    )
+                continue
+
+            latest_provenance = session.execute(
+                select(canonical_models.ProvenanceORM)
+                .where(
+                    canonical_models.ProvenanceORM.regulation_id == existing.id,
+                    canonical_models.ProvenanceORM.source_uri
+                    == provenance.source_uri,
                 )
+                .order_by(canonical_models.ProvenanceORM.fetched_at.desc())
+            ).scalars().first()
+
+            previous_checksum = (
+                latest_provenance.content_checksum
+                if latest_provenance is not None
+                else None
+            )
+            if previous_checksum == content_checksum:
                 logger.info(
-                    "Inserted provenance record for %s (source=%s)",
+                    "Skipped provenance record for %s (source=%s); duplicate payload detected",
                     reg.external_id,
                     provenance.source_uri,
                 )
+                continue
+
+            session.add(
+                canonical_models.ProvenanceORM(
+                    regulation_id=existing.id,
+                    source_uri=provenance.source_uri,
+                    fetched_at=provenance.fetched_at,
+                    fetch_parameters=provenance.fetch_parameters,
+                    raw_content=provenance.raw_content,
+                    content_checksum=content_checksum,
+                )
+            )
+            logger.info(
+                "Inserted provenance record for %s (source=%s; checksum=%s%s)",
+                reg.external_id,
+                provenance.source_uri,
+                content_checksum,
+                (
+                    f", previous_checksum={previous_checksum}"
+                    if previous_checksum
+                    else ""
+                ),
+            )
 
 
 def main() -> None:
