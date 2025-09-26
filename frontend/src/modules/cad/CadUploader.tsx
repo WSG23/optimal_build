@@ -77,7 +77,7 @@ export function CadUploader({ onUpload, isUploading = false, status, summary }: 
         <input
           ref={inputRef}
           type="file"
-          accept=".dxf,.ifc,.json"
+          accept=".dxf,.ifc,.json,.pdf,.svg"
           className="cad-uploader__input"
           onChange={handleChange}
           disabled={isUploading}
