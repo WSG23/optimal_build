@@ -426,11 +426,29 @@ class APIRouter:
         route = _Route(
             full_path or "/",
             endpoint=endpoint,
-            methods=methods,
+            methods=[method.upper() for method in methods],
             response_model=response_model,
             status_code=status_code,
         )
         self.routes.append(route)
+
+    def api_route(
+        self,
+        path: str,
+        *,
+        methods: Optional[Iterable[str]] = None,
+        response_model: Optional[type] = None,
+        status_code: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        resolved_methods = [method.upper() for method in (methods or ["GET"])]
+        return self._decorator(
+            path,
+            methods=resolved_methods,
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
 
     def get(
         self,
@@ -449,7 +467,7 @@ class APIRouter:
         status_code: Optional[int] = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self._decorator(
+        return self.api_route(
             path,
             methods=["POST"],
             response_model=response_model,
