@@ -1,0 +1,11 @@
+{
+  "help": "https://data.gov.sg/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "realistic-resource-id",
+    "records": "This should have been a list of records",
+    "total": 1,
+    "offset": 0,
+    "limit": 100
+  }
+}
