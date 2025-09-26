@@ -1,0 +1,7 @@
+[lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E203", "W503"]
+line-length = 100
+
+[lint.isort]
+combine-as-imports = true

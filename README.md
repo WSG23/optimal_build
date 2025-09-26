@@ -1,270 +1,100 @@
-# Optimal Build
+# Regstack Jurisdiction Plug-in Architecture
 
-## Prerequisites
+Regstack provides a jurisdiction-agnostic pipeline for normalising building regulations. This
+implementation introduces a plug-in registry, canonical schema, Alembic migrations, and a CLI for
+fetching and parsing regulations into PostgreSQL (or SQLite for tests).
 
-* Docker with the Compose plugin (or the legacy `docker-compose` binary) for targets that manage services such as `make dev-start`, `make init-db`, `make reset`, `make build`, and `make logs`. The Makefile auto-detects whichever CLI is available and surfaces a descriptive error when neither is present.
-* A local Python interpreter with the backend dependencies installed (e.g., `pip install -r backend/requirements-dev.txt`) so that Python fallbacks like `make seed-data` and `make db.upgrade` can talk to the database when Docker is unavailable.
+## Quickstart
 
-## Bootstrap
+1. **Create a virtual environment** (Python 3.11):
+   ```bash
+   python3.11 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+2. **Export a database URL** (PostgreSQL recommended, SQLite supported):
+   ```bash
+   export REGSTACK_DB="postgresql://user:pass@localhost:5432/regstack"
+   ```
+3. **Run migrations**:
+   ```bash
+   alembic -c db/alembic.ini upgrade head
+   ```
+4. **Ingest the Singapore BCA sample**:
+   ```bash
+   python -m scripts.ingest --jurisdiction sg_bca --since 2025-01-01 --store "$REGSTACK_DB"
+   ```
 
-Before running any `make` targets, install the backend runtime dependencies so Alembic and other CLI entry points are available locally:
+## Repository Layout
 
-```bash
-pip install -r backend/requirements.txt
+```
+core/                  # Canonical models, registry, utilities, global taxonomy
+jurisdictions/         # Plug-ins (one folder per jurisdiction)
+  └── sg_bca/          # Mock Singapore BCA implementation
+scripts/               # CLI entry points (ingest)
+db/                    # Alembic environment and migrations
+docs/architecture.md   # Diagram of the system
 ```
 
-If you plan to run linting or tests directly, follow up with the development extras:
+Key components:
+- `core/canonical_models.py` exposes both Pydantic and SQLAlchemy models with shared metadata.
+- `core/registry.py` loads jurisdiction plug-ins dynamically via `jurisdictions.<code>.parse`.
+- `core/mapping.py` merges the global taxonomy (`core/global_categories.yaml`) with local overrides.
+- `scripts/ingest.py` orchestrates fetch, parse, map, and persistence steps.
+- `jurisdictions/sg_bca/` contains a self-contained mock parser, fetcher, overrides, and tests.
+
+## Running the Pipeline
+
+Once dependencies and migrations are installed:
 
 ```bash
-pip install -r backend/requirements-dev.txt
+python -m scripts.ingest --jurisdiction sg_bca --since 2025-01-01 --store "$REGSTACK_DB"
 ```
 
-## Frontend environment configuration
+The command will fetch mock data, parse it into the canonical schema, apply keyword-based mappings,
+and write both the regulation and provenance entries into the configured database.
 
-The frontend reads API locations from the `VITE_API_BASE_URL` variable that is loaded by Vite at build time. The value is resolved with `new URL(path, base)` so that links behave correctly whether the backend is exposed on the same origin, via a sub-path proxy, or through a separate host. For local development we provide a default of `/` in `frontend/.env` (copy `frontend/.env.example`) so the app talks to whichever host serves the frontend.
+### Inspecting the Database
 
-### Configuring `VITE_API_BASE_URL`
+Example SQL to verify inserted data:
 
-| Environment | Suggested value | Notes |
-|-------------|-----------------|-------|
-| Local development with Vite proxy or reverse proxy | `/` | Default value. Requests are routed relative to the web origin, allowing a dev proxy (e.g., Vite's `server.proxy`) or an ingress controller to forward traffic to the API service. |
-| Local development without a proxy | `http://localhost:8000/` | Point directly at the backend when running it on a different host/port than the frontend dev server. |
-| Staging/production behind a proxy prefix | `/api/` (or another sub-path) | Useful when a load balancer terminates TLS and exposes the API under a path prefix on the same domain as the UI. |
-| Staging/production on a dedicated API domain | `https://api.example.com/` | Use a fully-qualified URL when the API is hosted on a different domain. |
+```sql
+SELECT code, name FROM jurisdictions;
+SELECT jurisdiction_code, external_id, global_tags FROM regulations;
+SELECT regulation_id, source_uri FROM provenance;
+```
 
-Set the variable in the environment that builds the frontend (e.g., `frontend/.env`, `.env.production`, Docker/CI environment variables, or hosting provider settings). Because the variable name starts with `VITE_`, it is inlined at build time and no additional runtime configuration is required.
-
-## Backend environment configuration
-
-Copy `.env.example` to `.env` at the repository root to configure the FastAPI backend and background workers. The template now includes the following groups of variables:
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `ODA_LICENSE_KEY` | _(empty)_ | Inject the proprietary license string issued by the Open Design Alliance (or other CAD SDK vendor). Provide the real value via your local `.env`, container secrets, or CI/CD secret store — never commit the key. |
-| `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND` | Derived from `REDIS_URL` (defaults to `redis://localhost:6379/0` and `/1`) | Connection strings used by Celery for task dispatch and result storage. Override if your Redis deployment lives elsewhere or you use a different broker. |
-| `RQ_REDIS_URL` | Derived from `REDIS_URL` (defaults to `redis://localhost:6379/2`) | Redis connection used by any RQ workers. |
-| `OVERLAY_QUEUE_LOW`, `OVERLAY_QUEUE_DEFAULT`, `OVERLAY_QUEUE_HIGH` | `overlay:low`, `overlay:default`, `overlay:high` | Named queues for overlay-processing jobs so workers can prioritise workloads. |
-| `IMPORTS_BUCKET_NAME`, `EXPORTS_BUCKET_NAME` | `cad-imports`, `cad-exports` | Object-storage buckets used for CAD uploads and generated exports. |
-
-These values are consumed by `backend/app/core/config.py`. When only `REDIS_URL` is provided the backend reuses the same host and credentials for Celery and RQ while automatically splitting work across database indices `0`, `1`, and `2`. In staging or production deployments, configure the same variables through your orchestrator (Docker Compose, Kubernetes, managed task queue, etc.) so that the backend API, Celery workers, and any RQ workers share consistent queue and storage names.
-
-### Database migrations
-
-Apply the Alembic migrations before booting the API or background workers. Use
-`make db.upgrade` to run `python -m backend.migrations alembic upgrade head`
-directly against your local environment. Docker-driven setups can call
-`make init-db`, which executes the same module inside the backend container
-once the Compose CLI is available.
-
-The Postgres service defined in `docker-compose.yml` mounts
-[`scripts/init-db.sql`](scripts/init-db.sql) into
-`/docker-entrypoint-initdb.d/`. The script reads the `POSTGRES_DB` and
-`POSTGRES_USER` values from the container environment (falling back to the
-repository defaults of `building_compliance` and `postgres`) before
-provisioning the database. It always enables the `pgcrypto` and `uuid-ossp`
-extensions, and when `BUILDABLE_USE_POSTGIS` is set to a truthy value **and**
-the container exposes the PostGIS extension files, it installs `postgis` so
-geometry-aware migrations can run without manual intervention. When migrations
-introduce new extensions or other global prerequisites, update the SQL
-bootstrap script and run `alembic upgrade head` so the declarative schema and
-the on-disk database stay aligned. Because the script only executes when the
-Postgres data directory is empty, run `docker compose down -v` (or remove the
-`postgres_data` volume) — or the equivalent `docker-compose down -v` command —
-to rebuild the database after changing the bootstrap logic. Document any new assumptions in this README so local and CI environments
-stay in sync.
-
-## CI Smokes
-
-Before pushing changes, run `python -m backend.scripts.run_smokes --artifacts artifacts/`
-from the repository root. The helper mirrors the CI backend job by applying
-Alembic upgrades, seeding the screening/finance/non-regulatory/entitlements
-fixtures, executing the offline reference ingestion flows, and issuing smoke
-requests to the buildable, finance, and entitlements endpoints. Artefacts (JSON
-summaries, CSV exports, the OpenAPI schema, etc.) are written to the supplied
-directory – defaulting to `artifacts/` – so you can inspect the same outputs
-that CI collects.
-
-## Feasibility Wizard
-
-The frontend Feasibility Wizard screens seeded parcels against the
-`POST /api/v1/screen/buildable` endpoint. Configure the following environment
-variables before running `pnpm dev` or building for production:
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `VITE_API_BASE_URL` | `/` | Base URL for API requests. Override when the backend runs on a different host/port. |
-| `VITE_FEASIBILITY_USE_MOCKS` | `false` | Force the wizard to serve mock data without hitting the backend. Useful for offline UI work. |
-
-The wizard form accepts an address plus two adjustable assumptions:
-
-* `typFloorToFloorM` – default `3.4`. Controls the conversion between height
-  limits and maximum storeys.
-* `efficiencyRatio` – default `0.8`. Multiplies gross floor area to estimate
-  net saleable area. Values must stay within `0 < ratio ≤ 1`.
-
-Requests are debounced by 300 ms. While the debounce timer runs the wizard keeps
-an in-flight `fetch` abort handle so that subsequent changes cancel the earlier
-request before it reaches the backend. UI states include loading skeletons,
-empty/partial results when no zone or rules are returned, and a typed error
-state when the backend responds with a non-200 status.
-
-Use the “Copy request JSON” control in the toolbar to capture the most recent
-payload for debugging. Telemetry events (`feasibility.compute`) log anonymised
-address previews plus success/failure status and duration; raw addresses are not
-persisted client-side.
-
-## API roles and headers
-
-All `/api/v1` endpoints require an `X-Role` header so the backend can enforce
-role-based access control. Read-only operations such as `POST
-/api/v1/screen/buildable`, `GET /api/v1/finance/export`, or the reference data
-lookups accept `viewer`, `reviewer`, or `admin`. Endpoints that persist or
-mutate data – for example `/api/v1/finance/feasibility`, `/api/v1/import`, and
-the overlay decision routes – enforce reviewer/admin roles. Omit the header or
-send an invalid role and the API responds with `403 Forbidden`.
-
-## Running the AEC sample flow
-
-The repository ships with a lightweight CLI (`backend/scripts/aec_flow.py`) and Make
-targets that exercise the import, overlay, and export pipeline end-to-end using the
-sample fixtures checked into the test suite. Each command boots the FastAPI
-application in-process, configures an inline job queue, and stores artefacts under
-`.devstack/` by default (override with `AEC_RUNTIME_DIR=/custom/path`).
-
-1. `make import-sample` — uploads `tests/samples/sample_floorplan.json` through the
-   `/api/v1/import` endpoint, triggers parsing, and seeds an `OverlaySourceGeometry`
-   record for `AEC_PROJECT_ID` (defaults to `101`). The command writes a summary to
-   `.devstack/import_sample.json` so that subsequent steps can inspect the import ID
-   and detection metadata.
-2. `make run-overlay` — invokes `/api/v1/overlay/{project_id}/run` via the inline
-   queue, materialising overlay suggestions and storing them in
-   `.devstack/overlay_run.json` for review. Re-running the command updates existing
-   suggestions to reflect any geometry changes.
-3. `make export-approved` — approves the highest-severity suggestion (customise the
-   reviewer identity with `AEC_DECIDED_BY`/`AEC_APPROVAL_NOTES`) and downloads a CAD
-   export using `/api/v1/export/{project_id}`. The artefact lands in
-   `.devstack/exports/` alongside a JSON manifest when optional CAD dependencies are
-   unavailable. Set `AEC_EXPORT_FORMAT` to switch between `pdf`, `dxf`, `dwg`, or
-   `ifc` payloads.
-4. `make test-aec` — chains the three commands above before running the dedicated
-   backend regression (`pytest tests/test_workflows/test_aec_pipeline.py`) and the
-   frontend test suite. CI reuses this target to validate the AEC flow.
-
-Override `AEC_SAMPLE`, `AEC_PROJECT_ID`, and related variables to experiment with
-different fixtures or project identifiers. All commands stream human-readable JSON
-summaries to stdout so that the flow can be incorporated into local scripts or
-monitoring jobs.
-
-## ROI metrics
-
-The frontend ROI dashboard queries `/api/v1/roi/{project_id}` for automation
-insights such as time saved, acceptance rates, and iteration counts. The
-underlying heuristics and instrumentation assumptions are documented in
-[`docs/roi_metrics.md`](docs/roi_metrics.md).
-
-## Finance feasibility demo
-
-Run `make seed-data` after applying migrations to populate both the screening
-fixtures and a finance feasibility workspace. When Docker Compose is available
-the target executes `python -m backend.scripts.seed_screening` and
-`python -m backend.scripts.seed_finance_demo` inside the backend container. If
-Compose is missing, the Makefile falls back to running the same modules
-locally, so ensure your Python environment can reach the configured database.
-The seeding process creates:
-
-* a finance project linked to `project_id=401` named “Finance Demo Development”,
-* three scenarios (A/B/C) with escalated cost assumptions and cash-flow inputs,
-* cost line items and monthly cash-flow schedules for each scenario, and
-* persisted results mirroring the `/api/v1/finance/feasibility` response payload.
-
-To run the seeder outside Docker, execute `python -m backend.scripts.seed_finance_demo`
-from the repository root. The CLI accepts `--project-id`, `--project-name`, and
-`--currency` options plus `--keep-existing` to retain previous demo rows.
-
-After seeding, call the finance API with the scenario definition baked into the
-demo data:
+For quick checks during development you can use SQLite:
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/finance/feasibility \
-  -H "Content-Type: application/json" \
-  -H "X-Role: reviewer" \
-  -d '{
-    "project_id": 401,
-    "project_name": "Finance Demo Development",
-    "scenario": {
-      "name": "Scenario A – Base Case",
-      "description": "Baseline absorption with phased sales releases.",
-      "currency": "SGD",
-      "is_primary": true,
-      "cost_escalation": {
-        "amount": "38950000",
-        "base_period": "2024-Q1",
-        "series_name": "construction_all_in",
-        "jurisdiction": "SG",
-        "provider": "Public"
-      },
-      "cash_flow": {
-        "discount_rate": "0.08",
-        "cash_flows": [
-          "-2500000",
-          "-4100000",
-          "-4650000",
-          "-200000",
-          "4250000",
-          "10200000"
-        ]
-      },
-      "dscr": {
-        "net_operating_incomes": [
-          "0", "0", "3800000", "5600000", "7200000", "7800000"
-        ],
-        "debt_services": [
-          "0", "0", "3200000", "3300000", "3400000", "3400000"
-        ],
-        "period_labels": ["M1", "M2", "M3", "M4", "M5", "M6"]
-      }
-    }
-  }'
+python -m scripts.ingest --jurisdiction sg_bca --since 2025-01-01 --store sqlite:///regstack.db
+sqlite3 regstack.db 'SELECT jurisdiction_code, external_id FROM regulations;'
 ```
 
-The response includes `scenario_id`, which can be passed to the export endpoint
-to retrieve a CSV summary of the persisted metrics:
+## Adding a New Jurisdiction
 
-```bash
-curl -L -o finance_scenario.csv \
-  -H "X-Role: viewer" \
-  "http://localhost:8000/api/v1/finance/export?scenario_id=<SCENARIO_ID>"
-```
+Follow this five-step checklist:
 
-Replace `<SCENARIO_ID>` with the identifier returned by the feasibility call.
+1. **Create the plug-in folder** under `jurisdictions/<code>/` with `__init__.py`.
+2. **Implement `fetch.py`** returning iterable `ProvenanceRecord` objects from `fetch_raw()`.
+3. **Implement `parse.py`** exposing `PARSER` that fulfils `JurisdictionParser`, maps raw payloads to
+   `CanonicalReg` instances, and returns an override path if needed.
+4. **Add `map_overrides.yaml` (optional)** to extend or override global taxonomy keywords.
+5. **Write tests** under `jurisdictions/<code>/tests/` to cover parse + persistence, using
+   SQLite and the shared ingestion helpers.
 
-## Non-regulatory reference seeding
+After implementing the plug-in, rerun `alembic upgrade head` if migrations changed, and execute the
+CLI with the new jurisdiction code.
 
-Run `make seed-nonreg` to populate ergonomics, material standards, and cost
-index reference tables. The Makefile target executes `python -m
-backend.scripts.seed_nonreg`, which you can also invoke directly from the
-repository root when seeding outside Docker.
+## Tooling
 
-## Entitlements roadmap seeding
+- `requirements.txt` pin core dependencies (SQLAlchemy 2.x, Pydantic v2, Alembic, PyYAML).
+- `pyproject.toml` configures packaging metadata and Ruff linting baseline.
+- `Makefile` offers helper targets for migrations and ingestion (`make regstack-ingest`).
+- `ruff.toml` defines lint rules aligned with the lightweight scaffold.
 
-Run `python scripts/seed_entitlements_sg.py --project-id 90301 --reset` to seed the
-Singapore entitlement authorities, approval types, and a default roadmap for a
-project. The script provisions Urban Redevelopment Authority, BCA, LTA, and NEA
-approvals before inserting the baseline roadmap sequence for the supplied
-project identifier.
+## Further Reading
 
-After seeding, the following API endpoints expose entitlement information:
-
-- `GET /api/v1/entitlements/{project_id}/roadmap` – list sequenced roadmap items.
-- `POST /api/v1/entitlements/{project_id}/studies` – create a study entry
-  (requires an `X-Role: admin` or `X-Role: reviewer` header).
-- `POST /api/v1/entitlements/{project_id}/stakeholders` – create stakeholder
-  engagements with contact details.
-- `POST /api/v1/entitlements/{project_id}/legal` – register legal instruments.
-- `GET /api/v1/entitlements/{project_id}/export` – download CSV, HTML, or PDF
-  exports of roadmap, study, stakeholder, and legal registers.
-
-All read-only endpoints accept `limit` and `offset` query parameters for
-pagination, while mutating endpoints enforce reviewer/admin roles via the
-`X-Role` header. Prometheus metrics exposed at `/health/metrics` include the new
-`entitlements_*_requests_total` counters so operators can monitor adoption.
+See [`docs/architecture.md`](docs/architecture.md) for the Mermaid system diagram and textual
+legend outlining the data flow from fetchers to downstream analytics.
