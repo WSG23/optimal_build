@@ -1,4 +1,4 @@
-"""Parser implementation for the Singapore BCA mock plug-in."""
+"""Parser implementation for the Singapore BCA data.gov.sg circulars feed."""
 from __future__ import annotations
 
 from dataclasses import dataclass
