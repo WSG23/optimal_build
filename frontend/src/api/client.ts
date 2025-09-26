@@ -254,6 +254,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export class ApiClient {
   private readonly baseUrl: string
+  private readonly defaultRole: string | null
 
   constructor(baseUrl: string = import.meta.env.VITE_API_BASE_URL ?? '/') {
     const candidates = [
@@ -271,6 +272,15 @@ export class ApiClient {
         const trimmed = value.trim()
         return trimmed.length > 0 && trimmed !== '/'
       }) ?? 'http://localhost:9400'
+
+    const roleCandidates = [
+      import.meta.env?.VITE_API_ROLE,
+      typeof window !== 'undefined' ? window.localStorage?.getItem('app:api-role') ?? undefined : undefined,
+      'reviewer',
+    ] as Array<string | undefined>
+
+    this.defaultRole =
+      roleCandidates.find((value) => typeof value === 'string' && value.trim().length > 0) ?? null
   }
 
   private buildUrl(path: string) {
@@ -290,7 +300,17 @@ export class ApiClient {
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
-    const response = await fetch(this.buildUrl(path), init)
+    const headers = new Headers(init?.headers)
+    if (this.defaultRole && !headers.has('X-Role')) {
+      headers.set('X-Role', this.defaultRole)
+    }
+
+    const requestInit: RequestInit = {
+      ...init,
+      headers,
+    }
+
+    const response = await fetch(this.buildUrl(path), requestInit)
     if (!response.ok) {
       const message = await response.text()
       throw new Error(message || `Request to ${path} failed with ${response.status}`)
