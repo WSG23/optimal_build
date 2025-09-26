@@ -8,6 +8,22 @@ function normaliseBaseUrl(value: string | undefined | null): string {
   return trimmed === '' ? '/' : trimmed
 }
 
+function resolveDefaultRole(): string | null {
+  const candidates = [
+    import.meta.env?.VITE_API_ROLE,
+    typeof window !== 'undefined'
+      ? window.localStorage?.getItem('app:api-role') ?? undefined
+      : undefined,
+    'admin',
+  ] as Array<string | undefined>
+
+  const candidate = candidates.find(
+    (value) => typeof value === 'string' && value.trim().length > 0,
+  )
+
+  return candidate ? candidate.trim() : null
+}
+
 function buildUrl(path: string, base: string): string {
   if (/^https?:/i.test(path)) {
     return path
@@ -288,11 +304,18 @@ export async function runFinanceFeasibility(
   request: FinanceFeasibilityRequest,
   options: FinanceFeasibilityOptions = {},
 ): Promise<FinanceScenarioSummary> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  const defaultRole = resolveDefaultRole()
+  if (defaultRole) {
+    headers['X-Role'] = defaultRole
+  }
+
   const response = await fetch(buildUrl('api/v1/finance/feasibility', apiBaseUrl), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(toPayload(request)),
     signal: options.signal,
   })

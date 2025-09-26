@@ -4,7 +4,10 @@ async function runFinanceFeasibility(request, options = {}) {
   const baseUrl = options.baseUrl ?? '/api/v1/'
   const response = await fetch(joinUrl(baseUrl, 'finance/feasibility'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Role': 'admin',
+    },
     body: JSON.stringify(snakeCase(request)),
   })
   if (!response.ok) {
