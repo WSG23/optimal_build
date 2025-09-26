@@ -1,6 +1,7 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { AppLayout } from '../../App'
 import { fetchBuildable, type BuildableSummary } from '../../api/buildable'
 import { useTranslation } from '../../i18n'
 
@@ -406,38 +407,35 @@ export function FeasibilityWizard() {
     )
   }, [result, t])
 
-  return (
-    <div className="feasibility-wizard" data-testid="feasibility-wizard">
-      <header className="feasibility-wizard__header">
-        <div>
-          <h1>{t('wizard.title')}</h1>
-          <p>{t('wizard.description')}</p>
-        </div>
-        <div className="feasibility-wizard__toolbar">
-          <button
-            type="button"
-            onClick={handleCopyRequest}
-            disabled={!payload}
-            className="feasibility-wizard__copy"
-          >
-            {t('wizard.form.copyRequest')}
-          </button>
-          {copyState === 'copied' && (
-            <span className="feasibility-wizard__copy-status" role="status">
-              {t('wizard.form.copySuccess')}
-            </span>
-          )}
-          {copyState === 'error' && (
-            <span className="feasibility-wizard__copy-status" role="status">
-              {t('wizard.form.copyError')}
-            </span>
-          )}
-        </div>
-      </header>
+  const headerActions = (
+    <div className="feasibility-wizard__toolbar">
+      <button
+        type="button"
+        onClick={handleCopyRequest}
+        disabled={!payload}
+        className="feasibility-wizard__copy"
+      >
+        {t('wizard.form.copyRequest')}
+      </button>
+      {copyState === 'copied' && (
+        <span className="feasibility-wizard__copy-status" role="status">
+          {t('wizard.form.copySuccess')}
+        </span>
+      )}
+      {copyState === 'error' && (
+        <span className="feasibility-wizard__copy-status" role="status">
+          {t('wizard.form.copyError')}
+        </span>
+      )}
+    </div>
+  )
 
-      <div className="feasibility-wizard__layout">
-        <section className="feasibility-wizard__controls">
-          <form className="feasibility-form" onSubmit={handleSubmit} noValidate>
+  return (
+    <AppLayout title={t('wizard.title')} subtitle={t('wizard.description')} actions={headerActions}>
+      <div className="feasibility-wizard" data-testid="feasibility-wizard">
+        <div className="feasibility-wizard__layout">
+          <section className="feasibility-wizard__controls">
+            <form className="feasibility-form" onSubmit={handleSubmit} noValidate>
             <label className="feasibility-form__label" htmlFor="address-input">
               {t('wizard.form.addressLabel')}
             </label>
@@ -609,10 +607,11 @@ export function FeasibilityWizard() {
         </section>
       </div>
 
-      <div className="sr-only" aria-live="polite">
-        {liveAnnouncement}
+        <div className="sr-only" aria-live="polite">
+          {liveAnnouncement}
+        </div>
       </div>
-    </div>
+    </AppLayout>
   )
 }
 

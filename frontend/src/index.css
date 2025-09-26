@@ -603,35 +603,10 @@ h1, h2, h3 {
 .feasibility-wizard {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 4rem;
+  padding: 0 1.5rem 4rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-}
-
-.feasibility-wizard__header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.feasibility-wizard__header h1 {
-  margin: 0;
-  font-size: 2.25rem;
-}
-
-.feasibility-wizard__header p {
-  margin: 0;
-  color: #475569;
-  max-width: 720px;
-}
-
-@media (min-width: 768px) {
-  .feasibility-wizard__header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: baseline;
-  }
 }
 
 .feasibility-wizard__toolbar {

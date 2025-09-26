@@ -41,7 +41,7 @@
   },
   "uploader": {
     "title": "Upload building layouts",
-    "subtitle": "Drop DXF/DWG files to launch the parse pipeline and monitor overlays in real-time.",
+    "subtitle": "Drop DXF/DWG/IFC/JSON files to launch the parse pipeline and monitor overlays in real-time.",
     "dropHint": "Drag & drop or paste files here",
     "browseLabel": "Browse files",
     "latestStatus": "Latest status",
