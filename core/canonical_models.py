@@ -100,6 +100,12 @@ class ProvenanceORM(RegstackBase):
 
     __tablename__ = "provenance"
     __table_args__ = (
+        UniqueConstraint(
+            "regulation_id",
+            "source_uri",
+            "content_checksum",
+            name="uq_provenance_reg_source_checksum",
+        ),
         Index("ix_provenance_source", "source_uri"),
     )
 
@@ -113,6 +119,7 @@ class ProvenanceORM(RegstackBase):
     )
     fetch_parameters: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
     raw_content: Mapped[str] = mapped_column(Text, nullable=False)
+    content_checksum: Mapped[str] = mapped_column(String(length=64), nullable=False)
 
     regulation: Mapped[RegulationORM] = relationship(back_populates="provenance_entries")
 
