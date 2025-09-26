@@ -134,6 +134,12 @@ class Fetcher:
                     if not record:
                         continue
                     issued_at = record.get("issued_at")
+                    if isinstance(issued_at, datetime) and issued_at.tzinfo is not None:
+                        issued_at = issued_at.astimezone(timezone.utc).replace(
+                            tzinfo=None
+                        )
+                        record["issued_at"] = issued_at
+
                     if issued_at and issued_at < since_dt:
                         continue
                     records.append(self._to_provenance(row, record, since))

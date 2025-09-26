@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -127,6 +127,33 @@ def test_fetcher_rejects_malformed_payload(monkeypatch):
         fixture_fetcher.fetch_raw(date(2025, 1, 1))
 
     assert "json object" in str(excinfo.value).lower()
+
+
+def test_fetcher_normalises_timezone_aware_issue_dates(monkeypatch):
+    since = date(2025, 1, 1)
+    fixture_fetcher = _build_fixture_fetcher(monkeypatch)
+
+    original_parse = fetch.Fetcher._parse_datetime
+
+    def parse_with_timezone(value: str | None):
+        parsed = original_parse(value)
+        if parsed is None:
+            return None
+        return parsed.replace(tzinfo=timezone.utc)
+
+    monkeypatch.setattr(
+        fetch.Fetcher,
+        "_parse_datetime",
+        staticmethod(parse_with_timezone),
+        raising=False,
+    )
+
+    raw_records = fixture_fetcher.fetch_raw(since)
+
+    assert [record.regulation_external_id for record in raw_records] == [
+        "2025-04",
+        "2025-03",
+    ]
 
 
 def test_ingestion_deduplicates_provenance_entries(monkeypatch):
