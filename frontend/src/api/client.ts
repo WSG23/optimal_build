@@ -276,7 +276,7 @@ export class ApiClient {
     const roleCandidates = [
       import.meta.env?.VITE_API_ROLE,
       typeof window !== 'undefined' ? window.localStorage?.getItem('app:api-role') ?? undefined : undefined,
-      'reviewer',
+      'admin',
     ] as Array<string | undefined>
 
     this.defaultRole =
