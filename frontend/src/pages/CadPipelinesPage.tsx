@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { OverlaySuggestion, PipelineSuggestion, ProjectRoiMetrics } from '../api/client'
 import { AppLayout } from '../App'
@@ -10,6 +10,8 @@ import RoiSummary from '../modules/cad/RoiSummary'
 import type { RoiMetrics } from '../modules/cad/types'
 
 const DEFAULT_PROJECT_ID = 5821
+const OVERLAY_RUN_POLL_INTERVAL_MS = 2500
+const OVERLAY_RUN_POLL_TIMEOUT_MS = 60000
 
 export function CadPipelinesPage() {
   const apiClient = useApiClient()
@@ -21,13 +23,72 @@ export function CadPipelinesPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { rules, loading: rulesLoading } = useRules(apiClient)
+  const processedProjectRef = useRef<{ id: number | null; processed: boolean }>({ id: null, processed: false })
 
   useEffect(() => {
+    if (processedProjectRef.current.id !== projectId) {
+      processedProjectRef.current = { id: projectId, processed: false }
+    }
+    if (processedProjectRef.current.processed) {
+      return
+    }
+    processedProjectRef.current.processed = true
+
     let cancelled = false
+    const waitForOverlayRun = async (
+      status: string,
+      jobId: string | null,
+      lastEventIdBeforeRun: number,
+      startedAt: number,
+    ): Promise<void> => {
+      const normalisedStatus = status.toLowerCase()
+      if (normalisedStatus === 'completed') {
+        return
+      }
+      if (normalisedStatus === 'failed') {
+        throw new Error(t('common.errors.pipelineLoad'))
+      }
+      if (!jobId) {
+        throw new Error(t('common.errors.pipelineLoad'))
+      }
+
+      const deadline = startedAt + OVERLAY_RUN_POLL_TIMEOUT_MS
+      while (!cancelled && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, OVERLAY_RUN_POLL_INTERVAL_MS))
+        if (cancelled) {
+          return
+        }
+
+        const events = await apiClient.listAuditTrail(projectId, { eventType: 'overlay_run' })
+        const completed = events.some((event) => event.id > lastEventIdBeforeRun)
+        if (completed) {
+          return
+        }
+      }
+
+      if (!cancelled) {
+        throw new Error(t('common.errors.pipelineLoad'))
+      }
+    }
+
     const load = async () => {
       setLoading(true)
       setError(null)
       try {
+        const eventsBeforeRun = await apiClient.listAuditTrail(projectId, { eventType: 'overlay_run' })
+        if (cancelled) {
+          return
+        }
+        const lastEventIdBeforeRun = eventsBeforeRun.reduce<number>((max, event) => {
+          return event.id > max ? event.id : max
+        }, 0)
+        const runRequestedAt = Date.now()
+        const runResult = await apiClient.runOverlay(projectId)
+        await waitForOverlayRun(runResult.status, runResult.jobId, lastEventIdBeforeRun, runRequestedAt)
+        if (cancelled) {
+          return
+        }
+
         const overlays = await apiClient.listOverlaySuggestions(projectId)
         if (!cancelled) {
           setOverlaySuggestions(overlays)
@@ -38,6 +99,9 @@ export function CadPipelinesPage() {
           if (!cancelled) {
             setSuggestions(pipeline)
           }
+        }
+        if (cancelled) {
+          return
         }
         const roiMetrics = await apiClient.getProjectRoi(projectId)
         if (!cancelled) {
