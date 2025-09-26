@@ -41,8 +41,8 @@
   },
   "uploader": {
     "title": "建物レイアウトをアップロード",
-    "subtitle": "DXF/IFC/JSON またはベクター PDF/SVG ファイルをドロップして解析パイプラインを起動し、リアルタイムでオーバーレイを確認します。",
-    "dropHint": "ここにファイルをドラッグ＆ドロップまたは貼り付け",
+    "subtitle": "DXF/IFC/JSON やベクター PDF/SVG、または JPEG 図面をドロップして解析パイプラインを起動し、リアルタイムでオーバーレイを確認します。",
+    "dropHint": "DXF・IFC・JSON・PDF・SVG・JPEG ファイルをここにドラッグ＆ドロップまたは貼り付け",
     "browseLabel": "ファイルを選択",
     "latestStatus": "最新ステータス",
     "parsing": "CAD レイヤーを処理しています…",
