@@ -15,6 +15,7 @@ class JurisdictionParser(Protocol):
     """Protocol describing jurisdiction plug-ins."""
 
     code: str
+    display_name: str | None
 
     def fetch_raw(self, since: date) -> Iterable[ProvenanceRecord]:
         """Return raw regulation payloads with provenance metadata."""
@@ -32,6 +33,7 @@ class RegisteredJurisdiction:
 
     code: str
     parser: JurisdictionParser
+    display_name: str | None = None
 
 
 class RegistryError(RuntimeError):
@@ -65,4 +67,5 @@ def load_jurisdiction(code: str) -> RegisteredJurisdiction:
                 f"Jurisdiction '{code}' is missing required attributes: {missing_attrs}"
             )
 
-    return RegisteredJurisdiction(code=code, parser=parser)
+    display_name = getattr(parser, "display_name", None)
+    return RegisteredJurisdiction(code=code, parser=parser, display_name=display_name)

@@ -24,6 +24,7 @@ class SGBCAPARSER:
     """Concrete parser for the SG BCA jurisdiction."""
 
     code: str = "sg_bca"
+    display_name: str = "Singapore Building and Construction Authority"
     _mapping_definition: dict | None = field(default=None, init=False, repr=False)
 
     def fetch_raw(self, since: date) -> Iterable[ProvenanceRecord]:
