@@ -6,7 +6,7 @@ from datetime import date, datetime
 import json
 import re
 from pathlib import Path
-from typing import Iterable, List
+from typing import Any, Iterable, List, Sequence
 
 from core.canonical_models import CanonicalReg, ProvenanceRecord
 from core.mapping import GLOBAL_MAPPING_FILE, load_yaml, merge_mappings
@@ -34,14 +34,21 @@ class SGBCAPARSER:
         regulations: List[CanonicalReg] = []
         for record in records:
             payload = self._decode_record(record)
-            regulations.append(self._build_regulation(record, payload))
+            for regulation_payload, context, fallback_id in self._iter_regulations(
+                record, payload
+            ):
+                regulations.append(
+                    self._build_regulation(
+                        record, regulation_payload, context, fallback_id
+                    )
+                )
         return regulations
 
     def map_overrides_path(self) -> Path | None:
         return Path(__file__).resolve().parent / "map_overrides.yaml"
 
     # ------------------------------------------------------------------
-    def _decode_record(self, record: ProvenanceRecord) -> dict:
+    def _decode_record(self, record: ProvenanceRecord) -> Any:
         try:
             payload = json.loads(record.raw_content)
         except json.JSONDecodeError as exc:  # pragma: no cover - defensive
@@ -49,25 +56,106 @@ class SGBCAPARSER:
                 f"Record '{record.regulation_external_id}' contains invalid JSON: {exc}"
             ) from exc
 
-        if not isinstance(payload, dict):
+        if not isinstance(payload, (dict, list)):
             raise ParserError(
-                f"Record '{record.regulation_external_id}' JSON payload is not an object"
+                f"Record '{record.regulation_external_id}' JSON payload must be an object or array"
             )
         return payload
 
+    def _iter_regulations(
+        self, record: ProvenanceRecord, payload: Any
+    ) -> List[tuple[dict, str, str | None]]:
+        if isinstance(payload, list):
+            container = payload
+            container_label = "payload"
+            fallback_id: str | None = None
+        elif isinstance(payload, dict):
+            container = self._locate_regulation_container(payload)
+            if container is None:
+                context = record.regulation_external_id or record.source_uri
+                return [
+                    (
+                        payload,
+                        context or "SG BCA record without identifier",
+                        record.regulation_external_id,
+                    )
+                ]
+            container_label = container[0]
+            container = container[1]
+            fallback_id = None
+        else:  # pragma: no cover - defensive programming
+            raise ParserError(
+                f"Record '{record.regulation_external_id}' has unsupported payload type"
+            )
+
+        if not isinstance(container, Sequence) or isinstance(container, (str, bytes)):
+            raise ParserError(
+                f"Record '{record.regulation_external_id}' field '{container_label}' must be an array"
+            )
+
+        regulations: List[tuple[dict, str, str | None]] = []
+        for index, entry in enumerate(container):
+            if not isinstance(entry, dict):
+                raise ParserError(
+                    f"Record '{record.regulation_external_id}' entry {container_label}[{index}] is not a JSON object"
+                )
+            regulations.append(
+                (
+                    entry,
+                    self._regulation_context(record, entry, container_label, index),
+                    fallback_id,
+                )
+            )
+        return regulations
+
+    def _locate_regulation_container(self, payload: dict) -> tuple[str, Sequence[Any]] | None:
+        if "result" in payload and isinstance(payload["result"], dict):
+            result = payload["result"]
+            records = result.get("records")
+            if isinstance(records, Sequence) and not isinstance(records, (str, bytes)):
+                return "result.records", records
+        for key in ("records", "regulations", "items", "data"):
+            candidate = payload.get(key)
+            if isinstance(candidate, Sequence) and not isinstance(candidate, (str, bytes)):
+                return key, candidate
+        return None
+
+    def _regulation_context(
+        self,
+        record: ProvenanceRecord,
+        payload: dict,
+        container_label: str,
+        index: int,
+    ) -> str:
+        external_id = self._extract_external_id(payload, strict=False)
+        if external_id:
+            return str(external_id)
+        base = record.regulation_external_id or record.source_uri or "unknown-record"
+        return f"{base} {container_label}[{index}]"
+
     def _build_regulation(
-        self, record: ProvenanceRecord, payload: dict
+        self,
+        record: ProvenanceRecord,
+        payload: dict,
+        context: str,
+        fallback_external_id: str | None,
     ) -> CanonicalReg:
+        external_id = self._extract_external_id(payload) or fallback_external_id
+        if not external_id:
+            raise ParserError(
+                f"SG BCA regulation '{context}' is missing a circular number or external identifier"
+            )
+
         title = self._extract_first(payload, "subject", "title", "circular_title")
         if not title:
             raise ParserError(
-                f"SG BCA record '{record.regulation_external_id}' is missing a title"
+                f"SG BCA regulation '{context}' is missing a title"
             )
 
         text = self._extract_first(payload, "description", "content", "body")
         if not text:
             raise ParserError(
-                f"SG BCA record '{record.regulation_external_id}' is missing body text"
+                f"SG BCA regulation '{context}' is missing body text"
             )
 
         issued_on = self._extract_date(
@@ -93,11 +181,11 @@ class SGBCAPARSER:
             "revision_no",
         )
 
-        metadata = self._build_metadata(record, payload)
+        metadata = self._build_metadata(record, payload, context)
 
         return CanonicalReg(
             jurisdiction_code=self.code,
-            external_id=record.regulation_external_id,
+            external_id=external_id,
             title=title,
             text=text,
             issued_on=issued_on,
@@ -108,9 +196,24 @@ class SGBCAPARSER:
         )
 
     def _build_metadata(
-        self, record: ProvenanceRecord, payload: dict
+        self, record: ProvenanceRecord, payload: dict, context: str
     ) -> dict[str, object]:
-        metadata: dict[str, object] = {"source_uri": record.source_uri}
+        metadata: dict[str, object] = {}
+        source_uri = self._extract_first(
+            payload,
+            "weblink",
+            "url",
+            "uri",
+            "link",
+            "source_uri",
+        )
+        if not source_uri:
+            source_uri = record.source_uri
+        if not source_uri:
+            raise ParserError(
+                f"SG BCA regulation '{context}' is missing a source URI"
+            )
+        metadata["source_uri"] = source_uri
         for key in (
             "category",
             "categories",
@@ -125,6 +228,35 @@ class SGBCAPARSER:
             if value is not None and value != "":
                 metadata[key] = value
         return metadata
+
+    def _extract_external_id(
+        self, payload: dict, *, strict: bool = True
+    ) -> str | None:
+        for key in (
+            "circular_no",
+            "circular_number",
+            "external_id",
+            "regulation_external_id",
+            "document_number",
+            "reference",
+            "ref",
+            "id",
+            "identifier",
+        ):
+            if key not in payload:
+                continue
+            value = payload.get(key)
+            if value is None:
+                continue
+            if isinstance(value, str):
+                value = value.strip()
+                if value:
+                    return value
+            else:
+                return str(value)
+        if strict:
+            return None
+        return None
 
     def _extract_first(self, payload: dict, *keys: str) -> str | None:
         for key in keys:
@@ -197,31 +329,46 @@ class SGBCAPARSER:
     def _extract_terms(self, payload: dict) -> set[str]:
         values: List[str] = []
         for key in ("category", "categories", "keywords", "tags", "topic", "topics"):
-            raw = payload.get(key)
-            if raw is None:
-                continue
-            if isinstance(raw, str):
-                values.extend(re.split(r"[;,|]", raw))
-            elif isinstance(raw, (list, tuple)):
-                for item in raw:
-                    if isinstance(item, str):
-                        values.extend(re.split(r"[;,|]", item))
-                    elif item is not None:
-                        values.append(str(item))
-            else:
-                values.append(str(raw))
+            values.extend(self._flatten_terms(payload.get(key)))
 
         normalised: set[str] = set()
         for value in values:
-            cleaned = value.strip()
-            if not cleaned:
-                continue
-            lower = cleaned.lower()
-            normalised.add(lower)
-            slug = self._slugify(cleaned)
-            if slug:
-                normalised.add(slug)
+            for token in re.split(r"[;,|]", value):
+                cleaned = token.strip()
+                if not cleaned:
+                    continue
+                lower = cleaned.lower()
+                normalised.add(lower)
+                slug = self._slugify(cleaned)
+                if slug:
+                    normalised.add(slug)
         return normalised
+
+    def _flatten_terms(self, raw: object) -> List[str]:
+        if raw is None:
+            return []
+        if isinstance(raw, str):
+            return [raw]
+        if isinstance(raw, (list, tuple, set)):
+            values: List[str] = []
+            for item in raw:
+                values.extend(self._flatten_terms(item))
+            return values
+        if isinstance(raw, dict):
+            collected: List[str] = []
+            for key in ("name", "title", "label", "value", "slug", "text"):
+                value = raw.get(key)
+                if isinstance(value, str):
+                    collected.append(value)
+            for nested in ("keywords", "tags", "values", "items"):
+                if nested in raw:
+                    collected.extend(self._flatten_terms(raw[nested]))
+            if collected:
+                return collected
+            fallback = raw.get("id")
+            if isinstance(fallback, str):
+                return [fallback]
+        return [str(raw)]
 
     def _keywords_for_category(self, slug: str, payload: dict) -> set[str]:
         keywords = set()
