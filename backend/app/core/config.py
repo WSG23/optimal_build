@@ -6,7 +6,11 @@ import secrets
 from typing import Iterable, List
 from urllib.parse import urlparse, urlunparse
 
-_DEFAULT_ALLOWED_ORIGINS = ("http://localhost:3000", "http://localhost:5173")
+_DEFAULT_ALLOWED_ORIGINS = (
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:4400",
+)
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 
 

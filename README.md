@@ -98,3 +98,4 @@ CLI with the new jurisdiction code.
 
 See [`docs/architecture.md`](docs/architecture.md) for the Mermaid system diagram and textual
 legend outlining the data flow from fetchers to downstream analytics.
+### Bypass dev_mode CORS
