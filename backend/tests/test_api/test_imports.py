@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -198,6 +199,34 @@ async def test_upload_pdf_vectorizes_when_enabled(
     vector_payload = json.loads(vector_path.read_text())
     assert vector_payload["paths"]
     assert vector_payload["walls"] == payload["vector_summary"]["walls"]
+
+
+@pytest.mark.asyncio
+async def test_upload_jpeg_vectorizes_bitmap_when_enabled(
+    app_client: AsyncClient,
+) -> None:
+    Image = pytest.importorskip("PIL.Image")
+
+    image = Image.new("L", (32, 32), color=255)
+    for x in range(8, 24):
+        image.putpixel((x, 16), 0)
+
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG")
+    buffer.seek(0)
+
+    response = await app_client.post(
+        "/api/v1/import",
+        files={"file": ("floorplan.jpg", buffer, "image/jpeg")},
+        data={"infer_walls": "true"},
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["filename"].endswith(".jpg")
+    assert payload["vector_summary"] is not None
+    assert payload["vector_summary"]["source"] == "jpeg"
+    assert payload["vector_summary"]["options"]["bitmap_walls"] is True
 
 
 @pytest.mark.asyncio

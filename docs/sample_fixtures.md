@@ -51,6 +51,18 @@ samples/
   to confirm that multi-page PDF payloads yield layer-aware vector paths and
   baseline wall detection results.
 
+### JPEG uploads
+
+* **Purpose:** Exercises the bitmap vectorization path that powers JPEG
+  wall-detection via Pillow.
+* **Structure:** The test suite generates synthetic monochrome floorplans at
+  runtime, ensuring wall runs can be identified without storing additional
+  fixtures in the repository.
+* **Usage:** Exercised by
+  `backend/tests/test_jobs/test_raster_vector.py::test_vectorize_jpeg_detects_bitmap_walls`
+  to guarantee raster imports flow through the new helper that feeds
+  `_detect_walls_from_binary`.
+
 ## Manual Validation
 
 To manually inspect or regenerate test outcomes when working on the import and

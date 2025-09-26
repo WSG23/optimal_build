@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import math
 import re
+from io import BytesIO
 from dataclasses import dataclass, field
 from itertools import chain
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
@@ -14,6 +15,11 @@ try:  # pragma: no cover - optional dependency
     import fitz  # type: ignore  # PyMuPDF
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     fitz = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    from PIL import Image
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    Image = None  # type: ignore[assignment]
 
 from backend.jobs import job
 
@@ -419,6 +425,38 @@ def _detect_bitmap_walls(
     return _detect_walls_from_binary(binary, rect.width, rect.height, options)
 
 
+def _vectorize_bitmap_image(
+    image_payload: bytes, options: RasterVectorOptions, source: str
+) -> RasterVectorResult:
+    if Image is None:  # pragma: no cover - optional dependency
+        raise RuntimeError("Raster image vectorization requires Pillow")
+
+    with Image.open(BytesIO(image_payload)) as image:  # type: ignore[attr-defined]
+        grayscale = image.convert("L")
+        width, height = grayscale.size
+
+        bounds: Optional[Tuple[float, float]]
+        if width <= 0 or height <= 0:
+            bounds = None
+        else:
+            bounds = (float(width), float(height))
+
+        walls: List[WallCandidate] = []
+        if options.infer_walls and width > 0 and height > 0:
+            threshold = int(255 * options.bitmap_threshold)
+            data = list(grayscale.getdata())
+            binary: List[List[bool]] = []
+            for y in range(height):
+                offset = y * width
+                row_values = data[offset : offset + width]
+                binary.append([value <= threshold for value in row_values])
+            walls = _detect_walls_from_binary(binary, float(width), float(height), options)
+
+    return RasterVectorResult(
+        paths=[], walls=walls, bounds=bounds, source=source, options=options
+    )
+
+
 def _extract_pdf_page_paths(page: "fitz.Page", page_index: int) -> List[VectorPath]:
     paths: List[VectorPath] = []
     layer = f"page-{page_index + 1}"
@@ -534,7 +572,7 @@ async def vectorize_floorplan(
     infer_walls: bool = False,
     minimum_wall_length: float = 1.0,
 ) -> Dict[str, Any]:
-    """Convert a PDF/SVG payload into vector paths and baseline walls."""
+    """Convert PDF/SVG or raster image payloads into vector paths and walls."""
 
     options = RasterVectorOptions(
         infer_walls=infer_walls, minimum_wall_length=minimum_wall_length
@@ -544,6 +582,16 @@ async def vectorize_floorplan(
     loop = asyncio.get_running_loop()
     if content_type == "image/svg+xml" or name.endswith(".svg"):
         result = await loop.run_in_executor(None, _vectorize_svg, payload, options)
+        return result.to_payload()
+    if content_type in {"image/jpeg", "image/jpg"} or name.endswith((".jpg", ".jpeg")):
+        result = await loop.run_in_executor(
+            None, _vectorize_bitmap_image, payload, options, "jpeg"
+        )
+        return result.to_payload()
+    if content_type == "image/png" or name.endswith(".png"):
+        result = await loop.run_in_executor(
+            None, _vectorize_bitmap_image, payload, options, "png"
+        )
         return result.to_payload()
     if content_type == "application/pdf" or name.endswith(".pdf"):
         result = await loop.run_in_executor(None, _vectorize_pdf, payload, options)
