@@ -260,10 +260,17 @@ export class ApiClient {
       baseUrl,
       import.meta.env?.VITE_API_BASE,
       typeof window !== 'undefined' ? window.location.origin : undefined,
-      'http://localhost/',
+      'http://localhost:9400',
     ] as Array<string | undefined>
 
-    this.baseUrl = candidates.find((value) => typeof value === 'string' && value.trim().length > 0) ?? '/'
+    this.baseUrl =
+      candidates.find((value) => {
+        if (typeof value !== 'string') {
+          return false
+        }
+        const trimmed = value.trim()
+        return trimmed.length > 0 && trimmed !== '/'
+      }) ?? 'http://localhost:9400'
   }
 
   private buildUrl(path: string) {
@@ -271,7 +278,7 @@ export class ApiClient {
       return path
     }
     const trimmed = path.startsWith('/') ? path.slice(1) : path
-    const root = this.baseUrl || (typeof window !== 'undefined' ? window.location.origin : '/')
+    const root = this.baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9400')
     try {
       return new URL(trimmed, root.endsWith('/') ? root : `${root}/`).toString()
     } catch (error) {

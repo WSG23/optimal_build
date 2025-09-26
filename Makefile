@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev dev-stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify
+.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -281,7 +281,7 @@ dev: ## Start supporting services, the backend API, and frontends
 		echo "Skipping admin UI (INCLUDE_ADMIN=0)."; \
 	fi
 
-dev-stop: ## Stop services started with dev (excluding docker-compose)
+stop: ## Stop services started with dev (excluding docker-compose)
 	@if [ -f $(DEV_BACKEND_PID) ]; then \
 		PID=$$(cat $(DEV_BACKEND_PID)); \
 		if kill -0 $$PID 2>/dev/null; then \
