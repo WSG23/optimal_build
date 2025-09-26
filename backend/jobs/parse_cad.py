@@ -600,6 +600,41 @@ def _parse_json_payload(data: Mapping[str, Any]) -> ParsedGeometry:
     )
 
 
+def _coerce_vector_point(value: Any) -> Optional[Dict[str, float]]:
+    """Convert vector payload points into mapping form."""
+
+    if isinstance(value, Mapping):
+        x = value.get("x")
+        y = value.get("y")
+        if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+            return {"x": float(x), "y": float(y)}
+        return None
+    if isinstance(value, Sequence) and not isinstance(value, (bytes, str)):
+        values = list(value)
+        if len(values) != 2:
+            return None
+        try:
+            return {"x": float(values[0]), "y": float(values[1])}
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
+def _is_closed_path(points: Sequence[Dict[str, float]]) -> bool:
+    if len(points) < 4:
+        return False
+    first = points[0]
+    last = points[-1]
+    return bool(
+        math.isfinite(first["x"])
+        and math.isfinite(first["y"])
+        and math.isfinite(last["x"])
+        and math.isfinite(last["y"])
+        and math.isclose(first["x"], last["x"], rel_tol=1e-6, abs_tol=1e-6)
+        and math.isclose(first["y"], last["y"], rel_tol=1e-6, abs_tol=1e-6)
+    )
+
+
 def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
     builder = GraphBuilder.new()
     level_id = "VectorLevel"
@@ -625,8 +660,8 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
         for index, entry in enumerate(walls, start=1):  # type: ignore[assignment]
             if not isinstance(entry, Mapping):
                 continue
-            start = entry.get("start")
-            end = entry.get("end")
+            start = _coerce_vector_point(entry.get("start"))
+            end = _coerce_vector_point(entry.get("end"))
             if start is None or end is None:
                 continue
             raw_identifier = entry.get("id") or entry.get("name")
@@ -635,10 +670,17 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                 seen_walls,
             )
             metadata: Dict[str, Any] = {}
-            for key in ("thickness", "confidence", "source"):
+            for key in ("thickness", "confidence"):
                 value = entry.get(key)
-                if value is not None:
+                if isinstance(value, (int, float)):
+                    metadata[key] = float(value)
+            for key in ("source", "layer"):
+                value = entry.get(key)
+                if value not in (None, ""):
                     metadata[key] = value
+            extra_metadata = entry.get("metadata")
+            if isinstance(extra_metadata, Mapping):
+                metadata.update({key: value for key, value in extra_metadata.items()})
             try:
                 builder.add_wall(
                     {
@@ -663,22 +705,14 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
             points_raw = entry.get("points")
             if not isinstance(points_raw, Sequence):
                 continue
-            points: List[Tuple[float, float]] = []
-            valid = True
+            boundary: List[Dict[str, float]] = []
             for point in points_raw:  # type: ignore[assignment]
-                if not isinstance(point, Sequence) or len(point) != 2:
-                    valid = False
+                coerced = _coerce_vector_point(point)
+                if coerced is None:
+                    boundary = []
                     break
-                try:
-                    x_val = float(point[0])
-                    y_val = float(point[1])
-                except (TypeError, ValueError):
-                    valid = False
-                    break
-                points.append((x_val, y_val))
-            if not valid or len(points) < 4:
-                continue
-            if points[0] != points[-1]:
+                boundary.append(coerced)
+            if not boundary or not _is_closed_path(boundary):
                 continue
 
             raw_identifier = entry.get("id") or entry.get("name") or entry.get("layer")
@@ -687,6 +721,9 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                 seen_spaces,
             )
             metadata: Dict[str, Any] = {"source": "vector_path"}
+            extra_metadata = entry.get("metadata")
+            if isinstance(extra_metadata, Mapping):
+                metadata.update({key: value for key, value in extra_metadata.items()})
             layer_name = entry.get("layer")
             if layer_name not in (None, ""):
                 metadata["layer"] = layer_name
@@ -694,11 +731,6 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
             if isinstance(stroke_width, (int, float)):
                 metadata["stroke_width"] = float(stroke_width)
             metadata["path_index"] = index - 1
-
-            boundary = [
-                {"x": point[0], "y": point[1]}
-                for point in points
-            ]
 
             try:
                 builder.add_space(

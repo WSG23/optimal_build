@@ -1,7 +1,7 @@
 """Vector payload parsing tests for the CAD parser job."""
 
 import json
-from typing import Dict
+from typing import Dict, Mapping
 
 import pytest
 from sqlalchemy import select
@@ -30,14 +30,32 @@ async def test_parse_job_uses_vector_payload(
         "source": "vector",
         "paths": [
             {
-                "points": [[0, 0], [6, 0], [6, 5], [0, 5], [0, 0]],
+                "points": [
+                    {"x": 0, "y": 0},
+                    {"x": 6, "y": 0},
+                    {"x": 6, "y": 5},
+                    {"x": 0, "y": 5},
+                    {"x": 0, "y": 0},
+                ],
                 "layer": "1",
                 "stroke_width": 0.25,
+                "metadata": {"usage": "living"},
             },
             {
                 "points": [[0, 0], [3, 0]],
                 "layer": "sketch",
                 "stroke_width": 0.1,
+            },
+            {
+                "points": [
+                    [1, 1],
+                    [2.5, 1],
+                    [2.5, 2.5],
+                    [1, 2.5],
+                    [1 + 1e-7, 1 - 1e-7],
+                ],
+                "layer": "storage",
+                "metadata": {"usage": "closet"},
             },
         ],
         "walls": [
@@ -47,6 +65,8 @@ async def test_parse_job_uses_vector_payload(
                 "thickness": 0.2,
                 "confidence": 0.95,
                 "source": "vector",
+                "layer": "shell",
+                "metadata": {"segment": "north"},
             },
             {
                 "start": [6, 0],
@@ -54,6 +74,7 @@ async def test_parse_job_uses_vector_payload(
                 "thickness": 0.2,
                 "confidence": 0.9,
                 "source": "vector",
+                "layer": "shell",
             },
         ],
         "bounds": {"width": 12, "height": 8},
@@ -89,6 +110,20 @@ async def test_parse_job_uses_vector_payload(
             graph = refreshed.parse_result["graph"]
             assert graph["walls"], "Wall entities should be present in parsed graph"
             assert graph["spaces"], "Closed vector paths should produce spaces"
+            wall_layers = {
+                wall.get("metadata", {}).get("layer")
+                for wall in graph["walls"]
+                if isinstance(wall, Mapping)
+            }
+            assert "shell" in wall_layers
+            space_metadata = graph["spaces"][0]["metadata"]
+            assert space_metadata["usage"] == "living"
+            closet_space = next(
+                space
+                for space in graph["spaces"]
+                if space.get("metadata", {}).get("usage") == "closet"
+            )
+            assert closet_space["metadata"]["layer"] == "storage"
             assert refreshed.parse_result["floors"] == 1
             assert refreshed.parse_result["units"] == len(graph["spaces"])
 
