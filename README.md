@@ -79,7 +79,8 @@ Follow this five-step checklist:
 1. **Create the plug-in folder** under `jurisdictions/<code>/` with `__init__.py`.
 2. **Implement `fetch.py`** returning iterable `ProvenanceRecord` objects from `fetch_raw()`.
 3. **Implement `parse.py`** exposing `PARSER` that fulfils `JurisdictionParser`, maps raw payloads to
-   `CanonicalReg` instances, and returns an override path if needed.
+   `CanonicalReg` instances, and returns an override path if needed. Parsers may also set an optional
+   `display_name` attribute to control the human-friendly jurisdiction name stored in the registry.
 4. **Add `map_overrides.yaml` (optional)** to extend or override global taxonomy keywords.
 5. **Write tests** under `jurisdictions/<code>/tests/` to cover parse + persistence, using
    SQLite and the shared ingestion helpers.
