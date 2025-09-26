@@ -1,0 +1,36 @@
+{
+  "help": "https://data.gov.sg/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "realistic-resource-id",
+    "records": [
+      {
+        "circular_no": "2025-04",
+        "circular_date": "2025-04-10",
+        "effective_date": "2025-05-01",
+        "subject": "Revisions to accessible fire exits",
+        "weblink": "https://www1.bca.gov.sg/circulars/2025-04",
+        "description": "Section 1.1 Fire Safety - ensure accessible fire exits are available on every floor.",
+        "version": "Revision 4",
+        "category": "Fire Safety",
+        "keywords": ["Universal Design", "Accessibility"],
+        "tags": "Fire Safety;Accessibility",
+        "agency": "Building and Construction Authority"
+      },
+      {
+        "circular_no": "2025-03",
+        "circular_date": "2025-03-12",
+        "effective_date": "2025-03-20",
+        "subject": "Updated inspection regime for mechanical ventilation",
+        "description": "Monthly inspections are now required for all mechanical ventilation systems.",
+        "weblink": "https://www1.bca.gov.sg/circulars/2025-03",
+        "categories": ["Compliance", "Fire Safety"],
+        "document_type": "Circular",
+        "topic": "Inspection"
+      }
+    ],
+    "total": 3,
+    "offset": 0,
+    "limit": 2
+  }
+}

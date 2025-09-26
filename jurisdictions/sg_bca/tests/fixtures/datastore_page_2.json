@@ -1,0 +1,25 @@
+{
+  "help": "https://data.gov.sg/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "resource_id": "realistic-resource-id",
+    "records": [
+      {
+        "circular_no": "",
+        "circular_date": "2025-01-15",
+        "subject": "Record missing identifier",
+        "description": "This circular is missing the circular number and should be skipped."
+      },
+      {
+        "circular_no": "2024-12",
+        "circular_date": "2024-12-15",
+        "subject": "Legacy guidance to be archived",
+        "description": "This record predates the fetch window and should not appear in results.",
+        "weblink": "https://www1.bca.gov.sg/circulars/2024-12"
+      }
+    ],
+    "total": 3,
+    "offset": 2,
+    "limit": 2
+  }
+}
