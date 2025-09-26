@@ -54,7 +54,9 @@ def ensure_jurisdiction(session, parser: JurisdictionParser) -> None:
         session.add(
             canonical_models.JurisdictionORM(
                 code=parser.code,
-                name=getattr(parser, "display_name", parser.code.upper()),
+                name=(
+                    getattr(parser, "display_name", None) or parser.code.upper()
+                ),
             )
         )
 

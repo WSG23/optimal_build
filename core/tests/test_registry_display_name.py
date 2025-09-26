@@ -29,3 +29,38 @@ def test_ensure_jurisdiction_uses_display_name() -> None:
             session.close()
 
     assert stored.name == getattr(registered.parser, "display_name")
+
+
+def test_ensure_jurisdiction_falls_back_to_uppercase_code() -> None:
+    """Parsers without display names should fall back to uppercase codes."""
+
+    class DummyParser:
+        code = "xx"
+        display_name = None
+
+        def fetch_raw(self, since):  # pragma: no cover - not used in test
+            raise NotImplementedError
+
+        def parse(self, records):  # pragma: no cover - not used in test
+            raise NotImplementedError
+
+        def map_overrides_path(self):  # pragma: no cover - not used in test
+            return None
+
+    engine = get_engine("sqlite:///:memory:")
+    session_factory = create_session_factory(engine)
+    canonical_models.RegstackBase.metadata.create_all(engine)
+
+    session = session_factory()
+    try:
+        ensure_jurisdiction(session, DummyParser())
+        stored = session.execute(
+            select(canonical_models.JurisdictionORM).where(
+                canonical_models.JurisdictionORM.code == "xx"
+            )
+        ).scalar_one()
+    finally:
+        if hasattr(session, "close"):
+            session.close()
+
+    assert stored.name == "XX"
