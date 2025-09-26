@@ -31,6 +31,14 @@ async def test_entitlements_workflow(
 
     assert summary.roadmap_items > 0
 
+    base_path_response = await app_client.post(
+        "/api/v1/entitlements",
+        headers={"X-Role": "admin"},
+        json={},
+    )
+    assert base_path_response.status_code == 400
+    assert "project" in base_path_response.json()["detail"].lower()
+
     roadmap_response = await app_client.get(
         f"/api/v1/entitlements/{PROJECT_ID}/roadmap"
     )

@@ -46,6 +46,23 @@ def _model_list(schema, records):
     return [schema.model_validate(record, from_attributes=True) for record in records]
 
 
+@router.api_route(
+    "",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    include_in_schema=False,
+)
+async def entitlements_root_placeholder() -> None:
+    """Provide a clearer error when project-specific path parameters are missing."""
+
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=(
+            "Specify a project-scoped endpoint, e.g.\n"
+            "POST /api/v1/entitlements/{project_id}/roadmap"
+        ),
+    )
+
+
 @router.get(
     "/{project_id}/roadmap",
     response_model=EntRoadmapCollection,
