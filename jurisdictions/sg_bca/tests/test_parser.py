@@ -1,14 +1,16 @@
 """Tests for the SG BCA plug-in."""
 from __future__ import annotations
 
-from datetime import date
+import json
+from datetime import date, datetime
 
+import pytest
 from sqlalchemy import select
 
 from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.util import create_session_factory, get_engine, session_scope
-from jurisdictions.sg_bca.parse import PARSER
+from jurisdictions.sg_bca.parse import PARSER, ParserError
 from jurisdictions.sg_bca import fetch
 
 
@@ -37,7 +39,33 @@ def test_parse_and_persist(monkeypatch):
         )
 
     assert count == 1
-    assert stored.global_tags == ["fire_safety"]
+    assert regs[0].title == "Smoke detector requirements"
+    assert regs[0].text.startswith("Section 1.1 Fire Safety")
+    assert regs[0].issued_on == date(2025, 2, 2)
+    assert regs[0].effective_on == date(2025, 3, 1)
+    assert regs[0].version == "Revision 2"
+    assert regs[0].metadata["category"] == "Fire Safety"
+    assert regs[0].metadata["keywords"] == [
+        "Smoke detector",
+        "Universal Design",
+    ]
+    assert stored.global_tags == ["accessibility", "fire_safety"]
+
+
+def test_parse_missing_title_raises():
+    record = canonical_models.ProvenanceRecord(
+        regulation_external_id="missing-title",
+        source_uri="https://example.invalid/record",
+        fetched_at=datetime(2025, 1, 1, 0, 0, 0),
+        fetch_parameters={},
+        raw_content=json.dumps({"description": "Content without a title."}),
+    )
+
+    with pytest.raises(ParserError) as excinfo:
+        list(PARSER.parse([record]))
+
+    assert "missing a title" in str(excinfo.value)
+    assert "missing-title" in str(excinfo.value)
 
 
 def _persist(
@@ -55,9 +83,15 @@ def _run_fetch(monkeypatch, since: date):
         {
             "circular_no": "2025-01",
             "circular_date": "2025-02-02",
+            "effective_date": "2025-03-01",
             "subject": "Smoke detector requirements",
             "weblink": "https://www1.bca.gov.sg/circulars/2025-01",
             "description": "Section 1.1 Fire Safety - A smoke detector must be installed.",
+            "version": "Revision 2",
+            "category": "Fire Safety",
+            "keywords": ["Smoke detector", "Universal Design"],
+            "tags": "Fire Safety;Regulation",
+            "agency": "BCA",
         },
         {
             "circular_no": "2024-10",
