@@ -402,17 +402,10 @@ export class ApiClient {
       formData.append('infer_walls', 'true')
     }
 
-    const response = await fetch(this.buildUrl('api/v1/import'), {
+    const payload = await this.request<ImportResultResponse>('api/v1/import', {
       method: 'POST',
       body: formData,
     })
-
-    if (!response.ok) {
-      const message = await response.text()
-      throw new Error(message || `Import request failed with status ${response.status}`)
-    }
-
-    const payload = (await response.json()) as ImportResultResponse
     return this.mapImportResult(payload)
   }
 
@@ -603,11 +596,14 @@ export class ApiClient {
       }
     }
 
+    const headers = new Headers({ 'Content-Type': 'application/json' })
+    if (this.defaultRole) {
+      headers.set('X-Role', this.defaultRole)
+    }
+
     const response = await fetch(this.buildUrl(`api/v1/export/${projectId}`), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
     })
 
