@@ -133,7 +133,8 @@ class Fetcher:
                     record = self._normalise_row(row)
                     if not record:
                         continue
-                    if record["issued_at"] and record["issued_at"] < since_dt:
+                    issued_at = record.get("issued_at")
+                    if issued_at and issued_at < since_dt:
                         continue
                     records.append(self._to_provenance(row, record, since))
 
@@ -282,14 +283,19 @@ class Fetcher:
         normalised = value.replace("Z", "")
         for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"):
             try:
-                return datetime.strptime(normalised, fmt)
+                parsed = datetime.strptime(normalised, fmt)
+                return parsed
             except ValueError:
                 continue
         try:
-            return datetime.fromisoformat(normalised)
+            parsed = datetime.fromisoformat(normalised)
         except ValueError:
             LOGGER.warning("sg_bca.fetch.unparsed_date", raw=value)
             return None
+
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        return parsed
 
 
 def fetch(since: date) -> Iterable[ProvenanceRecord]:
