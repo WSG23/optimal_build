@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import logging
 from datetime import date
 from typing import Iterable, List
 
@@ -11,6 +13,9 @@ from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.registry import RegistryError, load_jurisdiction
 from core.util import create_session_factory, get_engine, session_scope
+
+
+logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -92,18 +97,65 @@ def upsert_regulations(
 
         provenance = provenance_by_ext.get(reg.external_id)
         if provenance:
-            session.add(
-                canonical_models.ProvenanceORM(
-                    regulation_id=existing.id,
-                    source_uri=provenance.source_uri,
-                    fetched_at=provenance.fetched_at,
-                    fetch_parameters=provenance.fetch_parameters,
-                    raw_content=provenance.raw_content,
-                )
+            content_checksum = hashlib.sha256(
+                provenance.raw_content.encode("utf-8")
+            ).hexdigest()
+            prov_stmt = select(canonical_models.ProvenanceORM).where(
+                canonical_models.ProvenanceORM.regulation_id == existing.id,
+                canonical_models.ProvenanceORM.source_uri == provenance.source_uri,
+                canonical_models.ProvenanceORM.content_checksum == content_checksum,
             )
+            existing_provenance = session.execute(prov_stmt).scalar_one_or_none()
+            if existing_provenance:
+                updated_fields = []
+                if existing_provenance.fetched_at != provenance.fetched_at:
+                    existing_provenance.fetched_at = provenance.fetched_at
+                    updated_fields.append("fetched_at")
+                if (
+                    existing_provenance.fetch_parameters
+                    != provenance.fetch_parameters
+                ):
+                    existing_provenance.fetch_parameters = (
+                        provenance.fetch_parameters
+                    )
+                    updated_fields.append("fetch_parameters")
+                if existing_provenance.raw_content != provenance.raw_content:
+                    existing_provenance.raw_content = provenance.raw_content
+                    updated_fields.append("raw_content")
+
+                if updated_fields:
+                    logger.info(
+                        "Updated provenance record for %s (source=%s; fields=%s)",
+                        reg.external_id,
+                        provenance.source_uri,
+                        ", ".join(updated_fields),
+                    )
+                else:
+                    logger.info(
+                        "Skipped provenance record for %s (source=%s); no changes detected",
+                        reg.external_id,
+                        provenance.source_uri,
+                    )
+            else:
+                session.add(
+                    canonical_models.ProvenanceORM(
+                        regulation_id=existing.id,
+                        source_uri=provenance.source_uri,
+                        fetched_at=provenance.fetched_at,
+                        fetch_parameters=provenance.fetch_parameters,
+                        raw_content=provenance.raw_content,
+                        content_checksum=content_checksum,
+                    )
+                )
+                logger.info(
+                    "Inserted provenance record for %s (source=%s)",
+                    reg.external_id,
+                    provenance.source_uri,
+                )
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO)
     args = parse_args()
     try:
         since = date.fromisoformat(args.since)
