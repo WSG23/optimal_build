@@ -7,6 +7,7 @@ import json
 import math
 import os
 import tempfile
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import BytesIO
@@ -100,6 +101,14 @@ def _resolve_local_path(storage_path: str) -> Path:
 async def _load_payload(record: ImportRecord) -> bytes:
     path = _resolve_local_path(record.storage_path)
     return await asyncio.to_thread(path.read_bytes)
+
+
+def _load_vector_payload(storage_path: str) -> Dict[str, Any]:
+    path = _resolve_local_path(storage_path)
+    payload = json.loads(path.read_text())
+    if not isinstance(payload, Mapping):
+        raise ValueError("Vector payload must be a mapping")
+    return dict(payload)
 
 
 def _normalise_name(value: Any, fallback: str) -> str:
@@ -424,6 +433,23 @@ def _estimate_space_geometry(
     ]
 
 
+def _derive_vector_layers(payload: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    layer_counts: Counter[str] = Counter()
+    paths = payload.get("paths")
+    if isinstance(paths, Sequence):
+        for entry in paths:  # type: ignore[assignment]
+            if not isinstance(entry, Mapping):
+                continue
+            layer_name = entry.get("layer")
+            if layer_name in (None, ""):
+                continue
+            layer_counts[str(layer_name)] += 1
+    return [
+        {"name": name, "path_count": count, "source": "vector_paths"}
+        for name, count in sorted(layer_counts.items())
+    ]
+
+
 def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
     builder = GraphBuilder.new()
     floors_summary: List[Dict[str, Any]] = []
@@ -574,6 +600,147 @@ def _parse_json_payload(data: Mapping[str, Any]) -> ParsedGeometry:
     )
 
 
+def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
+    builder = GraphBuilder.new()
+    level_id = "VectorLevel"
+    level_name = "Vector Floor"
+
+    level_metadata: Dict[str, Any] = {"source": payload.get("source", "vector")}
+    bounds = payload.get("bounds")
+    if isinstance(bounds, Mapping):
+        level_metadata["bounds"] = {
+            key: float(value)
+            for key, value in bounds.items()
+            if isinstance(value, (int, float))
+        }
+
+    builder.add_level(
+        {"id": level_id, "name": level_name, "elevation": 0.0, "metadata": level_metadata}
+    )
+
+    wall_ids: List[str] = []
+    seen_walls: Dict[str, None] = {}
+    walls = payload.get("walls")
+    if isinstance(walls, Sequence):
+        for index, entry in enumerate(walls, start=1):  # type: ignore[assignment]
+            if not isinstance(entry, Mapping):
+                continue
+            start = entry.get("start")
+            end = entry.get("end")
+            if start is None or end is None:
+                continue
+            raw_identifier = entry.get("id") or entry.get("name")
+            wall_id = _ensure_unique(
+                _normalise_name(raw_identifier, f"W{index:03d}"),
+                seen_walls,
+            )
+            metadata: Dict[str, Any] = {}
+            for key in ("thickness", "confidence", "source"):
+                value = entry.get(key)
+                if value is not None:
+                    metadata[key] = value
+            try:
+                builder.add_wall(
+                    {
+                        "id": wall_id,
+                        "level_id": level_id,
+                        "start": start,
+                        "end": end,
+                        "metadata": metadata,
+                    }
+                )
+            except (TypeError, ValueError):
+                continue
+            wall_ids.append(wall_id)
+
+    space_ids: List[str] = []
+    seen_spaces: Dict[str, None] = {}
+    paths = payload.get("paths")
+    if isinstance(paths, Sequence):
+        for index, entry in enumerate(paths, start=1):  # type: ignore[assignment]
+            if not isinstance(entry, Mapping):
+                continue
+            points_raw = entry.get("points")
+            if not isinstance(points_raw, Sequence):
+                continue
+            points: List[Tuple[float, float]] = []
+            valid = True
+            for point in points_raw:  # type: ignore[assignment]
+                if not isinstance(point, Sequence) or len(point) != 2:
+                    valid = False
+                    break
+                try:
+                    x_val = float(point[0])
+                    y_val = float(point[1])
+                except (TypeError, ValueError):
+                    valid = False
+                    break
+                points.append((x_val, y_val))
+            if not valid or len(points) < 4:
+                continue
+            if points[0] != points[-1]:
+                continue
+
+            raw_identifier = entry.get("id") or entry.get("name") or entry.get("layer")
+            space_id = _ensure_unique(
+                _normalise_name(raw_identifier, f"S{index:03d}"),
+                seen_spaces,
+            )
+            metadata: Dict[str, Any] = {"source": "vector_path"}
+            layer_name = entry.get("layer")
+            if layer_name not in (None, ""):
+                metadata["layer"] = layer_name
+            stroke_width = entry.get("stroke_width")
+            if isinstance(stroke_width, (int, float)):
+                metadata["stroke_width"] = float(stroke_width)
+            metadata["path_index"] = index - 1
+
+            boundary = [
+                {"x": point[0], "y": point[1]}
+                for point in points
+            ]
+
+            try:
+                builder.add_space(
+                    {
+                        "id": space_id,
+                        "level_id": level_id,
+                        "boundary": boundary,
+                        "metadata": metadata,
+                    }
+                )
+            except (TypeError, ValueError):
+                continue
+            space_ids.append(space_id)
+
+    builder.validate_integrity()
+
+    layer_metadata = _derive_vector_layers(payload)
+
+    floors_summary = [{"name": level_name, "unit_ids": list(space_ids)}]
+
+    metadata: Dict[str, Any] = {
+        "source": "vector_payload",
+        "walls": len(wall_ids),
+        "spaces": len(space_ids),
+        "paths": len(paths) if isinstance(paths, Sequence) else 0,
+        "layers": len(layer_metadata),
+    }
+    if isinstance(bounds, Mapping):
+        metadata["bounds"] = level_metadata.get("bounds")
+    options = payload.get("options")
+    if isinstance(options, Mapping):
+        metadata["vector_options"] = dict(options)
+
+    return ParsedGeometry(
+        graph=builder.graph,
+        floors=floors_summary,
+        units=list(space_ids),
+        layers=layer_metadata,
+        metadata=metadata,
+    )
+
+
 def _parse_dxf_payload(payload: bytes) -> ParsedGeometry:
     quicklook = _prepare_dxf_quicklook(payload)
     builder = GraphBuilder.new()
@@ -669,7 +836,11 @@ def _parse_ifc_payload(payload: bytes) -> ParsedGeometry:
     )
 
 
-def _parse_payload(record: ImportRecord, payload: bytes) -> ParsedGeometry:
+def _parse_payload(
+    record: ImportRecord,
+    payload: bytes,
+    vector_payload: Optional[Mapping[str, Any]] = None,
+) -> ParsedGeometry:
     filename = (record.filename or "").lower()
     content_type = (record.content_type or "").lower()
     if filename.endswith(".json") or content_type == "application/json":
@@ -679,6 +850,10 @@ def _parse_payload(record: ImportRecord, payload: bytes) -> ParsedGeometry:
         return _parse_dxf_payload(payload)
     if filename.endswith(".ifc") or "ifc" in content_type:
         return _parse_ifc_payload(payload)
+    is_pdf = filename.endswith(".pdf") or "pdf" in content_type
+    is_svg = filename.endswith(".svg") or "svg" in content_type
+    if vector_payload is not None and (is_pdf or is_svg):
+        return _parse_vector_payload(vector_payload)
     raise RuntimeError(f"Unsupported import format for '{record.filename}'")
 
 
@@ -723,7 +898,21 @@ async def parse_import_job(import_id: str) -> Dict[str, Any]:
 
         try:
             payload = await _load_payload(record)
-            parsed = await asyncio.to_thread(_parse_payload, record, payload)
+            vector_payload: Optional[Dict[str, Any]] = None
+            if record.vector_storage_path:
+                try:
+                    vector_payload = await asyncio.to_thread(
+                        _load_vector_payload,
+                        record.vector_storage_path,
+                    )
+                except FileNotFoundError:
+                    vector_payload = None
+            parsed = await asyncio.to_thread(
+                _parse_payload,
+                record,
+                payload,
+                vector_payload,
+            )
             result = await _persist_result(session, record, parsed)
             if getattr(record, "project_id", None) is not None:
                 overlay_record = await ingest_parsed_import_geometry(
