@@ -152,6 +152,17 @@ verify: ## Run formatting checks, linting, and tests
 	$(MAKE) lint
 	$(MAKE) test
 
+regstack-migrate: ## Run Alembic migrations for the Regstack schema
+	ALEMBIC_INI=db/alembic.ini \
+	$(PY) -m alembic -c $$ALEMBIC_INI upgrade head
+
+regstack-ingest: ## Ingest SG BCA sample into the configured database
+	@if [ -z "$$REGSTACK_DB" ]; then \
+		echo "Set REGSTACK_DB before running this target"; \
+		exit 1; \
+	fi
+	$(PY) -m scripts.ingest --jurisdiction sg_bca --since 2025-01-01 --store $$REGSTACK_DB
+
 smoke-buildable: ## Run the buildable latency smoke test and report the observed P90
 	cd backend && $(PY) -m pytest -s tests/pwp/test_buildable_latency.py
 

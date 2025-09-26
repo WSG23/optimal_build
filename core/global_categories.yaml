@@ -1,0 +1,22 @@
+categories:
+  fire_safety:
+    title: "Fire Safety"
+    description: "Requirements related to fire detection, suppression, and safe evacuation."
+    keywords:
+      - "fire"
+      - "sprinkler"
+      - "alarm"
+  accessibility:
+    title: "Accessibility"
+    description: "Access provisions for persons with disabilities."
+    keywords:
+      - "access"
+      - "wheelchair"
+      - "barrier-free"
+  structural_integrity:
+    title: "Structural Integrity"
+    description: "Load-bearing and structural stability requirements."
+    keywords:
+      - "structural"
+      - "load"
+      - "strength"
