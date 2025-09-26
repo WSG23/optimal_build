@@ -9,19 +9,25 @@ const meta = {
 
 export default meta
 
-const sampleStatus: ParseStatusUpdate = {
-  jobId: 'demo',
-  status: 'ready',
-  overlays: ['fire_access', 'coastal'],
-  hints: ['Ensure secondary egress'],
-  zoneCode: 'RA',
-  updatedAt: new Date().toISOString(),
+const baseStatus: ParseStatusUpdate = {
+  importId: 'demo-import',
+  status: 'completed',
+  requestedAt: new Date(Date.now() - 120000).toISOString(),
+  completedAt: new Date().toISOString(),
+  jobId: 'demo-job',
+  detectedFloors: [
+    { name: 'Level 01', unitIds: ['101', '102'] },
+    { name: 'Level 02', unitIds: ['201'] },
+  ],
+  detectedUnits: ['101', '102', '201'],
+  metadata: { parser: 'storybook' },
+  error: null,
 }
 
 export const Ready = () => (
   <TranslationProvider>
     <div style={{ maxWidth: 960 }}>
-      <CadUploader onUpload={console.log} status={sampleStatus} zoneCode="RA" />
+      <CadUploader onUpload={console.log} status={baseStatus} />
     </div>
   </TranslationProvider>
 )
@@ -32,8 +38,12 @@ export const Loading = () => (
       <CadUploader
         onUpload={console.log}
         isUploading
-        status={{ ...sampleStatus, status: 'processing', overlays: [], hints: [] }}
-        zoneCode="RCR"
+        status={{
+          ...baseStatus,
+          status: 'running',
+          completedAt: null,
+          metadata: { parser: 'storybook', progress: 65 },
+        }}
       />
     </div>
   </TranslationProvider>

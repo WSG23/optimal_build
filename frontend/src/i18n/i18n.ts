@@ -245,9 +245,11 @@ declare global {
 }
 
 if (isBrowser()) {
-  window.__APP_I18N__ = i18n
+  const scopedWindow = window as Window & { __APP_I18N__?: I18n }
+  scopedWindow.__APP_I18N__ = i18n
 } else {
-  globalThis.__APP_I18N__ = i18n
+  const scopedGlobal = globalThis as typeof globalThis & { __APP_I18N__?: I18n }
+  scopedGlobal.__APP_I18N__ = i18n
 }
 
 export { I18n }
