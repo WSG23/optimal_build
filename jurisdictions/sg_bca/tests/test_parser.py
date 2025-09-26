@@ -1,6 +1,7 @@
 """Tests for the SG BCA fetcher and parser."""
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -316,6 +317,86 @@ def test_ingestion_deduplicates_identical_provenance_records():
 
     assert len(provenance_in_db) == 1
     assert provenance_in_db[0].source_uri == "https://example.invalid/source-a"
+
+
+def test_ingestion_reuses_existing_checksum_when_payload_reappears():
+    engine = get_engine("sqlite:///:memory:")
+    canonical_models.RegstackBase.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+
+    regulation = canonical_models.CanonicalReg(
+        jurisdiction_code=PARSER.code,
+        external_id="reg-with-content-revert",
+        title="Regulation with reverting payload",
+        text="Example content",
+        issued_on=date(2025, 1, 5),
+        effective_on=date(2025, 1, 6),
+        metadata={},
+        global_tags=["example"],
+    )
+
+    initial_payload = {"id": "source-a", "payload": "initial"}
+    changed_payload = {"id": "source-a", "payload": "updated"}
+
+    initial_record = canonical_models.ProvenanceRecord(
+        regulation_external_id="reg-with-content-revert",
+        source_uri="https://example.invalid/source-a",
+        fetched_at=datetime(2025, 1, 11, 12, 0, 0),
+        fetch_parameters={"page": 1},
+        raw_content=json.dumps(initial_payload),
+    )
+    changed_record = canonical_models.ProvenanceRecord(
+        regulation_external_id="reg-with-content-revert",
+        source_uri="https://example.invalid/source-a",
+        fetched_at=datetime(2025, 1, 12, 12, 0, 0),
+        fetch_parameters={"page": 1},
+        raw_content=json.dumps(changed_payload),
+    )
+    reverted_record = canonical_models.ProvenanceRecord(
+        regulation_external_id="reg-with-content-revert",
+        source_uri="https://example.invalid/source-a",
+        fetched_at=datetime(2025, 1, 13, 12, 0, 0),
+        fetch_parameters={"page": 1},
+        raw_content=json.dumps(initial_payload),
+    )
+
+    with session_scope(session_factory) as session:
+        session.add(canonical_models.JurisdictionORM(code=PARSER.code, name="SG BCA"))
+        _persist(session, [regulation], [initial_record])
+
+    with session_scope(session_factory) as session:
+        _persist(session, [regulation], [changed_record])
+
+    with session_scope(session_factory) as session:
+        _persist(session, [regulation], [reverted_record])
+
+    with session_scope(session_factory) as session:
+        regulation_in_db = session.execute(
+            select(canonical_models.RegulationORM).where(
+                canonical_models.RegulationORM.external_id
+                == "reg-with-content-revert"
+            )
+        ).scalar_one()
+
+        provenance_entries = session.execute(
+            select(canonical_models.ProvenanceORM)
+            .where(canonical_models.ProvenanceORM.regulation_id == regulation_in_db.id)
+            .order_by(canonical_models.ProvenanceORM.fetched_at.asc())
+        ).scalars().all()
+
+    assert len(provenance_entries) == 2
+
+    initial_checksum = hashlib.sha256(initial_record.raw_content.encode("utf-8")).hexdigest()
+    changed_checksum = hashlib.sha256(changed_record.raw_content.encode("utf-8")).hexdigest()
+    assert {entry.content_checksum for entry in provenance_entries} == {
+        initial_checksum,
+        changed_checksum,
+    }
+
+    reverted_entry = next(
+        entry for entry in provenance_entries if entry.content_checksum == initial_checksum
+    )
+    assert reverted_entry.fetched_at == reverted_record.fetched_at
 
 
 def test_parse_missing_title_raises():

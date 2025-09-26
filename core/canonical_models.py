@@ -104,7 +104,12 @@ class ProvenanceORM(RegstackBase):
             "regulation_id",
             "source_uri",
             "content_checksum",
-            name="uq_provenance_reg_source_checksum",
+            name="uq_provenance_reg_source_checksum_v2",
+        ),
+        Index(
+            "ix_provenance_regulation_source",
+            "regulation_id",
+            "source_uri",
         ),
         Index("ix_provenance_source", "source_uri"),
     )
