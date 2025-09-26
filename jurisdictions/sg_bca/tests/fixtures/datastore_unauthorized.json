@@ -1,0 +1,9 @@
+{
+  "help": "https://data.gov.sg/api/3/action/help_show?name=datastore_search",
+  "success": false,
+  "error": {
+    "__type": "Authorization Error",
+    "message": "Invalid API key provided",
+    "info": "You do not have access to this resource."
+  }
+}

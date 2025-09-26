@@ -58,11 +58,14 @@ def test_fetcher_raises_for_bad_credentials(monkeypatch):
     class UnauthorizedResponse:
         status_code = 401
 
+        def __init__(self) -> None:
+            self._payload = _load_fixture("datastore_unauthorized.json")
+
         def raise_for_status(self) -> None:
             raise RuntimeError("HTTP 401")
 
         def json(self) -> dict:
-            return {"success": False, "error": {"message": "Invalid API key"}}
+            return self._payload
 
     class UnauthorizedClient:
         def __init__(self, *_, **__):
@@ -95,11 +98,14 @@ def test_fetcher_rejects_malformed_payload(monkeypatch):
     class MalformedResponse:
         status_code = 200
 
+        def __init__(self) -> None:
+            self._payload = _load_fixture("datastore_malformed_records.json")
+
         def raise_for_status(self) -> None:
             return None
 
         def json(self) -> dict:
-            return {"result": {"records": "not-a-list"}}
+            return self._payload
 
     class MalformedClient:
         def __init__(self, *_, **__):
@@ -180,6 +186,7 @@ def test_ingestion_deduplicates_provenance_entries(monkeypatch):
 
     assert len(regs_in_db) == 2
     assert len(provenance_in_db) == 2
+    assert {reg.external_id for reg in regs_in_db} == {"2025-04", "2025-03"}
 
     second_fetcher = _build_fixture_fetcher(monkeypatch)
     second_records = second_fetcher.fetch_raw(since)
@@ -199,6 +206,10 @@ def test_ingestion_deduplicates_provenance_entries(monkeypatch):
 
     assert len(regs_after_second) == 2
     assert len(provenance_after_second) == 2
+    assert {reg.external_id for reg in regs_after_second} == {"2025-04", "2025-03"}
+    assert {
+        provenance.regulation_id for provenance in provenance_after_second
+    } == {reg.id for reg in regs_after_second}
 
 
 def test_ingestion_persists_multiple_sources_for_single_regulation():
