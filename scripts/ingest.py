@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from core import canonical_models
 from core.mapping import load_and_apply_mappings
-from core.registry import RegistryError, load_jurisdiction
+from core.registry import JurisdictionParser, RegistryError, load_jurisdiction
 from core.util import create_session_factory, get_engine, session_scope
 
 
@@ -43,15 +43,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def ensure_jurisdiction(session, jurisdiction_code: str, name: str) -> None:
+def ensure_jurisdiction(session, parser: JurisdictionParser) -> None:
     """Ensure the jurisdiction exists in the database."""
 
     stmt = select(canonical_models.JurisdictionORM).where(
-        canonical_models.JurisdictionORM.code == jurisdiction_code
+        canonical_models.JurisdictionORM.code == parser.code
     )
     if not session.execute(stmt).scalar_one_or_none():
         session.add(
-            canonical_models.JurisdictionORM(code=jurisdiction_code, name=name)
+            canonical_models.JurisdictionORM(
+                code=parser.code,
+                name=getattr(parser, "display_name", parser.code.upper()),
+            )
         )
 
 
@@ -179,7 +182,7 @@ def main() -> None:
     )
 
     with session_scope(session_factory) as session:
-        ensure_jurisdiction(session, parser.code, parser.code.upper())
+        ensure_jurisdiction(session, parser)
         upsert_regulations(session, regulations, provenance_records)
 
     print(  # pragma: no cover - CLI feedback
