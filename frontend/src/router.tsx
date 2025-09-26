@@ -35,7 +35,7 @@ interface RouterProviderProps {
 
 export function RouterProvider({ router }: RouterProviderProps) {
   const [path, setPath] = useState<string>(() => getInitialPath())
-  const routes = router?.routes ?? []
+  const routes = useMemo(() => router?.routes ?? [], [router])
 
   useEffect(() => {
     if (typeof window === 'undefined') {

@@ -5,15 +5,8 @@ import i18n from './i18n'
 import { I18nContext } from './context'
 
 export function useTranslation() {
-  let instance = i18n
-
-  try {
-    instance = useContext(I18nContext)
-  } catch (error) {
-    if (import.meta.env?.DEV) {
-      console.warn('Translation context unavailable, using default instance instead.', error)
-    }
-  }
+  const contextInstance = useContext(I18nContext)
+  const instance = contextInstance ?? i18n
 
   const [, forceUpdate] = useState(0)
 
