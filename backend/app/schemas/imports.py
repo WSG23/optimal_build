@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DetectedFloor(BaseModel):
@@ -47,10 +47,7 @@ class ImportResult(BaseModel):
     )
     parse_status: str
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ParseStatusResponse(BaseModel):
@@ -64,10 +61,7 @@ class ParseStatusResponse(BaseModel):
     error: Optional[str] = None
     job_id: Optional[str] = None
 
-    class Config:
-        """Model configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 __all__ = ["DetectedFloor", "ImportResult", "ParseStatusResponse"]

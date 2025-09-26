@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class RulePackSchema(BaseModel):
@@ -24,10 +24,7 @@ class RulePackSchema(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def model_validate(
@@ -66,10 +63,7 @@ class RulePackSummary(BaseModel):
     version: int
     description: Optional[str] = None
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RulesetValidationRequest(BaseModel):

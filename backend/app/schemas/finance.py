@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class CostIndexSnapshot(BaseModel):
@@ -121,10 +121,7 @@ class FinanceResultSchema(BaseModel):
     unit: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FinanceFeasibilityResponse(BaseModel):

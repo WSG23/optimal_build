@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class MaterialStandard(BaseModel):
@@ -27,7 +27,4 @@ class MaterialStandard(BaseModel):
     provenance: Optional[Dict[str, Any]]
     source_document: Optional[str]
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

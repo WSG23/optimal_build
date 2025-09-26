@@ -15,7 +15,7 @@ from app.models.entitlements import (
     EntStudyStatus,
     EntStudyType,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EntAuthorityBase(BaseModel):
@@ -53,8 +53,7 @@ class EntAuthoritySchema(EntAuthorityBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EntApprovalTypeBase(BaseModel):
@@ -97,8 +96,7 @@ class EntApprovalTypeSchema(EntApprovalTypeBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EntRoadmapItemBase(BaseModel):
@@ -145,8 +143,7 @@ class EntRoadmapItemSchema(EntRoadmapItemBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EntStudyBase(BaseModel):
@@ -191,8 +188,7 @@ class EntStudySchema(EntStudyBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EntEngagementBase(BaseModel):
@@ -237,8 +233,7 @@ class EntEngagementSchema(EntEngagementBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EntLegalInstrumentBase(BaseModel):
@@ -281,8 +276,7 @@ class EntLegalInstrumentSchema(EntLegalInstrumentBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 SchemaType = TypeVar("SchemaType", bound=BaseModel)

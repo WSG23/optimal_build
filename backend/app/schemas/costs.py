@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CostIndex(BaseModel):
@@ -23,7 +23,4 @@ class CostIndex(BaseModel):
     provider: str
     methodology: Optional[str]
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

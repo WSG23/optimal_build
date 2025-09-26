@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class OverlayDecisionRecord(BaseModel):
@@ -17,10 +17,7 @@ class OverlayDecisionRecord(BaseModel):
     decided_at: datetime
     notes: Optional[str] = None
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OverlaySuggestion(BaseModel):
@@ -49,10 +46,7 @@ class OverlaySuggestion(BaseModel):
     decision_notes: Optional[str] = None
     decision: Optional[OverlayDecisionRecord] = None
 
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @field_validator("target_ids", mode="before")
     @classmethod
