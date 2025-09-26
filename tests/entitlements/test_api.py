@@ -10,6 +10,8 @@ pytest.importorskip("sqlalchemy")
 
 from httpx import AsyncClient
 
+from app.core.config import settings
+from app.main import app
 from app.utils import metrics
 from backend.scripts.seed_entitlements_sg import seed_entitlements
 
@@ -38,6 +40,27 @@ async def test_entitlements_workflow(
     )
     assert base_path_response.status_code == 400
     assert "project" in base_path_response.json()["detail"].lower()
+
+    original_default_role = settings.DEFAULT_ROLE
+    settings.DEFAULT_ROLE = "admin"
+    try:
+        fallback_payload = {
+            "project_id": PROJECT_ID,
+            "name": "Traffic Impact Study",
+            "study_type": "traffic",
+            "status": "draft",
+        }
+        async with AsyncClient(
+            app=app, base_url="http://testserver"
+        ) as fallback_client:
+            fallback_response = await fallback_client.post(
+                f"/api/v1/entitlements/{PROJECT_ID}/studies",
+                json=fallback_payload,
+            )
+        assert fallback_response.status_code == 201
+        fallback_response.json()["id"]
+    finally:
+        settings.DEFAULT_ROLE = original_default_role
 
     roadmap_response = await app_client.get(
         f"/api/v1/entitlements/{PROJECT_ID}/roadmap"

@@ -6,6 +6,8 @@ from typing import Literal
 
 from fastapi import Depends, Header, HTTPException, status
 
+from app.core.config import settings
+
 Role = Literal["viewer", "reviewer", "admin"]
 
 _VIEWER_ROLES: set[str] = {"viewer", "reviewer", "admin"}
@@ -15,7 +17,10 @@ _REVIEWER_ROLES: set[str] = {"reviewer", "admin"}
 async def get_request_role(x_role: str | None = Header(default=None)) -> Role:
     """Derive the caller role from the ``X-Role`` header."""
 
-    role = (x_role or "viewer").strip().lower()
+    configured_default = settings.DEFAULT_ROLE.strip().lower()
+    if configured_default not in _VIEWER_ROLES:
+        configured_default = "viewer"
+    role = (x_role or configured_default).strip().lower()
     if role not in _VIEWER_ROLES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -34,6 +39,8 @@ async def require_reviewer(role: Role = Depends(get_request_role)) -> Role:
     """Restrict mutations to reviewer or admin roles."""
 
     if role not in _REVIEWER_ROLES:
+        if settings.ALLOW_VIEWER_MUTATIONS:
+            return role
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Reviewer or admin role required for mutation",

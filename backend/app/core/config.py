@@ -158,9 +158,12 @@ class Settings:
 
     LOG_LEVEL: str
 
+    DEFAULT_ROLE: str
+
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
     BUILDABLE_EFFICIENCY_RATIO: float
     BUILDABLE_USE_POSTGIS: bool
+    ALLOW_VIEWER_MUTATIONS: bool
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -221,6 +224,8 @@ class Settings:
 
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+        self.DEFAULT_ROLE = os.getenv("DEFAULT_ROLE", "viewer")
+
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
             "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0
         )
@@ -228,6 +233,8 @@ class Settings:
             "BUILDABLE_EFFICIENCY_RATIO", 0.82
         )
         self.BUILDABLE_USE_POSTGIS = _load_bool("BUILDABLE_USE_POSTGIS", False)
+
+        self.ALLOW_VIEWER_MUTATIONS = _load_bool("ALLOW_VIEWER_MUTATIONS", False)
 
 
 settings = Settings()
