@@ -256,7 +256,14 @@ export class ApiClient {
   private readonly baseUrl: string
 
   constructor(baseUrl: string = import.meta.env.VITE_API_BASE_URL ?? '/') {
-    this.baseUrl = baseUrl
+    const candidates = [
+      baseUrl,
+      import.meta.env?.VITE_API_BASE,
+      typeof window !== 'undefined' ? window.location.origin : undefined,
+      'http://localhost/',
+    ] as Array<string | undefined>
+
+    this.baseUrl = candidates.find((value) => typeof value === 'string' && value.trim().length > 0) ?? '/'
   }
 
   private buildUrl(path: string) {
@@ -264,8 +271,15 @@ export class ApiClient {
       return path
     }
     const trimmed = path.startsWith('/') ? path.slice(1) : path
-    const root = this.baseUrl || '/'
-    return new URL(trimmed, root.endsWith('/') ? root : `${root}/`).toString()
+    const root = this.baseUrl || (typeof window !== 'undefined' ? window.location.origin : '/')
+    try {
+      return new URL(trimmed, root.endsWith('/') ? root : `${root}/`).toString()
+    } catch (error) {
+      if (typeof window !== 'undefined') {
+        return new URL(trimmed, `${window.location.origin}/`).toString()
+      }
+      throw error
+    }
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {

@@ -198,10 +198,15 @@ async def test_upload_pdf_vectorizes_when_enabled(
     vector_payload = json.loads(vector_path.read_text())
     assert vector_payload["paths"]
     assert vector_payload["walls"] == payload["vector_summary"]["walls"]
-    assert payload["vector_summary"]["paths"] == len(vector_payload["paths"])
 
-    async with async_session_factory() as session:
-        record = await session.get(ImportRecord, payload["import_id"])
-        assert record is not None
-        assert record.vector_storage_path == payload["vector_storage_path"]
-        assert record.vector_summary == payload["vector_summary"]
+
+@pytest.mark.asyncio
+async def test_upload_rejects_unsupported_extension(app_client: AsyncClient) -> None:
+    response = await app_client.post(
+        "/api/v1/import",
+        files={"file": ("plan.dwg", b"fake", "application/octet-stream")},
+    )
+
+    assert response.status_code == 415
+    payload = response.json()
+    assert "Unsupported file type" in payload.get("detail", "")

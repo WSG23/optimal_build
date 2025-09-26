@@ -32,7 +32,7 @@ function CadUploader({ onUpload = () => {}, isUploading = false, status = null, 
       { className: 'cad-uploader__dropzone', role: 'presentation' },
       React.createElement('input', {
         type: 'file',
-        accept: '.dxf,.dwg,.ifc,.json,.zip',
+        accept: '.dxf,.ifc,.json',
         className: 'cad-uploader__input',
         disabled: isUploading,
       }),

@@ -30,6 +30,9 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 router = APIRouter()
 logger = get_logger(__name__)
 
+SUPPORTED_IMPORT_SUFFIXES: Tuple[str, ...] = (".dxf", ".ifc", ".json")
+SUPPORTED_IMPORT_MEDIA_HINTS: Tuple[str, ...] = ("dxf", "ifc", "json")
+
 
 def _extract_unit_id(unit: Any) -> str | None:
     """Return a unit identifier from diverse payload representations."""
@@ -162,6 +165,17 @@ def _detect_import_metadata(
             return [], [], []
 
     return [], [], []
+
+
+def _is_supported_import(filename: str | None, content_type: str | None) -> bool:
+    """Return ``True`` when the upload is a natively supported CAD/BIM payload."""
+
+    name = (filename or "").lower()
+    if any(name.endswith(suffix) for suffix in SUPPORTED_IMPORT_SUFFIXES):
+        return True
+
+    media_type = (content_type or "").lower()
+    return any(hint in media_type for hint in SUPPORTED_IMPORT_MEDIA_HINTS)
 
 
 def _is_vectorizable(filename: str | None, content_type: str | None) -> bool:
@@ -343,6 +357,12 @@ async def upload_import(
 
     filename = file.filename or "upload.bin"
     content_type = file.content_type
+
+    if not (_is_supported_import(filename, content_type) or _is_vectorizable(filename, content_type)):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported file type. Upload DXF, IFC, or JSON exports, or supply a PDF/SVG for vectorisation.",
+        )
 
     detected_floors, detected_units, layer_metadata = await asyncio.to_thread(
         _detect_import_metadata,
