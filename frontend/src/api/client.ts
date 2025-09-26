@@ -276,7 +276,7 @@ export class ApiClient {
     const roleCandidates = [
       import.meta.env?.VITE_API_ROLE,
       typeof window !== 'undefined' ? window.localStorage?.getItem('app:api-role') ?? undefined : undefined,
-      'reviewer',
+      'admin',
     ] as Array<string | undefined>
 
     this.defaultRole =
@@ -402,9 +402,13 @@ export class ApiClient {
       formData.append('infer_walls', 'true')
     }
 
+    const headers = new Headers()
+    headers.set('X-Role', this.defaultRole ?? 'admin')
+
     const payload = await this.request<ImportResultResponse>('api/v1/import', {
       method: 'POST',
       body: formData,
+      headers,
     })
     return this.mapImportResult(payload)
   }
