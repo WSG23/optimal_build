@@ -187,6 +187,10 @@ def _is_vectorizable(filename: str | None, content_type: str | None) -> bool:
         return True
     if name.endswith(".svg") or "svg" in media_type:
         return True
+    if name.endswith((".jpg", ".jpeg")) or "jpeg" in media_type:
+        return True
+    if name.endswith(".png") or "png" in media_type:
+        return True
     return False
 
 
@@ -361,7 +365,7 @@ async def upload_import(
     if not (_is_supported_import(filename, content_type) or _is_vectorizable(filename, content_type)):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Unsupported file type. Upload DXF, IFC, or JSON exports, or supply a PDF/SVG for vectorisation.",
+            detail="Unsupported file type. Upload DXF, IFC, or JSON exports, or supply a PDF/SVG/JPEG/PNG for vectorisation.",
         )
 
     detected_floors, detected_units, layer_metadata = await asyncio.to_thread(

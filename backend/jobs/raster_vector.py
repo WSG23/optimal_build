@@ -6,6 +6,7 @@ import asyncio
 import math
 import re
 from dataclasses import dataclass, field
+from io import BytesIO
 from itertools import chain
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from xml.etree import ElementTree as ET
@@ -14,6 +15,11 @@ try:  # pragma: no cover - optional dependency
     import fitz  # type: ignore  # PyMuPDF
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     fitz = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    from PIL import Image
+except ModuleNotFoundError:  # pragma: no cover - optional dependency guard
+    Image = None  # type: ignore[assignment]
 
 from backend.jobs import job
 
@@ -525,6 +531,44 @@ def _vectorize_svg(
     return _extract_svg_result(svg_payload, options)
 
 
+def _vectorize_bitmap_image(
+    image_payload: bytes, options: RasterVectorOptions
+) -> RasterVectorResult:
+    if Image is None:  # pragma: no cover - optional dependency
+        raise RuntimeError("Bitmap vectorization requires Pillow")
+
+    with Image.open(BytesIO(image_payload)) as image:  # type: ignore[arg-type]
+        grayscale = image.convert("L")
+        width, height = grayscale.size
+        threshold = int(255 * options.bitmap_threshold)
+        data = list(grayscale.getdata())
+
+    if width <= 0 or height <= 0:
+        binary: List[List[bool]] = []
+    else:
+        binary = []
+        for row_index in range(height):
+            offset = row_index * width
+            row = [value <= threshold for value in data[offset : offset + width]]
+            binary.append(row)
+
+    walls: List[WallCandidate]
+    if options.infer_walls:
+        walls = _detect_walls_from_binary(
+            binary, float(width), float(height), options
+        )
+    else:
+        walls = []
+
+    return RasterVectorResult(
+        paths=[],
+        walls=walls,
+        bounds=(float(width), float(height)) if width and height else None,
+        source="bitmap",
+        options=options,
+    )
+
+
 @job(name="jobs.raster_vector.vectorize_floorplan", queue="imports:vector")
 async def vectorize_floorplan(
     payload: bytes,
@@ -534,7 +578,7 @@ async def vectorize_floorplan(
     infer_walls: bool = False,
     minimum_wall_length: float = 1.0,
 ) -> Dict[str, Any]:
-    """Convert a PDF/SVG payload into vector paths and baseline walls."""
+    """Convert a PDF/SVG/bitmap payload into vector paths and baseline walls."""
 
     options = RasterVectorOptions(
         infer_walls=infer_walls, minimum_wall_length=minimum_wall_length
@@ -547,6 +591,12 @@ async def vectorize_floorplan(
         return result.to_payload()
     if content_type == "application/pdf" or name.endswith(".pdf"):
         result = await loop.run_in_executor(None, _vectorize_pdf, payload, options)
+        return result.to_payload()
+    if content_type.startswith("image/jpeg") or name.endswith((".jpg", ".jpeg")):
+        result = await loop.run_in_executor(None, _vectorize_bitmap_image, payload, options)
+        return result.to_payload()
+    if content_type.startswith("image/png") or name.endswith(".png"):
+        result = await loop.run_in_executor(None, _vectorize_bitmap_image, payload, options)
         return result.to_payload()
     raise RuntimeError("Unsupported floorplan media type")
 

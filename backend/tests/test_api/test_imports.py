@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 from pathlib import Path
 
 import pytest
+
+pytest.importorskip("PIL")
+from PIL import Image, ImageDraw
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
@@ -198,6 +202,32 @@ async def test_upload_pdf_vectorizes_when_enabled(
     vector_payload = json.loads(vector_path.read_text())
     assert vector_payload["paths"]
     assert vector_payload["walls"] == payload["vector_summary"]["walls"]
+
+
+@pytest.mark.asyncio
+async def test_upload_jpeg_vectorizes_when_enabled(
+    app_client: AsyncClient,
+    async_session_factory,
+) -> None:
+    image = Image.new("RGB", (96, 96), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((10, 44, 86, 52), fill="black")
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG")
+    buffer.seek(0)
+
+    response = await app_client.post(
+        "/api/v1/import",
+        files={"file": ("floorplan.jpg", buffer, "image/jpeg")},
+        data={"infer_walls": "true"},
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["vector_summary"] is not None
+    assert payload["vector_summary"]["source"] == "bitmap"
+    assert payload["vector_summary"]["options"]["requested"] is True
+    assert payload["vector_summary"]["options"]["bitmap_walls"] is True
 
 
 @pytest.mark.asyncio

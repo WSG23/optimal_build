@@ -48,6 +48,42 @@ def _ensure_namespace_package(name: str, location: Path) -> None:
 
 _ensure_namespace_package("backend", _REPO_ROOT)
 
+
+def _find_shadow_package(prefix: str) -> str | None:
+    """Return the repository-local stub package that matches ``prefix``."""
+
+    for entry in sorted(_REPO_ROOT.iterdir()):
+        if entry.is_dir() and entry.name.startswith(prefix):
+            return entry.name
+    return None
+
+
+def _ensure_optional_dependency(
+    module_name: str, stub_prefix: str, friendly_name: str
+) -> None:
+    """Expose vendored stubs for optional dependencies when absent."""
+
+    try:  # pragma: no branch - the common happy path
+        import_module(module_name)
+        return
+    except ModuleNotFoundError:
+        pass
+
+    try:
+        from backend._stub_loader import load_package_stub
+    except ModuleNotFoundError:  # pragma: no cover - repo structure unexpectedly missing
+        return
+
+    package_name = _find_shadow_package(stub_prefix)
+    if package_name is None:  # pragma: no cover - stub directories missing locally
+        return
+
+    load_package_stub(module_name, package_name, friendly_name)
+
+
+_ensure_optional_dependency("fastapi", "fastapi_shadow_", "FastAPI")
+_ensure_optional_dependency("starlette", "starlette_shadow_", "Starlette")
+
 try:  # pragma: no cover - async plugin is optional when running unit tests
     import pytest_asyncio  # type: ignore[import-not-found]
 except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim

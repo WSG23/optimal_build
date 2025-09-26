@@ -432,6 +432,24 @@ class APIRouter:
         )
         self.routes.append(route)
 
+    def api_route(
+        self,
+        path: str,
+        *,
+        methods: Optional[Iterable[str]] = None,
+        response_model: Optional[type] = None,
+        status_code: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        actual_methods = list(methods or ["GET"])
+        return self._decorator(
+            path,
+            methods=actual_methods,
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
+
     def get(
         self,
         path: str,
