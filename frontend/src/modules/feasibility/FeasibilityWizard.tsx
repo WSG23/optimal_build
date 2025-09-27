@@ -1,6 +1,8 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { cssVar } from '@ob/tokens'
+
 import { AppLayout } from '../../App'
 import { fetchBuildable, type BuildableSummary } from '../../api/buildable'
 import { useTranslation } from '../../i18n'
@@ -59,6 +61,16 @@ export function FeasibilityWizard() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [liveAnnouncement, setLiveAnnouncement] = useState('')
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle')
+
+  const copyStatusColor = useMemo(() => {
+    if (copyState === 'copied') {
+      return cssVar('color-success-strong')
+    }
+    if (copyState === 'error') {
+      return cssVar('color-error-strong')
+    }
+    return cssVar('color-brand-primary')
+  }, [copyState])
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const debounceRef = useRef<number | null>(null)
@@ -418,12 +430,20 @@ export function FeasibilityWizard() {
         {t('wizard.form.copyRequest')}
       </button>
       {copyState === 'copied' && (
-        <span className="feasibility-wizard__copy-status" role="status">
+        <span
+          className="feasibility-wizard__copy-status"
+          role="status"
+          style={{ color: copyStatusColor }}
+        >
           {t('wizard.form.copySuccess')}
         </span>
       )}
       {copyState === 'error' && (
-        <span className="feasibility-wizard__copy-status" role="status">
+        <span
+          className="feasibility-wizard__copy-status"
+          role="status"
+          style={{ color: copyStatusColor }}
+        >
           {t('wizard.form.copyError')}
         </span>
       )}

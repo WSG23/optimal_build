@@ -1,0 +1,68 @@
+:root {
+  /* Color tokens */
+  --ob-color-surface-default: #ffffff;
+  --ob-color-surface-default-rgb: 255 255 255;
+  --ob-color-surface-alt: #f8fafc;
+  --ob-color-surface-alt-rgb: 248 250 252;
+  --ob-color-surface-inverse: #0f172a;
+  --ob-color-surface-inverse-rgb: 15 23 42;
+
+  --ob-color-border-subtle: #cbd5f5;
+  --ob-color-border-subtle-rgb: 203 213 245;
+  --ob-color-border-neutral: #e2e8f0;
+  --ob-color-border-neutral-rgb: 226 232 240;
+
+  --ob-color-text-primary: #1e293b;
+  --ob-color-text-muted: #475569;
+  --ob-color-text-inverse: #ffffff;
+  --ob-color-text-inverse-muted-rgb: 226 232 240;
+
+  --ob-color-brand-primary: #2563eb;
+  --ob-color-brand-primary-rgb: 37 99 235;
+  --ob-color-brand-primary-emphasis: #1d4ed8;
+  --ob-color-brand-primary-emphasis-rgb: 29 78 216;
+  --ob-color-brand-soft: #bfdbfe;
+  --ob-color-brand-soft-rgb: 191 219 254;
+
+  --ob-color-info-strong: #1e3a8a;
+  --ob-color-success-strong: #15803d;
+  --ob-color-warning-strong: #b45309;
+  --ob-color-error-strong: #b91c1c;
+  --ob-color-error-muted: #991b1b;
+  --ob-color-error-soft: #fee2e2;
+  --ob-color-warning-soft: #f1f5f9;
+
+  /* Spacing tokens */
+  --ob-space-025: 0.25rem;
+  --ob-space-035: 0.35rem;
+  --ob-space-050: 0.5rem;
+  --ob-space-065: 0.65rem;
+  --ob-space-075: 0.75rem;
+  --ob-space-085: 0.85rem;
+  --ob-space-090: 0.9rem;
+  --ob-space-095: 0.95rem;
+  --ob-space-100: 1rem;
+  --ob-space-125: 1.25rem;
+  --ob-space-130: 1.3rem;
+  --ob-space-150: 1.5rem;
+  --ob-space-175: 1.75rem;
+  --ob-space-200: 2rem;
+  --ob-space-250: 2.5rem;
+  --ob-space-300: 3rem;
+  --ob-space-400: 4rem;
+
+  /* Radius tokens */
+  --ob-radius-sm: 0.65rem;
+  --ob-radius-md: 0.75rem;
+  --ob-radius-md-plus: 0.85rem;
+  --ob-radius-lg: 1rem;
+  --ob-radius-xl: 1.25rem;
+  --ob-radius-2xl: 1.5rem;
+  --ob-radius-pill: 9999px;
+
+  /* Typography tokens */
+  --ob-font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ob-font-weight-regular: 400;
+  --ob-font-weight-semibold: 600;
+  --ob-font-weight-bold: 700;
+}

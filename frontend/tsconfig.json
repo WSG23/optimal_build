@@ -15,8 +15,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "baseUrl": "./src",
+    "paths": {
+      "@ob/tokens": ["../core/design-tokens/index.ts"]
+    }
   },
-  "include": ["src"],
+  "include": ["src", "../core/design-tokens"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

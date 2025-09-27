@@ -8,6 +8,7 @@ import CadPipelinesPage from './pages/CadPipelinesPage'
 import CadUploadPage from './pages/CadUploadPage'
 import FeasibilityWizard from './modules/feasibility/FeasibilityWizard'
 import FinanceWorkspace from './modules/finance'
+import '@ob/tokens.css'
 import './index.css'
 
 const router = createBrowserRouter([
