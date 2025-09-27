@@ -8,7 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 jobs:
   lint:
@@ -412,6 +412,12 @@ jobs:
 
       - name: Install frontend dependencies
         run: pnpm -C frontend install --frozen-lockfile
+
+      - name: Lint frontend application
+        run: pnpm -C frontend lint
+
+      - name: Run frontend unit tests
+        run: pnpm -C frontend test
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

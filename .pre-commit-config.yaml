@@ -7,11 +7,27 @@ repos:
       language: system
       pass_filenames: false
 
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.6.0
+  hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-yaml
+    - id: check-merge-conflict
+
 - repo: https://github.com/psf/black
   rev: 24.8.0
   hooks:
     - id: black
-      files: ^(backend/tests|tests)/
+      args: ["--line-length=88"]
+      files: ^(backend|app|core|db|jurisdictions|scripts|tests|uvicorn_app|prefect|jobs|samples)/
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.6.9
+  hooks:
+    - id: ruff
+      args: ["--fix"]
+      files: ^(backend|app|core|db|jurisdictions|scripts|tests|uvicorn_app|prefect|jobs|samples)/
 
 - repo: https://github.com/PyCQA/flake8
   rev: 7.1.1
@@ -31,6 +47,7 @@ repos:
         - fastapi==0.104.1
         - uvicorn[standard]==0.24.0
         - pydantic[email]==2.5.0
+        - pydantic==2.5.0
         - sqlalchemy[asyncio]==2.0.23
         - asyncpg==0.29.0
         - alembic==1.13.0
@@ -42,3 +59,27 @@ repos:
         - prefect==2.14.10
         - structlog==23.2.0
         - prometheus-client==0.19.0
+
+- repo: https://github.com/pre-commit/mirrors-prettier
+  rev: v3.3.3
+  hooks:
+    - id: prettier
+      files: ^(frontend|ui-admin)/
+
+- repo: https://github.com/pre-commit/mirrors-eslint
+  rev: v9.9.0
+  hooks:
+    - id: eslint
+      files: ^frontend/
+      additional_dependencies:
+        - eslint@9.11.1
+        - @typescript-eslint/eslint-plugin@8.44.1
+        - @typescript-eslint/parser@8.44.1
+        - eslint-plugin-react-hooks@4.6.0
+        - eslint-plugin-react-refresh@0.4.4
+
+- repo: https://github.com/gitleaks/gitleaks
+  rev: v8.18.4
+  hooks:
+    - id: gitleaks
+      args: ["protect", "--verbose", "--redact", "--staged"]
