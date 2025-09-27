@@ -11,6 +11,21 @@ env:
   NODE_VERSION: '18'
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Determine affected paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
@@ -304,10 +319,56 @@ jobs:
           path: artifacts
           if-no-files-found: warn
 
+  frontend:
+    name: Frontend Lint & Test
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - changes
+    if: ${{ github.event_name == 'push' || needs.changes.outputs.frontend == 'true' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.store-path }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Install frontend dependencies
+        run: pnpm -C frontend install --frozen-lockfile
+
+      - name: Lint frontend
+        run: pnpm -C frontend lint
+
+      - name: Run frontend tests
+        run: pnpm -C frontend test
+
   frontend-e2e:
     name: Frontend E2E
     runs-on: ubuntu-latest
-    needs: backend
+    needs:
+      - backend
+      - frontend
+      - changes
+    if: ${{ github.event_name == 'push' || needs.changes.outputs.frontend == 'true' }}
     env:
       POSTGRES_SERVER: 127.0.0.1
       POSTGRES_DB: building_compliance
