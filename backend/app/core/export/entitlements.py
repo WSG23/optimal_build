@@ -69,22 +69,32 @@ def _serialise_roadmap(records) -> List[Dict[str, object]]:
         serialised.append(
             {
                 "sequence": item.sequence_order,
-                "status": item.status.value
-                if hasattr(item.status, "value")
-                else str(item.status),
+                "status": (
+                    item.status.value
+                    if hasattr(item.status, "value")
+                    else str(item.status)
+                ),
                 "approval_type_id": item.approval_type_id,
-                "target_submission": item.target_submission_date.isoformat()
-                if item.target_submission_date
-                else None,
-                "target_decision": item.target_decision_date.isoformat()
-                if item.target_decision_date
-                else None,
-                "actual_submission": item.actual_submission_date.isoformat()
-                if item.actual_submission_date
-                else None,
-                "actual_decision": item.actual_decision_date.isoformat()
-                if item.actual_decision_date
-                else None,
+                "target_submission": (
+                    item.target_submission_date.isoformat()
+                    if item.target_submission_date
+                    else None
+                ),
+                "target_decision": (
+                    item.target_decision_date.isoformat()
+                    if item.target_decision_date
+                    else None
+                ),
+                "actual_submission": (
+                    item.actual_submission_date.isoformat()
+                    if item.actual_submission_date
+                    else None
+                ),
+                "actual_decision": (
+                    item.actual_decision_date.isoformat()
+                    if item.actual_decision_date
+                    else None
+                ),
                 "notes": item.notes,
             }
         )

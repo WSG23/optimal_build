@@ -102,10 +102,7 @@ def _collect_declared_floors(
     for entry in raw_floors:
         if isinstance(entry, dict):
             name = str(
-                entry.get("name")
-                or entry.get("label")
-                or entry.get("id")
-                or "Floor"
+                entry.get("name") or entry.get("label") or entry.get("id") or "Floor"
             )
             units: List[str] = []
             for unit in entry.get("units", []):
@@ -121,7 +118,9 @@ def _collect_declared_floors(
     return floors
 
 
-def _register_unit_ids(raw_units: Iterable[object], seen_units: Dict[str, None]) -> None:
+def _register_unit_ids(
+    raw_units: Iterable[object], seen_units: Dict[str, None]
+) -> None:
     """Track standalone units so they appear in the ordered summary."""
 
     for unit in raw_units:
@@ -132,7 +131,7 @@ def _register_unit_ids(raw_units: Iterable[object], seen_units: Dict[str, None])
 
 
 def _detect_json_payload(
-    payload: Mapping[str, Any]
+    payload: Mapping[str, Any],
 ) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
     """Inspect a JSON payload and extract quick-look floor and unit metadata."""
 
@@ -319,10 +318,7 @@ def _normalise_floor_entry(
         unit_ids: List[str] = []
     else:
         name = str(
-            data.get("name")
-            or data.get("label")
-            or data.get("id")
-            or f"Floor {index}"
+            data.get("name") or data.get("label") or data.get("id") or f"Floor {index}"
         )
         raw_units = data.get("unit_ids") or data.get("units")
         unit_ids = _normalise_units(raw_units)
@@ -473,7 +469,10 @@ async def upload_import(
     filename = file.filename or "upload.bin"
     content_type = file.content_type
 
-    if not (_is_supported_import(filename, content_type) or _is_vectorizable(filename, content_type)):
+    if not (
+        _is_supported_import(filename, content_type)
+        or _is_vectorizable(filename, content_type)
+    ):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Unsupported file type. Upload DXF, IFC, or JSON exports, or supply a PDF/SVG/JPEG for vectorisation.",

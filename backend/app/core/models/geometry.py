@@ -39,7 +39,7 @@ class SourceReference:
 
     @staticmethod
     def from_mapping(
-        payload: Optional[MutableMapping[str, Any]]
+        payload: Optional[MutableMapping[str, Any]],
     ) -> Optional["SourceReference"]:
         """Create a reference from an arbitrary mapping.
 
@@ -524,9 +524,11 @@ class CanonicalGeometry:
             root_payload = {
                 "id": "root",
                 "kind": str(payload.get("kind", "site")),
-                "properties": dict(payload.get("metadata", {}))
-                if isinstance(payload.get("metadata"), Mapping)
-                else {},
+                "properties": (
+                    dict(payload.get("metadata", {}))
+                    if isinstance(payload.get("metadata"), Mapping)
+                    else {}
+                ),
                 "children": [],
             }
         root = GeometryNode.from_dict(root_payload)

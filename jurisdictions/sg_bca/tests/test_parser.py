@@ -1,4 +1,5 @@
 """Tests for the SG BCA fetcher and parser."""
+
 from __future__ import annotations
 
 import hashlib
@@ -30,7 +31,9 @@ def test_fetcher_and_parser_against_recorded_fixtures(monkeypatch):
         "2025-03",
     ]
     assert all("resource_id" in record.fetch_parameters for record in raw_records)
-    assert all(record.fetch_parameters["since"] == since.isoformat() for record in raw_records)
+    assert all(
+        record.fetch_parameters["since"] == since.isoformat() for record in raw_records
+    )
 
     first_payload = json.loads(raw_records[0].raw_content)
     assert first_payload["subject"] == "Revisions to accessible fire exits"
@@ -226,10 +229,12 @@ def test_ingestion_deduplicates_provenance_entries(monkeypatch):
         _persist(session, mapped_first, first_records)
 
     with session_scope(session_factory) as session:
-        regs_in_db = session.execute(select(canonical_models.RegulationORM)).scalars().all()
-        provenance_in_db = session.execute(
-            select(canonical_models.ProvenanceORM)
-        ).scalars().all()
+        regs_in_db = (
+            session.execute(select(canonical_models.RegulationORM)).scalars().all()
+        )
+        provenance_in_db = (
+            session.execute(select(canonical_models.ProvenanceORM)).scalars().all()
+        )
 
     assert len(regs_in_db) == 2
     assert len(provenance_in_db) == 2
@@ -244,19 +249,19 @@ def test_ingestion_deduplicates_provenance_entries(monkeypatch):
         _persist(session, mapped_second, second_records)
 
     with session_scope(session_factory) as session:
-        regs_after_second = session.execute(
-            select(canonical_models.RegulationORM)
-        ).scalars().all()
-        provenance_after_second = session.execute(
-            select(canonical_models.ProvenanceORM)
-        ).scalars().all()
+        regs_after_second = (
+            session.execute(select(canonical_models.RegulationORM)).scalars().all()
+        )
+        provenance_after_second = (
+            session.execute(select(canonical_models.ProvenanceORM)).scalars().all()
+        )
 
     assert len(regs_after_second) == 2
     assert len(provenance_after_second) == 2
     assert {reg.external_id for reg in regs_after_second} == {"2025-04", "2025-03"}
-    assert {
-        provenance.regulation_id for provenance in provenance_after_second
-    } == {reg.id for reg in regs_after_second}
+    assert {provenance.regulation_id for provenance in provenance_after_second} == {
+        reg.id for reg in regs_after_second
+    }
 
 
 def test_ingestion_persists_multiple_sources_for_single_regulation():
@@ -266,7 +271,7 @@ def test_ingestion_persists_multiple_sources_for_single_regulation():
 
     regulation = canonical_models.CanonicalReg(
         jurisdiction_code=PARSER.code,
-        external_id="multi-source-reg", 
+        external_id="multi-source-reg",
         title="Test regulation with multiple provenance sources",
         text="Example content",
         issued_on=date(2025, 1, 1),
@@ -297,24 +302,30 @@ def test_ingestion_persists_multiple_sources_for_single_regulation():
         _persist(session, [regulation], provenance_records)
 
     with session_scope(session_factory) as session:
-        regulations_in_db = session.execute(
-            select(canonical_models.RegulationORM).where(
-                canonical_models.RegulationORM.external_id == "multi-source-reg"
+        regulations_in_db = (
+            session.execute(
+                select(canonical_models.RegulationORM).where(
+                    canonical_models.RegulationORM.external_id == "multi-source-reg"
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(regulations_in_db) == 1
 
-        provenance_in_db = session.execute(
-            select(canonical_models.ProvenanceORM).where(
-                canonical_models.ProvenanceORM.regulation_id
-                == regulations_in_db[0].id
+        provenance_in_db = (
+            session.execute(
+                select(canonical_models.ProvenanceORM).where(
+                    canonical_models.ProvenanceORM.regulation_id
+                    == regulations_in_db[0].id
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     assert len(provenance_in_db) == 2
-    assert {
-        provenance.source_uri for provenance in provenance_in_db
-    } == {
+    assert {provenance.source_uri for provenance in provenance_in_db} == {
         "https://example.invalid/source-a",
         "https://example.invalid/source-b",
     }
@@ -361,16 +372,19 @@ def test_ingestion_deduplicates_identical_provenance_records():
     with session_scope(session_factory) as session:
         regulation_in_db = session.execute(
             select(canonical_models.RegulationORM).where(
-                canonical_models.RegulationORM.external_id
-                == "dedupe-provenance-reg"
+                canonical_models.RegulationORM.external_id == "dedupe-provenance-reg"
             )
         ).scalar_one()
 
-        provenance_in_db = session.execute(
-            select(canonical_models.ProvenanceORM).where(
-                canonical_models.ProvenanceORM.regulation_id == regulation_in_db.id
+        provenance_in_db = (
+            session.execute(
+                select(canonical_models.ProvenanceORM).where(
+                    canonical_models.ProvenanceORM.regulation_id == regulation_in_db.id
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     assert len(provenance_in_db) == 1
     assert provenance_in_db[0].source_uri == "https://example.invalid/source-a"
@@ -430,28 +444,39 @@ def test_ingestion_reuses_existing_checksum_when_payload_reappears():
     with session_scope(session_factory) as session:
         regulation_in_db = session.execute(
             select(canonical_models.RegulationORM).where(
-                canonical_models.RegulationORM.external_id
-                == "reg-with-content-revert"
+                canonical_models.RegulationORM.external_id == "reg-with-content-revert"
             )
         ).scalar_one()
 
-        provenance_entries = session.execute(
-            select(canonical_models.ProvenanceORM)
-            .where(canonical_models.ProvenanceORM.regulation_id == regulation_in_db.id)
-            .order_by(canonical_models.ProvenanceORM.fetched_at.asc())
-        ).scalars().all()
+        provenance_entries = (
+            session.execute(
+                select(canonical_models.ProvenanceORM)
+                .where(
+                    canonical_models.ProvenanceORM.regulation_id == regulation_in_db.id
+                )
+                .order_by(canonical_models.ProvenanceORM.fetched_at.asc())
+            )
+            .scalars()
+            .all()
+        )
 
     assert len(provenance_entries) == 2
 
-    initial_checksum = hashlib.sha256(initial_record.raw_content.encode("utf-8")).hexdigest()
-    changed_checksum = hashlib.sha256(changed_record.raw_content.encode("utf-8")).hexdigest()
+    initial_checksum = hashlib.sha256(
+        initial_record.raw_content.encode("utf-8")
+    ).hexdigest()
+    changed_checksum = hashlib.sha256(
+        changed_record.raw_content.encode("utf-8")
+    ).hexdigest()
     assert {entry.content_checksum for entry in provenance_entries} == {
         initial_checksum,
         changed_checksum,
     }
 
     reverted_entry = next(
-        entry for entry in provenance_entries if entry.content_checksum == initial_checksum
+        entry
+        for entry in provenance_entries
+        if entry.content_checksum == initial_checksum
     )
     assert reverted_entry.fetched_at == reverted_record.fetched_at
 

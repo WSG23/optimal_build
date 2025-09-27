@@ -1,4 +1,5 @@
 """Parser implementation for the Singapore BCA data.gov.sg circulars feed."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -108,7 +109,9 @@ class SGBCAPARSER:
             )
         return regulations
 
-    def _locate_regulation_container(self, payload: dict) -> tuple[str, Sequence[Any]] | None:
+    def _locate_regulation_container(
+        self, payload: dict
+    ) -> tuple[str, Sequence[Any]] | None:
         if "result" in payload and isinstance(payload["result"], dict):
             result = payload["result"]
             records = result.get("records")
@@ -116,7 +119,9 @@ class SGBCAPARSER:
                 return "result.records", records
         for key in ("records", "regulations", "items", "data"):
             candidate = payload.get(key)
-            if isinstance(candidate, Sequence) and not isinstance(candidate, (str, bytes)):
+            if isinstance(candidate, Sequence) and not isinstance(
+                candidate, (str, bytes)
+            ):
                 return key, candidate
         return None
 
@@ -148,15 +153,11 @@ class SGBCAPARSER:
 
         title = self._extract_first(payload, "subject", "title", "circular_title")
         if not title:
-            raise ParserError(
-                f"SG BCA regulation '{context}' is missing a title"
-            )
+            raise ParserError(f"SG BCA regulation '{context}' is missing a title")
 
         text = self._extract_first(payload, "description", "content", "body")
         if not text:
-            raise ParserError(
-                f"SG BCA regulation '{context}' is missing body text"
-            )
+            raise ParserError(f"SG BCA regulation '{context}' is missing body text")
 
         issued_on = self._extract_date(
             payload,
@@ -210,9 +211,7 @@ class SGBCAPARSER:
         if not source_uri:
             source_uri = record.source_uri
         if not source_uri:
-            raise ParserError(
-                f"SG BCA regulation '{context}' is missing a source URI"
-            )
+            raise ParserError(f"SG BCA regulation '{context}' is missing a source URI")
         metadata["source_uri"] = source_uri
         for key in (
             "category",
@@ -229,9 +228,7 @@ class SGBCAPARSER:
                 metadata[key] = value
         return metadata
 
-    def _extract_external_id(
-        self, payload: dict, *, strict: bool = True
-    ) -> str | None:
+    def _extract_external_id(self, payload: dict, *, strict: bool = True) -> str | None:
         for key in (
             "circular_no",
             "circular_number",

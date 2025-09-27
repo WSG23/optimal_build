@@ -288,7 +288,7 @@ def _normalise_overlays(
 
 
 def _group_by_layer(
-    features: Iterable[Dict[str, Any]]
+    features: Iterable[Dict[str, Any]],
 ) -> Dict[str, List[Dict[str, Any]]]:
     grouped: Dict[str, List[Dict[str, Any]]] = {}
     for feature in features:

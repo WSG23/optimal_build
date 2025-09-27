@@ -1,4 +1,5 @@
 """Mapping utilities for canonical regulations."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -51,7 +52,7 @@ def _parse_simple_yaml(contents: str) -> Dict:
         if indent == 2 and stripped.endswith(":"):
             current_key = stripped[:-1]
             current_section[current_key] = {}
-        elif indent == 4 and stripped.startswith("keywords:" ):
+        elif indent == 4 and stripped.startswith("keywords:"):
             current_section.setdefault(current_key or "", {})["keywords"] = []
         elif indent == 6 and stripped.startswith("- "):
             if current_key is None:
@@ -64,7 +65,9 @@ def _parse_simple_yaml(contents: str) -> Dict:
             if current_key is None:
                 continue
             field, value = stripped.split(":", 1)
-            current_section.setdefault(current_key, {})[field.strip()] = value.strip().strip('"')
+            current_section.setdefault(current_key, {})[
+                field.strip()
+            ] = value.strip().strip('"')
     return result
 
 
@@ -88,7 +91,9 @@ def merge_mappings(global_map: Dict, override_map: Dict) -> Dict:
     return merged
 
 
-def apply_mapping(definition: Dict, regulations: Iterable[CanonicalReg]) -> List[CanonicalReg]:
+def apply_mapping(
+    definition: Dict, regulations: Iterable[CanonicalReg]
+) -> List[CanonicalReg]:
     """Apply keyword-based mapping rules to the provided regulations."""
 
     categories = definition.get("categories", {})

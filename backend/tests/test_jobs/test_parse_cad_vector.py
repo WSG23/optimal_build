@@ -128,8 +128,8 @@ async def test_parse_job_uses_vector_payload(
             assert refreshed.parse_result["units"] == len(graph["spaces"])
 
             overlay_record = (
-                await session.execute(select(OverlaySourceGeometry))
-            ).scalars().one()
+                (await session.execute(select(OverlaySourceGeometry))).scalars().one()
+            )
             metadata = refreshed.parse_result["metadata"]
             assert metadata["source"] == "vector_payload"
             assert metadata["overlay_source_id"] == overlay_record.id

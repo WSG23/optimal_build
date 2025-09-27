@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+
 class TemplateError(RuntimeError):
     """Fallback template error type."""
+
 
 class TemplateLookupException(TemplateError):
     """Raised when a template cannot be located."""

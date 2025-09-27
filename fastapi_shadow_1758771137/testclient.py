@@ -42,14 +42,23 @@ class TestClient:
         path, query = self._split_url(url)
         query_params = dict(params or {})
         if query and not query_params:
-            query_params.update({key: value[0] if len(value) == 1 else value for key, value in self._parse_query(query).items()})
+            query_params.update(
+                {
+                    key: value[0] if len(value) == 1 else value
+                    for key, value in self._parse_query(query).items()
+                }
+            )
         prepared_files = {}
         if files:
             for key, (filename, payload, content_type) in files.items():
                 data_bytes = payload.read() if hasattr(payload, "read") else payload
                 prepared_files[key] = (
                     filename,
-                    data_bytes if isinstance(data_bytes, (bytes, bytearray)) else str(data_bytes).encode("utf-8"),
+                    (
+                        data_bytes
+                        if isinstance(data_bytes, (bytes, bytearray))
+                        else str(data_bytes).encode("utf-8")
+                    ),
                     content_type or "application/octet-stream",
                 )
 
@@ -92,7 +101,9 @@ class TestClient:
         data: Optional[Mapping[str, Any]] = None,
         files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
     ) -> _SyncResponse:
-        return self.request("POST", url, headers=headers, json=json, data=data, files=files)
+        return self.request(
+            "POST", url, headers=headers, json=json, data=data, files=files
+        )
 
     def put(
         self,
@@ -122,7 +133,9 @@ class TestClient:
         return parsed.path or "/", parsed.query
 
     @staticmethod
-    def _parse_query(query: str) -> dict[str, list[str]]:  # pragma: no cover - defensive fallback
+    def _parse_query(
+        query: str,
+    ) -> dict[str, list[str]]:  # pragma: no cover - defensive fallback
         parts: dict[str, list[str]] = {}
         for chunk in filter(None, query.split("&")):
             if "=" in chunk:

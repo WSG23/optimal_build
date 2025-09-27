@@ -51,9 +51,9 @@ async def list_documents(
             "source_id": document.source_id,
             "version_label": document.version_label,
             "storage_path": document.storage_path,
-            "retrieved_at": document.retrieved_at.isoformat()
-            if document.retrieved_at
-            else None,
+            "retrieved_at": (
+                document.retrieved_at.isoformat() if document.retrieved_at else None
+            ),
         }
         for document in result.scalars().all()
     ]

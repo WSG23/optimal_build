@@ -1,4 +1,5 @@
 """CLI entry point for ingesting jurisdiction regulations."""
+
 from __future__ import annotations
 
 import argparse
@@ -68,7 +69,9 @@ def upsert_regulations(
 ) -> None:
     """Upsert regulations and provenance into the database."""
 
-    provenance_by_ext: Dict[str, List[canonical_models.ProvenanceRecord]] = defaultdict(list)
+    provenance_by_ext: Dict[str, List[canonical_models.ProvenanceRecord]] = defaultdict(
+        list
+    )
     for record in provenance_records:
         provenance_by_ext[record.regulation_external_id].append(record)
 
@@ -108,10 +111,8 @@ def upsert_regulations(
             matched_provenance = session.execute(
                 select(canonical_models.ProvenanceORM).where(
                     canonical_models.ProvenanceORM.regulation_id == existing.id,
-                    canonical_models.ProvenanceORM.source_uri
-                    == provenance.source_uri,
-                    canonical_models.ProvenanceORM.content_checksum
-                    == content_checksum,
+                    canonical_models.ProvenanceORM.source_uri == provenance.source_uri,
+                    canonical_models.ProvenanceORM.content_checksum == content_checksum,
                 )
             ).scalar_one_or_none()
 
@@ -120,13 +121,8 @@ def upsert_regulations(
                 if matched_provenance.fetched_at != provenance.fetched_at:
                     matched_provenance.fetched_at = provenance.fetched_at
                     updated_fields.append("fetched_at")
-                if (
-                    matched_provenance.fetch_parameters
-                    != provenance.fetch_parameters
-                ):
-                    matched_provenance.fetch_parameters = (
-                        provenance.fetch_parameters
-                    )
+                if matched_provenance.fetch_parameters != provenance.fetch_parameters:
+                    matched_provenance.fetch_parameters = provenance.fetch_parameters
                     updated_fields.append("fetch_parameters")
                 if matched_provenance.raw_content != provenance.raw_content:
                     matched_provenance.raw_content = provenance.raw_content
@@ -147,15 +143,19 @@ def upsert_regulations(
                     )
                 continue
 
-            latest_provenance = session.execute(
-                select(canonical_models.ProvenanceORM)
-                .where(
-                    canonical_models.ProvenanceORM.regulation_id == existing.id,
-                    canonical_models.ProvenanceORM.source_uri
-                    == provenance.source_uri,
+            latest_provenance = (
+                session.execute(
+                    select(canonical_models.ProvenanceORM)
+                    .where(
+                        canonical_models.ProvenanceORM.regulation_id == existing.id,
+                        canonical_models.ProvenanceORM.source_uri
+                        == provenance.source_uri,
+                    )
+                    .order_by(canonical_models.ProvenanceORM.fetched_at.desc())
                 )
-                .order_by(canonical_models.ProvenanceORM.fetched_at.desc())
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
 
             previous_checksum = (
                 latest_provenance.content_checksum

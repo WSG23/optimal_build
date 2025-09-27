@@ -43,7 +43,9 @@ class TimeStamper:
         return event_dict
 
 
-def StackInfoRenderer() -> Callable[[logging.Logger, str, MutableMapping[str, Any]], MutableMapping[str, Any]]:
+def StackInfoRenderer() -> (
+    Callable[[logging.Logger, str, MutableMapping[str, Any]], MutableMapping[str, Any]]
+):
     """Return a renderer compatible with the real structlog API."""
 
     def _renderer(

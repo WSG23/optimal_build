@@ -23,8 +23,12 @@ class TypeDecorator:
 
     cache_ok = False
 
-    def process_bind_param(self, value: Any, dialect: Any) -> Any:  # noqa: D401 - default passthrough
+    def process_bind_param(
+        self, value: Any, dialect: Any
+    ) -> Any:  # noqa: D401 - default passthrough
         return value
 
-    def process_result_value(self, value: Any, dialect: Any) -> Any:  # noqa: D401 - default passthrough
+    def process_result_value(
+        self, value: Any, dialect: Any
+    ) -> Any:  # noqa: D401 - default passthrough
         return value

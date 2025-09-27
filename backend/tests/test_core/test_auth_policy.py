@@ -58,8 +58,14 @@ def test_requires_signoff(role, expected, approved_signoff):
         (WorkspaceRole.ARCHITECT, "approved", True),
     ],
 )
-def test_can_export_permit_ready(role, signoff, expected, approved_signoff, pending_signoff):
-    snapshot = approved_signoff if signoff == "approved" else pending_signoff if signoff else None
+def test_can_export_permit_ready(
+    role, signoff, expected, approved_signoff, pending_signoff
+):
+    snapshot = (
+        approved_signoff
+        if signoff == "approved"
+        else pending_signoff if signoff else None
+    )
     context = PolicyContext(role=role, signoff=snapshot)
     assert can_export_permit_ready(context) is expected
 
@@ -74,7 +80,11 @@ def test_can_export_permit_ready(role, signoff, expected, approved_signoff, pend
     ],
 )
 def test_watermark_policies(role, signoff, forced, approved_signoff, pending_signoff):
-    snapshot = approved_signoff if signoff == "approved" else pending_signoff if signoff else None
+    snapshot = (
+        approved_signoff
+        if signoff == "approved"
+        else pending_signoff if signoff else None
+    )
     context = PolicyContext(role=role, signoff=snapshot)
     assert watermark_forced(context) is forced
     if forced:
@@ -84,6 +94,8 @@ def test_watermark_policies(role, signoff, forced, approved_signoff, pending_sig
 
 
 def test_can_invite_architect_only_developer(approved_signoff):
-    assert can_invite_architect(PolicyContext(role=WorkspaceRole.DEVELOPER, signoff=approved_signoff))
+    assert can_invite_architect(
+        PolicyContext(role=WorkspaceRole.DEVELOPER, signoff=approved_signoff)
+    )
     assert not can_invite_architect(PolicyContext(role=WorkspaceRole.AGENCY))
     assert not can_invite_architect(PolicyContext(role=WorkspaceRole.ARCHITECT))

@@ -27,7 +27,9 @@ def evaluate_export(request: ExportRequest, context: PolicyContext) -> ExportDec
         return ExportDecision(allowed=True)
     role = context.role
     if role == WorkspaceRole.AGENCY:
-        return ExportDecision(allowed=False, reason="Agency exports cannot be permit-ready")
+        return ExportDecision(
+            allowed=False, reason="Agency exports cannot be permit-ready"
+        )
     if role == WorkspaceRole.DEVELOPER:
         return ExportDecision(
             allowed=False,

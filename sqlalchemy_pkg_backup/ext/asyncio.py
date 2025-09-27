@@ -42,7 +42,9 @@ class AsyncSession:
         result = await self.execute(statement, *args, **kwargs)
         return result.scalar_one_or_none()
 
-    async def flush(self) -> None:  # noqa: D401 - the in-memory store writes immediately
+    async def flush(
+        self,
+    ) -> None:  # noqa: D401 - the in-memory store writes immediately
         return None
 
     async def commit(self) -> None:
@@ -131,7 +133,9 @@ class _AsyncSessionmaker:
     def __getitem__(self, _item: Any) -> "_AsyncSessionmaker":
         return self
 
-    def __call__(self, *args: Any, bind: AsyncEngine | None = None, **kwargs: Any) -> _AsyncSessionFactory:
+    def __call__(
+        self, *args: Any, bind: AsyncEngine | None = None, **kwargs: Any
+    ) -> _AsyncSessionFactory:
         engine = bind
         if engine is None and args:
             engine = args[0]
@@ -145,4 +149,3 @@ async_sessionmaker = _AsyncSessionmaker()
 
 def create_async_engine(*args: Any, **kwargs: Any) -> AsyncEngine:
     return AsyncEngine()
-

@@ -22,7 +22,9 @@ def test_non_permit_ready_requests_always_allowed():
 
 
 def test_developer_requires_signoff_for_permit_ready():
-    context = PolicyContext(role=WorkspaceRole.DEVELOPER, signoff=build_signoff("pending"))
+    context = PolicyContext(
+        role=WorkspaceRole.DEVELOPER, signoff=build_signoff("pending")
+    )
     request = ExportRequest(project_id=1, overlay_version="v1", permit_ready=True)
     decision = evaluate_export(request, context)
     assert not decision.allowed
@@ -38,7 +40,9 @@ def test_architect_with_signoff_is_allowed():
 
 
 def test_agency_never_permit_ready():
-    context = PolicyContext(role=WorkspaceRole.AGENCY, signoff=build_signoff("approved"))
+    context = PolicyContext(
+        role=WorkspaceRole.AGENCY, signoff=build_signoff("approved")
+    )
     request = ExportRequest(project_id=1, overlay_version="v1", permit_ready=True)
     decision = evaluate_export(request, context)
     assert not decision.allowed

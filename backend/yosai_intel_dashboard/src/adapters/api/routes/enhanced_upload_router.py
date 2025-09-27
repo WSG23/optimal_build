@@ -124,7 +124,9 @@ class ComplianceAuditLogger:
 class EnhancedUploadAuditRecord(BaseModel):
     """Payload accepted by the audit endpoint."""
 
-    actor: str | None = Field(default=None, description="Identity triggering the upload")
+    actor: str | None = Field(
+        default=None, description="Identity triggering the upload"
+    )
     filename: str | None = Field(default=None, description="Uploaded file name")
     status: str = Field(description="Outcome of the upload workflow")
     payload: MutableMapping[str, Any] | None = Field(

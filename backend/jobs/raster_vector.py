@@ -450,7 +450,9 @@ def _vectorize_bitmap_image(
                 offset = y * width
                 row_values = data[offset : offset + width]
                 binary.append([value <= threshold for value in row_values])
-            walls = _detect_walls_from_binary(binary, float(width), float(height), options)
+            walls = _detect_walls_from_binary(
+                binary, float(width), float(height), options
+            )
 
     return RasterVectorResult(
         paths=[], walls=walls, bounds=bounds, source=source, options=options

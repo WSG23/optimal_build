@@ -20,26 +20,36 @@ def _reload_router_module() -> None:
     importlib.import_module(MODULE_PATH)
 
 
-def test_router_import_does_not_touch_read_only_filesystem(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_router_import_does_not_touch_read_only_filesystem(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Importing the router must not attempt filesystem writes."""
 
     monkeypatch.delenv("ENHANCED_UPLOAD_AUDIT_DB", raising=False)
     monkeypatch.delenv("ENHANCED_UPLOAD_AUDIT_DIR", raising=False)
 
-    def _fail_write_bytes(self: Path, data: bytes) -> None:  # pragma: no cover - defensive
+    def _fail_write_bytes(
+        self: Path, data: bytes
+    ) -> None:  # pragma: no cover - defensive
         raise PermissionError("Filesystem is read-only")
 
     monkeypatch.setattr(Path, "write_bytes", _fail_write_bytes, raising=True)
 
-    def _fail_connect(*_args, **_kwargs) -> sqlite3.Connection:  # pragma: no cover - defensive
-        raise AssertionError("sqlite3.connect should not be invoked during module import")
+    def _fail_connect(
+        *_args, **_kwargs
+    ) -> sqlite3.Connection:  # pragma: no cover - defensive
+        raise AssertionError(
+            "sqlite3.connect should not be invoked during module import"
+        )
 
     monkeypatch.setattr(sqlite3, "connect", _fail_connect)
 
     _reload_router_module()
 
 
-@pytest.mark.parametrize("env_var", ["ENHANCED_UPLOAD_AUDIT_DB", "ENHANCED_UPLOAD_AUDIT_DIR"])
+@pytest.mark.parametrize(
+    "env_var", ["ENHANCED_UPLOAD_AUDIT_DB", "ENHANCED_UPLOAD_AUDIT_DIR"]
+)
 def test_audit_records_persist_to_configured_location(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env_var: str
 ) -> None:
@@ -64,7 +74,11 @@ def test_audit_records_persist_to_configured_location(
 
     resolved = module.resolve_audit_db_path()
     assert resolved.exists()
-    assert resolved == db_path if env_var.endswith("_DB") else db_dir / "enhanced_upload_audit.db"
+    assert (
+        resolved == db_path
+        if env_var.endswith("_DB")
+        else db_dir / "enhanced_upload_audit.db"
+    )
 
     with sqlite3.connect(resolved) as connection:
         connection.row_factory = sqlite3.Row
@@ -78,4 +92,3 @@ def test_audit_records_persist_to_configured_location(
     assert json.loads(row["payload"]) == {"project_id": 42}
 
     module.reset_audit_logger_cache()
-

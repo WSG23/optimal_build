@@ -296,10 +296,14 @@ class SelectStatement:
     def options(self, *args: Any, **kwargs: Any) -> "SelectStatement":  # noqa: D401
         return self
 
-    def join(self, *args: Any, **kwargs: Any) -> "SelectStatement":  # pragma: no cover - unused
+    def join(
+        self, *args: Any, **kwargs: Any
+    ) -> "SelectStatement":  # pragma: no cover - unused
         return self
 
-    def outerjoin(self, *args: Any, **kwargs: Any) -> "SelectStatement":  # pragma: no cover - unused
+    def outerjoin(
+        self, *args: Any, **kwargs: Any
+    ) -> "SelectStatement":  # pragma: no cover - unused
         return self
 
     def _apply(self, database: "InMemoryDatabase") -> List[Any]:
@@ -434,7 +438,9 @@ class InMemoryDatabase:
     def add(self, instance: Any) -> None:
         model = type(instance)
         if model not in self._data:
-            self.register_model(model, getattr(model, "__tablename__", model.__name__.lower()))
+            self.register_model(
+                model, getattr(model, "__tablename__", model.__name__.lower())
+            )
         pk_name = getattr(model, "__primary_key__", None)
         if pk_name:
             pk_value = getattr(instance, pk_name, None)
@@ -491,10 +497,11 @@ def register_column(model: type, name: str, column: ColumnDescriptor) -> None:
     GLOBAL_DATABASE.register_column(model, column)
 
 
-def register_relationship(model: type, name: str, descriptor: RelationshipDescriptor) -> None:
+def register_relationship(
+    model: type, name: str, descriptor: RelationshipDescriptor
+) -> None:
     relationships = getattr(model, "__relationships__", None)
     if relationships is None:
         relationships = {}
         setattr(model, "__relationships__", relationships)
     relationships[name] = descriptor
-

@@ -114,7 +114,9 @@ class Index:
 class _Text:
     statement: str
 
-    def bindparams(self, *args: Any, **kwargs: Any) -> "_Text":  # noqa: D401 - passthrough
+    def bindparams(
+        self, *args: Any, **kwargs: Any
+    ) -> "_Text":  # noqa: D401 - passthrough
         return self
 
 
@@ -133,7 +135,9 @@ def text(statement: str) -> TextClause:
 class _FunctionCall:
     """Placeholder object representing ``func.<name>(...)`` expressions."""
 
-    def __init__(self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
+    def __init__(
+        self, name: str, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> None:
         self.name = name
         self.args = args
         self.kwargs = kwargs
@@ -154,7 +158,9 @@ class _FuncProxy:
     def __getattr__(self, name: str) -> _SQLFunction:  # noqa: D401 - factory proxy
         return _SQLFunction(name)
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover - defensive
+    def __call__(
+        self, *args: Any, **kwargs: Any
+    ) -> Any:  # pragma: no cover - defensive
         raise RuntimeError("SQL function objects cannot be called directly")
 
 
@@ -187,4 +193,3 @@ def __getattr__(name: str) -> Any:
         _DYNAMIC_TYPES[name] = placeholder
         return placeholder
     raise AttributeError(f"module 'sqlalchemy' has no attribute {name!r}")
-

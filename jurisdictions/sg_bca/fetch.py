@@ -7,6 +7,7 @@ exposes a small amount of operational configuration that can be driven via
 environment variables.  See ``README.md`` in this package for deployment
 guidance.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -73,9 +74,7 @@ class FetchConfig:
             max_retries=int(env.get("SG_BCA_MAX_RETRIES", cls.max_retries)),
             backoff_factor=float(env.get("SG_BCA_BACKOFF_FACTOR", cls.backoff_factor)),
             rate_limit_per_minute=(
-                int(rate)
-                if (rate := env.get("SG_BCA_RATE_LIMIT_PER_MINUTE"))
-                else None
+                int(rate) if (rate := env.get("SG_BCA_RATE_LIMIT_PER_MINUTE")) else None
             ),
             user_agent=env.get("SG_BCA_USER_AGENT", cls.user_agent),
             date_field=env.get("SG_BCA_DATE_FIELD", cls.date_field),
@@ -111,7 +110,9 @@ class Fetcher:
         records: List[ProvenanceRecord] = []
 
         self._logger.info(
-            "sg_bca.fetch.start", since=since.isoformat(), resource=self.config.resource_id
+            "sg_bca.fetch.start",
+            since=since.isoformat(),
+            resource=self.config.resource_id,
         )
 
         with self._create_client() as client:
@@ -183,7 +184,9 @@ class Fetcher:
                     received=len((payload.get("result") or {}).get("records", [])),
                 )
                 return payload
-            except Exception as exc:  # pragma: no cover - specific exceptions depend on httpx
+            except (
+                Exception
+            ) as exc:  # pragma: no cover - specific exceptions depend on httpx
                 last_exc = exc
                 wait_time = self.config.backoff_factor * (2 ** (attempt - 1))
                 self._logger.warning(
@@ -252,9 +255,7 @@ class Fetcher:
         issued_at = self._parse_datetime(issued_raw)
         external_id = self._coerce_str(row.get(self.config.external_id_field))
         if not external_id:
-            self._logger.warning(
-                "sg_bca.fetch.row_missing_external_id", row=row
-            )
+            self._logger.warning("sg_bca.fetch.row_missing_external_id", row=row)
             return {}
         return {"issued_at": issued_at, "external_id": external_id}
 

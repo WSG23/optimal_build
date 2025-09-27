@@ -89,4 +89,3 @@ class _LoaderOption:
 
 def selectinload(*args: Any, **kwargs: Any) -> _LoaderOption:  # noqa: D401
     return _LoaderOption("selectinload")
-

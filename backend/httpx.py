@@ -33,7 +33,9 @@ def _get_test_client() -> Any:
 
         try:
             from fastapi.testclient import TestClient  # type: ignore[assignment]
-        except Exception:  # pragma: no cover - propagate meaningful error if fully unavailable
+        except (
+            Exception
+        ):  # pragma: no cover - propagate meaningful error if fully unavailable
             _TEST_CLIENT_UNAVAILABLE = True
             return None
     _TEST_CLIENT = TestClient
@@ -115,7 +117,11 @@ class _StubAsyncClient:
                     content = content.encode("utf-8")
                 prepared_files[key] = (
                     filename,
-                    content if isinstance(content, (bytes, bytearray)) else bytes(content),
+                    (
+                        content
+                        if isinstance(content, (bytes, bytearray))
+                        else bytes(content)
+                    ),
                     content_type or "application/octet-stream",
                 )
 
@@ -152,7 +158,9 @@ class _StubAsyncClient:
             body = _json_bytes(json)
         if prepared_headers:
             for key, value in prepared_headers.items():
-                scope["headers"].append((key.encode("utf-8"), str(value).encode("utf-8")))
+                scope["headers"].append(
+                    (key.encode("utf-8"), str(value).encode("utf-8"))
+                )
         else:
             scope["headers"].append((b"host", self.base_url.encode("utf-8")))
         if not any(key == b"host" for key, _ in scope["headers"]):
@@ -186,9 +194,7 @@ class _StubAsyncClient:
         for message in sent_messages:
             if message["type"] == "http.response.start":
                 status_code = message.get("status", 500)
-                raw_headers: Iterable[tuple[bytes, bytes]] = message.get(
-                    "headers", []
-                )
+                raw_headers: Iterable[tuple[bytes, bytes]] = message.get("headers", [])
                 resp_headers = {
                     key.decode("utf-8").lower(): value.decode("utf-8")
                     for key, value in raw_headers

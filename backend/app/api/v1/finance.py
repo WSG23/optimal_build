@@ -339,9 +339,9 @@ async def run_finance_feasibility(
             irr_raw = calculator.irr(cash_inputs.cash_flows)
             irr_value = irr_raw.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         except ValueError:
-            irr_metadata[
-                "warning"
-            ] = "IRR could not be computed for the provided cash flows"
+            irr_metadata["warning"] = (
+                "IRR could not be computed for the provided cash flows"
+            )
 
         dscr_entries: List[DscrEntrySchema] = []
         dscr_metadata: dict[str, List[dict[str, object]]] = {}

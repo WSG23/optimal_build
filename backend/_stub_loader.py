@@ -99,7 +99,9 @@ def _load_runtime_distribution(package: str, friendly_name: str) -> ModuleType:
     return module
 
 
-def load_optional_package(module_name: str, package: str, friendly_name: str) -> ModuleType:
+def load_optional_package(
+    module_name: str, package: str, friendly_name: str
+) -> ModuleType:
     """Load either the in-repo stub or the installed distribution.
 
     This allows test fixtures to run even when contributors rely on the real

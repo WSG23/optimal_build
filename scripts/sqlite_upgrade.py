@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+
 def _ensure_sqlite_directory(database_url: str) -> None:
     url = make_url(database_url)
     if url.drivername.startswith("sqlite"):
@@ -44,7 +45,9 @@ async def apply_migrations(database_url: str) -> None:
 def main() -> None:
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
-        fallback = os.environ.get("DEV_SQLITE_URL") or "sqlite+aiosqlite:///" + str(ROOT / ".devstack" / "app.db")
+        fallback = os.environ.get("DEV_SQLITE_URL") or "sqlite+aiosqlite:///" + str(
+            ROOT / ".devstack" / "app.db"
+        )
         database_url = fallback
     asyncio.run(apply_migrations(database_url))
 

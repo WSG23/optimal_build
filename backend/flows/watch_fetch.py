@@ -30,6 +30,7 @@ from prefect import flow
 
 if importlib.util.find_spec("sqlalchemy") is None:  # pragma: no cover - stub fallback
     import app as _app_for_sqlalchemy_stub  # noqa: F401  pylint: disable=unused-import
+
     importlib.import_module("sqlalchemy")
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker

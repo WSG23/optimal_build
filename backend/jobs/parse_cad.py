@@ -312,9 +312,11 @@ def _extract_ifc_layer_metadata(
             {
                 "name": candidate,
                 "item_count": len(assigned_items),
-                "type": assignment.is_a()
-                if hasattr(assignment, "is_a")
-                else "IfcPresentationLayerAssignment",
+                "type": (
+                    assignment.is_a()
+                    if hasattr(assignment, "is_a")
+                    else "IfcPresentationLayerAssignment"
+                ),
             }
         )
     return metadata
@@ -345,9 +347,9 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
                 "id": level_id,
                 "name": floor_name,
                 "elevation": elevation,
-                "metadata": {"ifc_type": storey.is_a()}
-                if hasattr(storey, "is_a")
-                else {},
+                "metadata": (
+                    {"ifc_type": storey.is_a()} if hasattr(storey, "is_a") else {}
+                ),
             }
         )
 
@@ -650,7 +652,12 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
         }
 
     builder.add_level(
-        {"id": level_id, "name": level_name, "elevation": 0.0, "metadata": level_metadata}
+        {
+            "id": level_id,
+            "name": level_name,
+            "elevation": 0.0,
+            "metadata": level_metadata,
+        }
     )
 
     wall_ids: List[str] = []

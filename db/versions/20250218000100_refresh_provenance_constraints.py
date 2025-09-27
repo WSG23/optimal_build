@@ -1,4 +1,5 @@
 """Refresh provenance dedupe constraints."""
+
 from __future__ import annotations
 
 from alembic import op

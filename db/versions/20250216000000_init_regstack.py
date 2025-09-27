@@ -1,4 +1,5 @@
 """Initial schema for Regstack."""
+
 from __future__ import annotations
 
 from alembic import op
@@ -49,7 +50,9 @@ def upgrade() -> None:
         sa.Column("regulation_id", sa.Integer, nullable=False),
         sa.Column("mapping_type", sa.String(length=100), nullable=False),
         sa.Column("payload", sa.JSON(), nullable=False),
-        sa.ForeignKeyConstraint(["regulation_id"], ["regulations.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["regulation_id"], ["regulations.id"], ondelete="CASCADE"
+        ),
     )
 
     op.create_table(
@@ -65,7 +68,9 @@ def upgrade() -> None:
         ),
         sa.Column("fetch_parameters", sa.JSON(), nullable=False),
         sa.Column("raw_content", sa.Text, nullable=False),
-        sa.ForeignKeyConstraint(["regulation_id"], ["regulations.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["regulation_id"], ["regulations.id"], ondelete="CASCADE"
+        ),
     )
 
     bind = op.get_bind()

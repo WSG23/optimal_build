@@ -1,4 +1,5 @@
 """Alembic environment configuration for Regstack."""
+
 from __future__ import annotations
 
 from logging.config import fileConfig

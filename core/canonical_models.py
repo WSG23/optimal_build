@@ -1,4 +1,5 @@
 """Canonical data models for jurisdictions and regulations."""
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -125,7 +126,9 @@ class ProvenanceORM(RegstackBase):
     raw_content: Mapped[str] = mapped_column(Text, nullable=False)
     content_checksum: Mapped[str] = mapped_column(String(length=64), nullable=False)
 
-    regulation: Mapped[RegulationORM] = relationship(back_populates="provenance_entries")
+    regulation: Mapped[RegulationORM] = relationship(
+        back_populates="provenance_entries"
+    )
 
 
 class CanonicalJurisdiction(BaseModel):

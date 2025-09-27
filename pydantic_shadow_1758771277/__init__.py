@@ -92,7 +92,6 @@ def Field(
     default_factory: Optional[Callable[[], Any]] = None,
     description: Optional[str] = None,
     **kwargs: Any,
-
 ) -> FieldInfo:
     """Return metadata describing a model field."""
 
@@ -133,7 +132,11 @@ def _build_field(type_annotation: Any, field: FieldInfo) -> FieldInfo:
         extra=dict(field.extra or {}),
     )
     field.annotation = type_annotation
-    field.required = field.default is Undefined and field.default_factory is None and not _is_optional(type_annotation)
+    field.required = (
+        field.default is Undefined
+        and field.default_factory is None
+        and not _is_optional(type_annotation)
+    )
     return field
 
 
@@ -198,8 +201,9 @@ def _convert_value(value: Any, annotation: Any) -> Any:
         if not isinstance(value, dict):
             raise ValidationError("dictionary required")
         return {
-            _convert_value(key, key_type) if key_type is not Any else key:
-            _convert_value(item, value_type) if value_type is not Any else item
+            _convert_value(key, key_type) if key_type is not Any else key: (
+                _convert_value(item, value_type) if value_type is not Any else item
+            )
             for key, item in value.items()
         }
 
@@ -226,7 +230,9 @@ def _apply_field_validators(
     return value
 
 
-def _apply_model_validators(cls: Type["BaseModel"], instance: "BaseModel") -> "BaseModel":
+def _apply_model_validators(
+    cls: Type["BaseModel"], instance: "BaseModel"
+) -> "BaseModel":
     for validator in cls.__model_validators__:
         result = validator(cls, instance)
         if isinstance(result, cls):
@@ -265,7 +271,9 @@ class BaseModelMeta(type):
             fields[field_name] = _build_field(annotation, field_info)
 
         field_validators: Dict[str, list[Callable[[Type["BaseModel"], Any], Any]]] = {}
-        model_validators: list[Callable[[Type["BaseModel"], "BaseModel"], "BaseModel"]] = []
+        model_validators: list[
+            Callable[[Type["BaseModel"], "BaseModel"], "BaseModel"]
+        ] = []
 
         for attr_name, attr_value in list(namespace.items()):
             func = None
@@ -388,10 +396,7 @@ class BaseModel(metaclass=BaseModelMeta):
                 if name in provided
             )
         else:
-            items = (
-                (name, getattr(self, name))
-                for name in self.model_fields
-            )
+            items = ((name, getattr(self, name)) for name in self.model_fields)
         return {name: _dump_value(value, mode) for name, value in items}
 
     def __repr__(self) -> str:  # pragma: no cover - human-readable convenience
@@ -414,18 +419,24 @@ def _dump_value(value: Any, mode: str) -> Any:
     return value
 
 
-def field_validator(*fields: str, mode: str = "after") -> Callable[[Callable[..., Any]], classmethod]:
+def field_validator(
+    *fields: str, mode: str = "after"
+) -> Callable[[Callable[..., Any]], classmethod]:
     """Decorator registering a field level validator."""
 
     def decorator(func: Callable[..., Any]) -> classmethod:
         underlying = func.__func__ if isinstance(func, classmethod) else func
-        setattr(underlying, "__pydantic_field_validator__", {"fields": fields, "mode": mode})
+        setattr(
+            underlying, "__pydantic_field_validator__", {"fields": fields, "mode": mode}
+        )
         return classmethod(underlying)
 
     return decorator
 
 
-def model_validator(*, mode: str = "after") -> Callable[[Callable[..., Any]], classmethod]:
+def model_validator(
+    *, mode: str = "after"
+) -> Callable[[Callable[..., Any]], classmethod]:
     """Decorator registering a model level validator."""
 
     def decorator(func: Callable[..., Any]) -> classmethod:

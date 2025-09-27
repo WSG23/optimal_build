@@ -11,6 +11,7 @@ from typing import Any, cast
 
 if importlib.util.find_spec("sqlalchemy") is None:
     import app as _app_for_sqlalchemy_stub  # noqa: F401  pylint: disable=unused-import
+
     importlib.import_module("sqlalchemy")
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent

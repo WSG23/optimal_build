@@ -31,7 +31,9 @@ else:
     class Response:
         """Minimal HTTP response object."""
 
-        def __init__(self, status_code: int, body: bytes, headers: Dict[str, str]) -> None:
+        def __init__(
+            self, status_code: int, body: bytes, headers: Dict[str, str]
+        ) -> None:
             self.status_code = status_code
             self._body = body
             self.headers = headers
@@ -90,7 +92,9 @@ else:
         ) -> Response:
             path, query = _normalise_url(url)
             query_params = _merge_query(query, params)
-            prepared_headers = _prepare_headers(headers, json, base=self._default_headers)
+            prepared_headers = _prepare_headers(
+                headers, json, base=self._default_headers
+            )
 
             prepared_files: Dict[str, tuple[str, bytes, str]] = {}
             if files:
@@ -103,7 +107,11 @@ else:
                         content = content.encode("utf-8")
                     prepared_files[key] = (
                         filename,
-                        content if isinstance(content, (bytes, bytearray)) else bytes(content),
+                        (
+                            content
+                            if isinstance(content, (bytes, bytearray))
+                            else bytes(content)
+                        ),
                         content_type or "application/octet-stream",
                     )
 
@@ -135,13 +143,17 @@ else:
                 body = _json_bytes(json)
             if prepared_headers:
                 for key, value in prepared_headers.items():
-                    scope["headers"].append((key.encode("utf-8"), str(value).encode("utf-8")))
+                    scope["headers"].append(
+                        (key.encode("utf-8"), str(value).encode("utf-8"))
+                    )
             else:
                 scope["headers"].append((b"host", self.base_url.encode("utf-8")))
             if not any(key == b"host" for key, _ in scope["headers"]):
                 scope["headers"].append((b"host", self.base_url.encode("utf-8")))
 
-            receive_messages = [{"type": "http.request", "body": body, "more_body": False}]
+            receive_messages = [
+                {"type": "http.request", "body": body, "more_body": False}
+            ]
             sent_messages: list[dict[str, Any]] = []
 
             async def receive() -> dict[str, Any]:
@@ -161,8 +173,13 @@ else:
             for message in sent_messages:
                 if message["type"] == "http.response.start":
                     status_code = message.get("status", 500)
-                    raw_headers: Iterable[tuple[bytes, bytes]] = message.get("headers", [])
-                    headers = {key.decode("utf-8"): value.decode("utf-8") for key, value in raw_headers}
+                    raw_headers: Iterable[tuple[bytes, bytes]] = message.get(
+                        "headers", []
+                    )
+                    headers = {
+                        key.decode("utf-8"): value.decode("utf-8")
+                        for key, value in raw_headers
+                    }
                 elif message["type"] == "http.response.body":
                     payload += message.get("body", b"")
             return Response(status_code, payload, headers)
@@ -185,7 +202,9 @@ else:
             data: Optional[Dict[str, Any]] = None,
             files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
         ) -> Response:
-            return await self.request("POST", url, headers=headers, json=json, data=data, files=files)
+            return await self.request(
+                "POST", url, headers=headers, json=json, data=data, files=files
+            )
 
         async def put(
             self,

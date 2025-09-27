@@ -70,11 +70,17 @@ class Server:
             for sig in (signal.SIGINT, signal.SIGTERM):
                 try:
                     loop.add_signal_handler(sig, self._shutdown.set)
-                except (NotImplementedError, RuntimeError):  # pragma: no cover - platform specific
+                except (
+                    NotImplementedError,
+                    RuntimeError,
+                ):  # pragma: no cover - platform specific
                     pass
 
             sockets = self._server.sockets or []
-            bound = ", ".join(f"http://{sock.getsockname()[0]}:{sock.getsockname()[1]}" for sock in sockets)
+            bound = ", ".join(
+                f"http://{sock.getsockname()[0]}:{sock.getsockname()[1]}"
+                for sock in sockets
+            )
             if bound:
                 print(f"Uvicorn stub running on {bound} (Press CTRL+C to quit)")
 
@@ -90,10 +96,14 @@ class Server:
 
             loop = asyncio.get_running_loop()
             for sig in (signal.SIGINT, signal.SIGTERM):
-                with contextlib.suppress(NotImplementedError, RuntimeError):  # pragma: no cover - platform specific
+                with contextlib.suppress(
+                    NotImplementedError, RuntimeError
+                ):  # pragma: no cover - platform specific
                     loop.remove_signal_handler(sig)
 
-    async def _handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def _handle_connection(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         try:
             request = await self._read_request(reader)
             if request is None:
@@ -114,7 +124,9 @@ class Server:
         if not request_line:
             return None
         try:
-            method, target, http_version = request_line.decode("latin-1").strip().split()
+            method, target, http_version = (
+                request_line.decode("latin-1").strip().split()
+            )
         except ValueError as exc:
             raise ValueError("Malformed HTTP request line") from exc
 
@@ -176,7 +188,9 @@ class Server:
                         raise ValueError("Invalid JSON payload") from exc
                 elif "application/x-www-form-urlencoded" in content_type:
                     parsed = parse_qs(body.decode("utf-8"), keep_blank_values=True)
-                    form_data = {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
+                    form_data = {
+                        k: v[0] if len(v) == 1 else v for k, v in parsed.items()
+                    }
             status_code, response_headers, payload = await self._app.handle_request(  # type: ignore[call-arg]
                 method=request["method"],
                 path=path,
@@ -186,13 +200,21 @@ class Server:
                 files=files,
                 headers=headers,
             )
-            header_items = list(response_headers.items()) if isinstance(response_headers, Mapping) else list(response_headers)
-            normalised_headers = [(str(name), str(value)) for name, value in header_items]
+            header_items = (
+                list(response_headers.items())
+                if isinstance(response_headers, Mapping)
+                else list(response_headers)
+            )
+            normalised_headers = [
+                (str(name), str(value)) for name, value in header_items
+            ]
             return status_code, normalised_headers, payload
 
         return await self._dispatch_asgi(request, path, split.query)
 
-    async def _dispatch_asgi(self, request: _Request, path: str, query_string: str) -> _Response:
+    async def _dispatch_asgi(
+        self, request: _Request, path: str, query_string: str
+    ) -> _Response:
         body = request["body"]
         headers = [
             (
@@ -258,7 +280,10 @@ class Server:
         await self._app(scope, receive, send)  # type: ignore[misc]
 
         payload = b"".join(body_chunks)
-        header_items = [(name.decode("latin-1"), value.decode("latin-1")) for name, value in response_headers]
+        header_items = [
+            (name.decode("latin-1"), value.decode("latin-1"))
+            for name, value in response_headers
+        ]
         return status_code, header_items, payload
 
     async def _write_response(
@@ -310,10 +335,14 @@ class Server:
             elif message_type == "lifespan.shutdown.complete":
                 shutdown_event.set()
             elif message_type == "lifespan.startup.failed":
-                self._lifespan_error = RuntimeError(message.get("message", "lifespan startup failed"))
+                self._lifespan_error = RuntimeError(
+                    message.get("message", "lifespan startup failed")
+                )
                 startup_event.set()
             elif message_type == "lifespan.shutdown.failed":
-                self._lifespan_error = RuntimeError(message.get("message", "lifespan shutdown failed"))
+                self._lifespan_error = RuntimeError(
+                    message.get("message", "lifespan shutdown failed")
+                )
                 shutdown_event.set()
 
         scope = {
@@ -364,7 +393,9 @@ class Server:
         return obj
 
 
-def run(app: str | Callable[..., Any], *, host: str = "127.0.0.1", port: int = 8000) -> None:
+def run(
+    app: str | Callable[..., Any], *, host: str = "127.0.0.1", port: int = 8000
+) -> None:
     """Run the server for the supplied application."""
 
     server = Server(Config(app=app, host=host, port=port))

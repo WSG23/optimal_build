@@ -64,9 +64,11 @@ async def ingest_parsed_import_geometry(
             "filename": import_record.filename,
             "content_type": import_record.content_type,
             "size_bytes": import_record.size_bytes,
-            "uploaded_at": import_record.uploaded_at.isoformat()
-            if getattr(import_record, "uploaded_at", None)
-            else None,
+            "uploaded_at": (
+                import_record.uploaded_at.isoformat()
+                if getattr(import_record, "uploaded_at", None)
+                else None
+            ),
             "floors": payload.get("floors"),
             "units": payload.get("units"),
             "parser": parsed_metadata.get("source"),

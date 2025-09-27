@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+
 class Template:
     """Placeholder template object returning a descriptive message."""
 
-    def __init__(self, *args: object, **kwargs: object) -> None:  # pragma: no cover - trivial
+    def __init__(
+        self, *args: object, **kwargs: object
+    ) -> None:  # pragma: no cover - trivial
         self.args = args
         self.kwargs = kwargs
 

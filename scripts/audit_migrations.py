@@ -4,11 +4,16 @@ import re, sys
 root = Path("backend/migrations/versions")
 paths = sorted(root.glob("*.py"))
 
-enum_call_rx   = re.compile(r"\b(?:sa\.Enum|postgresql\.ENUM)\s*\((?P<args>.*?)\)", re.DOTALL)
-enum_name_rx   = re.compile(r"name\s*=\s*['\"]([A-Za-z_][A-Za-z0-9_]*)['\"]")
-create_false_rx= re.compile(r"create_type\s*=\s*False")
+enum_call_rx = re.compile(
+    r"\b(?:sa\.Enum|postgresql\.ENUM)\s*\((?P<args>.*?)\)", re.DOTALL
+)
+enum_name_rx = re.compile(r"name\s*=\s*['\"]([A-Za-z_][A-Za-z0-9_]*)['\"]")
+create_false_rx = re.compile(r"create_type\s*=\s*False")
 upgrade_def_rx = re.compile(r"(?m)^\s*def\s+upgrade\s*\(\s*\)\s*:\s*$")
-guard_block_rx = re.compile(r"SELECT\s+1\s+FROM\s+pg_type\s+WHERE\s+typname\s*=\s*['\"][A-Za-z_][A-Za-z0-9_]*['\"]", re.IGNORECASE)
+guard_block_rx = re.compile(
+    r"SELECT\s+1\s+FROM\s+pg_type\s+WHERE\s+typname\s*=\s*['\"][A-Za-z_][A-Za-z0-9_]*['\"]",
+    re.IGNORECASE,
+)
 
 drop_idx_rx = re.compile(r"\bop\.drop_index\s*\(")
 drop_tbl_rx = re.compile(r"\bop\.drop_table\s*\(")

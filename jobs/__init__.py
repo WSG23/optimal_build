@@ -9,4 +9,3 @@ _backend_jobs = import_module("backend.jobs")
 
 # Replace this module entry so ``import jobs`` returns ``backend.jobs`` directly.
 sys.modules[__name__] = _backend_jobs
-

@@ -114,9 +114,9 @@ async def export_project(
         media_type=artifact.media_type,
         background=BackgroundTask(stream.close),
     )
-    response.headers[
-        "Content-Disposition"
-    ] = f'attachment; filename="{artifact.filename}"'
+    response.headers["Content-Disposition"] = (
+        f'attachment; filename="{artifact.filename}"'
+    )
     renderer = artifact.manifest.get("renderer")
     if renderer:
         response.headers["X-Export-Renderer"] = str(renderer)

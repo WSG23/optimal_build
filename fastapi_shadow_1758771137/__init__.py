@@ -134,7 +134,9 @@ class StreamingResponse(Response):
         headers: Optional[Mapping[str, str]] = None,
         background: Optional[Callable[[], Awaitable[None] | None]] = None,
     ) -> None:
-        super().__init__(b"", status_code=status_code, media_type=media_type, headers=headers)
+        super().__init__(
+            b"", status_code=status_code, media_type=media_type, headers=headers
+        )
         self._stream = content
         self._background = background
 
@@ -148,13 +150,19 @@ class StreamingResponse(Response):
             payload = chunk or b""
         elif hasattr(stream, "__aiter__"):
             async for item in stream:  # pragma: no cover - rarely exercised
-                payload += item if isinstance(item, bytes) else str(item).encode("utf-8")
+                payload += (
+                    item if isinstance(item, bytes) else str(item).encode("utf-8")
+                )
         else:
             for item in stream:  # pragma: no cover - rarely exercised
-                payload += item if isinstance(item, bytes) else str(item).encode("utf-8")
+                payload += (
+                    item if isinstance(item, bytes) else str(item).encode("utf-8")
+                )
         if self._background is not None:
             result = self._background()
-            if inspect.isawaitable(result):  # pragma: no cover - optional async background
+            if inspect.isawaitable(
+                result
+            ):  # pragma: no cover - optional async background
                 await result
         return payload
 
@@ -238,10 +246,11 @@ def _build_model_example(annotation: Any) -> Any:
             if item_example is None:
                 return []
             return _normalise_example([item_example])
-        if (
-            isinstance(origin, type)
-            and issubclass(origin, MappingABC)
-        ) or origin in {dict, Dict, Mapping}:
+        if (isinstance(origin, type) and issubclass(origin, MappingABC)) or origin in {
+            dict,
+            Dict,
+            Mapping,
+        }:
             args = get_args(annotation)
             key_type = args[0] if len(args) >= 1 else str
             value_type = args[1] if len(args) >= 2 else Any
@@ -334,10 +343,11 @@ def _is_pydantic_model_type(annotation: Any) -> bool:
             and not issubclass(origin, (str, bytes))
         ) or origin in {list, set, tuple}:
             return any(_is_pydantic_model_type(arg) for arg in get_args(annotation))
-        if (
-            isinstance(origin, type)
-            and issubclass(origin, MappingABC)
-        ) or origin in {dict, Dict, Mapping}:
+        if (isinstance(origin, type) and issubclass(origin, MappingABC)) or origin in {
+            dict,
+            Dict,
+            Mapping,
+        }:
             args = get_args(annotation)
             if len(args) >= 2:
                 return _is_pydantic_model_type(args[1])
@@ -408,7 +418,9 @@ def _convert_path_value(value: str) -> str:
 class APIRouter:
     """Collects routes prior to inclusion within an application."""
 
-    def __init__(self, *, prefix: str = "", tags: Optional[Iterable[str]] = None) -> None:
+    def __init__(
+        self, *, prefix: str = "", tags: Optional[Iterable[str]] = None
+    ) -> None:
         self.prefix = prefix.rstrip("/")
         self.routes: list[_Route] = []
         self.tags = list(tags or [])
@@ -422,7 +434,9 @@ class APIRouter:
         response_model: Optional[type] = None,
         status_code: Optional[int] = None,
     ) -> None:
-        full_path = f"{self.prefix}{path}" if path.startswith("/") else f"{self.prefix}/{path}"
+        full_path = (
+            f"{self.prefix}{path}" if path.startswith("/") else f"{self.prefix}/{path}"
+        )
         route = _Route(
             full_path or "/",
             endpoint=endpoint,
@@ -457,7 +471,9 @@ class APIRouter:
         response_model: Optional[type] = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self._decorator(path, methods=["GET"], response_model=response_model, **kwargs)
+        return self._decorator(
+            path, methods=["GET"], response_model=response_model, **kwargs
+        )
 
     def post(
         self,
@@ -482,7 +498,9 @@ class APIRouter:
         response_model: Optional[type] = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        return self._decorator(path, methods=["PUT"], response_model=response_model, **kwargs)
+        return self._decorator(
+            path, methods=["PUT"], response_model=response_model, **kwargs
+        )
 
     def delete(
         self,
@@ -514,7 +532,13 @@ class APIRouter:
         **_: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
-            self.add_api_route(path, func, methods=methods, response_model=response_model, status_code=status_code)
+            self.add_api_route(
+                path,
+                func,
+                methods=methods,
+                response_model=response_model,
+                status_code=status_code,
+            )
             return func
 
         return wrapper
@@ -557,13 +581,19 @@ class FastAPI:
                 _Route(openapi_path, endpoint=_openapi_handler, methods=["GET"])
             )
 
-    def add_middleware(self, middleware_cls: Any, **options: Any) -> None:  # pragma: no cover - middleware ignored
+    def add_middleware(
+        self, middleware_cls: Any, **options: Any
+    ) -> None:  # pragma: no cover - middleware ignored
         self._middleware.append((middleware_cls, options))
 
     def include_router(self, router: APIRouter, *, prefix: str = "") -> None:
         prefix = prefix.rstrip("/")
         for route in router.routes:
-            combined_path = f"{prefix}{route.path}" if route.path.startswith("/") else f"{prefix}/{route.path}"
+            combined_path = (
+                f"{prefix}{route.path}"
+                if route.path.startswith("/")
+                else f"{prefix}/{route.path}"
+            )
             combined = _Route(
                 combined_path or "/",
                 endpoint=route.endpoint,
@@ -574,7 +604,9 @@ class FastAPI:
             self.routes.append(combined)
         self._openapi_schema = None
 
-    def get(self, path: str, *, response_model: Optional[type] = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def get(
+        self, path: str, *, response_model: Optional[type] = None
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         decorator = self.router.get(path, response_model=response_model)
 
         def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -617,7 +649,11 @@ class FastAPI:
     ) -> Tuple[int, Dict[str, str], bytes]:
         route = self._match_route(method, path)
         if route is None:
-            return status.HTTP_404_NOT_FOUND, {"content-type": "application/json"}, json.dumps({"detail": "Not Found"}).encode("utf-8")
+            return (
+                status.HTTP_404_NOT_FOUND,
+                {"content-type": "application/json"},
+                json.dumps({"detail": "Not Found"}).encode("utf-8"),
+            )
 
         try:
             header_map = {key.lower(): value for key, value in (headers or {}).items()}
@@ -676,9 +712,7 @@ class FastAPI:
                     if request_example is not None:
                         operation["requestBody"] = {
                             "content": {
-                                "application/json": {
-                                    "example": request_example
-                                }
+                                "application/json": {"example": request_example}
                             }
                         }
 
@@ -741,7 +775,9 @@ async def _execute_route(
         await _run_cleanups(cleanup_callbacks)
 
 
-async def _run_cleanups(callbacks: Iterable[Callable[[], Awaitable[None] | None]]) -> None:
+async def _run_cleanups(
+    callbacks: Iterable[Callable[[], Awaitable[None] | None]],
+) -> None:
     for callback in callbacks:
         try:
             result = callback()
@@ -775,7 +811,9 @@ async def _build_arguments(
             continue
 
         if isinstance(default, Depends):
-            dependency = app.dependency_overrides.get(default.dependency, default.dependency)
+            dependency = app.dependency_overrides.get(
+                default.dependency, default.dependency
+            )
             resolved = await _resolve_dependency(
                 app,
                 dependency,
@@ -809,14 +847,19 @@ async def _build_arguments(
         if isinstance(default, Query):
             if default.default is ...:
                 if name not in query_params:
-                    raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Missing query parameter {name}")
+                    raise HTTPException(
+                        status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        f"Missing query parameter {name}",
+                    )
             value = query_params.get(name, default.default)
             arguments[name] = _coerce_type(value, annotation)
             continue
 
         if isinstance(default, Form):
             if default.default is ... and name not in form_data:
-                raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Missing form field {name}")
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY, f"Missing form field {name}"
+                )
             value = form_data.get(name, default.default)
             arguments[name] = _coerce_type(value, annotation)
             continue
@@ -824,19 +867,29 @@ async def _build_arguments(
         if isinstance(default, File):
             if name not in files:
                 if default.default is ...:
-                    raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Missing file field {name}")
+                    raise HTTPException(
+                        status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        f"Missing file field {name}",
+                    )
                 arguments[name] = default.default
                 continue
             filename, payload, content_type = files[name]
-            arguments[name] = UploadFile(filename=filename, content_type=content_type, _data=payload)
+            arguments[name] = UploadFile(
+                filename=filename, content_type=content_type, _data=payload
+            )
             continue
 
         if json_body is not None and not body_consumed:
-            if name == "payload" or (inspect.isclass(annotation) and hasattr(annotation, "model_validate")):
+            if name == "payload" or (
+                inspect.isclass(annotation) and hasattr(annotation, "model_validate")
+            ):
                 arguments[name] = _coerce_type(json_body, annotation)
                 body_consumed = True
                 continue
-            if annotation in {dict, Mapping, Any} and parameter.default is inspect._empty:
+            if (
+                annotation in {dict, Mapping, Any}
+                and parameter.default is inspect._empty
+            ):
                 arguments[name] = json_body
                 body_consumed = True
                 continue
@@ -849,7 +902,9 @@ async def _build_arguments(
             arguments[name] = _coerce_type(query_params[name], annotation)
             continue
 
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unable to resolve parameter {name}")
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unable to resolve parameter {name}"
+        )
 
     return arguments
 
@@ -973,7 +1028,9 @@ def _convert_path_param(value: str, endpoint: Callable[..., Any], name: str) -> 
     return value
 
 
-async def _serialise_response(route: _Route, result: Any) -> Tuple[int, Dict[str, str], bytes]:
+async def _serialise_response(
+    route: _Route, result: Any
+) -> Tuple[int, Dict[str, str], bytes]:
     status_code = route.status_code or status.HTTP_200_OK
     headers: Dict[str, str] = {"content-type": "application/json"}
 
@@ -996,7 +1053,9 @@ async def _serialise_response(route: _Route, result: Any) -> Tuple[int, Dict[str
             result = route.response_model.model_validate(result)
 
     if hasattr(result, "model_dump"):
-        payload = json.dumps(result.model_dump(mode="json"), default=_json_default).encode("utf-8")
+        payload = json.dumps(
+            result.model_dump(mode="json"), default=_json_default
+        ).encode("utf-8")
     elif isinstance(result, (dict, list)):
         payload = json.dumps(result, default=_json_default).encode("utf-8")
     elif result is None:

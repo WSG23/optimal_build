@@ -79,10 +79,14 @@ class BoundLogger:
     def unbind(self, *keys: str) -> "BoundLogger":
         """Return a new logger without the specified context keys."""
 
-        new_context = {key: value for key, value in self._context.items() if key not in keys}
+        new_context = {
+            key: value for key, value in self._context.items() if key not in keys
+        }
         return BoundLogger(self.name, new_context, self._logger)
 
-    def _apply_processors(self, method_name: str, event_dict: MutableMapping[str, Any]) -> Any:
+    def _apply_processors(
+        self, method_name: str, event_dict: MutableMapping[str, Any]
+    ) -> Any:
         result: Any = event_dict
         for processor in iter_processors():
             result = processor(self._logger, method_name, result)
@@ -91,7 +95,11 @@ class BoundLogger:
     def _prepare_event(
         self, method_name: str, event: str, kwargs: MutableMapping[str, Any]
     ) -> tuple[str, Any]:
-        event_dict: MutableMapping[str, Any] = {"event": event, **self._context, **kwargs}
+        event_dict: MutableMapping[str, Any] = {
+            "event": event,
+            **self._context,
+            **kwargs,
+        }
         processed = self._apply_processors(method_name, event_dict)
         exc_info: Any | None = None
         if isinstance(processed, dict):

@@ -1,4 +1,5 @@
 """Add checksum-based dedupe constraint for provenance."""
+
 from __future__ import annotations
 
 import hashlib
@@ -28,9 +29,7 @@ def upgrade() -> None:
     metadata = sa.MetaData()
     provenance = sa.Table("provenance", metadata, autoload_with=bind)
 
-    rows = bind.execute(
-        sa.select(provenance.c.id, provenance.c.raw_content)
-    ).fetchall()
+    rows = bind.execute(sa.select(provenance.c.id, provenance.c.raw_content)).fetchall()
     for row in rows:
         checksum = _compute_checksum(row.raw_content)
         bind.execute(

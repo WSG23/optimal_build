@@ -21,8 +21,9 @@ def test_ensure_jurisdiction_uses_display_name() -> None:
     try:
         ensure_jurisdiction(session, registered.parser)
         stored = session.execute(
-            select(canonical_models.JurisdictionORM)
-            .where(canonical_models.JurisdictionORM.code == registered.parser.code)
+            select(canonical_models.JurisdictionORM).where(
+                canonical_models.JurisdictionORM.code == registered.parser.code
+            )
         ).scalar_one()
     finally:
         if hasattr(session, "close"):

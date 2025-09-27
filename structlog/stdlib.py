@@ -13,7 +13,9 @@ __all__ = ["BoundLogger", "LoggerFactory"]
 class LoggerFactory:
     """Mimic the behaviour of :class:`structlog.stdlib.LoggerFactory`."""
 
-    def __call__(self, name: str | None = None, *args: Any, **kwargs: Any) -> logging.Logger:
+    def __call__(
+        self, name: str | None = None, *args: Any, **kwargs: Any
+    ) -> logging.Logger:
         if name is None and args:
             name = args[0]
         if name is None:

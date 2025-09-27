@@ -11,6 +11,7 @@ from typing import Iterable
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_REQUIREMENTS = _REPO_ROOT / "backend" / "requirements.txt"
 
+
 def _module_exists(name: str) -> bool:
     try:
         __import__(name)
@@ -56,7 +57,9 @@ def _safe_to_install() -> bool:
 
 
 def _install_requirements(requirements: Path) -> None:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(requirements)])
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "-r", str(requirements)]
+    )
 
 
 def ensure_alembic(requirements: Path | None = None) -> None:
