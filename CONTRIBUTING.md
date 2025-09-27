@@ -1,7 +1,7 @@
 # Contributing to Optimal Build
 
 Thanks for your interest in contributing! This guide covers the basics to get
-your environment ready, keep your changes clean, and run the full suite of
+your environment ready, follow our coding standards, and run the full suite of
 checks before opening a pull request.
 
 ## Initial setup
@@ -17,28 +17,85 @@ pip install -U pip pre-commit
 pre-commit install
 ```
 
-## Before pushing changes
+If you prefer a single command that installs both Python and JavaScript
+dependencies, run `make venv` from the repository root. This target also sets
+up the `frontend` workspace and installs the configured pre-commit hooks if the
+`pre-commit` binary is available.
 
-Always run the local quality gates before you push a branch. The verify
-target executes formatting checks, linting, and the test suite in one go.
+## Coding standards
 
-```bash
-make verify
-```
+### Python
 
-If you prefer, you can run the individual commands as needed:
+- Format Python code with **Black** (`black --line-length 88`) and keep imports
+  organized through **Ruff**'s isort integration. Both tools run automatically
+  via pre-commit across the backend, application packages, scripts, and tests.
+- Address lint findings reported by **Ruff** and the targeted **Flake8** checks
+  that protect the test suites.
+- Keep type hints current—**mypy** runs against `backend/` using the
+  configuration in `backend/pyproject.toml`.
 
-```bash
-make format
-make lint
-make test
-```
+### JavaScript and TypeScript
 
-## One-time full run
+- Use **Prettier** for formatting files under `frontend/` and `ui-admin/`.
+- Resolve lint warnings flagged by **ESLint** (configured with
+  `@typescript-eslint` and the React plugins) to maintain consistent frontend
+  code quality.
 
-Run all pre-commit hooks across the repository at least once to ensure there
-are no latent issues before you start iterating.
+### Security expectations
 
-```bash
-pre-commit run --all-files
-```
+- Never commit secrets, credentials, or production data. The **gitleaks** hook
+  runs in pre-commit to detect accidental disclosures—review and resolve any
+  findings before pushing.
+- Review changes for secure defaults (e.g., input validation, authorization
+  checks) and coordinate with the maintainers if you suspect a vulnerability.
+
+## Contributor workflow
+
+1. **Create a branch.** Use a descriptive branch name such as
+   `feature/short-description` or `fix/issue-id`.
+2. **Install dependencies** following the initial setup above (or via
+   `make venv`). Ensure `pre-commit install` has been run so hooks trigger on
+   each commit.
+3. **Prime the hooks.** Run all configured hooks one time across the repo:
+
+   ```bash
+   pre-commit run --all-files
+   ```
+
+4. **Develop your change.** Keep commits focused and reference relevant issues.
+   Update documentation, configuration, and tests alongside code changes.
+5. **Run checks before pushing.** Execute the local quality gates so your PR
+   passes CI:
+
+   ```bash
+   make verify
+   ```
+
+   This target runs formatting checks, linting, and the Python tests. For
+   targeted runs you can invoke:
+
+   ```bash
+   make format
+   make lint
+   make test
+   ```
+
+   Frontend tests live under `frontend/`—run them with `npm test` when your
+   changes affect the UI.
+6. **Prepare the pull request.** Include a summary of the change, note any
+   follow-up work, and call out testing performed. Ensure CI is green before
+   requesting review.
+
+## Reviewer checklist
+
+- **Formatting and linting:** Confirm Black, Ruff, Flake8, Prettier, and ESLint
+  all run cleanly (CI should execute the corresponding pre-commit hooks).
+- **Tests:** Verify `make verify` and any targeted test suites (backend Pytest,
+  frontend `npm test`) succeed.
+- **Types:** Ensure mypy passes for backend changes and that TypeScript builds
+  without errors where applicable.
+- **Documentation:** Check that README, docs, or configuration files are
+  updated when behavior changes or new steps are required.
+- **Security:** Review gitleaks output, look for exposed secrets, and evaluate
+  the change for security impacts (authentication, authorization, sensitive
+  data handling).
