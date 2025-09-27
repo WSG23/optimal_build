@@ -64,66 +64,95 @@ def _normalise_floor(
     return {"name": name, "unit_ids": collected}
 
 
-def _detect_json_payload(
-    payload: Mapping[str, Any]
-) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
-    """Inspect a JSON payload and extract quick-look floor and unit metadata."""
+def _collect_layer_floors(
+    raw_layers: Iterable[object], seen_units: Dict[str, None]
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Return floor summaries and layer metadata for standard layer payloads."""
 
     floors: List[Dict[str, Any]] = []
-    seen_units: Dict[str, None] = {}
-    layer_metadata: List[Dict[str, Any]] = []
+    metadata: List[Dict[str, Any]] = []
+    for layer in raw_layers:
+        if not isinstance(layer, dict):
+            continue
+        metadata.append(dict(layer))
+        layer_type = str(layer.get("type", "")).lower()
+        if layer_type not in {"floor", "level", "storey", "story"}:
+            continue
+        floor_name = str(
+            layer.get("name") or layer.get("label") or layer.get("id") or "Floor"
+        )
+        unit_ids: List[str] = []
+        for unit in layer.get("units", []):
+            unit_id = _extract_unit_id(unit)
+            if unit_id is None:
+                continue
+            if unit_id not in seen_units:
+                seen_units[unit_id] = None
+            unit_ids.append(unit_id)
+        floors.append({"name": floor_name, "unit_ids": unit_ids})
+    return floors, metadata
 
-    raw_layers = payload.get("layers")
-    if isinstance(raw_layers, list):
-        for layer in raw_layers:
-            if not isinstance(layer, dict):
-                continue
-            layer_metadata.append(dict(layer))
-            layer_type = str(layer.get("type", "")).lower()
-            if layer_type not in {"floor", "level", "storey", "story"}:
-                continue
-            floor_name = str(
-                layer.get("name") or layer.get("label") or layer.get("id") or "Floor"
+
+def _collect_declared_floors(
+    raw_floors: Iterable[object], seen_units: Dict[str, None]
+) -> List[Dict[str, Any]]:
+    """Normalise free-form floor entries into predictable summaries."""
+
+    floors: List[Dict[str, Any]] = []
+    for entry in raw_floors:
+        if isinstance(entry, dict):
+            name = str(
+                entry.get("name")
+                or entry.get("label")
+                or entry.get("id")
+                or "Floor"
             )
-            unit_ids = []
-            for unit in layer.get("units", []):
+            units: List[str] = []
+            for unit in entry.get("units", []):
                 unit_id = _extract_unit_id(unit)
                 if unit_id is None:
                     continue
                 if unit_id not in seen_units:
                     seen_units[unit_id] = None
-                unit_ids.append(unit_id)
-            floors.append({"name": floor_name, "unit_ids": unit_ids})
+                units.append(unit_id)
+            floors.append({"name": name, "unit_ids": units})
+        else:
+            floors.append(_normalise_floor(name=str(entry), seen_units=seen_units))
+    return floors
+
+
+def _register_unit_ids(raw_units: Iterable[object], seen_units: Dict[str, None]) -> None:
+    """Track standalone units so they appear in the ordered summary."""
+
+    for unit in raw_units:
+        unit_id = _extract_unit_id(unit)
+        if unit_id is None or unit_id in seen_units:
+            continue
+        seen_units[unit_id] = None
+
+
+def _detect_json_payload(
+    payload: Mapping[str, Any]
+) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+    """Inspect a JSON payload and extract quick-look floor and unit metadata."""
+
+    seen_units: Dict[str, None] = {}
+    layer_metadata: List[Dict[str, Any]] = []
+    floors: List[Dict[str, Any]] = []
+
+    raw_layers = payload.get("layers")
+    if isinstance(raw_layers, list):
+        layer_floors, metadata = _collect_layer_floors(raw_layers, seen_units)
+        floors.extend(layer_floors)
+        layer_metadata.extend(metadata)
 
     raw_floors = payload.get("floors")
     if isinstance(raw_floors, list):
-        for entry in raw_floors:
-            if isinstance(entry, dict):
-                name = str(
-                    entry.get("name")
-                    or entry.get("label")
-                    or entry.get("id")
-                    or "Floor"
-                )
-                units = []
-                for unit in entry.get("units", []):
-                    unit_id = _extract_unit_id(unit)
-                    if unit_id is None:
-                        continue
-                    if unit_id not in seen_units:
-                        seen_units[unit_id] = None
-                    units.append(unit_id)
-                floors.append({"name": name, "unit_ids": units})
-            else:
-                floors.append(_normalise_floor(name=str(entry), seen_units=seen_units))
+        floors.extend(_collect_declared_floors(raw_floors, seen_units))
 
     raw_units = payload.get("units")
     if isinstance(raw_units, list):
-        for unit in raw_units:
-            unit_id = _extract_unit_id(unit)
-            if unit_id is None or unit_id in seen_units:
-                continue
-            seen_units[unit_id] = None
+        _register_unit_ids(raw_units, seen_units)
 
     ordered_units = list(seen_units.keys())
     return floors, ordered_units, layer_metadata
@@ -279,6 +308,57 @@ def _coerce_mapping_payload(value: object) -> Mapping[str, Any] | None:
     return None
 
 
+def _normalise_floor_entry(
+    index: int, entry: object, seen_units: Dict[str, None]
+) -> Dict[str, Any]:
+    """Return floor metadata, updating ``seen_units`` while normalising payloads."""
+
+    data = _coerce_mapping_payload(entry)
+    if data is None:
+        name = str(entry) if entry not in (None, "") else f"Floor {index}"
+        unit_ids: List[str] = []
+    else:
+        name = str(
+            data.get("name")
+            or data.get("label")
+            or data.get("id")
+            or f"Floor {index}"
+        )
+        raw_units = data.get("unit_ids") or data.get("units")
+        unit_ids = _normalise_units(raw_units)
+    for unit_id in unit_ids:
+        if unit_id not in seen_units:
+            seen_units[unit_id] = None
+    return {"name": name, "unit_count": len(unit_ids), "unit_ids": unit_ids}
+
+
+def _integrate_detected_units(
+    units_payload: object, seen_units: Dict[str, None]
+) -> None:
+    """Merge standalone unit identifiers into ``seen_units``."""
+
+    if isinstance(units_payload, list):
+        iterable = units_payload
+    elif units_payload in (None, ""):
+        iterable = []
+    else:
+        iterable = [units_payload]
+    for unit in iterable:
+        unit_id = _extract_unit_id(unit)
+        if unit_id and unit_id not in seen_units:
+            seen_units[unit_id] = None
+
+
+def _layer_count_from_metadata(layer_metadata: object) -> int | None:
+    """Return an integer count when layer metadata is present."""
+
+    if not layer_metadata:
+        return None
+    if isinstance(layer_metadata, list):
+        return len(layer_metadata)
+    return 1
+
+
 def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
     """Aggregate import detection metadata for downstream consumers."""
 
@@ -289,39 +369,10 @@ def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
     seen_units: Dict[str, None] = {}
 
     for index, entry in enumerate(floors_raw, start=1):
-        data = _coerce_mapping_payload(entry)
-        if data is None:
-            name = str(entry) if entry not in (None, "") else f"Floor {index}"
-            unit_ids: List[str] = []
-        else:
-            name = str(
-                data.get("name")
-                or data.get("label")
-                or data.get("id")
-                or f"Floor {index}"
-            )
-            raw_units = data.get("unit_ids") or data.get("units")
-            unit_ids = _normalise_units(raw_units)
-        for unit_id in unit_ids:
-            if unit_id not in seen_units:
-                seen_units[unit_id] = None
-        floor_breakdown.append(
-            {
-                "name": name,
-                "unit_count": len(unit_ids),
-                "unit_ids": unit_ids,
-            }
-        )
+        floor_breakdown.append(_normalise_floor_entry(index, entry, seen_units))
 
     units_raw = record.detected_units or parse_metadata.get("detected_units") or []
-    if isinstance(units_raw, list):
-        iterable_units = units_raw
-    else:
-        iterable_units = [units_raw]
-    for unit in iterable_units:
-        unit_id = _extract_unit_id(unit)
-        if unit_id and unit_id not in seen_units:
-            seen_units[unit_id] = None
+    _integrate_detected_units(units_raw, seen_units)
 
     summary: Dict[str, Any] = {
         "floors": len(floor_breakdown),
@@ -329,15 +380,75 @@ def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
         "floor_breakdown": floor_breakdown,
     }
     layer_metadata = record.layer_metadata or parse_metadata.get("layer_metadata") or []
-    if layer_metadata:
-        if isinstance(layer_metadata, list):
-            layer_count = len(layer_metadata)
-        else:
-            layer_count = 1
+    layer_count = _layer_count_from_metadata(layer_metadata)
+    if layer_count:
         summary["layers"] = layer_count
     if record.parse_status:
         summary["status"] = record.parse_status
     return summary
+
+
+async def _vectorize_payload_if_requested(
+    *,
+    enable_raster_processing: bool,
+    raw_payload: bytes,
+    filename: str,
+    content_type: str | None,
+    infer_walls: bool,
+    import_id: str,
+    layer_metadata: List[Dict[str, Any]],
+) -> Tuple[
+    Dict[str, Any] | None,
+    Dict[str, Any] | None,
+    List[Dict[str, Any]] | None,
+]:
+    """Return vectorization artefacts when requested and successful."""
+
+    if not enable_raster_processing or not _is_vectorizable(filename, content_type):
+        return None, None, None
+
+    vector_payload: Dict[str, Any] | None = None
+    safe_content_type = content_type or ""
+
+    try:
+        dispatch = await job_queue.enqueue(
+            vectorize_floorplan,
+            payload=raw_payload,
+            content_type=safe_content_type,
+            filename=filename,
+            infer_walls=infer_walls,
+        )
+        if dispatch.result and isinstance(dispatch.result, Mapping):
+            vector_payload = dict(dispatch.result)
+        elif dispatch.status != "completed":
+            inline_result = await vectorize_floorplan(
+                raw_payload,
+                content_type=safe_content_type,
+                filename=filename,
+                infer_walls=infer_walls,
+            )
+            if isinstance(inline_result, Mapping):
+                vector_payload = dict(inline_result)
+    except Exception as exc:  # pragma: no cover - defensive logging surface
+        logger.warning(
+            "vectorization_failed",
+            import_id=import_id,
+            filename=filename,
+            error=str(exc),
+        )
+
+    if vector_payload is None:
+        return None, None, None
+
+    vector_summary = _summarise_vector_payload(
+        vector_payload,
+        infer_walls=infer_walls,
+        requested=True,
+    )
+    derived_layers: List[Dict[str, Any]] | None = None
+    if not layer_metadata:
+        derived_layers = _derive_vector_layers(vector_payload)
+    return vector_payload, vector_summary, derived_layers
 
 
 @router.post(
@@ -388,46 +499,21 @@ async def upload_import(
         detected_units=detected_units,
     )
 
-    vector_payload: Dict[str, Any] | None = None
-    vector_summary: Dict[str, Any] | None = None
-    if enable_raster_processing and _is_vectorizable(filename, content_type):
-        try:
-            dispatch = await job_queue.enqueue(
-                vectorize_floorplan,
-                payload=raw_payload,
-                content_type=content_type or "",
-                filename=filename,
-                infer_walls=infer_walls,
-            )
-            if dispatch.result and isinstance(dispatch.result, Mapping):
-                vector_payload = dict(dispatch.result)
-            elif dispatch.status != "completed":
-                inline_result = await vectorize_floorplan(
-                    raw_payload,
-                    content_type=content_type or "",
-                    filename=filename,
-                    infer_walls=infer_walls,
-                )
-                if isinstance(inline_result, Mapping):
-                    vector_payload = dict(inline_result)
-        except Exception as exc:  # pragma: no cover - defensive logging surface
-            logger.warning(
-                "vectorization_failed",
-                import_id=import_id,
-                filename=record.filename,
-                error=str(exc),
-            )
-
-        if vector_payload is not None:
-            vector_summary = _summarise_vector_payload(
-                vector_payload,
-                infer_walls=infer_walls,
-                requested=True,
-            )
-            if not layer_metadata:
-                derived_layers = _derive_vector_layers(vector_payload)
-                if derived_layers:
-                    layer_metadata = derived_layers
+    (
+        vector_payload,
+        vector_summary,
+        derived_layers,
+    ) = await _vectorize_payload_if_requested(
+        enable_raster_processing=enable_raster_processing,
+        raw_payload=raw_payload,
+        filename=filename,
+        content_type=content_type,
+        infer_walls=infer_walls,
+        import_id=import_id,
+        layer_metadata=layer_metadata,
+    )
+    if derived_layers:
+        layer_metadata = derived_layers
 
     stored_layer_metadata = layer_metadata or detected_floors
     record.layer_metadata = stored_layer_metadata

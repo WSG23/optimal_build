@@ -1,9 +1,6 @@
 """Add reference material, cost, and monitoring tables (patched)"""
 
 from alembic import op
-from sqlalchemy.dialects import postgresql
-
-import sqlalchemy as sa
 
 revision = "20240115_000001"
 down_revision = "20240711_000000"

@@ -18,7 +18,7 @@ from app.models.entitlements import (
     EntRoadmapItem,
     EntStudy,
 )
-from sqlalchemy import Select, func, select
+from sqlalchemy import select
 
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200

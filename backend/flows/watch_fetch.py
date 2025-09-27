@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import hashlib
+import importlib
+import importlib.util
 import json
 import sys
 from dataclasses import dataclass
@@ -26,15 +28,12 @@ from typing import (
 
 from prefect import flow
 
-try:  # pragma: no cover - exercised when SQLAlchemy isn't installed
-    import sqlalchemy  # type: ignore[import-not-found]
-except ModuleNotFoundError:  # pragma: no cover - fallback to bundled stub for CLI usage
+if importlib.util.find_spec("sqlalchemy") is None:  # pragma: no cover - stub fallback
     import app as _app_for_sqlalchemy_stub  # noqa: F401  pylint: disable=unused-import
-    import sqlalchemy  # type: ignore[import-not-found]
+    importlib.import_module("sqlalchemy")
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

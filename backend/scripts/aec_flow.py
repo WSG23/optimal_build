@@ -31,7 +31,6 @@ os.environ.setdefault(
 
 from app.core.database import AsyncSessionLocal, engine
 from app.core.geometry.builder import GraphBuilder
-from app.core.geometry.serializer import GeometrySerializer
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.main import app
 from app.models.base import BaseModel

@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 
 from alembic import op
-from sqlalchemy.dialects import postgresql
-
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.

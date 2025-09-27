@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
-try:  # pragma: no cover - exercised when SQLAlchemy is unavailable
-    import sqlalchemy  # type: ignore[import-not-found]
-except (
-    ModuleNotFoundError
-):  # pragma: no cover - fallback to bundled stub for CLI entrypoints
+if importlib.util.find_spec("sqlalchemy") is None:
     import app as _app_for_sqlalchemy_stub  # noqa: F401  pylint: disable=unused-import
-    import sqlalchemy  # type: ignore[import-not-found]
+    importlib.import_module("sqlalchemy")
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 

@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import (
     JSON,
     Boolean,
-    Column,
     Date,
     DateTime,
     ForeignKey,

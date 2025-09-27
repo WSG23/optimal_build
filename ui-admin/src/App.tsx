@@ -6,7 +6,6 @@ import ClausesPage from './pages/ClausesPage';
 import RulesReviewPage from './pages/RulesReviewPage';
 import DiffsPage from './pages/DiffsPage';
 import EntitlementsPage from './pages/EntitlementsPage';
-import 'diff2html/bundles/css/diff2html.min.css';
 
 const App = () => {
   return (

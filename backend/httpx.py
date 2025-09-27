@@ -307,7 +307,7 @@ class AsyncClient:
 
     async def aclose(self) -> None:
         if getattr(self, "_mode", "testclient") == "testclient":
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, self._test_client.close)
             return
 
@@ -329,7 +329,7 @@ class AsyncClient:
     async def get(self, url: str, **kwargs: Any):
         if self._mode == "testclient":
             kwargs = self._apply_headers(kwargs)
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
                 None, partial(self._test_client.get, url, **kwargs)
             )
@@ -340,7 +340,7 @@ class AsyncClient:
     async def post(self, url: str, **kwargs: Any):
         if self._mode == "testclient":
             kwargs = self._apply_headers(kwargs)
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
                 None, partial(self._test_client.post, url, **kwargs)
             )
@@ -351,7 +351,7 @@ class AsyncClient:
     async def put(self, url: str, **kwargs: Any):
         if self._mode == "testclient":
             kwargs = self._apply_headers(kwargs)
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
                 None, partial(self._test_client.put, url, **kwargs)
             )
@@ -362,7 +362,7 @@ class AsyncClient:
     async def delete(self, url: str, **kwargs: Any):
         if self._mode == "testclient":
             kwargs = self._apply_headers(kwargs)
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
                 None, partial(self._test_client.delete, url, **kwargs)
             )

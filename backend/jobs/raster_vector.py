@@ -8,7 +8,7 @@ import re
 from io import BytesIO
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from xml.etree import ElementTree as ET
 
 try:  # pragma: no cover - optional dependency
