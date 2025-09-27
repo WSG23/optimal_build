@@ -32,16 +32,60 @@ jobs:
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
 
-  db_upgrade_smoke:
-    name: DB Upgrade Smoke
+  typecheck:
+    name: Type Check
     runs-on: ubuntu-latest
     needs: lint
-    env:
-      POSTGRES_SERVER: 127.0.0.1
-      POSTGRES_DB: building_compliance
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_PORT: '5432'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install backend type-check dependencies
+        run: |
+          pip install -r backend/requirements-dev.txt
+
+      - name: Run backend mypy
+        run: mypy backend
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        id: typecheck-pnpm-store
+        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.typecheck-pnpm-store.outputs.store-path }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Install frontend dependencies
+        run: pnpm -C frontend install --frozen-lockfile
+
+      - name: Run frontend type checks
+        run: pnpm -C frontend exec tsc --noEmit
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: typecheck
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,36 +101,41 @@ jobs:
         run: |
           pip install -r backend/requirements.txt
 
-      - name: Start Postgres service
-        run: |
-          docker compose -f docker-compose.yml up -d postgres
+      - name: Compile backend sources
+        run: python -m compileall backend
 
-      - name: Wait for Postgres
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 30); do
-            if docker compose -f docker-compose.yml exec -T postgres pg_isready -U "$POSTGRES_USER"; then
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Postgres did not become ready in time" >&2
-          exit 1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Run Alembic migrations
-        run: make db.upgrade
+      - name: Enable Corepack
+        run: corepack enable
 
-      - name: Stop Postgres service
-        if: always()
-        run: |
-          docker compose -f docker-compose.yml down --volumes
+      - name: Resolve pnpm store path
+        id: build-pnpm-store
+        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
-  backend:
-    name: Backend Smokes & Tests
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.build-pnpm-store.outputs.store-path }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Install frontend dependencies
+        run: pnpm -C frontend install --frozen-lockfile
+
+      - name: Build frontend application
+        run: pnpm -C frontend build
+
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
-    needs:
-      - lint
-      - db_upgrade_smoke
+    needs: build
     env:
       POSTGRES_SERVER: 127.0.0.1
       POSTGRES_DB: building_compliance
@@ -105,6 +154,8 @@ jobs:
       PYTHONPATH: backend
       CI_ARTIFACTS: ${{ github.workspace }}/artifacts
       REFERENCE_STORAGE: ${{ github.workspace }}/artifacts/reference_storage
+      VITE_API_BASE_URL: http://127.0.0.1:8000/
+      CI: 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -119,6 +170,42 @@ jobs:
       - name: Install backend dependencies
         run: |
           pip install -r backend/requirements-dev.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        id: tests-pnpm-store
+        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.tests-pnpm-store.outputs.store-path }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-
+
+      - name: Install frontend dependencies
+        run: pnpm -C frontend install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers
+        run: pnpm -C frontend exec playwright install --with-deps
 
       - name: Start backing services
         run: |
@@ -206,7 +293,7 @@ jobs:
               raise SystemExit("parse_segment ingestion produced no clauses")
           PY
 
-      - name: Launch backend API for smokes
+      - name: Launch backend API for smoke tests
         run: |
           python -m uvicorn app.main:app \
             --host 0.0.0.0 \
@@ -292,145 +379,10 @@ jobs:
             cp backend/coverage.xml "$CI_ARTIFACTS/backend-coverage.xml"
           fi
 
-      - name: Stop services
-        if: always()
-        run: docker compose -f docker-compose.yml down --volumes
-
-      - name: Upload backend artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-artifacts
-          path: artifacts
-          if-no-files-found: warn
-
-  frontend-e2e:
-    name: Frontend E2E
-    runs-on: ubuntu-latest
-    needs: backend
-    env:
-      POSTGRES_SERVER: 127.0.0.1
-      POSTGRES_DB: building_compliance
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_PORT: '5432'
-      REDIS_URL: redis://127.0.0.1:6379
-      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
-      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/1
-      RQ_REDIS_URL: redis://127.0.0.1:6379/2
-      S3_ENDPOINT: http://127.0.0.1:9000
-      S3_ACCESS_KEY: minioadmin
-      S3_SECRET_KEY: minioadmin
-      IMPORTS_BUCKET_NAME: cad-imports
-      EXPORTS_BUCKET_NAME: cad-exports
-      PYTHONPATH: backend
-      VITE_API_BASE_URL: http://127.0.0.1:8000/
-      CI: 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Resolve pnpm store path
-        id: pnpm-store
-        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-store.outputs.store-path }}
-          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-          cache-dependency-path: backend/requirements-dev.txt
-
-      - name: Install backend dependencies
-        run: |
-          pip install -r backend/requirements-dev.txt
-
-      - name: Start backing services
-        run: |
-          docker compose -f docker-compose.yml up -d postgres redis minio
-
-      - name: Wait for services
-        run: |
-          set -euo pipefail
-          postgres_ready=false
-          for attempt in $(seq 1 30); do
-            if docker compose -f docker-compose.yml exec -T postgres pg_isready -U "$POSTGRES_USER"; then
-              postgres_ready=true
-              break
-            fi
-            sleep 2
-          done
-          if [ "$postgres_ready" != "true" ]; then
-            echo "Postgres did not become ready in time" >&2
-            exit 1
-          fi
-          docker compose -f docker-compose.yml exec -T redis redis-cli ping
-          minio_ready=false
-          for attempt in $(seq 1 30); do
-            if curl -sSf http://127.0.0.1:9000/minio/health/live > /dev/null; then
-              minio_ready=true
-              break
-            fi
-            sleep 2
-          done
-          if [ "$minio_ready" != "true" ]; then
-            echo "Minio did not become ready in time" >&2
-            exit 1
-          fi
-
-      - name: Run database migrations
-        run: make db.upgrade
-
-      - name: Seed reference data
-        run: make seed-data
-
-      - name: Seed non-regulatory datasets
-        run: |
-          if make -n seed-nonreg >/dev/null 2>&1; then
-            make seed-nonreg
-          else
-            echo "seed-nonreg target not present; skipping"
-          fi
-
-      - name: Install frontend dependencies
-        run: pnpm -C frontend install --frozen-lockfile
-
-      - name: Lint frontend application
-        run: pnpm -C frontend lint
-
       - name: Run frontend unit tests
         run: pnpm -C frontend test
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-
-      - name: Install Playwright browsers
-        run: pnpm -C frontend exec playwright install --with-deps
-
-      - name: Launch backend API for E2E
+      - name: Launch backend API for E2E tests
         run: |
           python -m uvicorn app.main:app \
             --host 0.0.0.0 \
@@ -439,7 +391,7 @@ jobs:
           echo $! > "$RUNNER_TEMP/backend-e2e.pid"
         working-directory: backend
 
-      - name: Wait for backend readiness
+      - name: Wait for backend readiness (E2E)
         run: |
           set -euo pipefail
           for attempt in $(seq 1 40); do
@@ -456,7 +408,7 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_INSTALL: '1'
         run: pnpm -C frontend test:e2e
 
-      - name: Stop backend API
+      - name: Stop backend API (E2E)
         if: always()
         run: |
           if [ -f "$RUNNER_TEMP/backend-e2e.pid" ]; then
@@ -481,6 +433,14 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.yml down --volumes
 
+      - name: Upload backend artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifacts
+          path: artifacts
+          if-no-files-found: warn
+
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -490,3 +450,16 @@ jobs:
             frontend/test-results
             frontend/playwright-report
           if-no-files-found: warn
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --redact
