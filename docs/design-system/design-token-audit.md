@@ -64,4 +64,11 @@ This table will evolve, but it provides an initial contract for the shared desig
 ## Tooling Added
 
 - `npm run lint:tokens` (within `frontend`) enforces that the Feasibility flow stays free of raw hex values.
+- Tailwind in `ui-admin` now maps tokenized colors/radii/weights; migrate page classes from `slate-*` et al. to the new aliases as you touch them.
 - Extend the token lint to other modules once they migrate to the shared system.
+
+## Remaining Admin Surfaces
+
+- `ui-admin/src/pages/SourcesPage.tsx`, `ClausesPage.tsx`, and `EntitlementsPage.tsx` still reference the legacy `slate-*`/`emerald-*` palette.
+- `ui-admin/src/components/Sidebar.tsx`, `DiffViewer.tsx`, and PDF viewer utilities depend on the same ad-hoc shades.
+- Prioritise these modules next so the admin shell fully respects the shared token layer before widening lint coverage.

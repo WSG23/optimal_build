@@ -13,8 +13,11 @@
   --ob-color-border-neutral-rgb: 226 232 240;
 
   --ob-color-text-primary: #1e293b;
+  --ob-color-text-primary-rgb: 30 41 59;
   --ob-color-text-muted: #475569;
+  --ob-color-text-muted-rgb: 71 85 105;
   --ob-color-text-inverse: #ffffff;
+  --ob-color-text-inverse-rgb: 255 255 255;
   --ob-color-text-inverse-muted-rgb: 226 232 240;
 
   --ob-color-brand-primary: #2563eb;
@@ -23,13 +26,18 @@
   --ob-color-brand-primary-emphasis-rgb: 29 78 216;
   --ob-color-brand-soft: #bfdbfe;
   --ob-color-brand-soft-rgb: 191 219 254;
-
   --ob-color-info-strong: #1e3a8a;
+  --ob-color-info-strong-rgb: 30 58 138;
   --ob-color-success-strong: #15803d;
+  --ob-color-success-strong-rgb: 21 128 61;
   --ob-color-warning-strong: #b45309;
+  --ob-color-warning-strong-rgb: 180 83 9;
   --ob-color-error-strong: #b91c1c;
+  --ob-color-error-strong-rgb: 185 28 28;
   --ob-color-error-muted: #991b1b;
+  --ob-color-error-muted-rgb: 153 27 27;
   --ob-color-error-soft: #fee2e2;
+  --ob-color-error-soft-rgb: 254 226 226;
   --ob-color-warning-soft: #f1f5f9;
 
   /* Spacing tokens */

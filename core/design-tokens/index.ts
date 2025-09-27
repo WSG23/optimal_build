@@ -130,10 +130,19 @@ export type CssRgbTokenName =
   | 'color-surface-inverse-rgb'
   | 'color-border-subtle-rgb'
   | 'color-border-neutral-rgb'
+  | 'color-text-primary-rgb'
+  | 'color-text-muted-rgb'
+  | 'color-text-inverse-rgb'
   | 'color-text-inverse-muted-rgb'
   | 'color-brand-primary-rgb'
   | 'color-brand-primary-emphasis-rgb'
   | 'color-brand-soft-rgb'
+  | 'color-info-strong-rgb'
+  | 'color-success-strong-rgb'
+  | 'color-warning-strong-rgb'
+  | 'color-error-strong-rgb'
+  | 'color-error-muted-rgb'
+  | 'color-error-soft-rgb'
 
 export const cssVar = (token: CssTokenName) => `var(--ob-${token})`
 

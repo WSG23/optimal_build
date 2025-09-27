@@ -11,10 +11,14 @@ const projectRoot = resolve(__dirname, '..')
 const filesToCheck = [
   {
     path: resolve(projectRoot, 'frontend/src/index.css'),
-    filter: (line) => line.includes('feasibility'),
+    filter: (line) => line.includes('feasibility') || line.includes('finance'),
   },
   {
     path: resolve(projectRoot, 'frontend/src/modules/feasibility/FeasibilityWizard.tsx'),
+    filter: () => true,
+  },
+  {
+    path: resolve(projectRoot, 'frontend/src/modules/finance/FinanceWorkspace.tsx'),
     filter: () => true,
   },
 ]

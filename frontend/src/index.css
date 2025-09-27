@@ -991,16 +991,16 @@ h1, h2, h3 {
 .finance-workspace {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--ob-space-150);
 }
 
 .finance-workspace__refresh {
-  padding: 0.5rem 1.25rem;
-  border-radius: 999px;
+  padding: var(--ob-space-050) var(--ob-space-125);
+  border-radius: var(--ob-radius-pill);
   border: none;
-  background: #1d4ed8;
-  color: #ffffff;
-  font-weight: 600;
+  background: var(--ob-color-brand-primary-emphasis);
+  color: var(--ob-color-text-inverse);
+  font-weight: var(--ob-font-weight-semibold);
   cursor: pointer;
 }
 
@@ -1011,29 +1011,29 @@ h1, h2, h3 {
 
 .finance-workspace__error {
   margin: 0;
-  padding: 1rem 1.25rem;
-  border-radius: 1rem;
-  background: rgba(220, 38, 38, 0.1);
-  color: #991b1b;
+  padding: var(--ob-space-100) var(--ob-space-125);
+  border-radius: var(--ob-radius-lg);
+  background: var(--ob-color-error-soft);
+  color: var(--ob-color-error-muted);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--ob-space-025);
 }
 
 .finance-workspace__error-detail {
-  font-weight: 400;
+  font-weight: var(--ob-font-weight-regular);
 }
 
 .finance-workspace__status,
 .finance-workspace__empty {
   margin: 0;
-  color: #475569;
+  color: var(--ob-color-text-muted);
 }
 
 .finance-table__wrapper {
-  background: #ffffff;
-  border-radius: 1.5rem;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  background: var(--ob-color-surface-default);
+  border-radius: var(--ob-radius-2xl);
+  box-shadow: 0 12px 24px rgb(var(--ob-color-surface-inverse-rgb) / 0.08);
   overflow: hidden;
 }
 
@@ -1044,15 +1044,15 @@ h1, h2, h3 {
 
 .finance-table__caption {
   text-align: left;
-  font-weight: 600;
-  padding: 1.5rem 1.75rem 0.5rem;
-  color: #1e3a8a;
+  font-weight: var(--ob-font-weight-semibold);
+  padding: var(--ob-space-150) var(--ob-space-175) var(--ob-space-050);
+  color: var(--ob-color-info-strong);
 }
 
 .finance-table th,
 .finance-table td {
-  padding: 1rem 1.75rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: var(--ob-space-100) var(--ob-space-175);
+  border-bottom: 1px solid var(--ob-color-border-neutral);
   text-align: left;
 }
 
@@ -1062,10 +1062,10 @@ h1, h2, h3 {
 }
 
 .finance-table thead {
-  background: #eef2ff;
+  background: rgb(var(--ob-color-brand-primary-rgb) / 0.08);
 }
 
 .finance-table thead th {
-  font-weight: 700;
-  color: #1e293b;
+  font-weight: var(--ob-font-weight-bold);
+  color: var(--ob-color-text-primary);
 }
