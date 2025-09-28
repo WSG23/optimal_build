@@ -13,10 +13,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from backend.yosai_intel_dashboard.src.adapters.api.plugins.compliance_plugin.config import (
-    ComplianceConfig,
-)
-
 try:  # pragma: no cover - fallback for environments without FastAPI installed
     from fastapi import APIRouter, Depends
 except ModuleNotFoundError:  # pragma: no cover
@@ -34,6 +30,7 @@ except ModuleNotFoundError:  # pragma: no cover
     from pydantic import BaseModel, Field
 
 __all__ = [
+    "AUDIT_DB_ENV_VAR",
     "ComplianceAuditLogger",
     "EnhancedUploadAuditRecord",
     "get_audit_logger",
@@ -41,21 +38,17 @@ __all__ = [
     "router",
 ]
 
+AUDIT_DB_ENV_VAR = "ENHANCED_UPLOAD_AUDIT_DB"
+AUDIT_DIR_ENV_VAR = "ENHANCED_UPLOAD_AUDIT_DIR"
 _DEFAULT_DB_FILENAME = "enhanced_upload_audit.db"
 
 
-def _resolve_compliance_config() -> ComplianceConfig:
-    """Return the resolved compliance configuration."""
-
-    return ComplianceConfig.load()
-
-
-def _resolve_storage_directory(config: ComplianceConfig | None = None) -> Path:
+def _resolve_storage_directory() -> Path:
     """Return the base directory for persisting audit data."""
 
-    config = config or _resolve_compliance_config()
-    if config.audit_directory is not None:
-        return config.audit_directory
+    override = os.getenv(AUDIT_DIR_ENV_VAR)
+    if override:
+        return Path(override).expanduser()
 
     xdg_data_home = os.getenv("XDG_DATA_HOME")
     if xdg_data_home:
@@ -67,11 +60,12 @@ def _resolve_storage_directory(config: ComplianceConfig | None = None) -> Path:
 def resolve_audit_db_path() -> Path:
     """Return the configured SQLite database path for audit persistence."""
 
-    config = _resolve_compliance_config()
-    return config.resolve_database_path(
-        default_filename=_DEFAULT_DB_FILENAME,
-        fallback_directory=_resolve_storage_directory(config),
-    )
+    override = os.getenv(AUDIT_DB_ENV_VAR)
+    if override:
+        return Path(override).expanduser()
+
+    base_dir = _resolve_storage_directory()
+    return base_dir / _DEFAULT_DB_FILENAME
 
 
 @dataclass(slots=True)
