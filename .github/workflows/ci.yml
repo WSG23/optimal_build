@@ -108,7 +108,7 @@ jobs:
           pip install -r backend/requirements-dev.txt
 
       - name: Run backend mypy
-        run: mypy backend
+        run: mypy --config-file mypy.ini
 
       - name: Set up Node.js
         if: needs.changes.outputs.frontend == 'true'

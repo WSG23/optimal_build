@@ -42,7 +42,7 @@ repos:
     - id: mypy
       name: mypy-backend
       files: ^backend/
-      args: [--config-file=backend/pyproject.toml]
+      args: [--config-file=mypy.ini]
       additional_dependencies:
         - fastapi==0.104.1
         - uvicorn[standard]==0.24.0
