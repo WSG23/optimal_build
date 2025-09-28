@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from urllib.error import HTTPError
+from typing import Final
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from app.models.rkp import RefDocument, RefSource
@@ -22,6 +23,24 @@ class HTTPResponse:
 
 class SimpleHTTPClient:
     """Minimal HTTP client using ``urllib`` for asynchronous flows."""
+
+    _DEFAULT_TIMEOUT: Final[float] = 10.0
+    _DEFAULT_MAX_ATTEMPTS: Final[int] = 3
+    _DEFAULT_BACKOFF_FACTOR: Final[float] = 0.5
+    _DEFAULT_MAX_BACKOFF: Final[float] = 5.0
+
+    def __init__(
+        self,
+        *,
+        timeout: float | None = None,
+        max_attempts: int | None = None,
+        backoff_factor: float | None = None,
+        max_backoff: float | None = None,
+    ) -> None:
+        self._timeout = timeout or self._DEFAULT_TIMEOUT
+        self._max_attempts = max_attempts or self._DEFAULT_MAX_ATTEMPTS
+        self._backoff_factor = backoff_factor or self._DEFAULT_BACKOFF_FACTOR
+        self._max_backoff = max_backoff or self._DEFAULT_MAX_BACKOFF
 
     async def head(
         self, url: str, headers: Mapping[str, str] | None = None
@@ -40,25 +59,46 @@ class SimpleHTTPClient:
         *,
         headers: Mapping[str, str] | None = None,
     ) -> HTTPResponse:
-        def _perform_request() -> HTTPResponse:
-            request = Request(url, method=method, headers=dict(headers or {}))
-            try:
-                with urlopen(
-                    request
-                ) as response:  # nosec B310 - used for controlled fetches
-                    payload = b"" if method == "HEAD" else response.read()
-                    return HTTPResponse(
-                        response.status, dict(response.headers.items()), payload
-                    )
-            except (
-                HTTPError
-            ) as exc:  # pragma: no cover - network errors exercised in tests
-                payload = exc.read() if hasattr(exc, "read") else b""
-                return HTTPResponse(
-                    exc.code, dict(getattr(exc, "headers", {}) or {}), payload
-                )
+        last_error: Exception | None = None
 
-        return await asyncio.to_thread(_perform_request)
+        for attempt in range(1, self._max_attempts + 1):
+
+            def _perform_request() -> HTTPResponse:
+                request = Request(url, method=method, headers=dict(headers or {}))
+                try:
+                    with urlopen(
+                        request, timeout=self._timeout
+                    ) as response:  # nosec B310 - controlled upstream fetches
+                        payload = b"" if method == "HEAD" else response.read()
+                        return HTTPResponse(
+                            response.status, dict(response.headers.items()), payload
+                        )
+                except HTTPError as exc:  # pragma: no cover - handled by mocks in tests
+                    payload = exc.read() if hasattr(exc, "read") else b""
+                    return HTTPResponse(
+                        exc.code, dict(getattr(exc, "headers", {}) or {}), payload
+                    )
+
+            try:
+                return await asyncio.to_thread(_perform_request)
+            except (URLError, TimeoutError) as exc:
+                last_error = exc
+            except Exception as exc:  # pragma: no cover - defensive catch-all
+                last_error = exc
+
+            if attempt == self._max_attempts:
+                break
+
+            delay = min(
+                self._max_backoff,
+                self._backoff_factor * (2 ** (attempt - 1)),
+            )
+            if delay > 0:
+                await asyncio.sleep(delay)
+
+        raise RuntimeError(
+            f"HTTP request to {url} failed after {self._max_attempts} attempts"
+        ) from last_error
 
 
 @dataclass(slots=True)
