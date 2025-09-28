@@ -1,27 +1,22 @@
 """API v1 router registration."""
 
-from fastapi import APIRouter
+from types import ModuleType
+from typing import Callable, Final, Protocol, cast
 
-from . import (
-    audit,
-    costs,
-    entitlements,
-    ergonomics,
-    export,
-    feasibility,
-    finance,
-    imports,
-    overlay,
-    products,
-    review,
-    roi,
-    rules,
-    rulesets,
-    screen,
-    standards,
-)
 
-TAGS_METADATA = [
+class _RouterModule(Protocol):
+    """Protocol describing API submodules that expose a FastAPI router."""
+
+    router: "Router"
+
+
+class Router(Protocol):
+    """Subset of FastAPI's router interface used within the aggregator."""
+
+    def include_router(self, router: "Router") -> None: ...
+
+
+TAGS_METADATA: Final[list[dict[str, str]]] = [
     {
         "name": "entitlements",
         "description": (
@@ -31,24 +26,62 @@ TAGS_METADATA = [
     }
 ]
 
-api_router = APIRouter()
-api_router.include_router(review.router)
-api_router.include_router(rules.router)
-api_router.include_router(rulesets.router)
-api_router.include_router(screen.router)
-api_router.include_router(ergonomics.router)
-api_router.include_router(products.router)
-api_router.include_router(standards.router)
-api_router.include_router(costs.router)
-api_router.include_router(overlay.router)
-api_router.include_router(export.router)
-api_router.include_router(roi.router)
-api_router.include_router(imports.router)
-api_router.include_router(audit.router)
-# Finance flows rely on both feasibility and export endpoints being present in the
-# main application so that the interactive documentation exposes them.
-api_router.include_router(feasibility.router)
-api_router.include_router(finance.router)
-api_router.include_router(entitlements.router)
+_ROUTER_MODULES: Final[tuple[str, ...]] = (
+    "review",
+    "rules",
+    "rulesets",
+    "screen",
+    "ergonomics",
+    "products",
+    "standards",
+    "costs",
+    "overlay",
+    "export",
+    "roi",
+    "imports",
+    "audit",
+    # Finance flows rely on both feasibility and export endpoints being present in
+    # the main application so that the interactive documentation exposes them.
+    "feasibility",
+    "finance",
+    "entitlements",
+)
 
-__all__ = ["api_router", "TAGS_METADATA"]
+
+def _router_factory() -> Callable[[], Router]:
+    """Return a callable that produces FastAPI router instances."""
+
+    module: ModuleType = __import__("fastapi", fromlist=["APIRouter"])
+    try:
+        factory = module.APIRouter
+    except AttributeError as exc:  # pragma: no cover - enforced by runtime tests
+        raise AttributeError("fastapi.APIRouter is unavailable") from exc
+    if not callable(factory):  # pragma: no cover - defensive guardrail
+        raise TypeError("fastapi.APIRouter must be callable")
+    return cast(Callable[[], Router], factory)
+
+
+def _load_router(module_name: str) -> Router:
+    """Import an API submodule and return its FastAPI router."""
+
+    module: ModuleType = __import__(f"{__name__}.{module_name}", fromlist=["router"])
+    if not hasattr(module, "router"):
+        raise AttributeError(
+            f"Module '{module_name}' must define an APIRouter named 'router'"
+        )
+
+    router = cast(_RouterModule, module).router
+    if not hasattr(router, "include_router"):
+        raise TypeError(
+            f"Module '{module_name}' router must expose an 'include_router' method"
+        )
+    return router
+
+
+_APIRouter: Final[Callable[[], Router]] = _router_factory()
+api_router: Final[Router] = _APIRouter()
+for _module_name in _ROUTER_MODULES:
+    api_router.include_router(_load_router(_module_name))
+
+
+__all__: Final[tuple[str, ...]] = ("api_router", "TAGS_METADATA")
