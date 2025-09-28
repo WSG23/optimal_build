@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import io
 import json
 import os
@@ -13,7 +14,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from types import ModuleType
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,20 +25,20 @@ from app.core.metrics import EXPORT_BASELINE_SECONDS
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 
-try:  # pragma: no cover - optional dependency
-    import ezdxf  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - handled gracefully at runtime
-    ezdxf = None  # type: ignore
 
-try:  # pragma: no cover - optional dependency
-    import ifcopenshell  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - handled gracefully at runtime
-    ifcopenshell = None  # type: ignore
+def _load_optional_module(name: str) -> ModuleType | None:
+    try:  # pragma: no cover - optional dependency
+        return cast(ModuleType, importlib.import_module(name))
+    except ModuleNotFoundError:  # pragma: no cover - handled gracefully at runtime
+        return None
 
-try:  # pragma: no cover - optional dependency
-    from reportlab.pdfgen import canvas as pdf_canvas  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - handled gracefully at runtime
-    pdf_canvas = None  # type: ignore
+
+ez_dxf_module = _load_optional_module("ezdxf")
+ifcopenshell = _load_optional_module("ifcopenshell")
+reportlab_pdfgen = _load_optional_module("reportlab.pdfgen")
+
+ezdxf = ez_dxf_module
+pdf_canvas = getattr(reportlab_pdfgen, "canvas", None) if reportlab_pdfgen else None
 
 
 DEFAULT_PENDING_WATERMARK = "PRELIMINARY – Pending overlay approvals"
