@@ -41,3 +41,18 @@ UI/API → Core (jurisdiction-agnostic)
        ├─ Compliance/AI reasoners
        └─ Analytics (diffs/overlap)
 ```
+
+## Reference deployment footprint
+
+The current reference deployment bundles a fairly heavy backing stack:
+
+- **PostgreSQL** stores the regulation corpus and feeds downstream analytics.
+- **Neo4j** powers the graph-relations service that materialises regulation
+  relationships for the UI and automated checks.
+- **Kafka** acts as the event backbone that streams regulation changes to graph
+  processors and other consumers.
+- **Graph-relations service** depends on both Kafka and Neo4j to build the
+  real-time relationship views exposed to clients.
+
+Teams evaluating the platform should plan for this footprint, especially if
+they do not already operate managed graph or streaming infrastructure.
