@@ -13,8 +13,7 @@ class _SupportsTypeDescriptor(Protocol):
 
     name: str
 
-    def type_descriptor(self, type_: object) -> object:
-        ...
+    def type_descriptor(self, type_: object) -> object: ...
 
 
 class FlexibleJSONB(TypeDecorator):
