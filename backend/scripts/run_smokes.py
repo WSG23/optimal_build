@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import structlog
 
 from ..flows import parse_segment, watch_fetch
 from . import seed_entitlements_sg, seed_finance_demo, seed_nonreg, seed_screening
@@ -24,12 +25,15 @@ BACKEND_PORT = 8000
 ENTITLEMENTS_PROJECT_ID = 90301
 
 
+LOGGER = structlog.get_logger(__name__)
+
+
 class SmokeError(RuntimeError):
     """Raised when a smoke step fails to produce the expected artefacts."""
 
 
 def _log(message: str) -> None:
-    print(f"[smokes] {message}")
+    LOGGER.info("smokes.message", message=message)
 
 
 def _write_json(path: Path, payload: Any) -> None:
@@ -150,14 +154,23 @@ def running_backend(backend_dir: Path, host: str, port: int) -> Iterator[str]:
 
 def _wait_for_api(base_url: str, attempts: int = 40, delay: float = 2.0) -> None:
     last_error: Exception | None = None
-    for _ in range(attempts):
+    url = f"{base_url}/health"
+    for attempt in range(1, attempts + 1):
         try:
-            response = httpx.get(f"{base_url}/health", timeout=5.0)
+            response = httpx.get(url, timeout=5.0)
             if response.status_code == 200:
                 return
         except Exception as exc:  # pragma: no cover - best effort wait loop
             last_error = exc
+            LOGGER.warning(
+                "smokes.wait_for_api.retry",
+                attempt=attempt,
+                attempts=attempts,
+                url=url,
+                error=str(exc),
+            )
         time.sleep(delay)
+    LOGGER.error("smokes.wait_for_api.failed", url=url, error=str(last_error))
     raise SmokeError(f"Backend API failed readiness check: {last_error}")
 
 
@@ -172,14 +185,31 @@ def _retry_request(
     **kwargs: Any,
 ) -> httpx.Response:
     last_error: Exception | None = None
-    for _ in range(retries):
+    for attempt in range(1, retries + 1):
         try:
             response = client.request(method, url, timeout=timeout, **kwargs)
             response.raise_for_status()
             return response
         except Exception as exc:  # pragma: no cover - retries for flaky readiness
             last_error = exc
+            LOGGER.warning(
+                "smokes.retry_request.retry",
+                attempt=attempt,
+                retries=retries,
+                method=method,
+                url=url,
+                error=str(exc),
+            )
+            if attempt == retries:
+                break
             time.sleep(delay)
+    LOGGER.error(
+        "smokes.retry_request.failed",
+        retries=retries,
+        method=method,
+        url=url,
+        error=str(last_error),
+    )
     raise SmokeError(
         f"Request to {url} failed after {retries} attempts"
     ) from last_error
