@@ -67,8 +67,11 @@ class _MetricBase:
     def clear(self) -> None:
         self._metrics.clear()
 
+    def _label_key(self, labels: dict[str, str]) -> tuple[str, ...]:
+        return tuple(labels.get(label, "") for label in self._labelnames)
+
     def labels(self, **labels: str) -> _Sample:
-        key = tuple(labels.get(label, "") for label in self._labelnames)
+        key = self._label_key(labels)
         if key not in self._metrics:
             self._metrics[key] = _Sample()
         return self._metrics[key]
@@ -181,12 +184,12 @@ class Histogram(_MetricBase):
         )
         super().__init__(name, documentation, labelnames, registry, **kwargs)
 
-    def labels(self, **labels: str) -> _HistogramSample:  # type: ignore[override]
-        key = tuple(labels.get(label, "") for label in self._labelnames)
-        if key not in self._metrics:
-            self._metrics[key] = _HistogramSample(self._upper_bounds)
-        sample = self._metrics[key]
-        assert isinstance(sample, _HistogramSample)
+    def labels(self, **labels: str) -> _HistogramSample:
+        key = self._label_key(labels)
+        sample = self._metrics.get(key)
+        if not isinstance(sample, _HistogramSample):
+            sample = _HistogramSample(self._upper_bounds)
+            self._metrics[key] = sample
         return sample
 
     def observe(self, amount: float) -> None:

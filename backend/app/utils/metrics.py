@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 try:  # pragma: no cover - exercised when dependency is available
     from prometheus_client import (
@@ -16,13 +16,17 @@ try:  # pragma: no cover - exercised when dependency is available
         generate_latest,
     )
 except ModuleNotFoundError:  # pragma: no cover - fallback for offline tests
-    from app.utils._prometheus_stub import (  # type: ignore
+    from app.utils._prometheus_stub import (
         CollectorRegistry,
         Counter,
         Gauge,
         Histogram,
         generate_latest,
     )
+
+
+GenerateLatest = Callable[[CollectorRegistry], bytes]
+_GENERATE_LATEST: GenerateLatest = cast(GenerateLatest, generate_latest)
 
 
 REGISTRY: CollectorRegistry
@@ -411,4 +415,4 @@ def _percentile_from_buckets(
 def render_latest_metrics() -> bytes:
     """Render metrics for exposure via HTTP endpoints."""
 
-    return generate_latest(REGISTRY)
+    return _GENERATE_LATEST(REGISTRY)

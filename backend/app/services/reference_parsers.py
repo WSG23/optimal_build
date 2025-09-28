@@ -133,7 +133,7 @@ class _HTMLSectionParser(HTMLParser):
         self._in_heading = False
         self._in_text = False
 
-    def handle_starttag(self, tag: str, attrs):  # type: ignore[override]
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag_lower = tag.lower()
         if tag_lower in self.HEADING_TAGS:
             self._flush_section()
@@ -144,14 +144,14 @@ class _HTMLSectionParser(HTMLParser):
         elif tag_lower == "br":
             self._text_parts.append("\n")
 
-    def handle_endtag(self, tag: str):  # type: ignore[override]
+    def handle_endtag(self, tag: str) -> None:
         tag_lower = tag.lower()
         if tag_lower in self.HEADING_TAGS:
             self._in_heading = False
         elif tag_lower in self.TEXT_TAGS:
             self._in_text = False
 
-    def handle_data(self, data: str):  # type: ignore[override]
+    def handle_data(self, data: str) -> None:
         stripped = data.strip()
         if not stripped:
             return
@@ -160,7 +160,7 @@ class _HTMLSectionParser(HTMLParser):
         elif self._in_text:
             self._text_parts.append(stripped)
 
-    def close(self) -> None:  # type: ignore[override]
+    def close(self) -> None:
         self._flush_section()
         super().close()
 

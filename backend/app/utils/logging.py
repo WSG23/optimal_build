@@ -3,15 +3,41 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Protocol, cast
 
-try:  # pragma: no cover - importlib_metadata fallback only for older Python versions
-    from importlib import metadata as importlib_metadata
-except ImportError:  # pragma: no cover - Python < 3.8
-    try:  # pragma: no cover - optional backport may be unavailable
-        import importlib_metadata  # type: ignore[import-not-found]
-    except ImportError:  # pragma: no cover - no metadata helpers available
-        importlib_metadata = None  # type: ignore[assignment]
+
+class _MetadataModule(Protocol):
+    """Minimal protocol for importlib metadata providers."""
+
+    PackageNotFoundError: type[Exception]
+
+    def version(self, distribution: str) -> str: ...
+
+
+importlib_metadata: _MetadataModule | None
+
+try:  # pragma: no cover - importlib.metadata available on Python 3.8+
+    from importlib import metadata as _importlib_metadata_module
+except ImportError:  # pragma: no cover - runtime older than Python 3.8
+    try:
+        import importlib_metadata as _importlib_metadata_backport
+    except ModuleNotFoundError:  # pragma: no cover - no metadata helpers available
+        importlib_metadata = None
+    else:
+        importlib_metadata = cast(_MetadataModule, _importlib_metadata_backport)
+else:
+    importlib_metadata = cast(_MetadataModule, _importlib_metadata_module)
+
+
+class _PackageNotFoundError(Exception):
+    """Fallback when metadata helpers are unavailable."""
+
+
+PackageNotFoundError: type[Exception]
+if importlib_metadata is not None:
+    PackageNotFoundError = importlib_metadata.PackageNotFoundError
+else:
+    PackageNotFoundError = _PackageNotFoundError
 
 import structlog
 from structlog.stdlib import BoundLogger
@@ -22,11 +48,12 @@ from app.core.config import settings
 def _structlog_distribution_present() -> bool:
     """Return ``True`` when the real ``structlog`` package is installed."""
 
-    if importlib_metadata is None:  # type: ignore[comparison-overlap]
+    metadata_module = importlib_metadata
+    if metadata_module is None:
         return False
     try:
-        importlib_metadata.version("structlog")
-    except importlib_metadata.PackageNotFoundError:  # type: ignore[attr-defined]
+        metadata_module.version("structlog")
+    except PackageNotFoundError:
         return False
     except Exception:  # pragma: no cover - defensive against metadata issues
         return False
