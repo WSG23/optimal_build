@@ -1,7 +1,7 @@
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? null
 
 function normaliseBaseUrl(value: string | undefined | null): string {
-  if (!value) {
+  if (typeof value !== 'string') {
     return '/'
   }
   const trimmed = value.trim()
@@ -10,9 +10,9 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 
 function resolveDefaultRole(): string | null {
   const candidates = [
-    import.meta.env?.VITE_API_ROLE,
+    import.meta.env.VITE_API_ROLE,
     typeof window !== 'undefined'
-      ? window.localStorage?.getItem('app:api-role') ?? undefined
+      ? window.localStorage.getItem('app:api-role') ?? undefined
       : undefined,
     'admin',
   ] as Array<string | undefined>
@@ -291,6 +291,11 @@ function mapDscrEntry(payload: DscrEntryPayload): DscrEntry {
 function mapResponse(
   payload: FinanceFeasibilityResponsePayload,
 ): FinanceScenarioSummary {
+  const resultsSource = Array.isArray(payload.results) ? payload.results : []
+  const dscrTimelineSource = Array.isArray(payload.dscr_timeline)
+    ? payload.dscr_timeline
+    : []
+
   return {
     scenarioId: payload.scenario_id,
     projectId: payload.project_id,
@@ -299,8 +304,8 @@ function mapResponse(
     currency: payload.currency,
     escalatedCost: payload.escalated_cost,
     costIndex: mapCostIndex(payload.cost_index),
-    results: (payload.results ?? []).map(mapResult),
-    dscrTimeline: (payload.dscr_timeline ?? []).map(mapDscrEntry),
+    results: resultsSource.map(mapResult),
+    dscrTimeline: dscrTimelineSource.map(mapDscrEntry),
   }
 }
 

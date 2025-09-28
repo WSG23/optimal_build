@@ -72,7 +72,9 @@ export function CadUploadPage() {
         {error && <p className="cad-upload__error">{error}</p>}
 
         <CadUploader
-          onUpload={handleUpload}
+          onUpload={(file) => {
+            void handleUpload(file)
+          }}
           isUploading={isUploading}
           status={status}
           summary={job}

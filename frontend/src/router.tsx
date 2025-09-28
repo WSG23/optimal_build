@@ -42,7 +42,7 @@ interface RouterProviderProps {
 
 export function RouterProvider({ router }: RouterProviderProps) {
   const [path, setPath] = useState<string>(() => getInitialPath())
-  const routes = useMemo(() => router?.routes ?? [], [router])
+  const routes = useMemo(() => router.routes, [router])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -54,7 +54,9 @@ export function RouterProvider({ router }: RouterProviderProps) {
     }
 
     window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
   }, [])
 
   const navigate = useCallback((to: string) => {
@@ -123,7 +125,7 @@ export function createLinkClickHandler(
       return
     }
 
-    if (!shouldHandleLinkClick(event, event.currentTarget?.target)) {
+    if (!shouldHandleLinkClick(event, event.currentTarget.target)) {
       return
     }
 

@@ -12,7 +12,12 @@ export function ZoneLockControls({ locked, onToggle }: ZoneLockControlsProps) {
   return (
     <section className="cad-panel">
       <h3>{t('controls.locked')}</h3>
-      <button type="button" onClick={() => onToggle(!locked)}>
+      <button
+        type="button"
+        onClick={() => {
+          onToggle(!locked)
+        }}
+      >
         {label}
       </button>
       {locked && <p className="cad-panel__hint">{t('detection.locked')}</p>}

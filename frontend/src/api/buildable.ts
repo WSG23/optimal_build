@@ -1,5 +1,5 @@
 function normaliseBaseUrl(value: string | undefined | null): string {
-  if (!value) {
+  if (typeof value !== 'string') {
     return '/'
   }
   const trimmed = value.trim()
@@ -7,7 +7,7 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 }
 
 const API_PREFIX = 'api/v1/screen/buildable'
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? null
 const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
 
 export type RuleProvenance = {

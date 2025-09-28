@@ -9,7 +9,7 @@ export function useRules(client: ApiClient) {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    client
+    void client
       .listRules()
       .then((items) => {
         if (!cancelled) {

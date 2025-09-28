@@ -31,7 +31,9 @@ export function ExportDialog({
       <p>{t('panels.exportSubtitle')}</p>
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setOpen((value) => !value)
+        }}
         disabled={disabled}
       >
         {t('detection.exportCta')}
@@ -42,7 +44,9 @@ export function ExportDialog({
             <li key={format}>
               <button
                 type="button"
-                onClick={() => handleExport(format)}
+                onClick={() => {
+                  handleExport(format)
+                }}
                 disabled={disabled}
               >
                 {format}

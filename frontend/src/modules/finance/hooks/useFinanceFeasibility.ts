@@ -65,17 +65,21 @@ export function useFinanceFeasibility(
   }, [requests])
 
   useEffect(() => {
-    fetchScenarios()
+    void fetchScenarios()
     return () => {
       controllerRef.current?.abort()
       controllerRef.current = null
     }
   }, [fetchScenarios])
 
+  const triggerFetch = useCallback(() => {
+    void fetchScenarios()
+  }, [fetchScenarios])
+
   return {
     scenarios,
     loading,
     error,
-    refresh: fetchScenarios,
+    refresh: triggerFetch,
   }
 }

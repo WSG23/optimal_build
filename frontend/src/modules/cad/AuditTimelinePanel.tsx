@@ -22,9 +22,11 @@ export function AuditTimelinePanel({
       suggestion_id?: unknown
     }
     if (typeof decisionContext.decision === 'string') {
-      const identifier = decisionContext.suggestion_id
-        ? ` #${decisionContext.suggestion_id}`
-        : ''
+      const suggestionId = decisionContext.suggestion_id
+      const identifier =
+        typeof suggestionId === 'string' || typeof suggestionId === 'number'
+          ? ` #${suggestionId}`
+          : ''
       return `${decisionContext.decision}${identifier}`
     }
     return Object.entries(context)

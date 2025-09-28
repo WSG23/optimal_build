@@ -43,6 +43,7 @@ export function CadPipelinesPage() {
     processedProjectRef.current.processed = true
 
     let cancelled = false
+    const isCancelled = () => cancelled
     const waitForOverlayRun = async (
       status: string,
       jobId: string | null,
@@ -61,11 +62,14 @@ export function CadPipelinesPage() {
       }
 
       const deadline = startedAt + OVERLAY_RUN_POLL_TIMEOUT_MS
-      while (!cancelled && Date.now() < deadline) {
+      while (Date.now() < deadline) {
+        if (isCancelled()) {
+          return
+        }
         await new Promise((resolve) =>
           setTimeout(resolve, OVERLAY_RUN_POLL_INTERVAL_MS),
         )
-        if (cancelled) {
+        if (isCancelled()) {
           return
         }
 
@@ -80,9 +84,10 @@ export function CadPipelinesPage() {
         }
       }
 
-      if (!cancelled) {
-        throw new Error(t('common.errors.pipelineLoad'))
+      if (isCancelled()) {
+        return
       }
+      throw new Error(t('common.errors.pipelineLoad'))
     }
 
     const load = async () => {
@@ -92,7 +97,7 @@ export function CadPipelinesPage() {
         const eventsBeforeRun = await apiClient.listAuditTrail(projectId, {
           eventType: 'overlay_run',
         })
-        if (cancelled) {
+        if (isCancelled()) {
           return
         }
         const lastEventIdBeforeRun = eventsBeforeRun.reduce<number>(
@@ -109,30 +114,31 @@ export function CadPipelinesPage() {
           lastEventIdBeforeRun,
           runRequestedAt,
         )
-        if (cancelled) {
+        if (isCancelled()) {
           return
         }
 
         const overlays = await apiClient.listOverlaySuggestions(projectId)
-        if (!cancelled) {
-          setOverlaySuggestions(overlays)
-          const pipeline = await apiClient.getDefaultPipelineSuggestions({
-            overlays: overlays.map((item) => item.code),
-            hints: overlays
-              .map((item) => item.rationale)
-              .filter((value): value is string => Boolean(value)),
-          })
-          if (!cancelled) {
-            setSuggestions(pipeline)
-          }
-        }
-        if (cancelled) {
+        if (isCancelled()) {
           return
         }
-        const roiMetrics = await apiClient.getProjectRoi(projectId)
-        if (!cancelled) {
-          setRoi(roiMetrics)
+        setOverlaySuggestions(overlays)
+        const pipeline = await apiClient.getDefaultPipelineSuggestions({
+          overlays: overlays.map((item) => item.code),
+          hints: overlays
+            .map((item) => item.rationale)
+            .filter((value): value is string => Boolean(value)),
+        })
+        if (isCancelled()) {
+          return
         }
+        setSuggestions(pipeline)
+
+        const roiMetrics = await apiClient.getProjectRoi(projectId)
+        if (isCancelled()) {
+          return
+        }
+        setRoi(roiMetrics)
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -192,9 +198,9 @@ export function CadPipelinesPage() {
             type="number"
             min={1}
             value={projectId}
-            onChange={(event) =>
+            onChange={(event) => {
               setProjectId(Number(event.target.value) || DEFAULT_PROJECT_ID)
-            }
+            }}
           />
         </label>
         {overlayCodes.length > 0 && (

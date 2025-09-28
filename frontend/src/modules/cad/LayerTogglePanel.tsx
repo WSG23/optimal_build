@@ -44,7 +44,9 @@ export function LayerTogglePanel({
               className={`cad-layer-toggle__button${
                 isActive ? ' cad-layer-toggle__button--active' : ''
               }`}
-              onClick={() => handleToggle(status)}
+              onClick={() => {
+                handleToggle(status)
+              }}
               aria-pressed={isActive}
               disabled={disabled}
             >

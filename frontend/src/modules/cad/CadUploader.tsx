@@ -30,7 +30,7 @@ export function CadUploader({
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setIsDragging(false)
-    handleFiles(event.dataTransfer?.files ?? null)
+    handleFiles(event.dataTransfer.files)
   }
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>) => {

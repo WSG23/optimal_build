@@ -186,7 +186,7 @@ interface OverlaySuggestionResponse {
   severity: string | null
   status: string
   engine_version: string | null
-  engine_payload: Record<string, unknown>
+  engine_payload: Record<string, unknown> | null
   score: number | null
   geometry_checksum: string
   created_at: string
@@ -261,10 +261,13 @@ export class ApiClient {
   private readonly baseUrl: string
   private readonly defaultRole: string | null
 
-  constructor(baseUrl: string = import.meta.env.VITE_API_BASE_URL ?? '/') {
+  constructor(baseUrl: string = '/') {
+    const envBaseUrl = import.meta.env.VITE_API_BASE_URL
+    const fallbackBase = import.meta.env.VITE_API_BASE
     const candidates = [
       baseUrl,
-      import.meta.env?.VITE_API_BASE,
+      envBaseUrl,
+      fallbackBase,
       typeof window !== 'undefined' ? window.location.origin : undefined,
       'http://localhost:9400',
     ] as Array<string | undefined>
@@ -278,11 +281,13 @@ export class ApiClient {
         return trimmed.length > 0 && trimmed !== '/'
       }) ?? 'http://localhost:9400'
 
-    const roleCandidates = [
-      import.meta.env?.VITE_API_ROLE,
+    const storedRole =
       typeof window !== 'undefined'
-        ? window.localStorage?.getItem('app:api-role') ?? undefined
-        : undefined,
+        ? window.localStorage.getItem('app:api-role') ?? undefined
+        : undefined
+    const roleCandidates = [
+      import.meta.env.VITE_API_ROLE,
+      storedRole,
       'admin',
     ] as Array<string | undefined>
 
@@ -337,6 +342,13 @@ export class ApiClient {
   }
 
   private mapImportResult(payload: ImportResultResponse): CadImportSummary {
+    const detectedFloorsSource = Array.isArray(payload.detected_floors)
+      ? payload.detected_floors
+      : []
+    const detectedUnitsSource = Array.isArray(payload.detected_units)
+      ? payload.detected_units
+      : []
+
     return {
       importId: payload.import_id,
       fileName: payload.filename,
@@ -344,24 +356,27 @@ export class ApiClient {
       sizeBytes: payload.size_bytes,
       uploadedAt: payload.uploaded_at,
       parseStatus: payload.parse_status,
-      detectedFloors: (payload.detected_floors ?? []).map((floor) => ({
+      detectedFloors: detectedFloorsSource.map((floor) => ({
         name: floor.name,
-        unitIds: floor.unit_ids ?? [],
+        unitIds: Array.isArray(floor.unit_ids) ? floor.unit_ids : [],
       })),
-      detectedUnits: payload.detected_units ?? [],
+      detectedUnits: [...detectedUnitsSource],
       vectorSummary: payload.vector_summary ?? null,
     }
   }
 
   private mapParseStatus(payload: ParseStatusResponse): ParseStatusUpdate {
-    const result = payload.result ?? {}
-    const detectedFloors = (result?.detected_floors ?? []).map((floor) => ({
-      name: floor.name,
-      unitIds: floor.unit_ids ?? [],
-    }))
-    const detectedUnits = result?.detected_units ?? []
-    const metadata =
-      (result?.metadata as Record<string, unknown> | undefined) ?? null
+    const result =
+      payload.result && typeof payload.result === 'object'
+        ? payload.result
+        : null
+    const detectedFloorsSource = Array.isArray(result?.detected_floors)
+      ? result.detected_floors
+      : []
+    const detectedUnitsSource = Array.isArray(result?.detected_units)
+      ? result.detected_units
+      : []
+    const metadataValue = result?.metadata ?? null
 
     return {
       importId: payload.import_id,
@@ -369,9 +384,12 @@ export class ApiClient {
       requestedAt: payload.requested_at,
       completedAt: payload.completed_at,
       jobId: payload.job_id ?? null,
-      detectedFloors,
-      detectedUnits,
-      metadata,
+      detectedFloors: detectedFloorsSource.map((floor) => ({
+        name: floor.name,
+        unitIds: Array.isArray(floor.unit_ids) ? floor.unit_ids : [],
+      })),
+      detectedUnits: [...detectedUnitsSource],
+      metadata: metadataValue,
       error: payload.error ?? null,
     }
   }
@@ -414,8 +432,13 @@ export class ApiClient {
     options: { inferWalls?: boolean } = {},
   ): Promise<CadImportSummary> {
     const formData = new FormData()
-    const fileName = 'name' in file ? (file as File).name : 'upload.dxf'
-    formData.append('file', file, fileName)
+    const derivedName =
+      typeof File !== 'undefined' &&
+      file instanceof File &&
+      typeof file.name === 'string'
+        ? file.name
+        : 'upload.dxf'
+    formData.append('file', file, derivedName)
     if (options.inferWalls) {
       formData.append('infer_walls', 'true')
     }

@@ -29,13 +29,14 @@ function normaliseStatus(status: string): DetectionStatus {
 }
 
 function deriveAreaSqm(suggestion: OverlaySuggestion): number {
-  const payload = suggestion.enginePayload ?? {}
+  const payload = suggestion.enginePayload
+  const payloadWithArea = payload as { area_sqm?: unknown }
+  const payloadWithAffectedArea = payload as { affected_area_sqm?: unknown }
   const directArea =
-    typeof (payload as { area_sqm?: unknown }).area_sqm === 'number'
-      ? (payload as { area_sqm?: number }).area_sqm
-      : typeof (payload as { affected_area_sqm?: unknown })
-            .affected_area_sqm === 'number'
-        ? (payload as { affected_area_sqm?: number }).affected_area_sqm
+    typeof payloadWithArea.area_sqm === 'number'
+      ? payloadWithArea.area_sqm
+      : typeof payloadWithAffectedArea.affected_area_sqm === 'number'
+        ? payloadWithAffectedArea.affected_area_sqm
         : null
   if (typeof directArea === 'number') {
     return directArea
@@ -222,18 +223,21 @@ export function CadDetectionPage() {
           includePendingOverlays: activeLayers.includes('pending'),
           includeRejectedOverlays: activeLayers.includes('rejected'),
         })
-        if (
-          typeof window !== 'undefined' &&
-          typeof window.URL?.createObjectURL === 'function'
-        ) {
-          const url = window.URL.createObjectURL(artifact.blob)
+        if (typeof window !== 'undefined') {
+          const urlFactory = window.URL
+          if (typeof urlFactory.createObjectURL !== 'function') {
+            return
+          }
+          const url = urlFactory.createObjectURL(artifact.blob)
           const anchor = document.createElement('a')
           anchor.href = url
           anchor.download = artifact.filename ?? `overlay.${lower}`
           document.body.appendChild(anchor)
           anchor.click()
           anchor.remove()
-          window.URL.revokeObjectURL(url)
+          if (typeof urlFactory.revokeObjectURL === 'function') {
+            urlFactory.revokeObjectURL(url)
+          }
         }
       } catch (err) {
         setError(
@@ -277,7 +281,9 @@ export function CadDetectionPage() {
         />
         <ZoneLockControls locked={locked} onToggle={setLocked} />
         <ExportDialog
-          onExport={handleExport}
+          onExport={(format) => {
+            void handleExport(format)
+          }}
           disabled={pendingCount > 0 || exporting || mutationPending}
         />
       </div>

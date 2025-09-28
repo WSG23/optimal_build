@@ -14,6 +14,9 @@ const DEFAULT_ASSUMPTIONS = {
 
 const DEBOUNCE_MS = 300
 
+const readCssVar = (token: string): string =>
+  String((cssVar as (name: string) => unknown)(token))
+
 interface AssumptionInputs {
   typFloorToFloorM: string
   efficiencyRatio: string
@@ -44,7 +47,7 @@ function anonymiseAddress(address: string): string {
     return ''
   }
   if (trimmed.length <= 5) {
-    return `${trimmed[0] ?? ''}***`
+    return `${trimmed[0]}***`
   }
   const prefix = trimmed.slice(0, 3)
   const suffix = trimmed.slice(-2)
@@ -74,14 +77,14 @@ export function FeasibilityWizard() {
     'idle',
   )
 
-  const copyStatusColor = useMemo(() => {
+  const copyStatusColor = useMemo<string>(() => {
     if (copyState === 'copied') {
-      return cssVar('color-success-strong')
+      return readCssVar('color-success-strong')
     }
     if (copyState === 'error') {
-      return cssVar('color-error-strong')
+      return readCssVar('color-error-strong')
     }
-    return cssVar('color-brand-primary')
+    return readCssVar('color-brand-primary')
   }, [copyState])
 
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -325,8 +328,12 @@ export function FeasibilityWizard() {
     }
     const text = `${JSON.stringify(body, null, 2)}\n`
 
-    const copyPromise = navigator.clipboard
-      ? navigator.clipboard.writeText(text)
+    const clipboard =
+      typeof navigator !== 'undefined' && 'clipboard' in navigator
+        ? navigator.clipboard
+        : undefined
+    const copyPromise = clipboard
+      ? clipboard.writeText(text)
       : Promise.reject(new Error('Clipboard API unavailable'))
 
     copyPromise

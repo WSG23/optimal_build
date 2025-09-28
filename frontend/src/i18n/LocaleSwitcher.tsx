@@ -5,7 +5,10 @@ import { supportedLanguages, useTranslation } from './index'
 
 export function LocaleSwitcher() {
   const { i18n, t } = useTranslation()
-  const currentLanguage = i18n.resolvedLanguage ?? i18n.language
+  const currentLanguage =
+    typeof i18n.resolvedLanguage === 'string'
+      ? i18n.resolvedLanguage
+      : i18n.language
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLSelectElement>) => {

@@ -145,13 +145,13 @@ export function createMockBuildableTransport(
     responses = DEFAULT_RESPONSES,
     fallbackResponse = DEFAULT_FALLBACK_RESPONSE,
   } = options
-  return async (
+  return (
     _baseUrl: string,
     request: BuildableRequest,
   ): Promise<BuildableResponse> => {
     const key = normaliseAddress(request.address)
     const response = responses[key] ?? fallbackResponse
-    return cloneBuildableResponse(response)
+    return Promise.resolve(cloneBuildableResponse(response))
   }
 }
 

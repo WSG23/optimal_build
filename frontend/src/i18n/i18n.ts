@@ -14,7 +14,7 @@ type Listener = () => void
 
 type ResourceDictionary = Record<string, Record<string, unknown>>
 
-type Resources = Record<string, ResourceDictionary>
+type Resources = Partial<Record<string, ResourceDictionary>>
 
 const STORAGE_KEY = 'optimal_build:locale'
 const QUERY_KEYS = ['lang', 'locale', 'lng']
@@ -136,7 +136,7 @@ class I18n {
     }
   }
 
-  async changeLanguage(language: string) {
+  changeLanguage(language: string): this {
     this.language = language
     this.resolvedLanguage = this.isSupported(language)
       ? (language as SupportedLanguage)
@@ -204,11 +204,8 @@ class I18n {
 
   t(key: string, options: TranslationOptions = {}): string {
     const namespace = options.ns ?? 'translation'
-    const languagesToCheck: SupportedLanguage[] = []
-    if (this.resolvedLanguage) {
-      languagesToCheck.push(this.resolvedLanguage)
-    }
-    if (!languagesToCheck.includes(this.fallbackLng)) {
+    const languagesToCheck: SupportedLanguage[] = [this.resolvedLanguage]
+    if (this.resolvedLanguage !== this.fallbackLng) {
       languagesToCheck.push(this.fallbackLng)
     }
 

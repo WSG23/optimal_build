@@ -42,7 +42,13 @@ const router = createBrowserRouter([
   },
 ])
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const container = document.getElementById('root')
+
+if (!container) {
+  throw new Error('Root element with id "root" not found')
+}
+
+ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <TranslationProvider>
       <RouterProvider router={router} />
