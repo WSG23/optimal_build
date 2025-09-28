@@ -80,8 +80,14 @@ up the `frontend` workspace and installs the configured pre-commit hooks if the
    make test
    ```
 
-   Frontend tests live under `frontend/`—run them with `npm test` when your
-   changes affect the UI.
+   Frontend workspaces have dedicated commands:
+
+   ```bash
+   pnpm -C frontend test        # Vite/Web UI checks
+   pnpm -C ui-admin test        # Admin UI checks
+   ```
+
+   Run these when your changes affect the corresponding UI packages.
 6. **Prepare the pull request.** Include a summary of the change, note any
    follow-up work, and call out testing performed. Ensure CI is green before
    requesting review.
