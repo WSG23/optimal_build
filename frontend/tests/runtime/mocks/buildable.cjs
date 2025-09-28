@@ -64,7 +64,9 @@ const DEFAULT_RESPONSES = {
     input_kind: 'address',
     zone_code: 'C1',
     overlays: ['airport'],
-    advisory_hints: ['Coordinate with CAAS on height limits under the airport safeguarding zone.'],
+    advisory_hints: [
+      'Coordinate with CAAS on height limits under the airport safeguarding zone.',
+    ],
     metrics: {
       gfa_cap_m2: 3430,
       floors_max: 8,
@@ -125,7 +127,10 @@ function cloneBuildableResponse(payload) {
 }
 
 function createMockBuildableTransport(options = {}) {
-  const { responses = DEFAULT_RESPONSES, fallbackResponse = DEFAULT_FALLBACK_RESPONSE } = options
+  const {
+    responses = DEFAULT_RESPONSES,
+    fallbackResponse = DEFAULT_FALLBACK_RESPONSE,
+  } = options
   return async (_baseUrl, request) => {
     const key = normaliseAddress(request.address)
     const response = responses[key] ?? fallbackResponse

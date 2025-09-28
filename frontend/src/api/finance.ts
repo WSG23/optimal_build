@@ -201,7 +201,9 @@ interface FinanceFeasibilityResponsePayload {
   dscr_timeline: DscrEntryPayload[]
 }
 
-function toPayload(request: FinanceFeasibilityRequest): FinanceFeasibilityRequestPayload {
+function toPayload(
+  request: FinanceFeasibilityRequest,
+): FinanceFeasibilityRequestPayload {
   const { scenario } = request
   return {
     project_id: request.projectId,
@@ -236,7 +238,9 @@ function toPayload(request: FinanceFeasibilityRequest): FinanceFeasibilityReques
   }
 }
 
-function mapSnapshot(payload: CostIndexSnapshotPayload | null | undefined): CostIndexSnapshot | null {
+function mapSnapshot(
+  payload: CostIndexSnapshotPayload | null | undefined,
+): CostIndexSnapshot | null {
   if (!payload) {
     return null
   }
@@ -250,7 +254,9 @@ function mapSnapshot(payload: CostIndexSnapshotPayload | null | undefined): Cost
   }
 }
 
-function mapCostIndex(payload: CostIndexProvenancePayload): CostIndexProvenance {
+function mapCostIndex(
+  payload: CostIndexProvenancePayload,
+): CostIndexProvenance {
   return {
     seriesName: payload.series_name,
     jurisdiction: payload.jurisdiction,
@@ -282,7 +288,9 @@ function mapDscrEntry(payload: DscrEntryPayload): DscrEntry {
   }
 }
 
-function mapResponse(payload: FinanceFeasibilityResponsePayload): FinanceScenarioSummary {
+function mapResponse(
+  payload: FinanceFeasibilityResponsePayload,
+): FinanceScenarioSummary {
   return {
     scenarioId: payload.scenario_id,
     projectId: payload.project_id,
@@ -313,16 +321,22 @@ export async function runFinanceFeasibility(
     headers['X-Role'] = defaultRole
   }
 
-  const response = await fetch(buildUrl('api/v1/finance/feasibility', apiBaseUrl), {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(toPayload(request)),
-    signal: options.signal,
-  })
+  const response = await fetch(
+    buildUrl('api/v1/finance/feasibility', apiBaseUrl),
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(toPayload(request)),
+      signal: options.signal,
+    },
+  )
 
   if (!response.ok) {
     const message = await response.text()
-    throw new Error(message || `Finance feasibility request failed with status ${response.status}`)
+    throw new Error(
+      message ||
+        `Finance feasibility request failed with status ${response.status}`,
+    )
   }
 
   const payload = (await response.json()) as FinanceFeasibilityResponsePayload

@@ -24,10 +24,18 @@ function renderContextSummary(context) {
 function AuditTimelinePanel({ events = [], loading = false }) {
   const { t } = useTranslation()
   if (loading) {
-    return React.createElement('div', { className: 'audit-timeline audit-timeline--loading' }, '…')
+    return React.createElement(
+      'div',
+      { className: 'audit-timeline audit-timeline--loading' },
+      '…',
+    )
   }
   if (!events.length) {
-    return React.createElement('div', { className: 'audit-timeline audit-timeline--empty' }, t('audit.empty'))
+    return React.createElement(
+      'div',
+      { className: 'audit-timeline audit-timeline--empty' },
+      t('audit.empty'),
+    )
   }
   return React.createElement(
     'section',
@@ -40,11 +48,27 @@ function AuditTimelinePanel({ events = [], loading = false }) {
         React.createElement(
           'li',
           { key: event.id },
-          React.createElement('span', { className: 'audit-timeline__type' }, event.eventType),
-          React.createElement('span', null, `${t('audit.baseline')}: ${formatMinutes(event.baselineSeconds)}`),
-          React.createElement('span', null, `${t('audit.actual')}: ${formatMinutes(event.actualSeconds)}`),
+          React.createElement(
+            'span',
+            { className: 'audit-timeline__type' },
+            event.eventType,
+          ),
+          React.createElement(
+            'span',
+            null,
+            `${t('audit.baseline')}: ${formatMinutes(event.baselineSeconds)}`,
+          ),
+          React.createElement(
+            'span',
+            null,
+            `${t('audit.actual')}: ${formatMinutes(event.actualSeconds)}`,
+          ),
           event.context
-            ? React.createElement('span', { className: 'audit-timeline__context' }, renderContextSummary(event.context))
+            ? React.createElement(
+                'span',
+                { className: 'audit-timeline__context' },
+                renderContextSummary(event.context),
+              )
             : null,
         ),
       ),

@@ -44,7 +44,10 @@ module.exports = [
           caughtErrors: 'none',
         },
       ],
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
     },
   },
 ]

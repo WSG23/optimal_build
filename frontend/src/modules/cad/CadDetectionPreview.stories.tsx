@@ -10,10 +10,34 @@ const meta = {
 export default meta
 
 const units: DetectedUnit[] = [
-  { id: 'L01-01', floor: 1, unitLabel: '#01-01', areaSqm: 82, status: 'source' },
-  { id: 'L01-02', floor: 1, unitLabel: '#01-02', areaSqm: 79, status: 'pending' },
-  { id: 'L02-01', floor: 2, unitLabel: '#02-01', areaSqm: 85, status: 'approved' },
-  { id: 'L03-01', floor: 3, unitLabel: '#03-01', areaSqm: 90, status: 'rejected' },
+  {
+    id: 'L01-01',
+    floor: 1,
+    unitLabel: '#01-01',
+    areaSqm: 82,
+    status: 'source',
+  },
+  {
+    id: 'L01-02',
+    floor: 1,
+    unitLabel: '#01-02',
+    areaSqm: 79,
+    status: 'pending',
+  },
+  {
+    id: 'L02-01',
+    floor: 2,
+    unitLabel: '#02-01',
+    areaSqm: 85,
+    status: 'approved',
+  },
+  {
+    id: 'L03-01',
+    floor: 3,
+    unitLabel: '#03-01',
+    areaSqm: 90,
+    status: 'rejected',
+  },
 ]
 
 export const Default = () => (

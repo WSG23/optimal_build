@@ -1,1 +1,4 @@
-export { FinanceWorkspace as default, FinanceWorkspace } from './FinanceWorkspace'
+export {
+  FinanceWorkspace as default,
+  FinanceWorkspace,
+} from './FinanceWorkspace'

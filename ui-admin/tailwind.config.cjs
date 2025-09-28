@@ -1,9 +1,11 @@
-const withOpacityValue = (cssVariable) => ({ opacityValue }) => {
-  if (opacityValue === undefined) {
-    return `rgb(var(${cssVariable}))`
+const withOpacityValue =
+  (cssVariable) =>
+  ({ opacityValue }) => {
+    if (opacityValue === undefined) {
+      return `rgb(var(${cssVariable}))`
+    }
+    return `rgb(var(${cssVariable}) / ${opacityValue})`
   }
-  return `rgb(var(${cssVariable}) / ${opacityValue})`
-}
 
 module.exports = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -19,11 +21,15 @@ module.exports = {
           primary: withOpacityValue('--ob-color-text-primary-rgb'),
           muted: withOpacityValue('--ob-color-text-muted-rgb'),
           inverse: withOpacityValue('--ob-color-text-inverse-rgb'),
-          'inverse-muted': withOpacityValue('--ob-color-text-inverse-muted-rgb'),
+          'inverse-muted': withOpacityValue(
+            '--ob-color-text-inverse-muted-rgb',
+          ),
         },
         brand: {
           primary: withOpacityValue('--ob-color-brand-primary-rgb'),
-          'primary-emphasis': withOpacityValue('--ob-color-brand-primary-emphasis-rgb'),
+          'primary-emphasis': withOpacityValue(
+            '--ob-color-brand-primary-emphasis-rgb',
+          ),
           soft: withOpacityValue('--ob-color-brand-soft-rgb'),
         },
         border: {
@@ -61,4 +67,4 @@ module.exports = {
     },
   },
   plugins: [],
-};
+}

@@ -10,7 +10,12 @@ interface CadUploaderProps {
   summary?: CadImportSummary | null
 }
 
-export function CadUploader({ onUpload, isUploading = false, status, summary }: CadUploaderProps) {
+export function CadUploader({
+  onUpload,
+  isUploading = false,
+  status,
+  summary,
+}: CadUploaderProps) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -68,7 +73,9 @@ export function CadUploader({ onUpload, isUploading = false, status, summary }: 
   return (
     <div className="cad-uploader">
       <div
-        className={`cad-uploader__dropzone${isDragging ? ' cad-uploader__dropzone--dragging' : ''}`}
+        className={`cad-uploader__dropzone${
+          isDragging ? ' cad-uploader__dropzone--dragging' : ''
+        }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -83,16 +90,25 @@ export function CadUploader({ onUpload, isUploading = false, status, summary }: 
           disabled={isUploading}
         />
         <p className="cad-uploader__hint">{t('uploader.dropHint')}</p>
-        <button type="button" className="cad-uploader__browse" onClick={handleBrowse} disabled={isUploading}>
+        <button
+          type="button"
+          className="cad-uploader__browse"
+          onClick={handleBrowse}
+          disabled={isUploading}
+        >
           {t('uploader.browseLabel')}
         </button>
       </div>
 
       <aside className="cad-uploader__status">
         <h3>{t('uploader.latestStatus')}</h3>
-        {summary && <p className="cad-uploader__filename">{summary.fileName}</p>}
+        {summary && (
+          <p className="cad-uploader__filename">{summary.fileName}</p>
+        )}
         {latestStatus ? <p>{latestStatus}</p> : <p>{t('uploader.parsing')}</p>}
-        {status?.error && <p className="cad-uploader__message">{status.error}</p>}
+        {status?.error && (
+          <p className="cad-uploader__message">{status.error}</p>
+        )}
         <dl className="cad-uploader__meta">
           <div>
             <dt>{t('uploader.floors')}</dt>
@@ -104,7 +120,9 @@ export function CadUploader({ onUpload, isUploading = false, status, summary }: 
           </div>
           <div>
             <dt>{t('uploader.units')}</dt>
-            <dd>{detectedUnits.length > 0 ? detectedUnits.length : fallbackDash}</dd>
+            <dd>
+              {detectedUnits.length > 0 ? detectedUnits.length : fallbackDash}
+            </dd>
           </div>
         </dl>
       </aside>

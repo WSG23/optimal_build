@@ -1,6 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { AnchorHTMLAttributes, MouseEventHandler, ReactNode } from 'react'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 interface RouteDefinition {
   path: string
@@ -66,15 +73,25 @@ export function RouterProvider({ router }: RouterProviderProps) {
     return routes.find((route) => route.path === '/')?.element ?? null
   }, [path, routes])
 
-  const contextValue = useMemo<RouterContextValue>(() => ({ path, navigate }), [path, navigate])
+  const contextValue = useMemo<RouterContextValue>(
+    () => ({ path, navigate }),
+    [path, navigate],
+  )
 
-  return <RouterContext.Provider value={contextValue}>{activeElement}</RouterContext.Provider>
+  return (
+    <RouterContext.Provider value={contextValue}>
+      {activeElement}
+    </RouterContext.Provider>
+  )
 }
 
 type LinkMouseEvent = Parameters<MouseEventHandler<HTMLAnchorElement>>[0]
 
 export function shouldHandleLinkClick(
-  event: Pick<LinkMouseEvent, 'button' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>,
+  event: Pick<
+    LinkMouseEvent,
+    'button' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'
+  >,
   target: string | null | undefined,
 ) {
   if (event.button !== 0) {

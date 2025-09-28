@@ -8,7 +8,10 @@ interface RulePackExplanationPanelProps {
   loading?: boolean
 }
 
-export function RulePackExplanationPanel({ rules, loading = false }: RulePackExplanationPanelProps) {
+export function RulePackExplanationPanel({
+  rules,
+  loading = false,
+}: RulePackExplanationPanelProps) {
   const { t } = useTranslation()
 
   const grouped = useMemo(
@@ -36,10 +39,13 @@ export function RulePackExplanationPanel({ rules, loading = false }: RulePackExp
               <ul>
                 {grouped[key].map((rule) => (
                   <li key={rule.id}>
-                    <strong>{rule.parameterKey}</strong> {rule.operator} {rule.value}
+                    <strong>{rule.parameterKey}</strong> {rule.operator}{' '}
+                    {rule.value}
                     {rule.unit ? ` ${rule.unit}` : ''}
                     {rule.overlays.length > 0 && (
-                      <span className="cad-rulepack__overlay">{rule.overlays.join(', ')}</span>
+                      <span className="cad-rulepack__overlay">
+                        {rule.overlays.join(', ')}
+                      </span>
                     )}
                   </li>
                 ))}

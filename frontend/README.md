@@ -46,7 +46,12 @@ const mockOptions = createMockBuildableOptions({
       zone_code: 'R5',
       overlays: [],
       advisory_hints: [],
-      metrics: { gfa_cap_m2: 100, floors_max: 2, footprint_m2: 50, nsa_est_m2: 80 },
+      metrics: {
+        gfa_cap_m2: 100,
+        floors_max: 2,
+        footprint_m2: 50,
+        nsa_est_m2: 80,
+      },
       zone_source: {
         kind: 'parcel',
         layer_name: null,

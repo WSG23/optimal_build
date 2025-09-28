@@ -17,7 +17,12 @@ export interface CadImportSummary {
   vectorSummary: Record<string, unknown> | null
 }
 
-export type ParseJobStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed'
+export type ParseJobStatus =
+  | 'pending'
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
 
 export interface ParseStatusUpdate {
   importId: string
@@ -275,12 +280,16 @@ export class ApiClient {
 
     const roleCandidates = [
       import.meta.env?.VITE_API_ROLE,
-      typeof window !== 'undefined' ? window.localStorage?.getItem('app:api-role') ?? undefined : undefined,
+      typeof window !== 'undefined'
+        ? window.localStorage?.getItem('app:api-role') ?? undefined
+        : undefined,
       'admin',
     ] as Array<string | undefined>
 
     this.defaultRole =
-      roleCandidates.find((value) => typeof value === 'string' && value.trim().length > 0) ?? null
+      roleCandidates.find(
+        (value) => typeof value === 'string' && value.trim().length > 0,
+      ) ?? null
   }
 
   private buildUrl(path: string) {
@@ -288,7 +297,11 @@ export class ApiClient {
       return path
     }
     const trimmed = path.startsWith('/') ? path.slice(1) : path
-    const root = this.baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9400')
+    const root =
+      this.baseUrl ||
+      (typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost:9400')
     try {
       return new URL(trimmed, root.endsWith('/') ? root : `${root}/`).toString()
     } catch (error) {
@@ -313,7 +326,9 @@ export class ApiClient {
     const response = await fetch(this.buildUrl(path), requestInit)
     if (!response.ok) {
       const message = await response.text()
-      throw new Error(message || `Request to ${path} failed with ${response.status}`)
+      throw new Error(
+        message || `Request to ${path} failed with ${response.status}`,
+      )
     }
     if (response.status === 204) {
       return undefined as T
@@ -345,7 +360,8 @@ export class ApiClient {
       unitIds: floor.unit_ids ?? [],
     }))
     const detectedUnits = result?.detected_units ?? []
-    const metadata = (result?.metadata as Record<string, unknown> | undefined) ?? null
+    const metadata =
+      (result?.metadata as Record<string, unknown> | undefined) ?? null
 
     return {
       importId: payload.import_id,
@@ -360,7 +376,9 @@ export class ApiClient {
     }
   }
 
-  private mapOverlaySuggestion(payload: OverlaySuggestionResponse): OverlaySuggestion {
+  private mapOverlaySuggestion(
+    payload: OverlaySuggestionResponse,
+  ): OverlaySuggestion {
     return {
       id: payload.id,
       projectId: payload.project_id,
@@ -414,14 +432,19 @@ export class ApiClient {
   }
 
   async triggerParse(importId: string): Promise<ParseStatusUpdate> {
-    const payload = await this.request<ParseStatusResponse>(`api/v1/parse/${importId}`, {
-      method: 'POST',
-    })
+    const payload = await this.request<ParseStatusResponse>(
+      `api/v1/parse/${importId}`,
+      {
+        method: 'POST',
+      },
+    )
     return this.mapParseStatus(payload)
   }
 
   async fetchParseStatus(importId: string): Promise<ParseStatusUpdate> {
-    const payload = await this.request<ParseStatusResponse>(`api/v1/parse/${importId}`)
+    const payload = await this.request<ParseStatusResponse>(
+      `api/v1/parse/${importId}`,
+    )
     return this.mapParseStatus(payload)
   }
 
@@ -444,7 +467,8 @@ export class ApiClient {
             break
           }
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error'
+          const message =
+            error instanceof Error ? error.message : 'Unknown error'
           onUpdate({
             importId,
             status: 'failed',
@@ -498,15 +522,29 @@ export class ApiClient {
     }
   }
 
-  async listOverlaySuggestions(projectId: number): Promise<OverlaySuggestion[]> {
-    const payload = await this.request<OverlayListingResponse>(`api/v1/overlay/${projectId}`)
+  async listOverlaySuggestions(
+    projectId: number,
+  ): Promise<OverlaySuggestion[]> {
+    const payload = await this.request<OverlayListingResponse>(
+      `api/v1/overlay/${projectId}`,
+    )
     return payload.items.map((item) => this.mapOverlaySuggestion(item))
   }
 
-  async runOverlay(projectId: number): Promise<{ status: string; projectId: number; jobId: string | null; created?: number; updated?: number; evaluated?: number }> {
-    const payload = await this.request<OverlayRunResponse>(`api/v1/overlay/${projectId}/run`, {
-      method: 'POST',
-    })
+  async runOverlay(projectId: number): Promise<{
+    status: string
+    projectId: number
+    jobId: string | null
+    created?: number
+    updated?: number
+    evaluated?: number
+  }> {
+    const payload = await this.request<OverlayRunResponse>(
+      `api/v1/overlay/${projectId}/run`,
+      {
+        method: 'POST',
+      },
+    )
     return {
       status: payload.status,
       projectId: payload.project_id,
@@ -519,22 +557,33 @@ export class ApiClient {
 
   async decideOverlay(
     projectId: number,
-    input: { suggestionId: number; decision: 'approved' | 'rejected'; decidedBy?: string; notes?: string },
+    input: {
+      suggestionId: number
+      decision: 'approved' | 'rejected'
+      decidedBy?: string
+      notes?: string
+    },
   ): Promise<OverlaySuggestion> {
-    const payload = await this.request<OverlayDecisionResponse>(`api/v1/overlay/${projectId}/decision`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        suggestion_id: input.suggestionId,
-        decision: input.decision,
-        decided_by: input.decidedBy,
-        notes: input.notes,
-      }),
-    })
+    const payload = await this.request<OverlayDecisionResponse>(
+      `api/v1/overlay/${projectId}/decision`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          suggestion_id: input.suggestionId,
+          decision: input.decision,
+          decided_by: input.decidedBy,
+          notes: input.notes,
+        }),
+      },
+    )
     return this.mapOverlaySuggestion(payload.item)
   }
 
-  async listAuditTrail(projectId: number, options: { eventType?: string } = {}): Promise<AuditEvent[]> {
+  async listAuditTrail(
+    projectId: number,
+    options: { eventType?: string } = {},
+  ): Promise<AuditEvent[]> {
     const searchParams = new URLSearchParams()
     if (options.eventType) {
       searchParams.set('event_type', options.eventType)
@@ -577,7 +626,10 @@ export class ApiClient {
     }
   }
 
-  async exportProject(projectId: number, options: ExportRequestOptions): Promise<ExportArtifactResponse> {
+  async exportProject(
+    projectId: number,
+    options: ExportRequestOptions,
+  ): Promise<ExportArtifactResponse> {
     const body: Record<string, unknown> = {
       format: options.format,
       include_source: options.includeSource ?? true,
@@ -613,7 +665,9 @@ export class ApiClient {
 
     if (!response.ok) {
       const message = await response.text()
-      throw new Error(message || `Export request failed with status ${response.status}`)
+      throw new Error(
+        message || `Export request failed with status ${response.status}`,
+      )
     }
 
     const blob = await response.blob()
@@ -651,13 +705,20 @@ export class ApiClient {
     const suggestions: PipelineSuggestion[] = []
 
     byTopic.forEach((topicRules, topic) => {
-      const related = topicRules.filter((rule) =>
-        rule.overlays.some((overlay) => overlays.has(overlay)) ||
-        rule.advisoryHints.some((hint) => hints.has(hint)),
+      const related = topicRules.filter(
+        (rule) =>
+          rule.overlays.some((overlay) => overlays.has(overlay)) ||
+          rule.advisoryHints.some((hint) => hints.has(hint)),
       )
-      const automationScore = related.length > 0 ? Math.min(0.95, 0.5 + related.length / (topicRules.length * 1.5)) : 0.45
+      const automationScore =
+        related.length > 0
+          ? Math.min(0.95, 0.5 + related.length / (topicRules.length * 1.5))
+          : 0.45
       const savings = Math.round(automationScore * 100 * 0.3)
-      const reviewHours = Math.max(2, Math.round(topicRules.length * automationScore))
+      const reviewHours = Math.max(
+        2,
+        Math.round(topicRules.length * automationScore),
+      )
 
       suggestions.push({
         id: `pipeline-${topic.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
@@ -679,7 +740,8 @@ export class ApiClient {
         {
           id: 'pipeline-default',
           title: 'Core compliance pipeline',
-          description: 'Baseline review workflow across zoning, fire safety and environmental health topics.',
+          description:
+            'Baseline review workflow across zoning, fire safety and environmental health topics.',
           focus: 'baseline',
           automationScore: 0.5,
           reviewHoursSaved: 6,

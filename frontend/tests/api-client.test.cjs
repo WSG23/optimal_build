@@ -16,7 +16,9 @@ if (typeof global.FormData === 'undefined') {
   }
 }
 
-const { ApiClient } = loadModule(path.resolve(__dirname, '../src/api/client.ts'))
+const { ApiClient } = loadModule(
+  path.resolve(__dirname, '../src/api/client.ts'),
+)
 
 function restoreFetch(originalFetch) {
   if (originalFetch) {
@@ -88,7 +90,10 @@ test('pollParseStatus stops after completion update', async () => {
         status: 'completed',
         requested_at: '2024-03-10T10:00:00Z',
         completed_at: '2024-03-10T10:00:05Z',
-        result: { detected_floors: [{ name: 'Level 01', unit_ids: ['01-01'] }], detected_units: ['01-01'] },
+        result: {
+          detected_floors: [{ name: 'Level 01', unit_ids: ['01-01'] }],
+          detected_units: ['01-01'],
+        },
         error: null,
         job_id: null,
       },
@@ -152,7 +157,10 @@ test('decideOverlay normalises overlay suggestion payload', async () => {
     )
 
   const client = new ApiClient('http://example.com/')
-  const suggestion = await client.decideOverlay(5821, { suggestionId: 99, decision: 'approved' })
+  const suggestion = await client.decideOverlay(5821, {
+    suggestionId: 99,
+    decision: 'approved',
+  })
 
   restoreFetch(originalFetch)
 
@@ -193,7 +201,10 @@ test('getDefaultPipelineSuggestions prioritises overlay matches', async () => {
     },
   ]
 
-  const suggestions = await client.getDefaultPipelineSuggestions({ overlays: ['fire_access'], hints: [] })
+  const suggestions = await client.getDefaultPipelineSuggestions({
+    overlays: ['fire_access'],
+    hints: [],
+  })
   assert.ok(suggestions.length > 0)
   assert.strictEqual(suggestions[0].relatedRuleIds.includes(1), true)
   assert.ok(suggestions[0].focus.toLowerCase().includes('fire'))

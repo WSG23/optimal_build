@@ -11,7 +11,9 @@ async function runFinanceFeasibility(request, options = {}) {
     body: JSON.stringify(snakeCase(request)),
   })
   if (!response.ok) {
-    throw new Error(`Finance feasibility request failed with status ${response.status}`)
+    throw new Error(
+      `Finance feasibility request failed with status ${response.status}`,
+    )
   }
   const payload = await response.json()
   const data = camelCase(payload)

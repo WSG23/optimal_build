@@ -1,11 +1,11 @@
-import { Route, Routes } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import SourcesPage from './pages/SourcesPage';
-import DocumentsPage from './pages/DocumentsPage';
-import ClausesPage from './pages/ClausesPage';
-import RulesReviewPage from './pages/RulesReviewPage';
-import DiffsPage from './pages/DiffsPage';
-import EntitlementsPage from './pages/EntitlementsPage';
+import { Route, Routes } from 'react-router-dom'
+import Sidebar from './components/Sidebar'
+import SourcesPage from './pages/SourcesPage'
+import DocumentsPage from './pages/DocumentsPage'
+import ClausesPage from './pages/ClausesPage'
+import RulesReviewPage from './pages/RulesReviewPage'
+import DiffsPage from './pages/DiffsPage'
+import EntitlementsPage from './pages/EntitlementsPage'
 
 const App = () => {
   return (
@@ -22,7 +22,7 @@ const App = () => {
         </Routes>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App

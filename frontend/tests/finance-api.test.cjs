@@ -46,12 +46,29 @@ test('runFinanceFeasibility serialises payloads and maps responses', async () =>
           },
         },
         results: [
-          { name: 'npv', value: '1200000', unit: 'currency', metadata: { source: 'demo' } },
+          {
+            name: 'npv',
+            value: '1200000',
+            unit: 'currency',
+            metadata: { source: 'demo' },
+          },
           { name: 'irr', value: '0.12', unit: 'ratio', metadata: null },
         ],
         dscr_timeline: [
-          { period: 'M1', noi: '0', debt_service: '0', dscr: null, currency: 'SGD' },
-          { period: 'M2', noi: '3500000', debt_service: '3100000', dscr: '1.13', currency: 'SGD' },
+          {
+            period: 'M1',
+            noi: '0',
+            debt_service: '0',
+            dscr: null,
+            currency: 'SGD',
+          },
+          {
+            period: 'M2',
+            noi: '3500000',
+            debt_service: '3100000',
+            dscr: '1.13',
+            currency: 'SGD',
+          },
         ],
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },

@@ -27,7 +27,10 @@ export function CadDetectionPreview({
 }: CadDetectionPreviewProps) {
   const { t } = useTranslation()
   const floors = useMemo(
-    () => Array.from(new Set(units.map((unit) => unit.floor))).sort((a, b) => a - b),
+    () =>
+      Array.from(new Set(units.map((unit) => unit.floor))).sort(
+        (a, b) => a - b,
+      ),
     [units],
   )
   const fallbackDash = t('common.fallback.dash')
@@ -42,14 +45,18 @@ export function CadDetectionPreview({
         <div className="cad-preview__summary">
           <span>{t('detection.summary.floors', { count: floors.length })}</span>
           <span>{t('detection.summary.units', { count: units.length })}</span>
-          {zoneCode && <span>{t('detection.summary.zone', { code: zoneCode })}</span>}
+          {zoneCode && (
+            <span>{t('detection.summary.zone', { code: zoneCode })}</span>
+          )}
         </div>
       </header>
 
       <div className="cad-preview__grid">
         <div className="cad-preview__panel">
           <h3>{t('detection.overlays')}</h3>
-          {overlays.length === 0 ? <p>{fallbackDash}</p> : (
+          {overlays.length === 0 ? (
+            <p>{fallbackDash}</p>
+          ) : (
             <ul>
               {overlays.map((overlay) => (
                 <li key={overlay}>{overlay}</li>
@@ -59,7 +66,9 @@ export function CadDetectionPreview({
         </div>
         <div className="cad-preview__panel">
           <h3>{t('detection.advisory')}</h3>
-          {hints.length === 0 ? <p>{fallbackDash}</p> : (
+          {hints.length === 0 ? (
+            <p>{fallbackDash}</p>
+          ) : (
             <ul>
               {hints.map((hint) => (
                 <li key={hint}>{hint}</li>
@@ -69,7 +78,9 @@ export function CadDetectionPreview({
         </div>
       </div>
 
-      {locked && <p className="cad-preview__lock-indicator">{t('detection.locked')}</p>}
+      {locked && (
+        <p className="cad-preview__lock-indicator">{t('detection.locked')}</p>
+      )}
 
       <table className="cad-preview__table">
         <caption>{t('detection.tableHeading')}</caption>

@@ -29,14 +29,22 @@ export function ExportDialog({
     <section className="cad-panel">
       <h3>{t('panels.exportTitle')}</h3>
       <p>{t('panels.exportSubtitle')}</p>
-      <button type="button" onClick={() => setOpen((value) => !value)} disabled={disabled}>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        disabled={disabled}
+      >
         {t('detection.exportCta')}
       </button>
       {open && (
         <ul className="cad-export">
           {formats.map((format) => (
             <li key={format}>
-              <button type="button" onClick={() => handleExport(format)} disabled={disabled}>
+              <button
+                type="button"
+                onClick={() => handleExport(format)}
+                disabled={disabled}
+              >
                 {format}
               </button>
             </li>

@@ -7,16 +7,32 @@ const { renderToStaticMarkup } = require('react-dom/server')
 
 const { loadModule } = require('./helpers/loadModule.cjs')
 
-const { TranslationProvider } = loadModule(path.resolve(__dirname, '../src/i18n/index.ts'))
-const { CadUploader } = loadModule(path.resolve(__dirname, '../src/modules/cad/CadUploader.tsx'))
-const { LayerTogglePanel } = loadModule(path.resolve(__dirname, '../src/modules/cad/LayerTogglePanel.tsx'))
-const { BulkReviewControls } = loadModule(path.resolve(__dirname, '../src/modules/cad/BulkReviewControls.tsx'))
-const { AuditTimelinePanel } = loadModule(path.resolve(__dirname, '../src/modules/cad/AuditTimelinePanel.tsx'))
-const { ExportDialog } = loadModule(path.resolve(__dirname, '../src/modules/cad/ExportDialog.tsx'))
-const { RoiSummary } = loadModule(path.resolve(__dirname, '../src/modules/cad/RoiSummary.tsx'))
+const { TranslationProvider } = loadModule(
+  path.resolve(__dirname, '../src/i18n/index.ts'),
+)
+const { CadUploader } = loadModule(
+  path.resolve(__dirname, '../src/modules/cad/CadUploader.tsx'),
+)
+const { LayerTogglePanel } = loadModule(
+  path.resolve(__dirname, '../src/modules/cad/LayerTogglePanel.tsx'),
+)
+const { BulkReviewControls } = loadModule(
+  path.resolve(__dirname, '../src/modules/cad/BulkReviewControls.tsx'),
+)
+const { AuditTimelinePanel } = loadModule(
+  path.resolve(__dirname, '../src/modules/cad/AuditTimelinePanel.tsx'),
+)
+const { ExportDialog } = loadModule(
+  path.resolve(__dirname, '../src/modules/cad/ExportDialog.tsx'),
+)
+const { RoiSummary } = loadModule(
+  path.resolve(__dirname, '../src/modules/cad/RoiSummary.tsx'),
+)
 
 function renderWithProvider(element) {
-  return renderToStaticMarkup(React.createElement(TranslationProvider, null, element))
+  return renderToStaticMarkup(
+    React.createElement(TranslationProvider, null, element),
+  )
 }
 
 test('CadUploader renders detected floors and units', () => {
@@ -126,7 +142,9 @@ test('AuditTimelinePanel renders audit metadata and context summary', () => {
   assert.match(eventsHtml, /Actual: 10 min/)
   assert.match(eventsHtml, /approved #77/)
 
-  const emptyHtml = renderWithProvider(React.createElement(AuditTimelinePanel, { events: [], loading: false }))
+  const emptyHtml = renderWithProvider(
+    React.createElement(AuditTimelinePanel, { events: [], loading: false }),
+  )
   assert.match(emptyHtml, /—/)
 })
 

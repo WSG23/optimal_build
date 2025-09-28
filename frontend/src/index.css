@@ -32,7 +32,9 @@ a:hover {
   color: #1d4ed8;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   line-height: 1.1;
 }
 

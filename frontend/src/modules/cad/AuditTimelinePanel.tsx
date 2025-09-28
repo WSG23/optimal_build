@@ -6,7 +6,10 @@ interface AuditTimelinePanelProps {
   loading?: boolean
 }
 
-export function AuditTimelinePanel({ events, loading = false }: AuditTimelinePanelProps) {
+export function AuditTimelinePanel({
+  events,
+  loading = false,
+}: AuditTimelinePanelProps) {
   const { t } = useTranslation()
   const fallbackDash = t('common.fallback.dash')
 
@@ -14,9 +17,14 @@ export function AuditTimelinePanel({ events, loading = false }: AuditTimelinePan
     if (!context || Object.keys(context).length === 0) {
       return fallbackDash
     }
-    const decisionContext = context as { decision?: unknown; suggestion_id?: unknown }
+    const decisionContext = context as {
+      decision?: unknown
+      suggestion_id?: unknown
+    }
     if (typeof decisionContext.decision === 'string') {
-      const identifier = decisionContext.suggestion_id ? ` #${decisionContext.suggestion_id}` : ''
+      const identifier = decisionContext.suggestion_id
+        ? ` #${decisionContext.suggestion_id}`
+        : ''
       return `${decisionContext.decision}${identifier}`
     }
     return Object.entries(context)
@@ -50,16 +58,22 @@ export function AuditTimelinePanel({ events, loading = false }: AuditTimelinePan
               </p>
               <p className="cad-timeline__baseline">
                 {event.baselineSeconds !== null
-                  ? t('detection.auditBaseline', { minutes: Math.round(event.baselineSeconds / 60) })
+                  ? t('detection.auditBaseline', {
+                      minutes: Math.round(event.baselineSeconds / 60),
+                    })
                   : t('detection.auditBaseline', { minutes: fallbackDash })}
               </p>
               <p className="cad-timeline__baseline">
                 {event.actualSeconds !== null
-                  ? t('detection.auditActual', { minutes: Math.round(event.actualSeconds / 60) })
+                  ? t('detection.auditActual', {
+                      minutes: Math.round(event.actualSeconds / 60),
+                    })
                   : t('detection.auditActual', { minutes: fallbackDash })}
               </p>
               <p className="cad-timeline__baseline">
-                {t('detection.auditContext', { text: formatContext(event.context) })}
+                {t('detection.auditContext', {
+                  text: formatContext(event.context),
+                })}
               </p>
             </li>
           ))}

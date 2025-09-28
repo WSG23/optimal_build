@@ -71,7 +71,9 @@ const DEFAULT_RESPONSES: Record<string, BuildableResponse> = {
     input_kind: 'address',
     zone_code: 'C1',
     overlays: ['airport'],
-    advisory_hints: ['Coordinate with CAAS on height limits under the airport safeguarding zone.'],
+    advisory_hints: [
+      'Coordinate with CAAS on height limits under the airport safeguarding zone.',
+    ],
     metrics: {
       gfa_cap_m2: 3430,
       floors_max: 8,
@@ -139,8 +141,14 @@ export interface BuildableMockOptions {
 export function createMockBuildableTransport(
   options: BuildableMockOptions = {},
 ): BuildableTransport {
-  const { responses = DEFAULT_RESPONSES, fallbackResponse = DEFAULT_FALLBACK_RESPONSE } = options
-  return async (_baseUrl: string, request: BuildableRequest): Promise<BuildableResponse> => {
+  const {
+    responses = DEFAULT_RESPONSES,
+    fallbackResponse = DEFAULT_FALLBACK_RESPONSE,
+  } = options
+  return async (
+    _baseUrl: string,
+    request: BuildableRequest,
+  ): Promise<BuildableResponse> => {
     const key = normaliseAddress(request.address)
     const response = responses[key] ?? fallbackResponse
     return cloneBuildableResponse(response)

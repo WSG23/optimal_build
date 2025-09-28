@@ -150,7 +150,9 @@ function mapRule(rule: RuleItem): BuildableRule {
 
 function mapResponse(payload: BuildableResponse): BuildableSummary {
   const advisoryHints = Array.isArray(payload.advisory_hints)
-    ? payload.advisory_hints.filter((hint): hint is string => typeof hint === 'string')
+    ? payload.advisory_hints.filter(
+        (hint): hint is string => typeof hint === 'string',
+      )
     : []
 
   return {
@@ -196,15 +198,24 @@ export async function postBuildable(
 
   if (!response.ok) {
     if (contentType.includes('application/json')) {
-      const payload = (await response.json()) as { detail?: unknown; error?: unknown }
-      const detail = typeof payload.detail === 'string' ? payload.detail : undefined
-      const error = typeof payload.error === 'string' ? payload.error : undefined
+      const payload = (await response.json()) as {
+        detail?: unknown
+        error?: unknown
+      }
+      const detail =
+        typeof payload.detail === 'string' ? payload.detail : undefined
+      const error =
+        typeof payload.error === 'string' ? payload.error : undefined
       throw new Error(
-        detail ?? error ?? `Request to /${API_PREFIX} failed with ${response.status}`,
+        detail ??
+          error ??
+          `Request to /${API_PREFIX} failed with ${response.status}`,
       )
     }
     const message = await response.text()
-    throw new Error(message || `Request to /${API_PREFIX} failed with ${response.status}`)
+    throw new Error(
+      message || `Request to /${API_PREFIX} failed with ${response.status}`,
+    )
   }
 
   if (!contentType.includes('application/json')) {

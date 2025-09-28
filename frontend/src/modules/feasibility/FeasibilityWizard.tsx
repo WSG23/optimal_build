@@ -24,7 +24,13 @@ interface AssumptionErrors {
   efficiencyRatio?: 'required' | 'invalid' | 'range'
 }
 
-type WizardStatus = 'idle' | 'loading' | 'success' | 'partial' | 'empty' | 'error'
+type WizardStatus =
+  | 'idle'
+  | 'loading'
+  | 'success'
+  | 'partial'
+  | 'empty'
+  | 'error'
 
 type PendingPayload = {
   address: string
@@ -49,18 +55,24 @@ export function FeasibilityWizard() {
   const { t, i18n } = useTranslation()
   const [addressInput, setAddressInput] = useState('')
   const [addressError, setAddressError] = useState<string | null>(null)
-  const [assumptionInputs, setAssumptionInputs] = useState<AssumptionInputs>(() => ({
-    typFloorToFloorM: DEFAULT_ASSUMPTIONS.typFloorToFloorM.toString(),
-    efficiencyRatio: DEFAULT_ASSUMPTIONS.efficiencyRatio.toString(),
-  }))
+  const [assumptionInputs, setAssumptionInputs] = useState<AssumptionInputs>(
+    () => ({
+      typFloorToFloorM: DEFAULT_ASSUMPTIONS.typFloorToFloorM.toString(),
+      efficiencyRatio: DEFAULT_ASSUMPTIONS.efficiencyRatio.toString(),
+    }),
+  )
   const [assumptionErrors, setAssumptionErrors] = useState<AssumptionErrors>({})
-  const [appliedAssumptions, setAppliedAssumptions] = useState({ ...DEFAULT_ASSUMPTIONS })
+  const [appliedAssumptions, setAppliedAssumptions] = useState({
+    ...DEFAULT_ASSUMPTIONS,
+  })
   const [payload, setPayload] = useState<PendingPayload | null>(null)
   const [result, setResult] = useState<BuildableSummary | null>(null)
   const [status, setStatus] = useState<WizardStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [liveAnnouncement, setLiveAnnouncement] = useState('')
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>(
+    'idle',
+  )
 
   const copyStatusColor = useMemo(() => {
     if (copyState === 'copied') {
@@ -139,15 +151,23 @@ export function FeasibilityWizard() {
     setStatus('loading')
     setErrorMessage(null)
 
-    const startTime = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const startTime =
+      typeof performance !== 'undefined' ? performance.now() : Date.now()
 
     debounceRef.current = window.setTimeout(() => {
       fetchBuildable(payload, { signal: controller.signal })
         .then((response) => {
           const duration =
-            (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startTime
+            (typeof performance !== 'undefined'
+              ? performance.now()
+              : Date.now()) - startTime
 
-          dispatchTelemetry(duration, 'success', response.zoneCode, payload.address)
+          dispatchTelemetry(
+            duration,
+            'success',
+            response.zoneCode,
+            payload.address,
+          )
           setResult(response)
 
           if (!response.zoneCode) {
@@ -174,7 +194,9 @@ export function FeasibilityWizard() {
             return
           }
           const duration =
-            (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startTime
+            (typeof performance !== 'undefined'
+              ? performance.now()
+              : Date.now()) - startTime
           dispatchTelemetry(duration, 'error', null, payload.address)
           setStatus('error')
           setErrorMessage(
@@ -214,10 +236,13 @@ export function FeasibilityWizard() {
     })
   }, [appliedAssumptions])
 
-  const handleAddressChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setAddressInput(event.target.value)
-    setAddressError(null)
-  }, [])
+  const handleAddressChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setAddressInput(event.target.value)
+      setAddressError(null)
+    },
+    [],
+  )
 
   const handleAssumptionChange = useCallback(
     (key: keyof AssumptionInputs) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -327,13 +352,19 @@ export function FeasibilityWizard() {
       error === 'required'
         ? 'wizard.assumptions.errors.required'
         : error === 'range'
-        ? 'wizard.assumptions.errors.range'
-        : 'wizard.assumptions.errors.invalid'
+          ? 'wizard.assumptions.errors.range'
+          : 'wizard.assumptions.errors.invalid'
     return <p className="feasibility-assumptions__error">{t(messageKey)}</p>
   }
 
-  const renderProvenanceBadge = (provenance: BuildableSummary['rules'][number]['provenance']) => {
-    if (provenance.documentId && provenance.pages && provenance.pages.length > 0) {
+  const renderProvenanceBadge = (
+    provenance: BuildableSummary['rules'][number]['provenance'],
+  ) => {
+    if (
+      provenance.documentId &&
+      provenance.pages &&
+      provenance.pages.length > 0
+    ) {
       return (
         <span className="feasibility-citation__badge">
           {t('wizard.citations.documentWithPages', {
@@ -451,181 +482,230 @@ export function FeasibilityWizard() {
   )
 
   return (
-    <AppLayout title={t('wizard.title')} subtitle={t('wizard.description')} actions={headerActions}>
+    <AppLayout
+      title={t('wizard.title')}
+      subtitle={t('wizard.description')}
+      actions={headerActions}
+    >
       <div className="feasibility-wizard" data-testid="feasibility-wizard">
         <div className="feasibility-wizard__layout">
           <section className="feasibility-wizard__controls">
-            <form className="feasibility-form" onSubmit={handleSubmit} noValidate>
-            <label className="feasibility-form__label" htmlFor="address-input">
-              {t('wizard.form.addressLabel')}
-            </label>
-            <div className="feasibility-form__field">
-              <input
-                id="address-input"
-                name="address"
-                type="text"
-                value={addressInput}
-                onChange={handleAddressChange}
-                placeholder={t('wizard.form.addressPlaceholder')}
-                data-testid="address-input"
-              />
-              {addressError && <p className="feasibility-form__error">{addressError}</p>}
-            </div>
-            <div className="feasibility-form__actions">
-              <button
-                type="submit"
-                className="feasibility-form__submit"
-                data-testid="compute-button"
-              >
-                {status === 'loading'
-                  ? t('wizard.form.submitLoading')
-                  : t('wizard.form.submitLabel')}
-              </button>
-            </div>
-          </form>
-
-          <section className="feasibility-assumptions">
-            <header>
-              <h2>{t('wizard.assumptions.title')}</h2>
-              <p>{t('wizard.assumptions.subtitle')}</p>
-            </header>
-            <div className="feasibility-assumptions__grid">
-              <div>
-                <label htmlFor="assumption-floor">
-                  {t('wizard.assumptions.fields.typFloorToFloor.label')}
-                </label>
-                <input
-                  id="assumption-floor"
-                  type="number"
-                  step="0.1"
-                  min={0}
-                  value={assumptionInputs.typFloorToFloorM}
-                  onChange={handleAssumptionChange('typFloorToFloorM')}
-                  data-testid="assumption-floor"
-                />
-                <p className="feasibility-assumptions__hint">
-                  {t('wizard.assumptions.fields.typFloorToFloor.hint', {
-                    value: decimalFormatter.format(DEFAULT_ASSUMPTIONS.typFloorToFloorM),
-                  })}
-                </p>
-                {renderAssumptionError('typFloorToFloorM')}
-              </div>
-              <div>
-                <label htmlFor="assumption-efficiency">
-                  {t('wizard.assumptions.fields.efficiency.label')}
-                </label>
-                <input
-                  id="assumption-efficiency"
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  max={1}
-                  value={assumptionInputs.efficiencyRatio}
-                  onChange={handleAssumptionChange('efficiencyRatio')}
-                />
-                <p className="feasibility-assumptions__hint">
-                  {t('wizard.assumptions.fields.efficiency.hint', {
-                    value: decimalFormatter.format(DEFAULT_ASSUMPTIONS.efficiencyRatio),
-                  })}
-                </p>
-                {renderAssumptionError('efficiencyRatio')}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="feasibility-assumptions__reset"
-              onClick={handleResetAssumptions}
+            <form
+              className="feasibility-form"
+              onSubmit={handleSubmit}
+              noValidate
             >
-              {t('wizard.assumptions.reset')}
-            </button>
-          </section>
-        </section>
+              <label
+                className="feasibility-form__label"
+                htmlFor="address-input"
+              >
+                {t('wizard.form.addressLabel')}
+              </label>
+              <div className="feasibility-form__field">
+                <input
+                  id="address-input"
+                  name="address"
+                  type="text"
+                  value={addressInput}
+                  onChange={handleAddressChange}
+                  placeholder={t('wizard.form.addressPlaceholder')}
+                  data-testid="address-input"
+                />
+                {addressError && (
+                  <p className="feasibility-form__error">{addressError}</p>
+                )}
+              </div>
+              <div className="feasibility-form__actions">
+                <button
+                  type="submit"
+                  className="feasibility-form__submit"
+                  data-testid="compute-button"
+                >
+                  {status === 'loading'
+                    ? t('wizard.form.submitLoading')
+                    : t('wizard.form.submitLabel')}
+                </button>
+              </div>
+            </form>
 
-        <section className="feasibility-results" aria-live="polite" aria-busy={status === 'loading'}>
-          {status === 'idle' && (
-            <p className="feasibility-results__placeholder">
-              {t('wizard.states.idle')}
-            </p>
-          )}
-
-          {status === 'loading' && (
-            <div className="feasibility-results__skeleton" role="status">
-              <div className="skeleton skeleton--heading" />
-              <div className="skeleton skeleton--row" />
-              <div className="skeleton skeleton--row" />
-              <div className="skeleton skeleton--grid" />
-            </div>
-          )}
-
-          {status === 'error' && (
-            <p className="feasibility-results__error" role="alert">
-              {errorMessage ?? t('wizard.errors.generic')}
-            </p>
-          )}
-
-          {(status === 'success' || status === 'partial' || status === 'empty') && result && (
-            <div className="feasibility-results__content">
-              <header className="feasibility-results__header">
-                <div>
-                  <span className="feasibility-results__label">{t('wizard.results.zone')}</span>
-                  <span className="feasibility-results__value" data-testid="zone-code">
-                    {result.zoneCode ?? t('wizard.results.zoneUnknown')}
-                  </span>
-                </div>
-                <div>
-                  <span className="feasibility-results__label">{t('wizard.results.overlays')}</span>
-                  <div className="feasibility-results__overlays" data-testid="overlay-badges">
-                    {result.overlays.length === 0 && (
-                      <span className="feasibility-results__badge">
-                        {t('wizard.results.none')}
-                      </span>
-                    )}
-                    {result.overlays.map((overlay) => (
-                      <span key={overlay} className="feasibility-results__badge">
-                        {overlay}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+            <section className="feasibility-assumptions">
+              <header>
+                <h2>{t('wizard.assumptions.title')}</h2>
+                <p>{t('wizard.assumptions.subtitle')}</p>
               </header>
+              <div className="feasibility-assumptions__grid">
+                <div>
+                  <label htmlFor="assumption-floor">
+                    {t('wizard.assumptions.fields.typFloorToFloor.label')}
+                  </label>
+                  <input
+                    id="assumption-floor"
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={assumptionInputs.typFloorToFloorM}
+                    onChange={handleAssumptionChange('typFloorToFloorM')}
+                    data-testid="assumption-floor"
+                  />
+                  <p className="feasibility-assumptions__hint">
+                    {t('wizard.assumptions.fields.typFloorToFloor.hint', {
+                      value: decimalFormatter.format(
+                        DEFAULT_ASSUMPTIONS.typFloorToFloorM,
+                      ),
+                    })}
+                  </p>
+                  {renderAssumptionError('typFloorToFloorM')}
+                </div>
+                <div>
+                  <label htmlFor="assumption-efficiency">
+                    {t('wizard.assumptions.fields.efficiency.label')}
+                  </label>
+                  <input
+                    id="assumption-efficiency"
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    max={1}
+                    value={assumptionInputs.efficiencyRatio}
+                    onChange={handleAssumptionChange('efficiencyRatio')}
+                  />
+                  <p className="feasibility-assumptions__hint">
+                    {t('wizard.assumptions.fields.efficiency.hint', {
+                      value: decimalFormatter.format(
+                        DEFAULT_ASSUMPTIONS.efficiencyRatio,
+                      ),
+                    })}
+                  </p>
+                  {renderAssumptionError('efficiencyRatio')}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="feasibility-assumptions__reset"
+                onClick={handleResetAssumptions}
+              >
+                {t('wizard.assumptions.reset')}
+              </button>
+            </section>
+          </section>
 
-              {metricsView}
+          <section
+            className="feasibility-results"
+            aria-live="polite"
+            aria-busy={status === 'loading'}
+          >
+            {status === 'idle' && (
+              <p className="feasibility-results__placeholder">
+                {t('wizard.states.idle')}
+              </p>
+            )}
 
-              {advisoryView}
+            {status === 'loading' && (
+              <div className="feasibility-results__skeleton" role="status">
+                <div className="skeleton skeleton--heading" />
+                <div className="skeleton skeleton--row" />
+                <div className="skeleton skeleton--row" />
+                <div className="skeleton skeleton--grid" />
+              </div>
+            )}
 
-              {status === 'empty' && (
-                <p className="feasibility-results__empty">{t('wizard.states.empty')}</p>
-              )}
+            {status === 'error' && (
+              <p className="feasibility-results__error" role="alert">
+                {errorMessage ?? t('wizard.errors.generic')}
+              </p>
+            )}
 
-              {status === 'partial' && result.zoneCode && (
-                <p className="feasibility-results__partial">{t('wizard.states.partial')}</p>
-              )}
-
-              {result.rules.length > 0 && (
-                <section className="feasibility-citations" data-testid="citations">
-                  <h3>{t('wizard.citations.title')}</h3>
-                  <ul>
-                    {result.rules.map((rule) => (
-                      <li key={rule.id} className="feasibility-citation">
-                        <div className="feasibility-citation__meta">
-                          <span className="feasibility-citation__authority">{rule.authority}</span>
-                          <span className="feasibility-citation__clause">
-                            {rule.provenance.clauseRef ?? t('wizard.citations.unknownClause')}
+            {(status === 'success' ||
+              status === 'partial' ||
+              status === 'empty') &&
+              result && (
+                <div className="feasibility-results__content">
+                  <header className="feasibility-results__header">
+                    <div>
+                      <span className="feasibility-results__label">
+                        {t('wizard.results.zone')}
+                      </span>
+                      <span
+                        className="feasibility-results__value"
+                        data-testid="zone-code"
+                      >
+                        {result.zoneCode ?? t('wizard.results.zoneUnknown')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="feasibility-results__label">
+                        {t('wizard.results.overlays')}
+                      </span>
+                      <div
+                        className="feasibility-results__overlays"
+                        data-testid="overlay-badges"
+                      >
+                        {result.overlays.length === 0 && (
+                          <span className="feasibility-results__badge">
+                            {t('wizard.results.none')}
                           </span>
-                        </div>
-                        <p className="feasibility-citation__parameter">
-                          {`${rule.parameterKey} ${rule.operator} ${rule.value}${rule.unit ? ` ${rule.unit}` : ''}`}
-                        </p>
-                        {renderProvenanceBadge(rule.provenance)}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+                        )}
+                        {result.overlays.map((overlay) => (
+                          <span
+                            key={overlay}
+                            className="feasibility-results__badge"
+                          >
+                            {overlay}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </header>
+
+                  {metricsView}
+
+                  {advisoryView}
+
+                  {status === 'empty' && (
+                    <p className="feasibility-results__empty">
+                      {t('wizard.states.empty')}
+                    </p>
+                  )}
+
+                  {status === 'partial' && result.zoneCode && (
+                    <p className="feasibility-results__partial">
+                      {t('wizard.states.partial')}
+                    </p>
+                  )}
+
+                  {result.rules.length > 0 && (
+                    <section
+                      className="feasibility-citations"
+                      data-testid="citations"
+                    >
+                      <h3>{t('wizard.citations.title')}</h3>
+                      <ul>
+                        {result.rules.map((rule) => (
+                          <li key={rule.id} className="feasibility-citation">
+                            <div className="feasibility-citation__meta">
+                              <span className="feasibility-citation__authority">
+                                {rule.authority}
+                              </span>
+                              <span className="feasibility-citation__clause">
+                                {rule.provenance.clauseRef ??
+                                  t('wizard.citations.unknownClause')}
+                              </span>
+                            </div>
+                            <p className="feasibility-citation__parameter">
+                              {`${rule.parameterKey} ${rule.operator} ${
+                                rule.value
+                              }${rule.unit ? ` ${rule.unit}` : ''}`}
+                            </p>
+                            {renderProvenanceBadge(rule.provenance)}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </div>
               )}
-            </div>
-          )}
-        </section>
-      </div>
+          </section>
+        </div>
 
         <div className="sr-only" aria-live="polite">
           {liveAnnouncement}

@@ -1,53 +1,57 @@
-import { useEffect, useMemo, useState } from 'react';
-import Header from '../components/Header';
-import { ReviewAPI } from '../api/client';
-import type { RuleRecord } from '../types';
+import { useEffect, useMemo, useState } from 'react'
+import Header from '../components/Header'
+import { ReviewAPI } from '../api/client'
+import type { RuleRecord } from '../types'
 
 const RulesReviewPage = () => {
-  const [rules, setRules] = useState<RuleRecord[]>([]);
-  const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rules, setRules] = useState<RuleRecord[]>([])
+  const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    setLoading(true);
+    setLoading(true)
     ReviewAPI.getRules()
       .then((response) => {
-        setRules(response.items);
-        setError(null);
+        setRules(response.items)
+        setError(null)
         if (response.items.length && selectedRuleId === null) {
-          setSelectedRuleId(response.items[0].id);
+          setSelectedRuleId(response.items[0].id)
         }
       })
       .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .finally(() => setLoading(false))
     // We only want to load rules on initial mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   const selectedRule = useMemo(
     () => rules.find((rule) => rule.id === selectedRuleId) ?? null,
-    [rules, selectedRuleId]
-  );
+    [rules, selectedRuleId],
+  )
 
   const handleAction = async (action: 'approve' | 'reject' | 'publish') => {
-    if (!selectedRule) return;
-    setIsSubmitting(true);
+    if (!selectedRule) return
+    setIsSubmitting(true)
     try {
-      const { item } = await ReviewAPI.reviewRule(selectedRule.id, action);
-      setRules((prev) => prev.map((rule) => (rule.id === item.id ? item : rule)));
+      const { item } = await ReviewAPI.reviewRule(selectedRule.id, action)
+      setRules((prev) =>
+        prev.map((rule) => (rule.id === item.id ? item : rule)),
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update rule');
+      setError(err instanceof Error ? err.message : 'Failed to update rule')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <div>
       <Header title="Rules Review" />
-      {loading && <p className="text-sm text-text-inverse/70">Loading rules…</p>}
+      {loading && (
+        <p className="text-sm text-text-inverse/70">Loading rules…</p>
+      )}
       {error && <p className="text-sm text-error-strong/85">{error}</p>}
       {!loading && !error && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -56,9 +60,15 @@ const RulesReviewPage = () => {
               <table className="min-w-full divide-y divide-border-neutral/40">
                 <thead className="bg-surface-inverse/60">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-text-inverse/70">Parameter</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-text-inverse/70">Requirement</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-text-inverse/70">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-text-inverse/70">
+                      Parameter
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-text-inverse/70">
+                      Requirement
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-text-inverse/70">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-neutral/40">
@@ -66,12 +76,16 @@ const RulesReviewPage = () => {
                     <tr
                       key={rule.id}
                       className={`cursor-pointer hover:bg-surface-inverse/50 ${
-                        selectedRuleId === rule.id ? 'bg-surface-inverse/60' : ''
+                        selectedRuleId === rule.id
+                          ? 'bg-surface-inverse/60'
+                          : ''
                       }`}
                       onClick={() => setSelectedRuleId(rule.id)}
                     >
                       <td className="px-4 py-3 text-sm text-text-inverse">
-                        <div className="font-semibold">{rule.parameter_key}</div>
+                        <div className="font-semibold">
+                          {rule.parameter_key}
+                        </div>
                         <div className="text-xs text-text-inverse/70">
                           {rule.jurisdiction} · {rule.authority}
                         </div>
@@ -85,8 +99,8 @@ const RulesReviewPage = () => {
                             rule.review_status === 'approved'
                               ? 'bg-success-strong/20 text-success-strong/80'
                               : rule.review_status === 'rejected'
-                              ? 'bg-error-strong/20 text-error-strong/80'
-                              : 'bg-warning-strong/20 text-warning-strong/80'
+                                ? 'bg-error-strong/20 text-error-strong/80'
+                                : 'bg-warning-strong/20 text-warning-strong/80'
                           }`}
                         >
                           {rule.review_status.replace('_', ' ')}
@@ -96,7 +110,10 @@ const RulesReviewPage = () => {
                   ))}
                   {rules.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="px-4 py-6 text-center text-sm text-text-inverse/70">
+                      <td
+                        colSpan={3}
+                        className="px-4 py-6 text-center text-sm text-text-inverse/70"
+                      >
                         No rules awaiting review.
                       </td>
                     </tr>
@@ -110,7 +127,9 @@ const RulesReviewPage = () => {
             {selectedRule ? (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-text-inverse">Overlays</h3>
+                  <h3 className="text-sm font-semibold text-text-inverse">
+                    Overlays
+                  </h3>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {selectedRule.overlays.length ? (
                       selectedRule.overlays.map((overlay) => (
@@ -122,27 +141,40 @@ const RulesReviewPage = () => {
                         </span>
                       ))
                     ) : (
-                      <span className="text-xs text-text-inverse/70">No overlays</span>
+                      <span className="text-xs text-text-inverse/70">
+                        No overlays
+                      </span>
                     )}
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-inverse">Advisory Hints</h3>
+                  <h3 className="text-sm font-semibold text-text-inverse">
+                    Advisory Hints
+                  </h3>
                   <ul className="mt-2 space-y-2 text-sm text-text-inverse/80 list-disc list-inside">
                     {selectedRule.advisory_hints.map((hint, index) => (
                       <li key={index}>{hint}</li>
                     ))}
                     {selectedRule.advisory_hints.length === 0 && (
-                      <li className="text-xs text-text-inverse/70">No hints available.</li>
+                      <li className="text-xs text-text-inverse/70">
+                        No hints available.
+                      </li>
                     )}
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-inverse">Normalized Parameters</h3>
+                  <h3 className="text-sm font-semibold text-text-inverse">
+                    Normalized Parameters
+                  </h3>
                   <ul className="mt-2 space-y-2 text-xs text-text-inverse/80">
                     {selectedRule.normalized.map((param) => (
-                      <li key={param.parameter_key} className="border border-border-neutral/40 rounded p-2">
-                        <div className="font-semibold text-text-inverse">{param.parameter_key}</div>
+                      <li
+                        key={param.parameter_key}
+                        className="border border-border-neutral/40 rounded p-2"
+                      >
+                        <div className="font-semibold text-text-inverse">
+                          {param.parameter_key}
+                        </div>
                         <div>
                           {param.operator} {param.value} {param.unit || ''}
                         </div>
@@ -156,7 +188,9 @@ const RulesReviewPage = () => {
                       </li>
                     ))}
                     {selectedRule.normalized.length === 0 && (
-                      <li className="text-xs text-text-inverse/70">No normalized data available.</li>
+                      <li className="text-xs text-text-inverse/70">
+                        No normalized data available.
+                      </li>
                     )}
                   </ul>
                 </div>
@@ -178,13 +212,15 @@ const RulesReviewPage = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-text-inverse/70">Select a rule to review its details.</p>
+              <p className="text-sm text-text-inverse/70">
+                Select a rule to review its details.
+              </p>
             )}
           </div>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default RulesReviewPage;
+export default RulesReviewPage

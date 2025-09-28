@@ -9,10 +9,13 @@ export default defineConfig(({ mode }) => {
   const serverPort = Number.parseInt(env.FRONTEND_PORT ?? '', 10)
   const host = env.VITE_DEV_HOST?.trim() || '127.0.0.1'
 
-  const rawApiBase = env.VITE_API_BASE_URL?.trim() || env.VITE_API_BASE?.trim() || ''
+  const rawApiBase =
+    env.VITE_API_BASE_URL?.trim() || env.VITE_API_BASE?.trim() || ''
   const backendPort = env.BACKEND_PORT?.trim() || '9400'
   const resolvedApiBase =
-    rawApiBase.length > 0 && rawApiBase !== '/' ? rawApiBase : `http://127.0.0.1:${backendPort}`
+    rawApiBase.length > 0 && rawApiBase !== '/'
+      ? rawApiBase
+      : `http://127.0.0.1:${backendPort}`
   const proxyTarget = resolvedApiBase.replace(/\/+$/, '')
 
   return {
@@ -33,7 +36,10 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@ob/tokens': path.resolve(__dirname, '../core/design-tokens/index.ts'),
-        '@ob/tokens.css': path.resolve(__dirname, '../core/design-tokens/tokens.css'),
+        '@ob/tokens.css': path.resolve(
+          __dirname,
+          '../core/design-tokens/tokens.css',
+        ),
       },
     },
   }

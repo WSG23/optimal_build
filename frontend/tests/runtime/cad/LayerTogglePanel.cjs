@@ -2,7 +2,11 @@ const React = require('react')
 
 const ALL_LAYERS = ['source', 'approved', 'pending', 'rejected']
 
-function LayerTogglePanel({ activeLayers = [], onToggle = () => {}, disabled = false }) {
+function LayerTogglePanel({
+  activeLayers = [],
+  onToggle = () => {},
+  disabled = false,
+}) {
   void onToggle
   const activeSet = new Set(activeLayers)
   return React.createElement(

@@ -22,10 +22,18 @@ export function BulkReviewControls({
         {pendingCount} {t('controls.pending')}
       </p>
       <div className="cad-bulk-controls">
-        <button type="button" onClick={onApproveAll} disabled={disabled || pendingCount === 0}>
+        <button
+          type="button"
+          onClick={onApproveAll}
+          disabled={disabled || pendingCount === 0}
+        >
           {t('controls.approveAll')}
         </button>
-        <button type="button" onClick={onRejectAll} disabled={disabled || pendingCount === 0}>
+        <button
+          type="button"
+          onClick={onRejectAll}
+          disabled={disabled || pendingCount === 0}
+        >
           {t('controls.rejectAll')}
         </button>
       </div>

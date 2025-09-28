@@ -11,7 +11,10 @@ test('App renders the expected headline', async () => {
   const html = renderToString(React.createElement(App))
   const expectedHeadingText = 'Optimal Build Studio'
   const headingPattern = new RegExp(
-    `<h1[^>]*>\\s*${expectedHeadingText.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*<\\/h1>`,
+    `<h1[^>]*>\\s*${expectedHeadingText.replace(
+      /[-/\\^$*+?.()|[\]{}]/g,
+      '\\$&',
+    )}\\s*<\\/h1>`,
     'i',
   )
   assert.match(

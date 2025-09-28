@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom'
 
 const navItems = [
   { to: '/', label: 'Sources' },
@@ -6,8 +6,8 @@ const navItems = [
   { to: '/clauses', label: 'Clauses' },
   { to: '/rules', label: 'Rules Review' },
   { to: '/diffs', label: 'Diffs' },
-  { to: '/entitlements', label: 'Entitlements' }
-];
+  { to: '/entitlements', label: 'Entitlements' },
+]
 
 const Sidebar = () => {
   return (
@@ -24,7 +24,9 @@ const Sidebar = () => {
             end={item.to === '/'}
             className={({ isActive }) =>
               `px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
-                isActive ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800'
+                isActive
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-300 hover:bg-slate-800'
               }`
             }
           >
@@ -33,7 +35,7 @@ const Sidebar = () => {
         ))}
       </nav>
     </aside>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar

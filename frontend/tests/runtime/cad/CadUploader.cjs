@@ -16,7 +16,12 @@ function resolveStatusLabel(status, t) {
   }
 }
 
-function CadUploader({ onUpload = () => {}, isUploading = false, status = null, summary = null }) {
+function CadUploader({
+  onUpload = () => {},
+  isUploading = false,
+  status = null,
+  summary = null,
+}) {
   void onUpload
   const { t } = useTranslation()
   const fallbackDash = t('common.fallback.dash')
@@ -36,10 +41,18 @@ function CadUploader({ onUpload = () => {}, isUploading = false, status = null, 
         className: 'cad-uploader__input',
         disabled: isUploading,
       }),
-      React.createElement('p', { className: 'cad-uploader__hint' }, t('uploader.dropHint')),
+      React.createElement(
+        'p',
+        { className: 'cad-uploader__hint' },
+        t('uploader.dropHint'),
+      ),
       React.createElement(
         'button',
-        { type: 'button', className: 'cad-uploader__browse', disabled: isUploading },
+        {
+          type: 'button',
+          className: 'cad-uploader__browse',
+          disabled: isUploading,
+        },
         t('uploader.browseLabel'),
       ),
     ),
@@ -48,10 +61,20 @@ function CadUploader({ onUpload = () => {}, isUploading = false, status = null, 
       { className: 'cad-uploader__status' },
       React.createElement('h3', null, t('uploader.latestStatus')),
       summary
-        ? React.createElement('p', { className: 'cad-uploader__filename' }, summary.fileName)
+        ? React.createElement(
+            'p',
+            { className: 'cad-uploader__filename' },
+            summary.fileName,
+          )
         : null,
       React.createElement('p', null, latestStatus),
-      status?.error ? React.createElement('p', { className: 'cad-uploader__message' }, status.error) : null,
+      status?.error
+        ? React.createElement(
+            'p',
+            { className: 'cad-uploader__message' },
+            status.error,
+          )
+        : null,
       React.createElement(
         'dl',
         { className: 'cad-uploader__meta' },
@@ -71,7 +94,11 @@ function CadUploader({ onUpload = () => {}, isUploading = false, status = null, 
           'div',
           null,
           React.createElement('dt', null, t('uploader.units')),
-          React.createElement('dd', null, detectedUnits.length > 0 ? detectedUnits.length : fallbackDash),
+          React.createElement(
+            'dd',
+            null,
+            detectedUnits.length > 0 ? detectedUnits.length : fallbackDash,
+          ),
         ),
       ),
     ),

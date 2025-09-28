@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from 'react'
 
 interface HeaderProps {
-  title: string;
-  actions?: ReactNode;
+  title: string
+  actions?: ReactNode
 }
 
 const Header = ({ title, actions }: HeaderProps) => {
@@ -11,7 +11,7 @@ const Header = ({ title, actions }: HeaderProps) => {
       <h2 className="text-2xl font-semibold text-text-inverse">{title}</h2>
       {actions && <div className="flex items-center space-x-2">{actions}</div>}
     </div>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

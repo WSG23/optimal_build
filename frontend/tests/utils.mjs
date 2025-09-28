@@ -9,7 +9,10 @@ const runtimeRoot = path.join(__dirname, 'runtime')
 
 const componentMap = new Map([
   ['tests/support/appEntry.tsx', path.join(runtimeRoot, 'AppEntry.cjs')],
-  ['tests/support/feasibilityWizardEntry.tsx', path.join(runtimeRoot, 'FeasibilityWizardEntry.cjs')],
+  [
+    'tests/support/feasibilityWizardEntry.tsx',
+    path.join(runtimeRoot, 'FeasibilityWizardEntry.cjs'),
+  ],
 ])
 
 export async function loadComponent(entryRelativePath) {

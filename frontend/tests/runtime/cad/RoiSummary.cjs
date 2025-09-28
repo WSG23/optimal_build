@@ -23,15 +23,25 @@ function RoiSummary({ metrics = {} }) {
       React.createElement(
         'li',
         null,
-        `${t('roi.automationScore')}: ${formatPercent(metrics.automationScore)}`,
+        `${t('roi.automationScore')}: ${formatPercent(
+          metrics.automationScore,
+        )}`,
       ),
-      React.createElement('li', null, `${t('roi.savingsPercent')}: ${formatPercent(metrics.savingsPercent)}`),
+      React.createElement(
+        'li',
+        null,
+        `${t('roi.savingsPercent')}: ${formatPercent(metrics.savingsPercent)}`,
+      ),
       React.createElement(
         'li',
         null,
         `${t('roi.reviewHoursSaved')}: ${metrics.reviewHoursSaved ?? '—'}h`,
       ),
-      React.createElement('li', null, `${t('roi.paybackWeeks')}: ${metrics.paybackWeeks ?? '—'} weeks`),
+      React.createElement(
+        'li',
+        null,
+        `${t('roi.paybackWeeks')}: ${metrics.paybackWeeks ?? '—'} weeks`,
+      ),
     ),
   )
 }

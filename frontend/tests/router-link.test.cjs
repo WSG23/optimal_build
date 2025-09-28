@@ -42,7 +42,11 @@ test('modified clicks bypass router navigation', () => {
   for (const modifierKey of ['metaKey', 'ctrlKey']) {
     const { event, wasPrevented } = createEvent({ [modifierKey]: true })
     handler(event)
-    assert.equal(wasPrevented(), false, `${modifierKey} should not call preventDefault`)
+    assert.equal(
+      wasPrevented(),
+      false,
+      `${modifierKey} should not call preventDefault`,
+    )
     assert.equal(
       navigations.length,
       0,
@@ -66,7 +70,11 @@ test('plain left click uses router navigation', () => {
   const { event, wasPrevented } = createEvent()
   handler(event)
 
-  assert.equal(wasPrevented(), true, 'preventDefault should be called for router navigation')
+  assert.equal(
+    wasPrevented(),
+    true,
+    'preventDefault should be called for router navigation',
+  )
   assert.equal(navigations.length, 1)
   assert.equal(navigations[0], '/destination')
 })

@@ -39,7 +39,11 @@ function formatCurrency(
   }
 }
 
-function formatPercent(value: string | null | undefined, locale: string, fallback: string): string {
+function formatPercent(
+  value: string | null | undefined,
+  locale: string,
+  fallback: string,
+): string {
   const parsed = toNumber(value)
   if (parsed === null) {
     return fallback
@@ -51,7 +55,11 @@ function formatPercent(value: string | null | undefined, locale: string, fallbac
   }).format(parsed)
 }
 
-function formatDscr(value: number | null, locale: string, fallback: string): string {
+function formatDscr(
+  value: number | null,
+  locale: string,
+  fallback: string,
+): string {
   if (value === null) {
     return fallback
   }
@@ -97,7 +105,9 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
   return (
     <div className="finance-table__wrapper">
       <table className="finance-table">
-        <caption className="finance-table__caption">{t('finance.table.caption')}</caption>
+        <caption className="finance-table__caption">
+          {t('finance.table.caption')}
+        </caption>
         <thead>
           <tr>
             <th scope="col">{t('finance.table.headers.scenario')}</th>
@@ -111,7 +121,14 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
           {rows.map((row) => (
             <tr key={row.id}>
               <th scope="row">{row.name}</th>
-              <td>{formatCurrency(row.escalatedCost, row.currency, locale, fallback)}</td>
+              <td>
+                {formatCurrency(
+                  row.escalatedCost,
+                  row.currency,
+                  locale,
+                  fallback,
+                )}
+              </td>
               <td>{formatCurrency(row.npv, row.currency, locale, fallback)}</td>
               <td>{formatPercent(row.irr, locale, fallback)}</td>
               <td>{formatDscr(row.minDscr, locale, fallback)}</td>

@@ -11,7 +11,12 @@ export interface AppLayoutProps {
   children: ReactNode
 }
 
-export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps) {
+export function AppLayout({
+  title,
+  subtitle,
+  actions,
+  children,
+}: AppLayoutProps) {
   const { t } = useTranslation()
   const path = useRouterPath()
 
@@ -34,7 +39,8 @@ export function AppLayout({ title, subtitle, actions, children }: AppLayoutProps
         <nav>
           <ul>
             {navItems.map((item) => {
-              const isActive = item.path === '/' ? path === '/' : path.startsWith(item.path)
+              const isActive =
+                item.path === '/' ? path === '/' : path.startsWith(item.path)
               return (
                 <li key={item.path}>
                   <Link

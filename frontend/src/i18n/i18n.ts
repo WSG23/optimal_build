@@ -1,4 +1,8 @@
-import { resources, supportedLanguages, type SupportedLanguage } from './resources'
+import {
+  resources,
+  supportedLanguages,
+  type SupportedLanguage,
+} from './resources'
 
 export interface TranslationOptions {
   ns?: string
@@ -166,7 +170,10 @@ class I18n {
     return namespaces[namespace] ?? null
   }
 
-  private getValue(resource: Record<string, unknown> | null, key: string): unknown {
+  private getValue(
+    resource: Record<string, unknown> | null,
+    key: string,
+  ): unknown {
     if (!resource) {
       return undefined
     }
@@ -184,7 +191,11 @@ class I18n {
   private interpolate(template: string, options: TranslationOptions): string {
     return template.replace(/\{\{\s*(.+?)\s*\}\}/g, (_, token: string) => {
       const key = token.trim()
-      if (key in options && options[key] !== undefined && options[key] !== null) {
+      if (
+        key in options &&
+        options[key] !== undefined &&
+        options[key] !== null
+      ) {
         return String(options[key])
       }
       return ''
@@ -248,7 +259,9 @@ if (isBrowser()) {
   const scopedWindow = window as Window & { __APP_I18N__?: I18n }
   scopedWindow.__APP_I18N__ = i18n
 } else {
-  const scopedGlobal = globalThis as typeof globalThis & { __APP_I18N__?: I18n }
+  const scopedGlobal = globalThis as typeof globalThis & {
+    __APP_I18N__?: I18n
+  }
   scopedGlobal.__APP_I18N__ = i18n
 }
 

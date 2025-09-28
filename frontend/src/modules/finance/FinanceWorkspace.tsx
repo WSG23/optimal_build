@@ -25,10 +25,24 @@ const FINANCE_SCENARIOS: readonly FinanceScenarioInput[] = [
     },
     cashFlow: {
       discountRate: '0.08',
-      cashFlows: ['-2500000', '-4100000', '-4650000', '-200000', '4250000', '10200000'],
+      cashFlows: [
+        '-2500000',
+        '-4100000',
+        '-4650000',
+        '-200000',
+        '4250000',
+        '10200000',
+      ],
     },
     dscr: {
-      netOperatingIncomes: ['0', '0', '3800000', '5600000', '7200000', '7800000'],
+      netOperatingIncomes: [
+        '0',
+        '0',
+        '3800000',
+        '5600000',
+        '7200000',
+        '7800000',
+      ],
       debtServices: ['0', '0', '3200000', '3300000', '3400000', '3400000'],
       periodLabels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
     },
@@ -47,10 +61,24 @@ const FINANCE_SCENARIOS: readonly FinanceScenarioInput[] = [
     },
     cashFlow: {
       discountRate: '0.075',
-      cashFlows: ['-2750000', '-4250000', '-4900000', '50000', '5700000', '11350000'],
+      cashFlows: [
+        '-2750000',
+        '-4250000',
+        '-4900000',
+        '50000',
+        '5700000',
+        '11350000',
+      ],
     },
     dscr: {
-      netOperatingIncomes: ['0', '0', '4200000', '6500000', '8200000', '9200000'],
+      netOperatingIncomes: [
+        '0',
+        '0',
+        '4200000',
+        '6500000',
+        '8200000',
+        '9200000',
+      ],
       debtServices: ['0', '0', '3100000', '3200000', '3200000', '3200000'],
       periodLabels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
     },
@@ -69,29 +97,41 @@ const FINANCE_SCENARIOS: readonly FinanceScenarioInput[] = [
     },
     cashFlow: {
       discountRate: '0.085',
-      cashFlows: ['-2250000', '-3750000', '-4100000', '-850000', '1900000', '6500000'],
+      cashFlows: [
+        '-2250000',
+        '-3750000',
+        '-4100000',
+        '-850000',
+        '1900000',
+        '6500000',
+      ],
     },
     dscr: {
-      netOperatingIncomes: ['0', '0', '3200000', '4500000', '5200000', '5800000'],
+      netOperatingIncomes: [
+        '0',
+        '0',
+        '3200000',
+        '4500000',
+        '5200000',
+        '5800000',
+      ],
       debtServices: ['0', '0', '3100000', '3200000', '3250000', '3250000'],
       periodLabels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
     },
   },
 ]
 
-const FINANCE_REQUESTS: readonly FinanceFeasibilityRequest[] = FINANCE_SCENARIOS.map(
-  (scenario) => ({
+const FINANCE_REQUESTS: readonly FinanceFeasibilityRequest[] =
+  FINANCE_SCENARIOS.map((scenario) => ({
     projectId: FINANCE_PROJECT_ID,
     projectName: FINANCE_PROJECT_NAME,
     scenario,
-  }),
-)
+  }))
 
 export function FinanceWorkspace() {
   const { t } = useTranslation()
-  const { scenarios, loading, error, refresh } = useFinanceFeasibility(
-    FINANCE_REQUESTS,
-  )
+  const { scenarios, loading, error, refresh } =
+    useFinanceFeasibility(FINANCE_REQUESTS)
 
   const showEmptyState = !loading && !error && scenarios.length === 0
 
@@ -106,7 +146,9 @@ export function FinanceWorkspace() {
           onClick={refresh}
           disabled={loading}
         >
-          {loading ? t('finance.actions.refreshing') : t('finance.actions.refresh')}
+          {loading
+            ? t('finance.actions.refreshing')
+            : t('finance.actions.refresh')}
         </button>
       }
     >
@@ -117,7 +159,9 @@ export function FinanceWorkspace() {
             <span className="finance-workspace__error-detail">{error}</span>
           </div>
         )}
-        {loading && <p className="finance-workspace__status">{t('common.loading')}</p>}
+        {loading && (
+          <p className="finance-workspace__status">{t('common.loading')}</p>
+        )}
         {showEmptyState && (
           <p className="finance-workspace__empty">{t('finance.table.empty')}</p>
         )}

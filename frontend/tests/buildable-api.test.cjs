@@ -190,7 +190,9 @@ test('fetchBuildable performs a network request in production bundles', async ()
       define: {
         'import.meta.env.PROD': 'true',
         'import.meta.env.DEV': 'false',
-        'import.meta.env.VITE_API_BASE_URL': JSON.stringify('https://example.test/'),
+        'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
+          'https://example.test/',
+        ),
       },
       build: {
         lib: {
@@ -206,7 +208,6 @@ test('fetchBuildable performs a network request in production bundles', async ()
       },
     })
 
-    // eslint-disable-next-line import/no-dynamic-require, global-require
     const builtModule = require(path.join(outDir, 'buildable.cjs'))
     const summary = await builtModule.fetchBuildable({
       address: '999 Production Way',

@@ -1,4 +1,9 @@
-const { snakeCase, camelCase, joinUrl, normaliseBaseUrl } = require('../shared.cjs')
+const {
+  snakeCase,
+  camelCase,
+  joinUrl,
+  normaliseBaseUrl,
+} = require('../shared.cjs')
 
 function mapCadImportSummary(payload) {
   const data = camelCase(payload)
@@ -81,7 +86,12 @@ class ApiClient {
     return mapCadImportSummary(payload)
   }
 
-  pollParseStatus({ importId, onUpdate, intervalMs = 1000, timeoutMs = 60000 }) {
+  pollParseStatus({
+    importId,
+    onUpdate,
+    intervalMs = 1000,
+    timeoutMs = 60000,
+  }) {
     const url = joinUrl(this.baseUrl, `cad/imports/${importId}`)
     let cancelled = false
     const deadline = Date.now() + timeoutMs
@@ -99,7 +109,11 @@ class ApiClient {
         const payload = await response.json()
         const update = mapParseStatusUpdate(payload)
         onUpdate(update)
-        if (update.status === 'completed' || update.status === 'failed' || Date.now() >= deadline) {
+        if (
+          update.status === 'completed' ||
+          update.status === 'failed' ||
+          Date.now() >= deadline
+        ) {
           cancelled = true
           return
         }
@@ -158,8 +172,12 @@ class ApiClient {
     for (const rule of rules) {
       const ruleOverlays = rule.overlays ?? []
       const ruleHints = rule.advisoryHints ?? []
-      const matchesOverlay = ruleOverlays.some((overlay) => overlaySet.has(overlay))
-      const matchesHint = ruleHints.some((hint) => hintSet.has(hint.toLowerCase()))
+      const matchesOverlay = ruleOverlays.some((overlay) =>
+        overlaySet.has(overlay),
+      )
+      const matchesHint = ruleHints.some((hint) =>
+        hintSet.has(hint.toLowerCase()),
+      )
       if (!matchesOverlay && !matchesHint) {
         continue
       }

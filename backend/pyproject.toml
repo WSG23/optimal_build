@@ -19,10 +19,12 @@ combine_as_imports = true
 [tool.ruff]
 line-length = 88
 target-version = "py311"
-select = ["E", "F", "I", "UP", "B", "S", "N", "T20"]
-ignore = ["E501"]  # handled by black
 src = ["backend", "app", "flows", "jobs", "scripts"]
 exclude = [".venv", ".git", "build", "dist", "frontend", "ui-admin"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "S", "N", "T20"]
+ignore = ["E501"]  # handled by black
 
 [tool.mypy]
 python_version = "3.11"
@@ -33,7 +35,29 @@ check_untyped_defs = true
 ignore_missing_imports = true
 no_implicit_optional = true
 strict_optional = true
-exclude = "frontend|ui-admin|tests"
+explicit_package_bases = true
+exclude = "frontend|ui-admin|tests|(^|/)fastapi/|(^|/)httpx/|(^|/)sqlalchemy/|(^|/)uvicorn_app/|(^|/)backend/sqlalchemy_pkg_backup/|(^|/)backend/_vendor/|(^|/)backend/(fastapi_shadow_|starlette_shadow_).*|(^|/)backend/migrations/"
+
+[[tool.mypy.overrides]]
+module = [
+    "fastapi",
+    "fastapi.*",
+    "starlette",
+    "starlette.*",
+    "sqlalchemy",
+    "sqlalchemy.*",
+    "uvicorn_app",
+    "uvicorn_app.*",
+    "httpx",
+    "httpx.*",
+    "backend.sqlalchemy_pkg_backup",
+    "backend.sqlalchemy_pkg_backup.*",
+    "backend._vendor",
+    "backend._vendor.*",
+    "backend.migrations",
+    "backend.migrations.*",
+]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "../tests"]

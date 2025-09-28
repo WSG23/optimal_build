@@ -16,7 +16,11 @@ function FeasibilityWizardContent() {
 }
 
 function FeasibilityWizard() {
-  return React.createElement(TranslationProvider, null, React.createElement(FeasibilityWizardContent))
+  return React.createElement(
+    TranslationProvider,
+    null,
+    React.createElement(FeasibilityWizardContent),
+  )
 }
 
 module.exports = { FeasibilityWizard }

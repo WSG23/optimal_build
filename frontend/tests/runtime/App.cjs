@@ -12,7 +12,11 @@ function AppShell() {
 }
 
 function App() {
-  return React.createElement(TranslationProvider, null, React.createElement(AppShell))
+  return React.createElement(
+    TranslationProvider,
+    null,
+    React.createElement(AppShell),
+  )
 }
 
 module.exports = { App }

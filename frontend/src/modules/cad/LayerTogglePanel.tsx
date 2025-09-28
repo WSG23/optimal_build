@@ -16,7 +16,11 @@ const LABEL_KEYS: Record<DetectionStatus, string> = {
   rejected: 'controls.rejected',
 }
 
-export function LayerTogglePanel({ activeLayers, onToggle, disabled = false }: LayerTogglePanelProps) {
+export function LayerTogglePanel({
+  activeLayers,
+  onToggle,
+  disabled = false,
+}: LayerTogglePanelProps) {
   const { t } = useTranslation()
 
   const handleToggle = (status: DetectionStatus) => {
@@ -37,7 +41,9 @@ export function LayerTogglePanel({ activeLayers, onToggle, disabled = false }: L
             <button
               key={status}
               type="button"
-              className={`cad-layer-toggle__button${isActive ? ' cad-layer-toggle__button--active' : ''}`}
+              className={`cad-layer-toggle__button${
+                isActive ? ' cad-layer-toggle__button--active' : ''
+              }`}
               onClick={() => handleToggle(status)}
               aria-pressed={isActive}
               disabled={disabled}

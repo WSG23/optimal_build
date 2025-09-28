@@ -12,7 +12,9 @@ const pythonPath = pythonPathEntries.filter(Boolean).join(path.delimiter)
 const defaultDbPath = path.resolve(rootDir, '.playwright-e2e.db')
 const defaultDbUrl = `sqlite+aiosqlite:///${defaultDbPath.replace(/\\/g, '/')}`
 const configuredDbUrl =
-  process.env.SQLALCHEMY_DATABASE_URI ?? process.env.PLAYWRIGHT_E2E_DB_URL ?? defaultDbUrl
+  process.env.SQLALCHEMY_DATABASE_URI ??
+  process.env.PLAYWRIGHT_E2E_DB_URL ??
+  defaultDbUrl
 const e2eDbUrl = process.env.PLAYWRIGHT_E2E_DB_URL ?? configuredDbUrl
 const buildableUsePostgis = process.env.BUILDABLE_USE_POSTGIS ?? '0'
 
@@ -28,7 +30,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'python -m backend.uvicorn app.main:app --host 127.0.0.1 --port 8000',
+      command:
+        'python -m backend.uvicorn app.main:app --host 127.0.0.1 --port 8000',
       cwd: backendDir,
       env: {
         PYTHONPATH: pythonPath,
@@ -46,7 +49,8 @@ export default defineConfig({
       command: 'pnpm dev -- --host 127.0.0.1 --port 3000',
       cwd: path.resolve(rootDir, 'frontend'),
       env: {
-        VITE_API_BASE_URL: process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/',
+        VITE_API_BASE_URL:
+          process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/',
       },
       port: 3000,
       reuseExistingServer: !process.env.CI,

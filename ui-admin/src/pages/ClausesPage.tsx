@@ -1,34 +1,34 @@
-import { useEffect, useState } from 'react';
-import Header from '../components/Header';
-import { ReviewAPI } from '../api/client';
-import type { ClauseRecord, DocumentRecord } from '../types';
-import PDFViewer from '../components/PDFViewer';
+import { useEffect, useState } from 'react'
+import Header from '../components/Header'
+import { ReviewAPI } from '../api/client'
+import type { ClauseRecord, DocumentRecord } from '../types'
+import PDFViewer from '../components/PDFViewer'
 
 const ClausesPage = () => {
-  const [documents, setDocuments] = useState<DocumentRecord[]>([]);
-  const [clauses, setClauses] = useState<ClauseRecord[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<number | undefined>();
-  const [previewDoc, setPreviewDoc] = useState<DocumentRecord | undefined>();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<DocumentRecord[]>([])
+  const [clauses, setClauses] = useState<ClauseRecord[]>([])
+  const [selectedDocument, setSelectedDocument] = useState<number | undefined>()
+  const [previewDoc, setPreviewDoc] = useState<DocumentRecord | undefined>()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    ReviewAPI.getDocuments().then((response) => setDocuments(response.items));
-  }, []);
+    ReviewAPI.getDocuments().then((response) => setDocuments(response.items))
+  }, [])
 
   useEffect(() => {
-    setLoading(true);
+    setLoading(true)
     ReviewAPI.getClauses(selectedDocument)
       .then((response) => {
-        setClauses(response.items);
-        setError(null);
+        setClauses(response.items)
+        setError(null)
         if (selectedDocument) {
-          setPreviewDoc(documents.find((doc) => doc.id === selectedDocument));
+          setPreviewDoc(documents.find((doc) => doc.id === selectedDocument))
         }
       })
       .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [selectedDocument, documents]);
+      .finally(() => setLoading(false))
+  }, [selectedDocument, documents])
 
   return (
     <div>
@@ -39,7 +39,9 @@ const ClausesPage = () => {
             className="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm"
             value={selectedDocument ?? ''}
             onChange={(event) =>
-              setSelectedDocument(event.target.value ? Number(event.target.value) : undefined)
+              setSelectedDocument(
+                event.target.value ? Number(event.target.value) : undefined,
+              )
             }
           >
             <option value="">All documents</option>
@@ -57,10 +59,17 @@ const ClausesPage = () => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="space-y-3">
             {clauses.map((clause) => (
-              <article key={clause.id} className="border border-slate-800 rounded p-4 bg-slate-900/40">
-                <h3 className="text-sm font-semibold text-slate-200">{clause.clause_ref || 'Unnamed clause'}</h3>
+              <article
+                key={clause.id}
+                className="border border-slate-800 rounded p-4 bg-slate-900/40"
+              >
+                <h3 className="text-sm font-semibold text-slate-200">
+                  {clause.clause_ref || 'Unnamed clause'}
+                </h3>
                 {clause.section_heading && (
-                  <p className="text-xs text-slate-400 mb-2">{clause.section_heading}</p>
+                  <p className="text-xs text-slate-400 mb-2">
+                    {clause.section_heading}
+                  </p>
                 )}
                 <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-line">
                   {clause.text_span}
@@ -74,13 +83,15 @@ const ClausesPage = () => {
             )}
           </div>
           <div className="border border-slate-800 rounded p-4 bg-slate-900/40">
-            <h3 className="text-sm font-semibold text-slate-200 mb-3">Document Preview</h3>
+            <h3 className="text-sm font-semibold text-slate-200 mb-3">
+              Document Preview
+            </h3>
             <PDFViewer url={previewDoc?.storage_path} />
           </div>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ClausesPage;
+export default ClausesPage

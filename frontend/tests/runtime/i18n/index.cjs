@@ -2,7 +2,8 @@ const React = require('react')
 
 const translations = {
   en: {
-    'app.tagline': 'Accelerate compliance and design alignment for CAD workflows.',
+    'app.tagline':
+      'Accelerate compliance and design alignment for CAD workflows.',
     'wizard.heading': 'Feasibility assessment',
     'uploader.ready': 'Parsing complete',
     'uploader.error': 'Processing error',

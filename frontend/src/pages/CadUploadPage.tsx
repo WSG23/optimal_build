@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { type CadImportSummary, type ParseStatusUpdate, useApiClient } from '../api/client'
+import {
+  type CadImportSummary,
+  type ParseStatusUpdate,
+  useApiClient,
+} from '../api/client'
 import { AppLayout } from '../App'
 import { useTranslation } from '../i18n'
 import CadUploader from '../modules/cad/CadUploader'
@@ -52,7 +56,9 @@ export function CadUploadPage() {
           intervalMs: 2500,
         })
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('common.errors.uploadFailed'))
+        setError(
+          err instanceof Error ? err.message : t('common.errors.uploadFailed'),
+        )
       } finally {
         setIsUploading(false)
       }

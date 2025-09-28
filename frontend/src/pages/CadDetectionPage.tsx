@@ -33,7 +33,8 @@ function deriveAreaSqm(suggestion: OverlaySuggestion): number {
   const directArea =
     typeof (payload as { area_sqm?: unknown }).area_sqm === 'number'
       ? (payload as { area_sqm?: number }).area_sqm
-      : typeof (payload as { affected_area_sqm?: unknown }).affected_area_sqm === 'number'
+      : typeof (payload as { affected_area_sqm?: unknown })
+            .affected_area_sqm === 'number'
         ? (payload as { affected_area_sqm?: number }).affected_area_sqm
         : null
   if (typeof directArea === 'number') {
@@ -67,11 +68,17 @@ export function CadDetectionPage() {
   const refreshAudit = useCallback(async () => {
     setAuditLoading(true)
     try {
-      const events = await apiClient.listAuditTrail(projectId, { eventType: 'overlay_decision' })
+      const events = await apiClient.listAuditTrail(projectId, {
+        eventType: 'overlay_decision',
+      })
       setAuditEvents(events)
     } catch (err) {
       // Surface audit errors in the shared error banner
-      setError((prev) => prev ?? (err instanceof Error ? err.message : t('detection.auditError')))
+      setError(
+        (prev) =>
+          prev ??
+          (err instanceof Error ? err.message : t('detection.auditError')),
+      )
     } finally {
       setAuditLoading(false)
     }
@@ -99,16 +106,26 @@ export function CadDetectionPage() {
       }
     }
     initialise().catch((err) => {
-      setError((prev) => prev ?? (err instanceof Error ? err.message : t('detection.loadError')))
+      setError(
+        (prev) =>
+          prev ??
+          (err instanceof Error ? err.message : t('detection.loadError')),
+      )
     })
     return () => {
       cancelled = true
     }
   }, [refreshAudit, refreshSuggestions, t])
 
-  const overlays = useMemo(() => suggestions.map((item) => item.code), [suggestions])
+  const overlays = useMemo(
+    () => suggestions.map((item) => item.code),
+    [suggestions],
+  )
   const hints = useMemo(
-    () => suggestions.map((item) => item.rationale).filter((value): value is string => Boolean(value)),
+    () =>
+      suggestions
+        .map((item) => item.rationale)
+        .filter((value): value is string => Boolean(value)),
     [suggestions],
   )
 
@@ -134,9 +151,12 @@ export function CadDetectionPage() {
     [units],
   )
 
-  const handleLayerToggle = useCallback((_: DetectionStatus, next: DetectionStatus[]) => {
-    setActiveLayers(next)
-  }, [])
+  const handleLayerToggle = useCallback(
+    (_: DetectionStatus, next: DetectionStatus[]) => {
+      setActiveLayers(next)
+    },
+    [],
+  )
 
   const applyDecisionBatch = useCallback(
     async (decision: 'approved' | 'rejected') => {
@@ -161,12 +181,22 @@ export function CadDetectionPage() {
         await refreshSuggestions()
         await refreshAudit()
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('detection.decisionError'))
+        setError(
+          err instanceof Error ? err.message : t('detection.decisionError'),
+        )
       } finally {
         setMutationPending(false)
       }
     },
-    [apiClient, locked, projectId, refreshAudit, refreshSuggestions, suggestions, t],
+    [
+      apiClient,
+      locked,
+      projectId,
+      refreshAudit,
+      refreshSuggestions,
+      suggestions,
+      t,
+    ],
   )
 
   const handleApproveAll = useCallback(() => {
@@ -192,7 +222,10 @@ export function CadDetectionPage() {
           includePendingOverlays: activeLayers.includes('pending'),
           includeRejectedOverlays: activeLayers.includes('rejected'),
         })
-        if (typeof window !== 'undefined' && typeof window.URL?.createObjectURL === 'function') {
+        if (
+          typeof window !== 'undefined' &&
+          typeof window.URL?.createObjectURL === 'function'
+        ) {
           const url = window.URL.createObjectURL(artifact.blob)
           const anchor = document.createElement('a')
           anchor.href = url
@@ -203,7 +236,9 @@ export function CadDetectionPage() {
           window.URL.revokeObjectURL(url)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('detection.exportError'))
+        setError(
+          err instanceof Error ? err.message : t('detection.exportError'),
+        )
       } finally {
         setExporting(false)
       }
@@ -241,7 +276,10 @@ export function CadDetectionPage() {
           disabled={locked || mutationPending}
         />
         <ZoneLockControls locked={locked} onToggle={setLocked} />
-        <ExportDialog onExport={handleExport} disabled={pendingCount > 0 || exporting || mutationPending} />
+        <ExportDialog
+          onExport={handleExport}
+          disabled={pendingCount > 0 || exporting || mutationPending}
+        />
       </div>
 
       <AuditTimelinePanel events={auditEvents} loading={auditLoading} />
