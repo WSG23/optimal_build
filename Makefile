@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify status
+.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify status hooks
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -130,6 +130,16 @@ format-check: ## Check formatting (tests only)
 lint: ## Run linting (tests only)
 	@[ -d backend/tests ] && flake8 backend/tests || true
 	@[ -d tests ] && flake8 tests || true
+
+hooks: ## Run pre-commit hooks across the repository
+	@if command -v $(PRE_COMMIT) >/dev/null 2>&1; then \
+		$(PRE_COMMIT) run --all-files; \
+	elif command -v pre-commit >/dev/null 2>&1; then \
+		pre-commit run --all-files; \
+	else \
+		echo "pre-commit not found. Run 'make venv' or install pre-commit."; \
+		exit 127; \
+	fi
 
 lint-prod: ## Run linting for backend production code (optional)
 	@targets=""; \
