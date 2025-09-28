@@ -169,7 +169,8 @@ def _wait_for_api(base_url: str, attempts: int = 40, delay: float = 2.0) -> None
                 url=url,
                 error=str(exc),
             )
-        time.sleep(delay)
+        if attempt != attempts:
+            time.sleep(delay)
     LOGGER.error("smokes.wait_for_api.failed", url=url, error=str(last_error))
     raise SmokeError(f"Backend API failed readiness check: {last_error}")
 
