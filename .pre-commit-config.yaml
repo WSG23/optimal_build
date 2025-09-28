@@ -70,7 +70,7 @@ repos:
   rev: v9.9.0
   hooks:
     - id: eslint
-      files: ^frontend/
+      files: ^(frontend|ui-admin)/
       additional_dependencies:
         - eslint@9.11.1
         - @typescript-eslint/eslint-plugin@8.44.1
