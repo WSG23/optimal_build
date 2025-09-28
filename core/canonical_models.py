@@ -6,7 +6,6 @@ from datetime import date, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
-
 from sqlalchemy import (
     JSON,
     Boolean,
