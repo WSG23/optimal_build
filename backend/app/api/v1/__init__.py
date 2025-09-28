@@ -23,6 +23,14 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
             "Roadmaps, studies, stakeholder engagements, and legal instruments "
             "captured for entitlement delivery."
         ),
+    },
+    {
+        "name": "Commercial Property Agent",
+        "description": (
+            "Market intelligence and property development analysis tools for "
+            "commercial real estate advisors. Includes GPS logging, development "
+            "potential scanning, photo documentation, 3D scenarios, and market analytics."
+        ),
     }
 ]
 
@@ -45,6 +53,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "feasibility",
     "finance",
     "entitlements",
+    "agents",
 )
 
 
