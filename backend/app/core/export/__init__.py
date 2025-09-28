@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import json
 import os
@@ -567,7 +568,8 @@ async def generate_project_export(
         payload = json.dumps(manifest, sort_keys=True).encode("utf-8")
 
     storage_backend = storage or LocalExportStorage()
-    artifact = storage_backend.store(
+    artifact = await asyncio.to_thread(
+        storage_backend.store,
         project_id=project_id,
         fmt=options.format,
         payload=payload,

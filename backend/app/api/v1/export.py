@@ -5,10 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.background import BackgroundTask
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
@@ -76,7 +75,7 @@ async def export_project(
     payload: ExportRequestPayload,
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> StreamingResponse:
+) -> FileResponse:
     """Generate and stream a CAD/BIM export for the given project."""
 
     try:
@@ -108,14 +107,10 @@ async def export_project(
     except ProjectGeometryMissing as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    stream = artifact.open()
-    response = StreamingResponse(
-        stream,
+    response = FileResponse(
+        path=artifact.path,
         media_type=artifact.media_type,
-        background=BackgroundTask(stream.close),
-    )
-    response.headers["Content-Disposition"] = (
-        f'attachment; filename="{artifact.filename}"'
+        filename=artifact.filename,
     )
     renderer = artifact.manifest.get("renderer")
     if renderer:
