@@ -443,7 +443,7 @@ jobs:
       - name: Run backend tests
         run: |
           cd backend
-          pytest -q --maxfail=1 --cov=app --cov-report=xml \
+          pytest -q --maxfail=1 --cov=app --cov-report=xml --cov-fail-under=80 \
             tests/test_api/test_rules.py \
             tests/test_flows/test_watch_fetch_flow.py \
             tests/test_flows/test_parse_segment_flow.py \
@@ -460,7 +460,7 @@ jobs:
 
       - name: Run frontend unit tests
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend test
+        run: pnpm -C frontend run test:coverage
 
       - name: Launch backend API for E2E tests
         if: needs.changes.outputs.frontend == 'true'

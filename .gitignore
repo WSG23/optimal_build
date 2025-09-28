@@ -115,6 +115,7 @@ frontend/node_modules/react-dom/*
 !frontend/node_modules/react-dom/server.js
 !frontend/node_modules/react-dom/server.node.js
 !frontend/node_modules/react-dom/package.json
+frontend/coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

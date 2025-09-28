@@ -1,0 +1,11 @@
+{
+  "reporter": ["text", "lcov"],
+  "all": true,
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["tests/e2e/**", "dist/**"],
+  "checkCoverage": true,
+  "lines": 80,
+  "statements": 80,
+  "functions": 0,
+  "branches": 0
+}
