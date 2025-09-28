@@ -1,10 +1,10 @@
 """API endpoints for Commercial Property Advisors agent features."""
 
 from typing import List, Dict, Any, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
@@ -31,6 +31,9 @@ from backend.app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches
 )
+from backend.app.services.agents.universal_site_pack import UniversalSitePackGenerator
+from backend.app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
+from backend.app.services.agents.marketing_materials import MarketingMaterialsGenerator
 
 router = APIRouter(prefix="/agents/commercial-property", tags=["Commercial Property Agent"])
 
@@ -513,6 +516,113 @@ async def value_property(
             "replacement_cost_value": float(valuation.replacement_cost_value) if valuation.replacement_cost_value else None,
             "recommended_value": float(valuation.recommended_value),
             "currency": valuation.currency
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/properties/{property_id}/generate-pack/{pack_type}")
+async def generate_professional_pack(
+    property_id: str,
+    pack_type: str = Path(..., pattern="^(universal|investment|sales|lease)$"),
+    db: AsyncSession = Depends(get_db),
+    role: Role = Depends(get_request_role)
+) -> Dict[str, Any]:
+    """
+    Generate professional PDF packs.
+    
+    Pack types:
+    - universal: 20-page Universal Site Pack
+    - investment: Institutional-grade Investment Memorandum
+    - sales: Sales marketing brochure
+    - lease: Leasing marketing brochure
+    """
+    try:
+        property_uuid = UUID(property_id)
+        
+        if pack_type == "universal":
+            generator = UniversalSitePackGenerator()
+            pdf_buffer = await generator.generate(
+                property_id=property_uuid,
+                session=db
+            )
+            filename = f"universal_site_pack_{property_id}.pdf"
+            
+        elif pack_type == "investment":
+            generator = InvestmentMemorandumGenerator()
+            pdf_buffer = await generator.generate(
+                property_id=property_uuid,
+                session=db
+            )
+            filename = f"investment_memorandum_{property_id}.pdf"
+            
+        elif pack_type in ["sales", "lease"]:
+            generator = MarketingMaterialsGenerator()
+            pdf_buffer = await generator.generate_sales_brochure(
+                property_id=property_uuid,
+                session=db,
+                material_type="sale" if pack_type == "sales" else "lease"
+            )
+            filename = f"{pack_type}_brochure_{property_id}.pdf"
+            
+        else:
+            raise HTTPException(status_code=400, detail="Invalid pack type")
+        
+        # Save to storage and get URL
+        url = await generator.save_to_storage(
+            pdf_buffer=pdf_buffer,
+            filename=filename,
+            property_id=property_id
+        )
+        
+        return {
+            "pack_type": pack_type,
+            "property_id": property_id,
+            "filename": filename,
+            "download_url": url,
+            "generated_at": datetime.utcnow().isoformat(),
+            "size_bytes": len(pdf_buffer.getvalue())
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/properties/{property_id}/generate-flyer")
+async def generate_email_flyer(
+    property_id: str,
+    material_type: str = Query("lease", pattern="^(sale|lease)$"),
+    db: AsyncSession = Depends(get_db),
+    role: Role = Depends(get_request_role)
+) -> Dict[str, Any]:
+    """Generate single-page email flyer."""
+    try:
+        property_uuid = UUID(property_id)
+        
+        generator = MarketingMaterialsGenerator()
+        pdf_buffer = await generator.generate_email_flyer(
+            property_id=property_uuid,
+            session=db,
+            material_type=material_type
+        )
+        
+        filename = f"flyer_{material_type}_{property_id}.pdf"
+        
+        # Save to storage
+        url = await generator.save_to_storage(
+            pdf_buffer=pdf_buffer,
+            filename=filename,
+            property_id=property_id
+        )
+        
+        return {
+            "property_id": property_id,
+            "flyer_type": material_type,
+            "filename": filename,
+            "download_url": url,
+            "generated_at": datetime.utcnow().isoformat(),
+            "size_bytes": len(pdf_buffer.getvalue())
         }
         
     except Exception as e:

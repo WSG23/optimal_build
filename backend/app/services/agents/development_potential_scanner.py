@@ -29,10 +29,8 @@ class DevelopmentScenario(BaseModel):
     description: str
     gfa_potential: float
     use_mix: Dict[str, float]  # e.g., {"office": 0.6, "retail": 0.4}
-    estimated_cost: float
-    estimated_revenue: float
-    projected_roi: float
-    timeline_months: int
+    market_comparable_psf: Optional[float] = None  # Market pricing only
+    indicative_timeline: str  # General timeline, not construction schedule
     constraints: List[str]
     opportunities: List[str]
 
@@ -44,7 +42,7 @@ class RawLandAnalysis(BaseModel):
     development_scenarios: List[DevelopmentScenario]
     site_constraints: List[str]
     development_opportunities: List[str]
-    estimated_land_value: Optional[float] = None
+    market_value_indication: Optional[float] = None  # Based on comparables only
 
 
 class ExistingBuildingAnalysis(BaseModel):
@@ -54,8 +52,8 @@ class ExistingBuildingAnalysis(BaseModel):
     renovation_potential: Dict[str, Any]
     adaptive_reuse_options: List[Dict[str, Any]]
     asset_enhancement_opportunities: List[str]
-    estimated_redevelopment_cost: float
-    projected_value_uplift: float
+    market_rent_potential: Optional[float] = None  # Market rent only
+    comparable_values_psf: Optional[float] = None  # Market comparables only
 
 
 class HistoricalPropertyAnalysis(BaseModel):

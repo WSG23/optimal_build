@@ -314,11 +314,9 @@ class DevelopmentAnalysis(Base, TimestampMixin):
     gfa_potential_sqm = Column(SQLDecimal(12, 2))
     optimal_use_mix = Column(JSON)  # {office: 60%, retail: 40%}
     
-    # Financial Projections
-    estimated_development_cost = Column(SQLDecimal(15, 2))
-    estimated_revenue = Column(SQLDecimal(15, 2))
-    projected_roi_percentage = Column(SQLDecimal(5, 2))
-    projected_cap_rate = Column(SQLDecimal(5, 2))
+    # Market Indicators (No developer financials)
+    market_value_estimate = Column(SQLDecimal(15, 2))  # Current market value
+    projected_cap_rate = Column(SQLDecimal(5, 2))  # Market cap rate only
     
     # Constraints
     site_constraints = Column(JSON)
