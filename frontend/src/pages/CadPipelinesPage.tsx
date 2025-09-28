@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import type {
   OverlaySuggestion,
@@ -163,6 +163,8 @@ export function CadPipelinesPage() {
     [overlaySuggestions],
   )
 
+  const projectIdInputId = useId()
+
   const roiMetrics = useMemo<RoiMetrics>(() => {
     if (!roi) {
       return {
@@ -183,9 +185,10 @@ export function CadPipelinesPage() {
   return (
     <AppLayout title={t('pipelines.title')} subtitle={t('pipelines.subtitle')}>
       <div className="cad-pipelines__toolbar">
-        <label>
+        <label htmlFor={projectIdInputId}>
           <span>{t('pipelines.projectLabel')}</span>
           <input
+            id={projectIdInputId}
             type="number"
             min={1}
             value={projectId}
