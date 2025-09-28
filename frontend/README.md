@@ -16,12 +16,12 @@ import { fetchBuildable } from './api/buildable'
 import { createMockBuildableOptions } from './mocks/buildable'
 
 const summary = await fetchBuildable(
-  {
-    address: '123 Example Ave',
-    typFloorToFloorM: 3.4,
-    efficiencyRatio: 0.8,
-  },
-  createMockBuildableOptions(),
+    {
+        address: '123 Example Ave',
+        typFloorToFloorM: 3.4,
+        efficiencyRatio: 0.8,
+    },
+    createMockBuildableOptions(),
 )
 ```
 
@@ -30,8 +30,8 @@ you can feature-gate it however you like during development. For example:
 
 ```ts
 const buildableOptions = import.meta.env.DEV
-  ? createMockBuildableOptions()
-  : undefined
+    ? createMockBuildableOptions()
+    : undefined
 
 fetchBuildable(payload, { signal: controller.signal, ...buildableOptions })
 ```
@@ -40,29 +40,29 @@ You can also customise the responses that are returned:
 
 ```ts
 const mockOptions = createMockBuildableOptions({
-  responses: {
-    '10 downing street': {
-      input_kind: 'address',
-      zone_code: 'R5',
-      overlays: [],
-      advisory_hints: [],
-      metrics: {
-        gfa_cap_m2: 100,
-        floors_max: 2,
-        footprint_m2: 50,
-        nsa_est_m2: 80,
-      },
-      zone_source: {
-        kind: 'parcel',
-        layer_name: null,
-        jurisdiction: null,
-        parcel_ref: null,
-        parcel_source: null,
-        note: null,
-      },
-      rules: [],
+    responses: {
+        '10 downing street': {
+            input_kind: 'address',
+            zone_code: 'R5',
+            overlays: [],
+            advisory_hints: [],
+            metrics: {
+                gfa_cap_m2: 100,
+                floors_max: 2,
+                footprint_m2: 50,
+                nsa_est_m2: 80,
+            },
+            zone_source: {
+                kind: 'parcel',
+                layer_name: null,
+                jurisdiction: null,
+                parcel_ref: null,
+                parcel_source: null,
+                note: null,
+            },
+            rules: [],
+        },
     },
-  },
 })
 
 await fetchBuildable(payload, mockOptions)

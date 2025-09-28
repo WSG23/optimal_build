@@ -4,4 +4,4 @@ flake8-bugbear==24.8.19
 pytest==7.4.3
 pytest-asyncio==0.23.7
 pre-commit==3.8.0
-Pillow>=10.3
+Pillow==10.3.0
