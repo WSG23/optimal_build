@@ -53,4 +53,3 @@ dependency is unavailable, the service falls back to HTML output.
 
 Prometheus counters named `entitlements_*_requests_total` track per-endpoint
 activity and are exposed via `/health/metrics`.
-
