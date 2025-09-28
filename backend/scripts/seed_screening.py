@@ -7,11 +7,14 @@ import asyncio
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
+import structlog
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
 from sqlalchemy import Column, Integer, String, Table, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -402,12 +405,12 @@ def main(argv: Sequence[str] | None = None) -> SeedSummary:
     parser = _build_parser()
     parser.parse_args(argv)
     summary = asyncio.run(_cli_main())
-    print(
-        "Seeded screening sample data:",
-        f"{summary.zoning_layers} zoning layers,",
-        f"{summary.parcels} parcels,",
-        f"{summary.geocode_cache} geocode cache entries,",
-        f"{summary.sources} reference sources",
+    logger.info(
+        "seed_screening.summary",
+        zoning_layers=summary.zoning_layers,
+        parcels=summary.parcels,
+        geocode_cache=summary.geocode_cache,
+        sources=summary.sources,
     )
     return summary
 

@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import app.utils.logging  # noqa: F401  pylint: disable=unused-import
+import structlog
 from app.core.database import AsyncSessionLocal, engine
 from app.models import (  # noqa: F401  pylint: disable=unused-import
     entitlements as ent_models,
@@ -16,6 +17,8 @@ from app.models.base import BaseModel
 from app.models.entitlements import EntApprovalCategory, EntRoadmapStatus
 from app.services.entitlements import EntitlementsService
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = structlog.get_logger(__name__)
 
 AUTHORITIES: Iterable[dict[str, str | None]] = (
     {
@@ -210,7 +213,7 @@ def main(argv: list[str] | None = None) -> EntitlementsSeedSummary:
     summary = asyncio.run(
         _run_async(project_id=args.project_id, reset_existing=args.reset)
     )
-    print(summary.as_dict())  # noqa: T201 - user facing CLI output
+    logger.info("seed_entitlements.summary", **summary.as_dict())
     return summary
 
 

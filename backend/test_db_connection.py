@@ -2,14 +2,17 @@
 
 import asyncio
 
+import structlog
 from app.core.config import settings
 from app.models.rkp import RefRule, RefSource
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+logger = structlog.get_logger(__name__)
+
 
 async def test_database():
     """Test database connection and basic CRUD operations."""
-    print("Testing database connection...")
+    logger.info("db_test.start")
 
     # Create engine and session
     engine = create_async_engine(str(settings.SQLALCHEMY_DATABASE_URI))
@@ -28,7 +31,9 @@ async def test_database():
             session.add(source)
             await session.commit()
             await session.refresh(source)
-            print(f"✅ Created source: {source.id} - {source.doc_title}")
+            logger.info(
+                "db_test.source_created", source_id=source.id, title=source.doc_title
+            )
 
             # Test 2: Create a rule
             rule = RefRule(
@@ -46,8 +51,13 @@ async def test_database():
             session.add(rule)
             await session.commit()
             await session.refresh(rule)
-            print(
-                f"✅ Created rule: {rule.id} - {rule.parameter_key} {rule.operator} {rule.value}{rule.unit}"
+            logger.info(
+                "db_test.rule_created",
+                rule_id=rule.id,
+                parameter_key=rule.parameter_key,
+                operator=rule.operator,
+                value=rule.value,
+                unit=rule.unit,
             )
 
             # Test 3: Query rules
@@ -57,12 +67,12 @@ async def test_database():
                 select(RefRule).where(RefRule.jurisdiction == "SG")
             )
             rules = result.scalars().all()
-            print(f"✅ Found {len(rules)} Singapore rules in database")
+            logger.info("db_test.rules_found", count=len(rules))
 
-            print("🎉 Database integration successful!")
+            logger.info("db_test.success")
 
-        except Exception as e:
-            print(f"❌ Database test failed: {e}")
+        except Exception as exc:
+            logger.exception("db_test.failed", error=str(exc))
             await session.rollback()
         finally:
             await engine.dispose()

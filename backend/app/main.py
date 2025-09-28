@@ -16,6 +16,7 @@ from app.api.deps import require_viewer
 from app.api.v1 import TAGS_METADATA, api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
+from app.middleware.security import SecurityHeadersMiddleware
 from app.models.rkp import RefRule
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
@@ -52,6 +53,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -217,7 +219,8 @@ if __name__ == "__main__":  # pragma: no cover
     args = parser.parse_args()
 
     if args.dump_openapi:
-        print(json.dumps(app.openapi(), indent=2, sort_keys=True))
+        schema = json.dumps(app.openapi(), indent=2, sort_keys=True)
+        logger.info("openapi.schema", schema=schema)
     else:
         import uvicorn
 

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
+import structlog
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.finance import (
@@ -22,6 +23,8 @@ from app.models.rkp import RefCostIndex
 from app.services.finance import calculator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = structlog.get_logger(__name__)
 
 DEMO_PROJECT_ID = 401
 DEMO_PROJECT_NAME = "Finance Demo Development"
@@ -756,14 +759,14 @@ def main(argv: Sequence[str] | None = None) -> FinanceDemoSummary:
     parser = _build_parser()
     args = parser.parse_args(argv)
     summary = asyncio.run(_cli_main(args))
-    print(
-        "Seeded finance demo:",
-        f"project_id={summary.project_id}",
-        f"fin_project_id={summary.fin_project_id}",
-        f"scenarios={summary.scenarios}",
-        f"cost_items={summary.cost_items}",
-        f"schedule_rows={summary.schedule_rows}",
-        f"results={summary.results}",
+    logger.info(
+        "seed_finance_demo.summary",
+        project_id=summary.project_id,
+        fin_project_id=summary.fin_project_id,
+        scenarios=summary.scenarios,
+        cost_items=summary.cost_items,
+        schedule_rows=summary.schedule_rows,
+        results=summary.results,
     )
     return summary
 

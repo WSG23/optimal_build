@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import structlog
+
 # Configure runtime directories before importing the application settings.
 _DEFAULT_RUNTIME_DIR = (
     os.environ.get("AEC_RUNTIME_DIR")
@@ -39,6 +41,8 @@ from app.models.overlay import OverlaySourceGeometry
 from sqlalchemy import select
 
 from ..httpx import AsyncClient
+
+logger = structlog.get_logger(__name__)
 
 STORAGE_PATH = Path(os.environ["STORAGE_LOCAL_PATH"]).resolve()
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
@@ -616,7 +620,7 @@ def main(argv: Iterable[str] | None = None) -> None:
     args = parser.parse_args(argv)
     try:
         result = asyncio.run(dispatch(args))
-        print(json.dumps(result, indent=2, sort_keys=True))
+        logger.info("aec_flow.result", result=result)
     finally:
         # Ensure connections are released between invocations.
         asyncio.run(engine.dispose())

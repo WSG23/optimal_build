@@ -12,6 +12,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+import structlog
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefCostIndex, RefErgonomics, RefMaterialStandard
@@ -22,6 +23,9 @@ SEED_ROOT = Path(__file__).parent / "seeds"
 ERGONOMICS_SEED = SEED_ROOT / "ergonomics_seed.json"
 STANDARDS_SEED = SEED_ROOT / "standards_seed.json"
 COST_INDEX_SEED = SEED_ROOT / "cost_index_seed.json"
+
+
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -280,11 +284,11 @@ def main(argv: Sequence[str] | None = None) -> NonRegSeedSummary:
     parser = _build_parser()
     parser.parse_args(argv)
     summary = asyncio.run(_cli_main())
-    print(
-        "Seeded non-reg datasets:",
-        f"{summary.ergonomics} ergonomics metrics,",
-        f"{summary.standards} material standards,",
-        f"{summary.cost_indices} cost indices",
+    logger.info(
+        "seed_nonreg.summary",
+        ergonomics=summary.ergonomics,
+        standards=summary.standards,
+        cost_indices=summary.cost_indices,
     )
     return summary
 
