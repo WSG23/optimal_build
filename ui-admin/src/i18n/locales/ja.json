@@ -1,0 +1,25 @@
+{
+  "sidebar": {
+    "title": "Optimal Build 管理",
+    "description": "コンプライアンスコンテンツをレビュー",
+    "nav": {
+      "sources": "情報源",
+      "documents": "文書",
+      "clauses": "条項",
+      "rules": "ルールレビュー",
+      "diffs": "差分",
+      "entitlements": "許認可"
+    }
+  },
+  "sources": {
+    "title": "情報源",
+    "loading": "情報源を読み込み中…",
+    "empty": "利用可能な情報源がありません。",
+    "loadError": "情報源の読み込みに失敗しました",
+    "columns": {
+      "authority": "機関",
+      "topic": "トピック",
+      "document": "文書"
+    }
+  }
+}

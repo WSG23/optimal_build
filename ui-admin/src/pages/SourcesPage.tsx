@@ -3,11 +3,13 @@ import Header from '../components/Header'
 import { ReviewAPI } from '../api/client'
 import type { SourceRecord } from '../types'
 import { toErrorMessage } from '../utils/error'
+import { useTranslation } from '../i18n'
 
 const SourcesPage = () => {
   const [sources, setSources] = useState<SourceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const loadSources = async () => {
@@ -17,33 +19,44 @@ const SourcesPage = () => {
         setSources(response.items)
         setError(null)
       } catch (error) {
-        setError(toErrorMessage(error, 'Failed to load sources'))
+        setError(toErrorMessage(error, t('sources.loadError')))
       } finally {
         setLoading(false)
       }
     }
 
     void loadSources()
-  }, [])
+  }, [t])
 
   return (
     <div>
-      <Header title="Sources" />
-      {loading && <p className="text-sm text-slate-400">Loading sources…</p>}
+      <Header title={t('sources.title')} />
+      {loading && (
+        <p className="text-sm text-slate-400">{t('sources.loading')}</p>
+      )}
       {error && <p className="text-sm text-red-400">{error}</p>}
       {!loading && !error && (
         <div className="overflow-hidden rounded-lg border border-slate-800">
           <table className="min-w-full divide-y divide-slate-800">
             <thead className="bg-slate-900">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400">
-                  Authority
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400"
+                >
+                  {t('sources.columns.authority')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400">
-                  Topic
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400"
+                >
+                  {t('sources.columns.topic')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400">
-                  Document
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400"
+                >
+                  {t('sources.columns.document')}
                 </th>
               </tr>
             </thead>
@@ -77,7 +90,7 @@ const SourcesPage = () => {
                     colSpan={3}
                     className="px-4 py-6 text-center text-sm text-slate-400"
                   >
-                    No sources available.
+                    {t('sources.empty')}
                   </td>
                 </tr>
               )}

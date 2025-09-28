@@ -1,20 +1,28 @@
+import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 
-const navItems = [
-  { to: '/', label: 'Sources' },
-  { to: '/documents', label: 'Documents' },
-  { to: '/clauses', label: 'Clauses' },
-  { to: '/rules', label: 'Rules Review' },
-  { to: '/diffs', label: 'Diffs' },
-  { to: '/entitlements', label: 'Entitlements' },
-]
+import { useTranslation } from '../i18n'
 
 const Sidebar = () => {
+  const { t } = useTranslation()
+
+  const navItems = useMemo(
+    () => [
+      { to: '/', label: t('sidebar.nav.sources') },
+      { to: '/documents', label: t('sidebar.nav.documents') },
+      { to: '/clauses', label: t('sidebar.nav.clauses') },
+      { to: '/rules', label: t('sidebar.nav.rules') },
+      { to: '/diffs', label: t('sidebar.nav.diffs') },
+      { to: '/entitlements', label: t('sidebar.nav.entitlements') },
+    ],
+    [t],
+  )
+
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800">
       <div className="px-6 py-4 border-b border-slate-800">
-        <h1 className="text-lg font-semibold">Optimal Build Admin</h1>
-        <p className="text-xs text-slate-400">Review compliance content</p>
+        <h1 className="text-lg font-semibold">{t('sidebar.title')}</h1>
+        <p className="text-xs text-slate-400">{t('sidebar.description')}</p>
       </div>
       <nav className="flex flex-col px-2 py-4 space-y-2">
         {navItems.map((item) => (

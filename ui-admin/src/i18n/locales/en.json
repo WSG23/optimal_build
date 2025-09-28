@@ -1,0 +1,25 @@
+{
+  "sidebar": {
+    "title": "Optimal Build Admin",
+    "description": "Review compliance content",
+    "nav": {
+      "sources": "Sources",
+      "documents": "Documents",
+      "clauses": "Clauses",
+      "rules": "Rules Review",
+      "diffs": "Diffs",
+      "entitlements": "Entitlements"
+    }
+  },
+  "sources": {
+    "title": "Sources",
+    "loading": "Loading sources…",
+    "empty": "No sources available.",
+    "loadError": "Failed to load sources",
+    "columns": {
+      "authority": "Authority",
+      "topic": "Topic",
+      "document": "Document"
+    }
+  }
+}
