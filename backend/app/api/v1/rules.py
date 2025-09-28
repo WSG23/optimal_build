@@ -2,23 +2,24 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Dict, Iterable, List, Literal, Optional, Union
+from collections.abc import Iterable
+from datetime import UTC, datetime
+from typing import Literal
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefRule, RefZoningLayer
 from app.services.normalize import NormalizedRule, RuleNormalizer
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy import select
 
 router = APIRouter()
 
 
-def _extract_zone_code(rule: RefRule) -> Optional[str]:
+def _extract_zone_code(rule: RefRule) -> str | None:
     applicability = rule.applicability or {}
     if isinstance(applicability, dict):
         zone = applicability.get("zone_code") or applicability.get("zone")
@@ -32,11 +33,11 @@ def _extract_zone_code(rule: RefRule) -> Optional[str]:
 def _serialise_rule(
     rule: RefRule,
     normalizer: RuleNormalizer,
-    zoning_lookup: Dict[str, List[RefZoningLayer]],
-) -> Dict[str, object]:
-    overlays: List[str] = []
-    hints: List[str] = []
-    normalized: List[NormalizedRule] = []
+    zoning_lookup: dict[str, list[RefZoningLayer]],
+) -> dict[str, object]:
+    overlays: list[str] = []
+    hints: list[str] = []
+    normalized: list[NormalizedRule] = []
 
     if rule.notes:
         normalized = normalizer.normalize(rule.notes, context={"rule_id": rule.id})
@@ -56,7 +57,7 @@ def _serialise_rule(
     overlays = list(dict.fromkeys(filter(None, overlays)))
     hints = list(dict.fromkeys(filter(None, hints)))
 
-    provenance: Dict[str, object]
+    provenance: dict[str, object]
     if isinstance(rule.source_provenance, dict):
         provenance = dict(rule.source_provenance)
     else:
@@ -91,14 +92,14 @@ def _serialise_rule(
 
 async def _load_zoning_lookup(
     session: AsyncSession, zone_codes: Iterable[str]
-) -> Dict[str, List[RefZoningLayer]]:
+) -> dict[str, list[RefZoningLayer]]:
     codes = [code for code in set(zone_codes) if code]
     if not codes:
         return {}
 
     stmt = select(RefZoningLayer).where(RefZoningLayer.zone_code.in_(codes))
     result = await session.execute(stmt)
-    lookup: Dict[str, List[RefZoningLayer]] = {}
+    lookup: dict[str, list[RefZoningLayer]] = {}
     for layer in result.scalars().all():
         lookup.setdefault(layer.zone_code, []).append(layer)
     return lookup
@@ -106,16 +107,16 @@ async def _load_zoning_lookup(
 
 @router.get("/rules")
 async def list_rules(
-    jurisdiction: Optional[str] = Query(None),
-    parameter_key: Optional[str] = Query(None),
-    authority: Optional[str] = Query(None),
-    topic: Optional[str] = Query(None),
-    review_status: Optional[Union[str, List[str]]] = Query(None),
+    jurisdiction: str | None = Query(None),
+    parameter_key: str | None = Query(None),
+    authority: str | None = Query(None),
+    topic: str | None = Query(None),
+    review_status: str | list[str] | None = Query(None),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     stmt = select(RefRule)
-    filter_conditions: List[object] = []
+    filter_conditions: list[object] = []
     if jurisdiction:
         condition = RefRule.jurisdiction == jurisdiction
         stmt = stmt.where(condition)
@@ -166,8 +167,8 @@ async def list_rules(
 
 class ReviewAction(BaseModel):
     action: Literal["approve", "reject", "publish"]
-    reviewer: Optional[str] = None
-    notes: Optional[str] = None
+    reviewer: str | None = None
+    notes: str | None = None
 
 
 @router.post("/rules/{rule_id}/review")
@@ -176,12 +177,12 @@ async def review_rule(
     payload: ReviewAction,
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_reviewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     rule = await session.get(RefRule, rule_id)
     if rule is None:
         raise HTTPException(status_code=404, detail="Rule not found")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if payload.action == "approve":
         rule.review_status = "approved"
         rule.reviewed_at = now
@@ -211,7 +212,7 @@ async def review_rule(
 async def review_queue(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     stmt = select(RefRule).where(RefRule.review_status == "needs_review")
     rules = (await session.execute(stmt)).scalars().all()
     zoning_lookup = await _load_zoning_lookup(

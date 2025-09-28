@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -15,12 +14,12 @@ class CostIndex(BaseModel):
     series_name: str
     jurisdiction: str
     category: str
-    subcategory: Optional[str]
+    subcategory: str | None
     period: str
     value: Decimal
     unit: str
-    source: Optional[str]
+    source: str | None
     provider: str
-    methodology: Optional[str]
+    methodology: str | None
 
     model_config = ConfigDict(from_attributes=True)

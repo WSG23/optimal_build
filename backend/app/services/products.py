@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -14,15 +14,15 @@ class VendorProduct:
     category: str
     product_code: str
     name: str
-    brand: Optional[str] = None
-    model_number: Optional[str] = None
-    sku: Optional[str] = None
-    dimensions: Optional[Dict[str, float]] = None
-    specifications: Optional[Dict[str, Any]] = None
-    bim_uri: Optional[str] = None
-    spec_uri: Optional[str] = None
+    brand: str | None = None
+    model_number: str | None = None
+    sku: str | None = None
+    dimensions: dict[str, float] | None = None
+    specifications: dict[str, Any] | None = None
+    bim_uri: str | None = None
+    spec_uri: str | None = None
 
-    def as_orm_kwargs(self) -> Dict[str, Any]:
+    def as_orm_kwargs(self) -> dict[str, Any]:
         """Return keyword arguments compatible with ``RefProduct``."""
 
         return {
@@ -47,10 +47,10 @@ class VendorProductAdapter:
         self.vendor = vendor
         self.default_category = default_category
 
-    def transform(self, payload: Dict[str, Any]) -> List[VendorProduct]:
+    def transform(self, payload: dict[str, Any]) -> list[VendorProduct]:
         """Transform the vendor payload into ``VendorProduct`` instances."""
 
-        products: List[VendorProduct] = []
+        products: list[VendorProduct] = []
         for raw in payload.get("products", []):
             product = self._build_product(raw)
             if product:
@@ -60,7 +60,7 @@ class VendorProductAdapter:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _build_product(self, raw: Dict[str, Any]) -> Optional[VendorProduct]:
+    def _build_product(self, raw: dict[str, Any]) -> VendorProduct | None:
         code = self._extract_code(raw)
         name = str(raw.get("name") or "").strip()
         if not code or not name:
@@ -83,19 +83,17 @@ class VendorProductAdapter:
             spec_uri=self._safe_str(raw.get("spec_uri") or raw.get("spec")),
         )
 
-    def _extract_code(self, raw: Dict[str, Any]) -> Optional[str]:
+    def _extract_code(self, raw: dict[str, Any]) -> str | None:
         for key in ("product_code", "code", "id"):
             value = raw.get(key)
             if value:
                 return str(value)
         return None
 
-    def _parse_dimensions(
-        self, data: Optional[Dict[str, Any]]
-    ) -> Optional[Dict[str, float]]:
+    def _parse_dimensions(self, data: dict[str, Any] | None) -> dict[str, float] | None:
         if not isinstance(data, dict):
             return None
-        result: Dict[str, float] = {}
+        result: dict[str, float] = {}
         for key in ("width", "width_mm", "depth", "depth_mm", "height", "height_mm"):
             value = data.get(key)
             if value is None:
@@ -116,12 +114,12 @@ class VendorProductAdapter:
         # Remove ``None`` entries
         return {k: v for k, v in normalised.items() if v is not None}
 
-    def _ensure_dict(self, value: Any) -> Dict[str, Any]:
+    def _ensure_dict(self, value: Any) -> dict[str, Any]:
         if isinstance(value, dict):
             return value
         return {}
 
-    def _safe_str(self, value: Any) -> Optional[str]:
+    def _safe_str(self, value: Any) -> str | None:
         if value is None:
             return None
         text = str(value).strip()

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
-from typing import Any, Iterable
+from typing import Any
 
 from backend._stub_loader import load_package_stub
 
@@ -98,7 +99,7 @@ def _create_inline_stub() -> ModuleType:
     class _TextClause:
         text: str
 
-        def bindparams(self, *args: Any, **kwargs: Any) -> "_TextClause":
+        def bindparams(self, *args: Any, **kwargs: Any) -> _TextClause:
             return self
 
     class Select:
@@ -106,42 +107,42 @@ def _create_inline_stub() -> ModuleType:
             self.entities = tuple(entities)
             self._modifiers: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
 
-        def _clone(self) -> "Select":
+        def _clone(self) -> Select:
             clone = Select(self.entities)
             clone._modifiers = list(self._modifiers)
             return clone
 
-        def where(self, *criteria: Any) -> "Select":
+        def where(self, *criteria: Any) -> Select:
             stmt = self._clone()
             stmt._modifiers.append(("where", criteria, {}))
             return stmt
 
-        def limit(self, value: int) -> "Select":
+        def limit(self, value: int) -> Select:
             stmt = self._clone()
             stmt._modifiers.append(("limit", (value,), {}))
             return stmt
 
-        def offset(self, value: int) -> "Select":
+        def offset(self, value: int) -> Select:
             stmt = self._clone()
             stmt._modifiers.append(("offset", (value,), {}))
             return stmt
 
-        def order_by(self, *criteria: Any) -> "Select":
+        def order_by(self, *criteria: Any) -> Select:
             stmt = self._clone()
             stmt._modifiers.append(("order_by", criteria, {}))
             return stmt
 
-        def options(self, *opts: Any) -> "Select":
+        def options(self, *opts: Any) -> Select:
             stmt = self._clone()
             stmt._modifiers.append(("options", opts, {}))
             return stmt
 
-        def join(self, *args: Any, **kwargs: Any) -> "Select":
+        def join(self, *args: Any, **kwargs: Any) -> Select:
             stmt = self._clone()
             stmt._modifiers.append(("join", args, kwargs))
             return stmt
 
-        def outerjoin(self, *args: Any, **kwargs: Any) -> "Select":
+        def outerjoin(self, *args: Any, **kwargs: Any) -> Select:
             stmt = self._clone()
             stmt._modifiers.append(("outerjoin", args, kwargs))
             return stmt
@@ -160,7 +161,7 @@ def _create_inline_stub() -> ModuleType:
             self.args = args
             self.kwargs = kwargs
 
-        def label(self, _label: str) -> "_FunctionCall":
+        def label(self, _label: str) -> _FunctionCall:
             return self
 
     class _SQLFunction:
@@ -246,7 +247,7 @@ def _create_inline_stub() -> ModuleType:
         async def scalar_one_or_none(self) -> Any:
             raise _MissingSQLAlchemy("AsyncResult.scalar_one_or_none")
 
-        async def scalars(self) -> "AsyncResult":
+        async def scalars(self) -> AsyncResult:
             raise _MissingSQLAlchemy("AsyncResult.scalars")
 
         def all(self) -> list[Any]:
@@ -280,7 +281,7 @@ def _create_inline_stub() -> ModuleType:
         async def close(self) -> None:
             raise _MissingSQLAlchemy("AsyncSession.close")
 
-        async def __aenter__(self) -> "AsyncSession":
+        async def __aenter__(self) -> AsyncSession:
             return self
 
         async def __aexit__(self, exc_type, exc, tb) -> None:
@@ -315,7 +316,7 @@ def _create_inline_stub() -> ModuleType:
         def __call__(self, *args: Any, **kwargs: Any) -> _AsyncSessionFactory:
             return _AsyncSessionFactory()
 
-        def __getitem__(self, _item: Any) -> "_AsyncSessionmaker":
+        def __getitem__(self, _item: Any) -> _AsyncSessionmaker:
             return self
 
     async_sessionmaker = _AsyncSessionmaker()
@@ -348,16 +349,16 @@ def _create_inline_stub() -> ModuleType:
         def __init__(self, description: str) -> None:
             self.description = description
 
-        def where(self, *args: Any, **kwargs: Any) -> "_Statement":
+        def where(self, *args: Any, **kwargs: Any) -> _Statement:
             return self
 
-        def limit(self, *args: Any, **kwargs: Any) -> "_Statement":
+        def limit(self, *args: Any, **kwargs: Any) -> _Statement:
             return self
 
-        def order_by(self, *args: Any, **kwargs: Any) -> "_Statement":
+        def order_by(self, *args: Any, **kwargs: Any) -> _Statement:
             return self
 
-        def options(self, *args: Any, **kwargs: Any) -> "_Statement":
+        def options(self, *args: Any, **kwargs: Any) -> _Statement:
             return self
 
     @dataclass

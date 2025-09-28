@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, List
 
 try:  # pragma: no cover - prefer PyYAML when present
     import yaml  # type: ignore
@@ -12,11 +12,10 @@ except Exception:  # pragma: no cover - fallback parser
 
 from .canonical_models import CanonicalReg
 
-
 GLOBAL_MAPPING_FILE = Path(__file__).resolve().parent / "global_categories.yaml"
 
 
-def load_yaml(path: Path) -> Dict:
+def load_yaml(path: Path) -> dict:
     """Load a YAML file from disk."""
 
     if not path.exists():
@@ -27,11 +26,11 @@ def load_yaml(path: Path) -> Dict:
         return yaml.safe_load(handle) or {}
 
 
-def _parse_simple_yaml(contents: str) -> Dict:
+def _parse_simple_yaml(contents: str) -> dict:
     """Parse a minimal subset of YAML for offline environments."""
 
-    result: Dict[str, Dict] = {"categories": {}}
-    current_section: Dict[str, Dict] | None = None
+    result: dict[str, dict] = {"categories": {}}
+    current_section: dict[str, dict] | None = None
     current_key: str | None = None
     for line in contents.splitlines():
         stripped = line.strip()
@@ -71,7 +70,7 @@ def _parse_simple_yaml(contents: str) -> Dict:
     return result
 
 
-def merge_mappings(global_map: Dict, override_map: Dict) -> Dict:
+def merge_mappings(global_map: dict, override_map: dict) -> dict:
     """Merge override mappings into the global mapping definition."""
 
     merged = {"categories": {}}
@@ -92,8 +91,8 @@ def merge_mappings(global_map: Dict, override_map: Dict) -> Dict:
 
 
 def apply_mapping(
-    definition: Dict, regulations: Iterable[CanonicalReg]
-) -> List[CanonicalReg]:
+    definition: dict, regulations: Iterable[CanonicalReg]
+) -> list[CanonicalReg]:
     """Apply keyword-based mapping rules to the provided regulations."""
 
     categories = definition.get("categories", {})
@@ -101,7 +100,7 @@ def apply_mapping(
         key: set(map(str.lower, payload.get("keywords", [])))
         for key, payload in categories.items()
     }
-    mapped: List[CanonicalReg] = []
+    mapped: list[CanonicalReg] = []
     for reg in regulations:
         text_lower = f"{reg.title}\n{reg.text}".lower()
         tags = set(reg.global_tags)
@@ -115,11 +114,11 @@ def apply_mapping(
 
 def load_and_apply_mappings(
     regulations: Iterable[CanonicalReg], override_path: Path | None
-) -> List[CanonicalReg]:
+) -> list[CanonicalReg]:
     """Load mappings from disk and apply them to the regulations."""
 
     global_map = load_yaml(GLOBAL_MAPPING_FILE)
-    override_map: Dict = {}
+    override_map: dict = {}
     if override_path is not None:
         override_map = load_yaml(override_path)
     merged = merge_mappings(global_map, override_map)

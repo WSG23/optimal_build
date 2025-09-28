@@ -4,18 +4,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
 
 from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.util import create_session_factory, get_engine, session_scope
 from jurisdictions.sg_bca import fetch
 from jurisdictions.sg_bca.parse import PARSER, ParserError
-
+from sqlalchemy import select
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 
@@ -63,7 +62,7 @@ def test_parser_iterates_all_regulations_from_page_payload():
     record = canonical_models.ProvenanceRecord(
         regulation_external_id="page-1",
         source_uri="https://data.gov.sg/api/action/datastore_search",
-        fetched_at=datetime(2025, 4, 12, 10, 0, 0, tzinfo=timezone.utc),
+        fetched_at=datetime(2025, 4, 12, 10, 0, 0, tzinfo=UTC),
         fetch_parameters={"offset": 0},
         raw_content=json.dumps(payload),
     )
@@ -103,7 +102,7 @@ def test_fetcher_raises_for_bad_credentials(monkeypatch):
         def __init__(self, *_, **__):
             pass
 
-        def __enter__(self) -> "UnauthorizedClient":
+        def __enter__(self) -> UnauthorizedClient:
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:
@@ -143,7 +142,7 @@ def test_fetcher_rejects_malformed_payload(monkeypatch):
         def __init__(self, *_, **__):
             pass
 
-        def __enter__(self) -> "MalformedClient":
+        def __enter__(self) -> MalformedClient:
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:
@@ -172,7 +171,7 @@ def test_parser_reports_missing_external_identifier_from_page_payload():
     record = canonical_models.ProvenanceRecord(
         regulation_external_id="page-2",
         source_uri="https://data.gov.sg/api/action/datastore_search",
-        fetched_at=datetime(2025, 4, 12, 10, 5, 0, tzinfo=timezone.utc),
+        fetched_at=datetime(2025, 4, 12, 10, 5, 0, tzinfo=UTC),
         fetch_parameters={"offset": 2},
         raw_content=json.dumps(payload),
     )
@@ -195,7 +194,7 @@ def test_fetcher_normalises_timezone_aware_issue_dates(monkeypatch):
         parsed = original_parse(value)
         if parsed is None:
             return None
-        return parsed.replace(tzinfo=timezone.utc)
+        return parsed.replace(tzinfo=UTC)
 
     monkeypatch.setattr(
         fetch.Fetcher,
@@ -554,7 +553,7 @@ def _patch_client_with_pages(
         def __init__(self, *_, **__):
             pass
 
-        def __enter__(self) -> "FixtureClient":
+        def __enter__(self) -> FixtureClient:
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:

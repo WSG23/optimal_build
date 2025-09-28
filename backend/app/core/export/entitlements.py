@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import csv
 import io
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Dict, Iterable, List, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,10 +38,10 @@ class EntitlementsSnapshot:
     """Serialised snapshot used for exports."""
 
     project_id: int
-    roadmap: List[Dict[str, object]]
-    studies: List[Dict[str, object]]
-    engagements: List[Dict[str, object]]
-    legal: List[Dict[str, object]]
+    roadmap: list[dict[str, object]]
+    studies: list[dict[str, object]]
+    engagements: list[dict[str, object]]
+    legal: list[dict[str, object]]
     generated_at: datetime
 
 
@@ -49,8 +49,8 @@ async def _collect_all(
     fetch_page,
     *,
     page_size: int = EXPORT_PAGE_SIZE,
-) -> List:
-    records: List = []
+) -> list:
+    records: list = []
     offset = 0
     while True:
         page = await fetch_page(limit=page_size, offset=offset)
@@ -63,8 +63,8 @@ async def _collect_all(
     return records
 
 
-def _serialise_roadmap(records) -> List[Dict[str, object]]:
-    serialised: List[Dict[str, object]] = []
+def _serialise_roadmap(records) -> list[dict[str, object]]:
+    serialised: list[dict[str, object]] = []
     for item in records:
         serialised.append(
             {
@@ -102,11 +102,11 @@ def _serialise_roadmap(records) -> List[Dict[str, object]]:
 
 
 def _serialise_simple(
-    records: Iterable, fields: Tuple[str, ...]
-) -> List[Dict[str, object]]:
-    serialised: List[Dict[str, object]] = []
+    records: Iterable, fields: tuple[str, ...]
+) -> list[dict[str, object]]:
+    serialised: list[dict[str, object]] = []
     for record in records:
-        payload: Dict[str, object] = {}
+        payload: dict[str, object] = {}
         for field in fields:
             value = getattr(record, field, None)
             if hasattr(value, "isoformat"):
@@ -172,7 +172,7 @@ async def build_snapshot(
                 "expiry_date",
             ),
         ),
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
     )
     return snapshot
 
@@ -275,7 +275,7 @@ def _render_csv(snapshot: EntitlementsSnapshot) -> bytes:
 
 def _render_html(snapshot: EntitlementsSnapshot) -> str:
     def _render_section(
-        title: str, headers: List[str], rows: List[List[object]]
+        title: str, headers: list[str], rows: list[list[object]]
     ) -> str:
         header_html = "".join(f"<th>{header}</th>" for header in headers)
         rows_html = "".join(
@@ -401,7 +401,7 @@ def _render_html(snapshot: EntitlementsSnapshot) -> str:
 
 def render_export_payload(
     snapshot: EntitlementsSnapshot, fmt: EntitlementsExportFormat
-) -> Tuple[bytes, str]:
+) -> tuple[bytes, str]:
     """Render the snapshot into the requested format."""
 
     if fmt is EntitlementsExportFormat.CSV:
@@ -424,7 +424,7 @@ async def generate_entitlements_export(
     *,
     project_id: int,
     fmt: EntitlementsExportFormat,
-) -> Tuple[bytes, str, str]:
+) -> tuple[bytes, str, str]:
     """Return payload, media type, and filename for the export."""
 
     snapshot = await build_snapshot(session, project_id)

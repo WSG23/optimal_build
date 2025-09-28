@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Iterator
 
 try:  # pragma: no cover - prefer real SQLAlchemy when available
     from sqlalchemy import create_engine
@@ -57,14 +57,17 @@ except Exception:  # pragma: no cover - fallback for minimal environments
         def close(self) -> None:
             self._closed = True
 
-    def create_engine(database_url: str, echo: bool = False):  # type: ignore[override]
+    def _create_engine(database_url: str, echo: bool = False):  # type: ignore[override]
         return _Engine(database_url, echo)
 
-    def sessionmaker(*args, **kwargs):  # type: ignore[override]
+    def _sessionmaker(*args, **kwargs):  # type: ignore[override]
         def factory():
             return _SimpleSession()
 
         return factory
+
+    create_engine = _create_engine  # type: ignore[assignment]
+    sessionmaker = _sessionmaker  # type: ignore[assignment]
 
     Engine = _Engine  # type: ignore[assignment]
     Session = _SimpleSession  # type: ignore[assignment]

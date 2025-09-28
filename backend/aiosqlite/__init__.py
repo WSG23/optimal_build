@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Any, Callable, Coroutine, Iterable, Optional
+from collections.abc import Callable, Coroutine, Iterable
+from typing import Any, Optional
 
 __all__ = ["connect", "Connection", "Cursor"]
 
@@ -27,24 +28,24 @@ class Cursor:
 
     async def execute(
         self, sql: str, parameters: Iterable[Any] | None = None
-    ) -> "Cursor":
+    ) -> Cursor:
         self._cursor.execute(sql, tuple(parameters or ()))
         self.rowcount = self._cursor.rowcount
         return self
 
     async def executemany(
         self, sql: str, parameters: Iterable[Iterable[Any]] | None = None
-    ) -> "Cursor":
+    ) -> Cursor:
         self._cursor.executemany(sql, list(parameters or ()))
         self.rowcount = self._cursor.rowcount
         return self
 
-    async def executescript(self, sql: str) -> "Cursor":
+    async def executescript(self, sql: str) -> Cursor:
         self._cursor.executescript(sql)
         self.rowcount = self._cursor.rowcount
         return self
 
-    async def fetchone(self) -> Optional[tuple[Any, ...]]:
+    async def fetchone(self) -> tuple[Any, ...] | None:
         return self._cursor.fetchone()
 
     async def fetchall(self) -> list[tuple[Any, ...]]:
@@ -71,7 +72,7 @@ class Connection:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
 
-    async def __aenter__(self) -> "Connection":
+    async def __aenter__(self) -> Connection:
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:

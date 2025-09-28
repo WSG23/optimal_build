@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any
 
 from sqlalchemy.orm import DeclarativeBase
 
@@ -14,7 +14,7 @@ class BaseModel(DeclarativeBase):
 
     __abstract__ = True
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable representation of the model instance."""
 
         def normalise(value: Any) -> Any:
@@ -24,7 +24,7 @@ class BaseModel(DeclarativeBase):
                 return value.isoformat()
             return value
 
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         table = getattr(self, "__table__", None)
         columns = getattr(table, "columns", None)
         if columns:
@@ -52,11 +52,11 @@ class MetadataProxy:
         value = getattr(instance, "metadata_json", None)
         if value is None:
             value = {}
-            setattr(instance, "metadata_json", value)
+            instance.metadata_json = value
         return value
 
     def __set__(self, instance, value):
-        setattr(instance, "metadata_json", value or {})
+        instance.metadata_json = value or {}
 
 
 __all__ = ["Base", "BaseModel", "MetadataProxy"]

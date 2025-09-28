@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import csv
 import io
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Iterable
+from collections.abc import Iterable
+from decimal import ROUND_HALF_UP, Decimal
 
 import pytest
 
@@ -22,13 +22,11 @@ if _PYDANTIC_MAJOR < 2:
     pytest.skip("Finance API tests require Pydantic v2", allow_module_level=True)
 
 
-from httpx import AsyncClient
-
 from backend.app.models.rkp import RefCostIndex
-from backend.app.services.finance import calculator
 from backend.app.schemas.finance import DscrInputs
+from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
-
+from httpx import AsyncClient
 
 REVIEWER_HEADERS = {"X-Role": "reviewer"}
 VIEWER_HEADERS = {"X-Role": "viewer"}
@@ -51,10 +49,8 @@ if getattr(DscrInputs, "__model_validators__", None):
         for validator in DscrInputs.__model_validators__
     ]
     original_validator = DscrInputs.__dict__["_validate_lengths"].__func__
-    setattr(
-        DscrInputs,
-        "_validate_lengths",
-        classmethod(_wrap_model_validator(original_validator)),
+    DscrInputs._validate_lengths = classmethod(
+        _wrap_model_validator(original_validator)
     )
 
 
@@ -219,7 +215,7 @@ async def test_finance_feasibility_and_export_endpoints(
     actual_dscr_entries = body["dscr_timeline"]
     serialised_expected = _serialise_dscr_entries(expected_dscr_entries)
     assert len(actual_dscr_entries) == len(serialised_expected)
-    for actual, expected in zip(actual_dscr_entries, serialised_expected):
+    for actual, expected in zip(actual_dscr_entries, serialised_expected, strict=False):
         assert actual["period"] == expected["period"]
         assert Decimal(actual["noi"]) == Decimal(expected["noi"])
         assert Decimal(actual["debt_service"]) == Decimal(expected["debt_service"])
@@ -257,7 +253,9 @@ async def test_finance_feasibility_and_export_endpoints(
     exported_timeline = rows[
         timeline_header_index + 1 : timeline_header_index + 1 + len(serialised_expected)
     ]
-    for exported_row, expected in zip(exported_timeline, serialised_expected):
+    for exported_row, expected in zip(
+        exported_timeline, serialised_expected, strict=False
+    ):
         period, noi, debt_service, dscr_value, currency = exported_row
         assert period == expected["period"]
         assert Decimal(noi) == Decimal(expected["noi"])

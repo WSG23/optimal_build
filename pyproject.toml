@@ -25,12 +25,67 @@ packages = ["core", "jurisdictions", "scripts", "db"]
 pythonpath = ["."]
 addopts = "-q"
 
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+include = "\\.pyi?$"
+extend-exclude = """
+(
+  ^/frontend
+ | ^/ui-admin
+ | ^/fastapi
+ | ^/fastapi_shadow_.*
+ | ^/starlette_shadow_.*
+ | ^/pydantic_shadow_.*
+ | ^/httpx
+ | ^/sqlalchemy
+ | ^/sqlalchemy_pkg_backup
+ | ^/importlib
+ | ^/uvicorn_app
+ | ^/backend/_vendor
+ | ^/backend/migrations
+ | ^/backend/starlette
+ | ^/backend/aiosqlite
+)
+"""
+
 [tool.ruff]
 line-length = 100
+target-version = "py311"
+exclude = [
+    ".venv",
+    ".git",
+    "build",
+    "dist",
+    "frontend",
+    "ui-admin",
+    "fastapi",
+    "fastapi_shadow_*",
+    "starlette_shadow_*",
+    "pydantic_shadow_*",
+    "httpx",
+    "sqlalchemy",
+    "sqlalchemy_pkg_backup",
+    "importlib",
+    "uvicorn_app",
+    "backend/_vendor",
+    "backend/migrations",
+    "backend/starlette",
+    "backend/aiosqlite",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]
-ignore = ["E203"]
+select = [
+    "E",
+    "F",
+    "W",
+    "B",
+    "UP",
+    "I",
+    "C4",
+]
+ignore = ["E203", "E402"]
+extend-ignore = ["B008"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 from types import ModuleType
-from typing import Iterable
 
 _MODULE_NAME = __name__
 _THIS_MODULE = sys.modules[_MODULE_NAME]

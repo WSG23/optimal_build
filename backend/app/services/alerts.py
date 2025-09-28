@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional, cast
+from datetime import UTC, datetime
+from typing import Any, cast
 
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefAlert, RefIngestionRun
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
-from sqlalchemy import Select, select
 
 logger = get_logger(__name__)
 
@@ -21,8 +21,8 @@ async def create_alert(
     alert_type: str,
     level: str,
     message: str,
-    ingestion_run: Optional[RefIngestionRun] = None,
-    context: Optional[Dict[str, Any]] = None,
+    ingestion_run: RefIngestionRun | None = None,
+    context: dict[str, Any] | None = None,
 ) -> RefAlert:
     """Persist an alert record and update metrics."""
 
@@ -44,7 +44,7 @@ async def create_alert(
 
 
 async def list_alerts(
-    session: AsyncSession, *, alert_type: Optional[str] = None
+    session: AsyncSession, *, alert_type: str | None = None
 ) -> list[RefAlert]:
     """Return alerts optionally filtered by type."""
 
@@ -63,7 +63,7 @@ async def acknowledge_alert(
     alert_id: int,
     *,
     acknowledged_by: str,
-) -> Optional[RefAlert]:
+) -> RefAlert | None:
     """Mark an alert as acknowledged."""
 
     stmt: Select[Any] = select(RefAlert).where(RefAlert.id == alert_id)
@@ -75,7 +75,7 @@ async def acknowledge_alert(
     alert_db = cast(RefAlert, alert)
     alert_record = cast(Any, alert_db)
     alert_record.acknowledged = True
-    alert_record.acknowledged_at = datetime.now(timezone.utc)
+    alert_record.acknowledged_at = datetime.now(UTC)
     alert_record.acknowledged_by = acknowledged_by
     await session.flush()
     log_event(

@@ -26,7 +26,6 @@ async def apply_migrations(database_url: str) -> None:
     _ensure_sqlite_directory(database_url)
     engine = create_async_engine(database_url)
     try:
-        from backend.app.models.base import Base
         import backend.app.models.audit  # noqa: F401
         import backend.app.models.entitlements  # noqa: F401
         import backend.app.models.finance  # noqa: F401
@@ -34,6 +33,7 @@ async def apply_migrations(database_url: str) -> None:
         import backend.app.models.overlay  # noqa: F401
         import backend.app.models.rkp  # noqa: F401
         import backend.app.models.rulesets  # noqa: F401
+        from backend.app.models.base import Base
     except ImportError as exc:  # pragma: no cover - defensive
         raise SystemExit(f"Failed to import models: {exc}") from exc
 

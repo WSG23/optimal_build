@@ -11,7 +11,6 @@ pytest.importorskip("pytest_asyncio")
 
 from httpx import AsyncClient
 
-
 VIEWER_HEADERS = {"X-Role": "viewer"}
 
 

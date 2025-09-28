@@ -1,9 +1,9 @@
 """Role-based access helpers for workspace policies."""
 
 from .policy import (
-    WorkspaceRole,
     PolicyContext,
     SignoffSnapshot,
+    WorkspaceRole,
     can_export_permit_ready,
     can_invite_architect,
     requires_signoff,

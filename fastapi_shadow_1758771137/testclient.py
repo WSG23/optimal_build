@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 import json
-from typing import Any, Mapping, MutableMapping, Optional
+from collections.abc import Mapping, MutableMapping
+from dataclasses import dataclass
+from typing import Any
 from urllib.parse import urlsplit
 
 
@@ -33,11 +34,11 @@ class TestClient:
         method: str,
         url: str,
         *,
-        params: Optional[Mapping[str, Any]] = None,
-        headers: Optional[Mapping[str, str]] = None,
+        params: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
         json: Any = None,
-        data: Optional[Mapping[str, Any]] = None,
-        files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+        data: Mapping[str, Any] | None = None,
+        files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
     ) -> _SyncResponse:
         path, query = self._split_url(url)
         query_params = dict(params or {})
@@ -87,8 +88,8 @@ class TestClient:
         self,
         url: str,
         *,
-        params: Optional[Mapping[str, Any]] = None,
-        headers: Optional[Mapping[str, str]] = None,
+        params: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
     ) -> _SyncResponse:
         return self.request("GET", url, params=params, headers=headers)
 
@@ -96,10 +97,10 @@ class TestClient:
         self,
         url: str,
         *,
-        headers: Optional[Mapping[str, str]] = None,
+        headers: Mapping[str, str] | None = None,
         json: Any = None,
-        data: Optional[Mapping[str, Any]] = None,
-        files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+        data: Mapping[str, Any] | None = None,
+        files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
     ) -> _SyncResponse:
         return self.request(
             "POST", url, headers=headers, json=json, data=data, files=files
@@ -109,9 +110,9 @@ class TestClient:
         self,
         url: str,
         *,
-        headers: Optional[Mapping[str, str]] = None,
+        headers: Mapping[str, str] | None = None,
         json: Any = None,
-        data: Optional[Mapping[str, Any]] = None,
+        data: Mapping[str, Any] | None = None,
     ) -> _SyncResponse:
         return self.request("PUT", url, headers=headers, json=json, data=data)
 
@@ -119,7 +120,7 @@ class TestClient:
         self,
         url: str,
         *,
-        headers: Optional[Mapping[str, str]] = None,
+        headers: Mapping[str, str] | None = None,
         json: Any = None,
     ) -> _SyncResponse:
         return self.request("DELETE", url, headers=headers, json=json)

@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Sequence
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
 from sqlalchemy import Column, Integer, String, Table, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @dataclass
@@ -24,7 +23,7 @@ class SeedSummary:
     zoning_layers: int
     sources: int
 
-    def as_dict(self) -> Dict[str, int]:
+    def as_dict(self) -> dict[str, int]:
         """Return the summary as a dictionary for logging or testing."""
 
         return {
@@ -35,7 +34,7 @@ class SeedSummary:
         }
 
 
-_SAMPLE_REF_SOURCES: Sequence[Dict[str, object]] = (
+_SAMPLE_REF_SOURCES: Sequence[dict[str, object]] = (
     {
         "jurisdiction": "SG",
         "authority": "URA",
@@ -75,7 +74,7 @@ _SAMPLE_REF_SOURCES: Sequence[Dict[str, object]] = (
 )
 
 
-_SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
+_SAMPLE_ZONING_LAYERS: Sequence[dict[str, object]] = (
     {
         "jurisdiction": "SG",
         "layer_name": "MasterPlan",
@@ -155,7 +154,7 @@ _SAMPLE_ZONING_LAYERS: Sequence[Dict[str, object]] = (
     },
 )
 
-_SAMPLE_PARCELS: Sequence[Dict[str, object]] = (
+_SAMPLE_PARCELS: Sequence[dict[str, object]] = (
     {
         "jurisdiction": "SG",
         "parcel_ref": "MK01-01234",
@@ -221,7 +220,7 @@ _SAMPLE_PARCELS: Sequence[Dict[str, object]] = (
     },
 )
 
-_SAMPLE_GEOCODES: Sequence[Dict[str, object]] = (
+_SAMPLE_GEOCODES: Sequence[dict[str, object]] = (
     {
         "address": "123 Example Ave",
         "lat": 1.2994,
@@ -273,8 +272,8 @@ def _ensure_stub_tables() -> None:
         )
 
 
-async def _upsert_ref_sources(session: AsyncSession) -> List[RefSource]:
-    sources: List[RefSource] = []
+async def _upsert_ref_sources(session: AsyncSession) -> list[RefSource]:
+    sources: list[RefSource] = []
     await session.execute(RefSource.__table__.delete())
 
     for payload in _SAMPLE_REF_SOURCES:
@@ -285,8 +284,8 @@ async def _upsert_ref_sources(session: AsyncSession) -> List[RefSource]:
     return sources
 
 
-async def _upsert_zoning_layers(session: AsyncSession) -> List[RefZoningLayer]:
-    layers: List[RefZoningLayer] = []
+async def _upsert_zoning_layers(session: AsyncSession) -> list[RefZoningLayer]:
+    layers: list[RefZoningLayer] = []
     for payload in _SAMPLE_ZONING_LAYERS:
         stmt = select(RefZoningLayer).where(
             RefZoningLayer.layer_name == payload["layer_name"],
@@ -305,8 +304,8 @@ async def _upsert_zoning_layers(session: AsyncSession) -> List[RefZoningLayer]:
     return layers
 
 
-async def _upsert_parcels(session: AsyncSession) -> List[RefParcel]:
-    parcels: List[RefParcel] = []
+async def _upsert_parcels(session: AsyncSession) -> list[RefParcel]:
+    parcels: list[RefParcel] = []
     for payload in _SAMPLE_PARCELS:
         stmt = select(RefParcel).where(RefParcel.parcel_ref == payload["parcel_ref"])
         existing = (await session.execute(stmt)).scalar_one_or_none()
@@ -324,10 +323,10 @@ async def _upsert_parcels(session: AsyncSession) -> List[RefParcel]:
 
 async def _upsert_geocode_entries(
     session: AsyncSession, parcels: Iterable[RefParcel]
-) -> List[RefGeocodeCache]:
+) -> list[RefGeocodeCache]:
     parcel_lookup = {parcel.parcel_ref: parcel.id for parcel in parcels}
-    geocodes: List[RefGeocodeCache] = []
-    missing_parcels: List[str] = []
+    geocodes: list[RefGeocodeCache] = []
+    missing_parcels: list[str] = []
 
     for payload in _SAMPLE_GEOCODES:
         entry = dict(payload)
@@ -397,7 +396,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> SeedSummary:
+def main(argv: Sequence[str] | None = None) -> SeedSummary:
     """Entry point for command-line execution."""
 
     parser = _build_parser()

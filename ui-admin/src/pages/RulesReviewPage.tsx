@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header'
 import { ReviewAPI } from '../api/client'
 import type { RuleRecord } from '../types'
+import { toErrorMessage } from '../utils/error'
 
 const RulesReviewPage = () => {
   const [rules, setRules] = useState<RuleRecord[]>([])
@@ -11,17 +12,23 @@ const RulesReviewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
-    ReviewAPI.getRules()
-      .then((response) => {
+    const loadRules = async () => {
+      setLoading(true)
+      try {
+        const response = await ReviewAPI.getRules()
         setRules(response.items)
         setError(null)
         if (response.items.length && selectedRuleId === null) {
           setSelectedRuleId(response.items[0].id)
         }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (error) {
+        setError(toErrorMessage(error, 'Failed to load rules'))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadRules()
     // We only want to load rules on initial mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -40,7 +47,7 @@ const RulesReviewPage = () => {
         prev.map((rule) => (rule.id === item.id ? item : rule)),
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update rule')
+      setError(toErrorMessage(err, 'Failed to update rule'))
     } finally {
       setIsSubmitting(false)
     }
@@ -80,7 +87,9 @@ const RulesReviewPage = () => {
                           ? 'bg-surface-inverse/60'
                           : ''
                       }`}
-                      onClick={() => setSelectedRuleId(rule.id)}
+                      onClick={() => {
+                        setSelectedRuleId(rule.id)
+                      }}
                     >
                       <td className="px-4 py-3 text-sm text-text-inverse">
                         <div className="font-semibold">
@@ -196,14 +205,18 @@ const RulesReviewPage = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => handleAction('approve')}
+                    onClick={() => {
+                      void handleAction('approve')
+                    }}
                     disabled={isSubmitting}
                     className="px-4 py-2 rounded bg-success-strong text-text-inverse text-sm font-semibold hover:bg-success-strong/85 disabled:opacity-60"
                   >
                     Approve
                   </button>
                   <button
-                    onClick={() => handleAction('publish')}
+                    onClick={() => {
+                      void handleAction('publish')
+                    }}
                     disabled={isSubmitting}
                     className="px-4 py-2 rounded bg-brand-primary text-text-inverse text-sm font-semibold hover:bg-brand-primary-emphasis disabled:opacity-60"
                   >

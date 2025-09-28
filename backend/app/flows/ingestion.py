@@ -2,23 +2,25 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Sequence
+from collections.abc import Callable, Sequence
+from typing import Any
 
+from prefect import flow
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
-from app.services import alerts, ingestion as ingestion_service, standards
+from app.services import alerts, standards
+from app.services import ingestion as ingestion_service
 from app.utils.logging import get_logger, log_event
-from prefect import flow
 
 logger = get_logger(__name__)
 
 
 @flow(name="material-standard-ingestion")
 async def material_standard_ingestion_flow(
-    records: Sequence[Dict[str, Any]],
+    records: Sequence[dict[str, Any]],
     session_factory: Callable[[], AsyncSession] = AsyncSessionLocal,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Ingest material standards and capture run metrics."""
 
     async with session_factory() as session:

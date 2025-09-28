@@ -5,12 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-from typing import Dict
-
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from backend.app.models.base import BaseModel
 from backend.scripts import seed_nonreg
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
 def _load_fixture_count(path: Path) -> int:
@@ -39,7 +37,7 @@ def test_seed_nonreg_cli_summary(monkeypatch) -> None:
 
     summary = seed_nonreg.main([])
 
-    expected: Dict[str, int] = {
+    expected: dict[str, int] = {
         "ergonomics": _load_fixture_count(seed_nonreg.ERGONOMICS_SEED),
         "standards": _load_fixture_count(seed_nonreg.STANDARDS_SEED),
         "cost_indices": _load_fixture_count(seed_nonreg.COST_INDEX_SEED),

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +20,7 @@ async def adjust_pro_forma_cost(
     base_cost: Decimal,
     series_name: str,
     jurisdiction: str = "SG",
-    provider: Optional[str] = None,
+    provider: str | None = None,
 ) -> Decimal:
     """Apply the latest cost index scalar to a base cost."""
 

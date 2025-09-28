@@ -6,14 +6,14 @@ import hashlib
 import hmac
 import json
 from collections.abc import Mapping
-from datetime import datetime, timezone
-from typing import Any, Dict, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.audit import AuditLog
-from sqlalchemy import select
 
 
 def _as_utc(timestamp: datetime | None) -> datetime | None:
@@ -22,8 +22,8 @@ def _as_utc(timestamp: datetime | None) -> datetime | None:
     if timestamp is None:
         return None
     if timestamp.tzinfo is None:
-        return timestamp.replace(tzinfo=timezone.utc)
-    return timestamp.astimezone(timezone.utc)
+        return timestamp.replace(tzinfo=UTC)
+    return timestamp.astimezone(UTC)
 
 
 def _coerce_float(value: Any) -> float | None:
@@ -37,7 +37,7 @@ def _coerce_float(value: Any) -> float | None:
         raise TypeError(f"Expected numeric value, received {value!r}") from exc
 
 
-def _normalise_context(context: Mapping[str, Any] | None) -> Dict[str, Any]:
+def _normalise_context(context: Mapping[str, Any] | None) -> dict[str, Any]:
     """Return a JSON-serialisable dictionary for the event context."""
 
     if context is None:
@@ -45,7 +45,7 @@ def _normalise_context(context: Mapping[str, Any] | None) -> Dict[str, Any]:
     return {str(key): value for key, value in dict(context).items()}
 
 
-def _payload_for_hash(log: AuditLog) -> Dict[str, Any]:
+def _payload_for_hash(log: AuditLog) -> dict[str, Any]:
     """Build a canonical payload for hashing and signing."""
 
     recorded_at = _as_utc(log.recorded_at)
@@ -108,7 +108,7 @@ async def append_event(
     previous = await _latest_entry(session, project_id)
     version = 1 if previous is None else previous.version + 1
     prev_hash = previous.hash if previous is not None else None
-    timestamp = _as_utc(recorded_at) or datetime.now(timezone.utc)
+    timestamp = _as_utc(recorded_at) or datetime.now(UTC)
 
     normalised_context = _normalise_context(context)
     log = AuditLog(
@@ -130,7 +130,7 @@ async def append_event(
     return log
 
 
-def serialise_log(log: AuditLog) -> Dict[str, Any]:
+def serialise_log(log: AuditLog) -> dict[str, Any]:
     """Convert an :class:`AuditLog` row into an API friendly dictionary."""
 
     recorded_at = log.recorded_at.isoformat() if log.recorded_at else None
@@ -149,7 +149,7 @@ def serialise_log(log: AuditLog) -> Dict[str, Any]:
     }
 
 
-def _diff_value(value_a: Any, value_b: Any) -> Dict[str, Any] | None:
+def _diff_value(value_a: Any, value_b: Any) -> dict[str, Any] | None:
     """Return a diff structure describing the change between two scalars."""
 
     if value_a == value_b:
@@ -159,12 +159,12 @@ def _diff_value(value_a: Any, value_b: Any) -> Dict[str, Any] | None:
 
 def _diff_context(
     context_a: Mapping[str, Any], context_b: Mapping[str, Any]
-) -> Dict[str, Dict[str, Any]]:
+) -> dict[str, dict[str, Any]]:
     """Compute added/removed/changed keys between two context payloads."""
 
-    added: Dict[str, Any] = {}
-    removed: Dict[str, Any] = {}
-    changed: Dict[str, Dict[str, Any]] = {}
+    added: dict[str, Any] = {}
+    removed: dict[str, Any] = {}
+    changed: dict[str, dict[str, Any]] = {}
 
     for key, value in context_b.items():
         if key not in context_a:
@@ -178,7 +178,7 @@ def _diff_context(
     return {"added": added, "removed": removed, "changed": changed}
 
 
-def diff_logs(log_a: AuditLog, log_b: AuditLog) -> Dict[str, Any]:
+def diff_logs(log_a: AuditLog, log_b: AuditLog) -> dict[str, Any]:
     """Return a structured diff between two audit log entries."""
 
     context_a = _normalise_context(log_a.context)
@@ -198,7 +198,7 @@ def diff_logs(log_a: AuditLog, log_b: AuditLog) -> Dict[str, Any]:
 
 async def verify_chain(
     session: AsyncSession, project_id: int
-) -> Tuple[bool, list[AuditLog]]:
+) -> tuple[bool, list[AuditLog]]:
     """Validate the audit chain for ``project_id`` and return ordered entries."""
 
     stmt = (

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -14,12 +14,12 @@ class RulePackSchema(BaseModel):
     id: int
     slug: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     jurisdiction: str
-    authority: Optional[str] = None
+    authority: str | None = None
     version: int
-    definition: Dict[str, Any]
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    definition: dict[str, Any]
+    metadata: dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
     created_at: datetime
     updated_at: datetime
@@ -32,13 +32,13 @@ class RulePackSchema(BaseModel):
         obj: Any,
         *,
         from_attributes: bool = False,
-    ) -> "RulePackSchema":
+    ) -> RulePackSchema:
         if from_attributes and not isinstance(obj, dict):
-            data: Dict[str, Any] = {}
+            data: dict[str, Any] = {}
             for name in cls.model_fields:
                 if name == "metadata":
                     if hasattr(obj, "metadata_json"):
-                        value = getattr(obj, "metadata_json")
+                        value = obj.metadata_json
                     else:
                         value = getattr(obj, "metadata", {})
                     if isinstance(value, dict):
@@ -59,9 +59,9 @@ class RulePackSummary(BaseModel):
     slug: str
     name: str
     jurisdiction: str
-    authority: Optional[str] = None
+    authority: str | None = None
     version: int
-    description: Optional[str] = None
+    description: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -69,15 +69,15 @@ class RulePackSummary(BaseModel):
 class RulesetValidationRequest(BaseModel):
     """Payload received when validating geometry against a rule pack."""
 
-    ruleset_id: Optional[int] = Field(default=None, ge=1)
-    ruleset_slug: Optional[str] = Field(default=None, min_length=1)
-    ruleset_version: Optional[int] = Field(default=None, ge=1)
-    geometry: Dict[str, Any] = Field(default_factory=dict)
+    ruleset_id: int | None = Field(default=None, ge=1)
+    ruleset_slug: str | None = Field(default=None, min_length=1)
+    ruleset_version: int | None = Field(default=None, ge=1)
+    geometry: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _check_identifier(
-        cls, values: "RulesetValidationRequest"
-    ) -> "RulesetValidationRequest":
+        cls, values: RulesetValidationRequest
+    ) -> RulesetValidationRequest:
         if values.ruleset_id is None and not values.ruleset_slug:
             raise ValueError("Either ruleset_id or ruleset_slug must be provided")
         return values
@@ -90,28 +90,28 @@ class ViolationFact(BaseModel):
     operator: str
     expected: Any = None
     actual: Any = None
-    message: Optional[str] = None
+    message: str | None = None
 
 
 class ViolationDetail(BaseModel):
     """Explainability payload describing a rule violation."""
 
     entity_id: str
-    messages: List[str] = Field(default_factory=list)
-    facts: List[ViolationFact] = Field(default_factory=list)
-    attributes: Dict[str, Any] = Field(default_factory=dict)
+    messages: list[str] = Field(default_factory=list)
+    facts: list[ViolationFact] = Field(default_factory=list)
+    attributes: dict[str, Any] = Field(default_factory=dict)
 
 
 class RuleEvaluationResult(BaseModel):
     """Outcome of evaluating a single rule against the geometry."""
 
     rule_id: str
-    title: Optional[str] = None
-    target: Optional[str] = None
-    citation: Optional[Dict[str, Any]] = None
+    title: str | None = None
+    target: str | None = None
+    citation: dict[str, Any] | None = None
     passed: bool
     checked: int
-    violations: List[ViolationDetail] = Field(default_factory=list)
+    violations: list[ViolationDetail] = Field(default_factory=list)
 
 
 class RulesetEvaluationSummary(BaseModel):
@@ -127,15 +127,15 @@ class RulesetValidationResponse(BaseModel):
     """Response returned by the validation endpoint."""
 
     ruleset: RulePackSummary
-    results: List[RuleEvaluationResult]
+    results: list[RuleEvaluationResult]
     summary: RulesetEvaluationSummary
-    citations: List[Dict[str, Any]] = Field(default_factory=list)
+    citations: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class RulesetListResponse(BaseModel):
     """Paginated response for the rule pack catalogue."""
 
-    items: List[RulePackSchema]
+    items: list[RulePackSchema]
     count: int
 
 

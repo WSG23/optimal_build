@@ -10,8 +10,8 @@ paths working by aliasing ``app`` to ``backend.app`` at import time.
 
 from __future__ import annotations
 
-from importlib import import_module
 import sys
+from importlib import import_module
 
 
 def _ensure_sqlalchemy() -> None:

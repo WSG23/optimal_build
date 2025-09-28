@@ -43,6 +43,7 @@ repos:
       name: mypy-backend
       files: ^backend/
       args: [--config-file=mypy.ini]
+      pass_filenames: false
       additional_dependencies:
         - fastapi==0.104.1
         - uvicorn[standard]==0.24.0

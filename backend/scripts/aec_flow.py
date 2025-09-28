@@ -6,9 +6,10 @@ import argparse
 import asyncio
 import json
 import os
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any
 
 # Configure runtime directories before importing the application settings.
 _DEFAULT_RUNTIME_DIR = (
@@ -67,7 +68,7 @@ def write_summary(name: str, payload: Mapping[str, Any]) -> Path:
     return path
 
 
-def load_sample_payload(sample_path: Path) -> Dict[str, Any]:
+def load_sample_payload(sample_path: Path) -> dict[str, Any]:
     """Return the parsed sample payload located at ``sample_path``."""
 
     if not sample_path.exists():
@@ -75,7 +76,7 @@ def load_sample_payload(sample_path: Path) -> Dict[str, Any]:
     return json.loads(sample_path.read_text(encoding="utf-8"))
 
 
-def _coerce_float(value: Any) -> Optional[float]:
+def _coerce_float(value: Any) -> float | None:
     if value is None:
         return None
     try:
@@ -87,17 +88,17 @@ def _coerce_float(value: Any) -> Optional[float]:
 @dataclass
 class SampleGeometry:
     canonical: CanonicalGeometry
-    unit_ids: List[str]
-    floor_names: List[str]
+    unit_ids: list[str]
+    floor_names: list[str]
 
 
 def build_canonical_geometry(sample: Mapping[str, Any]) -> SampleGeometry:
     """Recreate the canonical geometry used by the AEC workflow tests."""
 
     builder = GraphBuilder.new()
-    level_lookup: Dict[str, Mapping[str, Any]] = {}
-    collected_units: List[str] = []
-    floor_names: List[str] = []
+    level_lookup: dict[str, Mapping[str, Any]] = {}
+    collected_units: list[str] = []
+    floor_names: list[str] = []
 
     layers = sample.get("layers") if isinstance(sample.get("layers"), Iterable) else []
     for index, layer in enumerate(layers, start=1):
@@ -165,7 +166,7 @@ def build_canonical_geometry(sample: Mapping[str, Any]) -> SampleGeometry:
         ),
         None,
     )
-    root_properties: Dict[str, Any] = {"project": sample.get("project")}
+    root_properties: dict[str, Any] = {"project": sample.get("project")}
     if isinstance(site_layer, Mapping):
         metadata = site_layer.get("metadata")
         if isinstance(metadata, Mapping):
@@ -264,7 +265,7 @@ async def import_sample(
     sample_path: Path,
     project_id: int,
     infer_walls: bool,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Upload the sample payload and seed overlay geometry."""
 
     await ensure_schema()
@@ -330,8 +331,8 @@ async def import_sample(
     return summary
 
 
-def _summarise_overlays(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
-    summary: List[Dict[str, Any]] = []
+def _summarise_overlays(items: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    summary: list[dict[str, Any]] = []
     for item in items:
         summary.append(
             {
@@ -345,7 +346,7 @@ def _summarise_overlays(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, An
     return summary
 
 
-async def run_overlay(project_id: int) -> Dict[str, Any]:
+async def run_overlay(project_id: int) -> dict[str, Any]:
     """Execute the overlay engine and return suggestion summaries."""
 
     await ensure_schema()
@@ -378,7 +379,7 @@ _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 
 def _select_candidate(
     items: Iterable[Mapping[str, Any]],
-) -> Optional[Mapping[str, Any]]:
+) -> Mapping[str, Any] | None:
     ranked = sorted(
         (item for item in items if item.get("status") != "rejected"),
         key=lambda entry: (
@@ -414,7 +415,7 @@ async def approve_overlay(
     return payload
 
 
-def _extract_filename(disposition: Optional[str]) -> Optional[str]:
+def _extract_filename(disposition: str | None) -> str | None:
     if not disposition:
         return None
     parts = [part.strip() for part in disposition.split(";")]
@@ -431,7 +432,7 @@ async def export_approved(
     export_format: str,
     approver: str,
     notes: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Generate an export containing approved overlays for ``project_id``."""
 
     await ensure_schema()
@@ -442,7 +443,7 @@ async def export_approved(
                 f"Overlay listing failed with status {listing.status_code}: {listing.text}"
             )
         payload = listing.json()
-        items: List[Mapping[str, Any]] = list(payload.get("items", []))
+        items: list[Mapping[str, Any]] = list(payload.get("items", []))
         if not items:
             raise RuntimeError(
                 "No overlays available to export. Run the overlay job first."
@@ -500,7 +501,7 @@ async def export_approved(
         except (UnicodeDecodeError, json.JSONDecodeError):
             manifest = None
 
-    summary: Dict[str, Any] = {
+    summary: dict[str, Any] = {
         "project_id": project_id,
         "artifact": {
             "path": str(artifact_path),
@@ -524,7 +525,7 @@ async def export_approved(
     return summary
 
 
-async def dispatch(args: argparse.Namespace) -> Dict[str, Any]:
+async def dispatch(args: argparse.Namespace) -> dict[str, Any]:
     if args.command == "import-sample":
         return await import_sample(
             sample_path=Path(args.sample),
@@ -610,7 +611,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Iterable[str]] = None) -> None:
+def main(argv: Iterable[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:

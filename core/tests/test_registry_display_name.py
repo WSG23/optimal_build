@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from core import canonical_models
 from core.registry import load_jurisdiction
-from scripts.ingest import ensure_jurisdiction
 from core.util import create_session_factory, get_engine
+from scripts.ingest import ensure_jurisdiction
 from sqlalchemy import select
 
 
@@ -29,7 +29,7 @@ def test_ensure_jurisdiction_uses_display_name() -> None:
         if hasattr(session, "close"):
             session.close()
 
-    assert stored.name == getattr(registered.parser, "display_name")
+    assert stored.name == registered.parser.display_name
 
 
 def test_ensure_jurisdiction_falls_back_to_uppercase_code() -> None:

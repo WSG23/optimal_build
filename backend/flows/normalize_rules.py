@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
-
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from typing import Any
 
 from prefect import flow
 from sqlalchemy import Select, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -20,11 +20,11 @@ from app.services.normalize import NormalizedRule, RuleNormalizer
 
 @flow(name="normalize-reference-rules")
 async def normalize_reference_rules(
-    session_factory: "async_sessionmaker[AsyncSession]",
+    session_factory: async_sessionmaker[AsyncSession],
     *,
-    clause_ids: Optional[Sequence[int]] = None,
-    normalizer: Optional[RuleNormalizer] = None,
-) -> List[Dict[str, Any]]:
+    clause_ids: Sequence[int] | None = None,
+    normalizer: RuleNormalizer | None = None,
+) -> list[dict[str, Any]]:
     """Generate structured rules from stored ``RefClause`` entries.
 
     Parameters
@@ -48,7 +48,7 @@ async def normalize_reference_rules(
 
     normalizer = normalizer or RuleNormalizer()
     clause_filter = list(clause_ids) if clause_ids is not None else []
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
 
     async with session_factory() as session:
         stmt = _build_clause_query(clause_filter)
@@ -100,8 +100,8 @@ def _format_rule_value(value: Any) -> str:
     return str(value)
 
 
-def _collect_pages(clause: RefClause) -> List[int]:
-    pages: List[int] = []
+def _collect_pages(clause: RefClause) -> list[int]:
+    pages: list[int] = []
     for page in (clause.page_from, clause.page_to):
         if page is None:
             continue
@@ -111,8 +111,8 @@ def _collect_pages(clause: RefClause) -> List[int]:
     return pages
 
 
-def _build_provenance(clause: RefClause, document: RefDocument) -> Dict[str, Any]:
-    provenance: Dict[str, Any] = {
+def _build_provenance(clause: RefClause, document: RefDocument) -> dict[str, Any]:
+    provenance: dict[str, Any] = {
         "document_id": document.id,
         "clause_id": clause.id,
         "document_hash": getattr(document, "file_hash", None),

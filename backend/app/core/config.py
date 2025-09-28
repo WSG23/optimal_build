@@ -3,7 +3,7 @@
 import json
 import os
 import secrets
-from typing import Iterable, List
+from collections.abc import Iterable
 from urllib.parse import urlparse, urlunparse
 
 _DEFAULT_ALLOWED_ORIGINS = (
@@ -57,7 +57,7 @@ def _load_fractional_float(name: str, default: float) -> float:
     return default
 
 
-def _load_allowed_origins() -> List[str]:
+def _load_allowed_origins() -> list[str]:
     """Retrieve allowed CORS origins from the environment."""
 
     raw_origins = os.getenv("BACKEND_ALLOWED_ORIGINS")
@@ -86,7 +86,7 @@ def _load_allowed_origins() -> List[str]:
     return list(dict.fromkeys(cleaned))
 
 
-def _load_allowed_hosts() -> List[str]:
+def _load_allowed_hosts() -> list[str]:
     """Retrieve allowed hosts from the environment."""
 
     raw_hosts = os.getenv("ALLOWED_HOSTS")
@@ -153,8 +153,8 @@ class Settings:
     FIRST_SUPERUSER: str
     FIRST_SUPERUSER_PASSWORD: str
 
-    ALLOWED_HOSTS: List[str]
-    ALLOWED_ORIGINS: List[str]
+    ALLOWED_HOSTS: list[str]
+    ALLOWED_ORIGINS: list[str]
 
     LOG_LEVEL: str
 

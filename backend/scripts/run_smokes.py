@@ -8,9 +8,10 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Iterable, Iterator, MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, MutableMapping, Optional
+from typing import Any
 
 import httpx
 
@@ -56,7 +57,7 @@ def run_alembic_upgrades(backend_dir: Path) -> None:
 
 
 def run_seeders() -> (
-    tuple[Dict[str, Dict[str, int]], seed_finance_demo.FinanceDemoSummary]
+    tuple[dict[str, dict[str, int]], seed_finance_demo.FinanceDemoSummary]
 ):
     _log("Seeding screening reference data")
     screening_summary = seed_screening.main([])
@@ -72,7 +73,7 @@ def run_seeders() -> (
         ["--project-id", str(ENTITLEMENTS_PROJECT_ID), "--reset"]
     )
 
-    summaries: Dict[str, Dict[str, int]] = {
+    summaries: dict[str, dict[str, int]] = {
         "screening": screening_summary.as_dict(),
         "finance": finance_summary.as_dict(),
         "non_reg": nonreg_summary.as_dict(),
@@ -84,7 +85,7 @@ def run_seeders() -> (
     return summaries, finance_summary
 
 
-def run_reference_ingestion(storage_path: Path, artifacts_dir: Path) -> Dict[str, Any]:
+def run_reference_ingestion(storage_path: Path, artifacts_dir: Path) -> dict[str, Any]:
     storage_path.mkdir(parents=True, exist_ok=True)
 
     _log("Running offline watch_fetch flow")
@@ -148,7 +149,7 @@ def running_backend(backend_dir: Path, host: str, port: int) -> Iterator[str]:
 
 
 def _wait_for_api(base_url: str, attempts: int = 40, delay: float = 2.0) -> None:
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for _ in range(attempts):
         try:
             response = httpx.get(f"{base_url}/health", timeout=5.0)
@@ -170,7 +171,7 @@ def _retry_request(
     timeout: float = 30.0,
     **kwargs: Any,
 ) -> httpx.Response:
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for _ in range(retries):
         try:
             response = client.request(method, url, timeout=timeout, **kwargs)
@@ -184,7 +185,7 @@ def _retry_request(
     ) from last_error
 
 
-def run_buildable_smoke(client: httpx.Client, artifacts_dir: Path) -> Dict[str, Any]:
+def run_buildable_smoke(client: httpx.Client, artifacts_dir: Path) -> dict[str, Any]:
     _log("Executing buildable screening smoke request")
     payload = {
         "address": "123 Example Ave",
@@ -208,7 +209,7 @@ def run_finance_smoke(
     client: httpx.Client,
     artifacts_dir: Path,
     finance_summary: seed_finance_demo.FinanceDemoSummary,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _log("Executing finance feasibility smoke request")
     payload = {
         "project_id": finance_summary.project_id,
@@ -279,7 +280,7 @@ def run_finance_smoke(
     return data
 
 
-def run_entitlements_smoke(client: httpx.Client, artifacts_dir: Path) -> Dict[str, Any]:
+def run_entitlements_smoke(client: httpx.Client, artifacts_dir: Path) -> dict[str, Any]:
     _log("Executing entitlements roadmap smoke request")
     response = _retry_request(
         client,
@@ -296,7 +297,7 @@ def run_entitlements_smoke(client: httpx.Client, artifacts_dir: Path) -> Dict[st
     return data
 
 
-def fetch_openapi_schema(client: httpx.Client, artifacts_dir: Path) -> Dict[str, Any]:
+def fetch_openapi_schema(client: httpx.Client, artifacts_dir: Path) -> dict[str, Any]:
     _log("Fetching OpenAPI schema")
     response = _retry_request(client, "GET", "/openapi.json")
     payload = response.json()
@@ -304,7 +305,7 @@ def fetch_openapi_schema(client: httpx.Client, artifacts_dir: Path) -> Dict[str,
     return payload
 
 
-def orchestrate_smokes(artifacts_dir: Path) -> Dict[str, Any]:
+def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
     backend_dir = Path(__file__).resolve().parents[1]
     artifacts_dir.mkdir(parents=True, exist_ok=True)
 
@@ -348,7 +349,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Iterable[str]] = None) -> Dict[str, Any]:
+def main(argv: Iterable[str] | None = None) -> dict[str, Any]:
     parser = build_argument_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
     return orchestrate_smokes(args.artifacts.resolve())

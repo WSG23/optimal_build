@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Iterable
+from collections.abc import Iterable
+from decimal import ROUND_HALF_UP, Decimal
 
 import pytest
 
@@ -11,14 +11,12 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from httpx import AsyncClient
-
+from app.utils import metrics
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
 from backend.app.services.finance import calculator
-from app.utils import metrics
 from backend.scripts.seed_finance_demo import seed_finance_demo
-
+from httpx import AsyncClient
 
 REVIEWER_HEADERS = {"X-Role": "reviewer"}
 VIEWER_HEADERS = {"X-Role": "viewer"}
@@ -41,10 +39,8 @@ if getattr(DscrInputs, "__model_validators__", None):
         for validator in DscrInputs.__model_validators__
     ]
     original_validator = DscrInputs.__dict__["_validate_lengths"].__func__
-    setattr(
-        DscrInputs,
-        "_validate_lengths",
-        classmethod(_wrap_model_validator(original_validator)),
+    DscrInputs._validate_lengths = classmethod(
+        _wrap_model_validator(original_validator)
     )
 
 
@@ -208,7 +204,7 @@ async def test_finance_feasibility_and_export_metrics(
 
     actual_dscr_entries = body["dscr_timeline"]
     assert len(actual_dscr_entries) == len(serialised_expected)
-    for actual, expected in zip(actual_dscr_entries, serialised_expected):
+    for actual, expected in zip(actual_dscr_entries, serialised_expected, strict=False):
         assert actual["period"] == expected["period"]
         assert Decimal(actual["noi"]) == Decimal(expected["noi"])
         assert Decimal(actual["debt_service"]) == Decimal(expected["debt_service"])

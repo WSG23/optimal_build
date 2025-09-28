@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.core.auth import PolicyContext, SignoffSnapshot, WorkspaceRole
 from app.core.export.watermark import ExportPayload, apply_watermark
@@ -10,7 +10,7 @@ def approved_signoff() -> SignoffSnapshot:
         overlay_version="v1",
         status="approved",
         architect_user_id=3,
-        signed_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        signed_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
 
 

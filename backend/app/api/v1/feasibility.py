@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
+
+from fastapi import APIRouter, Depends
 
 from app.api.deps import require_viewer
 from app.schemas.feasibility import (
@@ -15,12 +17,11 @@ from app.services.feasibility import (
     generate_feasibility_rules,
     run_feasibility_assessment,
 )
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/feasibility", tags=["feasibility"])
 
 
-def _normalise_project_payload(data: Dict[str, Any]) -> Dict[str, Any]:
+def _normalise_project_payload(data: dict[str, Any]) -> dict[str, Any]:
     mapping = {
         "siteAddress": "site_address",
         "siteAreaSqm": "site_area_sqm",
@@ -32,7 +33,7 @@ def _normalise_project_payload(data: Dict[str, Any]) -> Dict[str, Any]:
     return normalised
 
 
-def _normalise_assessment_payload(data: Dict[str, Any]) -> Dict[str, Any]:
+def _normalise_assessment_payload(data: dict[str, Any]) -> dict[str, Any]:
     normalised = dict(data)
     project_payload = normalised.get("project")
     if isinstance(project_payload, dict):
@@ -44,7 +45,7 @@ def _normalise_assessment_payload(data: Dict[str, Any]) -> Dict[str, Any]:
 
 @router.post("/rules", response_model=FeasibilityRulesResponse)
 async def fetch_rules(
-    payload: Dict[str, Any],
+    payload: dict[str, Any],
     _: str = Depends(require_viewer),
 ) -> FeasibilityRulesResponse:
     """Return the recommended rules for the submitted project."""
@@ -55,7 +56,7 @@ async def fetch_rules(
 
 @router.post("/assessment", response_model=FeasibilityAssessmentResponse)
 async def submit_assessment(
-    payload: Dict[str, Any],
+    payload: dict[str, Any],
     _: str = Depends(require_viewer),
 ) -> FeasibilityAssessmentResponse:
     """Evaluate the feasibility assessment for the selected rules."""

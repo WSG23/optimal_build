@@ -4,22 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from typing import (
     Any,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Tuple,
     TypeVar,
 )
 
-Point2D = Tuple[float, float]
+Point2D = tuple[float, float]
 
 
 @dataclass(frozen=True)
@@ -28,19 +20,19 @@ class SourceReference:
 
     system: str
     identifier: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the reference to a mapping."""
-        data: Dict[str, Any] = {"system": self.system, "identifier": self.identifier}
+        data: dict[str, Any] = {"system": self.system, "identifier": self.identifier}
         if self.metadata:
             data["metadata"] = dict(self.metadata)
         return data
 
     @staticmethod
     def from_mapping(
-        payload: Optional[MutableMapping[str, Any]],
-    ) -> Optional["SourceReference"]:
+        payload: MutableMapping[str, Any] | None,
+    ) -> SourceReference | None:
         """Create a reference from an arbitrary mapping.
 
         The method is defensive: it tolerates missing keys and additional metadata
@@ -68,13 +60,13 @@ class GeometryEntity:
     """Base class for every spatial entity stored in :class:`GeometryGraph`."""
 
     id: str
-    name: Optional[str] = None
-    source: Optional[SourceReference] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    name: str | None = None
+    source: SourceReference | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the entity to a JSON-compatible mapping."""
-        data: Dict[str, Any] = {"id": self.id}
+        data: dict[str, Any] = {"id": self.id}
         if self.name:
             data["name"] = self.name
         if self.metadata:
@@ -89,9 +81,9 @@ class Level(GeometryEntity):
     """Floor plane of the building."""
 
     elevation: float = 0.0
-    height: Optional[float] = None
+    height: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = super().to_dict()
         data["elevation"] = self.elevation
         if self.height is not None:
@@ -104,10 +96,10 @@ class Space(GeometryEntity):
     """Enclosed space located on a level."""
 
     level_id: str = ""
-    boundary: List[Point2D] = field(default_factory=list)
-    wall_ids: List[str] = field(default_factory=list)
+    boundary: list[Point2D] = field(default_factory=list)
+    wall_ids: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = super().to_dict()
         data["level_id"] = self.level_id
         if self.boundary:
@@ -123,11 +115,11 @@ class Wall(GeometryEntity):
 
     start: Point2D = (0.0, 0.0)
     end: Point2D = (0.0, 0.0)
-    thickness: Optional[float] = None
-    level_id: Optional[str] = None
-    space_ids: List[str] = field(default_factory=list)
+    thickness: float | None = None
+    level_id: str | None = None
+    space_ids: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = super().to_dict()
         data.update(
             {
@@ -148,13 +140,13 @@ class Wall(GeometryEntity):
 class Door(GeometryEntity):
     """Door object anchored to a wall."""
 
-    wall_id: Optional[str] = None
+    wall_id: str | None = None
     position: float = 0.0
-    width: Optional[float] = None
-    swing: Optional[str] = None
-    level_id: Optional[str] = None
+    width: float | None = None
+    swing: str | None = None
+    level_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = super().to_dict()
         if self.wall_id:
             data["wall_id"] = self.wall_id
@@ -174,9 +166,9 @@ class Fixture(GeometryEntity):
 
     category: str = "generic"
     location: Point2D = (0.0, 0.0)
-    level_id: Optional[str] = None
+    level_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = super().to_dict()
         data["category"] = self.category
         data["location"] = [self.location[0], self.location[1]]
@@ -192,10 +184,10 @@ class Relationship:
     rel_type: str
     source_id: str
     target_id: str
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
-        data: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        data: dict[str, Any] = {
             "type": self.rel_type,
             "source_id": self.source_id,
             "target_id": self.target_id,
@@ -204,7 +196,7 @@ class Relationship:
             data["attributes"] = dict(self.attributes)
         return data
 
-    def key(self) -> Tuple[str, str, str]:
+    def key(self) -> tuple[str, str, str]:
         """Return a tuple uniquely identifying the relationship."""
         return (self.rel_type, self.source_id, self.target_id)
 
@@ -218,23 +210,23 @@ class GeometryGraph:
     def __init__(
         self,
         *,
-        levels: Optional[Iterable[Level]] = None,
-        spaces: Optional[Iterable[Space]] = None,
-        walls: Optional[Iterable[Wall]] = None,
-        doors: Optional[Iterable[Door]] = None,
-        fixtures: Optional[Iterable[Fixture]] = None,
-        relationships: Optional[Iterable[Relationship]] = None,
+        levels: Iterable[Level] | None = None,
+        spaces: Iterable[Space] | None = None,
+        walls: Iterable[Wall] | None = None,
+        doors: Iterable[Door] | None = None,
+        fixtures: Iterable[Fixture] | None = None,
+        relationships: Iterable[Relationship] | None = None,
     ) -> None:
-        self.levels: Dict[str, Level] = {entity.id: entity for entity in levels or []}
-        self.spaces: Dict[str, Space] = {entity.id: entity for entity in spaces or []}
-        self.walls: Dict[str, Wall] = {entity.id: entity for entity in walls or []}
-        self.doors: Dict[str, Door] = {entity.id: entity for entity in doors or []}
-        self.fixtures: Dict[str, Fixture] = {
+        self.levels: dict[str, Level] = {entity.id: entity for entity in levels or []}
+        self.spaces: dict[str, Space] = {entity.id: entity for entity in spaces or []}
+        self.walls: dict[str, Wall] = {entity.id: entity for entity in walls or []}
+        self.doors: dict[str, Door] = {entity.id: entity for entity in doors or []}
+        self.fixtures: dict[str, Fixture] = {
             entity.id: entity for entity in fixtures or []
         }
-        self.relationships: List[Relationship] = list(relationships or [])
+        self.relationships: list[Relationship] = list(relationships or [])
 
-    def copy(self) -> "GeometryGraph":
+    def copy(self) -> GeometryGraph:
         """Return a deep copy of the graph."""
         import copy
 
@@ -253,7 +245,7 @@ class GeometryGraph:
         raw = json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
-    def _get_collection_for(self, entity: GeometryEntity) -> Dict[str, GeometryEntity]:
+    def _get_collection_for(self, entity: GeometryEntity) -> dict[str, GeometryEntity]:
         if isinstance(entity, Level):
             return self.levels
         if isinstance(entity, Space):
@@ -272,7 +264,7 @@ class GeometryGraph:
         collection[entity.id] = entity
         return entity
 
-    def get_entity(self, entity_id: str) -> Optional[GeometryEntity]:
+    def get_entity(self, entity_id: str) -> GeometryEntity | None:
         """Return the entity with the provided identifier if present."""
         for collection in (
             self.levels,
@@ -309,7 +301,7 @@ class GeometryGraph:
 
     def find_relationship(
         self, rel_type: str, source_id: str, target_id: str
-    ) -> Optional[Relationship]:
+    ) -> Relationship | None:
         """Retrieve an existing relationship matching the key."""
         key = (rel_type, source_id, target_id)
         for relationship in self.relationships:
@@ -324,7 +316,7 @@ class GeometryGraph:
         key = (rel_type, source_id, target_id)
         self.relationships = [rel for rel in self.relationships if rel.key() != key]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the entire graph to primitives suitable for JSON."""
         return {
             "levels": [level.to_dict() for level in self.levels.values()],
@@ -338,7 +330,7 @@ class GeometryGraph:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "GeometryGraph":
+    def from_dict(cls, payload: Mapping[str, Any]) -> GeometryGraph:
         """Recreate a :class:`GeometryGraph` from its serialized representation."""
         levels = [
             Level(
@@ -431,26 +423,26 @@ class GeometryNode:
 
     node_id: str
     kind: str
-    properties: Dict[str, Any] = field(default_factory=dict)
-    children: List["GeometryNode"] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
+    children: list[GeometryNode] = field(default_factory=list)
 
-    def add_child(self, node: "GeometryNode") -> "GeometryNode":
+    def add_child(self, node: GeometryNode) -> GeometryNode:
         """Append ``node`` as a child and return it."""
 
         self.children.append(node)
         return node
 
-    def iter_nodes(self) -> Iterator["GeometryNode"]:
+    def iter_nodes(self) -> Iterator[GeometryNode]:
         """Yield the current node followed by all descendants."""
 
         yield self
         for child in self.children:
             yield from child.iter_nodes()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialise the node to a JSON-compatible mapping."""
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "id": self.node_id,
             "kind": self.kind,
             "properties": dict(self.properties),
@@ -460,7 +452,7 @@ class GeometryNode:
         return payload
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "GeometryNode":
+    def from_dict(cls, payload: Mapping[str, Any]) -> GeometryNode:
         """Instantiate a node from a mapping, tolerating partial data."""
 
         if not isinstance(payload, Mapping):
@@ -476,7 +468,7 @@ class GeometryNode:
             metadata = payload.get("metadata")
             properties = dict(metadata) if isinstance(metadata, Mapping) else {}
         children_payload = payload.get("children") or []
-        children: List[GeometryNode] = []
+        children: list[GeometryNode] = []
         for item in children_payload:
             if isinstance(item, Mapping):
                 children.append(cls.from_dict(item))
@@ -488,18 +480,18 @@ class CanonicalGeometry:
     """Canonical representation combining a tree and raw graph payload."""
 
     root: GeometryNode
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    graph: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    graph: dict[str, Any] = field(default_factory=dict)
 
     def iter_nodes(self) -> Iterator[GeometryNode]:
         """Iterate over the canonical geometry tree."""
 
         yield from self.root.iter_nodes()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialise the canonical representation for persistence."""
 
-        payload: Dict[str, Any] = {"root": self.root.to_dict()}
+        payload: dict[str, Any] = {"root": self.root.to_dict()}
         if self.metadata:
             payload["metadata"] = dict(self.metadata)
         for key, value in self.graph.items():
@@ -513,7 +505,7 @@ class CanonicalGeometry:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "CanonicalGeometry":
+    def from_dict(cls, payload: Mapping[str, Any]) -> CanonicalGeometry:
         """Rehydrate a :class:`CanonicalGeometry` instance from ``payload``."""
 
         if not isinstance(payload, Mapping):
@@ -537,7 +529,7 @@ class CanonicalGeometry:
         metadata = dict(metadata_raw) if isinstance(metadata_raw, Mapping) else {}
 
         graph_keys = ("levels", "spaces", "walls", "doors", "fixtures", "relationships")
-        graph_section: Dict[str, Any] = {}
+        graph_section: dict[str, Any] = {}
 
         nested_graph = payload.get("graph")
         if isinstance(nested_graph, Mapping):

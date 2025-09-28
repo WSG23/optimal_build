@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import Header from '../components/Header'
 import { ReviewAPI } from '../api/client'
 import type { DocumentRecord, SourceRecord } from '../types'
+import { toErrorMessage } from '../utils/error'
 
 const DocumentsPage = () => {
   const [sources, setSources] = useState<SourceRecord[]>([])
@@ -11,19 +12,41 @@ const DocumentsPage = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    ReviewAPI.getSources().then((response) => setSources(response.items))
+    const loadSources = async () => {
+      try {
+        const response = await ReviewAPI.getSources()
+        setSources(response.items)
+        setError(null)
+      } catch (error) {
+        setError(toErrorMessage(error, 'Failed to load sources'))
+      }
+    }
+
+    void loadSources()
   }, [])
 
   useEffect(() => {
-    setLoading(true)
-    ReviewAPI.getDocuments(selectedSource)
-      .then((response) => {
+    const loadDocuments = async () => {
+      setLoading(true)
+      try {
+        const response = await ReviewAPI.getDocuments(selectedSource)
         setDocuments(response.items)
         setError(null)
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (error) {
+        setError(toErrorMessage(error, 'Failed to load documents'))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadDocuments()
   }, [selectedSource])
+
+  const handleSourceChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSource(
+      event.target.value ? Number(event.target.value) : undefined,
+    )
+  }
 
   return (
     <div>
@@ -33,11 +56,7 @@ const DocumentsPage = () => {
           <select
             className="bg-surface-inverse/70 border border-border-neutral/40 rounded-md px-3 py-2 text-sm text-text-inverse"
             value={selectedSource ?? ''}
-            onChange={(event) =>
-              setSelectedSource(
-                event.target.value ? Number(event.target.value) : undefined,
-              )
-            }
+            onChange={handleSourceChange}
           >
             <option value="">All sources</option>
             {sources.map((source) => (

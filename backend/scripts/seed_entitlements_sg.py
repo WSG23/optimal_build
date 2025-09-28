@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Dict, Iterable
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from app.core.database import AsyncSessionLocal, engine
@@ -17,8 +15,9 @@ from app.models import (  # noqa: F401  pylint: disable=unused-import
 from app.models.base import BaseModel
 from app.models.entitlements import EntApprovalCategory, EntRoadmapStatus
 from app.services.entitlements import EntitlementsService
+from sqlalchemy.ext.asyncio import AsyncSession
 
-AUTHORITIES: Iterable[Dict[str, str | None]] = (
+AUTHORITIES: Iterable[dict[str, str | None]] = (
     {
         "slug": "ura",
         "name": "Urban Redevelopment Authority",
@@ -50,7 +49,7 @@ AUTHORITIES: Iterable[Dict[str, str | None]] = (
 )
 
 
-APPROVAL_TYPES: Iterable[Dict[str, object]] = (
+APPROVAL_TYPES: Iterable[dict[str, object]] = (
     {
         "authority_slug": "ura",
         "code": "outline_planning_permission",
@@ -94,7 +93,7 @@ APPROVAL_TYPES: Iterable[Dict[str, object]] = (
 )
 
 
-ROADMAP_SEQUENCE: Iterable[Dict[str, str]] = (
+ROADMAP_SEQUENCE: Iterable[dict[str, str]] = (
     {"authority_slug": "ura", "approval_code": "outline_planning_permission"},
     {"authority_slug": "ura", "approval_code": "written_permission"},
     {"authority_slug": "nea", "approval_code": "environmental_impact_assessment"},
@@ -111,7 +110,7 @@ class EntitlementsSeedSummary:
     approval_types: int
     roadmap_items: int
 
-    def as_dict(self) -> Dict[str, int]:
+    def as_dict(self) -> dict[str, int]:
         return {
             "authorities": self.authorities,
             "approval_types": self.approval_types,

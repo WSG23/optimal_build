@@ -16,20 +16,28 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api/v1'
 
+const encodeParam = (value: number | string): string =>
+  encodeURIComponent(String(value))
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   }
-  let headers: HeadersInit = defaultHeaders
+  const headers = new Headers(defaultHeaders)
   if (init?.headers) {
     if (init.headers instanceof Headers) {
-      const merged = new Headers(defaultHeaders)
-      init.headers.forEach((value, key) => merged.set(key, value))
-      headers = merged
+      init.headers.forEach((value, key) => {
+        headers.set(key, value)
+      })
+    } else if (Array.isArray(init.headers)) {
+      for (const [key, value] of init.headers) {
+        headers.set(key, value)
+      }
     } else {
-      headers = {
-        ...defaultHeaders,
-        ...(init.headers as Record<string, string>),
+      for (const [key, value] of Object.entries(init.headers)) {
+        if (typeof value === 'string') {
+          headers.set(key, value)
+        }
       }
     }
   }
@@ -39,7 +47,9 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   })
   if (!response.ok) {
     const message = await response.text()
-    throw new Error(message || `Request failed with status ${response.status}`)
+    throw new Error(
+      message || `Request failed with status ${response.status.toString()}`,
+    )
   }
   return response.json() as Promise<T>
 }
@@ -51,13 +61,13 @@ export const ReviewAPI = {
   getDocuments: (sourceId?: number) =>
     fetchJson<{ items: DocumentRecord[] }>(
       sourceId
-        ? `/review/documents?source_id=${sourceId}`
+        ? `/review/documents?source_id=${encodeParam(sourceId)}`
         : '/review/documents',
     ),
   getClauses: (documentId?: number) =>
     fetchJson<{ items: ClauseRecord[] }>(
       documentId
-        ? `/review/clauses?document_id=${documentId}`
+        ? `/review/clauses?document_id=${encodeParam(documentId)}`
         : '/review/clauses',
     ),
   getRules: () => fetchJson<{ items: RuleRecord[] }>('/rules'),
@@ -66,13 +76,13 @@ export const ReviewAPI = {
     action: 'approve' | 'reject' | 'publish',
     notes?: string,
   ) =>
-    fetchJson<{ item: RuleRecord }>(`/rules/${ruleId}/review`, {
+    fetchJson<{ item: RuleRecord }>(`/rules/${encodeParam(ruleId)}/review`, {
       method: 'POST',
       body: JSON.stringify({ action, notes }),
     }),
   getDiffs: (ruleId?: number) =>
     fetchJson<{ items: DiffRecord[] }>(
-      ruleId ? `/review/diffs?rule_id=${ruleId}` : '/review/diffs',
+      ruleId ? `/review/diffs?rule_id=${encodeParam(ruleId)}` : '/review/diffs',
     ),
   screenBuildable: (payload: {
     address?: string
@@ -90,7 +100,7 @@ export const ReviewAPI = {
 export const EntitlementsAPI = {
   getRoadmap: (projectId: number) =>
     fetchJson<PaginatedResponse<EntRoadmapItemRecord>>(
-      `/entitlements/${projectId}/roadmap?limit=200`,
+      `/entitlements/${encodeParam(projectId)}/roadmap?limit=200`,
     ),
   updateRoadmap: (
     projectId: number,
@@ -98,7 +108,7 @@ export const EntitlementsAPI = {
     payload: Partial<EntRoadmapItemRecord>,
   ) =>
     fetchJson<EntRoadmapItemRecord>(
-      `/entitlements/${projectId}/roadmap/${itemId}`,
+      `/entitlements/${encodeParam(projectId)}/roadmap/${encodeParam(itemId)}`,
       {
         method: 'PUT',
         headers: ADMIN_HEADERS,
@@ -107,44 +117,55 @@ export const EntitlementsAPI = {
     ),
   getStudies: (projectId: number) =>
     fetchJson<PaginatedResponse<EntStudyRecord>>(
-      `/entitlements/${projectId}/studies?limit=200`,
+      `/entitlements/${encodeParam(projectId)}/studies?limit=200`,
     ),
   createStudy: (projectId: number, payload: Partial<EntStudyRecord>) =>
-    fetchJson<EntStudyRecord>(`/entitlements/${projectId}/studies`, {
-      method: 'POST',
-      headers: ADMIN_HEADERS,
-      body: JSON.stringify(payload),
-    }),
+    fetchJson<EntStudyRecord>(
+      `/entitlements/${encodeParam(projectId)}/studies`,
+      {
+        method: 'POST',
+        headers: ADMIN_HEADERS,
+        body: JSON.stringify(payload),
+      },
+    ),
   updateStudy: (
     projectId: number,
     studyId: number,
     payload: Partial<EntStudyRecord>,
   ) =>
-    fetchJson<EntStudyRecord>(`/entitlements/${projectId}/studies/${studyId}`, {
-      method: 'PUT',
-      headers: ADMIN_HEADERS,
-      body: JSON.stringify(payload),
-    }),
+    fetchJson<EntStudyRecord>(
+      `/entitlements/${encodeParam(projectId)}/studies/${encodeParam(studyId)}`,
+      {
+        method: 'PUT',
+        headers: ADMIN_HEADERS,
+        body: JSON.stringify(payload),
+      },
+    ),
   getStakeholders: (projectId: number) =>
     fetchJson<PaginatedResponse<EntEngagementRecord>>(
-      `/entitlements/${projectId}/stakeholders?limit=200`,
+      `/entitlements/${encodeParam(projectId)}/stakeholders?limit=200`,
     ),
   createStakeholder: (
     projectId: number,
     payload: Partial<EntEngagementRecord>,
   ) =>
-    fetchJson<EntEngagementRecord>(`/entitlements/${projectId}/stakeholders`, {
-      method: 'POST',
-      headers: ADMIN_HEADERS,
-      body: JSON.stringify(payload),
-    }),
+    fetchJson<EntEngagementRecord>(
+      `/entitlements/${encodeParam(projectId)}/stakeholders`,
+      {
+        method: 'POST',
+        headers: ADMIN_HEADERS,
+        body: JSON.stringify(payload),
+      },
+    ),
   updateStakeholder: (
     projectId: number,
     stakeholderId: number,
     payload: Partial<EntEngagementRecord>,
   ) =>
     fetchJson<EntEngagementRecord>(
-      `/entitlements/${projectId}/stakeholders/${stakeholderId}`,
+      `/entitlements/${encodeParam(projectId)}/stakeholders/${encodeParam(
+        stakeholderId,
+      )}`,
       {
         method: 'PUT',
         headers: ADMIN_HEADERS,
@@ -153,24 +174,29 @@ export const EntitlementsAPI = {
     ),
   getLegalInstruments: (projectId: number) =>
     fetchJson<PaginatedResponse<EntLegalInstrumentRecord>>(
-      `/entitlements/${projectId}/legal?limit=200`,
+      `/entitlements/${encodeParam(projectId)}/legal?limit=200`,
     ),
   createLegalInstrument: (
     projectId: number,
     payload: Partial<EntLegalInstrumentRecord>,
   ) =>
-    fetchJson<EntLegalInstrumentRecord>(`/entitlements/${projectId}/legal`, {
-      method: 'POST',
-      headers: ADMIN_HEADERS,
-      body: JSON.stringify(payload),
-    }),
+    fetchJson<EntLegalInstrumentRecord>(
+      `/entitlements/${encodeParam(projectId)}/legal`,
+      {
+        method: 'POST',
+        headers: ADMIN_HEADERS,
+        body: JSON.stringify(payload),
+      },
+    ),
   updateLegalInstrument: (
     projectId: number,
     instrumentId: number,
     payload: Partial<EntLegalInstrumentRecord>,
   ) =>
     fetchJson<EntLegalInstrumentRecord>(
-      `/entitlements/${projectId}/legal/${instrumentId}`,
+      `/entitlements/${encodeParam(projectId)}/legal/${encodeParam(
+        instrumentId,
+      )}`,
       {
         method: 'PUT',
         headers: ADMIN_HEADERS,

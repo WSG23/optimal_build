@@ -5,12 +5,13 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 from app.models.rkp import RefErgonomics
+from sqlalchemy import select
+
 from flows.ergonomics import (
     DEFAULT_ERGONOMICS_METRICS,
     fetch_seeded_metrics,
     seed_ergonomics_metrics,
 )
-from sqlalchemy import select
 
 
 @pytest.mark.asyncio

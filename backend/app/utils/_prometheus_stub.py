@@ -9,9 +9,9 @@ stub will remain unused.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from math import isinf
-from typing import Dict, Iterable, Iterator, List, Sequence, Tuple
 
 
 @dataclass
@@ -29,16 +29,16 @@ class CollectorRegistry:
 
     def __init__(self, auto_describe: bool = True) -> None:
         self.auto_describe = auto_describe
-        self._collectors: Dict[str, _MetricBase] = {}
+        self._collectors: dict[str, _MetricBase] = {}
 
-    def register(self, metric: "_MetricBase") -> None:
+    def register(self, metric: _MetricBase) -> None:
         self._collectors[metric._name] = metric
 
-    def collect(self) -> Iterable["_MetricBase"]:
+    def collect(self) -> Iterable[_MetricBase]:
         return self._collectors.values()
 
     def get_sample_value(
-        self, name: str, labels: Dict[str, str] | None = None
+        self, name: str, labels: dict[str, str] | None = None
     ) -> float | None:
         metric = self._collectors.get(name)
         if metric is None:
@@ -60,25 +60,25 @@ class _MetricBase:
         self._name = name
         self._documentation = documentation
         self._labelnames = tuple(labelnames)
-        self._metrics: Dict[Tuple[str, ...], _Sample] = {}
+        self._metrics: dict[tuple[str, ...], _Sample] = {}
         if registry is not None:
             registry.register(self)
 
     def clear(self) -> None:
         self._metrics.clear()
 
-    def labels(self, **labels: str) -> "_Sample":
+    def labels(self, **labels: str) -> _Sample:
         key = tuple(labels.get(label, "") for label in self._labelnames)
         if key not in self._metrics:
             self._metrics[key] = _Sample()
         return self._metrics[key]
 
-    def _iter_samples(self) -> Iterator[Tuple[Dict[str, str], "_Sample"]]:
+    def _iter_samples(self) -> Iterator[tuple[dict[str, str], _Sample]]:
         for key, sample in self._metrics.items():
-            label_map = dict(zip(self._labelnames, key))
+            label_map = dict(zip(self._labelnames, key, strict=False))
             yield label_map, sample
 
-    def get_sample_value(self, labels: Dict[str, str]) -> float | None:
+    def get_sample_value(self, labels: dict[str, str]) -> float | None:
         key = tuple(labels.get(label, "") for label in self._labelnames)
         sample = self._metrics.get(key)
         if sample is None:
@@ -102,8 +102,8 @@ class _HistogramSample(_Sample):
         super().__init__()
         self._count = _ValueHolder()
         self._bounds = tuple(bounds)
-        self._bucket_counts: List[float] = [0.0 for _ in self._bounds]
-        self._observations: List[float] = []
+        self._bucket_counts: list[float] = [0.0 for _ in self._bounds]
+        self._observations: list[float] = []
 
     def observe(self, amount: float) -> None:
         self._count.value += 1.0
@@ -119,10 +119,10 @@ class _HistogramSample(_Sample):
     def sum(self) -> float:
         return self._value.get()
 
-    def bucket_counts(self) -> List[Tuple[float, float]]:
-        return list(zip(self._bounds, self._bucket_counts))
+    def bucket_counts(self) -> list[tuple[float, float]]:
+        return list(zip(self._bounds, self._bucket_counts, strict=False))
 
-    def observations(self) -> List[float]:
+    def observations(self) -> list[float]:
         return list(self._observations)
 
 
@@ -148,7 +148,7 @@ class Histogram(_MetricBase):
     """Histogram metric stub supporting sum, count, and buckets."""
 
     _type = "histogram"
-    DEFAULT_BUCKETS: Tuple[float, ...] = (
+    DEFAULT_BUCKETS: tuple[float, ...] = (
         0.005,
         0.01,
         0.025,
@@ -176,7 +176,7 @@ class Histogram(_MetricBase):
         buckets: Sequence[float] | None = None,
         **kwargs: object,
     ) -> None:
-        self._upper_bounds: Tuple[float, ...] = tuple(
+        self._upper_bounds: tuple[float, ...] = tuple(
             buckets if buckets is not None else self.DEFAULT_BUCKETS
         )
         super().__init__(name, documentation, labelnames, registry, **kwargs)

@@ -7,14 +7,15 @@ import asyncio
 import contextlib
 import json
 import signal
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from http import HTTPStatus
 from importlib import import_module
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlsplit
 
-_Request = Dict[str, Any]
-_Response = Tuple[int, List[Tuple[str, str]], bytes]
+_Request = dict[str, Any]
+_Response = tuple[int, list[tuple[str, str]], bytes]
 
 
 @dataclass
@@ -290,7 +291,7 @@ class Server:
         self,
         writer: asyncio.StreamWriter,
         status_code: int,
-        headers: Iterable[Tuple[str, str]],
+        headers: Iterable[tuple[str, str]],
         body: bytes,
     ) -> None:
         if not isinstance(body, (bytes, bytearray)):
@@ -402,7 +403,7 @@ def run(
     server.run()
 
 
-def main(argv: Optional[Iterable[str]] = None) -> None:
+def main(argv: Iterable[str] | None = None) -> None:
     """Entry point emulating ``uvicorn``'s CLI."""
 
     parser = argparse.ArgumentParser(description="Lightweight uvicorn stub")

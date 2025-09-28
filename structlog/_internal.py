@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Callable, Iterable, MutableMapping
+from collections.abc import Callable, Iterable, MutableMapping
+from typing import Any
 
 Processor = Callable[[logging.Logger, str, MutableMapping[str, Any]], Any]
 
@@ -27,13 +28,13 @@ def iter_processors() -> list[Processor]:
     return list(_STATE.get("processors", []))
 
 
-def set_wrapper_class(wrapper: Callable[["BoundLogger"], "BoundLogger"] | None) -> None:
+def set_wrapper_class(wrapper: Callable[[BoundLogger], BoundLogger] | None) -> None:
     """Record the wrapper class applied to loggers returned by :func:`get_logger`."""
 
     _STATE["wrapper_class"] = wrapper
 
 
-def get_wrapper_class() -> Callable[["BoundLogger"], "BoundLogger"] | None:
+def get_wrapper_class() -> Callable[[BoundLogger], BoundLogger] | None:
     """Return the configured wrapper class, if any."""
 
     return _STATE.get("wrapper_class")
@@ -64,19 +65,19 @@ class BoundLogger:
         self._context: dict[str, Any] = dict(context or {})
         self._logger = logger or logging.getLogger(self.name)
 
-    def bind(self, **kwargs: Any) -> "BoundLogger":
+    def bind(self, **kwargs: Any) -> BoundLogger:
         """Return a new logger with the provided context merged in."""
 
         new_context = dict(self._context)
         new_context.update(kwargs)
         return BoundLogger(self.name, new_context, self._logger)
 
-    def new(self, **kwargs: Any) -> "BoundLogger":
+    def new(self, **kwargs: Any) -> BoundLogger:
         """Return a new logger using *kwargs* as the complete context."""
 
         return BoundLogger(self.name, dict(kwargs), self._logger)
 
-    def unbind(self, *keys: str) -> "BoundLogger":
+    def unbind(self, *keys: str) -> BoundLogger:
         """Return a new logger without the specified context keys."""
 
         new_context = {

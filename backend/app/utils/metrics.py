@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Sequence, Tuple
+from typing import Any
 
 try:  # pragma: no cover - exercised when dependency is available
     from prometheus_client import (
@@ -188,7 +189,7 @@ def reset_metrics() -> None:
     _initialize_metrics()
 
 
-def counter_value(counter: Counter, labels: Dict[str, str]) -> float:
+def counter_value(counter: Counter, labels: dict[str, str]) -> float:
     """Return the current value for a labelled counter."""
 
     label_names: Iterable[str] = tuple(getattr(counter, "_labelnames", ()))
@@ -229,13 +230,13 @@ class HistogramPercentile:
 
     percentile: float
     value: float
-    buckets: Tuple[Tuple[float, float], ...]
+    buckets: tuple[tuple[float, float], ...]
 
 
 def histogram_percentile(
     histogram: Histogram,
     percentile: float,
-    labels: Dict[str, str] | None = None,
+    labels: dict[str, str] | None = None,
 ) -> HistogramPercentile:
     """Compute a percentile for a Prometheus histogram."""
 
@@ -260,7 +261,7 @@ def histogram_percentile(
 
 
 def histogram_percentile_from_bucket_counts(
-    buckets: Sequence[Tuple[float, float]], percentile: float
+    buckets: Sequence[tuple[float, float]], percentile: float
 ) -> HistogramPercentile:
     """Compute a percentile from exported histogram bucket counts.
 
@@ -291,17 +292,17 @@ def histogram_percentile_from_bucket_counts(
 
 
 def _normalize_histogram_labels(
-    histogram: Histogram, labels: Dict[str, str]
-) -> Dict[str, str]:
+    histogram: Histogram, labels: dict[str, str]
+) -> dict[str, str]:
     names: Iterable[str] = getattr(histogram, "_labelnames", ())
     return {name: str(labels.get(name, "")) for name in names}
 
 
 def _collect_histogram_data(
-    histogram: Histogram, labels: Dict[str, str]
-) -> Tuple[List[Tuple[float, float]], List[float]]:
-    buckets: List[Tuple[float, float]] = []
-    observations: List[float] = []
+    histogram: Histogram, labels: dict[str, str]
+) -> tuple[list[tuple[float, float]], list[float]]:
+    buckets: list[tuple[float, float]] = []
+    observations: list[float] = []
 
     metrics_map = getattr(histogram, "_metrics", None)
     label_names: Sequence[str] = tuple(getattr(histogram, "_labelnames", ()))
@@ -328,7 +329,7 @@ def _collect_histogram_data(
         samples = getattr(metric, "samples", None)
         if samples is None:
             continue
-        bucket_results: List[Tuple[float, float]] = []
+        bucket_results: list[tuple[float, float]] = []
         for sample in samples:
             sample_name = getattr(sample, "name", "")
             sample_labels = getattr(sample, "labels", {})
@@ -354,14 +355,14 @@ def _collect_histogram_data(
     return buckets, observations
 
 
-def _labels_match(sample_labels: Dict[str, str], expected: Dict[str, str]) -> bool:
+def _labels_match(sample_labels: dict[str, str], expected: dict[str, str]) -> bool:
     for key, value in expected.items():
         if sample_labels.get(key, "") != value:
             return False
     return True
 
 
-def _percentile_from_observations(values: List[float], percentile: float) -> float:
+def _percentile_from_observations(values: list[float], percentile: float) -> float:
     if not values:
         raise ValueError("Histogram percentile requested with no observations")
     if len(values) == 1:
@@ -380,7 +381,7 @@ def _percentile_from_observations(values: List[float], percentile: float) -> flo
 
 
 def _percentile_from_buckets(
-    buckets: Sequence[Tuple[float, float]], percentile: float
+    buckets: Sequence[tuple[float, float]], percentile: float
 ) -> float:
     if not buckets:
         raise ValueError("Histogram percentile requested without bucket data")

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Dict, Mapping
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit.ledger import append_event
@@ -12,12 +14,11 @@ from app.core.geometry import GeometrySerializer
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry
 from app.utils.logging import get_logger
-from sqlalchemy import select
 
 logger = get_logger(__name__)
 
 
-def _coerce_mapping(value: object) -> Dict[str, Any]:
+def _coerce_mapping(value: object) -> dict[str, Any]:
     """Return a shallow copy when ``value`` behaves like a mapping."""
 
     if isinstance(value, Mapping):
@@ -25,7 +26,7 @@ def _coerce_mapping(value: object) -> Dict[str, Any]:
     return {}
 
 
-def _clean_metadata(payload: Dict[str, Any]) -> Dict[str, Any]:
+def _clean_metadata(payload: dict[str, Any]) -> dict[str, Any]:
     """Remove ``None`` and empty container values from ``payload``."""
 
     return {
@@ -74,7 +75,7 @@ async def ingest_parsed_import_geometry(
             "parser": parsed_metadata.get("source"),
             "parse_metadata": parsed_metadata,
             "vector_summary": import_record.vector_summary,
-            "ingested_at": datetime.now(timezone.utc).isoformat(),
+            "ingested_at": datetime.now(UTC).isoformat(),
         }
     )
 

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from app.core.geometry.builder import GraphBuilder
 from app.core.models.geometry import GeometryGraph
 
 
-def _point_to_mapping(point: tuple[float, float]) -> Dict[str, float]:
+def _point_to_mapping(point: tuple[float, float]) -> dict[str, float]:
     return {"x": float(point[0]), "y": float(point[1])}
 
 
@@ -32,12 +33,12 @@ class GeometrySerializer:
         return graph
 
     @staticmethod
-    def to_export(graph: GeometryGraph) -> Dict[str, Any]:
+    def to_export(graph: GeometryGraph) -> dict[str, Any]:
         """Serialize the graph to a neutral JSON representation."""
         return graph.to_dict()
 
     @staticmethod
-    def to_cad(graph: GeometryGraph) -> Dict[str, Any]:
+    def to_cad(graph: GeometryGraph) -> dict[str, Any]:
         """Serialize the graph to a CAD friendly payload using point mappings."""
         payload = graph.to_dict()
         payload["levels"] = [dict(item) for item in payload.get("levels", [])]

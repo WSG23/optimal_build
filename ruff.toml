@@ -1,5 +1,36 @@
 line-length = 100
+target-version = "py311"
+exclude = [
+    ".venv",
+    ".git",
+    "build",
+    "dist",
+    "frontend",
+    "ui-admin",
+    "fastapi",
+    "fastapi_shadow_*",
+    "starlette_shadow_*",
+    "pydantic_shadow_*",
+    "httpx",
+    "sqlalchemy",
+    "sqlalchemy_pkg_backup",
+    "importlib",
+    "uvicorn_app",
+    "backend/_vendor",
+    "backend/migrations",
+    "backend/starlette",
+    "backend/aiosqlite",
+]
 
-lint.select = ["E", "F", "I", "W"]
-lint.ignore = ["E203"]
+lint.select = [
+    "E",
+    "F",
+    "W",
+    "B",
+    "UP",
+    "I",
+    "C4",
+]
+lint.ignore = ["E203", "E402"]
+lint.extend-ignore = ["B008"]
 lint.isort.combine-as-imports = true

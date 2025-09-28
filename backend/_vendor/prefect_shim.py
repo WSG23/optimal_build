@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 __all__ = ["flow", "task"]
 
@@ -15,9 +16,9 @@ def _attach_with_options(func: F) -> F:
     def _with_options(*_: Any, **__: Any) -> F:
         return func
 
-    setattr(func, "with_options", _with_options)  # type: ignore[attr-defined]
+    func.with_options = _with_options  # type: ignore[attr-defined]
     if not hasattr(func, "name"):
-        setattr(func, "name", func.__name__)
+        func.name = func.__name__
     return func
 
 
@@ -27,7 +28,7 @@ def flow(_func: F | None = None, *, name: str | None = None) -> F | Callable[[F]
     def decorator(func: F) -> F:
         wrapped = _attach_with_options(func)
         if name:
-            setattr(wrapped, "name", name)
+            wrapped.name = name
         return wrapped
 
     if _func is not None and callable(_func):
@@ -41,7 +42,7 @@ def task(_func: F | None = None, *, name: str | None = None) -> F | Callable[[F]
     def decorator(func: F) -> F:
         wrapped = _attach_with_options(func)
         if name:
-            setattr(wrapped, "name", name)
+            wrapped.name = name
         return wrapped
 
     if _func is not None and callable(_func):

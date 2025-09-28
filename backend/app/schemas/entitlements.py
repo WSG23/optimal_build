@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Generic, TypeVar
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.entitlements import (
     EntApprovalCategory,
@@ -15,7 +17,6 @@ from app.models.entitlements import (
     EntStudyStatus,
     EntStudyType,
 )
-from pydantic import BaseModel, ConfigDict, Field
 
 
 class EntAuthorityBase(BaseModel):
@@ -24,9 +25,9 @@ class EntAuthorityBase(BaseModel):
     jurisdiction: str = Field(..., min_length=1)
     name: str = Field(..., min_length=1)
     slug: str = Field(..., min_length=1)
-    website: Optional[str] = None
-    contact_email: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    website: str | None = None
+    contact_email: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class EntAuthorityCreate(EntAuthorityBase):
@@ -38,12 +39,12 @@ class EntAuthorityCreate(EntAuthorityBase):
 class EntAuthorityUpdate(BaseModel):
     """Attributes accepted when updating an authority."""
 
-    jurisdiction: Optional[str] = Field(default=None, min_length=1)
-    name: Optional[str] = Field(default=None, min_length=1)
-    slug: Optional[str] = Field(default=None, min_length=1)
-    website: Optional[str] = None
-    contact_email: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    jurisdiction: str | None = Field(default=None, min_length=1)
+    name: str | None = Field(default=None, min_length=1)
+    slug: str | None = Field(default=None, min_length=1)
+    website: str | None = None
+    contact_email: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class EntAuthoritySchema(EntAuthorityBase):
@@ -63,11 +64,11 @@ class EntApprovalTypeBase(BaseModel):
     code: str = Field(..., min_length=1)
     name: str = Field(..., min_length=1)
     category: EntApprovalCategory
-    description: Optional[str] = None
-    requirements: Dict[str, Any] = Field(default_factory=dict)
-    processing_time_days: Optional[int] = None
+    description: str | None = None
+    requirements: dict[str, Any] = Field(default_factory=dict)
+    processing_time_days: int | None = None
     is_mandatory: bool = True
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class EntApprovalTypeCreate(EntApprovalTypeBase):
@@ -79,14 +80,14 @@ class EntApprovalTypeCreate(EntApprovalTypeBase):
 class EntApprovalTypeUpdate(BaseModel):
     """Partial update payload for approval types."""
 
-    code: Optional[str] = Field(default=None, min_length=1)
-    name: Optional[str] = Field(default=None, min_length=1)
-    category: Optional[EntApprovalCategory] = None
-    description: Optional[str] = None
-    requirements: Optional[Dict[str, Any]] = None
-    processing_time_days: Optional[int] = None
-    is_mandatory: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
+    code: str | None = Field(default=None, min_length=1)
+    name: str | None = Field(default=None, min_length=1)
+    category: EntApprovalCategory | None = None
+    description: str | None = None
+    requirements: dict[str, Any] | None = None
+    processing_time_days: int | None = None
+    is_mandatory: bool | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class EntApprovalTypeSchema(EntApprovalTypeBase):
@@ -103,16 +104,16 @@ class EntRoadmapItemBase(BaseModel):
     """Shared attributes for roadmap items."""
 
     project_id: int
-    approval_type_id: Optional[int] = None
-    sequence_order: Optional[int] = Field(default=None, ge=1)
+    approval_type_id: int | None = None
+    sequence_order: int | None = Field(default=None, ge=1)
     status: EntRoadmapStatus = EntRoadmapStatus.PLANNED
-    status_changed_at: Optional[datetime] = None
-    target_submission_date: Optional[date] = None
-    target_decision_date: Optional[date] = None
-    actual_submission_date: Optional[date] = None
-    actual_decision_date: Optional[date] = None
-    notes: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    status_changed_at: datetime | None = None
+    target_submission_date: date | None = None
+    target_decision_date: date | None = None
+    actual_submission_date: date | None = None
+    actual_decision_date: date | None = None
+    notes: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class EntRoadmapItemCreate(EntRoadmapItemBase):
@@ -124,15 +125,15 @@ class EntRoadmapItemCreate(EntRoadmapItemBase):
 class EntRoadmapItemUpdate(BaseModel):
     """Partial update payload for roadmap items."""
 
-    approval_type_id: Optional[int] = None
-    sequence_order: Optional[int] = Field(default=None, ge=1)
-    status: Optional[EntRoadmapStatus] = None
-    target_submission_date: Optional[date] = None
-    target_decision_date: Optional[date] = None
-    actual_submission_date: Optional[date] = None
-    actual_decision_date: Optional[date] = None
-    notes: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    approval_type_id: int | None = None
+    sequence_order: int | None = Field(default=None, ge=1)
+    status: EntRoadmapStatus | None = None
+    target_submission_date: date | None = None
+    target_decision_date: date | None = None
+    actual_submission_date: date | None = None
+    actual_decision_date: date | None = None
+    notes: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class EntRoadmapItemSchema(EntRoadmapItemBase):
@@ -153,12 +154,12 @@ class EntStudyBase(BaseModel):
     name: str = Field(..., min_length=1)
     study_type: EntStudyType
     status: EntStudyStatus = EntStudyStatus.DRAFT
-    summary: Optional[str] = None
-    consultant: Optional[str] = None
-    due_date: Optional[date] = None
-    completed_at: Optional[datetime] = None
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    summary: str | None = None
+    consultant: str | None = None
+    due_date: date | None = None
+    completed_at: datetime | None = None
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class EntStudyCreate(EntStudyBase):
@@ -170,15 +171,15 @@ class EntStudyCreate(EntStudyBase):
 class EntStudyUpdate(BaseModel):
     """Partial update payload for studies."""
 
-    name: Optional[str] = Field(default=None, min_length=1)
-    study_type: Optional[EntStudyType] = None
-    status: Optional[EntStudyStatus] = None
-    summary: Optional[str] = None
-    consultant: Optional[str] = None
-    due_date: Optional[date] = None
-    completed_at: Optional[datetime] = None
-    attachments: Optional[List[Dict[str, Any]]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    name: str | None = Field(default=None, min_length=1)
+    study_type: EntStudyType | None = None
+    status: EntStudyStatus | None = None
+    summary: str | None = None
+    consultant: str | None = None
+    due_date: date | None = None
+    completed_at: datetime | None = None
+    attachments: list[dict[str, Any]] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class EntStudySchema(EntStudyBase):
@@ -196,14 +197,14 @@ class EntEngagementBase(BaseModel):
 
     project_id: int
     name: str = Field(..., min_length=1)
-    organisation: Optional[str] = None
+    organisation: str | None = None
     engagement_type: EntEngagementType
     status: EntEngagementStatus = EntEngagementStatus.PLANNED
-    contact_email: Optional[str] = None
-    contact_phone: Optional[str] = None
-    meetings: List[Dict[str, Any]] = Field(default_factory=list)
-    notes: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    meetings: list[dict[str, Any]] = Field(default_factory=list)
+    notes: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class EntEngagementCreate(EntEngagementBase):
@@ -215,15 +216,15 @@ class EntEngagementCreate(EntEngagementBase):
 class EntEngagementUpdate(BaseModel):
     """Partial update payload for engagements."""
 
-    name: Optional[str] = Field(default=None, min_length=1)
-    organisation: Optional[str] = None
-    engagement_type: Optional[EntEngagementType] = None
-    status: Optional[EntEngagementStatus] = None
-    contact_email: Optional[str] = None
-    contact_phone: Optional[str] = None
-    meetings: Optional[List[Dict[str, Any]]] = None
-    notes: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    name: str | None = Field(default=None, min_length=1)
+    organisation: str | None = None
+    engagement_type: EntEngagementType | None = None
+    status: EntEngagementStatus | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    meetings: list[dict[str, Any]] | None = None
+    notes: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class EntEngagementSchema(EntEngagementBase):
@@ -243,11 +244,11 @@ class EntLegalInstrumentBase(BaseModel):
     name: str = Field(..., min_length=1)
     instrument_type: EntLegalInstrumentType
     status: EntLegalInstrumentStatus = EntLegalInstrumentStatus.DRAFT
-    reference_code: Optional[str] = None
-    effective_date: Optional[date] = None
-    expiry_date: Optional[date] = None
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    reference_code: str | None = None
+    effective_date: date | None = None
+    expiry_date: date | None = None
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class EntLegalInstrumentCreate(EntLegalInstrumentBase):
@@ -259,14 +260,14 @@ class EntLegalInstrumentCreate(EntLegalInstrumentBase):
 class EntLegalInstrumentUpdate(BaseModel):
     """Partial update payload for legal instruments."""
 
-    name: Optional[str] = Field(default=None, min_length=1)
-    instrument_type: Optional[EntLegalInstrumentType] = None
-    status: Optional[EntLegalInstrumentStatus] = None
-    reference_code: Optional[str] = None
-    effective_date: Optional[date] = None
-    expiry_date: Optional[date] = None
-    attachments: Optional[List[Dict[str, Any]]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    name: str | None = Field(default=None, min_length=1)
+    instrument_type: EntLegalInstrumentType | None = None
+    status: EntLegalInstrumentStatus | None = None
+    reference_code: str | None = None
+    effective_date: date | None = None
+    expiry_date: date | None = None
+    attachments: list[dict[str, Any]] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class EntLegalInstrumentSchema(EntLegalInstrumentBase):
@@ -285,7 +286,7 @@ SchemaType = TypeVar("SchemaType", bound=BaseModel)
 class PaginatedCollection(BaseModel, Generic[SchemaType]):
     """Generic collection payload for list endpoints."""
 
-    items: List[SchemaType]
+    items: list[SchemaType]
     total: int
     limit: int
     offset: int

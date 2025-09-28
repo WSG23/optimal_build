@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
 from app.models.base import BaseModel
 from app.models.types import FlexibleJSONB
-from sqlalchemy import Column, DateTime, Integer, String, Text
 
 
 class ImportRecord(BaseModel):

@@ -17,14 +17,27 @@ line_length = 88
 combine_as_imports = true
 
 [tool.ruff]
-line-length = 88
+line-length = 100
 target-version = "py311"
 src = ["backend", "app", "flows", "jobs", "scripts"]
-exclude = [".venv", ".git", "build", "dist", "frontend", "ui-admin"]
+exclude = [
+    ".venv",
+    ".git",
+    "build",
+    "dist",
+    "frontend",
+    "ui-admin",
+    "_vendor",
+    "migrations",
+    "starlette",
+    "aiosqlite",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "S", "N", "T20"]
-ignore = ["E501"]  # handled by black
+select = ["E", "F", "I", "W"]
+extend-select = ["B"]
+ignore = ["E203", "E402", "E501"]  # handled by black
+extend-ignore = ["B008"]
 
 [tool.mypy]
 python_version = "3.11"

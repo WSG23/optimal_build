@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Dict, List
+from datetime import UTC, datetime
 
+from backend.jobs import job_queue
+from backend.jobs.overlay_run import run_overlay_job
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -15,12 +18,10 @@ from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
 from app.models.overlay import OverlayDecision, OverlaySuggestion
 from app.schemas.overlay import (
     OverlayDecisionPayload,
+)
+from app.schemas.overlay import (
     OverlaySuggestion as OverlaySuggestionSchema,
 )
-from backend.jobs import job_queue
-from backend.jobs.overlay_run import run_overlay_job
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
 
 router = APIRouter(prefix="/overlay")
 
@@ -30,7 +31,7 @@ async def run_overlay(
     project_id: int,
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_reviewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Execute the overlay feasibility engine for a project."""
 
     dispatch = await job_queue.enqueue(run_overlay_job, project_id=project_id)
@@ -42,7 +43,7 @@ async def run_overlay(
             except (TypeError, ValueError):
                 pass
         return payload
-    payload: Dict[str, object] = {
+    payload: dict[str, object] = {
         "status": dispatch.status,
         "project_id": project_id,
     }
@@ -56,7 +57,7 @@ async def list_project_overlays(
     project_id: int,
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Return overlay suggestions for the requested project."""
 
     stmt = (
@@ -66,7 +67,7 @@ async def list_project_overlays(
         .order_by(OverlaySuggestion.id)
     )
     result = await session.execute(stmt)
-    suggestions: List[OverlaySuggestion] = list(result.scalars().unique().all())
+    suggestions: list[OverlaySuggestion] = list(result.scalars().unique().all())
     items = [
         OverlaySuggestionSchema.model_validate(suggestion, from_attributes=True)
         for suggestion in suggestions
@@ -90,7 +91,7 @@ async def decide_overlay(
     payload: OverlayDecisionPayload,
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_reviewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Persist a decision on a generated overlay suggestion."""
 
     stmt = (
@@ -105,7 +106,7 @@ async def decide_overlay(
         raise HTTPException(status_code=404, detail="Overlay suggestion not found")
 
     decision_value = _normalise_decision_value(payload.decision)
-    timestamp = datetime.now(timezone.utc)
+    timestamp = datetime.now(UTC)
 
     if suggestion.decision is None:
         decision = OverlayDecision(
@@ -164,5 +165,5 @@ def _as_utc(timestamp: datetime | None) -> datetime | None:
     if timestamp is None:
         return None
     if timestamp.tzinfo is None:
-        return timestamp.replace(tzinfo=timezone.utc)
-    return timestamp.astimezone(timezone.utc)
+        return timestamp.replace(tzinfo=UTC)
+    return timestamp.astimezone(UTC)

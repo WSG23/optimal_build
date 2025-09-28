@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, Mapping, Optional
+from typing import Any
 
 from app.core.models.geometry import (
     Door,
@@ -32,7 +33,7 @@ def _as_point(value: Any) -> tuple[float, float]:
     raise TypeError(f"Unsupported point representation: {value!r}")
 
 
-def _as_metadata(value: Any) -> Dict[str, Any]:
+def _as_metadata(value: Any) -> dict[str, Any]:
     if value is None:
         return {}
     if isinstance(value, Mapping):
@@ -40,7 +41,7 @@ def _as_metadata(value: Any) -> Dict[str, Any]:
     raise TypeError(f"Metadata must be a mapping, received: {value!r}")
 
 
-def _ensure_source(value: Any) -> Optional[SourceReference]:
+def _ensure_source(value: Any) -> SourceReference | None:
     if value is None:
         return None
     if isinstance(value, SourceReference):
@@ -57,7 +58,7 @@ class GraphBuilder:
     graph: GeometryGraph
 
     @classmethod
-    def new(cls) -> "GraphBuilder":
+    def new(cls) -> GraphBuilder:
         return cls(graph=GeometryGraph())
 
     def add_level(self, payload: Mapping[str, Any]) -> Level:
@@ -237,7 +238,7 @@ class GraphBuilder:
 
     def validate_integrity(self) -> None:
         """Ensure cross references between entities remain valid."""
-        seen: Dict[str, str] = {}
+        seen: dict[str, str] = {}
         for entity in self.graph.iter_entities():
             if entity.id in seen and seen[entity.id] != entity.__class__.__name__:
                 raise ValueError(

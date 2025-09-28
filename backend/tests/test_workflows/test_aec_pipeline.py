@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from collections.abc import Iterable
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Dict, Iterable, Tuple
 
 import pytest
 
@@ -37,15 +37,15 @@ GOLDEN_MANIFEST_PATH = (
 )
 
 
-def _load_sample_payload() -> Dict[str, object]:
+def _load_sample_payload() -> dict[str, object]:
     return json.loads(SAMPLE_PATH.read_text("utf-8"))
 
 
 def _build_geometry_from_sample(
-    sample: Dict[str, object],
-) -> Tuple[CanonicalGeometry, Dict[str, Dict[str, object]]]:
+    sample: dict[str, object],
+) -> tuple[CanonicalGeometry, dict[str, dict[str, object]]]:
     builder = GraphBuilder.new()
-    level_lookup: Dict[str, Dict[str, object]] = {}
+    level_lookup: dict[str, dict[str, object]] = {}
 
     for index, layer in enumerate(sample.get("layers", []), start=1):
         if not isinstance(layer, dict):
@@ -101,7 +101,7 @@ def _build_geometry_from_sample(
         ),
         None,
     )
-    root_properties: Dict[str, object] = {"project": sample.get("project")}
+    root_properties: dict[str, object] = {"project": sample.get("project")}
     if isinstance(site_layer, dict):
         root_properties.update(site_layer.get("metadata", {}))
 
@@ -171,7 +171,7 @@ async def _seed_overlay_project(
             .scalars()
             .all()
         )
-        ten_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=10)
+        ten_minutes_ago = datetime.now(UTC) - timedelta(minutes=10)
         for suggestion in suggestions:
             suggestion.created_at = ten_minutes_ago
         await session.commit()
@@ -381,7 +381,7 @@ async def test_roi_snapshot_reports_saved_hours(async_session_factory):
         assert first is not None
         first.status = "approved"
         first.decided_by = "pytest"
-        first.decided_at = datetime.now(timezone.utc)
+        first.decided_at = datetime.now(UTC)
         await session.commit()
 
     async with async_session_factory() as session:

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Any, Iterable
+from typing import Any
 
 from ._memory import (
     ColumnDescriptor,
@@ -116,7 +117,7 @@ class _Text:
 
     def bindparams(
         self, *args: Any, **kwargs: Any
-    ) -> "_Text":  # noqa: D401 - passthrough
+    ) -> _Text:  # noqa: D401 - passthrough
         return self
 
 
@@ -142,7 +143,7 @@ class _FunctionCall:
         self.args = args
         self.kwargs = kwargs
 
-    def label(self, _label: str) -> "_FunctionCall":  # noqa: D401 - fluent API
+    def label(self, _label: str) -> _FunctionCall:  # noqa: D401 - fluent API
         return self
 
 

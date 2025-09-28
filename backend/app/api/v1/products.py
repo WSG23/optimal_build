@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefProduct
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -23,7 +23,7 @@ async def list_products(
     width_mm_max: int | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     stmt = select(RefProduct)
     if brand:
         stmt = stmt.where(RefProduct.brand == brand)
@@ -31,7 +31,7 @@ async def list_products(
         stmt = stmt.where(RefProduct.category == category)
 
     result = await session.execute(stmt)
-    items: List[Dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
     for product in result.scalars().all():
         dimensions = product.dimensions or {}
         width_value = dimensions.get("width_mm")

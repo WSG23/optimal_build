@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from sqlalchemy import Boolean, DateTime, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.models.base import BaseModel
 from app.models.types import FlexibleJSONB
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, UniqueConstraint
 
 JSONType = FlexibleJSONB
 

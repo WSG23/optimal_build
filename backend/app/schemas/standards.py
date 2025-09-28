@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -17,14 +17,14 @@ class MaterialStandard(BaseModel):
     standard_body: str
     property_key: str
     value: str
-    unit: Optional[str]
-    context: Optional[Dict[str, Any]]
-    section: Optional[str]
-    applicability: Optional[Dict[str, Any]]
-    edition: Optional[str]
-    effective_date: Optional[date]
-    license_ref: Optional[str]
-    provenance: Optional[Dict[str, Any]]
-    source_document: Optional[str]
+    unit: str | None
+    context: dict[str, Any] | None
+    section: str | None
+    applicability: dict[str, Any] | None
+    edition: str | None
+    effective_date: date | None
+    license_ref: str | None
+    provenance: dict[str, Any] | None
+    source_document: str | None
 
     model_config = ConfigDict(from_attributes=True)

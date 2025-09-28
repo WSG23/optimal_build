@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Dict, Iterable, List, Sequence
+
+from fastapi import HTTPException
 
 from app.schemas.feasibility import (
     BuildableAreaSummary,
@@ -15,9 +17,8 @@ from app.schemas.feasibility import (
     NewFeasibilityProjectInput,
     RuleAssessmentResult,
 )
-from fastapi import HTTPException
 
-_BASE_RULES: Sequence[Dict[str, object]] = (
+_BASE_RULES: Sequence[dict[str, object]] = (
     {
         "id": "ura-plot-ratio",
         "title": "Plot ratio within URA master plan envelope",
@@ -99,7 +100,7 @@ def _format_land_use(land_use: str) -> str:
     return cleaned if cleaned else "mixed use"
 
 
-def _build_rules() -> List[FeasibilityRule]:
+def _build_rules() -> list[FeasibilityRule]:
     return [FeasibilityRule.model_validate(item) for item in _BASE_RULES]
 
 
@@ -122,8 +123,8 @@ def generate_feasibility_rules(
     )
 
 
-def _normalise_selected_ids(selected_ids: Iterable[str]) -> List[str]:
-    seen: Dict[str, None] = {}
+def _normalise_selected_ids(selected_ids: Iterable[str]) -> list[str]:
+    seen: dict[str, None] = {}
     for identifier in selected_ids:
         if identifier not in seen:
             seen[identifier] = None
@@ -132,7 +133,7 @@ def _normalise_selected_ids(selected_ids: Iterable[str]) -> List[str]:
 
 def _calculate_summary(
     project: NewFeasibilityProjectInput,
-    results: List[RuleAssessmentResult],
+    results: list[RuleAssessmentResult],
 ) -> BuildableAreaSummary:
     max_plot_ratio = 3.5
     max_gfa = _round_half_up(project.site_area_sqm * max_plot_ratio)
@@ -188,7 +189,7 @@ def run_feasibility_assessment(
     """Evaluate the project against the selected rules."""
 
     rules = _build_rules()
-    lookup: Dict[str, FeasibilityRule] = {rule.id: rule for rule in rules}
+    lookup: dict[str, FeasibilityRule] = {rule.id: rule for rule in rules}
     normalised_ids = _normalise_selected_ids(payload.selected_rule_ids)
     missing = [identifier for identifier in normalised_ids if identifier not in lookup]
     if missing:

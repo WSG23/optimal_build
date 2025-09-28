@@ -1,15 +1,14 @@
 """Vector payload parsing tests for the CAD parser job."""
 
 import json
-from typing import Dict, Mapping
+from collections.abc import Mapping
 
 import pytest
-from sqlalchemy import select
-
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry
 from backend.app.services.storage import reset_storage_service
 from backend.jobs.parse_cad import parse_import_job
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio
@@ -26,7 +25,7 @@ async def test_parse_job_uses_vector_payload(
     pdf_bytes = b"%PDF-1.4\n%"
     pdf_path.write_bytes(pdf_bytes)
 
-    vector_payload: Dict[str, object] = {
+    vector_payload: dict[str, object] = {
         "source": "vector",
         "paths": [
             {

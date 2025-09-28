@@ -10,18 +10,17 @@ guidance.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date, datetime, time, timezone
 import json
 import os
 import time as time_module
-from typing import Iterable, List, MutableMapping, Sequence
+from collections.abc import Iterable, MutableMapping, Sequence
+from dataclasses import dataclass
+from datetime import UTC, date, datetime, time
 
 import httpx
 import structlog
-from structlog.stdlib import BoundLogger
-
 from core.canonical_models import ProvenanceRecord
+from structlog.stdlib import BoundLogger
 
 LOGGER: BoundLogger = structlog.get_logger(__name__)
 
@@ -54,7 +53,7 @@ class FetchConfig:
     external_id_field: str = "circular_no"
 
     @classmethod
-    def from_env(cls) -> "FetchConfig":
+    def from_env(cls) -> FetchConfig:
         """Instantiate configuration using well-known environment variables."""
 
         env = os.environ
@@ -100,14 +99,14 @@ class Fetcher:
         self._logger = logger or LOGGER
         self._last_request: float | None = None
 
-    def fetch_raw(self, since: date) -> List[ProvenanceRecord]:
+    def fetch_raw(self, since: date) -> list[ProvenanceRecord]:
         """Fetch all records newer than ``since`` from the configured API."""
 
         if not self.config.resource_id:
             raise FetchError("SG BCA fetcher configured without a resource id")
 
         since_dt = datetime.combine(since, time.min)
-        records: List[ProvenanceRecord] = []
+        records: list[ProvenanceRecord] = []
 
         self._logger.info(
             "sg_bca.fetch.start",
@@ -138,9 +137,7 @@ class Fetcher:
                         continue
                     issued_at = record.get("issued_at")
                     if isinstance(issued_at, datetime) and issued_at.tzinfo is not None:
-                        issued_at = issued_at.astimezone(timezone.utc).replace(
-                            tzinfo=None
-                        )
+                        issued_at = issued_at.astimezone(UTC).replace(tzinfo=None)
                         record["issued_at"] = issued_at
 
                     if issued_at and issued_at < since_dt:
@@ -269,7 +266,7 @@ class Fetcher:
         return ProvenanceRecord(
             regulation_external_id=str(normalised["external_id"]),
             source_uri=source_uri,
-            fetched_at=datetime.now(timezone.utc),
+            fetched_at=datetime.now(UTC),
             fetch_parameters={
                 "since": since.isoformat(),
                 "resource_id": self.config.resource_id,
@@ -304,7 +301,7 @@ class Fetcher:
             return None
 
         if parsed.tzinfo is not None:
-            parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+            parsed = parsed.astimezone(UTC).replace(tzinfo=None)
         return parsed
 
 

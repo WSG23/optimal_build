@@ -8,11 +8,12 @@ import math
 import os
 import tempfile
 from collections import Counter
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 from urllib.parse import urlparse
 
 try:  # pragma: no cover - optional dependency
@@ -39,10 +40,10 @@ class ParsedGeometry:
     """Result emitted by the parsing pipeline."""
 
     graph: GeometryGraph
-    floors: List[Dict[str, Any]]
-    units: List[str]
-    layers: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
+    floors: list[dict[str, Any]]
+    units: list[str]
+    layers: list[dict[str, Any]]
+    metadata: dict[str, Any]
 
 
 @dataclass(slots=True)
@@ -50,18 +51,18 @@ class DxfSpaceCandidate:
     """Representation of a DXF entity that can be treated as a space."""
 
     identifier: str
-    boundary: List[Dict[str, float]]
-    layer: Optional[str]
+    boundary: list[dict[str, float]]
+    layer: str | None
 
 
 @dataclass(slots=True)
 class DxfQuicklook:
     """Summary metadata extracted from a DXF payload."""
 
-    candidates: List[DxfSpaceCandidate]
-    floors: List[Dict[str, Any]]
-    units: List[str]
-    layers: List[Dict[str, Any]]
+    candidates: list[DxfSpaceCandidate]
+    floors: list[dict[str, Any]]
+    units: list[str]
+    layers: list[dict[str, Any]]
 
 
 @dataclass(slots=True)
@@ -70,19 +71,19 @@ class IfcSpaceCandidate:
 
     identifier: str
     name: str
-    level_id: Optional[str]
-    metadata: Dict[str, Any]
+    level_id: str | None
+    metadata: dict[str, Any]
 
 
 @dataclass(slots=True)
 class IfcQuicklook:
     """Summary metadata extracted from an IFC payload."""
 
-    storeys: List[Dict[str, Any]]
-    spaces: List[IfcSpaceCandidate]
-    floors: List[Dict[str, Any]]
-    units: List[str]
-    layers: List[Dict[str, Any]]
+    storeys: list[dict[str, Any]]
+    spaces: list[IfcSpaceCandidate]
+    floors: list[dict[str, Any]]
+    units: list[str]
+    layers: list[dict[str, Any]]
 
 
 def _resolve_local_path(storage_path: str) -> Path:
@@ -103,7 +104,7 @@ async def _load_payload(record: ImportRecord) -> bytes:
     return await asyncio.to_thread(path.read_bytes)
 
 
-def _load_vector_payload(storage_path: str) -> Dict[str, Any]:
+def _load_vector_payload(storage_path: str) -> dict[str, Any]:
     path = _resolve_local_path(storage_path)
     payload = json.loads(path.read_text())
     if not isinstance(payload, Mapping):
@@ -117,7 +118,7 @@ def _normalise_name(value: Any, fallback: str) -> str:
     return fallback
 
 
-def _ensure_unique(identifier: str, seen: Dict[str, None]) -> str:
+def _ensure_unique(identifier: str, seen: dict[str, None]) -> str:
     base = identifier
     counter = 1
     while identifier in seen:
@@ -153,8 +154,8 @@ def _read_dxf_document(payload: bytes):
 
 def _extract_dxf_layer_metadata(
     doc,
-) -> List[Dict[str, Any]]:  # pragma: no cover - depends on ezdxf
-    metadata: List[Dict[str, Any]] = []
+) -> list[dict[str, Any]]:  # pragma: no cover - depends on ezdxf
+    metadata: list[dict[str, Any]] = []
     layers = getattr(doc, "layers", None)
     if layers is None:
         return metadata
@@ -164,7 +165,7 @@ def _extract_dxf_layer_metadata(
         for name in names:
             if not name:
                 continue
-            entry: Dict[str, Any] = {"name": str(name)}
+            entry: dict[str, Any] = {"name": str(name)}
             layer_obj = None
             if callable(getter):
                 try:
@@ -198,16 +199,16 @@ def _extract_dxf_layer_metadata(
 
 def _collect_dxf_space_candidates(
     doc,
-) -> Tuple[
-    List[DxfSpaceCandidate], Dict[str, List[str]]
+) -> tuple[
+    list[DxfSpaceCandidate], dict[str, list[str]]
 ]:  # pragma: no cover - depends on ezdxf
-    candidates: List[DxfSpaceCandidate] = []
-    layer_units: Dict[str, List[str]] = {}
+    candidates: list[DxfSpaceCandidate] = []
+    layer_units: dict[str, list[str]] = {}
     modelspace = doc.modelspace()
     for index, entity in enumerate(modelspace, start=1):
         if entity.dxftype() != "LWPOLYLINE":
             continue
-        points: List[Dict[str, float]] = []
+        points: list[dict[str, float]] = []
         try:
             raw_points = entity.get_points("xy")  # type: ignore[arg-type]
         except Exception:  # pragma: no cover - defensive guard
@@ -234,10 +235,10 @@ def _collect_dxf_space_candidates(
 def _derive_dxf_floors(
     layer_metadata: Sequence[Mapping[str, Any]],
     unit_ids: Sequence[str],
-    layer_units: Mapping[str, List[str]],
-) -> List[Dict[str, Any]]:
-    floors: List[Dict[str, Any]] = []
-    seen_units: Dict[str, None] = {}
+    layer_units: Mapping[str, list[str]],
+) -> list[dict[str, Any]]:
+    floors: list[dict[str, Any]] = []
+    seen_units: dict[str, None] = {}
     for entry in layer_metadata:
         name_raw = entry.get("name")
         if not isinstance(name_raw, str):
@@ -275,7 +276,7 @@ def _prepare_dxf_quicklook(payload: bytes) -> DxfQuicklook:
 
 def detect_dxf_metadata(
     payload: bytes,
-) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]:
     quicklook = _prepare_dxf_quicklook(payload)
     return quicklook.floors, quicklook.units, quicklook.layers
 
@@ -289,13 +290,13 @@ def _load_ifc_model(payload: bytes):
 
 def _extract_ifc_layer_metadata(
     model,
-) -> List[Dict[str, Any]]:  # pragma: no cover - depends on ifcopenshell
-    metadata: List[Dict[str, Any]] = []
+) -> list[dict[str, Any]]:  # pragma: no cover - depends on ifcopenshell
+    metadata: list[dict[str, Any]] = []
     try:
         assignments = model.by_type("IfcPresentationLayerAssignment")
     except Exception:  # pragma: no cover - defensive guard
         assignments = []
-    seen: Dict[str, int] = {}
+    seen: dict[str, int] = {}
     for assignment in assignments:
         name = getattr(assignment, "Name", None) or getattr(
             assignment, "Description", None
@@ -324,11 +325,11 @@ def _extract_ifc_layer_metadata(
 
 def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
     model = _load_ifc_model(payload)
-    storeys_payload: List[Dict[str, Any]] = []
-    spaces: List[IfcSpaceCandidate] = []
-    floors_summary: List[Dict[str, Any]] = []
-    units: List[str] = []
-    seen_units: Dict[str, None] = {}
+    storeys_payload: list[dict[str, Any]] = []
+    spaces: list[IfcSpaceCandidate] = []
+    floors_summary: list[dict[str, Any]] = []
+    units: list[str] = []
+    seen_units: dict[str, None] = {}
 
     for storey in model.by_type(
         "IfcBuildingStorey"
@@ -353,7 +354,7 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
             }
         )
 
-        floor_units: List[str] = []
+        floor_units: list[str] = []
         related = getattr(storey, "ContainsElements", []) or []
         for rel in related:
             for element in getattr(rel, "RelatedElements", []) or []:
@@ -416,14 +417,14 @@ def _prepare_ifc_quicklook(payload: bytes) -> IfcQuicklook:
 
 def detect_ifc_metadata(
     payload: bytes,
-) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]:
     quicklook = _prepare_ifc_quicklook(payload)
     return quicklook.floors, quicklook.units, quicklook.layers
 
 
 def _estimate_space_geometry(
-    offset_x: float, offset_y: float, area: Optional[float]
-) -> List[Dict[str, float]]:
+    offset_x: float, offset_y: float, area: float | None
+) -> list[dict[str, float]]:
     side = max(math.sqrt(area) if area and area > 0 else 4.0, 3.0)
     width = side
     height = max(area / width if area else side, 3.0)
@@ -435,7 +436,7 @@ def _estimate_space_geometry(
     ]
 
 
-def _derive_vector_layers(payload: Mapping[str, Any]) -> List[Dict[str, Any]]:
+def _derive_vector_layers(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
     layer_counts: Counter[str] = Counter()
     paths = payload.get("paths")
     if isinstance(paths, Sequence):
@@ -454,18 +455,18 @@ def _derive_vector_layers(payload: Mapping[str, Any]) -> List[Dict[str, Any]]:
 
 def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
     builder = GraphBuilder.new()
-    floors_summary: List[Dict[str, Any]] = []
-    unit_ids: List[str] = []
-    seen_units: Dict[str, None] = {}
+    floors_summary: list[dict[str, Any]] = []
+    unit_ids: list[str] = []
+    seen_units: dict[str, None] = {}
 
-    site_metadata: Dict[str, Any] = {}
+    site_metadata: dict[str, Any] = {}
     project_name = data.get("project")
     if project_name not in (None, ""):
         site_metadata["project"] = project_name
 
     raw_layers = data.get("layers") if isinstance(data.get("layers"), Sequence) else []
-    layer_metadata: List[Dict[str, Any]] = []
-    floor_layers: List[Mapping[str, Any]] = []
+    layer_metadata: list[dict[str, Any]] = []
+    floor_layers: list[Mapping[str, Any]] = []
     for item in raw_layers:  # type: ignore[assignment]
         if not isinstance(item, Mapping):
             continue
@@ -480,7 +481,7 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
         if layer_type in {"floor", "level", "storey", "story"}:
             floor_layers.append(item)
 
-    entries: List[Mapping[str, Any]] = list(floor_layers)
+    entries: list[Mapping[str, Any]] = list(floor_layers)
     extra_floors = (
         data.get("floors") if isinstance(data.get("floors"), Sequence) else []
     )
@@ -511,7 +512,7 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
         floor_units: Iterable[Any] = (
             entry.get("units", []) if isinstance(entry.get("units"), Iterable) else []
         )
-        floor_summary_units: List[str] = []
+        floor_summary_units: list[str] = []
         offset_x = 0.0
         for raw_unit in floor_units:
             if isinstance(raw_unit, Mapping):
@@ -537,7 +538,7 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
                 area_float = None
 
             boundary = _estimate_space_geometry(offset_x, offset_y, area_float)
-            space_metadata: Dict[str, Any] = {"source_floor": floor_name}
+            space_metadata: dict[str, Any] = {"source_floor": floor_name}
             if isinstance(raw_unit, Mapping):
                 for key, value in raw_unit.items():
                     if key in {"id", "name", "label"}:
@@ -602,7 +603,7 @@ def _parse_json_payload(data: Mapping[str, Any]) -> ParsedGeometry:
     )
 
 
-def _coerce_vector_point(value: Any) -> Optional[Dict[str, float]]:
+def _coerce_vector_point(value: Any) -> dict[str, float] | None:
     """Convert vector payload points into mapping form."""
 
     if isinstance(value, Mapping):
@@ -622,7 +623,7 @@ def _coerce_vector_point(value: Any) -> Optional[Dict[str, float]]:
     return None
 
 
-def _is_closed_path(points: Sequence[Dict[str, float]]) -> bool:
+def _is_closed_path(points: Sequence[dict[str, float]]) -> bool:
     if len(points) < 4:
         return False
     first = points[0]
@@ -642,7 +643,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
     level_id = "VectorLevel"
     level_name = "Vector Floor"
 
-    level_metadata: Dict[str, Any] = {"source": payload.get("source", "vector")}
+    level_metadata: dict[str, Any] = {"source": payload.get("source", "vector")}
     bounds = payload.get("bounds")
     if isinstance(bounds, Mapping):
         level_metadata["bounds"] = {
@@ -660,8 +661,8 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
         }
     )
 
-    wall_ids: List[str] = []
-    seen_walls: Dict[str, None] = {}
+    wall_ids: list[str] = []
+    seen_walls: dict[str, None] = {}
     walls = payload.get("walls")
     if isinstance(walls, Sequence):
         for index, entry in enumerate(walls, start=1):  # type: ignore[assignment]
@@ -676,7 +677,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                 _normalise_name(raw_identifier, f"W{index:03d}"),
                 seen_walls,
             )
-            metadata: Dict[str, Any] = {}
+            metadata: dict[str, Any] = {}
             for key in ("thickness", "confidence"):
                 value = entry.get(key)
                 if isinstance(value, (int, float)):
@@ -702,8 +703,8 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                 continue
             wall_ids.append(wall_id)
 
-    space_ids: List[str] = []
-    seen_spaces: Dict[str, None] = {}
+    space_ids: list[str] = []
+    seen_spaces: dict[str, None] = {}
     paths = payload.get("paths")
     if isinstance(paths, Sequence):
         for index, entry in enumerate(paths, start=1):  # type: ignore[assignment]
@@ -712,7 +713,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
             points_raw = entry.get("points")
             if not isinstance(points_raw, Sequence):
                 continue
-            boundary: List[Dict[str, float]] = []
+            boundary: list[dict[str, float]] = []
             for point in points_raw:  # type: ignore[assignment]
                 coerced = _coerce_vector_point(point)
                 if coerced is None:
@@ -727,7 +728,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                 _normalise_name(raw_identifier, f"S{index:03d}"),
                 seen_spaces,
             )
-            metadata: Dict[str, Any] = {"source": "vector_path"}
+            metadata: dict[str, Any] = {"source": "vector_path"}
             extra_metadata = entry.get("metadata")
             if isinstance(extra_metadata, Mapping):
                 metadata.update({key: value for key, value in extra_metadata.items()})
@@ -758,7 +759,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
 
     floors_summary = [{"name": level_name, "unit_ids": list(space_ids)}]
 
-    metadata: Dict[str, Any] = {
+    metadata: dict[str, Any] = {
         "source": "vector_payload",
         "walls": len(wall_ids),
         "spaces": len(space_ids),
@@ -813,7 +814,7 @@ def _parse_dxf_payload(payload: bytes) -> ParsedGeometry:
 def _parse_ifc_payload(payload: bytes) -> ParsedGeometry:
     quicklook = _prepare_ifc_quicklook(payload)
     builder = GraphBuilder.new()
-    added_levels: Dict[str, None] = {}
+    added_levels: dict[str, None] = {}
 
     for storey in quicklook.storeys:  # pragma: no cover - depends on ifcopenshell
         level_id = storey["id"]
@@ -828,7 +829,7 @@ def _parse_ifc_payload(payload: bytes) -> ParsedGeometry:
         builder.add_level(level_payload)
         added_levels[level_id] = None
 
-    default_level_id: Optional[str] = None
+    default_level_id: str | None = None
     if not added_levels and quicklook.units:
         default_level_id = "DefaultStorey"
         builder.add_level(
@@ -878,7 +879,7 @@ def _parse_ifc_payload(payload: bytes) -> ParsedGeometry:
 def _parse_payload(
     record: ImportRecord,
     payload: bytes,
-    vector_payload: Optional[Mapping[str, Any]] = None,
+    vector_payload: Mapping[str, Any] | None = None,
 ) -> ParsedGeometry:
     filename = (record.filename or "").lower()
     content_type = (record.content_type or "").lower()
@@ -898,7 +899,7 @@ def _parse_payload(
 
 async def _persist_result(
     session, record: ImportRecord, parsed: ParsedGeometry
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     graph_payload = GeometrySerializer.to_export(parsed.graph)
     record.parse_status = "completed"
     record.parse_result = {
@@ -917,17 +918,17 @@ async def _persist_result(
     if parsed.units:
         record.detected_units = parsed.units
     record.parse_error = None
-    record.parse_completed_at = datetime.now(timezone.utc)
+    record.parse_completed_at = datetime.now(UTC)
     await session.flush()
     result = record.parse_result or {}
     return dict(result)
 
 
 @job(name="jobs.parse_cad.parse_import", queue="imports:parse")
-async def parse_import_job(import_id: str) -> Dict[str, Any]:
+async def parse_import_job(import_id: str) -> dict[str, Any]:
     """Parse an uploaded import payload and persist the resulting geometry."""
 
-    session_factory = getattr(app_database, "AsyncSessionLocal")
+    session_factory = app_database.AsyncSessionLocal
     async with session_factory() as session:
         record = await session.get(ImportRecord, import_id)
         if record is None:
@@ -937,7 +938,7 @@ async def parse_import_job(import_id: str) -> Dict[str, Any]:
 
         try:
             payload = await _load_payload(record)
-            vector_payload: Optional[Dict[str, Any]] = None
+            vector_payload: dict[str, Any] | None = None
             if record.vector_storage_path:
                 try:
                     vector_payload = await asyncio.to_thread(
@@ -979,7 +980,7 @@ async def parse_import_job(import_id: str) -> Dict[str, Any]:
         except Exception as exc:  # pragma: no cover - defensive logging surface
             record.parse_status = "failed"
             record.parse_error = str(exc)
-            record.parse_completed_at = datetime.now(timezone.utc)
+            record.parse_completed_at = datetime.now(UTC)
             await session.commit()
             raise
 

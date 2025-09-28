@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import { ReviewAPI } from '../api/client'
 import type { DiffRecord } from '../types'
 import DiffViewer from '../components/DiffViewer'
+import { toErrorMessage } from '../utils/error'
 
 const DiffsPage = () => {
   const [diffs, setDiffs] = useState<DiffRecord[]>([])
@@ -10,16 +11,25 @@ const DiffsPage = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    ReviewAPI.getDiffs()
-      .then((response) => {
+    const loadDiffs = async () => {
+      try {
+        const response = await ReviewAPI.getDiffs()
         setDiffs(response.items)
         if (response.items.length) {
           setSelected(response.items[0].rule_id)
         }
         setError(null)
-      })
-      .catch((err) => setError(err.message))
+      } catch (error) {
+        setError(toErrorMessage(error, 'Failed to load diffs'))
+      }
+    }
+
+    void loadDiffs()
   }, [])
+
+  const handleSelect = (ruleId: number) => {
+    setSelected(ruleId)
+  }
 
   const activeDiff = diffs.find((diff) => diff.rule_id === selected) ?? null
 
@@ -36,14 +46,16 @@ const DiffsPage = () => {
             {diffs.map((diff) => (
               <li key={diff.rule_id}>
                 <button
-                  onClick={() => setSelected(diff.rule_id)}
+                  onClick={() => {
+                    handleSelect(diff.rule_id)
+                  }}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                     selected === diff.rule_id
                       ? 'bg-surface-inverse/70 text-text-inverse'
                       : 'text-text-inverse/80 hover:bg-surface-inverse/50'
                   }`}
                 >
-                  Rule #{diff.rule_id}
+                  {`Rule #${diff.rule_id.toString()}`}
                 </button>
               </li>
             ))}

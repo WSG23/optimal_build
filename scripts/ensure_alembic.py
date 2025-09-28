@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_REQUIREMENTS = _REPO_ROOT / "backend" / "requirements.txt"
@@ -98,7 +98,7 @@ def ensure_alembic(requirements: Path | None = None) -> None:
                     f"Run 'pip install -r {requirement_display}' and rerun 'make db.upgrade'.",
                 ]
             )
-            raise SystemExit(exc.returncode)
+            raise SystemExit(exc.returncode) from exc
 
         if not _module_exists("alembic"):
             _print_error(
@@ -113,7 +113,10 @@ def ensure_alembic(requirements: Path | None = None) -> None:
     _print_error(
         [
             "Error: Alembic is not installed.",
-            f"Install backend dependencies with 'pip install -r {requirement_display}' before rerunning.",
+            (
+                "Install backend dependencies with "
+                f"'pip install -r {requirement_display}' before rerunning."
+            ),
             "If you prefer an isolated environment:",
             "  python -m venv .venv",
             "  source .venv/bin/activate  # (use .venv\\Scripts\\activate on Windows)",

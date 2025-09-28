@@ -5,8 +5,9 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 from app.models.rkp import RefProduct
-from flows.products import sync_vendor_products
 from sqlalchemy import select
+
+from flows.products import sync_vendor_products
 
 
 @pytest.mark.asyncio

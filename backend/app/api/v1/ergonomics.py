@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefErgonomics
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
 
 router = APIRouter(prefix="/ergonomics", tags=["ergonomics"])
 
@@ -21,7 +21,7 @@ async def list_ergonomics(
     population: str | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     stmt = select(RefErgonomics)
     if metric_key:
         stmt = stmt.where(RefErgonomics.metric_key == metric_key)

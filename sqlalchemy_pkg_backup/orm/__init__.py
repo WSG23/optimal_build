@@ -7,8 +7,8 @@ from typing import Any
 
 from .._memory import (
     MetaData,
-    RelationshipDescriptor,
     RelatedList,
+    RelationshipDescriptor,
     Table,
     register_model,
 )
@@ -83,7 +83,7 @@ def relationship(
 class _LoaderOption:
     name: str
 
-    def __call__(self, *args: Any, **kwargs: Any) -> "_LoaderOption":
+    def __call__(self, *args: Any, **kwargs: Any) -> _LoaderOption:
         return self
 
 

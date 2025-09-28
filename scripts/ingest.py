@@ -6,16 +6,14 @@ import argparse
 import hashlib
 import logging
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import date
-from typing import Dict, Iterable, List
-
-from sqlalchemy import select
 
 from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.registry import JurisdictionParser, RegistryError, load_jurisdiction
 from core.util import create_session_factory, get_engine, session_scope
-
+from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +63,11 @@ def ensure_jurisdiction(session, parser: JurisdictionParser) -> None:
 def upsert_regulations(
     session,
     regulations: Iterable[canonical_models.CanonicalReg],
-    provenance_records: List[canonical_models.ProvenanceRecord],
+    provenance_records: list[canonical_models.ProvenanceRecord],
 ) -> None:
     """Upsert regulations and provenance into the database."""
 
-    provenance_by_ext: Dict[str, List[canonical_models.ProvenanceRecord]] = defaultdict(
+    provenance_by_ext: dict[str, list[canonical_models.ProvenanceRecord]] = defaultdict(
         list
     )
     for record in provenance_records:

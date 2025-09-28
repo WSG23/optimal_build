@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Mapping, MutableMapping, Optional
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -24,12 +24,12 @@ class SimpleHTTPClient:
     """Minimal HTTP client using ``urllib`` for asynchronous flows."""
 
     async def head(
-        self, url: str, headers: Optional[Mapping[str, str]] = None
+        self, url: str, headers: Mapping[str, str] | None = None
     ) -> HTTPResponse:
         return await self._request("HEAD", url, headers=headers)
 
     async def get(
-        self, url: str, headers: Optional[Mapping[str, str]] = None
+        self, url: str, headers: Mapping[str, str] | None = None
     ) -> HTTPResponse:
         return await self._request("GET", url, headers=headers)
 
@@ -38,7 +38,7 @@ class SimpleHTTPClient:
         method: str,
         url: str,
         *,
-        headers: Optional[Mapping[str, str]] = None,
+        headers: Mapping[str, str] | None = None,
     ) -> HTTPResponse:
         def _perform_request() -> HTTPResponse:
             request = Request(url, method=method, headers=dict(headers or {}))
@@ -66,27 +66,27 @@ class FetchedDocument:
     """Result of fetching a reference document."""
 
     content: bytes
-    etag: Optional[str]
-    last_modified: Optional[str]
-    content_type: Optional[str]
+    etag: str | None
+    last_modified: str | None
+    content_type: str | None
 
 
 class ReferenceSourceFetcher:
     """Fetch reference sources with conditional requests."""
 
-    def __init__(self, http_client: Optional[SimpleHTTPClient] = None) -> None:
+    def __init__(self, http_client: SimpleHTTPClient | None = None) -> None:
         self._http = http_client or SimpleHTTPClient()
 
     async def fetch(
         self,
         source: RefSource,
-        existing: Optional[RefDocument] = None,
-    ) -> Optional[FetchedDocument]:
+        existing: RefDocument | None = None,
+    ) -> FetchedDocument | None:
         """Fetch ``source`` if it has been updated since ``existing``."""
 
         fetch_kind = (getattr(source, "fetch_kind", None) or "pdf").lower()
         conditional_headers = self._conditional_headers(existing)
-        head_response: Optional[HTTPResponse] = None
+        head_response: HTTPResponse | None = None
         if fetch_kind in {"pdf", "html", "sitemap"}:
             head_response = await self._safe_head(
                 source.landing_url,
@@ -128,8 +128,8 @@ class ReferenceSourceFetcher:
         self,
         url: str,
         *,
-        headers: Optional[Mapping[str, str]] = None,
-    ) -> Optional[HTTPResponse]:
+        headers: Mapping[str, str] | None = None,
+    ) -> HTTPResponse | None:
         try:
             response = await self._http.head(url, headers=headers or None)
         except Exception:  # pragma: no cover - defensive fallback for unsupported HEAD
@@ -138,9 +138,7 @@ class ReferenceSourceFetcher:
             return None
         return response
 
-    def _conditional_headers(
-        self, existing: Optional[RefDocument]
-    ) -> Mapping[str, str]:
+    def _conditional_headers(self, existing: RefDocument | None) -> Mapping[str, str]:
         headers: dict[str, str] = {}
         if existing and existing.http_etag:
             headers["If-None-Match"] = existing.http_etag
@@ -151,7 +149,7 @@ class ReferenceSourceFetcher:
     def _is_not_modified(
         self,
         response: HTTPResponse,
-        existing: Optional[RefDocument],
+        existing: RefDocument | None,
     ) -> bool:
         if response.status_code == 304:
             return True
@@ -170,7 +168,7 @@ class ReferenceSourceFetcher:
         return False
 
 
-def _get_header(headers: Mapping[str, str], key: str) -> Optional[str]:
+def _get_header(headers: Mapping[str, str], key: str) -> str | None:
     key_lower = key.lower()
     for header, value in headers.items():
         if header.lower() == key_lower:

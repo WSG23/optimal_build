@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncGenerator
 from importlib.util import find_spec
 from pathlib import Path
-from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,

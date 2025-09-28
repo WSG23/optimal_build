@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -13,9 +13,9 @@ class OverlayDecisionRecord(BaseModel):
 
     id: int
     decision: str
-    decided_by: Optional[str] = None
+    decided_by: str | None = None
     decided_at: datetime
-    notes: Optional[str] = None
+    notes: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,30 +27,30 @@ class OverlaySuggestion(BaseModel):
     project_id: int
     source_geometry_id: int
     code: str
-    type: Optional[str] = None
+    type: str | None = None
     title: str
-    rationale: Optional[str] = None
-    severity: Optional[str] = None
+    rationale: str | None = None
+    severity: str | None = None
     status: str
-    engine_version: Optional[str] = None
-    engine_payload: Dict[str, Any]
-    target_ids: List[str] = []
-    props: Dict[str, Any] = {}
-    rule_refs: List[str] = []
-    score: Optional[float] = None
+    engine_version: str | None = None
+    engine_payload: dict[str, Any]
+    target_ids: list[str] = []
+    props: dict[str, Any] = {}
+    rule_refs: list[str] = []
+    score: float | None = None
     geometry_checksum: str
     created_at: datetime
     updated_at: datetime
-    decided_at: Optional[datetime] = None
-    decided_by: Optional[str] = None
-    decision_notes: Optional[str] = None
-    decision: Optional[OverlayDecisionRecord] = None
+    decided_at: datetime | None = None
+    decided_by: str | None = None
+    decision_notes: str | None = None
+    decision: OverlayDecisionRecord | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
     @field_validator("target_ids", mode="before")
     @classmethod
-    def _ensure_target_ids(cls, value: object) -> List[str]:
+    def _ensure_target_ids(cls, value: object) -> list[str]:
         """Coerce target identifiers to a list of strings."""
 
         if value is None:
@@ -61,7 +61,7 @@ class OverlaySuggestion(BaseModel):
 
     @field_validator("props", mode="before")
     @classmethod
-    def _ensure_props(cls, value: object) -> Dict[str, Any]:
+    def _ensure_props(cls, value: object) -> dict[str, Any]:
         """Ensure a dictionary of properties is always returned."""
 
         if isinstance(value, dict):
@@ -70,7 +70,7 @@ class OverlaySuggestion(BaseModel):
 
     @field_validator("rule_refs", mode="before")
     @classmethod
-    def _ensure_rule_refs(cls, value: object) -> List[str]:
+    def _ensure_rule_refs(cls, value: object) -> list[str]:
         """Coerce rule references to a list of strings."""
 
         if value is None:
@@ -85,8 +85,8 @@ class OverlayDecisionPayload(BaseModel):
 
     suggestion_id: int
     decision: str
-    decided_by: Optional[str] = None
-    notes: Optional[str] = None
+    decided_by: str | None = None
+    notes: str | None = None
 
     @field_validator("decision")
     @classmethod

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import { ReviewAPI } from '../api/client'
 import type { SourceRecord } from '../types'
+import { toErrorMessage } from '../utils/error'
 
 const SourcesPage = () => {
   const [sources, setSources] = useState<SourceRecord[]>([])
@@ -9,13 +10,20 @@ const SourcesPage = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    ReviewAPI.getSources()
-      .then((response) => {
+    const loadSources = async () => {
+      setLoading(true)
+      try {
+        const response = await ReviewAPI.getSources()
         setSources(response.items)
         setError(null)
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (error) {
+        setError(toErrorMessage(error, 'Failed to load sources'))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadSources()
   }, [])
 
   return (

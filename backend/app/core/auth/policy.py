@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal
 
 
 class WorkspaceRole(str, Enum):
@@ -22,8 +22,8 @@ class SignoffSnapshot:
     project_id: int
     overlay_version: str
     status: SignoffStatus
-    architect_user_id: Optional[int]
-    signed_at: Optional[datetime]
+    architect_user_id: int | None
+    signed_at: datetime | None
 
     def is_approved(self) -> bool:
         return self.status == "approved"
@@ -32,7 +32,7 @@ class SignoffSnapshot:
 @dataclass(frozen=True)
 class PolicyContext:
     role: WorkspaceRole
-    signoff: Optional[SignoffSnapshot] = None
+    signoff: SignoffSnapshot | None = None
 
     @property
     def has_approved_signoff(self) -> bool:

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 import sys
+from importlib import import_module
 
 _backend_jobs = import_module("backend.jobs")
 

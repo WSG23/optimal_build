@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any, Literal
 
-from app.core.config import settings
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-_REQUEST_ALIAS_MAP: Dict[str, str] = {
+from app.core.config import settings
+
+_REQUEST_ALIAS_MAP: dict[str, str] = {
     "typFloorToFloorM": "typ_floor_to_floor_m",
     "efficiencyRatio": "efficiency_ratio",
     "defaults": "defaults",
 }
 
-_DEFAULTS_ALIAS_MAP: Dict[str, str] = {
+_DEFAULTS_ALIAS_MAP: dict[str, str] = {
     "plotRatio": "plot_ratio",
     "siteAreaM2": "site_area_m2",
     "siteCoverage": "site_coverage",
@@ -22,7 +24,7 @@ _DEFAULTS_ALIAS_MAP: Dict[str, str] = {
 }
 
 
-def _apply_aliases(data: Dict[str, Any], aliases: Mapping[str, str]) -> None:
+def _apply_aliases(data: dict[str, Any], aliases: Mapping[str, str]) -> None:
     """Populate canonical field names from known aliases."""
 
     for alias, field_name in aliases.items():
@@ -59,19 +61,19 @@ class BuildableDefaults(BaseModel):
 class BuildableRequest(BaseModel):
     """Request payload for buildable screening."""
 
-    address: Optional[str] = None
-    geometry: Optional[Dict[str, Any]] = None
-    project_type: Optional[str] = None
+    address: str | None = None
+    geometry: dict[str, Any] | None = None
+    project_type: str | None = None
     defaults: BuildableDefaults = Field(default_factory=BuildableDefaults)
-    typ_floor_to_floor_m: Optional[float] = Field(
+    typ_floor_to_floor_m: float | None = Field(
         default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M, gt=0
     )
-    efficiency_ratio: Optional[float] = Field(
+    efficiency_ratio: float | None = Field(
         default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0
     )
 
     @classmethod
-    def model_validate(cls, obj: Any, *args: Any, **kwargs: Any) -> "BuildableRequest":
+    def model_validate(cls, obj: Any, *args: Any, **kwargs: Any) -> BuildableRequest:
         """Normalise known camelCase keys before delegating to Pydantic."""
 
         if isinstance(obj, Mapping):
@@ -90,8 +92,8 @@ class BuildableRequest(BaseModel):
     @field_validator("geometry")
     @classmethod
     def _ensure_geojson_dict(
-        cls, value: Optional[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+        cls, value: dict[str, Any] | None
+    ) -> dict[str, Any] | None:
         """Only accept dictionaries for GeoJSON payloads."""
 
         if value is None:
@@ -102,7 +104,7 @@ class BuildableRequest(BaseModel):
 
     @field_validator("address")
     @classmethod
-    def _strip_address(cls, value: Optional[str]) -> Optional[str]:
+    def _strip_address(cls, value: str | None) -> str | None:
         """Normalise the address string."""
 
         if value is None:
@@ -112,7 +114,7 @@ class BuildableRequest(BaseModel):
 
     @field_validator("project_type")
     @classmethod
-    def _strip_project_type(cls, value: Optional[str]) -> Optional[str]:
+    def _strip_project_type(cls, value: str | None) -> str | None:
         """Normalise the project type string."""
 
         if value is None:
@@ -122,7 +124,7 @@ class BuildableRequest(BaseModel):
 
     @field_validator("efficiency_ratio")
     @classmethod
-    def _limit_efficiency_ratio(cls, value: Optional[float]) -> Optional[float]:
+    def _limit_efficiency_ratio(cls, value: float | None) -> float | None:
         """Ensure the efficiency ratio remains within a sensible range."""
 
         if value is None:
@@ -130,7 +132,7 @@ class BuildableRequest(BaseModel):
         return max(0.0, min(value, 1.0)) or None
 
     @model_validator(mode="after")
-    def _require_location(cls, instance: "BuildableRequest") -> "BuildableRequest":
+    def _require_location(cls, instance: BuildableRequest) -> BuildableRequest:
         """Ensure an address or geometry payload is supplied."""
 
         if not instance.address and not instance.geometry:
@@ -151,10 +153,10 @@ class BuildableRuleProvenance(BaseModel):
     """Provenance information for a rule."""
 
     rule_id: int
-    clause_ref: Optional[str] = None
-    document_id: Optional[int] = None
-    pages: Optional[List[int]] = None
-    seed_tag: Optional[str] = None
+    clause_ref: str | None = None
+    document_id: int | None = None
+    pages: list[int] | None = None
+    seed_tag: str | None = None
 
 
 class BuildableRule(BaseModel):
@@ -165,7 +167,7 @@ class BuildableRule(BaseModel):
     parameter_key: str
     operator: str
     value: str
-    unit: Optional[str] = None
+    unit: str | None = None
     provenance: BuildableRuleProvenance
 
 
@@ -173,11 +175,11 @@ class ZoneSource(BaseModel):
     """Metadata describing the source of the zoning information."""
 
     kind: Literal["parcel", "geometry", "unknown"]
-    layer_name: Optional[str] = None
-    jurisdiction: Optional[str] = None
-    parcel_ref: Optional[str] = None
-    parcel_source: Optional[str] = None
-    note: Optional[str] = None
+    layer_name: str | None = None
+    jurisdiction: str | None = None
+    parcel_ref: str | None = None
+    parcel_source: str | None = None
+    note: str | None = None
 
 
 class BuildableCalculation(BaseModel):
@@ -185,19 +187,19 @@ class BuildableCalculation(BaseModel):
 
     metrics: BuildableMetrics
     zone_source: ZoneSource
-    rules: List[BuildableRule]
+    rules: list[BuildableRule]
 
 
 class BuildableResponse(BaseModel):
     """Response payload returned by the buildable screening endpoint."""
 
     input_kind: Literal["address", "geometry"]
-    zone_code: Optional[str] = None
-    overlays: List[str]
-    advisory_hints: List[str]
+    zone_code: str | None = None
+    overlays: list[str]
+    advisory_hints: list[str]
     metrics: BuildableMetrics
     zone_source: ZoneSource
-    rules: List[BuildableRule]
+    rules: list[BuildableRule]
 
 
 __all__ = [

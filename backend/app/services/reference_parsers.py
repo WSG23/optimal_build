@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from html.parser import HTMLParser
-from typing import Iterable, List, Optional
 
 
 @dataclass(slots=True)
@@ -23,7 +23,7 @@ class ParsedClause:
 class ClauseParser:
     """Extract clauses from PDF or HTML payloads."""
 
-    def parse(self, kind: str, payload: bytes) -> List[ParsedClause]:
+    def parse(self, kind: str, payload: bytes) -> list[ParsedClause]:
         kind_lower = (kind or "").lower()
         if kind_lower == "pdf":
             text = self._decode(payload)
@@ -37,16 +37,16 @@ class ClauseParser:
     def _decode(self, payload: bytes) -> str:
         return payload.decode("utf-8", errors="ignore")
 
-    def _parse_text_clauses(self, text: str) -> List[ParsedClause]:
+    def _parse_text_clauses(self, text: str) -> list[ParsedClause]:
         pattern = re.compile(
             r"^(?:Section\s+)?(?P<ref>\d+(?:\.\d+)*(?:[A-Za-z])?)"
             r"(?:\s*[:\-.]\s+|\s+)(?P<title>.*)$",
             re.IGNORECASE,
         )
-        clauses: List[ParsedClause] = []
-        current_ref: Optional[str] = None
+        clauses: list[ParsedClause] = []
+        current_ref: str | None = None
         current_heading: str = ""
-        buffer: List[str] = []
+        buffer: list[str] = []
 
         for line in text.splitlines():
             stripped = line.strip()
@@ -84,7 +84,7 @@ class ClauseParser:
 
         return [clause for clause in clauses if clause.text or clause.heading]
 
-    def _parse_html_sections(self, payload: bytes) -> List[tuple[str, str]]:
+    def _parse_html_sections(self, payload: bytes) -> list[tuple[str, str]]:
         parser = _HTMLSectionParser()
         parser.feed(self._decode(payload))
         parser.close()
@@ -93,8 +93,8 @@ class ClauseParser:
     def _build_clauses_from_sections(
         self,
         sections: Iterable[tuple[str, str]],
-    ) -> List[ParsedClause]:
-        clauses: List[ParsedClause] = []
+    ) -> list[ParsedClause]:
+        clauses: list[ParsedClause] = []
         seen_refs: set[str] = set()
         for index, (heading, body) in enumerate(sections, start=1):
             clause_ref = self._extract_clause_ref(heading) or self._extract_clause_ref(
@@ -114,7 +114,7 @@ class ClauseParser:
             )
         return clauses
 
-    def _extract_clause_ref(self, text: str) -> Optional[str]:
+    def _extract_clause_ref(self, text: str) -> str | None:
         match = re.search(r"(\d+(?:\.\d+)*(?:[A-Za-z])?)", text or "")
         return match.group(1) if match else None
 
@@ -127,9 +127,9 @@ class _HTMLSectionParser(HTMLParser):
 
     def __init__(self) -> None:
         super().__init__()
-        self.sections: List[tuple[str, str]] = []
-        self._heading_parts: List[str] = []
-        self._text_parts: List[str] = []
+        self.sections: list[tuple[str, str]] = []
+        self._heading_parts: list[str] = []
+        self._text_parts: list[str] = []
         self._in_heading = False
         self._in_text = False
 

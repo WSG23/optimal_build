@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Pattern
+from re import Pattern
+from typing import Any
 
 
 @dataclass
@@ -14,14 +16,14 @@ class NormalizedRule:
     parameter_key: str
     operator: str
     value: Any
-    unit: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
-    hints: List[str] = field(default_factory=list)
+    unit: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
+    hints: list[str] = field(default_factory=list)
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Return a serialisable representation suitable for persistence."""
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "parameter_key": self.parameter_key,
             "operator": self.operator,
             "value": self.value,
@@ -39,18 +41,18 @@ class RuleTemplate:
 
     parameter_key: str
     operator: str
-    unit: Optional[str]
+    unit: str | None
     pattern: Pattern[str]
     value_transform: Callable[[re.Match[str]], Any]
-    hint_template: Optional[str] = None
+    hint_template: str | None = None
 
     def build_rule(
-        self, match: re.Match[str], *, context: Optional[Dict[str, Any]] = None
+        self, match: re.Match[str], *, context: dict[str, Any] | None = None
     ) -> NormalizedRule:
         """Create a :class:`NormalizedRule` instance from a regex match."""
 
         value = self.value_transform(match)
-        hints: List[str] = []
+        hints: list[str] = []
         if self.hint_template:
             hints.append(self.hint_template.format(value=value))
         return NormalizedRule(
@@ -67,7 +69,7 @@ class RuleNormalizer:
     """Normalise rule text using a library of templates."""
 
     def __init__(self) -> None:
-        self._templates: List[RuleTemplate] = []
+        self._templates: list[RuleTemplate] = []
         self._register_default_templates()
 
     def register_template(self, template: RuleTemplate) -> None:
@@ -76,11 +78,11 @@ class RuleNormalizer:
         self._templates.append(template)
 
     def normalize(
-        self, text: str, *, context: Optional[Dict[str, Any]] = None
-    ) -> List[NormalizedRule]:
+        self, text: str, *, context: dict[str, Any] | None = None
+    ) -> list[NormalizedRule]:
         """Extract structured rules from the provided text."""
 
-        matches: List[NormalizedRule] = []
+        matches: list[NormalizedRule] = []
         for template in self._templates:
             for match in template.pattern.finditer(text):
                 matches.append(template.build_rule(match, context=context))
@@ -88,8 +90,8 @@ class RuleNormalizer:
 
     @staticmethod
     def apply_overlays(
-        attributes: Dict[str, Any], overlays: Iterable[str]
-    ) -> Dict[str, Any]:
+        attributes: dict[str, Any], overlays: Iterable[str]
+    ) -> dict[str, Any]:
         """Persist overlays within a zoning layer attribute payload."""
 
         unique_overlays = list(dict.fromkeys(o for o in overlays if o))

@@ -4,24 +4,25 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
-from typing import List
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-
-from app.models.base import BaseModel, MetadataProxy
-from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
-    Enum as SAEnum,
     ForeignKey,
     Index,
     Integer,
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.models.base import BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
 
@@ -131,7 +132,7 @@ class EntAuthority(BaseModel):
         nullable=False,
     )
 
-    approval_types: Mapped[List["EntApprovalType"]] = relationship(
+    approval_types: Mapped[list[EntApprovalType]] = relationship(
         back_populates="authority", cascade="all, delete-orphan"
     )
     metadata = MetadataProxy()
@@ -171,7 +172,7 @@ class EntApprovalType(BaseModel):
     )
 
     authority: Mapped[EntAuthority] = relationship(back_populates="approval_types")
-    roadmap_items: Mapped[List["EntRoadmapItem"]] = relationship(
+    roadmap_items: Mapped[list[EntRoadmapItem]] = relationship(
         back_populates="approval_type"
     )
     metadata = MetadataProxy()

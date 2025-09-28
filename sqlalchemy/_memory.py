@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import copy
-import inspect
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Type
+from datetime import UTC, datetime
+from typing import Any
 
 
 def _callable(value: Any) -> bool:
@@ -24,7 +23,7 @@ def _evaluate_default(value: Any) -> Any:
         return value()
     name = getattr(value, "name", None)
     if isinstance(name, str) and name.lower() == "now":
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
     return copy.deepcopy(value)
 
 
@@ -130,10 +129,10 @@ class ColumnDescriptor:
         instance.__dict__[self.name] = _evaluate_default(self.onupdate)
 
 
-class RelatedList(List[Any]):
+class RelatedList(list[Any]):
     """List maintaining relationship back-references."""
 
-    def __init__(self, owner: Any, descriptor: "RelationshipDescriptor") -> None:
+    def __init__(self, owner: Any, descriptor: RelationshipDescriptor) -> None:
         super().__init__()
         self._owner = owner
         self._descriptor = descriptor
@@ -255,7 +254,7 @@ class MetaData:
     """Simplified metadata container mimicking SQLAlchemy's interface."""
 
     def __init__(self) -> None:
-        self.sorted_tables: List[Table] = []
+        self.sorted_tables: list[Table] = []
 
     def create_all(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401 - no-op
         return None
@@ -266,18 +265,18 @@ class SelectStatement:
 
     def __init__(self, entities: Sequence[Any]) -> None:
         self.entities = tuple(entities)
-        self._conditions: List[Condition] = []
-        self._ordering: List[OrderBy] = []
-        self._limit: Optional[int] = None
-        self._offset: Optional[int] = None
+        self._conditions: list[Condition] = []
+        self._ordering: list[OrderBy] = []
+        self._limit: int | None = None
+        self._offset: int | None = None
 
-    def where(self, *conditions: Condition) -> "SelectStatement":
+    def where(self, *conditions: Condition) -> SelectStatement:
         for condition in conditions:
             if condition is not None:
                 self._conditions.append(condition)
         return self
 
-    def order_by(self, *orderings: OrderBy | ColumnAccessor) -> "SelectStatement":
+    def order_by(self, *orderings: OrderBy | ColumnAccessor) -> SelectStatement:
         for ordering in orderings:
             if isinstance(ordering, ColumnAccessor):
                 self._ordering.append(OrderBy(ordering.attribute))
@@ -285,28 +284,28 @@ class SelectStatement:
                 self._ordering.append(ordering)
         return self
 
-    def limit(self, value: int) -> "SelectStatement":
+    def limit(self, value: int) -> SelectStatement:
         self._limit = value
         return self
 
-    def offset(self, value: int) -> "SelectStatement":
+    def offset(self, value: int) -> SelectStatement:
         self._offset = value
         return self
 
-    def options(self, *args: Any, **kwargs: Any) -> "SelectStatement":  # noqa: D401
+    def options(self, *args: Any, **kwargs: Any) -> SelectStatement:  # noqa: D401
         return self
 
     def join(
         self, *args: Any, **kwargs: Any
-    ) -> "SelectStatement":  # pragma: no cover - unused
+    ) -> SelectStatement:  # pragma: no cover - unused
         return self
 
     def outerjoin(
         self, *args: Any, **kwargs: Any
-    ) -> "SelectStatement":  # pragma: no cover - unused
+    ) -> SelectStatement:  # pragma: no cover - unused
         return self
 
-    def _apply(self, database: "InMemoryDatabase") -> List[Any]:
+    def _apply(self, database: InMemoryDatabase) -> list[Any]:
         if not self.entities:
             return []
         primary = self.entities[0]
@@ -335,16 +334,16 @@ class Result:
     def __init__(self, rows: Sequence[Any]) -> None:
         self._rows = list(rows)
 
-    def scalars(self) -> "ScalarResult":
+    def scalars(self) -> ScalarResult:
         return ScalarResult(self._rows)
 
-    def all(self) -> List[Any]:
+    def all(self) -> list[Any]:
         return list(self._rows)
 
     def first(self) -> Any:
         return self._rows[0] if self._rows else None
 
-    def fetchall(self) -> List[Any]:
+    def fetchall(self) -> list[Any]:
         return self.all()
 
     def scalar_one(self) -> Any:
@@ -359,7 +358,7 @@ class Result:
             raise RuntimeError("Expected zero or one row")
         return self._rows[0]
 
-    def mappings(self) -> "MappingResult":
+    def mappings(self) -> MappingResult:
         return MappingResult(self._rows)
 
 
@@ -369,9 +368,9 @@ class ScalarResult:
     def __init__(self, rows: Sequence[Any]) -> None:
         self._rows = list(rows)
 
-    def unique(self) -> "ScalarResult":
+    def unique(self) -> ScalarResult:
         seen: set[int] = set()
-        unique_rows: List[Any] = []
+        unique_rows: list[Any] = []
         for row in self._rows:
             identifier = id(row)
             if identifier in seen:
@@ -380,7 +379,7 @@ class ScalarResult:
             unique_rows.append(row)
         return ScalarResult(unique_rows)
 
-    def all(self) -> List[Any]:
+    def all(self) -> list[Any]:
         return list(self._rows)
 
     def first(self) -> Any:
@@ -408,7 +407,7 @@ class MappingResult:
     def __init__(self, rows: Sequence[Any]) -> None:
         self._rows = list(rows)
 
-    def first(self) -> Optional[Dict[str, Any]]:
+    def first(self) -> dict[str, Any] | None:
         return self._rows[0] if self._rows else None
 
 
@@ -416,10 +415,10 @@ class InMemoryDatabase:
     """Simple store maintaining data for mapped models."""
 
     def __init__(self) -> None:
-        self._data: Dict[type, List[Any]] = {}
-        self._pk_sequence: Dict[type, int] = {}
-        self._columns: Dict[type, List[ColumnDescriptor]] = {}
-        self._table_map: Dict[str, type] = {}
+        self._data: dict[type, list[Any]] = {}
+        self._pk_sequence: dict[type, int] = {}
+        self._columns: dict[type, list[ColumnDescriptor]] = {}
+        self._table_map: dict[str, type] = {}
 
     def register_model(self, model: type, table_name: str) -> None:
         self._data.setdefault(model, [])
@@ -475,7 +474,7 @@ class InMemoryDatabase:
                     if column.onupdate is not None:
                         column.apply_onupdate(row)
 
-    def resolve_table(self, table_name: str) -> Optional[type]:
+    def resolve_table(self, table_name: str) -> type | None:
         return self._table_map.get(table_name)
 
 
@@ -488,11 +487,11 @@ def register_model(model: type, table_name: str) -> None:
 
 def register_column(model: type, name: str, column: ColumnDescriptor) -> None:
     if column.primary_key:
-        setattr(model, "__primary_key__", name)
+        model.__primary_key__ = name
     mapped = getattr(model, "__mapped_columns__", None)
     if mapped is None:
         mapped = {}
-        setattr(model, "__mapped_columns__", mapped)
+        model.__mapped_columns__ = mapped
     mapped[name] = column
     GLOBAL_DATABASE.register_column(model, column)
 
@@ -503,5 +502,5 @@ def register_relationship(
     relationships = getattr(model, "__relationships__", None)
     if relationships is None:
         relationships = {}
-        setattr(model, "__relationships__", relationships)
+        model.__relationships__ = relationships
     relationships[name] = descriptor

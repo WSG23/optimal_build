@@ -28,6 +28,8 @@ ensure_backend_path()
 
 from backend.flows.ergonomics import (  # noqa: E402  pylint: disable=wrong-import-position
     fetch_seeded_metrics,
+)
+from backend.flows.ergonomics import (
     seed_ergonomics_metrics as _seed_ergonomics_metrics,
 )
 from backend.flows.normalize_rules import (  # noqa: E402  pylint: disable=wrong-import-position

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Union
 
 from app.models.rkp import RefCostIndex
 
@@ -18,10 +19,10 @@ DEFAULT_PRECISION = 28
 class DscrEntry:
     """Single period DSCR breakdown."""
 
-    period: Union[int, str]
+    period: int | str
     noi: Decimal
     debt_service: Decimal
-    dscr: Optional[Decimal]
+    dscr: Decimal | None
     currency: str
 
 
@@ -30,10 +31,10 @@ class PriceSensitivityResult:
     """Immutable representation of a 2D price sensitivity analysis."""
 
     currency: str
-    price_deltas: Tuple[Decimal, ...]
-    volume_deltas: Tuple[Decimal, ...]
-    prices: Tuple[Decimal, ...]
-    grid: Tuple[Tuple[Decimal, ...], ...]
+    price_deltas: tuple[Decimal, ...]
+    volume_deltas: tuple[Decimal, ...]
+    prices: tuple[Decimal, ...]
+    grid: tuple[tuple[Decimal, ...], ...]
 
 
 def _to_decimal(value: NumberLike) -> Decimal:
@@ -52,7 +53,7 @@ def _quantize_currency(value: Decimal) -> Decimal:
     return value.quantize(CURRENCY_QUANTIZER, rounding=ROUND_HALF_UP)
 
 
-def _normalise_cash_flows(cash_flows: Sequence[NumberLike]) -> Tuple[Decimal, ...]:
+def _normalise_cash_flows(cash_flows: Sequence[NumberLike]) -> tuple[Decimal, ...]:
     """Normalise an iterable of cash flows into a tuple of :class:`Decimal`."""
 
     return tuple(_to_decimal(cash) for cash in cash_flows)
@@ -189,10 +190,10 @@ def dscr_timeline(
     net_operating_incomes: Sequence[NumberLike],
     debt_services: Sequence[NumberLike],
     *,
-    period_labels: Optional[Sequence[Union[int, str]]] = None,
+    period_labels: Sequence[int | str] | None = None,
     currency: str = "SGD",
     precision: int = DEFAULT_PRECISION,
-) -> List[DscrEntry]:
+) -> list[DscrEntry]:
     """Generate a DSCR timeline ensuring monetary values are rounded to cents."""
 
     incomes = _normalise_cash_flows(net_operating_incomes)
@@ -204,15 +205,15 @@ def dscr_timeline(
     if period_labels and len(period_labels) != len(incomes):
         raise ValueError("period_labels must match the length of the cash flow series.")
 
-    entries: List[DscrEntry] = []
+    entries: list[DscrEntry] = []
     with localcontext() as ctx:
         ctx.prec = precision
-        for idx, (noi, debt) in enumerate(zip(incomes, services)):
+        for idx, (noi, debt) in enumerate(zip(incomes, services, strict=False)):
             period = period_labels[idx] if period_labels else idx
             quantized_noi = _quantize_currency(noi)
             quantized_debt = _quantize_currency(debt)
             if debt == 0:
-                dscr_value: Optional[Decimal]
+                dscr_value: Decimal | None
                 if noi > 0:
                     dscr_value = Decimal("Infinity")
                 elif noi < 0:
@@ -251,15 +252,15 @@ def price_sensitivity_grid(
     price = _to_decimal(base_price)
     volume = _to_decimal(base_volume)
 
-    price_points: List[Decimal] = []
-    grid_rows: List[Tuple[Decimal, ...]] = []
+    price_points: list[Decimal] = []
+    grid_rows: list[tuple[Decimal, ...]] = []
 
     with localcontext() as ctx:
         ctx.prec = precision
         for price_delta in price_adjustments:
             adjusted_price = _quantize_currency(price * (Decimal("1") + price_delta))
             price_points.append(adjusted_price)
-            row: List[Decimal] = []
+            row: list[Decimal] = []
             for volume_delta in volume_adjustments:
                 adjusted_volume = volume * (Decimal("1") + volume_delta)
                 revenue = _quantize_currency(adjusted_price * adjusted_volume)
@@ -280,9 +281,9 @@ def escalate_amount(
     *,
     base_period: str,
     indices: Iterable[RefCostIndex],
-    series_name: Optional[str] = None,
-    jurisdiction: Optional[str] = None,
-    provider: Optional[str] = None,
+    series_name: str | None = None,
+    jurisdiction: str | None = None,
+    provider: str | None = None,
     precision: int = DEFAULT_PRECISION,
 ) -> Decimal:
     """Escalate ``amount`` by comparing base and latest cost indices."""

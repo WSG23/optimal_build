@@ -5,10 +5,14 @@ from __future__ import annotations
 import csv
 import io
 import json
+from collections.abc import Iterator
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from time import perf_counter
-from typing import Any, Iterator, List, Optional
+from typing import Any
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -27,9 +31,6 @@ from app.schemas.finance import (
 from app.services.finance import calculator
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
-from sqlalchemy import select
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)
@@ -66,7 +67,7 @@ def _build_cost_index_snapshot(index: RefCostIndex | None) -> CostIndexSnapshot 
 
 def _compute_scalar(
     base: CostIndexSnapshot | None, latest: CostIndexSnapshot | None
-) -> Optional[Decimal]:
+) -> Decimal | None:
     """Return the escalation scalar derived from the supplied snapshots."""
 
     if base is None or latest is None:
@@ -105,7 +106,7 @@ def _convert_dscr_entry(entry: calculator.DscrEntry) -> DscrEntrySchema:
     )
 
 
-def _flush_buffer(stream: io.StringIO) -> Optional[bytes]:
+def _flush_buffer(stream: io.StringIO) -> bytes | None:
     """Read and reset the buffer returning encoded CSV content."""
 
     data = stream.getvalue()
@@ -283,7 +284,7 @@ async def run_finance_feasibility(
         if cost_input.provider:
             stmt = stmt.where(RefCostIndex.provider == cost_input.provider)
         indices_result = await session.execute(stmt)
-        indices: List[RefCostIndex] = list(indices_result.scalars().all())
+        indices: list[RefCostIndex] = list(indices_result.scalars().all())
 
         escalated_cost = calculator.escalate_amount(
             cost_input.amount,
@@ -330,7 +331,7 @@ async def run_finance_feasibility(
         npv_value = calculator.npv(cash_inputs.discount_rate, cash_inputs.cash_flows)
         npv_rounded = npv_value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-        irr_value: Optional[Decimal] = None
+        irr_value: Decimal | None = None
         irr_metadata = {
             "cash_flows": [str(value) for value in cash_inputs.cash_flows],
             "discount_rate": str(cash_inputs.discount_rate),
@@ -343,8 +344,8 @@ async def run_finance_feasibility(
                 "IRR could not be computed for the provided cash flows"
             )
 
-        dscr_entries: List[DscrEntrySchema] = []
-        dscr_metadata: dict[str, List[dict[str, object]]] = {}
+        dscr_entries: list[DscrEntrySchema] = []
+        dscr_metadata: dict[str, list[dict[str, object]]] = {}
         if payload.scenario.dscr:
             try:
                 timeline = calculator.dscr_timeline(
@@ -362,7 +363,7 @@ async def run_finance_feasibility(
                 ],
             }
 
-        results: List[FinResult] = [
+        results: list[FinResult] = [
             FinResult(
                 project_id=payload.project_id,
                 scenario=scenario,

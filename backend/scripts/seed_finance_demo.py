@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
@@ -22,6 +21,7 @@ from app.models.finance import (
 from app.models.rkp import RefCostIndex
 from app.services.finance import calculator
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 DEMO_PROJECT_ID = 401
 DEMO_PROJECT_NAME = "Finance Demo Development"
@@ -57,7 +57,7 @@ class FinanceDemoSummary:
     schedule_rows: int
     results: int
 
-    def as_dict(self) -> Dict[str, int]:
+    def as_dict(self) -> dict[str, int]:
         return {
             "project_id": self.project_id,
             "fin_project_id": self.fin_project_id,
@@ -391,7 +391,7 @@ def _to_decimal(value: DecimalLike, *, places: int = 2) -> Decimal:
     return decimal_value.quantize(quantiser, rounding=ROUND_HALF_UP)
 
 
-def _serialise_cashflows(values: Iterable[Decimal]) -> List[str]:
+def _serialise_cashflows(values: Iterable[Decimal]) -> list[str]:
     return [str(_to_decimal(value)) for value in values]
 
 
@@ -407,8 +407,8 @@ async def _load_indices(
     *,
     series_name: str,
     jurisdiction: str,
-    provider: Optional[str],
-) -> List[RefCostIndex]:
+    provider: str | None,
+) -> list[RefCostIndex]:
     stmt = select(RefCostIndex).where(
         RefCostIndex.series_name == series_name,
         RefCostIndex.jurisdiction == jurisdiction,
@@ -426,7 +426,7 @@ async def _seed_scenario(
     definition: Mapping[str, Any],
 ) -> ScenarioSeedResult:
     key = str(definition.get("key", ""))
-    assumptions: Dict[str, Any] = {
+    assumptions: dict[str, Any] = {
         "key": key,
         "name": definition["name"],
         "description": definition.get("description"),
@@ -470,7 +470,7 @@ async def _seed_scenario(
     await session.flush()
 
     total_cost = Decimal("0")
-    cost_items: List[FinCostItem] = []
+    cost_items: list[FinCostItem] = []
     for item in definition.get("cost_items", []):
         quantity = item.get("quantity")
         unit_cost = item.get("unit_cost")
@@ -493,7 +493,7 @@ async def _seed_scenario(
 
     cumulative = Decimal("0")
     total_revenue = Decimal("0")
-    schedule_rows: List[FinSchedule] = []
+    schedule_rows: list[FinSchedule] = []
     for entry in definition.get("schedule", []):
         hard = _to_decimal(entry.get("hard_cost", 0))
         soft = _to_decimal(entry.get("soft_cost", 0))
@@ -537,8 +537,8 @@ async def _seed_scenario(
     npv_value = calculator.npv(discount_rate, cash_flows)
     npv_rounded = _to_decimal(npv_value)
 
-    irr_value: Optional[Decimal] = None
-    irr_metadata: Dict[str, Any] = {
+    irr_value: Decimal | None = None
+    irr_metadata: dict[str, Any] = {
         "cash_flows": _serialise_cashflows(cash_flows),
         "discount_rate": str(_to_decimal(discount_rate, places=4)),
     }
@@ -550,8 +550,8 @@ async def _seed_scenario(
             "IRR could not be computed because the cash flows lack a sign change"
         )
 
-    dscr_entries: List[calculator.DscrEntry] = []
-    dscr_metadata: Dict[str, Any] = {}
+    dscr_entries: list[calculator.DscrEntry] = []
+    dscr_metadata: dict[str, Any] = {}
     if dscr_config:
         timeline = calculator.dscr_timeline(
             dscr_config["net_operating_incomes"],
@@ -573,7 +573,7 @@ async def _seed_scenario(
             ]
         }
 
-    results: List[FinResult] = [
+    results: list[FinResult] = [
         FinResult(
             project_id=fin_project.project_id,
             scenario_id=scenario.id,
@@ -669,7 +669,7 @@ async def seed_finance_demo(
     session.add(fin_project)
     await session.flush()
 
-    scenario_results: List[ScenarioSeedResult] = []
+    scenario_results: list[ScenarioSeedResult] = []
     for definition in SCENARIO_DEFINITIONS:
         result = await _seed_scenario(
             session, fin_project=fin_project, definition=definition
@@ -691,7 +691,9 @@ async def seed_finance_demo(
         **(fin_project.metadata or {}),
         "scenarios": {
             str(definition.get("key", result.scenario.id)): result.scenario.id
-            for definition, result in zip(SCENARIO_DEFINITIONS, scenario_results)
+            for definition, result in zip(
+                SCENARIO_DEFINITIONS, scenario_results, strict=False
+            )
         },
     }
 
@@ -748,7 +750,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> FinanceDemoSummary:
+def main(argv: Sequence[str] | None = None) -> FinanceDemoSummary:
     """Entry point for CLI execution."""
 
     parser = _build_parser()

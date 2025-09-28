@@ -3,28 +3,29 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Mapping as MappingABC
-from collections.abc import Sequence as SequenceABC
-from dataclasses import dataclass
-from dataclasses import dataclass
-from datetime import date, datetime
-from decimal import Decimal
-from functools import lru_cache
 import inspect
 import json
 import re
-from enum import Enum
-from typing import (
-    Any,
+from collections.abc import (
     Awaitable,
     Callable,
-    Dict,
     Iterable,
     Mapping,
+    Mapping as MappingABC,
+    Sequence as SequenceABC,
+)
+from dataclasses import dataclass
+from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
+from functools import cache, lru_cache
+from typing import (
+    Any,
+    Dict,
+    Literal,
     Optional,
     Tuple,
     Union,
-    Literal,
     get_args,
     get_origin,
     get_type_hints,
@@ -102,12 +103,12 @@ class Response:
         *,
         status_code: int = status.HTTP_200_OK,
         media_type: str | None = "application/json",
-        headers: Optional[Mapping[str, str]] = None,
+        headers: Mapping[str, str] | None = None,
     ) -> None:
         self.status_code = status_code
         self.media_type = media_type
         self._content = content
-        self.headers: Dict[str, str] = dict(headers or {})
+        self.headers: dict[str, str] = dict(headers or {})
 
     async def render(self) -> bytes:
         content = self._content
@@ -131,8 +132,8 @@ class StreamingResponse(Response):
         *,
         media_type: str | None = None,
         status_code: int = status.HTTP_200_OK,
-        headers: Optional[Mapping[str, str]] = None,
-        background: Optional[Callable[[], Awaitable[None] | None]] = None,
+        headers: Mapping[str, str] | None = None,
+        background: Callable[[], Awaitable[None] | None] | None = None,
     ) -> None:
         super().__init__(
             b"", status_code=status_code, media_type=media_type, headers=headers
@@ -175,7 +176,7 @@ class JSONResponse(Response):
         content: Any,
         *,
         status_code: int = status.HTTP_200_OK,
-        headers: Optional[Mapping[str, str]] = None,
+        headers: Mapping[str, str] | None = None,
     ) -> None:
         super().__init__(
             content,
@@ -248,7 +249,7 @@ def _build_model_example(annotation: Any) -> Any:
             return _normalise_example([item_example])
         if (isinstance(origin, type) and issubclass(origin, MappingABC)) or origin in {
             dict,
-            Dict,
+            dict,
             Mapping,
         }:
             args = get_args(annotation)
@@ -294,7 +295,7 @@ def _build_model_example(annotation: Any) -> Any:
 def _build_base_model_example(model: type[BaseModel]) -> Any:
     """Create a JSON-serialisable example for a pydantic model."""
 
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
     for name, field in getattr(model, "model_fields", {}).items():
         annotation = getattr(field, "annotation", Any)
         value: Any
@@ -345,7 +346,7 @@ def _is_pydantic_model_type(annotation: Any) -> bool:
             return any(_is_pydantic_model_type(arg) for arg in get_args(annotation))
         if (isinstance(origin, type) and issubclass(origin, MappingABC)) or origin in {
             dict,
-            Dict,
+            dict,
             Mapping,
         }:
             args = get_args(annotation)
@@ -354,7 +355,7 @@ def _is_pydantic_model_type(annotation: Any) -> bool:
     return False
 
 
-def _extract_request_model(route: "_Route") -> Any:
+def _extract_request_model(route: _Route) -> Any:
     """Return the request body model associated with the route if present."""
 
     endpoint = route.endpoint
@@ -378,8 +379,8 @@ class _Route:
         *,
         endpoint: Callable[..., Any],
         methods: Iterable[str],
-        response_model: Optional[type] = None,
-        status_code: Optional[int] = None,
+        response_model: type | None = None,
+        status_code: int | None = None,
     ) -> None:
         self.path = path
         self.endpoint = endpoint
@@ -388,16 +389,16 @@ class _Route:
         self.status_code = status_code
         self.pattern, self.param_converters = _compile_path(path)
 
-    def match(self, path: str) -> Optional[Dict[str, str]]:
+    def match(self, path: str) -> dict[str, str] | None:
         match = self.pattern.match(path)
         if not match:
             return None
         return match.groupdict()
 
 
-def _compile_path(path: str) -> Tuple[re.Pattern[str], Dict[str, Callable[[str], Any]]]:
+def _compile_path(path: str) -> tuple[re.Pattern[str], dict[str, Callable[[str], Any]]]:
     pattern = "^"
-    converters: Dict[str, Callable[[str], Any]] = {}
+    converters: dict[str, Callable[[str], Any]] = {}
     for segment in filter(None, path.split("/")):
         if segment.startswith("{") and segment.endswith("}"):
             name = segment.strip("{}")
@@ -419,7 +420,7 @@ class APIRouter:
     """Collects routes prior to inclusion within an application."""
 
     def __init__(
-        self, *, prefix: str = "", tags: Optional[Iterable[str]] = None
+        self, *, prefix: str = "", tags: Iterable[str] | None = None
     ) -> None:
         self.prefix = prefix.rstrip("/")
         self.routes: list[_Route] = []
@@ -431,8 +432,8 @@ class APIRouter:
         endpoint: Callable[..., Any],
         *,
         methods: Iterable[str],
-        response_model: Optional[type] = None,
-        status_code: Optional[int] = None,
+        response_model: type | None = None,
+        status_code: int | None = None,
     ) -> None:
         full_path = (
             f"{self.prefix}{path}" if path.startswith("/") else f"{self.prefix}/{path}"
@@ -450,9 +451,9 @@ class APIRouter:
         self,
         path: str,
         *,
-        methods: Optional[Iterable[str]] = None,
-        response_model: Optional[type] = None,
-        status_code: Optional[int] = None,
+        methods: Iterable[str] | None = None,
+        response_model: type | None = None,
+        status_code: int | None = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         resolved_methods = [method.upper() for method in (methods or ["GET"])]
@@ -468,7 +469,7 @@ class APIRouter:
         self,
         path: str,
         *,
-        response_model: Optional[type] = None,
+        response_model: type | None = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         return self._decorator(
@@ -479,8 +480,8 @@ class APIRouter:
         self,
         path: str,
         *,
-        response_model: Optional[type] = None,
-        status_code: Optional[int] = None,
+        response_model: type | None = None,
+        status_code: int | None = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         return self.api_route(
@@ -495,7 +496,7 @@ class APIRouter:
         self,
         path: str,
         *,
-        response_model: Optional[type] = None,
+        response_model: type | None = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         return self._decorator(
@@ -506,8 +507,8 @@ class APIRouter:
         self,
         path: str,
         *,
-        response_model: Optional[type] = None,
-        status_code: Optional[int] = None,
+        response_model: type | None = None,
+        status_code: int | None = None,
         **kwargs: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         return self._decorator(
@@ -518,7 +519,7 @@ class APIRouter:
             **kwargs,
         )
 
-    def include_router(self, router: "APIRouter") -> None:
+    def include_router(self, router: APIRouter) -> None:
         for route in router.routes:
             self.routes.append(route)
 
@@ -527,8 +528,8 @@ class APIRouter:
         path: str,
         *,
         methods: Iterable[str],
-        response_model: Optional[type] = None,
-        status_code: Optional[int] = None,
+        response_model: type | None = None,
+        status_code: int | None = None,
         **_: Any,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -560,11 +561,11 @@ class FastAPI:
         self.version = version or "0.1.0"
         self.router = APIRouter()
         self.routes: list[_Route] = []
-        self.dependency_overrides: Dict[Callable[..., Any], Callable[..., Any]] = {}
+        self.dependency_overrides: dict[Callable[..., Any], Callable[..., Any]] = {}
         self._middleware: list[tuple[Any, dict[str, Any]]] = []
         self._lifespan = lifespan
         self.openapi_tags: list[dict[str, Any]] = list(extra.get("openapi_tags", []))
-        self._openapi_schema: Dict[str, Any] | None = None
+        self._openapi_schema: dict[str, Any] | None = None
         self.openapi_url = openapi_url
 
         if self.openapi_url:
@@ -605,7 +606,7 @@ class FastAPI:
         self._openapi_schema = None
 
     def get(
-        self, path: str, *, response_model: Optional[type] = None
+        self, path: str, *, response_model: type | None = None
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         decorator = self.router.get(path, response_model=response_model)
 
@@ -620,8 +621,8 @@ class FastAPI:
         self,
         path: str,
         *,
-        response_model: Optional[type] = None,
-        status_code: Optional[int] = None,
+        response_model: type | None = None,
+        status_code: int | None = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         decorator = self.router.post(
             path,
@@ -644,9 +645,9 @@ class FastAPI:
         query_params: Mapping[str, Any] | None = None,
         json_body: Any = None,
         form_data: Mapping[str, Any] | None = None,
-        files: Mapping[str, Tuple[str, bytes, str]] | None = None,
+        files: Mapping[str, tuple[str, bytes, str]] | None = None,
         headers: Mapping[str, str] | None = None,
-    ) -> Tuple[int, Dict[str, str], bytes]:
+    ) -> tuple[int, dict[str, str], bytes]:
         route = self._match_route(method, path)
         if route is None:
             return (
@@ -675,7 +676,7 @@ class FastAPI:
             headers = {"content-type": "application/json"}
             return exc.status_code, headers, payload
 
-    def _match_route(self, method: str, path: str) -> Optional[_Route]:
+    def _match_route(self, method: str, path: str) -> _Route | None:
         candidates = self.routes + self.router.routes
         for route in candidates:
             if method.upper() not in route.methods:
@@ -684,13 +685,13 @@ class FastAPI:
                 return route
         return None
 
-    def openapi(self) -> Dict[str, Any]:
+    def openapi(self) -> dict[str, Any]:
         """Return a cached OpenAPI representation of the registered routes."""
 
         if self._openapi_schema is not None:
             return self._openapi_schema
 
-        schema: Dict[str, Any] = {
+        schema: dict[str, Any] = {
             "openapi": "3.1.0",
             "info": {"title": self.title, "version": self.version},
             "paths": {},
@@ -703,7 +704,7 @@ class FastAPI:
             request_model = _extract_request_model(route)
             summary = inspect.getdoc(route.endpoint)
             for method in sorted(route.methods):
-                operation: Dict[str, Any] = {}
+                operation: dict[str, Any] = {}
                 if summary:
                     operation["summary"] = summary.splitlines()[0]
 
@@ -717,7 +718,7 @@ class FastAPI:
                         }
 
                 status_code = route.status_code or status.HTTP_200_OK
-                responses: Dict[str, Any] = {
+                responses: dict[str, Any] = {
                     str(status_code): {"description": "Successful Response"}
                 }
                 response_model = route.response_model
@@ -744,9 +745,9 @@ async def _execute_route(
     query_params: Mapping[str, Any],
     json_body: Any,
     form_data: Mapping[str, Any],
-    files: Mapping[str, Tuple[str, bytes, str]],
+    files: Mapping[str, tuple[str, bytes, str]],
     headers: Mapping[str, str],
-) -> Tuple[int, Dict[str, str], bytes]:
+) -> tuple[int, dict[str, str], bytes]:
     path_params = route.match(path) or {}
     converted_params = {
         key: _convert_path_param(value, route.endpoint, key)
@@ -794,12 +795,12 @@ async def _build_arguments(
     query_params: Mapping[str, Any],
     json_body: Any,
     form_data: Mapping[str, Any],
-    files: Mapping[str, Tuple[str, bytes, str]],
+    files: Mapping[str, tuple[str, bytes, str]],
     headers: Mapping[str, str],
     cleanup_callbacks: list[Callable[[], Awaitable[None] | None]],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     signature = inspect.signature(endpoint)
-    arguments: Dict[str, Any] = {}
+    arguments: dict[str, Any] = {}
 
     body_consumed = False
     for name, parameter in signature.parameters.items():
@@ -916,7 +917,7 @@ async def _resolve_dependency(
     query_params: Mapping[str, Any],
     json_body: Any,
     form_data: Mapping[str, Any],
-    files: Mapping[str, Tuple[str, bytes, str]],
+    files: Mapping[str, tuple[str, bytes, str]],
     headers: Mapping[str, str],
     cleanup_callbacks: list[Callable[[], Awaitable[None] | None]],
 ) -> Any:
@@ -972,8 +973,8 @@ async def _resolve_dependency(
     return result
 
 
-@lru_cache(maxsize=None)
-def _type_hints_for(endpoint: Callable[..., Any]) -> Dict[str, Any]:
+@cache
+def _type_hints_for(endpoint: Callable[..., Any]) -> dict[str, Any]:
     try:
         return get_type_hints(endpoint)
     except Exception:
@@ -1030,9 +1031,9 @@ def _convert_path_param(value: str, endpoint: Callable[..., Any], name: str) -> 
 
 async def _serialise_response(
     route: _Route, result: Any
-) -> Tuple[int, Dict[str, str], bytes]:
+) -> tuple[int, dict[str, str], bytes]:
     status_code = route.status_code or status.HTTP_200_OK
-    headers: Dict[str, str] = {"content-type": "application/json"}
+    headers: dict[str, str] = {"content-type": "application/json"}
 
     if isinstance(result, Response):
         payload = await result.render()

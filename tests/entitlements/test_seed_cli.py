@@ -8,10 +8,8 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
 from backend.scripts import seed_entitlements_sg as script
-
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 PROJECT_ID = 90301
 

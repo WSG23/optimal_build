@@ -7,6 +7,7 @@ import type {
   EntRoadmapItemRecord,
   EntStudyRecord,
 } from '../types'
+import { toErrorMessage } from '../utils/error'
 
 const PROJECT_ID = 501
 
@@ -71,6 +72,17 @@ const legalTypes = [
 ]
 
 const legalStatuses = ['draft', 'in_review', 'executed', 'expired']
+
+const describeAttachment = (attachment: Record<string, unknown>): string => {
+  const candidate = ['url', 'label', 'href']
+    .map((key) => attachment[key])
+    .find(
+      (value): value is string =>
+        typeof value === 'string' && value.trim() !== '',
+    )
+
+  return candidate ?? 'Attachment'
+}
 
 interface StudyFormState {
   name: string
@@ -194,10 +206,8 @@ const EntitlementsPage = () => {
       setStakeholders(stakeholdersResp.items)
       setLegal(legalResp.items)
       setError(null)
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to load entitlements',
-      )
+    } catch (error) {
+      setError(toErrorMessage(error, 'Failed to load entitlements'))
     } finally {
       setLoading(false)
     }
@@ -214,14 +224,12 @@ const EntitlementsPage = () => {
     try {
       await EntitlementsAPI.updateRoadmap(PROJECT_ID, item.id, { status })
       void refreshData()
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to update roadmap item',
-      )
+    } catch (error) {
+      setError(toErrorMessage(error, 'Failed to update roadmap item'))
     }
   }
 
-  const handleStudySubmit = async (event: FormEvent) => {
+  const handleStudySubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     try {
       const payload = {
@@ -238,12 +246,12 @@ const EntitlementsPage = () => {
       await EntitlementsAPI.createStudy(PROJECT_ID, payload)
       setStudyForm(defaultStudyForm)
       void refreshData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create study')
+    } catch (error) {
+      setError(toErrorMessage(error, 'Failed to create study'))
     }
   }
 
-  const handleEngagementSubmit = async (event: FormEvent) => {
+  const handleEngagementSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     try {
       const payload = {
@@ -259,14 +267,12 @@ const EntitlementsPage = () => {
       await EntitlementsAPI.createStakeholder(PROJECT_ID, payload)
       setEngagementForm(defaultEngagementForm)
       void refreshData()
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to create stakeholder',
-      )
+    } catch (error) {
+      setError(toErrorMessage(error, 'Failed to create stakeholder'))
     }
   }
 
-  const handleLegalSubmit = async (event: FormEvent) => {
+  const handleLegalSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     try {
       const payload = {
@@ -284,12 +290,8 @@ const EntitlementsPage = () => {
       await EntitlementsAPI.createLegalInstrument(PROJECT_ID, payload)
       setLegalForm(defaultLegalForm)
       void refreshData()
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to create legal instrument',
-      )
+    } catch (error) {
+      setError(toErrorMessage(error, 'Failed to create legal instrument'))
     }
   }
 
@@ -303,19 +305,23 @@ const EntitlementsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-400">
-                Sequence #{item.sequence_order}
+                {`Sequence #${item.sequence_order.toString()}`}
               </p>
               <p className="text-lg font-semibold text-slate-100">
-                Approval #{item.approval_type_id ?? 'Unassigned'}
+                {`Approval #${
+                  item.approval_type_id === null
+                    ? 'Unassigned'
+                    : item.approval_type_id.toString()
+                }`}
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <StatusPill status={item.status} />
               <select
                 value={item.status}
-                onChange={(event) =>
-                  handleRoadmapStatusChange(item, event.target.value)
-                }
+                onChange={(event) => {
+                  void handleRoadmapStatusChange(item, event.target.value)
+                }}
                 className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-100 focus:outline-none focus:ring focus:ring-emerald-500"
               >
                 {statusOptions.roadmap.map((status) => (
@@ -366,7 +372,9 @@ const EntitlementsPage = () => {
   const renderStudies = () => (
     <div className="space-y-6">
       <form
-        onSubmit={handleStudySubmit}
+        onSubmit={(event) => {
+          void handleStudySubmit(event)
+        }}
         className="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
       >
         <h3 className="text-sm font-semibold text-slate-200">Add study</h3>
@@ -376,9 +384,9 @@ const EntitlementsPage = () => {
             <input
               required
               value={studyForm.name}
-              onChange={(event) =>
+              onChange={(event) => {
                 setStudyForm((prev) => ({ ...prev, name: event.target.value }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring focus:ring-emerald-500"
             />
           </label>
@@ -386,12 +394,12 @@ const EntitlementsPage = () => {
             Study Type
             <select
               value={studyForm.study_type}
-              onChange={(event) =>
+              onChange={(event) => {
                 setStudyForm((prev) => ({
                   ...prev,
                   study_type: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             >
               {studyTypes.map((option) => (
@@ -405,12 +413,12 @@ const EntitlementsPage = () => {
             Status
             <select
               value={studyForm.status}
-              onChange={(event) =>
+              onChange={(event) => {
                 setStudyForm((prev) => ({
                   ...prev,
                   status: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             >
               {studyStatuses.map((status) => (
@@ -424,12 +432,12 @@ const EntitlementsPage = () => {
             Consultant
             <input
               value={studyForm.consultant}
-              onChange={(event) =>
+              onChange={(event) => {
                 setStudyForm((prev) => ({
                   ...prev,
                   consultant: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -438,12 +446,12 @@ const EntitlementsPage = () => {
             <input
               type="date"
               value={studyForm.due_date}
-              onChange={(event) =>
+              onChange={(event) => {
                 setStudyForm((prev) => ({
                   ...prev,
                   due_date: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -452,12 +460,12 @@ const EntitlementsPage = () => {
             <input
               type="url"
               value={studyForm.report_url}
-              onChange={(event) =>
+              onChange={(event) => {
                 setStudyForm((prev) => ({
                   ...prev,
                   report_url: event.target.value,
                 }))
-              }
+              }}
               placeholder="https://"
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
@@ -509,12 +517,7 @@ const EntitlementsPage = () => {
                   {study.attachments.length === 0 && '—'}
                   {study.attachments.map((attachment, index) => (
                     <span key={index} className="block truncate">
-                      {String(
-                        attachment.url ??
-                          attachment.label ??
-                          attachment.href ??
-                          'Attachment',
-                      )}
+                      {describeAttachment(attachment)}
                     </span>
                   ))}
                 </dd>
@@ -537,7 +540,9 @@ const EntitlementsPage = () => {
   const renderStakeholders = () => (
     <div className="space-y-6">
       <form
-        onSubmit={handleEngagementSubmit}
+        onSubmit={(event) => {
+          void handleEngagementSubmit(event)
+        }}
         className="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
       >
         <h3 className="text-sm font-semibold text-slate-200">
@@ -549,12 +554,12 @@ const EntitlementsPage = () => {
             <input
               required
               value={engagementForm.name}
-              onChange={(event) =>
+              onChange={(event) => {
                 setEngagementForm((prev) => ({
                   ...prev,
                   name: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -562,12 +567,12 @@ const EntitlementsPage = () => {
             Organisation
             <input
               value={engagementForm.organisation}
-              onChange={(event) =>
+              onChange={(event) => {
                 setEngagementForm((prev) => ({
                   ...prev,
                   organisation: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -575,12 +580,12 @@ const EntitlementsPage = () => {
             Engagement Type
             <select
               value={engagementForm.engagement_type}
-              onChange={(event) =>
+              onChange={(event) => {
                 setEngagementForm((prev) => ({
                   ...prev,
                   engagement_type: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             >
               {engagementTypes.map((option) => (
@@ -594,12 +599,12 @@ const EntitlementsPage = () => {
             Status
             <select
               value={engagementForm.status}
-              onChange={(event) =>
+              onChange={(event) => {
                 setEngagementForm((prev) => ({
                   ...prev,
                   status: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             >
               {engagementStatuses.map((status) => (
@@ -614,12 +619,12 @@ const EntitlementsPage = () => {
             <input
               type="email"
               value={engagementForm.contact_email}
-              onChange={(event) =>
+              onChange={(event) => {
                 setEngagementForm((prev) => ({
                   ...prev,
                   contact_email: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -627,12 +632,12 @@ const EntitlementsPage = () => {
             Contact Phone
             <input
               value={engagementForm.contact_phone}
-              onChange={(event) =>
+              onChange={(event) => {
                 setEngagementForm((prev) => ({
                   ...prev,
                   contact_phone: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -641,12 +646,12 @@ const EntitlementsPage = () => {
           Notes
           <textarea
             value={engagementForm.notes}
-            onChange={(event) =>
+            onChange={(event) => {
               setEngagementForm((prev) => ({
                 ...prev,
                 notes: event.target.value,
               }))
-            }
+            }}
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             rows={3}
           />
@@ -703,7 +708,9 @@ const EntitlementsPage = () => {
   const renderLegal = () => (
     <div className="space-y-6">
       <form
-        onSubmit={handleLegalSubmit}
+        onSubmit={(event) => {
+          void handleLegalSubmit(event)
+        }}
         className="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
       >
         <h3 className="text-sm font-semibold text-slate-200">
@@ -715,9 +722,9 @@ const EntitlementsPage = () => {
             <input
               required
               value={legalForm.name}
-              onChange={(event) =>
+              onChange={(event) => {
                 setLegalForm((prev) => ({ ...prev, name: event.target.value }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -725,12 +732,12 @@ const EntitlementsPage = () => {
             Instrument Type
             <select
               value={legalForm.instrument_type}
-              onChange={(event) =>
+              onChange={(event) => {
                 setLegalForm((prev) => ({
                   ...prev,
                   instrument_type: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             >
               {legalTypes.map((option) => (
@@ -744,12 +751,12 @@ const EntitlementsPage = () => {
             Status
             <select
               value={legalForm.status}
-              onChange={(event) =>
+              onChange={(event) => {
                 setLegalForm((prev) => ({
                   ...prev,
                   status: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             >
               {legalStatuses.map((status) => (
@@ -763,12 +770,12 @@ const EntitlementsPage = () => {
             Reference Code
             <input
               value={legalForm.reference_code}
-              onChange={(event) =>
+              onChange={(event) => {
                 setLegalForm((prev) => ({
                   ...prev,
                   reference_code: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -777,12 +784,12 @@ const EntitlementsPage = () => {
             <input
               type="date"
               value={legalForm.effective_date}
-              onChange={(event) =>
+              onChange={(event) => {
                 setLegalForm((prev) => ({
                   ...prev,
                   effective_date: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -791,12 +798,12 @@ const EntitlementsPage = () => {
             <input
               type="date"
               value={legalForm.expiry_date}
-              onChange={(event) =>
+              onChange={(event) => {
                 setLegalForm((prev) => ({
                   ...prev,
                   expiry_date: event.target.value,
                 }))
-              }
+              }}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
           </label>
@@ -805,12 +812,12 @@ const EntitlementsPage = () => {
             <input
               type="url"
               value={legalForm.attachment_url}
-              onChange={(event) =>
+              onChange={(event) => {
                 setLegalForm((prev) => ({
                   ...prev,
                   attachment_url: event.target.value,
                 }))
-              }
+              }}
               placeholder="https://"
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
             />
@@ -862,12 +869,7 @@ const EntitlementsPage = () => {
                   {record.attachments.length === 0 && '—'}
                   {record.attachments.map((attachment, index) => (
                     <span key={index} className="block truncate">
-                      {String(
-                        attachment.url ??
-                          attachment.label ??
-                          attachment.href ??
-                          'Attachment',
-                      )}
+                      {describeAttachment(attachment)}
                     </span>
                   ))}
                 </dd>
@@ -889,13 +891,15 @@ const EntitlementsPage = () => {
       <Header title="Entitlements" />
       <p className="mt-1 text-sm text-slate-400">
         Monitor entitlement authorities, studies, stakeholder engagement, and
-        legal commitments for project #{PROJECT_ID}.
+        legal commitments for project #{PROJECT_ID.toString()}.
       </p>
       <div className="mt-6 flex space-x-3 border-b border-slate-800">
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => {
+              setActiveTab(tab.key)
+            }}
             className={`px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? 'border-b-2 border-emerald-400 text-emerald-300'

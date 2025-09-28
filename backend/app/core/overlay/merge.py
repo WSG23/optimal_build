@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 from dataclasses import fields, replace
-from typing import Dict
 
 from app.core.models.geometry import (
     Door,
@@ -28,7 +27,7 @@ def _merge_entities(
             f"with {type(incoming).__name__}"
         )
 
-    updates: Dict[str, object] = {"id": existing.id}
+    updates: dict[str, object] = {"id": existing.id}
     for field in fields(existing):
         if field.name == "id":
             continue

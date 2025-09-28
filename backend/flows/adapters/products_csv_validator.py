@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
+from collections.abc import Iterator, Mapping
 from pathlib import Path
-from typing import Iterator, Mapping, Optional
 
 from pydantic import (
     BaseModel,
@@ -28,10 +28,10 @@ class ProductRow(BaseModel):
     width_mm: conint(ge=0)
     depth_mm: conint(ge=0)
     height_mm: conint(ge=0)
-    weight_kg: Optional[confloat(ge=0)] = None
-    power_w: Optional[confloat(ge=0)] = None
-    bim_uri: Optional[HttpUrl] = None
-    spec_uri: Optional[HttpUrl] = None
+    weight_kg: confloat(ge=0) | None = None
+    power_w: confloat(ge=0) | None = None
+    bim_uri: HttpUrl | None = None
+    spec_uri: HttpUrl | None = None
 
     model_config = {"extra": "ignore"}
 
@@ -62,16 +62,14 @@ class ProductRow(BaseModel):
 class ValidationReport(BaseModel):
     """Summary of a CSV validation run."""
 
-    generated_at: dt.datetime = Field(
-        default_factory=lambda: dt.datetime.now(dt.timezone.utc)
-    )
+    generated_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.UTC))
     total: int = 0
     passed: int = 0
     failed: int = 0
     errors: list[str] = Field(default_factory=list)
 
 
-def read_csv(path: Path) -> Iterator[Mapping[str, Optional[str]]]:
+def read_csv(path: Path) -> Iterator[Mapping[str, str | None]]:
     """Yield rows from a CSV file as dictionaries.
 
     Blank rows are skipped to avoid generating spurious validation errors.

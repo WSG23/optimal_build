@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import importlib
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Iterable, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from .canonical_models import CanonicalReg, ProvenanceRecord
 
@@ -55,7 +56,7 @@ def load_jurisdiction(code: str) -> RegisteredJurisdiction:
             f"Jurisdiction '{code}' must expose a PARSER instance in {module_name}"
         )
 
-    parser = getattr(module, "PARSER")
+    parser = module.PARSER
     if not isinstance(parser, JurisdictionParser):  # type: ignore[misc]
         # The Protocol check is structural at runtime; this protects misconfigured parsers.
         missing_attrs = [

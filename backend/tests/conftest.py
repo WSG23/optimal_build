@@ -13,7 +13,6 @@ from types import ModuleType
 from typing import Any, cast
 
 import pytest
-
 from httpx import AsyncClient
 
 
@@ -127,12 +126,11 @@ except (
 StaticPool: type[Any] = _StaticPool
 
 
-from sqlalchemy.orm import Mapped, mapped_column
-
 import app.models as app_models
 import app.utils.metrics as metrics
 from app.core.database import get_session
 from app.models.base import BaseModel
+from sqlalchemy.orm import Mapped, mapped_column
 
 try:
     from app.main import app

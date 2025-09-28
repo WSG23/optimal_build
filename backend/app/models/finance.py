@@ -4,13 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import List
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-
-from app.models.base import BaseModel, MetadataProxy
-from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -21,6 +15,11 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.models.base import BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
 
@@ -54,7 +53,7 @@ class FinProject(BaseModel):
         nullable=False,
     )
 
-    scenarios: Mapped[List["FinScenario"]] = relationship(
+    scenarios: Mapped[list[FinScenario]] = relationship(
         "FinScenario", back_populates="fin_project", cascade="all, delete-orphan"
     )
     metadata = MetadataProxy()
@@ -93,16 +92,16 @@ class FinScenario(BaseModel):
     fin_project: Mapped[FinProject] = relationship(
         "FinProject", back_populates="scenarios"
     )
-    cost_items: Mapped[List["FinCostItem"]] = relationship(
+    cost_items: Mapped[list[FinCostItem]] = relationship(
         "FinCostItem", back_populates="scenario", cascade="all, delete-orphan"
     )
-    schedules: Mapped[List["FinSchedule"]] = relationship(
+    schedules: Mapped[list[FinSchedule]] = relationship(
         "FinSchedule", back_populates="scenario", cascade="all, delete-orphan"
     )
-    capital_stack: Mapped[List["FinCapitalStack"]] = relationship(
+    capital_stack: Mapped[list[FinCapitalStack]] = relationship(
         "FinCapitalStack", back_populates="scenario", cascade="all, delete-orphan"
     )
-    results: Mapped[List["FinResult"]] = relationship(
+    results: Mapped[list[FinResult]] = relationship(
         "FinResult", back_populates="scenario", cascade="all, delete-orphan"
     )
 

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any
 
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefCostCatalog, RefCostIndex
 from app.utils.logging import get_logger, log_event
-from sqlalchemy import Select, select
 
 logger = get_logger(__name__)
 
@@ -25,7 +26,7 @@ COST_INDEX_UPDATE_FIELDS: Iterable[str] = (
 
 
 async def upsert_cost_index(
-    session: AsyncSession, payload: Dict[str, Any]
+    session: AsyncSession, payload: dict[str, Any]
 ) -> RefCostIndex:
     """Insert or update a cost index value."""
 
@@ -68,8 +69,8 @@ async def get_latest_cost_index(
     *,
     series_name: str,
     jurisdiction: str = "SG",
-    provider: Optional[str] = None,
-) -> Optional[RefCostIndex]:
+    provider: str | None = None,
+) -> RefCostIndex | None:
     """Retrieve the latest cost index entry for the given series."""
 
     stmt: Select[Any] = select(RefCostIndex).where(
@@ -94,7 +95,7 @@ async def get_latest_cost_index(
 
 
 async def add_cost_catalog_item(
-    session: AsyncSession, payload: Dict[str, Any]
+    session: AsyncSession, payload: dict[str, Any]
 ) -> RefCostCatalog:
     """Insert a new entry in the cost catalog."""
 
@@ -113,9 +114,9 @@ async def add_cost_catalog_item(
 async def list_cost_catalog(
     session: AsyncSession,
     *,
-    catalog_name: Optional[str] = None,
-    category: Optional[str] = None,
-) -> List[RefCostCatalog]:
+    catalog_name: str | None = None,
+    category: str | None = None,
+) -> list[RefCostCatalog]:
     """List catalog entries with optional filters."""
 
     stmt: Select[Any] = select(RefCostCatalog)

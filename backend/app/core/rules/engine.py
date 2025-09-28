@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.models.geometry import GeometryEntity, GeometryGraph, Space
 
@@ -27,16 +27,16 @@ class RulesEngine:
             raise TypeError(
                 "Rule pack definition must include a sequence under 'rules'"
             )
-        self._rules: List[Mapping[str, Any]] = [dict(rule) for rule in rules]
+        self._rules: list[Mapping[str, Any]] = [dict(rule) for rule in rules]
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def evaluate(self, graph: GeometryGraph) -> Dict[str, Any]:
+    def evaluate(self, graph: GeometryGraph) -> dict[str, Any]:
         """Evaluate the configured rules against the provided geometry graph."""
 
         context = _EvaluationContext(graph=graph, rule={})
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
         total_checked = 0
         total_violations = 0
 
@@ -60,13 +60,13 @@ class RulesEngine:
     # ------------------------------------------------------------------
     def _evaluate_rule(
         self, rule: Mapping[str, Any], context: _EvaluationContext
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         predicate = rule.get("predicate")
         if not isinstance(predicate, Mapping):
             raise ValueError(f"Rule '{rule.get('id')}' missing predicate definition")
 
         target = str(rule.get("target", "spaces"))
-        violations: List[Dict[str, Any]] = []
+        violations: list[dict[str, Any]] = []
         checked = 0
 
         for entity in self._iter_target_entities(context.graph, target):
@@ -121,7 +121,7 @@ class RulesEngine:
         predicate: Mapping[str, Any],
         entity: GeometryEntity,
         context: _EvaluationContext,
-    ) -> tuple[bool, List[str], List[Dict[str, Any]]]:
+    ) -> tuple[bool, list[str], list[dict[str, Any]]]:
         if "all" in predicate:
             return self._evaluate_all(
                 predicate["all"], entity, context, predicate.get("message")
@@ -157,10 +157,10 @@ class RulesEngine:
         entity: GeometryEntity,
         context: _EvaluationContext,
         message: str | None,
-    ) -> tuple[bool, List[str], List[Dict[str, Any]]]:
+    ) -> tuple[bool, list[str], list[dict[str, Any]]]:
         all_passed = True
-        messages: List[str] = []
-        facts: List[Dict[str, Any]] = []
+        messages: list[str] = []
+        facts: list[dict[str, Any]] = []
         for item in predicates:
             passed, child_messages, child_facts = self._evaluate_predicate(
                 item, entity, context
@@ -181,9 +181,9 @@ class RulesEngine:
         entity: GeometryEntity,
         context: _EvaluationContext,
         message: str | None,
-    ) -> tuple[bool, List[str], List[Dict[str, Any]]]:
-        failure_messages: List[str] = []
-        failure_facts: List[Dict[str, Any]] = []
+    ) -> tuple[bool, list[str], list[dict[str, Any]]]:
+        failure_messages: list[str] = []
+        failure_facts: list[dict[str, Any]] = []
         for item in predicates:
             passed, child_messages, child_facts = self._evaluate_predicate(
                 item, entity, context
@@ -201,7 +201,7 @@ class RulesEngine:
         entity: GeometryEntity,
         context: _EvaluationContext,
         message: str | None,
-    ) -> tuple[bool, List[str], List[Dict[str, Any]]]:
+    ) -> tuple[bool, list[str], list[dict[str, Any]]]:
         passed, child_messages, child_facts = self._evaluate_predicate(
             predicate, entity, context
         )
@@ -215,7 +215,7 @@ class RulesEngine:
         predicate: Mapping[str, Any],
         entity: GeometryEntity,
         context: _EvaluationContext,
-    ) -> tuple[bool, List[str], List[Dict[str, Any]]]:
+    ) -> tuple[bool, list[str], list[dict[str, Any]]]:
         field = str(predicate.get("field"))
         operator = str(predicate.get("operator", "=="))
         actual = self._resolve_field(entity, field, context)
@@ -250,7 +250,7 @@ class RulesEngine:
                 message = self._format_failure_message(
                     field, operator, normalised_expected, normalised_actual
                 )
-        fact: Dict[str, Any] = {
+        fact: dict[str, Any] = {
             "field": field,
             "operator": operator,
             "expected": normalised_expected,
@@ -449,7 +449,7 @@ class RulesEngine:
             boundary = entity.boundary
         if not boundary:
             return 0.0
-        points: List[tuple[float, float]] = []
+        points: list[tuple[float, float]] = []
         for point in boundary:
             if isinstance(point, Sequence) and len(point) >= 2:
                 points.append((float(point[0]), float(point[1])))
@@ -477,7 +477,7 @@ class RulesEngine:
             boundary = entity.boundary
         if not boundary:
             return 0.0
-        points: List[tuple[float, float]] = []
+        points: list[tuple[float, float]] = []
         for point in boundary:
             if isinstance(point, Sequence) and len(point) >= 2:
                 points.append((float(point[0]), float(point[1])))
@@ -514,8 +514,8 @@ class RulesEngine:
 
     def _build_violation_attributes(
         self, entity: GeometryEntity, target: str
-    ) -> Dict[str, Any]:
-        attributes: Dict[str, Any] = {"target": target}
+    ) -> dict[str, Any]:
+        attributes: dict[str, Any] = {"target": target}
         name = getattr(entity, "name", None)
         if name:
             attributes["name"] = name

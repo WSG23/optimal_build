@@ -6,11 +6,12 @@ import json
 import os
 import sqlite3
 import tempfile
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Mapping, MutableMapping
+from typing import Any
 
 try:  # pragma: no cover - fallback for environments without FastAPI installed
     from fastapi import APIRouter, Depends
@@ -104,7 +105,7 @@ class ComplianceAuditLogger:
         """Persist an audit record for an enhanced upload operation."""
 
         serialised = json.dumps(payload or {}, default=str)
-        created_at = datetime.now(timezone.utc).isoformat()
+        created_at = datetime.now(UTC).isoformat()
         with sqlite3.connect(self.db_path) as connection:
             connection.execute(
                 """

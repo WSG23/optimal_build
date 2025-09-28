@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
+
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -40,7 +41,7 @@ class JurisdictionORM(RegstackBase):
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
-    regulations: Mapped[List["RegulationORM"]] = relationship(
+    regulations: Mapped[list[RegulationORM]] = relationship(
         back_populates="jurisdiction", cascade="all, delete-orphan"
     )
 
@@ -61,18 +62,18 @@ class RegulationORM(RegstackBase):
     external_id: Mapped[str] = mapped_column(String(length=255), nullable=False)
     title: Mapped[str] = mapped_column(String(length=500), nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    issued_on: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    effective_on: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    version: Mapped[Optional[str]] = mapped_column(String(length=50))
+    issued_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    effective_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    version: Mapped[str | None] = mapped_column(String(length=50))
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    metadata_: Mapped[Dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
-    global_tags: Mapped[List[str]] = mapped_column(JSON, default=list)
+    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
+    global_tags: Mapped[list[str]] = mapped_column(JSON, default=list)
 
     jurisdiction: Mapped[JurisdictionORM] = relationship(back_populates="regulations")
-    mappings: Mapped[List["RegMappingORM"]] = relationship(
+    mappings: Mapped[list[RegMappingORM]] = relationship(
         back_populates="regulation", cascade="all, delete-orphan"
     )
-    provenance_entries: Mapped[List["ProvenanceORM"]] = relationship(
+    provenance_entries: Mapped[list[ProvenanceORM]] = relationship(
         back_populates="regulation", cascade="all, delete-orphan"
     )
 
@@ -90,7 +91,7 @@ class RegMappingORM(RegstackBase):
         ForeignKey("regulations.id", ondelete="CASCADE"), nullable=False
     )
     mapping_type: Mapped[str] = mapped_column(String(length=100), nullable=False)
-    payload: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
     regulation: Mapped[RegulationORM] = relationship(back_populates="mappings")
 
@@ -122,7 +123,7 @@ class ProvenanceORM(RegstackBase):
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
-    fetch_parameters: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+    fetch_parameters: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     raw_content: Mapped[str] = mapped_column(Text, nullable=False)
     content_checksum: Mapped[str] = mapped_column(String(length=64), nullable=False)
 
@@ -145,11 +146,11 @@ class CanonicalReg(BaseModel):
     external_id: str
     title: str
     text: str
-    issued_on: Optional[date] = None
-    effective_on: Optional[date] = None
-    version: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    global_tags: List[str] = Field(default_factory=list)
+    issued_on: date | None = None
+    effective_on: date | None = None
+    version: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    global_tags: list[str] = Field(default_factory=list)
 
     model_config = {"extra": "ignore"}
 
@@ -159,7 +160,7 @@ class CanonicalMapping(BaseModel):
 
     regulation_external_id: str
     mapping_type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
 class ProvenanceRecord(BaseModel):
@@ -168,5 +169,5 @@ class ProvenanceRecord(BaseModel):
     regulation_external_id: str
     source_uri: str
     fetched_at: datetime
-    fetch_parameters: Dict[str, Any] = Field(default_factory=dict)
+    fetch_parameters: dict[str, Any] = Field(default_factory=dict)
     raw_content: str

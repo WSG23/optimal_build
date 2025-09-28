@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import date, datetime
 import json
 import re
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass, field
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Iterable, List, Sequence
+from typing import Any
 
 from core.canonical_models import CanonicalReg, ProvenanceRecord
 from core.mapping import GLOBAL_MAPPING_FILE, load_yaml, merge_mappings
@@ -32,7 +33,7 @@ class SGBCAPARSER:
         return fetch.fetch(since)
 
     def parse(self, records: Iterable[ProvenanceRecord]) -> Iterable[CanonicalReg]:
-        regulations: List[CanonicalReg] = []
+        regulations: list[CanonicalReg] = []
         for record in records:
             payload = self._decode_record(record)
             for regulation_payload, context, fallback_id in self._iter_regulations(
@@ -57,7 +58,7 @@ class SGBCAPARSER:
                 f"Record '{record.regulation_external_id}' contains invalid JSON: {exc}"
             ) from exc
 
-        if not isinstance(payload, (dict, list)):
+        if not isinstance(payload, dict | list):
             raise ParserError(
                 f"Record '{record.regulation_external_id}' JSON payload must be an object or array"
             )
@@ -65,7 +66,7 @@ class SGBCAPARSER:
 
     def _iter_regulations(
         self, record: ProvenanceRecord, payload: Any
-    ) -> List[tuple[dict, str, str | None]]:
+    ) -> list[tuple[dict, str, str | None]]:
         if isinstance(payload, list):
             container = payload
             container_label = "payload"
@@ -89,16 +90,18 @@ class SGBCAPARSER:
                 f"Record '{record.regulation_external_id}' has unsupported payload type"
             )
 
-        if not isinstance(container, Sequence) or isinstance(container, (str, bytes)):
+        if not isinstance(container, Sequence) or isinstance(container, str | bytes):
             raise ParserError(
-                f"Record '{record.regulation_external_id}' field '{container_label}' must be an array"
+                f"Record '{record.regulation_external_id}' field "
+                f"'{container_label}' must be an array"
             )
 
-        regulations: List[tuple[dict, str, str | None]] = []
+        regulations: list[tuple[dict, str, str | None]] = []
         for index, entry in enumerate(container):
             if not isinstance(entry, dict):
                 raise ParserError(
-                    f"Record '{record.regulation_external_id}' entry {container_label}[{index}] is not a JSON object"
+                    f"Record '{record.regulation_external_id}' entry "
+                    f"{container_label}[{index}] is not a JSON object"
                 )
             regulations.append(
                 (
@@ -115,12 +118,12 @@ class SGBCAPARSER:
         if "result" in payload and isinstance(payload["result"], dict):
             result = payload["result"]
             records = result.get("records")
-            if isinstance(records, Sequence) and not isinstance(records, (str, bytes)):
+            if isinstance(records, Sequence) and not isinstance(records, str | bytes):
                 return "result.records", records
         for key in ("records", "regulations", "items", "data"):
             candidate = payload.get(key)
             if isinstance(candidate, Sequence) and not isinstance(
-                candidate, (str, bytes)
+                candidate, str | bytes
             ):
                 return key, candidate
         return None
@@ -283,7 +286,7 @@ class SGBCAPARSER:
             return value
         if isinstance(value, datetime):
             return value.date()
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             # Some upstream feeds deliver Excel serial numbers.
             try:
                 return datetime.utcfromtimestamp(float(value)).date()
@@ -312,7 +315,7 @@ class SGBCAPARSER:
                 return None
         return None
 
-    def _map_upstream_tags(self, payload: dict) -> List[str]:
+    def _map_upstream_tags(self, payload: dict) -> list[str]:
         definition = self._get_mapping_definition()
         categories = definition.get("categories", {})
         terms = self._extract_terms(payload)
@@ -324,7 +327,7 @@ class SGBCAPARSER:
         return sorted(matched)
 
     def _extract_terms(self, payload: dict) -> set[str]:
-        values: List[str] = []
+        values: list[str] = []
         for key in ("category", "categories", "keywords", "tags", "topic", "topics"):
             values.extend(self._flatten_terms(payload.get(key)))
 
@@ -341,18 +344,18 @@ class SGBCAPARSER:
                     normalised.add(slug)
         return normalised
 
-    def _flatten_terms(self, raw: object) -> List[str]:
+    def _flatten_terms(self, raw: object) -> list[str]:
         if raw is None:
             return []
         if isinstance(raw, str):
             return [raw]
-        if isinstance(raw, (list, tuple, set)):
-            values: List[str] = []
+        if isinstance(raw, list | tuple | set):
+            values: list[str] = []
             for item in raw:
                 values.extend(self._flatten_terms(item))
             return values
         if isinstance(raw, dict):
-            collected: List[str] = []
+            collected: list[str] = []
             for key in ("name", "title", "label", "value", "slug", "text"):
                 value = raw.get(key)
                 if isinstance(value, str):

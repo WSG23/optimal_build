@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from .._memory import (
-    DeleteStatement,
     GLOBAL_DATABASE,
+    DeleteStatement,
     Result,
     SelectStatement,
     TextClause,
@@ -68,7 +69,7 @@ class AsyncSession:
     async def close(self) -> None:
         return None
 
-    async def __aenter__(self) -> "AsyncSession":
+    async def __aenter__(self) -> AsyncSession:
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
@@ -130,7 +131,7 @@ class _AsyncSessionFactory:
 
 
 class _AsyncSessionmaker:
-    def __getitem__(self, _item: Any) -> "_AsyncSessionmaker":
+    def __getitem__(self, _item: Any) -> _AsyncSessionmaker:
         return self
 
     def __call__(

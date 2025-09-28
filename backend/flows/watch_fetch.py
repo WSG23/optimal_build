@@ -9,19 +9,11 @@ import importlib
 import importlib.util
 import json
 import sys
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
     Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
     TypeVar,
     cast,
 )
@@ -33,8 +25,8 @@ if importlib.util.find_spec("sqlalchemy") is None:  # pragma: no cover - stub fa
 
     importlib.import_module("sqlalchemy")
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -64,16 +56,16 @@ def _resolve_flow_callable(flow_like: object) -> Callable[..., Awaitable[_Result
 
 @flow(name="watch-reference-sources")
 async def watch_reference_sources(
-    session_factory: "async_sessionmaker[AsyncSession]",
+    session_factory: async_sessionmaker[AsyncSession],
     *,
-    fetcher: Optional[ReferenceSourceFetcher] = None,
-    storage: Optional[ReferenceStorage] = None,
-) -> List[Dict[str, Any]]:
+    fetcher: ReferenceSourceFetcher | None = None,
+    storage: ReferenceStorage | None = None,
+) -> list[dict[str, Any]]:
     """Iterate active ``RefSource`` entries and persist changed documents."""
 
     fetcher = fetcher or ReferenceSourceFetcher()
     storage = storage or ReferenceStorage()
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     seen_hashes: set[tuple[int, str]] = set()
     seen_document_ids: set[int] = set()
     seen_file_hashes: set[str] = set()
@@ -146,9 +138,7 @@ async def watch_reference_sources(
     return results
 
 
-async def _latest_document(
-    session: AsyncSession, source_id: int
-) -> Optional[RefDocument]:
+async def _latest_document(session: AsyncSession, source_id: int) -> RefDocument | None:
     stmt = (
         select(RefDocument)
         .where(RefDocument.source_id == source_id)
@@ -162,7 +152,7 @@ async def _document_by_hash(
     session: AsyncSession,
     source_id: int,
     file_hash: str,
-) -> Optional[RefDocument]:
+) -> RefDocument | None:
     stmt = (
         select(RefDocument)
         .where(RefDocument.source_id == source_id)
@@ -172,7 +162,7 @@ async def _document_by_hash(
     return (await session.execute(stmt)).scalar_one_or_none()
 
 
-async def _active_sources(session: AsyncSession) -> List[RefSource]:
+async def _active_sources(session: AsyncSession) -> list[RefSource]:
     """Return active sources while pruning superseded duplicates."""
 
     rows = await session.execute(
@@ -184,7 +174,7 @@ async def _active_sources(session: AsyncSession) -> List[RefSource]:
 
     sources = _prune_stub_state(session, sources)
 
-    seen: Dict[Tuple[Optional[str], Optional[str]], RefSource] = {}
+    seen: dict[tuple[str | None, str | None], RefSource] = {}
     for source in sources:
         key = (source.jurisdiction, source.authority)
         existing = seen.get(key)
@@ -195,15 +185,15 @@ async def _active_sources(session: AsyncSession) -> List[RefSource]:
 
 
 def _prune_stub_state(
-    session: AsyncSession, sources: List[RefSource]
-) -> List[RefSource]:
+    session: AsyncSession, sources: list[RefSource]
+) -> list[RefSource]:
     """Normalise duplicate sources when using the in-repo SQLAlchemy stub."""
 
     database = getattr(session, "_database", None)
     if database is None:
         return sources
 
-    keep_map: Dict[Tuple[Optional[str], Optional[str]], RefSource] = {}
+    keep_map: dict[tuple[str | None, str | None], RefSource] = {}
     for source in sources:
         key = (source.jurisdiction, source.authority)
         current = keep_map.get(key)
@@ -223,7 +213,7 @@ def _prune_stub_state(
     return sorted(keep_sources, key=lambda item: item.id)
 
 
-def _determine_suffix(fetch_kind: Optional[str], fetched: FetchedDocument) -> str:
+def _determine_suffix(fetch_kind: str | None, fetched: FetchedDocument) -> str:
     kind = (fetch_kind or "").lower()
     if kind == "pdf":
         return ".pdf"
@@ -258,18 +248,18 @@ class OfflineReferenceFetcher:
 
     def __init__(
         self,
-        fixtures: Optional[Mapping[str, OfflineReferenceFixture]] = None,
+        fixtures: Mapping[str, OfflineReferenceFixture] | None = None,
     ) -> None:
         default_fixtures = _default_offline_fixtures()
-        self._fixtures: Dict[str, OfflineReferenceFixture] = {
+        self._fixtures: dict[str, OfflineReferenceFixture] = {
             key.upper(): value for key, value in (fixtures or default_fixtures).items()
         }
 
     async def fetch(
         self,
         source: RefSource,
-        existing: Optional[RefDocument] = None,
-    ) -> Optional[FetchedDocument]:
+        existing: RefDocument | None = None,
+    ) -> FetchedDocument | None:
         if not getattr(source, "is_active", True):
             return None
 
@@ -299,15 +289,15 @@ def _default_offline_fixtures() -> Mapping[str, OfflineReferenceFixture]:
     </html>
     """
     pdf_payload = (
-        "1.1 Fire Safety Obligations\n"
-        "Provide active fire protection systems in accordance with Table 3.\n"
-        "1.2 Egress Provision\n"
-        "Buildings must support two independent means of egress.\n"
-    ).encode("utf-8")
+        b"1.1 Fire Safety Obligations\n"
+        b"Provide active fire protection systems in accordance with Table 3.\n"
+        b"1.2 Egress Provision\n"
+        b"Buildings must support two independent means of egress.\n"
+    )
     drainage_payload = (
-        "2.1 Stormwater Capacity\n"
-        "Design attenuation tanks to accommodate a 100-year storm event.\n"
-    ).encode("utf-8")
+        b"2.1 Stormwater Capacity\n"
+        b"Design attenuation tanks to accommodate a 100-year storm event.\n"
+    )
     return {
         "URA": OfflineReferenceFixture(
             content=html_payload,
@@ -372,8 +362,8 @@ def _build_cli_parser() -> argparse.ArgumentParser:
 async def _run_once(
     *,
     storage: ReferenceStorage,
-    fetcher: Optional[ReferenceSourceFetcher] = None,
-) -> List[Dict[str, Any]]:
+    fetcher: ReferenceSourceFetcher | None = None,
+) -> list[dict[str, Any]]:
     flow_callable = _resolve_flow_callable(watch_reference_sources)
     return await flow_callable(
         AsyncSessionLocal,
@@ -383,9 +373,9 @@ async def _run_once(
 
 
 async def _summarise_ingestion(
-    results: Iterable[Dict[str, Any]],
-) -> Dict[str, Any]:
-    summary: Dict[str, Any] = {
+    results: Iterable[dict[str, Any]],
+) -> dict[str, Any]:
+    summary: dict[str, Any] = {
         "results": list(results),
     }
     async with AsyncSessionLocal() as session:
@@ -414,8 +404,8 @@ async def _summarise_ingestion(
 async def _run_flow(
     *,
     storage: ReferenceStorage,
-    fetcher: Optional[ReferenceSourceFetcher],
-) -> Dict[str, Any]:
+    fetcher: ReferenceSourceFetcher | None,
+) -> dict[str, Any]:
     """Execute the ingestion flow and derive a summary in one event loop."""
 
     await _ensure_database_schema(AsyncSessionLocal)
@@ -424,7 +414,7 @@ async def _run_flow(
 
 
 async def _ensure_database_schema(
-    session_factory: "async_sessionmaker[AsyncSession]",
+    session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     """Guarantee ``BaseModel`` tables exist for the active session factory."""
 
@@ -448,7 +438,7 @@ async def _ensure_database_schema(
         )
 
 
-def main(argv: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
     """CLI entry point used by CI smoke tests."""
 
     parser = _build_cli_parser()
@@ -457,7 +447,7 @@ def main(argv: Optional[Sequence[str]] = None) -> Dict[str, Any]:
         base_path=args.storage_path if args.storage_path is not None else None,
     )
 
-    fetcher: Optional[ReferenceSourceFetcher]
+    fetcher: ReferenceSourceFetcher | None
     if args.offline:
         fetcher = OfflineReferenceFetcher()  # type: ignore[assignment]
     else:

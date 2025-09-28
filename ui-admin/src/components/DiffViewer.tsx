@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { diffLines } from 'diff'
+import { diffLines, type Change } from 'diff'
 
 interface DiffViewerProps {
   baseline: string
@@ -23,7 +23,7 @@ function normaliseLines(text: string): string[] {
 
 const DiffViewer = ({ baseline, updated }: DiffViewerProps) => {
   const rows = useMemo<DiffLine[]>(() => {
-    const segments = diffLines(baseline, updated)
+    const segments: Change[] = diffLines(baseline, updated)
     let oldPointer = 1
     let newPointer = 1
 
@@ -80,11 +80,15 @@ const DiffViewer = ({ baseline, updated }: DiffViewerProps) => {
                 ? 'bg-rose-900/30 text-rose-200'
                 : 'bg-slate-950 text-slate-200'
 
+          const rowKey = [
+            row.type,
+            index.toString(),
+            row.oldNumber === null ? 'null' : row.oldNumber.toString(),
+            row.newNumber === null ? 'null' : row.newNumber.toString(),
+          ].join('-')
+
           return (
-            <div
-              className={`${baseClasses} ${tone}`}
-              key={`${row.type}-${index}-${row.oldNumber}-${row.newNumber}`}
-            >
+            <div className={`${baseClasses} ${tone}`} key={rowKey}>
               <span className="text-right text-slate-400">
                 {row.oldNumber !== null ? row.oldNumber : ''}
               </span>

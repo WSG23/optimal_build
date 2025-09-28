@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import Header from '../components/Header'
 import { ReviewAPI } from '../api/client'
 import type { ClauseRecord, DocumentRecord } from '../types'
 import PDFViewer from '../components/PDFViewer'
+import { toErrorMessage } from '../utils/error'
 
 const ClausesPage = () => {
   const [documents, setDocuments] = useState<DocumentRecord[]>([])
@@ -13,22 +14,46 @@ const ClausesPage = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    ReviewAPI.getDocuments().then((response) => setDocuments(response.items))
+    const loadDocuments = async () => {
+      try {
+        const response = await ReviewAPI.getDocuments()
+        setDocuments(response.items)
+        setError(null)
+      } catch (error) {
+        setError(toErrorMessage(error, 'Failed to load documents'))
+      }
+    }
+
+    void loadDocuments()
   }, [])
 
   useEffect(() => {
-    setLoading(true)
-    ReviewAPI.getClauses(selectedDocument)
-      .then((response) => {
+    const loadClauses = async () => {
+      setLoading(true)
+      try {
+        const response = await ReviewAPI.getClauses(selectedDocument)
         setClauses(response.items)
         setError(null)
         if (selectedDocument) {
           setPreviewDoc(documents.find((doc) => doc.id === selectedDocument))
+        } else {
+          setPreviewDoc(undefined)
         }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (error) {
+        setError(toErrorMessage(error, 'Failed to load clauses'))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadClauses()
   }, [selectedDocument, documents])
+
+  const handleDocumentChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedDocument(
+      event.target.value ? Number(event.target.value) : undefined,
+    )
+  }
 
   return (
     <div>
@@ -38,11 +63,7 @@ const ClausesPage = () => {
           <select
             className="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm"
             value={selectedDocument ?? ''}
-            onChange={(event) =>
-              setSelectedDocument(
-                event.target.value ? Number(event.target.value) : undefined,
-              )
-            }
+            onChange={handleDocumentChange}
           >
             <option value="">All documents</option>
             {documents.map((document) => (

@@ -5,8 +5,9 @@ from __future__ import annotations
 import asyncio
 import inspect
 import os
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Dict, Mapping, Optional, Tuple
+from typing import Any
 
 try:  # pragma: no cover - optional dependency, available in some deployments
     from celery import Celery  # type: ignore
@@ -31,15 +32,15 @@ class JobDispatch:
 
     backend: str
     job_name: str
-    queue: Optional[str]
+    queue: str | None
     status: str
-    task_id: Optional[str] = None
+    task_id: str | None = None
     result: Any | None = None
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Return a JSON serialisable representation."""
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "backend": self.backend,
             "job_name": self.job_name,
             "queue": self.queue,
@@ -57,14 +58,14 @@ class _BaseBackend:
 
     name: str
 
-    def register(self, func: JobFunc, name: str, queue: Optional[str]) -> JobFunc:
+    def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
         raise NotImplementedError
 
     async def enqueue(
         self,
         name: str,
-        queue: Optional[str],
-        args: Tuple[Any, ...],
+        queue: str | None,
+        args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
     ) -> JobDispatch:
         raise NotImplementedError
@@ -76,17 +77,17 @@ class _InlineBackend(_BaseBackend):
     name = "inline"
 
     def __init__(self) -> None:
-        self._registry: Dict[str, Tuple[JobFunc, Optional[str]]] = {}
+        self._registry: dict[str, tuple[JobFunc, str | None]] = {}
 
-    def register(self, func: JobFunc, name: str, queue: Optional[str]) -> JobFunc:
+    def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
         self._registry[name] = (func, queue)
         return func
 
     async def enqueue(
         self,
         name: str,
-        queue: Optional[str],
-        args: Tuple[Any, ...],
+        queue: str | None,
+        args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
     ) -> JobDispatch:
         if name not in self._registry:
@@ -117,9 +118,9 @@ class _CeleryBackend(
             broker=settings.CELERY_BROKER_URL,
             backend=settings.CELERY_RESULT_BACKEND,
         )
-        self._registry: Dict[str, Tuple[JobFunc, Optional[str]]] = {}
+        self._registry: dict[str, tuple[JobFunc, str | None]] = {}
 
-    def register(self, func: JobFunc, name: str, queue: Optional[str]) -> JobFunc:
+    def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
         task = self.app.task(name=name, bind=False)(func)
         self._registry[name] = (task, queue)
         return task
@@ -127,8 +128,8 @@ class _CeleryBackend(
     async def enqueue(
         self,
         name: str,
-        queue: Optional[str],
-        args: Tuple[Any, ...],
+        queue: str | None,
+        args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
     ) -> JobDispatch:
         if name not in self._registry:
@@ -160,24 +161,24 @@ class _RQBackend(
         if Queue is None or Redis is None:  # pragma: no cover - defensive guard
             raise RuntimeError("RQ backend requested but rq/redis are not installed")
         self.redis = Redis.from_url(settings.RQ_REDIS_URL)
-        self._queues: Dict[str, Queue] = {}
-        self._registry: Dict[str, Tuple[JobFunc, Optional[str]]] = {}
+        self._queues: dict[str, Queue] = {}
+        self._registry: dict[str, tuple[JobFunc, str | None]] = {}
 
-    def _get_queue(self, queue_name: Optional[str]) -> Queue:
+    def _get_queue(self, queue_name: str | None) -> Queue:
         name = queue_name or "default"
         if name not in self._queues:
             self._queues[name] = Queue(name, connection=self.redis)
         return self._queues[name]
 
-    def register(self, func: JobFunc, name: str, queue: Optional[str]) -> JobFunc:
+    def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
         self._registry[name] = (func, queue)
         return func
 
     async def enqueue(
         self,
         name: str,
-        queue: Optional[str],
-        args: Tuple[Any, ...],
+        queue: str | None,
+        args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
     ) -> JobDispatch:
         if name not in self._registry:
@@ -221,7 +222,7 @@ class JobQueue:
     def __init__(self) -> None:
         object.__setattr__(self, "_enqueue_proxy_depth", 0)
         self._backend = _select_backend()
-        self._queues: Dict[str, Optional[str]] = {}
+        self._queues: dict[str, str | None] = {}
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Allow tests to replace ``enqueue`` without mutating the class."""
@@ -256,7 +257,7 @@ class JobQueue:
 
         return self._backend.name
 
-    def register(self, func: JobFunc, name: str, queue: Optional[str]) -> JobFunc:
+    def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
         """Register a function with the backend."""
 
         registered = self._backend.register(func, name, queue)
@@ -267,7 +268,7 @@ class JobQueue:
         self,
         job: str | JobFunc,
         *args: Any,
-        queue: Optional[str] = None,
+        queue: str | None = None,
         **kwargs: Any,
     ) -> JobDispatch:
         """Enqueue a job identified by name or by callable."""
@@ -299,15 +300,15 @@ job_queue = JobQueue()
 
 
 def job(
-    name: Optional[str] = None, *, queue: Optional[str] = None
+    name: str | None = None, *, queue: str | None = None
 ) -> Callable[[JobFunc], JobFunc]:
     """Decorator used to register job functions with the active backend."""
 
     def decorator(func: JobFunc) -> JobFunc:
         task_name = name or f"{func.__module__}.{func.__qualname__}"
         registered = job_queue.register(func, task_name, queue)
-        setattr(registered, "job_name", task_name)
-        setattr(registered, "job_queue", job_queue)
+        registered.job_name = task_name
+        registered.job_queue = job_queue
         return registered
 
     return decorator

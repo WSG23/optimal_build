@@ -6,14 +6,14 @@ import argparse
 import asyncio
 import json
 import sys
+from collections.abc import Awaitable, Callable, Sequence
 from pathlib import Path
-from typing import Awaitable, Callable, List, Optional, Sequence, TypeVar, cast
-
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlalchemy.orm import selectinload
+from typing import TypeVar, cast
 
 from prefect import flow
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -40,16 +40,16 @@ def _resolve_flow_callable(flow_like: object) -> Callable[..., Awaitable[_Result
 
 @flow(name="parse-reference-documents")
 async def parse_reference_documents(
-    session_factory: "async_sessionmaker[AsyncSession]",
+    session_factory: async_sessionmaker[AsyncSession],
     *,
-    storage: Optional[ReferenceStorage] = None,
-    parser: Optional[ClauseParser] = None,
-) -> List[int]:
+    storage: ReferenceStorage | None = None,
+    parser: ClauseParser | None = None,
+) -> list[int]:
     """Parse pending ``RefDocument`` records into ``RefClause`` entries."""
 
     storage = storage or ReferenceStorage()
     parser = parser or ClauseParser()
-    processed: List[int] = []
+    processed: list[int] = []
 
     async with session_factory() as session:
         documents = (
@@ -81,7 +81,7 @@ async def parse_reference_documents(
 async def _replace_clauses(
     session: AsyncSession,
     document: RefDocument,
-    clauses: List[ParsedClause],
+    clauses: list[ParsedClause],
 ) -> None:
     existing = (
         (
@@ -160,8 +160,8 @@ def _build_cli_parser() -> argparse.ArgumentParser:
 
 
 async def _run_once(
-    *, storage: ReferenceStorage, parser: Optional[ClauseParser] = None
-) -> List[int]:
+    *, storage: ReferenceStorage, parser: ClauseParser | None = None
+) -> list[int]:
     flow_callable = _resolve_flow_callable(parse_reference_documents)
     return await flow_callable(
         AsyncSessionLocal,
@@ -177,7 +177,7 @@ async def _collect_counts() -> tuple[int, int]:
     return len(documents), len(clauses)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> dict[str, int | List[int]]:
+def main(argv: Sequence[str] | None = None) -> dict[str, int | list[int]]:
     parser = _build_cli_parser()
     args = parser.parse_args(argv)
     storage = ReferenceStorage(
@@ -187,7 +187,7 @@ def main(argv: Optional[Sequence[str]] = None) -> dict[str, int | List[int]]:
     processed = asyncio.run(_run_once(storage=storage))
     document_count, clause_count = asyncio.run(_collect_counts())
 
-    summary: dict[str, int | List[int]] = {
+    summary: dict[str, int | list[int]] = {
         "processed_documents": processed,
         "document_count": document_count,
         "clause_count": clause_count,

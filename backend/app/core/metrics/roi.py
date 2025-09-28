@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from math import ceil
-from typing import Iterable, Sequence
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.audit import AuditLog
 from app.models.overlay import OverlaySuggestion
-from sqlalchemy import select
 
 # Baseline timing assumptions (in seconds) used when estimating automation ROI.
 # These constants are shared with the instrumentation hooks that populate the
@@ -65,8 +65,8 @@ def _as_utc(timestamp: datetime | None) -> datetime | None:
     if timestamp is None:
         return None
     if timestamp.tzinfo is None:
-        return timestamp.replace(tzinfo=timezone.utc)
-    return timestamp.astimezone(timezone.utc)
+        return timestamp.replace(tzinfo=UTC)
+    return timestamp.astimezone(UTC)
 
 
 def _decision_metrics(

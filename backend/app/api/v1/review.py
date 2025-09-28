@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
-
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
 
 router = APIRouter(prefix="/review")
 
@@ -19,7 +17,7 @@ router = APIRouter(prefix="/review")
 async def list_sources(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     result = await session.execute(select(RefSource))
     items = [
         {
@@ -38,9 +36,9 @@ async def list_sources(
 @router.get("/documents")
 async def list_documents(
     session: AsyncSession = Depends(get_session),
-    source_id: Optional[int] = Query(default=None),
+    source_id: int | None = Query(default=None),
     _: str = Depends(require_viewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     stmt = select(RefDocument)
     if source_id is not None:
         stmt = stmt.where(RefDocument.source_id == source_id)
@@ -63,9 +61,9 @@ async def list_documents(
 @router.get("/clauses")
 async def list_clauses(
     session: AsyncSession = Depends(get_session),
-    document_id: Optional[int] = Query(default=None),
+    document_id: int | None = Query(default=None),
     _: str = Depends(require_viewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     stmt = select(RefClause)
     if document_id is not None:
         stmt = stmt.where(RefClause.document_id == document_id)
@@ -88,9 +86,9 @@ async def list_clauses(
 @router.get("/diffs")
 async def list_diffs(
     session: AsyncSession = Depends(get_session),
-    rule_id: Optional[int] = Query(default=None),
+    rule_id: int | None = Query(default=None),
     _: str = Depends(require_viewer),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     stmt = select(RefRule)
     if rule_id is not None:
         stmt = stmt.where(RefRule.id == rule_id)

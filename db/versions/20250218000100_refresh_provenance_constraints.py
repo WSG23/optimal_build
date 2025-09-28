@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision = "20250218000100"
 down_revision = "20250217000100"

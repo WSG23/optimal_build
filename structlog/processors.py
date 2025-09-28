@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Callable, MutableMapping
+from collections.abc import Callable, MutableMapping
+from datetime import UTC, datetime
+from typing import Any
 
 __all__ = [
     "JSONRenderer",
@@ -35,7 +36,7 @@ class TimeStamper:
     def __call__(
         self, _: logging.Logger, __: str, event_dict: MutableMapping[str, Any]
     ) -> MutableMapping[str, Any]:
-        now = datetime.now(timezone.utc if self.utc else None)
+        now = datetime.now(UTC if self.utc else None)
         if self.fmt == "iso":
             event_dict["timestamp"] = now.isoformat()
         else:

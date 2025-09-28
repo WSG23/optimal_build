@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
@@ -30,8 +32,6 @@ from app.schemas.entitlements import (
 )
 from app.services.entitlements import EntitlementsService
 from app.utils import metrics
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/entitlements", tags=["entitlements"])
 

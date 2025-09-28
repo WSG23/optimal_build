@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Any, Dict, List, Optional
+from typing import Any
 
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -18,8 +20,6 @@ from app.services.buildable import (
     load_layers_for_zone,
 )
 from app.utils import metrics
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
 
 router = APIRouter(prefix="/screen")
 
@@ -28,9 +28,9 @@ router = APIRouter(prefix="/screen")
 class ZoneResolution:
     """Intermediate representation of a resolved zoning lookup."""
 
-    zone_code: Optional[str]
-    parcel: Optional[RefParcel]
-    geometry_properties: Optional[Dict[str, Any]]
+    zone_code: str | None
+    parcel: RefParcel | None
+    geometry_properties: dict[str, Any] | None
     input_kind: str
 
 
@@ -82,8 +82,8 @@ async def _resolve_zone_resolution(
     session: AsyncSession, payload: BuildableRequest
 ) -> ZoneResolution:
     input_kind = "address" if payload.address else "geometry"
-    parcel: Optional[RefParcel] = None
-    zone_code: Optional[str] = None
+    parcel: RefParcel | None = None
+    zone_code: str | None = None
 
     if payload.address:
         stmt = select(RefGeocodeCache).where(RefGeocodeCache.address == payload.address)
@@ -95,7 +95,7 @@ async def _resolve_zone_resolution(
                 if code:
                     zone_code = str(code)
 
-    geometry_properties: Optional[Dict[str, Any]] = None
+    geometry_properties: dict[str, Any] | None = None
     if payload.geometry:
         properties = payload.geometry.get("properties")
         if isinstance(properties, dict):
@@ -112,10 +112,10 @@ async def _resolve_zone_resolution(
 
 
 def _collect_zone_metadata(
-    layers: List[RefZoningLayer],
-) -> tuple[List[str], List[str]]:
-    overlays: List[str] = []
-    hints: List[str] = []
+    layers: list[RefZoningLayer],
+) -> tuple[list[str], list[str]]:
+    overlays: list[str] = []
+    hints: list[str] = []
     for layer in layers:
         attributes = layer.attributes or {}
         overlays.extend(attributes.get("overlays", []))

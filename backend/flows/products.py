@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
-
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from typing import Any
 
 from prefect import flow
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -20,7 +20,7 @@ from app.services.products import VendorProduct, VendorProductAdapter
 
 async def _upsert_product(
     session: AsyncSession,
-    payload: Dict[str, Any],
+    payload: dict[str, Any],
 ) -> None:
     stmt = (
         select(RefProduct)
@@ -45,11 +45,11 @@ async def _upsert_product(
 
 @flow(name="sync-vendor-products")
 async def sync_vendor_products(
-    session_factory: "async_sessionmaker[AsyncSession]",
-    vendor_payload: Dict[str, Any],
+    session_factory: async_sessionmaker[AsyncSession],
+    vendor_payload: dict[str, Any],
     *,
-    adapter: Optional[VendorProductAdapter] = None,
-) -> List[Dict[str, Any]]:
+    adapter: VendorProductAdapter | None = None,
+) -> list[dict[str, Any]]:
     """Ingest a vendor payload into the ``ref_products`` table."""
 
     vendor_name = str(vendor_payload.get("vendor") or "unknown")
@@ -57,7 +57,7 @@ async def sync_vendor_products(
         adapter = VendorProductAdapter(vendor_name)
     products: Iterable[VendorProduct] = adapter.transform(vendor_payload)
 
-    as_dicts: List[Dict[str, Any]] = []
+    as_dicts: list[dict[str, Any]] = []
     async with session_factory() as session:
         for product in products:
             data = product.as_orm_kwargs()

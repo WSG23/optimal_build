@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Iterable, List, Optional, Sequence
+from datetime import UTC, datetime
+from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -18,13 +20,12 @@ from app.models.entitlements import (
     EntRoadmapItem,
     EntStudy,
 )
-from sqlalchemy import select
 
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
 
 
-def _normalise_limit(limit: Optional[int]) -> int:
+def _normalise_limit(limit: int | None) -> int:
     """Clamp user supplied limits to reasonable bounds."""
 
     if limit is None or limit <= 0:
@@ -32,7 +33,7 @@ def _normalise_limit(limit: Optional[int]) -> int:
     return min(limit, MAX_PAGE_SIZE)
 
 
-def _normalise_offset(offset: Optional[int]) -> int:
+def _normalise_offset(offset: int | None) -> int:
     if offset is None or offset < 0:
         return 0
     return offset
@@ -54,7 +55,7 @@ class EntitlementsService:
 
     async def list_authorities(
         self, *, jurisdiction: str | None = None
-    ) -> List[EntAuthority]:
+    ) -> list[EntAuthority]:
         stmt = select(EntAuthority).order_by(EntAuthority.name)
         if jurisdiction:
             stmt = stmt.where(EntAuthority.jurisdiction == jurisdiction)
@@ -74,7 +75,7 @@ class EntitlementsService:
         slug: str,
         website: str | None = None,
         contact_email: str | None = None,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> EntAuthority:
         authority = await self.get_authority_by_slug(slug)
         if authority is None:
@@ -115,10 +116,10 @@ class EntitlementsService:
         name: str,
         category,
         description: str | None = None,
-        requirements: Optional[dict] = None,
+        requirements: dict | None = None,
         processing_time_days: int | None = None,
         is_mandatory: bool | None = None,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> EntApprovalType:
         approval_type = await self.get_approval_type(
             authority_id=authority.id, code=code
@@ -151,7 +152,7 @@ class EntitlementsService:
         await self.session.flush()
         return approval_type
 
-    async def list_approval_types(self, *, authority_id: int) -> List[EntApprovalType]:
+    async def list_approval_types(self, *, authority_id: int) -> list[EntApprovalType]:
         stmt = (
             select(EntApprovalType)
             .where(EntApprovalType.authority_id == authority_id)
@@ -164,8 +165,8 @@ class EntitlementsService:
         self,
         *,
         project_id: int,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> PageResult:
         limit_value = _normalise_limit(limit)
         offset_value = _normalise_offset(offset)
@@ -174,7 +175,7 @@ class EntitlementsService:
         page_items = items[offset_value : offset_value + limit_value]
         return PageResult(items=page_items, total=total)
 
-    async def _load_full_roadmap(self, project_id: int) -> List[EntRoadmapItem]:
+    async def _load_full_roadmap(self, project_id: int) -> list[EntRoadmapItem]:
         stmt = (
             select(EntRoadmapItem)
             .options(selectinload(EntRoadmapItem.approval_type))
@@ -184,7 +185,7 @@ class EntitlementsService:
         result = await self.session.execute(stmt)
         return list(result.scalars().unique())
 
-    async def all_roadmap_items(self, project_id: int) -> List[EntRoadmapItem]:
+    async def all_roadmap_items(self, project_id: int) -> list[EntRoadmapItem]:
         """Return the full ordered roadmap for export routines."""
 
         return await self._load_full_roadmap(project_id)
@@ -266,7 +267,7 @@ class EntitlementsService:
             new_status = updates["status"]
             if new_status is not None and target.status != new_status:
                 target.status = new_status
-                target.status_changed_at = datetime.now(timezone.utc)
+                target.status_changed_at = datetime.now(UTC)
 
         if "sequence_order" in updates:
             sequence_order = updates["sequence_order"]
@@ -293,8 +294,8 @@ class EntitlementsService:
         self,
         *,
         project_id: int,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> PageResult:
         limit_value = _normalise_limit(limit)
         offset_value = _normalise_offset(offset)
@@ -349,8 +350,8 @@ class EntitlementsService:
         self,
         *,
         project_id: int,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> PageResult:
         limit_value = _normalise_limit(limit)
         offset_value = _normalise_offset(offset)
@@ -411,8 +412,8 @@ class EntitlementsService:
         self,
         *,
         project_id: int,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> PageResult:
         limit_value = _normalise_limit(limit)
         offset_value = _normalise_offset(offset)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional, cast
+from datetime import UTC, datetime
+from typing import Any, cast
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +19,8 @@ async def start_ingestion_run(
     session: AsyncSession,
     *,
     flow_name: str,
-    run_key: Optional[str] = None,
-    notes: Optional[str] = None,
+    run_key: str | None = None,
+    notes: str | None = None,
 ) -> RefIngestionRun:
     """Create a new ingestion run record."""
 
@@ -28,7 +28,7 @@ async def start_ingestion_run(
         flow_name=flow_name,
         run_key=run_key or str(uuid4()),
         status="running",
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
         notes=notes,
     )
     session.add(record)
@@ -45,13 +45,13 @@ async def complete_ingestion_run(
     status: str,
     records_ingested: int,
     suspected_updates: int,
-    extra_metrics: Optional[Dict[str, Any]] = None,
+    extra_metrics: dict[str, Any] | None = None,
 ) -> RefIngestionRun:
     """Finalize an ingestion run and update metrics."""
 
     run_record = cast(Any, run)
     run_record.status = status
-    run_record.finished_at = datetime.now(timezone.utc)
+    run_record.finished_at = datetime.now(UTC)
     run_record.records_ingested = records_ingested
     run_record.suspected_updates = suspected_updates
     run_record.metrics = extra_metrics or {}

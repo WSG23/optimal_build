@@ -5,10 +5,11 @@ from __future__ import annotations
 import asyncio
 import math
 import re
-from io import BytesIO
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from io import BytesIO
 from itertools import chain
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any
 from xml.etree import ElementTree as ET
 
 try:  # pragma: no cover - optional dependency
@@ -23,18 +24,18 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
 
 from backend.jobs import job
 
-Point = Tuple[float, float]
+Point = tuple[float, float]
 
 
 @dataclass(slots=True)
 class VectorPath:
     """A vectorised path consisting of ordered coordinates."""
 
-    points: List[Point]
-    layer: Optional[str] = None
-    stroke_width: Optional[float] = None
+    points: list[Point]
+    layer: str | None = None
+    stroke_width: float | None = None
 
-    def to_payload(self) -> Dict[str, Any]:
+    def to_payload(self) -> dict[str, Any]:
         return {
             "points": [[float(x), float(y)] for x, y in self.points],
             "layer": self.layer,
@@ -52,7 +53,7 @@ class WallCandidate:
     confidence: float
     source: str = "vector"
 
-    def to_payload(self) -> Dict[str, Any]:
+    def to_payload(self) -> dict[str, Any]:
         return {
             "start": [float(self.start[0]), float(self.start[1])],
             "end": [float(self.end[0]), float(self.end[1])],
@@ -75,14 +76,14 @@ class RasterVectorOptions:
 class RasterVectorResult:
     """Result produced by :func:`vectorize_floorplan`."""
 
-    paths: List[VectorPath]
-    walls: List[WallCandidate]
-    bounds: Optional[Tuple[float, float]]
+    paths: list[VectorPath]
+    walls: list[WallCandidate]
+    bounds: tuple[float, float] | None
     source: str
     options: RasterVectorOptions = field(default_factory=RasterVectorOptions)
 
-    def to_payload(self) -> Dict[str, Any]:
-        bounds_payload: Optional[Dict[str, float]] = None
+    def to_payload(self) -> dict[str, Any]:
+        bounds_payload: dict[str, float] | None = None
         if self.bounds is not None:
             bounds_payload = {
                 "width": float(self.bounds[0]),
@@ -102,7 +103,7 @@ class RasterVectorResult:
         }
 
 
-def _parse_svg_length(raw: Optional[str]) -> Optional[float]:
+def _parse_svg_length(raw: str | None) -> float | None:
     if raw is None:
         return None
     token = raw.strip()
@@ -117,8 +118,8 @@ def _parse_svg_length(raw: Optional[str]) -> Optional[float]:
         return None
 
 
-def _parse_svg_points(raw: str) -> List[Point]:
-    points: List[Point] = []
+def _parse_svg_points(raw: str) -> list[Point]:
+    points: list[Point] = []
     tokens = [
         token.strip() for token in raw.replace("\n", " ").split(" ") if token.strip()
     ]
@@ -132,11 +133,11 @@ def _parse_svg_points(raw: str) -> List[Point]:
     return points
 
 
-def _parse_svg_path_d(raw: str) -> List[Point]:
+def _parse_svg_path_d(raw: str) -> list[Point]:
     commands = raw.replace(",", " ").split()
-    points: List[Point] = []
+    points: list[Point] = []
     iterator = iter(commands)
-    current: Optional[Point] = None
+    current: Point | None = None
     for token in iterator:
         cmd = token.upper()
         if cmd in {"M", "L"}:
@@ -176,8 +177,8 @@ def _parse_svg_path_d(raw: str) -> List[Point]:
     return points
 
 
-def _extract_svg_paths(root: ET.Element) -> List[VectorPath]:
-    paths: List[VectorPath] = []
+def _extract_svg_paths(root: ET.Element) -> list[VectorPath]:
+    paths: list[VectorPath] = []
     for element in root.iter():
         tag = element.tag.split("}")[-1]
         if tag == "path" and element.attrib.get("d"):
@@ -215,7 +216,7 @@ def _extract_svg_paths(root: ET.Element) -> List[VectorPath]:
     return paths
 
 
-def _parse_svg_bounds(root: ET.Element) -> Optional[Tuple[float, float]]:
+def _parse_svg_bounds(root: ET.Element) -> tuple[float, float] | None:
     width = _parse_svg_length(root.attrib.get("width"))
     height = _parse_svg_length(root.attrib.get("height"))
     if width is not None and height is not None:
@@ -236,14 +237,14 @@ def detect_baseline_walls(
     *,
     minimum_length: float = 0.5,
     source: str = "vector",
-) -> List[WallCandidate]:
+) -> list[WallCandidate]:
     """Detect baseline walls from vector paths."""
 
-    walls: List[WallCandidate] = []
+    walls: list[WallCandidate] = []
     for path in paths:
         if len(path.points) < 2:
             continue
-        for start, end in zip(path.points, path.points[1:]):
+        for start, end in zip(path.points, path.points[1:], strict=False):
             dx = end[0] - start[0]
             dy = end[1] - start[1]
             length = math.hypot(dx, dy)
@@ -269,14 +270,14 @@ def detect_baseline_walls(
     return walls
 
 
-def _normalise_segment(start: Point, end: Point) -> Tuple[Point, Point]:
+def _normalise_segment(start: Point, end: Point) -> tuple[Point, Point]:
     if (start[0], start[1]) <= (end[0], end[1]):
         return start, end
     return end, start
 
 
-def _merge_walls(*collections: Iterable[WallCandidate]) -> List[WallCandidate]:
-    dedup: Dict[Tuple[float, float, float, float], WallCandidate] = {}
+def _merge_walls(*collections: Iterable[WallCandidate]) -> list[WallCandidate]:
+    dedup: dict[tuple[float, float, float, float], WallCandidate] = {}
     for candidate in chain.from_iterable(collections):
         ordered_start, ordered_end = _normalise_segment(candidate.start, candidate.end)
         key = (
@@ -296,8 +297,8 @@ def _merge_walls(*collections: Iterable[WallCandidate]) -> List[WallCandidate]:
     return list(dedup.values())
 
 
-def _iter_runs(values: Sequence[bool]) -> Iterable[Tuple[int, int]]:
-    start: Optional[int] = None
+def _iter_runs(values: Sequence[bool]) -> Iterable[tuple[int, int]]:
+    start: int | None = None
     for index, flag in enumerate(values):
         if flag:
             if start is None:
@@ -314,7 +315,7 @@ def _detect_walls_from_binary(
     width: float,
     height: float,
     options: RasterVectorOptions,
-) -> List[WallCandidate]:
+) -> list[WallCandidate]:
     if not binary:
         return []
     pixel_height = len(binary)
@@ -348,7 +349,7 @@ def _detect_walls_from_binary(
             source="bitmap",
         )
 
-    dedup: Dict[Tuple[float, float, float, float], WallCandidate] = {}
+    dedup: dict[tuple[float, float, float, float], WallCandidate] = {}
 
     for y, row in enumerate(binary):
         for start, end in _iter_runs(row):
@@ -393,8 +394,8 @@ def _detect_walls_from_binary(
 
 
 def _detect_bitmap_walls(
-    page: "fitz.Page", options: RasterVectorOptions
-) -> List[WallCandidate]:
+    page: fitz.Page, options: RasterVectorOptions
+) -> list[WallCandidate]:
     try:
         pixmap = page.get_pixmap(alpha=False)
     except Exception:  # pragma: no cover - defensive guard
@@ -405,9 +406,9 @@ def _detect_bitmap_walls(
     samples = memoryview(pixmap.samples)
     components = pixmap.n
     threshold = int(255 * options.bitmap_threshold)
-    binary: List[List[bool]] = []
+    binary: list[list[bool]] = []
     for y in range(pixmap.height):
-        row: List[bool] = []
+        row: list[bool] = []
         offset = y * pixmap.width * components
         for x in range(pixmap.width):
             index = offset + x * components
@@ -435,17 +436,17 @@ def _vectorize_bitmap_image(
         grayscale = image.convert("L")
         width, height = grayscale.size
 
-        bounds: Optional[Tuple[float, float]]
+        bounds: tuple[float, float] | None
         if width <= 0 or height <= 0:
             bounds = None
         else:
             bounds = (float(width), float(height))
 
-        walls: List[WallCandidate] = []
+        walls: list[WallCandidate] = []
         if options.infer_walls and width > 0 and height > 0:
             threshold = int(255 * options.bitmap_threshold)
             data = list(grayscale.getdata())
-            binary: List[List[bool]] = []
+            binary: list[list[bool]] = []
             for y in range(height):
                 offset = y * width
                 row_values = data[offset : offset + width]
@@ -459,16 +460,16 @@ def _vectorize_bitmap_image(
     )
 
 
-def _extract_pdf_page_paths(page: "fitz.Page", page_index: int) -> List[VectorPath]:
-    paths: List[VectorPath] = []
+def _extract_pdf_page_paths(page: fitz.Page, page_index: int) -> list[VectorPath]:
+    paths: list[VectorPath] = []
     layer = f"page-{page_index + 1}"
     for drawing in page.get_drawings():  # pragma: no cover - depends on pymupdf
         stroke_raw = drawing.get("width")
         stroke_width = (
             float(stroke_raw) if isinstance(stroke_raw, (int, float)) else None
         )
-        segments: List[List[Point]] = []
-        current: List[Point] = []
+        segments: list[list[Point]] = []
+        current: list[Point] = []
         for command in drawing["items"]:
             operator = command[0]
             if operator == "m":
@@ -515,10 +516,10 @@ def _extract_pdf_paths(
     if fitz is None:  # pragma: no cover - optional dependency
         raise RuntimeError("PDF vectorization requires PyMuPDF (fitz)")
     document = fitz.open(stream=pdf_payload, filetype="pdf")  # type: ignore[arg-type]
-    paths: List[VectorPath] = []
-    vector_walls: List[WallCandidate] = []
-    bitmap_walls: List[WallCandidate] = []
-    bounds: Optional[Tuple[float, float]] = None
+    paths: list[VectorPath] = []
+    vector_walls: list[WallCandidate] = []
+    bitmap_walls: list[WallCandidate] = []
+    bounds: tuple[float, float] | None = None
     for index, page in enumerate(document):  # pragma: no cover - depends on pymupdf
         page_paths = _extract_pdf_page_paths(page, index)
         paths.extend(page_paths)
@@ -570,10 +571,10 @@ async def vectorize_floorplan(
     payload: bytes,
     *,
     content_type: str,
-    filename: Optional[str] = None,
+    filename: str | None = None,
     infer_walls: bool = False,
     minimum_wall_length: float = 1.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Convert PDF/SVG or raster image payloads into vector paths and walls."""
 
     options = RasterVectorOptions(

@@ -3,13 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-
-from app.models.base import BaseModel, MetadataProxy
-from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -21,6 +15,11 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.models.base import BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
 
@@ -43,17 +42,17 @@ class OverlaySourceGeometry(BaseModel):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    suggestions: Mapped[List["OverlaySuggestion"]] = relationship(
+    suggestions: Mapped[list[OverlaySuggestion]] = relationship(
         "OverlaySuggestion",
         back_populates="source_geometry",
         cascade="all, delete-orphan",
     )
-    decisions: Mapped[List["OverlayDecision"]] = relationship(
+    decisions: Mapped[list[OverlayDecision]] = relationship(
         "OverlayDecision",
         back_populates="source_geometry",
         cascade="all, delete-orphan",
     )
-    locks: Mapped[List["OverlayRunLock"]] = relationship(
+    locks: Mapped[list[OverlayRunLock]] = relationship(
         "OverlayRunLock",
         back_populates="source_geometry",
         cascade="all, delete-orphan",
@@ -105,7 +104,7 @@ class OverlaySuggestion(BaseModel):
     source_geometry: Mapped[OverlaySourceGeometry] = relationship(
         "OverlaySourceGeometry", back_populates="suggestions"
     )
-    decision: Mapped[Optional["OverlayDecision"]] = relationship(
+    decision: Mapped[OverlayDecision | None] = relationship(
         "OverlayDecision",
         back_populates="suggestion",
         uselist=False,

@@ -19,9 +19,6 @@ from __future__ import annotations
 from backend.jobs import (  # noqa: F401  (re-exported for workers); noqa: F401
     celery_app,
     job_queue,
-    overlay_run as _overlay_run,
-    parse_cad as _parse_cad,
-    raster_vector as _raster_vector,
 )
 
 __all__ = ["celery_app", "job_queue"]

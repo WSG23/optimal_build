@@ -25,14 +25,15 @@ if _httpx_module is not None:
 else:
     import asyncio
     import json
-    from typing import Dict, Iterable, MutableMapping, Optional
+    from collections.abc import Iterable, MutableMapping
+    from typing import Dict, Optional
     from urllib.parse import parse_qs, urlencode, urlsplit
 
     class Response:
         """Minimal HTTP response object."""
 
         def __init__(
-            self, status_code: int, body: bytes, headers: Dict[str, str]
+            self, status_code: int, body: bytes, headers: dict[str, str]
         ) -> None:
             self.status_code = status_code
             self._body = body
@@ -65,7 +66,7 @@ else:
             *,
             app,
             base_url: str = "http://testserver",
-            headers: Optional[Dict[str, str]] = None,
+            headers: dict[str, str] | None = None,
         ) -> None:
             if app is None:
                 raise RuntimeError("AsyncClient stub requires an ASGI app instance")
@@ -73,7 +74,7 @@ else:
             self.base_url = base_url
             self._default_headers = _prepare_headers(headers, json_payload=None)
 
-        async def __aenter__(self) -> "AsyncClient":
+        async def __aenter__(self) -> AsyncClient:
             return self
 
         async def __aexit__(self, exc_type, exc, tb) -> None:  # noqa: D401
@@ -84,11 +85,11 @@ else:
             method: str,
             url: str,
             *,
-            params: Optional[Dict[str, Any]] = None,
-            headers: Optional[Dict[str, str]] = None,
+            params: dict[str, Any] | None = None,
+            headers: dict[str, str] | None = None,
             json: Any = None,
-            data: Optional[Dict[str, Any]] = None,
-            files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+            data: dict[str, Any] | None = None,
+            files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
         ) -> Response:
             path, query = _normalise_url(url)
             query_params = _merge_query(query, params)
@@ -96,7 +97,7 @@ else:
                 headers, json, base=self._default_headers
             )
 
-            prepared_files: Dict[str, tuple[str, bytes, str]] = {}
+            prepared_files: dict[str, tuple[str, bytes, str]] = {}
             if files:
                 for key, (filename, payload, content_type) in files.items():
                     if hasattr(payload, "read"):
@@ -168,7 +169,7 @@ else:
             await self._app(scope, receive, send)
 
             status_code = 500
-            headers: Dict[str, str] = {}
+            headers: dict[str, str] = {}
             payload = b""
             for message in sent_messages:
                 if message["type"] == "http.response.start":
@@ -188,8 +189,8 @@ else:
             self,
             url: str,
             *,
-            params: Optional[Dict[str, Any]] = None,
-            headers: Optional[Dict[str, str]] = None,
+            params: dict[str, Any] | None = None,
+            headers: dict[str, str] | None = None,
         ) -> Response:
             return await self.request("GET", url, params=params, headers=headers)
 
@@ -197,10 +198,10 @@ else:
             self,
             url: str,
             *,
-            headers: Optional[Dict[str, str]] = None,
+            headers: dict[str, str] | None = None,
             json: Any = None,
-            data: Optional[Dict[str, Any]] = None,
-            files: Optional[MutableMapping[str, tuple[str, Any, str | None]]] = None,
+            data: dict[str, Any] | None = None,
+            files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
         ) -> Response:
             return await self.request(
                 "POST", url, headers=headers, json=json, data=data, files=files
@@ -210,9 +211,9 @@ else:
             self,
             url: str,
             *,
-            headers: Optional[Dict[str, str]] = None,
+            headers: dict[str, str] | None = None,
             json: Any = None,
-            data: Optional[Dict[str, Any]] = None,
+            data: dict[str, Any] | None = None,
         ) -> Response:
             return await self.request("PUT", url, headers=headers, json=json, data=data)
 
@@ -220,7 +221,7 @@ else:
             self,
             url: str,
             *,
-            headers: Optional[Dict[str, str]] = None,
+            headers: dict[str, str] | None = None,
             json: Any = None,
         ) -> Response:
             return await self.request("DELETE", url, headers=headers, json=json)
@@ -235,8 +236,8 @@ else:
         return json.dumps(payload).encode("utf-8")
 
 
-def _merge_query(query: str, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-    combined: Dict[str, Any] = {
+def _merge_query(query: str, params: dict[str, Any] | None) -> dict[str, Any]:
+    combined: dict[str, Any] = {
         key: values[0] if len(values) == 1 else values
         for key, values in parse_qs(query, keep_blank_values=True).items()
     }
@@ -246,12 +247,12 @@ def _merge_query(query: str, params: Optional[Dict[str, Any]]) -> Dict[str, Any]
 
 
 def _prepare_headers(
-    headers: Optional[Dict[str, str]],
+    headers: dict[str, str] | None,
     json_payload: Any,
     *,
-    base: Optional[Dict[str, str]] = None,
-) -> Dict[str, str]:
-    prepared: Dict[str, str] = dict(base or {})
+    base: dict[str, str] | None = None,
+) -> dict[str, str]:
+    prepared: dict[str, str] = dict(base or {})
     if headers:
         for key, value in headers.items():
             prepared[key.lower()] = str(value)

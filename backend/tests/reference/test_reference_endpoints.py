@@ -1,10 +1,10 @@
 """Integration tests for seeded reference data endpoints."""
 
 import json
-from typing import Any, Dict, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import pytest
-
 from backend.scripts import seed_nonreg
 
 
@@ -50,7 +50,7 @@ async def test_standards_endpoint_includes_metadata(
     response = await client.get("/api/v1/standards")
     assert response.status_code == 200
 
-    records: Iterable[Dict[str, Any]] = response.json()
+    records: Iterable[dict[str, Any]] = response.json()
     expected = json.loads(seed_nonreg.STANDARDS_SEED.read_text(encoding="utf-8"))
     assert len(records) == len(expected)
 

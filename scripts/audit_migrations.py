@@ -1,5 +1,6 @@
+import re
+import sys
 from pathlib import Path
-import re, sys
 
 root = Path("backend/migrations/versions")
 paths = sorted(root.glob("*.py"))

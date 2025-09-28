@@ -2,14 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-
-from app.core.config import settings
-from app.models.base import BaseModel
-from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -23,6 +17,12 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
+from app.core.config import settings
+from app.models.base import BaseModel
+from app.models.types import FlexibleJSONB
 
 try:  # pragma: no cover - geometry support is optional in test environments
     if settings.BUILDABLE_USE_POSTGIS:
@@ -378,12 +378,12 @@ class RefCostIndex(BaseModel):
     @classmethod
     def latest(
         cls,
-        indices: Iterable["RefCostIndex"],
+        indices: Iterable[RefCostIndex],
         *,
-        series_name: Optional[str] = None,
-        jurisdiction: Optional[str] = None,
-        provider: Optional[str] = None,
-    ) -> Optional["RefCostIndex"]:
+        series_name: str | None = None,
+        jurisdiction: str | None = None,
+        provider: str | None = None,
+    ) -> RefCostIndex | None:
         """Select the latest index from ``indices`` matching the provided filters."""
 
         candidates = [

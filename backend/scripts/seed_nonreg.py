@@ -5,18 +5,18 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefCostIndex, RefErgonomics, RefMaterialStandard
 from sqlalchemy import Select, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 SEED_ROOT = Path(__file__).parent / "seeds"
 ERGONOMICS_SEED = SEED_ROOT / "ergonomics_seed.json"
@@ -32,7 +32,7 @@ class NonRegSeedSummary:
     standards: int = 0
     cost_indices: int = 0
 
-    def as_dict(self) -> Dict[str, int]:
+    def as_dict(self) -> dict[str, int]:
         """Represent the seeded counts as a dictionary."""
 
         return {
@@ -42,7 +42,7 @@ class NonRegSeedSummary:
         }
 
 
-def _load_seed_file(path: Path) -> List[Dict[str, Any]]:
+def _load_seed_file(path: Path) -> list[dict[str, Any]]:
     """Load a JSON seed file into Python dictionaries."""
 
     if not path.exists():
@@ -57,7 +57,7 @@ def _load_seed_file(path: Path) -> List[Dict[str, Any]]:
     raise ValueError(f"Seed file {path} must contain a JSON array.")
 
 
-def _parse_date(value: Any) -> Optional[date]:
+def _parse_date(value: Any) -> date | None:
     """Convert an ISO formatted string into a :class:`date`."""
 
     if value in (None, ""):
@@ -86,10 +86,10 @@ def _to_decimal(value: Any, places: int | None = None) -> Decimal:
     return result
 
 
-def _prepare_ergonomics(records: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _prepare_ergonomics(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     """Normalise ergonomics payloads for insertion/upsert."""
 
-    prepared: List[Dict[str, Any]] = []
+    prepared: list[dict[str, Any]] = []
     for record in records:
         metric = dict(record)
         if "metric_key" not in metric or "population" not in metric:
@@ -103,10 +103,10 @@ def _prepare_ergonomics(records: Iterable[Dict[str, Any]]) -> List[Dict[str, Any
     return prepared
 
 
-def _prepare_standards(records: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _prepare_standards(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     """Normalise material standard payloads."""
 
-    prepared: List[Dict[str, Any]] = []
+    prepared: list[dict[str, Any]] = []
     for record in records:
         entry = dict(record)
         entry.setdefault("jurisdiction", "SG")
@@ -119,10 +119,10 @@ def _prepare_standards(records: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]
     return prepared
 
 
-def _prepare_cost_indices(records: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _prepare_cost_indices(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     """Normalise cost index payloads."""
 
-    prepared: List[Dict[str, Any]] = []
+    prepared: list[dict[str, Any]] = []
     for record in records:
         entry = dict(record)
         entry.setdefault("jurisdiction", "SG")
@@ -143,7 +143,7 @@ def _prepare_cost_indices(records: Iterable[Dict[str, Any]]) -> List[Dict[str, A
 
 
 async def _upsert_ergonomics(
-    session: AsyncSession, metrics: Iterable[Dict[str, Any]]
+    session: AsyncSession, metrics: Iterable[dict[str, Any]]
 ) -> int:
     processed = 0
     for metric in metrics:
@@ -168,7 +168,7 @@ async def _upsert_ergonomics(
 
 
 async def _upsert_standards(
-    session: AsyncSession, standards: Iterable[Dict[str, Any]]
+    session: AsyncSession, standards: Iterable[dict[str, Any]]
 ) -> int:
     processed = 0
     for payload in standards:
@@ -203,7 +203,7 @@ async def _upsert_standards(
 
 
 async def _upsert_cost_indices(
-    session: AsyncSession, indices: Iterable[Dict[str, Any]]
+    session: AsyncSession, indices: Iterable[dict[str, Any]]
 ) -> int:
     processed = 0
     for payload in indices:
@@ -274,7 +274,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> NonRegSeedSummary:
+def main(argv: Sequence[str] | None = None) -> NonRegSeedSummary:
     """Entry point for command-line execution."""
 
     parser = _build_parser()

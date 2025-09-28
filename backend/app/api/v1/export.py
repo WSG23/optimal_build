@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.background import BackgroundTask
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
@@ -17,10 +21,6 @@ from app.core.export import (
     ProjectGeometryMissing,
     generate_project_export,
 )
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, field_validator
-from starlette.background import BackgroundTask
 
 router = APIRouter(prefix="/export", tags=["export"])
 
@@ -28,11 +28,11 @@ router = APIRouter(prefix="/export", tags=["export"])
 class LayerMapPayload(BaseModel):
     """Layer and style configuration supplied by the client."""
 
-    source: Dict[str, str] = Field(default_factory=dict)
-    overlays: Dict[str, str] = Field(default_factory=dict)
-    styles: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
-    default_source_layer: Optional[str] = None
-    default_overlay_layer: Optional[str] = None
+    source: dict[str, str] = Field(default_factory=dict)
+    overlays: dict[str, str] = Field(default_factory=dict)
+    styles: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    default_source_layer: str | None = None
+    default_overlay_layer: str | None = None
 
 
 class ExportRequestPayload(BaseModel):
@@ -44,7 +44,7 @@ class ExportRequestPayload(BaseModel):
     include_pending_overlays: bool = False
     include_rejected_overlays: bool = False
     layer_map: LayerMapPayload | None = None
-    pending_watermark: Optional[str] = None
+    pending_watermark: str | None = None
 
     @field_validator("format")
     @classmethod

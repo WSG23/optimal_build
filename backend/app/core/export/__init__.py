@@ -7,19 +7,20 @@ import json
 import os
 import time
 import uuid
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Mapping
+from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit.ledger import append_event
 from app.core.metrics import EXPORT_BASELINE_SECONDS
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
-from sqlalchemy import select
 
 try:  # pragma: no cover - optional dependency
     import ezdxf  # type: ignore
@@ -67,9 +68,9 @@ class ExportFormat(str, Enum):
 class LayerMapping:
     """Mapping configuration for source and overlay layers."""
 
-    source: Dict[str, str] = field(default_factory=dict)
-    overlays: Dict[str, str] = field(default_factory=dict)
-    styles: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    source: dict[str, str] = field(default_factory=dict)
+    overlays: dict[str, str] = field(default_factory=dict)
+    styles: dict[str, dict[str, Any]] = field(default_factory=dict)
     default_source_layer: str = "MODEL"
     default_overlay_layer: str = "OVERLAYS"
 
@@ -95,7 +96,7 @@ class LayerMapping:
             else self.default_overlay_layer
         )
 
-    def style_for(self, code: str, severity: str | None) -> Dict[str, Any]:
+    def style_for(self, code: str, severity: str | None) -> dict[str, Any]:
         """Lookup a style configuration for a layer."""
 
         if code in self.styles:
@@ -127,7 +128,7 @@ class ExportArtifact:
     path: Path
     filename: str
     media_type: str
-    manifest: Dict[str, Any]
+    manifest: dict[str, Any]
 
     def open(self) -> io.BufferedReader:
         """Return a binary stream for the stored artefact."""
@@ -183,7 +184,7 @@ class LocalExportStorage(ArtifactStorage):
         manifest: Mapping[str, Any],
         filename: str | None = None,
     ) -> ExportArtifact:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
         suffix = (
             filename
             or f"project-{project_id}-{timestamp}-{uuid.uuid4().hex[:8]}.{fmt.extension}"
@@ -212,8 +213,8 @@ def _normalise_geometry(
     geometries: Iterable[CanonicalGeometry],
     *,
     mapping: LayerMapping,
-) -> List[Dict[str, Any]]:
-    features: List[Dict[str, Any]] = []
+) -> list[dict[str, Any]]:
+    features: list[dict[str, Any]] = []
     for node in _iter_nodes(geometries):
         layer = mapping.map_source(node.kind)
         features.append(
@@ -234,8 +235,8 @@ def _normalise_overlays(
     include_approved: bool,
     include_pending: bool,
     include_rejected: bool,
-) -> List[Dict[str, Any]]:
-    features: List[Dict[str, Any]] = []
+) -> list[dict[str, Any]]:
+    features: list[dict[str, Any]] = []
     for overlay in overlays:
         status = (overlay.status or "pending").lower()
         include = False
@@ -288,9 +289,9 @@ def _normalise_overlays(
 
 
 def _group_by_layer(
-    features: Iterable[Dict[str, Any]],
-) -> Dict[str, List[Dict[str, Any]]]:
-    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    features: Iterable[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
     for feature in features:
         layer = feature.get("layer", "MODEL")
         payload = dict(feature)
@@ -318,11 +319,11 @@ class BaseWriter:
     def _build_manifest(
         self,
         *,
-        geometry: List[Dict[str, Any]],
-        overlays: List[Dict[str, Any]],
+        geometry: list[dict[str, Any]],
+        overlays: list[dict[str, Any]],
         watermark: str | None,
-    ) -> Dict[str, Any]:
-        manifest: Dict[str, Any] = {
+    ) -> dict[str, Any]:
+        manifest: dict[str, Any] = {
             "format": self.format.value,
             "renderer": "fallback",
             "options": {
@@ -342,10 +343,10 @@ class BaseWriter:
 
     def render(
         self,
-        geometry: List[Dict[str, Any]],
-        overlays: List[Dict[str, Any]],
+        geometry: list[dict[str, Any]],
+        overlays: list[dict[str, Any]],
         watermark: str | None,
-    ) -> tuple[bytes, Dict[str, Any]]:
+    ) -> tuple[bytes, dict[str, Any]]:
         raise NotImplementedError
 
 
@@ -354,10 +355,10 @@ class DXFWriter(BaseWriter):
 
     def render(
         self,
-        geometry: List[Dict[str, Any]],
-        overlays: List[Dict[str, Any]],
+        geometry: list[dict[str, Any]],
+        overlays: list[dict[str, Any]],
         watermark: str | None,
-    ) -> tuple[bytes, Dict[str, Any]]:
+    ) -> tuple[bytes, dict[str, Any]]:
         manifest = self._build_manifest(
             geometry=geometry, overlays=overlays, watermark=watermark
         )
@@ -396,10 +397,10 @@ class DWGWriter(BaseWriter):
 
     def render(
         self,
-        geometry: List[Dict[str, Any]],
-        overlays: List[Dict[str, Any]],
+        geometry: list[dict[str, Any]],
+        overlays: list[dict[str, Any]],
         watermark: str | None,
-    ) -> tuple[bytes, Dict[str, Any]]:
+    ) -> tuple[bytes, dict[str, Any]]:
         manifest = self._build_manifest(
             geometry=geometry, overlays=overlays, watermark=watermark
         )
@@ -412,10 +413,10 @@ class IFCWriter(BaseWriter):
 
     def render(
         self,
-        geometry: List[Dict[str, Any]],
-        overlays: List[Dict[str, Any]],
+        geometry: list[dict[str, Any]],
+        overlays: list[dict[str, Any]],
         watermark: str | None,
-    ) -> tuple[bytes, Dict[str, Any]]:
+    ) -> tuple[bytes, dict[str, Any]]:
         manifest = self._build_manifest(
             geometry=geometry, overlays=overlays, watermark=watermark
         )
@@ -448,10 +449,10 @@ class PDFWriter(BaseWriter):
 
     def render(
         self,
-        geometry: List[Dict[str, Any]],
-        overlays: List[Dict[str, Any]],
+        geometry: list[dict[str, Any]],
+        overlays: list[dict[str, Any]],
         watermark: str | None,
-    ) -> tuple[bytes, Dict[str, Any]]:
+    ) -> tuple[bytes, dict[str, Any]]:
         manifest = self._build_manifest(
             geometry=geometry, overlays=overlays, watermark=watermark
         )
@@ -487,7 +488,7 @@ class PDFWriter(BaseWriter):
         return json.dumps(manifest, sort_keys=True).encode("utf-8"), manifest
 
 
-_WRITERS: Dict[ExportFormat, type[BaseWriter]] = {
+_WRITERS: dict[ExportFormat, type[BaseWriter]] = {
     ExportFormat.DXF: DXFWriter,
     ExportFormat.DWG: DWGWriter,
     ExportFormat.IFC: IFCWriter,
@@ -525,7 +526,7 @@ async def generate_project_export(
             f"No source geometry found for project {project_id}"
         )
 
-    geometries: List[CanonicalGeometry] = []
+    geometries: list[CanonicalGeometry] = []
     for record in records:
         payload = record.graph
         if isinstance(payload, dict):
@@ -540,7 +541,7 @@ async def generate_project_export(
     )
     overlay_suggestions = list(overlay_result.scalars().unique())
 
-    geometry_features: List[Dict[str, Any]] = []
+    geometry_features: list[dict[str, Any]] = []
     if options.include_source:
         geometry_features = _normalise_geometry(
             geometries, mapping=options.layer_mapping
@@ -561,7 +562,7 @@ async def generate_project_export(
     writer = get_writer(options.format, options=options)
     payload, manifest = writer.render(geometry_features, overlay_features, watermark)
     manifest.setdefault("project_id", project_id)
-    manifest.setdefault("generated_at", datetime.now(timezone.utc).isoformat())
+    manifest.setdefault("generated_at", datetime.now(UTC).isoformat())
     if manifest.get("renderer") == "fallback":
         payload = json.dumps(manifest, sort_keys=True).encode("utf-8")
 

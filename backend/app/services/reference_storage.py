@@ -6,9 +6,8 @@ import asyncio
 import hashlib
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass(slots=True)
@@ -26,10 +25,10 @@ class ReferenceStorage:
     def __init__(
         self,
         *,
-        base_path: Optional[Path] = None,
-        bucket: Optional[str] = None,
+        base_path: Path | None = None,
+        bucket: str | None = None,
         prefix: str = "ref-documents",
-        endpoint_url: Optional[str] = None,
+        endpoint_url: str | None = None,
     ) -> None:
         self.base_path = base_path or self._resolve_base_path()
         self.base_path.mkdir(parents=True, exist_ok=True)
@@ -57,7 +56,7 @@ class ReferenceStorage:
     ) -> ReferenceStorageResult:
         """Persist ``payload`` for ``source_id`` using a content derived key."""
 
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         digest = hashlib.sha256(payload).hexdigest()[:12]
         filename = f"{timestamp}-{digest}{suffix}"
         key_parts = [

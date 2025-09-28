@@ -2,21 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date, datetime
 import inspect
 import json
+from collections.abc import Callable, Iterable, Mapping, MutableMapping, MutableSequence, Sequence
+from dataclasses import dataclass
+from datetime import date, datetime
 from typing import (
     Any,
-    Callable,
     Dict,
-    Iterable,
     List,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
     Optional,
-    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -77,9 +72,9 @@ class FieldInfo:
     """Metadata attached to model fields."""
 
     default: Any = Undefined
-    default_factory: Optional[Callable[[], Any]] = None
-    description: Optional[str] = None
-    extra: Dict[str, Any] | None = None
+    default_factory: Callable[[], Any] | None = None
+    description: str | None = None
+    extra: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:  # pragma: no cover - trivial initialiser
         if self.extra is None:
@@ -89,8 +84,8 @@ class FieldInfo:
 def Field(
     default: Any = Undefined,
     *,
-    default_factory: Optional[Callable[[], Any]] = None,
-    description: Optional[str] = None,
+    default_factory: Callable[[], Any] | None = None,
+    description: str | None = None,
     **kwargs: Any,
 ) -> FieldInfo:
     """Return metadata describing a model field."""
@@ -140,7 +135,7 @@ def _build_field(type_annotation: Any, field: FieldInfo) -> FieldInfo:
     return field
 
 
-def _convert_primitive(value: Any, expected: Type[Any]) -> Any:
+def _convert_primitive(value: Any, expected: type[Any]) -> Any:
     if value is None:
         return None
     try:
@@ -182,7 +177,7 @@ def _convert_value(value: Any, annotation: Any) -> Any:
                 continue
         return value
 
-    if origin in {list, List, Sequence, MutableSequence}:  # type: ignore[name-defined]
+    if origin in {list, list, Sequence, MutableSequence}:  # type: ignore[name-defined]
         item_type = get_args(annotation)[0] if get_args(annotation) else Any
         if value is None:
             return []
@@ -190,7 +185,7 @@ def _convert_value(value: Any, annotation: Any) -> Any:
             value = list(value)
         return [_convert_value(item, item_type) for item in value]
 
-    if origin in {dict, Dict, Mapping, MutableMapping}:  # type: ignore[name-defined]
+    if origin in {dict, dict, Mapping, MutableMapping}:  # type: ignore[name-defined]
         key_type, value_type = (Any, Any)
         if get_args(annotation):
             args = get_args(annotation)
@@ -221,7 +216,7 @@ def _convert_value(value: Any, annotation: Any) -> Any:
 
 
 def _apply_field_validators(
-    cls: Type["BaseModel"],
+    cls: type[BaseModel],
     name: str,
     value: Any,
 ) -> Any:
@@ -231,8 +226,8 @@ def _apply_field_validators(
 
 
 def _apply_model_validators(
-    cls: Type["BaseModel"], instance: "BaseModel"
-) -> "BaseModel":
+    cls: type[BaseModel], instance: BaseModel
+) -> BaseModel:
     for validator in cls.__model_validators__:
         result = validator(cls, instance)
         if isinstance(result, cls):
@@ -245,7 +240,7 @@ class BaseModelMeta(type):
 
     def __new__(mcls, name, bases, namespace, **kwargs):
         annotations = dict(namespace.get("__annotations__", {}))
-        fields: Dict[str, FieldInfo] = {}
+        fields: dict[str, FieldInfo] = {}
 
         for base in reversed(bases):
             if hasattr(base, "model_fields"):
@@ -270,9 +265,9 @@ class BaseModelMeta(type):
                 field_info = FieldInfo(default=default_value)
             fields[field_name] = _build_field(annotation, field_info)
 
-        field_validators: Dict[str, list[Callable[[Type["BaseModel"], Any], Any]]] = {}
+        field_validators: dict[str, list[Callable[[type[BaseModel], Any], Any]]] = {}
         model_validators: list[
-            Callable[[Type["BaseModel"], "BaseModel"], "BaseModel"]
+            Callable[[type[BaseModel], BaseModel], BaseModel]
         ] = []
 
         for attr_name, attr_value in list(namespace.items()):
@@ -294,7 +289,7 @@ class BaseModelMeta(type):
                 model_validators.append(func)
 
         config = namespace.get("Config")
-        model_config: Dict[str, Any] = {}
+        model_config: dict[str, Any] = {}
         if config is not None:
             for key in dir(config):
                 if key.startswith("_"):
@@ -323,14 +318,14 @@ class BaseModelMeta(type):
 class BaseModel(metaclass=BaseModelMeta):
     """Small subset of the behaviour of :class:`pydantic.BaseModel`."""
 
-    model_fields: Dict[str, FieldInfo]
-    __field_validators__: Dict[str, list[Callable[[Type["BaseModel"], Any], Any]]]
-    __model_validators__: list[Callable[[Type["BaseModel"], "BaseModel"], "BaseModel"]]
-    model_config: Dict[str, Any]
+    model_fields: dict[str, FieldInfo]
+    __field_validators__: dict[str, list[Callable[[type[BaseModel], Any], Any]]]
+    __model_validators__: list[Callable[[type[BaseModel], BaseModel], BaseModel]]
+    model_config: dict[str, Any]
 
     def __init__(self, **data: Any) -> None:
         provided_fields = set(data.keys())
-        values: Dict[str, Any] = {}
+        values: dict[str, Any] = {}
         for name, field in self.model_fields.items():
             if name in data:
                 value = data[name]
@@ -363,14 +358,14 @@ class BaseModel(metaclass=BaseModelMeta):
 
     @classmethod
     def model_validate(
-        cls: Type[T],
+        cls: type[T],
         obj: Any,
         *,
         from_attributes: bool = False,
     ) -> T:
         if isinstance(obj, cls):
             return obj
-        data: Dict[str, Any]
+        data: dict[str, Any]
         if isinstance(obj, Mapping):
             data = dict(obj)
         elif from_attributes:
@@ -387,7 +382,7 @@ class BaseModel(metaclass=BaseModelMeta):
         *,
         mode: str = "python",
         exclude_unset: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if exclude_unset:
             provided = getattr(self, "__provided_fields__", set())
             items = (
@@ -426,9 +421,7 @@ def field_validator(
 
     def decorator(func: Callable[..., Any]) -> classmethod:
         underlying = func.__func__ if isinstance(func, classmethod) else func
-        setattr(
-            underlying, "__pydantic_field_validator__", {"fields": fields, "mode": mode}
-        )
+        underlying.__pydantic_field_validator__ = {"fields": fields, "mode": mode}
         return classmethod(underlying)
 
     return decorator
@@ -441,7 +434,7 @@ def model_validator(
 
     def decorator(func: Callable[..., Any]) -> classmethod:
         underlying = func.__func__ if isinstance(func, classmethod) else func
-        setattr(underlying, "__pydantic_model_validator__", {"mode": mode})
+        underlying.__pydantic_model_validator__ = {"mode": mode}
         return classmethod(underlying)
 
     return decorator

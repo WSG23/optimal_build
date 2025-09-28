@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict
+from typing import Any
 
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -14,10 +19,6 @@ from app.core.database import engine, get_session
 from app.models.rkp import RefRule
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
-from fastapi import Depends, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
-from sqlalchemy import func, select, text
 
 configure_logging()
 logger = get_logger(__name__)
@@ -56,7 +57,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
-async def root() -> Dict[str, str]:
+async def root() -> dict[str, str]:
     """Root endpoint."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="root").inc()
@@ -69,7 +70,7 @@ async def root() -> Dict[str, str]:
 
 
 @app.get("/health")
-async def health_check(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
+async def health_check(session: AsyncSession = Depends(get_session)) -> dict[str, Any]:
     """Health check endpoint with database connectivity."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="health").inc()
@@ -105,7 +106,7 @@ async def health_metrics() -> Response:
 
 
 @app.get(f"{settings.API_V1_STR}/test")
-async def test_endpoint(_: str = Depends(require_viewer)) -> Dict[str, str]:
+async def test_endpoint(_: str = Depends(require_viewer)) -> dict[str, str]:
     """Test endpoint."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="test").inc()
@@ -116,7 +117,7 @@ async def test_endpoint(_: str = Depends(require_viewer)) -> Dict[str, str]:
 async def rules_count(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get count of rules in database."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="rules_count").inc()
@@ -131,7 +132,7 @@ async def rules_count(
             .group_by(RefRule.authority)
             .order_by(RefRule.authority)
         )
-        by_authority: Dict[str, int] = {}
+        by_authority: dict[str, int] = {}
         for authority, count in by_authority_result.all():
             key = str(authority) if authority else "unknown"
             by_authority[key] = int(count or 0)
@@ -143,7 +144,7 @@ async def rules_count(
         )
         sample_rule = sample_rule_result.mappings().first()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "total_rules": total_rules,
             "by_authority": by_authority,
         }
@@ -164,7 +165,7 @@ async def rules_count(
 async def database_status(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get database status and table information."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="database_status").inc()
@@ -179,7 +180,7 @@ async def database_status(
             .group_by(RefRule.topic)
             .order_by(RefRule.topic)
         )
-        by_topic: Dict[str, int] = {}
+        by_topic: dict[str, int] = {}
         total_rules = 0
         for topic, count in rules_by_topic_result.all():
             key = str(topic) if topic else "unknown"

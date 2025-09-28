@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any
 
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefMaterialStandard
 from app.utils.logging import get_logger, log_event
-from sqlalchemy import Select, select
 
 logger = get_logger(__name__)
 
@@ -29,7 +30,7 @@ STANDARD_UPDATE_FIELDS: Iterable[str] = (
 
 
 async def upsert_material_standard(
-    session: AsyncSession, payload: Dict[str, Any]
+    session: AsyncSession, payload: dict[str, Any]
 ) -> RefMaterialStandard:
     """Insert or update a material standard entry."""
 
@@ -71,11 +72,11 @@ async def upsert_material_standard(
 async def lookup_material_standards(
     session: AsyncSession,
     *,
-    standard_code: Optional[str] = None,
-    standard_body: Optional[str] = None,
-    material_type: Optional[str] = None,
-    section: Optional[str] = None,
-) -> List[RefMaterialStandard]:
+    standard_code: str | None = None,
+    standard_body: str | None = None,
+    material_type: str | None = None,
+    section: str | None = None,
+) -> list[RefMaterialStandard]:
     """Retrieve standards matching the provided filters."""
 
     stmt: Select[Any] = select(RefMaterialStandard)

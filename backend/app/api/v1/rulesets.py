@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Optional
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -21,15 +22,13 @@ from app.schemas.rulesets import (
     RulesetValidationRequest,
     RulesetValidationResponse,
 )
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import Select, select
 
 router = APIRouter()
 
 
 async def _load_ruleset(
     session: AsyncSession, payload: RulesetValidationRequest
-) -> Optional[RulePack]:
+) -> RulePack | None:
     """Retrieve the rule pack referenced by the validation request."""
 
     stmt: Select[RulePack]
@@ -95,7 +94,7 @@ async def validate_ruleset(
     summary = RulesetEvaluationSummary.model_validate(evaluation.get("summary", {}))
     ruleset_summary = RulePackSummary.model_validate(ruleset, from_attributes=True)
 
-    citations: List[Dict[str, object]] = []
+    citations: list[dict[str, object]] = []
     seen: set[str] = set()
     for item in results:
         citation = item.citation

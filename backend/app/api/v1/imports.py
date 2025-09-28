@@ -5,10 +5,19 @@ from __future__ import annotations
 import asyncio
 import json
 from collections import Counter
-from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Mapping, Tuple
+from collections.abc import Iterable, Mapping
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
+from backend.jobs import job_queue
+from backend.jobs.parse_cad import (
+    detect_dxf_metadata,
+    detect_ifc_metadata,
+    parse_import_job,
+)
+from backend.jobs.raster_vector import vectorize_floorplan
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
@@ -18,20 +27,12 @@ from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
-from backend.jobs import job_queue
-from backend.jobs.parse_cad import (
-    detect_dxf_metadata,
-    detect_ifc_metadata,
-    parse_import_job,
-)
-from backend.jobs.raster_vector import vectorize_floorplan
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
 router = APIRouter()
 logger = get_logger(__name__)
 
-SUPPORTED_IMPORT_SUFFIXES: Tuple[str, ...] = (".dxf", ".ifc", ".json")
-SUPPORTED_IMPORT_MEDIA_HINTS: Tuple[str, ...] = ("dxf", "ifc", "json")
+SUPPORTED_IMPORT_SUFFIXES: tuple[str, ...] = (".dxf", ".ifc", ".json")
+SUPPORTED_IMPORT_MEDIA_HINTS: tuple[str, ...] = ("dxf", "ifc", "json")
 
 
 def _extract_unit_id(unit: Any) -> str | None:
@@ -51,11 +52,11 @@ def _normalise_floor(
     *,
     name: str,
     unit_ids: Iterable[str] | None = None,
-    seen_units: Dict[str, None],
-) -> Dict[str, Any]:
+    seen_units: dict[str, None],
+) -> dict[str, Any]:
     """Create a floor summary while tracking unique units."""
 
-    collected: List[str] = []
+    collected: list[str] = []
     if unit_ids:
         for unit in unit_ids:
             if unit not in seen_units:
@@ -65,12 +66,12 @@ def _normalise_floor(
 
 
 def _collect_layer_floors(
-    raw_layers: Iterable[object], seen_units: Dict[str, None]
-) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    raw_layers: Iterable[object], seen_units: dict[str, None]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Return floor summaries and layer metadata for standard layer payloads."""
 
-    floors: List[Dict[str, Any]] = []
-    metadata: List[Dict[str, Any]] = []
+    floors: list[dict[str, Any]] = []
+    metadata: list[dict[str, Any]] = []
     for layer in raw_layers:
         if not isinstance(layer, dict):
             continue
@@ -81,7 +82,7 @@ def _collect_layer_floors(
         floor_name = str(
             layer.get("name") or layer.get("label") or layer.get("id") or "Floor"
         )
-        unit_ids: List[str] = []
+        unit_ids: list[str] = []
         for unit in layer.get("units", []):
             unit_id = _extract_unit_id(unit)
             if unit_id is None:
@@ -94,17 +95,17 @@ def _collect_layer_floors(
 
 
 def _collect_declared_floors(
-    raw_floors: Iterable[object], seen_units: Dict[str, None]
-) -> List[Dict[str, Any]]:
+    raw_floors: Iterable[object], seen_units: dict[str, None]
+) -> list[dict[str, Any]]:
     """Normalise free-form floor entries into predictable summaries."""
 
-    floors: List[Dict[str, Any]] = []
+    floors: list[dict[str, Any]] = []
     for entry in raw_floors:
         if isinstance(entry, dict):
             name = str(
                 entry.get("name") or entry.get("label") or entry.get("id") or "Floor"
             )
-            units: List[str] = []
+            units: list[str] = []
             for unit in entry.get("units", []):
                 unit_id = _extract_unit_id(unit)
                 if unit_id is None:
@@ -119,7 +120,7 @@ def _collect_declared_floors(
 
 
 def _register_unit_ids(
-    raw_units: Iterable[object], seen_units: Dict[str, None]
+    raw_units: Iterable[object], seen_units: dict[str, None]
 ) -> None:
     """Track standalone units so they appear in the ordered summary."""
 
@@ -132,12 +133,12 @@ def _register_unit_ids(
 
 def _detect_json_payload(
     payload: Mapping[str, Any],
-) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]:
     """Inspect a JSON payload and extract quick-look floor and unit metadata."""
 
-    seen_units: Dict[str, None] = {}
-    layer_metadata: List[Dict[str, Any]] = []
-    floors: List[Dict[str, Any]] = []
+    seen_units: dict[str, None] = {}
+    layer_metadata: list[dict[str, Any]] = []
+    floors: list[dict[str, Any]] = []
 
     raw_layers = payload.get("layers")
     if isinstance(raw_layers, list):
@@ -161,7 +162,7 @@ def _detect_import_metadata(
     filename: str | None,
     content_type: str | None,
     payload: bytes,
-) -> Tuple[List[Dict[str, Any]], List[str], List[Dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]:
     """Determine floors, units and layer metadata for diverse import payloads."""
 
     name = (filename or "").lower()
@@ -227,7 +228,7 @@ def _summarise_vector_payload(
     *,
     infer_walls: bool,
     requested: bool,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Generate a compact summary describing extracted vector geometry."""
 
     options_raw = payload.get("options")
@@ -249,7 +250,7 @@ def _summarise_vector_payload(
     }
 
 
-def _derive_vector_layers(payload: Mapping[str, Any]) -> List[Dict[str, Any]]:
+def _derive_vector_layers(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
     """Derive layer metadata from vectorized PDF payloads."""
 
     layer_counts: Counter[str] = Counter()
@@ -268,10 +269,10 @@ def _derive_vector_layers(payload: Mapping[str, Any]) -> List[Dict[str, Any]]:
     ]
 
 
-def _normalise_units(units: object) -> List[str]:
+def _normalise_units(units: object) -> list[str]:
     """Return a list of unit identifiers from diverse representations."""
 
-    collected: List[str] = []
+    collected: list[str] = []
     if isinstance(units, Mapping):
         iterable = list(units.values())
     elif isinstance(units, (list, tuple, set)):
@@ -308,14 +309,14 @@ def _coerce_mapping_payload(value: object) -> Mapping[str, Any] | None:
 
 
 def _normalise_floor_entry(
-    index: int, entry: object, seen_units: Dict[str, None]
-) -> Dict[str, Any]:
+    index: int, entry: object, seen_units: dict[str, None]
+) -> dict[str, Any]:
     """Return floor metadata, updating ``seen_units`` while normalising payloads."""
 
     data = _coerce_mapping_payload(entry)
     if data is None:
         name = str(entry) if entry not in (None, "") else f"Floor {index}"
-        unit_ids: List[str] = []
+        unit_ids: list[str] = []
     else:
         name = str(
             data.get("name") or data.get("label") or data.get("id") or f"Floor {index}"
@@ -329,7 +330,7 @@ def _normalise_floor_entry(
 
 
 def _integrate_detected_units(
-    units_payload: object, seen_units: Dict[str, None]
+    units_payload: object, seen_units: dict[str, None]
 ) -> None:
     """Merge standalone unit identifiers into ``seen_units``."""
 
@@ -355,14 +356,14 @@ def _layer_count_from_metadata(layer_metadata: object) -> int | None:
     return 1
 
 
-def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
+def _build_parse_summary(record: ImportRecord) -> dict[str, Any]:
     """Aggregate import detection metadata for downstream consumers."""
 
     parse_metadata = _coerce_mapping_payload(record.parse_result) or {}
 
     floors_raw = record.detected_floors or parse_metadata.get("detected_floors") or []
-    floor_breakdown: List[Dict[str, Any]] = []
-    seen_units: Dict[str, None] = {}
+    floor_breakdown: list[dict[str, Any]] = []
+    seen_units: dict[str, None] = {}
 
     for index, entry in enumerate(floors_raw, start=1):
         floor_breakdown.append(_normalise_floor_entry(index, entry, seen_units))
@@ -370,7 +371,7 @@ def _build_parse_summary(record: ImportRecord) -> Dict[str, Any]:
     units_raw = record.detected_units or parse_metadata.get("detected_units") or []
     _integrate_detected_units(units_raw, seen_units)
 
-    summary: Dict[str, Any] = {
+    summary: dict[str, Any] = {
         "floors": len(floor_breakdown),
         "units": len(seen_units),
         "floor_breakdown": floor_breakdown,
@@ -392,18 +393,18 @@ async def _vectorize_payload_if_requested(
     content_type: str | None,
     infer_walls: bool,
     import_id: str,
-    layer_metadata: List[Dict[str, Any]],
-) -> Tuple[
-    Dict[str, Any] | None,
-    Dict[str, Any] | None,
-    List[Dict[str, Any]] | None,
+    layer_metadata: list[dict[str, Any]],
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any] | None,
+    list[dict[str, Any]] | None,
 ]:
     """Return vectorization artefacts when requested and successful."""
 
     if not enable_raster_processing or not _is_vectorizable(filename, content_type):
         return None, None, None
 
-    vector_payload: Dict[str, Any] | None = None
+    vector_payload: dict[str, Any] | None = None
     safe_content_type = content_type or ""
 
     try:
@@ -441,7 +442,7 @@ async def _vectorize_payload_if_requested(
         infer_walls=infer_walls,
         requested=True,
     )
-    derived_layers: List[Dict[str, Any]] | None = None
+    derived_layers: list[dict[str, Any]] | None = None
     if not layer_metadata:
         derived_layers = _derive_vector_layers(vector_payload)
     return vector_payload, vector_summary, derived_layers
@@ -582,7 +583,7 @@ async def enqueue_parse(
             status_code=status.HTTP_404_NOT_FOUND, detail="Import not found"
         )
 
-    record.parse_requested_at = datetime.now(timezone.utc)
+    record.parse_requested_at = datetime.now(UTC)
     record.parse_status = "queued"
     await session.commit()
 

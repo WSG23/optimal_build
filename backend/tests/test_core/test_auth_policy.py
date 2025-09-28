@@ -1,7 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-
 from app.core.auth import (
     PolicyContext,
     SignoffSnapshot,
@@ -21,7 +20,7 @@ def approved_signoff() -> SignoffSnapshot:
         overlay_version="v1",
         status="approved",
         architect_user_id=42,
-        signed_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        signed_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
 
 

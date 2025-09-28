@@ -5,9 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Mapping, Optional
+from typing import Any
 
 
 @dataclass(slots=True)
@@ -18,8 +19,8 @@ class StorageResult:
     key: str
     uri: str
     bytes_written: int
-    layer_metadata_uri: Optional[str]
-    vector_data_uri: Optional[str]
+    layer_metadata_uri: str | None
+    vector_data_uri: str | None
 
 
 class StorageService:
@@ -31,7 +32,7 @@ class StorageService:
         bucket: str,
         prefix: str,
         local_base_path: Path,
-        endpoint_url: Optional[str] = None,
+        endpoint_url: str | None = None,
     ) -> None:
         self.bucket = bucket
         self.prefix = prefix.strip("/")
@@ -48,7 +49,7 @@ class StorageService:
         import_id: str,
         filename: str,
         payload: bytes,
-        layer_metadata: Iterable[Dict[str, Any]] | None = None,
+        layer_metadata: Iterable[dict[str, Any]] | None = None,
         vector_payload: Mapping[str, Any] | None = None,
     ) -> StorageResult:
         """Persist the payload and optional metadata."""
@@ -60,8 +61,8 @@ class StorageService:
 
         await asyncio.to_thread(file_path.write_bytes, payload)
 
-        layer_metadata_uri: Optional[str] = None
-        vector_data_uri: Optional[str] = None
+        layer_metadata_uri: str | None = None
+        vector_data_uri: str | None = None
         if layer_metadata is not None:
             metadata_path = file_path.with_suffix(file_path.suffix + ".layers.json")
             json_payload = json.dumps(list(layer_metadata), indent=2, sort_keys=True)

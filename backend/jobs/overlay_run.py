@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import inspect
 import time
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, AsyncIterator, Callable, Dict, List
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from datetime import UTC, datetime
+from typing import Any
 
 from app.core.audit.ledger import append_event
 from app.core.config import settings
@@ -21,6 +19,8 @@ from app.core.models.geometry import GeometryGraph
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
 from backend.jobs import job
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 ENGINE_VERSION = "2024.1"
 
@@ -34,7 +34,7 @@ class OverlayRunResult:
     created: int = 0
     updated: int = 0
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Return a serialisable representation."""
 
         return {
@@ -74,7 +74,7 @@ async def run_overlay_for_project(
         try:
             suggestions = _evaluate_geometry(geometry)
             result.evaluated += 1
-            existing_by_code: Dict[str, OverlaySuggestion] = {
+            existing_by_code: dict[str, OverlaySuggestion] = {
                 suggestion.code: suggestion for suggestion in source.suggestions
             }
             for payload in suggestions:
@@ -119,7 +119,7 @@ async def run_overlay_for_project(
                     result.updated += 1
         finally:
             lock.is_active = False
-            lock.released_at = datetime.now(timezone.utc)
+            lock.released_at = datetime.now(UTC)
     duration = time.perf_counter() - started_at
     baseline_seconds = float(result.evaluated) * OVERLAY_BASELINE_SECONDS
     await append_event(
@@ -143,7 +143,7 @@ def _acquire_lock(
 ) -> OverlayRunLock:
     """Create or refresh a lock for the geometry run."""
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for lock in source.locks:
         if lock.lock_kind == "evaluation":
             lock.acquired_at = now
@@ -162,10 +162,10 @@ def _acquire_lock(
     return lock
 
 
-def _evaluate_geometry(geometry: GeometryGraph) -> List[Dict[str, object]]:
+def _evaluate_geometry(geometry: GeometryGraph) -> list[dict[str, object]]:
     """Simple heuristic feasibility engine that produces overlay suggestions."""
 
-    suggestions: Dict[str, Dict[str, object]] = {}
+    suggestions: dict[str, dict[str, object]] = {}
     site_level_id = next(iter(geometry.levels.keys()), None)
     site_metadata = _collect_site_metadata(geometry)
 
@@ -301,7 +301,7 @@ def _evaluate_geometry(geometry: GeometryGraph) -> List[Dict[str, object]]:
     return [suggestions[code] for code in ordered_codes]
 
 
-def _find_tall_building_trigger(geometry: GeometryGraph) -> Dict[str, object] | None:
+def _find_tall_building_trigger(geometry: GeometryGraph) -> dict[str, object] | None:
     """Locate a tall building node, if any."""
 
     for space in geometry.spaces.values():
@@ -319,8 +319,8 @@ def _find_tall_building_trigger(geometry: GeometryGraph) -> Dict[str, object] | 
     return None
 
 
-def _collect_site_metadata(geometry: GeometryGraph) -> Dict[str, Any]:
-    metadata: Dict[str, Any] = {}
+def _collect_site_metadata(geometry: GeometryGraph) -> dict[str, Any]:
+    metadata: dict[str, Any] = {}
     for level in geometry.levels.values():
         metadata.update(level.metadata)
     return metadata
@@ -339,10 +339,10 @@ def _coerce_float(value: object) -> float | None:
         return None
 
 
-def _string_list(*values: object) -> List[str]:
+def _string_list(*values: object) -> list[str]:
     """Normalise one or more raw values into a deduplicated list of strings."""
 
-    items: List[str] = []
+    items: list[str] = []
     for value in values:
         if isinstance(value, (list, tuple, set)):
             for entry in value:
@@ -351,7 +351,7 @@ def _string_list(*values: object) -> List[str]:
                 items.append(str(entry))
         elif value not in (None, ""):
             items.append(str(value))
-    deduped: List[str] = []
+    deduped: list[str] = []
     seen: set[str] = set()
     for item in items:
         if item in seen:
@@ -361,7 +361,7 @@ def _string_list(*values: object) -> List[str]:
     return deduped
 
 
-def _coerce_mapping(value: object) -> Dict[str, Any]:
+def _coerce_mapping(value: object) -> dict[str, Any]:
     """Return a shallow copy of mapping inputs."""
 
     if isinstance(value, dict):
@@ -428,7 +428,7 @@ async def _job_session() -> AsyncIterator[AsyncSession]:
 
 
 @job(name="jobs.overlay_run.run_for_project", queue=settings.OVERLAY_QUEUE_DEFAULT)
-async def run_overlay_job(project_id: int) -> Dict[str, Any]:
+async def run_overlay_job(project_id: int) -> dict[str, Any]:
     """Job wrapper that executes the overlay engine using a standalone session."""
 
     async with _job_session() as session:

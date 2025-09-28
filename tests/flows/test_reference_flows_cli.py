@@ -8,15 +8,15 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from backend.app.models.base import BaseModel
 from backend.app.models.rkp import RefClause, RefDocument, RefSource
-from backend.flows import parse_segment as parse_segment_flow
-from backend.flows import watch_fetch as watch_fetch_flow
+from backend.flows import (
+    parse_segment as parse_segment_flow,
+    watch_fetch as watch_fetch_flow,
+)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
 async def _initialise_schema(engine) -> None:
@@ -26,7 +26,7 @@ async def _initialise_schema(engine) -> None:
 
 async def _seed_offline_sources(
     session_factory: async_sessionmaker,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     async with session_factory() as session:
         ura = RefSource(
             jurisdiction="SG",

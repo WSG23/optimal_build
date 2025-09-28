@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
-
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20240711_000000"

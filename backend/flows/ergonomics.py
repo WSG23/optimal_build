@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
-
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from typing import Any
 
 from prefect import flow
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.models.rkp import RefErgonomics
 
-DEFAULT_ERGONOMICS_METRICS: List[Dict[str, Any]] = [
+DEFAULT_ERGONOMICS_METRICS: list[dict[str, Any]] = [
     {
         "metric_key": "reach.forward.max_distance_mm",
         "population": "wheelchair",
@@ -39,15 +39,15 @@ DEFAULT_ERGONOMICS_METRICS: List[Dict[str, Any]] = [
 
 
 async def _upsert_metric(
-    session_factory: "async_sessionmaker[AsyncSession]",
-    metric: Dict[str, Any],
+    session_factory: async_sessionmaker[AsyncSession],
+    metric: dict[str, Any],
 ) -> None:
     async with session_factory() as session:
         await _merge_metric(session, metric)
         await session.commit()
 
 
-async def _merge_metric(session: AsyncSession, metric: Dict[str, Any]) -> None:
+async def _merge_metric(session: AsyncSession, metric: dict[str, Any]) -> None:
     stmt = (
         select(RefErgonomics)
         .where(RefErgonomics.metric_key == metric["metric_key"])
@@ -68,9 +68,9 @@ async def _merge_metric(session: AsyncSession, metric: Dict[str, Any]) -> None:
 
 @flow(name="seed-ergonomics-metrics")
 async def seed_ergonomics_metrics(
-    session_factory: "async_sessionmaker[AsyncSession]",
-    metrics: Optional[Iterable[Dict[str, Any]]] = None,
-) -> List[Dict[str, Any]]:
+    session_factory: async_sessionmaker[AsyncSession],
+    metrics: Iterable[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     """Seed the ergonomics reference table with baseline metrics."""
 
     payload = list(metrics) if metrics is not None else list(DEFAULT_ERGONOMICS_METRICS)
@@ -80,8 +80,8 @@ async def seed_ergonomics_metrics(
 
 
 async def fetch_seeded_metrics(
-    session_factory: "async_sessionmaker[AsyncSession]",
-) -> List[Dict[str, Any]]:
+    session_factory: async_sessionmaker[AsyncSession],
+) -> list[dict[str, Any]]:
     """Retrieve all ergonomics metrics from the reference table."""
 
     async with session_factory() as session:

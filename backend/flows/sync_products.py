@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import datetime as dt
 import sys
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, Sequence
-
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from prefect import flow, task
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -34,7 +33,7 @@ def _table_column_names() -> set[str]:
     if hasattr(table, "columns"):
         return {column.name for column in table.columns}
     if hasattr(table, "c"):
-        return set(getattr(table, "c").keys())
+        return set(table.c.keys())
     return set()
 
 
@@ -107,10 +106,10 @@ def _sku_filters(vendor: str) -> tuple[list, dict[str, object]]:
     defaults: dict[str, object] = {}
 
     if "vendor" in columns:
-        filters.append(getattr(RefProduct, "vendor") == vendor)
+        filters.append(RefProduct.vendor == vendor)
         defaults["vendor"] = vendor
     if "data_source" in columns:
-        filters.append(getattr(RefProduct, "data_source") == "csv")
+        filters.append(RefProduct.data_source == "csv")
         defaults["data_source"] = "csv"
 
     return filters, defaults
@@ -132,7 +131,7 @@ async def upsert_products(
 ) -> int:
     """Insert or update rows in the ``ref_products`` table."""
 
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     count = 0
 
     sku_column_name = "sku" if "sku" in _table_column_names() else "product_code"
@@ -167,7 +166,7 @@ async def mark_deprecated(
     result = await session.execute(stmt)
     rows = result.scalars().all()
 
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     count = 0
     has_deprecated_at = "deprecated_at" in _table_column_names()
     has_is_active = "is_active" in _table_column_names()
