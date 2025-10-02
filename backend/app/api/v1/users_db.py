@@ -4,22 +4,21 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import create_engine, Column, String, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr
 from typing import Optional
-from passlib.context import CryptContext
 from datetime import datetime
-import re
-from app.core.jwt_auth import create_tokens, TokenResponse, get_current_user, TokenData
 import uuid
+
+from app.core.jwt_auth import create_tokens, TokenResponse, get_current_user, TokenData
+from backend.app.utils.db import session_dependency
+from backend.app.utils.security import hash_password, verify_password
+from backend.app.schemas.user import UserSignupBase
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
-# Password hashing
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 
 router = APIRouter(prefix="/users-db", tags=["Database Users"])
 
@@ -43,42 +42,13 @@ Base.metadata.create_all(bind=engine)
 
 
 # Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+get_db = session_dependency(SessionLocal)
 
 
 # Pydantic models
-class UserSignup(BaseModel):
+class UserSignup(UserSignupBase):
     """User registration with validation."""
-    email: EmailStr
-    username: str = Field(..., min_length=3, max_length=50)
-    full_name: str = Field(..., min_length=1, max_length=100)
-    password: str = Field(..., min_length=8, max_length=100)
-    company_name: Optional[str] = Field(None, max_length=255)
-
-    @field_validator('username')
-    @classmethod
-    def validate_username(cls, v: str) -> str:
-        """Username must be alphanumeric with underscores only."""
-        if not re.match(r'^[a-zA-Z0-9_]+$', v):
-            raise ValueError('Username must contain only letters, numbers, and underscores')
-        return v
-
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        """Password must have at least 1 uppercase, 1 lowercase, 1 number."""
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not re.search(r'[0-9]', v):
-            raise ValueError('Password must contain at least one number')
-        return v
+    pass
 
 
 class UserResponse(BaseModel):
@@ -106,17 +76,6 @@ class LoginResponse(BaseModel):
     message: str
     user: UserResponse
     tokens: TokenResponse
-
-
-# Helper functions
-def hash_password(password: str) -> str:
-    """Hash a password for storing."""
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
 
 
 # API Endpoints

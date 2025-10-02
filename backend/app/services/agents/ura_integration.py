@@ -5,6 +5,7 @@ from datetime import datetime, date
 import httpx
 from pydantic import BaseModel
 from backend.app.core.config import settings
+from backend.app.services.base import AsyncClientService
 import structlog
 
 logger = structlog.get_logger()
@@ -33,7 +34,7 @@ class URAPropertyInfo(BaseModel):
     last_transaction_price: Optional[float] = None
 
 
-class URAIntegrationService:
+class URAIntegrationService(AsyncClientService):
     """Service for integrating with URA APIs for property and zoning data."""
     
     def __init__(self):
@@ -250,10 +251,5 @@ class URAIntegrationService:
         
         return mock_rentals
     
-    async def close(self):
-        """Close the HTTP client."""
-        await self.client.aclose()
-        
-
 # Singleton instance
 ura_service = URAIntegrationService()

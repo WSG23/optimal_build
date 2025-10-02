@@ -5,6 +5,7 @@ from decimal import Decimal
 import httpx
 from pydantic import BaseModel
 from backend.app.core.config import settings
+from backend.app.services.base import AsyncClientService
 import structlog
 
 logger = structlog.get_logger()
@@ -21,7 +22,7 @@ class Address(BaseModel):
     country: str = "Singapore"
     
 
-class GeocodingService:
+class GeocodingService(AsyncClientService):
     """Service for geocoding and reverse geocoding using OneMap API (Singapore)."""
     
     def __init__(self):
@@ -228,6 +229,3 @@ class GeocodingService:
         # This is a placeholder - implement if Google Maps API key is provided
         return None
     
-    async def close(self):
-        """Close the HTTP client."""
-        await self.client.aclose()

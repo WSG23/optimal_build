@@ -7,8 +7,10 @@ from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
-from app.core.jwt_auth import get_current_user, TokenData
 import uuid
+
+from app.core.jwt_auth import get_current_user, TokenData
+from backend.app.utils.db import session_dependency
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./projects.db"
@@ -41,12 +43,7 @@ Base.metadata.create_all(bind=engine)
 
 
 # Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+get_db = session_dependency(SessionLocal)
 
 
 # Pydantic models

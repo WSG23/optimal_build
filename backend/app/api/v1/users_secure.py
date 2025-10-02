@@ -1,49 +1,22 @@
 """Secure user API with validation and password hashing."""
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Dict, Optional
-from passlib.context import CryptContext
 from datetime import datetime
-import re
+
 from app.core.jwt_auth import create_tokens, TokenResponse, get_current_user, TokenData
+from backend.app.schemas.user import UserSignupBase
+from backend.app.utils.security import hash_password, verify_password
 
 router = APIRouter(prefix="/secure-users", tags=["Secure Users"])
-
-# Password hashing - using sha256_crypt for compatibility
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 
 # Temporary in-memory storage (will replace with database)
 users_db: Dict[str, dict] = {}
 
 
-class UserSignup(BaseModel):
+class UserSignup(UserSignupBase):
     """User registration with validation."""
-    email: EmailStr  # This validates email format automatically!
-    username: str = Field(..., min_length=3, max_length=50)
-    full_name: str = Field(..., min_length=1, max_length=100)
-    password: str = Field(..., min_length=8, max_length=100)
-    company_name: Optional[str] = Field(None, max_length=255)
-
-    @field_validator('username')
-    @classmethod
-    def validate_username(cls, v: str) -> str:
-        """Username must be alphanumeric with underscores only."""
-        if not re.match(r'^[a-zA-Z0-9_]+$', v):
-            raise ValueError('Username must contain only letters, numbers, and underscores')
-        return v
-
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        """Password must have at least 1 uppercase, 1 lowercase, 1 number."""
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not re.search(r'[0-9]', v):
-            raise ValueError('Password must contain at least one number')
-        return v
 
     @field_validator('full_name')
     @classmethod
@@ -76,17 +49,6 @@ class LoginResponse(BaseModel):
     message: str
     user: UserResponse
     tokens: TokenResponse
-
-
-def hash_password(password: str) -> str:
-    """Hash a password for storing."""
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
-
 
 @router.post("/signup", response_model=UserResponse)
 def signup(user_data: UserSignup):

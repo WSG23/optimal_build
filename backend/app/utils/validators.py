@@ -2,6 +2,29 @@
 
 import re
 
+USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
+UPPERCASE_PATTERN = re.compile(r"[A-Z]")
+LOWERCASE_PATTERN = re.compile(r"[a-z]")
+DIGIT_PATTERN = re.compile(r"[0-9]")
+
+
+def validate_username(value: str) -> str:
+    """Ensure usernames stay alphanumeric with optional underscores."""
+    if not USERNAME_PATTERN.match(value):
+        raise ValueError("Username must contain only letters, numbers, and underscores")
+    return value
+
+
+def validate_password(value: str) -> str:
+    """Enforce minimal password complexity requirements."""
+    if not UPPERCASE_PATTERN.search(value):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not LOWERCASE_PATTERN.search(value):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not DIGIT_PATTERN.search(value):
+        raise ValueError("Password must contain at least one number")
+    return value
+
 
 def validate_singapore_address(address: str) -> bool:
     """
