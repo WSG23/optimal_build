@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, date
-from typing import Any, Dict, List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -16,39 +15,16 @@ from app.services.agents.market_data_service import MarketDataService
 from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics,
 )
+from app.schemas.market import (
+    MarketPeriod,
+    MarketReportPayload,
+    MarketReportResponse,
+)
 
 router = APIRouter(prefix="/market-intelligence", tags=["market-intelligence"])
 
 _market_data_service = MarketDataService()
 _market_analytics = MarketIntelligenceAnalytics(_market_data_service)
-
-
-class MarketPeriod(BaseModel):
-    """Reporting window for market analytics."""
-
-    start: date
-    end: date
-
-
-class MarketReportPayload(BaseModel):
-    """Structured market intelligence report payload."""
-
-    property_type: PropertyType
-    location: str
-    period: MarketPeriod
-    comparables_analysis: Dict[str, Any]
-    supply_dynamics: Dict[str, Any]
-    yield_benchmarks: Dict[str, Any]
-    absorption_trends: Dict[str, Any]
-    market_cycle_position: Dict[str, Any]
-    recommendations: List[str]
-
-
-class MarketReportResponse(BaseModel):
-    """API response envelope for market intelligence reports."""
-
-    report: MarketReportPayload
-    generated_at: datetime
 
 
 @router.get("/report", response_model=MarketReportResponse)

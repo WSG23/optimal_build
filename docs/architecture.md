@@ -128,7 +128,8 @@ backend/
 │
 ├── jobs/             # Background job definitions (⚙️ In Progress)
 │   ├── parse_cad.py
-│   └── overlay_run.py
+│   ├── overlay_run.py
+│   └── generate_reports.py
 │
 └── scripts/          # CLI utilities (✅ Implemented)
     ├── seed_entitlements_sg.py
@@ -136,10 +137,11 @@ backend/
     └── ingest.py
 ```
 
-- 🔄 Planned Prefect flows: `compliance_flow.py`, `analytics_flow.py`, and an
-  orchestration wrapper for market intelligence reporting.
-- 🔄 Upcoming jobs: `generate_reports.py` (PDF bundle) and enhanced CAD/PDF
-  post-processing tied into Prefect deployments.
+- ✅ Prefect refresh flows now include `compliance_flow.py` and `analytics_flow.py`
+  for compliance snapshots and market intelligence reporting. Scheduled
+  deployments remain on the roadmap to automate recurring runs.
+- ⚙️ Upcoming enhancements: webhook notifications and MinIO lifecycle hooks for
+  asynchronous exports and document cleanup.
 
 ### Data Layer
 

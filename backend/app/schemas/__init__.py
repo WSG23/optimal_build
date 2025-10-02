@@ -44,6 +44,19 @@ from .overlay import (  # noqa: F401
     OverlayDecisionRecord,
     OverlaySuggestion,
 )
+from .property import (  # noqa: F401
+    PropertyComplianceSummary,
+    SingaporePropertySchema,
+)
+from .compliance import (  # noqa: F401
+    ComplianceCheckRequest,
+    ComplianceCheckResponse,
+)
+from .market import (  # noqa: F401
+    MarketPeriod,
+    MarketReportPayload,
+    MarketReportResponse,
+)
 from .rulesets import (  # noqa: F401
     RuleEvaluationResult,
     RulePackSchema,
@@ -108,4 +121,11 @@ __all__ = [
     "EntStudyCollection",
     "EntEngagementCollection",
     "EntLegalInstrumentCollection",
+    "ComplianceCheckRequest",
+    "ComplianceCheckResponse",
+    "MarketPeriod",
+    "MarketReportPayload",
+    "MarketReportResponse",
+    "PropertyComplianceSummary",
+    "SingaporePropertySchema",
 ]
