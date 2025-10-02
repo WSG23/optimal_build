@@ -8,32 +8,32 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, 
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
-from backend.app.api.deps import get_db, get_request_role, require_roles
-from backend.app.core.auth.policy import Role
-from backend.app.models.property import PropertyType
-from backend.app.services.geocoding import GeocodingService
-from backend.app.services.agents.ura_integration import ura_service
-from backend.app.services.agents.gps_property_logger import GPSPropertyLogger
-from backend.app.services.agents.development_potential_scanner import (
+from app.api.deps import get_request_role, Role, require_reviewer
+from app.core.database import get_session
+from app.models.property import PropertyType
+from app.services.geocoding import GeocodingService
+from app.services.agents.ura_integration import ura_service
+from app.services.agents.gps_property_logger import GPSPropertyLogger
+from app.services.agents.development_potential_scanner import (
     DevelopmentPotentialScanner, DevelopmentScenario
 )
-from backend.app.services.agents.photo_documentation import PhotoDocumentationManager
-from backend.app.services.agents.scenario_builder_3d import (
+from app.services.agents.photo_documentation import PhotoDocumentationManager
+from app.services.agents.scenario_builder_3d import (
     Quick3DScenarioBuilder, ScenarioType
 )
-from backend.app.services.agents.market_intelligence_analytics import (
+from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics
 )
-from backend.app.services.agents.market_data_service import MarketDataService
-from backend.app.services.buildable import BuildableService
-from backend.app.services.postgis import PostGISService
-from backend.app.services.finance import (
+from app.services.agents.market_data_service import MarketDataService
+from app.services.buildable import BuildableService
+from app.services.postgis import PostGISService
+from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches
 )
-from backend.app.services.agents.universal_site_pack import UniversalSitePackGenerator
-from backend.app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
-from backend.app.services.agents.marketing_materials import MarketingMaterialsGenerator
+from app.services.agents.universal_site_pack import UniversalSitePackGenerator
+from app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
+from app.services.agents.marketing_materials import MarketingMaterialsGenerator
 
 router = APIRouter(prefix="/agents/commercial-property", tags=["Commercial Property Agent"])
 
@@ -117,7 +117,7 @@ class PropertyValuationRequest(BaseModel):
 @router.post("/properties/log-gps")
 async def log_property_by_gps(
     request: GPSLogRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> Dict[str, Any]:
     """
@@ -148,7 +148,7 @@ async def log_property_by_gps(
 async def analyze_development_potential(
     property_id: str,
     request: PropertyAnalysisRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> Dict[str, Any]:
     """
@@ -204,7 +204,7 @@ async def upload_property_photo(
     file: UploadFile = File(...),
     notes: Optional[str] = None,
     tags: Optional[str] = None,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> PhotoUploadResponse:
     """
@@ -258,7 +258,7 @@ async def upload_property_photo(
 @router.get("/properties/{property_id}/photos")
 async def get_property_photos(
     property_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> List[Dict[str, Any]]:
     """Get all photos for a property."""
@@ -281,7 +281,7 @@ async def get_property_photos(
 async def generate_3d_scenarios(
     property_id: str,
     request: ScenarioGenerationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> List[Dict[str, Any]]:
     """
@@ -333,7 +333,7 @@ async def export_3d_scenario(
     property_id: str,
     scenario_index: int,
     format: str = Query("obj", pattern="^(obj|stl|glb|json)$"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> bytes:
     """Export a 3D scenario in various formats."""
@@ -344,7 +344,7 @@ async def export_3d_scenario(
 @router.post("/market-intelligence/report")
 async def generate_market_report(
     request: MarketReportRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> Dict[str, Any]:
     """
@@ -373,7 +373,7 @@ async def generate_market_report(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/market-intelligence/sync", dependencies=[Depends(require_roles([Role.ADMIN]))])
+@router.post("/market-intelligence/sync", dependencies=[Depends(require_reviewer)])
 async def sync_market_data(
     request: MarketSyncRequest,
     db: AsyncSession = Depends(get_db)
@@ -405,7 +405,7 @@ async def get_market_transactions(
     location: Optional[str] = Query(None),
     days_back: int = Query(90, ge=1, le=365),
     limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> List[Dict[str, Any]]:
     """Get recent market transactions."""
@@ -526,7 +526,7 @@ async def value_property(
 async def generate_professional_pack(
     property_id: str,
     pack_type: str = Path(..., pattern="^(universal|investment|sales|lease)$"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> Dict[str, Any]:
     """
@@ -593,7 +593,7 @@ async def generate_professional_pack(
 async def generate_email_flyer(
     property_id: str,
     material_type: str = Query("lease", pattern="^(sale|lease)$"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role)
 ) -> Dict[str, Any]:
     """Generate single-page email flyer."""

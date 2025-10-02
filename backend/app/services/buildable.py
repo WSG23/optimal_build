@@ -113,7 +113,7 @@ async def _load_rules_for_zone(
 
     stmt = (
         select(RefRule)
-        .where(RefRule.topic == "zoning")
+        .where(RefRule.topic.in_(["zoning", "building"]))  # Include both zoning and building rules
         .where(RefRule.review_status == "approved")
         .where(RefRule.is_published.is_(True))
     )

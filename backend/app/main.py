@@ -46,14 +46,14 @@ app = FastAPI(
     openapi_tags=TAGS_METADATA,
 )
 
+# app.add_middleware(SecurityHeadersMiddleware)  # Temporarily disabled for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["*"],  # Allow all origins for testing
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],
 )
-app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

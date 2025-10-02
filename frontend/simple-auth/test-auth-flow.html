@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication Flow</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        pre {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Flow Test</h1>
+
+    <div class="test-section">
+        <h2>Quick Test Actions</h2>
+        <button onclick="testFullFlow()">Run Full Test Flow</button>
+        <button onclick="checkCurrentAuth()">Check Current Auth</button>
+        <button onclick="clearAuth()">Clear Auth</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:9400/api/v1';
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            results.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+        }
+
+        function clearLog() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testFullFlow() {
+            clearLog();
+            log('Starting full authentication flow test...', 'info');
+
+            // Test credentials
+            const testUser = {
+                email: 'test@example.com',
+                password: 'TestPass123'
+            };
+
+            try {
+                // Step 1: Try to login
+                log('Step 1: Attempting login...', 'info');
+                const loginResponse = await fetch(`${API_URL}/users-db/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testUser)
+                });
+
+                if (!loginResponse.ok) {
+                    log(`Login failed with status ${loginResponse.status}`, 'error');
+
+                    // Try to signup first
+                    log('Attempting to create user first...', 'info');
+                    const signupData = {
+                        email: testUser.email,
+                        username: 'testuser',
+                        full_name: 'Test User',
+                        password: testUser.password  // Uses TestPass123
+                    };
+
+                    const signupResponse = await fetch(`${API_URL}/users-db/signup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(signupData)
+                    });
+
+                    if (signupResponse.ok) {
+                        log('User created successfully, retrying login...', 'success');
+                        // Retry login
+                        const retryResponse = await fetch(`${API_URL}/users-db/login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(testUser)
+                        });
+
+                        if (retryResponse.ok) {
+                            const data = await retryResponse.json();
+                            handleLoginSuccess(data);
+                        }
+                    } else {
+                        log('Signup failed - user may already exist', 'info');
+                    }
+                } else {
+                    const data = await loginResponse.json();
+                    handleLoginSuccess(data);
+                }
+
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleLoginSuccess(data) {
+            log('Login successful!', 'success');
+            log(`User: ${data.user.email}`, 'info');
+            log(`Token received: ${data.tokens.access_token.substring(0, 20)}...`, 'info');
+
+            // Store auth data
+            localStorage.setItem('accessToken', data.tokens.access_token);
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+
+            // Step 2: Test authenticated endpoint
+            log('Step 2: Testing project creation (requires auth)...', 'info');
+            const projectData = {
+                name: 'Test Project',
+                description: 'Testing authentication',
+                status: 'planning',
+                project_type: 'residential'
+            };
+
+            const createResponse = await fetch(`${API_URL}/projects/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${data.tokens.access_token}`
+                },
+                body: JSON.stringify(projectData)
+            });
+
+            if (createResponse.ok) {
+                const project = await createResponse.json();
+                log(`Project created successfully! ID: ${project.id}`, 'success');
+
+                // Step 3: List projects (no auth required)
+                log('Step 3: Listing projects (public endpoint)...', 'info');
+                const listResponse = await fetch(`${API_URL}/projects/list`);
+
+                if (listResponse.ok) {
+                    const projects = await listResponse.json();
+                    log(`Found ${projects.length} projects`, 'success');
+                }
+
+                // Step 4: Update project (requires auth)
+                log('Step 4: Updating project (requires auth)...', 'info');
+                const updateResponse = await fetch(`${API_URL}/projects/${project.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${data.tokens.access_token}`
+                    },
+                    body: JSON.stringify({ name: 'Updated Test Project' })
+                });
+
+                if (updateResponse.ok) {
+                    log('Project updated successfully!', 'success');
+                } else {
+                    log(`Update failed: ${updateResponse.status}`, 'error');
+                }
+
+                log('✅ All tests completed!', 'success');
+                log('You can now:', 'info');
+                log('1. Go to <a href="index.html">Login Page</a> and login', 'info');
+                log('2. You will be redirected to <a href="projects.html">Projects Page</a>', 'info');
+                log('3. Create, edit, and delete projects with authentication', 'info');
+
+            } else {
+                const error = await createResponse.text();
+                log(`Project creation failed: ${error}`, 'error');
+            }
+        }
+
+        function checkCurrentAuth() {
+            clearLog();
+            const token = localStorage.getItem('accessToken');
+            const user = localStorage.getItem('currentUser');
+
+            if (token && user) {
+                const userData = JSON.parse(user);
+                log('Authentication found:', 'success');
+                log(`User: ${userData.email}`, 'info');
+                log(`Token: ${token.substring(0, 20)}...`, 'info');
+                log('<pre>' + JSON.stringify(userData, null, 2) + '</pre>', 'info');
+            } else {
+                log('No authentication found', 'error');
+                log('You need to login first', 'info');
+            }
+        }
+
+        function clearAuth() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('currentUser');
+            log('Authentication cleared', 'success');
+        }
+    </script>
+</body>
+</html>

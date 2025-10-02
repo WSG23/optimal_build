@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singapore Properties - BCA & URA Compliance</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #1e40af;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .stat-passed { color: #059669; }
+        .stat-failed { color: #dc2626; }
+        .stat-warning { color: #d97706; }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            background: white;
+            min-width: 150px;
+        }
+
+        /* Buttons */
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        /* Properties Grid */
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .property-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .property-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .property-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .property-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .compliance-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-passed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-pending {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .property-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .property-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+        }
+
+        /* Compliance Report */
+        .compliance-report {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .compliance-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .compliance-section h4 {
+            color: #111827;
+            margin-bottom: 0.75rem;
+        }
+
+        .violation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .violation-item {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-item {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-item {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+        }
+
+        /* GFA Calculator */
+        .calculator-section {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            background: #e5e7eb;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.3s;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            min-width: 400px;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Alert (outside container for proper z-index layering) -->
+    <div id="alertMessage" class="alert"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🏢 Singapore Properties - BCA & URA Compliance</h1>
+        <div class="user-info">
+            <button onclick="window.location.href='projects.html'" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 5px; border: none; cursor: pointer; margin-right: 1rem;">
+                🏗️ Projects
+            </button>
+            <span id="userName">Loading...</span>
+            <button onclick="handleLogout()" style="background: #ef4444; color: white;">Logout</button>
+        </div>
+    </div>
+
+    <!-- Container -->
+    <div class="container">
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Properties</div>
+                <div class="stat-value" id="totalProperties">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">BCA Compliant</div>
+                <div class="stat-value stat-passed" id="bcaCompliant">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">URA Compliant</div>
+                <div class="stat-value stat-passed" id="uraCompliant">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Non-Compliant</div>
+                <div class="stat-value stat-failed" id="nonCompliant">0</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Property Type</label>
+                    <select id="filterType" onchange="filterProperties()">
+                        <option value="">All Types</option>
+                        <option value="residential">Residential</option>
+                        <option value="commercial">Commercial</option>
+                        <option value="industrial">Industrial</option>
+                        <option value="mixed">Mixed Use</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Zoning</label>
+                    <select id="filterZoning" onchange="filterProperties()">
+                        <option value="">All Zones</option>
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Business 1">Business 1</option>
+                        <option value="Business 2">Business 2</option>
+                        <option value="Industrial">Industrial</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Compliance Status</label>
+                    <select id="filterCompliance" onchange="filterProperties()">
+                        <option value="">All Status</option>
+                        <option value="passed">Passed</option>
+                        <option value="failed">Failed</option>
+                        <option value="warning">Warning</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Search</label>
+                    <input type="text" id="searchInput" placeholder="Search address..." onkeyup="filterProperties()">
+                </div>
+                <button class="btn-primary" onclick="showCreateModal()">➕ Add Property</button>
+                <button class="btn-success" onclick="loadProperties()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Properties Grid -->
+        <div id="propertiesGrid" class="properties-grid">
+            <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #6b7280;">
+                Loading properties...
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="propertyModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New Property</h2>
+
+            <form id="propertyForm" onsubmit="handlePropertySubmit(event)">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Property Name *</label>
+                        <input type="text" id="propertyName" required maxlength="255" placeholder="e.g., Marina Bay Residences">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Address *</label>
+                        <input type="text" id="address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Postal Code</label>
+                        <input type="text" id="postalCode" maxlength="6" pattern="[0-9]{6}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Land Area (sqm) *</label>
+                        <input type="number" id="landArea" required min="1" step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Property Type *</label>
+                        <select id="propertyType" required>
+                            <option value="">Select Type</option>
+                            <option value="residential">Residential</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="industrial">Industrial</option>
+                            <option value="mixed_use">Mixed Use</option>
+                            <option value="business_park">Business Park</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tenure</label>
+                        <select id="tenure">
+                            <option value="">Select Tenure</option>
+                            <option value="Freehold">Freehold</option>
+                            <option value="99-year">99-year Leasehold</option>
+                            <option value="999-year">999-year Leasehold</option>
+                            <option value="30-year">30-year Leasehold</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>URA Zoning *</label>
+                        <select id="zoning" required>
+                            <option value="">Select Zone</option>
+                            <option value="residential">Residential</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="industrial">Industrial</option>
+                            <option value="mixed_use">Mixed Use</option>
+                            <option value="business_park">Business Park</option>
+                            <option value="civic_institutional">Civic & Institutional</option>
+                            <option value="educational">Educational</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="transport">Transport</option>
+                            <option value="open_space">Open Space</option>
+                            <option value="special_use">Special Use</option>
+                        </select>
+                    </div>
+
+                    <!-- Auto-calculated fields with manual override option -->
+                    <div class="form-group full-width" style="background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h4 style="margin: 0; color: #059669;">📊 Buildable Metrics</h4>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                <input type="checkbox" id="manualOverride" onchange="toggleManualOverride()" style="cursor: pointer;">
+                                <span>Manual Override</span>
+                            </label>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">
+                            <span id="calculationModeText">Based on jurisdiction rules and building science</span>
+                        </p>
+
+                        <!-- Auto-calculated display -->
+                        <div id="calculatedMetrics" style="display: none;">
+                            <p><strong>Max Plot Ratio:</strong> <span id="calcPlotRatio">-</span> <small>(from URA zoning)</small></p>
+                            <p><strong>Max Height:</strong> <span id="calcMaxHeight">-</span> m <small>(from URA zoning)</small></p>
+                            <p><strong>Site Coverage:</strong> <span id="calcSiteCoverage">-</span>% <small>(from BCA requirements)</small></p>
+                            <p><strong>Max Buildable Floors:</strong> <span id="calcMaxFloors">-</span> <small>(constrained by GFA, footprint, and height)</small></p>
+                            <p><strong>Building Footprint:</strong> <span id="calcFootprint">-</span> sqm <small>(land × site coverage)</small></p>
+                            <p style="color: #059669;"><strong>Maximum GFA:</strong> <span id="calcMaxGFA">-</span> sqm <small>(land × plot ratio)</small></p>
+                            <p style="color: #059669;"><strong>Net Saleable Area (NSA):</strong> <span id="calcNSA">-</span> sqm <small>(82% efficiency)</small></p>
+                        </div>
+
+                        <!-- Manual override inputs -->
+                        <div id="manualInputs" style="display: none; margin-top: 1rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label style="font-size: 0.875rem; font-weight: 600;">Plot Ratio *</label>
+                                    <input type="number" id="manualPlotRatio" step="0.1" min="0.1" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                    <small style="color: #6b7280;">e.g., 2.8 or special variance</small>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.875rem; font-weight: 600;">Max Height (m) *</label>
+                                    <input type="number" id="manualHeight" step="0.1" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                    <small style="color: #6b7280;">Building height limit</small>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.875rem; font-weight: 600;">GFA (sqm) *</label>
+                                    <input type="number" id="manualGFA" step="0.01" min="0" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                    <small style="color: #6b7280;">Approved/variance GFA</small>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.875rem; font-weight: 600;">Number of Floors *</label>
+                                    <input type="number" id="manualFloors" step="1" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                    <small style="color: #6b7280;">Total storeys</small>
+                                </div>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <label style="font-size: 0.875rem; font-weight: 600;">Reason for Override</label>
+                                <textarea id="overrideReason" rows="2" placeholder="e.g., Government-approved variance, heritage exemption, special economic zone..." style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-family: inherit;"></textarea>
+                            </div>
+                            <button type="button" onclick="applyManualOverride()" style="background: #f59e0b; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-top: 0.5rem; width: 100%;">
+                                ⚠️ Apply Manual Override
+                            </button>
+                        </div>
+
+                        <!-- Auto-calculate button -->
+                        <div id="autoCalcButton">
+                            <button type="button" onclick="calculateBuildableMetrics()" style="background: #059669; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-top: 0.5rem; width: 100%;">
+                                Calculate Buildable Potential
+                            </button>
+                        </div>
+
+                        <!-- Compliance Check Section -->
+                        <div id="complianceCheckSection" style="display: none; margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <h4 style="margin-top: 0; color: #374151;">Check Design Compliance</h4>
+                            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.75rem;">
+                                Validate your proposed design against Singapore URA/BCA regulations before saving.
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                <div>
+                                    <label style="font-size: 0.875rem; font-weight: 600;">Proposed GFA (sqm)</label>
+                                    <input type="number" id="checkGFA" step="0.01" min="0" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.875rem; font-weight: 600;">Proposed Height (m)</label>
+                                    <input type="number" id="checkHeight" step="0.1" min="0" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.875rem; font-weight: 600;">Proposed Storeys</label>
+                                    <input type="number" id="checkStoreys" step="1" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                </div>
+                            </div>
+
+                            <button type="button" onclick="checkCompliance()" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; width: 100%;">
+                                🔍 Check Compliance
+                            </button>
+
+                            <!-- Compliance Results -->
+                            <div id="complianceResults" style="display: none; margin-top: 1rem;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Link to Project</label>
+                        <select id="projectId">
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" onclick="hideModal()" style="background: #6b7280; color: white;">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Property</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Compliance Report Modal -->
+    <div id="complianceModal" class="modal">
+        <div class="modal-content">
+            <h2>Compliance Report</h2>
+            <div id="complianceContent"></div>
+            <button onclick="hideComplianceModal()" style="background: #6b7280; color: white; margin-top: 1rem;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_URL = 'http://localhost:9400/api/v1';
+        let currentUser = null;
+        let accessToken = null;
+        let properties = [];
+        let projects = [];
+        let editingPropertyId = null;
+
+        // Initialize
+        window.onload = function() {
+            checkAuthentication();
+            loadProperties();
+            loadProjects();
+        };
+
+        function checkAuthentication() {
+            accessToken = localStorage.getItem('accessToken');
+            const storedUser = localStorage.getItem('currentUser');
+
+            if (!accessToken || !storedUser) {
+                alert('Please login first');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(storedUser);
+            document.getElementById('userName').textContent = currentUser.full_name || currentUser.email;
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+
+        async function loadProperties() {
+            try {
+                const response = await fetch(`${API_URL}/singapore-property/list`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to load properties');
+                }
+
+                properties = await response.json();
+                displayProperties(properties);
+                updateStats();
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Failed to load properties', 'error');
+            }
+        }
+
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_URL}/projects/list`);
+                if (response.ok) {
+                    projects = await response.json();
+                    updateProjectSelect();
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        function updateProjectSelect() {
+            const select = document.getElementById('projectId');
+            select.innerHTML = '<option value="">None</option>';
+            projects.forEach(project => {
+                select.innerHTML += `<option value="${project.id}">${project.name}</option>`;
+            });
+        }
+
+        function displayProperties(propertyList) {
+            const grid = document.getElementById('propertiesGrid');
+
+            if (propertyList.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #6b7280;">
+                        No properties found. Add your first property!
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = propertyList.map(property => {
+                const bcaClass = getStatusClass(property.bca_compliance_status);
+                const uraClass = getStatusClass(property.ura_compliance_status);
+
+                return `
+                    <div class="property-card">
+                        <div class="property-header">
+                            <h3 class="property-title">${escapeHtml(property.property_name || property.address)}</h3>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <span class="compliance-badge ${bcaClass}">BCA: ${property.bca_compliance_status}</span>
+                                <span class="compliance-badge ${uraClass}">URA: ${property.ura_compliance_status}</span>
+                            </div>
+                        </div>
+
+                        <div class="property-info">
+                            <div class="info-item">📍 ${escapeHtml(property.address)}</div>
+                            <div class="info-item">📮 ${property.postal_code || 'No postal code'}</div>
+                            <div class="info-item">🏛️ Zoning: ${property.zoning}</div>
+                            <div class="info-item">📐 Land: ${property.land_area_sqm ? parseFloat(property.land_area_sqm).toFixed(2) : '-'} sqm</div>
+                            <div class="info-item">📊 Plot Ratio: ${property.gross_plot_ratio || '-'}</div>
+                            <div class="info-item" style="color: #059669;"><strong>🏗️ Max GFA: ${property.gross_floor_area_sqm ? parseFloat(property.gross_floor_area_sqm).toFixed(2) : '-'} sqm</strong></div>
+                            ${property.num_storeys ? `<div class="info-item">📏 Floors: ${property.num_storeys}</div>` : ''}
+                            ${property.building_height_m ? `<div class="info-item">⬆️ Height: ${parseFloat(property.building_height_m).toFixed(1)}m</div>` : ''}
+                        </div>
+
+                        ${property.compliance_notes ? `
+                            <div style="background: #fef2f2; padding: 0.5rem; border-radius: 5px; margin-top: 0.5rem;">
+                                <small style="color: #991b1b;">${property.compliance_notes.split('\n')[0]}</small>
+                            </div>
+                        ` : ''}
+
+                        <div class="property-actions">
+                            <button class="btn-primary" onclick="checkCompliance('${property.id}')" style="font-size: 0.875rem;">
+                                📋 Check Compliance
+                            </button>
+                            <button class="btn-success" onclick="calculateGFA('${property.id}')" style="font-size: 0.875rem;">
+                                📊 GFA Analysis
+                            </button>
+                            <button onclick="editProperty('${property.id}')" style="background: #10b981; color: white; font-size: 0.875rem;">
+                                ✏️ Edit
+                            </button>
+                            <button onclick="deleteProperty('${property.id}')" style="background: #ef4444; color: white; font-size: 0.875rem;">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'passed': return 'badge-passed';
+                case 'failed': return 'badge-failed';
+                case 'warning': return 'badge-warning';
+                default: return 'badge-pending';
+            }
+        }
+
+        function updateStats() {
+            const total = properties.length;
+            const bcaPassed = properties.filter(p => p.bca_compliance_status === 'passed').length;
+            const uraPassed = properties.filter(p => p.ura_compliance_status === 'passed').length;
+            const nonCompliant = properties.filter(p =>
+                p.bca_compliance_status === 'failed' || p.ura_compliance_status === 'failed'
+            ).length;
+
+            document.getElementById('totalProperties').textContent = total;
+            document.getElementById('bcaCompliant').textContent = bcaPassed;
+            document.getElementById('uraCompliant').textContent = uraPassed;
+            document.getElementById('nonCompliant').textContent = nonCompliant;
+        }
+
+        function filterProperties() {
+            const type = document.getElementById('filterType').value;
+            const zoning = document.getElementById('filterZoning').value;
+            const compliance = document.getElementById('filterCompliance').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = properties;
+
+            if (type) {
+                filtered = filtered.filter(p => p.property_type === type);
+            }
+
+            if (zoning) {
+                filtered = filtered.filter(p => p.zoning === zoning);
+            }
+
+            if (compliance) {
+                filtered = filtered.filter(p =>
+                    p.bca_compliance_status === compliance || p.ura_compliance_status === compliance
+                );
+            }
+
+            if (search) {
+                filtered = filtered.filter(p =>
+                    p.address.toLowerCase().includes(search) ||
+                    (p.postal_code && p.postal_code.includes(search))
+                );
+            }
+
+            displayProperties(filtered);
+        }
+
+        // Building science constants (universal, from buildable.py config)
+        const BUILDING_CONSTANTS = {
+            floor_to_floor_m: 4.0,  // Ceiling + floor slab + MEP space
+            efficiency_ratio: 0.82   // 82% efficiency (accounts for walls, MEP, structure, circulation)
+        };
+
+        // Jurisdiction rules cache (loaded from API/database)
+        let jurisdictionRulesCache = null;
+
+        function toggleManualOverride() {
+            const isManual = document.getElementById('manualOverride').checked;
+            document.getElementById('manualInputs').style.display = isManual ? 'block' : 'none';
+            document.getElementById('autoCalcButton').style.display = isManual ? 'none' : 'block';
+            document.getElementById('calculatedMetrics').style.display = isManual ? 'none' : document.getElementById('calculatedMetrics').style.display;
+            document.getElementById('calculationModeText').textContent = isManual
+                ? '⚠️ Manual override mode - for exceptions, variances, or special approvals'
+                : 'Based on jurisdiction rules and building science';
+        }
+
+        function applyManualOverride() {
+            const plotRatio = parseFloat(document.getElementById('manualPlotRatio').value);
+            const height = parseFloat(document.getElementById('manualHeight').value);
+            const gfa = parseFloat(document.getElementById('manualGFA').value);
+            const floors = parseInt(document.getElementById('manualFloors').value);
+            const reason = document.getElementById('overrideReason').value.trim();
+
+            if (!plotRatio || !height || !gfa || !floors) {
+                showAlert('Please fill in all manual override fields', 'error');
+                return;
+            }
+
+            if (!reason) {
+                showAlert('Please provide a reason for manual override', 'error');
+                return;
+            }
+
+            const landArea = parseFloat(document.getElementById('landArea').value);
+            const nsa = gfa * BUILDING_CONSTANTS.efficiency_ratio;
+
+            // Display manual override values
+            document.getElementById('calcPlotRatio').textContent = plotRatio.toFixed(1) + ' ⚠️';
+            document.getElementById('calcMaxHeight').textContent = height.toFixed(1) + ' ⚠️';
+            document.getElementById('calcSiteCoverage').textContent = 'Manual';
+            document.getElementById('calcMaxFloors').textContent = floors + ' ⚠️';
+            document.getElementById('calcFootprint').textContent = 'Manual';
+            document.getElementById('calcMaxGFA').textContent = gfa.toFixed(2) + ' ⚠️';
+            document.getElementById('calcNSA').textContent = nsa.toFixed(2);
+
+            document.getElementById('calculatedMetrics').style.display = 'block';
+
+            // Store manual override values for form submission
+            window.calculatedBuildableData = {
+                gross_plot_ratio: plotRatio,
+                building_height_m: height,
+                gross_floor_area_sqm: gfa,
+                num_storeys: floors,
+                is_manual_override: true,
+                override_reason: reason
+            };
+
+            showAlert(`Manual override applied: ${reason}`, 'success');
+        }
+
+        async function calculateBuildableMetrics() {
+            const landArea = parseFloat(document.getElementById('landArea').value);
+            const zoning = document.getElementById('zoning').value;
+
+            if (!landArea || !zoning) {
+                showAlert('Please enter Land Area and select Zoning first', 'error');
+                return;
+            }
+
+            try {
+                // Call backend API to calculate buildable metrics using jurisdiction-agnostic system
+                const response = await fetch(`${API_URL}/singapore-property/calculate/buildable`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        land_area_sqm: landArea,
+                        zoning: zoning,
+                        jurisdiction: 'SG'  // Singapore jurisdiction
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to calculate buildable metrics');
+                }
+
+                const result = await response.json();
+
+                // Display results from jurisdiction-agnostic calculation
+                document.getElementById('calcPlotRatio').textContent = result.plot_ratio.toFixed(1);
+                document.getElementById('calcMaxHeight').textContent = result.max_height_m.toFixed(1);
+                document.getElementById('calcSiteCoverage').textContent = (result.site_coverage * 100).toFixed(0);
+                document.getElementById('calcMaxFloors').textContent = result.max_floors;
+                document.getElementById('calcFootprint').textContent = result.footprint_sqm.toFixed(2);
+                document.getElementById('calcMaxGFA').textContent = result.max_gfa_sqm.toFixed(2);
+                document.getElementById('calcNSA').textContent = result.nsa_sqm.toFixed(2);
+
+                document.getElementById('calculatedMetrics').style.display = 'block';
+
+                // Store calculated values for form submission
+                window.calculatedBuildableData = {
+                    gross_plot_ratio: result.plot_ratio,
+                    building_height_m: result.max_height_m,
+                    gross_floor_area_sqm: result.max_gfa_sqm,
+                    num_storeys: result.max_floors,
+                    is_manual_override: false
+                };
+
+                showAlert('Buildable metrics calculated from jurisdiction database', 'success');
+
+                // Show compliance check section after calculation
+                document.getElementById('complianceCheckSection').style.display = 'block';
+                // Pre-fill with calculated max values
+                document.getElementById('checkGFA').value = result.max_gfa_sqm;
+                document.getElementById('checkHeight').value = result.max_height_m;
+                document.getElementById('checkStoreys').value = result.max_floors;
+            } catch (error) {
+                console.error('Error calculating buildable metrics:', error);
+                showAlert('Failed to calculate buildable metrics. Please try manual override.', 'error');
+            }
+        }
+
+        async function checkCompliance() {
+            const landArea = parseFloat(document.getElementById('landArea').value);
+            const zoning = document.getElementById('zoning').value;
+            const proposedGFA = parseFloat(document.getElementById('checkGFA').value);
+            const proposedHeight = parseFloat(document.getElementById('checkHeight').value);
+            const proposedStoreys = parseInt(document.getElementById('checkStoreys').value);
+
+            if (!landArea || !zoning) {
+                showAlert('Please calculate buildable metrics first', 'error');
+                return;
+            }
+
+            if (!proposedGFA || !proposedHeight || !proposedStoreys) {
+                showAlert('Please enter all proposed design parameters', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/singapore-property/check-compliance`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        land_area_sqm: landArea,
+                        zoning: zoning,
+                        proposed_gfa_sqm: proposedGFA,
+                        proposed_height_m: proposedHeight,
+                        proposed_storeys: proposedStoreys,
+                        jurisdiction: 'SG'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to check compliance');
+                }
+
+                const result = await response.json();
+                displayComplianceResults(result);
+            } catch (error) {
+                console.error('Error checking compliance:', error);
+                showAlert('Failed to check compliance. Please try again.', 'error');
+            }
+        }
+
+        function displayComplianceResults(result) {
+            const resultsDiv = document.getElementById('complianceResults');
+
+            let statusColor, statusIcon, statusText;
+            if (result.status === 'PASSED') {
+                statusColor = '#059669';
+                statusIcon = '✅';
+                statusText = 'PASSED';
+            } else if (result.status === 'WARNING') {
+                statusColor = '#f59e0b';
+                statusIcon = '⚠️';
+                statusText = 'WARNING';
+            } else {
+                statusColor = '#dc2626';
+                statusIcon = '❌';
+                statusText = 'FAILED';
+            }
+
+            let html = `
+                <div style="padding: 1rem; background: white; border-radius: 8px; border: 2px solid ${statusColor};">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <span style="font-size: 1.5rem;">${statusIcon}</span>
+                        <h3 style="margin: 0; color: ${statusColor};">Compliance Status: ${statusText}</h3>
+                    </div>
+
+                    ${result.violations && result.violations.length > 0 ? `
+                        <div style="background: #fee2e2; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #dc2626;">⚠️ Violations (${result.violations.length})</h4>
+                            <ul style="margin: 0; padding-left: 1.25rem;">
+                                ${result.violations.map(v => `<li style="color: #991b1b; margin-bottom: 0.25rem;">${v}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+
+                    ${result.warnings && result.warnings.length > 0 ? `
+                        <div style="background: #fef3c7; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">⚠️ Warnings (${result.warnings.length})</h4>
+                            <ul style="margin: 0; padding-left: 1.25rem;">
+                                ${result.warnings.map(w => `<li style="color: #92400e; margin-bottom: 0.25rem;">${w}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+
+                    ${result.recommendations && result.recommendations.length > 0 ? `
+                        <div style="background: #dbeafe; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #1e40af;">💡 Recommendations</h4>
+                            <ul style="margin: 0; padding-left: 1.25rem;">
+                                ${result.recommendations.map(r => `<li style="color: #1e3a8a; margin-bottom: 0.25rem; font-size: 0.875rem;">${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+
+                    <details style="margin-top: 1rem;">
+                        <summary style="cursor: pointer; font-weight: 600; color: #6b7280;">View Detailed Checks</summary>
+                        <div style="margin-top: 0.75rem; padding: 0.75rem; background: #f9fafb; border-radius: 4px;">
+                            <div style="margin-bottom: 0.75rem;">
+                                <strong style="color: #374151;">URA Zoning Check:</strong>
+                                <span style="color: ${result.ura_check.status === 'passed' ? '#059669' : '#dc2626'}; font-weight: 600;">
+                                    ${result.ura_check.status.toUpperCase()}
+                                </span>
+                                ${result.ura_check.rules_applied ? `
+                                    <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">
+                                        ${Object.entries(result.ura_check.rules_applied).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div>
+                                <strong style="color: #374151;">BCA Building Check:</strong>
+                                <span style="color: ${result.bca_check.status === 'passed' ? '#059669' : '#dc2626'}; font-weight: 600;">
+                                    ${result.bca_check.status.toUpperCase()}
+                                </span>
+                                ${result.bca_check.requirements_applied ? `
+                                    <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">
+                                        ${Object.entries(result.bca_check.requirements_applied).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </details>
+
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: #f3f4f6; border-radius: 4px; font-size: 0.875rem;">
+                        <strong>Proposed Design:</strong>
+                        GFA: ${result.proposed_design.proposed_gfa_sqm?.toFixed(0)} sqm,
+                        Height: ${result.proposed_design.proposed_height_m?.toFixed(1)} m,
+                        Storeys: ${result.proposed_design.proposed_storeys},
+                        Plot Ratio: ${result.proposed_design.calculated_plot_ratio?.toFixed(2)}
+                    </div>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+
+            if (result.status === 'PASSED') {
+                showAlert('✅ Design complies with all regulations!', 'success');
+            } else if (result.status === 'WARNING') {
+                showAlert('⚠️ Design has warnings - review required', 'warning');
+            } else {
+                showAlert('❌ Design violates building codes', 'error');
+            }
+        }
+
+        function showCreateModal() {
+            editingPropertyId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Property';
+            document.getElementById('propertyForm').reset();
+            document.getElementById('calculatedMetrics').style.display = 'none';
+            document.getElementById('manualInputs').style.display = 'none';
+            document.getElementById('autoCalcButton').style.display = 'block';
+            document.getElementById('manualOverride').checked = false;
+            document.getElementById('calculationModeText').textContent = 'Based on jurisdiction rules and building science';
+            window.calculatedBuildableData = null;
+            document.getElementById('propertyModal').style.display = 'flex';
+        }
+
+        function editProperty(propertyId) {
+            editingPropertyId = propertyId;
+            const property = properties.find(p => p.id === propertyId);
+
+            if (!property) return;
+
+            document.getElementById('modalTitle').textContent = 'Edit Property';
+            document.getElementById('propertyName').value = property.property_name || '';
+            document.getElementById('address').value = property.address;
+            document.getElementById('postalCode').value = property.postal_code || '';
+            document.getElementById('landArea').value = property.land_area_sqm || '';
+            document.getElementById('propertyType').value = property.zoning || '';  // Use zoning as property type
+            document.getElementById('tenure').value = property.tenure || '';
+            document.getElementById('zoning').value = property.zoning;
+            document.getElementById('projectId').value = property.project_id || '';
+
+            // Show existing calculated values if available
+            if (property.gross_plot_ratio && property.gross_floor_area_sqm) {
+                document.getElementById('calcPlotRatio').textContent = property.gross_plot_ratio;
+                document.getElementById('calcMaxHeight').textContent = property.building_height_m || '-';
+                document.getElementById('calcMaxGFA').textContent = property.gross_floor_area_sqm;
+                document.getElementById('calcMaxFloors').textContent = property.num_storeys || '-';
+                document.getElementById('calculatedMetrics').style.display = 'block';
+
+                window.calculatedBuildableData = {
+                    gross_plot_ratio: parseFloat(property.gross_plot_ratio),
+                    building_height_m: parseFloat(property.building_height_m),
+                    gross_floor_area_sqm: parseFloat(property.gross_floor_area_sqm),
+                    num_storeys: parseInt(property.num_storeys)
+                };
+            }
+
+            document.getElementById('propertyModal').style.display = 'flex';
+        }
+
+        async function handlePropertySubmit(event) {
+            event.preventDefault();
+
+            // Check if buildable metrics were calculated
+            if (!window.calculatedBuildableData) {
+                showAlert('Please click "Calculate Buildable Potential" first', 'error');
+                return;
+            }
+
+            const propertyData = {
+                property_name: document.getElementById('propertyName').value,
+                address: document.getElementById('address').value,
+                postal_code: document.getElementById('postalCode').value || null,
+                zoning: document.getElementById('zoning').value,
+                tenure: document.getElementById('tenure').value || null,
+                land_area_sqm: parseFloat(document.getElementById('landArea').value),
+                // Use auto-calculated values from jurisdiction rules
+                gross_plot_ratio: window.calculatedBuildableData.gross_plot_ratio,
+                gross_floor_area_sqm: window.calculatedBuildableData.gross_floor_area_sqm,
+                building_height_m: window.calculatedBuildableData.building_height_m,
+                num_storeys: window.calculatedBuildableData.num_storeys,
+                project_id: document.getElementById('projectId').value || null
+            };
+
+            try {
+                let response;
+
+                if (editingPropertyId) {
+                    response = await fetch(`${API_URL}/singapore-property/${editingPropertyId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify(propertyData)
+                    });
+                } else {
+                    response = await fetch(`${API_URL}/singapore-property/create`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify(propertyData)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('API Error:', errorData);
+                    const errorMsg = errorData.detail || JSON.stringify(errorData) || 'Failed to save property';
+                    throw new Error(errorMsg);
+                }
+
+                hideModal();
+                showAlert(editingPropertyId ? 'Property updated!' : 'Property created!', 'success');
+                loadProperties();
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert(error.message || 'Failed to save property', 'error');
+            }
+        }
+
+        async function deleteProperty(propertyId) {
+            if (!confirm('Are you sure you want to delete this property?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/singapore-property/${propertyId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete property');
+                }
+
+                showAlert('Property deleted!', 'success');
+                loadProperties();
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Failed to delete property', 'error');
+            }
+        }
+
+        function showComplianceReport(report) {
+            const content = document.getElementById('complianceContent');
+
+            // API returns: { overall_status, bca_status, ura_status, violations, warnings, recommendations, compliance_data }
+            const uraCheck = report.compliance_data?.ura_check || {};
+            const bcaCheck = report.compliance_data?.bca_check || {};
+
+            content.innerHTML = `
+                <div class="compliance-report">
+                    <div class="compliance-section">
+                        <h4>Overall Status: ${report.overall_status === 'passed' ? '✅ PASSED' : '❌ FAILED'}</h4>
+                    </div>
+
+                    <div class="compliance-section">
+                        <h4>URA Zoning Compliance (${report.ura_status})</h4>
+                        ${uraCheck.violations && uraCheck.violations.length > 0 ? `
+                            <ul class="violation-list">
+                                ${uraCheck.violations.map(v => `<li class="violation-item">❌ ${v}</li>`).join('')}
+                            </ul>
+                        ` : '<p style="color: green;">✅ All URA requirements met</p>'}
+                    </div>
+
+                    <div class="compliance-section">
+                        <h4>BCA Building Compliance (${report.bca_status})</h4>
+                        ${bcaCheck.violations && bcaCheck.violations.length > 0 ? `
+                            <ul class="violation-list">
+                                ${bcaCheck.violations.map(v => `<li class="violation-item">❌ ${v}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+                        ${bcaCheck.warnings && bcaCheck.warnings.length > 0 ? `
+                            <ul class="violation-list">
+                                ${bcaCheck.warnings.map(w => `<li class="warning-item">⚠️ ${w}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+                        ${(!bcaCheck.violations || bcaCheck.violations.length === 0) && (!bcaCheck.warnings || bcaCheck.warnings.length === 0) ?
+                            '<p style="color: green;">✅ All BCA requirements met</p>' : ''}
+                    </div>
+
+                    ${report.recommendations && report.recommendations.length > 0 ? `
+                        <div class="compliance-section">
+                            <h4>Recommendations</h4>
+                            <ul class="violation-list">
+                                ${report.recommendations.map(r => `<li class="recommendation-item">💡 ${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('complianceModal').style.display = 'flex';
+        }
+
+        async function calculateGFA(propertyId) {
+            try {
+                const response = await fetch(`${API_URL}/singapore-property/calculate/gfa-utilization/${propertyId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to calculate GFA');
+                }
+
+                const result = await response.json();
+                showGFAReport(result);
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Failed to calculate GFA', 'error');
+            }
+        }
+
+        function showGFAReport(report) {
+            const content = document.getElementById('complianceContent');
+
+            // API returns: { max_gfa_sqm, current_gfa_sqm, remaining_gfa_sqm, utilization_percentage, potential_units, buildable_metrics, recommendations, property_id, land_area_sqm, plot_ratio }
+            const buildableMetrics = report.buildable_metrics || {};
+            content.innerHTML = `
+                <div class="calculator-section">
+                    <h3>GFA Utilization Analysis</h3>
+                    <div style="margin-top: 1rem;">
+                        <p><strong>Land Area:</strong> ${parseFloat(report.land_area_sqm).toFixed(2)} sqm</p>
+                        <p><strong>Plot Ratio:</strong> ${report.plot_ratio}</p>
+                        <p><strong>Maximum GFA:</strong> ${parseFloat(report.max_gfa_sqm).toFixed(2)} sqm</p>
+                        <p><strong>Current GFA:</strong> ${parseFloat(report.current_gfa_sqm).toFixed(2)} sqm</p>
+                        <p><strong>Remaining GFA:</strong> ${parseFloat(report.remaining_gfa_sqm).toFixed(2)} sqm</p>
+                        ${buildableMetrics.nsa_estimate_sqm ? `
+                            <p style="color: #059669;"><strong>Net Saleable Area (NSA):</strong> ${buildableMetrics.nsa_estimate_sqm.toLocaleString()} sqm
+                            <br><small>(${Math.round(buildableMetrics.efficiency_ratio * 100)}% efficiency - accounts for walls, MEP, circulation)</small></p>
+                        ` : ''}
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${report.utilization_percentage}%"></div>
+                    </div>
+                    <p style="text-align: center; color: #6b7280;">
+                        Utilization: ${parseFloat(report.utilization_percentage).toFixed(1)}%
+                    </p>
+
+                    ${report.potential_units && report.potential_units > 0 ? `
+                        <p style="margin-top: 1rem;">
+                            <strong>Potential Additional Units:</strong> ~${report.potential_units} units
+                            <br><small>(Based on 70sqm average unit size)</small>
+                        </p>
+                    ` : ''}
+
+                    ${report.recommendations && report.recommendations.length > 0 ? `
+                        <div style="margin-top: 1rem;">
+                            <h4>Recommendations:</h4>
+                            <ul style="margin-top: 0.5rem;">
+                                ${report.recommendations.map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('complianceModal').style.display = 'flex';
+        }
+
+        function hideModal() {
+            document.getElementById('propertyModal').style.display = 'none';
+        }
+
+        function hideComplianceModal() {
+            document.getElementById('complianceModal').style.display = 'none';
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alertMessage');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects V2 - Fixed</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #3b82f6;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .debug {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Projects Dashboard V2 (Fixed Version)</h1>
+        <p>This version properly handles empty fields by sending null values</p>
+        <button onclick="loadProjects()">🔄 Refresh Projects</button>
+        <button onclick="showCreateModal()">➕ New Project</button>
+        <button onclick="toggleDebug()">🐛 Toggle Debug</button>
+    </div>
+
+    <div id="message"></div>
+    <div id="debug" class="debug" style="display: none;">
+        <strong>Debug Console:</strong>
+        <div id="debugContent"></div>
+    </div>
+
+    <div id="projectsGrid" class="grid">
+        <div style="grid-column: 1/-1; text-align: center; color: #999;">
+            Loading projects...
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Create Project</h2>
+            <div id="modalMessage"></div>
+
+            <label>Project Name (Required):</label>
+            <input type="text" id="projectName" placeholder="Enter project name" required>
+
+            <label>Description (Optional):</label>
+            <textarea id="projectDescription" placeholder="Enter description" rows="3"></textarea>
+
+            <label>Location (Optional):</label>
+            <input type="text" id="projectLocation" placeholder="Enter location">
+
+            <label>Project Type:</label>
+            <select id="projectType">
+                <option value="residential">Residential</option>
+                <option value="commercial">Commercial</option>
+                <option value="industrial">Industrial</option>
+                <option value="mixed">Mixed Use</option>
+            </select>
+
+            <label>Status:</label>
+            <select id="projectStatus">
+                <option value="planning">Planning</option>
+                <option value="approval">Approval</option>
+                <option value="construction">Construction</option>
+                <option value="completed">Completed</option>
+            </select>
+
+            <label>Budget (Optional - must be > 0 if provided):</label>
+            <input type="number" id="projectBudget" placeholder="Enter budget amount" step="1000" min="1">
+
+            <div style="margin-top: 20px;">
+                <button onclick="saveProject()">💾 Save Project</button>
+                <button onclick="hideModal()" style="background: #6b7280;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:9400/api/v1/projects';
+        let projects = [];
+        let editingId = null;
+        let debugMode = false;
+
+        // Load projects on page load
+        window.onload = function() {
+            debugLog('Page loaded, fetching projects...');
+            loadProjects();
+        };
+
+        function debugLog(message, data = null) {
+            console.log(message, data);
+            if (debugMode) {
+                const debugContent = document.getElementById('debugContent');
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+                if (data) {
+                    entry.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                debugContent.insertBefore(entry, debugContent.firstChild);
+            }
+        }
+
+        function toggleDebug() {
+            debugMode = !debugMode;
+            document.getElementById('debug').style.display = debugMode ? 'block' : 'none';
+        }
+
+        async function loadProjects() {
+            try {
+                debugLog('Fetching projects from API...');
+                const response = await fetch(`${API_URL}/list`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                projects = await response.json();
+                debugLog('Projects loaded successfully', projects);
+                displayProjects();
+                showMessage(`Loaded ${projects.length} projects`, 'success');
+            } catch (error) {
+                debugLog('Error loading projects', error);
+                showMessage('Failed to load projects: ' + error.message, 'error');
+                document.getElementById('projectsGrid').innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; color: #999;">
+                        Failed to load projects. Please check the console.
+                    </div>
+                `;
+            }
+        }
+
+        function displayProjects() {
+            const grid = document.getElementById('projectsGrid');
+
+            if (projects.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; color: #999;">
+                        No projects yet. Click "➕ New Project" to create one.
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = projects.map(project => `
+                <div class="card">
+                    <h3>${project.name}</h3>
+                    <p><strong>ID:</strong> ${project.id}</p>
+                    <p><strong>Type:</strong> ${project.project_type || 'Not specified'}</p>
+                    <p><strong>Status:</strong> ${project.status}</p>
+                    <p><strong>Location:</strong> ${project.location || 'Not specified'}</p>
+                    <p><strong>Budget:</strong> ${project.budget ? '$' + project.budget.toLocaleString() : 'Not specified'}</p>
+                    <p><strong>Description:</strong> ${project.description || 'No description'}</p>
+                    <button onclick="editProject('${project.id}')">✏️ Edit</button>
+                    <button onclick="deleteProject('${project.id}')" style="background: #ef4444;">🗑️ Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function showCreateModal() {
+            document.getElementById('modalTitle').textContent = 'Create New Project';
+            document.getElementById('modalMessage').innerHTML = '';
+
+            // Clear all fields
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+            document.getElementById('projectLocation').value = '';
+            document.getElementById('projectType').value = 'residential';
+            document.getElementById('projectStatus').value = 'planning';
+            document.getElementById('projectBudget').value = '';
+
+            editingId = null;
+            document.getElementById('projectModal').classList.add('show');
+            debugLog('Opened create modal');
+        }
+
+        function editProject(id) {
+            const project = projects.find(p => p.id === id);
+            if (!project) {
+                showMessage('Project not found', 'error');
+                return;
+            }
+
+            document.getElementById('modalTitle').textContent = 'Edit Project';
+            document.getElementById('modalMessage').innerHTML = '';
+
+            // Fill in existing values
+            document.getElementById('projectName').value = project.name;
+            document.getElementById('projectDescription').value = project.description || '';
+            document.getElementById('projectLocation').value = project.location || '';
+            document.getElementById('projectType').value = project.project_type || 'residential';
+            document.getElementById('projectStatus').value = project.status;
+            document.getElementById('projectBudget').value = project.budget || '';
+
+            editingId = id;
+            document.getElementById('projectModal').classList.add('show');
+            debugLog('Opened edit modal for project', project);
+        }
+
+        async function saveProject() {
+            // Get form values
+            const name = document.getElementById('projectName').value.trim();
+            const description = document.getElementById('projectDescription').value.trim();
+            const location = document.getElementById('projectLocation').value.trim();
+            const budgetStr = document.getElementById('projectBudget').value.trim();
+
+            // Validate required fields
+            if (!name) {
+                showModalMessage('Project name is required!', 'error');
+                return;
+            }
+
+            // Prepare data - IMPORTANT: Use null for empty optional fields
+            const projectData = {
+                name: name,
+                description: description || null,  // null if empty
+                location: location || null,        // null if empty
+                project_type: document.getElementById('projectType').value,
+                status: document.getElementById('projectStatus').value
+            };
+
+            // Handle budget specially - only include if provided and valid
+            if (budgetStr) {
+                const budgetNum = parseFloat(budgetStr);
+                if (isNaN(budgetNum) || budgetNum <= 0) {
+                    showModalMessage('Budget must be a positive number!', 'error');
+                    return;
+                }
+                projectData.budget = budgetNum;
+            } else {
+                projectData.budget = null;  // Explicitly set to null if empty
+            }
+
+            debugLog('Sending project data:', projectData);
+
+            try {
+                let url, method;
+
+                if (editingId) {
+                    url = `${API_URL}/${editingId}`;
+                    method = 'PUT';
+                } else {
+                    url = `${API_URL}/create`;
+                    method = 'POST';
+                }
+
+                debugLog(`Making ${method} request to ${url}`);
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(projectData)
+                });
+
+                const responseText = await response.text();
+                debugLog(`Response status: ${response.status}`, responseText);
+
+                if (!response.ok) {
+                    let errorMessage = 'Failed to save project';
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        if (errorData.detail) {
+                            if (Array.isArray(errorData.detail)) {
+                                errorMessage = errorData.detail.map(err => err.msg).join(', ');
+                            } else {
+                                errorMessage = errorData.detail;
+                            }
+                        }
+                    } catch {
+                        errorMessage = responseText || 'Unknown error';
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                // Success!
+                hideModal();
+                showMessage(editingId ? 'Project updated successfully!' : 'Project created successfully!', 'success');
+                loadProjects();
+
+            } catch (error) {
+                debugLog('Error saving project:', error);
+                showModalMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteProject(id) {
+            if (!confirm('Are you sure you want to delete this project?')) {
+                return;
+            }
+
+            try {
+                debugLog(`Deleting project ${id}`);
+
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to delete: HTTP ${response.status}`);
+                }
+
+                showMessage('Project deleted successfully!', 'success');
+                loadProjects();
+
+            } catch (error) {
+                debugLog('Error deleting project:', error);
+                showMessage('Failed to delete project: ' + error.message, 'error');
+            }
+        }
+
+        function hideModal() {
+            document.getElementById('projectModal').classList.remove('show');
+            document.getElementById('modalMessage').innerHTML = '';
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.className = type;
+            msg.textContent = text;
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 5000);
+        }
+
+        function showModalMessage(text, type) {
+            const msg = document.getElementById('modalMessage');
+            msg.className = type;
+            msg.textContent = text;
+        }
+    </script>
+</body>
+</html>

@@ -12,44 +12,26 @@ from geoalchemy2 import Geography, Geometry
 from uuid import uuid4
 
 # revision identifiers
-revision = '000006'
-down_revision = '000005'
+revision = '20241228_000006'
+down_revision = '20240919_000005'
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """Create Commercial Property Agent tables."""
-    
-    # Create ENUM types
-    op.execute("""
-        CREATE TYPE property_type AS ENUM (
-            'office', 'retail', 'industrial', 'residential', 
-            'mixed_use', 'hotel', 'warehouse', 'land', 'special_purpose'
-        );
-        
-        CREATE TYPE property_status AS ENUM (
-            'existing', 'planned', 'approved', 
-            'under_construction', 'completed', 'demolished'
-        );
-        
-        CREATE TYPE tenure_type AS ENUM (
-            'freehold', 'leasehold_99', 'leasehold_999', 
-            'leasehold_60', 'leasehold_30', 'leasehold_other'
-        );
-    """)
-    
-    # Properties table
+
+    # Properties table (ENUM types will be created automatically by SQLAlchemy)
     op.create_table('properties',
         sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('gen_random_uuid()'), nullable=False),
         sa.Column('name', sa.String(255), nullable=False),
         sa.Column('address', sa.String(500), nullable=False),
         sa.Column('postal_code', sa.String(20), nullable=True),
-        sa.Column('property_type', sa.Enum('office', 'retail', 'industrial', 'residential', 'mixed_use', 
-                                         'hotel', 'warehouse', 'land', 'special_purpose', 
-                                         name='property_type', create_type=False), nullable=False),
-        sa.Column('status', sa.Enum('existing', 'planned', 'approved', 'under_construction', 
-                                   'completed', 'demolished', name='property_status', create_type=False), 
+        sa.Column('property_type', sa.Enum('office', 'retail', 'industrial', 'residential', 'mixed_use',
+                                         'hotel', 'warehouse', 'land', 'special_purpose',
+                                         name='property_type'), nullable=False),
+        sa.Column('status', sa.Enum('existing', 'planned', 'approved', 'under_construction',
+                                   'completed', 'demolished', name='property_status'),
                   server_default='existing', nullable=True),
         sa.Column('location', Geography(geometry_type='POINT', srid=4326), nullable=False),
         sa.Column('district', sa.String(50), nullable=True),
@@ -68,7 +50,7 @@ def upgrade() -> None:
         sa.Column('architect', sa.String(255), nullable=True),
         sa.Column('tenure_type', sa.Enum('freehold', 'leasehold_99', 'leasehold_999', 
                                        'leasehold_60', 'leasehold_30', 'leasehold_other',
-                                       name='tenure_type', create_type=False), nullable=True),
+                                       name='tenure_type'), nullable=True),
         sa.Column('lease_start_date', sa.Date(), nullable=True),
         sa.Column('lease_expiry_date', sa.Date(), nullable=True),
         sa.Column('zoning_code', sa.String(50), nullable=True),

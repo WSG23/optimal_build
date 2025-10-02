@@ -19,6 +19,7 @@ JSONB_TYPE = postgresql.JSONB(astext_type=sa.Text())
 def upgrade() -> None:
     """Apply the migration."""
     # Ensure a minimal 'projects' table exists so our FKs don't fail in fresh dev DBs.
+    # Updated to use UUID for long-term scalability
     op.execute(
         """
         DO $$
@@ -28,7 +29,7 @@ def upgrade() -> None:
                 WHERE table_schema = 'public' AND table_name = 'projects'
             ) THEN
                 CREATE TABLE projects (
-                    id SERIAL PRIMARY KEY
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid()
                 );
             END IF;
         END$$;
@@ -41,7 +42,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column(
             "project_id",
-            sa.Integer(),
+            postgresql.UUID(as_uuid=True),
             sa.ForeignKey("projects.id", ondelete="CASCADE"),
             nullable=False,
         ),
@@ -85,7 +86,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column(
             "project_id",
-            sa.Integer(),
+            postgresql.UUID(as_uuid=True),
             sa.ForeignKey("projects.id", ondelete="CASCADE"),
             nullable=False,
         ),

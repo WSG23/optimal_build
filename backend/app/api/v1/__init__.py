@@ -53,7 +53,12 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "feasibility",
     "finance",
     "entitlements",
-    "agents",
+    "test_users",  # Simple user API for learning
+    "users_secure",  # Secure user API with validation
+    "users_db",  # Database-backed user API
+    "projects_api",  # Projects CRUD API
+    "singapore_property_api",  # Singapore property with BCA/URA compliance
+    # "agents",  # Temporarily disabled - needs property model fixes
 )
 
 

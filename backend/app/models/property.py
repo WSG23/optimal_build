@@ -7,14 +7,15 @@ from uuid import UUID
 from enum import Enum
 
 from sqlalchemy import (
-    Column, String, Decimal as SQLDecimal, Integer, Float, Boolean,
-    DateTime, Date, ForeignKey, JSON, Enum as SQLEnum, Index
+    Column, String, Integer, Float, Boolean,
+    DateTime, Date, ForeignKey, JSON, Index
 )
+from sqlalchemy.types import Numeric as SQLDecimal, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 
-from backend.app.models.base import Base, TimestampMixin
+from app.models.base import BaseModel
 
 
 class PropertyType(str, Enum):
@@ -50,7 +51,7 @@ class TenureType(str, Enum):
     LEASEHOLD_OTHER = "leasehold_other"
 
 
-class Property(Base, TimestampMixin):
+class Property(BaseModel):
     """Core property entity for market intelligence."""
     __tablename__ = "properties"
     
@@ -115,7 +116,7 @@ class Property(Base, TimestampMixin):
     )
 
 
-class MarketTransaction(Base, TimestampMixin):
+class MarketTransaction(BaseModel):
     """Historical property transaction records."""
     __tablename__ = "market_transactions"
     
@@ -158,7 +159,7 @@ class MarketTransaction(Base, TimestampMixin):
     )
 
 
-class RentalListing(Base, TimestampMixin):
+class RentalListing(BaseModel):
     """Current and historical rental listings."""
     __tablename__ = "rental_listings"
     
@@ -204,7 +205,7 @@ class RentalListing(Base, TimestampMixin):
     )
 
 
-class DevelopmentPipeline(Base, TimestampMixin):
+class DevelopmentPipeline(BaseModel):
     """Upcoming property development projects."""
     __tablename__ = "development_pipeline"
     
@@ -256,7 +257,7 @@ class DevelopmentPipeline(Base, TimestampMixin):
     )
 
 
-class PropertyPhoto(Base, TimestampMixin):
+class PropertyPhoto(BaseModel):
     """Site photos and documentation."""
     __tablename__ = "property_photos"
     
@@ -296,7 +297,7 @@ class PropertyPhoto(Base, TimestampMixin):
     )
 
 
-class DevelopmentAnalysis(Base, TimestampMixin):
+class DevelopmentAnalysis(BaseModel):
     """Development potential analysis results."""
     __tablename__ = "development_analyses"
     
