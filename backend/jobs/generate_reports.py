@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, UTC
-from pathlib import Path
 from typing import Any, Mapping
 
 from app.services.storage import get_storage_service
 from backend.jobs import job
+from backend.jobs.notifications import notify_webhook
 
 REPORT_PREFIX = "reports"
 
@@ -34,23 +35,22 @@ def generate_market_report_bundle(
 
     storage = get_storage_service()
     target_name = filename or _default_filename()
-    relative_key = f"{REPORT_PREFIX}/{target_name}" if REPORT_PREFIX else target_name
-    output_path = storage.local_base_path / storage.prefix / relative_key
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload_bytes = json.dumps(report_payload, indent=2, default=str).encode("utf-8")
+    result = storage.store_bytes(
+        key=f"{REPORT_PREFIX}/{target_name}",
+        payload=payload_bytes,
+        content_type=content_type,
+    )
 
-    payload = json.dumps(report_payload, indent=2, default=str)
-    output_path.write_text(payload, encoding="utf-8")
-
-    uri = storage._to_uri(Path(storage.prefix) / relative_key)  # type: ignore[attr-defined]
-
-    return {
-        "uri": uri,
-        "bucket": storage.bucket,
-        "key": f"{storage.prefix}/{relative_key}" if storage.prefix else relative_key,
-        "bytes_written": len(payload.encode("utf-8")),
-        "content_type": content_type,
+    event_payload = {
+        **result.as_dict(),
         "stored_at": datetime.now(UTC).isoformat(),
     }
+
+    webhook_url = os.getenv("MARKET_REPORT_WEBHOOK_URL")
+    notify_webhook(webhook_url, event_payload)
+
+    return event_payload
 
 
 __all__ = ["generate_market_report_bundle"]

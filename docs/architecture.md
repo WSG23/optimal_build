@@ -112,8 +112,8 @@ backend/app/
 - ✅ Current routers in production include `users_secure.py`, `projects_api.py`,
   `singapore_property_api.py`, `finance.py`, `entitlements.py`, `overlay.py`, and
   related per-domain modules under `backend/app/api/v1/`.
-- 🔄 Consolidated endpoints (`analytics.py`, unified `compliance.py`) will arrive with the
-  dedicated market intelligence API and compliance workflow refresh.
+- ✅ Consolidated endpoints now include `market_intelligence.py` and `compliance.py`,
+  exposing unified market reporting and regulatory checks.
 
 #### **Background Jobs & Workflows**
 ```
@@ -175,6 +175,8 @@ See [DATA_MODELS_TREE.md](../DATA_MODELS_TREE.md) for complete schema.
   - `cad-imports` - CAD file uploads
   - `cad-exports` - Generated exports
   - `documents` - PDF/document storage
+- **Lifecycle**: Optional retention via `STORAGE_RETENTION_DAYS`; reporting jobs
+  emit webhook notifications when bundles are written.
 
 ### Orchestration & Processing
 
@@ -183,9 +185,11 @@ See [DATA_MODELS_TREE.md](../DATA_MODELS_TREE.md) for complete schema.
 - **Purpose**: Background task orchestration
 - **Workflows**:
   - ✅ Regulatory data ingestion (`sync_products`, `watch_fetch`, `normalize_rules`)
-  - ⚙️ Compliance checking pipelines (prototype tasks under `backend/flows/`)
-  - ⚙️ Market analytics processing (service ready, flow orchestration planned)
-  - 🔄 Report generation (PDF bundling + delivery queue)
+  - ✅ Compliance checking pipeline (`compliance_flow.refresh_singapore_compliance`)
+  - ✅ Market analytics processing (`analytics_flow.refresh_market_intelligence`)
+  - ⚙️ Report generation (PDF bundling + delivery queue)
+- **Deployments**: `backend/flows/deployments.py` builds default Prefect deployments for
+  market intelligence (daily) and compliance (hourly) when Prefect is installed.
 
 ## 🔄 Data Flow
 
@@ -234,9 +238,10 @@ User Upload (CAD/PDF)
   ← Upload confirmation + job_id
 ```
 
-> ⚙️ Current jobs handle CAD ingestion via `backend/jobs/parse_cad.py`; the fully
-> automated Prefect pipeline, MinIO lifecycle hooks, and notification webhooks are
-> planned enhancements.
+> ⚙️ CAD ingestion is handled by `backend/jobs/parse_cad.py`; the reporting bundle job
+> (`backend/jobs/generate_reports.py`) now persists analytics exports and emits
+> optional webhooks. Remaining work focuses on notification fan-out and MinIO
+> lifecycle automation in production environments.
 
 ## 🔐 Security Architecture
 
