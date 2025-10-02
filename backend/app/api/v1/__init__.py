@@ -31,7 +31,11 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
             "commercial real estate advisors. Includes GPS logging, development "
             "potential scanning, photo documentation, 3D scenarios, and market analytics."
         ),
-    }
+    },
+    {
+        "name": "market-intelligence",
+        "description": "Market analytics reports encompassing comparables, supply, yields, and absorption trends.",
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -58,6 +62,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "users_db",  # Database-backed user API
     "projects_api",  # Projects CRUD API
     "singapore_property_api",  # Singapore property with BCA/URA compliance
+    "market_intelligence",  # Market intelligence reporting API
     # "agents",  # Temporarily disabled - needs property model fixes
 )
 

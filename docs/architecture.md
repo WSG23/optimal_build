@@ -2,6 +2,12 @@
 
 ## 📐 Architecture Overview
 
+> **Status legend** — ✅ Implemented · ⚙️ In Progress (partial) · 🔄 Planned / Upcoming
+
+This document intentionally mixes shipped capabilities with near-term roadmap items to
+provide a north-star reference. Each section below is tagged with its current delivery
+status so readers can quickly distinguish today's behaviour from aspirational design.
+
 ```mermaid
 flowchart TD
     UI[Frontend UI<br/>React + TypeScript]
@@ -25,7 +31,7 @@ flowchart TD
 
 ### Frontend Layer
 
-#### **Building Compliance Frontend** (Port: 4400)
+#### **Building Compliance Frontend** (Port: 4400) — ✅ Implemented
 - **Framework**: React 18.2 + TypeScript + Vite 4.5
 - **UI Library**: Material-UI (MUI) 5.14
 - **Mapping**: Mapbox GL 3.0
@@ -47,7 +53,7 @@ frontend/src/
 └── router.tsx        # React Router config
 ```
 
-#### **Admin UI** (Port: 4401)
+#### **Admin UI** (Port: 4401) — ✅ Implemented
 - **Framework**: React 18.2 + TypeScript + Vite 7.1
 - **Styling**: TailwindCSS 3.3
 - **PDF Rendering**: pdfjs-dist 5.4
@@ -56,7 +62,7 @@ frontend/src/
 
 ### Backend Layer
 
-#### **FastAPI Application** (Port: 9400)
+#### **FastAPI Application** (Port: 9400) — ✅ Implemented
 - **Framework**: FastAPI 0.104.1 + Uvicorn 0.24.0
 - **Language**: Python 3.11
 - **API Style**: RESTful + async/await
@@ -103,26 +109,41 @@ backend/app/
 └── main.py           # Application entry point
 ```
 
+- ✅ Current routers in production include `users_secure.py`, `projects_api.py`,
+  `singapore_property_api.py`, `finance.py`, `entitlements.py`, `overlay.py`, and
+  related per-domain modules under `backend/app/api/v1/`.
+- 🔄 Consolidated endpoints (`analytics.py`, unified `compliance.py`) will arrive with the
+  dedicated market intelligence API and compliance workflow refresh.
+
 #### **Background Jobs & Workflows**
 ```
 backend/
-├── flows/            # Prefect workflows
-│   ├── ingestion_flow.py
-│   ├── compliance_flow.py
-│   └── analytics_flow.py
+├── flows/            # Prefect workflows (⚙️ In Progress)
+│   ├── adapters/
+│   ├── normalize_rules.py
+│   ├── parse_segment.py
+│   ├── products.py
+│   ├── sync_products.py
+│   └── watch_fetch.py
 │
-├── jobs/             # Background job definitions
+├── jobs/             # Background job definitions (⚙️ In Progress)
 │   ├── parse_cad.py
-│   └── generate_reports.py
+│   └── overlay_run.py
 │
-└── scripts/          # CLI utilities
-    ├── seed_data.py
+└── scripts/          # CLI utilities (✅ Implemented)
+    ├── seed_entitlements_sg.py
+    ├── seed_finance_demo.py
     └── ingest.py
 ```
 
+- 🔄 Planned Prefect flows: `compliance_flow.py`, `analytics_flow.py`, and an
+  orchestration wrapper for market intelligence reporting.
+- 🔄 Upcoming jobs: `generate_reports.py` (PDF bundle) and enhanced CAD/PDF
+  post-processing tied into Prefect deployments.
+
 ### Data Layer
 
-#### **PostgreSQL + PostGIS** (Port: 5432)
+#### **PostgreSQL + PostGIS** (Port: 5432) — ✅ Implemented
 - **Version**: PostgreSQL 15 with PostGIS 3.3
 - **Purpose**: Primary data store with geospatial capabilities
 - **ORM**: SQLAlchemy 2.0.23 (async)
@@ -138,7 +159,7 @@ backend/
 
 See [DATA_MODELS_TREE.md](../DATA_MODELS_TREE.md) for complete schema.
 
-#### **Redis** (Port: 6379)
+#### **Redis** (Port: 6379) — ✅ Implemented
 - **Version**: Redis 7-alpine
 - **Use Cases**:
   - Session caching
@@ -146,7 +167,7 @@ See [DATA_MODELS_TREE.md](../DATA_MODELS_TREE.md) for complete schema.
   - Rate limiting
   - Real-time data caching
 
-#### **MinIO S3 Storage** (Port: 9000/9001)
+#### **MinIO S3 Storage** (Port: 9000/9001) — ✅ Implemented
 - **Purpose**: Object storage (S3-compatible)
 - **Buckets**:
   - `cad-imports` - CAD file uploads
@@ -155,18 +176,18 @@ See [DATA_MODELS_TREE.md](../DATA_MODELS_TREE.md) for complete schema.
 
 ### Orchestration & Processing
 
-#### **Prefect** (Workflow Engine)
+#### **Prefect** (Workflow Engine) — ⚙️ In Progress
 - **Version**: 2.14.10
 - **Purpose**: Background task orchestration
 - **Workflows**:
-  - Regulatory data ingestion
-  - Compliance checking pipelines
-  - Market analytics processing
-  - Report generation
+  - ✅ Regulatory data ingestion (`sync_products`, `watch_fetch`, `normalize_rules`)
+  - ⚙️ Compliance checking pipelines (prototype tasks under `backend/flows/`)
+  - ⚙️ Market analytics processing (service ready, flow orchestration planned)
+  - 🔄 Report generation (PDF bundling + delivery queue)
 
 ## 🔄 Data Flow
 
-### 1. Compliance Check Flow
+### 1. Compliance Check Flow — ✅ Implemented
 ```
 User (Frontend)
   → POST /api/v1/singapore-property/check-compliance
@@ -178,7 +199,7 @@ User (Frontend)
   ← JSON Response
 ```
 
-### 2. Market Intelligence Flow
+### 2. Market Intelligence Flow — ✅ Implemented
 ```
 User Request
   → MarketIntelligenceAnalytics.generate_market_report()
@@ -192,7 +213,11 @@ User Request
   ← MarketReport Object
 ```
 
-### 3. File Upload & Processing Flow
+> ⚙️ Scheduled automation remains on the roadmap — the `/api/v1/market-intelligence/report`
+> endpoint now exposes real-time reports, with Prefect-driven refreshes planned to
+> publish recurring updates.
+
+### 3. File Upload & Processing Flow — ⚙️ In Progress
 ```
 User Upload (CAD/PDF)
   → Frontend (multipart/form-data)
@@ -206,6 +231,10 @@ User Upload (CAD/PDF)
         → Webhook notification
   ← Upload confirmation + job_id
 ```
+
+> ⚙️ Current jobs handle CAD ingestion via `backend/jobs/parse_cad.py`; the fully
+> automated Prefect pipeline, MinIO lifecycle hooks, and notification webhooks are
+> planned enhancements.
 
 ## 🔐 Security Architecture
 
@@ -223,18 +252,18 @@ User Upload (CAD/PDF)
 
 ## 📊 Monitoring & Observability
 
-### Logging
+### Logging — ✅ Implemented
 - **Library**: structlog 23.2.0
 - **Format**: Structured JSON logs
 - **Levels**: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-### Metrics
+### Metrics — ⚙️ In Progress
 - **Library**: prometheus-client 0.19.0
 - **Metrics**:
   - API request latency
   - Database query performance
   - Task queue length
-  - Market intelligence indicators
+  - Market intelligence indicators (⚙️ emitted once scheduled refresh metrics land)
 
 ## 🛠️ Tech Stack Summary
 
@@ -319,7 +348,7 @@ make reset        # Rebuild + reseed
 
 ## 🗂️ Jurisdiction Support
 
-### Singapore BCA (Building & Construction Authority)
+### Singapore BCA (Building & Construction Authority) — ✅ Implemented
 ```
 jurisdictions/sg_bca/
 ├── parsers/         # BCA regulation parsers

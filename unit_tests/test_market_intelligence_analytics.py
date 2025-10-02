@@ -15,7 +15,8 @@ import importlib
 import sys
 import types
 
-models_base = importlib.import_module("backend.app.models.base")
+models_base = importlib.import_module("app.models.base")
+sys.modules.setdefault("backend.app.models.base", models_base)
 
 if not hasattr(models_base, "TimestampMixin"):
     class TimestampMixin:  # pragma: no cover - compatibility shim for tests
@@ -24,8 +25,15 @@ if not hasattr(models_base, "TimestampMixin"):
 
     models_base.TimestampMixin = TimestampMixin  # type: ignore[attr-defined]
 
-market_models = importlib.import_module("backend.app.models.market")
-property_models = importlib.import_module("backend.app.models.property")
+property_models = sys.modules.get("app.models.property")
+if property_models is None:
+    property_models = importlib.import_module("app.models.property")
+sys.modules.setdefault("backend.app.models.property", property_models)
+
+market_models = sys.modules.get("app.models.market")
+if market_models is None:
+    market_models = importlib.import_module("app.models.market")
+sys.modules.setdefault("backend.app.models.market", market_models)
 
 if not hasattr(market_models, "MarketTransaction"):
     market_models.MarketTransaction = getattr(property_models, "MarketTransaction")
@@ -42,29 +50,33 @@ if not hasattr(market_models, "MarketIndex"):
 
     market_models.MarketIndex = MarketIndex
 
-market_data_module_name = "backend.app.services.agents.market_data_service"
-if market_data_module_name not in sys.modules:
-    stub_market_data = types.ModuleType(market_data_module_name)
+market_data_module_name = "app.services.agents.market_data_service"
+stub_market_data = types.ModuleType(market_data_module_name)
 
-    class MarketDataService:  # pragma: no cover - placeholder to satisfy import
+
+class MarketDataService:  # pragma: no cover - placeholder to satisfy import
+    pass
+
+
+stub_market_data.MarketDataService = MarketDataService
+sys.modules[market_data_module_name] = stub_market_data
+sys.modules["backend.app.services.agents.market_data_service"] = stub_market_data
+
+metrics_module_name = "app.core.metrics"
+stub_metrics = types.ModuleType(metrics_module_name)
+
+
+class MetricsCollector:  # pragma: no cover - placeholder to satisfy import
+    def record_gauge(self, *_, **__):
         pass
 
-    stub_market_data.MarketDataService = MarketDataService
-    sys.modules[market_data_module_name] = stub_market_data
 
-metrics_module_name = "backend.app.core.metrics"
-if metrics_module_name not in sys.modules:
-    stub_metrics = types.ModuleType(metrics_module_name)
+stub_metrics.MetricsCollector = MetricsCollector
+sys.modules[metrics_module_name] = stub_metrics
+sys.modules["backend.app.core.metrics"] = stub_metrics
 
-    class MetricsCollector:  # pragma: no cover - placeholder to satisfy import
-        def record_gauge(self, *_, **__):
-            pass
-
-    stub_metrics.MetricsCollector = MetricsCollector
-    sys.modules[metrics_module_name] = stub_metrics
-
-from backend.app.models.property import PropertyType
-from backend.app.services.agents.market_intelligence_analytics import (
+from app.models.property import PropertyType
+from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics,
     MarketReport,
 )
