@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -97,10 +98,24 @@ class FinanceScenarioInput(BaseModel):
 class FinanceFeasibilityRequest(BaseModel):
     """Payload accepted by the finance feasibility endpoint."""
 
-    project_id: int
+    project_id: str | int | UUID
     project_name: str | None = None
     fin_project_id: int | None = None
     scenario: FinanceScenarioInput
+
+    @field_validator("project_id", mode="before")
+    @classmethod
+    def _coerce_project_id(cls, value: Any) -> str | int | UUID:
+        """Accept UUID-compatible values supplied by clients."""
+
+        if value is None:
+            raise ValueError("project_id is required")
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                raise ValueError("project_id cannot be blank")
+            return stripped
+        return value
 
 
 class DscrEntrySchema(BaseModel):
@@ -128,7 +143,7 @@ class FinanceFeasibilityResponse(BaseModel):
     """Response payload returned by the finance feasibility endpoint."""
 
     scenario_id: int
-    project_id: int
+    project_id: str
     fin_project_id: int
     scenario_name: str
     currency: str

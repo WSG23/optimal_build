@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from backend._compat import compat_dataclass
 from app.models.singapore_property import SingaporeProperty, ComplianceStatus
 from app.schemas.compliance import ComplianceCheckResponse
 from app.schemas.property import PropertyComplianceSummary, SingaporePropertySchema
 from app.utils.singapore_compliance import update_property_compliance
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class ComplianceResult:
     """Outcome emitted by the compliance service."""
 
@@ -83,7 +83,7 @@ def _build_result(record: SingaporeProperty) -> ComplianceResult:
     )
     response = ComplianceCheckResponse(
         property_id=record.id,
-        compliance=compliance,
+        compliance=compliance.model_dump(),
         updated_at=record.updated_at,
         metadata={"jurisdiction": "SG"},
     )

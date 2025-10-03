@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import math
 import re
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
@@ -33,6 +33,53 @@ class ResolvedZone:
     zone_layers: Sequence[RefZoningLayer]
     input_kind: str
     geometry_properties: dict[str, Any] | None = None
+
+
+@dataclass
+class BuildableInput:
+    """Minimal input requirements for calculating buildable parameters."""
+
+    land_area: float
+    zone_code: str | None
+    plot_ratio: float | None
+    site_coverage: float | None = None
+    floor_height_m: float | None = None
+    efficiency_ratio: float | None = None
+
+
+class BuildableService:
+    """High-level façade around ``calculate_buildable`` for agent workflows."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def calculate_parameters(self, buildable_input: BuildableInput) -> BuildableCalculation:
+        defaults = BuildableDefaults(
+            plot_ratio=buildable_input.plot_ratio or BuildableDefaults().plot_ratio,
+            site_area_m2=buildable_input.land_area or BuildableDefaults().site_area_m2,
+            site_coverage=(
+                buildable_input.site_coverage
+                if buildable_input.site_coverage is not None
+                else BuildableDefaults().site_coverage
+            ),
+            floor_height_m=(
+                buildable_input.floor_height_m
+                if buildable_input.floor_height_m is not None
+                else BuildableDefaults().floor_height_m
+            ),
+            efficiency_factor=(
+                buildable_input.efficiency_ratio
+                if buildable_input.efficiency_ratio is not None
+                else BuildableDefaults().efficiency_factor
+            ),
+        )
+        resolved = ResolvedZone(
+            zone_code=buildable_input.zone_code,
+            parcel=None,
+            zone_layers=[],
+            input_kind="address",
+        )
+        return await calculate_buildable(self._session, resolved, defaults)
 
 
 async def calculate_buildable(
@@ -442,4 +489,10 @@ def _convert_to_metres(value: float, unit: str) -> float | None:
     return None
 
 
-__all__ = ["ResolvedZone", "calculate_buildable", "load_layers_for_zone"]
+__all__ = [
+    "BuildableInput",
+    "BuildableService",
+    "ResolvedZone",
+    "calculate_buildable",
+    "load_layers_for_zone",
+]

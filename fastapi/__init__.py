@@ -86,7 +86,8 @@ if _module_name != __name__:
 
 # Avoid leaking helper globals.
 del ModuleType
-del Path
+if "Path" in globals() and getattr(globals()["Path"], "__module__", "") == "pathlib":
+    del Path
 del importlib
 del pkgutil
 del sys

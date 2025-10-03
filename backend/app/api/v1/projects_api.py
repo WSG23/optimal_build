@@ -10,7 +10,7 @@ from datetime import datetime
 import uuid
 
 from app.core.jwt_auth import get_current_user, TokenData
-from backend.app.utils.db import session_dependency
+from app.utils.db import session_dependency
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./projects.db"

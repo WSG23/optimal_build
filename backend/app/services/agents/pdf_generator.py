@@ -28,9 +28,9 @@ from reportlab.graphics.widgets.markers import makeMarker
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.models.property import Property, PropertyType
-from backend.app.services.storage import StorageService
-from backend.app.core.config import settings
+from app.models.property import Property, PropertyType
+from app.services.storage import StorageService
+from app.core.config import settings
 
 
 class PageNumberCanvas(canvas.Canvas):

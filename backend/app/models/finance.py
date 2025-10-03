@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Optional
 from datetime import datetime
 from decimal import Decimal
 
@@ -37,9 +38,9 @@ class FinProject(BaseModel):
     currency: Mapped[str] = mapped_column(
         String(3), nullable=False, default="USD", server_default="USD"
     )
-    discount_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
-    total_development_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    total_gross_profit: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
+    discount_rate: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 4))
+    total_development_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    total_gross_profit: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
@@ -74,7 +75,7 @@ class FinScenario(BaseModel):
         ForeignKey("fin_projects.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[Optional[str]] = mapped_column(Text)
     assumptions: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
     is_primary: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, index=True
@@ -121,11 +122,11 @@ class FinCostItem(BaseModel):
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    category: Mapped[str | None] = mapped_column(String(50))
-    cost_group: Mapped[str | None] = mapped_column(String(50))
-    quantity: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
-    unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
-    total_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
+    category: Mapped[Optional[str]] = mapped_column(String(50))
+    cost_group: Mapped[Optional[str]] = mapped_column(String(50))
+    quantity: Mapped[Optional[Decimal]] = mapped_column(Numeric(14, 2))
+    unit_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(14, 2))
+    total_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
@@ -151,11 +152,11 @@ class FinSchedule(BaseModel):
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
     )
     month_index: Mapped[int] = mapped_column(Integer, nullable=False)
-    hard_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    soft_cost: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    revenue: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    cash_flow: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    cumulative_cash_flow: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
+    hard_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    soft_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    revenue: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    cash_flow: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    cumulative_cash_flow: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
@@ -183,11 +184,11 @@ class FinCapitalStack(BaseModel):
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    source_type: Mapped[str | None] = mapped_column(String(50))
-    tranche_order: Mapped[int | None] = mapped_column(Integer)
-    amount: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
-    rate: Mapped[Decimal | None] = mapped_column(Numeric(8, 4))
-    equity_share: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
+    source_type: Mapped[Optional[str]] = mapped_column(String(50))
+    tranche_order: Mapped[Optional[int]] = mapped_column(Integer)
+    amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    rate: Mapped[Optional[Decimal]] = mapped_column(Numeric(8, 4))
+    equity_share: Mapped[Optional[Decimal]] = mapped_column(Numeric(6, 4))
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
@@ -215,8 +216,8 @@ class FinResult(BaseModel):
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    value: Mapped[Decimal | None] = mapped_column(Numeric(16, 4))
-    unit: Mapped[str | None] = mapped_column(String(20))
+    value: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 4))
+    unit: Mapped[Optional[str]] = mapped_column(String(20))
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )

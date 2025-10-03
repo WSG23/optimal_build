@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 
 from app.core.auth import PolicyContext, WorkspaceRole, can_export_permit_ready
 

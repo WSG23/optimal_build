@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+from backend._compat import compat_dataclass
 from core.canonical_models import CanonicalReg, ProvenanceRecord
 from core.mapping import GLOBAL_MAPPING_FILE, load_yaml, merge_mappings
 from core.registry import JurisdictionParser
@@ -21,7 +22,7 @@ class ParserError(RuntimeError):
     """Raised when a SG BCA record cannot be converted into a canonical form."""
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class SGBCAPARSER:
     """Concrete parser for the SG BCA jurisdiction."""
 

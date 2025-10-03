@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Optional
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text, UniqueConstraint
@@ -22,9 +23,9 @@ class RulePack(BaseModel):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     slug: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[Optional[str]] = mapped_column(Text)
     jurisdiction: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
-    authority: Mapped[str | None] = mapped_column(String(128))
+    authority: Mapped[Optional[str]] = mapped_column(String(128))
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     definition: Mapped[dict] = mapped_column(JSONType, nullable=False)
     metadata_json: Mapped[dict] = mapped_column("metadata", JSONType, default=dict)

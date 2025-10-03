@@ -10,10 +10,10 @@ from sqlalchemy import select, insert
 from geoalchemy2.elements import WKTElement
 from geoalchemy2.functions import ST_GeomFromText
 
-from backend.app.models.property import Property, PropertyType, PropertyStatus
-from backend.app.services.geocoding import GeocodingService, Address
-from backend.app.services.agents.ura_integration import URAIntegrationService
-from backend.app.core.database import get_session
+from app.models.property import Property, PropertyType, PropertyStatus
+from app.services.geocoding import GeocodingService, Address
+from app.services.agents.ura_integration import URAIntegrationService
+from app.core.database import get_session
 import structlog
 
 logger = structlog.get_logger()

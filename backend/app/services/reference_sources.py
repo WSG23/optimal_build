@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping, MutableMapping
-from dataclasses import dataclass
 from typing import Final
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from backend._compat import compat_dataclass
 from app.models.rkp import RefDocument, RefSource
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class HTTPResponse:
     """Simplified HTTP response payload."""
 
@@ -101,7 +101,7 @@ class SimpleHTTPClient:
         ) from last_error
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class FetchedDocument:
     """Result of fetching a reference document."""
 

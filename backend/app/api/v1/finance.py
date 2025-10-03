@@ -9,6 +9,7 @@ from collections.abc import Iterator
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from time import perf_counter
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -34,6 +35,21 @@ from app.utils.logging import get_logger, log_event
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)
+
+
+def _normalise_project_id(project_id: str | int | UUID) -> UUID:
+    """Convert the externally supplied project identifier into a UUID."""
+
+    if isinstance(project_id, UUID):
+        return project_id
+    if isinstance(project_id, int):
+        if project_id < 0:
+            raise HTTPException(status_code=422, detail="project_id must be non-negative")
+        return UUID(int=project_id)
+    try:
+        return UUID(project_id)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail="project_id must be a valid UUID")
 
 
 def _decimal_from_value(value: object) -> Decimal:
@@ -223,11 +239,12 @@ async def run_finance_feasibility(
     metrics.FINANCE_FEASIBILITY_TOTAL.inc()
     start_time = perf_counter()
     response: FinanceFeasibilityResponse | None = None
+    project_uuid = _normalise_project_id(payload.project_id)
     try:
         log_event(
             logger,
             "finance_feasibility_received",
-            project_id=payload.project_id,
+            project_id=str(project_uuid),
             scenario=payload.scenario.name,
         )
 
@@ -236,7 +253,7 @@ async def run_finance_feasibility(
             fin_project = await session.get(FinProject, payload.fin_project_id)
             if fin_project is None:
                 raise HTTPException(status_code=404, detail="Finance project not found")
-            if fin_project.project_id != payload.project_id:
+            if fin_project.project_id != project_uuid:
                 raise HTTPException(
                     status_code=403,
                     detail="Finance project does not belong to the requested project",
@@ -244,7 +261,7 @@ async def run_finance_feasibility(
         else:
             stmt = (
                 select(FinProject)
-                .where(FinProject.project_id == payload.project_id)
+                .where(FinProject.project_id == project_uuid)
                 .order_by(FinProject.id)
                 .limit(1)
             )
@@ -253,7 +270,7 @@ async def run_finance_feasibility(
 
         if fin_project is None:
             fin_project = FinProject(
-                project_id=payload.project_id,
+                project_id=str(project_uuid),
                 name=payload.project_name or payload.scenario.name,
                 currency=payload.scenario.currency,
                 discount_rate=payload.scenario.cash_flow.discount_rate,
@@ -266,7 +283,7 @@ async def run_finance_feasibility(
             fin_project.discount_rate = payload.scenario.cash_flow.discount_rate
 
         scenario = FinScenario(
-            project_id=payload.project_id,
+            project_id=str(project_uuid),
             fin_project_id=fin_project.id,
             name=payload.scenario.name,
             description=payload.scenario.description,
@@ -365,7 +382,7 @@ async def run_finance_feasibility(
 
         results: list[FinResult] = [
             FinResult(
-                project_id=payload.project_id,
+                project_id=str(project_uuid),
                 scenario=scenario,
                 name="escalated_cost",
                 value=escalated_cost,
@@ -377,7 +394,7 @@ async def run_finance_feasibility(
                 },
             ),
             FinResult(
-                project_id=payload.project_id,
+                project_id=str(project_uuid),
                 scenario=scenario,
                 name="npv",
                 value=npv_rounded,
@@ -388,7 +405,7 @@ async def run_finance_feasibility(
                 },
             ),
             FinResult(
-                project_id=payload.project_id,
+                project_id=str(project_uuid),
                 scenario=scenario,
                 name="irr",
                 value=irr_value,
@@ -400,7 +417,7 @@ async def run_finance_feasibility(
         if dscr_entries:
             results.append(
                 FinResult(
-                    project_id=payload.project_id,
+                    project_id=str(project_uuid),
                     scenario=scenario,
                     name="dscr_timeline",
                     value=None,
@@ -418,12 +435,12 @@ async def run_finance_feasibility(
             logger,
             "finance_feasibility_completed",
             scenario_id=scenario.id,
-            project_id=payload.project_id,
+            project_id=str(project_uuid),
         )
 
         response = FinanceFeasibilityResponse(
             scenario_id=scenario.id,
-            project_id=scenario.project_id,
+            project_id=str(project_uuid),
             fin_project_id=scenario.fin_project_id,
             scenario_name=scenario.name,
             currency=payload.scenario.currency,

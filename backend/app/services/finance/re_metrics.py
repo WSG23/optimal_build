@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 from typing import Optional, Union, Dict, List
-from dataclasses import dataclass
 
-from backend.app.services.finance.calculator import (
+from app.services.finance.calculator import (
     NumberLike, CURRENCY_QUANTIZER, DEFAULT_PRECISION,
     _to_decimal, _quantize_currency
 )

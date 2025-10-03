@@ -9,6 +9,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+import pytest_asyncio
+
+if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1":
+    pytest.skip("backend fixtures unavailable", allow_module_level=True)
+
 from backend.app.models.base import BaseModel
 from backend.app.models.rkp import RefClause, RefDocument, RefSource
 from backend.flows import (
@@ -17,6 +23,27 @@ from backend.flows import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
+
+
+@pytest_asyncio.fixture
+async def flow_session_factory() -> async_sessionmaker:
+    """Provide an isolated in-memory async session factory for flow tests."""
+
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    async with engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.create_all)
+
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        yield factory
+    finally:
+        await engine.dispose()
 
 
 async def _initialise_schema(engine) -> None:

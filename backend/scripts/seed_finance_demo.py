@@ -7,7 +7,8 @@ import asyncio
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any
+from typing import Any, Union
+from uuid import UUID
 
 import structlog
 from app.core.database import AsyncSessionLocal, engine
@@ -31,7 +32,21 @@ DEMO_PROJECT_NAME = "Finance Demo Development"
 DEMO_CURRENCY = "SGD"
 
 
-DecimalLike = Decimal | int | float | str
+DecimalLike = Union[Decimal, int, float, str]
+
+
+def _normalise_project_id(value: Union[int, str, UUID]) -> UUID:
+    """Coerce various project id representations into a UUID."""
+
+    if isinstance(value, UUID):
+        return value
+    if isinstance(value, str):
+        return UUID(value)
+    if isinstance(value, int):
+        if value < 0:
+            raise ValueError("project_id must be non-negative")
+        return UUID(int=value)
+    raise TypeError(f"Unsupported project_id type: {type(value)!r}")
 
 
 @dataclass
@@ -53,7 +68,7 @@ class ScenarioSeedResult:
 class FinanceDemoSummary:
     """Summary of seeded finance demo entities."""
 
-    project_id: int
+    project_id: str
     fin_project_id: int
     scenarios: int
     cost_items: int
@@ -643,16 +658,18 @@ async def _seed_scenario(
 async def seed_finance_demo(
     session: AsyncSession,
     *,
-    project_id: int = DEMO_PROJECT_ID,
+    project_id: Union[int, str, UUID] = DEMO_PROJECT_ID,
     project_name: str = DEMO_PROJECT_NAME,
     currency: str = DEMO_CURRENCY,
     reset_existing: bool = True,
 ) -> FinanceDemoSummary:
     """Seed a finance demo project with scenarios and sample metrics."""
 
+    project_uuid = _normalise_project_id(project_id)
+
     if reset_existing:
         existing = await session.execute(
-            select(FinProject).where(FinProject.project_id == project_id)
+            select(FinProject).where(FinProject.project_id == project_uuid)
         )
         for project in existing.scalars():
             metadata = project.metadata or {}
@@ -661,7 +678,7 @@ async def seed_finance_demo(
         await session.flush()
 
     fin_project = FinProject(
-        project_id=project_id,
+        project_id=project_uuid,
         name=project_name,
         currency=currency,
         metadata={
@@ -690,20 +707,18 @@ async def seed_finance_demo(
         fin_project.total_development_cost = primary.total_cost
         fin_project.total_gross_profit = primary.cumulative_cash
 
-    fin_project.metadata = {
-        **(fin_project.metadata or {}),
-        "scenarios": {
-            str(definition.get("key", result.scenario.id)): result.scenario.id
-            for definition, result in zip(
-                SCENARIO_DEFINITIONS, scenario_results, strict=False
-            )
-        },
-    }
+        fin_project.metadata = {
+            **(fin_project.metadata or {}),
+            "scenarios": {
+                str(definition.get("key", result.scenario.id)): result.scenario.id
+                for definition, result in zip(SCENARIO_DEFINITIONS, scenario_results)
+            },
+        }
 
     await session.commit()
 
     return FinanceDemoSummary(
-        project_id=fin_project.project_id,
+        project_id=str(fin_project.project_id),
         fin_project_id=fin_project.id,
         scenarios=len(scenario_results),
         cost_items=sum(item.cost_items for item in scenario_results),

@@ -23,9 +23,9 @@ from reportlab.lib.enums import TA_CENTER
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from backend.app.models.property import Property, PropertyPhoto, RentalListing
-from backend.app.services.agents.pdf_generator import PDFGenerator, CoverPage, PageNumberCanvas
-from backend.app.services.storage import StorageService
+from app.models.property import Property, PropertyPhoto, RentalListing
+from app.services.agents.pdf_generator import PDFGenerator, CoverPage, PageNumberCanvas
+from app.services.storage import StorageService
 
 
 class FloorPlanDiagram(Flowable):

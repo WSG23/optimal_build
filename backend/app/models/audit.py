@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Optional
 from datetime import datetime
 
 from sqlalchemy import DateTime, Float, Index, Integer, String, UniqueConstraint
@@ -23,11 +24,11 @@ class AuditLog(BaseModel):
     project_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
     event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    baseline_seconds: Mapped[float | None] = mapped_column(Float)
-    actual_seconds: Mapped[float | None] = mapped_column(Float)
+    baseline_seconds: Mapped[Optional[float]] = mapped_column(Float)
+    actual_seconds: Mapped[Optional[float]] = mapped_column(Float)
     context: Mapped[dict] = mapped_column(JSONType, default=dict)
     hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    prev_hash: Mapped[str | None] = mapped_column(String(64))
+    prev_hash: Mapped[Optional[str]] = mapped_column(String(64))
     signature: Mapped[str] = mapped_column(String(128), nullable=False)
     recorded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True

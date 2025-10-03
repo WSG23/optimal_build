@@ -6,19 +6,38 @@ from decimal import Decimal
 from uuid import UUID
 import statistics
 
-import pandas as pd
-import numpy as np
+try:  # pragma: no cover - optional dependency
+    import pandas as pd
+except ModuleNotFoundError:  # pragma: no cover - fallback when pandas missing
+    pd = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    import numpy as np
+except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
+    np = None  # type: ignore[assignment]
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 
-from backend.app.models.property import PropertyType
-from backend.app.models.market import (
-    YieldBenchmark, AbsorptionTracking, MarketTransaction,
-    MarketCycle, MarketIndex, CompetitiveSet
+from app.models.property import Property, PropertyType, MarketTransaction
+from app.models.market import (
+    YieldBenchmark,
+    AbsorptionTracking,
+    MarketCycle,
+    MarketIndex,
+    CompetitiveSet,
 )
-from backend.app.services.agents.market_data_service import MarketDataService
-from backend.app.core.metrics import MetricsCollector
+from app.services.agents.market_data_service import MarketDataService
+
+try:  # pragma: no cover - optional metrics dependency
+    from app.core.metrics import MetricsCollector
+except ImportError:  # pragma: no cover - fallback stub
+
+    class MetricsCollector:  # type: ignore
+        """Fallback metrics collector that performs no operations."""
+
+        def record(self, *args: Any, **kwargs: Any) -> None:
+            return None
 import structlog
 
 logger = structlog.get_logger()
@@ -77,6 +96,10 @@ class MarketIntelligenceAnalytics:
         market_data_service: MarketDataService,
         metrics_collector: Optional[MetricsCollector] = None
     ):
+        if pd is None or np is None:
+            raise ImportError(
+                "MarketIntelligenceAnalytics requires 'pandas' and 'numpy'."
+            )
         self.market_data = market_data_service
         self.metrics = metrics_collector
     
@@ -158,19 +181,18 @@ class MarketIntelligenceAnalytics:
         """Analyze comparable transactions."""
         
         # Get recent transactions
-        stmt = select(MarketTransaction).where(
-            and_(
-                MarketTransaction.property_type == property_type.value,
-                MarketTransaction.transaction_date.between(period[0], period[1])
+        stmt = (
+            select(MarketTransaction)
+            .join(Property, MarketTransaction.property_id == Property.id)
+            .where(
+                Property.property_type == property_type,
+                MarketTransaction.transaction_date.between(period[0], period[1]),
             )
-        ).options(
-            selectinload(MarketTransaction.property)
+            .options(selectinload(MarketTransaction.property))
         )
-        
+
         if location != "all":
-            stmt = stmt.join(MarketTransaction.property).where(
-                MarketTransaction.property.has(district=location)
-            )
+            stmt = stmt.where(Property.district == location)
         
         result = await session.execute(stmt)
         transactions = result.scalars().all()
@@ -215,7 +237,7 @@ class MarketIntelligenceAnalytics:
     ) -> Dict[str, Any]:
         """Analyze supply pipeline and dynamics."""
         
-        from backend.app.models.property import DevelopmentPipeline, PropertyStatus
+        from app.models.property import DevelopmentPipeline, PropertyStatus
         
         # Get upcoming supply
         stmt = select(DevelopmentPipeline).where(

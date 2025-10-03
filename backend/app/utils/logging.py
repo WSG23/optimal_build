@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
+import json
 import logging
 from typing import Any, Protocol, cast
+from uuid import UUID
 
 
 class _MetadataModule(Protocol):
@@ -98,7 +103,30 @@ def get_logger(name: str | None = None) -> BoundLogger:
     return logger.bind(app=settings.PROJECT_NAME)
 
 
+def _serialise_for_logging(value: Any) -> Any:
+    """Convert *value* into something JSON serialisable for structlog."""
+
+    if isinstance(value, UUID):
+        return str(value)
+    if isinstance(value, (Decimal,)):  # quantised textual representation
+        return str(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, dict):
+        return {str(key): _serialise_for_logging(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_serialise_for_logging(item) for item in value]
+    try:
+        json.dumps(value)
+    except TypeError:
+        return str(value)
+    return value
+
+
 def log_event(logger: BoundLogger, event: str, **kwargs: Any) -> None:
     """Emit a structured info log with consistent naming."""
 
-    logger.info(event, **kwargs)
+    serialised_kwargs = {key: _serialise_for_logging(value) for key, value in kwargs.items()}
+    logger.info(event, **serialised_kwargs)

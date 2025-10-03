@@ -6,9 +6,8 @@ import argparse
 import asyncio
 import json
 import sys
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TypeVar, cast
 
 from prefect import flow
 from sqlalchemy import select
@@ -23,19 +22,7 @@ from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_parsers import ClauseParser, ParsedClause
 from app.services.reference_storage import ReferenceStorage
 
-_ResultT = TypeVar("_ResultT")
-
-
-def _resolve_flow_callable(flow_like: object) -> Callable[..., Awaitable[_ResultT]]:
-    """Return a coroutine function for Prefect-decorated callables."""
-
-    for attr in ("__wrapped__", "fn"):
-        candidate = getattr(flow_like, attr, None)
-        if callable(candidate):
-            return cast(Callable[..., Awaitable[_ResultT]], candidate)
-    if callable(flow_like):
-        return cast(Callable[..., Awaitable[_ResultT]], flow_like)
-    raise TypeError(f"Expected a callable Prefect flow, received {flow_like!r}")
+from ._prefect_utils import resolve_flow_callable
 
 
 @flow(name="parse-reference-documents")
@@ -162,7 +149,7 @@ def _build_cli_parser() -> argparse.ArgumentParser:
 async def _run_once(
     *, storage: ReferenceStorage, parser: ClauseParser | None = None
 ) -> list[int]:
-    flow_callable = _resolve_flow_callable(parse_reference_documents)
+    flow_callable = resolve_flow_callable(parse_reference_documents)
     return await flow_callable(
         AsyncSessionLocal,
         storage=storage,

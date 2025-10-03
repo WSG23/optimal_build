@@ -5,8 +5,47 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
+import uuid as uuid_module
 
+from sqlalchemy import TypeDecorator, CHAR
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase
+
+
+class UUID(TypeDecorator):
+    """Platform-independent UUID type.
+
+    Uses PostgreSQL's UUID type when available, otherwise uses
+    CHAR(36) storing UUIDs as strings for SQLite compatibility.
+    """
+    impl = CHAR
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PGUUID(as_uuid=True))
+        else:
+            return dialect.type_descriptor(CHAR(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == 'postgresql':
+            return value
+        else:
+            if isinstance(value, uuid_module.UUID):
+                return str(value)
+            return value
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == 'postgresql':
+            return value
+        else:
+            if not isinstance(value, uuid_module.UUID):
+                return uuid_module.UUID(value)
+            return value
 
 
 class BaseModel(DeclarativeBase):
@@ -59,4 +98,4 @@ class MetadataProxy:
         instance.metadata_json = value or {}
 
 
-__all__ = ["Base", "BaseModel", "MetadataProxy"]
+__all__ = ["Base", "BaseModel", "MetadataProxy", "UUID"]

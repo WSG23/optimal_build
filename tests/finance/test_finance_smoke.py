@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
+import uuid
 
 import pytest
 
@@ -14,6 +15,7 @@ pytest.importorskip("sqlalchemy")
 from app.utils import metrics
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
+from backend.app.models.projects import Project, ProjectPhase, ProjectType
 from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
 from httpx import AsyncClient
@@ -46,6 +48,25 @@ if getattr(DscrInputs, "__model_validators__", None):
 
 async def _seed_cost_indices(session, entries: Iterable[RefCostIndex]) -> None:
     session.add_all(list(entries))
+    await session.commit()
+
+
+async def _ensure_project(
+    session, *, project_id: uuid.UUID, name: str
+) -> None:
+    existing = await session.get(Project, project_id)
+    if existing is not None:
+        return
+    project = Project(
+        id=project_id,
+        project_name=name,
+        project_code=f"SMOKE-{project_id.hex[:8]}",
+        project_type=ProjectType.NEW_DEVELOPMENT,
+        current_phase=ProjectPhase.FEASIBILITY,
+        owner_email="smoke@example.com",
+        description="Finance smoke test project",
+    )
+    session.add(project)
     await session.commit()
 
 
@@ -107,8 +128,14 @@ async def test_finance_feasibility_and_export_metrics(
 ) -> None:
     metrics.reset_metrics()
 
-    project_id = 24680
+    project_uuid = uuid.uuid4()
+    project_id_str = str(project_uuid)
     async with async_session_factory() as session:
+        await _ensure_project(
+            session,
+            project_id=project_uuid,
+            name="Finance Smoke Project",
+        )
         await _seed_cost_indices(
             session,
             [
@@ -136,14 +163,14 @@ async def test_finance_feasibility_and_export_metrics(
         )
         summary = await seed_finance_demo(
             session,
-            project_id=project_id,
+            project_id=project_uuid,
             project_name="Finance Smoke Project",
             currency="SGD",
             reset_existing=True,
         )
 
     scenario_payload = {
-        "project_id": project_id,
+        "project_id": project_id_str,
         "project_name": "Finance Smoke Scenario",
         "fin_project_id": summary.fin_project_id,
         "scenario": {
@@ -191,7 +218,7 @@ async def test_finance_feasibility_and_export_metrics(
     assert response.status_code == 200
     body = response.json()
 
-    assert body["project_id"] == project_id
+    assert body["project_id"] == project_id_str
     assert body["fin_project_id"] == summary.fin_project_id
 
     results_by_name = {result["name"]: result for result in body["results"]}
@@ -204,7 +231,7 @@ async def test_finance_feasibility_and_export_metrics(
 
     actual_dscr_entries = body["dscr_timeline"]
     assert len(actual_dscr_entries) == len(serialised_expected)
-    for actual, expected in zip(actual_dscr_entries, serialised_expected, strict=False):
+    for actual, expected in zip(actual_dscr_entries, serialised_expected):
         assert actual["period"] == expected["period"]
         assert Decimal(actual["noi"]) == Decimal(expected["noi"])
         assert Decimal(actual["debt_service"]) == Decimal(expected["debt_service"])

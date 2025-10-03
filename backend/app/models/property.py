@@ -2,20 +2,40 @@
 
 from decimal import Decimal
 from datetime import datetime
-from typing import Optional, List, Dict
-from uuid import UUID
 from enum import Enum
+from typing import Dict, List, Optional
 
 from sqlalchemy import (
-    Column, String, Integer, Float, Boolean,
-    DateTime, Date, ForeignKey, JSON, Index
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    String,
 )
-from sqlalchemy.types import Numeric as SQLDecimal, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
-from geoalchemy2 import Geometry
+from sqlalchemy.types import Enum as SQLEnum, Numeric as SQLDecimal
 
-from app.models.base import BaseModel
+try:
+    from geoalchemy2 import Geometry
+except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
+    from sqlalchemy.types import UserDefinedType
+
+    class Geometry(UserDefinedType):  # type: ignore[misc]
+        """Minimal stub emulating geoalchemy2.Geometry when unavailable."""
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            self.args = args
+            self.kwargs = kwargs
+
+        def get_col_spec(self, **_: object) -> str:
+            return "GEOMETRY"
+
+from app.models.base import BaseModel, UUID
 
 
 class PropertyType(str, Enum):
@@ -55,7 +75,7 @@ class Property(BaseModel):
     """Core property entity for market intelligence."""
     __tablename__ = "properties"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Basic Information
     name = Column(String(255), nullable=False)
@@ -120,10 +140,10 @@ class MarketTransaction(BaseModel):
     """Historical property transaction records."""
     __tablename__ = "market_transactions"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Property Reference
-    property_id = Column(PGUUID(as_uuid=True), ForeignKey('properties.id'), nullable=False)
+    property_id = Column(UUID(), ForeignKey('properties.id'), nullable=False)
     property = relationship("Property", back_populates="transactions")
     
     # Transaction Details
@@ -163,10 +183,10 @@ class RentalListing(BaseModel):
     """Current and historical rental listings."""
     __tablename__ = "rental_listings"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Property Reference
-    property_id = Column(PGUUID(as_uuid=True), ForeignKey('properties.id'), nullable=False)
+    property_id = Column(UUID(), ForeignKey('properties.id'), nullable=False)
     property = relationship("Property", back_populates="rental_listings")
     
     # Listing Details
@@ -209,7 +229,7 @@ class DevelopmentPipeline(BaseModel):
     """Upcoming property development projects."""
     __tablename__ = "development_pipeline"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Project Information
     project_name = Column(String(255), nullable=False)
@@ -261,10 +281,10 @@ class PropertyPhoto(BaseModel):
     """Site photos and documentation."""
     __tablename__ = "property_photos"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Property Reference
-    property_id = Column(PGUUID(as_uuid=True), ForeignKey('properties.id'), nullable=False)
+    property_id = Column(UUID(), ForeignKey('properties.id'), nullable=False)
     property = relationship("Property", back_populates="photos")
     
     # Photo Details
@@ -301,10 +321,10 @@ class DevelopmentAnalysis(BaseModel):
     """Development potential analysis results."""
     __tablename__ = "development_analyses"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Property Reference
-    property_id = Column(PGUUID(as_uuid=True), ForeignKey('properties.id'), nullable=False)
+    property_id = Column(UUID(), ForeignKey('properties.id'), nullable=False)
     property = relationship("Property", back_populates="development_analyses")
     
     # Analysis Type

@@ -3,6 +3,7 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime, date, timedelta
 from uuid import UUID
+from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,9 +19,22 @@ from app.services.agents.development_potential_scanner import (
     DevelopmentPotentialScanner, DevelopmentScenario
 )
 from app.services.agents.photo_documentation import PhotoDocumentationManager
-from app.services.agents.scenario_builder_3d import (
-    Quick3DScenarioBuilder, ScenarioType
-)
+try:  # pragma: no cover - scenario builder has heavy optional deps
+    from app.services.agents.scenario_builder_3d import (
+        Quick3DScenarioBuilder,
+        ScenarioType,
+    )
+except ModuleNotFoundError:  # pragma: no cover - provide fallback enum
+
+    class ScenarioType(str, Enum):  # type: ignore[misc]
+        NEW_BUILD = "new_build"
+        RENOVATION = "renovation"
+        MIXED_USE_CONVERSION = "mixed_use_conversion"
+        VERTICAL_EXTENSION = "vertical_extension"
+        PODIUM_TOWER = "podium_tower"
+        PHASED_DEVELOPMENT = "phased"
+
+    Quick3DScenarioBuilder = None  # type: ignore[assignment]
 from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics
 )
@@ -31,9 +45,22 @@ from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches
 )
-from app.services.agents.universal_site_pack import UniversalSitePackGenerator
-from app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
-from app.services.agents.marketing_materials import MarketingMaterialsGenerator
+try:  # pragma: no cover - optional dependency relies on reportlab
+    from app.services.agents.universal_site_pack import UniversalSitePackGenerator
+except ModuleNotFoundError:  # pragma: no cover
+    UniversalSitePackGenerator = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency relies on reportlab
+    from app.services.agents.investment_memorandum import (
+        InvestmentMemorandumGenerator,
+    )
+except ModuleNotFoundError:  # pragma: no cover
+    InvestmentMemorandumGenerator = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency relies on reportlab
+    from app.services.agents.marketing_materials import MarketingMaterialsGenerator
+except ModuleNotFoundError:  # pragma: no cover
+    MarketingMaterialsGenerator = None  # type: ignore[assignment]
 
 router = APIRouter(prefix="/agents/commercial-property", tags=["Commercial Property Agent"])
 
@@ -161,7 +188,7 @@ async def analyze_development_potential(
     """
     # Get required services
     buildable_service = BuildableService(db)
-    from backend.app.services.finance.calculator import FinanceCalculator
+    from app.services.finance.calculator import FinanceCalculator
     finance_calc = FinanceCalculator()
     
     scanner = DevelopmentPotentialScanner(
@@ -169,7 +196,7 @@ async def analyze_development_potential(
     )
     
     # Get property data
-    from backend.app.models.property import Property
+    from app.models.property import Property
     from sqlalchemy import select
     
     stmt = select(Property).where(Property.id == UUID(property_id))
@@ -295,11 +322,17 @@ async def generate_3d_scenarios(
     - podium_tower: Podium with towers configuration
     - phased_development: Multi-phase development
     """
+    if Quick3DScenarioBuilder is None:
+        raise HTTPException(
+            status_code=503,
+            detail="3D scenario generation is unavailable in the current environment",
+        )
+
     postgis_service = PostGISService(db)
     scenario_builder = Quick3DScenarioBuilder(postgis_service)
     
     # Get property data
-    from backend.app.models.property import Property
+    from app.models.property import Property
     from sqlalchemy import select
     
     stmt = select(Property).where(Property.id == UUID(property_id))
@@ -542,6 +575,11 @@ async def generate_professional_pack(
         property_uuid = UUID(property_id)
         
         if pack_type == "universal":
+            if UniversalSitePackGenerator is None:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Universal Site Pack generation unavailable in this environment",
+                )
             generator = UniversalSitePackGenerator()
             pdf_buffer = await generator.generate(
                 property_id=property_uuid,
@@ -550,6 +588,11 @@ async def generate_professional_pack(
             filename = f"universal_site_pack_{property_id}.pdf"
             
         elif pack_type == "investment":
+            if InvestmentMemorandumGenerator is None:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Investment memorandum generation unavailable in this environment",
+                )
             generator = InvestmentMemorandumGenerator()
             pdf_buffer = await generator.generate(
                 property_id=property_uuid,
@@ -558,6 +601,11 @@ async def generate_professional_pack(
             filename = f"investment_memorandum_{property_id}.pdf"
             
         elif pack_type in ["sales", "lease"]:
+            if MarketingMaterialsGenerator is None:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Marketing material generation unavailable in this environment",
+                )
             generator = MarketingMaterialsGenerator()
             pdf_buffer = await generator.generate_sales_brochure(
                 property_id=property_uuid,

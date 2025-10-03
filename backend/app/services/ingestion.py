@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
+from backend._compat.datetime import UTC
 from typing import Any, cast
 from uuid import uuid4
 

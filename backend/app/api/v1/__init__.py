@@ -66,9 +66,8 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "users_db",  # Database-backed user API
     "projects_api",  # Projects CRUD API
     "singapore_property_api",  # Singapore property with BCA/URA compliance
-    "compliance",  # Unified compliance checks
-    "market_intelligence",  # Market intelligence reporting API
-    # "agents",  # Temporarily disabled - needs property model fixes
+    "market_intelligence",  # Market intelligence analytics API
+    "agents",  # Commercial property advisor agent endpoints
 )
 
 

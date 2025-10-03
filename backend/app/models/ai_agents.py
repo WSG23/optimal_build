@@ -8,11 +8,10 @@ from sqlalchemy import (
     Column, String, Boolean, DateTime, ForeignKey, Text, JSON,
     Enum as SQLEnum, Float, Integer
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 import uuid
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, UUID
 
 
 class AIAgentType(str, Enum):
@@ -42,7 +41,7 @@ class AIAgent(BaseModel):
 
     __tablename__ = "ai_agents"
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, unique=True)
     agent_type = Column(SQLEnum(AIAgentType), nullable=False)
     description = Column(Text)
@@ -85,13 +84,13 @@ class AIAgentSession(BaseModel):
 
     __tablename__ = "ai_agent_sessions"
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Foreign keys
-    agent_id = Column(PGUUID(as_uuid=True), ForeignKey("ai_agents.id"), nullable=False)
-    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    project_id = Column(PGUUID(as_uuid=True), ForeignKey("projects.id"))
-    property_id = Column(PGUUID(as_uuid=True), ForeignKey("singapore_properties.id"))
+    agent_id = Column(UUID(), ForeignKey("ai_agents.id"), nullable=False)
+    user_id = Column(UUID(), ForeignKey("users.id"), nullable=False)
+    project_id = Column(UUID(), ForeignKey("projects.id"))
+    property_id = Column(UUID(), ForeignKey("singapore_properties.id"))
 
     # Session data
     session_type = Column(String(100))  # analysis, compliance_check, report_generation

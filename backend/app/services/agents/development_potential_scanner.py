@@ -10,14 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert
 from pydantic import BaseModel
 
-from backend.app.models.property import (
+from app.models.property import (
     Property, PropertyType, DevelopmentAnalysis,
     TenureType, PropertyStatus
 )
-from backend.app.services.buildable import BuildableService, BuildableInput
-from backend.app.services.finance.calculator import FinanceCalculator
-from backend.app.services.agents.ura_integration import URAIntegrationService
-from backend.app.core.database import get_session
+from app.services.buildable import BuildableService, BuildableInput
+from app.services.finance.calculator import FinanceCalculator
+from app.services.agents.ura_integration import URAIntegrationService
+from app.core.database import get_session
 import structlog
 
 logger = structlog.get_logger()

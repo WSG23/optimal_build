@@ -43,7 +43,7 @@ def _get_test_client() -> Any:
     return TestClient
 
 
-class _StubResponse:
+class Response:
     def __init__(self, status_code: int, body: bytes, headers: dict[str, str]) -> None:
         self.status_code = status_code
         self._body = body
@@ -76,6 +76,7 @@ class _StubAsyncClient:
         app: Any,
         base_url: str = "http://testserver",
         headers: dict[str, str] | None = None,
+        **_: Any,
     ) -> None:
         if app is None:
             raise RuntimeError("AsyncClient stub requires an ASGI app instance")
@@ -102,7 +103,7 @@ class _StubAsyncClient:
         json: Any = None,
         data: dict[str, Any] | None = None,
         files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
-    ) -> _StubResponse:
+    ) -> Response:
         path, query = _normalise_url(url)
         query_params = _merge_query(query, params)
         prepared_headers = _prepare_headers(headers, json, base=self._default_headers)
@@ -141,7 +142,7 @@ class _StubAsyncClient:
                 for key, value in dict(resp_headers).items()
             }
             _normalise_content_type(header_map)
-            return _StubResponse(status_code, payload, header_map)
+            return Response(status_code, payload, header_map)
 
         if params:
             extra = urlencode(params, doseq=True)
@@ -203,7 +204,7 @@ class _StubAsyncClient:
                 _normalise_content_type(resp_headers)
             elif message["type"] == "http.response.body":
                 payload += message.get("body", b"")
-        return _StubResponse(status_code, payload, resp_headers)
+        return Response(status_code, payload, resp_headers)
 
     async def get(
         self,
@@ -211,7 +212,7 @@ class _StubAsyncClient:
         *,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> _StubResponse:
+    ) -> Response:
         return await self.request("GET", url, params=params, headers=headers)
 
     async def post(
@@ -222,7 +223,7 @@ class _StubAsyncClient:
         json: Any = None,
         data: dict[str, Any] | None = None,
         files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
-    ) -> _StubResponse:
+    ) -> Response:
         return await self.request(
             "POST", url, headers=headers, json=json, data=data, files=files
         )
@@ -234,7 +235,7 @@ class _StubAsyncClient:
         headers: dict[str, str] | None = None,
         json: Any = None,
         data: dict[str, Any] | None = None,
-    ) -> _StubResponse:
+    ) -> Response:
         return await self.request("PUT", url, headers=headers, json=json, data=data)
 
     async def delete(
@@ -243,7 +244,7 @@ class _StubAsyncClient:
         *,
         headers: dict[str, str] | None = None,
         json: Any = None,
-    ) -> _StubResponse:
+    ) -> Response:
         return await self.request("DELETE", url, headers=headers, json=json)
 
 
@@ -287,10 +288,16 @@ class AsyncClient:
     def __init__(
         self,
         *,
-        app: Any,
+        app: Any | None = None,
+        transport: Any | None = None,
         base_url: str = "http://testserver",
         headers: dict[str, str] | None = None,
+        **extra: Any,
     ) -> None:
+        if transport is not None and hasattr(transport, "app") and app is None:
+            app = getattr(transport, "app")
+        if app is None:
+            raise RuntimeError("AsyncClient stub requires an ASGI app instance")
         self._mode: str
         self._default_headers = dict(headers or {})
         test_client = _get_test_client()
@@ -304,6 +311,7 @@ class AsyncClient:
                 app=app,
                 base_url=base_url,
                 headers=headers,
+                **extra,
             )
 
     async def __aenter__(self) -> AsyncClient:
@@ -420,4 +428,11 @@ def _json_bytes(payload: Any) -> bytes:
     return json.dumps(payload).encode("utf-8")
 
 
-__all__ = ["AsyncClient"]
+class ASGITransport:
+    """Placeholder transport matching httpx.ASGITransport for tests."""
+
+    def __init__(self, *, app: Any) -> None:
+        self.app = app
+
+
+__all__ = ["AsyncClient", "ASGITransport", "Response"]

@@ -22,15 +22,24 @@ def _attach_with_options(func: F) -> F:
     return func
 
 
+def _apply_prefect_metadata(func: F, *, name: str | None) -> F:
+    wrapped = _attach_with_options(func)
+    if name:
+        wrapped.name = name
+    return wrapped
+
+
+def _decorator_factory(name: str | None) -> Callable[[F], F]:
+    def decorator(func: F) -> F:
+        return _apply_prefect_metadata(func, name=name)
+
+    return decorator
+
+
 def flow(_func: F | None = None, *, name: str | None = None) -> F | Callable[[F], F]:
     """Return a no-op decorator mimicking :func:`prefect.flow`."""
 
-    def decorator(func: F) -> F:
-        wrapped = _attach_with_options(func)
-        if name:
-            wrapped.name = name
-        return wrapped
-
+    decorator = _decorator_factory(name)
     if _func is not None and callable(_func):
         return decorator(cast(F, _func))
     return decorator
@@ -39,12 +48,7 @@ def flow(_func: F | None = None, *, name: str | None = None) -> F | Callable[[F]
 def task(_func: F | None = None, *, name: str | None = None) -> F | Callable[[F], F]:
     """Return a no-op decorator mimicking :func:`prefect.task`."""
 
-    def decorator(func: F) -> F:
-        wrapped = _attach_with_options(func)
-        if name:
-            wrapped.name = name
-        return wrapped
-
+    decorator = _decorator_factory(name)
     if _func is not None and callable(_func):
         return decorator(cast(F, _func))
     return decorator

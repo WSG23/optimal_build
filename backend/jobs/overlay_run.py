@@ -7,8 +7,10 @@ import time
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
+
+from backend._compat.datetime import UTC
 
 from app.core.audit.ledger import append_event
 from app.core.config import settings

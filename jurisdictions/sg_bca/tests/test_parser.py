@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import UTC, date, datetime
+from datetime import date, datetime
+from backend._compat.datetime import UTC
 from pathlib import Path
 
 import pytest

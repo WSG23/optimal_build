@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from math import ceil
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 from app.models.audit import AuditLog
 from app.models.overlay import OverlaySuggestion
 
@@ -23,7 +24,7 @@ DECISION_REVIEW_BASELINE_SECONDS = 15.0 * 60.0  # Manual overlay review per item
 PAYBACK_BASELINE_HOURS = 40.0  # Typical onboarding effort amortised in hours.
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class RoiSnapshot:
     """Aggregated ROI insights for a single project."""
 

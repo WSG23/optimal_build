@@ -13,10 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from geoalchemy2.functions import ST_Buffer, ST_Area, ST_Centroid, ST_AsText
 
-from backend.app.models.property import Property, PropertyType
-from backend.app.services.postgis import PostGISService
-from backend.app.services.agents.ura_integration import URAZoningInfo
-from backend.app.core.database import get_session
+from app.models.property import Property, PropertyType
+from app.services.postgis import PostGISService
+from app.services.agents.ura_integration import URAZoningInfo
+from app.core.database import get_session
 import structlog
 
 logger = structlog.get_logger()

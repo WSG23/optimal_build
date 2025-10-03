@@ -17,10 +17,15 @@ from reportlab.platypus import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from backend.app.models.property import Property, PropertyType, DevelopmentAnalysis
-from backend.app.models.market import YieldBenchmark, MarketTransaction
-from backend.app.services.agents.pdf_generator import PDFGenerator, CoverPage, PageNumberCanvas
-from backend.app.services.agents.development_potential_scanner import DevelopmentScenario
+from app.models.property import (
+    Property,
+    PropertyType,
+    DevelopmentAnalysis,
+    MarketTransaction,
+)
+from app.models.market import YieldBenchmark
+from app.services.agents.pdf_generator import PDFGenerator, CoverPage, PageNumberCanvas
+from app.services.agents.development_potential_scanner import DevelopmentScenario
 
 
 class UniversalSitePackGenerator(PDFGenerator):

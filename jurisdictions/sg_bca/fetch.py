@@ -14,11 +14,13 @@ import json
 import os
 import time as time_module
 from collections.abc import Iterable, MutableMapping, Sequence
-from dataclasses import dataclass
-from datetime import UTC, date, datetime, time
+from datetime import date, datetime, time
 
 import httpx
 import structlog
+
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 from core.canonical_models import ProvenanceRecord
 from structlog.stdlib import BoundLogger
 
@@ -29,7 +31,7 @@ class FetchError(RuntimeError):
     """Raised when the SG BCA fetcher cannot retrieve data from upstream."""
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class FetchConfig:
     """Configuration for the SG BCA fetcher.
 

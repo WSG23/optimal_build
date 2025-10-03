@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from collections.abc import Iterable, Sequence
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
 from typing import Union
 
@@ -208,7 +208,7 @@ def dscr_timeline(
     entries: list[DscrEntry] = []
     with localcontext() as ctx:
         ctx.prec = precision
-        for idx, (noi, debt) in enumerate(zip(incomes, services, strict=False)):
+        for idx, (noi, debt) in enumerate(zip(incomes, services)):
             period = period_labels[idx] if period_labels else idx
             quantized_noi = _quantize_currency(noi)
             quantized_debt = _quantize_currency(debt)
@@ -329,7 +329,99 @@ def escalate_amount(
         return _quantize_currency(base_value)
 
 
+class FinanceCalculator:
+    """Object oriented façade over the module-level finance helpers."""
+
+    def npv(
+        self,
+        rate: NumberLike,
+        cash_flows: Sequence[NumberLike],
+        *,
+        precision: int = DEFAULT_PRECISION,
+    ) -> Decimal:
+        return npv(rate, cash_flows, precision=precision)
+
+    def irr(
+        self,
+        cash_flows: Sequence[NumberLike],
+        *,
+        guess: NumberLike = Decimal("0.1"),
+        precision: int = DEFAULT_PRECISION,
+        tolerance: NumberLike = Decimal("1e-7"),
+        max_iterations: int = 64,
+        lower_bound: NumberLike = Decimal("-0.999999"),
+        upper_bound: NumberLike = Decimal("10"),
+    ) -> Decimal:
+        return irr(
+            cash_flows,
+            guess=guess,
+            precision=precision,
+            tolerance=tolerance,
+            max_iterations=max_iterations,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+        )
+
+    def dscr_timeline(
+        self,
+        net_operating_incomes: Sequence[NumberLike],
+        debt_services: Sequence[NumberLike],
+        *,
+        period_labels: Sequence[NumberLike] | None = None,
+        currency: str = "SGD",
+    ) -> tuple[DscrEntry, ...]:
+        return dscr_timeline(
+            net_operating_incomes,
+            debt_services,
+            period_labels=period_labels,
+            currency=currency,
+        )
+
+    def escalate_amount(
+        self,
+        amount: NumberLike,
+        *,
+        base_period: str,
+        indices: Sequence[RefCostIndex],
+        series_name: str | None = None,
+        jurisdiction: str | None = None,
+        provider: str | None = None,
+    ) -> Decimal:
+        return escalate_amount(
+            amount,
+            base_period=base_period,
+            indices=indices,
+            series_name=series_name,
+            jurisdiction=jurisdiction,
+            provider=provider,
+        )
+
+    def price_sensitivity_grid(
+        self,
+        prices: Sequence[NumberLike],
+        volumes: Sequence[NumberLike],
+        *,
+        base_price: NumberLike,
+        base_volume: NumberLike,
+        price_deltas: Sequence[NumberLike],
+        volume_deltas: Sequence[NumberLike],
+        currency: str = "SGD",
+        precision: int = DEFAULT_PRECISION,
+    ) -> PriceSensitivityResult:
+        return price_sensitivity_grid(
+            prices,
+            volumes,
+            base_price=base_price,
+            base_volume=base_volume,
+            price_deltas=price_deltas,
+            volume_deltas=volume_deltas,
+            currency=currency,
+            precision=precision,
+        )
+
+
 __all__ = [
+    "FinanceCalculator",
     "DscrEntry",
     "PriceSensitivityResult",
     "dscr_timeline",

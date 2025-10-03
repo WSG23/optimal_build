@@ -4,8 +4,8 @@ from typing import Optional, Dict, Tuple, Any
 from decimal import Decimal
 import httpx
 from pydantic import BaseModel
-from backend.app.core.config import settings
-from backend.app.services.base import AsyncClientService
+from app.core.config import settings
+from app.services.base import AsyncClientService
 import structlog
 
 logger = structlog.get_logger()
@@ -28,12 +28,19 @@ class GeocodingService(AsyncClientService):
     def __init__(self):
         self.onemap_base_url = "https://www.onemap.gov.sg/api"
         self.google_maps_api_key = getattr(settings, 'GOOGLE_MAPS_API_KEY', None)
-        self.client = httpx.AsyncClient(timeout=30.0)
+        try:
+            self.client = httpx.AsyncClient(timeout=30.0)
+        except RuntimeError:  # pragma: no cover - httpx stub unavailable
+            logger.warning("httpx AsyncClient unavailable; geocoding service will operate in mock mode")
+            self.client = None  # type: ignore[assignment]
     
     async def reverse_geocode(self, latitude: float, longitude: float) -> Optional[Address]:
         """Convert coordinates to address using OneMap API."""
         try:
             # Try OneMap first (free for Singapore)
+            if self.client is None:
+                raise RuntimeError("Geocoding client unavailable")
+
             response = await self.client.get(
                 f"{self.onemap_base_url}/public/revgeocodexy",
                 params={
@@ -72,6 +79,9 @@ class GeocodingService(AsyncClientService):
     async def geocode(self, address: str) -> Optional[Tuple[float, float]]:
         """Convert address to coordinates using OneMap API."""
         try:
+            if self.client is None:
+                raise RuntimeError("Geocoding client unavailable")
+
             response = await self.client.get(
                 f"{self.onemap_base_url}/common/elastic/search",
                 params={
@@ -117,6 +127,10 @@ class GeocodingService(AsyncClientService):
             "shopping_malls": [],
             "parks": []
         }
+
+        if self.client is None:
+            logger.warning("Geocoding client unavailable; returning empty amenity list")
+            return amenities
         
         # OneMap theme queries
         themes = {

@@ -16,7 +16,7 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 from app.schemas.compliance import ComplianceCheckResponse
 from app.schemas.property import PropertyComplianceSummary
@@ -80,6 +80,8 @@ async def test_compliance_check_success(monkeypatch) -> None:
 
     app = FastAPI()
     app.include_router(compliance_router.router)
+    paths = {route.path for route in app.router.routes}
+    assert '/compliance/check' in paths
 
     response_payload = ComplianceCheckResponse(
         property_id=uuid.uuid4(),
@@ -94,7 +96,7 @@ async def test_compliance_check_success(monkeypatch) -> None:
     )
     app.dependency_overrides[compliance_router.get_compliance_service] = lambda: _StubService(response_payload)
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
         response = await client.post(
             "/compliance/check",
             json={"property_id": str(response_payload.property_id)},
@@ -113,9 +115,11 @@ async def test_compliance_check_not_found(monkeypatch) -> None:
 
     app = FastAPI()
     app.include_router(compliance_router.router)
+    paths = {route.path for route in app.router.routes}
+    assert '/compliance/check' in paths
     app.dependency_overrides[compliance_router.get_compliance_service] = lambda: _StubService(raises=True)
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
         response = await client.post(
             "/compliance/check",
             json={"property_id": str(uuid.uuid4())},

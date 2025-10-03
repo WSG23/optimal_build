@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
+from backend._compat.datetime import UTC
 from pathlib import Path
 
 import pytest

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.core.metrics import MetricsCollector
 from app.models.property import PropertyType
 from app.services.agents.market_data_service import MarketDataService
 from app.services.agents.market_intelligence_analytics import (
@@ -24,7 +25,11 @@ from app.schemas.market import (
 router = APIRouter(prefix="/market-intelligence", tags=["market-intelligence"])
 
 _market_data_service = MarketDataService()
-_market_analytics = MarketIntelligenceAnalytics(_market_data_service)
+_metrics_collector = MetricsCollector()
+_market_analytics = MarketIntelligenceAnalytics(
+    _market_data_service,
+    metrics_collector=_metrics_collector,
+)
 
 
 @router.get("/report", response_model=MarketReportResponse)

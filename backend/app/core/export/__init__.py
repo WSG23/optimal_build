@@ -11,12 +11,13 @@ import time
 import uuid
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
+from backend._compat.datetime import UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

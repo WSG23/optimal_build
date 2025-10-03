@@ -5,7 +5,6 @@ from __future__ import annotations
 import inspect
 import json
 from collections.abc import Callable, Iterable, Mapping, MutableMapping, MutableSequence, Sequence
-from dataclasses import dataclass
 from datetime import date, datetime
 from typing import (
     Any,

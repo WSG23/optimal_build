@@ -1,13 +1,19 @@
 """Secure user API with validation and password hashing."""
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, field_validator
 from typing import Dict, Optional
 from datetime import datetime
 
+try:  # pragma: no cover - optional dependency
+    from pydantic import EmailStr  # type: ignore
+    import email_validator  # type: ignore  # noqa: F401
+except ImportError:  # pragma: no cover - fallback when validator missing
+    EmailStr = str  # type: ignore
+
 from app.core.jwt_auth import create_tokens, TokenResponse, get_current_user, TokenData
-from backend.app.schemas.user import UserSignupBase
-from backend.app.utils.security import hash_password, verify_password
+from app.schemas.user import UserSignupBase
+from app.utils.security import hash_password, verify_password
 
 router = APIRouter(prefix="/secure-users", tags=["Secure Users"])
 

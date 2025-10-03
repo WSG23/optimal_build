@@ -9,15 +9,11 @@ import importlib
 import importlib.util
 import json
 import sys
-from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import (
-    Any,
-    TypeVar,
-    cast,
-)
+from typing import Any
 
+from backend._compat import compat_dataclass
 from prefect import flow
 
 if importlib.util.find_spec("sqlalchemy") is None:  # pragma: no cover - stub fallback
@@ -37,21 +33,9 @@ from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_sources import FetchedDocument, ReferenceSourceFetcher
 from app.services.reference_storage import ReferenceStorage
 
+from ._prefect_utils import resolve_flow_callable
+
 SUPPORTED_FETCH_KINDS = {"pdf", "html", "sitemap"}
-
-_ResultT = TypeVar("_ResultT")
-
-
-def _resolve_flow_callable(flow_like: object) -> Callable[..., Awaitable[_ResultT]]:
-    """Return a coroutine function for Prefect-decorated callables."""
-
-    for attr in ("__wrapped__", "fn"):
-        candidate = getattr(flow_like, attr, None)
-        if callable(candidate):
-            return cast(Callable[..., Awaitable[_ResultT]], candidate)
-    if callable(flow_like):
-        return cast(Callable[..., Awaitable[_ResultT]], flow_like)
-    raise TypeError(f"Expected a callable Prefect flow, received {flow_like!r}")
 
 
 @flow(name="watch-reference-sources")
@@ -234,7 +218,7 @@ def _derive_version_label(fetched: FetchedDocument, file_hash: str) -> str:
     return file_hash[:12]
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class OfflineReferenceFixture:
     """Sample payload returned by the offline reference fetcher."""
 
@@ -364,7 +348,7 @@ async def _run_once(
     storage: ReferenceStorage,
     fetcher: ReferenceSourceFetcher | None = None,
 ) -> list[dict[str, Any]]:
-    flow_callable = _resolve_flow_callable(watch_reference_sources)
+    flow_callable = resolve_flow_callable(watch_reference_sources)
     return await flow_callable(
         AsyncSessionLocal,
         fetcher=fetcher,

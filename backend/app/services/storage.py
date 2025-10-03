@@ -6,13 +6,15 @@ import asyncio
 import json
 import os
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 
-@dataclass(slots=True)
+
+@compat_dataclass(slots=True)
 class StorageResult:
     """Outcome of storing an uploaded payload."""
 

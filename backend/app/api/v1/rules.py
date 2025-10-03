@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import datetime
+from backend._compat.datetime import UTC
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query

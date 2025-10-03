@@ -5,12 +5,13 @@ from __future__ import annotations
 import csv
 import io
 from collections.abc import Iterable
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 from app.services.entitlements import EntitlementsService
 from app.utils.render import render_html_to_pdf
 
@@ -33,7 +34,7 @@ class EntitlementsExportFormat(str, Enum):
         }[self]
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class EntitlementsSnapshot:
     """Serialised snapshot used for exports."""
 

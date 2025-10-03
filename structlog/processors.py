@@ -5,8 +5,14 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable, MutableMapping
-from datetime import UTC, datetime
 from typing import Any
+
+try:  # Python 3.11 provides datetime.UTC; older versions require timezone.utc
+    from datetime import UTC, datetime  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover - fallback for Python < 3.11
+    from datetime import datetime, timezone
+
+    UTC = timezone.utc
 
 __all__ = [
     "JSONRenderer",

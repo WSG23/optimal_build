@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, UTC
+from datetime import datetime
 from typing import Any, Mapping
 
+from backend._compat.datetime import UTC
 from app.services.storage import get_storage_service
 from backend.jobs import job
 from backend.jobs.notifications import notify_webhook

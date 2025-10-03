@@ -1,6 +1,6 @@
 """Market Data Service for managing and syncing property market data."""
 
-from typing import Dict, List, Optional, Any, Protocol
+from typing import Dict, List, Optional, Any, Protocol, Tuple
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from abc import ABC, abstractmethod
@@ -11,12 +11,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from backend.app.models.property import PropertyType, Property
-from backend.app.models.market import (
-    MarketTransaction, RentalListing, YieldBenchmark,
-    AbsorptionTracking, MarketCycle, MarketIndex
+from app.models.property import (
+    PropertyType,
+    Property,
+    MarketTransaction,
+    RentalListing,
 )
-from backend.app.core.config import settings
+from app.models.market import (
+    YieldBenchmark,
+    AbsorptionTracking,
+    MarketCycle,
+    MarketIndex,
+)
+from app.core.config import settings
 import structlog
 
 logger = structlog.get_logger()
@@ -478,7 +485,7 @@ class MarketDataService:
         """Update absorption tracking metrics."""
         # Simplified - in production, track actual project absorption
         
-        from backend.app.models.property import DevelopmentPipeline
+        from app.models.property import DevelopmentPipeline
         
         # Get active development projects
         stmt = select(DevelopmentPipeline).where(

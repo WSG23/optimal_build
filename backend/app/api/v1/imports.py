@@ -6,7 +6,8 @@ import asyncio
 import json
 from collections import Counter
 from collections.abc import Iterable, Mapping
-from datetime import UTC, datetime
+from datetime import datetime
+from backend._compat.datetime import UTC
 from typing import Any
 from uuid import uuid4
 

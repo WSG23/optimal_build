@@ -9,11 +9,11 @@ from sqlalchemy import (
     Column, String, Float, Boolean, DateTime, Date, ForeignKey,
     Text, JSON, Enum as SQLEnum, Integer, DECIMAL
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+
 from sqlalchemy.orm import relationship
 import uuid
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, UUID
 
 
 class ProjectType(str, Enum):
@@ -57,7 +57,7 @@ class Project(BaseModel):
 
     __tablename__ = "projects"
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Basic Information
     project_name = Column(String(255), nullable=False)
@@ -67,7 +67,7 @@ class Project(BaseModel):
     # Foreign Keys
     # NOTE: Removed property_id - properties now link TO projects (one-to-many)
     # One project can have multiple properties (multiple street addresses)
-    owner_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # Made optional for MVP
+    owner_id = Column(UUID(), ForeignKey("users.id"), nullable=True)  # Made optional for MVP
     owner_email = Column(String(255))  # Simple email-based ownership for MVP
 
     # Project Classification

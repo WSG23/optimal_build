@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Optional
 from datetime import datetime
 
 from sqlalchemy import (
@@ -79,17 +80,17 @@ class OverlaySuggestion(BaseModel):
         index=True,
     )
     code: Mapped[str] = mapped_column(String(100), nullable=False)
-    type: Mapped[str | None] = mapped_column(String(50))
+    type: Mapped[Optional[str]] = mapped_column(String(50))
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    rationale: Mapped[str | None] = mapped_column(Text)
-    severity: Mapped[str | None] = mapped_column(String(20))
+    rationale: Mapped[Optional[str]] = mapped_column(Text)
+    severity: Mapped[Optional[str]] = mapped_column(String(20))
     status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
-    engine_version: Mapped[str | None] = mapped_column(String(50))
+    engine_version: Mapped[Optional[str]] = mapped_column(String(50))
     engine_payload: Mapped[dict] = mapped_column(JSONType, default=dict)
     target_ids: Mapped[list[str]] = mapped_column(JSONType, default=list)
     props: Mapped[dict] = mapped_column(JSONType, default=dict)
     rule_refs: Mapped[list[str]] = mapped_column(JSONType, default=list)
-    score: Mapped[float | None] = mapped_column(Float)
+    score: Mapped[Optional[float]] = mapped_column(Float)
     geometry_checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
@@ -97,14 +98,14 @@ class OverlaySuggestion(BaseModel):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    decided_by: Mapped[str | None] = mapped_column(String(100))
-    decision_notes: Mapped[str | None] = mapped_column(Text)
+    decided_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    decided_by: Mapped[Optional[str]] = mapped_column(String(100))
+    decision_notes: Mapped[Optional[str]] = mapped_column(Text)
 
     source_geometry: Mapped[OverlaySourceGeometry] = relationship(
         "OverlaySourceGeometry", back_populates="suggestions"
     )
-    decision: Mapped[OverlayDecision | None] = relationship(
+    decision: Mapped[Optional[OverlayDecision]] = relationship(
         "OverlayDecision",
         back_populates="suggestion",
         uselist=False,
@@ -139,11 +140,11 @@ class OverlayDecision(BaseModel):
         unique=True,
     )
     decision: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
-    decided_by: Mapped[str | None] = mapped_column(String(100))
+    decided_by: Mapped[Optional[str]] = mapped_column(String(100))
     decided_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
-    notes: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
 
     suggestion: Mapped[OverlaySuggestion] = relationship(
         "OverlaySuggestion", back_populates="decision"
@@ -172,8 +173,8 @@ class OverlayRunLock(BaseModel):
     acquired_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
-    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    notes: Mapped[str | None] = mapped_column(Text)
+    released_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    notes: Mapped[Optional[str]] = mapped_column(Text)
 
     source_geometry: Mapped[OverlaySourceGeometry] = relationship(
         "OverlaySourceGeometry", back_populates="locks"

@@ -7,11 +7,10 @@ from typing import Optional
 from sqlalchemy import (
     Column, String, Boolean, DateTime, Enum as SQLEnum, Text
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 import uuid
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, UUID
 
 
 class UserRole(str, Enum):
@@ -30,7 +29,7 @@ class User(BaseModel):
 
     __tablename__ = "users"
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(100), unique=True, nullable=False, index=True)
     full_name = Column(String(255), nullable=False)

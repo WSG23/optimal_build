@@ -9,12 +9,20 @@ import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert
 from geoalchemy2.elements import WKTElement
-from PIL import Image
-import exifread
 
-from backend.app.models.property import Property, PropertyPhoto
-from backend.app.services.minio_service import MinIOService
-from backend.app.core.config import settings
+try:  # pragma: no cover - optional runtime dependency
+    from PIL import Image
+except ModuleNotFoundError:  # pragma: no cover
+    Image = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional runtime dependency
+    import exifread
+except ModuleNotFoundError:  # pragma: no cover
+    exifread = None  # type: ignore[assignment]
+
+from app.models.property import Property, PropertyPhoto
+from app.services.minio_service import MinIOService
+from app.core.config import settings
 import structlog
 
 logger = structlog.get_logger()
@@ -101,6 +109,8 @@ class PhotoDocumentationManager:
                 raise ValueError(f"Unsupported photo format: {filename}")
             
             # Open image for processing
+            if Image is None:
+                raise RuntimeError("Pillow is required to process images")
             image = Image.open(BytesIO(photo_data))
             
             # Extract EXIF data
@@ -163,6 +173,9 @@ class PhotoDocumentationManager:
     
     def _extract_exif_data(self, photo_data: bytes) -> Dict[str, Any]:
         """Extract EXIF data from photo."""
+        if exifread is None:
+            return {}
+
         try:
             tags = exifread.process_file(BytesIO(photo_data))
             

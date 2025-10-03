@@ -10,8 +10,8 @@ stub will remain unused.
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
-from dataclasses import dataclass
 from math import isinf
+from dataclasses import dataclass
 
 
 @dataclass
@@ -78,7 +78,7 @@ class _MetricBase:
 
     def _iter_samples(self) -> Iterator[tuple[dict[str, str], _Sample]]:
         for key, sample in self._metrics.items():
-            label_map = dict(zip(self._labelnames, key, strict=False))
+            label_map = {name: value for name, value in zip(self._labelnames, key)}
             yield label_map, sample
 
     def get_sample_value(self, labels: dict[str, str]) -> float | None:
@@ -123,7 +123,7 @@ class _HistogramSample(_Sample):
         return self._value.get()
 
     def bucket_counts(self) -> list[tuple[float, float]]:
-        return list(zip(self._bounds, self._bucket_counts, strict=False))
+        return list(zip(self._bounds, self._bucket_counts))
 
     def observations(self) -> list[float]:
         return list(self._observations)

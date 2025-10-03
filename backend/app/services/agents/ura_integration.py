@@ -4,8 +4,8 @@ from typing import Optional, Dict, List, Any
 from datetime import datetime, date
 import httpx
 from pydantic import BaseModel
-from backend.app.core.config import settings
-from backend.app.services.base import AsyncClientService
+from app.core.config import settings
+from app.services.base import AsyncClientService
 import structlog
 
 logger = structlog.get_logger()
@@ -42,14 +42,18 @@ class URAIntegrationService(AsyncClientService):
         self.access_key = getattr(settings, 'URA_ACCESS_KEY', None)
         self.token = None
         self.token_expiry = None
-        self.client = httpx.AsyncClient(timeout=30.0)
+        try:
+            self.client = httpx.AsyncClient(timeout=30.0)
+        except RuntimeError:  # pragma: no cover - falls back when httpx stub unavailable
+            logger.warning("httpx AsyncClient unavailable; URA integration will operate in mock mode")
+            self.client = None
     
     async def _get_token(self) -> Optional[str]:
         """Get or refresh URA API token."""
         if self.token and self.token_expiry and datetime.now() < self.token_expiry:
             return self.token
         
-        if not self.access_key:
+        if not self.access_key or self.client is None:
             logger.warning("URA access key not configured")
             return None
         

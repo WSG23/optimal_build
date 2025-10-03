@@ -7,11 +7,13 @@ import os
 import sqlite3
 import tempfile
 from collections.abc import Mapping, MutableMapping
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 
 try:  # pragma: no cover - fallback for environments without FastAPI installed
     from fastapi import APIRouter, Depends
@@ -68,7 +70,7 @@ def resolve_audit_db_path() -> Path:
     return base_dir / _DEFAULT_DB_FILENAME
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class ComplianceAuditLogger:
     """Persist compliance audit records for enhanced uploads."""
 

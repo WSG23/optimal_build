@@ -22,10 +22,10 @@ from reportlab.graphics.charts.barcharts import VerticalBarChart
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from backend.app.models.property import Property, MarketTransaction, RentalListing
-from backend.app.models.market import YieldBenchmark, MarketCycle
-from backend.app.services.agents.pdf_generator import PDFGenerator, CoverPage, PageNumberCanvas
-from backend.app.services.finance import (
+from app.models.property import Property, MarketTransaction, RentalListing
+from app.models.market import YieldBenchmark, MarketCycle
+from app.services.agents.pdf_generator import PDFGenerator, CoverPage, PageNumberCanvas
+from app.services.finance import (
     calculate_comprehensive_metrics, value_property_multiple_approaches
 )
 

@@ -6,11 +6,13 @@ import asyncio
 import math
 import re
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import field
 from io import BytesIO
 from itertools import chain
 from typing import Any
 from xml.etree import ElementTree as ET
+
+from backend._compat import compat_dataclass
 
 try:  # pragma: no cover - optional dependency
     import fitz  # type: ignore  # PyMuPDF
@@ -27,7 +29,7 @@ from backend.jobs import job
 Point = tuple[float, float]
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class VectorPath:
     """A vectorised path consisting of ordered coordinates."""
 
@@ -43,7 +45,7 @@ class VectorPath:
         }
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class WallCandidate:
     """A baseline wall approximation extracted from vector or bitmap data."""
 
@@ -63,7 +65,7 @@ class WallCandidate:
         }
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class RasterVectorOptions:
     """Configuration toggles for raster to vector processing."""
 
@@ -72,7 +74,7 @@ class RasterVectorOptions:
     bitmap_threshold: float = 0.65
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class RasterVectorResult:
     """Result produced by :func:`vectorize_floorplan`."""
 
@@ -244,7 +246,7 @@ def detect_baseline_walls(
     for path in paths:
         if len(path.points) < 2:
             continue
-        for start, end in zip(path.points, path.points[1:], strict=False):
+        for start, end in zip(path.points, path.points[1:]):
             dx = end[0] - start[0]
             dy = end[1] - start[1]
             length = math.hypot(dx, dy)

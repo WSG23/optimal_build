@@ -6,8 +6,9 @@ import asyncio
 import inspect
 import os
 from collections.abc import Awaitable, Callable, Mapping
-from dataclasses import dataclass
-from typing import Any
+from typing import Any, Union
+
+from backend._compat import compat_dataclass
 
 try:  # pragma: no cover - optional dependency, available in some deployments
     from celery import Celery  # type: ignore
@@ -23,10 +24,20 @@ except ModuleNotFoundError:  # pragma: no cover - keep inline fallback working
 
 from app.core.config import settings
 
-JobFunc = Callable[..., Awaitable[Any] | Any]
+JobFunc = Callable[..., Union[Awaitable[Any], Any]]
 
 
-@dataclass(slots=True)
+def _store_job(
+    registry: dict[str, tuple[JobFunc, str | None]],
+    func: JobFunc,
+    name: str,
+    queue: str | None,
+) -> JobFunc:
+    registry[name] = (func, queue)
+    return func
+
+
+@compat_dataclass(slots=True)
 class JobDispatch:
     """Metadata describing a scheduled job."""
 
@@ -80,8 +91,7 @@ class _InlineBackend(_BaseBackend):
         self._registry: dict[str, tuple[JobFunc, str | None]] = {}
 
     def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
-        self._registry[name] = (func, queue)
-        return func
+        return _store_job(self._registry, func, name, queue)
 
     async def enqueue(
         self,
@@ -171,8 +181,7 @@ class _RQBackend(
         return self._queues[name]
 
     def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
-        self._registry[name] = (func, queue)
-        return func
+        return _store_job(self._registry, func, name, queue)
 
     async def enqueue(
         self,

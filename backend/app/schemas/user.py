@@ -2,9 +2,15 @@
 
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
-from backend.app.utils import validators as user_validators
+try:  # pragma: no cover - optional email validation dependency
+    from pydantic import EmailStr  # type: ignore
+    import email_validator  # type: ignore  # noqa: F401
+except ImportError:  # pragma: no cover - fallback when validator missing
+    EmailStr = str  # type: ignore
+
+from app.utils import validators as user_validators
 
 
 class UserSignupBase(BaseModel):

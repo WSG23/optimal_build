@@ -9,12 +9,14 @@ import os
 import tempfile
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
+from backend._compat.datetime import UTC
 from io import BytesIO
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+
+from backend._compat import compat_dataclass
 
 try:  # pragma: no cover - optional dependency
     import ezdxf  # type: ignore
@@ -35,7 +37,7 @@ from app.services.storage import get_storage_service
 from backend.jobs import job
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class ParsedGeometry:
     """Result emitted by the parsing pipeline."""
 
@@ -46,7 +48,7 @@ class ParsedGeometry:
     metadata: dict[str, Any]
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class DxfSpaceCandidate:
     """Representation of a DXF entity that can be treated as a space."""
 
@@ -55,7 +57,7 @@ class DxfSpaceCandidate:
     layer: str | None
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class DxfQuicklook:
     """Summary metadata extracted from a DXF payload."""
 
@@ -65,7 +67,7 @@ class DxfQuicklook:
     layers: list[dict[str, Any]]
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class IfcSpaceCandidate:
     """Representation of an IFC space detected within a storey."""
 
@@ -75,7 +77,7 @@ class IfcSpaceCandidate:
     metadata: dict[str, Any]
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class IfcQuicklook:
     """Summary metadata extracted from an IFC payload."""
 

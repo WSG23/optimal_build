@@ -1,4 +1,5 @@
-from datetime import UTC, datetime
+from datetime import datetime
+from backend._compat.datetime import UTC
 
 import pytest
 from app.core.auth import (

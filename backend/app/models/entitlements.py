@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Optional
 from datetime import date, datetime
 from enum import Enum
 
@@ -117,8 +118,8 @@ class EntAuthority(BaseModel):
     jurisdiction: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     slug: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)
-    website: Mapped[str | None] = mapped_column(String(255))
-    contact_email: Mapped[str | None] = mapped_column(String(120))
+    website: Mapped[Optional[str]] = mapped_column(String(255))
+    contact_email: Mapped[Optional[str]] = mapped_column(String(120))
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
@@ -154,9 +155,9 @@ class EntApprovalType(BaseModel):
     category: Mapped[EntApprovalCategory] = mapped_column(
         SAEnum(EntApprovalCategory, name="ent_approval_category"), nullable=False
     )
-    description: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[Optional[str]] = mapped_column(Text)
     requirements: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
-    processing_time_days: Mapped[int | None] = mapped_column(Integer)
+    processing_time_days: Mapped[Optional[int]] = mapped_column(Integer)
     is_mandatory: Mapped[bool] = mapped_column(default=True, nullable=False)
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
@@ -189,19 +190,19 @@ class EntRoadmapItem(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    approval_type_id: Mapped[int | None] = mapped_column(
+    approval_type_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("ent_approval_types.id", ondelete="SET NULL"), index=True
     )
     sequence_order: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[EntRoadmapStatus] = mapped_column(
         SAEnum(EntRoadmapStatus, name="ent_roadmap_status"), nullable=False
     )
-    status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    target_submission_date: Mapped[date | None] = mapped_column(Date)
-    target_decision_date: Mapped[date | None] = mapped_column(Date)
-    actual_submission_date: Mapped[date | None] = mapped_column(Date)
-    actual_decision_date: Mapped[date | None] = mapped_column(Date)
-    notes: Mapped[str | None] = mapped_column(Text)
+    status_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    target_submission_date: Mapped[Optional[date]] = mapped_column(Date)
+    target_decision_date: Mapped[Optional[date]] = mapped_column(Date)
+    actual_submission_date: Mapped[Optional[date]] = mapped_column(Date)
+    actual_decision_date: Mapped[Optional[date]] = mapped_column(Date)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
@@ -215,7 +216,7 @@ class EntRoadmapItem(BaseModel):
         nullable=False,
     )
 
-    approval_type: Mapped[EntApprovalType | None] = relationship(
+    approval_type: Mapped[Optional[EntApprovalType]] = relationship(
         back_populates="roadmap_items"
     )
     metadata = MetadataProxy()
@@ -247,10 +248,10 @@ class EntStudy(BaseModel):
     status: Mapped[EntStudyStatus] = mapped_column(
         SAEnum(EntStudyStatus, name="ent_study_status"), nullable=False
     )
-    summary: Mapped[str | None] = mapped_column(Text)
-    consultant: Mapped[str | None] = mapped_column(String(120))
-    due_date: Mapped[date | None] = mapped_column(Date)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    summary: Mapped[Optional[str]] = mapped_column(Text)
+    consultant: Mapped[Optional[str]] = mapped_column(String(120))
+    due_date: Mapped[Optional[date]] = mapped_column(Date)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     attachments: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
@@ -275,17 +276,17 @@ class EntEngagement(BaseModel):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
-    organisation: Mapped[str | None] = mapped_column(String(150))
+    organisation: Mapped[Optional[str]] = mapped_column(String(150))
     engagement_type: Mapped[EntEngagementType] = mapped_column(
         SAEnum(EntEngagementType, name="ent_engagement_type"), nullable=False
     )
     status: Mapped[EntEngagementStatus] = mapped_column(
         SAEnum(EntEngagementStatus, name="ent_engagement_status"), nullable=False
     )
-    contact_email: Mapped[str | None] = mapped_column(String(120))
-    contact_phone: Mapped[str | None] = mapped_column(String(40))
+    contact_email: Mapped[Optional[str]] = mapped_column(String(120))
+    contact_phone: Mapped[Optional[str]] = mapped_column(String(40))
     meetings: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
-    notes: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
@@ -316,9 +317,9 @@ class EntLegalInstrument(BaseModel):
         SAEnum(EntLegalInstrumentStatus, name="ent_legal_instrument_status"),
         nullable=False,
     )
-    reference_code: Mapped[str | None] = mapped_column(String(80))
-    effective_date: Mapped[date | None] = mapped_column(Date)
-    expiry_date: Mapped[date | None] = mapped_column(Date)
+    reference_code: Mapped[Optional[str]] = mapped_column(String(80))
+    effective_date: Mapped[Optional[date]] = mapped_column(Date)
+    expiry_date: Mapped[Optional[date]] = mapped_column(Date)
     attachments: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False

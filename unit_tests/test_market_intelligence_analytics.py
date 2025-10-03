@@ -5,6 +5,8 @@ from unittest.mock import MagicMock
 import pytest
 import sqlalchemy as sa
 
+pytest.importorskip("pandas")
+
 if not hasattr(sa, "Decimal"):
     # SQLAlchemy 2.x exposes DECIMAL via "sqlalchemy.DECIMAL" but not "Decimal".
     from sqlalchemy import DECIMAL as _SQL_DECIMAL  # type: ignore

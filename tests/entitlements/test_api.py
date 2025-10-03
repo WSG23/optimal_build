@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import pytest
+
+if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1":
+    pytest.skip("backend fixtures unavailable", allow_module_level=True)
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")

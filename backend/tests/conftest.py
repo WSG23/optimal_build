@@ -15,6 +15,8 @@ from typing import Any, cast
 import pytest
 from httpx import AsyncClient
 
+from backend._sqlalchemy_stub import ensure_sqlalchemy
+
 
 def _find_repo_root(current: Path) -> Path:
     for parent in current.parents:
@@ -78,35 +80,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
 
 pytest_asyncio = cast(Any, pytest_asyncio)
 
-
-def _ensure_sqlalchemy() -> None:
-    """Expose the bundled lightweight SQLAlchemy implementation if needed."""
-
-    try:  # pragma: no cover - exercised implicitly when SQLAlchemy is available
-        import sqlalchemy  # noqa: F401
-    except ModuleNotFoundError:
-        pkg = import_module("sqlalchemy_pkg_backup")
-        sys.modules.setdefault("sqlalchemy", pkg)
-
-        for name in (
-            "ext",
-            "ext.asyncio",
-            "orm",
-            "engine",
-            "sql",
-            "dialects",
-            "dialects.postgresql",
-            "types",
-            "pool",
-        ):
-            try:
-                module = import_module(f"sqlalchemy_pkg_backup.{name}")
-            except ModuleNotFoundError:
-                continue
-            sys.modules.setdefault(f"sqlalchemy.{name}", module)
-
-
-_ensure_sqlalchemy()
+ensure_sqlalchemy()
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 

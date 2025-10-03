@@ -4,15 +4,21 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import create_engine, Column, String, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import uuid
 
+try:  # pragma: no cover - optional dependency
+    from pydantic import EmailStr  # type: ignore
+    import email_validator  # type: ignore  # noqa: F401
+except ImportError:  # pragma: no cover - fallback when validator missing
+    EmailStr = str  # type: ignore
+
 from app.core.jwt_auth import create_tokens, TokenResponse, get_current_user, TokenData
-from backend.app.utils.db import session_dependency
-from backend.app.utils.security import hash_password, verify_password
-from backend.app.schemas.user import UserSignupBase
+from app.utils.db import session_dependency
+from app.utils.security import hash_password, verify_password
+from app.schemas.user import UserSignupBase
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"

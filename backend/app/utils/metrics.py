@@ -34,6 +34,8 @@ REQUEST_COUNTER: Counter
 INGESTION_RUN_COUNTER: Counter
 INGESTED_RECORD_COUNTER: Counter
 ALERT_COUNTER: Counter
+MARKET_INTEL_CAP_RATE_GAUGE: Gauge
+MARKET_INTEL_RENTAL_PSF_GAUGE: Gauge
 COST_ADJUSTMENT_GAUGE: Gauge
 PWP_BUILDABLE_TOTAL: Counter
 PWP_BUILDABLE_DURATION_MS: Histogram
@@ -56,6 +58,8 @@ def _initialize_metrics() -> None:
     global INGESTION_RUN_COUNTER
     global INGESTED_RECORD_COUNTER
     global ALERT_COUNTER
+    global MARKET_INTEL_CAP_RATE_GAUGE
+    global MARKET_INTEL_RENTAL_PSF_GAUGE
     global COST_ADJUSTMENT_GAUGE
     global PWP_BUILDABLE_TOTAL
     global PWP_BUILDABLE_DURATION_MS
@@ -96,6 +100,20 @@ def _initialize_metrics() -> None:
         "ingestion_alerts_total",
         "Alerts emitted during ingestion runs by level.",
         labelnames=("level",),
+        registry=REGISTRY,
+    )
+
+    MARKET_INTEL_CAP_RATE_GAUGE = Gauge(
+        "market_intelligence_cap_rate",
+        "Latest market intelligence cap rate median by property type and location.",
+        labelnames=("property_type", "location"),
+        registry=REGISTRY,
+    )
+
+    MARKET_INTEL_RENTAL_PSF_GAUGE = Gauge(
+        "market_intelligence_rental_psf",
+        "Latest market intelligence rental PSF median by property type and location.",
+        labelnames=("property_type", "location"),
         registry=REGISTRY,
     )
 

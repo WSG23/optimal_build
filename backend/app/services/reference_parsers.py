@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
-from dataclasses import dataclass
 from html.parser import HTMLParser
 
+from backend._compat import compat_dataclass
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class ParsedClause:
     """Structured clause extracted from a reference document."""
 

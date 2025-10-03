@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import uuid
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -24,6 +25,7 @@ if _PYDANTIC_MAJOR < 2:
 
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
+from backend.app.models.projects import Project, ProjectPhase, ProjectType
 from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
 from httpx import AsyncClient
@@ -58,6 +60,27 @@ async def _seed_cost_indices(session, entries: Iterable[RefCostIndex]) -> None:
     """Persist the supplied cost index records."""
 
     session.add_all(list(entries))
+    await session.commit()
+
+
+async def _ensure_project(
+    session, *, project_id: uuid.UUID, name: str
+) -> None:
+    """Insert a minimal project row to satisfy foreign key constraints."""
+
+    existing = await session.get(Project, project_id)
+    if existing is not None:
+        return
+    project = Project(
+        id=project_id,
+        project_name=name,
+        project_code=f"QA-{project_id.hex[:8]}",
+        project_type=ProjectType.NEW_DEVELOPMENT,
+        current_phase=ProjectPhase.FEASIBILITY,
+        owner_email="qa@example.com",
+        description="Finance integration test project",
+    )
+    session.add(project)
     await session.commit()
 
 
@@ -106,8 +129,14 @@ async def test_finance_feasibility_and_export_endpoints(
 ) -> None:
     """Seeding demo data should enable both finance endpoints end-to-end."""
 
-    project_id = 98765
+    project_uuid = uuid.uuid4()
+    project_id_str = str(project_uuid)
     async with async_session_factory() as session:
+        await _ensure_project(
+            session,
+            project_id=project_uuid,
+            name="Finance Demo QA",
+        )
         await _seed_cost_indices(
             session,
             [
@@ -135,14 +164,14 @@ async def test_finance_feasibility_and_export_endpoints(
         )
         summary = await seed_finance_demo(
             session,
-            project_id=project_id,
+            project_id=project_uuid,
             project_name="Finance Demo QA",
             currency="SGD",
             reset_existing=True,
         )
 
     scenario_payload = {
-        "project_id": project_id,
+        "project_id": project_id_str,
         "project_name": "Finance QA Scenario",
         "fin_project_id": summary.fin_project_id,
         "scenario": {
@@ -186,7 +215,7 @@ async def test_finance_feasibility_and_export_endpoints(
     ).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
     expected_dscr_entries = _expected_dscr_entries()
 
-    assert body["project_id"] == project_id
+    assert body["project_id"] == project_id_str
     assert body["fin_project_id"] == summary.fin_project_id
 
     escalated_cost = Decimal(body["escalated_cost"])
@@ -215,7 +244,7 @@ async def test_finance_feasibility_and_export_endpoints(
     actual_dscr_entries = body["dscr_timeline"]
     serialised_expected = _serialise_dscr_entries(expected_dscr_entries)
     assert len(actual_dscr_entries) == len(serialised_expected)
-    for actual, expected in zip(actual_dscr_entries, serialised_expected, strict=False):
+    for actual, expected in zip(actual_dscr_entries, serialised_expected):
         assert actual["period"] == expected["period"]
         assert Decimal(actual["noi"]) == Decimal(expected["noi"])
         assert Decimal(actual["debt_service"]) == Decimal(expected["debt_service"])
@@ -253,9 +282,7 @@ async def test_finance_feasibility_and_export_endpoints(
     exported_timeline = rows[
         timeline_header_index + 1 : timeline_header_index + 1 + len(serialised_expected)
     ]
-    for exported_row, expected in zip(
-        exported_timeline, serialised_expected, strict=False
-    ):
+    for exported_row, expected in zip(exported_timeline, serialised_expected):
         period, noi, debt_service, dscr_value, currency = exported_row
         assert period == expected["period"]
         assert Decimal(noi) == Decimal(expected["noi"])

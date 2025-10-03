@@ -2,9 +2,17 @@
 
 from typing import Optional, BinaryIO, Union
 import io
-from minio import Minio
-from minio.error import MinioException
-from backend.app.core.config import settings
+try:  # pragma: no cover - optional runtime dependency
+    from minio import Minio
+    from minio.error import MinioException
+except ModuleNotFoundError:  # pragma: no cover - provide lightweight stub
+    Minio = None  # type: ignore[assignment]
+
+    class MinioException(Exception):
+        """Fallback MinIO exception type."""
+
+        pass
+from app.core.config import settings
 import structlog
 
 logger = structlog.get_logger()
@@ -24,16 +32,18 @@ class MinIOService:
         self.access_key = access_key or settings.S3_ACCESS_KEY
         self.secret_key = secret_key or settings.S3_SECRET_KEY
         self.secure = secure
-        
-        self.client = Minio(
-            self.endpoint,
-            access_key=self.access_key,
-            secret_key=self.secret_key,
-            secure=self.secure
-        )
-        
-        # Ensure bucket exists
-        self._ensure_bucket(settings.S3_BUCKET)
+        self.client = None
+
+        if Minio is not None:
+            self.client = Minio(
+                self.endpoint,
+                access_key=self.access_key,
+                secret_key=self.secret_key,
+                secure=self.secure,
+            )
+            self._ensure_bucket(settings.S3_BUCKET)
+        else:  # pragma: no cover - warn in reduced environments
+            logger.warning("MinIO client unavailable; storage operations will be no-ops")
     
     def _ensure_bucket(self, bucket_name: str) -> None:
         """Ensure bucket exists, create if not."""
@@ -43,7 +53,7 @@ class MinIOService:
                 logger.info(f"Created bucket: {bucket_name}")
         except MinioException as e:
             logger.error(f"Error ensuring bucket {bucket_name}: {str(e)}")
-    
+
     async def upload_file(
         self,
         bucket_name: str,
@@ -53,6 +63,10 @@ class MinIOService:
         metadata: Optional[dict] = None
     ) -> bool:
         """Upload file to MinIO/S3."""
+        if self.client is None:
+            logger.warning("MinIO client unavailable; skipping upload")
+            return False
+
         try:
             # Convert bytes to BytesIO if needed
             if isinstance(data, bytes):
@@ -86,6 +100,10 @@ class MinIOService:
         object_name: str
     ) -> Optional[bytes]:
         """Download file from MinIO/S3."""
+        if self.client is None:
+            logger.warning("MinIO client unavailable; skipping download")
+            return None
+
         try:
             response = self.client.get_object(bucket_name, object_name)
             data = response.read()
@@ -104,6 +122,10 @@ class MinIOService:
         object_name: str
     ) -> bool:
         """Remove object from MinIO/S3."""
+        if self.client is None:
+            logger.warning("MinIO client unavailable; skipping remove_object")
+            return False
+
         try:
             self.client.remove_object(bucket_name, object_name)
             logger.info(f"Removed {object_name} from {bucket_name}")
@@ -119,6 +141,10 @@ class MinIOService:
         prefix: Optional[str] = None
     ) -> list:
         """List objects in bucket."""
+        if self.client is None:
+            logger.warning("MinIO client unavailable; skipping list_objects")
+            return []
+
         try:
             objects = self.client.list_objects(
                 bucket_name,
@@ -147,6 +173,10 @@ class MinIOService:
         expires_seconds: int = 3600
     ) -> Optional[str]:
         """Generate presigned URL for object access."""
+        if self.client is None:
+            logger.warning("MinIO client unavailable; skipping presigned url generation")
+            return None
+
         try:
             url = self.client.presigned_get_object(
                 bucket_name,

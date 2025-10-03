@@ -76,3 +76,19 @@ async def load_layers_for_zone(
 
 
 __all__ = ["load_layers_for_zone", "parcel_area"]
+
+
+class PostGISService:
+    """Convenience façade exposing helper routines as methods."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def parcel_area(self, parcel: RefParcel | None) -> float | None:
+        return await parcel_area(self._session, parcel)
+
+    async def load_layers_for_zone(self, zone_code: str) -> list[RefZoningLayer]:
+        return await load_layers_for_zone(self._session, zone_code)
+
+
+__all__ = ["PostGISService", "load_layers_for_zone", "parcel_area"]

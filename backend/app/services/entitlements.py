@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 from app.models.entitlements import (
     EntApprovalType,
     EntAuthority,
@@ -39,7 +40,7 @@ def _normalise_offset(offset: int | None) -> int:
     return offset
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class PageResult:
     """Result bundle containing records and total count."""
 

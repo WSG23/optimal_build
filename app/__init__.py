@@ -13,35 +13,10 @@ from __future__ import annotations
 import sys
 from importlib import import_module
 
-
-def _ensure_sqlalchemy() -> None:
-    """Expose the bundled lightweight SQLAlchemy implementation if needed."""
-
-    try:  # pragma: no cover - exercised implicitly when SQLAlchemy is available
-        import sqlalchemy  # noqa: F401
-    except ModuleNotFoundError:
-        pkg = import_module("sqlalchemy_pkg_backup")
-        sys.modules.setdefault("sqlalchemy", pkg)
-
-        for name in (
-            "ext",
-            "ext.asyncio",
-            "orm",
-            "engine",
-            "sql",
-            "dialects",
-            "dialects.postgresql",
-            "types",
-            "pool",
-        ):
-            try:
-                module = import_module(f"sqlalchemy_pkg_backup.{name}")
-            except ModuleNotFoundError:
-                continue
-            sys.modules.setdefault(f"sqlalchemy.{name}", module)
+from backend._sqlalchemy_stub import ensure_sqlalchemy
 
 
-_ensure_sqlalchemy()
+ensure_sqlalchemy()
 
 _backend_app = import_module("backend.app")
 

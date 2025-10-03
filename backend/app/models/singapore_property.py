@@ -1,20 +1,43 @@
 """Singapore Property model for Property Development Platform."""
 
-from datetime import datetime, date
-from enum import Enum
+from datetime import date, datetime
 from decimal import Decimal
+from enum import Enum
 from typing import Optional
-
-from sqlalchemy import (
-    Column, String, Float, Boolean, DateTime, Date, ForeignKey,
-    Text, JSON, Enum as SQLEnum, Integer, DECIMAL
-)
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import relationship
-from geoalchemy2 import Geometry
 import uuid
 
-from app.models.base import BaseModel
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    DECIMAL,
+    Enum as SQLEnum,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+)
+from sqlalchemy.orm import relationship
+
+try:
+    from geoalchemy2 import Geometry
+except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
+    from sqlalchemy.types import UserDefinedType
+
+    class Geometry(UserDefinedType):  # type: ignore[misc]
+        """Minimal stub emulating geoalchemy2.Geometry for test environments."""
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            self.args = args
+            self.kwargs = kwargs
+
+        def get_col_spec(self, **_: object) -> str:  # pragma: no cover - simple stub
+            return "GEOMETRY"
+
+from app.models.base import BaseModel, UUID
 
 
 class PropertyZoning(str, Enum):
@@ -81,7 +104,7 @@ class SingaporeProperty(BaseModel):
 
     __tablename__ = "singapore_properties"
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Basic Information
     property_name = Column(String(255), nullable=False)
@@ -91,7 +114,7 @@ class SingaporeProperty(BaseModel):
     # Location data (optional for SQLite compatibility)
     latitude = Column(Float)
     longitude = Column(Float)
-    location = Column(Geometry('POINT', srid=4326), nullable=True)  # PostGIS geometry (optional)
+    location = Column(Geometry("POINT", srid=4326), nullable=True)  # PostGIS geometry (optional)
 
     # Singapore Planning Region and Subzone (based on URA)
     planning_region = Column(String(100))  # e.g., Central Region, East Region
@@ -195,7 +218,7 @@ class SingaporeProperty(BaseModel):
     development_constraints = Column(JSON)  # Height restrictions, setbacks, etc.
 
     # MVP: Project Linking
-    project_id = Column(PGUUID(as_uuid=True), ForeignKey('projects.id'), nullable=True)  # Link to project after acquisition
+    project_id = Column(UUID(), ForeignKey('projects.id'), nullable=True)  # Link to project after acquisition
     owner_email = Column(String(255))  # Track who owns/analyzes this property
 
     # Relationships

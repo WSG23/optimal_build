@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 from sqlalchemy import (
@@ -61,9 +61,9 @@ class RegulationORM(RegstackBase):
     external_id: Mapped[str] = mapped_column(String(length=255), nullable=False)
     title: Mapped[str] = mapped_column(String(length=500), nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    issued_on: Mapped[date | None] = mapped_column(Date, nullable=True)
-    effective_on: Mapped[date | None] = mapped_column(Date, nullable=True)
-    version: Mapped[str | None] = mapped_column(String(length=50))
+    issued_on: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    effective_on: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    version: Mapped[Optional[str]] = mapped_column(String(length=50))
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
     global_tags: Mapped[list[str]] = mapped_column(JSON, default=list)

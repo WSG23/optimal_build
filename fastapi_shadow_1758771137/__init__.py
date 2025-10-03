@@ -14,8 +14,8 @@ from collections.abc import (
     Mapping as MappingABC,
     Sequence as SequenceABC,
 )
-from dataclasses import dataclass
 from datetime import date, datetime
+from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
 from functools import cache, lru_cache
@@ -30,6 +30,7 @@ from typing import (
     get_origin,
     get_type_hints,
 )
+from types import SimpleNamespace
 
 from pydantic import BaseModel
 
@@ -52,6 +53,21 @@ class Depends:
         self.dependency = dependency
 
 
+@dataclass
+class Request:
+    """Minimal request object exposing headers and state."""
+
+    scope: Mapping[str, Any] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
+    state: SimpleNamespace = field(default_factory=SimpleNamespace)
+
+    async def body(self) -> bytes:  # pragma: no cover - rarely used in tests
+        return b""
+
+    def __getattr__(self, name: str) -> Any:  # pragma: no cover - simple proxy
+        return self.scope.get(name)
+
+
 class Query:
     def __init__(
         self,
@@ -62,6 +78,12 @@ class Query:
     ) -> None:
         self.default = default
         self.description = description
+
+
+class Path(Query):
+    """Marker used for path parameters."""
+
+    pass
 
 
 class Header:
@@ -603,6 +625,7 @@ class FastAPI:
                 status_code=route.status_code,
             )
             self.routes.append(combined)
+            self.router.routes.append(combined)
         self._openapi_schema = None
 
     def get(
@@ -1075,7 +1098,9 @@ __all__ = [
     "Form",
     "HTTPException",
     "JSONResponse",
+    "Path",
     "Query",
+    "Request",
     "Response",
     "StreamingResponse",
     "UploadFile",

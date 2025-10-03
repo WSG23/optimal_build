@@ -5,12 +5,14 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import os
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 
-@dataclass(slots=True)
+
+@compat_dataclass(slots=True)
 class ReferenceStorageResult:
     """Metadata about a persisted reference document."""
 

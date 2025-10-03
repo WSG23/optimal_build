@@ -3,25 +3,48 @@
 from decimal import Decimal
 from datetime import datetime, date
 from typing import Optional
-from uuid import UUID
 from enum import Enum
 
 from sqlalchemy import (
-    Column, String, Decimal as SQLDecimal, Integer, Float, Boolean,
-    DateTime, Date, ForeignKey, JSON, Enum as SQLEnum, Index, UniqueConstraint
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Enum as SQLEnum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    String,
+    UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from geoalchemy2 import Geometry
+from sqlalchemy.types import Numeric as SQLDecimal
 
-from backend.app.models.base import Base, TimestampMixin
-from backend.app.models.property import PropertyType
+try:
+    from geoalchemy2 import Geometry
+except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
+    from sqlalchemy.types import UserDefinedType
+
+    class Geometry(UserDefinedType):  # type: ignore[misc]
+        """Minimal stub emulating geoalchemy2.Geometry when unavailable."""
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            self.args = args
+            self.kwargs = kwargs
+
+        def get_col_spec(self, **_: object) -> str:
+            return "GEOMETRY"
+
+from app.models.base import BaseModel, UUID
+from app.models.property import PropertyType
 
 
-class YieldBenchmark(Base, TimestampMixin):
+class YieldBenchmark(BaseModel):
     """Market yield benchmarks by property type and location."""
     __tablename__ = "yield_benchmarks"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Benchmark Period
     benchmark_date = Column(Date, nullable=False)
@@ -83,14 +106,14 @@ class YieldBenchmark(Base, TimestampMixin):
     )
 
 
-class AbsorptionTracking(Base, TimestampMixin):
+class AbsorptionTracking(BaseModel):
     """Track absorption rates for developments."""
     __tablename__ = "absorption_tracking"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Reference
-    project_id = Column(PGUUID(as_uuid=True))  # Can reference properties or development_pipeline
+    project_id = Column(UUID())  # Can reference properties or development_pipeline
     project_name = Column(String(255))
     tracking_date = Column(Date, nullable=False)
     
@@ -138,11 +161,11 @@ class AbsorptionTracking(Base, TimestampMixin):
     )
 
 
-class MarketCycle(Base, TimestampMixin):
+class MarketCycle(BaseModel):
     """Track market cycles and phases."""
     __tablename__ = "market_cycles"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Period
     cycle_date = Column(Date, nullable=False)
@@ -178,11 +201,11 @@ class MarketCycle(Base, TimestampMixin):
     )
 
 
-class MarketIndex(Base, TimestampMixin):
+class MarketIndex(BaseModel):
     """Property market indices tracking."""
     __tablename__ = "market_indices"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Index Details
     index_date = Column(Date, nullable=False)
@@ -211,15 +234,15 @@ class MarketIndex(Base, TimestampMixin):
     )
 
 
-class CompetitiveSet(Base, TimestampMixin):
+class CompetitiveSet(BaseModel):
     """Define competitive sets for benchmarking."""
     __tablename__ = "competitive_sets"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Set Definition
     set_name = Column(String(255), nullable=False)
-    primary_property_id = Column(PGUUID(as_uuid=True))
+    primary_property_id = Column(UUID())
     
     # Criteria
     property_type = Column(SQLEnum(PropertyType), nullable=False)
@@ -250,11 +273,11 @@ class CompetitiveSet(Base, TimestampMixin):
     )
 
 
-class MarketAlert(Base, TimestampMixin):
+class MarketAlert(BaseModel):
     """Market intelligence alerts and triggers."""
     __tablename__ = "market_alerts"
     
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
     
     # Alert Configuration
     alert_type = Column(String(50), nullable=False)  # price_change, new_supply, absorption_spike
@@ -279,9 +302,19 @@ class MarketAlert(Base, TimestampMixin):
     # Status
     is_active = Column(Boolean, default=True)
     acknowledged_at = Column(DateTime)
-    acknowledged_by = Column(PGUUID(as_uuid=True))  # User ID
+    acknowledged_by = Column(UUID())  # User ID
     
     __table_args__ = (
         Index('idx_alert_active', 'is_active'),
         Index('idx_alert_triggered', 'triggered_at'),
     )
+
+
+# Backwards compatibility exports for transactional models defined elsewhere.
+from app.models.property import (  # noqa: E402  pylint: disable=wrong-import-position
+    MarketTransaction as _MarketTransaction,
+    RentalListing as _RentalListing,
+)
+
+MarketTransaction = _MarketTransaction
+RentalListing = _RentalListing

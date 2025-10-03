@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
+from backend._compat.datetime import UTC
 
 from backend.jobs import job_queue
 from backend.jobs.overlay_run import run_overlay_job
