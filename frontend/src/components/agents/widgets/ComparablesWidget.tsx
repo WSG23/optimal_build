@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Paper,
@@ -11,7 +11,6 @@ import {
   TableRow,
   TablePagination,
   Chip,
-  IconButton,
   Tooltip,
   TextField,
   InputAdornment,
@@ -23,18 +22,20 @@ import SearchIcon from '@mui/icons-material/Search';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { MarketTransaction } from '../../../types/market';
-import { PropertyType } from '../../../types/property';
 import { format, parseISO } from 'date-fns';
+import { MarketTransaction, ComparablesAnalysis } from '../../../types/market';
+import { PropertyType } from '../../../types/property';
 
 interface ComparablesWidgetProps {
   comparables: MarketTransaction[];
+  summary?: ComparablesAnalysis | null;
   propertyType: PropertyType;
   location: string;
 }
 
 const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
   comparables,
+  summary,
   propertyType,
   location
 }) => {
@@ -42,29 +43,52 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filter comparables based on search
   const filteredComparables = useMemo(() => {
-    return comparables.filter(comp => 
+    return comparables.filter((comp) =>
       comp.property_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       comp.district?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [comparables, searchTerm]);
 
-  // Calculate statistics
   const statistics = useMemo(() => {
-    if (filteredComparables.length === 0) return null;
+    const hasFilter = searchTerm.trim().length > 0;
+
+    if (!hasFilter && summary) {
+      return {
+        count: summary.transaction_count,
+        medianPsf: summary.median_psf,
+        meanPsf: summary.average_psf,
+        minPsf: summary.psf_range?.min ?? summary.average_psf,
+        maxPsf: summary.psf_range?.max ?? summary.average_psf,
+        totalVolume: summary.total_volume
+      };
+    }
+
+    if (filteredComparables.length === 0) {
+      return null;
+    }
 
     const prices = filteredComparables
-      .filter(c => c.psf_price)
-      .map(c => c.psf_price!);
-    
+      .filter((item) => typeof item.psf_price === 'number' && !Number.isNaN(item.psf_price))
+      .map((item) => item.psf_price as number);
+
+    if (prices.length === 0) {
+      return {
+        count: filteredComparables.length,
+        medianPsf: 0,
+        meanPsf: 0,
+        minPsf: 0,
+        maxPsf: 0,
+        totalVolume: filteredComparables.reduce((sum, c) => sum + (c.sale_price || 0), 0)
+      };
+    }
+
     const sortedPrices = [...prices].sort((a, b) => a - b);
     const median = sortedPrices[Math.floor(sortedPrices.length / 2)];
     const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
     const min = Math.min(...prices);
     const max = Math.max(...prices);
-
-    const totalVolume = filteredComparables.reduce((sum, c) => sum + c.sale_price, 0);
+    const totalVolume = filteredComparables.reduce((sum, c) => sum + (c.sale_price || 0), 0);
 
     return {
       count: filteredComparables.length,
@@ -74,9 +98,9 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
       maxPsf: max,
       totalVolume
     };
-  }, [filteredComparables]);
+  }, [filteredComparables, summary, searchTerm]);
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
@@ -85,7 +109,8 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
     setPage(0);
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value?: number | null) => {
+    if (value === undefined || value === null) return '—';
     return new Intl.NumberFormat('en-SG', {
       style: 'currency',
       currency: 'SGD',
@@ -94,7 +119,8 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
     }).format(value);
   };
 
-  const formatPsf = (value: number) => {
+  const formatPsf = (value?: number | null) => {
+    if (value === undefined || value === null || Number.isNaN(value)) return '—';
     return new Intl.NumberFormat('en-SG', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
@@ -102,30 +128,35 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
   };
 
   const getPriceTrend = (transaction: MarketTransaction) => {
-    // This would compare to historical average
     const avgPsf = statistics?.meanPsf || 0;
-    if (!transaction.psf_price) return null;
-    
+    if (!transaction.psf_price || avgPsf === 0) return null;
+
     const diff = ((transaction.psf_price - avgPsf) / avgPsf) * 100;
-    if (Math.abs(diff) < 5) return null;
-    
+    if (!Number.isFinite(diff) || Math.abs(diff) < 5) {
+      return null;
+    }
+
     return diff > 0 ? 'above' : 'below';
   };
 
   return (
     <Box>
-      {/* Statistics Cards */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">Recent Comparables</Typography>
+        <Typography variant="caption" color="textSecondary">
+          {propertyType.replace(/_/g, ' ').toUpperCase()} • {location.toUpperCase()}
+        </Typography>
+      </Box>
+
       {statistics && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom variant="body2">
-                  Total Transactions
+                  Comparable Count
                 </Typography>
-                <Typography variant="h5">
-                  {statistics.count}
-                </Typography>
+                <Typography variant="h5">{statistics.count}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -135,9 +166,7 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
                 <Typography color="textSecondary" gutterBottom variant="body2">
                   Median PSF
                 </Typography>
-                <Typography variant="h5">
-                  ${formatPsf(statistics.medianPsf)}
-                </Typography>
+                <Typography variant="h5">${formatPsf(statistics.medianPsf)}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -159,16 +188,13 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
                 <Typography color="textSecondary" gutterBottom variant="body2">
                   Total Volume
                 </Typography>
-                <Typography variant="h5">
-                  {formatCurrency(statistics.totalVolume)}
-                </Typography>
+                <Typography variant="h5">{formatCurrency(statistics.totalVolume)}</Typography>
               </CardContent>
             </Card>
           </Grid>
         </Grid>
       )}
 
-      {/* Search and Table */}
       <Paper sx={{ width: '100%', mb: 2 }}>
         <Box sx={{ p: 2 }}>
           <TextField
@@ -176,17 +202,17 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
             variant="outlined"
             placeholder="Search by property name or district..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(event) => setSearchTerm(event.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchIcon />
                 </InputAdornment>
-              ),
+              )
             }}
           />
         </Box>
-        
+
         <TableContainer>
           <Table>
             <TableHead>
@@ -206,38 +232,31 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
                 .map((transaction) => {
                   const trend = getPriceTrend(transaction);
                   return (
-                    <TableRow key={transaction.id}>
+                    <TableRow key={transaction.transaction_id} hover>
                       <TableCell>
                         {format(parseISO(transaction.transaction_date), 'dd MMM yyyy')}
                       </TableCell>
                       <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="body2" fontWeight="medium">
                           {transaction.property_name}
-                        </Box>
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {transaction.property_type.replace(/_/g, ' ')}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
                           size="small"
-                          icon={<LocationOnIcon />}
+                          icon={<LocationOnIcon fontSize="small" />}
                           label={transaction.district || 'N/A'}
                         />
                       </TableCell>
                       <TableCell align="right">
-                        {transaction.floor_area_sqm 
-                          ? formatPsf(transaction.floor_area_sqm)
-                          : '-'}
+                        {transaction.floor_area_sqm ? formatPsf(transaction.floor_area_sqm) : '—'}
                       </TableCell>
+                      <TableCell align="right">{formatCurrency(transaction.sale_price)}</TableCell>
                       <TableCell align="right">
-                        <Typography variant="body2" fontWeight="medium">
-                          {formatCurrency(transaction.sale_price)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight="medium">
-                          {transaction.psf_price 
-                            ? `$${formatPsf(transaction.psf_price)}`
-                            : '-'}
-                        </Typography>
+                        {transaction.psf_price ? `$${formatPsf(transaction.psf_price)}` : '—'}
                       </TableCell>
                       <TableCell align="center">
                         {trend && (
@@ -256,15 +275,15 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
           component="div"
           count={filteredComparables.length}
-          rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
         />
       </Paper>
     </Box>

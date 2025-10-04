@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Grid, 
-  Typography, 
-  Card, 
-  CardContent, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import {
+  Box,
+  Grid,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
   CircularProgress,
   Alert,
@@ -15,7 +13,8 @@ import {
   Tabs,
   Paper,
   IconButton,
-  Tooltip
+  Tooltip,
+  LinearProgress
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -59,17 +58,24 @@ const MarketIntelligenceDashboard: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  const { 
-    marketReport, 
-    comparables, 
-    supplyPipeline, 
+  const {
+    marketReport,
+    comparables,
+    comparablesSummary,
+    supplyDynamics,
     yieldBenchmarks,
-    absorptionData,
-    marketCycles,
-    loading, 
-    error, 
-    refresh 
+    absorptionTrends,
+    marketCycle,
+    loading,
+    error,
+    refresh
   } = useMarketData(propertyType, location, periodMonths);
+
+  useEffect(() => {
+    if (marketReport) {
+      setLastRefresh(new Date(marketReport.generated_at));
+    }
+  }, [marketReport]);
 
   const handleRefresh = async () => {
     await refresh();
@@ -102,16 +108,18 @@ const MarketIntelligenceDashboard: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ m: 2 }}>
-        Error loading market data: {error}
-      </Alert>
-    );
-  }
-
   return (
     <Box sx={{ p: 3 }}>
+      {loading && (
+        <LinearProgress sx={{ mb: 2 }} />
+      )}
+
+      {error && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
@@ -200,7 +208,13 @@ const MarketIntelligenceDashboard: React.FC = () => {
 
       {/* Quick Insights */}
       {marketReport && (
-        <QuickInsights marketReport={marketReport} />
+        <QuickInsights
+          marketReport={marketReport}
+          comparables={comparablesSummary}
+          supplyDynamics={supplyDynamics}
+          yieldBenchmarks={yieldBenchmarks}
+          absorptionTrends={absorptionTrends}
+        />
       )}
 
       {/* Main Content Tabs */}
@@ -218,45 +232,46 @@ const MarketIntelligenceDashboard: React.FC = () => {
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={8}>
-              <MarketHeatmap 
-                transactions={comparables || []} 
+              <MarketHeatmap
+                transactions={comparables}
                 propertyType={propertyType}
               />
             </Grid>
             <Grid item xs={12} md={4}>
-              <MarketCycleIndicator 
-                cycleData={marketCycles?.[0]} 
+              <MarketCycleIndicator
+                cycleData={marketCycle}
                 propertyType={propertyType}
               />
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         <TabPanel value={tabValue} index={1}>
-          <ComparablesWidget 
-            comparables={comparables || []} 
+          <ComparablesWidget
+            comparables={comparables}
+            summary={comparablesSummary}
             propertyType={propertyType}
             location={location}
           />
         </TabPanel>
-        
+
         <TabPanel value={tabValue} index={2}>
-          <PipelineTimelineWidget 
-            pipeline={supplyPipeline || []} 
+          <PipelineTimelineWidget
+            supplyDynamics={supplyDynamics}
             propertyType={propertyType}
           />
         </TabPanel>
-        
+
         <TabPanel value={tabValue} index={3}>
-          <YieldBenchmarkChart 
-            benchmarks={yieldBenchmarks || []} 
+          <YieldBenchmarkChart
+            yieldBenchmarks={yieldBenchmarks}
             propertyType={propertyType}
           />
         </TabPanel>
-        
+
         <TabPanel value={tabValue} index={4}>
-          <AbsorptionTrendsChart 
-            absorptionData={absorptionData || []} 
+          <AbsorptionTrendsChart
+            absorptionTrends={absorptionTrends}
             propertyType={propertyType}
           />
         </TabPanel>

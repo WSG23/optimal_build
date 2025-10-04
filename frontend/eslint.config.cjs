@@ -3,6 +3,22 @@ const globals = require('globals')
 const tsPlugin = require('@typescript-eslint/eslint-plugin')
 const tsParser = require('@typescript-eslint/parser')
 const reactHooks = require('eslint-plugin-react-hooks')
+
+if (reactHooks?.rules?.['exhaustive-deps'] && !reactHooks.rules['exhaustive-deps'].__patched) {
+    const originalCreate = reactHooks.rules['exhaustive-deps'].create
+    reactHooks.rules['exhaustive-deps'].create = (context) => {
+        const patchedContext = new Proxy(context, {
+            get(target, prop, receiver) {
+                if (prop === 'getSource') {
+                    return (node) => target.getSourceCode().getText(node)
+                }
+                return Reflect.get(target, prop, receiver)
+            },
+        })
+        return originalCreate(patchedContext)
+    }
+    reactHooks.rules['exhaustive-deps'].__patched = true
+}
 const reactRefresh = require('eslint-plugin-react-refresh')
 
 module.exports = [
