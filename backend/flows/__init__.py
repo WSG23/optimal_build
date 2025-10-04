@@ -26,6 +26,12 @@ def ensure_backend_path() -> None:
 
 ensure_backend_path()
 
+from backend.flows.analytics_flow import (  # noqa: E402  pylint: disable=wrong-import-position
+    refresh_market_intelligence as _refresh_market_intelligence,
+)
+from backend.flows.compliance_flow import (  # noqa: E402  pylint: disable=wrong-import-position
+    refresh_singapore_compliance as _refresh_singapore_compliance,
+)
 from backend.flows.ergonomics import (  # noqa: E402  pylint: disable=wrong-import-position
     fetch_seeded_metrics,
 )
@@ -34,12 +40,6 @@ from backend.flows.ergonomics import (
 )
 from backend.flows.normalize_rules import (  # noqa: E402  pylint: disable=wrong-import-position
     normalize_reference_rules as _normalize_reference_rules,
-)
-from backend.flows.compliance_flow import (  # noqa: E402  pylint: disable=wrong-import-position
-    refresh_singapore_compliance as _refresh_singapore_compliance,
-)
-from backend.flows.analytics_flow import (  # noqa: E402  pylint: disable=wrong-import-position
-    refresh_market_intelligence as _refresh_market_intelligence,
 )
 from backend.flows.parse_segment import (  # noqa: E402  pylint: disable=wrong-import-position
     parse_reference_documents as _parse_reference_documents,
@@ -75,8 +75,12 @@ parse_reference_documents = cast(FlowCallable, _unwrap_flow(_parse_reference_doc
 sync_vendor_products = cast(FlowCallable, _unwrap_flow(_sync_vendor_products))
 sync_products_csv_once = cast(FlowCallable, _unwrap_flow(_sync_products_csv_once))
 watch_reference_sources = cast(FlowCallable, _unwrap_flow(_watch_reference_sources))
-refresh_singapore_compliance = cast(FlowCallable, _unwrap_flow(_refresh_singapore_compliance))
-refresh_market_intelligence = cast(FlowCallable, _unwrap_flow(_refresh_market_intelligence))
+refresh_singapore_compliance = cast(
+    FlowCallable, _unwrap_flow(_refresh_singapore_compliance)
+)
+refresh_market_intelligence = cast(
+    FlowCallable, _unwrap_flow(_refresh_market_intelligence)
+)
 
 __all__ = [
     "ensure_backend_path",

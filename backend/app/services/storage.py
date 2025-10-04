@@ -101,7 +101,11 @@ class StorageService:
             )
 
         if self.retention_days:
-            await asyncio.to_thread(self.purge_expired, prefix=self.prefix, older_than_days=self.retention_days)
+            await asyncio.to_thread(
+                self.purge_expired,
+                prefix=self.prefix,
+                older_than_days=self.retention_days,
+            )
 
         return StorageResult(
             bucket=self.bucket,

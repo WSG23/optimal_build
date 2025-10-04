@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
-from typing import Iterable
-
 try:  # pragma: no cover - optional dependency
     from prefect.deployments import Deployment
     from prefect.events.schemas import DeploymentTrigger

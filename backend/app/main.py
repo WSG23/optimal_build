@@ -16,7 +16,6 @@ from app.api.deps import require_viewer
 from app.api.v1 import TAGS_METADATA, api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
-from app.middleware.security import SecurityHeadersMiddleware
 from app.models.rkp import RefRule
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event

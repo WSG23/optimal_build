@@ -10,13 +10,13 @@ import tempfile
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime
-from backend._compat.datetime import UTC
 from io import BytesIO
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 
 try:  # pragma: no cover - optional dependency
     import ezdxf  # type: ignore

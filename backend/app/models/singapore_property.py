@@ -1,24 +1,24 @@
 """Singapore Property model for Property Development Platform."""
 
-from datetime import date, datetime
-from decimal import Decimal
-from enum import Enum
-from typing import Optional
 import uuid
+from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import (
+    DECIMAL,
+    JSON,
     Boolean,
     Column,
     Date,
     DateTime,
-    DECIMAL,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Text,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
 
@@ -37,11 +37,13 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
         def get_col_spec(self, **_: object) -> str:  # pragma: no cover - simple stub
             return "GEOMETRY"
 
-from app.models.base import BaseModel, UUID
+
+from app.models.base import UUID, BaseModel
 
 
 class PropertyZoning(str, Enum):
     """Singapore zoning types based on URA Master Plan."""
+
     RESIDENTIAL = "residential"
     COMMERCIAL = "commercial"
     INDUSTRIAL = "industrial"
@@ -57,6 +59,7 @@ class PropertyZoning(str, Enum):
 
 class PropertyTenure(str, Enum):
     """Singapore property tenure types."""
+
     FREEHOLD = "freehold"
     LEASEHOLD_999 = "999_year_leasehold"
     LEASEHOLD_99 = "99_year_leasehold"
@@ -66,6 +69,7 @@ class PropertyTenure(str, Enum):
 
 class DevelopmentStatus(str, Enum):
     """Property development status."""
+
     VACANT_LAND = "vacant_land"
     PLANNING = "planning"
     APPROVED = "approved"
@@ -77,6 +81,7 @@ class DevelopmentStatus(str, Enum):
 
 class AcquisitionStatus(str, Enum):
     """Property acquisition status for feasibility workflow."""
+
     AVAILABLE = "available"  # Property identified, not yet analyzed
     UNDER_REVIEW = "under_review"  # Feasibility analysis in progress
     ACQUIRED = "acquired"  # Property purchased, linked to project
@@ -85,6 +90,7 @@ class AcquisitionStatus(str, Enum):
 
 class FeasibilityStatus(str, Enum):
     """Feasibility analysis status."""
+
     ANALYZING = "analyzing"  # Initial analysis phase
     APPROVED = "approved"  # Feasibility approved, ready for acquisition
     REJECTED = "rejected"  # Not feasible for development
@@ -93,6 +99,7 @@ class FeasibilityStatus(str, Enum):
 
 class ComplianceStatus(str, Enum):
     """BCA/URA compliance check status."""
+
     PENDING = "pending"  # Not yet checked
     PASSED = "passed"  # Compliant with all requirements
     WARNING = "warning"  # Minor issues, may need attention
@@ -114,7 +121,9 @@ class SingaporeProperty(BaseModel):
     # Location data (optional for SQLite compatibility)
     latitude = Column(Float)
     longitude = Column(Float)
-    location = Column(Geometry("POINT", srid=4326), nullable=True)  # PostGIS geometry (optional)
+    location = Column(
+        Geometry("POINT", srid=4326), nullable=True
+    )  # PostGIS geometry (optional)
 
     # Singapore Planning Region and Subzone (based on URA)
     planning_region = Column(String(100))  # e.g., Central Region, East Region
@@ -122,8 +131,12 @@ class SingaporeProperty(BaseModel):
     subzone = Column(String(100))  # e.g., Raffles Place, CBD
 
     # Property Details
-    zoning = Column(SQLEnum(PropertyZoning, values_callable=lambda x: [e.value for e in x]))
-    tenure = Column(SQLEnum(PropertyTenure, values_callable=lambda x: [e.value for e in x]))
+    zoning = Column(
+        SQLEnum(PropertyZoning, values_callable=lambda x: [e.value for e in x])
+    )
+    tenure = Column(
+        SQLEnum(PropertyTenure, values_callable=lambda x: [e.value for e in x])
+    )
     lease_start_date = Column(Date)  # For leasehold properties
     lease_remaining_years = Column(Integer)  # Calculated field
 
@@ -134,7 +147,9 @@ class SingaporeProperty(BaseModel):
     current_plot_ratio = Column(DECIMAL(5, 2))  # Current usage
 
     # Site Context (jurisdiction-specific, may not be used in all jurisdictions)
-    street_width_m = Column(DECIMAL(6, 2))  # Width of adjacent street (used for envelope calculations in some jurisdictions like NYC)
+    street_width_m = Column(
+        DECIMAL(6, 2)
+    )  # Width of adjacent street (used for envelope calculations in some jurisdictions like NYC)
 
     # Development Parameters (URA/BCA requirements)
     building_height_m = Column(DECIMAL(6, 2))
@@ -169,13 +184,22 @@ class SingaporeProperty(BaseModel):
     water_efficiency_rating = Column(String(20))
 
     # Status
-    development_status = Column(SQLEnum(DevelopmentStatus, values_callable=lambda x: [e.value for e in x]), default=DevelopmentStatus.VACANT_LAND)
+    development_status = Column(
+        SQLEnum(DevelopmentStatus, values_callable=lambda x: [e.value for e in x]),
+        default=DevelopmentStatus.VACANT_LAND,
+    )
     is_government_land = Column(Boolean, default=False)
     is_en_bloc_potential = Column(Boolean, default=False)  # Collective sale potential
 
     # MVP: Acquisition and Feasibility Workflow
-    acquisition_status = Column(SQLEnum(AcquisitionStatus, values_callable=lambda x: [e.value for e in x]), default=AcquisitionStatus.AVAILABLE)
-    feasibility_status = Column(SQLEnum(FeasibilityStatus, values_callable=lambda x: [e.value for e in x]), default=FeasibilityStatus.ANALYZING)
+    acquisition_status = Column(
+        SQLEnum(AcquisitionStatus, values_callable=lambda x: [e.value for e in x]),
+        default=AcquisitionStatus.AVAILABLE,
+    )
+    feasibility_status = Column(
+        SQLEnum(FeasibilityStatus, values_callable=lambda x: [e.value for e in x]),
+        default=FeasibilityStatus.ANALYZING,
+    )
 
     # MVP: Financial Tracking (Space Optimization Focus)
     estimated_acquisition_cost = Column(DECIMAL(15, 2))  # Estimate during feasibility
@@ -184,8 +208,14 @@ class SingaporeProperty(BaseModel):
     expected_revenue = Column(DECIMAL(15, 2))  # Projected sale/rental value
 
     # MVP: Compliance Monitoring (Always Informational)
-    bca_compliance_status = Column(SQLEnum(ComplianceStatus, values_callable=lambda x: [e.value for e in x]), default=ComplianceStatus.PENDING)
-    ura_compliance_status = Column(SQLEnum(ComplianceStatus, values_callable=lambda x: [e.value for e in x]), default=ComplianceStatus.PENDING)
+    bca_compliance_status = Column(
+        SQLEnum(ComplianceStatus, values_callable=lambda x: [e.value for e in x]),
+        default=ComplianceStatus.PENDING,
+    )
+    ura_compliance_status = Column(
+        SQLEnum(ComplianceStatus, values_callable=lambda x: [e.value for e in x]),
+        default=ComplianceStatus.PENDING,
+    )
     compliance_notes = Column(Text)  # Summary of violations/warnings
     compliance_data = Column(JSON)  # Detailed compliance check results
     compliance_last_checked = Column(DateTime)  # When compliance was last verified
@@ -209,7 +239,9 @@ class SingaporeProperty(BaseModel):
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     data_source = Column(String(100))  # URA, OneMap, manual entry
 
     # JSON fields for flexible data
@@ -218,11 +250,15 @@ class SingaporeProperty(BaseModel):
     development_constraints = Column(JSON)  # Height restrictions, setbacks, etc.
 
     # MVP: Project Linking
-    project_id = Column(UUID(), ForeignKey('projects.id'), nullable=True)  # Link to project after acquisition
+    project_id = Column(
+        UUID(), ForeignKey("projects.id"), nullable=True
+    )  # Link to project after acquisition
     owner_email = Column(String(255))  # Track who owns/analyzes this property
 
     # Relationships
-    project = relationship("Project", back_populates="properties")  # One property can link to one project
+    project = relationship(
+        "Project", back_populates="properties"
+    )  # One property can link to one project
     # ai_sessions = relationship("AIAgentSession", back_populates="property")  # Disabled - table not created yet
 
     def __repr__(self):

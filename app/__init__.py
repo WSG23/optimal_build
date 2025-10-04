@@ -15,7 +15,6 @@ from importlib import import_module
 
 from backend._sqlalchemy_stub import ensure_sqlalchemy
 
-
 ensure_sqlalchemy()
 
 _backend_app = import_module("backend.app")

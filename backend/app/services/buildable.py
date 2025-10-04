@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
 import re
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
@@ -53,7 +53,9 @@ class BuildableService:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def calculate_parameters(self, buildable_input: BuildableInput) -> BuildableCalculation:
+    async def calculate_parameters(
+        self, buildable_input: BuildableInput
+    ) -> BuildableCalculation:
         defaults = BuildableDefaults(
             plot_ratio=buildable_input.plot_ratio or BuildableDefaults().plot_ratio,
             site_area_m2=buildable_input.land_area or BuildableDefaults().site_area_m2,
@@ -160,7 +162,9 @@ async def _load_rules_for_zone(
 
     stmt = (
         select(RefRule)
-        .where(RefRule.topic.in_(["zoning", "building"]))  # Include both zoning and building rules
+        .where(
+            RefRule.topic.in_(["zoning", "building"])
+        )  # Include both zoning and building rules
         .where(RefRule.review_status == "approved")
         .where(RefRule.is_published.is_(True))
     )

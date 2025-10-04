@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+
 import pytest
 
 if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1":

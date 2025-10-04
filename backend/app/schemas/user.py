@@ -5,8 +5,8 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 try:  # pragma: no cover - optional email validation dependency
-    from pydantic import EmailStr  # type: ignore
     import email_validator  # type: ignore  # noqa: F401
+    from pydantic import EmailStr  # type: ignore
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
 
@@ -22,12 +22,12 @@ class UserSignupBase(BaseModel):
     password: str = Field(..., min_length=8, max_length=100)
     company_name: Optional[str] = Field(None, max_length=255)
 
-    @field_validator('username')
+    @field_validator("username")
     @classmethod
     def validate_username(cls, value: str) -> str:
         return user_validators.validate_username(value)
 
-    @field_validator('password')
+    @field_validator("password")
     @classmethod
     def validate_password(cls, value: str) -> str:
         return user_validators.validate_password(value)

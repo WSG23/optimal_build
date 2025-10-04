@@ -10,8 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from backend._compat.datetime import UTC
-
 from app.core.audit.ledger import append_event
 from app.core.config import settings
 from app.core.database import get_session
@@ -19,6 +17,7 @@ from app.core.geometry import GeometrySerializer
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
+from backend._compat.datetime import UTC
 from backend.jobs import job
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

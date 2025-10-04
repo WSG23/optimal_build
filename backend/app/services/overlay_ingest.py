@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from backend._compat.datetime import UTC
 from typing import Any
 
+from backend._compat.datetime import UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

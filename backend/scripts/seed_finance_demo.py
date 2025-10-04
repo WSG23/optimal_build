@@ -730,7 +730,9 @@ async def seed_finance_demo(
             **(fin_project.metadata or {}),
             "scenarios": {
                 str(definition.get("key", result.scenario.id)): result.scenario.id
-                for definition, result in zip(SCENARIO_DEFINITIONS, scenario_results)
+                for definition, result in zip(
+                    SCENARIO_DEFINITIONS, scenario_results, strict=False
+                )
             },
         }
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import re
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass, field
 from re import Pattern
 from typing import Any
 

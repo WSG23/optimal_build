@@ -165,12 +165,13 @@ if flow_session_factory in (None, _missing_fixture):
         from app.main import app as _fastapi_app
     except Exception:  # pragma: no cover - FastAPI app unavailable
         _fastapi_app = None
-    from httpx import AsyncClient as _AsyncClient
     from sqlalchemy.ext.asyncio import (
         AsyncSession,
         async_sessionmaker,
         create_async_engine,
     )
+
+    from httpx import AsyncClient as _AsyncClient
 
     try:
         from sqlalchemy.pool import StaticPool as _StaticPool
@@ -194,9 +195,9 @@ if flow_session_factory in (None, _missing_fixture):
             await _truncate_all(db_session)
 
     @pytest_asyncio.fixture(scope="session")
-    async def flow_session_factory() -> AsyncGenerator[
-        async_sessionmaker[AsyncSession], None
-    ]:
+    async def flow_session_factory() -> (
+        AsyncGenerator[async_sessionmaker[AsyncSession], None]
+    ):
         engine = create_async_engine(
             "sqlite+aiosqlite:///:memory:",
             connect_args={"check_same_thread": False},
@@ -220,7 +221,7 @@ if flow_session_factory in (None, _missing_fixture):
             except ModuleNotFoundError:  # pragma: no cover - optional modules
                 continue
             previous = getattr(module, "AsyncSessionLocal", None)
-            setattr(module, "AsyncSessionLocal", factory)
+            module.AsyncSessionLocal = factory
             override_targets.append((module, previous))
 
         try:
@@ -233,7 +234,7 @@ if flow_session_factory in (None, _missing_fixture):
                     except AttributeError:  # pragma: no cover - already absent
                         pass
                 else:
-                    setattr(module, "AsyncSessionLocal", previous)
+                    module.AsyncSessionLocal = previous
             await engine.dispose()
 
     @pytest_asyncio.fixture(autouse=True)
@@ -311,9 +312,9 @@ if not hasattr(base_module, "TimestampMixin"):
         created_at = None
         updated_at = None
 
-    setattr(base_module, "TimestampMixin", TimestampMixin)
+    base_module.TimestampMixin = TimestampMixin
     if not hasattr(app_base_module, "TimestampMixin"):
-        setattr(app_base_module, "TimestampMixin", TimestampMixin)
+        app_base_module.TimestampMixin = TimestampMixin
 
 
 base_module = sys.modules.get("backend.app.models.base")
@@ -324,9 +325,9 @@ if base_module is not None and not hasattr(base_module, "TimestampMixin"):
         created_at = None
         updated_at = None
 
-    setattr(base_module, "TimestampMixin", _TimestampMixin)
+    base_module.TimestampMixin = _TimestampMixin
     if app_base_module is not None and not hasattr(app_base_module, "TimestampMixin"):
-        setattr(app_base_module, "TimestampMixin", _TimestampMixin)
+        app_base_module.TimestampMixin = _TimestampMixin
 
 from app.models.base import BaseModel as _BaseModel
 
@@ -338,9 +339,13 @@ if not hasattr(_BaseModel, "TimestampMixin") and "TimestampMixin" not in globals
         created_at = None
         updated_at = None
 
-    setattr(
-        sys.modules["backend.app.models.base"], "TimestampMixin", TimestampMixinStub
-    ) if "backend.app.models.base" in sys.modules else None
+    (
+        setattr(
+            sys.modules["backend.app.models.base"], "TimestampMixin", TimestampMixinStub
+        )
+        if "backend.app.models.base" in sys.modules
+        else None
+    )
 from backend.scripts.seed_market_demo import seed_market_demo
 from backend.scripts.seed_nonreg import seed_nonregulated_reference_data
 

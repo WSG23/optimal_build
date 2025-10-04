@@ -10,8 +10,8 @@ stub will remain unused.
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
-from math import isinf
 from dataclasses import dataclass
+from math import isinf
 
 
 @dataclass
@@ -72,7 +72,10 @@ class _MetricBase:
 
     def labels(self, *label_args: str, **labels: str) -> _Sample:
         if label_args:
-            labels = {name: value for name, value in zip(self._labelnames, label_args)} | labels
+            labels = {
+                name: value
+                for name, value in zip(self._labelnames, label_args, strict=False)
+            } | labels
         key = self._label_key(labels)
         if key not in self._metrics:
             self._metrics[key] = _Sample()
@@ -80,7 +83,9 @@ class _MetricBase:
 
     def _iter_samples(self) -> Iterator[tuple[dict[str, str], _Sample]]:
         for key, sample in self._metrics.items():
-            label_map = {name: value for name, value in zip(self._labelnames, key)}
+            label_map = {
+                name: value for name, value in zip(self._labelnames, key, strict=False)
+            }
             yield label_map, sample
 
     def get_sample_value(self, labels: dict[str, str]) -> float | None:
@@ -125,7 +130,7 @@ class _HistogramSample(_Sample):
         return self._value.get()
 
     def bucket_counts(self) -> list[tuple[float, float]]:
-        return list(zip(self._bounds, self._bucket_counts))
+        return list(zip(self._bounds, self._bucket_counts, strict=False))
 
     def observations(self) -> list[float]:
         return list(self._observations)
@@ -188,7 +193,10 @@ class Histogram(_MetricBase):
 
     def labels(self, *label_args: str, **labels: str) -> _HistogramSample:
         if label_args:
-            labels = {name: value for name, value in zip(self._labelnames, label_args)} | labels
+            labels = {
+                name: value
+                for name, value in zip(self._labelnames, label_args, strict=False)
+            } | labels
         key = self._label_key(labels)
         sample = self._metrics.get(key)
         if not isinstance(sample, _HistogramSample):

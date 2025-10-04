@@ -19,7 +19,9 @@ def _normalise_key(key: str) -> str:
     return ascii_key.strip().lower().replace(" ", "_")
 
 
-def normalize_column_names(records: Iterable[Mapping[str, object]]) -> List[MutableMapping[str, object]]:
+def normalize_column_names(
+    records: Iterable[Mapping[str, object]]
+) -> List[MutableMapping[str, object]]:
     """Return a list with normalised dictionary keys."""
 
     normalised: List[MutableMapping[str, object]] = []

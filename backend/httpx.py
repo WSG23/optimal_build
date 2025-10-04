@@ -295,7 +295,7 @@ class AsyncClient:
         **extra: Any,
     ) -> None:
         if transport is not None and hasattr(transport, "app") and app is None:
-            app = getattr(transport, "app")
+            app = transport.app
         if app is None:
             raise RuntimeError("AsyncClient stub requires an ASGI app instance")
         self._mode: str

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
-import uuid
 
 import pytest
 
@@ -13,9 +13,9 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from app.utils import metrics
+from backend.app.models.projects import Project, ProjectPhase, ProjectType
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
-from backend.app.models.projects import Project, ProjectPhase, ProjectType
 from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
 from httpx import AsyncClient
@@ -229,7 +229,7 @@ async def test_finance_feasibility_and_export_metrics(
 
     actual_dscr_entries = body["dscr_timeline"]
     assert len(actual_dscr_entries) == len(serialised_expected)
-    for actual, expected in zip(actual_dscr_entries, serialised_expected):
+    for actual, expected in zip(actual_dscr_entries, serialised_expected, strict=False):
         assert actual["period"] == expected["period"]
         assert Decimal(actual["noi"]) == Decimal(expected["noi"])
         assert Decimal(actual["debt_service"]) == Decimal(expected["debt_service"])

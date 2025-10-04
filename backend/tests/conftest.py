@@ -13,9 +13,8 @@ from types import ModuleType
 from typing import Any, cast
 
 import pytest
-from httpx import AsyncClient
-
 from backend._sqlalchemy_stub import ensure_sqlalchemy
+from httpx import AsyncClient
 
 
 def _find_repo_root(current: Path) -> Path:

@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, localcontext
-from typing import Optional, Union, Dict, List
+from typing import Optional
 
 from app.services.finance.calculator import (
-    NumberLike, CURRENCY_QUANTIZER, DEFAULT_PRECISION,
-    _to_decimal, _quantize_currency
+    DEFAULT_PRECISION,
+    NumberLike,
+    _quantize_currency,
+    _to_decimal,
 )
 
 __all__ = [
     "calculate_noi",
-    "calculate_cap_rate", 
+    "calculate_cap_rate",
     "calculate_cash_on_cash_return",
     "calculate_gross_rent_multiplier",
     "calculate_debt_yield",
@@ -23,14 +25,14 @@ __all__ = [
     "calculate_vacancy_loss",
     "calculate_operating_expense_ratio",
     "PropertyValuation",
-    "REFinancialMetrics"
+    "REFinancialMetrics",
 ]
 
 
 @dataclass(frozen=True)
 class PropertyValuation:
     """Property valuation using different methods."""
-    
+
     income_approach_value: Decimal
     comparable_sales_value: Optional[Decimal] = None
     replacement_cost_value: Optional[Decimal] = None
@@ -38,10 +40,10 @@ class PropertyValuation:
     currency: str = "SGD"
 
 
-@dataclass(frozen=True) 
+@dataclass(frozen=True)
 class REFinancialMetrics:
     """Comprehensive real estate financial metrics."""
-    
+
     noi: Decimal
     cap_rate: Optional[Decimal]
     cash_on_cash_return: Optional[Decimal]
@@ -60,11 +62,11 @@ def calculate_noi(
     vacancy_rate: NumberLike = 0,
     operating_expenses: NumberLike = 0,
     *,
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> Decimal:
     """
     Calculate Net Operating Income (NOI).
-    
+
     Parameters
     ----------
     gross_rental_income:
@@ -77,39 +79,36 @@ def calculate_noi(
         Total operating expenses
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     Net Operating Income
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         gross_income = _to_decimal(gross_rental_income)
         other = _to_decimal(other_income)
         vacancy = _to_decimal(vacancy_rate)
         expenses = _to_decimal(operating_expenses)
-        
+
         # Calculate effective gross income
         total_potential_income = gross_income + other
         vacancy_loss = total_potential_income * vacancy
         effective_gross_income = total_potential_income - vacancy_loss
-        
+
         # NOI = Effective Gross Income - Operating Expenses
         noi = effective_gross_income - expenses
-        
+
         return _quantize_currency(noi)
 
 
 def calculate_cap_rate(
-    noi: NumberLike,
-    property_value: NumberLike,
-    *,
-    precision: int = DEFAULT_PRECISION
+    noi: NumberLike, property_value: NumberLike, *, precision: int = DEFAULT_PRECISION
 ) -> Optional[Decimal]:
     """
     Calculate Capitalization Rate (Cap Rate).
-    
+
     Parameters
     ----------
     noi:
@@ -118,22 +117,22 @@ def calculate_cap_rate(
         Current market value or purchase price
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     Cap rate as decimal (0.05 = 5%) or None if property_value is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         net_income = _to_decimal(noi)
         value = _to_decimal(property_value)
-        
+
         if value == 0:
             return None
-            
+
         cap_rate = net_income / value
-        
+
         # Return as percentage decimal (4 decimal places)
         return cap_rate.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
@@ -142,11 +141,11 @@ def calculate_cash_on_cash_return(
     annual_cash_flow: NumberLike,
     initial_cash_investment: NumberLike,
     *,
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> Optional[Decimal]:
     """
     Calculate Cash-on-Cash Return.
-    
+
     Parameters
     ----------
     annual_cash_flow:
@@ -155,22 +154,22 @@ def calculate_cash_on_cash_return(
         Total cash invested (down payment + closing costs + initial repairs)
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     Cash-on-cash return as decimal or None if initial investment is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         cash_flow = _to_decimal(annual_cash_flow)
         investment = _to_decimal(initial_cash_investment)
-        
+
         if investment == 0:
             return None
-            
+
         coc_return = cash_flow / investment
-        
+
         return coc_return.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
 
@@ -178,11 +177,11 @@ def calculate_gross_rent_multiplier(
     property_value: NumberLike,
     annual_gross_income: NumberLike,
     *,
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> Optional[Decimal]:
     """
     Calculate Gross Rent Multiplier (GRM).
-    
+
     Parameters
     ----------
     property_value:
@@ -191,34 +190,31 @@ def calculate_gross_rent_multiplier(
         Annual gross rental income (before expenses)
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     GRM ratio or None if income is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         value = _to_decimal(property_value)
         income = _to_decimal(annual_gross_income)
-        
+
         if income == 0:
             return None
-            
+
         grm = value / income
-        
+
         return grm.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def calculate_debt_yield(
-    noi: NumberLike,
-    loan_amount: NumberLike,
-    *,
-    precision: int = DEFAULT_PRECISION
+    noi: NumberLike, loan_amount: NumberLike, *, precision: int = DEFAULT_PRECISION
 ) -> Optional[Decimal]:
     """
     Calculate Debt Yield.
-    
+
     Parameters
     ----------
     noi:
@@ -227,22 +223,22 @@ def calculate_debt_yield(
         Total loan/mortgage amount
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     Debt yield as decimal or None if loan amount is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         net_income = _to_decimal(noi)
         loan = _to_decimal(loan_amount)
-        
+
         if loan == 0:
             return None
-            
+
         debt_yield = net_income / loan
-        
+
         return debt_yield.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
 
@@ -250,11 +246,11 @@ def calculate_loan_to_value(
     loan_amount: NumberLike,
     property_value: NumberLike,
     *,
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> Optional[Decimal]:
     """
     Calculate Loan-to-Value (LTV) Ratio.
-    
+
     Parameters
     ----------
     loan_amount:
@@ -263,34 +259,31 @@ def calculate_loan_to_value(
         Current market value or purchase price
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     LTV ratio as decimal or None if property value is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         loan = _to_decimal(loan_amount)
         value = _to_decimal(property_value)
-        
+
         if value == 0:
             return None
-            
+
         ltv = loan / value
-        
+
         return ltv.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
 
 def calculate_property_value_from_noi(
-    noi: NumberLike,
-    cap_rate: NumberLike,
-    *,
-    precision: int = DEFAULT_PRECISION
+    noi: NumberLike, cap_rate: NumberLike, *, precision: int = DEFAULT_PRECISION
 ) -> Optional[Decimal]:
     """
     Calculate property value using income approach.
-    
+
     Parameters
     ----------
     noi:
@@ -299,22 +292,22 @@ def calculate_property_value_from_noi(
         Market capitalization rate as decimal
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     Estimated property value or None if cap rate is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         net_income = _to_decimal(noi)
         rate = _to_decimal(cap_rate)
-        
+
         if rate == 0:
             return None
-            
+
         value = net_income / rate
-        
+
         return _quantize_currency(value)
 
 
@@ -324,11 +317,11 @@ def calculate_rental_yield(
     *,
     gross: bool = True,
     operating_expenses: NumberLike = 0,
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> Optional[Decimal]:
     """
     Calculate rental yield (gross or net).
-    
+
     Parameters
     ----------
     annual_rental_income:
@@ -341,27 +334,27 @@ def calculate_rental_yield(
         Annual operating expenses (for net yield)
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     Rental yield as decimal or None if property value is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         income = _to_decimal(annual_rental_income)
         value = _to_decimal(property_value)
-        
+
         if value == 0:
             return None
-        
+
         if gross:
             rental_yield = income / value
         else:
             expenses = _to_decimal(operating_expenses)
             net_income = income - expenses
             rental_yield = net_income / value
-        
+
         return rental_yield.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
 
@@ -369,11 +362,11 @@ def calculate_vacancy_loss(
     potential_gross_income: NumberLike,
     vacancy_rate: NumberLike,
     *,
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> Decimal:
     """
     Calculate vacancy loss amount.
-    
+
     Parameters
     ----------
     potential_gross_income:
@@ -382,19 +375,19 @@ def calculate_vacancy_loss(
         Vacancy rate as decimal
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     Vacancy loss amount
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         income = _to_decimal(potential_gross_income)
         rate = _to_decimal(vacancy_rate)
-        
+
         vacancy_loss = income * rate
-        
+
         return _quantize_currency(vacancy_loss)
 
 
@@ -402,11 +395,11 @@ def calculate_operating_expense_ratio(
     operating_expenses: NumberLike,
     effective_gross_income: NumberLike,
     *,
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> Optional[Decimal]:
     """
     Calculate Operating Expense Ratio (OER).
-    
+
     Parameters
     ----------
     operating_expenses:
@@ -415,22 +408,22 @@ def calculate_operating_expense_ratio(
         Effective gross income (after vacancy)
     precision:
         Decimal precision for calculations
-        
+
     Returns
     -------
     OER as decimal or None if income is zero
     """
     with localcontext() as ctx:
         ctx.prec = precision
-        
+
         expenses = _to_decimal(operating_expenses)
         income = _to_decimal(effective_gross_income)
-        
+
         if income == 0:
             return None
-            
+
         oer = expenses / income
-        
+
         return oer.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
 
 
@@ -445,11 +438,11 @@ def calculate_comprehensive_metrics(
     other_income: NumberLike = 0,
     *,
     currency: str = "SGD",
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> REFinancialMetrics:
     """
     Calculate comprehensive real estate financial metrics.
-    
+
     Parameters
     ----------
     property_value:
@@ -472,7 +465,7 @@ def calculate_comprehensive_metrics(
         Currency code
     precision:
         Decimal precision
-        
+
     Returns
     -------
     Comprehensive financial metrics
@@ -483,68 +476,68 @@ def calculate_comprehensive_metrics(
         other_income,
         vacancy_rate,
         operating_expenses,
-        precision=precision
+        precision=precision,
     )
-    
+
     # Calculate cap rate
     cap_rate = calculate_cap_rate(noi, property_value, precision=precision)
-    
+
     # Calculate rental yield
     rental_yield = calculate_rental_yield(
         gross_rental_income,
         property_value,
         gross=False,
         operating_expenses=operating_expenses,
-        precision=precision
+        precision=precision,
     )
-    
+
     # Calculate debt-related metrics if loan info provided
     ltv_ratio = None
     debt_yield = None
     cash_on_cash = None
     dscr = None
-    
+
     if loan_amount:
         ltv_ratio = calculate_loan_to_value(
             loan_amount, property_value, precision=precision
         )
-        debt_yield = calculate_debt_yield(
-            noi, loan_amount, precision=precision
-        )
-    
+        debt_yield = calculate_debt_yield(noi, loan_amount, precision=precision)
+
     if annual_debt_service:
         if _to_decimal(annual_debt_service) > 0:
             annual_cash_flow = noi - _to_decimal(annual_debt_service)
-            
+
             if initial_cash_investment:
                 cash_on_cash = calculate_cash_on_cash_return(
-                    annual_cash_flow,
-                    initial_cash_investment,
-                    precision=precision
+                    annual_cash_flow, initial_cash_investment, precision=precision
                 )
-            
+
             # Simple DSCR calculation
             with localcontext() as ctx:
                 ctx.prec = precision
                 dscr = (_to_decimal(noi) / _to_decimal(annual_debt_service)).quantize(
                     Decimal("0.0001"), rounding=ROUND_HALF_UP
                 )
-    
+
     # Calculate other metrics
     grm = calculate_gross_rent_multiplier(
         property_value, gross_rental_income, precision=precision
     )
-    
-    effective_gross_income = _to_decimal(gross_rental_income) + _to_decimal(other_income) - calculate_vacancy_loss(
-        _to_decimal(gross_rental_income) + _to_decimal(other_income),
-        vacancy_rate,
-        precision=precision
+
+    effective_gross_income = (
+        _to_decimal(gross_rental_income)
+        + _to_decimal(other_income)
+        - calculate_vacancy_loss(
+            _to_decimal(gross_rental_income) + _to_decimal(other_income),
+            vacancy_rate,
+            precision=precision,
+        )
     )
-    
+
     oer = calculate_operating_expense_ratio(
         operating_expenses, effective_gross_income, precision=precision
     )
-    
+
     return REFinancialMetrics(
         noi=noi,
         cap_rate=cap_rate,
@@ -555,7 +548,7 @@ def calculate_comprehensive_metrics(
         dscr=dscr,
         rental_yield=rental_yield,
         operating_expense_ratio=oer,
-        currency=currency
+        currency=currency,
     )
 
 
@@ -569,11 +562,11 @@ def value_property_multiple_approaches(
     depreciation_factor: NumberLike = Decimal("0.8"),
     *,
     currency: str = "SGD",
-    precision: int = DEFAULT_PRECISION
+    precision: int = DEFAULT_PRECISION,
 ) -> PropertyValuation:
     """
     Value property using multiple approaches.
-    
+
     Parameters
     ----------
     noi:
@@ -594,7 +587,7 @@ def value_property_multiple_approaches(
         Currency code
     precision:
         Decimal precision
-        
+
     Returns
     -------
     Property valuation using different methods
@@ -603,7 +596,7 @@ def value_property_multiple_approaches(
     income_value = calculate_property_value_from_noi(
         noi, market_cap_rate, precision=precision
     )
-    
+
     # Sales comparison approach
     comparable_value = None
     if comparable_psf and property_size_sqf:
@@ -612,7 +605,7 @@ def value_property_multiple_approaches(
             psf = _to_decimal(comparable_psf)
             size = _to_decimal(property_size_sqf)
             comparable_value = _quantize_currency(psf * size)
-    
+
     # Cost approach
     replacement_value = None
     if replacement_cost_psf and property_size_sqf:
@@ -621,15 +614,15 @@ def value_property_multiple_approaches(
             cost_psf = _to_decimal(replacement_cost_psf)
             size = _to_decimal(property_size_sqf)
             depreciation = _to_decimal(depreciation_factor)
-            
+
             building_value = cost_psf * size * depreciation
-            
+
             if land_value:
                 land = _to_decimal(land_value)
                 replacement_value = _quantize_currency(building_value + land)
             else:
                 replacement_value = _quantize_currency(building_value)
-    
+
     # Determine recommended value (weighted average or selection logic)
     values = []
     if income_value:
@@ -638,7 +631,7 @@ def value_property_multiple_approaches(
         values.append(comparable_value)
     if replacement_value:
         values.append(replacement_value)
-    
+
     if values:
         # Simple average for now - could implement weighted average
         with localcontext() as ctx:
@@ -647,11 +640,11 @@ def value_property_multiple_approaches(
             recommended_value = _quantize_currency(recommended)
     else:
         recommended_value = Decimal("0")
-    
+
     return PropertyValuation(
         income_approach_value=income_value or Decimal("0"),
         comparable_sales_value=comparable_value,
         replacement_cost_value=replacement_value,
         recommended_value=recommended_value,
-        currency=currency
+        currency=currency,
     )

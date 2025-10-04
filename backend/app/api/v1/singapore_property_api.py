@@ -6,30 +6,31 @@ property feasibility analysis and space optimization.
 MVP: Uses synchronous database for simplicity.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+import uuid
 from datetime import datetime
 from decimal import Decimal
-import uuid
+from typing import Any, Dict, List, Optional
 
-from app.core.jwt_auth import get_current_user, TokenData
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.core.config import settings
+from app.core.jwt_auth import TokenData, get_current_user
 from app.models.singapore_property import (
-    SingaporeProperty,
-    PropertyZoning,
-    PropertyTenure,
     AcquisitionStatus,
-    FeasibilityStatus,
     ComplianceStatus,
-    DevelopmentStatus
+    DevelopmentStatus,
+    FeasibilityStatus,
+    PropertyTenure,
+    PropertyZoning,
+    SingaporeProperty,
 )
 from app.utils.singapore_compliance import (
+    calculate_gfa_utilization,
     run_full_compliance_check_sync,
     update_property_compliance_sync,
-    calculate_gfa_utilization
 )
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
@@ -38,6 +39,7 @@ router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
 # This creates a separate sync session just for this MVP feature
 _sync_engine = None
 _SessionLocal = None
+
 
 def get_sync_db():
     """Get synchronous database session for MVP."""
@@ -52,7 +54,9 @@ def get_sync_db():
         print(f"[Singapore Property API] Connecting to: {db_url}")
 
         _sync_engine = create_engine(db_url, pool_pre_ping=True)
-        _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_sync_engine)
+        _SessionLocal = sessionmaker(
+            autocommit=False, autoflush=False, bind=_sync_engine
+        )
 
     db = _SessionLocal()
     try:
@@ -64,6 +68,7 @@ def get_sync_db():
 # Pydantic Request/Response Models
 class PropertyCreate(BaseModel):
     """Property creation model for MVP."""
+
     # Basic Information
     property_name: str = Field(..., min_length=1, max_length=255)
     address: str = Field(..., min_length=1, max_length=1000)
@@ -75,7 +80,9 @@ class PropertyCreate(BaseModel):
 
     # Land and Building
     land_area_sqm: Decimal = Field(..., gt=0, description="Land area in square meters")
-    gross_plot_ratio: Decimal = Field(..., gt=0, description="Maximum plot ratio allowed")
+    gross_plot_ratio: Decimal = Field(
+        ..., gt=0, description="Maximum plot ratio allowed"
+    )
     gross_floor_area_sqm: Optional[Decimal] = Field(None, ge=0)
     building_height_m: Optional[Decimal] = Field(None, gt=0)
     num_storeys: Optional[int] = Field(None, gt=0)
@@ -98,6 +105,7 @@ class PropertyCreate(BaseModel):
 
 class PropertyUpdate(BaseModel):
     """Property update model."""
+
     property_name: Optional[str] = Field(None, min_length=1, max_length=255)
     address: Optional[str] = Field(None, min_length=1)
     postal_code: Optional[str] = Field(None, max_length=6, pattern="^[0-9]{6}$")
@@ -122,6 +130,7 @@ class PropertyUpdate(BaseModel):
 
 class PropertyResponse(BaseModel):
     """Property response model."""
+
     id: str
     property_name: str
     address: str
@@ -181,14 +190,22 @@ class PropertyResponse(BaseModel):
             "gross_floor_area_sqm": obj.gross_floor_area_sqm,
             "building_height_m": obj.building_height_m,
             "num_storeys": obj.num_storeys,
-            "acquisition_status": obj.acquisition_status.value if obj.acquisition_status else None,
-            "feasibility_status": obj.feasibility_status.value if obj.feasibility_status else None,
+            "acquisition_status": (
+                obj.acquisition_status.value if obj.acquisition_status else None
+            ),
+            "feasibility_status": (
+                obj.feasibility_status.value if obj.feasibility_status else None
+            ),
             "estimated_acquisition_cost": obj.estimated_acquisition_cost,
             "actual_acquisition_cost": obj.actual_acquisition_cost,
             "estimated_development_cost": obj.estimated_development_cost,
             "expected_revenue": obj.expected_revenue,
-            "bca_compliance_status": obj.bca_compliance_status.value if obj.bca_compliance_status else None,
-            "ura_compliance_status": obj.ura_compliance_status.value if obj.ura_compliance_status else None,
+            "bca_compliance_status": (
+                obj.bca_compliance_status.value if obj.bca_compliance_status else None
+            ),
+            "ura_compliance_status": (
+                obj.ura_compliance_status.value if obj.ura_compliance_status else None
+            ),
             "compliance_notes": obj.compliance_notes,
             "compliance_last_checked": obj.compliance_last_checked,
             "max_developable_gfa_sqm": obj.max_developable_gfa_sqm,
@@ -204,6 +221,7 @@ class PropertyResponse(BaseModel):
 
 class ComplianceCheckResponse(BaseModel):
     """Compliance check response."""
+
     property_id: str
     overall_status: str
     bca_status: str
@@ -216,11 +234,12 @@ class ComplianceCheckResponse(BaseModel):
 
 # API Endpoints
 
+
 @router.post("/create", response_model=PropertyResponse)
 def create_property(
     property_data: PropertyCreate,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db)
+    db: Session = Depends(get_sync_db),
 ):
     """
     Create a new Singapore property with automatic compliance checking.
@@ -233,8 +252,10 @@ def create_property(
     """
     # Create property instance (convert enums to values for SQLAlchemy)
     # Debug: Check what type zoning is
-    print(f"[DEBUG] property_data.zoning type: {type(property_data.zoning)}, value: {property_data.zoning}")
-    if hasattr(property_data.zoning, 'value'):
+    print(
+        f"[DEBUG] property_data.zoning type: {type(property_data.zoning)}, value: {property_data.zoning}"
+    )
+    if hasattr(property_data.zoning, "value"):
         zoning_value = property_data.zoning.value
         print(f"[DEBUG] Extracted zoning.value: {zoning_value}")
     else:
@@ -246,19 +267,31 @@ def create_property(
         address=property_data.address,
         postal_code=property_data.postal_code,
         zoning=zoning_value,
-        tenure=property_data.tenure.value if property_data.tenure and hasattr(property_data.tenure, 'value') else property_data.tenure,
+        tenure=(
+            property_data.tenure.value
+            if property_data.tenure and hasattr(property_data.tenure, "value")
+            else property_data.tenure
+        ),
         land_area_sqm=property_data.land_area_sqm,
         gross_plot_ratio=property_data.gross_plot_ratio,
         gross_floor_area_sqm=property_data.gross_floor_area_sqm,
         building_height_m=property_data.building_height_m,
         num_storeys=property_data.num_storeys,
-        acquisition_status=property_data.acquisition_status.value if hasattr(property_data.acquisition_status, 'value') else property_data.acquisition_status,
-        feasibility_status=property_data.feasibility_status.value if hasattr(property_data.feasibility_status, 'value') else property_data.feasibility_status,
+        acquisition_status=(
+            property_data.acquisition_status.value
+            if hasattr(property_data.acquisition_status, "value")
+            else property_data.acquisition_status
+        ),
+        feasibility_status=(
+            property_data.feasibility_status.value
+            if hasattr(property_data.feasibility_status, "value")
+            else property_data.feasibility_status
+        ),
         estimated_acquisition_cost=property_data.estimated_acquisition_cost,
         estimated_development_cost=property_data.estimated_development_cost,
         expected_revenue=property_data.expected_revenue,
         owner_email=current_user.email,
-        development_status=DevelopmentStatus.VACANT_LAND.value
+        development_status=DevelopmentStatus.VACANT_LAND.value,
     )
 
     # Run compliance checks and update property
@@ -280,7 +313,7 @@ def list_properties(
     zoning: Optional[PropertyZoning] = Query(None),
     compliance_status: Optional[ComplianceStatus] = Query(None),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ):
     """
     List all Singapore properties with optional filters.
@@ -297,8 +330,8 @@ def list_properties(
         query = query.filter(SingaporeProperty.zoning == zoning)
     if compliance_status:
         query = query.filter(
-            (SingaporeProperty.bca_compliance_status == compliance_status) |
-            (SingaporeProperty.ura_compliance_status == compliance_status)
+            (SingaporeProperty.bca_compliance_status == compliance_status)
+            | (SingaporeProperty.ura_compliance_status == compliance_status)
         )
 
     properties = query.offset(skip).limit(limit).all()
@@ -310,7 +343,7 @@ def list_properties(
 def get_property(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db)
+    db: Session = Depends(get_sync_db),
 ):
     """Get a specific property by ID."""
     try:
@@ -318,10 +351,14 @@ def get_property(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid property ID format")
 
-    property_obj = db.query(SingaporeProperty).filter(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email
-    ).first()
+    property_obj = (
+        db.query(SingaporeProperty)
+        .filter(
+            SingaporeProperty.id == property_uuid,
+            SingaporeProperty.owner_email == current_user.email,
+        )
+        .first()
+    )
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -334,7 +371,7 @@ def update_property(
     property_id: str,
     property_update: PropertyUpdate,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db)
+    db: Session = Depends(get_sync_db),
 ):
     """
     Update a property and re-run compliance checks.
@@ -346,10 +383,14 @@ def update_property(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid property ID format")
 
-    property_obj = db.query(SingaporeProperty).filter(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email
-    ).first()
+    property_obj = (
+        db.query(SingaporeProperty)
+        .filter(
+            SingaporeProperty.id == property_uuid,
+            SingaporeProperty.owner_email == current_user.email,
+        )
+        .first()
+    )
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -373,7 +414,7 @@ def update_property(
 def check_property_compliance(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db)
+    db: Session = Depends(get_sync_db),
 ):
     """
     Run detailed BCA and URA compliance checks for a property.
@@ -386,10 +427,14 @@ def check_property_compliance(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid property ID format")
 
-    property_obj = db.query(SingaporeProperty).filter(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email
-    ).first()
+    property_obj = (
+        db.query(SingaporeProperty)
+        .filter(
+            SingaporeProperty.id == property_uuid,
+            SingaporeProperty.owner_email == current_user.email,
+        )
+        .first()
+    )
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -405,7 +450,7 @@ def check_property_compliance(
         violations=result["violations"],
         warnings=result["warnings"],
         recommendations=result["recommendations"],
-        compliance_data=result["compliance_data"]
+        compliance_data=result["compliance_data"],
     )
 
 
@@ -413,7 +458,7 @@ def check_property_compliance(
 def calculate_property_gfa(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db)
+    db: Session = Depends(get_sync_db),
 ):
     """
     Calculate GFA utilization and remaining development potential.
@@ -425,26 +470,33 @@ def calculate_property_gfa(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid property ID format")
 
-    property_obj = db.query(SingaporeProperty).filter(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email
-    ).first()
+    property_obj = (
+        db.query(SingaporeProperty)
+        .filter(
+            SingaporeProperty.id == property_uuid,
+            SingaporeProperty.owner_email == current_user.email,
+        )
+        .first()
+    )
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
 
     result = calculate_gfa_utilization(property_obj)
     result["property_id"] = property_id
-    result["land_area_sqm"] = float(property_obj.land_area_sqm) if property_obj.land_area_sqm else None
-    result["plot_ratio"] = float(property_obj.gross_plot_ratio) if property_obj.gross_plot_ratio else None
+    result["land_area_sqm"] = (
+        float(property_obj.land_area_sqm) if property_obj.land_area_sqm else None
+    )
+    result["plot_ratio"] = (
+        float(property_obj.gross_plot_ratio) if property_obj.gross_plot_ratio else None
+    )
 
     return result
 
 
 @router.post("/calculate/buildable")
 async def calculate_buildable_metrics(
-    request: Dict[str, Any],
-    current_user: TokenData = Depends(get_current_user)
+    request: Dict[str, Any], current_user: TokenData = Depends(get_current_user)
 ):
     """
     Calculate buildable metrics using jurisdiction-agnostic system.
@@ -461,23 +513,25 @@ async def calculate_buildable_metrics(
     Returns:
         Buildable metrics including plot ratio, max height, GFA, NSA, etc.
     """
-    from app.services.buildable import calculate_buildable, ResolvedZone
-    from app.schemas.buildable import BuildableDefaults
     from app.core.database import AsyncSessionLocal
+    from app.schemas.buildable import BuildableDefaults
+    from app.services.buildable import ResolvedZone, calculate_buildable
 
-    land_area = request.get('land_area_sqm')
-    zoning = request.get('zoning')
-    jurisdiction = request.get('jurisdiction', 'SG')
-    street_width = request.get('street_width_m')
+    land_area = request.get("land_area_sqm")
+    zoning = request.get("zoning")
+    jurisdiction = request.get("jurisdiction", "SG")
+    street_width = request.get("street_width_m")
 
     if not land_area or not zoning:
-        raise HTTPException(status_code=400, detail="land_area_sqm and zoning are required")
+        raise HTTPException(
+            status_code=400, detail="land_area_sqm and zoning are required"
+        )
 
     # Create buildable defaults
     defaults = BuildableDefaults(
         site_area_m2=float(land_area),
         floor_height_m=4.0,  # Building science constant
-        efficiency_factor=0.82  # 82% efficiency
+        efficiency_factor=0.82,  # 82% efficiency
     )
 
     # Create resolved zone for jurisdiction-agnostic lookup
@@ -486,7 +540,7 @@ async def calculate_buildable_metrics(
         parcel=None,
         zone_layers=[],
         input_kind="api_request",
-        geometry_properties={"street_width_m": street_width} if street_width else None
+        geometry_properties={"street_width_m": street_width} if street_width else None,
     )
 
     # Use jurisdiction-agnostic buildable service
@@ -497,7 +551,7 @@ async def calculate_buildable_metrics(
                 resolved=resolved,
                 defaults=defaults,
                 typ_floor_to_floor_m=4.0,
-                efficiency_ratio=0.82
+                efficiency_ratio=0.82,
             )
 
             # Extract metrics
@@ -522,7 +576,9 @@ async def calculate_buildable_metrics(
             if max_height is None:
                 max_height = metrics.floors_max * 4.0 if metrics.floors_max > 0 else 0
             if site_coverage_pct is None:
-                site_coverage_pct = (metrics.footprint_m2 / land_area * 100) if land_area > 0 else 0
+                site_coverage_pct = (
+                    (metrics.footprint_m2 / land_area * 100) if land_area > 0 else 0
+                )
 
             # Site coverage as fraction for calculations
             site_coverage_fraction = site_coverage_pct / 100.0
@@ -540,7 +596,7 @@ async def calculate_buildable_metrics(
                 "floor_to_floor_m": 4.0,
                 "rules_applied": len(buildable_calc.rules),
                 "jurisdiction": jurisdiction,
-                "zone_code": zoning
+                "zone_code": zoning,
             }
         except Exception as e:
             # Fallback: Use simple calculation if RefRule database is empty
@@ -549,14 +605,36 @@ async def calculate_buildable_metrics(
 
             # Fallback default values (will be replaced by RefRule data)
             fallback_rules = {
-                "residential": {"plot_ratio": 2.8, "max_height": 36, "site_coverage": 0.4},
-                "commercial": {"plot_ratio": 10.0, "max_height": 280, "site_coverage": 0.5},
-                "industrial": {"plot_ratio": 2.5, "max_height": 50, "site_coverage": 0.6},
-                "mixed_use": {"plot_ratio": 3.0, "max_height": 80, "site_coverage": 0.45},
-                "business_park": {"plot_ratio": 2.5, "max_height": 50, "site_coverage": 0.45}
+                "residential": {
+                    "plot_ratio": 2.8,
+                    "max_height": 36,
+                    "site_coverage": 0.4,
+                },
+                "commercial": {
+                    "plot_ratio": 10.0,
+                    "max_height": 280,
+                    "site_coverage": 0.5,
+                },
+                "industrial": {
+                    "plot_ratio": 2.5,
+                    "max_height": 50,
+                    "site_coverage": 0.6,
+                },
+                "mixed_use": {
+                    "plot_ratio": 3.0,
+                    "max_height": 80,
+                    "site_coverage": 0.45,
+                },
+                "business_park": {
+                    "plot_ratio": 2.5,
+                    "max_height": 50,
+                    "site_coverage": 0.45,
+                },
             }
 
-            rules = fallback_rules.get(zoning, {"plot_ratio": 2.8, "max_height": 36, "site_coverage": 0.4})
+            rules = fallback_rules.get(
+                zoning, {"plot_ratio": 2.8, "max_height": 36, "site_coverage": 0.4}
+            )
 
             max_gfa = land_area * rules["plot_ratio"]
             max_floors = int(rules["max_height"] / 4.0)
@@ -576,14 +654,13 @@ async def calculate_buildable_metrics(
                 "rules_applied": 0,
                 "jurisdiction": jurisdiction,
                 "zone_code": zoning,
-                "fallback_used": True
+                "fallback_used": True,
             }
 
 
 @router.post("/check-compliance")
 async def check_compliance(
-    request: Dict[str, Any],
-    current_user: TokenData = Depends(get_current_user)
+    request: Dict[str, Any], current_user: TokenData = Depends(get_current_user)
 ):
     """
     Check building code compliance for proposed design against Singapore URA/BCA rules.
@@ -592,18 +669,23 @@ async def check_compliance(
     Returns pass/fail status with detailed violations list.
     """
     from app.core.database import AsyncSessionLocal
-    from app.utils.singapore_compliance import check_ura_compliance, check_bca_compliance
+    from app.utils.singapore_compliance import (
+        check_bca_compliance,
+        check_ura_compliance,
+    )
 
     # Extract request parameters
-    land_area = request.get('land_area_sqm')
-    zoning = request.get('zoning')
-    proposed_gfa = request.get('proposed_gfa_sqm')
-    proposed_height = request.get('proposed_height_m')
-    proposed_storeys = request.get('proposed_storeys')
-    jurisdiction = request.get('jurisdiction', 'SG')
+    land_area = request.get("land_area_sqm")
+    zoning = request.get("zoning")
+    proposed_gfa = request.get("proposed_gfa_sqm")
+    proposed_height = request.get("proposed_height_m")
+    proposed_storeys = request.get("proposed_storeys")
+    jurisdiction = request.get("jurisdiction", "SG")
 
     if not land_area or not zoning:
-        raise HTTPException(status_code=400, detail="land_area_sqm and zoning are required")
+        raise HTTPException(
+            status_code=400, detail="land_area_sqm and zoning are required"
+        )
 
     # Create a temporary property object for compliance checking
     temp_property = SingaporeProperty(
@@ -615,10 +697,14 @@ async def check_compliance(
         gross_floor_area_sqm=Decimal(str(proposed_gfa)) if proposed_gfa else None,
         building_height_m=Decimal(str(proposed_height)) if proposed_height else None,
         num_storeys=proposed_storeys,
-        gross_plot_ratio=Decimal(str(proposed_gfa / land_area)) if proposed_gfa and land_area else None,
+        gross_plot_ratio=(
+            Decimal(str(proposed_gfa / land_area))
+            if proposed_gfa and land_area
+            else None
+        ),
         owner_email=current_user.email,
         created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        updated_at=datetime.utcnow(),
     )
 
     async with AsyncSessionLocal() as session:
@@ -628,8 +714,12 @@ async def check_compliance(
             bca_result = await check_bca_compliance(temp_property, session)
 
             # Compile all violations and warnings
-            all_violations = ura_result.get("violations", []) + bca_result.get("violations", [])
-            all_warnings = ura_result.get("warnings", []) + bca_result.get("warnings", [])
+            all_violations = ura_result.get("violations", []) + bca_result.get(
+                "violations", []
+            )
+            all_warnings = ura_result.get("warnings", []) + bca_result.get(
+                "warnings", []
+            )
             all_recommendations = bca_result.get("recommendations", [])
 
             # Determine overall status
@@ -646,33 +736,49 @@ async def check_compliance(
                 "warnings": all_warnings,
                 "recommendations": all_recommendations,
                 "ura_check": {
-                    "status": ura_result["status"].value if hasattr(ura_result["status"], 'value') else ura_result["status"],
+                    "status": (
+                        ura_result["status"].value
+                        if hasattr(ura_result["status"], "value")
+                        else ura_result["status"]
+                    ),
                     "violations": ura_result.get("violations", []),
-                    "rules_applied": ura_result.get("rules_applied", {})
+                    "rules_applied": ura_result.get("rules_applied", {}),
                 },
                 "bca_check": {
-                    "status": bca_result["status"].value if hasattr(bca_result["status"], 'value') else bca_result["status"],
+                    "status": (
+                        bca_result["status"].value
+                        if hasattr(bca_result["status"], "value")
+                        else bca_result["status"]
+                    ),
                     "violations": bca_result.get("violations", []),
-                    "requirements_applied": bca_result.get("requirements_applied", {})
+                    "requirements_applied": bca_result.get("requirements_applied", {}),
                 },
                 "proposed_design": {
                     "land_area_sqm": float(land_area),
                     "zoning": zoning,
                     "proposed_gfa_sqm": float(proposed_gfa) if proposed_gfa else None,
-                    "proposed_height_m": float(proposed_height) if proposed_height else None,
+                    "proposed_height_m": (
+                        float(proposed_height) if proposed_height else None
+                    ),
                     "proposed_storeys": proposed_storeys,
-                    "calculated_plot_ratio": float(proposed_gfa / land_area) if proposed_gfa and land_area else None
-                }
+                    "calculated_plot_ratio": (
+                        float(proposed_gfa / land_area)
+                        if proposed_gfa and land_area
+                        else None
+                    ),
+                },
             }
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Compliance check failed: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Compliance check failed: {str(e)}"
+            )
 
 
 @router.delete("/{property_id}")
 def delete_property(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db)
+    db: Session = Depends(get_sync_db),
 ):
     """Soft delete a property (marks as inactive)."""
     try:
@@ -680,10 +786,14 @@ def delete_property(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid property ID format")
 
-    property_obj = db.query(SingaporeProperty).filter(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email
-    ).first()
+    property_obj = (
+        db.query(SingaporeProperty)
+        .filter(
+            SingaporeProperty.id == property_uuid,
+            SingaporeProperty.owner_email == current_user.email,
+        )
+        .first()
+    )
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")

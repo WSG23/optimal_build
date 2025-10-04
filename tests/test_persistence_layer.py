@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 from datetime import datetime, timedelta
 
-from backend.app.services.storage import StorageService
 from backend._compat.datetime import UTC
+from backend.app.services.storage import StorageService
 
 
 def test_store_bytes_and_retention(tmp_path):

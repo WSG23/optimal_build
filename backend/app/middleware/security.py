@@ -30,7 +30,9 @@ except ModuleNotFoundError:  # pragma: no cover - lightweight fallback
                 {
                     "type": "http.response.start",
                     "status": response.status_code,
-                    "headers": [(k.encode(), v.encode()) for k, v in response.headers.items()],
+                    "headers": [
+                        (k.encode(), v.encode()) for k, v in response.headers.items()
+                    ],
                 }
             )
             await send({"type": "http.response.body", "body": payload})

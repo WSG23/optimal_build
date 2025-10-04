@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from app.core.auth import PolicyContext, watermark_text
 
 

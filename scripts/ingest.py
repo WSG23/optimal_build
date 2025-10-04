@@ -9,11 +9,12 @@ from collections import defaultdict
 from collections.abc import Iterable
 from datetime import date
 
+from sqlalchemy import select
+
 from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.registry import JurisdictionParser, RegistryError, load_jurisdiction
 from core.util import create_session_factory, get_engine, session_scope
-from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 

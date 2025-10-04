@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from types import ModuleType, SimpleNamespace
+from types import ModuleType
 
 
 def install_property_stub(monkeypatch) -> None:

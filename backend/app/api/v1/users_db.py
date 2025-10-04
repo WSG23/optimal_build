@@ -1,28 +1,31 @@
 """User API with real database support using SQLAlchemy."""
 
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy import create_engine, Column, String, Boolean, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import Boolean, Column, DateTime, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
 
 try:  # pragma: no cover - optional dependency
-    from pydantic import EmailStr  # type: ignore
     import email_validator  # type: ignore  # noqa: F401
+    from pydantic import EmailStr  # type: ignore
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
 
-from app.core.jwt_auth import create_tokens, TokenResponse, get_current_user, TokenData
+from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_current_user
+from app.schemas.user import UserSignupBase
 from app.utils.db import session_dependency
 from app.utils.security import hash_password, verify_password
-from app.schemas.user import UserSignupBase
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -33,7 +36,9 @@ router = APIRouter(prefix="/users-db", tags=["Database Users"])
 class UserDB(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=lambda: f"user_{uuid.uuid4().hex[:8]}")
+    id = Column(
+        String, primary_key=True, default=lambda: f"user_{uuid.uuid4().hex[:8]}"
+    )
     email = Column(String, unique=True, nullable=False, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
     full_name = Column(String, nullable=False)
@@ -54,11 +59,13 @@ get_db = session_dependency(SessionLocal)
 # Pydantic models
 class UserSignup(UserSignupBase):
     """User registration with validation."""
+
     pass
 
 
 class UserResponse(BaseModel):
     """Safe user response without password."""
+
     id: str
     email: str
     username: str
@@ -73,12 +80,14 @@ class UserResponse(BaseModel):
 
 class UserLogin(BaseModel):
     """User login credentials."""
+
     email: EmailStr
     password: str
 
 
 class LoginResponse(BaseModel):
     """Login response with JWT tokens."""
+
     message: str
     user: UserResponse
     tokens: TokenResponse
@@ -103,7 +112,7 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
         username=user_data.username,
         full_name=user_data.full_name,
         company_name=user_data.company_name,
-        hashed_password=hash_password(user_data.password)
+        hashed_password=hash_password(user_data.password),
     )
 
     db.add(db_user)
@@ -124,27 +133,18 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # Create JWT tokens
-    user_dict = {
-        "id": user.id,
-        "email": user.email,
-        "username": user.username
-    }
+    user_dict = {"id": user.id, "email": user.email, "username": user.username}
     tokens = create_tokens(user_dict)
 
     # Create response
     user_response = UserResponse.model_validate(user)
 
-    return LoginResponse(
-        message="Login successful",
-        user=user_response,
-        tokens=tokens
-    )
+    return LoginResponse(message="Login successful", user=user_response, tokens=tokens)
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(
-    current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Get current user info from JWT token."""
     user = db.query(UserDB).filter(UserDB.email == current_user.email).first()
@@ -161,7 +161,7 @@ def list_users(db: Session = Depends(get_db)):
     users = db.query(UserDB).all()
     return {
         "users": [UserResponse.model_validate(u) for u in users],
-        "total": len(users)
+        "total": len(users),
     }
 
 
@@ -176,6 +176,6 @@ def test_endpoint():
             "Email validation",
             "Password hashing",
             "JWT authentication",
-            "User registration and login"
-        ]
+            "User registration and login",
+        ],
     }

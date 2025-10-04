@@ -1,20 +1,23 @@
 """Projects API with CRUD operations."""
 
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy import create_engine, Column, String, Float, Boolean, DateTime, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-from pydantic import BaseModel, Field
-from typing import Optional, List
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import List, Optional
 
-from app.core.jwt_auth import get_current_user, TokenData
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import Boolean, Column, DateTime, Float, String, Text, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.core.jwt_auth import TokenData, get_current_user
 from app.utils.db import session_dependency
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./projects.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -25,7 +28,9 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 class ProjectDB(Base):
     __tablename__ = "projects"
 
-    id = Column(String, primary_key=True, default=lambda: f"proj_{uuid.uuid4().hex[:8]}")
+    id = Column(
+        String, primary_key=True, default=lambda: f"proj_{uuid.uuid4().hex[:8]}"
+    )
     name = Column(String, nullable=False, index=True)
     description = Column(Text, nullable=True)
     location = Column(String, nullable=True)
@@ -49,6 +54,7 @@ get_db = session_dependency(SessionLocal)
 # Pydantic models
 class ProjectCreate(BaseModel):
     """Project creation model."""
+
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
     location: Optional[str] = Field(None, max_length=200)
@@ -59,6 +65,7 @@ class ProjectCreate(BaseModel):
 
 class ProjectUpdate(BaseModel):
     """Project update model."""
+
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
     location: Optional[str] = Field(None, max_length=200)
@@ -69,6 +76,7 @@ class ProjectUpdate(BaseModel):
 
 class ProjectResponse(BaseModel):
     """Project response model."""
+
     id: str
     name: str
     description: Optional[str]
@@ -90,7 +98,7 @@ class ProjectResponse(BaseModel):
 async def create_project(
     project_data: ProjectCreate,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new project for the authenticated user."""
 
@@ -102,7 +110,7 @@ async def create_project(
         project_type=project_data.project_type,
         status=project_data.status,
         budget=project_data.budget,
-        owner_email=current_user.email  # Use authenticated user's email
+        owner_email=current_user.email,  # Use authenticated user's email
     )
 
     db.add(db_project)
@@ -113,15 +121,15 @@ async def create_project(
 
 
 @router.get("/list", response_model=List[ProjectResponse])
-async def list_projects(
-    db: Session = Depends(get_db),
-    skip: int = 0,
-    limit: int = 100
-):
+async def list_projects(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     """List all active projects (no auth required for viewing)."""
-    projects = db.query(ProjectDB).filter(
-        ProjectDB.is_active == True
-    ).offset(skip).limit(limit).all()
+    projects = (
+        db.query(ProjectDB)
+        .filter(ProjectDB.is_active == True)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
     return [ProjectResponse.model_validate(p) for p in projects]
 
@@ -130,13 +138,14 @@ async def list_projects(
 async def get_project(
     project_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get a specific project by ID."""
-    project = db.query(ProjectDB).filter(
-        ProjectDB.id == project_id,
-        ProjectDB.owner_email == current_user.email
-    ).first()
+    project = (
+        db.query(ProjectDB)
+        .filter(ProjectDB.id == project_id, ProjectDB.owner_email == current_user.email)
+        .first()
+    )
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -149,13 +158,14 @@ async def update_project(
     project_id: str,
     project_update: ProjectUpdate,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update a project (must be owner)."""
-    project = db.query(ProjectDB).filter(
-        ProjectDB.id == project_id,
-        ProjectDB.owner_email == current_user.email
-    ).first()
+    project = (
+        db.query(ProjectDB)
+        .filter(ProjectDB.id == project_id, ProjectDB.owner_email == current_user.email)
+        .first()
+    )
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -177,13 +187,14 @@ async def update_project(
 async def delete_project(
     project_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Soft delete a project (marks as inactive) - must be owner."""
-    project = db.query(ProjectDB).filter(
-        ProjectDB.id == project_id,
-        ProjectDB.owner_email == current_user.email
-    ).first()
+    project = (
+        db.query(ProjectDB)
+        .filter(ProjectDB.id == project_id, ProjectDB.owner_email == current_user.email)
+        .first()
+    )
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -197,16 +208,12 @@ async def delete_project(
 
 
 @router.get("/stats/summary")
-async def get_project_stats(
-    db: Session = Depends(get_db)
-):
+async def get_project_stats(db: Session = Depends(get_db)):
     """Get project statistics (temporarily without auth for testing)."""
     # Temporarily disabled authentication for testing
     # current_user: TokenData = Depends(get_current_user)
     # ProjectDB.owner_email == current_user.email,
-    projects = db.query(ProjectDB).filter(
-        ProjectDB.is_active == True
-    ).all()
+    projects = db.query(ProjectDB).filter(ProjectDB.is_active == True).all()
 
     total_budget = sum(p.budget for p in projects if p.budget)
     status_counts = {}
@@ -215,11 +222,15 @@ async def get_project_stats(
     for project in projects:
         status_counts[project.status] = status_counts.get(project.status, 0) + 1
         if project.project_type:
-            type_counts[project.project_type] = type_counts.get(project.project_type, 0) + 1
+            type_counts[project.project_type] = (
+                type_counts.get(project.project_type, 0) + 1
+            )
 
-    active_count = (status_counts.get("planning", 0) +
-                    status_counts.get("approval", 0) +
-                    status_counts.get("construction", 0))
+    active_count = (
+        status_counts.get("planning", 0)
+        + status_counts.get("approval", 0)
+        + status_counts.get("construction", 0)
+    )
 
     return {
         "total_projects": len(projects),
@@ -231,5 +242,5 @@ async def get_project_stats(
         "recent_projects": [
             {"id": p.id, "name": p.name, "created_at": p.created_at}
             for p in sorted(projects, key=lambda x: x.created_at, reverse=True)[:5]
-        ]
+        ],
     }

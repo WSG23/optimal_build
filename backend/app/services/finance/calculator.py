@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
 from typing import Union
 
@@ -208,7 +208,7 @@ def dscr_timeline(
     entries: list[DscrEntry] = []
     with localcontext() as ctx:
         ctx.prec = precision
-        for idx, (noi, debt) in enumerate(zip(incomes, services)):
+        for idx, (noi, debt) in enumerate(zip(incomes, services, strict=False)):
             period = period_labels[idx] if period_labels else idx
             quantized_noi = _quantize_currency(noi)
             quantized_debt = _quantize_currency(debt)

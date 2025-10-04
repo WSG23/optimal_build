@@ -1,15 +1,18 @@
 """JWT Authentication utilities."""
 
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-from jose import jwt, JWTError
-from fastapi import HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
 import os
+from datetime import datetime, timedelta
+from typing import Any, Dict
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from pydantic import BaseModel
 
 # Configuration - read SECRET_KEY from environment variable
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key-for-development-only-do-not-use-in-production")
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "fallback-secret-key-for-development-only-do-not-use-in-production"
+)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7
@@ -20,6 +23,7 @@ security = HTTPBearer()
 
 class TokenData(BaseModel):
     """Token payload data."""
+
     email: str
     username: str
     user_id: str
@@ -27,6 +31,7 @@ class TokenData(BaseModel):
 
 class TokenResponse(BaseModel):
     """Token response model."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -77,7 +82,9 @@ def verify_token(token: str, token_type: str = "access") -> TokenData:
         raise credentials_exception
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> TokenData:
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> TokenData:
     """Get current user from JWT token."""
     token = credentials.credentials
     return verify_token(token, token_type="access")
@@ -88,13 +95,10 @@ def create_tokens(user_data: Dict[str, Any]) -> TokenResponse:
     token_data = {
         "email": user_data["email"],
         "username": user_data["username"],
-        "user_id": user_data["id"]
+        "user_id": user_data["id"],
     }
 
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token
-    )
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)

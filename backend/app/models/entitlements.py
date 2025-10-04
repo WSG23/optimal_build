@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Optional
 from datetime import date, datetime
 from enum import Enum
+from typing import Optional
 
 from sqlalchemy import (
     CheckConstraint,
@@ -197,7 +197,9 @@ class EntRoadmapItem(BaseModel):
     status: Mapped[EntRoadmapStatus] = mapped_column(
         SAEnum(EntRoadmapStatus, name="ent_roadmap_status"), nullable=False
     )
-    status_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    status_changed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True)
+    )
     target_submission_date: Mapped[Optional[date]] = mapped_column(Date)
     target_decision_date: Mapped[Optional[date]] = mapped_column(Date)
     actual_submission_date: Mapped[Optional[date]] = mapped_column(Date)

@@ -18,7 +18,6 @@ from datetime import date, datetime, time
 
 import httpx
 import structlog
-
 from backend._compat import compat_dataclass
 from backend._compat.datetime import UTC
 from core.canonical_models import ProvenanceRecord

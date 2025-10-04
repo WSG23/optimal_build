@@ -6,17 +6,18 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 from uuid import UUID
 
+from app.models.singapore_property import ComplianceStatus, SingaporeProperty
+from app.utils.singapore_compliance import update_property_compliance
 from prefect import flow
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.models.singapore_property import SingaporeProperty, ComplianceStatus
-from app.utils.singapore_compliance import update_property_compliance
-
 DEFAULT_BATCH_SIZE = 50
 
 
-def _build_property_query(property_ids: Iterable[UUID] | None) -> Select[tuple[SingaporeProperty]]:
+def _build_property_query(
+    property_ids: Iterable[UUID] | None,
+) -> Select[tuple[SingaporeProperty]]:
     stmt = select(SingaporeProperty).order_by(SingaporeProperty.updated_at.desc())
     if property_ids:
         stmt = stmt.where(SingaporeProperty.id.in_(list(property_ids)))
@@ -61,8 +62,12 @@ async def refresh_singapore_compliance(
 
         for record in properties:
             updated = await update_property_compliance(record, session)
-            bca_status = getattr(updated, "bca_compliance_status", ComplianceStatus.PENDING)
-            ura_status = getattr(updated, "ura_compliance_status", ComplianceStatus.PENDING)
+            bca_status = getattr(
+                updated, "bca_compliance_status", ComplianceStatus.PENDING
+            )
+            ura_status = getattr(
+                updated, "ura_compliance_status", ComplianceStatus.PENDING
+            )
             results.append(
                 {
                     "property_id": str(updated.id),

@@ -44,11 +44,13 @@ def _normalise_project_id(project_id: str | int | UUID) -> UUID:
         return project_id
     if isinstance(project_id, int):
         if project_id < 0:
-            raise HTTPException(status_code=422, detail="project_id must be non-negative")
+            raise HTTPException(
+                status_code=422, detail="project_id must be non-negative"
+            )
         return UUID(int=project_id)
     try:
         return UUID(project_id)
-    except (AttributeError, TypeError, ValueError) as exc:
+    except (AttributeError, TypeError, ValueError):
         raise HTTPException(status_code=422, detail="project_id must be a valid UUID")
 
 

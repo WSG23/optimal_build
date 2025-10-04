@@ -1,8 +1,8 @@
 """Unicode handling in compliance summaries."""
 
-from datetime import datetime
 import importlib
 import sys
+from datetime import datetime
 
 from tests.helpers import ensure_sqlite_uuid, install_property_stub
 

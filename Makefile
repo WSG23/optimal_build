@@ -122,17 +122,14 @@ $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
 
 install: venv ## Install dependencies (alias)
 
-format: ## Format code (tests only)
-	@[ -d backend/tests ] && $(BLACK) backend/tests || true
-	@[ -d tests ] && $(BLACK) tests || true
+format: ## Format code (all Python files)
+	@$(BLACK) backend/app/ backend/tests/ tests/ || true
 
-format-check: ## Check formatting (tests only)
-	@[ -d backend/tests ] && $(BLACK) --check backend/tests || true
-	@[ -d tests ] && $(BLACK) --check tests || true
+format-check: ## Check formatting (all Python files)
+	@$(BLACK) --check backend/app/ backend/tests/ tests/ || true
 
-lint: ## Run linting (tests only)
-	@[ -d backend/tests ] && $(FLAKE8) backend/tests || true
-	@[ -d tests ] && $(FLAKE8) tests || true
+lint: ## Run linting (all Python files)
+	@$(FLAKE8) backend/app/ backend/tests/ tests/ || true
 
 hooks: ## Run pre-commit hooks across the repository
 	@if command -v $(PRE_COMMIT) >/dev/null 2>&1; then \

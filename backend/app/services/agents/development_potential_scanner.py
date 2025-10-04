@@ -1,30 +1,30 @@
 """Development Potential Scanner for analyzing property development opportunities."""
 
-from typing import Dict, List, Optional, Any
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, insert
-from pydantic import BaseModel
-
-from app.models.property import (
-    Property, PropertyType, DevelopmentAnalysis,
-    TenureType, PropertyStatus
-)
-from app.services.buildable import BuildableService, BuildableInput
-from app.services.finance.calculator import FinanceCalculator
-from app.services.agents.ura_integration import URAIntegrationService
-from app.core.database import get_session
 import structlog
+from app.models.property import (
+    DevelopmentAnalysis,
+    Property,
+    PropertyType,
+    TenureType,
+)
+from app.services.agents.ura_integration import URAIntegrationService
+from app.services.buildable import BuildableInput, BuildableService
+from app.services.finance.calculator import FinanceCalculator
+from pydantic import BaseModel
+from sqlalchemy import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger()
 
 
 class DevelopmentScenario(BaseModel):
     """A development scenario for a property."""
+
     scenario_type: str
     description: str
     gfa_potential: float
@@ -41,6 +41,7 @@ class DevelopmentScenario(BaseModel):
 
 class RawLandAnalysis(BaseModel):
     """Analysis results for raw land development."""
+
     gfa_potential: float
     optimal_use_mix: Dict[str, float]
     development_scenarios: List[DevelopmentScenario]
@@ -51,6 +52,7 @@ class RawLandAnalysis(BaseModel):
 
 class ExistingBuildingAnalysis(BaseModel):
     """Analysis results for existing building redevelopment."""
+
     current_gfa: float
     redevelopment_gfa_potential: float
     renovation_potential: Dict[str, Any]
@@ -62,6 +64,7 @@ class ExistingBuildingAnalysis(BaseModel):
 
 class HistoricalPropertyAnalysis(BaseModel):
     """Analysis results for historical/conservation properties."""
+
     heritage_value: str
     conservation_requirements: List[str]
     facade_preservation_needed: bool
@@ -78,7 +81,7 @@ class DevelopmentPotentialScanner:
         self,
         buildable_service: BuildableService,
         finance_calculator: FinanceCalculator,
-        ura_service: URAIntegrationService
+        ura_service: URAIntegrationService,
     ):
         self.buildable = buildable_service
         self.finance = finance_calculator
@@ -89,7 +92,7 @@ class DevelopmentPotentialScanner:
         property_data: Property,
         property_type: str,
         session: AsyncSession,
-        save_analysis: bool = True
+        save_analysis: bool = True,
     ) -> Dict[str, Any]:
         """
         Analyze development potential based on property type.
@@ -109,7 +112,9 @@ class DevelopmentPotentialScanner:
             elif property_type == "existing_building":
                 analysis = await self._analyze_existing_building(property_data, session)
             elif property_type == "historical_property":
-                analysis = await self._analyze_historical_property(property_data, session)
+                analysis = await self._analyze_historical_property(
+                    property_data, session
+                )
             else:
                 raise ValueError(f"Unknown property type for analysis: {property_type}")
 
@@ -126,9 +131,7 @@ class DevelopmentPotentialScanner:
             raise
 
     async def _analyze_raw_land(
-        self,
-        property_data: Property,
-        session: AsyncSession
+        self, property_data: Property, session: AsyncSession
     ) -> RawLandAnalysis:
         """Analyze raw land development potential."""
 
@@ -139,7 +142,7 @@ class DevelopmentPotentialScanner:
         buildable_input = BuildableInput(
             land_area=float(property_data.land_area_sqm or 0),
             zone_code=property_data.zoning_code or zoning_info.zone_code,
-            plot_ratio=float(property_data.plot_ratio or zoning_info.plot_ratio)
+            plot_ratio=float(property_data.plot_ratio or zoning_info.plot_ratio),
         )
 
         buildable_result = await self.buildable.calculate_parameters(buildable_input)
@@ -174,13 +177,11 @@ class DevelopmentPotentialScanner:
             development_scenarios=scenarios,
             site_constraints=site_constraints,
             development_opportunities=opportunities,
-            estimated_land_value=land_value
+            estimated_land_value=land_value,
         )
 
     async def _analyze_existing_building(
-        self,
-        property_data: Property,
-        session: AsyncSession
+        self, property_data: Property, session: AsyncSession
     ) -> ExistingBuildingAnalysis:
         """Analyze existing building redevelopment/renovation potential."""
 
@@ -193,7 +194,7 @@ class DevelopmentPotentialScanner:
         buildable_input = BuildableInput(
             land_area=float(property_data.land_area_sqm or 0),
             zone_code=property_data.zoning_code or zoning_info.zone_code,
-            plot_ratio=float(property_data.plot_ratio or zoning_info.plot_ratio)
+            plot_ratio=float(property_data.plot_ratio or zoning_info.plot_ratio),
         )
 
         buildable_result = await self.buildable.calculate_parameters(buildable_input)
@@ -228,13 +229,11 @@ class DevelopmentPotentialScanner:
             adaptive_reuse_options=adaptive_reuse,
             asset_enhancement_opportunities=aei_opportunities,
             estimated_redevelopment_cost=redevelopment_cost,
-            projected_value_uplift=value_uplift
+            projected_value_uplift=value_uplift,
         )
 
     async def _analyze_historical_property(
-        self,
-        property_data: Property,
-        session: AsyncSession
+        self, property_data: Property, session: AsyncSession
     ) -> HistoricalPropertyAnalysis:
         """Analyze historical/conservation property development potential."""
 
@@ -246,7 +245,9 @@ class DevelopmentPotentialScanner:
 
         # Check facade preservation needs
         facade_preservation = property_data.conservation_status in [
-            "conserved", "monument", "heritage"
+            "conserved",
+            "monument",
+            "heritage",
         ]
 
         # Allowable modifications
@@ -272,13 +273,11 @@ class DevelopmentPotentialScanner:
             allowable_modifications=allowable_mods,
             adaptive_reuse_potential=adaptive_reuse,
             grant_opportunities=grants,
-            special_considerations=special_considerations
+            special_considerations=special_considerations,
         )
 
     def _determine_optimal_use_mix(
-        self,
-        zoning_info: Any,
-        location: Any
+        self, zoning_info: Any, location: Any
     ) -> Dict[str, float]:
         """Determine optimal use mix based on zoning and market conditions."""
 
@@ -287,14 +286,11 @@ class DevelopmentPotentialScanner:
             "Commercial": {"office": 0.7, "retail": 0.3},
             "Business": {"office": 0.5, "light_industrial": 0.3, "retail": 0.2},
             "Mixed Use": {"residential": 0.6, "retail": 0.2, "office": 0.2},
-            "Residential": {"residential": 0.9, "retail": 0.1}
+            "Residential": {"residential": 0.9, "retail": 0.1},
         }
 
         # Get base template
-        base_mix = use_mix_templates.get(
-            zoning_info.zone_description,
-            {"mixed": 1.0}
-        )
+        base_mix = use_mix_templates.get(zoning_info.zone_description, {"mixed": 1.0})
 
         # TODO: Adjust based on market conditions and location factors
 
@@ -305,7 +301,7 @@ class DevelopmentPotentialScanner:
         property_data: Property,
         gfa_potential: float,
         optimal_use_mix: Dict[str, float],
-        zoning_info: Any
+        zoning_info: Any,
     ) -> List[DevelopmentScenario]:
         """Generate multiple development scenarios."""
 
@@ -316,19 +312,21 @@ class DevelopmentPotentialScanner:
         optimal_revenue = gfa_potential * 8000  # $8000 per sqm sales price
         optimal_roi = ((optimal_revenue - optimal_cost) / optimal_cost) * 100
 
-        scenarios.append(DevelopmentScenario(
-            scenario_type="optimal_mix",
-            description="Development following recommended use mix",
-            gfa_potential=gfa_potential,
-            use_mix=optimal_use_mix,
-            estimated_cost=optimal_cost,
-            estimated_revenue=optimal_revenue,
-            projected_roi=optimal_roi,
-            timeline_months=36,
-            indicative_timeline="36 months (concept to completion)",
-            constraints=["Market dependent", "Financing required"],
-            opportunities=["Strong location", "Growing demand"]
-        ))
+        scenarios.append(
+            DevelopmentScenario(
+                scenario_type="optimal_mix",
+                description="Development following recommended use mix",
+                gfa_potential=gfa_potential,
+                use_mix=optimal_use_mix,
+                estimated_cost=optimal_cost,
+                estimated_revenue=optimal_revenue,
+                projected_roi=optimal_roi,
+                timeline_months=36,
+                indicative_timeline="36 months (concept to completion)",
+                constraints=["Market dependent", "Financing required"],
+                opportunities=["Strong location", "Growing demand"],
+            )
+        )
 
         # Scenario 2: Single use development
         if len(optimal_use_mix) > 1:
@@ -340,19 +338,21 @@ class DevelopmentPotentialScanner:
             single_revenue = gfa_potential * 7500
             single_roi = ((single_revenue - single_cost) / single_cost) * 100
 
-            scenarios.append(DevelopmentScenario(
-                scenario_type="single_use",
-                description=f"Single use development - {dominant_use[0]}",
-                gfa_potential=gfa_potential,
-                use_mix=single_use_mix,
-                estimated_cost=single_cost,
-                estimated_revenue=single_revenue,
-                projected_roi=single_roi,
-                timeline_months=30,
-                indicative_timeline="30 months (streamlined delivery)",
-                constraints=["Less flexibility", "Market concentration risk"],
-                opportunities=["Simpler execution", "Clear target market"]
-            ))
+            scenarios.append(
+                DevelopmentScenario(
+                    scenario_type="single_use",
+                    description=f"Single use development - {dominant_use[0]}",
+                    gfa_potential=gfa_potential,
+                    use_mix=single_use_mix,
+                    estimated_cost=single_cost,
+                    estimated_revenue=single_revenue,
+                    projected_roi=single_roi,
+                    timeline_months=30,
+                    indicative_timeline="30 months (streamlined delivery)",
+                    constraints=["Less flexibility", "Market concentration risk"],
+                    opportunities=["Simpler execution", "Clear target market"],
+                )
+            )
 
         # Scenario 3: Phased development
         if gfa_potential > 50000:  # Only for large sites
@@ -360,26 +360,30 @@ class DevelopmentPotentialScanner:
             phase1_cost = phase1_gfa * 3200
             phase1_revenue = phase1_gfa * 7800
 
-            scenarios.append(DevelopmentScenario(
-                scenario_type="phased",
-                description="Phased development approach",
-                gfa_potential=phase1_gfa,
-                use_mix=optimal_use_mix,
-                estimated_cost=phase1_cost,
-                estimated_revenue=phase1_revenue,
-                projected_roi=((phase1_revenue - phase1_cost) / phase1_cost) * 100,
-                timeline_months=24,
-                indicative_timeline="24 months for initial phase",
-                constraints=["Requires master planning", "Longer overall timeline"],
-                opportunities=["Risk mitigation", "Market flexibility", "Cash flow management"]
-            ))
+            scenarios.append(
+                DevelopmentScenario(
+                    scenario_type="phased",
+                    description="Phased development approach",
+                    gfa_potential=phase1_gfa,
+                    use_mix=optimal_use_mix,
+                    estimated_cost=phase1_cost,
+                    estimated_revenue=phase1_revenue,
+                    projected_roi=((phase1_revenue - phase1_cost) / phase1_cost) * 100,
+                    timeline_months=24,
+                    indicative_timeline="24 months for initial phase",
+                    constraints=["Requires master planning", "Longer overall timeline"],
+                    opportunities=[
+                        "Risk mitigation",
+                        "Market flexibility",
+                        "Cash flow management",
+                    ],
+                )
+            )
 
         return scenarios
 
     def _identify_site_constraints(
-        self,
-        property_data: Property,
-        zoning_info: Any
+        self, property_data: Property, zoning_info: Any
     ) -> List[str]:
         """Identify site development constraints."""
 
@@ -412,14 +416,17 @@ class DevelopmentPotentialScanner:
         property_id: UUID,
         analysis_type: str,
         analysis_result: Any,
-        session: AsyncSession
+        session: AsyncSession,
     ):
         """Save analysis results to database."""
 
         # Prepare a lightweight financial summary for storage
         financial_summary = None
         recommended_scenario = None
-        if hasattr(analysis_result, 'development_scenarios') and analysis_result.development_scenarios:
+        if (
+            hasattr(analysis_result, "development_scenarios")
+            and analysis_result.development_scenarios
+        ):
             optimal = analysis_result.development_scenarios[0]
             recommended_scenario = optimal.scenario_type
             financial_summary = {
@@ -434,14 +441,22 @@ class DevelopmentPotentialScanner:
             "property_id": property_id,
             "analysis_type": analysis_type,
             "analysis_date": datetime.utcnow(),
-            "gfa_potential_sqm": getattr(analysis_result, 'gfa_potential', None),
-            "optimal_use_mix": getattr(analysis_result, 'optimal_use_mix', None),
-            "site_constraints": {"constraints": getattr(analysis_result, 'site_constraints', [])},
-            "development_opportunities": {"opportunities": getattr(analysis_result, 'development_opportunities', [])},
-            "development_scenarios": [s.dict() for s in getattr(analysis_result, 'development_scenarios', [])],
+            "gfa_potential_sqm": getattr(analysis_result, "gfa_potential", None),
+            "optimal_use_mix": getattr(analysis_result, "optimal_use_mix", None),
+            "site_constraints": {
+                "constraints": getattr(analysis_result, "site_constraints", [])
+            },
+            "development_opportunities": {
+                "opportunities": getattr(
+                    analysis_result, "development_opportunities", []
+                )
+            },
+            "development_scenarios": [
+                s.dict() for s in getattr(analysis_result, "development_scenarios", [])
+            ],
             "value_add_potential": financial_summary,
             "recommended_scenario": recommended_scenario,
-            "confidence_level": Decimal("0.75")  # Default confidence
+            "confidence_level": Decimal("0.75"),  # Default confidence
         }
 
         stmt = insert(DevelopmentAnalysis).values(**analysis_record)
@@ -453,10 +468,7 @@ class DevelopmentPotentialScanner:
     # Additional helper methods for specific analysis types
 
     async def _identify_opportunities(
-        self,
-        property_data: Property,
-        zoning_info: Any,
-        use_mix: Dict[str, float]
+        self, property_data: Property, zoning_info: Any, use_mix: Dict[str, float]
     ) -> List[str]:
         """Identify development opportunities."""
         opportunities = []
@@ -478,10 +490,7 @@ class DevelopmentPotentialScanner:
         return opportunities
 
     async def _estimate_land_value(
-        self,
-        property_data: Property,
-        gfa_potential: float,
-        use_mix: Dict[str, float]
+        self, property_data: Property, gfa_potential: float, use_mix: Dict[str, float]
     ) -> float:
         """Estimate land value based on development potential."""
         # Simplified land value calculation
@@ -492,7 +501,7 @@ class DevelopmentPotentialScanner:
             "retail": 3000,
             "residential": 2000,
             "industrial": 800,
-            "mixed": 2200
+            "mixed": 2200,
         }
 
         # Calculate weighted average PSF
@@ -510,9 +519,7 @@ class DevelopmentPotentialScanner:
         return land_value
 
     async def _analyze_renovation_potential(
-        self,
-        property_data: Property,
-        current_gfa: float
+        self, property_data: Property, current_gfa: float
     ) -> Dict[str, Any]:
         """Analyze renovation and upgrading potential."""
 
@@ -524,30 +531,34 @@ class DevelopmentPotentialScanner:
             "facade_upgrade": {
                 "feasible": building_age and building_age > 15,
                 "estimated_cost_psm": 500,
-                "value_uplift_percentage": 5
+                "value_uplift_percentage": 5,
             },
             "mep_upgrade": {  # Mechanical, Electrical, Plumbing
                 "feasible": building_age and building_age > 20,
                 "estimated_cost_psm": 800,
-                "value_uplift_percentage": 10
+                "value_uplift_percentage": 10,
             },
             "space_reconfiguration": {
                 "feasible": True,
                 "estimated_cost_psm": 1200,
-                "value_uplift_percentage": 15
+                "value_uplift_percentage": 15,
             },
             "green_certification": {
                 "feasible": True,
                 "estimated_cost_psm": 300,
                 "value_uplift_percentage": 8,
-                "additional_benefits": ["Lower operating costs", "Tenant attraction"]
+                "additional_benefits": ["Lower operating costs", "Tenant attraction"],
             },
             "technology_upgrade": {
                 "feasible": True,
                 "estimated_cost_psm": 400,
                 "value_uplift_percentage": 12,
-                "features": ["Smart building systems", "IoT integration", "Touchless access"]
-            }
+                "features": [
+                    "Smart building systems",
+                    "IoT integration",
+                    "Touchless access",
+                ],
+            },
         }
 
         # Calculate total potential
@@ -566,15 +577,15 @@ class DevelopmentPotentialScanner:
         renovation_potential["summary"] = {
             "total_estimated_cost": total_cost,
             "total_value_uplift_percentage": min(total_uplift, 40),  # Cap at 40%
-            "recommended_approach": "Phased renovation" if total_cost > 10000000 else "Single phase"
+            "recommended_approach": (
+                "Phased renovation" if total_cost > 10000000 else "Single phase"
+            ),
         }
 
         return renovation_potential
 
     def _identify_adaptive_reuse_options(
-        self,
-        property_data: Property,
-        zoning_info: Any
+        self, property_data: Property, zoning_info: Any
     ) -> List[Dict[str, Any]]:
         """Identify adaptive reuse possibilities."""
 
@@ -585,59 +596,71 @@ class DevelopmentPotentialScanner:
 
         # Office to Residential conversion
         if current_type == PropertyType.OFFICE and "Residential" in allowed_uses:
-            reuse_options.append({
-                "conversion_type": "Office to Residential",
-                "feasibility": "High" if property_data.year_built and property_data.year_built < 2000 else "Medium",
-                "key_considerations": [
-                    "Floor plate suitability",
-                    "Natural ventilation requirements",
-                    "Plumbing modifications"
-                ],
-                "estimated_timeline_months": 18,
-                "market_demand": "High"
-            })
+            reuse_options.append(
+                {
+                    "conversion_type": "Office to Residential",
+                    "feasibility": (
+                        "High"
+                        if property_data.year_built and property_data.year_built < 2000
+                        else "Medium"
+                    ),
+                    "key_considerations": [
+                        "Floor plate suitability",
+                        "Natural ventilation requirements",
+                        "Plumbing modifications",
+                    ],
+                    "estimated_timeline_months": 18,
+                    "market_demand": "High",
+                }
+            )
 
         # Industrial to Creative Space
         if current_type == PropertyType.INDUSTRIAL:
-            reuse_options.append({
-                "conversion_type": "Industrial to Creative/Tech Space",
-                "feasibility": "High",
-                "key_considerations": [
-                    "High ceiling advantage",
-                    "Open floor plates",
-                    "Parking requirements"
-                ],
-                "estimated_timeline_months": 12,
-                "market_demand": "Medium"
-            })
+            reuse_options.append(
+                {
+                    "conversion_type": "Industrial to Creative/Tech Space",
+                    "feasibility": "High",
+                    "key_considerations": [
+                        "High ceiling advantage",
+                        "Open floor plates",
+                        "Parking requirements",
+                    ],
+                    "estimated_timeline_months": 12,
+                    "market_demand": "Medium",
+                }
+            )
 
         # Retail to Mixed Use
         if current_type == PropertyType.RETAIL and "Mixed" in str(allowed_uses):
-            reuse_options.append({
-                "conversion_type": "Retail to Mixed-Use",
-                "feasibility": "Medium",
-                "key_considerations": [
-                    "Upper floor conversion potential",
-                    "Separate access requirements",
-                    "Service requirements"
-                ],
-                "estimated_timeline_months": 24,
-                "market_demand": "High"
-            })
+            reuse_options.append(
+                {
+                    "conversion_type": "Retail to Mixed-Use",
+                    "feasibility": "Medium",
+                    "key_considerations": [
+                        "Upper floor conversion potential",
+                        "Separate access requirements",
+                        "Service requirements",
+                    ],
+                    "estimated_timeline_months": 24,
+                    "market_demand": "High",
+                }
+            )
 
         # Hotel to Service Apartment/Co-living
         if current_type == PropertyType.HOTEL:
-            reuse_options.append({
-                "conversion_type": "Hotel to Service Apartments",
-                "feasibility": "High",
-                "key_considerations": [
-                    "Existing room layouts advantageous",
-                    "Kitchen additions needed",
-                    "Regulatory compliance"
-                ],
-                "estimated_timeline_months": 9,
-                "market_demand": "High"
-            })
+            reuse_options.append(
+                {
+                    "conversion_type": "Hotel to Service Apartments",
+                    "feasibility": "High",
+                    "key_considerations": [
+                        "Existing room layouts advantageous",
+                        "Kitchen additions needed",
+                        "Regulatory compliance",
+                    ],
+                    "estimated_timeline_months": 9,
+                    "market_demand": "High",
+                }
+            )
 
         return reuse_options
 
@@ -659,37 +682,43 @@ class DevelopmentPotentialScanner:
 
         # Type-specific opportunities
         if property_data.property_type == PropertyType.OFFICE:
-            opportunities.extend([
-                "Convert to flexible workspace",
-                "Add wellness amenities",
-                "Implement touchless technologies"
-            ])
+            opportunities.extend(
+                [
+                    "Convert to flexible workspace",
+                    "Add wellness amenities",
+                    "Implement touchless technologies",
+                ]
+            )
         elif property_data.property_type == PropertyType.RETAIL:
-            opportunities.extend([
-                "Add F&B components",
-                "Create experiential retail spaces",
-                "Integrate online-offline retail"
-            ])
+            opportunities.extend(
+                [
+                    "Add F&B components",
+                    "Create experiential retail spaces",
+                    "Integrate online-offline retail",
+                ]
+            )
         elif property_data.property_type == PropertyType.INDUSTRIAL:
-            opportunities.extend([
-                "Add ramp-up logistics facilities",
-                "Increase floor loading capacity",
-                "Install solar panels on roof"
-            ])
+            opportunities.extend(
+                [
+                    "Add ramp-up logistics facilities",
+                    "Increase floor loading capacity",
+                    "Install solar panels on roof",
+                ]
+            )
 
         # Universal opportunities
-        opportunities.extend([
-            "Achieve green building certification",
-            "Implement smart building technologies",
-            "Improve accessibility features"
-        ])
+        opportunities.extend(
+            [
+                "Achieve green building certification",
+                "Implement smart building technologies",
+                "Improve accessibility features",
+            ]
+        )
 
         return opportunities
 
     async def _estimate_redevelopment_cost(
-        self,
-        property_data: Property,
-        new_gfa: float
+        self, property_data: Property, new_gfa: float
     ) -> float:
         """Estimate redevelopment cost."""
 
@@ -700,7 +729,7 @@ class DevelopmentPotentialScanner:
             PropertyType.RESIDENTIAL: 3000,
             PropertyType.INDUSTRIAL: 2000,
             PropertyType.HOTEL: 4500,
-            PropertyType.MIXED_USE: 3800
+            PropertyType.MIXED_USE: 3800,
         }
 
         base_cost_psm = base_costs.get(property_data.property_type, 3500)
@@ -724,7 +753,7 @@ class DevelopmentPotentialScanner:
         self,
         property_data: Property,
         renovation_potential: Dict[str, Any],
-        redevelopment_gfa: float
+        redevelopment_gfa: float,
     ) -> float:
         """Calculate potential value uplift from renovation or redevelopment."""
 
@@ -742,8 +771,7 @@ class DevelopmentPotentialScanner:
 
         # Return the better option
         return max(
-            renovation_value - current_value,
-            redevelopment_value - current_value
+            renovation_value - current_value, redevelopment_value - current_value
         )
 
     def _assess_heritage_value(self, property_data: Property) -> str:
@@ -766,27 +794,29 @@ class DevelopmentPotentialScanner:
         requirements = []
 
         if property_data.is_conservation:
-            requirements.extend([
-                "Maintain original facade",
-                "Preserve key architectural features",
-                "Use appropriate materials for restoration",
-                "Submit plans to URA Conservation team",
-                "Engage qualified conservation architect"
-            ])
+            requirements.extend(
+                [
+                    "Maintain original facade",
+                    "Preserve key architectural features",
+                    "Use appropriate materials for restoration",
+                    "Submit plans to URA Conservation team",
+                    "Engage qualified conservation architect",
+                ]
+            )
 
             if property_data.conservation_status == "monument":
-                requirements.extend([
-                    "No structural alterations allowed",
-                    "Interior features must be preserved",
-                    "Regular maintenance inspections required"
-                ])
+                requirements.extend(
+                    [
+                        "No structural alterations allowed",
+                        "Interior features must be preserved",
+                        "Regular maintenance inspections required",
+                    ]
+                )
 
         return requirements
 
     def _get_allowable_modifications(
-        self,
-        property_data: Property,
-        conservation_requirements: List[str]
+        self, property_data: Property, conservation_requirements: List[str]
     ) -> List[str]:
         """Determine allowable modifications for heritage properties."""
 
@@ -796,82 +826,98 @@ class DevelopmentPotentialScanner:
         allowable = []
 
         if property_data.conservation_status != "monument":
-            allowable.extend([
-                "Internal reconfiguration (non-structural)",
-                "Rear additions (subject to guidelines)",
-                "Roof additions (setback required)",
-                "Basement excavation (with precautions)",
-                "Modern services integration"
-            ])
+            allowable.extend(
+                [
+                    "Internal reconfiguration (non-structural)",
+                    "Rear additions (subject to guidelines)",
+                    "Roof additions (setback required)",
+                    "Basement excavation (with precautions)",
+                    "Modern services integration",
+                ]
+            )
         else:
-            allowable.extend([
-                "Reversible installations only",
-                "Sensitive lighting additions",
-                "Conservation-grade repairs",
-                "Interpretive displays"
-            ])
+            allowable.extend(
+                [
+                    "Reversible installations only",
+                    "Sensitive lighting additions",
+                    "Conservation-grade repairs",
+                    "Interpretive displays",
+                ]
+            )
 
         return allowable
 
     def _get_heritage_adaptive_reuse_options(
-        self,
-        property_data: Property
+        self, property_data: Property
     ) -> List[Dict[str, Any]]:
         """Get adaptive reuse options specific to heritage buildings."""
 
         options = []
 
         # Boutique hotel conversion
-        options.append({
-            "use": "Boutique Heritage Hotel",
-            "suitability": "High" if property_data.floors_above_ground and property_data.floors_above_ground >= 3 else "Medium",
-            "key_features": [
-                "Preserve historic character",
-                "Limited room count maintains exclusivity",
-                "Heritage tourism appeal"
-            ],
-            "challenges": ["Modern services integration", "Fire safety compliance"],
-            "precedents": ["Raffles Hotel", "Fullerton Hotel"]
-        })
+        options.append(
+            {
+                "use": "Boutique Heritage Hotel",
+                "suitability": (
+                    "High"
+                    if property_data.floors_above_ground
+                    and property_data.floors_above_ground >= 3
+                    else "Medium"
+                ),
+                "key_features": [
+                    "Preserve historic character",
+                    "Limited room count maintains exclusivity",
+                    "Heritage tourism appeal",
+                ],
+                "challenges": ["Modern services integration", "Fire safety compliance"],
+                "precedents": ["Raffles Hotel", "Fullerton Hotel"],
+            }
+        )
 
         # Cultural/Arts space
-        options.append({
-            "use": "Cultural/Arts Center",
-            "suitability": "High",
-            "key_features": [
-                "Public accessibility",
-                "Grant funding available",
-                "Community value"
-            ],
-            "challenges": ["Revenue generation", "Ongoing maintenance"],
-            "precedents": ["National Gallery", "Arts House"]
-        })
+        options.append(
+            {
+                "use": "Cultural/Arts Center",
+                "suitability": "High",
+                "key_features": [
+                    "Public accessibility",
+                    "Grant funding available",
+                    "Community value",
+                ],
+                "challenges": ["Revenue generation", "Ongoing maintenance"],
+                "precedents": ["National Gallery", "Arts House"],
+            }
+        )
 
         # F&B destination
-        options.append({
-            "use": "Heritage F&B Destination",
-            "suitability": "High",
-            "key_features": [
-                "Character adds to dining experience",
-                "Multiple concepts possible",
-                "Tourist attraction"
-            ],
-            "challenges": ["Kitchen exhaust requirements", "Service access"],
-            "precedents": ["CHIJMES", "Alkaff Mansion"]
-        })
+        options.append(
+            {
+                "use": "Heritage F&B Destination",
+                "suitability": "High",
+                "key_features": [
+                    "Character adds to dining experience",
+                    "Multiple concepts possible",
+                    "Tourist attraction",
+                ],
+                "challenges": ["Kitchen exhaust requirements", "Service access"],
+                "precedents": ["CHIJMES", "Alkaff Mansion"],
+            }
+        )
 
         # Creative offices
-        options.append({
-            "use": "Heritage Creative Offices",
-            "suitability": "Medium",
-            "key_features": [
-                "Unique workspace environment",
-                "Appeals to creative industries",
-                "Premium rental potential"
-            ],
-            "challenges": ["Modern IT infrastructure", "Subdivision limitations"],
-            "precedents": ["The Working Capitol", "The Great Madras"]
-        })
+        options.append(
+            {
+                "use": "Heritage Creative Offices",
+                "suitability": "Medium",
+                "key_features": [
+                    "Unique workspace environment",
+                    "Appeals to creative industries",
+                    "Premium rental potential",
+                ],
+                "challenges": ["Modern IT infrastructure", "Subdivision limitations"],
+                "precedents": ["The Working Capitol", "The Great Madras"],
+            }
+        )
 
         return options
 
@@ -881,12 +927,14 @@ class DevelopmentPotentialScanner:
         grants = []
 
         if property_data.is_conservation:
-            grants.extend([
-                "URA Architectural Heritage Award (up to $1M)",
-                "National Heritage Board Conservation Grant",
-                "Business Improvement Fund (for heritage businesses)",
-                "STB Experience Step-Up Fund (for tourism uses)"
-            ])
+            grants.extend(
+                [
+                    "URA Architectural Heritage Award (up to $1M)",
+                    "National Heritage Board Conservation Grant",
+                    "Business Improvement Fund (for heritage businesses)",
+                    "STB Experience Step-Up Fund (for tourism uses)",
+                ]
+            )
 
             if property_data.conservation_status == "monument":
                 grants.append("National Monument Maintenance Grant (annual)")
@@ -898,8 +946,7 @@ class DevelopmentPotentialScanner:
         return grants
 
     def _get_heritage_special_considerations(
-        self,
-        property_data: Property
+        self, property_data: Property
     ) -> List[str]:
         """Get special considerations for heritage property development."""
 
@@ -909,14 +956,16 @@ class DevelopmentPotentialScanner:
             "Higher construction costs (20-40% premium)",
             "Limited contractor pool with conservation experience",
             "Potential archaeological requirements",
-            "Public and stakeholder consultation may be required"
+            "Public and stakeholder consultation may be required",
         ]
 
         if property_data.conservation_status == "monument":
-            considerations.extend([
-                "National Heritage Board approval required",
-                "Interpretive program development needed",
-                "Public access requirements"
-            ])
+            considerations.extend(
+                [
+                    "National Heritage Board approval required",
+                    "Interpretive program development needed",
+                    "Public access requirements",
+                ]
+            )
 
         return considerations

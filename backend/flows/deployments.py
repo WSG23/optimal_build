@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 async def create_default_deployments(work_queue: str = "default") -> None:
     """Register default deployments when Prefect is available."""
 
-    if Deployment is None or CronSchedule is None:  # pragma: no cover - graceful fallback
+    if (
+        Deployment is None or CronSchedule is None
+    ):  # pragma: no cover - graceful fallback
         logger.warning("Prefect is not installed; skipping deployment creation")
         return
 
@@ -42,7 +44,11 @@ async def create_default_deployments(work_queue: str = "default") -> None:
 
     await analytics_deployment.apply()
     await compliance_deployment.apply()
-    logger.info("Registered default Prefect deployments: %s, %s", analytics_deployment.name, compliance_deployment.name)
+    logger.info(
+        "Registered default Prefect deployments: %s, %s",
+        analytics_deployment.name,
+        compliance_deployment.name,
+    )
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation helper

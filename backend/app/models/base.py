@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import uuid as uuid_module
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
-import uuid as uuid_module
 
-from sqlalchemy import TypeDecorator, CHAR
+from sqlalchemy import CHAR, TypeDecorator
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase
 
@@ -18,11 +18,12 @@ class UUID(TypeDecorator):
     Uses PostgreSQL's UUID type when available, otherwise uses
     CHAR(36) storing UUIDs as strings for SQLite compatibility.
     """
+
     impl = CHAR
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(PGUUID(as_uuid=True))
         else:
             return dialect.type_descriptor(CHAR(36))
@@ -30,7 +31,7 @@ class UUID(TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
-        elif dialect.name == 'postgresql':
+        elif dialect.name == "postgresql":
             return value
         else:
             if isinstance(value, uuid_module.UUID):
@@ -40,7 +41,7 @@ class UUID(TypeDecorator):
     def process_result_value(self, value, dialect):
         if value is None:
             return value
-        elif dialect.name == 'postgresql':
+        elif dialect.name == "postgresql":
             return value
         else:
             if not isinstance(value, uuid_module.UUID):

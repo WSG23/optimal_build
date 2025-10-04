@@ -1,21 +1,31 @@
 """AI Agent models for Singapore Property Development Platform."""
 
+import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any
 
 from sqlalchemy import (
-    Column, String, Boolean, DateTime, ForeignKey, Text, JSON,
-    Enum as SQLEnum, Float, Integer
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
-import uuid
 
-from app.models.base import BaseModel, UUID
+from app.models.base import UUID, BaseModel
 
 
 class AIAgentType(str, Enum):
     """Types of AI agents in the system."""
+
     FEASIBILITY_ANALYST = "feasibility_analyst"
     REGULATORY_COMPLIANCE = "regulatory_compliance"
     COST_ESTIMATOR = "cost_estimator"
@@ -30,6 +40,7 @@ class AIAgentType(str, Enum):
 
 class AIAgentStatus(str, Enum):
     """Status of AI agents."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     MAINTENANCE = "maintenance"
@@ -47,7 +58,9 @@ class AIAgent(BaseModel):
     description = Column(Text)
     version = Column(String(50), nullable=False, default="1.0.0")
 
-    status = Column(SQLEnum(AIAgentStatus), default=AIAgentStatus.ACTIVE, nullable=False)
+    status = Column(
+        SQLEnum(AIAgentStatus), default=AIAgentStatus.ACTIVE, nullable=False
+    )
     is_enabled = Column(Boolean, default=True, nullable=False)
 
     # Model configuration
@@ -70,10 +83,14 @@ class AIAgent(BaseModel):
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
-    sessions = relationship("AIAgentSession", back_populates="agent", cascade="all, delete-orphan")
+    sessions = relationship(
+        "AIAgentSession", back_populates="agent", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<AIAgent {self.name} ({self.agent_type})>"
@@ -130,4 +147,6 @@ class AIAgentSession(BaseModel):
     # property = relationship("SingaporeProperty", back_populates="ai_sessions")  # Disabled - circular dependency issue
 
     def __repr__(self):
-        return f"<AIAgentSession {self.id} (Agent: {self.agent_id}, User: {self.user_id})>"
+        return (
+            f"<AIAgentSession {self.id} (Agent: {self.agent_id}, User: {self.user_id})>"
+        )

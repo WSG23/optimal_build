@@ -8,9 +8,6 @@ from decimal import Decimal
 from typing import Sequence
 from uuid import UUID, uuid4
 
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -18,8 +15,15 @@ from app.models.market import (
     PropertyType,
     YieldBenchmark,
 )
-from app.models.property import Property, PropertyStatus, TenureType
-from app.models.property import MarketTransaction, RentalListing
+from app.models.property import (
+    MarketTransaction,
+    Property,
+    PropertyStatus,
+    RentalListing,
+    TenureType,
+)
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 _DEMO_TAG = "market_demo"
 
@@ -40,8 +44,12 @@ class MarketDemoSummary:
 async def _purge_existing(session: AsyncSession) -> None:
     """Remove previously-seeded demo records."""
 
-    await session.execute(delete(MarketTransaction).where(MarketTransaction.data_source == _DEMO_TAG))
-    await session.execute(delete(RentalListing).where(RentalListing.listing_source == _DEMO_TAG))
+    await session.execute(
+        delete(MarketTransaction).where(MarketTransaction.data_source == _DEMO_TAG)
+    )
+    await session.execute(
+        delete(RentalListing).where(RentalListing.listing_source == _DEMO_TAG)
+    )
     await session.execute(
         delete(YieldBenchmark).where(
             YieldBenchmark.district == "D01",
@@ -49,9 +57,17 @@ async def _purge_existing(session: AsyncSession) -> None:
             YieldBenchmark.period_type == "monthly",
         )
     )
-    await session.execute(delete(AbsorptionTracking).where(AbsorptionTracking.project_name.ilike("Market Demo%")))
-    await session.execute(delete(MarketCycle).where(MarketCycle.market_segment == "Market Demo"))
-    await session.execute(delete(MarketIndex).where(MarketIndex.data_source == _DEMO_TAG))
+    await session.execute(
+        delete(AbsorptionTracking).where(
+            AbsorptionTracking.project_name.ilike("Market Demo%")
+        )
+    )
+    await session.execute(
+        delete(MarketCycle).where(MarketCycle.market_segment == "Market Demo")
+    )
+    await session.execute(
+        delete(MarketIndex).where(MarketIndex.data_source == _DEMO_TAG)
+    )
     await session.execute(delete(Property).where(Property.data_source == _DEMO_TAG))
     await session.commit()
 

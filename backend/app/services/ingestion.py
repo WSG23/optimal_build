@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from backend._compat.datetime import UTC
 from typing import Any, cast
 from uuid import uuid4
 
+from backend._compat.datetime import UTC
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefIngestionRun

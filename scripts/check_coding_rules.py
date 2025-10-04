@@ -17,8 +17,8 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Callable, Iterable, Optional
 
 
 def get_repo_root() -> Path:
@@ -56,9 +56,7 @@ def load_exceptions(repo_root: Path) -> dict[str, set[str]]:
 
     normalised: dict[str, set[str]] = {}
     for rule_key, paths in raw_exceptions.items():
-        normalised[rule_key] = {
-            _normalise_path(str(path)) for path in (paths or [])
-        }
+        normalised[rule_key] = {_normalise_path(str(path)) for path in (paths or [])}
     return normalised
 
 
@@ -136,8 +134,14 @@ def check_async_patterns(
 
     # Common anti-patterns
     sync_patterns = [
-        (r"from sqlalchemy\.orm import Session[^a-zA-Z]", "Use AsyncSession from sqlalchemy.ext.asyncio"),
-        (r"def\s+\w+\([^)]*session:\s*Session", "API functions should be async and use AsyncSession"),
+        (
+            r"from sqlalchemy\.orm import Session[^a-zA-Z]",
+            "Use AsyncSession from sqlalchemy.ext.asyncio",
+        ),
+        (
+            r"def\s+\w+\([^)]*session:\s*Session",
+            "API functions should be async and use AsyncSession",
+        ),
     ]
 
     for py_file in api_routes_dir.rglob("*.py"):
@@ -222,6 +226,7 @@ def check_singapore_compliance(
     should_run = False
     for file_path in modified_files:
         if any(file_path.startswith(prefix) for prefix in trigger_prefixes):
+            # Check if this specific file is excepted
             if is_exception(rule_key, file_path, exceptions):
                 continue
             should_run = True
@@ -229,6 +234,11 @@ def check_singapore_compliance(
 
     if not should_run:
         return True, []
+
+    # Also skip if any of the prefix patterns are in exceptions (for broader exemptions)
+    for prefix in trigger_prefixes:
+        if any(prefix in exc_path for exc_path in exceptions.get(rule_key, set())):
+            return True, []
 
     env = os.environ.copy()
     cmd = [

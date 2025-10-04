@@ -1,8 +1,9 @@
 """Simple test API for users - learning exercise."""
 
+from typing import Dict
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -12,6 +13,7 @@ fake_users_db: Dict[str, dict] = {}
 
 class UserSignup(BaseModel):
     """What the user sends to register."""
+
     email: str
     username: str
     full_name: str
@@ -20,6 +22,7 @@ class UserSignup(BaseModel):
 
 class UserResponse(BaseModel):
     """What we send back (never send password!)."""
+
     email: str
     username: str
     full_name: str
@@ -45,14 +48,14 @@ def signup(user: UserSignup):
         "email": user.email,
         "username": user.username,
         "full_name": user.full_name,
-        "password": user.password  # Never do this in production!
+        "password": user.password,  # Never do this in production!
     }
 
     return UserResponse(
         email=user.email,
         username=user.username,
         full_name=user.full_name,
-        message="User registered successfully!"
+        message="User registered successfully!",
     )
 
 
@@ -65,7 +68,4 @@ def list_users():
         safe_user = {k: v for k, v in user_data.items() if k != "password"}
         safe_users.append(safe_user)
 
-    return {
-        "users": safe_users,
-        "total": len(safe_users)
-    }
+    return {"users": safe_users, "total": len(safe_users)}

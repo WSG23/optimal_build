@@ -1,23 +1,32 @@
 """Project model for Singapore Property Development Platform."""
 
-from datetime import datetime, date
+import uuid
+from datetime import datetime
 from enum import Enum
-from decimal import Decimal
-from typing import Optional
 
 from sqlalchemy import (
-    Column, String, Float, Boolean, DateTime, Date, ForeignKey,
-    Text, JSON, Enum as SQLEnum, Integer, DECIMAL
+    DECIMAL,
+    JSON,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
 )
-
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import relationship
-import uuid
 
-from app.models.base import BaseModel, UUID
+from app.models.base import UUID, BaseModel
 
 
 class ProjectType(str, Enum):
     """Types of development projects."""
+
     NEW_DEVELOPMENT = "new_development"
     REDEVELOPMENT = "redevelopment"
     ADDITION_ALTERATION = "addition_alteration"
@@ -30,6 +39,7 @@ class ProjectType(str, Enum):
 
 class ProjectPhase(str, Enum):
     """Project development phases."""
+
     CONCEPT = "concept"
     FEASIBILITY = "feasibility"
     DESIGN = "design"
@@ -43,6 +53,7 @@ class ProjectPhase(str, Enum):
 
 class ApprovalStatus(str, Enum):
     """Regulatory approval status."""
+
     NOT_SUBMITTED = "not_submitted"
     PENDING = "pending"
     APPROVED = "approved"
@@ -67,12 +78,16 @@ class Project(BaseModel):
     # Foreign Keys
     # NOTE: Removed property_id - properties now link TO projects (one-to-many)
     # One project can have multiple properties (multiple street addresses)
-    owner_id = Column(UUID(), ForeignKey("users.id"), nullable=True)  # Made optional for MVP
+    owner_id = Column(
+        UUID(), ForeignKey("users.id"), nullable=True
+    )  # Made optional for MVP
     owner_email = Column(String(255))  # Simple email-based ownership for MVP
 
     # Project Classification
     project_type = Column(SQLEnum(ProjectType), nullable=False)
-    current_phase = Column(SQLEnum(ProjectPhase), default=ProjectPhase.CONCEPT, nullable=False)
+    current_phase = Column(
+        SQLEnum(ProjectPhase), default=ProjectPhase.CONCEPT, nullable=False
+    )
 
     # Timeline
     start_date = Column(Date)
@@ -82,14 +97,18 @@ class Project(BaseModel):
     # Singapore Regulatory Submissions
     # URA (Urban Redevelopment Authority)
     ura_submission_number = Column(String(100))
-    ura_approval_status = Column(SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED)
+    ura_approval_status = Column(
+        SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED
+    )
     ura_submission_date = Column(Date)
     ura_approval_date = Column(Date)
     ura_conditions = Column(JSON)  # Conditions of approval
 
     # BCA (Building and Construction Authority)
     bca_submission_number = Column(String(100))
-    bca_approval_status = Column(SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED)
+    bca_approval_status = Column(
+        SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED
+    )
     bca_submission_date = Column(Date)
     bca_approval_date = Column(Date)
     bca_bc1_number = Column(String(100))  # Building Control number
@@ -97,7 +116,9 @@ class Project(BaseModel):
     structural_pe_number = Column(String(100))  # Professional Engineer registration
 
     # SCDF (Singapore Civil Defence Force)
-    scdf_approval_status = Column(SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED)
+    scdf_approval_status = Column(
+        SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED
+    )
     scdf_submission_date = Column(Date)
     scdf_approval_date = Column(Date)
     fire_safety_certificate = Column(String(100))
@@ -160,11 +181,15 @@ class Project(BaseModel):
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     created_by = Column(String(100))
 
     # Relationships
-    properties = relationship("SingaporeProperty", back_populates="project")  # One project can have multiple properties
+    properties = relationship(
+        "SingaporeProperty", back_populates="project"
+    )  # One project can have multiple properties
     owner = relationship("User", back_populates="projects")
     ai_sessions = relationship("AIAgentSession", back_populates="project")
 

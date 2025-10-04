@@ -5,17 +5,17 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import date, datetime
-from backend._compat.datetime import UTC
 from pathlib import Path
 
 import pytest
+from sqlalchemy import select
 
+from backend._compat.datetime import UTC
 from core import canonical_models
 from core.mapping import load_and_apply_mappings
 from core.util import create_session_factory, get_engine, session_scope
 from jurisdictions.sg_bca import fetch
 from jurisdictions.sg_bca.parse import PARSER, ParserError
-from sqlalchemy import select
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 

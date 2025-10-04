@@ -1,8 +1,8 @@
 from datetime import datetime
-from backend._compat.datetime import UTC
 
 from app.core.auth import PolicyContext, SignoffSnapshot, WorkspaceRole
 from app.core.export.watermark import ExportPayload, apply_watermark
+from backend._compat.datetime import UTC
 
 
 def approved_signoff() -> SignoffSnapshot:

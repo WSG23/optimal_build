@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import os
 import subprocess
@@ -12,41 +13,44 @@ from collections.abc import Iterable, Iterator, MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Awaitable, Callable
+from uuid import uuid4
 
 import httpx
 import structlog
-
-import asyncio
+from app.core.database import AsyncSessionLocal
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..flows import parse_segment, watch_fetch
-from . import seed_nonreg, seed_screening
+from .seed_entitlements_sg import (
+    EntitlementsSeedSummary,
+)
+from .seed_entitlements_sg import (
+    _run_async as seed_entitlements_async,
+)
 from .seed_finance_demo import (
-    FinanceDemoSummary,
     DEMO_CURRENCY,
-    DEMO_PROJECT_ID,
     DEMO_PROJECT_NAME,
-    ensure_schema as ensure_finance_schema,
+    FinanceDemoSummary,
     seed_finance_demo,
+)
+from .seed_finance_demo import (
+    ensure_schema as ensure_finance_schema,
 )
 from .seed_nonreg import (
     NonRegSeedSummary,
-    ensure_schema as ensure_nonreg_schema,
     seed_nonregulated_reference_data,
+)
+from .seed_nonreg import (
+    ensure_schema as ensure_nonreg_schema,
 )
 from .seed_screening import (
     SeedSummary,
-    ensure_schema as ensure_screening_schema,
     seed_screening_sample_data,
 )
-from .seed_entitlements_sg import (
-    EntitlementsSeedSummary,
-    _run_async as seed_entitlements_async,
+from .seed_screening import (
+    ensure_schema as ensure_screening_schema,
 )
-from sqlalchemy import text
-from app.models.projects import Project
-from uuid import uuid4
-from app.core.database import AsyncSessionLocal
-from sqlalchemy.ext.asyncio import AsyncSession
 
 DEFAULT_ARTIFACT_DIR = Path("artifacts")
 BACKEND_HOST = "127.0.0.1"

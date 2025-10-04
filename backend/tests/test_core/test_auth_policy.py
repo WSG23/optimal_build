@@ -1,5 +1,4 @@
 from datetime import datetime
-from backend._compat.datetime import UTC
 
 import pytest
 from app.core.auth import (
@@ -12,6 +11,7 @@ from app.core.auth import (
     watermark_forced,
     watermark_text,
 )
+from backend._compat.datetime import UTC
 
 
 @pytest.fixture
@@ -64,9 +64,7 @@ def test_can_export_permit_ready(
     snapshot = (
         approved_signoff
         if signoff == "approved"
-        else pending_signoff
-        if signoff
-        else None
+        else pending_signoff if signoff else None
     )
     context = PolicyContext(role=role, signoff=snapshot)
     assert can_export_permit_ready(context) is expected
@@ -85,9 +83,7 @@ def test_watermark_policies(role, signoff, forced, approved_signoff, pending_sig
     snapshot = (
         approved_signoff
         if signoff == "approved"
-        else pending_signoff
-        if signoff
-        else None
+        else pending_signoff if signoff else None
     )
     context = PolicyContext(role=role, signoff=snapshot)
     assert watermark_forced(context) is forced

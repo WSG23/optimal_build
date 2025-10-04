@@ -9,10 +9,10 @@ Usage:
 """
 
 import asyncio
-from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefRule, RefSource
+from sqlalchemy import select
 
 
 async def seed_singapore_rules():
@@ -39,7 +39,7 @@ async def seed_singapore_rules():
             doc_title="Master Plan 2019 - Written Statement",
             landing_url="https://www.ura.gov.sg/Corporate/Planning/Master-Plan",
             fetch_kind="html",
-            is_active=True
+            is_active=True,
         )
         session.add(ura_source)
         await session.flush()
@@ -52,7 +52,7 @@ async def seed_singapore_rules():
             doc_title="Code on Accessibility in the Built Environment 2019",
             landing_url="https://www1.bca.gov.sg/",
             fetch_kind="pdf",
-            is_active=True
+            is_active=True,
         )
         session.add(bca_source)
         await session.flush()
@@ -71,7 +71,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:residential"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -84,7 +84,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:residential"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -97,9 +97,8 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:residential"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
-
             # Commercial Zoning
             {
                 "jurisdiction": "SG",
@@ -112,7 +111,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:commercial"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -125,7 +124,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:commercial"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -138,9 +137,8 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:commercial"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
-
             # Industrial Zoning
             {
                 "jurisdiction": "SG",
@@ -153,7 +151,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:industrial"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -166,7 +164,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:industrial"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -179,9 +177,8 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:industrial"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
-
             # Mixed Use Zoning
             {
                 "jurisdiction": "SG",
@@ -194,7 +191,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:mixed_use"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -207,9 +204,8 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:mixed_use"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
-
             # Business Park Zoning
             {
                 "jurisdiction": "SG",
@@ -222,7 +218,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:business_park"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -235,9 +231,8 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:business_park"},
                 "source_id": ura_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
-
             # BCA Site Coverage Rules
             {
                 "jurisdiction": "SG",
@@ -250,7 +245,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:residential"},
                 "source_id": bca_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -263,7 +258,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:commercial"},
                 "source_id": bca_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -276,7 +271,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:industrial"},
                 "source_id": bca_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -289,7 +284,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:mixed_use"},
                 "source_id": bca_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
             {
                 "jurisdiction": "SG",
@@ -302,7 +297,7 @@ async def seed_singapore_rules():
                 "applicability": {"zone_code": "SG:business_park"},
                 "source_id": bca_source.id,
                 "review_status": "approved",
-                "is_published": True
+                "is_published": True,
             },
         ]
 
@@ -313,8 +308,12 @@ async def seed_singapore_rules():
 
         await session.commit()
 
-        print(f"✅ Successfully seeded {len(singapore_rules)} Singapore rules into RefRule database")
-        print("These rules are now available for jurisdiction-agnostic buildable calculations")
+        print(
+            f"✅ Successfully seeded {len(singapore_rules)} Singapore rules into RefRule database"
+        )
+        print(
+            "These rules are now available for jurisdiction-agnostic buildable calculations"
+        )
 
 
 if __name__ == "__main__":

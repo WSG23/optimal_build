@@ -246,7 +246,7 @@ def detect_baseline_walls(
     for path in paths:
         if len(path.points) < 2:
             continue
-        for start, end in zip(path.points, path.points[1:]):
+        for start, end in zip(path.points, path.points[1:], strict=False):
             dx = end[0] - start[0]
             dy = end[1] - start[1]
             length = math.hypot(dx, dy)

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import importlib
+import sys
 from datetime import datetime
 from types import SimpleNamespace
 from uuid import uuid4
-import importlib
-import sys
 
 from tests.helpers import ensure_sqlite_uuid, install_property_stub
 

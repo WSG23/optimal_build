@@ -9,6 +9,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from backend._compat import compat_dataclass
+
 from app.models.rkp import RefDocument, RefSource
 
 

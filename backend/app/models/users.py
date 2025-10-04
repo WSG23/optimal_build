@@ -1,20 +1,19 @@
 """User model for Singapore Property Development Platform."""
 
+import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
-from sqlalchemy import (
-    Column, String, Boolean, DateTime, Enum as SQLEnum, Text
-)
+from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
-import uuid
 
-from app.models.base import BaseModel, UUID
+from app.models.base import UUID, BaseModel
 
 
 class UserRole(str, Enum):
     """User roles in the system."""
+
     ADMIN = "admin"
     DEVELOPER = "developer"
     INVESTOR = "investor"
@@ -43,7 +42,9 @@ class User(BaseModel):
     is_verified = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
     last_login = Column(DateTime)
 
     # Singapore specific fields
@@ -51,8 +52,12 @@ class User(BaseModel):
     acra_registered = Column(Boolean, default=False)  # ACRA registration status
 
     # Relationships
-    ai_agent_sessions = relationship("AIAgentSession", back_populates="user", cascade="all, delete-orphan")
-    projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
+    ai_agent_sessions = relationship(
+        "AIAgentSession", back_populates="user", cascade="all, delete-orphan"
+    )
+    projects = relationship(
+        "Project", back_populates="owner", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<User {self.username} ({self.email})>"

@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
+from backend._compat import compat_dataclass
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from backend._compat import compat_dataclass
-from app.models.singapore_property import SingaporeProperty, ComplianceStatus
+from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 from app.schemas.compliance import ComplianceCheckResponse
 from app.schemas.property import PropertyComplianceSummary, SingaporePropertySchema
 from app.utils.singapore_compliance import update_property_compliance

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import datetime
-from backend._compat.datetime import UTC
 from typing import Literal
 
+from backend._compat.datetime import UTC
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select
