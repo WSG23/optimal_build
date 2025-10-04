@@ -27,6 +27,7 @@ export function AppLayout({
     { path: '/cad/pipelines', label: t('nav.pipelines') },
     { path: '/feasibility', label: t('nav.feasibility') },
     { path: '/finance', label: t('nav.finance') },
+    { path: '/visualizations/intelligence', label: t('nav.intelligence') },
   ]
 
   return (
