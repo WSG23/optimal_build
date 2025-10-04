@@ -1,9 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MarketTransaction } from '../../../types/market';
 import { PropertyType } from '../../../types/property';
+import type { FeatureCollection, Point } from 'geojson';
+
+type TransactionFeatureProperties = {
+  price: number;
+  psf?: number | null;
+  propertyName: string;
+  date: string;
+  district?: string | null;
+};
 
 // You'll need to set your Mapbox access token
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN || '';
@@ -19,6 +28,46 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 }) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+
+  const filteredTransactions = useMemo(
+    () => transactions.filter(transaction => transaction.property_type === propertyType),
+    [transactions, propertyType]
+  );
+
+  const featureCollection = useMemo<FeatureCollection<Point, TransactionFeatureProperties>>(() => {
+    const singaporeBounds = {
+      minLng: 103.6,
+      maxLng: 104.0,
+      minLat: 1.2,
+      maxLat: 1.5
+    };
+
+    return {
+      type: 'FeatureCollection',
+      features: filteredTransactions.map(transaction => {
+        const lng = singaporeBounds.minLng + Math.random() * (singaporeBounds.maxLng - singaporeBounds.minLng);
+        const lat = singaporeBounds.minLat + Math.random() * (singaporeBounds.maxLat - singaporeBounds.minLat);
+
+        return {
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point',
+            coordinates: [lng, lat]
+          },
+          properties: {
+            price: transaction.sale_price,
+            psf: transaction.psf_price ?? null,
+            propertyName: transaction.property_name,
+            date: new Date(transaction.transaction_date).toLocaleDateString(),
+            district: transaction.district ?? null
+          }
+        };
+      })
+    };
+  }, [filteredTransactions]);
+
+  const featureCollectionRef = useRef(featureCollection);
+  featureCollectionRef.current = featureCollection;
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxgl.accessToken) return;
@@ -37,10 +86,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
       // Add heatmap layer
       map.current.addSource('transactions', {
         type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: generateHeatmapData()
-        }
+        data: featureCollectionRef.current
       });
 
       // Add heatmap layer
@@ -126,10 +172,19 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
       // Add popups
       map.current.on('click', 'transaction-points', (e) => {
-        if (!map.current || !e.features || e.features.length === 0) return;
+        if (!map.current || !e.features?.length) return;
 
-        const coordinates = (e.features[0].geometry as any).coordinates.slice();
-        const properties = e.features[0].properties;
+        const feature = e.features[0];
+        if (feature.geometry?.type !== 'Point') return;
+
+        const coordinates = [...feature.geometry.coordinates] as [number, number];
+        const properties = feature.properties as TransactionFeatureProperties | undefined;
+        if (!properties) return;
+
+        const formattedPsf =
+          properties.psf !== null && properties.psf !== undefined
+            ? new Intl.NumberFormat('en-SG').format(properties.psf)
+            : 'N/A';
 
         new mapboxgl.Popup()
           .setLngLat(coordinates)
@@ -137,7 +192,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
             <div>
               <strong>${properties.propertyName}</strong><br/>
               Price: $${new Intl.NumberFormat('en-SG').format(properties.price)}<br/>
-              PSF: $${properties.psf ? new Intl.NumberFormat('en-SG').format(properties.psf) : 'N/A'}<br/>
+              PSF: $${formattedPsf}<br/>
               Date: ${properties.date}
             </div>
           `)
@@ -155,54 +210,21 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
     });
 
     return () => {
-      if (map.current) map.current.remove();
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, []);
 
-  // Update data when transactions change
   useEffect(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
 
-    const source = map.current.getSource('transactions') as mapboxgl.GeoJSONSource;
-    if (source) {
-      source.setData({
-        type: 'FeatureCollection',
-        features: generateHeatmapData()
-      });
+    const source = map.current.getSource('transactions');
+    if (source && 'setData' in source) {
+      (source as mapboxgl.GeoJSONSource).setData(featureCollection);
     }
-  }, [transactions]);
-
-  const generateHeatmapData = () => {
-    // Generate random coordinates around Singapore for demo
-    // In production, these would come from actual property coordinates
-    const singaporeBounds = {
-      minLng: 103.6,
-      maxLng: 104.0,
-      minLat: 1.2,
-      maxLat: 1.5
-    };
-
-    return transactions.map(transaction => {
-      // For demo: generate random coordinates within Singapore
-      const lng = singaporeBounds.minLng + Math.random() * (singaporeBounds.maxLng - singaporeBounds.minLng);
-      const lat = singaporeBounds.minLat + Math.random() * (singaporeBounds.maxLat - singaporeBounds.minLat);
-
-      return {
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [lng, lat]
-        },
-        properties: {
-          price: transaction.sale_price,
-          psf: transaction.psf_price,
-          propertyName: transaction.property_name,
-          date: new Date(transaction.transaction_date).toLocaleDateString(),
-          district: transaction.district
-        }
-      };
-    });
-  };
+  }, [featureCollection]);
 
   if (!mapboxgl.accessToken) {
     return (

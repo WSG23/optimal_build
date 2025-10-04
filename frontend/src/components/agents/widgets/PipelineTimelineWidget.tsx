@@ -3,67 +3,71 @@ import {
   Box,
   Paper,
   Typography,
+  Grid,
+  Card,
+  CardContent,
+  Chip
+} from '@mui/material';
+import {
   Timeline,
   TimelineItem,
   TimelineSeparator,
   TimelineConnector,
   TimelineContent,
   TimelineDot,
-  TimelineOppositeContent,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  LinearProgress,
-  Tooltip
-} from '@mui/material';
+  TimelineOppositeContent
+} from '@mui/lab';
 import BusinessIcon from '@mui/icons-material/Business';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ScheduleIcon from '@mui/icons-material/Schedule';
-import { DevelopmentPipeline } from '../../../types/market';
+import { format } from 'date-fns';
+import { SupplyDynamics, MajorDevelopment } from '../../../types/market';
 import { PropertyType } from '../../../types/property';
-import { format, parseISO, differenceInMonths } from 'date-fns';
 
 interface PipelineTimelineWidgetProps {
-  pipeline: DevelopmentPipeline[];
+  supplyDynamics?: SupplyDynamics | null;
   propertyType: PropertyType;
 }
 
 const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
-  pipeline,
+  supplyDynamics,
   propertyType
 }) => {
-  // Group pipeline by year
-  const pipelineByYear = useMemo(() => {
-    const grouped = pipeline.reduce((acc, project) => {
-      const year = new Date(project.expected_completion).getFullYear();
-      if (!acc[year]) acc[year] = [];
-      acc[year].push(project);
-      return acc;
-    }, {} as Record<number, DevelopmentPipeline[]>);
-
-    return Object.entries(grouped)
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([year, projects]) => ({
-        year: Number(year),
-        projects: projects.sort((a, b) => 
-          new Date(a.expected_completion).getTime() - new Date(b.expected_completion).getTime()
-        )
-      }));
-  }, [pipeline]);
-
-  // Calculate total supply by year
   const supplyByYear = useMemo(() => {
-    return pipelineByYear.map(({ year, projects }) => ({
-      year,
-      totalGFA: projects.reduce((sum, p) => sum + (p.total_gfa_sqm || 0), 0),
-      totalUnits: projects.reduce((sum, p) => sum + (p.units_total || 0), 0),
-      projectCount: projects.length
-    }));
-  }, [pipelineByYear]);
+    if (!supplyDynamics) {
+      return [];
+    }
 
-  const getStatusIcon = (status: string) => {
+    return Object.entries(supplyDynamics.supply_by_year || {})
+      .map(([year, entry]) => ({
+        year: Number(year),
+        totalGFA: entry.total_gfa,
+        totalUnits: entry.total_units,
+        projectCount: entry.projects
+      }))
+      .sort((a, b) => a.year - b.year);
+  }, [supplyDynamics]);
+
+  const majorDevelopments = useMemo(() => {
+    if (!supplyDynamics) {
+      return [] as MajorDevelopment[];
+    }
+
+    return [...supplyDynamics.major_developments].sort((a, b) => {
+      if (!a.completion && !b.completion) return 0;
+      if (!a.completion) return 1;
+      if (!b.completion) return -1;
+      return new Date(a.completion).getTime() - new Date(b.completion).getTime();
+    });
+  }, [supplyDynamics]);
+
+  const formatGFA = (value?: number | null) => {
+    if (!value) return '0';
+    return new Intl.NumberFormat('en-SG', { maximumFractionDigits: 0 }).format(value);
+  };
+
+  const statusIcon = (status: string) => {
     switch (status) {
       case 'completed':
         return <CheckCircleIcon />;
@@ -77,176 +81,118 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const statusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'success';
+        return 'success' as const;
       case 'under_construction':
-        return 'warning';
+        return 'warning' as const;
       case 'approved':
-        return 'info';
+        return 'info' as const;
       case 'planned':
-        return 'default';
+        return 'default' as const;
       default:
-        return 'default';
+        return 'default' as const;
     }
-  };
-
-  const formatGFA = (value: number) => {
-    return new Intl.NumberFormat('en-SG', {
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
-  const getCompletionProgress = (project: DevelopmentPipeline) => {
-    if (project.development_status === 'completed') return 100;
-    if (project.development_status === 'planned') return 0;
-    
-    // Calculate based on time if under construction
-    if (project.development_status === 'under_construction') {
-      const today = new Date();
-      const completion = parseISO(project.expected_completion);
-      const monthsToCompletion = differenceInMonths(completion, today);
-      
-      // Assume 24-month construction period
-      const progress = Math.max(0, Math.min(100, ((24 - monthsToCompletion) / 24) * 100));
-      return Math.round(progress);
-    }
-    
-    return 10; // Approved projects
   };
 
   return (
     <Box>
-      {/* Summary Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {supplyByYear.slice(0, 3).map(({ year, totalGFA, totalUnits, projectCount }) => (
-          <Grid item xs={12} sm={4} key={year}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom variant="body2">
-                  {year} Supply
-                </Typography>
-                <Typography variant="h6" gutterBottom>
-                  {formatGFA(totalGFA)} sqm
-                </Typography>
-                <Box display="flex" gap={1}>
-                  <Chip 
-                    size="small" 
-                    label={`${projectCount} projects`}
-                    variant="outlined"
-                  />
-                  {totalUnits > 0 && (
-                    <Chip 
-                      size="small" 
-                      label={`${formatGFA(totalUnits)} units`}
-                      variant="outlined"
-                    />
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">Supply Pipeline</Typography>
+        <Typography variant="caption" color="textSecondary">
+          {propertyType.replace(/_/g, ' ').toUpperCase()}
+        </Typography>
+      </Box>
 
-      {/* Timeline */}
+      {supplyByYear.length > 0 ? (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {supplyByYear.slice(0, 3).map(({ year, totalGFA, totalUnits, projectCount }) => (
+            <Grid item xs={12} sm={4} key={year}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom variant="body2">
+                    {year} Supply
+                  </Typography>
+                  <Typography variant="h6" gutterBottom>
+                    {formatGFA(totalGFA)} sqm
+                  </Typography>
+                  <Box display="flex" gap={1} flexWrap="wrap">
+                    <Chip size="small" label={`${projectCount} projects`} variant="outlined" />
+                    {totalUnits > 0 && (
+                      <Chip size="small" label={`${formatGFA(totalUnits)} units`} variant="outlined" />
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography color="textSecondary">
+            No pipeline summary is available for the selected filters.
+          </Typography>
+        </Paper>
+      )}
+
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
-          Development Pipeline Timeline
+          Major Developments
         </Typography>
-        
-        <Timeline position="alternate">
-          {pipelineByYear.map(({ year, projects }) => (
-            <React.Fragment key={year}>
-              {projects.map((project, index) => (
-                <TimelineItem key={project.id}>
+
+        {majorDevelopments.length === 0 ? (
+          <Typography color="textSecondary">No development projects found.</Typography>
+        ) : (
+          <Timeline position="alternate">
+            {majorDevelopments.map((project, index) => {
+              const completionLabel = project.completion
+                ? format(new Date(project.completion), 'MMM yyyy')
+                : 'TBC';
+
+              return (
+                <TimelineItem key={`${project.name}-${index}`}>
                   <TimelineOppositeContent color="textSecondary">
-                    {format(parseISO(project.expected_completion), 'MMM yyyy')}
+                    {completionLabel}
                   </TimelineOppositeContent>
                   <TimelineSeparator>
-                    <TimelineDot color={getStatusColor(project.development_status) as any}>
-                      {getStatusIcon(project.development_status)}
+                    <TimelineDot color={statusColor(project.status)}>
+                      {statusIcon(project.status)}
                     </TimelineDot>
-                    {index < projects.length - 1 || year < pipelineByYear[pipelineByYear.length - 1].year ? (
-                      <TimelineConnector />
-                    ) : null}
+                    {index < majorDevelopments.length - 1 && <TimelineConnector />}
                   </TimelineSeparator>
                   <TimelineContent>
                     <Card>
                       <CardContent>
                         <Typography variant="subtitle1" fontWeight="medium">
-                          {project.project_name}
+                          {project.name}
                         </Typography>
-                        <Typography variant="body2" color="textSecondary" gutterBottom>
-                          {project.developer}
-                        </Typography>
-                        
-                        <Box mt={1} mb={1}>
-                          <Chip 
-                            size="small" 
-                            label={project.development_status.replace(/_/g, ' ')}
-                            color={getStatusColor(project.development_status) as any}
+                        {project.developer && (
+                          <Typography variant="body2" color="textSecondary" gutterBottom>
+                            {project.developer}
+                          </Typography>
+                        )}
+                        <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
+                          <Chip
+                            size="small"
+                            label={project.status.replace(/_/g, ' ')}
+                            color={statusColor(project.status)}
                           />
-                          {project.district && (
-                            <Chip 
-                              size="small" 
-                              label={project.district}
-                              variant="outlined"
-                              sx={{ ml: 1 }}
-                            />
-                          )}
+                          {project.units ? (
+                            <Chip size="small" label={`${project.units} units`} variant="outlined" />
+                          ) : null}
                         </Box>
-                        
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          GFA: {formatGFA(project.total_gfa_sqm)} sqm
-                          {project.units_total && ` • ${project.units_total} units`}
+                        <Typography variant="body2">
+                          GFA: {formatGFA(project.gfa)} sqm
                         </Typography>
-                        
-                        {project.pre_commitment_rate !== undefined && (
-                          <Box>
-                            <Box display="flex" justifyContent="space-between" mb={0.5}>
-                              <Typography variant="caption">
-                                Pre-commitment
-                              </Typography>
-                              <Typography variant="caption">
-                                {Math.round(project.pre_commitment_rate * 100)}%
-                              </Typography>
-                            </Box>
-                            <LinearProgress 
-                              variant="determinate" 
-                              value={project.pre_commitment_rate * 100}
-                              sx={{ height: 6, borderRadius: 3 }}
-                            />
-                          </Box>
-                        )}
-                        
-                        {project.development_status === 'under_construction' && (
-                          <Box mt={1}>
-                            <Box display="flex" justifyContent="space-between" mb={0.5}>
-                              <Typography variant="caption">
-                                Construction Progress
-                              </Typography>
-                              <Typography variant="caption">
-                                {getCompletionProgress(project)}%
-                              </Typography>
-                            </Box>
-                            <LinearProgress 
-                              variant="determinate" 
-                              value={getCompletionProgress(project)}
-                              sx={{ height: 6, borderRadius: 3 }}
-                              color="secondary"
-                            />
-                          </Box>
-                        )}
                       </CardContent>
                     </Card>
                   </TimelineContent>
                 </TimelineItem>
-              ))}
-            </React.Fragment>
-          ))}
-        </Timeline>
+              );
+            })}
+          </Timeline>
+        )}
       </Paper>
     </Box>
   );

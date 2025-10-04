@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PropertyType } from '../types/property';
-import { 
-  MarketReport, 
-  MarketTransaction, 
-  DevelopmentPipeline, 
-  YieldBenchmark, 
-  AbsorptionData,
-  MarketCycle 
+import {
+  MarketReport,
+  MarketTransaction,
+  ComparablesAnalysis,
+  SupplyDynamics,
+  YieldBenchmarks,
+  AbsorptionTrends,
+  MarketCyclePosition
 } from '../types/market';
 import { apiClient } from '../services/api';
 
@@ -17,41 +18,30 @@ export const useMarketData = (
 ) => {
   const [marketReport, setMarketReport] = useState<MarketReport | null>(null);
   const [comparables, setComparables] = useState<MarketTransaction[]>([]);
-  const [supplyPipeline, setSupplyPipeline] = useState<DevelopmentPipeline[]>([]);
-  const [yieldBenchmarks, setYieldBenchmarks] = useState<YieldBenchmark[]>([]);
-  const [absorptionData, setAbsorptionData] = useState<AbsorptionData[]>([]);
-  const [marketCycles, setMarketCycles] = useState<MarketCycle[]>([]);
+  const [comparablesSummary, setComparablesSummary] = useState<ComparablesAnalysis | null>(null);
+  const [supplyDynamics, setSupplyDynamics] = useState<SupplyDynamics | null>(null);
+  const [yieldBenchmarks, setYieldBenchmarks] = useState<YieldBenchmarks | null>(null);
+  const [absorptionTrends, setAbsorptionTrends] = useState<AbsorptionTrends | null>(null);
+  const [marketCycle, setMarketCycle] = useState<MarketCyclePosition | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMarketData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Fetch market report
-      const reportResponse = await apiClient.post<MarketReport>(
+      const reportPromise = apiClient.post<MarketReport>(
         '/api/v1/agents/commercial-property/market-intelligence/report',
         {
           property_type: propertyType,
-          location: location,
+          location,
           period_months: periodMonths
         }
       );
-      setMarketReport(reportResponse.data);
 
-      // Extract data from report
-      if (reportResponse.data) {
-        setComparables(reportResponse.data.comparables?.transactions || []);
-        setSupplyPipeline(reportResponse.data.supply_pipeline?.projects || []);
-        setYieldBenchmarks(reportResponse.data.yield_analysis?.benchmarks || []);
-        setAbsorptionData(reportResponse.data.absorption_trends?.data || []);
-        setMarketCycles(reportResponse.data.market_dynamics?.cycles || []);
-      }
-
-      // Fetch additional transaction data if needed
       const daysBack = periodMonths * 30;
-      const transactionsResponse = await apiClient.get<MarketTransaction[]>(
+      const transactionsPromise = apiClient.get<MarketTransaction[]>(
         '/api/v1/agents/commercial-property/market-intelligence/transactions',
         {
           params: {
@@ -62,10 +52,36 @@ export const useMarketData = (
           }
         }
       );
-      
-      // Merge with report comparables if more detailed data available
-      if (transactionsResponse.data && transactionsResponse.data.length > comparables.length) {
-        setComparables(transactionsResponse.data);
+
+      const [reportResult, transactionsResult] = await Promise.allSettled([
+        reportPromise,
+        transactionsPromise
+      ]);
+
+      if (reportResult.status !== 'fulfilled') {
+        throw reportResult.reason;
+      }
+
+      const report = reportResult.value.data;
+      setMarketReport(report);
+      setComparablesSummary(report.comparables_analysis);
+      setSupplyDynamics(report.supply_dynamics);
+      setYieldBenchmarks(report.yield_benchmarks);
+      setAbsorptionTrends(report.absorption_trends);
+      setMarketCycle(report.market_cycle_position);
+
+      const partialErrors: string[] = [];
+
+      if (transactionsResult.status === 'fulfilled') {
+        setComparables(transactionsResult.value.data || []);
+      } else {
+        console.error('Error fetching transactions:', transactionsResult.reason);
+        partialErrors.push('Some comparable transaction records could not be loaded.');
+        setComparables([]);
+      }
+
+      if (partialErrors.length > 0) {
+        setError(partialErrors.join(' '));
       }
 
     } catch (err) {
@@ -87,10 +103,11 @@ export const useMarketData = (
   return {
     marketReport,
     comparables,
-    supplyPipeline,
+    comparablesSummary,
+    supplyDynamics,
     yieldBenchmarks,
-    absorptionData,
-    marketCycles,
+    absorptionTrends,
+    marketCycle,
     loading,
     error,
     refresh

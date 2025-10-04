@@ -1,155 +1,173 @@
-export interface MarketReport {
-  report_date: string;
-  property_type: string;
-  location: string;
-  period_months: number;
-  executive_summary: ExecutiveSummary;
-  comparables?: ComparablesAnalysis;
-  supply_pipeline?: SupplyPipelineAnalysis;
-  yield_analysis?: YieldAnalysis;
-  absorption_trends?: AbsorptionAnalysis;
-  market_dynamics?: MarketDynamics;
-  recommendations: string[];
+import { PropertyType } from './property';
+
+export interface MarketPeriod {
+  start: string;
+  end: string;
 }
 
-export interface ExecutiveSummary {
-  market_sentiment: 'bullish' | 'neutral' | 'bearish';
-  key_metrics: {
-    avg_price_psf: number;
-    median_cap_rate: number;
-    total_transaction_volume: number;
-    yoy_price_change: number;
-    vacancy_rate: number;
-    new_supply_sqm: number;
-  };
-  key_findings: string[];
+export interface ComparableTransaction {
+  date: string;
+  property_name: string;
+  price: number;
+  psf?: number | null;
+  buyer_type?: string | null;
 }
 
 export interface ComparablesAnalysis {
-  total_transactions: number;
-  transactions: MarketTransaction[];
-  price_statistics: {
-    mean: number;
-    median: number;
-    std_dev: number;
+  transaction_count: number;
+  total_volume: number;
+  average_psf: number;
+  median_psf: number;
+  psf_range: {
     min: number;
     max: number;
   };
-  trends: {
-    price_trend: 'increasing' | 'stable' | 'decreasing';
-    volume_trend: 'increasing' | 'stable' | 'decreasing';
-  };
+  quarterly_trends: Record<string, {
+    count: number;
+    total_volume: number;
+    avg_psf: number;
+  }>;
+  price_trend: string;
+  top_transactions: ComparableTransaction[];
+  buyer_profile: Record<string, number>;
+  message?: string;
 }
 
 export interface MarketTransaction {
-  id: string;
-  property_id: string;
+  transaction_id: string;
   property_name: string;
   transaction_date: string;
   sale_price: number;
-  psf_price?: number;
+  psf_price?: number | null;
   property_type: string;
-  district?: string;
-  floor_area_sqm?: number;
-  buyer_type?: string;
-  seller_type?: string;
+  district?: string | null;
+  floor_area_sqm?: number | null;
+  buyer_type?: string | null;
 }
 
-export interface SupplyPipelineAnalysis {
-  total_pipeline_sqm: number;
-  projects_count: number;
-  projects: DevelopmentPipeline[];
-  completion_timeline: {
-    [year: string]: number; // sqm by year
-  };
-  impact_assessment: string;
+export interface SupplyByYearEntry {
+  projects: number;
+  total_gfa: number;
+  total_units: number;
 }
 
-export interface DevelopmentPipeline {
-  id: string;
-  project_name: string;
-  developer: string;
-  property_type: string;
-  total_gfa_sqm: number;
-  expected_completion: string;
-  development_status: string;
-  district?: string;
-  units_total?: number;
-  pre_commitment_rate?: number;
+export type SupplyByYear = Record<string, SupplyByYearEntry>;
+
+export interface MajorDevelopment {
+  name: string;
+  developer?: string | null;
+  gfa: number;
+  units?: number | null;
+  completion?: string | null;
+  status: string;
 }
 
-export interface YieldAnalysis {
-  current_yields: {
-    cap_rate_median: number;
-    rental_yield_median: number;
-    spread_vs_risk_free: number;
-  };
-  benchmarks: YieldBenchmark[];
-  yield_trends: {
-    direction: 'compressing' | 'stable' | 'expanding';
-    basis_points_change: number;
-  };
+export interface SupplyDynamics {
+  pipeline_projects: number;
+  total_upcoming_gfa: number;
+  supply_by_year: SupplyByYear;
+  supply_pressure: string;
+  major_developments: MajorDevelopment[];
+  market_impact: string;
 }
 
-export interface YieldBenchmark {
-  id: string;
-  benchmark_date: string;
-  property_type: string;
-  district?: string;
-  location_tier?: string;
-  cap_rate_median: number;
-  cap_rate_mean?: number;
-  cap_rate_min?: number;
-  cap_rate_max?: number;
-  rental_yield_median?: number;
-  sample_size?: number;
-}
-
-export interface AbsorptionAnalysis {
-  net_absorption_sqm: number;
-  gross_absorption_sqm: number;
-  absorption_rate: number;
-  avg_time_to_lease: number;
-  data: AbsorptionData[];
-  velocity_assessment: string;
-}
-
-export interface AbsorptionData {
-  id: string;
-  tracking_date: string;
-  property_type: string;
-  district?: string;
-  units_launched?: number;
-  units_sold_period?: number;
-  sales_absorption_rate?: number;
-  nla_leased_period?: number;
-  leasing_absorption_rate?: number;
-  velocity_trend?: string;
-}
-
-export interface MarketDynamics {
-  current_cycle_phase: string;
-  phase_confidence: number;
-  cycles: MarketCycle[];
-  leading_indicators: {
-    [indicator: string]: {
-      value: number;
-      trend: string;
-      signal: string;
+export interface YieldBenchmarks {
+  current_metrics: {
+    cap_rate: {
+      mean: number;
+      median: number;
+      range: {
+        p25: number;
+        p75: number;
+      };
+    };
+    rental_rates: {
+      mean_psf: number;
+      median_psf: number;
+      occupancy: number;
+    };
+    transaction_volume: {
+      count: number;
+      total_value: number;
     };
   };
-  market_outlook: string;
+  trends: {
+    cap_rate_trend: string;
+    rental_trend: string;
+  };
+  yoy_changes: {
+    cap_rate_change_bps?: number;
+    rental_change_pct?: number;
+    transaction_volume_change_pct?: number;
+  };
+  market_position: string;
 }
 
-export interface MarketCycle {
-  id: string;
-  cycle_date: string;
-  property_type: string;
-  cycle_phase: string;
-  phase_duration_months?: number;
-  price_momentum?: number;
-  rental_momentum?: number;
-  supply_demand_ratio?: number;
-  cycle_outlook?: string;
-  model_confidence?: number;
+export interface AbsorptionTrends {
+  current_metrics: {
+    sales_absorption_rate: number;
+    leasing_absorption_rate: number;
+    avg_days_to_sale: number;
+    avg_days_to_lease: number;
+  };
+  period_averages: {
+    avg_sales_absorption: number;
+    avg_leasing_absorption: number;
+  };
+  velocity_trend: string;
+  market_comparison: {
+    vs_market_average: number;
+  };
+  forecast: {
+    current_absorption?: number;
+    projected_absorption_6m?: number;
+    avg_monthly_absorption?: number;
+    estimated_sellout_months?: number | null;
+    message?: string;
+  };
+  seasonal_patterns?: {
+    peak_month?: number;
+    peak_absorption?: number;
+    low_month?: number;
+    low_absorption?: number;
+    seasonality_strength?: number;
+    message?: string;
+  };
+}
+
+export interface MarketCyclePosition {
+  current_phase: string;
+  phase_duration_months?: number | null;
+  phase_strength?: number | null;
+  indicators: {
+    price_momentum?: number | null;
+    rental_momentum?: number | null;
+    transaction_volume_change?: number | null;
+    supply_demand_ratio?: number | null;
+  };
+  outlook: {
+    next_12_months?: string | null;
+    pipeline_impact?: number | null;
+    demand_forecast?: number | null;
+  };
+  index_trends?: {
+    current_index?: number;
+    mom_change?: number;
+    qoq_change?: number;
+    yoy_change?: number;
+    trend?: string;
+  };
+}
+
+export interface MarketReport {
+  property_type: PropertyType;
+  location: string;
+  period: MarketPeriod;
+  comparables_analysis: ComparablesAnalysis;
+  supply_dynamics: SupplyDynamics;
+  yield_benchmarks: YieldBenchmarks;
+  absorption_trends: AbsorptionTrends;
+  market_cycle_position: MarketCyclePosition;
+  recommendations: string[];
+  generated_at: string;
 }
