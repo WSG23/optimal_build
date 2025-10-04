@@ -11,13 +11,42 @@ import time
 from collections.abc import Iterable, Iterator, MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 import httpx
 import structlog
 
+import asyncio
+
 from ..flows import parse_segment, watch_fetch
-from . import seed_entitlements_sg, seed_finance_demo, seed_nonreg, seed_screening
+from . import seed_nonreg, seed_screening
+from .seed_finance_demo import (
+    FinanceDemoSummary,
+    DEMO_CURRENCY,
+    DEMO_PROJECT_ID,
+    DEMO_PROJECT_NAME,
+    ensure_schema as ensure_finance_schema,
+    seed_finance_demo,
+)
+from .seed_nonreg import (
+    NonRegSeedSummary,
+    ensure_schema as ensure_nonreg_schema,
+    seed_nonregulated_reference_data,
+)
+from .seed_screening import (
+    SeedSummary,
+    ensure_schema as ensure_screening_schema,
+    seed_screening_sample_data,
+)
+from .seed_entitlements_sg import (
+    EntitlementsSeedSummary,
+    _run_async as seed_entitlements_async,
+)
+from sqlalchemy import text
+from app.models.projects import Project
+from uuid import uuid4
+from app.core.database import AsyncSessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
 
 DEFAULT_ARTIFACT_DIR = Path("artifacts")
 BACKEND_HOST = "127.0.0.1"
@@ -60,21 +89,54 @@ def run_alembic_upgrades(backend_dir: Path) -> None:
     )
 
 
-def run_seeders() -> (
-    tuple[dict[str, dict[str, int]], seed_finance_demo.FinanceDemoSummary]
-):
+async def _seed_with_session(
+    seeder: Callable[[AsyncSession], Awaitable[Any]],
+) -> Any:
+    async with AsyncSessionLocal() as session:
+        return await seeder(session)
+
+
+async def _run_seeders_async() -> tuple[dict[str, dict[str, int]], FinanceDemoSummary]:
     _log("Seeding screening reference data")
-    screening_summary = seed_screening.main([])
+    await ensure_screening_schema()
+
+    async def _seed_screening(session):
+        return await seed_screening_sample_data(session, commit=True)
+
+    screening_summary: SeedSummary = await _seed_with_session(_seed_screening)
 
     _log("Seeding finance demo data")
-    finance_summary = seed_finance_demo.main([])
+    await ensure_finance_schema()
+
+    async def _seed_finance(session):
+        project_uuid = uuid4()
+        await session.execute(
+            text("INSERT INTO projects (id) VALUES (:id) ON CONFLICT (id) DO NOTHING"),
+            {"id": project_uuid},
+        )
+
+        return await seed_finance_demo(
+            session,
+            project_id=project_uuid,
+            project_name=DEMO_PROJECT_NAME,
+            currency=DEMO_CURRENCY,
+            reset_existing=True,
+        )
+
+    finance_summary: FinanceDemoSummary = await _seed_with_session(_seed_finance)
 
     _log("Seeding non-regulatory datasets")
-    nonreg_summary = seed_nonreg.main([])
+    await ensure_nonreg_schema()
+
+    async def _seed_nonreg(session):
+        return await seed_nonregulated_reference_data(session, commit=True)
+
+    nonreg_summary: NonRegSeedSummary = await _seed_with_session(_seed_nonreg)
 
     _log("Seeding entitlements reference data")
-    entitlements_summary = seed_entitlements_sg.main(
-        ["--project-id", str(ENTITLEMENTS_PROJECT_ID), "--reset"]
+    entitlements_summary: EntitlementsSeedSummary = await seed_entitlements_async(
+        project_id=ENTITLEMENTS_PROJECT_ID,
+        reset_existing=True,
     )
 
     summaries: dict[str, dict[str, int]] = {
@@ -87,6 +149,10 @@ def run_seeders() -> (
         },
     }
     return summaries, finance_summary
+
+
+def run_seeders() -> tuple[dict[str, dict[str, int]], FinanceDemoSummary]:
+    return asyncio.run(_run_seeders_async())
 
 
 def run_reference_ingestion(storage_path: Path, artifacts_dir: Path) -> dict[str, Any]:
