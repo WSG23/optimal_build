@@ -18,6 +18,7 @@ from sqlalchemy import (
     JSON,
     String,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.types import Numeric as SQLDecimal
 
@@ -44,7 +45,7 @@ class YieldBenchmark(BaseModel):
     """Market yield benchmarks by property type and location."""
     __tablename__ = "yield_benchmarks"
     
-    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
     
     # Benchmark Period
     benchmark_date = Column(Date, nullable=False)
@@ -110,7 +111,7 @@ class AbsorptionTracking(BaseModel):
     """Track absorption rates for developments."""
     __tablename__ = "absorption_tracking"
     
-    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
     
     # Reference
     project_id = Column(UUID())  # Can reference properties or development_pipeline
@@ -165,7 +166,7 @@ class MarketCycle(BaseModel):
     """Track market cycles and phases."""
     __tablename__ = "market_cycles"
     
-    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
     
     # Period
     cycle_date = Column(Date, nullable=False)
@@ -205,7 +206,7 @@ class MarketIndex(BaseModel):
     """Property market indices tracking."""
     __tablename__ = "market_indices"
     
-    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
     
     # Index Details
     index_date = Column(Date, nullable=False)
@@ -238,7 +239,7 @@ class CompetitiveSet(BaseModel):
     """Define competitive sets for benchmarking."""
     __tablename__ = "competitive_sets"
     
-    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
     
     # Set Definition
     set_name = Column(String(255), nullable=False)
@@ -277,7 +278,7 @@ class MarketAlert(BaseModel):
     """Market intelligence alerts and triggers."""
     __tablename__ = "market_alerts"
     
-    id = Column(UUID(), primary_key=True, server_default="gen_random_uuid()")
+    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
     
     # Alert Configuration
     alert_type = Column(String(50), nullable=False)  # price_change, new_supply, absorption_spike

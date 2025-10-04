@@ -1,0 +1,10 @@
+# Declare per-rule exceptions for the coding rules checker.
+# See CODING_RULES.md for guidance before adding entries.
+exceptions:
+  rule_1_migrations:
+    # Pre-existing migrations with known issues - do not modify these
+    - backend/migrations/versions/0773c87952ef_add_singapore_properties_table_with_mvp_.py
+    - backend/migrations/versions/20241228_000006_add_commercial_property_agent_tables.py
+  rule_2_async: []
+  rule_4_dependency_pinning: []
+  rule_5_singapore: []

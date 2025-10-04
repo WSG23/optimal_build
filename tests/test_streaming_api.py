@@ -52,10 +52,14 @@ async def test_generate_market_report_endpoint(monkeypatch) -> None:
     install_market_analytics_stub(monkeypatch, _Analytics)
 
     project_root = Path(__file__).resolve().parents[1]
-    module_path = project_root / "backend" / "app" / "api" / "v1" / "market_intelligence.py"
+    module_path = (
+        project_root / "backend" / "app" / "api" / "v1" / "market_intelligence.py"
+    )
     sys.modules.pop("backend.app.api.v1.market_intelligence", None)
 
-    spec = importlib.util.spec_from_file_location("unit_tests.market_intelligence", module_path)
+    spec = importlib.util.spec_from_file_location(
+        "unit_tests.market_intelligence", module_path
+    )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, spec.name, module)

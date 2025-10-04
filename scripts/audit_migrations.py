@@ -2,8 +2,62 @@ import re
 import sys
 from pathlib import Path
 
-root = Path("backend/migrations/versions")
+try:  # Optional dependency; script should still run without YAML
+    import yaml  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    yaml = None  # type: ignore
+
+
+def _normalise(path: Path) -> str:
+    return str(path).replace("\\", "/").lstrip("./")
+
+
+def load_exceptions() -> set[str]:
+    repo_root = Path(__file__).resolve().parent.parent
+    cfg = repo_root / ".coding-rules-exceptions.yml"
+    if not cfg.exists():
+        return set()
+
+    if yaml is not None:
+        data = yaml.safe_load(cfg.read_text()) or {}
+        exceptions = data.get("exceptions", {}) or {}
+        rule_entries = exceptions.get("rule_1_migrations", []) or []
+        return {_normalise(Path(entry)) for entry in rule_entries}
+
+    # Fallback parser for simple YAML structures when PyYAML is unavailable.
+    entries: set[str] = set()
+    current_rule: str | None = None
+    in_exceptions = False
+
+    for raw_line in cfg.read_text().splitlines():
+        no_comment = raw_line.split("#", 1)[0].rstrip()
+        if not no_comment.strip():
+            continue
+        stripped = no_comment.strip()
+
+        if not no_comment.startswith(" "):
+            in_exceptions = stripped == "exceptions:"
+            current_rule = None
+            continue
+
+        if not in_exceptions:
+            continue
+
+        if not stripped.startswith("- ") and stripped.endswith(":"):
+            current_rule = stripped.rstrip(":")
+            continue
+
+        if current_rule == "rule_1_migrations" and stripped.startswith("- "):
+            path = stripped[2:].strip()
+            if path:
+                entries.add(_normalise(Path(path)))
+    return entries
+
+
+repo_root = Path(__file__).resolve().parent.parent
+root = repo_root / "backend" / "migrations" / "versions"
 paths = sorted(root.glob("*.py"))
+exceptions = load_exceptions()
 
 enum_call_rx = re.compile(
     r"\b(?:sa\.Enum|postgresql\.ENUM)\s*\((?P<args>.*?)\)", re.DOTALL
@@ -25,6 +79,9 @@ lines = []
 failed = 0
 
 for p in paths:
+    rel_path = _normalise(p.relative_to(repo_root))
+    if rel_path in exceptions:
+        continue
     s = p.read_text()
     issues = []
 

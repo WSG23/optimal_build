@@ -6,17 +6,22 @@ import asyncio
 import os
 import sys
 from types import ModuleType, SimpleNamespace
+
 # Jose stubs
 try:
     from jose import jwt  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover
     jose_stub = ModuleType("jose")
+
     class JWTError(Exception):
         pass
+
     def _encode(payload, *_args, **_kwargs):
         return "token"
+
     def _decode(token, *_args, **_kwargs):
         return {}
+
     jose_stub.JWTError = JWTError
     jose_stub.jwt = SimpleNamespace(encode=_encode, decode=_decode)
     sys.modules.setdefault("jose", jose_stub)
@@ -34,9 +39,11 @@ try:
     from sqlalchemy.dialects.postgresql import UUID as PGUUID  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover
     pg_module = ModuleType("sqlalchemy.dialects.postgresql")
+
     class _UUID:
         def __init__(self, *_, **__):
             pass
+
     pg_module.UUID = _UUID
     sys.modules.setdefault("sqlalchemy.dialects.postgresql", pg_module)
     PGUUID = _UUID
@@ -47,6 +54,7 @@ except ModuleNotFoundError:  # pragma: no cover
     _geo_sqlite = None
 
 if _geo_sqlite is not None:
+
     def _noop_after_create(*_, **__):  # pragma: no cover
         return None
 
@@ -62,9 +70,10 @@ try:
 except ModuleNotFoundError:
     SQLiteTypeCompiler = None  # type: ignore
 
-if SQLiteTypeCompiler is not None and not hasattr(SQLiteTypeCompiler, 'visit_UUID'):
+if SQLiteTypeCompiler is not None and not hasattr(SQLiteTypeCompiler, "visit_UUID"):
+
     def _visit_uuid(self, _type, **_):  # pragma: no cover - sqlite fallback
-        return 'CHAR(36)'
+        return "CHAR(36)"
 
     SQLiteTypeCompiler.visit_UUID = _visit_uuid  # type: ignore[attr-defined]
 
@@ -83,7 +92,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub when plugin miss
     pytest_asyncio.fixture = pytest.fixture  # type: ignore[attr-defined]
     sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
 
-if os.environ.get('ENABLE_BACKEND_TEST_FIXTURES') == '1':
+if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") == "1":
     try:
         from backend.tests import (
             conftest as backend_conftest,
@@ -126,12 +135,18 @@ if getattr(backend_conftest, "flow_session_factory", None) is not None:
 else:
     pytest_plugins = []
 
+
 def _missing_fixture(*_args, **_kwargs):
     raise RuntimeError("backend test fixtures unavailable")
 
+
 # Re-export backend fixtures in this namespace for pytest discovery.
-flow_session_factory = getattr(backend_conftest, "flow_session_factory", _missing_fixture)
-async_session_factory = getattr(backend_conftest, "async_session_factory", _missing_fixture)
+flow_session_factory = getattr(
+    backend_conftest, "flow_session_factory", _missing_fixture
+)
+async_session_factory = getattr(
+    backend_conftest, "async_session_factory", _missing_fixture
+)
 session = getattr(backend_conftest, "session", _missing_fixture)
 session_factory = getattr(backend_conftest, "session_factory", _missing_fixture)
 reset_metrics = getattr(backend_conftest, "reset_metrics", _missing_fixture)
@@ -145,12 +160,18 @@ if flow_session_factory in (None, _missing_fixture):
     import app.utils.metrics as _metrics_module
     from app.core.database import get_session as _get_session
     from app.models.base import BaseModel as _FallbackBaseModel
+
     try:
         from app.main import app as _fastapi_app
     except Exception:  # pragma: no cover - FastAPI app unavailable
         _fastapi_app = None
     from httpx import AsyncClient as _AsyncClient
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    from sqlalchemy.ext.asyncio import (
+        AsyncSession,
+        async_sessionmaker,
+        create_async_engine,
+    )
+
     try:
         from sqlalchemy.pool import StaticPool as _StaticPool
     except (ImportError, AttributeError):  # pragma: no cover - stub fallback
@@ -173,7 +194,9 @@ if flow_session_factory in (None, _missing_fixture):
             await _truncate_all(db_session)
 
     @pytest_asyncio.fixture(scope="session")
-    async def flow_session_factory() -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+    async def flow_session_factory() -> AsyncGenerator[
+        async_sessionmaker[AsyncSession], None
+    ]:
         engine = create_async_engine(
             "sqlite+aiosqlite:///:memory:",
             connect_args={"check_same_thread": False},
@@ -277,38 +300,47 @@ if flow_session_factory in (None, _missing_fixture):
     async def client_fixture(app_client):
         yield app_client
 
+
 from backend.app.core import database as app_database
-base_module = importlib.import_module('backend.app.models.base')
-app_base_module = importlib.import_module('app.models.base')
-if not hasattr(base_module, 'TimestampMixin'):
+
+base_module = importlib.import_module("backend.app.models.base")
+app_base_module = importlib.import_module("app.models.base")
+if not hasattr(base_module, "TimestampMixin"):
+
     class TimestampMixin:  # pragma: no cover - compatibility stub
         created_at = None
         updated_at = None
 
-    setattr(base_module, 'TimestampMixin', TimestampMixin)
-    if not hasattr(app_base_module, 'TimestampMixin'):
-        setattr(app_base_module, 'TimestampMixin', TimestampMixin)
+    setattr(base_module, "TimestampMixin", TimestampMixin)
+    if not hasattr(app_base_module, "TimestampMixin"):
+        setattr(app_base_module, "TimestampMixin", TimestampMixin)
 
 
-base_module = sys.modules.get('backend.app.models.base')
-app_base_module = sys.modules.get('app.models.base')
-if base_module is not None and not hasattr(base_module, 'TimestampMixin'):
+base_module = sys.modules.get("backend.app.models.base")
+app_base_module = sys.modules.get("app.models.base")
+if base_module is not None and not hasattr(base_module, "TimestampMixin"):
+
     class _TimestampMixin:
         created_at = None
         updated_at = None
 
-    setattr(base_module, 'TimestampMixin', _TimestampMixin)
-    if app_base_module is not None and not hasattr(app_base_module, 'TimestampMixin'):
-        setattr(app_base_module, 'TimestampMixin', _TimestampMixin)
+    setattr(base_module, "TimestampMixin", _TimestampMixin)
+    if app_base_module is not None and not hasattr(app_base_module, "TimestampMixin"):
+        setattr(app_base_module, "TimestampMixin", _TimestampMixin)
 
 from app.models.base import BaseModel as _BaseModel
-if not hasattr(_BaseModel.__class__, 'metadata'):
+
+if not hasattr(_BaseModel.__class__, "metadata"):
     _BaseModel = _BaseModel  # pragma: no cover
-if not hasattr(_BaseModel, 'TimestampMixin') and 'TimestampMixin' not in globals():
+if not hasattr(_BaseModel, "TimestampMixin") and "TimestampMixin" not in globals():
+
     class TimestampMixinStub:
         created_at = None
         updated_at = None
-    setattr(sys.modules['backend.app.models.base'], 'TimestampMixin', TimestampMixinStub) if 'backend.app.models.base' in sys.modules else None
+
+    setattr(
+        sys.modules["backend.app.models.base"], "TimestampMixin", TimestampMixinStub
+    ) if "backend.app.models.base" in sys.modules else None
 from backend.scripts.seed_market_demo import seed_market_demo
 from backend.scripts.seed_nonreg import seed_nonregulated_reference_data
 

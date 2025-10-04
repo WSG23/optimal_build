@@ -51,9 +51,7 @@ async def _seed_cost_indices(session, entries: Iterable[RefCostIndex]) -> None:
     await session.commit()
 
 
-async def _ensure_project(
-    session, *, project_id: uuid.UUID, name: str
-) -> None:
+async def _ensure_project(session, *, project_id: uuid.UUID, name: str) -> None:
     existing = await session.get(Project, project_id)
     if existing is not None:
         return

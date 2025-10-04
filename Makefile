@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify status hooks
+.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules status hooks
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -21,6 +21,9 @@ else
 UVICORN ?= $(UVICORN_BIN)
 endif
 PRE_COMMIT ?= $(VENV_ABS)/bin/pre-commit
+BLACK ?= $(VENV_ABS)/bin/black
+FLAKE8 ?= $(VENV_ABS)/bin/flake8
+PYTEST ?= $(VENV_ABS)/bin/pytest
 
 PYENV ?= $(shell command -v pyenv 2>/dev/null)
 PYENV_PREFERRED_VERSION ?= 3.11.12
@@ -120,16 +123,16 @@ $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
 install: venv ## Install dependencies (alias)
 
 format: ## Format code (tests only)
-	@[ -d backend/tests ] && black backend/tests || true
-	@[ -d tests ] && black tests || true
+	@[ -d backend/tests ] && $(BLACK) backend/tests || true
+	@[ -d tests ] && $(BLACK) tests || true
 
 format-check: ## Check formatting (tests only)
-	@[ -d backend/tests ] && black --check backend/tests || true
-	@[ -d tests ] && black --check tests || true
+	@[ -d backend/tests ] && $(BLACK) --check backend/tests || true
+	@[ -d tests ] && $(BLACK) --check tests || true
 
 lint: ## Run linting (tests only)
-	@[ -d backend/tests ] && flake8 backend/tests || true
-	@[ -d tests ] && flake8 tests || true
+	@[ -d backend/tests ] && $(FLAKE8) backend/tests || true
+	@[ -d tests ] && $(FLAKE8) tests || true
 
 hooks: ## Run pre-commit hooks across the repository
 	@if command -v $(PRE_COMMIT) >/dev/null 2>&1; then \
@@ -149,18 +152,26 @@ lint-prod: ## Run linting for backend production code (optional)
 		fi; \
 	done; \
 	if [ -n "$$targets" ]; then \
-		flake8 $$targets || { echo "::warning::flake8 found issues in production code. Review output above."; true; }; \
+		$(FLAKE8) $$targets || { echo "::warning::flake8 found issues in production code. Review output above."; true; }; \
 	else \
 		echo "No production directories found to lint."; \
 	fi
 
-test: ## Run tests (tests only)
-	pytest -q
+test: ## Run tests (unit tests only - fast)
+	$(PYTEST) -q unit_tests/
 
-verify: ## Run formatting checks, linting, and tests
+test-all: ## Run all tests including integration tests
+	$(PYTEST) -q
+
+verify: ## Run formatting checks, linting, coding rules, and tests
 	$(MAKE) format-check
 	$(MAKE) lint
+	$(MAKE) check-coding-rules
 	$(MAKE) test
+
+check-coding-rules: ## Verify compliance with CODING_RULES.md
+	@echo "Checking coding rules compliance..."
+	@$(PY) scripts/check_coding_rules.py
 
 regstack-migrate: ## Run Alembic migrations for the Regstack schema
 	ALEMBIC_INI=db/alembic.ini \
@@ -196,7 +207,7 @@ test-aec: ## Run sample import, overlay, export flows and regression tests
 	cd frontend && npm test
 
 test-cov: ## Run tests with coverage
-	cd backend && $(PY) -m pytest --cov=app --cov-report=html
+	cd backend && $(PYTEST) --cov=app --cov-report=html
 	@echo "Coverage report: backend/htmlcov/index.html"
 
 clean: ## Clean build artifacts
@@ -283,7 +294,7 @@ dev: ## Start supporting services, the backend API, and frontends
 		else \
 			rm -f $(DEV_ADMIN_PID); \
 			: > $(DEV_ADMIN_LOG); \
-			(cd ui-admin && VITE_API_BASE=http://localhost:$(BACKEND_PORT) nohup $(ADMIN_CMD) > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
+			(cd ui-admin && VITE_API_BASE=http://localhost:$(BACKEND_PORT) VITE_API_URL=http://localhost:$(BACKEND_PORT)/api/v1 nohup $(ADMIN_CMD) > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
 			echo "Admin UI started (PID $$(cat $(DEV_ADMIN_PID))). Logs: $(DEV_ADMIN_LOG)"; \
 			echo "✅ Admin UI running on port $(ADMIN_PORT). Check $(DEV_ADMIN_LOG) for actual port if reassigned."; \
 		fi; \

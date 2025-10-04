@@ -25,5 +25,7 @@ def test_market_report_schema(monkeypatch):
         recommendations=["Monitor"],
     )
 
-    response = module.MarketReportResponse(report=payload, generated_at=datetime(2024, 3, 1, 12, 0))
+    response = module.MarketReportResponse(
+        report=payload, generated_at=datetime(2024, 3, 1, 12, 0)
+    )
     assert response.report.location == "all"

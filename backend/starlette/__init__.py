@@ -3,12 +3,40 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import pkgutil
 import sys
 from pathlib import Path
 from types import ModuleType
 
-from backend._stub_loader import import_runtime_dependency
+try:
+    from backend._stub_loader import import_runtime_dependency
+except ModuleNotFoundError:
+    backend_root = Path(__file__).resolve().parents[1]
+    repo_root = backend_root.parent
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    stub_loader_path = backend_root / "_stub_loader.py"
+    if not stub_loader_path.exists():  # pragma: no cover - defensive guard
+        raise
+
+    backend_package = sys.modules.setdefault("backend", ModuleType("backend"))
+    existing_path = list(getattr(backend_package, "__path__", []))
+    if str(backend_root) not in existing_path:
+        existing_path.append(str(backend_root))
+    backend_package.__path__ = existing_path
+
+    spec = importlib.util.spec_from_file_location(
+        "backend._stub_loader", stub_loader_path
+    )
+    if spec is None or spec.loader is None:  # pragma: no cover - safety net
+        raise
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["backend._stub_loader"] = module
+    spec.loader.exec_module(module)
+    import_runtime_dependency = module.import_runtime_dependency
 
 _SHADOW_PREFIX = "starlette_shadow_"
 
