@@ -94,9 +94,9 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub when plugin miss
 
 if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") == "1":
     try:
-        from backend.tests import (
+        from backend.tests import (  # noqa: F401 - ensure fallback stubs are registered
             conftest as backend_conftest,
-        )  # noqa: F401 - ensure fallback stubs are registered
+        )
     except Exception:  # pragma: no cover - fallback when backend fixtures unavailable
         backend_conftest = SimpleNamespace(
             flow_session_factory=None,

@@ -11,18 +11,11 @@ from decimal import Decimal
 from typing import Any, Awaitable, Callable, Dict, TypeVar
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import _resolve_database_url
 from app.models.rkp import RefRule
-from app.models.singapore_property import (
-    ComplianceStatus,
-    SingaporeProperty,
-)
+from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 
 _T = TypeVar("_T")
 

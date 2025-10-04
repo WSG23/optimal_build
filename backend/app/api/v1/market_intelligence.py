@@ -11,11 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.metrics import MetricsCollector
 from app.models.property import PropertyType
-from app.schemas.market import (
-    MarketPeriod,
-    MarketReportPayload,
-    MarketReportResponse,
-)
+from app.schemas.market import MarketPeriod, MarketReportPayload, MarketReportResponse
 from app.services.agents.market_data_service import MarketDataService
 from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics,

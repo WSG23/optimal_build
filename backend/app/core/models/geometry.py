@@ -6,10 +6,7 @@ import hashlib
 import json
 from collections.abc import Iterable, Iterator, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
-from typing import (
-    Any,
-    TypeVar,
-)
+from typing import Any, TypeVar
 
 Point2D = tuple[float, float]
 

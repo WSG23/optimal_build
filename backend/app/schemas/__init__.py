@@ -1,9 +1,6 @@
 """Schema exports."""
 
-from .compliance import (  # noqa: F401
-    ComplianceCheckRequest,
-    ComplianceCheckResponse,
-)
+from .compliance import ComplianceCheckRequest, ComplianceCheckResponse  # noqa: F401
 from .costs import CostIndex  # noqa: F401
 from .entitlements import (  # noqa: F401
     EntApprovalTypeCreate,
@@ -53,10 +50,7 @@ from .overlay import (  # noqa: F401
     OverlayDecisionRecord,
     OverlaySuggestion,
 )
-from .property import (  # noqa: F401
-    PropertyComplianceSummary,
-    SingaporePropertySchema,
-)
+from .property import PropertyComplianceSummary, SingaporePropertySchema  # noqa: F401
 from .rulesets import (  # noqa: F401
     RuleEvaluationResult,
     RulePackSchema,

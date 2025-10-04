@@ -53,9 +53,7 @@ except ModuleNotFoundError:  # pragma: no cover
     UniversalSitePackGenerator = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency relies on reportlab
-    from app.services.agents.investment_memorandum import (
-        InvestmentMemorandumGenerator,
-    )
+    from app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
 except ModuleNotFoundError:  # pragma: no cover
     InvestmentMemorandumGenerator = None  # type: ignore[assignment]
 

@@ -22,7 +22,9 @@ UVICORN ?= $(UVICORN_BIN)
 endif
 PRE_COMMIT ?= $(VENV_ABS)/bin/pre-commit
 BLACK ?= $(VENV_ABS)/bin/black
+ISORT ?= $(VENV_ABS)/bin/isort
 FLAKE8 ?= $(VENV_ABS)/bin/flake8
+MYPY ?= $(PY) -m mypy
 PYTEST ?= $(VENV_ABS)/bin/pytest
 
 PYENV ?= $(shell command -v pyenv 2>/dev/null)
@@ -124,12 +126,16 @@ install: venv ## Install dependencies (alias)
 
 format: ## Format code (all Python files)
 	@$(BLACK) backend/app/ backend/tests/ tests/ || true
+	@$(ISORT) backend/app/ backend/tests/ tests/ || true
 
 format-check: ## Check formatting (all Python files)
 	@$(BLACK) --check backend/app/ backend/tests/ tests/ || true
+	@$(ISORT) --check backend/app/ backend/tests/ tests/ || true
 
 lint: ## Run linting (all Python files)
 	@$(FLAKE8) backend/app/ backend/tests/ tests/ || true
+	@$(MYPY) backend/app/ || true
+	@cd frontend && npm run lint || true
 
 hooks: ## Run pre-commit hooks across the repository
 	@if command -v $(PRE_COMMIT) >/dev/null 2>&1; then \

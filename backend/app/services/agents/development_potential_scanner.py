@@ -6,12 +6,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import structlog
-from app.models.property import (
-    DevelopmentAnalysis,
-    Property,
-    PropertyType,
-    TenureType,
-)
+from app.models.property import DevelopmentAnalysis, Property, PropertyType, TenureType
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.buildable import BuildableInput, BuildableService
 from app.services.finance.calculator import FinanceCalculator
