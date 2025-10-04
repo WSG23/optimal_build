@@ -8,16 +8,23 @@ This module provides compliance validation functions based on Singapore's:
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any, Awaitable, Callable, Dict, TypeVar
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
+from app.core.database import _resolve_database_url
 from app.models.rkp import RefRule
 from app.models.singapore_property import (
     ComplianceStatus,
     SingaporeProperty,
 )
+
+_T = TypeVar("_T")
 
 # NOTE: Singapore URA and BCA rules are now stored in the RefRule database table
 # This allows jurisdiction-agnostic calculations via services/buildable.py
@@ -26,6 +33,20 @@ from app.models.singapore_property import (
 # To populate rules, use: python -m scripts.seed_singapore_rules
 #
 # Legacy hardcoded rules removed - use RefRule database instead
+
+
+async def _run_with_temporary_async_session(
+    callback: Callable[[AsyncSession], Awaitable[_T]]
+) -> _T:
+    """Execute ``callback`` with an isolated async session for sync callers."""
+
+    engine = create_async_engine(_resolve_database_url(), future=True, echo=False)
+    session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            return await callback(session)
+    finally:
+        await engine.dispose()
 
 
 async def check_ura_compliance(
@@ -616,10 +637,10 @@ def run_full_compliance_check_sync(property: SingaporeProperty) -> Dict[str, Any
     """Synchronous wrapper around run_full_compliance_check for sync endpoints."""
 
     async def _run() -> Dict[str, Any]:
-        from app.core.database import AsyncSessionLocal
-
-        async with AsyncSessionLocal() as session:
+        async def _callback(session: AsyncSession) -> Dict[str, Any]:
             return await run_full_compliance_check(property, session)
+
+        return await _run_with_temporary_async_session(_callback)
 
     return asyncio.run(_run())
 
@@ -628,9 +649,9 @@ def update_property_compliance_sync(property: SingaporeProperty) -> SingaporePro
     """Synchronous wrapper around update_property_compliance for sync endpoints."""
 
     async def _run() -> SingaporeProperty:
-        from app.core.database import AsyncSessionLocal
-
-        async with AsyncSessionLocal() as session:
+        async def _callback(session: AsyncSession) -> SingaporeProperty:
             return await update_property_compliance(property, session)
+
+        return await _run_with_temporary_async_session(_callback)
 
     return asyncio.run(_run())
