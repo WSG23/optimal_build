@@ -95,6 +95,7 @@ async def seed_market_demo(
 
     transactions: Sequence[MarketTransaction] = (
         MarketTransaction(
+            id=uuid4(),
             property_id=property_id,
             transaction_date=date.today() - timedelta(days=120),
             transaction_type="sale",
@@ -113,6 +114,7 @@ async def seed_market_demo(
             confidence_score=Decimal("0.95"),
         ),
         MarketTransaction(
+            id=uuid4(),
             property_id=property_id,
             transaction_date=date.today() - timedelta(days=400),
             transaction_type="sale",
@@ -134,6 +136,7 @@ async def seed_market_demo(
     session.add_all(transactions)
 
     rental_listing = RentalListing(
+        id=uuid4(),
         property_id=property_id,
         listing_date=date.today() - timedelta(days=30),
         listing_type="unit",
@@ -150,6 +153,7 @@ async def seed_market_demo(
     session.add(rental_listing)
 
     benchmark = YieldBenchmark(
+        id=uuid4(),
         benchmark_date=date.today().replace(day=1),
         period_type="monthly",
         district="D01",
@@ -174,6 +178,7 @@ async def seed_market_demo(
     session.add(benchmark)
 
     absorption = AbsorptionTracking(
+        id=uuid4(),
         project_id=property_id,
         project_name="Market Demo Tower",
         tracking_date=date.today() - timedelta(days=30),
@@ -203,6 +208,7 @@ async def seed_market_demo(
     session.add(absorption)
 
     cycle = MarketCycle(
+        id=uuid4(),
         cycle_date=date.today().replace(day=1),
         property_type=PropertyType.OFFICE,
         market_segment="Market Demo",
@@ -224,6 +230,7 @@ async def seed_market_demo(
 
     indices = [
         MarketIndex(
+            id=uuid4(),
             index_date=date.today() - timedelta(days=30 * idx),
             index_name="OFFICE_PPI",
             property_type=PropertyType.OFFICE,

@@ -21,7 +21,7 @@ async def test_market_report_returns_seeded_payload(app_client, market_demo_data
         },
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     payload = response.json()["report"]
 
     assert payload["property_type"] == PropertyType.OFFICE.value

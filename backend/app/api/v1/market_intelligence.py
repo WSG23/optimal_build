@@ -21,8 +21,10 @@ from app.schemas.market import (
     MarketReportPayload,
     MarketReportResponse,
 )
+from app.utils.logging import get_logger, log_event
 
 router = APIRouter(prefix="/market-intelligence", tags=["market-intelligence"])
+logger = get_logger(__name__)
 
 _market_data_service = MarketDataService()
 _metrics_collector = MetricsCollector()
@@ -51,7 +53,17 @@ async def generate_market_report(
             competitive_set_id=competitive_set_id,
         )
     except Exception as exc:  # pragma: no cover - defensive guard
-        raise HTTPException(status_code=500, detail="Failed to generate market report") from exc
+        log_event(
+            logger,
+            "market_intelligence_report_failed",
+            error=str(exc),
+            property_type=property_type.value,
+            location=location,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate market report: {exc}",
+        ) from exc
 
     payload = MarketReportPayload(
         property_type=report.property_type,

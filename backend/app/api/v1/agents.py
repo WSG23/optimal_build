@@ -409,7 +409,7 @@ async def generate_market_report(
 @router.post("/market-intelligence/sync", dependencies=[Depends(require_reviewer)])
 async def sync_market_data(
     request: MarketSyncRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ) -> Dict[str, Any]:
     """
     Sync market data from configured providers.

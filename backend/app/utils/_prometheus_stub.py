@@ -70,7 +70,9 @@ class _MetricBase:
     def _label_key(self, labels: dict[str, str]) -> tuple[str, ...]:
         return tuple(labels.get(label, "") for label in self._labelnames)
 
-    def labels(self, **labels: str) -> _Sample:
+    def labels(self, *label_args: str, **labels: str) -> _Sample:
+        if label_args:
+            labels = {name: value for name, value in zip(self._labelnames, label_args)} | labels
         key = self._label_key(labels)
         if key not in self._metrics:
             self._metrics[key] = _Sample()
@@ -184,7 +186,9 @@ class Histogram(_MetricBase):
         )
         super().__init__(name, documentation, labelnames, registry, **kwargs)
 
-    def labels(self, **labels: str) -> _HistogramSample:
+    def labels(self, *label_args: str, **labels: str) -> _HistogramSample:
+        if label_args:
+            labels = {name: value for name, value in zip(self._labelnames, label_args)} | labels
         key = self._label_key(labels)
         sample = self._metrics.get(key)
         if not isinstance(sample, _HistogramSample):
