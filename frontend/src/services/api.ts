@@ -41,24 +41,36 @@ class ApiClient {
     );
   }
 
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.client.get<T>(url, config);
+  async get<TResponse>(url: string, config?: AxiosRequestConfig<unknown>): Promise<AxiosResponse<TResponse>> {
+    return this.client.get<TResponse>(url, config);
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.client.post<T>(url, data, config);
+  async post<TResponse, TData = unknown>(
+    url: string,
+    data?: TData,
+    config?: AxiosRequestConfig<TData>
+  ): Promise<AxiosResponse<TResponse>> {
+    return this.client.post<TResponse>(url, data, config);
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.client.put<T>(url, data, config);
+  async put<TResponse, TData = unknown>(
+    url: string,
+    data?: TData,
+    config?: AxiosRequestConfig<TData>
+  ): Promise<AxiosResponse<TResponse>> {
+    return this.client.put<TResponse>(url, data, config);
   }
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.client.delete<T>(url, config);
+  async delete<TResponse>(url: string, config?: AxiosRequestConfig<unknown>): Promise<AxiosResponse<TResponse>> {
+    return this.client.delete<TResponse>(url, config);
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    return this.client.patch<T>(url, data, config);
+  async patch<TResponse, TData = unknown>(
+    url: string,
+    data?: TData,
+    config?: AxiosRequestConfig<TData>
+  ): Promise<AxiosResponse<TResponse>> {
+    return this.client.patch<TResponse>(url, data, config);
   }
 }
 

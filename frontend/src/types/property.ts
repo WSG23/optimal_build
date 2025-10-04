@@ -60,7 +60,7 @@ export interface Property {
   plot_ratio?: number;
   is_conservation?: boolean;
   conservation_status?: string;
-  heritage_constraints?: any;
+  heritage_constraints?: unknown;
   created_at: string;
   updated_at: string;
 }
