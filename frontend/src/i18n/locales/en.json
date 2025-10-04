@@ -27,7 +27,8 @@
     "detection": "Floor & unit detection",
     "pipelines": "Default pipelines",
     "feasibility": "Feasibility wizard",
-    "finance": "Finance workspace"
+    "finance": "Finance workspace",
+    "intelligence": "Advanced intelligence"
   },
   "home": {
     "cards": {
