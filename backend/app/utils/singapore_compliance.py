@@ -8,17 +8,16 @@ This module provides compliance validation functions based on Singapore's:
 import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.singapore_property import (
-    SingaporeProperty,
-    PropertyZoning,
-    ComplianceStatus
-)
 from app.models.rkp import RefRule
-
+from app.models.singapore_property import (
+    ComplianceStatus,
+    SingaporeProperty,
+)
 
 # NOTE: Singapore URA and BCA rules are now stored in the RefRule database table
 # This allows jurisdiction-agnostic calculations via services/buildable.py
@@ -29,7 +28,9 @@ from app.models.rkp import RefRule
 # Legacy hardcoded rules removed - use RefRule database instead
 
 
-async def check_ura_compliance(property: SingaporeProperty, session: AsyncSession) -> Dict[str, Any]:
+async def check_ura_compliance(
+    property: SingaporeProperty, session: AsyncSession
+) -> Dict[str, Any]:
     """
     Check URA zoning compliance for a Singapore property using RefRule database.
 
@@ -44,8 +45,8 @@ async def check_ura_compliance(property: SingaporeProperty, session: AsyncSessio
         - warnings: List of warning messages
         - rules_applied: The URA rules that were checked
     """
-    violations = []
-    warnings = []
+    violations: list[str] = []
+    warnings: list[str] = []
 
     # Get zoning rules
     if not property.zoning:
@@ -54,11 +55,13 @@ async def check_ura_compliance(property: SingaporeProperty, session: AsyncSessio
             "message": "Zoning not specified",
             "violations": [],
             "warnings": ["Property zoning must be specified for compliance check"],
-            "rules_applied": {}
+            "rules_applied": {},
         }
 
     # Convert enum to string if needed
-    zoning_str = property.zoning.value if hasattr(property.zoning, 'value') else property.zoning
+    zoning_str = (
+        property.zoning.value if hasattr(property.zoning, "value") else property.zoning
+    )
     zone_code = f"SG:{zoning_str}"
 
     # Query RefRule database for URA zoning rules
@@ -68,7 +71,7 @@ async def check_ura_compliance(property: SingaporeProperty, session: AsyncSessio
         .where(RefRule.authority == "URA")
         .where(RefRule.topic == "zoning")
         .where(RefRule.review_status == "approved")
-        .where(RefRule.is_published == True)
+        .where(RefRule.is_published)
     )
     result = await session.execute(stmt)
     all_rules = result.scalars().all()
@@ -87,7 +90,7 @@ async def check_ura_compliance(property: SingaporeProperty, session: AsyncSessio
             "message": f"No URA rules found for zoning: {zoning_str}",
             "violations": [],
             "warnings": [f"No zoning rules found in database for zone {zone_code}"],
-            "rules_applied": {}
+            "rules_applied": {},
         }
 
     # Parse rules into dict for easier checking
@@ -117,7 +120,11 @@ async def check_ura_compliance(property: SingaporeProperty, session: AsyncSessio
             )
 
     # Calculate actual plot ratio if GFA is provided
-    if property.gross_floor_area_sqm and property.land_area_sqm and property.land_area_sqm > 0:
+    if (
+        property.gross_floor_area_sqm
+        and property.land_area_sqm
+        and property.land_area_sqm > 0
+    ):
         actual_plot_ratio = property.gross_floor_area_sqm / property.land_area_sqm
         if "max_plot_ratio" in rules_dict:
             max_plot_ratio = rules_dict["max_plot_ratio"]
@@ -139,11 +146,15 @@ async def check_ura_compliance(property: SingaporeProperty, session: AsyncSessio
         "status": status,
         "violations": violations,
         "warnings": warnings,
-        "rules_applied": {k: str(v) if isinstance(v, Decimal) else v for k, v in rules_dict.items()}
+        "rules_applied": {
+            k: str(v) if isinstance(v, Decimal) else v for k, v in rules_dict.items()
+        },
     }
 
 
-async def check_bca_compliance(property: SingaporeProperty, session: AsyncSession) -> Dict[str, Any]:
+async def check_bca_compliance(
+    property: SingaporeProperty, session: AsyncSession
+) -> Dict[str, Any]:
     """
     Check BCA building compliance for a Singapore property using RefRule database.
 
@@ -159,9 +170,9 @@ async def check_bca_compliance(property: SingaporeProperty, session: AsyncSessio
         - recommendations: List of recommended actions
         - requirements_applied: The BCA requirements that were checked
     """
-    violations = []
-    warnings = []
-    recommendations = []
+    violations: list[str] = []
+    warnings: list[str] = []
+    recommendations: list[str] = []
 
     if not property.zoning:
         return {
@@ -170,11 +181,13 @@ async def check_bca_compliance(property: SingaporeProperty, session: AsyncSessio
             "violations": [],
             "warnings": ["Property zoning must be specified for BCA compliance check"],
             "recommendations": [],
-            "requirements_applied": {}
+            "requirements_applied": {},
         }
 
     # Convert enum to string if needed
-    zoning_str = property.zoning.value if hasattr(property.zoning, 'value') else property.zoning
+    zoning_str = (
+        property.zoning.value if hasattr(property.zoning, "value") else property.zoning
+    )
     zone_code = f"SG:{zoning_str}"
 
     # Query RefRule database for BCA building rules
@@ -184,7 +197,7 @@ async def check_bca_compliance(property: SingaporeProperty, session: AsyncSessio
         .where(RefRule.authority == "BCA")
         .where(RefRule.topic == "building")
         .where(RefRule.review_status == "approved")
-        .where(RefRule.is_published == True)
+        .where(RefRule.is_published)
     )
     result = await session.execute(stmt)
     all_rules = result.scalars().all()
@@ -204,7 +217,7 @@ async def check_bca_compliance(property: SingaporeProperty, session: AsyncSessio
             "violations": [],
             "warnings": [f"No building rules found in database for zone {zone_code}"],
             "recommendations": [],
-            "requirements_applied": {}
+            "requirements_applied": {},
         }
 
     # Parse rules into dict
@@ -216,7 +229,11 @@ async def check_bca_compliance(property: SingaporeProperty, session: AsyncSessio
             requirements["max_site_coverage"] = Decimal(value_str) / 100
 
     # Check site coverage
-    if property.gross_floor_area_sqm and property.land_area_sqm and property.num_storeys:
+    if (
+        property.gross_floor_area_sqm
+        and property.land_area_sqm
+        and property.num_storeys
+    ):
         # Estimate building footprint (assuming uniform floor plates)
         footprint = property.gross_floor_area_sqm / property.num_storeys
         site_coverage = footprint / property.land_area_sqm
@@ -249,7 +266,9 @@ async def check_bca_compliance(property: SingaporeProperty, session: AsyncSessio
                 residential_gfa = property.gross_floor_area_sqm * Decimal("0.8")
 
             # Estimate number of units if not provided
-            estimated_units = property.num_storeys * 8  # Rough estimate: 8 units per floor
+            estimated_units = (
+                property.num_storeys * 8
+            )  # Rough estimate: 8 units per floor
 
             if residential_gfa and estimated_units:
                 avg_unit_size = residential_gfa / estimated_units
@@ -286,13 +305,14 @@ async def check_bca_compliance(property: SingaporeProperty, session: AsyncSessio
         "violations": violations,
         "warnings": warnings,
         "recommendations": recommendations,
-        "requirements_applied": {k: str(v) if isinstance(v, Decimal) else v for k, v in requirements.items()}
+        "requirements_applied": {
+            k: str(v) if isinstance(v, Decimal) else v for k, v in requirements.items()
+        },
     }
 
 
 async def calculate_gfa_utilization_async(
-    property: SingaporeProperty,
-    session: Any = None
+    property: SingaporeProperty, session: Any = None
 ) -> Dict[str, Any]:
     """
     Calculate GFA utilization using the production buildable service.
@@ -317,8 +337,8 @@ async def calculate_gfa_utilization_async(
         - buildable_metrics: Detailed metrics from buildable service
         - recommendations: List of optimization suggestions
     """
-    from app.services.buildable import calculate_buildable, ResolvedZone
     from app.schemas.buildable import BuildableDefaults
+    from app.services.buildable import ResolvedZone, calculate_buildable
 
     if not property.land_area_sqm or not property.gross_plot_ratio:
         return {
@@ -328,7 +348,9 @@ async def calculate_gfa_utilization_async(
             "remaining_gfa_sqm": None,
             "utilization_percentage": None,
             "potential_units": None,
-            "recommendations": ["Specify land area and plot ratio to calculate development potential"]
+            "recommendations": [
+                "Specify land area and plot ratio to calculate development potential"
+            ],
         }
 
     # Create buildable defaults using property data
@@ -337,16 +359,20 @@ async def calculate_gfa_utilization_async(
         site_area_m2=float(property.land_area_sqm),
         site_coverage=0.45,  # Default, will be overridden by zoning rules
         floor_height_m=4.0,  # Default floor-to-floor from config
-        efficiency_factor=0.82  # 82% efficiency (18% loss for walls, MEP, structure, circulation)
+        efficiency_factor=0.82,  # 82% efficiency (18% loss for walls, MEP, structure, circulation)
     )
 
     # Create resolved zone (simplified for Singapore MVP - no PostGIS integration yet)
     resolved = ResolvedZone(
-        zone_code=property.zoning.value if hasattr(property.zoning, 'value') else property.zoning,
+        zone_code=(
+            property.zoning.value
+            if hasattr(property.zoning, "value")
+            else property.zoning
+        ),
         parcel=None,
         zone_layers=[],
         input_kind="property",
-        geometry_properties=None
+        geometry_properties=None,
     )
 
     # Calculate buildable metrics using production service
@@ -356,7 +382,7 @@ async def calculate_gfa_utilization_async(
             resolved=resolved,
             defaults=defaults,
             typ_floor_to_floor_m=4.0,
-            efficiency_ratio=0.82
+            efficiency_ratio=0.82,
         )
         max_gfa = buildable_calc.metrics.gfa_cap_m2
         nsa_est = buildable_calc.metrics.nsa_est_m2
@@ -369,13 +395,17 @@ async def calculate_gfa_utilization_async(
         floors_max = property.num_storeys or 0
         footprint = int(float(property.land_area_sqm) * 0.45)  # 45% site coverage
 
-    current_gfa = float(property.gross_floor_area_sqm) if property.gross_floor_area_sqm else 0.0
+    current_gfa = (
+        float(property.gross_floor_area_sqm) if property.gross_floor_area_sqm else 0.0
+    )
     remaining_gfa = max_gfa - current_gfa
     utilization_pct = (current_gfa / max_gfa * 100) if max_gfa > 0 else 0.0
 
     # Estimate potential units (residential only)
     potential_units = None
-    zoning_value = property.zoning.value if hasattr(property.zoning, 'value') else property.zoning
+    zoning_value = (
+        property.zoning.value if hasattr(property.zoning, "value") else property.zoning
+    )
     if zoning_value in ["residential", "mixed_use"] and remaining_gfa > 0:
         avg_unit_size = 70  # Assume 70sqm average
         potential_units = int(remaining_gfa / avg_unit_size)
@@ -383,10 +413,16 @@ async def calculate_gfa_utilization_async(
     recommendations = []
     if remaining_gfa > 0:
         recommendations.append(f"You can build up to {remaining_gfa:.0f} sqm more GFA")
-        recommendations.append(f"Current utilization is {utilization_pct:.1f}% of maximum allowed")
-        recommendations.append(f"Net Saleable Area (NSA) estimate: {nsa_est:,} sqm (82% efficiency)")
+        recommendations.append(
+            f"Current utilization is {utilization_pct:.1f}% of maximum allowed"
+        )
+        recommendations.append(
+            f"Net Saleable Area (NSA) estimate: {nsa_est:,} sqm (82% efficiency)"
+        )
         if potential_units:
-            recommendations.append(f"Potential for approximately {potential_units} additional residential units")
+            recommendations.append(
+                f"Potential for approximately {potential_units} additional residential units"
+            )
     else:
         recommendations.append("Maximum GFA utilization reached")
 
@@ -400,9 +436,9 @@ async def calculate_gfa_utilization_async(
             "nsa_estimate_sqm": nsa_est,
             "floors_max": floors_max,
             "footprint_sqm": footprint,
-            "efficiency_ratio": 0.82
+            "efficiency_ratio": 0.82,
         },
-        "recommendations": recommendations
+        "recommendations": recommendations,
     }
 
 
@@ -421,12 +457,16 @@ def calculate_gfa_utilization(property: SingaporeProperty) -> Dict[str, Any]:
             "remaining_gfa_sqm": None,
             "utilization_percentage": None,
             "potential_units": None,
-            "recommendations": ["Specify land area and plot ratio to calculate development potential"]
+            "recommendations": [
+                "Specify land area and plot ratio to calculate development potential"
+            ],
         }
 
     # Calculate with buildable service defaults (4.0m floor height, 82% efficiency)
     max_gfa = float(property.land_area_sqm * property.gross_plot_ratio)
-    current_gfa = float(property.gross_floor_area_sqm) if property.gross_floor_area_sqm else 0.0
+    current_gfa = (
+        float(property.gross_floor_area_sqm) if property.gross_floor_area_sqm else 0.0
+    )
     remaining_gfa = max_gfa - current_gfa
     utilization_pct = (current_gfa / max_gfa * 100) if max_gfa > 0 else 0.0
 
@@ -435,7 +475,9 @@ def calculate_gfa_utilization(property: SingaporeProperty) -> Dict[str, Any]:
 
     # Estimate potential units (residential only)
     potential_units = None
-    zoning_value = property.zoning.value if hasattr(property.zoning, 'value') else property.zoning
+    zoning_value = (
+        property.zoning.value if hasattr(property.zoning, "value") else property.zoning
+    )
     if zoning_value in ["residential", "mixed_use"] and remaining_gfa > 0:
         avg_unit_size = 70  # Assume 70sqm average
         potential_units = int(remaining_gfa / avg_unit_size)
@@ -443,10 +485,16 @@ def calculate_gfa_utilization(property: SingaporeProperty) -> Dict[str, Any]:
     recommendations = []
     if remaining_gfa > 0:
         recommendations.append(f"You can build up to {remaining_gfa:.0f} sqm more GFA")
-        recommendations.append(f"Current utilization is {utilization_pct:.1f}% of maximum allowed")
-        recommendations.append(f"Net Saleable Area (NSA) estimate: {nsa_est:,} sqm (82% efficiency)")
+        recommendations.append(
+            f"Current utilization is {utilization_pct:.1f}% of maximum allowed"
+        )
+        recommendations.append(
+            f"Net Saleable Area (NSA) estimate: {nsa_est:,} sqm (82% efficiency)"
+        )
         if potential_units:
-            recommendations.append(f"Potential for approximately {potential_units} additional residential units")
+            recommendations.append(
+                f"Potential for approximately {potential_units} additional residential units"
+            )
     else:
         recommendations.append("Maximum GFA utilization reached")
 
@@ -459,13 +507,15 @@ def calculate_gfa_utilization(property: SingaporeProperty) -> Dict[str, Any]:
         "buildable_metrics": {
             "nsa_estimate_sqm": nsa_est,
             "efficiency_ratio": 0.82,
-            "floor_height_m": 4.0
+            "floor_height_m": 4.0,
         },
-        "recommendations": recommendations
+        "recommendations": recommendations,
     }
 
 
-async def run_full_compliance_check(property: SingaporeProperty, session: AsyncSession) -> Dict[str, Any]:
+async def run_full_compliance_check(
+    property: SingaporeProperty, session: AsyncSession
+) -> Dict[str, Any]:
     """
     Run complete BCA and URA compliance checks on a property using RefRule database.
     Updates the property's compliance fields.
@@ -484,7 +534,9 @@ async def run_full_compliance_check(property: SingaporeProperty, session: AsyncS
     # Compile all violations and recommendations
     all_violations = ura_check.get("violations", []) + bca_check.get("violations", [])
     all_warnings = ura_check.get("warnings", []) + bca_check.get("warnings", [])
-    all_recommendations = bca_check.get("recommendations", []) + gfa_calc.get("recommendations", [])
+    all_recommendations = bca_check.get("recommendations", []) + gfa_calc.get(
+        "recommendations", []
+    )
 
     # Determine overall compliance status
     if all_violations:
@@ -515,12 +567,14 @@ async def run_full_compliance_check(property: SingaporeProperty, session: AsyncS
             "ura_check": ura_check,
             "bca_check": bca_check,
             "gfa_calculation": gfa_calc,
-            "checked_at": datetime.utcnow().isoformat()
-        }
+            "checked_at": datetime.utcnow().isoformat(),
+        },
     }
 
 
-async def update_property_compliance(property: SingaporeProperty, session: AsyncSession) -> SingaporeProperty:
+async def update_property_compliance(
+    property: SingaporeProperty, session: AsyncSession
+) -> SingaporeProperty:
     """
     Run compliance checks and update the property model fields.
 
@@ -536,8 +590,12 @@ async def update_property_compliance(property: SingaporeProperty, session: Async
     # Update property compliance fields (convert enum to value for SQLAlchemy)
     bca_status = compliance_result["bca_status"]
     ura_status = compliance_result["ura_status"]
-    property.bca_compliance_status = bca_status.value if hasattr(bca_status, 'value') else bca_status
-    property.ura_compliance_status = ura_status.value if hasattr(ura_status, 'value') else ura_status
+    property.bca_compliance_status = (
+        bca_status.value if hasattr(bca_status, "value") else bca_status
+    )
+    property.ura_compliance_status = (
+        ura_status.value if hasattr(ura_status, "value") else ura_status
+    )
     property.compliance_notes = compliance_result["compliance_notes"]
     property.compliance_data = compliance_result["compliance_data"]
     property.compliance_last_checked = datetime.utcnow()
@@ -546,7 +604,9 @@ async def update_property_compliance(property: SingaporeProperty, session: Async
     gfa_calc = compliance_result["compliance_data"]["gfa_calculation"]
     if gfa_calc.get("max_gfa_sqm"):
         property.max_developable_gfa_sqm = Decimal(str(gfa_calc["max_gfa_sqm"]))
-        property.gfa_utilization_percentage = Decimal(str(gfa_calc["utilization_percentage"]))
+        property.gfa_utilization_percentage = Decimal(
+            str(gfa_calc["utilization_percentage"])
+        )
         property.potential_additional_units = gfa_calc.get("potential_units")
 
     return property

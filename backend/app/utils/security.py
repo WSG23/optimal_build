@@ -7,9 +7,9 @@ import hmac
 import secrets
 
 try:  # pragma: no cover - prefer passlib when available
-    from passlib.context import CryptContext
+    from passlib.context import CryptContext  # type: ignore[import-untyped]
 except ModuleNotFoundError:  # pragma: no cover - fallback implementation
-    CryptContext = None  # type: ignore[assignment]
+    CryptContext = None
 
 
 if CryptContext is not None:
@@ -17,13 +17,13 @@ if CryptContext is not None:
 
     def hash_password(password: str) -> str:
         """Hash a password for storing using passlib."""
-
-        return pwd_context.hash(password)
+        result: str = pwd_context.hash(password)
+        return result
 
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash using passlib."""
-
-        return pwd_context.verify(plain_password, hashed_password)
+        result: bool = pwd_context.verify(plain_password, hashed_password)
+        return result
 
 else:
 

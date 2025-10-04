@@ -211,6 +211,8 @@ class Settings:
         self.S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "minioadmin")
         self.IMPORTS_BUCKET_NAME = os.getenv("IMPORTS_BUCKET_NAME", "cad-imports")
         self.EXPORTS_BUCKET_NAME = os.getenv("EXPORTS_BUCKET_NAME", "cad-exports")
+        # Backwards-compatible default used by legacy storage helpers
+        self.S3_BUCKET = os.getenv("S3_BUCKET", self.IMPORTS_BUCKET_NAME)
 
         self.FIRST_SUPERUSER = os.getenv(
             "FIRST_SUPERUSER", "admin@buildingcompliance.com"

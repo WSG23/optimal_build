@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules status hooks
+.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules status hooks
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -225,14 +225,23 @@ init-db: ## Apply Alembic migrations inside Docker
 db.upgrade: ## Apply database migrations locally
 	DEV_SQLITE_URL=$(DEV_SQLITE_URL) DATABASE_URL="$${DATABASE_URL:-$(DEV_SQLITE_URL)}" $(PY) scripts/sqlite_upgrade.py
 
-seed-data: ## Seed screening data and finance demo scenarios
+seed-data: ## Seed screening data, finance demo scenarios, and sample properties
 	@if [ -n "$(DOCKER_COMPOSE)" ]; then \
 	        $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_screening; \
 	        $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_finance_demo; \
+	        $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_properties_projects --reset; \
 	else \
 		echo "Docker Compose CLI not detected; running seeders locally."; \
 		$(PY) -m backend.scripts.seed_screening; \
 		$(PY) -m backend.scripts.seed_finance_demo; \
+		$(PY) -m backend.scripts.seed_properties_projects --reset; \
+	fi
+
+seed-properties-projects: ## Seed sample properties and projects for Commercial Property APIs
+	@if [ -n "$(DOCKER_COMPOSE)" ]; then \
+	    $(DOCKER_COMPOSE) exec backend python -m backend.scripts.seed_properties_projects --reset; \
+	else \
+	    $(PY) -m backend.scripts.seed_properties_projects --reset; \
 	fi
 
 logs: ## Show application logs

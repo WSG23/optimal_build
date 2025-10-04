@@ -6,12 +6,12 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from backend._compat import compat_dataclass
-from backend._compat.datetime import UTC
 from app.models.entitlements import (
     EntApprovalType,
     EntAuthority,
@@ -286,9 +286,12 @@ class EntitlementsService:
         target = next((entry for entry in items if entry.id == item_id), None)
         if target is None:
             return
-        items = [entry for entry in items if entry.id != item_id]
-        self._reindex(items)
+
         await self.session.delete(target)
+        await self.session.flush()
+
+        remaining = [entry for entry in items if entry.id != item_id]
+        self._reindex(remaining)
         await self.session.flush()
 
     async def list_studies(

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import logging
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-import json
-import logging
 from typing import Any, Protocol, cast
 from uuid import UUID
 
@@ -25,7 +25,7 @@ try:  # pragma: no cover - importlib.metadata available on Python 3.8+
     from importlib import metadata as _importlib_metadata_module
 except ImportError:  # pragma: no cover - runtime older than Python 3.8
     try:
-        import importlib_metadata as _importlib_metadata_backport
+        import importlib_metadata as _importlib_metadata_backport  # type: ignore[import-not-found]
     except ModuleNotFoundError:  # pragma: no cover - no metadata helpers available
         importlib_metadata = None
     else:
@@ -128,5 +128,7 @@ def _serialise_for_logging(value: Any) -> Any:
 def log_event(logger: BoundLogger, event: str, **kwargs: Any) -> None:
     """Emit a structured info log with consistent naming."""
 
-    serialised_kwargs = {key: _serialise_for_logging(value) for key, value in kwargs.items()}
+    serialised_kwargs = {
+        key: _serialise_for_logging(value) for key, value in kwargs.items()
+    }
     logger.info(event, **serialised_kwargs)

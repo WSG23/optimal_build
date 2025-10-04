@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from app.core.config import settings
 
@@ -188,6 +188,13 @@ class BuildableCalculation(BaseModel):
     metrics: BuildableMetrics
     zone_source: ZoneSource
     rules: list[BuildableRule]
+
+    @computed_field
+    @property
+    def gfa_total(self) -> float:
+        """Total gross floor area permitted by the calculation."""
+
+        return float(self.metrics.gfa_cap_m2)
 
 
 class BuildableResponse(BaseModel):
