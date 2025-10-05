@@ -2,6 +2,8 @@
 
 This document defines the coding standards for the `optimal_build` repository. All new code and modified files should follow these rules. CODEX and other contributors should adhere to these standards.
 
+For workflow, tooling setup, and detailed linting guidance, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 If a temporary exception is truly necessary, record it in
 `.coding-rules-exceptions.yml` and include context plus a clean-up plan. The
 automation in `scripts/check_coding_rules.py` reads that file when evaluating
@@ -71,30 +73,11 @@ def get_property(session: Session, property_id: str):  # Missing async
 
 ## 3. Testing Before Commits
 
-**Rule:** Run `make verify` before creating pull requests or committing major changes. All tests must pass.
+**Rule:** Run `make verify` before committing or opening a pull request.
 
-**Why:** Catches formatting issues, linting errors, and test failures before they reach the main branch.
+**Why:** It catches formatting issues, lint failures, and test regressions before they reach `main`.
 
-**How to follow:**
-- Run `make verify` before creating a PR (runs format-check, lint, and tests)
-- Fix any issues reported by the command
-- For comprehensive checks, run `make hooks` to execute pre-commit hooks
-- Individual components: `make format-check`, `make lint`, `make test`
-
-**Examples:**
-```bash
-# ✅ Correct - verify before committing
-make verify
-# ... fix any issues ...
-git add .
-git commit -m "Add compliance validation"
-
-# Optional: run full pre-commit hooks
-make hooks
-
-# ❌ Wrong - committing without testing
-git commit -m "quick fix" && git push  # No testing!
-```
+**Tip:** See [CONTRIBUTING.md](CONTRIBUTING.md#testing-and-quality-checks) for the full testing and linting workflow.
 
 ---
 
@@ -164,41 +147,6 @@ curl -X POST http://localhost:9400/api/v1/singapore-property/check-compliance \
 - If a temporary exception is unavoidable, document it in
   `.coding-rules-exceptions.yml` under `rule_5_singapore`, together with a plan
   for removal.
-
----
-
-## Code Style Summary
-
-Based on majority patterns in the codebase:
-
-### Python (Backend)
-- **Naming:** `snake_case` for functions, variables, files
-- **Classes:** `PascalCase`
-- **Imports:** Organize with `from __future__ import annotations` at top, then stdlib, then third-party, then local
-- **Formatting:** Use `black` for auto-formatting (run via `make format`)
-- **Linting:** Follow `flake8` rules (check via `make lint`)
-
-### TypeScript/React (Frontend)
-- **Naming:** `camelCase` for variables/functions, `PascalCase` for components/types
-- **Interfaces:** Use `interface` not `type` for object shapes
-- **Async:** Use `async`/`await`, not `.then()` chains
-- **API calls:** snake_case in API responses, map to camelCase in frontend (see [client.ts:344-366](frontend/src/api/client.ts#L344-L366))
-
-### File Organization
-- Python modules: `backend/app/{feature}/` (e.g., `backend/app/models/`, `backend/app/api/routes/`)
-- Tests mirror structure: `backend/tests/test_api/test_{feature}.py`
-- Frontend components: `frontend/src/components/`, `frontend/src/pages/`
-- Shared types: `frontend/src/types/`
-
----
-
-## Enforcement
-
-These rules are enforced through:
-1. **Automated checks** in `make verify` (see Makefile:160-163)
-2. **Pre-commit hooks** via `make hooks` (optional but recommended)
-3. **Code review** - reviewers should reference this document
-4. **CI/CD** - GitHub Actions runs `make verify` on all PRs
 
 ---
 

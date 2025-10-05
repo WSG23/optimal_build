@@ -1,20 +1,42 @@
 """GPS Property Logger for Commercial Property Advisors agent."""
 
+import asyncio
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, Optional, Tuple
+from enum import Enum
+from statistics import mean
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
 
 import structlog
+from app.models.property import Property, PropertyStatus, PropertyType
+from app.services.agents.ura_integration import URAIntegrationService
+from app.services.geocoding import Address, GeocodingService
 from geoalchemy2.functions import ST_GeomFromText
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.property import Property, PropertyStatus, PropertyType
-from app.services.agents.ura_integration import URAIntegrationService
-from app.services.geocoding import Address, GeocodingService
-
 logger = structlog.get_logger()
+
+
+class DevelopmentScenario(str, Enum):
+    """Supported development scenarios for quick GPS analysis."""
+
+    RAW_LAND = "raw_land"
+    EXISTING_BUILDING = "existing_building"
+    HERITAGE_PROPERTY = "heritage_property"
+    UNDERUSED_ASSET = "underused_asset"
+
+    @classmethod
+    def default_set(cls) -> List["DevelopmentScenario"]:
+        """Return the default ordered list of scenarios to analyse."""
+
+        return [
+            cls.RAW_LAND,
+            cls.EXISTING_BUILDING,
+            cls.HERITAGE_PROPERTY,
+            cls.UNDERUSED_ASSET,
+        ]
 
 
 class PropertyLogResult:
@@ -29,6 +51,7 @@ class PropertyLogResult:
         existing_use: str,
         property_info: Optional[Dict[str, Any]] = None,
         nearby_amenities: Optional[Dict[str, Any]] = None,
+        quick_analysis: Optional[Dict[str, Any]] = None,
         timestamp: datetime = None,
     ):
         self.property_id = property_id
@@ -38,13 +61,14 @@ class PropertyLogResult:
         self.existing_use = existing_use
         self.property_info = property_info
         self.nearby_amenities = nearby_amenities
+        self.quick_analysis = quick_analysis
         self.timestamp = timestamp or datetime.utcnow()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
         return {
             "property_id": str(self.property_id),
-            "address": self.address.dict(),
+            "address": self.address.model_dump(),
             "coordinates": {
                 "latitude": self.coordinates[0],
                 "longitude": self.coordinates[1],
@@ -53,6 +77,7 @@ class PropertyLogResult:
             "existing_use": self.existing_use,
             "property_info": self.property_info,
             "nearby_amenities": self.nearby_amenities,
+            "quick_analysis": self.quick_analysis,
             "timestamp": self.timestamp.isoformat(),
         }
 
@@ -72,6 +97,7 @@ class GPSPropertyLogger:
         longitude: float,
         session: AsyncSession,
         user_id: Optional[UUID] = None,
+        scenarios: Optional[List[DevelopmentScenario]] = None,
     ) -> PropertyLogResult:
         """
         Log a property from GPS coordinates.
@@ -103,6 +129,17 @@ class GPSPropertyLogger:
             ura_zoning = await self.ura.get_zoning_info(address.full_address)
             existing_use = await self.ura.get_existing_use(address.full_address)
             property_info = await self.ura.get_property_info(address.full_address)
+            property_type = self._determine_property_type(existing_use or "")
+
+            development_plans_task = asyncio.create_task(
+                self.ura.get_development_plans(latitude, longitude)
+            )
+            transactions_task = asyncio.create_task(
+                self.ura.get_transaction_data(property_type.value, address.district)
+            )
+            rentals_task = asyncio.create_task(
+                self.ura.get_rental_data(property_type.value, address.district)
+            )
 
             # Step 4: Get nearby amenities
             nearby_amenities = await self.geocoding.get_nearby_amenities(
@@ -123,6 +160,7 @@ class GPSPropertyLogger:
                     address,
                     latitude,
                     longitude,
+                    property_type,
                     ura_zoning,
                     existing_use,
                     property_info,
@@ -133,15 +171,32 @@ class GPSPropertyLogger:
             # Step 6: Log the property access
             await self._log_property_access(session, property_id, user_id)
 
+            development_plans = await development_plans_task
+            transactions = await transactions_task
+            rentals = await rentals_task
+
+            quick_analysis = self._generate_quick_analysis(
+                scenarios or DevelopmentScenario.default_set(),
+                ura_zoning=ura_zoning,
+                property_info=property_info,
+                existing_use=existing_use,
+                nearby_amenities=nearby_amenities,
+                property_type=property_type,
+                development_plans=development_plans,
+                transactions=transactions,
+                rentals=rentals,
+            )
+
             # Return comprehensive result
             return PropertyLogResult(
                 property_id=property_id,
                 address=address,
                 coordinates=(latitude, longitude),
-                ura_zoning=ura_zoning.dict() if ura_zoning else {},
+                ura_zoning=ura_zoning.model_dump() if ura_zoning else {},
                 existing_use=existing_use or "Unknown",
-                property_info=property_info.dict() if property_info else None,
+                property_info=property_info.model_dump() if property_info else None,
                 nearby_amenities=nearby_amenities,
+                quick_analysis=quick_analysis,
             )
 
         except Exception as e:
@@ -184,15 +239,13 @@ class GPSPropertyLogger:
         address: Address,
         latitude: float,
         longitude: float,
+        property_type: PropertyType,
         ura_zoning: Any,
         existing_use: str,
         property_info: Any,
     ) -> UUID:
         """Create new property record."""
         property_id = uuid4()
-
-        # Determine property type from existing use
-        property_type = self._determine_property_type(existing_use)
 
         # Create point geometry
         point = f"POINT({longitude} {latitude})"
@@ -319,3 +372,302 @@ class GPSPropertyLogger:
             return "leasehold_30"
         else:
             return "leasehold_other"
+
+    def _generate_quick_analysis(
+        self,
+        scenarios: List[DevelopmentScenario],
+        *,
+        ura_zoning: Optional[Any],
+        property_info: Optional[Any],
+        existing_use: Optional[str],
+        nearby_amenities: Optional[Dict[str, Any]],
+        property_type: PropertyType,
+        development_plans: List[Dict[str, Any]],
+        transactions: List[Dict[str, Any]],
+        rentals: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Generate a lightweight, scenario-based analysis for GPS captures."""
+
+        insights: List[Dict[str, Any]] = []
+        for scenario in scenarios:
+            if scenario == DevelopmentScenario.RAW_LAND:
+                insights.append(
+                    self._quick_raw_land_analysis(
+                        ura_zoning, property_info, development_plans
+                    )
+                )
+            elif scenario == DevelopmentScenario.EXISTING_BUILDING:
+                insights.append(
+                    self._quick_existing_asset_analysis(
+                        ura_zoning, property_info, transactions
+                    )
+                )
+            elif scenario == DevelopmentScenario.HERITAGE_PROPERTY:
+                insights.append(
+                    self._quick_heritage_analysis(
+                        property_info,
+                        existing_use,
+                        ura_zoning,
+                        development_plans,
+                    )
+                )
+            elif scenario == DevelopmentScenario.UNDERUSED_ASSET:
+                insights.append(
+                    self._quick_underused_analysis(
+                        existing_use,
+                        nearby_amenities,
+                        property_info,
+                        rentals,
+                        property_type,
+                    )
+                )
+
+        return {
+            "generated_at": datetime.utcnow().isoformat(),
+            "scenarios": insights,
+        }
+
+    @staticmethod
+    def _safe_float(value: Optional[Any]) -> Optional[float]:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _safe_int(value: Optional[Any]) -> Optional[int]:
+        coerced = GPSPropertyLogger._safe_float(value)
+        if coerced is None:
+            return None
+        return int(round(coerced))
+
+    @staticmethod
+    def _average(values: List[Optional[float]]) -> Optional[float]:
+        numeric = [value for value in values if value is not None]
+        if not numeric:
+            return None
+        return float(mean(numeric))
+
+    @staticmethod
+    def _nearest_plan_completion(
+        development_plans: List[Dict[str, Any]]
+    ) -> Optional[str]:
+        nearest_ribbon: Optional[str] = None
+        shortest_distance = float("inf")
+        for plan in development_plans:
+            distance = GPSPropertyLogger._safe_float(plan.get("distance_km"))
+            completion = plan.get("expected_completion")
+            if distance is None or completion is None:
+                continue
+            if distance < shortest_distance:
+                shortest_distance = distance
+                nearest_ribbon = str(completion)
+        return nearest_ribbon
+
+    def _quick_raw_land_analysis(
+        self,
+        ura_zoning: Optional[Any],
+        property_info: Optional[Any],
+        development_plans: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        site_area = (
+            self._safe_float(getattr(property_info, "site_area_sqm", None))
+            if property_info
+            else None
+        )
+        plot_ratio = (
+            self._safe_float(getattr(ura_zoning, "plot_ratio", None))
+            if ura_zoning
+            else None
+        )
+        potential_gfa = site_area * plot_ratio if site_area and plot_ratio else None
+        development_count = len(development_plans)
+        nearest_completion = self._nearest_plan_completion(development_plans)
+
+        headline: str
+        if potential_gfa:
+            headline = (
+                f"Est. max GFA ≈ {potential_gfa:,.0f} sqm using plot ratio {plot_ratio}"
+            )
+        else:
+            headline = "Plot ratio or site area missing — manual GFA check needed"
+
+        return {
+            "scenario": DevelopmentScenario.RAW_LAND.value,
+            "headline": headline,
+            "metrics": {
+                "site_area_sqm": site_area,
+                "plot_ratio": plot_ratio,
+                "potential_gfa_sqm": potential_gfa,
+                "nearby_development_count": development_count,
+                "nearest_completion": nearest_completion,
+            },
+            "notes": list(
+                filter(
+                    None,
+                    [
+                        getattr(
+                            ura_zoning, "zone_description", "Zoning data unavailable"
+                        ),
+                        getattr(ura_zoning, "special_conditions", None),
+                        f"{development_count} upcoming projects within 2 km",
+                    ],
+                )
+            ),
+        }
+
+    def _quick_existing_asset_analysis(
+        self,
+        ura_zoning: Optional[Any],
+        property_info: Optional[Any],
+        transactions: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        approved_gfa = (
+            self._safe_float(getattr(property_info, "gfa_approved", None))
+            if property_info
+            else None
+        )
+        plot_ratio = (
+            self._safe_float(getattr(ura_zoning, "plot_ratio", None))
+            if ura_zoning
+            else None
+        )
+        site_area = (
+            self._safe_float(getattr(property_info, "site_area_sqm", None))
+            if property_info
+            else None
+        )
+        potential_gfa = plot_ratio * site_area if plot_ratio and site_area else None
+        uplift = (
+            (potential_gfa - approved_gfa) if potential_gfa and approved_gfa else None
+        )
+
+        transaction_psf = [
+            self._safe_float(transaction.get("psf_price"))
+            for transaction in transactions
+        ]
+        average_psf = self._average(transaction_psf)
+        transaction_count = len(transactions)
+
+        if uplift and uplift > 0:
+            headline = (
+                f"Potential uplift of ≈ {uplift:,.0f} sqm compared to approved GFA"
+            )
+        elif approved_gfa:
+            headline = "Existing approvals already near zoning limit"
+        else:
+            headline = "No approved GFA data — assess existing building efficiency"
+
+        return {
+            "scenario": DevelopmentScenario.EXISTING_BUILDING.value,
+            "headline": headline,
+            "metrics": {
+                "approved_gfa_sqm": approved_gfa,
+                "scenario_gfa_sqm": potential_gfa,
+                "gfa_uplift_sqm": uplift,
+                "recent_transaction_count": transaction_count,
+                "average_psf_price": average_psf,
+            },
+            "notes": [
+                "Consider retrofit or adaptive reuse options to unlock unused GFA",
+            ],
+        }
+
+    def _quick_heritage_analysis(
+        self,
+        property_info: Optional[Any],
+        existing_use: Optional[str],
+        ura_zoning: Optional[Any],
+        development_plans: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        completion_year = (
+            int(property_info.completion_year)
+            if property_info and property_info.completion_year
+            else None
+        )
+        heritage_risk = "medium"
+        notes: List[str] = []
+
+        if completion_year and completion_year < 1970:
+            notes.append("Asset predates 1970 — likely conservation review required")
+            heritage_risk = "high"
+        elif "conservation" in (existing_use or "").lower():
+            notes.append("Existing use indicates conservation-sensitive asset")
+            heritage_risk = "high"
+        else:
+            notes.append(
+                getattr(
+                    ura_zoning,
+                    "special_conditions",
+                    "Check URA conservation portal for obligations",
+                )
+            )
+
+        if development_plans:
+            notes.append(
+                f"{len(development_plans)} planned projects nearby may influence heritage dialogue"
+            )
+
+        return {
+            "scenario": DevelopmentScenario.HERITAGE_PROPERTY.value,
+            "headline": f"Heritage risk assessment: {heritage_risk.upper()}",
+            "metrics": {
+                "completion_year": completion_year,
+                "heritage_risk": heritage_risk,
+            },
+            "notes": [note for note in notes if note],
+        }
+
+    def _quick_underused_analysis(
+        self,
+        existing_use: Optional[str],
+        nearby_amenities: Optional[Dict[str, Any]],
+        property_info: Optional[Any],
+        rentals: List[Dict[str, Any]],
+        property_type: PropertyType,
+    ) -> Dict[str, Any]:
+        amenity_summary = (
+            len(nearby_amenities.get("mrt_stations", [])) if nearby_amenities else 0
+        )
+        building_height = (
+            self._safe_float(getattr(property_info, "building_height", None))
+            if property_info
+            else None
+        )
+
+        notes = []
+        if amenity_summary == 0:
+            notes.append("Limited transit access — consider last-mile improvements")
+        else:
+            notes.append("Strong transit presence supports repositioning")
+
+        if building_height and building_height < 20:
+            notes.append(
+                "Low-rise profile — explore vertical expansion if zoning permits"
+            )
+
+        average_rent = self._average(
+            [self._safe_float(rental.get("monthly_rent")) for rental in rentals]
+        )
+        rental_count = len(rentals)
+
+        if rental_count == 0:
+            notes.append(
+                "No nearby rental comps in dataset — check brokerage feeds for fresh pricing"
+            )
+
+        return {
+            "scenario": DevelopmentScenario.UNDERUSED_ASSET.value,
+            "headline": "Review asset utilisation versus surrounding demand",
+            "metrics": {
+                "nearby_mrt_count": amenity_summary,
+                "current_use": existing_use,
+                "building_height_m": building_height,
+                "average_monthly_rent": average_rent,
+                "rental_comparable_count": rental_count,
+                "property_type": property_type.value,
+            },
+            "notes": notes,
+        }

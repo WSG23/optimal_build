@@ -2,23 +2,28 @@
 
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, Optional
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
+from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.database import get_session
-from app.models.property import PropertyType
+from app.models.property import Property, PropertyType
 from app.services.agents.development_potential_scanner import (
     DevelopmentPotentialScanner,
 )
-from app.services.agents.gps_property_logger import GPSPropertyLogger
+from app.services.agents.gps_property_logger import (
+    DevelopmentScenario,
+    GPSPropertyLogger,
+)
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
-from app.services.geocoding import GeocodingService
-from pydantic import BaseModel, Field
+from app.services.geocoding import Address, GeocodingService
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -66,6 +71,8 @@ router = APIRouter(
     prefix="/agents/commercial-property", tags=["Commercial Property Agent"]
 )
 
+logger = structlog.get_logger()
+
 # Service instances
 geocoding_service = GeocodingService()
 gps_logger = GPSPropertyLogger(geocoding_service, ura_service)
@@ -81,6 +88,47 @@ class GPSLogRequest(BaseModel):
 
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
+    development_scenarios: list[DevelopmentScenario] | None = Field(
+        None,
+        description=(
+            "Optional list of development scenarios to analyse during capture. "
+            "Defaults to the core commercial scenarios if omitted."
+        ),
+    )
+
+
+class CoordinatePair(BaseModel):
+    latitude: float
+    longitude: float
+
+
+class QuickAnalysisScenario(BaseModel):
+    scenario: DevelopmentScenario
+    headline: str
+    metrics: Dict[str, Any]
+    notes: list[str]
+
+
+class QuickAnalysisEnvelope(BaseModel):
+    generated_at: datetime
+    scenarios: list[QuickAnalysisScenario]
+
+
+class GPSLogResponse(BaseModel):
+    property_id: UUID
+    address: Address
+    coordinates: CoordinatePair
+    ura_zoning: Dict[str, Any]
+    existing_use: str
+    property_info: Optional[Dict[str, Any]]
+    nearby_amenities: Optional[Dict[str, Any]]
+    quick_analysis: QuickAnalysisEnvelope
+    timestamp: datetime
+
+
+class MarketIntelligenceResponse(BaseModel):
+    property_id: UUID
+    report: Dict[str, Any]
 
 
 class PropertyAnalysisRequest(BaseModel):
@@ -155,12 +203,12 @@ class PropertyValuationRequest(BaseModel):
 # API Endpoints
 
 
-@router.post("/properties/log-gps")
+@router.post("/properties/log-gps", response_model=GPSLogResponse)
 async def log_property_by_gps(
     request: GPSLogRequest,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> dict[str, Any]:
+) -> GPSLogResponse:
     """
     Log a property using GPS coordinates.
 
@@ -177,12 +225,77 @@ async def log_property_by_gps(
             longitude=request.longitude,
             session=db,
             user_id=None,  # TODO: Get from auth context
+            scenarios=request.development_scenarios,
         )
+        quick_analysis_payload = result.quick_analysis or {
+            "generated_at": datetime.utcnow().isoformat(),
+            "scenarios": [],
+        }
+        quick_analysis = QuickAnalysisEnvelope.model_validate(quick_analysis_payload)
 
-        return result.to_dict()
+        return GPSLogResponse(
+            property_id=result.property_id,
+            address=result.address,
+            coordinates=CoordinatePair(
+                latitude=result.coordinates[0],
+                longitude=result.coordinates[1],
+            ),
+            ura_zoning=result.ura_zoning,
+            existing_use=result.existing_use,
+            property_info=result.property_info,
+            nearby_amenities=result.nearby_amenities,
+            quick_analysis=quick_analysis,
+            timestamp=result.timestamp,
+        )
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get(
+    "/properties/{property_id}/market-intelligence",
+    response_model=MarketIntelligenceResponse,
+)
+async def get_property_market_intelligence(
+    property_id: str,
+    months: int = 12,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> MarketIntelligenceResponse:
+    """Generate market intelligence snapshot for a captured property."""
+
+    try:
+        property_uuid = UUID(property_id)
+    except ValueError as exc:  # pragma: no cover
+        raise HTTPException(status_code=400, detail="Invalid property ID") from exc
+
+    stmt = select(Property).where(Property.id == property_uuid)
+    result = await db.execute(stmt)
+    property_data = result.scalar_one_or_none()
+
+    if not property_data:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    location = property_data.district or "all"
+
+    try:
+        report = await market_analytics.generate_market_report(
+            property_type=property_data.property_type,
+            location=location,
+            period_months=months,
+            session=db,
+        )
+    except Exception as exc:  # pragma: no cover - analytics layer may raise
+        logger.error("Market intelligence generation failed", exc_info=exc)
+        raise HTTPException(
+            status_code=503,
+            detail="Market intelligence service is temporarily unavailable",
+        ) from exc
+
+    return MarketIntelligenceResponse(
+        property_id=property_uuid,
+        report=report.to_dict(),
+    )
 
 
 @router.post("/properties/{property_id}/analyze")

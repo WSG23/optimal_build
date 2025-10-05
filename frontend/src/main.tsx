@@ -6,6 +6,7 @@ import { TranslationProvider } from './i18n'
 import { CadDetectionPage } from './pages/CadDetectionPage'
 import { CadPipelinesPage } from './pages/CadPipelinesPage'
 import { CadUploadPage } from './pages/CadUploadPage'
+import AgentsGpsCapturePage from './pages/AgentsGpsCapturePage'
 import { FeasibilityWizard } from './modules/feasibility/FeasibilityWizard'
 import { FinanceWorkspace } from './modules/finance'
 import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligence'
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
   {
     path: '/finance',
     element: <FinanceWorkspace />,
+  },
+  {
+    path: '/agents/site-capture',
+    element: <AgentsGpsCapturePage />,
   },
   {
     path: '/visualizations/intelligence',

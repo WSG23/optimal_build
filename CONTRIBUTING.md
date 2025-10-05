@@ -24,6 +24,8 @@ up the `frontend` workspace and installs the configured pre-commit hooks if the
 
 ## Coding standards
 
+For project-specific rules (migrations, async patterns, compliance checks), see [CODING_RULES.md](CODING_RULES.md).
+
 ### Python
 
 - Format Python code with **Black** (`black --line-length 88`) and keep imports

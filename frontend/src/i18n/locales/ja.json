@@ -28,7 +28,8 @@
     "pipelines": "デフォルトパイプライン",
     "feasibility": "フィージビリティウィザード",
     "finance": "ファイナンスワークスペース",
-    "intelligence": "高度なインテリジェンス"
+    "intelligence": "高度なインテリジェンス",
+    "agentCapture": "エージェントGPS取得"
   },
   "home": {
     "cards": {
@@ -112,6 +113,92 @@
         "minDscr": "最低DSCR"
       },
       "empty": "利用可能な財務シナリオがありません。"
+    }
+  },
+  "agentsCapture": {
+    "title": "GPS現地キャプチャ",
+    "subtitle": "シンガポールの地点を記録し、ゾーニング情報と簡易シナリオ分析を即座に取得してチーム共有をスムーズにします。",
+    "form": {
+      "latitude": "緯度",
+      "longitude": "経度",
+      "scenarioLegend": "評価するシナリオ",
+      "submit": "簡易分析を生成",
+      "submitLoading": "生成中…",
+      "helper": "既定値はシンガポール中心部の座標です。現地で取得したGPS値を入力して活用できます。"
+    },
+    "errors": {
+      "coordinatesInvalid": "有効な緯度・経度を入力してください。",
+      "generic": "簡易分析を生成できませんでした。時間をおいて再度お試しください。"
+    },
+    "scenarios": {
+      "rawLand": {
+        "title": "更地ポテンシャル",
+        "description": "URAゾーニングに基づきGFA上限や利用用途の方向性を推定します。"
+      },
+      "existingBuilding": {
+        "title": "既存建物の余力",
+        "description": "承認済みGFAとゾーニング余力を比較し、改修や増築の可能性を探ります。"
+      },
+      "heritageProperty": {
+        "title": "ヘリテージ配慮",
+        "description": "保存指定やSTB連携が必要となるリスクを早期に把握します。"
+      },
+      "underusedAsset": {
+        "title": "低稼働資産の再活用",
+        "description": "周辺アメニティと現用途を組み合わせ、リポジショニングの示唆を整理します。"
+      }
+    },
+    "metrics": {
+      "siteArea": "敷地面積 (㎡)",
+      "plotRatio": "プロットレシオ",
+      "potentialGfa": "潜在GFA (㎡)",
+      "approvedGfa": "承認済みGFA (㎡)",
+      "scenarioGfa": "シナリオGFA (㎡)",
+      "gfaUplift": "GFA増分 (㎡)",
+      "nearbyMrtCount": "最寄りMRT駅数",
+      "currentUse": "現用途",
+      "buildingHeight": "建物高さ (m)",
+      "nearbyDevelopmentCount": "周辺開発件数",
+      "nearestCompletion": "最短完工予定",
+      "recentTransactionCount": "直近取引件数",
+      "averagePsfPrice": "平均PSF価格",
+      "averageMonthlyRent": "平均月額賃料",
+      "rentalComparableCount": "賃料比較件数",
+      "propertyType": "物件タイプ",
+      "completionYear": "竣工年",
+      "heritageRisk": "ヘリテージリスク"
+    },
+    "results": {
+      "title": "クイック分析",
+      "subtitle": "開発・設計・コンプライアンスチームへ引き継ぐ前に要点を把握できます。",
+      "address": "住所: {{address}}",
+      "existingUse": "現用途: {{use}}",
+      "zone": "ゾーニング: {{zone}}",
+      "empty": "選択したシナリオに対する分析は生成されませんでした。",
+      "generatedAt": "分析生成時刻: {{timestamp}}",
+      "viewFeasibility": "フィージビリティウィザードを開く",
+      "openFinance": "ファイナンスへ共有"
+    },
+    "disclaimer": "本結果は参考情報です。対外共有の前に開発・法規・財務チームで必ず確認してください。",
+    "placeholder": "座標を入力して、エージェント向けのクイックシナリオ分析を開始しましょう。",
+    "context": {
+      "mapTitle": "現地マップ",
+      "mapFallback": "地図を表示するには VITE_MAPBOX_ACCESS_TOKEN を設定してください。",
+      "amenitiesTitle": "周辺アメニティ",
+      "amenities": {
+        "mrt": "MRT駅",
+        "bus": "バス停",
+        "schools": "学校",
+        "malls": "ショッピングモール",
+        "parks": "公園"
+      },
+      "amenities.itemWithDistance": "{{name}}・約{{distance}}m",
+      "amenities.item": "{{name}}"
+    },
+    "disclaimers": {
+      "preDevelopment": "マーケティング向けの概算分析です。対外共有前に開発・法規・財務チームで必ず前提条件を確認してください。",
+      "salesLeasing": "図面・仕様は参考値です。最終契約書および当局承認が優先されます。",
+      "default": "本結果は参考情報です。対外共有の前に開発・法規・財務チームで必ず確認してください。"
     }
   },
   "controls": {

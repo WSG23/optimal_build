@@ -28,7 +28,8 @@
     "pipelines": "Default pipelines",
     "feasibility": "Feasibility wizard",
     "finance": "Finance workspace",
-    "intelligence": "Advanced intelligence"
+    "intelligence": "Advanced intelligence",
+    "agentCapture": "Agent GPS capture"
   },
   "home": {
     "cards": {
@@ -112,6 +113,92 @@
         "minDscr": "Minimum DSCR"
       },
       "empty": "No finance scenarios are available."
+    }
+  },
+  "agentsCapture": {
+    "title": "Universal GPS site capture",
+    "subtitle": "Log a Singapore site, fetch zoning context and review quick multi-scenario insights before inviting the wider team.",
+    "form": {
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "scenarioLegend": "Scenarios to evaluate",
+      "submit": "Generate quick analysis",
+      "submitLoading": "Generating…",
+      "helper": "Coordinates default to the Singapore CBD. Adjust them or paste precise GPS points from the field."
+    },
+    "errors": {
+      "coordinatesInvalid": "Enter valid latitude and longitude values to continue.",
+      "generic": "Unable to generate the quick analysis. Please try again."
+    },
+    "scenarios": {
+      "rawLand": {
+        "title": "Raw land potential",
+        "description": "Estimate GFA capacity and permitted use mix from the URA zoning profile."
+      },
+      "existingBuilding": {
+        "title": "Existing building uplift",
+        "description": "Compare approved GFA with zoning headroom to spot retrofit or extension opportunities."
+      },
+      "heritageProperty": {
+        "title": "Heritage sensitivity",
+        "description": "Flag assets that may require conservation workflows or STB engagement."
+      },
+      "underusedAsset": {
+        "title": "Underused asset review",
+        "description": "Blend amenity data with current use to highlight repositioning ideas."
+      }
+    },
+    "metrics": {
+      "siteArea": "Site area (sqm)",
+      "plotRatio": "Plot ratio",
+      "potentialGfa": "Potential GFA (sqm)",
+      "approvedGfa": "Approved GFA (sqm)",
+      "scenarioGfa": "Scenario GFA (sqm)",
+      "gfaUplift": "GFA uplift (sqm)",
+      "nearbyMrtCount": "Nearby MRT stations",
+      "currentUse": "Current use",
+      "buildingHeight": "Building height (m)",
+      "nearbyDevelopmentCount": "Nearby development pipeline",
+      "nearestCompletion": "Nearest completion",
+      "recentTransactionCount": "Recent transactions",
+      "averagePsfPrice": "Average PSF price",
+      "averageMonthlyRent": "Average monthly rent",
+      "rentalComparableCount": "Rental comparables",
+      "propertyType": "Property type",
+      "completionYear": "Completion year",
+      "heritageRisk": "Heritage risk"
+    },
+    "results": {
+      "title": "Quick analysis",
+      "subtitle": "Review the highlights before handing off to developers, architects or compliance teams.",
+      "address": "Address: {{address}}",
+      "existingUse": "Existing use: {{use}}",
+      "zone": "Zoning: {{zone}}",
+      "empty": "No analysis insights were generated for the selected scenarios.",
+      "generatedAt": "Analysis generated at {{timestamp}}",
+      "viewFeasibility": "Open feasibility wizard",
+      "openFinance": "Send to finance workspace"
+    },
+    "disclaimer": "Illustrative analysis only. Always confirm results with the core development, compliance and finance teams before distributing externally.",
+    "placeholder": "Capture a set of coordinates to unlock quick scenario insights for agents and advisors.",
+    "context": {
+      "mapTitle": "Site context map",
+      "mapFallback": "Add VITE_MAPBOX_ACCESS_TOKEN to view the interactive map.",
+      "amenitiesTitle": "Nearby amenities",
+      "amenities": {
+        "mrt": "MRT stations",
+        "bus": "Bus stops",
+        "schools": "Schools",
+        "malls": "Shopping malls",
+        "parks": "Parks"
+      },
+      "amenities.itemWithDistance": "{{name}} • {{distance}} m",
+      "amenities.item": "{{name}}"
+    },
+    "disclaimers": {
+      "preDevelopment": "Illustrative marketing feasibility analysis — validate assumptions with development, compliance and finance teams before external use.",
+      "salesLeasing": "Indicative layout and specifications — dimensions approximate, subject to final contract documentation and authority approvals.",
+      "default": "Illustrative analysis only. Always confirm results with the core development, compliance and finance teams before distributing externally."
     }
   },
   "controls": {
