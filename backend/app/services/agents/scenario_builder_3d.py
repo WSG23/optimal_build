@@ -7,13 +7,12 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import structlog
 import trimesh
-from geoalchemy2.functions import ST_AsText
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.property import Property, PropertyType
 from app.services.agents.ura_integration import URAZoningInfo
 from app.services.postgis import PostGISService
+from geoalchemy2.functions import ST_AsText
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger()
 
@@ -240,6 +239,14 @@ class Quick3DScenarioBuilder:
 
         # Simple rectangular footprint based on GFA
         floor_area = float(property_data.gross_floor_area_sqm) / existing_floors
+        # Protect against invalid floor_area values
+        if floor_area <= 0:
+            logger.warning(
+                "Invalid floor_area for renovation massing",
+                floor_area=floor_area,
+                property_id=property_data.id,
+            )
+            return None
         side_length = np.sqrt(floor_area)
 
         footprint = [
@@ -340,7 +347,16 @@ class Quick3DScenarioBuilder:
         # Use existing footprint approximation
         if property_data.gross_floor_area_sqm and existing_floors:
             floor_area = float(property_data.gross_floor_area_sqm) / existing_floors
-            side_length = np.sqrt(floor_area)
+            # Protect against invalid floor_area values
+            if floor_area > 0:
+                side_length = np.sqrt(floor_area)
+            else:
+                logger.warning(
+                    "Invalid floor_area for vertical extension",
+                    floor_area=floor_area,
+                    property_id=property_data.id,
+                )
+                side_length = 30  # Default
         else:
             side_length = 30  # Default
 
@@ -526,7 +542,12 @@ class Quick3DScenarioBuilder:
 
         # For simplicity, apply uniform setback
         # In production, apply directional setbacks
-        avg_setback = np.mean(list(setbacks.values()))
+        setback_values = list(setbacks.values())
+        if not setback_values:
+            logger.warning("No setback values provided, using default")
+            avg_setback = 3.0  # Default setback
+        else:
+            avg_setback = np.mean(setback_values)
 
         # Use PostGIS to buffer inward
         from shapely.geometry import Polygon

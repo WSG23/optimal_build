@@ -14,10 +14,6 @@ try:  # pragma: no cover - optional dependency
     import numpy as np
 except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
     np = None  # type: ignore[assignment]
-from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -26,6 +22,9 @@ from app.models.market import (
 )
 from app.models.property import MarketTransaction, Property, PropertyType
 from app.services.agents.market_data_service import MarketDataService
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 try:  # pragma: no cover - optional metrics dependency
     from app.core.metrics import MetricsCollector
@@ -508,7 +507,7 @@ class MarketIntelligenceAnalytics:
                 quarterly[quarter]["avg_psf"].append(float(txn.psf_price))
 
         # Calculate averages
-        for quarter, data in quarterly.items():
+        for _quarter, data in quarterly.items():
             if data["avg_psf"]:
                 data["avg_psf"] = statistics.mean(data["avg_psf"])
             else:
@@ -768,7 +767,12 @@ class MarketIntelligenceAnalytics:
 
         # Estimate sellout timeline
         if avg_absorption > 0:
-            months_to_sellout = (100 - current_absorbed) / (avg_absorption / 100)
+            # Protect against division by zero when avg_absorption is very small
+            absorption_rate = avg_absorption / 100
+            if absorption_rate > 0.001:  # More than 0.1% monthly absorption
+                months_to_sellout = (100 - current_absorbed) / absorption_rate
+            else:
+                months_to_sellout = None  # Too slow to estimate
         else:
             months_to_sellout = None
 
