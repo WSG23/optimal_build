@@ -14,6 +14,10 @@ try:  # pragma: no cover - optional dependency
     import numpy as np
 except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
     np = None  # type: ignore[assignment]
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -22,9 +26,6 @@ from app.models.market import (
 )
 from app.models.property import MarketTransaction, Property, PropertyType
 from app.services.agents.market_data_service import MarketDataService
-from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 try:  # pragma: no cover - optional metrics dependency
     from app.core.metrics import MetricsCollector

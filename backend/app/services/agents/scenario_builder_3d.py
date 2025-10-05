@@ -7,12 +7,13 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import structlog
 import trimesh
-from app.models.property import Property, PropertyType
-from app.services.agents.ura_integration import URAZoningInfo
-from app.services.postgis import PostGISService
 from geoalchemy2.functions import ST_AsText
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.property import Property, PropertyType
+from app.services.agents.ura_integration import URAZoningInfo
+from app.services.postgis import PostGISService
 
 logger = structlog.get_logger()
 

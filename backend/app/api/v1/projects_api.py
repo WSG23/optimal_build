@@ -5,13 +5,13 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 from sqlalchemy import Boolean, Column, DateTime, Float, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.jwt_auth import TokenData, get_current_user
 from app.utils.db import session_dependency
+from pydantic import BaseModel, Field
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./projects.db"

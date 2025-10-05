@@ -9,7 +9,7 @@ from types import ModuleType, SimpleNamespace
 
 # Jose stubs
 try:
-    from jose import jwt  # type: ignore
+    from jose import JWTError, jwt  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover
     jose_stub = ModuleType("jose")
 
@@ -26,12 +26,11 @@ except ModuleNotFoundError:  # pragma: no cover
     jose_stub.jwt = SimpleNamespace(encode=_encode, decode=_decode)
     sys.modules.setdefault("jose", jose_stub)
 else:
-    from jose import JWTError  # type: ignore
+    JWTError = JWTError  # re-export for callers
 
 import importlib
 from importlib import import_module
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
 
 import pytest
 

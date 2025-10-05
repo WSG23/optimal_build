@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from backend._compat.datetime import UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +14,7 @@ from app.core.geometry import GeometrySerializer
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry
 from app.utils.logging import get_logger
+from backend._compat.datetime import UTC
 
 logger = get_logger(__name__)
 

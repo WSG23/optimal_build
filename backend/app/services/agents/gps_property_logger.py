@@ -6,12 +6,13 @@ from typing import Any, Dict, Optional, Tuple
 from uuid import UUID, uuid4
 
 import structlog
-from app.models.property import Property, PropertyStatus, PropertyType
-from app.services.agents.ura_integration import URAIntegrationService
-from app.services.geocoding import Address, GeocodingService
 from geoalchemy2.functions import ST_GeomFromText
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.property import Property, PropertyStatus, PropertyType
+from app.services.agents.ura_integration import URAIntegrationService
+from app.services.geocoding import Address, GeocodingService
 
 logger = structlog.get_logger()
 

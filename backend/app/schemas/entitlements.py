@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from app.models.entitlements import (
     EntApprovalCategory,
     EntEngagementStatus,
@@ -17,6 +15,7 @@ from app.models.entitlements import (
     EntStudyStatus,
     EntStudyType,
 )
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EntAuthorityBase(BaseModel):

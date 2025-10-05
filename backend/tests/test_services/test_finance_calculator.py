@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 import pytest
+
 from app.models.rkp import RefCostIndex
 from app.services.finance import calculator
 

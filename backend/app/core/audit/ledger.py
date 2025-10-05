@@ -9,12 +9,12 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from backend._compat.datetime import UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.audit import AuditLog
+from backend._compat.datetime import UTC
 
 
 def _as_utc(timestamp: datetime | None) -> datetime | None:

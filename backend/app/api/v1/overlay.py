@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from backend._compat.datetime import UTC
-from backend.jobs import job_queue
-from backend.jobs.overlay_run import run_overlay_job
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,10 +16,11 @@ from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
 from app.models.overlay import OverlayDecision, OverlaySuggestion
 from app.schemas.overlay import (
     OverlayDecisionPayload,
-)
-from app.schemas.overlay import (
     OverlaySuggestion as OverlaySuggestionSchema,
 )
+from backend._compat.datetime import UTC
+from backend.jobs import job_queue
+from backend.jobs.overlay_run import run_overlay_job
 
 router = APIRouter(prefix="/overlay")
 
