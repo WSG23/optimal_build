@@ -8,9 +8,11 @@ import {
   DEFAULT_SCENARIO_ORDER,
   type DevelopmentScenario,
   type GpsCaptureSummary,
+  type MarketIntelligenceSummary,
   type MetricValue,
   type QuickAnalysisScenarioSummary,
   logPropertyByGps,
+  fetchPropertyMarketIntelligence,
 } from '../api/agents'
 import { useTranslation } from '../i18n'
 import { Link } from '../router'
@@ -51,6 +53,86 @@ const SCENARIO_OPTIONS: readonly ScenarioOption[] = [
     descriptionKey: 'agentsCapture.scenarios.underusedAsset.description',
   },
 ] as const
+
+function formatDateDisplay(value: unknown, locale: string): string | null {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null
+  }
+  const timestamp = Date.parse(value)
+  if (Number.isNaN(timestamp)) {
+    return value
+  }
+  return new Date(timestamp).toLocaleDateString(locale)
+}
+
+function renderMarketReport(
+  summary: MarketIntelligenceSummary,
+  translate: ReturnType<typeof useTranslation>['t'],
+  locale: string,
+) {
+  const report = summary.report ?? {}
+  const comparables = (report.comparables_analysis as Record<string, unknown>) ?? {}
+  const transactions =
+    typeof comparables.transaction_count === 'number'
+      ? comparables.transaction_count
+      : null
+  const propertyType =
+    typeof report.property_type === 'string' ? report.property_type : null
+  const location = typeof report.location === 'string' ? report.location : null
+  const periodData = report.period as
+    | { start?: string | null; end?: string | null }
+    | undefined
+  const periodStart = formatDateDisplay(periodData?.start, locale)
+  const periodEnd = formatDateDisplay(periodData?.end, locale)
+  const generatedAt = formatDateDisplay(report.generated_at, locale)
+
+  const metrics = [
+    {
+      key: 'propertyType',
+      label: translate('agentsCapture.market.propertyType'),
+      value: propertyType ?? '—',
+    },
+    {
+      key: 'location',
+      label: translate('agentsCapture.market.location'),
+      value: location ?? '—',
+    },
+    {
+      key: 'period',
+      label: translate('agentsCapture.market.period'),
+      value:
+        periodStart && periodEnd
+          ? `${periodStart} – ${periodEnd}`
+          : periodStart ?? periodEnd ?? '—',
+    },
+    {
+      key: 'transactions',
+      label: translate('agentsCapture.market.transactions'),
+      value:
+        transactions !== null
+          ? new Intl.NumberFormat(locale).format(transactions)
+          : '—',
+    },
+  ]
+
+  return (
+    <>
+      <dl className="agents-capture__market-metrics">
+        {metrics.map(({ key, label, value }) => (
+          <div key={key} className="agents-capture__market-row">
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {generatedAt && (
+        <p className="agents-capture__status">
+          {translate('agentsCapture.market.generatedAt', { timestamp: generatedAt })}
+        </p>
+      )}
+    </>
+  )
+}
 
 function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -225,10 +307,12 @@ function ScenarioCard({
 
 interface AgentsGpsCapturePageProps {
   logPropertyFn?: typeof logPropertyByGps
+  fetchMarketIntelligenceFn?: typeof fetchPropertyMarketIntelligence
 }
 
 export function AgentsGpsCapturePage({
   logPropertyFn = logPropertyByGps,
+  fetchMarketIntelligenceFn = fetchPropertyMarketIntelligence,
 }: AgentsGpsCapturePageProps = {}) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language ?? 'en'
@@ -240,6 +324,10 @@ export function AgentsGpsCapturePage({
   const [result, setResult] = useState<GpsCaptureSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [marketReport, setMarketReport] =
+    useState<MarketIntelligenceSummary | null>(null)
+  const [marketLoading, setMarketLoading] = useState(false)
+  const [marketError, setMarketError] = useState<string | null>(null)
 
   const toggleScenario = (scenario: DevelopmentScenario) => {
     setSelectedScenarios((current) => {
@@ -308,6 +396,46 @@ export function AgentsGpsCapturePage({
     }
     return messages
   }, [scenarioKeys, t])
+
+  useEffect(() => {
+    if (!result) {
+      setMarketReport(null)
+      return undefined
+    }
+
+    const controller = new AbortController()
+    let cancelled = false
+
+    setMarketLoading(true)
+    setMarketError(null)
+
+    fetchMarketIntelligenceFn(result.propertyId, 12, controller.signal)
+      .then((report) => {
+        if (!cancelled) {
+          setMarketReport(report)
+        }
+      })
+      .catch((err) => {
+        if (cancelled || err?.name === 'AbortError') {
+          return
+        }
+        setMarketError(
+          err instanceof Error
+            ? err.message
+            : t('agentsCapture.errors.market'),
+        )
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setMarketLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [fetchMarketIntelligenceFn, result, t])
 
   return (
     <AppLayout
@@ -508,6 +636,20 @@ export function AgentsGpsCapturePage({
                 </ul>
               </aside>
             )}
+            <aside className="agents-capture__market">
+              <h4>{t('agentsCapture.market.title')}</h4>
+              {marketLoading && (
+                <p className="agents-capture__status">
+                  {t('agentsCapture.market.loading')}
+                </p>
+              )}
+              {marketError && (
+                <p className="agents-capture__error agents-capture__error--inline">
+                  {t('agentsCapture.market.error', { message: marketError })}
+                </p>
+              )}
+              {marketReport && renderMarketReport(marketReport, t, locale)}
+            </aside>
           </section>
         )}
       </section>

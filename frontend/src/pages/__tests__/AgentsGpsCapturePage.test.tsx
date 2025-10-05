@@ -64,15 +64,33 @@ describe('AgentsGpsCapturePage', () => {
       timestamp: '2025-01-01T00:00:00Z',
     }
 
-    let callCount = 0
-    const stub = async () => {
-      callCount += 1
+    let captureCalls = 0
+    const captureStub = async () => {
+      captureCalls += 1
       return summary
+    }
+
+    let marketCalls = 0
+    const marketStub = async () => {
+      marketCalls += 1
+      return {
+        propertyId: summary.propertyId,
+        report: {
+          property_type: 'office',
+          location: 'D01',
+          period: { start: '2025-01-01', end: '2025-06-01' },
+          comparables_analysis: { transaction_count: 3 },
+          generated_at: '2025-07-01T00:00:00Z',
+        },
+      }
     }
 
     render(
       <TranslationProvider>
-        <AgentsGpsCapturePage logPropertyFn={stub} />
+        <AgentsGpsCapturePage
+          logPropertyFn={captureStub}
+          fetchMarketIntelligenceFn={marketStub}
+        />
       </TranslationProvider>,
     )
 
@@ -88,12 +106,18 @@ describe('AgentsGpsCapturePage', () => {
     )
 
     await waitFor(() => {
-      assert.equal(callCount, 1)
+      assert.equal(captureCalls, 1)
+    })
+    await waitFor(() => {
+      assert.equal(marketCalls, 1)
     })
 
     assert.ok(
       screen.getByRole('heading', { name: /Raw land potential/i })
     )
     assert.ok(screen.getByText(/Max GFA 20,000 sqm/i))
+    assert.ok(screen.getByText(/Market intelligence/i))
+    assert.ok(screen.getByText(/Transactions/i))
+    assert.ok(screen.getByText(/Add VITE_MAPBOX_ACCESS_TOKEN/))
   })
 })

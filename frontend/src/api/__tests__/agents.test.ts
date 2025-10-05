@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { type DevelopmentScenario, logPropertyByGps } from '../agents'
+import {
+  type DevelopmentScenario,
+  logPropertyByGps,
+  fetchPropertyMarketIntelligence,
+} from '../agents'
 
 describe('agents API mapping', () => {
   it('maps the GPS capture payload into camelCase structures', async () => {
@@ -110,5 +114,64 @@ describe('agents API mapping', () => {
     )
 
     assert.deepEqual(captured[0], selection)
+  })
+
+  it('fetches market intelligence and returns the report payload', async () => {
+    const originalFetch = globalThis.fetch
+
+    let requestedUrl: string | null = null
+    globalThis.fetch = (async (
+      input: RequestInfo,
+      _init?: RequestInit,
+    ) => {
+      requestedUrl = typeof input === 'string' ? input : String(input)
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => 'application/json',
+        },
+        async json() {
+          return {
+            property_id: 'abc123',
+            report: { comparables_analysis: { transaction_count: 5 } },
+          }
+        },
+      }
+    }) as typeof globalThis.fetch
+
+    try {
+      const summary = await fetchPropertyMarketIntelligence('abc123', 6)
+      assert.ok(
+        requestedUrl?.includes('/market-intelligence?months=6'),
+        'request url includes months filter',
+      )
+      assert.equal(summary.report.comparables_analysis.transaction_count, 5)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('raises an error when the market intelligence endpoint returns a failure status', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () => ({
+      ok: false,
+      status: 503,
+      headers: {
+        get: () => 'text/plain',
+      },
+      async text() {
+        return 'service unavailable'
+      },
+    })) as typeof globalThis.fetch
+
+    try {
+      await assert.rejects(
+        () => fetchPropertyMarketIntelligence('abc123'),
+        /service unavailable/,
+      )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 })

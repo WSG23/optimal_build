@@ -379,3 +379,59 @@ export const DEFAULT_SCENARIO_ORDER: readonly DevelopmentScenario[] = [
   'heritage_property',
   'underused_asset',
 ]
+
+export interface MarketIntelligenceSummary {
+  propertyId: string
+  report: Record<string, unknown>
+}
+
+export async function fetchPropertyMarketIntelligence(
+  propertyId: string,
+  months = 12,
+  signal?: AbortSignal,
+): Promise<MarketIntelligenceSummary> {
+  const params = new URLSearchParams()
+  if (months) {
+    params.set('months', String(months))
+  }
+
+  const response = await fetch(
+    buildUrl(
+      `api/v1/agents/commercial-property/properties/${propertyId}/market-intelligence?${params.toString()}`,
+    ),
+    {
+      method: 'GET',
+      signal,
+    },
+  )
+
+  const contentType = response.headers?.get?.('content-type') ?? ''
+
+  if (!response.ok) {
+    const detail = contentType.includes('application/json')
+      ? await response.json().then((data: Record<string, unknown>) => {
+          const errorDetail = data?.detail
+          return typeof errorDetail === 'string' ? errorDetail : undefined
+        })
+      : await response.text()
+
+    throw new Error(
+      detail ||
+        `Request to market-intelligence failed with ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`,
+    )
+  }
+
+  if (!contentType.includes('application/json')) {
+    throw new Error('Expected JSON response from market-intelligence endpoint')
+  }
+
+  const payload = (await response.json()) as {
+    property_id: string
+    report: Record<string, unknown>
+  }
+
+  return {
+    propertyId: payload.property_id,
+    report: payload.report ?? {},
+  }
+}

@@ -128,7 +128,8 @@
     },
     "errors": {
       "coordinatesInvalid": "Enter valid latitude and longitude values to continue.",
-      "generic": "Unable to generate the quick analysis. Please try again."
+      "generic": "Unable to generate the quick analysis. Please try again.",
+      "market": "Unable to load market intelligence."
     },
     "scenarios": {
       "rawLand": {
@@ -199,6 +200,16 @@
       "preDevelopment": "Illustrative marketing feasibility analysis — validate assumptions with development, compliance and finance teams before external use.",
       "salesLeasing": "Indicative layout and specifications — dimensions approximate, subject to final contract documentation and authority approvals.",
       "default": "Illustrative analysis only. Always confirm results with the core development, compliance and finance teams before distributing externally."
+    },
+    "market": {
+      "title": "Market intelligence",
+      "loading": "Loading market intelligence…",
+      "error": "Unable to load market intelligence: {{message}}",
+      "propertyType": "Property type",
+      "location": "Location",
+      "period": "Period",
+      "transactions": "Transactions",
+      "generatedAt": "Report generated on {{timestamp}}"
     }
   },
   "controls": {

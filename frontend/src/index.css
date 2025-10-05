@@ -434,6 +434,16 @@ h3 {
     font-size: 0.9rem;
 }
 
+.agents-capture__status {
+    margin: 0;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.agents-capture__error--inline {
+    margin: 0;
+}
+
 .agents-capture__context {
     display: grid;
     gap: 1.5rem;
@@ -492,6 +502,37 @@ h3 {
     display: block;
     font-weight: 600;
     margin-bottom: 0.25rem;
+}
+
+.agents-capture__market {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.agents-capture__market-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+}
+
+.agents-capture__market-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.agents-capture__market-row dt {
+    color: #475569;
+    font-weight: 600;
+}
+
+.agents-capture__market-row dd {
+    margin: 0;
+    color: #0f172a;
+    font-weight: 600;
 }
 
 .app-home__cta {
