@@ -6,8 +6,8 @@ Follow these guardrails when you take over the keyboard:
 1. **Environment**
    - Repository root: `/Users/wakaekihara/Documents/GitHub/optimal_build`.
    - Sandbox: `workspace-write` (you may edit files within the repo).
-   - Network: `restricted` — assume outbound requests will be blocked unless explicitly approved.
-   - Approval policy: `on-request`; ask for escalation when a command needs it (e.g., writing outside the repo, network access, destructive actions).
+   - Network: `allowed` — network access enabled for package installation and updates.
+   - Approval policy: `on-request`; ask for escalation when a command needs it (e.g., writing outside the repo, destructive actions).
 
 2. **Shell usage**
    - Invoke commands through the harness (e.g. `bash -lc "<cmd>"`).
