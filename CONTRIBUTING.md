@@ -93,7 +93,13 @@ make lint
   `pnpm -C frontend test` for the Vite UI and `pnpm -C ui-admin test` for the
   admin UI.
 - Commit only after the above checks pass so that every iteration remains
-  shippable.
+  shippable. The recommended loop is:
+
+  1. Stage your changes and run `git commit`.
+  2. Let the configured pre-commit hooks execute (`make verify` is part of the
+     pipeline).
+  3. If a hook fails, fix the reported issue, restage, and try the commit again.
+  4. Repeat until the commit succeeds, then push or open the PR.
 
 ### Security expectations
 
