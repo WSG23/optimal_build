@@ -79,6 +79,8 @@ sets of features, reusing the same data foundations:
   commit so each milestone stays shippable.
 - Keep `CODING_RULES.md` in mind for migrations, async endpoints, and Singapore
   compliance changes.
+- Follow the workflow in `CONTRIBUTING.md` (testing loops, pre-commit retry
+  cycle, reviewer expectations) so each iteration lands cleanly.
 - Update contributor docs and user-facing guides alongside the new features.
 
 ## 9. Launch Preparation
