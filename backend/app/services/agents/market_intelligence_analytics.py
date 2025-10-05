@@ -2,7 +2,7 @@
 
 import statistics
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 try:  # pragma: no cover - optional dependency
@@ -14,6 +14,10 @@ try:  # pragma: no cover - optional dependency
     import numpy as np
 except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
     np = None  # type: ignore[assignment]
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -22,9 +26,6 @@ from app.models.market import (
 )
 from app.models.property import MarketTransaction, Property, PropertyType
 from app.services.agents.market_data_service import MarketDataService
-from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 try:  # pragma: no cover - optional metrics dependency
     from app.core.metrics import MetricsCollector
@@ -49,13 +50,13 @@ class MarketReport:
         self,
         property_type: PropertyType,
         location: str,
-        period: Tuple[date, date],
-        comparables_analysis: Dict[str, Any],
-        supply_dynamics: Dict[str, Any],
-        yield_benchmarks: Dict[str, Any],
-        absorption_trends: Dict[str, Any],
-        market_cycle_position: Dict[str, Any],
-        recommendations: List[str],
+        period: tuple[date, date],
+        comparables_analysis: dict[str, Any],
+        supply_dynamics: dict[str, Any],
+        yield_benchmarks: dict[str, Any],
+        absorption_trends: dict[str, Any],
+        market_cycle_position: dict[str, Any],
+        recommendations: list[str],
     ):
         self.property_type = property_type
         self.location = location
@@ -68,7 +69,7 @@ class MarketReport:
         self.recommendations = recommendations
         self.generated_at = datetime.utcnow()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "property_type": self.property_type.value,
@@ -93,7 +94,7 @@ class MarketIntelligenceAnalytics:
     def __init__(
         self,
         market_data_service: MarketDataService,
-        metrics_collector: Optional[MetricsCollector] = None,
+        metrics_collector: MetricsCollector | None = None,
     ):
         if pd is None or np is None:
             raise ImportError(
@@ -108,7 +109,7 @@ class MarketIntelligenceAnalytics:
         location: str,
         period_months: int,
         session: AsyncSession,
-        competitive_set_id: Optional[UUID] = None,
+        competitive_set_id: UUID | None = None,
     ) -> MarketReport:
         """
         Generate comprehensive market intelligence report.
@@ -177,9 +178,9 @@ class MarketIntelligenceAnalytics:
         self,
         property_type: PropertyType,
         location: str,
-        period: Tuple[date, date],
+        period: tuple[date, date],
         session: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze comparable transactions."""
 
         # Get recent transactions
@@ -234,9 +235,9 @@ class MarketIntelligenceAnalytics:
         self,
         property_type: PropertyType,
         location: str,
-        period: Tuple[date, date],
+        period: tuple[date, date],
         session: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze supply pipeline and dynamics."""
 
         from app.models.property import DevelopmentPipeline, PropertyStatus
@@ -300,9 +301,9 @@ class MarketIntelligenceAnalytics:
         self,
         property_type: PropertyType,
         location: str,
-        period: Tuple[date, date],
+        period: tuple[date, date],
         session: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze yield benchmarks and trends."""
 
         # Get yield benchmarks
@@ -369,9 +370,9 @@ class MarketIntelligenceAnalytics:
         self,
         property_type: PropertyType,
         location: str,
-        period: Tuple[date, date],
+        period: tuple[date, date],
         session: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze absorption and velocity trends."""
 
         # Get absorption tracking data
@@ -435,7 +436,7 @@ class MarketIntelligenceAnalytics:
 
     async def _analyze_market_cycle(
         self, property_type: PropertyType, location: str, session: AsyncSession
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze current position in market cycle."""
 
         # Get market cycle data
@@ -488,8 +489,8 @@ class MarketIntelligenceAnalytics:
     # Helper methods
 
     def _group_by_quarter(
-        self, transactions: List[MarketTransaction]
-    ) -> Dict[str, Any]:
+        self, transactions: list[MarketTransaction]
+    ) -> dict[str, Any]:
         """Group transactions by quarter."""
         quarterly = {}
 
@@ -515,7 +516,7 @@ class MarketIntelligenceAnalytics:
 
         return quarterly
 
-    def _calculate_price_trend(self, quarterly_data: Dict[str, Any]) -> str:
+    def _calculate_price_trend(self, quarterly_data: dict[str, Any]) -> str:
         """Calculate price trend from quarterly data."""
         if len(quarterly_data) < 2:
             return "insufficient_data"
@@ -542,8 +543,8 @@ class MarketIntelligenceAnalytics:
         return "stable"
 
     def _get_top_transactions(
-        self, transactions: List[MarketTransaction], limit: int = 5
-    ) -> List[Dict[str, Any]]:
+        self, transactions: list[MarketTransaction], limit: int = 5
+    ) -> list[dict[str, Any]]:
         """Get top transactions by value."""
         sorted_txns = sorted(transactions, key=lambda x: x.sale_price, reverse=True)[
             :limit
@@ -561,8 +562,8 @@ class MarketIntelligenceAnalytics:
         ]
 
     def _analyze_buyer_profile(
-        self, transactions: List[MarketTransaction]
-    ) -> Dict[str, int]:
+        self, transactions: list[MarketTransaction]
+    ) -> dict[str, int]:
         """Analyze buyer type distribution."""
         buyer_types = {}
 
@@ -595,8 +596,8 @@ class MarketIntelligenceAnalytics:
             return "low"
 
     def _get_major_developments(
-        self, projects: List[Any], limit: int = 5
-    ) -> List[Dict[str, Any]]:
+        self, projects: list[Any], limit: int = 5
+    ) -> list[dict[str, Any]]:
         """Get major development projects."""
         sorted_projects = sorted(
             projects, key=lambda x: x.total_gfa_sqm or 0, reverse=True
@@ -633,7 +634,7 @@ class MarketIntelligenceAnalytics:
         return impact_messages.get(pressure, "Unable to assess impact")
 
     def _calculate_yield_trend(
-        self, benchmarks: List[YieldBenchmark], metric: str
+        self, benchmarks: list[YieldBenchmark], metric: str
     ) -> str:
         """Calculate trend for yield metric."""
         if len(benchmarks) < 2:
@@ -658,8 +659,8 @@ class MarketIntelligenceAnalytics:
             return "decreasing"
 
     def _calculate_yoy_change(
-        self, benchmarks: List[YieldBenchmark]
-    ) -> Dict[str, float]:
+        self, benchmarks: list[YieldBenchmark]
+    ) -> dict[str, float]:
         """Calculate year-over-year changes."""
         if len(benchmarks) < 12:
             return {}
@@ -721,7 +722,7 @@ class MarketIntelligenceAnalytics:
         else:
             return "yields_normal"
 
-    def _analyze_velocity_trend(self, absorption_data: List[AbsorptionTracking]) -> str:
+    def _analyze_velocity_trend(self, absorption_data: list[AbsorptionTracking]) -> str:
         """Analyze absorption velocity trend."""
         if len(absorption_data) < 3:
             return "insufficient_data"
@@ -748,8 +749,8 @@ class MarketIntelligenceAnalytics:
             return "stable"
 
     def _forecast_absorption(
-        self, absorption_data: List[AbsorptionTracking], months_ahead: int = 6
-    ) -> Dict[str, Any]:
+        self, absorption_data: list[AbsorptionTracking], months_ahead: int = 6
+    ) -> dict[str, Any]:
         """Simple absorption forecast."""
         if len(absorption_data) < 3:
             return {"message": "Insufficient data for forecast"}
@@ -784,8 +785,8 @@ class MarketIntelligenceAnalytics:
         }
 
     def _detect_seasonal_patterns(
-        self, absorption_data: List[AbsorptionTracking]
-    ) -> Dict[str, Any]:
+        self, absorption_data: list[AbsorptionTracking]
+    ) -> dict[str, Any]:
         """Detect seasonal patterns in absorption."""
         if len(absorption_data) < 12:
             return {"message": "Insufficient data for seasonal analysis"}
@@ -823,7 +824,7 @@ class MarketIntelligenceAnalytics:
 
     async def _get_market_indices(
         self, property_type: PropertyType, session: AsyncSession
-    ) -> List[MarketIndex]:
+    ) -> list[MarketIndex]:
         """Get market indices for property type."""
         stmt = (
             select(MarketIndex)
@@ -835,7 +836,7 @@ class MarketIntelligenceAnalytics:
         result = await session.execute(stmt)
         return result.scalars().all()
 
-    def _analyze_index_trends(self, indices: List[MarketIndex]) -> Dict[str, Any]:
+    def _analyze_index_trends(self, indices: list[MarketIndex]) -> dict[str, Any]:
         """Analyze market index trends."""
         if not indices:
             return {}
@@ -850,7 +851,7 @@ class MarketIntelligenceAnalytics:
             "trend": self._determine_index_trend(indices),
         }
 
-    def _determine_index_trend(self, indices: List[MarketIndex]) -> str:
+    def _determine_index_trend(self, indices: list[MarketIndex]) -> str:
         """Determine overall index trend."""
         if len(indices) < 3:
             return "insufficient_data"
@@ -867,12 +868,12 @@ class MarketIntelligenceAnalytics:
 
     def _generate_recommendations(
         self,
-        comparables: Dict[str, Any],
-        supply: Dict[str, Any],
-        yields: Dict[str, Any],
-        absorption: Dict[str, Any],
-        cycle: Dict[str, Any],
-    ) -> List[str]:
+        comparables: dict[str, Any],
+        supply: dict[str, Any],
+        yields: dict[str, Any],
+        absorption: dict[str, Any],
+        cycle: dict[str, Any],
+    ) -> list[str]:
         """Generate actionable recommendations based on analysis."""
         recommendations = []
 
@@ -944,7 +945,7 @@ class MarketIntelligenceAnalytics:
         return recommendations
 
     def _record_metrics(
-        self, property_type: PropertyType, location: str, yields: Dict[str, Any]
+        self, property_type: PropertyType, location: str, yields: dict[str, Any]
     ):
         """Record metrics for monitoring."""
         if not self.metrics:

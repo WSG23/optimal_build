@@ -2,11 +2,10 @@
 
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
-from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, get_request_role, require_reviewer
@@ -19,6 +18,7 @@ from app.services.agents.gps_property_logger import GPSPropertyLogger
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import GeocodingService
+from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -97,7 +97,7 @@ class ScenarioGenerationRequest(BaseModel):
     """Request model for 3D scenario generation."""
 
     property_id: str
-    scenario_types: List[ScenarioType]
+    scenario_types: list[ScenarioType]
 
 
 class MarketReportRequest(BaseModel):
@@ -106,7 +106,7 @@ class MarketReportRequest(BaseModel):
     property_type: PropertyType
     location: str = "all"
     period_months: int = Field(12, ge=1, le=36)
-    competitive_set_id: Optional[str] = None
+    competitive_set_id: str | None = None
 
 
 class PhotoUploadResponse(BaseModel):
@@ -114,17 +114,17 @@ class PhotoUploadResponse(BaseModel):
 
     photo_id: str
     storage_key: str
-    location: Optional[Dict[str, float]] = None
+    location: dict[str, float] | None = None
     capture_timestamp: datetime
-    auto_tags: List[str]
+    auto_tags: list[str]
     public_url: str
 
 
 class MarketSyncRequest(BaseModel):
     """Request model for market data sync."""
 
-    providers: Optional[List[str]] = None
-    property_types: Optional[List[PropertyType]] = None
+    providers: list[str] | None = None
+    property_types: list[PropertyType] | None = None
 
 
 class FinancialMetricsRequest(BaseModel):
@@ -133,9 +133,9 @@ class FinancialMetricsRequest(BaseModel):
     property_value: float
     gross_rental_income: float
     operating_expenses: float
-    loan_amount: Optional[float] = None
-    annual_debt_service: Optional[float] = None
-    initial_cash_investment: Optional[float] = None
+    loan_amount: float | None = None
+    annual_debt_service: float | None = None
+    initial_cash_investment: float | None = None
     vacancy_rate: float = 0.05
     other_income: float = 0
 
@@ -145,10 +145,10 @@ class PropertyValuationRequest(BaseModel):
 
     noi: float
     market_cap_rate: float
-    comparable_psf: Optional[float] = None
-    property_size_sqf: Optional[float] = None
-    replacement_cost_psf: Optional[float] = None
-    land_value: Optional[float] = None
+    comparable_psf: float | None = None
+    property_size_sqf: float | None = None
+    replacement_cost_psf: float | None = None
+    land_value: float | None = None
     depreciation_factor: float = 0.8
 
 
@@ -160,7 +160,7 @@ async def log_property_by_gps(
     request: GPSLogRequest,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Log a property using GPS coordinates.
 
@@ -191,7 +191,7 @@ async def analyze_development_potential(
     request: PropertyAnalysisRequest,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyze development potential for a property.
 
@@ -243,8 +243,8 @@ async def analyze_development_potential(
 async def upload_property_photo(
     property_id: str,
     file: UploadFile = File(...),
-    notes: Optional[str] = None,
-    tags: Optional[str] = None,
+    notes: str | None = None,
+    tags: str | None = None,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
 ) -> PhotoUploadResponse:
@@ -301,7 +301,7 @@ async def get_property_photos(
     property_id: str,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Get all photos for a property."""
     photo_manager = PhotoDocumentationManager()
 
@@ -322,7 +322,7 @@ async def generate_3d_scenarios(
     request: ScenarioGenerationRequest,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Generate 3D massing scenarios for property development.
 
@@ -394,7 +394,7 @@ async def generate_market_report(
     request: MarketReportRequest,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate comprehensive market intelligence report.
 
@@ -426,7 +426,7 @@ async def generate_market_report(
 @router.post("/market-intelligence/sync", dependencies=[Depends(require_reviewer)])
 async def sync_market_data(
     request: MarketSyncRequest, db: AsyncSession = Depends(get_session)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Sync market data from configured providers.
 
@@ -450,12 +450,12 @@ async def sync_market_data(
 @router.get("/market-intelligence/transactions")
 async def get_market_transactions(
     property_type: PropertyType,
-    location: Optional[str] = Query(None),
+    location: str | None = Query(None),
     days_back: int = Query(90, ge=1, le=365),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Get recent market transactions."""
     end_date = date.today()
     start_date = end_date - timedelta(days=days_back)
@@ -485,7 +485,7 @@ async def get_market_transactions(
 @router.post("/financial/metrics")
 async def calculate_financial_metrics(
     request: FinancialMetricsRequest, role: Role = Depends(get_request_role)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate comprehensive real estate financial metrics.
 
@@ -558,7 +558,7 @@ async def calculate_financial_metrics(
 @router.post("/financial/valuation")
 async def value_property(
     request: PropertyValuationRequest, role: Role = Depends(get_request_role)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Value property using multiple approaches.
 
@@ -616,7 +616,7 @@ async def generate_professional_pack(
     pack_type: str = Path(..., pattern="^(universal|investment|sales|lease)$"),
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate professional PDF packs.
 
@@ -690,7 +690,7 @@ async def generate_email_flyer(
     material_type: str = Query("lease", pattern="^(sale|lease)$"),
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Generate single-page email flyer."""
     try:
         property_uuid = UUID(property_id)

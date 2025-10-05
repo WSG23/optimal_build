@@ -2,17 +2,18 @@
 
 import json
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import structlog
 import trimesh
-from app.models.property import Property, PropertyType
-from app.services.agents.ura_integration import URAZoningInfo
-from app.services.postgis import PostGISService
 from geoalchemy2.functions import ST_AsText
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.property import Property, PropertyType
+from app.services.agents.ura_integration import URAZoningInfo
+from app.services.postgis import PostGISService
 
 logger = structlog.get_logger()
 
@@ -33,11 +34,11 @@ class BuildingMassing:
 
     def __init__(
         self,
-        footprint_coords: List[Tuple[float, float]],
+        footprint_coords: list[tuple[float, float]],
         height: float,
         floors: int,
         scenario_type: ScenarioType,
-        use_mix: Dict[str, float] = None,
+        use_mix: dict[str, float] = None,
     ):
         self.footprint_coords = footprint_coords
         self.height = height
@@ -48,7 +49,7 @@ class BuildingMassing:
         self.volume = None
         self.gfa = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "footprint": self.footprint_coords,
@@ -74,10 +75,10 @@ class Quick3DScenarioBuilder:
     async def generate_massing_scenarios(
         self,
         property_data: Property,
-        scenario_types: List[ScenarioType],
+        scenario_types: list[ScenarioType],
         session: AsyncSession,
-        zoning_info: Optional[URAZoningInfo] = None,
-    ) -> List[BuildingMassing]:
+        zoning_info: URAZoningInfo | None = None,
+    ) -> list[BuildingMassing]:
         """
         Generate 3D massing scenarios for property development.
 
@@ -142,7 +143,7 @@ class Quick3DScenarioBuilder:
 
     async def _get_property_boundary(
         self, property_data: Property, session: AsyncSession
-    ) -> List[Tuple[float, float]]:
+    ) -> list[tuple[float, float]]:
         """Get property boundary coordinates."""
 
         # If we have actual geometry, extract coordinates
@@ -176,10 +177,10 @@ class Quick3DScenarioBuilder:
     async def _generate_new_build_massing(
         self,
         property_data: Property,
-        boundary: List[Tuple[float, float]],
-        zoning_info: Optional[URAZoningInfo],
+        boundary: list[tuple[float, float]],
+        zoning_info: URAZoningInfo | None,
         session: AsyncSession,
-    ) -> Optional[BuildingMassing]:
+    ) -> BuildingMassing | None:
         """Generate new building massing based on zoning."""
 
         # Apply setbacks to get buildable footprint
@@ -227,7 +228,7 @@ class Quick3DScenarioBuilder:
 
     async def _generate_renovation_massing(
         self, property_data: Property, session: AsyncSession
-    ) -> Optional[BuildingMassing]:
+    ) -> BuildingMassing | None:
         """Generate renovation massing (existing building with modifications)."""
 
         if not property_data.gross_floor_area_sqm:
@@ -278,10 +279,10 @@ class Quick3DScenarioBuilder:
     async def _generate_mixed_use_massing(
         self,
         property_data: Property,
-        boundary: List[Tuple[float, float]],
-        zoning_info: Optional[URAZoningInfo],
+        boundary: list[tuple[float, float]],
+        zoning_info: URAZoningInfo | None,
         session: AsyncSession,
-    ) -> Optional[BuildingMassing]:
+    ) -> BuildingMassing | None:
         """Generate mixed-use development massing."""
 
         # Apply setbacks
@@ -330,7 +331,7 @@ class Quick3DScenarioBuilder:
 
     async def _generate_vertical_extension(
         self, property_data: Property, session: AsyncSession
-    ) -> Optional[BuildingMassing]:
+    ) -> BuildingMassing | None:
         """Generate vertical extension on existing building."""
 
         if not property_data.building_height_m:
@@ -404,10 +405,10 @@ class Quick3DScenarioBuilder:
     async def _generate_podium_tower(
         self,
         property_data: Property,
-        boundary: List[Tuple[float, float]],
-        zoning_info: Optional[URAZoningInfo],
+        boundary: list[tuple[float, float]],
+        zoning_info: URAZoningInfo | None,
         session: AsyncSession,
-    ) -> Optional[BuildingMassing]:
+    ) -> BuildingMassing | None:
         """Generate podium-tower configuration."""
 
         buildable_footprint = await self._apply_setbacks(
@@ -469,10 +470,10 @@ class Quick3DScenarioBuilder:
     async def _generate_phased_development(
         self,
         property_data: Property,
-        boundary: List[Tuple[float, float]],
-        zoning_info: Optional[URAZoningInfo],
+        boundary: list[tuple[float, float]],
+        zoning_info: URAZoningInfo | None,
         session: AsyncSession,
-    ) -> List[BuildingMassing]:
+    ) -> list[BuildingMassing]:
         """Generate phased development scenarios."""
 
         phases = []
@@ -534,10 +535,10 @@ class Quick3DScenarioBuilder:
 
     async def _apply_setbacks(
         self,
-        boundary: List[Tuple[float, float]],
-        setbacks: Dict[str, float],
+        boundary: list[tuple[float, float]],
+        setbacks: dict[str, float],
         session: AsyncSession,
-    ) -> Optional[List[Tuple[float, float]]]:
+    ) -> list[tuple[float, float]] | None:
         """Apply setbacks to property boundary using PostGIS."""
 
         # For simplicity, apply uniform setback
@@ -567,7 +568,7 @@ class Quick3DScenarioBuilder:
         return coords
 
     def _create_building_mesh(
-        self, footprint: List[Tuple[float, float]], height: float
+        self, footprint: list[tuple[float, float]], height: float
     ) -> trimesh.Trimesh:
         """Create a 3D building mesh from footprint and height."""
 
@@ -615,7 +616,7 @@ class Quick3DScenarioBuilder:
         return float(mesh.volume)
 
     def _calculate_gfa(
-        self, footprint: List[Tuple[float, float]], floors: int
+        self, footprint: list[tuple[float, float]], floors: int
     ) -> float:
         """Calculate gross floor area."""
         from shapely.geometry import Polygon
@@ -627,8 +628,8 @@ class Quick3DScenarioBuilder:
 
     def _calculate_mixed_use_gfa(
         self,
-        podium_footprint: List[Tuple[float, float]],
-        tower_footprint: List[Tuple[float, float]],
+        podium_footprint: list[tuple[float, float]],
+        tower_footprint: list[tuple[float, float]],
         podium_height: float,
         tower_height: float,
     ) -> float:
@@ -641,7 +642,7 @@ class Quick3DScenarioBuilder:
 
         return podium_gfa + tower_gfa
 
-    def _get_default_use_mix(self, property_type: PropertyType) -> Dict[str, float]:
+    def _get_default_use_mix(self, property_type: PropertyType) -> dict[str, float]:
         """Get default use mix by property type."""
         use_mixes = {
             PropertyType.OFFICE: {"office": 0.9, "retail": 0.1},
@@ -659,8 +660,8 @@ class Quick3DScenarioBuilder:
         return use_mixes.get(property_type, {"mixed": 1.0})
 
     def _scale_footprint(
-        self, footprint: List[Tuple[float, float]], scale: float
-    ) -> List[Tuple[float, float]]:
+        self, footprint: list[tuple[float, float]], scale: float
+    ) -> list[tuple[float, float]]:
         """Scale footprint around its centroid."""
         from shapely.affinity import scale as shapely_scale
         from shapely.geometry import Polygon
@@ -671,8 +672,8 @@ class Quick3DScenarioBuilder:
         return list(scaled.exterior.coords)
 
     def _generate_tower_footprints(
-        self, podium_footprint: List[Tuple[float, float]], num_towers: int = 2
-    ) -> List[List[Tuple[float, float]]]:
+        self, podium_footprint: list[tuple[float, float]], num_towers: int = 2
+    ) -> list[list[tuple[float, float]]]:
         """Generate tower footprints on podium."""
         from shapely.geometry import Polygon, box
 
@@ -713,8 +714,8 @@ class Quick3DScenarioBuilder:
         return tower_footprints
 
     def _split_footprint(
-        self, footprint: List[Tuple[float, float]]
-    ) -> Tuple[List[Tuple[float, float]], List[Tuple[float, float]]]:
+        self, footprint: list[tuple[float, float]]
+    ) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
         """Split footprint into two phases."""
         from shapely.geometry import Polygon, box
 
@@ -731,7 +732,7 @@ class Quick3DScenarioBuilder:
 
         return (list(phase1.exterior.coords), list(phase2.exterior.coords))
 
-    def _parse_wkt_coords(self, wkt: str) -> List[Tuple[float, float]]:
+    def _parse_wkt_coords(self, wkt: str) -> list[tuple[float, float]]:
         """Parse coordinates from WKT string."""
         import re
 

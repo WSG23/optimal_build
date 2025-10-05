@@ -191,7 +191,8 @@ def test_ingested_rule_overrides_seed_defaults(session_factory) -> None:
             assert setback_rule.value == "5.0"
             assert setback_rule.unit == "m"
 
-            # The less restrictive defaults should still be surfaced but must not override overrides.
+            # The less restrictive defaults should still be surfaced
+            # and must not override overrides.
             assert base_far.id in rule_lookup
             assert base_setback.id in rule_lookup
             assert calculation.metrics.gfa_cap_m2 == 3150

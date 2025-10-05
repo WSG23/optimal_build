@@ -20,7 +20,12 @@ async def test_parse_reference_documents_from_pdf(
     async_session_factory, tmp_path
 ) -> None:
     storage = ReferenceStorage(base_path=tmp_path, bucket="")
-    payload = b"1.1 Scope\nThe scope clause describes the coverage.\n\n1.2 Requirements\nAll exits must remain unobstructed."
+    payload = (
+        b"1.1 Scope\n"
+        b"The scope clause describes the coverage.\n\n"
+        b"1.2 Requirements\n"
+        b"All exits must remain unobstructed."
+    )
 
     async with async_session_factory() as session:
         source = RefSource(

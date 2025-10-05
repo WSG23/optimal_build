@@ -2,11 +2,12 @@
 
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+
 from pydantic import BaseModel
 
 # Configuration - read SECRET_KEY from environment variable
@@ -37,7 +38,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
-def create_access_token(data: Dict[str, Any]) -> str:
+def create_access_token(data: dict[str, Any]) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -46,7 +47,7 @@ def create_access_token(data: Dict[str, Any]) -> str:
     return encoded_jwt
 
 
-def create_refresh_token(data: Dict[str, Any]) -> str:
+def create_refresh_token(data: dict[str, Any]) -> str:
     """Create a JWT refresh token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
@@ -90,7 +91,7 @@ async def get_current_user(
     return verify_token(token, token_type="access")
 
 
-def create_tokens(user_data: Dict[str, Any]) -> TokenResponse:
+def create_tokens(user_data: dict[str, Any]) -> TokenResponse:
     """Create both access and refresh tokens."""
     token_data = {
         "email": user_data["email"],

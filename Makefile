@@ -134,7 +134,7 @@ format-check: ## Check formatting (all Python files)
 
 lint: ## Run linting (all Python files)
 	@$(FLAKE8) backend/app/ backend/tests/ tests/ || true
-	@$(MYPY) backend/app/ || true
+	@$(MYPY) || true
 	@cd frontend && npm run lint || true
 
 hooks: ## Run pre-commit hooks across the repository

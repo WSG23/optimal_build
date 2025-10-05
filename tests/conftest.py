@@ -27,6 +27,7 @@ except ModuleNotFoundError:  # pragma: no cover
     sys.modules.setdefault("jose", jose_stub)
 else:
     JWTError = JWTError  # re-export for callers
+    jwt = jwt  # re-export for callers
 
 import importlib
 from importlib import import_module
@@ -129,30 +130,17 @@ def event_loop():
         loop.close()
 
 
-if getattr(backend_conftest, "flow_session_factory", None) is not None:
-    pytest_plugins = ["backend.tests.conftest"]
-else:
-    pytest_plugins = []
-
-
 def _missing_fixture(*_args, **_kwargs):
     raise RuntimeError("backend test fixtures unavailable")
 
 
 # Re-export backend fixtures in this namespace for pytest discovery.
-flow_session_factory = getattr(
+_backend_flow_session_factory = getattr(
     backend_conftest, "flow_session_factory", _missing_fixture
 )
-async_session_factory = getattr(
-    backend_conftest, "async_session_factory", _missing_fixture
-)
-session = getattr(backend_conftest, "session", _missing_fixture)
-session_factory = getattr(backend_conftest, "session_factory", _missing_fixture)
-reset_metrics = getattr(backend_conftest, "reset_metrics", _missing_fixture)
-app_client = getattr(backend_conftest, "app_client", _missing_fixture)
-client = getattr(backend_conftest, "client_fixture", _missing_fixture)
 
-if flow_session_factory in (None, _missing_fixture):
+if _backend_flow_session_factory in (None, _missing_fixture):
+    pytest_plugins = []
     from collections.abc import AsyncGenerator
     from contextlib import asynccontextmanager
 
@@ -300,6 +288,19 @@ if flow_session_factory in (None, _missing_fixture):
     async def client_fixture(app_client):
         yield app_client
 
+    client = client_fixture
+else:
+    pytest_plugins = ["backend.tests.conftest"]
+    flow_session_factory = _backend_flow_session_factory
+    async_session_factory = getattr(
+        backend_conftest, "async_session_factory", _missing_fixture
+    )
+    session = getattr(backend_conftest, "session", _missing_fixture)
+    session_factory = getattr(backend_conftest, "session_factory", _missing_fixture)
+    reset_metrics = getattr(backend_conftest, "reset_metrics", _missing_fixture)
+    app_client = getattr(backend_conftest, "app_client", _missing_fixture)
+    client = getattr(backend_conftest, "client_fixture", _missing_fixture)
+
 
 from backend.app.core import database as app_database
 
@@ -338,13 +339,12 @@ if not hasattr(_BaseModel, "TimestampMixin") and "TimestampMixin" not in globals
         created_at = None
         updated_at = None
 
-    (
-        setattr(
-            sys.modules["backend.app.models.base"], "TimestampMixin", TimestampMixinStub
-        )
-        if "backend.app.models.base" in sys.modules
-        else None
-    )
+    backend_base_module = sys.modules.get("backend.app.models.base")
+    if backend_base_module is not None:
+        backend_base_module.TimestampMixin = TimestampMixinStub
+    app_base_module = sys.modules.get("app.models.base")
+    if app_base_module is not None and not hasattr(app_base_module, "TimestampMixin"):
+        app_base_module.TimestampMixin = TimestampMixinStub
 from backend.scripts.seed_market_demo import seed_market_demo
 from backend.scripts.seed_nonreg import seed_nonregulated_reference_data
 

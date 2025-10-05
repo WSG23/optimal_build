@@ -9,10 +9,9 @@ MVP: Uses synchronous database for simplicity.
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -32,6 +31,7 @@ from app.utils.singapore_compliance import (
     run_full_compliance_check_sync,
     update_property_compliance_sync,
 )
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
 
@@ -72,32 +72,32 @@ class PropertyCreate(BaseModel):
     # Basic Information
     property_name: str = Field(..., min_length=1, max_length=255)
     address: str = Field(..., min_length=1, max_length=1000)
-    postal_code: Optional[str] = Field(None, max_length=6, pattern="^[0-9]{6}$")
+    postal_code: str | None = Field(None, max_length=6, pattern="^[0-9]{6}$")
 
     # Property Details
     zoning: PropertyZoning
-    tenure: Optional[PropertyTenure] = None
+    tenure: PropertyTenure | None = None
 
     # Land and Building
     land_area_sqm: Decimal = Field(..., gt=0, description="Land area in square meters")
     gross_plot_ratio: Decimal = Field(
         ..., gt=0, description="Maximum plot ratio allowed"
     )
-    gross_floor_area_sqm: Optional[Decimal] = Field(None, ge=0)
-    building_height_m: Optional[Decimal] = Field(None, gt=0)
-    num_storeys: Optional[int] = Field(None, gt=0)
+    gross_floor_area_sqm: Decimal | None = Field(None, ge=0)
+    building_height_m: Decimal | None = Field(None, gt=0)
+    num_storeys: int | None = Field(None, gt=0)
 
     # MVP: Acquisition & Feasibility
-    acquisition_status: Optional[AcquisitionStatus] = AcquisitionStatus.AVAILABLE
-    feasibility_status: Optional[FeasibilityStatus] = FeasibilityStatus.ANALYZING
+    acquisition_status: AcquisitionStatus | None = AcquisitionStatus.AVAILABLE
+    feasibility_status: FeasibilityStatus | None = FeasibilityStatus.ANALYZING
 
     # MVP: Financial
-    estimated_acquisition_cost: Optional[Decimal] = Field(None, ge=0)
-    estimated_development_cost: Optional[Decimal] = Field(None, ge=0)
-    expected_revenue: Optional[Decimal] = Field(None, ge=0)
+    estimated_acquisition_cost: Decimal | None = Field(None, ge=0)
+    estimated_development_cost: Decimal | None = Field(None, ge=0)
+    expected_revenue: Decimal | None = Field(None, ge=0)
 
     # Optional: Link to project
-    project_id: Optional[str] = None
+    project_id: str | None = None
 
     class Config:
         use_enum_values = True
@@ -106,23 +106,23 @@ class PropertyCreate(BaseModel):
 class PropertyUpdate(BaseModel):
     """Property update model."""
 
-    property_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    address: Optional[str] = Field(None, min_length=1)
-    postal_code: Optional[str] = Field(None, max_length=6, pattern="^[0-9]{6}$")
-    zoning: Optional[PropertyZoning] = None
-    tenure: Optional[PropertyTenure] = None
-    land_area_sqm: Optional[Decimal] = Field(None, gt=0)
-    gross_plot_ratio: Optional[Decimal] = Field(None, gt=0)
-    gross_floor_area_sqm: Optional[Decimal] = Field(None, ge=0)
-    building_height_m: Optional[Decimal] = Field(None, gt=0)
-    num_storeys: Optional[int] = Field(None, gt=0)
-    acquisition_status: Optional[AcquisitionStatus] = None
-    feasibility_status: Optional[FeasibilityStatus] = None
-    estimated_acquisition_cost: Optional[Decimal] = Field(None, ge=0)
-    actual_acquisition_cost: Optional[Decimal] = Field(None, ge=0)
-    estimated_development_cost: Optional[Decimal] = Field(None, ge=0)
-    expected_revenue: Optional[Decimal] = Field(None, ge=0)
-    project_id: Optional[str] = None
+    property_name: str | None = Field(None, min_length=1, max_length=255)
+    address: str | None = Field(None, min_length=1)
+    postal_code: str | None = Field(None, max_length=6, pattern="^[0-9]{6}$")
+    zoning: PropertyZoning | None = None
+    tenure: PropertyTenure | None = None
+    land_area_sqm: Decimal | None = Field(None, gt=0)
+    gross_plot_ratio: Decimal | None = Field(None, gt=0)
+    gross_floor_area_sqm: Decimal | None = Field(None, ge=0)
+    building_height_m: Decimal | None = Field(None, gt=0)
+    num_storeys: int | None = Field(None, gt=0)
+    acquisition_status: AcquisitionStatus | None = None
+    feasibility_status: FeasibilityStatus | None = None
+    estimated_acquisition_cost: Decimal | None = Field(None, ge=0)
+    actual_acquisition_cost: Decimal | None = Field(None, ge=0)
+    estimated_development_cost: Decimal | None = Field(None, ge=0)
+    expected_revenue: Decimal | None = Field(None, ge=0)
+    project_id: str | None = None
 
     class Config:
         use_enum_values = True
@@ -134,41 +134,41 @@ class PropertyResponse(BaseModel):
     id: str
     property_name: str
     address: str
-    postal_code: Optional[str]
+    postal_code: str | None
 
-    zoning: Optional[str]
-    tenure: Optional[str]
+    zoning: str | None
+    tenure: str | None
 
-    land_area_sqm: Optional[Decimal]
-    gross_plot_ratio: Optional[Decimal]
-    gross_floor_area_sqm: Optional[Decimal]
-    building_height_m: Optional[Decimal]
-    num_storeys: Optional[int]
+    land_area_sqm: Decimal | None
+    gross_plot_ratio: Decimal | None
+    gross_floor_area_sqm: Decimal | None
+    building_height_m: Decimal | None
+    num_storeys: int | None
 
     # MVP: Workflow Status
-    acquisition_status: Optional[str]
-    feasibility_status: Optional[str]
+    acquisition_status: str | None
+    feasibility_status: str | None
 
     # MVP: Financial
-    estimated_acquisition_cost: Optional[Decimal]
-    actual_acquisition_cost: Optional[Decimal]
-    estimated_development_cost: Optional[Decimal]
-    expected_revenue: Optional[Decimal]
+    estimated_acquisition_cost: Decimal | None
+    actual_acquisition_cost: Decimal | None
+    estimated_development_cost: Decimal | None
+    expected_revenue: Decimal | None
 
     # Compliance
-    bca_compliance_status: Optional[str]
-    ura_compliance_status: Optional[str]
-    compliance_notes: Optional[str]
-    compliance_last_checked: Optional[datetime]
+    bca_compliance_status: str | None
+    ura_compliance_status: str | None
+    compliance_notes: str | None
+    compliance_last_checked: datetime | None
 
     # Space Optimization
-    max_developable_gfa_sqm: Optional[Decimal]
-    gfa_utilization_percentage: Optional[Decimal]
-    potential_additional_units: Optional[int]
+    max_developable_gfa_sqm: Decimal | None
+    gfa_utilization_percentage: Decimal | None
+    potential_additional_units: int | None
 
     # Metadata
-    project_id: Optional[str]
-    owner_email: Optional[str]
+    project_id: str | None
+    owner_email: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -226,10 +226,10 @@ class ComplianceCheckResponse(BaseModel):
     overall_status: str
     bca_status: str
     ura_status: str
-    violations: List[str]
-    warnings: List[str]
-    recommendations: List[str]
-    compliance_data: Dict[str, Any]
+    violations: list[str]
+    warnings: list[str]
+    recommendations: list[str]
+    compliance_data: dict[str, Any]
 
 
 # API Endpoints
@@ -305,13 +305,13 @@ def create_property(
     return PropertyResponse.from_orm(new_property)
 
 
-@router.get("/list", response_model=List[PropertyResponse])
+@router.get("/list", response_model=list[PropertyResponse])
 def list_properties(
     db: Session = Depends(get_sync_db),
-    acquisition_status: Optional[AcquisitionStatus] = Query(None),
-    feasibility_status: Optional[FeasibilityStatus] = Query(None),
-    zoning: Optional[PropertyZoning] = Query(None),
-    compliance_status: Optional[ComplianceStatus] = Query(None),
+    acquisition_status: AcquisitionStatus | None = Query(None),
+    feasibility_status: FeasibilityStatus | None = Query(None),
+    zoning: PropertyZoning | None = Query(None),
+    compliance_status: ComplianceStatus | None = Query(None),
     skip: int = 0,
     limit: int = 100,
 ):
@@ -496,7 +496,7 @@ def calculate_property_gfa(
 
 @router.post("/calculate/buildable")
 async def calculate_buildable_metrics(
-    request: Dict[str, Any], current_user: TokenData = Depends(get_current_user)
+    request: dict[str, Any], current_user: TokenData = Depends(get_current_user)
 ):
     """
     Calculate buildable metrics using jurisdiction-agnostic system.
@@ -660,7 +660,7 @@ async def calculate_buildable_metrics(
 
 @router.post("/check-compliance")
 async def check_compliance(
-    request: Dict[str, Any], current_user: TokenData = Depends(get_current_user)
+    request: dict[str, Any], current_user: TokenData = Depends(get_current_user)
 ):
     """
     Check building code compliance for proposed design against Singapore URA/BCA rules.
