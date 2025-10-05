@@ -83,6 +83,18 @@ make lint
   `@typescript-eslint` and the React plugins) to maintain consistent frontend
   code quality.
 
+## Testing and quality checks
+
+- Run `make verify` after each significant change. It executes Black (88-column
+  formatting), Ruff (100-column linting), Flake8, mypy, the unit test suites,
+  and the repository-specific coding rule checks.
+- When a slice touches the front-end workspaces, also run the package-specific
+  scripts:
+  `pnpm -C frontend test` for the Vite UI and `pnpm -C ui-admin test` for the
+  admin UI.
+- Commit only after the above checks pass so that every iteration remains
+  shippable.
+
 ### Security expectations
 
 - Never commit secrets, credentials, or production data. The **gitleaks** hook
