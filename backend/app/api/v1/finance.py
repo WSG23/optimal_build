@@ -50,8 +50,10 @@ def _normalise_project_id(project_id: str | int | UUID) -> UUID:
         return UUID(int=project_id)
     try:
         return UUID(project_id)
-    except (AttributeError, TypeError, ValueError):
-        raise HTTPException(status_code=422, detail="project_id must be a valid UUID")
+    except (AttributeError, TypeError, ValueError) as e:
+        raise HTTPException(
+            status_code=422, detail="project_id must be a valid UUID"
+        ) from e
 
 
 def _decimal_from_value(value: object) -> Decimal:
@@ -359,9 +361,9 @@ async def run_finance_feasibility(
             irr_raw = calculator.irr(cash_inputs.cash_flows)
             irr_value = irr_raw.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         except ValueError:
-            irr_metadata[
-                "warning"
-            ] = "IRR could not be computed for the provided cash flows"
+            irr_metadata["warning"] = (
+                "IRR could not be computed for the provided cash flows"
+            )
 
         dscr_entries: list[DscrEntrySchema] = []
         dscr_metadata: dict[str, list[dict[str, object]]] = {}

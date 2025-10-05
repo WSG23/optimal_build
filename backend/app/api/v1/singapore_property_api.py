@@ -12,6 +12,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -31,7 +32,6 @@ from app.utils.singapore_compliance import (
     run_full_compliance_check_sync,
     update_property_compliance_sync,
 )
-from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
 
@@ -348,8 +348,8 @@ def get_property(
     """Get a specific property by ID."""
     try:
         property_uuid = uuid.UUID(property_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid property ID format")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
     property_obj = (
         db.query(SingaporeProperty)
@@ -380,8 +380,8 @@ def update_property(
     """
     try:
         property_uuid = uuid.UUID(property_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid property ID format")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
     property_obj = (
         db.query(SingaporeProperty)
@@ -424,8 +424,8 @@ def check_property_compliance(
     """
     try:
         property_uuid = uuid.UUID(property_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid property ID format")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
     property_obj = (
         db.query(SingaporeProperty)
@@ -467,8 +467,8 @@ def calculate_property_gfa(
     """
     try:
         property_uuid = uuid.UUID(property_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid property ID format")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
     property_obj = (
         db.query(SingaporeProperty)
@@ -680,7 +680,7 @@ async def check_compliance(
     proposed_gfa = request.get("proposed_gfa_sqm")
     proposed_height = request.get("proposed_height_m")
     proposed_storeys = request.get("proposed_storeys")
-    jurisdiction = request.get("jurisdiction", "SG")
+    _jurisdiction = request.get("jurisdiction", "SG")  # Reserved for future use
 
     if not land_area or not zoning:
         raise HTTPException(
@@ -771,7 +771,7 @@ async def check_compliance(
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Compliance check failed: {str(e)}"
-            )
+            ) from e
 
 
 @router.delete("/{property_id}")
@@ -783,8 +783,8 @@ def delete_property(
     """Soft delete a property (marks as inactive)."""
     try:
         property_uuid = uuid.UUID(property_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid property ID format")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
     property_obj = (
         db.query(SingaporeProperty)

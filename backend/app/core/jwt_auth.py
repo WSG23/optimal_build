@@ -7,7 +7,6 @@ from typing import Any, Dict
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-
 from pydantic import BaseModel
 
 # Configuration - read SECRET_KEY from environment variable
@@ -79,8 +78,8 @@ def verify_token(token: str, token_type: str = "access") -> TokenData:
             raise credentials_exception
 
         return TokenData(email=email, username=username, user_id=user_id)
-    except JWTError:
-        raise credentials_exception
+    except JWTError as e:
+        raise credentials_exception from e
 
 
 async def get_current_user(

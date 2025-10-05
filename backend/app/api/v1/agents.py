@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, get_request_role, require_reviewer
@@ -18,7 +19,6 @@ from app.services.agents.gps_property_logger import GPSPropertyLogger
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import GeocodingService
-from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -182,7 +182,7 @@ async def log_property_by_gps(
         return result.to_dict()
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/properties/{property_id}/analyze")
@@ -236,7 +236,7 @@ async def analyze_development_potential(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/properties/{property_id}/photos")
@@ -293,7 +293,7 @@ async def upload_property_photo(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/properties/{property_id}/photos")
@@ -313,7 +313,7 @@ async def get_property_photos(
         return photos
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/properties/{property_id}/scenarios/3d")
@@ -371,7 +371,7 @@ async def generate_3d_scenarios(
         return [scenario.to_dict() for scenario in scenarios]
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/properties/{property_id}/scenarios/3d/{scenario_index}/export")
@@ -420,7 +420,7 @@ async def generate_market_report(
         return report.to_dict()
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/market-intelligence/sync", dependencies=[Depends(require_reviewer)])
@@ -444,7 +444,7 @@ async def sync_market_data(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/market-intelligence/transactions")
@@ -552,7 +552,7 @@ async def calculate_financial_metrics(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/financial/valuation")
@@ -607,7 +607,7 @@ async def value_property(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/properties/{property_id}/generate-pack/{pack_type}")
@@ -681,7 +681,7 @@ async def generate_professional_pack(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/properties/{property_id}/generate-flyer")
@@ -717,4 +717,4 @@ async def generate_email_flyer(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
