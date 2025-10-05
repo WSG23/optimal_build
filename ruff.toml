@@ -1,3 +1,5 @@
+# Ruff configuration for optimal_build
+# Ruff is a fast Python linter that replaces flake8, isort, and more
 line-length = 100
 target-version = "py311"
 exclude = [

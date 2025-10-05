@@ -34,6 +34,46 @@ up the `frontend` workspace and installs the configured pre-commit hooks if the
 - Keep type hints current—**mypy** runs against `backend/` using the
   configuration in `backend/pyproject.toml`.
 
+#### Linting Strategy
+
+This project uses a multi-layered linting approach:
+
+**Primary Linter: Ruff** (`ruff.toml`)
+- Line length: 100 characters
+- Checks: E (pycodestyle errors), F (Pyflakes), W (pycodestyle warnings), B (bugbear), UP (pyupgrade), I (isort), C4 (comprehensions)
+- Runs on all production code: `backend/`, `app/`, `core/`, etc.
+- Fastest Python linter, replaces flake8 + isort + pyupgrade
+
+**Secondary Linter: Flake8** (`.flake8` - DEPRECATED)
+- Line length: 100 characters (aligned with Ruff)
+- Runs ONLY on test files: `backend/tests/`, `tests/`
+- Kept for backward compatibility; may be removed in future
+
+**Type Checker: mypy** (`mypy.ini`)
+- Strict type checking on `backend/` code
+- Helps catch bugs before runtime
+
+**Common Lint Errors:**
+- `B904`: Always use `raise ... from e` when re-raising exceptions to preserve stack traces
+- `B007`: Rename unused loop variables to `_variablename`
+- `F401`: Remove unused imports
+- `E501`: Keep lines under 100 characters
+
+**Running Linters Locally:**
+```bash
+# Run all quality checks
+make verify
+
+# Run just linting
+make lint
+
+# Run ruff on specific files
+.venv/bin/ruff check backend/app/
+
+# Auto-fix ruff issues
+.venv/bin/ruff check --fix backend/app/
+```
+
 ### JavaScript and TypeScript
 
 - Use **Prettier** for formatting files under `frontend/` and `ui-admin/`.

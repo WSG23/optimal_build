@@ -1,6 +1,8 @@
 [flake8]
+# DEPRECATED: This configuration is kept for backward compatibility
+# Primary linting is now done with ruff (see ruff.toml)
 extend-ignore = E203,W503
-max-line-length = 130
+max-line-length = 100  # Aligned with ruff
 
 # Keep flake8 focused on FIRST-PARTY code. Exclude venvs, caches, build outputs,
 # and vendored third-party trees that sometimes live in-repo.
