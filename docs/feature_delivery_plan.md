@@ -106,6 +106,9 @@ sets of features, reusing the same data foundations:
 - Enriched the quick analysis with nearby development pipeline, transaction and
   rental signals and exposed them in the UI with map/amenity context and
   workflow hand-offs.
+- Extended the finance workspace to surface capital stack ratios and drawdown
+  schedules end-to-end, covering backend calculations, API mapping, and UI
+  visualisations.
 - Documented linting/testing workflows and kept `make verify` as the default
   quality gate after each increment.
 

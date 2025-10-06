@@ -62,6 +62,21 @@ export interface DscrInputs {
   periodLabels?: string[]
 }
 
+export interface CapitalStackSliceInput {
+  name: string
+  sourceType: string
+  amount: string
+  rate?: string | null
+  trancheOrder?: number | null
+  metadata?: Record<string, unknown> | null
+}
+
+export interface DrawdownPeriodInput {
+  period: string
+  equityDraw?: string
+  debtDraw?: string
+}
+
 export interface FinanceScenarioInput {
   name: string
   description?: string
@@ -70,6 +85,8 @@ export interface FinanceScenarioInput {
   costEscalation: CostEscalationInput
   cashFlow: CashflowInputs
   dscr?: DscrInputs
+  capitalStack?: CapitalStackSliceInput[]
+  drawdownSchedule?: DrawdownPeriodInput[]
 }
 
 export interface FinanceFeasibilityRequest {
@@ -114,6 +131,50 @@ export interface FinanceResultItem {
   metadata: Record<string, unknown>
 }
 
+export interface CapitalStackSlice {
+  name: string
+  sourceType: string
+  category: string
+  amount: string
+  share: string
+  rate?: string | null
+  trancheOrder?: number | null
+  metadata: Record<string, unknown>
+}
+
+export interface CapitalStackSummary {
+  currency: string
+  total: string
+  equityTotal: string
+  debtTotal: string
+  otherTotal: string
+  equityRatio?: string | null
+  debtRatio?: string | null
+  otherRatio?: string | null
+  loanToCost?: string | null
+  weightedAverageDebtRate?: string | null
+  slices: CapitalStackSlice[]
+}
+
+export interface DrawdownEntry {
+  period: string
+  equityDraw: string
+  debtDraw: string
+  totalDraw: string
+  cumulativeEquity: string
+  cumulativeDebt: string
+  outstandingDebt: string
+}
+
+export interface DrawdownSchedule {
+  currency: string
+  entries: DrawdownEntry[]
+  totalEquity: string
+  totalDebt: string
+  peakDebtBalance: string
+  finalDebtBalance: string
+}
+
 export interface FinanceScenarioSummary {
   scenarioId: number
   projectId: number
@@ -124,6 +185,8 @@ export interface FinanceScenarioSummary {
   costIndex: CostIndexProvenance
   results: FinanceResultItem[]
   dscrTimeline: DscrEntry[]
+  capitalStack: CapitalStackSummary | null
+  drawdownSchedule: DrawdownSchedule | null
 }
 
 interface FinanceFeasibilityRequestPayload {
@@ -151,6 +214,19 @@ interface FinanceFeasibilityRequestPayload {
       debt_services: string[]
       period_labels?: string[]
     }
+    capital_stack?: Array<{
+      name: string
+      source_type: string
+      amount: string
+      rate?: string | null
+      tranche_order?: number | null
+      metadata?: Record<string, unknown> | null
+    }>
+    drawdown_schedule?: Array<{
+      period: string
+      equity_draw?: string
+      debt_draw?: string
+    }>
   }
 }
 
@@ -181,12 +257,56 @@ interface FinanceResultPayload {
   metadata?: Record<string, unknown> | null
 }
 
+interface CapitalStackSlicePayload {
+  name: string
+  source_type: string
+  category: string
+  amount: string
+  share: string
+  rate?: string | null
+  tranche_order?: number | null
+  metadata?: Record<string, unknown> | null
+}
+
+interface CapitalStackSummaryPayload {
+  currency: string
+  total: string
+  equity_total: string
+  debt_total: string
+  other_total: string
+  equity_ratio?: string | null
+  debt_ratio?: string | null
+  other_ratio?: string | null
+  loan_to_cost?: string | null
+  weighted_average_debt_rate?: string | null
+  slices: CapitalStackSlicePayload[]
+}
+
 interface DscrEntryPayload {
   period: string
   noi: string
   debt_service: string
   dscr?: string | null
   currency: string
+}
+
+interface DrawdownEntryPayload {
+  period: string
+  equity_draw: string
+  debt_draw: string
+  total_draw: string
+  cumulative_equity: string
+  cumulative_debt: string
+  outstanding_debt: string
+}
+
+interface DrawdownSchedulePayload {
+  currency: string
+  entries: DrawdownEntryPayload[]
+  total_equity: string
+  total_debt: string
+  peak_debt_balance: string
+  final_debt_balance: string
 }
 
 interface FinanceFeasibilityResponsePayload {
@@ -199,6 +319,8 @@ interface FinanceFeasibilityResponsePayload {
   cost_index: CostIndexProvenancePayload
   results: FinanceResultPayload[]
   dscr_timeline: DscrEntryPayload[]
+  capital_stack?: CapitalStackSummaryPayload | null
+  drawdown_schedule?: DrawdownSchedulePayload | null
 }
 
 function toPayload(
@@ -233,6 +355,24 @@ function toPayload(
               ? [...scenario.dscr.periodLabels]
               : undefined,
           }
+        : undefined,
+      capital_stack: scenario.capitalStack?.length
+        ? scenario.capitalStack.map((slice) => ({
+            name: slice.name,
+            source_type: slice.sourceType,
+            amount: slice.amount,
+            rate: slice.rate ?? undefined,
+            tranche_order:
+              typeof slice.trancheOrder === 'number' ? slice.trancheOrder : undefined,
+            metadata: slice.metadata ?? undefined,
+          }))
+        : undefined,
+      drawdown_schedule: scenario.drawdownSchedule?.length
+        ? scenario.drawdownSchedule.map((entry) => ({
+            period: entry.period,
+            equity_draw: entry.equityDraw ?? undefined,
+            debt_draw: entry.debtDraw ?? undefined,
+          }))
         : undefined,
     },
   }
@@ -278,6 +418,74 @@ function mapResult(payload: FinanceResultPayload): FinanceResultItem {
   }
 }
 
+function mapCapitalStackSlice(
+  payload: CapitalStackSlicePayload,
+): CapitalStackSlice {
+  return {
+    name: payload.name,
+    sourceType: payload.source_type,
+    category: payload.category,
+    amount: payload.amount,
+    share: payload.share,
+    rate: payload.rate ?? null,
+    trancheOrder: payload.tranche_order ?? null,
+    metadata: payload.metadata ? { ...payload.metadata } : {},
+  }
+}
+
+function mapCapitalStack(
+  payload: CapitalStackSummaryPayload | null | undefined,
+): CapitalStackSummary | null {
+  if (!payload) {
+    return null
+  }
+  return {
+    currency: payload.currency,
+    total: payload.total,
+    equityTotal: payload.equity_total,
+    debtTotal: payload.debt_total,
+    otherTotal: payload.other_total,
+    equityRatio: payload.equity_ratio ?? null,
+    debtRatio: payload.debt_ratio ?? null,
+    otherRatio: payload.other_ratio ?? null,
+    loanToCost: payload.loan_to_cost ?? null,
+    weightedAverageDebtRate: payload.weighted_average_debt_rate ?? null,
+    slices: Array.isArray(payload.slices)
+      ? payload.slices.map(mapCapitalStackSlice)
+      : [],
+  }
+}
+
+function mapDrawdownEntry(payload: DrawdownEntryPayload): DrawdownEntry {
+  return {
+    period: payload.period,
+    equityDraw: payload.equity_draw,
+    debtDraw: payload.debt_draw,
+    totalDraw: payload.total_draw,
+    cumulativeEquity: payload.cumulative_equity,
+    cumulativeDebt: payload.cumulative_debt,
+    outstandingDebt: payload.outstanding_debt,
+  }
+}
+
+function mapDrawdown(
+  payload: DrawdownSchedulePayload | null | undefined,
+): DrawdownSchedule | null {
+  if (!payload) {
+    return null
+  }
+  return {
+    currency: payload.currency,
+    entries: Array.isArray(payload.entries)
+      ? payload.entries.map(mapDrawdownEntry)
+      : [],
+    totalEquity: payload.total_equity,
+    totalDebt: payload.total_debt,
+    peakDebtBalance: payload.peak_debt_balance,
+    finalDebtBalance: payload.final_debt_balance,
+  }
+}
+
 function mapDscrEntry(payload: DscrEntryPayload): DscrEntry {
   return {
     period: payload.period,
@@ -306,6 +514,8 @@ function mapResponse(
     costIndex: mapCostIndex(payload.cost_index),
     results: resultsSource.map(mapResult),
     dscrTimeline: dscrTimelineSource.map(mapDscrEntry),
+    capitalStack: mapCapitalStack(payload.capital_stack ?? null),
+    drawdownSchedule: mapDrawdown(payload.drawdown_schedule ?? null),
   }
 }
 

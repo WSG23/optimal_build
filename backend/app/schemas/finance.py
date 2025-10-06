@@ -33,6 +33,25 @@ class CostIndexProvenance(BaseModel):
     latest_index: CostIndexSnapshot | None = None
 
 
+class CapitalStackSliceInput(BaseModel):
+    """Capital stack tranche supplied by the caller."""
+
+    name: str
+    source_type: str = Field(..., min_length=1)
+    amount: Decimal = Field(..., ge=Decimal("0"))
+    rate: Decimal | None = None
+    tranche_order: int | None = Field(default=None, ge=0)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class DrawdownPeriodInput(BaseModel):
+    """Single period drawdown inputs for financing schedules."""
+
+    period: str
+    equity_draw: Decimal = Decimal("0")
+    debt_draw: Decimal = Decimal("0")
+
+
 class CostEscalationInput(BaseModel):
     """Inputs required to escalate a base amount using cost indices."""
 
@@ -93,6 +112,8 @@ class FinanceScenarioInput(BaseModel):
     cost_escalation: CostEscalationInput
     cash_flow: CashflowInputs
     dscr: DscrInputs | None = None
+    capital_stack: list[CapitalStackSliceInput] | None = None
+    drawdown_schedule: list[DrawdownPeriodInput] | None = None
 
 
 class FinanceFeasibilityRequest(BaseModel):
@@ -139,6 +160,58 @@ class FinanceResultSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CapitalStackSliceSchema(BaseModel):
+    """Serialised representation of a capital stack component."""
+
+    name: str
+    source_type: str
+    category: str
+    amount: Decimal
+    share: Decimal
+    rate: Decimal | None = None
+    tranche_order: int | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class CapitalStackSummarySchema(BaseModel):
+    """Aggregated capital stack summary returned by the API."""
+
+    currency: str
+    total: Decimal
+    equity_total: Decimal
+    debt_total: Decimal
+    other_total: Decimal
+    equity_ratio: Decimal | None = None
+    debt_ratio: Decimal | None = None
+    other_ratio: Decimal | None = None
+    loan_to_cost: Decimal | None = None
+    weighted_average_debt_rate: Decimal | None = None
+    slices: list[CapitalStackSliceSchema] = Field(default_factory=list)
+
+
+class FinancingDrawdownEntrySchema(BaseModel):
+    """Serialised drawdown schedule entry."""
+
+    period: str
+    equity_draw: Decimal
+    debt_draw: Decimal
+    total_draw: Decimal
+    cumulative_equity: Decimal
+    cumulative_debt: Decimal
+    outstanding_debt: Decimal
+
+
+class FinancingDrawdownScheduleSchema(BaseModel):
+    """Full drawdown schedule summary returned by the API."""
+
+    currency: str
+    entries: list[FinancingDrawdownEntrySchema] = Field(default_factory=list)
+    total_equity: Decimal
+    total_debt: Decimal
+    peak_debt_balance: Decimal
+    final_debt_balance: Decimal
+
+
 class FinanceFeasibilityResponse(BaseModel):
     """Response payload returned by the finance feasibility endpoint."""
 
@@ -151,15 +224,23 @@ class FinanceFeasibilityResponse(BaseModel):
     cost_index: CostIndexProvenance
     results: list[FinanceResultSchema]
     dscr_timeline: list[DscrEntrySchema] = Field(default_factory=list)
+    capital_stack: CapitalStackSummarySchema | None = None
+    drawdown_schedule: FinancingDrawdownScheduleSchema | None = None
 
 
 __all__ = [
+    "CapitalStackSliceInput",
+    "CapitalStackSliceSchema",
+    "CapitalStackSummarySchema",
     "CashflowInputs",
     "CostEscalationInput",
     "CostIndexProvenance",
     "CostIndexSnapshot",
+    "DrawdownPeriodInput",
     "DscrEntrySchema",
     "DscrInputs",
+    "FinancingDrawdownEntrySchema",
+    "FinancingDrawdownScheduleSchema",
     "FinanceFeasibilityRequest",
     "FinanceFeasibilityResponse",
     "FinanceResultSchema",

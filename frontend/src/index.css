@@ -1368,6 +1368,12 @@ h3 {
     color: var(--ob-color-text-muted);
 }
 
+.finance-workspace__sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-200);
+}
+
 .finance-table__wrapper {
     background: var(--ob-color-surface-default);
     border-radius: var(--ob-radius-2xl);
@@ -1397,6 +1403,188 @@ h3 {
 .finance-table tbody tr:last-child th,
 .finance-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+.finance-capital {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-125);
+}
+
+.finance-capital__title,
+.finance-drawdown__title {
+    margin: 0;
+    font-size: var(--ob-font-size-xl);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-strong);
+}
+
+.finance-capital__grid,
+.finance-drawdown__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--ob-space-150);
+}
+
+.finance-capital__card,
+.finance-drawdown__card {
+    background: var(--ob-color-surface-default);
+    border-radius: var(--ob-radius-2xl);
+    box-shadow: 0 12px 24px rgb(var(--ob-color-surface-inverse-rgb) / 0.08);
+    padding: var(--ob-space-175);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-125);
+}
+
+.finance-capital__card-header,
+.finance-drawdown__card-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+}
+
+.finance-capital__card-title,
+.finance-drawdown__card-title {
+    margin: 0;
+    font-size: var(--ob-font-size-lg);
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.finance-capital__total {
+    margin: 0;
+    color: var(--ob-color-brand-primary-strong);
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.finance-capital__bar {
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--ob-radius-pill);
+    height: 12px;
+    background: var(--ob-color-border-neutral);
+}
+
+.finance-capital__segment {
+    display: inline-block;
+    height: 100%;
+}
+
+.finance-capital__segment--equity {
+    background: var(--ob-color-success-strong);
+}
+
+.finance-capital__segment--debt {
+    background: var(--ob-color-warning-strong);
+}
+
+.finance-capital__segment--other {
+    background: var(--ob-color-info-strong);
+}
+
+.finance-capital__ratios {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--ob-space-075);
+    margin: 0;
+}
+
+.finance-capital__ratios dt {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-muted);
+}
+
+.finance-capital__ratios dd {
+    margin: 0;
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.finance-capital__slices {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-075);
+}
+
+.finance-capital__slice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.finance-capital__slice-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-muted);
+}
+
+.finance-capital__slice-name {
+    font-weight: var(--ob-font-weight-medium);
+}
+
+.finance-capital__slice-share {
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.finance-capital__slice-category {
+    font-style: italic;
+}
+
+.finance-drawdown__card-header {
+    align-items: flex-start;
+}
+
+.finance-drawdown__totals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--ob-space-075);
+    margin: 0;
+}
+
+.finance-drawdown__totals dt {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-muted);
+}
+
+.finance-drawdown__totals dd {
+    margin: 0;
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.finance-drawdown__table-wrapper {
+    overflow-x: auto;
+}
+
+.finance-drawdown__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.finance-drawdown__table-caption {
+    text-align: left;
+    font-weight: var(--ob-font-weight-medium);
+    margin-bottom: var(--ob-space-050);
+}
+
+.finance-drawdown__table th,
+.finance-drawdown__table td {
+    padding: var(--ob-space-075) var(--ob-space-100);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
+    text-align: left;
+}
+
+.finance-drawdown__table tbody tr:last-child th,
+.finance-drawdown__table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.finance-drawdown__more {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-muted);
 }
 
 .finance-table thead {

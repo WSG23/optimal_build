@@ -110,9 +110,40 @@
         "escalatedCost": "エスカレーション後コスト",
         "npv": "正味現在価値",
         "irr": "内部収益率",
-        "minDscr": "最低DSCR"
+        "minDscr": "最低DSCR",
+        "loanToCost": "ローン対コスト比"
       },
       "empty": "利用可能な財務シナリオがありません。"
+    },
+    "capitalStack": {
+      "title": "資本構成の内訳",
+      "labels": {
+        "equity": "自己資本比率",
+        "debt": "借入比率",
+        "loanToCost": "ローン対コスト比",
+        "weightedDebtRate": "平均借入金利"
+      },
+      "categories": {
+        "equity": "自己資本",
+        "debt": "借入金",
+        "other": "その他"
+      }
+    },
+    "drawdown": {
+      "title": "資金調達スケジュール",
+      "caption": "期間別ドローダウン",
+      "headers": {
+        "period": "期間",
+        "equity": "自己資本",
+        "debt": "借入金",
+        "outstanding": "残高"
+      },
+      "totals": {
+        "equity": "投入済み自己資本",
+        "debt": "投入済み借入金",
+        "peakDebt": "最大借入残高"
+      },
+      "moreEntries": "さらに{{count}}期間"
     }
   },
   "agentsCapture": {

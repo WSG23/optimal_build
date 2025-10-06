@@ -5,6 +5,8 @@ import {
   type FinanceScenarioInput,
 } from '../../api/finance'
 import { FinanceScenarioTable } from './components/FinanceScenarioTable'
+import { FinanceCapitalStack } from './components/FinanceCapitalStack'
+import { FinanceDrawdownSchedule } from './components/FinanceDrawdownSchedule'
 import { useFinanceFeasibility } from './hooks/useFinanceFeasibility'
 
 const FINANCE_PROJECT_ID = 401
@@ -165,7 +167,13 @@ export function FinanceWorkspace() {
         {showEmptyState && (
           <p className="finance-workspace__empty">{t('finance.table.empty')}</p>
         )}
-        {scenarios.length > 0 && <FinanceScenarioTable scenarios={scenarios} />}
+        {scenarios.length > 0 && (
+          <div className="finance-workspace__sections">
+            <FinanceScenarioTable scenarios={scenarios} />
+            <FinanceCapitalStack scenarios={scenarios} />
+            <FinanceDrawdownSchedule scenarios={scenarios} />
+          </div>
+        )}
       </section>
     </AppLayout>
   )

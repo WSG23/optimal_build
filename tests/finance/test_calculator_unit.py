@@ -89,3 +89,63 @@ def test_dscr_timeline_quantizes_inputs_and_ratios() -> None:
     assert second.noi == Decimal("890.12")
     assert second.debt_service == Decimal("456.79")
     assert second.dscr == Decimal("1.9487")
+
+
+def test_capital_stack_summary_computes_totals_and_ratios() -> None:
+    """Capital stack summary should derive totals, ratios and weighted rates."""
+
+    summary = calculator.capital_stack_summary(
+        [
+            {
+                "name": "Sponsor Equity",
+                "source_type": "equity",
+                "amount": "400",
+            },
+            {
+                "name": "Senior Loan",
+                "source_type": "debt",
+                "amount": "800",
+                "rate": "0.065",
+            },
+        ],
+        currency="SGD",
+        total_development_cost="1200",
+    )
+
+    assert summary.total == Decimal("1200.00")
+    assert summary.equity_total == Decimal("400.00")
+    assert summary.debt_total == Decimal("800.00")
+    assert summary.other_total == Decimal("0.00")
+    assert summary.equity_ratio == Decimal("0.3333")
+    assert summary.debt_ratio == Decimal("0.6667")
+    assert summary.loan_to_cost == Decimal("0.6667")
+    assert summary.weighted_average_debt_rate == Decimal("0.0650")
+
+    first_slice, second_slice = summary.slices
+    assert first_slice.category == "equity"
+    assert first_slice.share == Decimal("0.3333")
+    assert second_slice.category == "debt"
+    assert second_slice.share == Decimal("0.6667")
+
+
+def test_drawdown_schedule_accumulates_balances() -> None:
+    """Drawdown schedule should accumulate equity and debt exposure per period."""
+
+    schedule = calculator.drawdown_schedule(
+        [
+            {"period": "M0", "equity_draw": "150", "debt_draw": "0"},
+            {"period": "M1", "equity_draw": "250", "debt_draw": "300"},
+            {"period": "M2", "equity_draw": "0", "debt_draw": "500"},
+        ],
+        currency="SGD",
+    )
+
+    assert schedule.total_equity == Decimal("400.00")
+    assert schedule.total_debt == Decimal("800.00")
+    assert schedule.peak_debt_balance == Decimal("800.00")
+    assert schedule.final_debt_balance == Decimal("800.00")
+
+    entry_m1 = schedule.entries[1]
+    entry_m2 = schedule.entries[2]
+    assert entry_m1.outstanding_debt == Decimal("300.00")
+    assert entry_m2.cumulative_equity == Decimal("400.00")

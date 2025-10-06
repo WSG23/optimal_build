@@ -193,6 +193,25 @@ async def test_finance_feasibility_and_export_endpoints(
                 "debt_services": ["0", "1000", "800"],
                 "period_labels": ["M0", "M1", "M2"],
             },
+            "capital_stack": [
+                {
+                    "name": "Sponsor Equity",
+                    "source_type": "equity",
+                    "amount": "400",
+                },
+                {
+                    "name": "Senior Loan",
+                    "source_type": "debt",
+                    "amount": "800",
+                    "rate": "0.065",
+                    "tranche_order": 1,
+                },
+            ],
+            "drawdown_schedule": [
+                {"period": "M0", "equity_draw": "150", "debt_draw": "0"},
+                {"period": "M1", "equity_draw": "250", "debt_draw": "300"},
+                {"period": "M2", "equity_draw": "0", "debt_draw": "500"},
+            ],
         },
     }
 
@@ -225,7 +244,13 @@ async def test_finance_feasibility_and_export_endpoints(
     assert Decimal(cost_index["scalar"]) == Decimal("1.2000")
 
     results_by_name = {result["name"]: result for result in body["results"]}
-    assert {"escalated_cost", "npv", "irr"}.issubset(results_by_name.keys())
+    assert {
+        "escalated_cost",
+        "npv",
+        "irr",
+        "capital_stack",
+        "drawdown_schedule",
+    }.issubset(results_by_name.keys())
 
     escalated_result = results_by_name["escalated_cost"]
     assert Decimal(escalated_result["value"]) == Decimal("1200.00")
@@ -239,6 +264,20 @@ async def test_finance_feasibility_and_export_endpoints(
     assert Decimal(irr_result["value"]) == expected_irr
     assert irr_result["unit"] == "ratio"
 
+    capital_stack_result = results_by_name["capital_stack"]
+    assert Decimal(capital_stack_result["value"]) == Decimal("1200.00")
+    capital_meta = capital_stack_result["metadata"]
+    assert capital_meta["totals"]["equity"] == "400.00"
+    assert capital_meta["ratios"]["debt"] == "0.6667"
+    assert len(capital_meta["slices"]) == 2
+
+    drawdown_result = results_by_name["drawdown_schedule"]
+    assert drawdown_result["value"] is None
+    drawdown_meta = drawdown_result["metadata"]
+    assert drawdown_meta["totals"]["debt"] == "800.00"
+    assert drawdown_meta["entries"][1]["period"] == "M1"
+    assert drawdown_meta["entries"][1]["outstanding_debt"] == "300.00"
+
     actual_dscr_entries = body["dscr_timeline"]
     serialised_expected = _serialise_dscr_entries(expected_dscr_entries)
     assert len(actual_dscr_entries) == len(serialised_expected)
@@ -248,6 +287,22 @@ async def test_finance_feasibility_and_export_endpoints(
         assert Decimal(actual["debt_service"]) == Decimal(expected["debt_service"])
         assert actual["currency"] == expected["currency"]
         assert actual["dscr"] == expected["dscr"]
+
+    capital_stack_summary = body["capital_stack"]
+    assert capital_stack_summary is not None
+    assert Decimal(capital_stack_summary["total"]) == Decimal("1200.00")
+    assert Decimal(capital_stack_summary["equity_total"]) == Decimal("400.00")
+    assert Decimal(capital_stack_summary["debt_total"]) == Decimal("800.00")
+    assert capital_stack_summary["slices"][0]["category"] == "equity"
+    assert Decimal(capital_stack_summary["slices"][1]["share"]) == Decimal("0.6667")
+
+    drawdown_schedule = body["drawdown_schedule"]
+    assert drawdown_schedule is not None
+    assert Decimal(drawdown_schedule["total_debt"]) == Decimal("800.00")
+    assert drawdown_schedule["entries"][1]["period"] == "M1"
+    assert Decimal(drawdown_schedule["entries"][1]["outstanding_debt"]) == Decimal(
+        "300.00"
+    )
 
     scenario_id = body["scenario_id"]
 

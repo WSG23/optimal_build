@@ -110,9 +110,40 @@
         "escalatedCost": "Escalated cost",
         "npv": "Net present value",
         "irr": "Internal rate of return",
-        "minDscr": "Minimum DSCR"
+        "minDscr": "Minimum DSCR",
+        "loanToCost": "Loan-to-cost"
       },
       "empty": "No finance scenarios are available."
+    },
+    "capitalStack": {
+      "title": "Capital stack overview",
+      "labels": {
+        "equity": "Equity share",
+        "debt": "Debt share",
+        "loanToCost": "Loan-to-cost",
+        "weightedDebtRate": "Weighted debt rate"
+      },
+      "categories": {
+        "equity": "Equity",
+        "debt": "Debt",
+        "other": "Other"
+      }
+    },
+    "drawdown": {
+      "title": "Drawdown schedule",
+      "caption": "Funding drawdowns by period",
+      "headers": {
+        "period": "Period",
+        "equity": "Equity draw",
+        "debt": "Debt draw",
+        "outstanding": "Outstanding debt"
+      },
+      "totals": {
+        "equity": "Equity deployed",
+        "debt": "Debt deployed",
+        "peakDebt": "Peak debt balance"
+      },
+      "moreEntries": "{{count}} more periods"
     }
   },
   "agentsCapture": {

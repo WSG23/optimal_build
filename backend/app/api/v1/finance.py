@@ -19,15 +19,19 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
-from app.models.finance import FinProject, FinResult, FinScenario
+from app.models.finance import FinCapitalStack, FinProject, FinResult, FinScenario
 from app.models.rkp import RefCostIndex
 from app.schemas.finance import (
+    CapitalStackSliceSchema,
+    CapitalStackSummarySchema,
     CostIndexProvenance,
     CostIndexSnapshot,
     DscrEntrySchema,
     FinanceFeasibilityRequest,
     FinanceFeasibilityResponse,
     FinanceResultSchema,
+    FinancingDrawdownEntrySchema,
+    FinancingDrawdownScheduleSchema,
 )
 from app.services.finance import calculator
 from app.utils import metrics
@@ -123,6 +127,66 @@ def _convert_dscr_entry(entry: calculator.DscrEntry) -> DscrEntrySchema:
         debt_service=entry.debt_service,
         dscr=dscr_repr,
         currency=entry.currency,
+    )
+
+
+def _convert_capital_stack_summary(
+    summary: calculator.CapitalStackSummary,
+) -> CapitalStackSummarySchema:
+    """Convert a calculator summary into the API schema representation."""
+
+    slices = [
+        CapitalStackSliceSchema(
+            name=component.name,
+            source_type=component.source_type,
+            category=component.category,
+            amount=component.amount,
+            share=component.share,
+            rate=component.rate,
+            tranche_order=component.tranche_order,
+            metadata=dict(component.metadata),
+        )
+        for component in summary.slices
+    ]
+    return CapitalStackSummarySchema(
+        currency=summary.currency,
+        total=summary.total,
+        equity_total=summary.equity_total,
+        debt_total=summary.debt_total,
+        other_total=summary.other_total,
+        equity_ratio=summary.equity_ratio,
+        debt_ratio=summary.debt_ratio,
+        other_ratio=summary.other_ratio,
+        loan_to_cost=summary.loan_to_cost,
+        weighted_average_debt_rate=summary.weighted_average_debt_rate,
+        slices=slices,
+    )
+
+
+def _convert_drawdown_schedule(
+    schedule: calculator.FinancingDrawdownSchedule,
+) -> FinancingDrawdownScheduleSchema:
+    """Convert calculator drawdown schedule into the API schema."""
+
+    entries = [
+        FinancingDrawdownEntrySchema(
+            period=entry.period,
+            equity_draw=entry.equity_draw,
+            debt_draw=entry.debt_draw,
+            total_draw=entry.total_draw,
+            cumulative_equity=entry.cumulative_equity,
+            cumulative_debt=entry.cumulative_debt,
+            outstanding_debt=entry.outstanding_debt,
+        )
+        for entry in schedule.entries
+    ]
+    return FinancingDrawdownScheduleSchema(
+        currency=schedule.currency,
+        entries=entries,
+        total_equity=schedule.total_equity,
+        total_debt=schedule.total_debt,
+        peak_debt_balance=schedule.peak_debt_balance,
+        final_debt_balance=schedule.final_debt_balance,
     )
 
 
@@ -361,9 +425,9 @@ async def run_finance_feasibility(
             irr_raw = calculator.irr(cash_inputs.cash_flows)
             irr_value = irr_raw.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
         except ValueError:
-            irr_metadata[
-                "warning"
-            ] = "IRR could not be computed for the provided cash flows"
+            irr_metadata["warning"] = (
+                "IRR could not be computed for the provided cash flows"
+            )
 
         dscr_entries: list[DscrEntrySchema] = []
         dscr_metadata: dict[str, list[dict[str, object]]] = {}
@@ -383,6 +447,137 @@ async def run_finance_feasibility(
                     _json_safe(entry.model_dump(mode="json")) for entry in dscr_entries
                 ],
             }
+
+        capital_stack_summary_schema: CapitalStackSummarySchema | None = None
+        capital_stack_result_metadata: dict[str, object] | None = None
+        if payload.scenario.capital_stack:
+            stack_inputs = [
+                item.model_dump(mode="json") for item in payload.scenario.capital_stack
+            ]
+            stack_summary = calculator.capital_stack_summary(
+                stack_inputs,
+                currency=payload.scenario.currency,
+                total_development_cost=escalated_cost,
+            )
+            capital_stack_summary_schema = _convert_capital_stack_summary(stack_summary)
+
+            capital_stack_rows: list[FinCapitalStack] = []
+            slices_payload: list[dict[str, object]] = []
+            for idx, component in enumerate(stack_summary.slices):
+                tranche_order = (
+                    component.tranche_order
+                    if component.tranche_order is not None
+                    else idx
+                )
+                component_metadata = _json_safe(dict(component.metadata))
+                capital_stack_rows.append(
+                    FinCapitalStack(
+                        project_id=str(project_uuid),
+                        scenario=scenario,
+                        name=component.name,
+                        source_type=component.source_type,
+                        tranche_order=tranche_order,
+                        amount=component.amount,
+                        rate=component.rate,
+                        equity_share=component.share,
+                        metadata={
+                            "category": component.category,
+                            "share": str(component.share),
+                            "detail": component_metadata,
+                        },
+                    )
+                )
+                slices_payload.append(
+                    {
+                        "name": component.name,
+                        "source_type": component.source_type,
+                        "category": component.category,
+                        "amount": str(component.amount),
+                        "share": str(component.share),
+                        "rate": (
+                            str(component.rate) if component.rate is not None else None
+                        ),
+                        "tranche_order": component.tranche_order,
+                        "metadata": component_metadata,
+                    }
+                )
+            if capital_stack_rows:
+                session.add_all(capital_stack_rows)
+            capital_stack_result_metadata = _json_safe(
+                {
+                    "currency": capital_stack_summary_schema.currency,
+                    "totals": {
+                        "total": str(stack_summary.total),
+                        "equity": str(stack_summary.equity_total),
+                        "debt": str(stack_summary.debt_total),
+                        "other": str(stack_summary.other_total),
+                    },
+                    "ratios": {
+                        "equity": (
+                            str(stack_summary.equity_ratio)
+                            if stack_summary.equity_ratio is not None
+                            else None
+                        ),
+                        "debt": (
+                            str(stack_summary.debt_ratio)
+                            if stack_summary.debt_ratio is not None
+                            else None
+                        ),
+                        "other": (
+                            str(stack_summary.other_ratio)
+                            if stack_summary.other_ratio is not None
+                            else None
+                        ),
+                        "loan_to_cost": (
+                            str(stack_summary.loan_to_cost)
+                            if stack_summary.loan_to_cost is not None
+                            else None
+                        ),
+                        "weighted_average_debt_rate": (
+                            str(stack_summary.weighted_average_debt_rate)
+                            if stack_summary.weighted_average_debt_rate is not None
+                            else None
+                        ),
+                    },
+                    "slices": slices_payload,
+                }
+            )
+
+        drawdown_schedule_schema: FinancingDrawdownScheduleSchema | None = None
+        drawdown_result_metadata: dict[str, object] | None = None
+        if payload.scenario.drawdown_schedule:
+            schedule_inputs = [
+                item.model_dump(mode="json")
+                for item in payload.scenario.drawdown_schedule
+            ]
+            schedule_summary = calculator.drawdown_schedule(
+                schedule_inputs,
+                currency=payload.scenario.currency,
+            )
+            drawdown_schedule_schema = _convert_drawdown_schedule(schedule_summary)
+            drawdown_result_metadata = _json_safe(
+                {
+                    "currency": drawdown_schedule_schema.currency,
+                    "totals": {
+                        "equity": str(schedule_summary.total_equity),
+                        "debt": str(schedule_summary.total_debt),
+                        "peak_debt_balance": str(schedule_summary.peak_debt_balance),
+                        "final_debt_balance": str(schedule_summary.final_debt_balance),
+                    },
+                    "entries": [
+                        {
+                            "period": entry.period,
+                            "equity_draw": str(entry.equity_draw),
+                            "debt_draw": str(entry.debt_draw),
+                            "total_draw": str(entry.total_draw),
+                            "cumulative_equity": str(entry.cumulative_equity),
+                            "cumulative_debt": str(entry.cumulative_debt),
+                            "outstanding_debt": str(entry.outstanding_debt),
+                        }
+                        for entry in schedule_summary.entries
+                    ],
+                }
+            )
 
         results: list[FinResult] = [
             FinResult(
@@ -430,6 +625,36 @@ async def run_finance_feasibility(
                 )
             )
 
+        if (
+            capital_stack_summary_schema is not None
+            and capital_stack_result_metadata is not None
+        ):
+            results.append(
+                FinResult(
+                    project_id=str(project_uuid),
+                    scenario=scenario,
+                    name="capital_stack",
+                    value=capital_stack_summary_schema.total,
+                    unit=payload.scenario.currency,
+                    metadata=capital_stack_result_metadata,
+                )
+            )
+
+        if (
+            drawdown_schedule_schema is not None
+            and drawdown_result_metadata is not None
+        ):
+            results.append(
+                FinResult(
+                    project_id=str(project_uuid),
+                    scenario=scenario,
+                    name="drawdown_schedule",
+                    value=None,
+                    unit=None,
+                    metadata=drawdown_result_metadata,
+                )
+            )
+
         session.add_all(results)
 
         await session.flush()
@@ -460,6 +685,8 @@ async def run_finance_feasibility(
                 for result in results
             ],
             dscr_timeline=dscr_entries,
+            capital_stack=capital_stack_summary_schema,
+            drawdown_schedule=drawdown_schedule_schema,
         )
     finally:
         duration_ms = (perf_counter() - start_time) * 1000

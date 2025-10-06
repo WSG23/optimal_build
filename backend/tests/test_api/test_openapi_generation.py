@@ -8,11 +8,10 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from fastapi.testclient import TestClient
-
 from app.api.v1 import TAGS_METADATA  # noqa: E402  (import after dependency checks)
 from app.core.config import settings  # noqa: E402
 from app.main import app  # noqa: E402
+from fastapi.testclient import TestClient
 
 
 def test_openapi_includes_expected_paths() -> None:
@@ -49,12 +48,16 @@ def test_openapi_includes_expected_paths() -> None:
     ]
     assert finance_request["scenario"]["cost_escalation"]["jurisdiction"] == "SG"
     assert finance_request["scenario"]["cash_flow"]["cash_flows"] == ["0"]
+    assert "capital_stack" in finance_request["scenario"]
+    assert "drawdown_schedule" in finance_request["scenario"]
 
     finance_response = finance_post["responses"]["200"]["content"]["application/json"][
         "example"
     ]
     assert finance_response["cost_index"]["base_index"]["value"] == "0"
     assert finance_response["results"][0]["metadata"] == {}
+    assert "capital_stack" in finance_response
+    assert "drawdown_schedule" in finance_response
 
 
 def test_openapi_endpoint_returns_cached_schema() -> None:

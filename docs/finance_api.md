@@ -11,9 +11,10 @@ enforce reviewer-only mutations while allowing read access to viewers.
 `POST /api/v1/finance/feasibility`
 
 Submit a project scenario to calculate escalated construction costs, net present
-value (NPV), internal rate of return (IRR), and optionally a debt-service
-coverage ratio (DSCR) timeline. When the request succeeds the scenario is
-persisted and a summary of the results is returned.
+value (NPV), internal rate of return (IRR), an optional debt-service coverage
+ratio (DSCR) timeline, plus the associated capital stack and drawdown schedule.
+When the request succeeds the scenario is persisted and a comprehensive summary
+is returned for the frontend to render.
 
 ### Request body
 
@@ -42,7 +43,26 @@ persisted and a summary of the results is returned.
       "net_operating_incomes": ["2200000", "2400000", "2600000"],
       "debt_services": ["1800000", "1800000", "1800000"],
       "period_labels": ["2025", "2026", "2027"]
-    }
+    },
+    "capital_stack": [
+      {
+        "name": "Sponsor Equity",
+        "source_type": "equity",
+        "amount": "5000000"
+      },
+      {
+        "name": "Senior Loan",
+        "source_type": "debt",
+        "amount": "8500000",
+        "rate": "0.065",
+        "tranche_order": 1
+      }
+    ],
+    "drawdown_schedule": [
+      { "period": "2025-Q1", "equity_draw": "2500000", "debt_draw": "0" },
+      { "period": "2025-Q2", "equity_draw": "2500000", "debt_draw": "4000000" },
+      { "period": "2025-Q3", "equity_draw": "0", "debt_draw": "4500000" }
+    ]
   }
 }
 ```
@@ -128,7 +148,68 @@ persisted and a summary of the results is returned.
       "dscr": "1.2222",
       "currency": "SGD"
     }
-  ]
+  ],
+  "capital_stack": {
+    "currency": "SGD",
+    "total": "13450000.00",
+    "equity_total": "5000000.00",
+    "debt_total": "8450000.00",
+    "other_total": "0.00",
+    "equity_ratio": "0.3717",
+    "debt_ratio": "0.6283",
+    "other_ratio": "0.0000",
+    "loan_to_cost": "0.6283",
+    "weighted_average_debt_rate": "0.0650",
+    "slices": [
+      {
+        "name": "Sponsor Equity",
+        "source_type": "equity",
+        "category": "equity",
+        "amount": "5000000.00",
+        "share": "0.3717",
+        "rate": null,
+        "tranche_order": 0,
+        "metadata": {}
+      },
+      {
+        "name": "Senior Loan",
+        "source_type": "debt",
+        "category": "debt",
+        "amount": "8450000.00",
+        "share": "0.6283",
+        "rate": "0.0650",
+        "tranche_order": 1,
+        "metadata": {}
+      }
+    ]
+  },
+  "drawdown_schedule": {
+    "currency": "SGD",
+    "entries": [
+      {
+        "period": "2025-Q1",
+        "equity_draw": "2500000.00",
+        "debt_draw": "0.00",
+        "total_draw": "2500000.00",
+        "cumulative_equity": "2500000.00",
+        "cumulative_debt": "0.00",
+        "outstanding_debt": "0.00"
+      },
+      {
+        "period": "2025-Q2",
+        "equity_draw": "2500000.00",
+        "debt_draw": "4000000.00",
+        "total_draw": "6500000.00",
+        "cumulative_equity": "5000000.00",
+        "cumulative_debt": "4000000.00",
+        "outstanding_debt": "4000000.00"
+      }
+    ],
+    "total_equity": "5000000.00",
+    "total_debt": "8450000.00",
+    "peak_debt_balance": "8450000.00",
+    "final_debt_balance": "8450000.00"
+  }
 }
 ```
 

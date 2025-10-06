@@ -84,6 +84,7 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
           .map((entry) => toNumber(entry.dscr ?? null))
           .filter((value): value is number => value !== null)
         const minDscr = dscrValues.length > 0 ? Math.min(...dscrValues) : null
+        const loanToCost = scenario.capitalStack?.loanToCost ?? null
 
         return {
           id: scenario.scenarioId,
@@ -93,6 +94,7 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
           npv,
           irr,
           minDscr,
+          loanToCost,
         }
       }),
     [scenarios],
@@ -115,6 +117,7 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
             <th scope="col">{t('finance.table.headers.npv')}</th>
             <th scope="col">{t('finance.table.headers.irr')}</th>
             <th scope="col">{t('finance.table.headers.minDscr')}</th>
+            <th scope="col">{t('finance.table.headers.loanToCost')}</th>
           </tr>
         </thead>
         <tbody>
@@ -132,6 +135,7 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
               <td>{formatCurrency(row.npv, row.currency, locale, fallback)}</td>
               <td>{formatPercent(row.irr, locale, fallback)}</td>
               <td>{formatDscr(row.minDscr, locale, fallback)}</td>
+              <td>{formatPercent(row.loanToCost, locale, fallback)}</td>
             </tr>
           ))}
         </tbody>

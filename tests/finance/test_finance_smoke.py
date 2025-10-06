@@ -192,6 +192,24 @@ async def test_finance_feasibility_and_export_metrics(
                 "debt_services": ["0", "1000", "800"],
                 "period_labels": ["M0", "M1", "M2"],
             },
+            "capital_stack": [
+                {
+                    "name": "Sponsor Equity",
+                    "source_type": "equity",
+                    "amount": "400",
+                },
+                {
+                    "name": "Senior Loan",
+                    "source_type": "debt",
+                    "amount": "800",
+                    "rate": "0.065",
+                },
+            ],
+            "drawdown_schedule": [
+                {"period": "M0", "equity_draw": "150", "debt_draw": "0"},
+                {"period": "M1", "equity_draw": "250", "debt_draw": "300"},
+                {"period": "M2", "equity_draw": "0", "debt_draw": "500"},
+            ],
         },
     }
 
@@ -226,6 +244,8 @@ async def test_finance_feasibility_and_export_metrics(
     assert results_by_name["npv"]["unit"] == "SGD"
     assert Decimal(results_by_name["irr"]["value"]) == expected_irr
     assert results_by_name["irr"]["unit"] == "ratio"
+    assert "capital_stack" in results_by_name
+    assert "drawdown_schedule" in results_by_name
 
     actual_dscr_entries = body["dscr_timeline"]
     assert len(actual_dscr_entries) == len(serialised_expected)
@@ -238,6 +258,9 @@ async def test_finance_feasibility_and_export_metrics(
             assert actual["dscr"] in (None, "")
         else:
             assert actual["dscr"] == expected["dscr"]
+
+    assert body["capital_stack"] is not None
+    assert body["drawdown_schedule"] is not None
 
     feasibility_total = metrics.counter_value(metrics.FINANCE_FEASIBILITY_TOTAL, {})
     assert feasibility_total == pytest.approx(baseline_feasibility + 1.0)
