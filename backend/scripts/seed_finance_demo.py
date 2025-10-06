@@ -14,6 +14,7 @@ import structlog
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.finance import (
+    FinCapitalStack,
     FinCostItem,
     FinProject,
     FinResult,
@@ -190,6 +191,52 @@ SCENARIO_DEFINITIONS: Sequence[Mapping[str, Any]] = (
                 "revenue": Decimal("12000000"),
             },
         ),
+        "capital_stack": (
+            {
+                "name": "Sponsor Equity",
+                "source_type": "equity",
+                "amount": Decimal("15580000"),
+            },
+            {
+                "name": "Senior Loan",
+                "source_type": "debt",
+                "amount": Decimal("23370000"),
+                "rate": Decimal("0.0475"),
+                "tranche_order": 1,
+            },
+        ),
+        "drawdown_schedule": (
+            {
+                "period": "M1",
+                "equity_draw": Decimal("6000000"),
+                "debt_draw": Decimal("0"),
+            },
+            {
+                "period": "M2",
+                "equity_draw": Decimal("4500000"),
+                "debt_draw": Decimal("2500000"),
+            },
+            {
+                "period": "M3",
+                "equity_draw": Decimal("3000000"),
+                "debt_draw": Decimal("4500000"),
+            },
+            {
+                "period": "M4",
+                "equity_draw": Decimal("1200000"),
+                "debt_draw": Decimal("5000000"),
+            },
+            {
+                "period": "M5",
+                "equity_draw": Decimal("800000"),
+                "debt_draw": Decimal("6500000"),
+            },
+            {
+                "period": "M6",
+                "equity_draw": Decimal("300000"),
+                "debt_draw": Decimal("4870000"),
+            },
+        ),
     },
     {
         "key": "B",
@@ -291,6 +338,59 @@ SCENARIO_DEFINITIONS: Sequence[Mapping[str, Any]] = (
                 "hard_cost": Decimal("1800000"),
                 "soft_cost": Decimal("350000"),
                 "revenue": Decimal("13500000"),
+            },
+        ),
+        "capital_stack": (
+            {
+                "name": "Sponsor Equity",
+                "source_type": "equity",
+                "amount": Decimal("16440000"),
+            },
+            {
+                "name": "Senior Loan",
+                "source_type": "debt",
+                "amount": Decimal("20550000"),
+                "rate": Decimal("0.0450"),
+                "tranche_order": 1,
+            },
+            {
+                "name": "Mezzanine Loan",
+                "source_type": "mezzanine_debt",
+                "amount": Decimal("4110000"),
+                "rate": Decimal("0.0825"),
+                "tranche_order": 2,
+            },
+        ),
+        "drawdown_schedule": (
+            {
+                "period": "M1",
+                "equity_draw": Decimal("6500000"),
+                "debt_draw": Decimal("1800000"),
+            },
+            {
+                "period": "M2",
+                "equity_draw": Decimal("5000000"),
+                "debt_draw": Decimal("3200000"),
+            },
+            {
+                "period": "M3",
+                "equity_draw": Decimal("3200000"),
+                "debt_draw": Decimal("4900000"),
+            },
+            {
+                "period": "M4",
+                "equity_draw": Decimal("800000"),
+                "debt_draw": Decimal("5300000"),
+            },
+            {
+                "period": "M5",
+                "equity_draw": Decimal("600000"),
+                "debt_draw": Decimal("5400000"),
+            },
+            {
+                "period": "M6",
+                "equity_draw": Decimal("344000"),
+                "debt_draw": Decimal("4060000"),
             },
         ),
     },
@@ -396,6 +496,59 @@ SCENARIO_DEFINITIONS: Sequence[Mapping[str, Any]] = (
                 "revenue": Decimal("8000000"),
             },
         ),
+        "capital_stack": (
+            {
+                "name": "Sponsor Equity",
+                "source_type": "equity",
+                "amount": Decimal("14720000"),
+            },
+            {
+                "name": "Senior Loan",
+                "source_type": "debt",
+                "amount": Decimal("18400000"),
+                "rate": Decimal("0.0485"),
+                "tranche_order": 1,
+            },
+            {
+                "name": "Bridge Facility",
+                "source_type": "bridge_debt",
+                "amount": Decimal("3680000"),
+                "rate": Decimal("0.0650"),
+                "tranche_order": 2,
+            },
+        ),
+        "drawdown_schedule": (
+            {
+                "period": "M1",
+                "equity_draw": Decimal("5200000"),
+                "debt_draw": Decimal("1500000"),
+            },
+            {
+                "period": "M2",
+                "equity_draw": Decimal("3900000"),
+                "debt_draw": Decimal("3000000"),
+            },
+            {
+                "period": "M3",
+                "equity_draw": Decimal("2800000"),
+                "debt_draw": Decimal("4200000"),
+            },
+            {
+                "period": "M4",
+                "equity_draw": Decimal("1400000"),
+                "debt_draw": Decimal("4600000"),
+            },
+            {
+                "period": "M5",
+                "equity_draw": Decimal("900000"),
+                "debt_draw": Decimal("4800000"),
+            },
+            {
+                "period": "M6",
+                "equity_draw": Decimal("520000"),
+                "debt_draw": Decimal("3980000"),
+            },
+        ),
     },
 )
 
@@ -456,6 +609,8 @@ async def _seed_scenario(
     cost_config = definition["cost_escalation"]
     cash_config = definition["cash_flow"]
     dscr_config = definition.get("dscr")
+    capital_stack_config = definition.get("capital_stack")
+    drawdown_config = definition.get("drawdown_schedule")
 
     assumptions["cost_escalation"] = {
         "amount": str(_to_decimal(cost_config["amount"])),
@@ -476,6 +631,34 @@ async def _seed_scenario(
             "debt_services": _serialise_cashflows(dscr_config["debt_services"]),
             "period_labels": list(dscr_config.get("period_labels") or []),
         }
+    if capital_stack_config:
+        capital_stack_assumptions: list[dict[str, Any]] = []
+        for item in capital_stack_config:
+            capital_stack_assumptions.append(
+                {
+                    "name": item["name"],
+                    "source_type": item["source_type"],
+                    "amount": str(_to_decimal(item["amount"])),
+                    "rate": (
+                        str(_to_decimal(item["rate"], places=4))
+                        if item.get("rate") is not None
+                        else None
+                    ),
+                    "tranche_order": item.get("tranche_order"),
+                }
+            )
+        assumptions["capital_stack"] = capital_stack_assumptions
+    if drawdown_config:
+        drawdown_assumptions: list[dict[str, Any]] = []
+        for entry in drawdown_config:
+            drawdown_assumptions.append(
+                {
+                    "period": entry["period"],
+                    "equity_draw": str(_to_decimal(entry.get("equity_draw", 0))),
+                    "debt_draw": str(_to_decimal(entry.get("debt_draw", 0))),
+                }
+            )
+        assumptions["drawdown_schedule"] = drawdown_assumptions
 
     scenario = FinScenario(
         project_id=fin_project.project_id,
@@ -592,6 +775,142 @@ async def _seed_scenario(
             ]
         }
 
+    capital_stack_metadata: dict[str, Any] | None = None
+    capital_stack_total: Decimal | None = None
+    if capital_stack_config:
+        capital_stack_inputs: list[dict[str, Any]] = []
+        for item in capital_stack_config:
+            capital_stack_inputs.append(
+                {
+                    "name": item["name"],
+                    "source_type": item["source_type"],
+                    "amount": _to_decimal(item["amount"]),
+                    "rate": (
+                        _to_decimal(item["rate"], places=4)
+                        if item.get("rate") is not None
+                        else None
+                    ),
+                    "tranche_order": item.get("tranche_order"),
+                }
+            )
+        stack_summary = calculator.capital_stack_summary(
+            capital_stack_inputs,
+            currency=fin_project.currency,
+            total_development_cost=escalated_cost,
+        )
+        capital_stack_rows: list[FinCapitalStack] = []
+        slices_payload: list[dict[str, Any]] = []
+        for idx, component in enumerate(stack_summary.slices):
+            metadata = {
+                "seed": "finance_demo",
+                "scenario_key": key,
+                "category": component.category,
+            }
+            tranche_order = (
+                component.tranche_order if component.tranche_order is not None else idx
+            )
+            capital_stack_rows.append(
+                FinCapitalStack(
+                    project_id=fin_project.project_id,
+                    scenario_id=scenario.id,
+                    name=component.name,
+                    source_type=component.source_type,
+                    tranche_order=tranche_order,
+                    amount=component.amount,
+                    rate=component.rate,
+                    equity_share=component.share,
+                    metadata=metadata,
+                )
+            )
+            slices_payload.append(
+                {
+                    "name": component.name,
+                    "source_type": component.source_type,
+                    "category": component.category,
+                    "amount": str(component.amount),
+                    "share": str(component.share),
+                    "rate": str(component.rate) if component.rate is not None else None,
+                    "tranche_order": component.tranche_order,
+                }
+            )
+        if capital_stack_rows:
+            session.add_all(capital_stack_rows)
+        capital_stack_total = stack_summary.total
+        capital_stack_metadata = {
+            "currency": stack_summary.currency,
+            "totals": {
+                "total": str(stack_summary.total),
+                "equity": str(stack_summary.equity_total),
+                "debt": str(stack_summary.debt_total),
+                "other": str(stack_summary.other_total),
+            },
+            "ratios": {
+                "equity": (
+                    str(stack_summary.equity_ratio)
+                    if stack_summary.equity_ratio is not None
+                    else None
+                ),
+                "debt": (
+                    str(stack_summary.debt_ratio)
+                    if stack_summary.debt_ratio is not None
+                    else None
+                ),
+                "other": (
+                    str(stack_summary.other_ratio)
+                    if stack_summary.other_ratio is not None
+                    else None
+                ),
+                "loan_to_cost": (
+                    str(stack_summary.loan_to_cost)
+                    if stack_summary.loan_to_cost is not None
+                    else None
+                ),
+                "weighted_average_debt_rate": (
+                    str(stack_summary.weighted_average_debt_rate)
+                    if stack_summary.weighted_average_debt_rate is not None
+                    else None
+                ),
+            },
+            "slices": slices_payload,
+        }
+
+    drawdown_metadata: dict[str, Any] | None = None
+    if drawdown_config:
+        drawdown_inputs: list[dict[str, Any]] = []
+        for entry in drawdown_config:
+            drawdown_inputs.append(
+                {
+                    "period": entry["period"],
+                    "equity_draw": _to_decimal(entry.get("equity_draw", 0)),
+                    "debt_draw": _to_decimal(entry.get("debt_draw", 0)),
+                }
+            )
+        drawdown_summary = calculator.drawdown_schedule(
+            drawdown_inputs,
+            currency=fin_project.currency,
+        )
+        drawdown_metadata = {
+            "currency": drawdown_summary.currency,
+            "totals": {
+                "equity": str(drawdown_summary.total_equity),
+                "debt": str(drawdown_summary.total_debt),
+                "peak_debt_balance": str(drawdown_summary.peak_debt_balance),
+                "final_debt_balance": str(drawdown_summary.final_debt_balance),
+            },
+            "entries": [
+                {
+                    "period": entry.period,
+                    "equity_draw": str(entry.equity_draw),
+                    "debt_draw": str(entry.debt_draw),
+                    "total_draw": str(entry.total_draw),
+                    "cumulative_equity": str(entry.cumulative_equity),
+                    "cumulative_debt": str(entry.cumulative_debt),
+                    "outstanding_debt": str(entry.outstanding_debt),
+                }
+                for entry in drawdown_summary.entries
+            ],
+        }
+
     results: list[FinResult] = [
         FinResult(
             project_id=fin_project.project_id,
@@ -638,6 +957,30 @@ async def _seed_scenario(
                 value=None,
                 unit=None,
                 metadata=dscr_metadata,
+            )
+        )
+
+    if capital_stack_metadata and capital_stack_total is not None:
+        results.append(
+            FinResult(
+                project_id=fin_project.project_id,
+                scenario_id=scenario.id,
+                name="capital_stack",
+                value=capital_stack_total,
+                unit=fin_project.currency,
+                metadata=capital_stack_metadata,
+            )
+        )
+
+    if drawdown_metadata:
+        results.append(
+            FinResult(
+                project_id=fin_project.project_id,
+                scenario_id=scenario.id,
+                name="drawdown_schedule",
+                value=None,
+                unit=None,
+                metadata=drawdown_metadata,
             )
         )
 
