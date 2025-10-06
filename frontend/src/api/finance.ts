@@ -1,4 +1,8 @@
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? null
+const rawApiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ??
+  import.meta.env.VITE_API_URL ??
+  import.meta.env.VITE_API_BASE ??
+  null
 
 function normaliseBaseUrl(value: string | undefined | null): string {
   if (typeof value !== 'string') {
