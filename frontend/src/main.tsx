@@ -13,6 +13,12 @@ import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligenc
 import '@ob/tokens.css'
 import './index.css'
 
+const hash = window.location.hash
+if (hash.startsWith('#/')) {
+  const targetPath = hash.slice(1)
+  window.history.replaceState(null, '', targetPath)
+}
+
 const router = createBrowserRouter([
   {
     path: '/home',
