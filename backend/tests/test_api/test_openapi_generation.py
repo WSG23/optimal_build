@@ -26,6 +26,7 @@ def test_openapi_includes_expected_paths() -> None:
     paths = schema["paths"]
     assert "/api/v1/screen/buildable" in paths
     assert "/api/v1/finance/feasibility" in paths
+    assert "/api/v1/finance/scenarios" in paths
 
     buildable_post = paths["/api/v1/screen/buildable"]["post"]
     request_example = buildable_post["requestBody"]["content"]["application/json"][

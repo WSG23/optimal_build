@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from time import perf_counter
 from typing import Any
@@ -127,6 +127,350 @@ def _convert_dscr_entry(entry: calculator.DscrEntry) -> DscrEntrySchema:
         debt_service=entry.debt_service,
         dscr=dscr_repr,
         currency=entry.currency,
+    )
+
+
+async def _load_cost_indices(
+    session: AsyncSession,
+    *,
+    series_name: str,
+    jurisdiction: str,
+    provider: str | None,
+) -> list[RefCostIndex]:
+    stmt = select(RefCostIndex).where(
+        RefCostIndex.series_name == series_name,
+        RefCostIndex.jurisdiction == jurisdiction,
+    )
+    if provider:
+        stmt = stmt.where(RefCostIndex.provider == provider)
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def _summarise_persisted_scenario(
+    scenario: FinScenario,
+    *,
+    session: AsyncSession,
+) -> FinanceFeasibilityResponse:
+    assumptions: dict[str, Any] = dict(scenario.assumptions or {})
+    fin_project = scenario.fin_project
+    if fin_project is None:
+        raise HTTPException(
+            status_code=500, detail="Finance project missing for scenario"
+        )
+
+    cost_config = assumptions.get("cost_escalation") or {}
+    cash_config = assumptions.get("cash_flow") or {}
+    dscr_config = assumptions.get("dscr")
+    capital_stack_config = assumptions.get("capital_stack")
+    drawdown_config = assumptions.get("drawdown_schedule")
+
+    try:
+        amount_value = _decimal_from_value(cost_config["amount"])
+    except (
+        KeyError
+    ) as exc:  # pragma: no cover - seeded data always includes cost config
+        raise HTTPException(
+            status_code=500, detail="Scenario missing cost escalation data"
+        ) from exc
+
+    indices = await _load_cost_indices(
+        session,
+        series_name=cost_config.get("series_name", ""),
+        jurisdiction=cost_config.get("jurisdiction", ""),
+        provider=cost_config.get("provider"),
+    )
+
+    escalated_cost = calculator.escalate_amount(
+        amount_value,
+        base_period=cost_config.get("base_period", ""),
+        indices=indices,
+        series_name=cost_config.get("series_name"),
+        jurisdiction=cost_config.get("jurisdiction"),
+        provider=cost_config.get("provider"),
+    )
+
+    latest_index = RefCostIndex.latest(
+        indices,
+        jurisdiction=cost_config.get("jurisdiction"),
+        provider=cost_config.get("provider"),
+        series_name=cost_config.get("series_name"),
+    )
+    base_index: RefCostIndex | None = None
+    for index in indices:
+        if str(index.period) != cost_config.get("base_period"):
+            continue
+        if index.series_name != cost_config.get("series_name"):
+            continue
+        if index.jurisdiction != cost_config.get("jurisdiction"):
+            continue
+        if cost_config.get("provider") and index.provider != cost_config.get(
+            "provider"
+        ):
+            continue
+        base_index = index
+        break
+
+    cost_provenance = CostIndexProvenance(
+        series_name=cost_config.get("series_name", ""),
+        jurisdiction=cost_config.get("jurisdiction", ""),
+        provider=cost_config.get("provider"),
+        base_period=cost_config.get("base_period", ""),
+        latest_period=str(latest_index.period) if latest_index else None,
+        scalar=_compute_scalar(
+            _build_cost_index_snapshot(base_index),
+            _build_cost_index_snapshot(latest_index),
+        ),
+        base_index=_build_cost_index_snapshot(base_index),
+        latest_index=_build_cost_index_snapshot(latest_index),
+    )
+
+    discount_rate = cash_config.get("discount_rate", "0")
+    cash_flows = cash_config.get("cash_flows") or []
+    npv_value = calculator.npv(discount_rate, cash_flows)
+    npv_rounded = npv_value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    irr_value: Decimal | None = None
+    irr_metadata = {
+        "cash_flows": [str(value) for value in cash_flows],
+        "discount_rate": str(discount_rate),
+    }
+    try:
+        irr_raw = calculator.irr(cash_flows)
+        irr_value = irr_raw.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+    except ValueError:
+        irr_metadata["warning"] = (
+            "IRR could not be computed for the provided cash flows"
+        )
+
+    dscr_entries: list[DscrEntrySchema] = []
+    if dscr_config:
+        timeline = calculator.dscr_timeline(
+            dscr_config.get("net_operating_incomes", []),
+            dscr_config.get("debt_services", []),
+            period_labels=dscr_config.get("period_labels"),
+            currency=fin_project.currency,
+        )
+        dscr_entries = [_convert_dscr_entry(entry) for entry in timeline]
+
+    capital_stack_inputs: list[Mapping[str, Any]] = []
+    if scenario.capital_stack:
+        ordered = sorted(
+            scenario.capital_stack,
+            key=lambda item: (
+                item.tranche_order if item.tranche_order is not None else item.id
+            ),
+        )
+        for entry in ordered:
+            capital_stack_inputs.append(
+                {
+                    "name": entry.name,
+                    "source_type": entry.source_type or "other",
+                    "amount": entry.amount or Decimal("0"),
+                    "rate": entry.rate,
+                    "tranche_order": entry.tranche_order,
+                    "metadata": dict(entry.metadata or {}),
+                }
+            )
+    elif isinstance(capital_stack_config, list):
+        for item in capital_stack_config:
+            capital_stack_inputs.append(
+                {
+                    "name": item.get("name", ""),
+                    "source_type": item.get("source_type", "other"),
+                    "amount": _decimal_from_value(item.get("amount", "0")),
+                    "rate": (
+                        _decimal_from_value(item.get("rate"))
+                        if item.get("rate") is not None
+                        else None
+                    ),
+                    "tranche_order": item.get("tranche_order"),
+                }
+            )
+
+    capital_stack_summary = None
+    if capital_stack_inputs:
+        capital_stack_summary = calculator.capital_stack_summary(
+            capital_stack_inputs,
+            currency=fin_project.currency,
+            total_development_cost=escalated_cost,
+        )
+
+    drawdown_summary = None
+    if isinstance(drawdown_config, list) and drawdown_config:
+        schedule_inputs = []
+        for entry in drawdown_config:
+            schedule_inputs.append(
+                {
+                    "period": entry.get("period", ""),
+                    "equity_draw": _decimal_from_value(entry.get("equity_draw", "0")),
+                    "debt_draw": _decimal_from_value(entry.get("debt_draw", "0")),
+                }
+            )
+        drawdown_summary = calculator.drawdown_schedule(
+            schedule_inputs,
+            currency=fin_project.currency,
+        )
+
+    dscr_metadata = {}
+    if dscr_entries:
+        dscr_metadata = {
+            "entries": [
+                _json_safe(entry.model_dump(mode="json")) for entry in dscr_entries
+            ],
+        }
+
+    capital_metadata = None
+    if capital_stack_summary:
+        capital_metadata = {
+            "currency": capital_stack_summary.currency,
+            "totals": {
+                "total": str(capital_stack_summary.total),
+                "equity": str(capital_stack_summary.equity_total),
+                "debt": str(capital_stack_summary.debt_total),
+                "other": str(capital_stack_summary.other_total),
+            },
+            "ratios": {
+                "equity": (
+                    str(capital_stack_summary.equity_ratio)
+                    if capital_stack_summary.equity_ratio is not None
+                    else None
+                ),
+                "debt": (
+                    str(capital_stack_summary.debt_ratio)
+                    if capital_stack_summary.debt_ratio is not None
+                    else None
+                ),
+                "other": (
+                    str(capital_stack_summary.other_ratio)
+                    if capital_stack_summary.other_ratio is not None
+                    else None
+                ),
+                "loan_to_cost": (
+                    str(capital_stack_summary.loan_to_cost)
+                    if capital_stack_summary.loan_to_cost is not None
+                    else None
+                ),
+                "weighted_average_debt_rate": (
+                    str(capital_stack_summary.weighted_average_debt_rate)
+                    if capital_stack_summary.weighted_average_debt_rate is not None
+                    else None
+                ),
+            },
+            "slices": [
+                {
+                    "name": component.name,
+                    "source_type": component.source_type,
+                    "category": component.category,
+                    "amount": str(component.amount),
+                    "share": str(component.share),
+                    "rate": str(component.rate) if component.rate is not None else None,
+                    "tranche_order": component.tranche_order,
+                }
+                for component in capital_stack_summary.slices
+            ],
+        }
+
+    drawdown_metadata = None
+    if drawdown_summary:
+        drawdown_metadata = {
+            "currency": drawdown_summary.currency,
+            "totals": {
+                "equity": str(drawdown_summary.total_equity),
+                "debt": str(drawdown_summary.total_debt),
+                "peak_debt_balance": str(drawdown_summary.peak_debt_balance),
+                "final_debt_balance": str(drawdown_summary.final_debt_balance),
+            },
+            "entries": [
+                {
+                    "period": entry.period,
+                    "equity_draw": str(entry.equity_draw),
+                    "debt_draw": str(entry.debt_draw),
+                    "total_draw": str(entry.total_draw),
+                    "cumulative_equity": str(entry.cumulative_equity),
+                    "cumulative_debt": str(entry.cumulative_debt),
+                    "outstanding_debt": str(entry.outstanding_debt),
+                }
+                for entry in drawdown_summary.entries
+            ],
+        }
+
+    results: list[FinanceResultSchema] = [
+        FinanceResultSchema(
+            name="escalated_cost",
+            value=escalated_cost,
+            unit=fin_project.currency,
+            metadata={
+                "base_amount": str(amount_value),
+                "base_period": cost_config.get("base_period"),
+                "cost_index": _json_safe(cost_provenance.model_dump(mode="json")),
+            },
+        ),
+        FinanceResultSchema(
+            name="npv",
+            value=npv_rounded,
+            unit=fin_project.currency,
+            metadata={
+                "discount_rate": str(discount_rate),
+                "cash_flows": [str(value) for value in cash_flows],
+            },
+        ),
+        FinanceResultSchema(
+            name="irr",
+            value=irr_value,
+            unit="ratio",
+            metadata=irr_metadata,
+        ),
+    ]
+
+    if dscr_entries:
+        results.append(
+            FinanceResultSchema(
+                name="dscr_timeline",
+                value=None,
+                metadata=dscr_metadata,
+            )
+        )
+
+    if capital_metadata and capital_stack_summary:
+        results.append(
+            FinanceResultSchema(
+                name="capital_stack",
+                value=capital_stack_summary.total,
+                unit=fin_project.currency,
+                metadata=capital_metadata,
+            )
+        )
+
+    if drawdown_metadata:
+        results.append(
+            FinanceResultSchema(
+                name="drawdown_schedule",
+                value=None,
+                metadata=drawdown_metadata,
+            )
+        )
+
+    drawdown_schema = None
+    if drawdown_summary:
+        drawdown_schema = _convert_drawdown_schedule(drawdown_summary)
+
+    return FinanceFeasibilityResponse(
+        scenario_id=scenario.id,
+        project_id=str(scenario.project_id),
+        fin_project_id=scenario.fin_project_id,
+        scenario_name=scenario.name,
+        currency=fin_project.currency,
+        escalated_cost=escalated_cost,
+        cost_index=cost_provenance,
+        results=results,
+        dscr_timeline=dscr_entries,
+        capital_stack=(
+            _convert_capital_stack_summary(capital_stack_summary)
+            if capital_stack_summary
+            else None
+        ),
+        drawdown_schedule=drawdown_schema,
     )
 
 
@@ -694,6 +1038,47 @@ async def run_finance_feasibility(
 
     assert response is not None
     return response
+
+
+@router.get("/scenarios", response_model=list[FinanceFeasibilityResponse])
+async def list_finance_scenarios(
+    project_id: str | int | UUID | None = Query(None),
+    fin_project_id: int | None = Query(None),
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
+) -> list[FinanceFeasibilityResponse]:
+    """Return previously persisted finance scenarios for the requested project."""
+
+    if project_id is None and fin_project_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="project_id or fin_project_id must be provided",
+        )
+
+    stmt = (
+        select(FinScenario)
+        .options(
+            selectinload(FinScenario.fin_project),
+            selectinload(FinScenario.capital_stack),
+        )
+        .order_by(FinScenario.id)
+    )
+
+    if fin_project_id is not None:
+        stmt = stmt.where(FinScenario.fin_project_id == fin_project_id)
+
+    if project_id is not None:
+        normalised = _normalise_project_id(project_id)
+        stmt = stmt.where(FinScenario.project_id == str(normalised))
+
+    result = await session.execute(stmt)
+    scenarios = list(result.scalars().all())
+
+    summaries: list[FinanceFeasibilityResponse] = []
+    for scenario in scenarios:
+        summaries.append(await _summarise_persisted_scenario(scenario, session=session))
+
+    return summaries
 
 
 @router.get("/export")

@@ -127,4 +127,51 @@ describe('finance API mapping', () => {
       globalThis.fetch = originalFetch
     }
   })
+
+  it('fetches persisted finance scenarios and maps responses', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (input) => {
+      const url = typeof input === 'string' ? input : input.toString()
+      assert.ok(url.includes('/api/v1/finance/scenarios?project_id=401'))
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return [
+            {
+              scenario_id: 26,
+              project_id: 401,
+              fin_project_id: 12,
+              scenario_name: 'Seeded Scenario',
+              currency: 'SGD',
+              escalated_cost: '38950000.00',
+              cost_index: {
+                series_name: 'construction_all_in',
+                jurisdiction: 'SG',
+                provider: 'Public',
+                base_period: '2024-Q1',
+                latest_period: '2024-Q4',
+                scalar: '1.2000',
+                base_index: null,
+                latest_index: null,
+              },
+              results: [],
+              dscr_timeline: [],
+              capital_stack: null,
+              drawdown_schedule: null,
+            },
+          ]
+        },
+      }
+    }) as typeof globalThis.fetch
+
+    try {
+      const summaries = await listFinanceScenarios({ projectId: 401 })
+      assert.equal(summaries.length, 1)
+      assert.equal(summaries[0]?.scenarioId, 26)
+      assert.equal(summaries[0]?.projectId, 401)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })

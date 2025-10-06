@@ -348,6 +348,20 @@ async def test_finance_feasibility_and_export_endpoints(
         else:
             assert dscr_value == expected["dscr"]
 
+    list_response = await app_client.get(
+        "/api/v1/finance/scenarios",
+        params={"project_id": project_id_str},
+        headers=VIEWER_HEADERS,
+    )
+    assert list_response.status_code == 200
+    scenarios_body = list_response.json()
+    assert isinstance(scenarios_body, list)
+    fetched = next(
+        item for item in scenarios_body if item["scenario_id"] == scenario_id
+    )
+    assert Decimal(fetched["escalated_cost"]) == Decimal("1200.00")
+    assert fetched["capital_stack"] is not None
+
 
 @pytest.mark.asyncio
 async def test_finance_feasibility_requires_reviewer_role(

@@ -564,3 +564,54 @@ export function findResult(
 ): FinanceResultItem | undefined {
   return summary.results.find((result) => result.name === name)
 }
+
+export interface FinanceScenarioListParams {
+  projectId?: number
+  finProjectId?: number
+}
+
+export async function listFinanceScenarios(
+  params: FinanceScenarioListParams = {},
+  options: FinanceFeasibilityOptions = {},
+): Promise<FinanceScenarioSummary[]> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  const defaultRole = resolveDefaultRole()
+  if (defaultRole) {
+    headers['X-Role'] = defaultRole
+  }
+
+  const query = new URLSearchParams()
+  if (typeof params.projectId === 'number') {
+    query.set('project_id', params.projectId.toString())
+  }
+  if (typeof params.finProjectId === 'number') {
+    query.set('fin_project_id', params.finProjectId.toString())
+  }
+
+  const querySuffix = query.toString()
+  const response = await fetch(
+    buildUrl(
+      `api/v1/finance/scenarios${querySuffix ? `?${querySuffix}` : ''}`,
+      apiBaseUrl,
+    ),
+    {
+      method: 'GET',
+      headers,
+      signal: options.signal,
+    },
+  )
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message ||
+        `Finance scenario list request failed with status ${response.status}`,
+    )
+  }
+
+  const payload = (await response.json()) as FinanceFeasibilityResponsePayload[]
+  return Array.isArray(payload) ? payload.map(mapResponse) : []
+}
