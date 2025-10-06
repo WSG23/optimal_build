@@ -1068,7 +1068,22 @@ async def list_finance_scenarios(
         stmt = stmt.where(FinScenario.fin_project_id == fin_project_id)
 
     if project_id is not None:
-        normalised = _normalise_project_id(project_id)
+        try:
+            if isinstance(project_id, str):
+                stripped = project_id.strip()
+                if stripped.isdigit():
+                    normalised = _normalise_project_id(int(stripped))
+                else:
+                    normalised = _normalise_project_id(stripped)
+            else:
+                normalised = _normalise_project_id(project_id)
+        except HTTPException as exc:
+            raise exc
+        except Exception as exc:  # pragma: no cover - defensive for unexpected types
+            raise HTTPException(
+                status_code=422, detail="project_id must be a valid UUID"
+            ) from exc
+
         stmt = stmt.where(FinScenario.project_id == str(normalised))
 
     result = await session.execute(stmt)
