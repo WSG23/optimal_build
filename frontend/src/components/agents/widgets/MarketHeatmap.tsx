@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Box, Paper, Typography } from '@mui/material';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { MarketTransaction } from '../../../types/market';
-import { PropertyType } from '../../../types/property';
-import type { FeatureCollection, Point } from 'geojson';
+import React, { useEffect, useMemo, useRef } from 'react'
+import { Box, Paper, Typography } from '@mui/material'
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import { MarketTransaction } from '../../../types/market'
+import { PropertyType } from '../../../types/property'
+import type { FeatureCollection, Point } from 'geojson'
 
 type TransactionFeatureProperties = {
   price: number;
@@ -14,8 +14,13 @@ type TransactionFeatureProperties = {
   district?: string | null;
 };
 
-// You'll need to set your Mapbox access token
-mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN || '';
+const MAPBOX_TOKEN =
+  import.meta.env?.VITE_MAPBOX_ACCESS_TOKEN ??
+  (typeof window !== 'undefined'
+    ? window.localStorage.getItem('mapbox:access-token') ?? ''
+    : '')
+
+mapboxgl.accessToken = MAPBOX_TOKEN
 
 interface MarketHeatmapProps {
   transactions: MarketTransaction[];
