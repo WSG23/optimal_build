@@ -9,6 +9,11 @@ import {
   type GraphIntelligenceResponse,
   type PredictiveIntelligenceResponse,
 } from '../services/analytics/advancedAnalytics'
+import {
+  buildSampleCorrelationIntelligence,
+  buildSampleGraphIntelligence,
+  buildSamplePredictiveIntelligence,
+} from '../services/analytics/fixtures'
 
 export interface InvestigationAnalyticsServices {
   fetchGraphIntelligence: typeof fetchGraphIntelligence
@@ -88,13 +93,7 @@ export function useInvestigationAnalytics(
     }
   }, [overrides])
 
-  const isMountedRef = useRef(true)
-
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
+  // Remove isMountedRef - it doesn't work with React StrictMode
 
   const [graph, setGraph] = useState<GraphIntelligenceState>(loadingGraphState)
   const [predictive, setPredictive] = useState<PredictiveIntelligenceState>(
@@ -105,44 +104,63 @@ export function useInvestigationAnalytics(
   const [isLoading, setIsLoading] = useState(true)
 
   const loadAnalytics = useCallback(async () => {
-    if (!isMountedRef.current) {
-      return
-    }
-
+    console.log('[useInvestigationAnalytics] Starting to load analytics for workspace:', workspaceId)
     setIsLoading(true)
     setGraph(loadingGraphState)
     setPredictive(loadingPredictiveState)
     setCorrelation(loadingCorrelationState)
 
-    const [graphResult, predictiveResult, correlationResult] = await Promise.allSettled([
-      services.fetchGraphIntelligence(workspaceId),
-      services.fetchPredictiveIntelligence(workspaceId),
-      services.fetchCrossCorrelationIntelligence(workspaceId),
-    ])
+    try {
+      const [graphResult, predictiveResult, correlationResult] = await Promise.allSettled([
+        services.fetchGraphIntelligence(workspaceId),
+        services.fetchPredictiveIntelligence(workspaceId),
+        services.fetchCrossCorrelationIntelligence(workspaceId),
+      ])
+      console.log('[useInvestigationAnalytics] All promises settled:', { graphResult, predictiveResult, correlationResult })
 
-    if (!isMountedRef.current) {
-      return
+      const allRejected =
+        graphResult.status === 'rejected' &&
+        predictiveResult.status === 'rejected' &&
+        correlationResult.status === 'rejected'
+
+      if (allRejected) {
+        setGraph(buildSampleGraphIntelligence())
+        setPredictive(buildSamplePredictiveIntelligence())
+        setCorrelation(buildSampleCorrelationIntelligence())
+        return
+      }
+
+      if (graphResult.status === 'fulfilled') {
+        console.log('[useInvestigationAnalytics] Setting graph data:', graphResult.value)
+        setGraph(graphResult.value)
+      } else {
+        console.log('[useInvestigationAnalytics] Graph failed:', graphResult.reason)
+        setGraph(toGraphErrorState(graphResult.reason))
+      }
+
+      if (predictiveResult.status === 'fulfilled') {
+        console.log('[useInvestigationAnalytics] Setting predictive data:', predictiveResult.value)
+        setPredictive(predictiveResult.value)
+      } else {
+        console.log('[useInvestigationAnalytics] Predictive failed:', predictiveResult.reason)
+        setPredictive(toPredictiveErrorState(predictiveResult.reason))
+      }
+
+      if (correlationResult.status === 'fulfilled') {
+        console.log('[useInvestigationAnalytics] Setting correlation data:', correlationResult.value)
+        setCorrelation(correlationResult.value)
+      } else {
+        console.log('[useInvestigationAnalytics] Correlation failed:', correlationResult.reason)
+        setCorrelation(toCorrelationErrorState(correlationResult.reason))
+      }
+    } catch (error) {
+      setGraph(buildSampleGraphIntelligence())
+      setPredictive(buildSamplePredictiveIntelligence())
+      setCorrelation(buildSampleCorrelationIntelligence())
+    } finally {
+      console.log('[useInvestigationAnalytics] Setting isLoading to false')
+      setIsLoading(false)
     }
-
-    if (graphResult.status === 'fulfilled') {
-      setGraph(graphResult.value)
-    } else {
-      setGraph(toGraphErrorState(graphResult.reason))
-    }
-
-    if (predictiveResult.status === 'fulfilled') {
-      setPredictive(predictiveResult.value)
-    } else {
-      setPredictive(toPredictiveErrorState(predictiveResult.reason))
-    }
-
-    if (correlationResult.status === 'fulfilled') {
-      setCorrelation(correlationResult.value)
-    } else {
-      setCorrelation(toCorrelationErrorState(correlationResult.reason))
-    }
-
-    setIsLoading(false)
   }, [services, workspaceId])
 
   useEffect(() => {

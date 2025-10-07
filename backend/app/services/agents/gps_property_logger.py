@@ -9,10 +9,15 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
 
 import structlog
+from geoalchemy2.functions import ST_GeomFromText
+
+try:  # pragma: no cover - geoalchemy may be optional in some environments
+    from geoalchemy2.elements import WKTElement
+except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missing
+    WKTElement = None  # type: ignore[assignment]
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.geocoding import Address, GeocodingService
-from geoalchemy2.functions import ST_GeomFromText
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -249,6 +254,13 @@ class GPSPropertyLogger:
 
         # Create point geometry
         point = f"POINT({longitude} {latitude})"
+        location_value: Any
+        if WKTElement is not None:
+            location_value = WKTElement(point, srid=4326)
+        elif hasattr(Property.location, "ST_GeomFromText"):
+            location_value = ST_GeomFromText(point, 4326)
+        else:
+            location_value = point
 
         property_data = {
             "id": property_id,
@@ -261,7 +273,7 @@ class GPSPropertyLogger:
             "postal_code": address.postal_code,
             "property_type": property_type,
             "status": PropertyStatus.EXISTING,
-            "location": point,
+            "location": location_value,
             "district": address.district,
             "zoning_code": ura_zoning.zone_code if ura_zoning else None,
             "plot_ratio": float(ura_zoning.plot_ratio) if ura_zoning else None,

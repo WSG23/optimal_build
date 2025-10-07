@@ -548,6 +548,9 @@ def _flush_buffer(stream: io.StringIO) -> bytes | None:
 def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes]:
     """Yield CSV rows describing a scenario and its persisted results."""
 
+    def _stringify(value: object) -> str:
+        return "" if value is None else str(value)
+
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(["Metric", "Value", "Unit"])
@@ -559,18 +562,16 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
         scenario.results, key=lambda item: getattr(item, "id", 0) or 0
     )
     for result in ordered_results:
-        value = result.value
-        value_repr = "" if value is None else str(value)
+        value_repr = _stringify(result.value)
         unit_repr = result.unit or ""
         writer.writerow([result.name, value_repr, unit_repr])
         chunk = _flush_buffer(buffer)
         if chunk:
             yield chunk
 
-        if result.name == "dscr_timeline":
-            timeline = None
-            if isinstance(result.metadata, dict):
-                timeline = result.metadata.get("entries")
+        metadata = result.metadata if isinstance(result.metadata, dict) else None
+        if result.name == "dscr_timeline" and metadata:
+            timeline = metadata.get("entries")
             if timeline:
                 writer.writerow([])
                 chunk = _flush_buffer(buffer)
@@ -588,6 +589,170 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
                             entry.get("debt_service", ""),
                             entry.get("dscr", ""),
                             entry.get("currency", currency),
+                        ]
+                    )
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+
+        if result.name == "capital_stack" and metadata:
+            section_currency = metadata.get("currency") or unit_repr or currency
+            writer.writerow([])
+            chunk = _flush_buffer(buffer)
+            if chunk:
+                yield chunk
+            writer.writerow(["Capital Stack Summary"])
+            chunk = _flush_buffer(buffer)
+            if chunk:
+                yield chunk
+
+            totals = metadata.get("totals")
+            if isinstance(totals, dict):
+                total_rows = (
+                    ("Total Financing", totals.get("total"), section_currency),
+                    ("Equity Financing", totals.get("equity"), section_currency),
+                    ("Debt Financing", totals.get("debt"), section_currency),
+                    ("Other Financing", totals.get("other"), section_currency),
+                )
+                for label, raw_value, unit in total_rows:
+                    if raw_value is None:
+                        continue
+                    writer.writerow([label, _stringify(raw_value), unit])
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+
+            ratios = metadata.get("ratios")
+            if isinstance(ratios, dict):
+                ratio_rows = (
+                    ("Equity Ratio", ratios.get("equity")),
+                    ("Debt Ratio", ratios.get("debt")),
+                    ("Other Ratio", ratios.get("other")),
+                    ("Loan To Cost", ratios.get("loan_to_cost")),
+                    (
+                        "Weighted Average Debt Rate",
+                        ratios.get("weighted_average_debt_rate"),
+                    ),
+                )
+                for label, raw_value in ratio_rows:
+                    if raw_value is None:
+                        continue
+                    writer.writerow([label, _stringify(raw_value), "ratio"])
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+
+            slices = metadata.get("slices")
+            if isinstance(slices, list) and slices:
+                writer.writerow([])
+                chunk = _flush_buffer(buffer)
+                if chunk:
+                    yield chunk
+                writer.writerow(
+                    [
+                        "Capital Stack Slices",
+                    ]
+                )
+                chunk = _flush_buffer(buffer)
+                if chunk:
+                    yield chunk
+                writer.writerow(
+                    [
+                        "Name",
+                        "Source Type",
+                        "Category",
+                        "Amount",
+                        "Share",
+                        "Rate",
+                        "Tranche Order",
+                    ]
+                )
+                chunk = _flush_buffer(buffer)
+                if chunk:
+                    yield chunk
+                for component in slices:
+                    writer.writerow(
+                        [
+                            component.get("name", ""),
+                            component.get("source_type", ""),
+                            component.get("category", ""),
+                            _stringify(component.get("amount")),
+                            _stringify(component.get("share")),
+                            _stringify(component.get("rate")),
+                            _stringify(component.get("tranche_order")),
+                        ]
+                    )
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+
+        if result.name == "drawdown_schedule" and metadata:
+            schedule_currency = metadata.get("currency") or unit_repr or currency
+            writer.writerow([])
+            chunk = _flush_buffer(buffer)
+            if chunk:
+                yield chunk
+            writer.writerow(["Drawdown Schedule Summary"])
+            chunk = _flush_buffer(buffer)
+            if chunk:
+                yield chunk
+
+            totals = metadata.get("totals")
+            if isinstance(totals, dict):
+                total_rows = (
+                    ("Total Equity Draw", totals.get("equity"), schedule_currency),
+                    ("Total Debt Draw", totals.get("debt"), schedule_currency),
+                    (
+                        "Peak Debt Balance",
+                        totals.get("peak_debt_balance"),
+                        schedule_currency,
+                    ),
+                    (
+                        "Final Debt Balance",
+                        totals.get("final_debt_balance"),
+                        schedule_currency,
+                    ),
+                )
+                for label, raw_value, unit in total_rows:
+                    if raw_value is None:
+                        continue
+                    writer.writerow([label, _stringify(raw_value), unit])
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+
+            entries = metadata.get("entries")
+            if isinstance(entries, list) and entries:
+                writer.writerow([])
+                chunk = _flush_buffer(buffer)
+                if chunk:
+                    yield chunk
+                writer.writerow(
+                    [
+                        "Period",
+                        "Equity Draw",
+                        "Debt Draw",
+                        "Total Draw",
+                        "Cumulative Equity",
+                        "Cumulative Debt",
+                        "Outstanding Debt",
+                        "Currency",
+                    ]
+                )
+                chunk = _flush_buffer(buffer)
+                if chunk:
+                    yield chunk
+                for entry in entries:
+                    writer.writerow(
+                        [
+                            entry.get("period", ""),
+                            _stringify(entry.get("equity_draw")),
+                            _stringify(entry.get("debt_draw")),
+                            _stringify(entry.get("total_draw")),
+                            _stringify(entry.get("cumulative_equity")),
+                            _stringify(entry.get("cumulative_debt")),
+                            _stringify(entry.get("outstanding_debt")),
+                            schedule_currency,
                         ]
                     )
                     chunk = _flush_buffer(buffer)

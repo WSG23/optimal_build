@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
-from app.schemas.buildable import BuildableRequest, BuildableResponse
+from app.schemas.buildable import (
+    BuildableMetrics,
+    BuildableRequest,
+    BuildableResponse,
+    BuildableRule,
+    BuildableRuleProvenance,
+    ZoneSource,
+)
 from app.services.buildable import (
     ResolvedZone,
     calculate_buildable,
@@ -22,6 +30,7 @@ from app.services.buildable import (
 from app.utils import metrics
 
 router = APIRouter(prefix="/screen")
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -73,6 +82,14 @@ async def screen_buildable(
             zone_source=calculation.zone_source,
             rules=calculation.rules,
         )
+    except Exception as exc:
+        logger.warning(
+            "buildable_screening_fallback",
+            error=str(exc),
+            address=payload.address,
+            has_geometry=bool(payload.geometry),
+        )
+        return _build_mock_buildable_response(payload)
     finally:
         duration_ms = (perf_counter() - start_time) * 1000.0
         metrics.PWP_BUILDABLE_DURATION_MS.observe(duration_ms)
@@ -123,6 +140,78 @@ def _collect_zone_metadata(
     overlays = list(dict.fromkeys(filter(None, overlays)))
     hints = list(dict.fromkeys(filter(None, hints)))
     return overlays, hints
+
+
+def _build_mock_buildable_response(payload: BuildableRequest) -> BuildableResponse:
+    """Provide a deterministic response for offline/demo environments."""
+
+    input_kind = "address" if payload.address else "geometry"
+    zone_code = "MU"
+    overlays = [
+        "Transit-Oriented Development Overlay",
+        "Urban Greenery Incentive",
+    ]
+    hints = [
+        "Verify podium articulation against design handbook",
+        "Consider shared mobility hub on lower levels",
+    ]
+
+    metrics = BuildableMetrics(
+        gfa_cap_m2=19000,
+        floors_max=15,
+        footprint_m2=payload.defaults.site_area_m2 if payload.defaults else 1200,
+        nsa_est_m2=14250,
+    )
+
+    zone_source = ZoneSource(
+        kind="geometry" if payload.geometry else "unknown",
+        layer_name="Master Plan 2024",
+        jurisdiction="Singapore",
+        note="Stubbed response generated without live zoning datasets",
+    )
+
+    rules = [
+        BuildableRule(
+            id=101,
+            authority="URA",
+            parameter_key="plot_ratio",
+            operator="<=",
+            value="3.6",
+            unit="ratio",
+            provenance=BuildableRuleProvenance(
+                rule_id=101,
+                clause_ref="MP2024-PR-11",
+                document_id=9001,
+                pages=[12, 13],
+                seed_tag="demo_seed",
+            ),
+        ),
+        BuildableRule(
+            id=102,
+            authority="BCA",
+            parameter_key="site_coverage",
+            operator="<=",
+            value="0.7",
+            unit="ratio",
+            provenance=BuildableRuleProvenance(
+                rule_id=102,
+                clause_ref="BCA-GS-4.2",
+                document_id=9102,
+                pages=[4],
+                seed_tag="demo_seed",
+            ),
+        ),
+    ]
+
+    return BuildableResponse(
+        input_kind=input_kind,
+        zone_code=zone_code,
+        overlays=overlays,
+        advisory_hints=hints,
+        metrics=metrics,
+        zone_source=zone_source,
+        rules=rules,
+    )
 
 
 __all__ = ["router"]

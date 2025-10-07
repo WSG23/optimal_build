@@ -44,6 +44,7 @@ export function CadPipelinesPage() {
 
     let cancelled = false
     const isCancelled = () => cancelled
+    // Note: We don't check cancelled before setState to work with React StrictMode
     const waitForOverlayRun = async (
       status: string,
       jobId: string | null,
@@ -122,7 +123,7 @@ export function CadPipelinesPage() {
         if (isCancelled()) {
           return
         }
-        setOverlaySuggestions(overlays)
+
         const pipeline = await apiClient.getDefaultPipelineSuggestions({
           overlays: overlays.map((item) => item.code),
           hints: overlays
@@ -132,26 +133,27 @@ export function CadPipelinesPage() {
         if (isCancelled()) {
           return
         }
-        setSuggestions(pipeline)
 
         const roiMetrics = await apiClient.getProjectRoi(projectId)
         if (isCancelled()) {
           return
         }
+
+        // Set all state together to avoid partial updates in StrictMode
+        setOverlaySuggestions(overlays)
+        setSuggestions(pipeline)
         setRoi(roiMetrics)
       } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : t('common.errors.pipelineLoad'),
-          )
-          setSuggestions([])
-        }
+        // Don't check cancelled to work with React StrictMode
+        setError(
+          err instanceof Error
+            ? err.message
+            : t('common.errors.pipelineLoad'),
+        )
+        setSuggestions([])
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        // Don't check cancelled to work with React StrictMode
+        setLoading(false)
       }
     }
 

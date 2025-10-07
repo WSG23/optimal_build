@@ -190,17 +190,23 @@ function normaliseCorrelationResponse(
 export async function fetchGraphIntelligence(
   workspaceId: string,
 ): Promise<GraphIntelligenceResponse> {
+  console.log('[fetchGraphIntelligence] Calling API with workspaceId:', workspaceId)
   try {
-    const response = await apiClient.get<unknown>('/analytics/intelligence/graph', {
+    const response = await apiClient.get<unknown>('/api/v1/analytics/intelligence/graph', {
       params: { workspaceId },
     })
+    console.log('[fetchGraphIntelligence] Response received:', response.data)
     const payload = parseOrThrow(
       graphResponseSchema,
       response.data,
       'Graph intelligence payload failed validation',
     )
-    return normaliseGraphResponse(payload)
+    console.log('[fetchGraphIntelligence] Validation passed, payload:', payload)
+    const normalized = normaliseGraphResponse(payload)
+    console.log('[fetchGraphIntelligence] Returning normalized:', normalized)
+    return normalized
   } catch (error) {
+    console.error('[fetchGraphIntelligence] Error caught:', error)
     if (error instanceof IntelligenceValidationError) {
       throw error
     }
@@ -211,18 +217,22 @@ export async function fetchGraphIntelligence(
 export async function fetchPredictiveIntelligence(
   workspaceId: string,
 ): Promise<PredictiveIntelligenceResponse> {
+  console.log('[fetchPredictiveIntelligence] Calling API')
   try {
     const response = await apiClient.get<unknown>(
-      '/analytics/intelligence/predictive',
+      '/api/v1/analytics/intelligence/predictive',
       { params: { workspaceId } },
     )
+    console.log('[fetchPredictiveIntelligence] Response:', response.data)
     const payload = parseOrThrow(
       predictiveResponseSchema,
       response.data,
       'Predictive intelligence payload failed validation',
     )
+    console.log('[fetchPredictiveIntelligence] Returning:', payload)
     return normalisePredictiveResponse(payload)
   } catch (error) {
+    console.error('[fetchPredictiveIntelligence] Error:', error)
     if (error instanceof IntelligenceValidationError) {
       throw error
     }
@@ -233,18 +243,22 @@ export async function fetchPredictiveIntelligence(
 export async function fetchCrossCorrelationIntelligence(
   workspaceId: string,
 ): Promise<CrossCorrelationIntelligenceResponse> {
+  console.log('[fetchCrossCorrelationIntelligence] Calling API')
   try {
     const response = await apiClient.get<unknown>(
-      '/analytics/intelligence/cross-correlation',
+      '/api/v1/analytics/intelligence/cross-correlation',
       { params: { workspaceId } },
     )
+    console.log('[fetchCrossCorrelationIntelligence] Response:', response.data)
     const payload = parseOrThrow(
       correlationResponseSchema,
       response.data,
       'Cross-correlation intelligence payload failed validation',
     )
+    console.log('[fetchCrossCorrelationIntelligence] Returning:', payload)
     return normaliseCorrelationResponse(payload)
   } catch (error) {
+    console.error('[fetchCrossCorrelationIntelligence] Error:', error)
     if (error instanceof IntelligenceValidationError) {
       throw error
     }
