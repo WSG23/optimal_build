@@ -12,6 +12,7 @@ from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -31,7 +32,6 @@ from app.utils.singapore_compliance import (
     run_full_compliance_check_sync,
     update_property_compliance_sync,
 )
-from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
 
@@ -49,9 +49,6 @@ def get_sync_db():
         # Use the same database URL but synchronous
         original_url = str(settings.SQLALCHEMY_DATABASE_URI)
         db_url = original_url.replace("+aiosqlite", "").replace("+asyncpg", "+psycopg2")
-
-        # Debug: Print what we're connecting to
-        print(f"[Singapore Property API] Connecting to: {db_url}")
 
         _sync_engine = create_engine(db_url, pool_pre_ping=True)
         _SessionLocal = sessionmaker(
@@ -251,16 +248,10 @@ def create_property(
     4. Returns property with compliance status
     """
     # Create property instance (convert enums to values for SQLAlchemy)
-    # Debug: Check what type zoning is
-    print(
-        f"[DEBUG] property_data.zoning type: {type(property_data.zoning)}, value: {property_data.zoning}"
-    )
     if hasattr(property_data.zoning, "value"):
         zoning_value = property_data.zoning.value
-        print(f"[DEBUG] Extracted zoning.value: {zoning_value}")
     else:
         zoning_value = property_data.zoning
-        print(f"[DEBUG] Using zoning directly: {zoning_value}")
 
     new_property = SingaporeProperty(
         property_name=property_data.property_name,
@@ -598,11 +589,9 @@ async def calculate_buildable_metrics(
                 "jurisdiction": jurisdiction,
                 "zone_code": zoning,
             }
-        except Exception as e:
+        except Exception:
             # Fallback: Use simple calculation if RefRule database is empty
             # This allows MVP to work before rules are populated
-            print(f"[WARNING] Buildable calculation failed, using fallback: {e}")
-
             # Fallback default values (will be replaced by RefRule data)
             fallback_rules = {
                 "residential": {
