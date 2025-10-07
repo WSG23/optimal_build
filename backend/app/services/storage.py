@@ -152,9 +152,8 @@ class StorageService:
             if self.bucket:
                 return f"{base}/{self.bucket}/{key}"
             return f"{base}/{key}"
-        if self.bucket:
-            return f"s3://{self.bucket}/{key}"
-        return key
+        # For local storage, return path relative to working directory
+        return str(self.local_base_path / key)
 
     def purge_expired(
         self,

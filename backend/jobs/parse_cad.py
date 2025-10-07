@@ -10,7 +10,6 @@ import tempfile
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -92,8 +91,17 @@ def _resolve_local_path(storage_path: str) -> Path:
     storage_service = get_storage_service()
     parsed = urlparse(storage_path)
     if parsed.scheme in {"", "file"}:
-        path = Path(parsed.path)
-        return path if path.is_absolute() else storage_service.local_base_path / path
+        # For local paths (no scheme or file://), return as-is
+        path = Path(parsed.path if parsed.path else storage_path)
+        # If path doesn't exist but starts with bucket name, try without it
+        # (backwards compatibility for old URIs that included bucket in path)
+        if not path.exists() and storage_service.bucket:
+            # Try stripping the bucket prefix if present
+            path_str = str(path)
+            bucket_prefix = f"{storage_service.bucket}/"
+            if path_str.startswith(bucket_prefix):
+                path = Path(path_str[len(bucket_prefix) :])
+        return path
     if parsed.scheme == "s3":
         # For s3://bucket/path, netloc is bucket, path is /path
         bucket = parsed.netloc
@@ -108,7 +116,12 @@ def _resolve_local_path(storage_path: str) -> Path:
 
 async def _load_payload(record: ImportRecord) -> bytes:
     path = _resolve_local_path(record.storage_path)
-    return await asyncio.to_thread(path.read_bytes)
+    payload = await asyncio.to_thread(path.read_bytes)
+    if not isinstance(payload, bytes):
+        raise TypeError(
+            f"Expected bytes from {path}, got {type(payload).__name__}: {repr(payload)[:100]}"
+        )
+    return payload
 
 
 def _load_vector_payload(storage_path: str) -> dict[str, Any]:
@@ -136,21 +149,39 @@ def _ensure_unique(identifier: str, seen: dict[str, None]) -> str:
 
 
 def _read_dxf_document(payload: bytes):
+
     if ezdxf is None:  # pragma: no cover - optional dependency
         raise RuntimeError("ezdxf is required to parse DXF payloads")
-    stream = BytesIO(payload)
-    if hasattr(ezdxf, "read"):
-        try:
-            stream.seek(0)
-            return ezdxf.read(stream=stream)
-        except TypeError:
-            stream.seek(0)
-            return ezdxf.read(stream)
-    stream.seek(0)
-    with tempfile.NamedTemporaryFile(suffix=".dxf", delete=False) as handle:
+    if not isinstance(payload, bytes):
+        raise TypeError(
+            f"DXF payload must be bytes, got {type(payload).__name__}: {repr(payload)[:200]}"
+        )
+
+    # Write to temp file and use recover mode for robustness
+    with tempfile.NamedTemporaryFile(suffix=".dxf", delete=False, mode="wb") as handle:
         handle.write(payload)
         tmp_name = handle.name
+
     try:
+        # Try recover mode first to handle malformed DXF files
+        if hasattr(ezdxf, "recover") and hasattr(ezdxf.recover, "readfile"):
+            try:
+                result = ezdxf.recover.readfile(tmp_name)
+                # recover.readfile returns (doc, auditor) tuple
+                if isinstance(result, tuple):
+                    return result[0]
+                return result
+            except Exception as e:
+                # If recover fails, log and try normal read
+                import sys
+
+                print(
+                    f"DXF recover failed: {e}, trying normal read",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
+        # Fallback to normal read
         return ezdxf.readfile(tmp_name)
     finally:  # pragma: no cover - cleanup guard
         try:

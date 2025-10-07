@@ -6,6 +6,7 @@ This script checks compliance with CODING_RULES.md:
 2. Async patterns in API routes
 3. Dependency files are properly formatted
 4. Singapore compliance tests run when critical files change
+5. Core expectations from CONTRIBUTING.md remain documented
 
 Exceptions to individual rules can be declared in
 ``.coding-rules-exceptions.yml``.
@@ -13,11 +14,10 @@ Exceptions to individual rules can be declared in
 
 from __future__ import annotations
 
-import os
 import re
 import subprocess
 import sys
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 
@@ -111,7 +111,7 @@ def check_migration_modifications(
                         break
                     errors.append(
                         f"RULE VIOLATION: Modified existing migration file: {file_path}\n"
-                        f"  -> Rule 1: Never edit existing migrations. Create a new migration instead.\n"
+                        f"  -> Rule 1: Do not edit existing migrations; create a new one instead.\n"
                         f"  -> See CODING_RULES.md section 1"
                     )
 
@@ -240,7 +240,6 @@ def check_singapore_compliance(
         if any(prefix in exc_path for exc_path in exceptions.get(rule_key, set())):
             return True, []
 
-    env = os.environ.copy()
     cmd = [
         sys.executable,
         "-m",
@@ -265,20 +264,82 @@ def check_singapore_compliance(
     )
 
 
+def check_contributing_guidelines(repo_root: Path) -> tuple[bool, list[str]]:
+    """Validate key expectations documented in CONTRIBUTING.md."""
+
+    errors: list[str] = []
+    contributing_path = repo_root / "CONTRIBUTING.md"
+
+    if not contributing_path.exists():
+        errors.append(
+            "GUIDELINE VIOLATION: CONTRIBUTING.md is missing.\n"
+            "  -> Restore the contributing guide at the repository root."
+        )
+        return False, errors
+
+    try:
+        content = contributing_path.read_text(encoding="utf-8")
+    except OSError as exc:  # pragma: no cover - surface unexpected IO issues
+        errors.append(
+            "GUIDELINE VIOLATION: CONTRIBUTING.md could not be read.\n" f"  -> {exc}"
+        )
+        return False, errors
+
+    content_lower = content.lower()
+    required_snippets = {
+        "pre-commit install": (
+            "GUIDELINE VIOLATION: CONTRIBUTING.md must instruct contributors to install "
+            "pre-commit hooks (missing 'pre-commit install')."
+        ),
+        "make verify": (
+            "GUIDELINE VIOLATION: CONTRIBUTING.md must reference the 'make verify' quality gate."
+        ),
+        "coding_rules.md": (
+            "GUIDELINE VIOLATION: CONTRIBUTING.md should link to CODING_RULES.md."
+        ),
+    }
+
+    for snippet, error_message in required_snippets.items():
+        if snippet not in content_lower:
+            errors.append(error_message)
+
+    return len(errors) == 0, errors
+
+
+def run_section(
+    title: str, checks: list[tuple[str, Callable[[], tuple[bool, list[str]]]]]
+) -> tuple[bool, list[str]]:
+    """Run a group of checks and report their results."""
+
+    print("=" * 60)
+    print(title)
+    print("=" * 60)
+
+    section_passed = True
+    section_errors: list[str] = []
+
+    for check_name, check_func in checks:
+        print(f"\nChecking {check_name}...", end=" ")
+        passed, errors = check_func()
+
+        if passed:
+            print("✓ PASSED")
+        else:
+            print("✗ FAILED")
+            section_passed = False
+            section_errors.extend(errors)
+
+    print("\n" + "=" * 60)
+    return section_passed, section_errors
+
+
 def main() -> int:
     """Run all coding rules checks."""
-    print("=" * 60)
-    print("Coding Rules Verification")
-    print("=" * 60)
-
-    all_passed = True
-    all_errors: list[str] = []
-
     repo_root = get_repo_root()
     exceptions = load_exceptions(repo_root)
     modified_files = get_modified_files()
 
-    checks = [
+    coding_checks = [
         (
             "Rule 1: Migration Files",
             lambda: check_migration_modifications(modified_files, exceptions),
@@ -297,18 +358,21 @@ def main() -> int:
         ),
     ]
 
-    for check_name, check_func in checks:
-        print(f"\nChecking {check_name}...", end=" ")
-        passed, errors = check_func()
+    contributing_checks = [
+        ("Contributor Documentation", lambda: check_contributing_guidelines(repo_root)),
+    ]
 
-        if passed:
-            print("✓ PASSED")
-        else:
-            print("✗ FAILED")
+    all_passed = True
+    all_errors: list[str] = []
+
+    for title, checks in [
+        ("Coding Rules Verification", coding_checks),
+        ("Contributing Guidelines Verification", contributing_checks),
+    ]:
+        section_passed, section_errors = run_section(title, checks)
+        if not section_passed:
             all_passed = False
-            all_errors.extend(errors)
-
-    print("\n" + "=" * 60)
+            all_errors.extend(section_errors)
 
     if not all_passed:
         print("\nViolations found:\n")
@@ -316,10 +380,12 @@ def main() -> int:
             print(error)
             print()
         print("=" * 60)
-        print("See CODING_RULES.md for details on how to fix these issues.")
+        print(
+            "See CODING_RULES.md and CONTRIBUTING.md for details on how to fix these issues."
+        )
         return 1
 
-    print("All coding rules checks passed!")
+    print("All coding rules and contributing guideline checks passed!")
     print("=" * 60)
     return 0
 

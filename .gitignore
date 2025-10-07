@@ -126,6 +126,7 @@ lerna-debug.log*
 # Runtime data
 pids
 *.pid
+backend/.storage/
 *.seed
 *.pid.lock
 
