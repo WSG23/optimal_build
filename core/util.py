@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 
 try:  # pragma: no cover - prefer real SQLAlchemy when available
     from sqlalchemy import create_engine

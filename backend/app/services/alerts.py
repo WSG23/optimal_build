@@ -5,13 +5,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, cast
 
+from backend._compat.datetime import UTC
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefAlert, RefIngestionRun
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
-from backend._compat.datetime import UTC
 
 logger = get_logger(__name__)
 

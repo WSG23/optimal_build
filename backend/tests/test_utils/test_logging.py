@@ -6,7 +6,6 @@ import json
 import logging
 
 import pytest
-
 from app.core.config import settings
 from app.utils.logging import configure_logging, get_logger, log_event
 

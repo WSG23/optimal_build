@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
-from pathlib import Path
 import importlib
 import importlib.util
 import sys
+import uuid
+from datetime import datetime
+from pathlib import Path
 
 import pytest
 
@@ -15,15 +15,16 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from fastapi import FastAPI
-from httpx import AsyncClient, ASGITransport
-
 from app.schemas.compliance import ComplianceCheckResponse
 from app.schemas.property import PropertyComplianceSummary
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 
 
 class _StubService:
-    def __init__(self, response: ComplianceCheckResponse | None = None, *, raises: bool = False) -> None:
+    def __init__(
+        self, response: ComplianceCheckResponse | None = None, *, raises: bool = False
+    ) -> None:
         self._response = response
         self._raises = raises
 
@@ -43,11 +44,13 @@ def _load_router(monkeypatch):
     project_root = Path(__file__).resolve().parents[1]
     module_path = project_root / "backend" / "app" / "api" / "v1" / "compliance.py"
 
-    monkeypatch.setattr("sqlalchemy.ext.asyncio.create_async_engine", lambda *_, **__: object())
+    monkeypatch.setattr(
+        "sqlalchemy.ext.asyncio.create_async_engine", lambda *_, **__: object()
+    )
 
     class _SessionFactory:
         async def __aenter__(self):
-            raise RuntimeError('session usage not expected in tests')
+            raise RuntimeError("session usage not expected in tests")
 
         async def __aexit__(self, exc_type, exc, tb):
             return False
@@ -59,7 +62,9 @@ def _load_router(monkeypatch):
         def __call__(self, *_, **__):
             return _SessionFactory()
 
-    monkeypatch.setattr("sqlalchemy.ext.asyncio.async_sessionmaker", _AsyncSessionMakerStub())
+    monkeypatch.setattr(
+        "sqlalchemy.ext.asyncio.async_sessionmaker", _AsyncSessionMakerStub()
+    )
     app_base = importlib.import_module("app.models.base")
     app_property = importlib.import_module("app.models.property")
     monkeypatch.setitem(sys.modules, "backend.app.models.base", app_base)
@@ -81,7 +86,7 @@ async def test_compliance_check_success(monkeypatch) -> None:
     app = FastAPI()
     app.include_router(compliance_router.router)
     paths = {route.path for route in app.router.routes}
-    assert '/compliance/check' in paths
+    assert "/compliance/check" in paths
 
     response_payload = ComplianceCheckResponse(
         property_id=uuid.uuid4(),
@@ -94,9 +99,13 @@ async def test_compliance_check_success(monkeypatch) -> None:
         ),
         updated_at=datetime(2024, 4, 1, 12, 0),
     )
-    app.dependency_overrides[compliance_router.get_compliance_service] = lambda: _StubService(response_payload)
+    app.dependency_overrides[
+        compliance_router.get_compliance_service
+    ] = lambda: _StubService(response_payload)
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         response = await client.post(
             "/compliance/check",
             json={"property_id": str(response_payload.property_id)},
@@ -116,10 +125,14 @@ async def test_compliance_check_not_found(monkeypatch) -> None:
     app = FastAPI()
     app.include_router(compliance_router.router)
     paths = {route.path for route in app.router.routes}
-    assert '/compliance/check' in paths
-    app.dependency_overrides[compliance_router.get_compliance_service] = lambda: _StubService(raises=True)
+    assert "/compliance/check" in paths
+    app.dependency_overrides[
+        compliance_router.get_compliance_service
+    ] = lambda: _StubService(raises=True)
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         response = await client.post(
             "/compliance/check",
             json={"property_id": str(uuid.uuid4())},

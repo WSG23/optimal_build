@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 import pytest
@@ -25,7 +25,7 @@ class StubGeocodingService:
 
     async def get_nearby_amenities(
         self, latitude: float, longitude: float, radius_m: int = 1000
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "mrt_stations": [{"name": "Raffles MRT", "distance_m": 180}],
             "bus_stops": [{"name": "Bus Stop", "distance_m": 90}],
@@ -62,7 +62,7 @@ class StubURAService:
 
     async def get_development_plans(
         self, latitude: float, longitude: float, radius_km: float = 2.0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         return [
             {
                 "project_name": "Mock Mix-Use",
@@ -72,16 +72,16 @@ class StubURAService:
         ]
 
     async def get_transaction_data(
-        self, property_type: str, district: Optional[str] = None, months_back: int = 12
-    ) -> List[Dict[str, Any]]:
+        self, property_type: str, district: str | None = None, months_back: int = 12
+    ) -> list[dict[str, Any]]:
         return [
             {"psf_price": 2500},
             {"psf_price": 2700},
         ]
 
     async def get_rental_data(
-        self, property_type: str, district: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, property_type: str, district: str | None = None
+    ) -> list[dict[str, Any]]:
         return [
             {"monthly_rent": 4500},
             {"monthly_rent": 5200},
@@ -103,7 +103,7 @@ class FakeSession:
 class LoggerUnderTest(GPSPropertyLogger):
     def __init__(self) -> None:
         super().__init__(StubGeocodingService(), StubURAService())
-        self._created_ids: List[UUID] = []
+        self._created_ids: list[UUID] = []
 
     async def _find_existing_property(self, *args: Any, **kwargs: Any) -> None:
         return None

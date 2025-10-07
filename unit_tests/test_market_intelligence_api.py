@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
-from pathlib import Path
 import importlib
 import importlib.util
 import sys
 import types
+from datetime import date, datetime
+from pathlib import Path
 
 import pytest
 
@@ -39,7 +39,9 @@ class _StubSession:  # pragma: no cover - simple sentinel
 @pytest.mark.asyncio
 async def test_market_intelligence_router_response(monkeypatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
-    module_path = project_root / "backend" / "app" / "api" / "v1" / "market_intelligence.py"
+    module_path = (
+        project_root / "backend" / "app" / "api" / "v1" / "market_intelligence.py"
+    )
 
     app_base = importlib.import_module("app.models.base")
     app_property = importlib.import_module("app.models.property")

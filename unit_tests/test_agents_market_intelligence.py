@@ -1,11 +1,12 @@
-import pytest
-from fastapi import HTTPException
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
+
+from app.models.property import PropertyType
 from backend.app.api.v1 import agents
 from backend.app.api.v1.agents import get_property_market_intelligence
-from app.models.property import PropertyType
+from fastapi import HTTPException
 
 
 class StubResult:
@@ -42,10 +43,12 @@ async def test_get_property_market_intelligence_success(monkeypatch):
     session = StubSession(property_record)
 
     async def fake_generate_market_report(*args, **kwargs):  # noqa: ARG001
-        return StubReport({
-            "property_type": PropertyType.OFFICE.value,
-            "comparables_analysis": {"transaction_count": 4},
-        })
+        return StubReport(
+            {
+                "property_type": PropertyType.OFFICE.value,
+                "comparables_analysis": {"transaction_count": 4},
+            }
+        )
 
     monkeypatch.setattr(
         agents,
@@ -57,7 +60,7 @@ async def test_get_property_market_intelligence_success(monkeypatch):
         property_id=str(property_id),
         months=6,
         db=session,
-        role='developer',
+        role="developer",
     )
 
     assert response.property_id == property_id
@@ -67,6 +70,7 @@ async def test_get_property_market_intelligence_success(monkeypatch):
 @pytest.mark.asyncio
 async def test_get_property_market_intelligence_not_found(monkeypatch):
     session = StubSession(None)
+
     async def fake_generate(*args, **kwargs):  # noqa: ARG001
         return StubReport({})
 
@@ -81,6 +85,6 @@ async def test_get_property_market_intelligence_not_found(monkeypatch):
             property_id=str(uuid4()),
             months=6,
             db=session,
-            role='developer',
+            role="developer",
         )
     assert exc.value.status_code == 404

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -19,9 +21,9 @@ from app.core.export import (
     ProjectGeometryMissing,
     generate_project_export,
 )
-from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/export", tags=["export"])
+logger = logging.getLogger(__name__)
 
 
 class LayerMapPayload(BaseModel):
@@ -115,6 +117,15 @@ async def export_project(
     renderer = artifact.manifest.get("renderer")
     if renderer:
         response.headers["X-Export-Renderer"] = str(renderer)
+        if str(renderer).lower() == "fallback":
+            response.headers["X-Export-Fallback"] = "1"
+            logger.warning(
+                "export_renderer_fallback",
+                extra={
+                    "project_id": project_id,
+                    "requested_format": options.format.value,
+                },
+            )
     watermark = artifact.manifest.get("watermark")
     if watermark:
         response.headers["X-Export-Watermark"] = str(watermark)

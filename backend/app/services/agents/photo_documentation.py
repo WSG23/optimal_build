@@ -19,7 +19,6 @@ except ModuleNotFoundError:  # pragma: no cover
     exifread = None  # type: ignore[assignment]
 
 import structlog
-
 from app.core.config import settings
 from app.models.property import PropertyPhoto
 from app.services.minio_service import MinIOService

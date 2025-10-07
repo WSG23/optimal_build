@@ -11,8 +11,6 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.models.rkp import RefDocument, RefSource
 from app.services.reference_sources import (
     FetchedDocument,
@@ -20,8 +18,10 @@ from app.services.reference_sources import (
     ReferenceSourceFetcher,
 )
 from app.services.reference_storage import ReferenceStorage
-from flows.watch_fetch import watch_reference_sources
 from scripts.seed_screening import seed_screening_sample_data
+from sqlalchemy import select
+
+from flows.watch_fetch import watch_reference_sources
 
 
 def test_watch_fetch_flow_exposed_as_callable() -> None:

@@ -6,9 +6,9 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
+from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from sqlalchemy import select
 
-from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from flows.normalize_rules import normalize_reference_rules
 
 

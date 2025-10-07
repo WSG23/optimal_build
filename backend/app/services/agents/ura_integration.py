@@ -3,9 +3,8 @@
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
-import structlog
-
 import httpx
+import structlog
 from app.core.config import settings
 from app.services.base import AsyncClientService
 from pydantic import BaseModel

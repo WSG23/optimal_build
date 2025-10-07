@@ -6,6 +6,9 @@ import io
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from app.models.property import Property, PropertyPhoto, PropertyType, RentalListing
+from app.services.agents.investment_memorandum import InvestmentHighlight
+from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
@@ -27,9 +30,6 @@ from reportlab.platypus import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.property import Property, PropertyPhoto, RentalListing
-from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
 
 
 class FloorPlanDiagram(Flowable):
@@ -359,7 +359,7 @@ class MarketingMaterialsGenerator(PDFGenerator):
             select(RentalListing)
             .where(
                 RentalListing.property_id == property_id,
-                RentalListing.is_active == True,
+                RentalListing.is_active,
             )
             .order_by(RentalListing.floor_level)
         )
@@ -861,7 +861,6 @@ class MarketingMaterialsGenerator(PDFGenerator):
 
         # Disclaimer
         story.append(Spacer(1, 0.3 * inch))
-        disclaimer_text = "INDICATIVE PRICING - Subject to final terms and negotiations"
         story.append(
             self._add_disclaimer("leasing" if material_type == "lease" else "sales")
         )

@@ -6,6 +6,9 @@ import io
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from app.models.market import YieldBenchmark
+from app.models.property import DevelopmentAnalysis, MarketTransaction, Property
+from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from reportlab.platypus import (
@@ -18,10 +21,6 @@ from reportlab.platypus import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.market import YieldBenchmark
-from app.models.property import DevelopmentAnalysis, MarketTransaction, Property
-from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
 
 
 class UniversalSitePackGenerator(PDFGenerator):
@@ -570,8 +569,6 @@ class UniversalSitePackGenerator(PDFGenerator):
         story.append(Paragraph("Investment Summary", self.styles["CustomHeading2"]))
 
         if property_data["latest_analysis"]:
-            analysis = property_data["latest_analysis"]
-
             # Market-based analysis only
             market_data = [
                 ["Market Indicator", "Current", "1-Year Ago", "Change"],
@@ -758,8 +755,8 @@ class UniversalSitePackGenerator(PDFGenerator):
 
         limitations_list = ListFlowable(
             [
-                ListItem(Paragraph(l, self.styles["Normal"]), leftIndent=20)
-                for l in limitations
+                ListItem(Paragraph(limitation, self.styles["Normal"]), leftIndent=20)
+                for limitation in limitations
             ],
             bulletType="bullet",
         )

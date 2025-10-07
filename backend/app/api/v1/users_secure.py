@@ -4,12 +4,10 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-
 from pydantic import BaseModel, field_validator
 
 try:  # pragma: no cover - optional dependency
     import email_validator  # type: ignore  # noqa: F401
-
     from pydantic import EmailStr  # type: ignore
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
@@ -139,7 +137,7 @@ def test():
 def list_users():
     """List all users (for testing - remove in production!)."""
     safe_users = []
-    for email, user in users_db.items():
+    for _email, user in users_db.items():
         safe_user = {k: v for k, v in user.items() if k != "hashed_password"}
         safe_users.append(safe_user)
 

@@ -128,6 +128,7 @@ export interface ExportArtifactResponse {
   blob: Blob
   filename: string | null
   renderer: string | null
+  fallback: boolean
   watermark: string | null
 }
 
@@ -707,6 +708,7 @@ export class ApiClient {
       blob,
       filename,
       renderer: response.headers.get('X-Export-Renderer'),
+      fallback: response.headers.get('X-Export-Fallback') === '1',
       watermark: response.headers.get('X-Export-Watermark'),
     }
   }

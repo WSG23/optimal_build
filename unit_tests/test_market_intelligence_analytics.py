@@ -21,6 +21,7 @@ models_base = importlib.import_module("app.models.base")
 sys.modules.setdefault("backend.app.models.base", models_base)
 
 if not hasattr(models_base, "TimestampMixin"):
+
     class TimestampMixin:  # pragma: no cover - compatibility shim for tests
         created_at = None
         updated_at = None
@@ -38,15 +39,17 @@ if market_models is None:
 sys.modules.setdefault("backend.app.models.market", market_models)
 
 if not hasattr(market_models, "MarketTransaction"):
-    market_models.MarketTransaction = getattr(property_models, "MarketTransaction")
+    market_models.MarketTransaction = property_models.MarketTransaction
 if not hasattr(market_models, "RentalListing"):
-    market_models.RentalListing = getattr(property_models, "RentalListing")
+    market_models.RentalListing = property_models.RentalListing
 if not hasattr(market_models, "CompetitiveSet"):
+
     class CompetitiveSet:  # pragma: no cover - analytics tests don't touch DB
         pass
 
     market_models.CompetitiveSet = CompetitiveSet
 if not hasattr(market_models, "MarketIndex"):
+
     class MarketIndex:  # pragma: no cover - placeholder for imports
         pass
 
@@ -99,7 +102,7 @@ def test_market_report_to_dict_serializes_fields():
         yield_benchmarks={"current_metrics": {}},
         absorption_trends={"velocity_trend": "stable"},
         market_cycle_position={"current_phase": "expansion"},
-        recommendations=["Hold pricing"]
+        recommendations=["Hold pricing"],
     )
 
     serialized = report.to_dict()
@@ -162,10 +165,7 @@ def test_assess_yield_position_ranges(analytics_service):
 
 def test_forecast_absorption_projects_future(analytics_service):
     absorption_samples = [
-        SimpleNamespace(
-            sales_absorption_rate=rate,
-            tracking_date=date(2023, month, 1)
-        )
+        SimpleNamespace(sales_absorption_rate=rate, tracking_date=date(2023, month, 1))
         for month, rate in enumerate(range(10, 70, 10), start=1)
     ]
 
@@ -193,10 +193,7 @@ def test_detect_seasonal_patterns_returns_diagnostics(analytics_service):
         12: 8,
     }
     absorption_history = [
-        SimpleNamespace(
-            tracking_date=date(2023, month, 1),
-            sales_absorption_rate=value
-        )
+        SimpleNamespace(tracking_date=date(2023, month, 1), sales_absorption_rate=value)
         for month, value in monthly_values.items()
     ]
 
@@ -211,10 +208,7 @@ def test_detect_seasonal_patterns_returns_diagnostics(analytics_service):
 
 def test_detect_seasonal_patterns_insufficient_data(analytics_service):
     short_history = [
-        SimpleNamespace(
-            tracking_date=date(2023, month, 1),
-            sales_absorption_rate=10
-        )
+        SimpleNamespace(tracking_date=date(2023, month, 1), sales_absorption_rate=10)
         for month in range(1, 6)
     ]
 
@@ -236,4 +230,7 @@ def test_generate_recommendations_compiles_messages(analytics_service):
     assert any("High supply" in rec for rec in recommendations)
     assert any("Elevated yields" in rec for rec in recommendations)
     assert any("Market in expansion" in rec for rec in recommendations)
-    assert recommendations[-1] == "Continue monitoring market indicators weekly for early trend detection"
+    assert (
+        recommendations[-1]
+        == "Continue monitoring market indicators weekly for early trend detection"
+    )

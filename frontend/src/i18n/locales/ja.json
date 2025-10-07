@@ -76,6 +76,7 @@
     "loadError": "オーバーレイ提案を読み込めませんでした",
     "decisionError": "オーバーレイの決定を保存できませんでした",
     "exportError": "エクスポートに失敗しました",
+    "exportFallback": "PDFエクスポートにはReportLabコンポーネントが必要です。DXFまたはIFCをダウンロードするか、ReportLabをインストールしてください。",
     "auditError": "監査ログを読み込めませんでした",
     "auditBaseline": "基準時間: {{minutes}} 分",
     "auditActual": "実績: {{minutes}} 分",

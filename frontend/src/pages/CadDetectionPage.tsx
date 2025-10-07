@@ -223,6 +223,10 @@ export function CadDetectionPage() {
           includePendingOverlays: activeLayers.includes('pending'),
           includeRejectedOverlays: activeLayers.includes('rejected'),
         })
+        if (artifact.fallback) {
+          setError(t('detection.exportFallback'))
+          return
+        }
         if (typeof window !== 'undefined') {
           const urlFactory = window.URL
           if (typeof urlFactory.createObjectURL !== 'function') {

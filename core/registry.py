@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Protocol, runtime_checkable

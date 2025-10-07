@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from backend.jobs.parse_cad import _parse_dxf_payload, _parse_ifc_payload
 from backend.jobs.raster_vector import _vectorize_pdf
 

@@ -10,12 +10,14 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
-    Enum as SAEnum,
     ForeignKey,
     Index,
     Integer,
     String,
     Text,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func

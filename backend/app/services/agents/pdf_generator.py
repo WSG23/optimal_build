@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
+from app.services.storage import StorageService
 from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.linecharts import HorizontalLineChart
 from reportlab.graphics.charts.piecharts import Pie
@@ -18,8 +19,6 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Flowable, Paragraph, Table, TableStyle
-
-from app.services.storage import StorageService
 
 
 class PageNumberCanvas(canvas.Canvas):

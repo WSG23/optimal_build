@@ -5,7 +5,6 @@ from collections.abc import Iterable
 from typing import Any
 
 import pytest
-
 from backend.scripts import seed_nonreg
 
 

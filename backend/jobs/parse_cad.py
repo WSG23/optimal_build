@@ -149,7 +149,6 @@ def _ensure_unique(identifier: str, seen: dict[str, None]) -> str:
 
 
 def _read_dxf_document(payload: bytes):
-
     if ezdxf is None:  # pragma: no cover - optional dependency
         raise RuntimeError("ezdxf is required to parse DXF payloads")
     if not isinstance(payload, bytes):

@@ -76,6 +76,7 @@
     "loadError": "Unable to load overlay suggestions",
     "decisionError": "Saving the overlay decision failed",
     "exportError": "Export failed",
+    "exportFallback": "PDF export requires the optional ReportLab component. Download DXF/IFC instead or install ReportLab.",
     "auditError": "Unable to load audit entries",
     "auditBaseline": "Baseline: {{minutes}} min",
     "auditActual": "Actual: {{minutes}} min",

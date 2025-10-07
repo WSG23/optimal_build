@@ -7,6 +7,13 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from app.models.market import MarketCycle, YieldBenchmark
+from app.models.property import MarketTransaction, Property, RentalListing
+from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
+from app.services.finance import (
+    calculate_comprehensive_metrics,
+    value_property_multiple_approaches,
+)
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
@@ -23,14 +30,6 @@ from reportlab.platypus import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.market import MarketCycle, YieldBenchmark
-from app.models.property import MarketTransaction, Property, RentalListing
-from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
-from app.services.finance import (
-    calculate_comprehensive_metrics,
-    value_property_multiple_approaches,
-)
 
 
 class InvestmentHighlight(Flowable):
@@ -185,7 +184,7 @@ class InvestmentMemorandumGenerator(PDFGenerator):
 
         # Load rental listings
         stmt = select(RentalListing).where(
-            RentalListing.property_id == property_id, RentalListing.is_active == True
+            RentalListing.property_id == property_id, RentalListing.is_active
         )
         result = await session.execute(stmt)
         rentals = result.scalars().all()
@@ -647,7 +646,6 @@ class InvestmentMemorandumGenerator(PDFGenerator):
         """Create detailed financial analysis."""
         story = []
         metrics = financial_data["metrics"]
-        valuation = financial_data["valuation"]
 
         story.append(self._create_header_table("FINANCIAL ANALYSIS"))
         story.append(Spacer(1, 0.3 * inch))

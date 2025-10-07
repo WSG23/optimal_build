@@ -6,8 +6,9 @@ from datetime import datetime
 from typing import Any, Dict
 from uuid import UUID
 
-from app.schemas.property import PropertyComplianceSummary
 from pydantic import BaseModel, Field
+
+from app.schemas.property import PropertyComplianceSummary
 
 
 class ComplianceCheckRequest(BaseModel):

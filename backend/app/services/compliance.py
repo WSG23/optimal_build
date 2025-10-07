@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
+from backend._compat import compat_dataclass
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -13,7 +14,6 @@ from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 from app.schemas.compliance import ComplianceCheckResponse
 from app.schemas.property import PropertyComplianceSummary, SingaporePropertySchema
 from app.utils.singapore_compliance import update_property_compliance
-from backend._compat import compat_dataclass
 
 
 @compat_dataclass(slots=True)

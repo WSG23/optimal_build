@@ -3,7 +3,6 @@
 from typing import Dict
 
 from fastapi import APIRouter, HTTPException
-
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -65,7 +64,7 @@ def list_users():
     """List all registered users (for testing)."""
     # Remove passwords from response
     safe_users = []
-    for email, user_data in fake_users_db.items():
+    for _email, user_data in fake_users_db.items():
         safe_user = {k: v for k, v in user_data.items() if k != "password"}
         safe_users.append(safe_user)
 

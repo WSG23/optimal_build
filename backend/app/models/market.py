@@ -6,12 +6,14 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
-    Enum as SQLEnum,
     Index,
     Integer,
     String,
     UniqueConstraint,
     text,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.types import Numeric as SQLDecimal
 
@@ -326,6 +328,8 @@ class MarketAlert(BaseModel):
 # Backwards compatibility exports for transactional models defined elsewhere.
 from app.models.property import (  # noqa: E402  pylint: disable=wrong-import-position
     MarketTransaction as _MarketTransaction,
+)
+from app.models.property import (
     RentalListing as _RentalListing,
 )
 

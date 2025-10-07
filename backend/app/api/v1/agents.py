@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +25,6 @@ from app.services.agents.gps_property_logger import (
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import Address, GeocodingService
-from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (

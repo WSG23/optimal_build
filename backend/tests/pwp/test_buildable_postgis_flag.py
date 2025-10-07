@@ -5,8 +5,6 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
-from sqlalchemy import select
-
 from app.core.config import settings
 from app.models.rkp import RefParcel
 from app.schemas.buildable import BuildableDefaults
@@ -16,6 +14,7 @@ from app.services.buildable import (
     load_layers_for_zone,
 )
 from scripts.seed_screening import seed_screening_sample_data
+from sqlalchemy import select
 
 PARCEL_ZONE_CASES = (
     ("MK01-01234", "R2"),

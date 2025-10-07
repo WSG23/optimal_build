@@ -6,12 +6,11 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
+from app.models.market import AbsorptionTracking, MarketIndex
+from app.models.property import MarketTransaction, Property, PropertyType, RentalListing
 from sqlalchemy import insert, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.market import AbsorptionTracking, MarketIndex
-from app.models.property import MarketTransaction, Property, PropertyType, RentalListing
 
 logger = structlog.get_logger()
 
@@ -528,7 +527,7 @@ class MarketDataService:
         stmt = select(RentalListing)
 
         if active_only:
-            stmt = stmt.where(RentalListing.is_active == True)
+            stmt = stmt.where(RentalListing.is_active)
 
         # Join with property for filtering
         stmt = stmt.join(RentalListing.property)

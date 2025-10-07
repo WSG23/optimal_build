@@ -5,13 +5,13 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import Boolean, Column, DateTime, Float, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.jwt_auth import TokenData, get_current_user
 from app.utils.db import session_dependency
-from pydantic import BaseModel, Field
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./projects.db"
@@ -124,11 +124,7 @@ async def create_project(
 async def list_projects(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     """List all active projects (no auth required for viewing)."""
     projects = (
-        db.query(ProjectDB)
-        .filter(ProjectDB.is_active == True)
-        .offset(skip)
-        .limit(limit)
-        .all()
+        db.query(ProjectDB).filter(ProjectDB.is_active).offset(skip).limit(limit).all()
     )
 
     return [ProjectResponse.model_validate(p) for p in projects]
@@ -213,7 +209,7 @@ async def get_project_stats(db: Session = Depends(get_db)):
     # Temporarily disabled authentication for testing
     # current_user: TokenData = Depends(get_current_user)
     # ProjectDB.owner_email == current_user.email,
-    projects = db.query(ProjectDB).filter(ProjectDB.is_active == True).all()
+    projects = db.query(ProjectDB).filter(ProjectDB.is_active).all()
 
     total_budget = sum(p.budget for p in projects if p.budget)
     status_counts = {}

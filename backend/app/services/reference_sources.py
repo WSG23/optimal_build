@@ -8,8 +8,9 @@ from typing import Final
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from app.models.rkp import RefDocument, RefSource
 from backend._compat import compat_dataclass
+
+from app.models.rkp import RefDocument, RefSource
 
 
 @compat_dataclass(slots=True)
