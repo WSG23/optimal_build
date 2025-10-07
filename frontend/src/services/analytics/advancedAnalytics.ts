@@ -22,6 +22,44 @@ export class IntelligenceRequestError extends Error {
   }
 }
 
+const IS_DEV = import.meta.env?.DEV ?? false
+const REQUEST_TIMEOUT_MS = 30000
+
+function debugLog(...args: unknown[]): void {
+  if (IS_DEV) {
+    console.log(...args)
+  }
+}
+
+function debugError(...args: unknown[]): void {
+  if (IS_DEV) {
+    console.error(...args)
+  }
+}
+
+async function requestWithTimeout<T>(
+  requestFactory: (signal: AbortSignal | undefined) => Promise<T>,
+  timeoutMessage: string,
+): Promise<T> {
+  if (typeof AbortController === 'undefined') {
+    return requestFactory(undefined)
+  }
+
+  const controller = new AbortController()
+  const timeoutHandle = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  try {
+    return await requestFactory(controller.signal)
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new IntelligenceRequestError(timeoutMessage, error)
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutHandle)
+  }
+}
+
 const graphNodeSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -190,24 +228,32 @@ function normaliseCorrelationResponse(
 export async function fetchGraphIntelligence(
   workspaceId: string,
 ): Promise<GraphIntelligenceResponse> {
-  console.log('[fetchGraphIntelligence] Calling API with workspaceId:', workspaceId)
+  debugLog('[fetchGraphIntelligence] Calling API with workspaceId:', workspaceId)
   try {
-    const response = await apiClient.get<unknown>('/api/v1/analytics/intelligence/graph', {
-      params: { workspaceId },
-    })
-    console.log('[fetchGraphIntelligence] Response received:', response.data)
+    const response = await requestWithTimeout(
+      (signal) =>
+        apiClient.get<unknown>('/api/v1/analytics/intelligence/graph', {
+          params: { workspaceId },
+          signal,
+        }),
+      'Graph intelligence request timed out',
+    )
+    debugLog('[fetchGraphIntelligence] Response received:', response.data)
     const payload = parseOrThrow(
       graphResponseSchema,
       response.data,
       'Graph intelligence payload failed validation',
     )
-    console.log('[fetchGraphIntelligence] Validation passed, payload:', payload)
+    debugLog('[fetchGraphIntelligence] Validation passed, payload:', payload)
     const normalized = normaliseGraphResponse(payload)
-    console.log('[fetchGraphIntelligence] Returning normalized:', normalized)
+    debugLog('[fetchGraphIntelligence] Returning normalized:', normalized)
     return normalized
   } catch (error) {
-    console.error('[fetchGraphIntelligence] Error caught:', error)
+    debugError('[fetchGraphIntelligence] Error caught:', error)
     if (error instanceof IntelligenceValidationError) {
+      throw error
+    }
+    if (error instanceof IntelligenceRequestError) {
       throw error
     }
     throw new IntelligenceRequestError('Unable to load graph intelligence', error)
@@ -217,23 +263,30 @@ export async function fetchGraphIntelligence(
 export async function fetchPredictiveIntelligence(
   workspaceId: string,
 ): Promise<PredictiveIntelligenceResponse> {
-  console.log('[fetchPredictiveIntelligence] Calling API')
+  debugLog('[fetchPredictiveIntelligence] Calling API for workspace:', workspaceId)
   try {
-    const response = await apiClient.get<unknown>(
-      '/api/v1/analytics/intelligence/predictive',
-      { params: { workspaceId } },
+    const response = await requestWithTimeout(
+      (signal) =>
+        apiClient.get<unknown>('/api/v1/analytics/intelligence/predictive', {
+          params: { workspaceId },
+          signal,
+        }),
+      'Predictive intelligence request timed out',
     )
-    console.log('[fetchPredictiveIntelligence] Response:', response.data)
+    debugLog('[fetchPredictiveIntelligence] Response:', response.data)
     const payload = parseOrThrow(
       predictiveResponseSchema,
       response.data,
       'Predictive intelligence payload failed validation',
     )
-    console.log('[fetchPredictiveIntelligence] Returning:', payload)
+    debugLog('[fetchPredictiveIntelligence] Returning:', payload)
     return normalisePredictiveResponse(payload)
   } catch (error) {
-    console.error('[fetchPredictiveIntelligence] Error:', error)
+    debugError('[fetchPredictiveIntelligence] Error:', error)
     if (error instanceof IntelligenceValidationError) {
+      throw error
+    }
+    if (error instanceof IntelligenceRequestError) {
       throw error
     }
     throw new IntelligenceRequestError('Unable to load predictive intelligence', error)
@@ -243,23 +296,30 @@ export async function fetchPredictiveIntelligence(
 export async function fetchCrossCorrelationIntelligence(
   workspaceId: string,
 ): Promise<CrossCorrelationIntelligenceResponse> {
-  console.log('[fetchCrossCorrelationIntelligence] Calling API')
+  debugLog('[fetchCrossCorrelationIntelligence] Calling API for workspace:', workspaceId)
   try {
-    const response = await apiClient.get<unknown>(
-      '/api/v1/analytics/intelligence/cross-correlation',
-      { params: { workspaceId } },
+    const response = await requestWithTimeout(
+      (signal) =>
+        apiClient.get<unknown>('/api/v1/analytics/intelligence/cross-correlation', {
+          params: { workspaceId },
+          signal,
+        }),
+      'Cross-correlation intelligence request timed out',
     )
-    console.log('[fetchCrossCorrelationIntelligence] Response:', response.data)
+    debugLog('[fetchCrossCorrelationIntelligence] Response:', response.data)
     const payload = parseOrThrow(
       correlationResponseSchema,
       response.data,
       'Cross-correlation intelligence payload failed validation',
     )
-    console.log('[fetchCrossCorrelationIntelligence] Returning:', payload)
+    debugLog('[fetchCrossCorrelationIntelligence] Returning:', payload)
     return normaliseCorrelationResponse(payload)
   } catch (error) {
-    console.error('[fetchCrossCorrelationIntelligence] Error:', error)
+    debugError('[fetchCrossCorrelationIntelligence] Error:', error)
     if (error instanceof IntelligenceValidationError) {
+      throw error
+    }
+    if (error instanceof IntelligenceRequestError) {
       throw error
     }
     throw new IntelligenceRequestError('Unable to load correlation intelligence', error)

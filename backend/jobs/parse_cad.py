@@ -95,7 +95,12 @@ def _resolve_local_path(storage_path: str) -> Path:
         path = Path(parsed.path)
         return path if path.is_absolute() else storage_service.local_base_path / path
     if parsed.scheme == "s3":
+        # For s3://bucket/path, netloc is bucket, path is /path
+        bucket = parsed.netloc
         key = parsed.path.lstrip("/")
+        # Combine bucket and key for local path
+        if bucket:
+            return storage_service.local_base_path / bucket / key
         return storage_service.local_base_path / key
     # Fall back to treating the value as a relative path beneath the storage root
     return storage_service.local_base_path / storage_path

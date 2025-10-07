@@ -40,6 +40,9 @@ minio==7.2.0
 # 3D geometry
 trimesh==4.0.0
 
+# CAD/BIM parsing
+ezdxf==1.1.0
+
 # PDF generation
 # reportlab==4.0.0  # Temporarily disabled - requires cairo system dependency
 

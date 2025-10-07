@@ -7,12 +7,12 @@ from uuid import UUID, uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.database import get_session
+from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
 from app.services.agents.development_potential_scanner import (
     DevelopmentPotentialScanner,
@@ -24,6 +24,7 @@ from app.services.agents.gps_property_logger import (
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import Address, GeocodingService
+from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -208,6 +209,7 @@ async def log_property_by_gps(
     request: GPSLogRequest,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
+    current_user: TokenData | None = Depends(get_optional_user),
 ) -> GPSLogResponse:
     """
     Log a property using GPS coordinates.
@@ -220,11 +222,21 @@ async def log_property_by_gps(
     - Return comprehensive property information
     """
     try:
+        user_uuid: Optional[UUID] = None
+        if current_user and current_user.user_id:
+            try:
+                user_uuid = UUID(current_user.user_id)
+            except ValueError:
+                logger.warning(
+                    "gps_logger_invalid_user_id",
+                    supplied_user_id=current_user.user_id,
+                )
+
         result = await gps_logger.log_property_from_gps(
             latitude=request.latitude,
             longitude=request.longitude,
             session=db,
-            user_id=None,  # TODO: Get from auth context
+            user_id=user_uuid,
             scenarios=request.development_scenarios,
         )
         quick_analysis_payload = result.quick_analysis or {

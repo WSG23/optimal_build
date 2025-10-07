@@ -15,6 +15,21 @@ import {
   buildSamplePredictiveIntelligence,
 } from '../services/analytics/fixtures'
 
+const IS_DEV = import.meta.env?.DEV ?? false
+const CACHE_TTL_MS = 60000
+
+function debugLog(...args: unknown[]): void {
+  if (IS_DEV) {
+    console.log(...args)
+  }
+}
+
+function debugError(...args: unknown[]): void {
+  if (IS_DEV) {
+    console.error(...args)
+  }
+}
+
 export interface InvestigationAnalyticsServices {
   fetchGraphIntelligence: typeof fetchGraphIntelligence
   fetchPredictiveIntelligence: typeof fetchPredictiveIntelligence
@@ -79,6 +94,13 @@ function toCorrelationErrorState(reason: unknown): CrossCorrelationIntelligenceR
   }
 }
 
+interface CachedAnalyticsEntry {
+  graph: GraphIntelligenceState
+  predictive: PredictiveIntelligenceState
+  correlation: CrossCorrelationIntelligenceState
+  timestamp: number
+}
+
 export function useInvestigationAnalytics(
   workspaceId: string,
   overrides?: Partial<InvestigationAnalyticsServices>,
@@ -102,66 +124,138 @@ export function useInvestigationAnalytics(
   const [correlation, setCorrelation] =
     useState<CrossCorrelationIntelligenceState>(loadingCorrelationState)
   const [isLoading, setIsLoading] = useState(true)
+  const cacheRef = useRef<Map<string, CachedAnalyticsEntry>>(new Map())
 
-  const loadAnalytics = useCallback(async () => {
-    console.log('[useInvestigationAnalytics] Starting to load analytics for workspace:', workspaceId)
-    setIsLoading(true)
-    setGraph(loadingGraphState)
-    setPredictive(loadingPredictiveState)
-    setCorrelation(loadingCorrelationState)
+  const loadAnalytics = useCallback(
+    async (forceRefresh = false) => {
+      debugLog(
+        '[useInvestigationAnalytics] Starting to load analytics for workspace:',
+        workspaceId,
+        { forceRefresh },
+      )
+      const cacheKey = workspaceId
+      const cachedEntry = cacheRef.current.get(cacheKey)
+      const cacheIsFresh =
+        !forceRefresh &&
+        cachedEntry !== undefined &&
+        Date.now() - cachedEntry.timestamp < CACHE_TTL_MS
 
-    try {
-      const [graphResult, predictiveResult, correlationResult] = await Promise.allSettled([
-        services.fetchGraphIntelligence(workspaceId),
-        services.fetchPredictiveIntelligence(workspaceId),
-        services.fetchCrossCorrelationIntelligence(workspaceId),
-      ])
-      console.log('[useInvestigationAnalytics] All promises settled:', { graphResult, predictiveResult, correlationResult })
-
-      const allRejected =
-        graphResult.status === 'rejected' &&
-        predictiveResult.status === 'rejected' &&
-        correlationResult.status === 'rejected'
-
-      if (allRejected) {
-        setGraph(buildSampleGraphIntelligence())
-        setPredictive(buildSamplePredictiveIntelligence())
-        setCorrelation(buildSampleCorrelationIntelligence())
+      if (cacheIsFresh) {
+        debugLog(
+          '[useInvestigationAnalytics] Serving analytics from cache for workspace:',
+          workspaceId,
+        )
+        setGraph(cachedEntry.graph)
+        setPredictive(cachedEntry.predictive)
+        setCorrelation(cachedEntry.correlation)
+        setIsLoading(false)
         return
       }
 
-      if (graphResult.status === 'fulfilled') {
-        console.log('[useInvestigationAnalytics] Setting graph data:', graphResult.value)
-        setGraph(graphResult.value)
-      } else {
-        console.log('[useInvestigationAnalytics] Graph failed:', graphResult.reason)
-        setGraph(toGraphErrorState(graphResult.reason))
-      }
+      setIsLoading(true)
+      setGraph(loadingGraphState)
+      setPredictive(loadingPredictiveState)
+      setCorrelation(loadingCorrelationState)
 
-      if (predictiveResult.status === 'fulfilled') {
-        console.log('[useInvestigationAnalytics] Setting predictive data:', predictiveResult.value)
-        setPredictive(predictiveResult.value)
-      } else {
-        console.log('[useInvestigationAnalytics] Predictive failed:', predictiveResult.reason)
-        setPredictive(toPredictiveErrorState(predictiveResult.reason))
-      }
+      try {
+        const [graphResult, predictiveResult, correlationResult] = await Promise.allSettled([
+          services.fetchGraphIntelligence(workspaceId),
+          services.fetchPredictiveIntelligence(workspaceId),
+          services.fetchCrossCorrelationIntelligence(workspaceId),
+        ])
+        debugLog('[useInvestigationAnalytics] All promises settled:', {
+          graphResult,
+          predictiveResult,
+          correlationResult,
+        })
 
-      if (correlationResult.status === 'fulfilled') {
-        console.log('[useInvestigationAnalytics] Setting correlation data:', correlationResult.value)
-        setCorrelation(correlationResult.value)
-      } else {
-        console.log('[useInvestigationAnalytics] Correlation failed:', correlationResult.reason)
-        setCorrelation(toCorrelationErrorState(correlationResult.reason))
+        const allRejected =
+          graphResult.status === 'rejected' &&
+          predictiveResult.status === 'rejected' &&
+          correlationResult.status === 'rejected'
+
+        let nextGraph: GraphIntelligenceState
+        let nextPredictive: PredictiveIntelligenceState
+        let nextCorrelation: CrossCorrelationIntelligenceState
+
+        if (allRejected) {
+          nextGraph = buildSampleGraphIntelligence()
+          nextPredictive = buildSamplePredictiveIntelligence()
+          nextCorrelation = buildSampleCorrelationIntelligence()
+          debugError(
+            '[useInvestigationAnalytics] All analytics requests failed; using fixture data.',
+          )
+        } else {
+          if (graphResult.status === 'fulfilled') {
+            debugLog('[useInvestigationAnalytics] Setting graph data:', graphResult.value)
+            nextGraph = graphResult.value
+          } else {
+            debugError('[useInvestigationAnalytics] Graph request failed:', graphResult.reason)
+            nextGraph = toGraphErrorState(graphResult.reason)
+          }
+
+          if (predictiveResult.status === 'fulfilled') {
+            debugLog(
+              '[useInvestigationAnalytics] Setting predictive data:',
+              predictiveResult.value,
+            )
+            nextPredictive = predictiveResult.value
+          } else {
+            debugError(
+              '[useInvestigationAnalytics] Predictive request failed:',
+              predictiveResult.reason,
+            )
+            nextPredictive = toPredictiveErrorState(predictiveResult.reason)
+          }
+
+          if (correlationResult.status === 'fulfilled') {
+            debugLog(
+              '[useInvestigationAnalytics] Setting correlation data:',
+              correlationResult.value,
+            )
+            nextCorrelation = correlationResult.value
+          } else {
+            debugError(
+              '[useInvestigationAnalytics] Correlation request failed:',
+              correlationResult.reason,
+            )
+            nextCorrelation = toCorrelationErrorState(correlationResult.reason)
+          }
+        }
+
+        setGraph(nextGraph)
+        setPredictive(nextPredictive)
+        setCorrelation(nextCorrelation)
+        cacheRef.current.set(cacheKey, {
+          graph: nextGraph,
+          predictive: nextPredictive,
+          correlation: nextCorrelation,
+          timestamp: Date.now(),
+        })
+      } catch (error) {
+        debugError(
+          '[useInvestigationAnalytics] Unexpected error during analytics load; using fixture data:',
+          error,
+        )
+        const fallbackGraph = buildSampleGraphIntelligence()
+        const fallbackPredictive = buildSamplePredictiveIntelligence()
+        const fallbackCorrelation = buildSampleCorrelationIntelligence()
+        setGraph(fallbackGraph)
+        setPredictive(fallbackPredictive)
+        setCorrelation(fallbackCorrelation)
+        cacheRef.current.set(cacheKey, {
+          graph: fallbackGraph,
+          predictive: fallbackPredictive,
+          correlation: fallbackCorrelation,
+          timestamp: Date.now(),
+        })
+      } finally {
+        debugLog('[useInvestigationAnalytics] Setting isLoading to false')
+        setIsLoading(false)
       }
-    } catch (error) {
-      setGraph(buildSampleGraphIntelligence())
-      setPredictive(buildSamplePredictiveIntelligence())
-      setCorrelation(buildSampleCorrelationIntelligence())
-    } finally {
-      console.log('[useInvestigationAnalytics] Setting isLoading to false')
-      setIsLoading(false)
-    }
-  }, [services, workspaceId])
+    },
+    [services, workspaceId],
+  )
 
   useEffect(() => {
     loadAnalytics().catch(() => {
@@ -170,7 +264,7 @@ export function useInvestigationAnalytics(
   }, [loadAnalytics])
 
   const refetch = useCallback(async () => {
-    await loadAnalytics()
+    await loadAnalytics(true)
   }, [loadAnalytics])
 
   return {
