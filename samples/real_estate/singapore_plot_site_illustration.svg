@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f5f5f5"/>
+  <rect x="40" y="40" width="320" height="220" fill="#cfe8ff" stroke="#0a4da3" stroke-width="4"/>
+  <rect x="70" y="70" width="260" height="160" fill="none" stroke="#ff914d" stroke-width="6" stroke-dasharray="12 10"/>
+  <text x="200" y="30" text-anchor="middle" font-size="20" font-family="Arial" fill="#0a4da3">Bukit Merah Plot Overview</text>
+  <circle cx="300" cy="190" r="24" fill="#ffd966" stroke="#d29500" stroke-width="4"/>
+  <text x="300" y="195" text-anchor="middle" font-size="12" font-family="Arial" fill="#4a3000">Landmark</text>
+  <text x="70" y="260" font-size="14" font-family="Arial" fill="#0a4da3">Setback Zone</text>
+  <text x="40" y="290" font-size="12" font-family="Arial" fill="#6b6b6b">Illustrative placeholder – not to scale</text>
+</svg>

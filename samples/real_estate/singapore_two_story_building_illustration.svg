@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f8f8f8"/>
+  <rect x="60" y="60" width="280" height="160" fill="#ddeaf7" stroke="#0b6fa4" stroke-width="4"/>
+  <rect x="60" y="150" width="280" height="70" fill="#bad4f5" stroke="#0b6fa4" stroke-width="4"/>
+  <rect x="140" y="110" width="40" height="100" fill="#f0f0f0" stroke="#333333" stroke-width="3"/>
+  <rect x="220" y="110" width="40" height="100" fill="#f0f0f0" stroke="#333333" stroke-width="3"/>
+  <rect x="185" y="110" width="30" height="100" fill="#ffffff" stroke="#333333" stroke-width="3"/>
+  <rect x="175" y="70" width="50" height="40" fill="#ffffff" stroke="#333333" stroke-width="3"/>
+  <text x="200" y="40" text-anchor="middle" font-size="20" font-family="Arial" fill="#0b6fa4">Two-Storey Mixed-Use</text>
+  <text x="200" y="265" text-anchor="middle" font-size="12" font-family="Arial" fill="#6b6b6b">Illustrative elevation placeholder</text>
+</svg>
