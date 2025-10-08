@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import inspect
 import time
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from app.core.audit.ledger import append_event
@@ -17,6 +18,7 @@ from app.core.geometry import GeometrySerializer
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
+from app.models.rkp import RefRule
 from backend._compat.datetime import UTC
 from backend.jobs import job
 from sqlalchemy import select
@@ -46,6 +48,15 @@ class OverlayRunResult:
         }
 
 
+@dataclass
+class RuleContext:
+    """Context required to evaluate jurisdictional rules."""
+
+    zone_code: str | None
+    rules: Sequence[RefRule]
+    metrics: dict[str, float]
+
+
 async def run_overlay_for_project(
     session: AsyncSession,
     *,
@@ -67,13 +78,23 @@ async def run_overlay_for_project(
         return result
 
     started_at = time.perf_counter()
+    rule_cache: dict[str, Sequence[RefRule]] = {}
     for source in records:
         geometry = GeometrySerializer.from_export(source.graph)
         fingerprint = geometry.fingerprint()
         source.checksum = fingerprint
         lock = _acquire_lock(session, source)
         try:
-            suggestions = _evaluate_geometry(geometry)
+            metadata = _coerce_mapping(source.metadata)
+            zone_code = _extract_zone_code(metadata)
+            rules = await _load_rules_for_zone(session, zone_code, rule_cache)
+            metrics = _build_rule_metrics(geometry, metadata)
+            rule_context = (
+                RuleContext(zone_code=zone_code, rules=rules, metrics=metrics)
+                if rules
+                else None
+            )
+            suggestions = _evaluate_geometry(geometry, rule_context=rule_context)
             result.evaluated += 1
             existing_by_code: dict[str, OverlaySuggestion] = {
                 suggestion.code: suggestion for suggestion in source.suggestions
@@ -166,6 +187,14 @@ def _acquire_lock(
 def _space_area(space) -> float | None:
     """Compute the polygon area for a space boundary."""
 
+    metadata = getattr(space, "metadata", None)
+    if isinstance(metadata, dict):
+        stored_area = metadata.get("area_sqm")
+        if isinstance(stored_area, (int, float)):
+            return float(stored_area)
+        unit_scale = metadata.get("unit_scale_to_m")
+    else:
+        unit_scale = None
     boundary = getattr(space, "boundary", None)
     if not boundary or len(boundary) < 3:
         return None
@@ -174,10 +203,160 @@ def _space_area(space) -> float | None:
     for index, (x1, y1) in enumerate(points):
         x2, y2 = points[(index + 1) % len(points)]
         area += x1 * y2 - x2 * y1
-    return abs(area) * 0.5
+    area = abs(area) * 0.5
+    if isinstance(unit_scale, (int, float)) and unit_scale not in (0, 1):
+        return area * (float(unit_scale) ** 2)
+    return area
 
 
-def _evaluate_geometry(geometry: GeometryGraph) -> list[dict[str, object]]:
+def _extract_zone_code(metadata: dict[str, Any]) -> str:
+    """Determine the zone code applicable to the evaluated geometry."""
+
+    parse_meta = _coerce_mapping(metadata.get("parse_metadata"))
+    raw_zone = (
+        metadata.get("zone_code")
+        or parse_meta.get("zone_code")
+        or parse_meta.get("zone")
+    )
+    if isinstance(raw_zone, str) and raw_zone.strip():
+        zone = raw_zone.strip()
+        if not zone.upper().startswith("SG:"):
+            zone = f"SG:{zone}"
+        return zone
+    # Default to residential zoning when no metadata is provided so the demo rules fire.
+    return "SG:residential"
+
+
+async def _load_rules_for_zone(
+    session: AsyncSession,
+    zone_code: str,
+    cache: dict[str, Sequence[RefRule]],
+) -> Sequence[RefRule]:
+    """Fetch and cache published rules for the specified zone code."""
+
+    if zone_code in cache:
+        return cache[zone_code]
+
+    stmt = (
+        select(RefRule)
+        .where(RefRule.jurisdiction == "SG")
+        .where(RefRule.review_status == "approved")
+        .where(RefRule.is_published.is_(True))
+    )
+    result = await session.execute(stmt)
+    zone_rules: list[RefRule] = []
+    for rule in result.scalars().all():
+        if not rule.applicability:
+            zone_rules.append(rule)
+            continue
+        if not isinstance(rule.applicability, dict):
+            continue
+        rule_zone = rule.applicability.get("zone_code")
+        if rule_zone == zone_code:
+            zone_rules.append(rule)
+    cache[zone_code] = zone_rules
+    return zone_rules
+
+
+def _build_rule_metrics(
+    geometry: GeometryGraph,
+    metadata: dict[str, Any],
+) -> dict[str, float]:
+    """Derive metrics used for rule evaluation."""
+
+    metrics: dict[str, float] = {}
+    footprint_by_level: dict[str, float] = {}
+    max_height: float | None = None
+    total_area = 0.0
+    points: list[tuple[float, float]] = []
+
+    for space in geometry.spaces.values():
+        area = _space_area(space)
+        if area is not None:
+            total_area += area
+            level = space.level_id or "default"
+            footprint_by_level[level] = footprint_by_level.get(level, 0.0) + area
+            if space.boundary:
+                points.extend(space.boundary)
+        raw_height = space.metadata.get("height_m") or space.metadata.get("height")
+        height = _coerce_float(raw_height)
+        if height is not None:
+            max_height = height if max_height is None else max(max_height, height)
+
+    metrics["total_unit_area_sqm"] = total_area if total_area > 0 else None
+    if max_height is not None:
+        metrics["max_height_m"] = max_height
+
+    parse_meta = _coerce_mapping(metadata.get("parse_metadata"))
+    land_area = _coerce_float(metadata.get("site_area_sqm")) or _coerce_float(
+        parse_meta.get("site_area_sqm")
+    )
+
+    if not land_area and points:
+        xs = [point[0] for point in points]
+        ys = [point[1] for point in points]
+        width = max(xs) - min(xs) if xs else 0.0
+        depth = max(ys) - min(ys) if ys else 0.0
+        if width > 0 and depth > 0:
+            land_area = width * depth
+
+    if land_area:
+        metrics["land_area_sqm"] = land_area
+
+    gross_floor_area = _coerce_float(
+        metadata.get("gross_floor_area_sqm")
+    ) or _coerce_float(parse_meta.get("gross_floor_area_sqm"))
+    if gross_floor_area is None and total_area > 0:
+        gross_floor_area = total_area
+    if gross_floor_area is not None:
+        metrics["gross_floor_area_sqm"] = gross_floor_area
+
+    if gross_floor_area is not None and land_area:
+        try:
+            metrics["plot_ratio"] = gross_floor_area / land_area
+        except ZeroDivisionError:
+            pass
+
+    footprint_area = None
+    if footprint_by_level:
+        footprint_area = max(footprint_by_level.values())
+    elif total_area > 0:
+        footprint_area = total_area
+
+    if footprint_area is not None and land_area:
+        try:
+            metrics["site_coverage_percent"] = (footprint_area / land_area) * 100
+        except ZeroDivisionError:
+            pass
+    return metrics
+
+
+_PARAMETER_METRIC_MAP: dict[str, str] = {
+    "zoning.max_far": "plot_ratio",
+    "zoning.max_building_height_m": "max_height_m",
+    "zoning.setback.front_min_m": "front_setback_m",
+    "zoning.site_coverage.max_percent": "site_coverage_percent",
+}
+
+_METRIC_LABELS: dict[str, str] = {
+    "plot_ratio": "Plot ratio",
+    "max_height_m": "Building height (m)",
+    "front_setback_m": "Front setback (m)",
+    "site_coverage_percent": "Site coverage (%)",
+}
+
+_METRIC_SEVERITY: dict[str, str] = {
+    "plot_ratio": "high",
+    "max_height_m": "high",
+    "front_setback_m": "medium",
+    "site_coverage_percent": "medium",
+}
+
+
+def _evaluate_geometry(
+    geometry: GeometryGraph,
+    rule_context: RuleContext | None = None,
+) -> list[dict[str, object]]:
     """Simple heuristic feasibility engine that produces overlay suggestions."""
 
     suggestions: dict[str, dict[str, object]] = {}
@@ -376,6 +555,14 @@ def _evaluate_geometry(geometry: GeometryGraph) -> list[dict[str, object]]:
                 },
             )
 
+    if rule_context and rule_context.rules:
+        rule_suggestions = _evaluate_rules_for_geometry(
+            rule_context=rule_context,
+            site_level_id=site_level_id,
+        )
+        for overlay in rule_suggestions:
+            suggestions[overlay["code"]] = overlay
+
     ordered_codes = sorted(suggestions.keys())
     return [suggestions[code] for code in ordered_codes]
 
@@ -446,6 +633,194 @@ def _coerce_mapping(value: object) -> dict[str, Any]:
     if isinstance(value, dict):
         return dict(value)
     return {}
+
+
+def _coerce_float(value: object) -> float | None:
+    """Attempt to coerce a value to ``float``."""
+
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, Decimal):
+        return float(value)
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _unit_suffix(unit: str | None) -> str:
+    """Return a human-readable suffix for numeric values."""
+
+    if not unit:
+        return ""
+    stripped = str(unit).strip()
+    return f" {stripped}" if stripped else ""
+
+
+def _humanise_parameter_key(parameter_key: str) -> str:
+    """Convert a parameter key into a readable label."""
+
+    return parameter_key.replace(".", " ").replace("_", " ").replace("  ", " ").title()
+
+
+def _compare_rule(value: float, operator: str, threshold: float) -> bool:
+    """Return ``True`` when ``value`` satisfies the rule ``operator`` and ``threshold``."""
+
+    tolerance = 1e-6
+    op = (operator or "").strip()
+    if op == "<=":
+        return value <= threshold + tolerance
+    if op == "<":
+        return value < threshold - tolerance
+    if op == ">=":
+        return value + tolerance >= threshold
+    if op == ">":
+        return value > threshold + tolerance
+    if op in {"=", "=="}:
+        return abs(value - threshold) <= tolerance
+    return True
+
+
+def _evaluate_rules_for_geometry(
+    rule_context: RuleContext,
+    site_level_id: str | None,
+) -> list[dict[str, object]]:
+    """Generate overlays for each rule violation (or missing metric) detected."""
+
+    overlays: list[dict[str, object]] = []
+    missing_reported: set[str] = set()
+    metrics = rule_context.metrics
+
+    for rule in rule_context.rules:
+        metric_key = _PARAMETER_METRIC_MAP.get(rule.parameter_key)
+        if metric_key is None:
+            continue
+        limit_value = _coerce_float(rule.value)
+        if limit_value is None:
+            continue
+        measured_value = metrics.get(metric_key)
+        if measured_value is None:
+            if metric_key not in missing_reported:
+                overlays.append(
+                    _build_missing_metric_overlay(
+                        metric_key=metric_key,
+                        parameter_key=rule.parameter_key,
+                        zone_code=rule_context.zone_code,
+                        site_level_id=site_level_id,
+                    )
+                )
+                missing_reported.add(metric_key)
+            continue
+        if not _compare_rule(measured_value, rule.operator, limit_value):
+            overlays.append(
+                _build_rule_violation_overlay(
+                    rule=rule,
+                    metric_key=metric_key,
+                    measured=measured_value,
+                    limit_value=limit_value,
+                    zone_code=rule_context.zone_code,
+                    site_level_id=site_level_id,
+                )
+            )
+
+    return overlays
+
+
+def _build_rule_violation_overlay(
+    *,
+    rule: RefRule,
+    metric_key: str,
+    measured: float,
+    limit_value: float,
+    zone_code: str | None,
+    site_level_id: str | None,
+) -> dict[str, object]:
+    """Create an overlay payload describing a rule violation."""
+
+    label = _METRIC_LABELS.get(metric_key, _humanise_parameter_key(rule.parameter_key))
+    severity = _METRIC_SEVERITY.get(metric_key, "medium")
+    unit_suffix = _unit_suffix(rule.unit)
+    code = f"rule_violation_{rule.parameter_key.replace('.', '_')}"
+
+    rationale = (
+        f"{label} {measured:.2f}{unit_suffix} violates "
+        f"requirement {rule.operator} {limit_value:.2f}{unit_suffix}"
+    )
+    if zone_code:
+        rationale += f" for {zone_code} zoning."
+    else:
+        rationale += "."
+
+    score = None
+    if limit_value:
+        try:
+            score = measured / limit_value
+        except ZeroDivisionError:
+            score = None
+
+    return {
+        "code": code,
+        "type": "regulatory",
+        "title": f"{label} exceeds limit",
+        "rationale": rationale,
+        "severity": severity,
+        "score": score,
+        "target_ids": _string_list(site_level_id),
+        "props": {
+            "parameter_key": rule.parameter_key,
+            "measured_value": measured,
+            "limit_value": limit_value,
+            "operator": rule.operator,
+            "unit": rule.unit,
+            "zone_code": zone_code,
+        },
+        "rule_refs": [rule.parameter_key],
+        "engine_payload": {
+            "rule_id": rule.id,
+            "parameter_key": rule.parameter_key,
+            "measured": measured,
+            "limit": limit_value,
+            "operator": rule.operator,
+            "unit": rule.unit,
+        },
+    }
+
+
+def _build_missing_metric_overlay(
+    *,
+    metric_key: str,
+    parameter_key: str,
+    zone_code: str | None,
+    site_level_id: str | None,
+) -> dict[str, object]:
+    """Create an overlay prompting the reviewer to supply missing inputs."""
+
+    label = _METRIC_LABELS.get(metric_key, _humanise_parameter_key(parameter_key))
+    rationale = f"Provide {label.lower()} data so rules can be evaluated accurately."
+    if zone_code:
+        rationale += f" This is required for {zone_code} compliance."
+
+    return {
+        "code": f"rule_data_missing_{metric_key}",
+        "type": "data",
+        "title": f"Provide {label.lower()} data",
+        "rationale": rationale,
+        "severity": "low",
+        "target_ids": _string_list(site_level_id),
+        "props": {
+            "metric": metric_key,
+            "parameter_key": parameter_key,
+            "zone_code": zone_code,
+        },
+        "rule_refs": [parameter_key],
+        "engine_payload": {
+            "missing_metric": metric_key,
+            "parameter_key": parameter_key,
+            "zone_code": zone_code,
+        },
+    }
 
 
 def _resolve_session_dependency() -> Callable[[], Any]:

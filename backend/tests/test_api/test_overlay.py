@@ -117,6 +117,12 @@ async def test_overlay_run_and_decisions(
     assert "flood_mitigation" in codes
     assert "tall_building_review" in codes
     assert "coastal_evacuation_plan" in codes
+    assert "rule_violation_zoning_max_building_height_m" in codes
+    assert "rule_data_missing_front_setback_m" in codes
+    assert (
+        "rule_violation_zoning_site_coverage_max_percent" in codes
+        or "rule_data_missing_site_coverage_percent" in codes
+    )
     unit_codes = [code for code in codes if code.startswith("unit_space_")]
     assert unit_codes, "Expected unit overlays to be generated for parsed spaces"
     summary = next(

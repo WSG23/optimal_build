@@ -1,5 +1,10 @@
 from app.core.models.geometry import GeometryGraph, Level, Space
-from backend.jobs.overlay_run import _evaluate_geometry
+from app.models.rkp import RefRule
+from backend.jobs.overlay_run import (
+    RuleContext,
+    _build_rule_metrics,
+    _evaluate_geometry,
+)
 
 
 def test_evaluate_geometry_emits_unit_overlays():
@@ -10,7 +15,7 @@ def test_evaluate_geometry_emits_unit_overlays():
             name="Unit A",
             level_id="L1",
             boundary=[(0.0, 0.0), (8.0, 0.0), (8.0, 5.0), (0.0, 5.0)],
-            metadata={"category": "residential"},
+            metadata={"category": "residential", "height_m": 50},
         ),
         Space(
             id="S2",
@@ -33,3 +38,27 @@ def test_evaluate_geometry_emits_unit_overlays():
     assert aggregate is not None
     assert aggregate["engine_payload"]["unit_count"] == 2
     assert aggregate["props"]["total_unit_area_sqm"] == 68.0
+
+    rule = RefRule(
+        jurisdiction="SG",
+        authority="URA",
+        topic="zoning",
+        parameter_key="zoning.max_building_height_m",
+        operator="<=",
+        value="30",
+        unit="m",
+        review_status="approved",
+        is_published=True,
+        applicability={"zone_code": "SG:residential"},
+    )
+    rule.id = 101
+
+    metrics = _build_rule_metrics(graph, {})
+    context = RuleContext(
+        zone_code="SG:residential",
+        rules=[rule],
+        metrics=metrics,
+    )
+    suggestions_with_rules = _evaluate_geometry(graph, rule_context=context)
+    codes_with_rules = {item["code"] for item in suggestions_with_rules}
+    assert "rule_violation_zoning_max_building_height_m" in codes_with_rules

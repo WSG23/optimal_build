@@ -54,6 +54,7 @@ class DxfSpaceCandidate:
     identifier: str
     boundary: list[dict[str, float]]
     layer: str | None
+    metadata: dict[str, Any]
 
 
 @compat_dataclass(slots=True)
@@ -64,6 +65,7 @@ class DxfQuicklook:
     floors: list[dict[str, Any]]
     units: list[str]
     layers: list[dict[str, Any]]
+    metadata: dict[str, Any]
 
 
 @compat_dataclass(slots=True)
@@ -264,7 +266,12 @@ def _collect_dxf_space_candidates(
         if layer_name:
             layer_units.setdefault(layer_name.lower(), []).append(space_id)
         candidates.append(
-            DxfSpaceCandidate(identifier=space_id, boundary=points, layer=layer_name)
+            DxfSpaceCandidate(
+                identifier=space_id,
+                boundary=points,
+                layer=layer_name,
+                metadata={},
+            )
         )
     return candidates, layer_units
 
@@ -300,14 +307,116 @@ def _derive_dxf_floors(
     return floors
 
 
+def _polygon_area(points: Sequence[Mapping[str, float]]) -> float:
+    """Return the area enclosed by ``points`` using the shoelace formula."""
+
+    if len(points) < 3:
+        return 0.0
+    area = 0.0
+    for index, point in enumerate(points):
+        next_point = points[(index + 1) % len(points)]
+        x1 = float(point.get("x", 0.0))
+        y1 = float(point.get("y", 0.0))
+        x2 = float(next_point.get("x", 0.0))
+        y2 = float(next_point.get("y", 0.0))
+        area += x1 * y2 - x2 * y1
+    return abs(area) * 0.5
+
+
+def _estimate_length_scale(candidates: Sequence[DxfSpaceCandidate]) -> float:
+    """Estimate the conversion factor from DXF units to metres."""
+
+    lengths: list[float] = []
+    for candidate in candidates:
+        boundary = candidate.boundary
+        if len(boundary) < 2:
+            continue
+        for index, point in enumerate(boundary):
+            next_point = boundary[(index + 1) % len(boundary)]
+            dx = float(next_point.get("x", 0.0)) - float(point.get("x", 0.0))
+            dy = float(next_point.get("y", 0.0)) - float(point.get("y", 0.0))
+            length = math.hypot(dx, dy)
+            if length > 0:
+                lengths.append(length)
+    if not lengths:
+        return 1.0
+    lengths.sort()
+    median = lengths[len(lengths) // 2]
+    # Assume millimetres when edges are significantly larger than 50 units.
+    if median > 50:
+        return 0.001
+    return 1.0
+
+
+def _compute_candidate_metrics(
+    candidates: Sequence[DxfSpaceCandidate],
+    scale_to_m: float,
+) -> tuple[dict[str, float], dict[str, float]]:
+    """Compute per-space areas and aggregated metrics."""
+
+    space_areas: dict[str, float] = {}
+    bounds: dict[str, float] = {}
+    min_x = min_y = float("inf")
+    max_x = max_y = float("-inf")
+
+    for candidate in candidates:
+        boundary = candidate.boundary
+        for point in boundary:
+            x_val = float(point.get("x", 0.0))
+            y_val = float(point.get("y", 0.0))
+            min_x = min(min_x, x_val)
+            min_y = min(min_y, y_val)
+            max_x = max(max_x, x_val)
+            max_y = max(max_y, y_val)
+        raw_area = _polygon_area(boundary)
+        area_m2 = raw_area * (scale_to_m**2)
+        if area_m2 > 0:
+            space_areas[candidate.identifier] = area_m2
+            candidate.metadata["area_sqm"] = area_m2
+        else:
+            candidate.metadata.pop("area_sqm", None)
+
+    if min_x == float("inf") or min_y == float("inf"):
+        bounds = {}
+    else:
+        bounds = {
+            "min_x": min_x * scale_to_m,
+            "min_y": min_y * scale_to_m,
+            "max_x": max_x * scale_to_m,
+            "max_y": max_y * scale_to_m,
+        }
+    return space_areas, bounds
+
+
 def _prepare_dxf_quicklook(payload: bytes) -> DxfQuicklook:
     doc = _read_dxf_document(payload)
     layer_metadata = _extract_dxf_layer_metadata(doc)
     candidates, layer_units = _collect_dxf_space_candidates(doc)
     unit_ids = [candidate.identifier for candidate in candidates]
     floors = _derive_dxf_floors(layer_metadata, unit_ids, layer_units)
+    metadata: dict[str, Any] = {
+        "unit_count": len(unit_ids),
+        "layer_count": len(layer_metadata),
+    }
+    scale_to_m = _estimate_length_scale(candidates)
+    metadata["unit_scale_to_m"] = scale_to_m
+    space_areas, bounds = _compute_candidate_metrics(candidates, scale_to_m)
+    if space_areas:
+        metadata["gross_floor_area_sqm"] = sum(space_areas.values())
+    if bounds:
+        metadata["site_bounds"] = bounds
+        width = bounds["max_x"] - bounds["min_x"]
+        height = bounds["max_y"] - bounds["min_y"]
+        site_area = width * height
+        if site_area > 0:
+            metadata["site_area_sqm"] = site_area
+    metadata["space_areas_sqm"] = space_areas
     return DxfQuicklook(
-        candidates=candidates, floors=floors, units=unit_ids, layers=layer_metadata
+        candidates=candidates,
+        floors=floors,
+        units=unit_ids,
+        layers=layer_metadata,
+        metadata=metadata,
     )
 
 
@@ -822,19 +931,36 @@ def _parse_dxf_payload(payload: bytes) -> ParsedGeometry:
     quicklook = _prepare_dxf_quicklook(payload)
     builder = GraphBuilder.new()
     builder.add_level({"id": "L1", "name": "Model Space", "elevation": 0.0})
+    raw_space_areas = quicklook.metadata.get("space_areas_sqm") or {}
+    space_areas = dict(raw_space_areas) if isinstance(raw_space_areas, Mapping) else {}
+    unit_scale = float(quicklook.metadata.get("unit_scale_to_m") or 1.0)
     for candidate in quicklook.candidates:  # pragma: no cover - depends on ezdxf
+        area_sqm = space_areas.get(candidate.identifier)
+        space_metadata = dict(candidate.metadata)
+        space_metadata.update(
+            {
+                "source_entity": "LWPOLYLINE",
+                "unit_scale_to_m": unit_scale,
+            }
+        )
+        if candidate.layer:
+            space_metadata.setdefault("source_layer", candidate.layer)
+        if area_sqm is not None:
+            space_metadata["area_sqm"] = area_sqm
         builder.add_space(
             {
                 "id": candidate.identifier,
                 "level_id": "L1",
                 "boundary": candidate.boundary,
-                "metadata": {
-                    "source_entity": "LWPOLYLINE",
-                    "source_layer": candidate.layer,
-                },
+                "metadata": space_metadata,
             }
         )
     builder.validate_integrity()
+    parse_metadata: dict[str, Any] = {
+        "site_area_sqm": quicklook.metadata.get("site_area_sqm"),
+        "gross_floor_area_sqm": quicklook.metadata.get("gross_floor_area_sqm"),
+        "unit_scale_to_m": unit_scale,
+    }
     return ParsedGeometry(
         graph=builder.graph,
         floors=quicklook.floors,
@@ -844,6 +970,13 @@ def _parse_dxf_payload(payload: bytes) -> ParsedGeometry:
             "source": "dxf",
             "entities": len(quicklook.units),
             "layers": len(quicklook.layers),
+            "site_area_sqm": quicklook.metadata.get("site_area_sqm"),
+            "gross_floor_area_sqm": quicklook.metadata.get("gross_floor_area_sqm"),
+            "site_bounds": quicklook.metadata.get("site_bounds"),
+            "unit_scale_to_m": unit_scale,
+            "parse_metadata": {
+                key: value for key, value in parse_metadata.items() if value is not None
+            },
         },
     )
 

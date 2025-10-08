@@ -131,6 +131,12 @@ if "projects" not in getattr(BaseModel.metadata, "tables", {}):
 _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers", "no_db: skip database setup/teardown for lightweight tests"
+    )
+
+
 @pytest.fixture(scope="session")
 def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
     """Create a dedicated event loop for the entire test session."""
@@ -163,9 +169,15 @@ async def flow_session_factory() -> AsyncGenerator[
     async_sessionmaker[AsyncSession],
     None,
 ]:
-    """Provide a shared async session factory backed by Postgres test database."""
+    """Provide a shared async session factory backed by Postgres test database.
+
+    Uses Alembic migrations to create the schema, ensuring tests validate
+    the actual migration files used in production.
+    """
 
     import os
+    import subprocess
+    from pathlib import Path
 
     # Use Postgres test database instead of SQLite in-memory
     db_url = os.getenv(
@@ -173,13 +185,42 @@ async def flow_session_factory() -> AsyncGenerator[
         "postgresql+asyncpg://postgres:password@localhost:5432/building_compliance_test",
     )
 
+    # Enable PostGIS extension (required for geography columns)
+    from sqlalchemy import create_engine, text
+
+    sync_url = db_url.replace("+asyncpg", "")
+    sync_engine = create_engine(sync_url)
+    with sync_engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
+        conn.commit()
+    sync_engine.dispose()
+
+    # Apply Alembic migrations to test database
+    backend_dir = Path(__file__).parent.parent
+    repo_root = backend_dir.parent
+    alembic_bin = repo_root / ".venv" / "bin" / "alembic"
+
+    # Set database URL for migrations (use sync URL for alembic)
+    env = os.environ.copy()
+    env["DATABASE_URL"] = sync_url
+
+    # Run migrations (idempotent - only applies what's missing)
+    result = subprocess.run(
+        [str(alembic_bin), "-c", str(backend_dir / "alembic.ini"), "upgrade", "head"],
+        cwd=str(backend_dir),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Alembic migrations failed:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+        )
+
     engine = create_async_engine(
         db_url,
         future=True,
     )
-
-    async with engine.begin() as conn:
-        await conn.run_sync(BaseModel.metadata.create_all)
 
     factory = async_sessionmaker(engine, expire_on_commit=False)
     try:
@@ -191,8 +232,13 @@ async def flow_session_factory() -> AsyncGenerator[
 @pytest_asyncio.fixture(autouse=True)
 async def _cleanup_flow_session_factory(
     flow_session_factory: async_sessionmaker[AsyncSession],
+    request: pytest.FixtureRequest,
 ) -> AsyncGenerator[None, None]:
     """Ensure the shared flow database starts empty for every test."""
+
+    if request.node.get_closest_marker("no_db"):
+        yield
+        return
 
     await _reset_database(flow_session_factory)
     try:

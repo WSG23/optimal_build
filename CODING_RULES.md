@@ -150,6 +150,71 @@ curl -X POST http://localhost:9400/api/v1/singapore-property/check-compliance \
 
 ---
 
+## 6. Python Import Ordering and Formatting
+
+**Rule:** Follow strict import ordering and formatting to match Black, Ruff, and isort hook standards. Imports must be grouped, sorted, and formatted according to the project's automated formatters.
+
+**Why:** Pre-commit hooks automatically fix import formatting. Writing imports correctly the first time prevents unnecessary "write code → hooks modify it → commit modified code" cycles.
+
+**Import Order (PEP 8 + isort):**
+1. Standard library imports (e.g., `os`, `sys`, `pathlib`)
+2. Third-party package imports (e.g., `sqlalchemy`, `fastapi`, `alembic`)
+3. Local application imports (e.g., `app.models`, `app.core`)
+4. One blank line between each group
+
+**Within Each Group:**
+- `import X` statements come before `from X import Y` statements
+- Alphabetical ordering
+- Combine multiple imports from the same module: `from X import A, B` (not separate lines)
+
+**Line Length:**
+- Maximum 88 characters (Black standard)
+- Avoid unnecessary line wrapping for lines under 88 characters
+
+**Examples:**
+
+```python
+# ✅ Correct - proper import ordering
+import os
+import sys
+from logging.config import fileConfig
+from pathlib import Path
+
+from alembic import context
+from sqlalchemy import engine_from_config, pool
+
+import app.models.audit
+import app.models.finance
+import app.models.imports
+from app.models.base import BaseModel
+
+# ❌ Wrong - mixed ordering, separate imports from same module
+from logging.config import fileConfig  # from statement before import
+import os
+import sys
+
+from sqlalchemy import engine_from_config  # should combine
+from sqlalchemy import pool
+
+from alembic import context  # third-party mixed with above
+
+import app.models.finance  # not alphabetical
+import app.models.audit
+```
+
+**Tool Configuration:**
+- Black: 88 character line length ([.pre-commit-config.yaml:28](.pre-commit-config.yaml#L28))
+- Ruff: Uses isort for import ordering ([.pre-commit-config.yaml:35](.pre-commit-config.yaml#L35))
+- See [pyproject.toml](pyproject.toml) for detailed tool settings
+
+**Quick Check:**
+Run formatters before committing:
+```bash
+make format  # Runs black and ruff with --fix
+```
+
+---
+
 ## Questions?
 
 If a rule is unclear or seems wrong for a specific case:
@@ -157,4 +222,4 @@ If a rule is unclear or seems wrong for a specific case:
 2. Propose a rule change by updating this document in a separate PR
 3. Document exceptions inline with `# Exception: <reason>` comments
 
-**Last updated:** 2025-10-04
+**Last updated:** 2025-10-08

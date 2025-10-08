@@ -20,6 +20,7 @@ Follow these guardrails when you take over the keyboard:
    - Add comments sparingly—only to clarify complex logic.
    - Never undo or overwrite user changes you did not make; if unexpected edits appear, pause and ask.
    - Ensure new files are saved within the repo (respect writable roots).
+   - Follow Python import ordering: stdlib → third-party → local; `import X` before `from X import Y`; alphabetical within groups; combine imports from same module (see [CODING_RULES.md](CODING_RULES.md#6-python-import-ordering-and-formatting)).
 
 4. **Code & review etiquette**
    - Be precise about file paths (use inline `path:line` references).
