@@ -46,15 +46,31 @@ Key components:
 
 ## Development Workflow
 
-Before committing or pushing changes, run the automated checks so regressions are caught early:
+Before committing changes, follow this workflow to ensure clean commits:
 
 ```bash
-make verify    # formatting, linting, coding rules, and tests (~10s)
-# or, if you only need the unit tests:
-make test
+# 1. Make your changes
+# ... edit files ...
+
+# 2. Run hooks FIRST (auto-formats files)
+make hooks        # Black, Prettier, ruff --fix, etc.
+
+# 3. Stage the formatted files
+git add .
+
+# 4. Quick sanity check
+make test         # ~10s, verify nothing broke
+
+# 5. Commit
+git commit -m "Your feature"
 ```
 
-The `make verify` target is already wired into the pre-commit configuration, so keeping your environment up to date ensures each commit verifies cleanly.
+**Why this order matters:** `make hooks` modifies files (formatting, fixing imports, adding newlines). Running hooks before `git add` ensures auto-formatting changes are included in the commit, not left as unstaged changes.
+
+For a full verification suite:
+```bash
+make verify    # formatting, linting, coding rules, and tests
+```
 
 ## Running the Pipeline
 
