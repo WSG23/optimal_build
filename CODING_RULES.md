@@ -171,6 +171,10 @@ curl -X POST http://localhost:9400/api/v1/singapore-property/check-compliance \
 - Maximum 88 characters (Black standard)
 - Avoid unnecessary line wrapping for lines under 88 characters
 
+**File Formatting:**
+- All files must end with a single newline character
+- No trailing whitespace on any line
+
 **Examples:**
 
 ```python
