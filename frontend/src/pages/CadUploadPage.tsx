@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import {
   type CadImportSummary,
@@ -11,6 +11,8 @@ import CadUploader from '../modules/cad/CadUploader'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
 
+const DEFAULT_PROJECT_ID = 5821
+
 export function CadUploadPage() {
   const apiClient = useApiClient()
   const { t } = useTranslation()
@@ -18,8 +20,10 @@ export function CadUploadPage() {
   const [status, setStatus] = useState<ParseStatusUpdate | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [projectId, setProjectId] = useState<number>(DEFAULT_PROJECT_ID)
   const cancelRef = useRef<(() => void) | null>(null)
   const { rules, loading } = useRules(apiClient)
+  const projectIdInputId = useId()
 
   useEffect(() => {
     return () => {
@@ -33,7 +37,9 @@ export function CadUploadPage() {
       setIsUploading(true)
       setError(null)
       try {
-        const summary = await apiClient.uploadCadDrawing(file)
+        const summary = await apiClient.uploadCadDrawing(file, {
+          projectId,
+        })
         setJob(summary)
         setStatus({
           importId: summary.importId,
@@ -63,12 +69,31 @@ export function CadUploadPage() {
         setIsUploading(false)
       }
     },
-    [apiClient, t],
+    [apiClient, projectId, t],
   )
 
   return (
     <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
       <div className="cad-upload">
+        <div className="cad-upload__controls">
+          <label className="cad-upload__label" htmlFor={projectIdInputId}>
+            <span>{t('uploader.projectLabel')}</span>
+            <input
+              id={projectIdInputId}
+              type="number"
+              min={1}
+              value={projectId}
+              onChange={(event) => {
+                const value = Number(event.target.value)
+                if (Number.isNaN(value) || value <= 0) {
+                  setProjectId(DEFAULT_PROJECT_ID)
+                  return
+                }
+                setProjectId(Math.trunc(value))
+              }}
+            />
+          </label>
+        </div>
         {error && <p className="cad-upload__error">{error}</p>}
 
         <CadUploader

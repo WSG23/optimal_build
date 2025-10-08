@@ -52,7 +52,8 @@
     "error": "CAD ファイルの解析中に問題が発生しました。",
     "overlays": "検出されたオーバーレイ",
     "hints": "当局からのヒント",
-    "zone": "ゾーン"
+    "zone": "ゾーン",
+    "projectLabel": "プロジェクトID"
   },
   "detection": {
     "title": "階層とユニットの検出プレビュー",

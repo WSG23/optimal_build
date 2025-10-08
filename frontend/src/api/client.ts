@@ -430,7 +430,7 @@ export class ApiClient {
 
   async uploadCadDrawing(
     file: File | Blob,
-    options: { inferWalls?: boolean } = {},
+    options: { inferWalls?: boolean; projectId?: number } = {},
   ): Promise<CadImportSummary> {
     const formData = new FormData()
     const derivedName =
@@ -442,6 +442,9 @@ export class ApiClient {
     formData.append('file', file, derivedName)
     if (options.inferWalls) {
       formData.append('infer_walls', 'true')
+    }
+    if (typeof options.projectId === 'number' && !Number.isNaN(options.projectId)) {
+      formData.append('project_id', options.projectId.toString())
     }
 
     const headers = new Headers()
