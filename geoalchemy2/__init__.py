@@ -13,7 +13,9 @@ class Geometry(UserDefinedType):
         self.kwargs = kwargs
 
     def get_col_spec(self, **_kwargs: object) -> str:
-        return "GEOMETRY"
+        # SQLite does not support GEOMETRY natively; fall back to TEXT so tests
+        # using the shim can create tables without PostGIS.
+        return "TEXT"
 
 
 __all__ = ["Geometry"]

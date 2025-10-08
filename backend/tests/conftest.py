@@ -163,14 +163,21 @@ async def flow_session_factory() -> AsyncGenerator[
     async_sessionmaker[AsyncSession],
     None,
 ]:
-    """Provide a shared async session factory backed by SQLite."""
+    """Provide a shared async session factory backed by Postgres test database."""
+
+    import os
+
+    # Use Postgres test database instead of SQLite in-memory
+    db_url = os.getenv(
+        "TEST_DATABASE_URL",
+        "postgresql+asyncpg://postgres:password@localhost:5432/building_compliance_test",
+    )
 
     engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+        db_url,
         future=True,
     )
+
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
 

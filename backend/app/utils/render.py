@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, Protocol, cast
 class _HTMLDocument(Protocol):
     """Minimal interface required from a rendered HTML document."""
 
-    def write_pdf(self) -> bytes:
-        ...
+    def write_pdf(self) -> bytes: ...
 
 
 HTMLFactory = Callable[..., _HTMLDocument]

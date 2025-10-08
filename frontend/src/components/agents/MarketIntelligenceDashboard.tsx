@@ -84,12 +84,12 @@ const MarketIntelligenceDashboard: React.FC = () => {
 
   const handleExportReport = () => {
     if (!marketReport) return;
-    
+
     const dataStr = JSON.stringify(marketReport, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
+
     const exportFileDefaultName = `market-report-${propertyType}-${new Date().toISOString().split('T')[0]}.json`;
-    
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -228,7 +228,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
             <Tab label="Market Dynamics" />
           </Tabs>
         </Box>
-        
+
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={8}>

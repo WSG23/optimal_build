@@ -44,6 +44,18 @@ Key components:
 - `scripts/ingest.py` orchestrates fetch, parse, map, and persistence steps.
 - `jurisdictions/sg_bca/` contains a self-contained mock parser, fetcher, overrides, and tests.
 
+## Development Workflow
+
+Before committing or pushing changes, run the automated checks so regressions are caught early:
+
+```bash
+make verify    # formatting, linting, coding rules, and tests (~10s)
+# or, if you only need the unit tests:
+make test
+```
+
+The `make verify` target is already wired into the pre-commit configuration, so keeping your environment up to date ensures each commit verifies cleanly.
+
 ## Running the Pipeline
 
 Once dependencies and migrations are installed:
