@@ -117,6 +117,14 @@ async def test_overlay_run_and_decisions(
     assert "flood_mitigation" in codes
     assert "tall_building_review" in codes
     assert "coastal_evacuation_plan" in codes
+    unit_codes = [code for code in codes if code.startswith("unit_space_")]
+    assert unit_codes, "Expected unit overlays to be generated for parsed spaces"
+    summary = next(
+        (item for item in payload["items"] if item["code"] == "unit_area_summary"),
+        None,
+    )
+    assert summary is not None
+    assert summary["engine_payload"]["unit_count"] >= len(unit_codes)
     assert all(item["status"] == "pending" for item in payload["items"])
     assert all(isinstance(item["target_ids"], list) for item in payload["items"])
     assert all(isinstance(item["props"], dict) for item in payload["items"])

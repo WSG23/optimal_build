@@ -163,6 +163,20 @@ def _acquire_lock(
     return lock
 
 
+def _space_area(space) -> float | None:
+    """Compute the polygon area for a space boundary."""
+
+    boundary = getattr(space, "boundary", None)
+    if not boundary or len(boundary) < 3:
+        return None
+    area = 0.0
+    points = list(boundary)
+    for index, (x1, y1) in enumerate(points):
+        x2, y2 = points[(index + 1) % len(points)]
+        area += x1 * y2 - x2 * y1
+    return abs(area) * 0.5
+
+
 def _evaluate_geometry(geometry: GeometryGraph) -> list[dict[str, object]]:
     """Simple heuristic feasibility engine that produces overlay suggestions."""
 
@@ -297,6 +311,70 @@ def _evaluate_geometry(geometry: GeometryGraph) -> list[dict[str, object]]:
                     "nodes": coastal_targets,
                 },
             }
+
+    spaces = list(geometry.spaces.values())
+    if spaces:
+        total_area = 0.0
+        residential_count = 0
+        for index, space in enumerate(spaces, start=1):
+            area = _space_area(space)
+            if area is not None:
+                total_area += area
+            if space.metadata.get("category") == "residential":
+                residential_count += 1
+            code = f"unit_space_{space.id or index}"
+            if code in suggestions:
+                continue
+            title = space.name or f"Unit {index}"
+            props = {
+                "space_id": space.id,
+                "level_id": space.level_id or site_level_id,
+            }
+            engine_payload: dict[str, object] = {
+                "space_id": space.id,
+            }
+            if area is not None:
+                rounded_area = round(area, 1)
+                props["area_sqm"] = rounded_area
+                engine_payload["area_sqm"] = rounded_area
+            severity = "medium" if area is not None and area >= 120 else "low"
+            score = (area / 200.0) if area is not None else None
+            suggestions[code] = {
+                "code": code,
+                "type": "assessment",
+                "title": title,
+                "rationale": "Auto-generated unit summary based on parsed CAD boundaries.",
+                "severity": severity,
+                "score": score,
+                "target_ids": _string_list(space.id),
+                "props": props,
+                "rule_refs": ["occupancy.unit.summary"],
+                "engine_payload": engine_payload,
+            }
+
+        if total_area > 0:
+            suggestions.setdefault(
+                "unit_area_summary",
+                {
+                    "code": "unit_area_summary",
+                    "type": "summary",
+                    "title": "Unit area coverage",
+                    "rationale": "Summarises total detected unit area for quick QA.",
+                    "severity": "low",
+                    "score": min(1.0, total_area / 1000.0),
+                    "target_ids": _string_list(site_level_id),
+                    "props": {
+                        "total_unit_area_sqm": round(total_area, 1),
+                        "unit_count": len(spaces),
+                        "residential_units": residential_count,
+                    },
+                    "rule_refs": ["occupancy.area.summary"],
+                    "engine_payload": {
+                        "area_sqm": round(total_area, 1),
+                        "unit_count": len(spaces),
+                    },
+                },
+            )
 
     ordered_codes = sorted(suggestions.keys())
     return [suggestions[code] for code in ordered_codes]

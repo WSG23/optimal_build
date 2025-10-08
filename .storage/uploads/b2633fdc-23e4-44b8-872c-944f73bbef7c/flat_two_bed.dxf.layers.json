@@ -1,0 +1,22 @@
+[
+  {
+    "color": 7,
+    "linetype": "CONTINUOUS",
+    "name": "LEVEL_01"
+  },
+  {
+    "color": 3,
+    "linetype": "CONTINUOUS",
+    "name": "LEVEL_02"
+  },
+  {
+    "color": 7,
+    "linetype": "Continuous",
+    "name": "0"
+  },
+  {
+    "color": 7,
+    "linetype": "Continuous",
+    "name": "Defpoints"
+  }
+]

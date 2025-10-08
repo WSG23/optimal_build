@@ -36,10 +36,10 @@ def _load_optional_module(name: str) -> ModuleType | None:
 
 ez_dxf_module = _load_optional_module("ezdxf")
 ifcopenshell = _load_optional_module("ifcopenshell")
-reportlab_pdfgen = _load_optional_module("reportlab.pdfgen")
+reportlab_pdfgen = _load_optional_module("reportlab.pdfgen.canvas")
 
 ezdxf = ez_dxf_module
-pdf_canvas = getattr(reportlab_pdfgen, "canvas", None) if reportlab_pdfgen else None
+pdf_canvas = reportlab_pdfgen
 
 
 DEFAULT_PENDING_WATERMARK = "PRELIMINARY – Pending overlay approvals"
