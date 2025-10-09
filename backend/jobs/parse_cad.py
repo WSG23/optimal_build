@@ -1072,6 +1072,17 @@ async def _persist_result(
 ) -> dict[str, Any]:
     graph_payload = GeometrySerializer.to_export(parsed.graph)
     record.parse_status = "completed"
+    metadata = dict(parsed.metadata)
+    zone_code = getattr(record, "zone_code", None)
+    if zone_code:
+        parse_metadata_section = metadata.get("parse_metadata")
+        if isinstance(parse_metadata_section, Mapping):
+            parse_metadata_section = dict(parse_metadata_section)
+        else:
+            parse_metadata_section = {}
+        parse_metadata_section["zone_code"] = zone_code
+        metadata["parse_metadata"] = parse_metadata_section
+        metadata["zone_code"] = zone_code
     record.parse_result = {
         "floors": len(parsed.floors),
         "units": len(parsed.units),
@@ -1079,7 +1090,7 @@ async def _persist_result(
         "detected_units": parsed.units,
         "layer_metadata": parsed.layers,
         "graph": graph_payload,
-        "metadata": parsed.metadata,
+        "metadata": metadata,
     }
     if parsed.layers:
         record.layer_metadata = parsed.layers

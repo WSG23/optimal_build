@@ -22,6 +22,7 @@ class ImportRecord(BaseModel):
     content_type = Column(String(100))
     size_bytes = Column(Integer, nullable=False)
     storage_path = Column(Text, nullable=False)
+    zone_code = Column(String(50))
     uploaded_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

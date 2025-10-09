@@ -81,6 +81,7 @@ pytest_asyncio = cast(Any, pytest_asyncio)
 
 ensure_sqlalchemy()
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
@@ -153,7 +154,10 @@ async def _truncate_all(session: AsyncSession) -> None:
 
     await session.rollback()
     for table in reversed(_SORTED_TABLES):
-        await session.execute(table.delete())
+        try:
+            await session.execute(table.delete())
+        except SQLAlchemyError:
+            continue
     await session.commit()
 
 
@@ -206,7 +210,7 @@ async def flow_session_factory() -> AsyncGenerator[
 
     # Run migrations (idempotent - only applies what's missing)
     result = subprocess.run(
-        [str(alembic_bin), "-c", str(backend_dir / "alembic.ini"), "upgrade", "head"],
+        [str(alembic_bin), "-c", str(backend_dir / "alembic.ini"), "upgrade", "heads"],
         cwd=str(backend_dir),
         env=env,
         capture_output=True,

@@ -12,6 +12,15 @@ import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
 
 const DEFAULT_PROJECT_ID = 5821
+const DEFAULT_ZONE_CODE = 'SG:residential'
+
+const ZONE_OPTIONS: Array<{ value: string; labelKey: string }> = [
+  { value: 'SG:residential', labelKey: 'residential' },
+  { value: 'SG:commercial', labelKey: 'commercial' },
+  { value: 'SG:industrial', labelKey: 'industrial' },
+  { value: 'SG:mixed_use', labelKey: 'mixedUse' },
+  { value: 'SG:business_park', labelKey: 'businessPark' },
+]
 
 export function CadUploadPage() {
   const apiClient = useApiClient()
@@ -21,9 +30,11 @@ export function CadUploadPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<number>(DEFAULT_PROJECT_ID)
+  const [zoneCode, setZoneCode] = useState<string>(DEFAULT_ZONE_CODE)
   const cancelRef = useRef<(() => void) | null>(null)
   const { rules, loading } = useRules(apiClient)
   const projectIdInputId = useId()
+  const zoneInputId = useId()
 
   useEffect(() => {
     return () => {
@@ -39,6 +50,7 @@ export function CadUploadPage() {
       try {
         const summary = await apiClient.uploadCadDrawing(file, {
           projectId,
+          zoneCode,
         })
         setJob(summary)
         setStatus({
@@ -69,7 +81,7 @@ export function CadUploadPage() {
         setIsUploading(false)
       }
     },
-    [apiClient, projectId, t],
+    [apiClient, projectId, t, zoneCode],
   )
 
   return (
@@ -92,6 +104,22 @@ export function CadUploadPage() {
                 setProjectId(Math.trunc(value))
               }}
             />
+          </label>
+          <label className="cad-upload__label" htmlFor={zoneInputId}>
+            <span>{t('uploader.zoneLabel')}</span>
+            <select
+              id={zoneInputId}
+              value={zoneCode}
+              onChange={(event) => {
+                setZoneCode(event.target.value)
+              }}
+            >
+              {ZONE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {t(`uploader.zoneOptions.${option.labelKey}`)}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
         {error && <p className="cad-upload__error">{error}</p>}

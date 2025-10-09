@@ -45,6 +45,9 @@ class ImportResult(BaseModel):
     vector_summary: dict[str, Any] | None = Field(
         default=None, description="Summary of extracted vector paths and inferred walls"
     )
+    zone_code: str | None = Field(
+        default=None, description="Zoning code associated with the import"
+    )
     parse_status: str
 
     model_config = ConfigDict(from_attributes=True)

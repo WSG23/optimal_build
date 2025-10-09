@@ -76,6 +76,7 @@ async def ingest_parsed_import_geometry(
             "parser": parsed_metadata.get("source"),
             "parse_metadata": parsed_metadata,
             "vector_summary": import_record.vector_summary,
+            "zone_code": getattr(import_record, "zone_code", None),
             "ingested_at": datetime.now(UTC).isoformat(),
         }
     )
@@ -113,6 +114,7 @@ async def ingest_parsed_import_geometry(
             "floors": payload.get("floors"),
             "units": payload.get("units"),
             "parser": metadata.get("parser"),
+            "zone_code": getattr(import_record, "zone_code", None),
         }
     )
     await append_event(

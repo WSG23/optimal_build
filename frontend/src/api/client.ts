@@ -15,6 +15,7 @@ export interface CadImportSummary {
   detectedFloors: DetectedFloorSummary[]
   detectedUnits: string[]
   vectorSummary: Record<string, unknown> | null
+  zoneCode: string | null
 }
 
 export type ParseJobStatus =
@@ -160,6 +161,7 @@ interface ImportResultResponse {
   detected_units: string[] | null
   vector_summary: Record<string, unknown> | null
   parse_status: ParseJobStatus
+  zone_code?: string | null
 }
 
 interface ParseStatusResponse {
@@ -363,6 +365,7 @@ export class ApiClient {
       })),
       detectedUnits: [...detectedUnitsSource],
       vectorSummary: payload.vector_summary ?? null,
+      zoneCode: payload.zone_code ?? null,
     }
   }
 
@@ -430,7 +433,7 @@ export class ApiClient {
 
   async uploadCadDrawing(
     file: File | Blob,
-    options: { inferWalls?: boolean; projectId?: number } = {},
+    options: { inferWalls?: boolean; projectId?: number; zoneCode?: string } = {},
   ): Promise<CadImportSummary> {
     const formData = new FormData()
     const derivedName =
@@ -445,6 +448,9 @@ export class ApiClient {
     }
     if (typeof options.projectId === 'number' && !Number.isNaN(options.projectId)) {
       formData.append('project_id', options.projectId.toString())
+    }
+    if (typeof options.zoneCode === 'string' && options.zoneCode.trim()) {
+      formData.append('zone_code', options.zoneCode.trim())
     }
 
     const headers = new Headers()

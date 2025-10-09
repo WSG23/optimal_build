@@ -53,7 +53,15 @@
     "overlays": "検出されたオーバーレイ",
     "hints": "当局からのヒント",
     "zone": "ゾーン",
-    "projectLabel": "プロジェクトID"
+    "projectLabel": "プロジェクトID",
+    "zoneLabel": "ゾーニング",
+    "zoneOptions": {
+      "residential": "住宅",
+      "commercial": "商業",
+      "industrial": "工業",
+      "mixedUse": "複合",
+      "businessPark": "ビジネスパーク"
+    }
   },
   "detection": {
     "title": "階層とユニットの検出プレビュー",

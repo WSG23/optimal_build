@@ -33,7 +33,7 @@ async def test_upload_import_persists_metadata(
             files={"file": (sample_path.name, handle, "application/json")},
         )
 
-    assert response.status_code == 201
+    assert response.status_code == 201, response.json()
     payload = response.json()
     assert payload["filename"] == sample_path.name
     assert payload["detected_units"] == ["01-01", "01-02", "02-01", "P1", "P2"]
@@ -45,6 +45,8 @@ async def test_upload_import_persists_metadata(
     assert payload["parse_status"] == "pending"
     assert payload["vector_storage_path"] is None
     assert payload["vector_summary"] is None
+    assert "zone_code" in payload
+    assert payload["zone_code"] is None
 
     async with async_session_factory() as session:
         record = await session.get(ImportRecord, payload["import_id"])
@@ -94,6 +96,7 @@ async def test_upload_dxf_emits_detection(app_client: AsyncClient) -> None:
     assert {"LEVEL_01", "LEVEL_02"}.issubset(layer_names)
     floor_names = {floor["name"].upper() for floor in payload["detected_floors"]}
     assert {"LEVEL_01", "LEVEL_02"}.issubset(floor_names)
+    assert payload.get("zone_code") is None
 
 
 @pytest.mark.asyncio
@@ -103,11 +106,11 @@ async def test_upload_ifc_surfaces_storeys(app_client: AsyncClient) -> None:
     )
 
     sample_path = GLOBAL_SAMPLES_DIR / "ifc" / "office_small.ifc"
-    with sample_path.open("rb") as handle:
-        response = await app_client.post(
-            "/api/v1/import",
-            files={"file": (sample_path.name, handle, "application/octet-stream")},
-        )
+    ifc_bytes = sample_path.read_bytes()
+    response = await app_client.post(
+        "/api/v1/import",
+        files={"file": (sample_path.name, ifc_bytes, "application/octet-stream")},
+    )
 
     assert response.status_code == 201
     payload = response.json()
@@ -174,8 +177,10 @@ async def test_upload_pdf_vectorizes_when_enabled(
     with pdf_path.open("rb") as handle:
         response = await app_client.post(
             "/api/v1/import",
-            files={"file": (pdf_path.name, handle, "application/pdf")},
-            data={"infer_walls": "true"},
+            files={
+                "file": (pdf_path.name, handle, "application/pdf"),
+                "infer_walls": (None, "true", None),
+            },
         )
 
     assert response.status_code == 201
@@ -217,8 +222,10 @@ async def test_upload_jpeg_vectorizes_bitmap_when_enabled(
 
     response = await app_client.post(
         "/api/v1/import",
-        files={"file": ("floorplan.jpg", buffer, "image/jpeg")},
-        data={"infer_walls": "true"},
+        files={
+            "file": ("floorplan.jpg", buffer, "image/jpeg"),
+            "infer_walls": (None, "true", None),
+        },
     )
 
     assert response.status_code == 201
@@ -239,3 +246,12 @@ async def test_upload_rejects_unsupported_extension(app_client: AsyncClient) -> 
     assert response.status_code == 415
     payload = response.json()
     assert "Unsupported file type" in payload.get("detail", "")
+
+
+def test_normalise_zone_code_roundtrip():
+    from backend.app.api.v1.imports import _normalise_zone_code
+
+    assert _normalise_zone_code("residential") == "SG:residential"
+    assert _normalise_zone_code(" SG:Industrial ") == "SG:industrial"
+    assert _normalise_zone_code("SG:") == "SG:"
+    assert _normalise_zone_code("") is None

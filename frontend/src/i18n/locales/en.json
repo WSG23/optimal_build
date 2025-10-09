@@ -53,7 +53,15 @@
     "overlays": "Detected overlays",
     "hints": "Authority hints",
     "zone": "Zone",
-    "projectLabel": "Project ID"
+    "projectLabel": "Project ID",
+    "zoneLabel": "Zoning",
+    "zoneOptions": {
+      "residential": "Residential",
+      "commercial": "Commercial",
+      "industrial": "Industrial",
+      "mixedUse": "Mixed use",
+      "businessPark": "Business park"
+    }
   },
   "detection": {
     "title": "Floor and unit detection preview",

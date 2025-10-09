@@ -30,7 +30,7 @@ async def test_overlay_run_and_decisions(
         upload_response = await app_client.post(
             "/api/v1/import",
             files={"file": (sample_path.name, handle, "application/json")},
-            data={"project_id": str(PROJECT_ID)},
+            data={"project_id": str(PROJECT_ID), "zone_code": "SG:residential"},
         )
 
     assert upload_response.status_code == 201

@@ -18,7 +18,16 @@ from backend.jobs.parse_cad import (
     parse_import_job,
 )
 from backend.jobs.raster_vector import vectorize_floorplan
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
@@ -357,6 +366,24 @@ def _layer_count_from_metadata(layer_metadata: object) -> int | None:
     return 1
 
 
+def _normalise_zone_code(value: str | None) -> str | None:
+    """Normalise zone codes to the ``PREFIX:suffix`` canonical format."""
+
+    if value is None:
+        return None
+    zone = value.strip()
+    if not zone:
+        return None
+    if ":" in zone:
+        prefix, suffix = zone.split(":", 1)
+        prefix = prefix.strip().upper() or "SG"
+        suffix = suffix.strip().lower()
+    else:
+        prefix = "SG"
+        suffix = zone.lower()
+    return f"{prefix}:{suffix}"
+
+
 def _build_parse_summary(record: ImportRecord) -> dict[str, Any]:
     """Aggregate import detection metadata for downstream consumers."""
 
@@ -457,6 +484,8 @@ async def upload_import(
     enable_raster_processing: bool = Form(True),
     infer_walls: bool = Form(False),
     project_id: int | None = Form(default=None),
+    zone_code: str | None = Form(default=None),
+    zone_header: str | None = Header(default=None, alias="X-Zone-Code"),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_reviewer),
 ) -> ImportResult:
@@ -488,10 +517,13 @@ async def upload_import(
     )
 
     import_id = str(uuid4())
+    selected_zone = zone_code or zone_header
+    normalised_zone = _normalise_zone_code(selected_zone)
 
     record = ImportRecord(
         id=import_id,
         project_id=project_id,
+        zone_code=normalised_zone,
         filename=file.filename or "upload.bin",
         content_type=file.content_type,
         size_bytes=len(raw_payload),
@@ -546,6 +578,7 @@ async def upload_import(
                 "detected_floors": len(record.detected_floors or []),
                 "detected_units": len(record.detected_units or []),
                 "vectorized": vector_summary is not None,
+                "zone_code": normalised_zone,
             },
         )
 

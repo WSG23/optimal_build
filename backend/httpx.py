@@ -8,6 +8,7 @@ from collections.abc import Iterable, MutableMapping
 from functools import partial
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit
+from uuid import uuid4
 
 _TEST_CLIENT: Any | None = None
 _TEST_CLIENT_UNAVAILABLE = False
@@ -108,7 +109,7 @@ class _StubAsyncClient:
         query_params = _merge_query(query, params)
         prepared_headers = _prepare_headers(headers, json, base=self._default_headers)
 
-        prepared_files: dict[str, tuple[str, bytes, str]] = {}
+        prepared_files: dict[str, tuple[str | None, bytes, str]] = {}
         if files:
             for key, (filename, payload, content_type) in files.items():
                 if hasattr(payload, "read"):
@@ -126,6 +127,43 @@ class _StubAsyncClient:
                     ),
                     content_type or "application/octet-stream",
                 )
+        body = b""
+        if json is not None:
+            body = _json_bytes(json)
+        elif prepared_files or data:
+            boundary = f"----httpxboundary{uuid4().hex}"
+            parts: list[bytes] = []
+            for key, value in (data or {}).items():
+                value_str = str(value)
+                parts.append(
+                    (
+                        f"--{boundary}\r\n"
+                        f'Content-Disposition: form-data; name="{key}"\r\n\r\n'
+                    ).encode("utf-8")
+                    + value_str.encode("utf-8")
+                    + b"\r\n"
+                )
+            for key, (filename, content, content_type) in prepared_files.items():
+                filename_value = filename or key
+                parts.append(
+                    (
+                        f"--{boundary}\r\n"
+                        f'Content-Disposition: form-data; name="{key}"; filename="{filename_value}"\r\n'
+                        f"Content-Type: {content_type}\r\n\r\n"
+                    ).encode("utf-8")
+                    + content
+                    + b"\r\n"
+                )
+            parts.append(f"--{boundary}--\r\n".encode("utf-8"))
+            body = b"".join(parts)
+            prepared_headers["content-type"] = (
+                f"multipart/form-data; boundary={boundary}"
+            )
+        elif data:
+            body = urlencode(data).encode("utf-8")
+            prepared_headers.setdefault(
+                "content-type", "application/x-www-form-urlencoded"
+            )
 
         if hasattr(self._app, "handle_request"):
             status_code, resp_headers, payload = await self._app.handle_request(
