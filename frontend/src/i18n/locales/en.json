@@ -76,6 +76,17 @@
     "empty": "No units match the current filters.",
     "locked": "Zone is locked. Unlock to update review status.",
     "exportCta": "Export review pack",
+    "override": {
+      "add": "Provide data",
+      "edit": "Edit data",
+      "prompt": "Enter {metric} value",
+      "prompts": {
+        "frontSetback": "front setback (m)",
+        "maxHeight": "building height (m)",
+        "siteArea": "site area (sqm)",
+        "grossFloorArea": "gross floor area (sqm)"
+      }
+    },
     "summary": {
       "floors": "{{count}} floors",
       "units": "{{count}} units",

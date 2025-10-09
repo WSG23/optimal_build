@@ -32,6 +32,7 @@ class ImportRecord(BaseModel):
     detected_units = Column(FlexibleJSONB, default=list)
     vector_storage_path = Column(Text)
     vector_summary = Column(FlexibleJSONB)
+    metric_overrides = Column(FlexibleJSONB, default=dict)
 
     parse_status = Column(String(32), nullable=False, default="pending")
     parse_requested_at = Column(DateTime(timezone=True))

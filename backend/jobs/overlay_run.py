@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 import time
-from collections.abc import AsyncIterator, Callable, Sequence
+from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -288,6 +288,12 @@ def _build_rule_metrics(
         metrics["max_height_m"] = max_height
 
     parse_meta = _coerce_mapping(metadata.get("parse_metadata"))
+    overrides = _coerce_mapping(metadata.get("metric_overrides"))
+    if not overrides and parse_meta:
+        overrides = _coerce_mapping(parse_meta.get("overrides"))
+    if overrides:
+        metrics = _apply_metric_overrides(metrics, overrides)
+
     land_area = _coerce_float(metadata.get("site_area_sqm")) or _coerce_float(
         parse_meta.get("site_area_sqm")
     )
@@ -329,6 +335,46 @@ def _build_rule_metrics(
         except ZeroDivisionError:
             pass
     return metrics
+
+
+def _apply_metric_overrides(
+    metrics: dict[str, float], overrides: Mapping[str, Any]
+) -> dict[str, float]:
+    updated = dict(metrics)
+    overrides_map: dict[str, float] = {}
+    for key, raw_value in overrides.items():
+        value = _coerce_float(raw_value)
+        if value is None:
+            continue
+        overrides_map[key] = value
+        if key in {"site_area_sqm", "land_area_sqm"}:
+            updated["land_area_sqm"] = value
+        elif key == "gross_floor_area_sqm":
+            updated["gross_floor_area_sqm"] = value
+        elif key in {"max_height_m", "building_height_m"}:
+            updated["max_height_m"] = value
+        elif key == "front_setback_m":
+            updated["front_setback_m"] = value
+
+    land_area = updated.get("land_area_sqm")
+    gross_floor_area = updated.get("gross_floor_area_sqm")
+
+    if gross_floor_area is not None and land_area:
+        try:
+            updated["plot_ratio"] = gross_floor_area / land_area
+        except ZeroDivisionError:
+            pass
+
+    footprint_area = None
+    if "site_coverage_percent" in updated and land_area:
+        footprint_area = (updated["site_coverage_percent"] / 100.0) * land_area
+    if footprint_area is not None and land_area:
+        try:
+            updated["site_coverage_percent"] = (footprint_area / land_area) * 100
+        except ZeroDivisionError:
+            pass
+
+    return updated
 
 
 _PARAMETER_METRIC_MAP: dict[str, str] = {

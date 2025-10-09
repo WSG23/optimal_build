@@ -76,6 +76,17 @@
     "empty": "現在のフィルターに一致するユニットはありません。",
     "locked": "ゾーンがロックされています。ステータスを更新するにはロックを解除してください。",
     "exportCta": "レビュー資料をエクスポート",
+    "override": {
+      "add": "値を入力",
+      "edit": "値を編集",
+      "prompt": "{metric} の値を入力してください",
+      "prompts": {
+        "frontSetback": "前面セットバック (m)",
+        "maxHeight": "建物高さ (m)",
+        "siteArea": "敷地面積 (㎡)",
+        "grossFloorArea": "延床面積 (㎡)"
+      }
+    },
     "summary": {
       "floors": "{{count}} 階",
       "units": "{{count}} ユニット",

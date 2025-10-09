@@ -16,6 +16,7 @@ export interface CadImportSummary {
   detectedUnits: string[]
   vectorSummary: Record<string, unknown> | null
   zoneCode: string | null
+  overrides: Record<string, number> | null
 }
 
 export type ParseJobStatus =
@@ -162,6 +163,7 @@ interface ImportResultResponse {
   vector_summary: Record<string, unknown> | null
   parse_status: ParseJobStatus
   zone_code?: string | null
+  metric_overrides?: Record<string, number> | null
 }
 
 interface ParseStatusResponse {
@@ -366,6 +368,14 @@ export class ApiClient {
       detectedUnits: [...detectedUnitsSource],
       vectorSummary: payload.vector_summary ?? null,
       zoneCode: payload.zone_code ?? null,
+      overrides:
+        payload.metric_overrides && typeof payload.metric_overrides === 'object'
+          ? Object.fromEntries(
+              Object.entries(payload.metric_overrides).flatMap(([key, value]) =>
+                typeof value === 'number' ? [[key, value]] : [],
+              ),
+            )
+          : null,
     }
   }
 
@@ -586,6 +596,35 @@ export class ApiClient {
       updated: payload.updated,
       evaluated: payload.evaluated,
     }
+  }
+
+  async getLatestImport(projectId: number): Promise<CadImportSummary | null> {
+    try {
+      const payload = await this.request<ImportResultResponse>(
+        `api/v1/import/latest?project_id=${projectId}`,
+      )
+      return this.mapImportResult(payload)
+    } catch (error) {
+      if (error instanceof Error && /404/.test(error.message)) {
+        return null
+      }
+      throw error
+    }
+  }
+
+  async updateImportOverrides(
+    importId: string,
+    overrides: Record<string, number>,
+  ): Promise<CadImportSummary> {
+    const payload = await this.request<ImportResultResponse>(
+      `api/v1/import/${importId}/overrides`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(overrides),
+      },
+    )
+    return this.mapImportResult(payload)
   }
 
   async decideOverlay(

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { AuditEvent, OverlaySuggestion } from '../api/client'
+import type { AuditEvent, CadImportSummary, OverlaySuggestion } from '../api/client'
 import { AppLayout } from '../App'
 import { useApiClient } from '../api/client'
 import { useTranslation } from '../i18n'
@@ -59,12 +59,30 @@ export function CadDetectionPage() {
   const [auditLoading, setAuditLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [importSummary, setImportSummary] = useState<CadImportSummary | null>(null)
+  const [loadingImport, setLoadingImport] = useState(false)
   const [activeLayers, setActiveLayers] = useState<DetectionStatus[]>([
     'source',
     'pending',
     'approved',
     'rejected',
   ])
+
+  const fetchLatestImport = useCallback(async () => {
+    setLoadingImport(true)
+    try {
+      const summary = await apiClient.getLatestImport(projectId)
+      setImportSummary(summary)
+    } catch (err) {
+      setImportSummary(null)
+      setError(
+        (prev) =>
+          prev ?? (err instanceof Error ? err.message : t('detection.loadError')),
+      )
+    } finally {
+      setLoadingImport(false)
+    }
+  }, [apiClient, projectId, t])
 
   const refreshAudit = useCallback(async () => {
     setAuditLoading(true)
@@ -103,6 +121,9 @@ export function CadDetectionPage() {
     const initialise = async () => {
       await refreshSuggestions()
       if (!cancelled) {
+        await fetchLatestImport()
+      }
+      if (!cancelled) {
         await refreshAudit()
       }
     }
@@ -116,7 +137,7 @@ export function CadDetectionPage() {
     return () => {
       cancelled = true
     }
-  }, [refreshAudit, refreshSuggestions, t])
+  }, [fetchLatestImport, refreshAudit, refreshSuggestions, t])
 
   const overlays = useMemo(
     () => suggestions.map((item) => item.code),
@@ -130,16 +151,30 @@ export function CadDetectionPage() {
     [suggestions],
   )
 
+  const overrides = importSummary?.overrides ?? {}
   const units = useMemo<DetectedUnit[]>(
     () =>
-      suggestions.map((suggestion, index) => ({
-        id: suggestion.id.toString(),
-        floor: index + 1,
-        unitLabel: suggestion.title || suggestion.code,
-        areaSqm: deriveAreaSqm(suggestion),
-        status: normaliseStatus(suggestion.status),
-      })),
-    [suggestions],
+      suggestions.map((suggestion, index) => {
+        const missingMetricKey =
+          typeof (suggestion.enginePayload as { missing_metric?: unknown })
+            ?.missing_metric === 'string'
+            ? ((suggestion.enginePayload as { missing_metric?: string }).missing_metric ?? null)
+            : null
+        const overrideValue =
+          missingMetricKey && typeof overrides[missingMetricKey] === 'number'
+            ? overrides[missingMetricKey]
+            : null
+        return {
+          id: suggestion.id.toString(),
+          floor: index + 1,
+          unitLabel: suggestion.title || suggestion.code,
+          areaSqm: deriveAreaSqm(suggestion),
+          status: normaliseStatus(suggestion.status),
+          missingMetricKey: missingMetricKey ?? undefined,
+          overrideValue,
+        }
+      }),
+    [overrides, suggestions],
   )
 
   const visibleUnits = useMemo(
@@ -208,6 +243,63 @@ export function CadDetectionPage() {
     void applyDecisionBatch('rejected')
   }, [applyDecisionBatch])
 
+  const metricLabels = useMemo(
+    () => ({
+      front_setback_m: t('detection.override.prompts.frontSetback'),
+      max_height_m: t('detection.override.prompts.maxHeight'),
+      site_area_sqm: t('detection.override.prompts.siteArea'),
+      gross_floor_area_sqm: t('detection.override.prompts.grossFloorArea'),
+    }),
+    [t],
+  )
+
+  const handleProvideMetric = useCallback(
+    async (metricKey: string, currentValue?: number | null) => {
+      if (!importSummary) {
+        return
+      }
+      const label = metricLabels[metricKey as keyof typeof metricLabels] ?? metricKey
+      const input = window.prompt(
+        t('detection.override.prompt', { metric: label }),
+        currentValue != null ? currentValue.toString() : '',
+      )
+      if (input === null) {
+        return
+      }
+      const parsed = Number.parseFloat(input)
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        window.alert(t('common.errors.generic'))
+        return
+      }
+      setMutationPending(true)
+      try {
+        await apiClient.updateImportOverrides(importSummary.importId, {
+          [metricKey]: parsed,
+        })
+        await apiClient.runOverlay(projectId)
+        await refreshSuggestions()
+        await fetchLatestImport()
+        await refreshAudit()
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : t('detection.loadError'),
+        )
+      } finally {
+        setMutationPending(false)
+      }
+    },
+    [
+      apiClient,
+      fetchLatestImport,
+      importSummary,
+      metricLabels,
+      projectId,
+      refreshAudit,
+      refreshSuggestions,
+      t,
+    ],
+  )
+
   const handleExport = useCallback(
     async (format: string) => {
       if (pendingCount > 0) {
@@ -259,6 +351,7 @@ export function CadDetectionPage() {
       <div className="cad-detection__toolbar">
         <p>{t('detection.projectSummary', { id: projectId })}</p>
         {loadingSuggestions && <span>{t('common.loading')}</span>}
+        {loadingImport && <span>{t('common.loading')}</span>}
       </div>
 
       {error && <p className="cad-detection__error">{error}</p>}
@@ -267,8 +360,10 @@ export function CadDetectionPage() {
         units={visibleUnits}
         overlays={overlays}
         hints={hints}
-        zoneCode={null}
+        zoneCode={importSummary?.zoneCode ?? null}
         locked={locked}
+        onProvideMetric={handleProvideMetric}
+        provideMetricDisabled={mutationPending}
       />
 
       <div className="cad-detection__grid">

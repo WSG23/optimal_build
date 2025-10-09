@@ -48,6 +48,10 @@ class ImportResult(BaseModel):
     zone_code: str | None = Field(
         default=None, description="Zoning code associated with the import"
     )
+    metric_overrides: dict[str, Any] | None = Field(
+        default=None,
+        description="Reviewer-supplied metric overrides for rule evaluation",
+    )
     parse_status: str
 
     model_config = ConfigDict(from_attributes=True)

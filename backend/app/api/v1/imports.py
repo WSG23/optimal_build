@@ -25,9 +25,12 @@ from fastapi import (
     Form,
     Header,
     HTTPException,
+    Query,
     UploadFile,
     status,
 )
+from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
@@ -37,6 +40,18 @@ from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
+
+
+class MetricOverridePayload(BaseModel):
+    site_area_sqm: float | None = Field(default=None, gt=0)
+    gross_floor_area_sqm: float | None = Field(default=None, gt=0)
+    max_height_m: float | None = Field(default=None, gt=0)
+    front_setback_m: float | None = Field(default=None, gt=0)
+
+    def normalized(self) -> dict[str, float]:
+        values = self.model_dump(exclude_none=True)
+        return {key: float(value) for key, value in values.items()}
+
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -384,6 +399,45 @@ def _normalise_zone_code(value: str | None) -> str | None:
     return f"{prefix}:{suffix}"
 
 
+def _coerce_positive(value: float | None) -> float | None:
+    if value is None:
+        return None
+    try:
+        candidate = float(value)
+    except (TypeError, ValueError):
+        return None
+    return candidate if candidate > 0 else None
+
+
+def _import_result_from_record(record: ImportRecord) -> ImportResult:
+    floors_raw = record.detected_floors or []
+    floors = [
+        DetectedFloor(
+            name=str(floor.get("name", f"Floor {index}")),
+            unit_ids=list(floor.get("unit_ids") or []),
+        )
+        for index, floor in enumerate(floors_raw, start=1)
+        if isinstance(floor, Mapping)
+    ]
+
+    return ImportResult(
+        import_id=record.id,
+        filename=record.filename,
+        content_type=record.content_type,
+        size_bytes=record.size_bytes,
+        storage_path=record.storage_path,
+        vector_storage_path=record.vector_storage_path,
+        uploaded_at=record.uploaded_at,
+        layer_metadata=list(record.layer_metadata or []),
+        detected_floors=floors,
+        detected_units=list(record.detected_units or []),
+        vector_summary=record.vector_summary,
+        zone_code=getattr(record, "zone_code", None),
+        metric_overrides=getattr(record, "metric_overrides", None),
+        parse_status=record.parse_status,
+    )
+
+
 def _build_parse_summary(record: ImportRecord) -> dict[str, Any]:
     """Aggregate import detection metadata for downstream consumers."""
 
@@ -485,6 +539,10 @@ async def upload_import(
     infer_walls: bool = Form(False),
     project_id: int | None = Form(default=None),
     zone_code: str | None = Form(default=None),
+    site_area_sqm: float | None = Form(default=None),
+    gross_floor_area_sqm: float | None = Form(default=None),
+    max_height_m: float | None = Form(default=None),
+    front_setback_m: float | None = Form(default=None),
     zone_header: str | None = Header(default=None, alias="X-Zone-Code"),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_reviewer),
@@ -520,10 +578,22 @@ async def upload_import(
     selected_zone = zone_code or zone_header
     normalised_zone = _normalise_zone_code(selected_zone)
 
+    overrides: dict[str, float] = {}
+    for key, value in {
+        "site_area_sqm": site_area_sqm,
+        "gross_floor_area_sqm": gross_floor_area_sqm,
+        "max_height_m": max_height_m,
+        "front_setback_m": front_setback_m,
+    }.items():
+        coerced = _coerce_positive(value)
+        if coerced is not None:
+            overrides[key] = coerced
+
     record = ImportRecord(
         id=import_id,
         project_id=project_id,
         zone_code=normalised_zone,
+        metric_overrides=overrides or None,
         filename=file.filename or "upload.bin",
         content_type=file.content_type,
         size_bytes=len(raw_payload),
@@ -579,28 +649,81 @@ async def upload_import(
                 "detected_units": len(record.detected_units or []),
                 "vectorized": vector_summary is not None,
                 "zone_code": normalised_zone,
+                "metric_overrides": overrides or None,
             },
         )
 
     await session.commit()
     await session.refresh(record)
 
-    return ImportResult(
-        import_id=record.id,
-        filename=record.filename,
-        content_type=record.content_type,
-        size_bytes=record.size_bytes,
-        storage_path=record.storage_path,
-        vector_storage_path=record.vector_storage_path,
-        uploaded_at=record.uploaded_at,
-        layer_metadata=record.layer_metadata or [],
-        detected_floors=[
-            DetectedFloor(**floor) for floor in record.detected_floors or []
-        ],
-        detected_units=record.detected_units or [],
-        vector_summary=record.vector_summary or vector_summary,
-        parse_status=record.parse_status,
+    return _import_result_from_record(record)
+
+
+@router.get("/import/latest", response_model=ImportResult)
+async def get_latest_import(
+    project_id: int = Query(..., gt=0),
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_viewer),
+) -> ImportResult:
+    stmt = (
+        select(ImportRecord)
+        .where(ImportRecord.project_id == project_id)
+        .order_by(ImportRecord.uploaded_at.desc())
+        .limit(1)
     )
+    result = await session.execute(stmt)
+    record = result.scalars().first()
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Import not found"
+        )
+    return _import_result_from_record(record)
+
+
+@router.post("/import/{import_id}/overrides", response_model=ImportResult)
+async def update_import_overrides(
+    import_id: str,
+    payload: MetricOverridePayload,
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(require_reviewer),
+) -> ImportResult:
+    record = await session.get(ImportRecord, import_id)
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Import not found"
+        )
+
+    overrides = dict(record.metric_overrides or {})
+    overrides.update(payload.normalized())
+    overrides = {key: value for key, value in overrides.items() if value is not None}
+    record.metric_overrides = overrides or None
+
+    if record.parse_result and isinstance(record.parse_result, dict):
+        metadata = dict(record.parse_result.get("metadata") or {})
+        parse_meta = dict(metadata.get("parse_metadata") or {})
+        if overrides:
+            parse_meta["overrides"] = dict(overrides)
+            metadata["metric_overrides"] = dict(overrides)
+        else:
+            parse_meta.pop("overrides", None)
+            metadata.pop("metric_overrides", None)
+        metadata["parse_metadata"] = parse_meta
+        record.parse_result["metadata"] = metadata
+
+    if record.project_id is not None:
+        await append_event(
+            session,
+            project_id=record.project_id,
+            event_type="import_override",
+            context={
+                "import_id": record.id,
+                "metric_overrides": overrides or {},
+            },
+        )
+
+    await session.commit()
+    await session.refresh(record)
+    return _import_result_from_record(record)
 
 
 @router.post("/parse/{import_id}", response_model=ParseStatusResponse)

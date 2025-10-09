@@ -77,6 +77,7 @@ async def ingest_parsed_import_geometry(
             "parse_metadata": parsed_metadata,
             "vector_summary": import_record.vector_summary,
             "zone_code": getattr(import_record, "zone_code", None),
+            "metric_overrides": getattr(import_record, "metric_overrides", None),
             "ingested_at": datetime.now(UTC).isoformat(),
         }
     )
@@ -115,6 +116,7 @@ async def ingest_parsed_import_geometry(
             "units": payload.get("units"),
             "parser": metadata.get("parser"),
             "zone_code": getattr(import_record, "zone_code", None),
+            "metric_overrides": getattr(import_record, "metric_overrides", None),
         }
     )
     await append_event(

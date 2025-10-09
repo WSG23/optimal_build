@@ -6,6 +6,8 @@ export interface DetectedUnit {
   unitLabel: string
   areaSqm: number
   status: DetectionStatus
+  missingMetricKey?: string
+  overrideValue?: number | null
 }
 
 export interface RoiMetrics {

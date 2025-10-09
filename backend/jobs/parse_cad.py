@@ -1074,6 +1074,7 @@ async def _persist_result(
     record.parse_status = "completed"
     metadata = dict(parsed.metadata)
     zone_code = getattr(record, "zone_code", None)
+    metric_overrides = getattr(record, "metric_overrides", None) or {}
     if zone_code:
         parse_metadata_section = metadata.get("parse_metadata")
         if isinstance(parse_metadata_section, Mapping):
@@ -1083,6 +1084,15 @@ async def _persist_result(
         parse_metadata_section["zone_code"] = zone_code
         metadata["parse_metadata"] = parse_metadata_section
         metadata["zone_code"] = zone_code
+    if metric_overrides:
+        parse_metadata_section = metadata.get("parse_metadata")
+        if isinstance(parse_metadata_section, Mapping):
+            parse_metadata_section = dict(parse_metadata_section)
+        else:
+            parse_metadata_section = {}
+        parse_metadata_section["overrides"] = dict(metric_overrides)
+        metadata["parse_metadata"] = parse_metadata_section
+        metadata["metric_overrides"] = dict(metric_overrides)
     record.parse_result = {
         "floors": len(parsed.floors),
         "units": len(parsed.units),

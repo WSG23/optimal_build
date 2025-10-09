@@ -248,6 +248,39 @@ async def test_upload_rejects_unsupported_extension(app_client: AsyncClient) -> 
     assert "Unsupported file type" in payload.get("detail", "")
 
 
+@pytest.mark.asyncio
+async def test_import_overrides_and_latest_endpoint(
+    app_client: AsyncClient,
+) -> None:
+    sample_path = SAMPLES_DIR / "sample_floorplan.json"
+    project_id = 7777
+    with sample_path.open("rb") as handle:
+        upload_response = await app_client.post(
+            "/api/v1/import",
+            files={"file": (sample_path.name, handle, "application/json")},
+            data={"project_id": str(project_id)},
+        )
+
+    assert upload_response.status_code == 201
+    upload_payload = upload_response.json()
+
+    override_response = await app_client.post(
+        f"/api/v1/import/{upload_payload['import_id']}/overrides",
+        json={"max_height_m": 42.5},
+    )
+    assert override_response.status_code == 200
+    override_payload = override_response.json()
+    assert override_payload["metric_overrides"]["max_height_m"] == 42.5
+
+    latest_response = await app_client.get(
+        f"/api/v1/import/latest?project_id={project_id}"
+    )
+    assert latest_response.status_code == 200
+    latest_payload = latest_response.json()
+    assert latest_payload["import_id"] == upload_payload["import_id"]
+    assert latest_payload["metric_overrides"]["max_height_m"] == 42.5
+
+
 def test_normalise_zone_code_roundtrip():
     from backend.app.api.v1.imports import _normalise_zone_code
 

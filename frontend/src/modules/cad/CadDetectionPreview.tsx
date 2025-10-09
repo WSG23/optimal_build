@@ -9,6 +9,8 @@ interface CadDetectionPreviewProps {
   hints: string[]
   zoneCode?: string | null
   locked?: boolean
+  onProvideMetric?: (metricKey: string, currentValue?: number | null) => void
+  provideMetricDisabled?: boolean
 }
 
 const STATUS_LABEL_KEYS: Record<DetectedUnit['status'], string> = {
@@ -24,6 +26,8 @@ export function CadDetectionPreview({
   hints,
   zoneCode,
   locked = false,
+  onProvideMetric,
+  provideMetricDisabled = false,
 }: CadDetectionPreviewProps) {
   const { t } = useTranslation()
   const floors = useMemo(
@@ -105,6 +109,20 @@ export function CadDetectionPreview({
                 <td>{unit.areaSqm.toFixed(1)}</td>
                 <td className={`cad-status cad-status--${unit.status}`}>
                   {t(STATUS_LABEL_KEYS[unit.status])}
+                  {unit.missingMetricKey && onProvideMetric && (
+                    <button
+                      type="button"
+                      className="cad-preview__metric-button"
+                      disabled={provideMetricDisabled}
+                      onClick={() => {
+                        onProvideMetric(unit.missingMetricKey!, unit.overrideValue)
+                      }}
+                    >
+                      {unit.overrideValue != null
+                        ? t('detection.override.edit')
+                        : t('detection.override.add')}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))
