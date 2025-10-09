@@ -14,6 +14,15 @@ import { DetectionStatus, DetectedUnit } from '../modules/cad/types'
 
 const DEFAULT_PROJECT_ID = 5821
 
+interface AggregatedSuggestion {
+  key: string
+  suggestion: OverlaySuggestion
+  count: number
+  status: DetectionStatus
+  missingMetricKey?: string
+  totalArea: number
+}
+
 function normaliseStatus(status: string): DetectionStatus {
   const value = status.toLowerCase()
   if (value === 'approved') {
@@ -45,6 +54,146 @@ function deriveAreaSqm(suggestion: OverlaySuggestion): number {
     return Math.max(0, Math.round(suggestion.score * 1000) / 10)
   }
   return 0
+}
+
+const STATUS_PRIORITY: DetectionStatus[] = [
+  'pending',
+  'rejected',
+  'approved',
+  'source',
+]
+
+function getStatusPriority(status: DetectionStatus): number {
+  const priority = STATUS_PRIORITY.indexOf(status)
+  return priority === -1 ? STATUS_PRIORITY.length : priority
+}
+
+function getSuggestionTimestamp(suggestion: OverlaySuggestion): number {
+  const updated = Date.parse(suggestion.updatedAt)
+  if (Number.isFinite(updated)) {
+    return updated
+  }
+  const created = Date.parse(suggestion.createdAt)
+  if (Number.isFinite(created)) {
+    return created
+  }
+  return 0
+}
+
+function getMissingMetricKey(suggestion: OverlaySuggestion): string | undefined {
+  const payload = suggestion.enginePayload as {
+    missing_metric?: unknown
+  }
+  const props = suggestion.props as {
+    metric?: unknown
+  }
+  if (typeof payload?.missing_metric === 'string') {
+    return payload.missing_metric
+  }
+  if (typeof props?.metric === 'string') {
+    return props.metric
+  }
+  return undefined
+}
+
+function filterLatestUnitSpaceSuggestions(
+  suggestions: OverlaySuggestion[],
+): OverlaySuggestion[] {
+  const latestByCode = new Map<string, number>()
+  for (const suggestion of suggestions) {
+    if (!suggestion.code.startsWith('unit_space_')) {
+      continue
+    }
+    const timestamp = getSuggestionTimestamp(suggestion)
+    const existing = latestByCode.get(suggestion.code)
+    if (existing == null || timestamp > existing) {
+      latestByCode.set(suggestion.code, timestamp)
+    }
+  }
+
+  const seen = new Set<string>()
+  return suggestions.filter((suggestion) => {
+    if (!suggestion.code.startsWith('unit_space_')) {
+      return true
+    }
+    const latestTimestamp = latestByCode.get(suggestion.code)
+    if (latestTimestamp == null) {
+      return true
+    }
+    const timestamp = getSuggestionTimestamp(suggestion)
+    if (timestamp !== latestTimestamp) {
+      return false
+    }
+    if (seen.has(suggestion.code)) {
+      return false
+    }
+    seen.add(suggestion.code)
+    return true
+  })
+}
+
+function aggregateOverlaySuggestions(
+  suggestions: OverlaySuggestion[],
+): AggregatedSuggestion[] {
+  const groups = new Map<
+    string,
+    {
+      key: string
+      latest: OverlaySuggestion
+      latestTimestamp: number
+      status: DetectionStatus
+      firstIndex: number
+      missingMetricKey?: string
+      count: number
+      totalArea: number
+    }
+  >()
+
+  suggestions.forEach((suggestion, index) => {
+    const status = normaliseStatus(suggestion.status)
+    const missingMetricKey = getMissingMetricKey(suggestion)
+    const groupKey = missingMetricKey ?? suggestion.code
+    const timestamp = getSuggestionTimestamp(suggestion)
+    const area = deriveAreaSqm(suggestion)
+    const existing = groups.get(groupKey)
+    if (!existing) {
+      groups.set(groupKey, {
+        key: groupKey,
+        latest: suggestion,
+        latestTimestamp: timestamp,
+        status,
+        firstIndex: index,
+        missingMetricKey,
+        count: 1,
+        totalArea: area,
+      })
+      return
+    }
+
+    existing.count += 1
+    existing.totalArea += area
+    if (getStatusPriority(status) < getStatusPriority(existing.status)) {
+      existing.status = status
+    }
+    if (!existing.missingMetricKey && missingMetricKey) {
+      existing.missingMetricKey = missingMetricKey
+    }
+    if (timestamp >= existing.latestTimestamp) {
+      existing.latest = suggestion
+      existing.latestTimestamp = timestamp
+    }
+  })
+
+  return Array.from(groups.values())
+    .sort((a, b) => a.firstIndex - b.firstIndex)
+    .map((group) => ({
+      key: group.key,
+      suggestion: group.latest,
+      count: group.count,
+      status: group.status,
+      missingMetricKey: group.missingMetricKey,
+      totalArea: group.totalArea,
+    }))
 }
 
 export function CadDetectionPage() {
@@ -139,42 +288,59 @@ export function CadDetectionPage() {
     }
   }, [fetchLatestImport, refreshAudit, refreshSuggestions, t])
 
-  const overlays = useMemo(
-    () => suggestions.map((item) => item.code),
-    [suggestions],
-  )
-  const hints = useMemo(
-    () =>
-      suggestions
-        .map((item) => item.rationale)
-        .filter((value): value is string => Boolean(value)),
+  const filteredSuggestions = useMemo(
+    () => filterLatestUnitSpaceSuggestions(suggestions),
     [suggestions],
   )
 
-  const overrides = importSummary?.overrides ?? {}
-  const units = useMemo<DetectedUnit[]>(
+  const aggregatedSuggestions = useMemo(
+    () => aggregateOverlaySuggestions(filteredSuggestions),
+    [filteredSuggestions],
+  )
+
+  const overlays = useMemo(
+    () => aggregatedSuggestions.map((item) => item.suggestion.code),
+    [aggregatedSuggestions],
+  )
+  const hints = useMemo(
     () =>
-      suggestions.map((suggestion, index) => {
-        const missingMetricKey =
-          typeof (suggestion.enginePayload as { missing_metric?: unknown })
-            ?.missing_metric === 'string'
-            ? ((suggestion.enginePayload as { missing_metric?: string }).missing_metric ?? null)
-            : null
+      aggregatedSuggestions
+        .map((item) => item.suggestion.rationale)
+        .filter((value): value is string => Boolean(value)),
+    [aggregatedSuggestions],
+  )
+
+  const units = useMemo<DetectedUnit[]>(
+    () => {
+      const overrides = importSummary?.overrides ?? {}
+      return aggregatedSuggestions.map((entry, index) => {
+        const missingMetricKey = entry.missingMetricKey ?? null
         const overrideValue =
           missingMetricKey && typeof overrides[missingMetricKey] === 'number'
             ? overrides[missingMetricKey]
             : null
+        const baseLabel =
+          entry.suggestion.title || entry.suggestion.code || entry.key
+        const label =
+          entry.count > 1
+            ? `${baseLabel} ${t('detection.countSuffix', { count: entry.count })}`
+            : baseLabel
+        const areaSqm =
+          entry.totalArea > 0
+            ? entry.totalArea
+            : deriveAreaSqm(entry.suggestion)
         return {
-          id: suggestion.id.toString(),
+          id: entry.key,
           floor: index + 1,
-          unitLabel: suggestion.title || suggestion.code,
-          areaSqm: deriveAreaSqm(suggestion),
-          status: normaliseStatus(suggestion.status),
+          unitLabel: label,
+          areaSqm,
+          status: entry.status,
           missingMetricKey: missingMetricKey ?? undefined,
           overrideValue,
         }
-      }),
-    [overrides, suggestions],
+      })
+    },
+    [aggregatedSuggestions, importSummary?.overrides, t],
   )
 
   const visibleUnits = useMemo(
@@ -183,8 +349,8 @@ export function CadDetectionPage() {
   )
 
   const pendingCount = useMemo(
-    () => units.filter((unit) => unit.status === 'pending').length,
-    [units],
+    () => aggregatedSuggestions.filter((entry) => entry.status === 'pending').length,
+    [aggregatedSuggestions],
   )
 
   const handleLayerToggle = useCallback(

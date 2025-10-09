@@ -13,7 +13,8 @@
     "loading": "Loading…",
     "errors": {
       "uploadFailed": "Upload failed",
-      "pipelineLoad": "Unable to load suggestions"
+      "pipelineLoad": "Unable to load suggestions",
+      "generic": "Something went wrong"
     }
   },
   "app": {
@@ -73,6 +74,7 @@
     "floor": "Floor",
     "area": "Area (sqm)",
     "status": "Status",
+    "countSuffix": "×{{count}}",
     "empty": "No units match the current filters.",
     "locked": "Zone is locked. Unlock to update review status.",
     "exportCta": "Export review pack",
