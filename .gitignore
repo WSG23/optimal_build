@@ -127,6 +127,7 @@ lerna-debug.log*
 pids
 *.pid
 backend/.storage/
+.storage/
 *.seed
 *.pid.lock
 
