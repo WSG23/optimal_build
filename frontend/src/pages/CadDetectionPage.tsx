@@ -63,6 +63,13 @@ const STATUS_PRIORITY: DetectionStatus[] = [
   'source',
 ]
 
+const STATUS_LABEL_KEYS: Record<DetectionStatus, string> = {
+  source: 'controls.source',
+  pending: 'controls.pending',
+  approved: 'controls.approved',
+  rejected: 'controls.rejected',
+}
+
 function getStatusPriority(status: DetectionStatus): number {
   const priority = STATUS_PRIORITY.indexOf(status)
   return priority === -1 ? STATUS_PRIORITY.length : priority
@@ -198,7 +205,7 @@ export function aggregateOverlaySuggestions(
 
 export function CadDetectionPage() {
   const apiClient = useApiClient()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [projectId] = useState<number>(DEFAULT_PROJECT_ID)
   const [suggestions, setSuggestions] = useState<OverlaySuggestion[]>([])
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
@@ -210,12 +217,7 @@ export function CadDetectionPage() {
   const [exporting, setExporting] = useState(false)
   const [importSummary, setImportSummary] = useState<CadImportSummary | null>(null)
   const [loadingImport, setLoadingImport] = useState(false)
-  const [activeLayers, setActiveLayers] = useState<DetectionStatus[]>([
-    'source',
-    'pending',
-    'approved',
-    'rejected',
-  ])
+  const [activeLayers, setActiveLayers] = useState<DetectionStatus[]>(['source', 'pending'])
 
   const fetchLatestImport = useCallback(async () => {
     setLoadingImport(true)
@@ -352,6 +354,17 @@ export function CadDetectionPage() {
     () => aggregatedSuggestions.filter((entry) => entry.status === 'pending').length,
     [aggregatedSuggestions],
   )
+
+  const hiddenStatusLabels = useMemo(() => {
+    const focus: DetectionStatus[] = ['approved', 'rejected']
+    const hidden = focus.filter((status) => !activeLayers.includes(status))
+    if (hidden.length === 0) {
+      return []
+    }
+    return hidden.map((status) => t(STATUS_LABEL_KEYS[status]))
+  }, [activeLayers, t])
+
+  const statusListSeparator = i18n.resolvedLanguage === 'ja' ? '、' : ', '
 
   const handleLayerToggle = useCallback(
     (_: DetectionStatus, next: DetectionStatus[]) => {
@@ -537,6 +550,13 @@ export function CadDetectionPage() {
           activeLayers={activeLayers}
           onToggle={handleLayerToggle}
           disabled={mutationPending}
+          hint={
+            hiddenStatusLabels.length > 0
+              ? t('detection.layerHint', {
+                  statuses: hiddenStatusLabels.join(statusListSeparator),
+                })
+              : undefined
+          }
         />
         <BulkReviewControls
           pendingCount={pendingCount}

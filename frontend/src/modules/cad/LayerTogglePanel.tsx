@@ -6,6 +6,7 @@ interface LayerTogglePanelProps {
   activeLayers: DetectionStatus[]
   onToggle: (status: DetectionStatus, next: DetectionStatus[]) => void
   disabled?: boolean
+  hint?: string
 }
 
 const ORDER: DetectionStatus[] = ['source', 'pending', 'approved', 'rejected']
@@ -20,6 +21,7 @@ export function LayerTogglePanel({
   activeLayers,
   onToggle,
   disabled = false,
+  hint,
 }: LayerTogglePanelProps) {
   const { t } = useTranslation()
 
@@ -55,6 +57,7 @@ export function LayerTogglePanel({
           )
         })}
       </div>
+      {hint && <p className="cad-layer-toggle__hint">{hint}</p>}
     </section>
   )
 }

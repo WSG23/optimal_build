@@ -77,6 +77,8 @@
     "countSuffix": "×{{count}}",
     "pendingNotice": "{{count}} pending overlays — resolve to enable export.",
     "pendingNoticeSingle": "1 pending overlay — resolve to enable export.",
+    "pendingTooltip": "Pending overlays must be resolved by providing data or recording a decision before export becomes available.",
+    "layerHint": "{{statuses}} overlays are hidden by default. Toggle them on to review prior decisions.",
     "empty": "No units match the current filters.",
     "locked": "Zone is locked. Unlock to update review status.",
     "exportCta": "Export review pack",

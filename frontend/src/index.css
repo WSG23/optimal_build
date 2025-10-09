@@ -800,6 +800,12 @@ h3 {
     border-color: #2563eb;
 }
 
+.cad-layer-toggle__hint {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
 .cad-bulk-controls {
     display: flex;
     gap: 0.5rem;
@@ -889,12 +895,37 @@ h3 {
 }
 
 .cad-export__pending {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     margin: 0.75rem 0 0;
     padding: 0.75rem 1rem;
     border-radius: 0.75rem;
     background: #fee2e2;
     color: #991b1b;
     font-weight: 600;
+}
+
+.cad-export__pending-text {
+    flex: 1 1 auto;
+}
+
+.cad-export__pending-info {
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 999px;
+    background: #991b1b;
+    color: #ffffff;
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: help;
+}
+
+.cad-export__pending-info:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
 }
 
 .cad-export button {

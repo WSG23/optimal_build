@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import importlib.machinery
 import sys
+import uuid
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import import_module
@@ -81,6 +82,7 @@ pytest_asyncio = cast(Any, pytest_asyncio)
 
 ensure_sqlalchemy()
 
+from sqlalchemy import event
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -99,12 +101,15 @@ except (
 
 StaticPool: type[Any] = _StaticPool
 
-
+# isort: off
+# Import app modules before sqlalchemy.orm to ensure proper initialization
 import app.models as app_models
 import app.utils.metrics as metrics
 from app.core.database import get_session
 from app.models.base import BaseModel
 from sqlalchemy.orm import Mapped, mapped_column
+
+# isort: on
 
 try:
     from app.main import app
@@ -181,6 +186,21 @@ async def flow_session_factory() -> AsyncGenerator[
         poolclass=StaticPool,
         future=True,
     )
+
+    @event.listens_for(engine.sync_engine, "connect")
+    def _register_sqlite_functions(dbapi_connection, _) -> None:
+        """Provide minimal SQLite stubs for Postgres-specific helpers."""
+
+        def _gen_random_uuid() -> str:
+            return str(uuid.uuid4())
+
+        try:
+            dbapi_connection.create_function("gen_random_uuid", 0, _gen_random_uuid)
+        except Exception:
+            # Some DBAPI implementations (or repeated registrations) may raise;
+            # ignore so tests keep running on providers that already support it.
+            pass
+
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
 

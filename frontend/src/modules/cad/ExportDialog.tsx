@@ -33,9 +33,19 @@ export function ExportDialog({
       <p>{t('panels.exportSubtitle')}</p>
       {pendingCount > 0 && (
         <p className="cad-export__pending">
-          {pendingCount === 1
-            ? t('detection.pendingNoticeSingle')
-            : t('detection.pendingNotice', { count: pendingCount })}
+          <span className="cad-export__pending-text">
+            {pendingCount === 1
+              ? t('detection.pendingNoticeSingle')
+              : t('detection.pendingNotice', { count: pendingCount })}
+          </span>
+          <button
+            type="button"
+            className="cad-export__pending-info"
+            title={t('detection.pendingTooltip')}
+            aria-label={t('detection.pendingTooltip')}
+          >
+            i
+          </button>
         </p>
       )}
       <button
