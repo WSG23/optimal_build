@@ -75,6 +75,8 @@
     "area": "Area (sqm)",
     "status": "Status",
     "countSuffix": "×{{count}}",
+    "pendingNotice": "{{count}} pending overlays — resolve to enable export.",
+    "pendingNoticeSingle": "1 pending overlay — resolve to enable export.",
     "empty": "No units match the current filters.",
     "locked": "Zone is locked. Unlock to update review status.",
     "exportCta": "Export review pack",

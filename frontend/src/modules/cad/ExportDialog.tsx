@@ -7,6 +7,7 @@ interface ExportDialogProps {
   onExport?: (format: string) => void
   disabled?: boolean
   defaultOpen?: boolean
+  pendingCount?: number
 }
 
 const DEFAULT_FORMATS = ['DXF', 'DWG', 'IFC', 'PDF']
@@ -16,6 +17,7 @@ export function ExportDialog({
   onExport,
   disabled = false,
   defaultOpen = false,
+  pendingCount = 0,
 }: ExportDialogProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(defaultOpen)
@@ -29,6 +31,13 @@ export function ExportDialog({
     <section className="cad-panel">
       <h3>{t('panels.exportTitle')}</h3>
       <p>{t('panels.exportSubtitle')}</p>
+      {pendingCount > 0 && (
+        <p className="cad-export__pending">
+          {pendingCount === 1
+            ? t('detection.pendingNoticeSingle')
+            : t('detection.pendingNotice', { count: pendingCount })}
+        </p>
+      )}
       <button
         type="button"
         onClick={() => {

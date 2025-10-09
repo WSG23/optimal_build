@@ -96,7 +96,7 @@ function getMissingMetricKey(suggestion: OverlaySuggestion): string | undefined 
   return undefined
 }
 
-function filterLatestUnitSpaceSuggestions(
+export function filterLatestUnitSpaceSuggestions(
   suggestions: OverlaySuggestion[],
 ): OverlaySuggestion[] {
   const latestByCode = new Map<string, number>()
@@ -132,7 +132,7 @@ function filterLatestUnitSpaceSuggestions(
   })
 }
 
-function aggregateOverlaySuggestions(
+export function aggregateOverlaySuggestions(
   suggestions: OverlaySuggestion[],
 ): AggregatedSuggestion[] {
   const groups = new Map<
@@ -550,6 +550,7 @@ export function CadDetectionPage() {
             void handleExport(format)
           }}
           disabled={pendingCount > 0 || exporting || mutationPending}
+          pendingCount={pendingCount}
         />
       </div>
 
