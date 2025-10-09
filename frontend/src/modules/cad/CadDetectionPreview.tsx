@@ -109,6 +109,9 @@ export function CadDetectionPreview({
                 <td>{unit.areaSqm.toFixed(1)}</td>
                 <td className={`cad-status cad-status--${unit.status}`}>
                   {t(STATUS_LABEL_KEYS[unit.status])}
+                  {unit.overrideDisplay && (
+                    <span className="cad-status__override">{unit.overrideDisplay}</span>
+                  )}
                   {unit.missingMetricKey && onProvideMetric && (
                     <button
                       type="button"

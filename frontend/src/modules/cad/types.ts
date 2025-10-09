@@ -8,6 +8,7 @@ export interface DetectedUnit {
   status: DetectionStatus
   missingMetricKey?: string
   overrideValue?: number | null
+  overrideDisplay?: string
 }
 
 export interface RoiMetrics {

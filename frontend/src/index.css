@@ -729,6 +729,13 @@ h3 {
     font-weight: 600;
 }
 
+.cad-status__override {
+    margin-left: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #475569;
+}
+
 .cad-status--source {
     color: #334155;
 }

@@ -312,6 +312,16 @@ export function CadDetectionPage() {
     [aggregatedSuggestions],
   )
 
+  const metricLabels = useMemo(
+    () => ({
+      front_setback_m: t('detection.override.prompts.frontSetback'),
+      max_height_m: t('detection.override.prompts.maxHeight'),
+      site_area_sqm: t('detection.override.prompts.siteArea'),
+      gross_floor_area_sqm: t('detection.override.prompts.grossFloorArea'),
+    }),
+    [t],
+  )
+
   const units = useMemo<DetectedUnit[]>(
     () => {
       const overrides = importSummary?.overrides ?? {}
@@ -331,6 +341,13 @@ export function CadDetectionPage() {
           entry.totalArea > 0
             ? entry.totalArea
             : deriveAreaSqm(entry.suggestion)
+        const overrideDisplay =
+          missingMetricKey && overrideValue != null
+            ? `${metricLabels[missingMetricKey as keyof typeof metricLabels] ?? missingMetricKey}: ${new Intl.NumberFormat(undefined, {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: overrideValue % 1 === 0 ? 0 : 2,
+              }).format(overrideValue)}`
+            : undefined
         return {
           id: entry.key,
           floor: index + 1,
@@ -339,10 +356,11 @@ export function CadDetectionPage() {
           status: entry.status,
           missingMetricKey: missingMetricKey ?? undefined,
           overrideValue,
+          overrideDisplay,
         }
       })
     },
-    [aggregatedSuggestions, importSummary?.overrides, t],
+    [aggregatedSuggestions, importSummary?.overrides, metricLabels, t],
   )
 
   const visibleUnits = useMemo(
@@ -421,16 +439,6 @@ export function CadDetectionPage() {
   const handleRejectAll = useCallback(() => {
     void applyDecisionBatch('rejected')
   }, [applyDecisionBatch])
-
-  const metricLabels = useMemo(
-    () => ({
-      front_setback_m: t('detection.override.prompts.frontSetback'),
-      max_height_m: t('detection.override.prompts.maxHeight'),
-      site_area_sqm: t('detection.override.prompts.siteArea'),
-      gross_floor_area_sqm: t('detection.override.prompts.grossFloorArea'),
-    }),
-    [t],
-  )
 
   const handleProvideMetric = useCallback(
     async (metricKey: string, currentValue?: number | null) => {
