@@ -754,6 +754,12 @@ h3 {
     color: #0f172a;
 }
 
+.cad-overlay-summary__actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-left: auto;
+}
+
 .cad-overlay-summary__filters {
     font-size: 0.75rem;
     font-weight: 500;
@@ -764,6 +770,18 @@ h3 {
     margin: 0.25rem 0 0.5rem;
     font-size: 0.78rem;
     color: #475569;
+}
+
+.cad-overlay-status-summary {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+    color: #0f172a;
+}
+
+.cad-overlay-status-summary__muted {
+    color: #94a3b8;
 }
 
 .cad-overlay-summary__reset {
@@ -781,6 +799,25 @@ h3 {
 .cad-overlay-summary__reset:disabled {
     color: #94a3b8;
     cursor: default;
+}
+
+.cad-overlay-summary__preset {
+    border: none;
+    background: #f1f5f9;
+    color: #1e3a8a;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.cad-overlay-summary__preset:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
 }
 
 .cad-overlay-summary__badges {

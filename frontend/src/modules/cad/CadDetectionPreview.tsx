@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 
 import { useTranslation } from '../../i18n'
-import { DetectedUnit } from './types'
+import { DetectedUnit, DetectionStatus } from './types'
 
 type OverlaySummary = {
   key: string
@@ -31,9 +31,16 @@ interface CadDetectionPreviewProps {
   severitySummary: SeveritySummary
   severityPercentages: SeveritySummary
   hiddenSeverityCounts: SeveritySummary
+  statusCounts: Record<DetectedUnit['status'], number>
+  hiddenStatusCounts: Record<DetectedUnit['status'], number>
+  activeStatuses: DetectionStatus[]
   activeSeverities: OverlaySummary['severity'][]
   onToggleSeverity: SeverityToggleHandler
   onResetSeverity: SeverityResetHandler
+  onSaveSeverityPreset: () => void
+  onApplySeverityPreset: () => void
+  hasSeverityPreset: boolean
+  canApplySeverityPreset: boolean
   isSeverityFiltered: boolean
   hiddenPendingCount: number
   severityFilterSummary: string
@@ -60,9 +67,16 @@ export function CadDetectionPreview({
   severitySummary,
   severityPercentages,
   hiddenSeverityCounts,
+  statusCounts,
+  hiddenStatusCounts,
+  activeStatuses,
   activeSeverities,
   onToggleSeverity,
   onResetSeverity,
+  onSaveSeverityPreset,
+  onApplySeverityPreset,
+  hasSeverityPreset,
+  canApplySeverityPreset,
   isSeverityFiltered,
   hiddenPendingCount,
   severityFilterSummary,
@@ -174,14 +188,33 @@ export function CadDetectionPreview({
                   <span className="cad-overlay-summary__filters">
                     {severityFilterSummary}
                   </span>
-                  <button
-                    type="button"
-                    className="cad-overlay-summary__reset"
-                    onClick={onResetSeverity}
-                    disabled={!isSeverityFiltered}
-                  >
-                    {t('detection.severitySummary.reset')}
-                  </button>
+                  <div className="cad-overlay-summary__actions">
+                    <button
+                      type="button"
+                      className="cad-overlay-summary__reset"
+                      onClick={onResetSeverity}
+                      disabled={!isSeverityFiltered}
+                    >
+                      {t('detection.severitySummary.reset')}
+                    </button>
+                    <button
+                      type="button"
+                      className="cad-overlay-summary__preset"
+                      onClick={onSaveSeverityPreset}
+                    >
+                      {t('detection.severitySummary.presetSave')}
+                    </button>
+                    {hasSeverityPreset && (
+                      <button
+                        type="button"
+                        className="cad-overlay-summary__preset"
+                        onClick={onApplySeverityPreset}
+                        disabled={!canApplySeverityPreset}
+                      >
+                        {t('detection.severitySummary.presetApply')}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div
                   className="cad-overlay-summary__badges"
@@ -234,6 +267,34 @@ export function CadDetectionPreview({
                     )
                   })}
                 </div>
+              </div>
+              <div className="cad-overlay-status-summary">
+                {(['pending', 'approved', 'rejected'] as DetectionStatus[]).map(
+                  (status) => {
+                    const count = statusCounts[status]
+                    const hidden = hiddenStatusCounts[status]
+                    const label = t(`detection.statusFilters.${status}Count`, {
+                      count,
+                    })
+                    const tooltip = hidden
+                      ? t('detection.statusFilters.tooltipHidden', {
+                          label,
+                          count: hidden,
+                        })
+                      : label
+                    return (
+                      <span
+                        key={status}
+                        className={activeStatuses.includes(status)
+                          ? ''
+                          : 'cad-overlay-status-summary__muted'}
+                        title={tooltip}
+                      >
+                        {label}
+                      </span>
+                    )
+                  },
+                )}
               </div>
               {!isSeverityFiltered && hiddenPendingCount === 0 && (
                 <p className="cad-overlay-summary__helper">

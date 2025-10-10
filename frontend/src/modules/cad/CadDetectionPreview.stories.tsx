@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import CadDetectionPreview from './CadDetectionPreview'
 import { TranslationProvider } from '../../i18n'
-import type { DetectedUnit } from './types'
+import type { DetectedUnit, DetectionStatus } from './types'
 
 const meta = {
   title: 'CAD/Detection Preview',
@@ -15,6 +15,10 @@ type SeverityKey = 'high' | 'medium' | 'low' | 'none'
 type StoryProps = Parameters<typeof CadDetectionPreview>[0]
 
 const ALL_SEVERITIES: SeverityKey[] = ['high', 'medium', 'low', 'none']
+const ALL_STATUSES: DetectionStatus[] = ['source', 'pending', 'approved', 'rejected']
+
+const arraysEqual = <T,>(a: T[], b: T[]) =>
+  a.length === b.length && a.every((value) => b.includes(value))
 
 const computePercentages = (summary: StoryProps['severitySummary']) => {
   const total = summary.high + summary.medium + summary.low + summary.none
@@ -43,7 +47,15 @@ const PreviewStoryWrapper = (
   const [activeSeverities, setActiveSeverities] = useState<SeverityKey[]>([
     ...ALL_SEVERITIES,
   ])
-  const { severitySummary, severityPercentages: providedPercentages, ...rest } = props
+  const [preset, setPreset] = useState<SeverityKey[] | null>(null)
+  const {
+    severitySummary,
+    severityPercentages: providedPercentages,
+    statusCounts = { source: 0, pending: 0, approved: 0, rejected: 0 },
+    hiddenStatusCounts = { source: 0, pending: 0, approved: 0, rejected: 0 },
+    activeStatuses = ALL_STATUSES,
+    ...rest
+  } = props
   const severityPercentages = providedPercentages ?? computePercentages(severitySummary)
 
   const hiddenSeverityCounts = ALL_SEVERITIES.reduce(
@@ -73,6 +85,19 @@ const PreviewStoryWrapper = (
   }
 
   const isFiltered = activeSeverities.length !== ALL_SEVERITIES.length
+  const hasPreset = preset !== null
+  const canApplyPreset =
+    preset !== null && !arraysEqual(preset, activeSeverities)
+
+  const savePreset = () => {
+    setPreset([...activeSeverities])
+  }
+
+  const applyPreset = () => {
+    if (preset) {
+      setActiveSeverities([...preset])
+    }
+  }
 
   return (
     <TranslationProvider>
@@ -80,10 +105,17 @@ const PreviewStoryWrapper = (
         severitySummary={severitySummary}
         severityPercentages={severityPercentages}
         hiddenSeverityCounts={hiddenSeverityCounts}
+        statusCounts={statusCounts}
+        hiddenStatusCounts={hiddenStatusCounts}
+        activeStatuses={activeStatuses}
         {...rest}
         activeSeverities={activeSeverities}
         onToggleSeverity={toggleSeverity}
         onResetSeverity={resetSeverity}
+        onSaveSeverityPreset={savePreset}
+        onApplySeverityPreset={applyPreset}
+        hasSeverityPreset={hasPreset}
+        canApplySeverityPreset={canApplyPreset}
         isSeverityFiltered={isFiltered}
       />
     </TranslationProvider>
@@ -151,6 +183,9 @@ export const Default = () => (
       },
     ]}
     severitySummary={{ high: 1, medium: 1, low: 0, none: 1 }}
+    statusCounts={{ source: 0, pending: 3, approved: 1, rejected: 1 }}
+    hiddenStatusCounts={{ source: 0, pending: 0, approved: 0, rejected: 0 }}
+    activeStatuses={ALL_STATUSES}
     hints={['Coordinate with SCDF on staging']}
     zoneCode="RA"
   />
@@ -162,6 +197,9 @@ export const Locked = () => (
     overlays={[]}
     hints={['Awaiting overlays']}
     severitySummary={{ high: 0, medium: 0, low: 0, none: 0 }}
+    statusCounts={{ source: 0, pending: 1, approved: 0, rejected: 0 }}
+    hiddenStatusCounts={{ source: 0, pending: 0, approved: 0, rejected: 0 }}
+    activeStatuses={ALL_STATUSES}
     zoneCode="CBD"
     locked
   />

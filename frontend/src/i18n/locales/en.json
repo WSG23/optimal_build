@@ -110,7 +110,9 @@
         "focus": "Focus on high/medium",
         "restore": "Restore severity filters",
         "shortcut": "Shortcut: Shift + H"
-      }
+      },
+      "presetSave": "Save severity preset",
+      "presetApply": "Apply preset"
     },
     "layerHint": "{{statuses}} overlays are hidden by default. Toggle them on to review prior decisions.",
     "empty": "No units match the current filters.",
@@ -159,7 +161,9 @@
       "pendingOnly": "Show pending only",
       "all": "Show all statuses",
       "approvedCount": "Approved: {{count}}",
-      "rejectedCount": "Rejected: {{count}}"
+      "rejectedCount": "Rejected: {{count}}",
+      "pendingCount": "Pending: {{count}}",
+      "tooltipHidden": "{{label}} — {{count}} hidden"
     }
   },
   "pipelines": {

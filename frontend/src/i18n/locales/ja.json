@@ -110,7 +110,9 @@
         "focus": "高・中リスクだけを見る",
         "restore": "フィルターを元に戻す",
         "shortcut": "ショートカット: Shift + H"
-      }
+      },
+      "presetSave": "重要度プリセットを保存",
+      "presetApply": "プリセットを適用"
     },
     "layerHint": "{{statuses}} のオーバーレイは既定で非表示です。過去の判断を確認する場合はトグルで表示してください。",
     "empty": "現在のフィルターに一致するユニットはありません。",
@@ -159,7 +161,9 @@
       "pendingOnly": "保留のみ表示",
       "all": "すべてのステータスを表示",
       "approvedCount": "承認済み: {{count}}",
-      "rejectedCount": "却下: {{count}}"
+      "rejectedCount": "却下: {{count}}",
+      "pendingCount": "保留中: {{count}}",
+      "tooltipHidden": "{{label}} — {{count}} 件が非表示"
     }
   },
   "pipelines": {

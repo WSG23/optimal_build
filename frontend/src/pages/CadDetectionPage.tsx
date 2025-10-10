@@ -17,13 +17,13 @@ import ZoneLockControls from '../modules/cad/ZoneLockControls'
 import { DetectionStatus, DetectedUnit } from '../modules/cad/types'
 
 const DEFAULT_PROJECT_ID = 5821
-const DEFAULT_LAYERS: DetectionStatus[] = ['source', 'pending']
-const _ALL_LAYERS: DetectionStatus[] = [
+const ALL_LAYERS: DetectionStatus[] = [
   'source',
   'pending',
   'approved',
   'rejected',
 ]
+const DEFAULT_LAYERS: DetectionStatus[] = ['source', 'pending']
 
 interface AggregatedSuggestion {
   key: string
@@ -328,6 +328,9 @@ export function CadDetectionPage() {
     ...ALL_SEVERITIES,
   ])
   const [savedSeverities, setSavedSeverities] = useState<
+    OverlaySeverity[] | null
+  >(null)
+  const [customSeverityPreset, setCustomSeverityPreset] = useState<
     OverlaySeverity[] | null
   >(null)
 
@@ -643,22 +646,61 @@ export function CadDetectionPage() {
       approved: 0,
       rejected: 0,
     }
+    filteredByStatus.forEach((entry) => {
+      counts[entry.status] += 1
+    })
+    return counts
+  }, [filteredByStatus])
+
+  const totalStatusCounts = useMemo(() => {
+    const counts: Record<DetectionStatus, number> = {
+      source: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+    }
     aggregatedSuggestions.forEach((entry) => {
       counts[entry.status] += 1
     })
     return counts
   }, [aggregatedSuggestions])
 
+  const hiddenStatusCounts = useMemo(() => {
+    const counts: Record<DetectionStatus, number> = {
+      source: Math.max(0, totalStatusCounts.source - statusCounts.source),
+      pending: Math.max(0, totalStatusCounts.pending - statusCounts.pending),
+      approved: Math.max(0, totalStatusCounts.approved - statusCounts.approved),
+      rejected: Math.max(0, totalStatusCounts.rejected - statusCounts.rejected),
+    }
+    return counts
+  }, [statusCounts, totalStatusCounts])
+
+  const hasSeverityPreset = customSeverityPreset !== null
+
+  const canApplySeverityPreset = useMemo(() => {
+    if (!customSeverityPreset) {
+      return false
+    }
+    if (customSeverityPreset.length !== activeSeverities.length) {
+      return true
+    }
+    const set = new Set(customSeverityPreset)
+    return activeSeverities.some((severity) => !set.has(severity))
+  }, [activeSeverities, customSeverityPreset])
+
   const statusFilterSummary = useMemo(() => {
     const pendingOnly = activeLayers.length === 1 && activeLayers[0] === 'pending'
-    if (pendingOnly) {
+    const isAll =
+      activeLayers.length === ALL_LAYERS.length &&
+      ALL_LAYERS.every((status) => activeLayers.includes(status))
+    if (isAll) {
       return t('detection.statusFilters.pendingOnly')
+    }
+    if (pendingOnly) {
+      return t('detection.statusFilters.all')
     }
     const approved = statusCounts.approved
     const rejected = statusCounts.rejected
-    if (approved === 0 && rejected === 0) {
-      return t('detection.statusFilters.all')
-    }
     return `${t('detection.statusFilters.approvedCount', { count: approved })} · ${t('detection.statusFilters.rejectedCount', { count: rejected })}`
   }, [activeLayers, statusCounts, t])
 
@@ -702,10 +744,21 @@ export function CadDetectionPage() {
   }, [])
 
   const handleResetAllFilters = useCallback(() => {
-    setActiveLayers([...DEFAULT_LAYERS])
+    setActiveLayers([...ALL_LAYERS])
     setActiveSeverities([...ALL_SEVERITIES])
     setSavedSeverities(null)
+    setCustomSeverityPreset(null)
   }, [])
+
+  const handleSaveSeverityPreset = useCallback(() => {
+    setCustomSeverityPreset([...activeSeverities])
+  }, [activeSeverities])
+
+  const handleApplySeverityPreset = useCallback(() => {
+    if (customSeverityPreset) {
+      setActiveSeverities([...customSeverityPreset])
+    }
+  }, [customSeverityPreset])
 
   const applyDecisionBatch = useCallback(
     async (decision: 'approved' | 'rejected') => {
@@ -882,13 +935,19 @@ export function CadDetectionPage() {
           type="button"
           className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
           onClick={() => {
-            const isPendingFocus =
-              activeLayers.length === 1 && activeLayers[0] === 'pending'
-            if (isPendingFocus) {
-              setActiveLayers([...DEFAULT_LAYERS])
-            } else {
-              setActiveLayers(['pending'])
-            }
+            setActiveLayers((current) => {
+              const pendingOnly = current.length === 1 && current[0] === 'pending'
+              const isAll =
+                current.length === ALL_LAYERS.length &&
+                ALL_LAYERS.every((status) => current.includes(status))
+              if (pendingOnly) {
+                return [...ALL_LAYERS]
+              }
+              if (isAll) {
+                return ['pending']
+              }
+              return [...ALL_LAYERS]
+            })
           }}
         >
           {statusFilterSummary}
@@ -936,9 +995,16 @@ export function CadDetectionPage() {
         severitySummary={severitySummary}
         severityPercentages={severityPercentages}
         hiddenSeverityCounts={hiddenSeverityCounts}
+        statusCounts={statusCounts}
+        hiddenStatusCounts={hiddenStatusCounts}
+        activeStatuses={activeLayers}
         activeSeverities={activeSeverities}
         onToggleSeverity={handleSeverityToggle}
         onResetSeverity={handleSeverityReset}
+        onSaveSeverityPreset={handleSaveSeverityPreset}
+        onApplySeverityPreset={handleApplySeverityPreset}
+        hasSeverityPreset={hasSeverityPreset}
+        canApplySeverityPreset={canApplySeverityPreset}
         isSeverityFiltered={isSeverityFiltered}
         hiddenPendingCount={hiddenPendingCount}
         severityFilterSummary={severityFilterSummary}
