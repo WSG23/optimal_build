@@ -4,7 +4,8 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, String
+from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
@@ -56,6 +57,11 @@ class User(BaseModel):
     )
     projects = relationship(
         "Project", back_populates="owner", cascade="all, delete-orphan"
+    )
+    listing_accounts = relationship(
+        "ListingIntegrationAccount",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self):
