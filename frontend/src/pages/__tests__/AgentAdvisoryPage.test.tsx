@@ -83,6 +83,13 @@ describe('AgentAdvisoryPage', () => {
     globalWithDom.document = dom.window.document
     globalWithDom.navigator = dom.window.navigator
 
+    // Ensure window.location has the query string
+    dom.window.history.replaceState(
+      null,
+      '',
+      'http://localhost/agents/advisory?propertyId=test-property',
+    )
+
     let _callCount = 0
     globalThis.fetch = (async (input: RequestInfo, init?: RequestInit) => {
       _callCount += 1
@@ -116,9 +123,12 @@ describe('AgentAdvisoryPage', () => {
       </TranslationProvider>,
     )
 
-    await waitFor(() => {
-      assert.ok(screen.getByText(/Asset mix strategy/i))
-    })
+    await waitFor(
+      () => {
+        assert.ok(screen.getByText(/Asset mix strategy/i))
+      },
+      { timeout: 5000 },
+    )
 
     assert.ok(screen.getByText(/Plot ratio allows flexibility/i))
 

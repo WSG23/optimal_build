@@ -21,3 +21,20 @@ Object.defineProperty(globalThis, 'navigator', {
   writable: true,
   value: bootstrapDom.window.navigator,
 })
+
+// Mock import.meta.env for Vite environment variables
+const mockImportMeta = {
+  env: {
+    VITE_API_BASE_URL: 'http://localhost:9400',
+    MODE: 'test',
+    DEV: false,
+    PROD: false,
+    SSR: false,
+  },
+}
+
+// Make import.meta available globally for tests
+if (!globalThis.import) {
+  globalThis.import = {}
+}
+globalThis.import.meta = mockImportMeta

@@ -6,7 +6,11 @@ function normaliseBaseUrl(value: string | undefined | null): string {
   return trimmed === '' ? '/' : trimmed
 }
 
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? null
+const metaEnv =
+  typeof import.meta !== 'undefined' && import.meta
+    ? (import.meta as ImportMeta).env
+    : undefined
+const rawApiBaseUrl = metaEnv?.VITE_API_BASE_URL ?? null
 const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
 
 function buildUrl(path: string, base: string = apiBaseUrl) {

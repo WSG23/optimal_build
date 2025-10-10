@@ -5,8 +5,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "20250220_000007"
-down_revision = "20241228_000006_add_commercial_property_agent_tables"
+revision = "20250220_000009"
+down_revision = "0773c87952ef"  # singapore_properties table
 branch_labels = None
 depends_on = None
 

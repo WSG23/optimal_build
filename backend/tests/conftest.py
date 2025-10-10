@@ -345,3 +345,100 @@ async def client_fixture(
     """Compatibility alias exposing the app client under the traditional name."""
 
     yield app_client
+
+
+@pytest_asyncio.fixture
+async def market_demo_data(
+    async_session_factory: async_sessionmaker[AsyncSession],
+) -> AsyncGenerator[None, None]:
+    """Populate database with demo property data for market advisory tests."""
+    # Import inside fixture to avoid circular dependencies
+    import uuid as uuid_module
+
+    from app.models.property import Property, PropertyStatus, PropertyType, TenureType
+
+    # Check if properties table exists, if not skip this fixture
+    async with async_session_factory() as session:
+        try:
+            # Try to query the table to see if it exists
+            from sqlalchemy import text as sql_text
+
+            await session.execute(sql_text("SELECT 1 FROM properties LIMIT 1"))
+        except Exception:
+            # Table doesn't exist (likely due to PostgreSQL-specific DDL in SQLite tests)
+            # Create it manually for SQLite
+            await session.execute(
+                sql_text(
+                    """
+                    CREATE TABLE IF NOT EXISTS properties (
+                        id TEXT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        address VARCHAR(500) NOT NULL,
+                        postal_code VARCHAR(20),
+                        property_type VARCHAR(50) NOT NULL,
+                        status VARCHAR(50),
+                        location TEXT NOT NULL,
+                        district VARCHAR(50),
+                        subzone VARCHAR(100),
+                        planning_area VARCHAR(100),
+                        land_area_sqm DECIMAL(10, 2),
+                        gross_floor_area_sqm DECIMAL(12, 2),
+                        net_lettable_area_sqm DECIMAL(12, 2),
+                        building_height_m DECIMAL(6, 2),
+                        floors_above_ground INTEGER,
+                        floors_below_ground INTEGER,
+                        units_total INTEGER,
+                        year_built INTEGER,
+                        year_renovated INTEGER,
+                        developer VARCHAR(255),
+                        architect VARCHAR(255),
+                        tenure_type VARCHAR(50),
+                        lease_start_date DATE,
+                        lease_expiry_date DATE,
+                        zoning_code VARCHAR(50),
+                        plot_ratio DECIMAL(4, 2),
+                        is_conservation BOOLEAN,
+                        conservation_status VARCHAR(100),
+                        heritage_constraints JSON,
+                        ura_property_id VARCHAR(50) UNIQUE,
+                        data_source VARCHAR(50),
+                        external_references JSON
+                    )
+                """
+                )
+            )
+            await session.commit()
+
+        # Create a demo property for advisory service testing
+        demo_property = Property(
+            id=uuid_module.uuid4(),  # Explicitly set ID for SQLite compatibility
+            name="Market Demo Tower",
+            address="123 Marina Boulevard",
+            postal_code="018989",
+            property_type=PropertyType.OFFICE,
+            status=PropertyStatus.EXISTING,
+            location="POINT(103.8535 1.2830)",  # Singapore coordinates
+            district="Downtown Core",
+            subzone="Marina Centre",
+            planning_area="Downtown Core",
+            land_area_sqm=5000.0,
+            gross_floor_area_sqm=25000.0,
+            net_lettable_area_sqm=22000.0,
+            building_height_m=120.0,
+            floors_above_ground=30,
+            floors_below_ground=2,
+            units_total=150,
+            year_built=2015,
+            developer="Demo Developer Pte Ltd",
+            architect="Demo Architects",
+            tenure_type=TenureType.LEASEHOLD_99,
+            plot_ratio=5.0,
+            is_conservation=False,
+            data_source="demo",
+        )
+        session.add(demo_property)
+        await session.commit()
+
+    yield
+
+    # Cleanup happens automatically via _reset_database in async_session_factory

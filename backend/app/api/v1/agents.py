@@ -573,13 +573,15 @@ async def get_property_advisory_summary(
 
     asset_mix = _convert_asset_mix(summary.asset_mix)
     market_positioning = AdvisoryMarketPositioning(**summary.market_positioning)
-    absorption_forecast = AdvisoryAbsorptionForecast(
-        **summary.absorption_forecast,
-        timeline=[
-            AdvisoryTimelineMilestone(**milestone)
-            for milestone in summary.absorption_forecast.get("timeline", [])
-        ],
-    )
+
+    # Build absorption forecast, converting timeline milestones
+    absorption_data = dict(summary.absorption_forecast)
+    absorption_data["timeline"] = [
+        AdvisoryTimelineMilestone(**milestone)
+        for milestone in summary.absorption_forecast.get("timeline", [])
+    ]
+    absorption_forecast = AdvisoryAbsorptionForecast(**absorption_data)
+
     feedback_items = _convert_feedback_items(summary.feedback)
 
     return AdvisorySummaryResponse(
