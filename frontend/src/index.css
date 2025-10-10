@@ -1193,7 +1193,45 @@ h3 {
 
 .cad-detection__toolbar {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    color: #1e3a8a;
+}
+
+.cad-detection__filters-pill {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: default;
+    border: none;
+}
+
+.cad-detection__filters-pill--clickable {
+    cursor: pointer;
+}
+
+.cad-detection__filters-pill--clickable:hover,
+.cad-detection__filters-pill--clickable:focus-visible {
+    box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.2);
+    outline: none;
+}
+
+.cad-detection__shortcut-hint {
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+@media (max-width: 640px) {
+    .cad-detection__toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 .cad-detection__grid {

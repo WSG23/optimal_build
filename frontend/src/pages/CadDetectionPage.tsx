@@ -321,6 +321,32 @@ export function CadDetectionPage() {
   const [activeSeverities, setActiveSeverities] = useState<OverlaySeverity[]>([
     ...ALL_SEVERITIES,
   ])
+  const [savedSeverities, setSavedSeverities] = useState<OverlaySeverity[] | null>(
+    null,
+  )
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.shiftKey && (event.key === 'H' || event.key === 'h')) {
+        event.preventDefault()
+        setActiveSeverities((current) => {
+          const isFocused = savedSeverities !== null
+          if (isFocused) {
+            const restore = savedSeverities ?? ALL_SEVERITIES
+            setSavedSeverities(null)
+            return [...restore]
+          }
+          setSavedSeverities(current)
+          return ['high', 'medium']
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handler)
+    return () => {
+      window.removeEventListener('keydown', handler)
+    }
+  }, [savedSeverities])
 
   const fetchLatestImport = useCallback(async () => {
     setLoadingImport(true)
@@ -612,6 +638,7 @@ export function CadDetectionPage() {
 
   const handleSeverityReset = useCallback(() => {
     setActiveSeverities([...ALL_SEVERITIES])
+    setSavedSeverities(null)
   }, [])
 
   const applyDecisionBatch = useCallback(
@@ -752,6 +779,35 @@ export function CadDetectionPage() {
         <p>{t('detection.projectSummary', { id: projectId })}</p>
         {loadingSuggestions && <span>{t('common.loading')}</span>}
         {loadingImport && <span>{t('common.loading')}</span>}
+        <button
+          type="button"
+          className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
+          onClick={() => {
+            setActiveSeverities((current) => {
+              const isFocused = savedSeverities !== null
+              if (isFocused) {
+                const restore = savedSeverities ?? ALL_SEVERITIES
+                setSavedSeverities(null)
+                return [...restore]
+              }
+              setSavedSeverities(current)
+              return ['high', 'medium']
+            })
+          }}
+        >
+          {savedSeverities === null
+            ? t('detection.severitySummary.toolbar.focus')
+            : t('detection.severitySummary.toolbar.restore')}
+        </button>
+        <span
+          className="cad-detection__filters-pill"
+          title={severityFilterSummary}
+        >
+          {severityFilterSummary}
+        </span>
+        <span className="cad-detection__shortcut-hint">
+          {t('detection.severitySummary.toolbar.shortcut')}
+        </span>
       </div>
 
       {error && <p className="cad-detection__error">{error}</p>}

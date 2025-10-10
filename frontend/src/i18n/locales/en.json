@@ -103,6 +103,11 @@
       "filters": {
         "all": "All severities",
         "active": "Active: {{list}}"
+      },
+      "toolbar": {
+        "focus": "Focus on high/medium",
+        "restore": "Restore severity filters",
+        "shortcut": "Shortcut: Shift + H"
       }
     },
     "layerHint": "{{statuses}} overlays are hidden by default. Toggle them on to review prior decisions.",
