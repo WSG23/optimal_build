@@ -880,6 +880,36 @@ h3 {
     outline: none;
 }
 
+.cad-overlay-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    color: #475569;
+}
+
+.cad-overlay-empty button {
+    align-self: flex-start;
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.cad-overlay-empty button:hover,
+.cad-overlay-empty button:focus-visible {
+    background: #1d4ed8;
+    outline: none;
+}
+
 .cad-overlay-item {
     background: rgba(255, 255, 255, 0.65);
     border-radius: 0.75rem;

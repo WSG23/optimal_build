@@ -148,7 +148,18 @@
       "status": "ステータスフィルターがすべてのオーバーレイを非表示にしています。",
       "severity": "重要度フィルターがすべてのオーバーレイを非表示にしています。",
       "resetStatus": "ステータスフィルターをリセット",
+      "resetSeverity": "重要度フィルターをリセット",
+      "resetAll": "すべてのオーバーレイを表示"
+    },
+    "overlaysEmpty": {
+      "filters": "現在のフィルターに一致するオーバーレイはありません。",
       "resetSeverity": "重要度フィルターをリセット"
+    },
+    "statusFilters": {
+      "pendingOnly": "保留のみ表示",
+      "all": "すべてのステータスを表示",
+      "approvedCount": "承認済み: {{count}}",
+      "rejectedCount": "却下: {{count}}"
     }
   },
   "pipelines": {

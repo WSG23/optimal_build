@@ -18,7 +18,12 @@ import { DetectionStatus, DetectedUnit } from '../modules/cad/types'
 
 const DEFAULT_PROJECT_ID = 5821
 const DEFAULT_LAYERS: DetectionStatus[] = ['source', 'pending']
-const ALL_LAYERS: DetectionStatus[] = ['source', 'pending', 'approved', 'rejected']
+const _ALL_LAYERS: DetectionStatus[] = [
+  'source',
+  'pending',
+  'approved',
+  'rejected',
+]
 
 interface AggregatedSuggestion {
   key: string
@@ -322,9 +327,9 @@ export function CadDetectionPage() {
   const [activeSeverities, setActiveSeverities] = useState<OverlaySeverity[]>([
     ...ALL_SEVERITIES,
   ])
-  const [savedSeverities, setSavedSeverities] = useState<OverlaySeverity[] | null>(
-    null,
-  )
+  const [savedSeverities, setSavedSeverities] = useState<
+    OverlaySeverity[] | null
+  >(null)
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -539,7 +544,9 @@ export function CadDetectionPage() {
 
   const hiddenBySeverity = useMemo(
     () =>
-      !hiddenByStatus && filteredByStatus.length > 0 && filteredBySeverity.length === 0,
+      !hiddenByStatus &&
+      filteredByStatus.length > 0 &&
+      filteredBySeverity.length === 0,
     [hiddenByStatus, filteredByStatus.length, filteredBySeverity.length],
   )
 
@@ -607,18 +614,18 @@ export function CadDetectionPage() {
               },
             ).format(overrideValue)}`
           : undefined
-        return {
-          id: entry.key,
-          floor: index + 1,
-          unitLabel: label,
-          areaSqm,
-          status: entry.status,
-          severity: severityKey,
-          missingMetricKey: missingMetricKey ?? undefined,
-          overrideValue,
-          overrideDisplay,
-          metricLabel,
-        }
+      return {
+        id: entry.key,
+        floor: index + 1,
+        unitLabel: label,
+        areaSqm,
+        status: entry.status,
+        severity: severityKey,
+        missingMetricKey: missingMetricKey ?? undefined,
+        overrideValue,
+        overrideDisplay,
+        metricLabel,
+      }
     })
   }, [filteredBySeverity, importSummary?.overrides, metricLabels, t])
 
@@ -628,6 +635,19 @@ export function CadDetectionPage() {
     () => filteredByStatus.filter((entry) => entry.status === 'pending').length,
     [filteredByStatus],
   )
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<DetectionStatus, number> = {
+      source: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+    }
+    aggregatedSuggestions.forEach((entry) => {
+      counts[entry.status] += 1
+    })
+    return counts
+  }, [aggregatedSuggestions])
 
   const hiddenStatusLabels = useMemo(() => {
     const focus: DetectionStatus[] = ['approved', 'rejected']

@@ -148,7 +148,18 @@
       "status": "Status filters currently hide all overlays.",
       "severity": "Severity filters currently hide all overlays.",
       "resetStatus": "Reset status filters",
+      "resetSeverity": "Reset severity filters",
+      "resetAll": "Show all overlays"
+    },
+    "overlaysEmpty": {
+      "filters": "No overlays match the current filters.",
       "resetSeverity": "Reset severity filters"
+    },
+    "statusFilters": {
+      "pendingOnly": "Show pending only",
+      "all": "Show all statuses",
+      "approvedCount": "Approved: {{count}}",
+      "rejectedCount": "Rejected: {{count}}"
     }
   },
   "pipelines": {

@@ -160,7 +160,12 @@ export function CadDetectionPreview({
         <div className="cad-preview__panel">
           <h3>{t('detection.overlays')}</h3>
           {overlays.length === 0 ? (
-            <p>{fallbackDash}</p>
+            <div className="cad-overlay-empty">
+              <p>{t('detection.overlaysEmpty.filters')}</p>
+              <button type="button" onClick={onResetSeverity}>
+                {t('detection.overlaysEmpty.resetSeverity')}
+              </button>
+            </div>
           ) : (
             <>
               <div className="cad-overlay-summary">
