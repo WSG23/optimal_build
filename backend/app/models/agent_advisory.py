@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID as UUIDType
 from uuid import uuid4
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -19,11 +21,11 @@ class AgentAdvisoryFeedback(BaseModel):
 
     __tablename__ = "agent_advisory_feedback"
 
-    id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid4())
+    id: Mapped[UUIDType] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    property_id: Mapped[str] = mapped_column(
-        String(36),
+    property_id: Mapped[UUIDType] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("properties.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

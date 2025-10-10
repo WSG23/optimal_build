@@ -7,7 +7,6 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 }
 
 const API_PREFIX = 'api/v1/agents/commercial-property/properties/log-gps'
-const _PROPERTY_PREFIX = 'api/v1/agents/commercial-property/properties'
 const metaEnv =
   typeof import.meta !== 'undefined' && import.meta
     ? (import.meta as ImportMeta).env
@@ -270,44 +269,6 @@ function mapNearbyAmenities(
     schools: mapAmenityList(payload.schools),
     shoppingMalls: mapAmenityList(payload.shopping_malls),
     parks: mapAmenityList(payload.parks),
-  }
-}
-
-function mapPhotoLocation(value: unknown): PropertyPhoto['location'] {
-  if (!value || typeof value !== 'object') {
-    return null
-  }
-  const payload = value as Record<string, unknown>
-  const latitude = coerceNumber(payload.latitude)
-  const longitude = coerceNumber(payload.longitude)
-  if (latitude == null && longitude == null) {
-    return null
-  }
-  return {
-    latitude,
-    longitude,
-  }
-}
-
-function _mapPhoto(payload: Record<string, unknown>): PropertyPhoto {
-  const autoTags = Array.isArray(payload.auto_tags)
-    ? payload.auto_tags.filter(
-        (item): item is string => typeof item === 'string',
-      )
-    : []
-  const tagList = Array.isArray(payload.tags)
-    ? payload.tags.filter((item): item is string => typeof item === 'string')
-    : null
-
-  return {
-    photoId: coerceString(payload.photo_id) ?? '',
-    storageKey: coerceString(payload.storage_key) ?? null,
-    captureTimestamp: coerceString(payload.capture_timestamp) ?? null,
-    autoTags,
-    publicUrl: coerceString(payload.public_url) ?? null,
-    location: mapPhotoLocation(payload.location),
-    notes: coerceString(payload.notes) ?? null,
-    tags: tagList,
   }
 }
 

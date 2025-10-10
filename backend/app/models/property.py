@@ -73,6 +73,10 @@ class TenureType(str, Enum):
     LEASEHOLD_OTHER = "leasehold_other"
 
 
+def _enum_values(enum_cls: type[Enum]) -> list[str]:
+    return [member.value for member in enum_cls]
+
+
 class Property(BaseModel):
     """Core property entity for market intelligence."""
 
@@ -84,8 +88,23 @@ class Property(BaseModel):
     name = Column(String(255), nullable=False)
     address = Column(String(500), nullable=False)
     postal_code = Column(String(20))
-    property_type = Column(SQLEnum(PropertyType), nullable=False, index=True)
-    status = Column(SQLEnum(PropertyStatus), default=PropertyStatus.EXISTING)
+    property_type = Column(
+        SQLEnum(
+            PropertyType,
+            name="property_type",
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+        index=True,
+    )
+    status = Column(
+        SQLEnum(
+            PropertyStatus,
+            name="property_status",
+            values_callable=_enum_values,
+        ),
+        default=PropertyStatus.EXISTING,
+    )
 
     # Location
     location = Column(Geometry("POINT", srid=4326), nullable=False)
@@ -109,7 +128,13 @@ class Property(BaseModel):
     architect = Column(String(255))
 
     # Legal/Regulatory
-    tenure_type = Column(SQLEnum(TenureType))
+    tenure_type = Column(
+        SQLEnum(
+            TenureType,
+            name="tenure_type",
+            values_callable=_enum_values,
+        )
+    )
     lease_start_date = Column(Date)
     lease_expiry_date = Column(Date)
     zoning_code = Column(String(50))

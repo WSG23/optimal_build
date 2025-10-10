@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +26,6 @@ from app.services.agents.gps_property_logger import (
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import Address, GeocodingService
-from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -539,16 +539,30 @@ def _convert_asset_mix(payload: dict[str, Any]) -> AdvisoryAssetMix:
 def _convert_feedback_items(items: list[dict[str, Any]]) -> list[AdvisoryFeedbackItem]:
     converted: list[AdvisoryFeedbackItem] = []
     for item in items:
+        # Handle both UUID objects (from DB) and strings (from API)
+        item_id = item["id"] if isinstance(item["id"], UUID) else UUID(item["id"])
+        prop_id = (
+            item["property_id"]
+            if isinstance(item["property_id"], UUID)
+            else UUID(item["property_id"])
+        )
+        # Handle both datetime objects and ISO strings
+        created = (
+            item["created_at"]
+            if isinstance(item["created_at"], datetime)
+            else datetime.fromisoformat(item["created_at"])
+        )
+
         converted.append(
             AdvisoryFeedbackItem(
-                id=UUID(item["id"]),
-                property_id=UUID(item["property_id"]),
+                id=item_id,
+                property_id=prop_id,
                 submitted_by=item.get("submitted_by"),
                 channel=item.get("channel"),
                 sentiment=item["sentiment"],
                 notes=item["notes"],
                 metadata=item.get("metadata", {}),
-                created_at=datetime.fromisoformat(item["created_at"]),
+                created_at=created,
             )
         )
     return converted
