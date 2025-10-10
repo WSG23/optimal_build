@@ -668,6 +668,12 @@ export function CadDetectionPage() {
     setActiveLayers([...DEFAULT_LAYERS])
   }, [])
 
+  const handleResetAllFilters = useCallback(() => {
+    setActiveLayers([...DEFAULT_LAYERS])
+    setActiveSeverities([...ALL_SEVERITIES])
+    setSavedSeverities(null)
+  }, [])
+
   const applyDecisionBatch = useCallback(
     async (decision: 'approved' | 'rejected') => {
       if (locked) {
@@ -826,6 +832,13 @@ export function CadDetectionPage() {
             ? t('detection.severitySummary.toolbar.focus')
             : t('detection.severitySummary.toolbar.restore')}
         </button>
+        <button
+          type="button"
+          className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
+          onClick={handleResetAllFilters}
+        >
+          {t('detection.filtersBanner.resetAll')}
+        </button>
         <span
           className="cad-detection__filters-pill"
           title={severityFilterSummary}
@@ -859,6 +872,9 @@ export function CadDetectionPage() {
                 {t('detection.filtersBanner.resetSeverity')}
               </button>
             )}
+            <button type="button" onClick={handleResetAllFilters}>
+              {t('detection.filtersBanner.resetAll')}
+            </button>
           </div>
         </div>
       )}
