@@ -7,7 +7,12 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 }
 
 const API_PREFIX = 'api/v1/agents/commercial-property/properties/log-gps'
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? null
+const PROPERTY_PREFIX = 'api/v1/agents/commercial-property/properties'
+const metaEnv =
+  typeof import.meta !== 'undefined' && import.meta
+    ? (import.meta as ImportMeta).env
+    : undefined
+const rawApiBaseUrl = metaEnv?.VITE_API_BASE_URL ?? null
 const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
 
 function buildUrl(path: string, base: string = apiBaseUrl) {
@@ -85,6 +90,25 @@ export interface QuickAnalysisScenarioSummary {
 export interface QuickAnalysisSummary {
   generatedAt: string
   scenarios: QuickAnalysisScenarioSummary[]
+}
+
+export interface PropertyPhoto {
+  photoId: string
+  storageKey: string | null
+  captureTimestamp: string | null
+  autoTags: string[]
+  publicUrl: string | null
+  location?: {
+    latitude: number | null
+    longitude: number | null
+  } | null
+  notes?: string | null
+  tags?: string[] | null
+}
+
+export interface UploadPhotoOptions {
+  notes?: string
+  tags?: string[]
 }
 
 export interface GpsCaptureSummary {
@@ -246,6 +270,42 @@ function mapNearbyAmenities(
   }
 }
 
+function mapPhotoLocation(value: unknown): PropertyPhoto['location'] {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+  const payload = value as Record<string, unknown>
+  const latitude = coerceNumber(payload.latitude)
+  const longitude = coerceNumber(payload.longitude)
+  if (latitude == null && longitude == null) {
+    return null
+  }
+  return {
+    latitude,
+    longitude,
+  }
+}
+
+function mapPhoto(payload: Record<string, unknown>): PropertyPhoto {
+  const autoTags = Array.isArray(payload.auto_tags)
+    ? payload.auto_tags.filter((item): item is string => typeof item === 'string')
+    : []
+  const tagList = Array.isArray(payload.tags)
+    ? payload.tags.filter((item): item is string => typeof item === 'string')
+    : null
+
+  return {
+    photoId: coerceString(payload.photo_id) ?? '',
+    storageKey: coerceString(payload.storage_key) ?? null,
+    captureTimestamp: coerceString(payload.capture_timestamp) ?? null,
+    autoTags,
+    publicUrl: coerceString(payload.public_url) ?? null,
+    location: mapPhotoLocation(payload.location),
+    notes: coerceString(payload.notes) ?? null,
+    tags: tagList,
+  }
+}
+
 function mapMetrics(
   metrics: Record<string, unknown> | null | undefined,
 ): Record<string, MetricValue> {
@@ -385,6 +445,21 @@ export interface MarketIntelligenceSummary {
   report: Record<string, unknown>
 }
 
+export type ProfessionalPackType =
+  | 'universal'
+  | 'investment'
+  | 'sales'
+  | 'lease'
+
+export interface ProfessionalPackSummary {
+  packType: ProfessionalPackType
+  propertyId: string
+  filename: string
+  downloadUrl: string | null
+  generatedAt: string
+  sizeBytes: number | null
+}
+
 export async function fetchPropertyMarketIntelligence(
   propertyId: string,
   months = 12,
@@ -433,5 +508,59 @@ export async function fetchPropertyMarketIntelligence(
   return {
     propertyId: payload.property_id,
     report: payload.report ?? {},
+  }
+}
+
+export async function generateProfessionalPack(
+  propertyId: string,
+  packType: ProfessionalPackType,
+  signal?: AbortSignal,
+): Promise<ProfessionalPackSummary> {
+  const url = buildUrl(
+    `api/v1/agents/commercial-property/properties/${propertyId}/generate-pack/${packType}`,
+  )
+
+  const response = await fetch(url, {
+    method: 'POST',
+    signal,
+  })
+
+  const contentType = response.headers?.get?.('content-type') ?? ''
+
+  if (!response.ok) {
+    const detail = contentType.includes('application/json')
+      ? await response.json().then((data: Record<string, unknown>) => {
+          const message = data?.detail
+          return typeof message === 'string' ? message : undefined
+        })
+      : await response.text()
+
+    throw new Error(
+      detail ||
+        `Request to generate ${packType} pack failed with ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`,
+    )
+  }
+
+  if (!contentType.includes('application/json')) {
+    throw new Error('Expected JSON response from professional pack endpoint')
+  }
+
+  const payload = (await response.json()) as {
+    pack_type: ProfessionalPackType
+    property_id: string
+    filename: string
+    download_url?: string | null
+    generated_at: string
+    size_bytes?: number | null
+  }
+
+  return {
+    packType: payload.pack_type,
+    propertyId: payload.property_id,
+    filename: payload.filename,
+    downloadUrl: payload.download_url ?? null,
+    generatedAt: payload.generated_at,
+    sizeBytes:
+      typeof payload.size_bytes === 'number' ? payload.size_bytes : null,
   }
 }

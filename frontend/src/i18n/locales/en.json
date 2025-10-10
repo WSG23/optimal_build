@@ -326,6 +326,38 @@
       "period": "Period",
       "transactions": "Transactions",
       "generatedAt": "Report generated on {{timestamp}}"
+    },
+    "pack": {
+      "title": "Professional marketing packs",
+      "subtitle": "Generate agent-ready documents from the latest quick analysis.",
+      "selectLabel": "Pack type",
+      "generate": "Generate professional pack",
+      "generateLoading": "Generating…",
+      "downloadCta": "Download {{filename}}",
+      "generatedAt": "Generated on {{timestamp}}",
+      "size": "Approx. file size: {{size}}",
+      "error": "Unable to generate marketing pack: {{message}}",
+      "errorFallback": "Unable to generate marketing pack.",
+      "missingProperty": "Log the site before generating a marketing pack.",
+      "noDownload": "Download link unavailable in this environment.",
+      "options": {
+        "universal": {
+          "title": "Universal site pack",
+          "description": "20-page overview spanning zoning, scenarios, amenities and compliance notes."
+        },
+        "investment": {
+          "title": "Investment memorandum",
+          "description": "Institutional-grade pack covering financial metrics, sensitivity analysis and capital stack."
+        },
+        "sales": {
+          "title": "Sales brochure",
+          "description": "Client-ready document focused on positioning, comparables and buyer messaging."
+        },
+        "lease": {
+          "title": "Leasing brochure",
+          "description": "Highlights tenant mix, floor efficiency and absorption to support leasing conversations."
+        }
+      }
     }
   },
   "controls": {

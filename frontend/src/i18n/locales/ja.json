@@ -326,6 +326,38 @@
       "period": "期間",
       "transactions": "取引件数",
       "generatedAt": "レポート生成日: {{timestamp}}"
+    },
+    "pack": {
+      "title": "プロ向けマーケティングパック",
+      "subtitle": "最新のクイック分析からエージェント用資料を生成します。",
+      "selectLabel": "パック種類",
+      "generate": "マーケティングパックを生成",
+      "generateLoading": "生成中…",
+      "downloadCta": "{{filename}} をダウンロード",
+      "generatedAt": "{{timestamp}} に生成",
+      "size": "推定ファイルサイズ: {{size}}",
+      "error": "マーケティングパックを生成できません: {{message}}",
+      "errorFallback": "マーケティングパックを生成できません。",
+      "missingProperty": "サイトを記録してからマーケティングパックを生成してください。",
+      "noDownload": "この環境ではダウンロードリンクを利用できません。",
+      "options": {
+        "universal": {
+          "title": "ユニバーサルサイトパック",
+          "description": "ゾーニング・シナリオ・アメニティ・コンプライアンスを網羅した20ページの概要資料。"
+        },
+        "investment": {
+          "title": "投資メモランダム",
+          "description": "財務指標、感度分析、資本構成を含む機関投資家向けの専門資料。"
+        },
+        "sales": {
+          "title": "販売用パンフレット",
+          "description": "物件ポジショニングや比較事例、購入者向けメッセージに特化した資料。"
+        },
+        "lease": {
+          "title": "リーシングパンフレット",
+          "description": "テナント構成、フロア効率、吸収動向を強調したリーシング支援資料。"
+        }
+      }
     }
   },
   "controls": {

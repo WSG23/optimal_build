@@ -5,6 +5,7 @@ import {
   type DevelopmentScenario,
   logPropertyByGps,
   fetchPropertyMarketIntelligence,
+  generateProfessionalPack,
 } from '../agents'
 
 describe('agents API mapping', () => {
@@ -169,6 +170,80 @@ describe('agents API mapping', () => {
       await assert.rejects(
         () => fetchPropertyMarketIntelligence('abc123'),
         /service unavailable/,
+      )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('requests professional pack generation and maps the response payload', async () => {
+    const originalFetch = globalThis.fetch
+
+    let requestedUrl: string | null = null
+    let requestedMethod: string | undefined
+
+    globalThis.fetch = (async (
+      input: RequestInfo,
+      init?: RequestInit,
+    ) => {
+      requestedUrl = typeof input === 'string' ? input : String(input)
+      requestedMethod = init?.method
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => 'application/json',
+        },
+        async json() {
+          return {
+            pack_type: 'sales',
+            property_id: 'abc123',
+            filename: 'sales_brochure.pdf',
+            download_url: 'https://example.com/sales.pdf',
+            generated_at: '2025-07-01T00:00:00Z',
+            size_bytes: 42_000,
+          }
+        },
+      }
+    }) as typeof globalThis.fetch
+
+    try {
+      const summary = await generateProfessionalPack('abc123', 'sales')
+      assert.ok(
+        requestedUrl?.endsWith(
+          '/api/v1/agents/commercial-property/properties/abc123/generate-pack/sales',
+        ),
+      )
+      assert.equal(requestedMethod, 'POST')
+      assert.equal(summary.packType, 'sales')
+      assert.equal(summary.propertyId, 'abc123')
+      assert.equal(summary.filename, 'sales_brochure.pdf')
+      assert.equal(summary.downloadUrl, 'https://example.com/sales.pdf')
+      assert.equal(summary.sizeBytes, 42_000)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('propagates API errors when professional pack generation fails', async () => {
+    const originalFetch = globalThis.fetch
+
+    globalThis.fetch = (async () => ({
+      ok: false,
+      status: 429,
+      statusText: 'Too Many Requests',
+      headers: {
+        get: () => 'text/plain',
+      },
+      async text() {
+        return 'generation throttled'
+      },
+    })) as typeof globalThis.fetch
+
+    try {
+      await assert.rejects(
+        () => generateProfessionalPack('abc123', 'investment'),
+        /generation throttled/,
       )
     } finally {
       globalThis.fetch = originalFetch

@@ -111,6 +111,9 @@ sets of features, reusing the same data foundations:
   visualisations.
 - Documented linting/testing workflows and kept `make verify` as the default
   quality gate after each increment.
+- Wired the agent capture workspace to property-specific market intelligence
+  and unlocked one-click generation of universal, investment, sales, or leasing
+  marketing packs with immediate download feedback.
 
 This plan should make it easy to resume the conversation later and keep the team
 aligned on what “start” and “finish” look like for the flagship features.

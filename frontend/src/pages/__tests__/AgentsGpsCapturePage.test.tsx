@@ -3,40 +3,19 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import { JSDOM } from 'jsdom'
 
 import { TranslationProvider } from '../../i18n'
 import type { GpsCaptureSummary } from '../../api/agents'
 import { AgentsGpsCapturePage } from '../AgentsGpsCapturePage'
 
 describe('AgentsGpsCapturePage', () => {
-  let dom: JSDOM
-
   beforeEach(() => {
-    dom = new JSDOM('<!doctype html><html><body></body></html>', {
-      url: 'http://localhost/agents/site-capture',
-    })
-    const globalWithDom = globalThis as typeof globalThis & {
-      window: Window & typeof globalThis
-      document: Document
-      navigator: Navigator
-    }
-    globalWithDom.window = dom.window
-    globalWithDom.document = dom.window.document
-    globalWithDom.navigator = dom.window.navigator
+    cleanup()
+    window.history.replaceState(null, '', 'http://localhost/agents/site-capture')
   })
 
   afterEach(() => {
     cleanup()
-    dom.window.close()
-    const globalWithDom = globalThis as {
-      window?: Window & typeof globalThis
-      document?: Document
-      navigator?: Navigator
-    }
-    delete globalWithDom.window
-    delete globalWithDom.document
-    delete globalWithDom.navigator
   })
 
   it('submits coordinates and renders quick analysis cards', async () => {
@@ -85,11 +64,27 @@ describe('AgentsGpsCapturePage', () => {
       }
     }
 
+    let packCalls = 0
+    let lastPackType: string | null = null
+    const packStub = async (_propertyId: string, packType: 'universal' | 'investment' | 'sales' | 'lease') => {
+      packCalls += 1
+      lastPackType = packType
+      return {
+        packType,
+        propertyId: summary.propertyId,
+        filename: `${packType}_pack.pdf`,
+        downloadUrl: 'https://example.com/pack.pdf',
+        generatedAt: '2025-07-02T08:00:00Z',
+        sizeBytes: 52_428,
+      }
+    }
+
     render(
       <TranslationProvider>
         <AgentsGpsCapturePage
           logPropertyFn={captureStub}
           fetchMarketIntelligenceFn={marketStub}
+          generatePackFn={packStub}
         />
       </TranslationProvider>,
     )
@@ -116,8 +111,25 @@ describe('AgentsGpsCapturePage', () => {
       screen.getByRole('heading', { name: /Raw land potential/i })
     )
     assert.ok(screen.getByText(/Max GFA 20,000 sqm/i))
-    assert.ok(screen.getByText(/Market intelligence/i))
+    assert.ok(screen.getByRole('heading', { name: /Market intelligence/i }))
     assert.ok(screen.getByText(/Transactions/i))
     assert.ok(screen.getByText(/Add VITE_MAPBOX_ACCESS_TOKEN/))
+
+    fireEvent.change(screen.getByLabelText(/Pack type/i), {
+      target: { value: 'sales' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Generate professional pack/i }),
+    )
+
+    await waitFor(() => {
+      assert.equal(packCalls, 1)
+      assert.equal(lastPackType, 'sales')
+    })
+
+    assert.ok(
+      screen.getByRole('link', { name: /Download sales_pack\.pdf/i }),
+    )
   })
 })

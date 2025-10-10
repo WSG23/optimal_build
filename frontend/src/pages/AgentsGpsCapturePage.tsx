@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 
 import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
+
+const isNodeTestEnv =
+  typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
+
+if (typeof window !== 'undefined' && !isNodeTestEnv) {
+  void import('mapbox-gl/dist/mapbox-gl.css')
+}
 
 import { AppLayout } from '../App'
 import {
@@ -11,13 +17,20 @@ import {
   type MarketIntelligenceSummary,
   type MetricValue,
   type QuickAnalysisScenarioSummary,
+  type ProfessionalPackSummary,
+  type ProfessionalPackType,
   logPropertyByGps,
   fetchPropertyMarketIntelligence,
+  generateProfessionalPack,
 } from '../api/agents'
 import { useTranslation } from '../i18n'
 import { Link } from '../router'
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ?? ''
+const MAPBOX_ENV =
+  typeof import.meta !== 'undefined' && import.meta
+    ? (import.meta as ImportMeta).env
+    : undefined
+const MAPBOX_TOKEN = MAPBOX_ENV?.VITE_MAPBOX_ACCESS_TOKEN ?? ''
 if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN
 }
@@ -51,6 +64,35 @@ const SCENARIO_OPTIONS: readonly ScenarioOption[] = [
     value: 'underused_asset',
     labelKey: 'agentsCapture.scenarios.underusedAsset.title',
     descriptionKey: 'agentsCapture.scenarios.underusedAsset.description',
+  },
+] as const
+
+interface PackOption {
+  value: ProfessionalPackType
+  labelKey: string
+  descriptionKey: string
+}
+
+const PACK_OPTIONS: readonly PackOption[] = [
+  {
+    value: 'universal',
+    labelKey: 'agentsCapture.pack.options.universal.title',
+    descriptionKey: 'agentsCapture.pack.options.universal.description',
+  },
+  {
+    value: 'investment',
+    labelKey: 'agentsCapture.pack.options.investment.title',
+    descriptionKey: 'agentsCapture.pack.options.investment.description',
+  },
+  {
+    value: 'sales',
+    labelKey: 'agentsCapture.pack.options.sales.title',
+    descriptionKey: 'agentsCapture.pack.options.sales.description',
+  },
+  {
+    value: 'lease',
+    labelKey: 'agentsCapture.pack.options.lease.title',
+    descriptionKey: 'agentsCapture.pack.options.lease.description',
   },
 ] as const
 
@@ -230,6 +272,23 @@ function formatMetricValue(value: MetricValue, locale: string): string {
   return value
 }
 
+function formatFileSize(bytes: number | null, locale: string): string {
+  if (bytes == null || Number.isNaN(bytes)) {
+    return '—'
+  }
+  if (bytes < 1024) {
+    return `${new Intl.NumberFormat(locale).format(bytes)} B`
+  }
+  const units = ['KB', 'MB', 'GB'] as const
+  let value = bytes / 1024
+  let index = 0
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024
+    index += 1
+  }
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} ${units[index]}`
+}
+
 function scenarioTitle(
   scenario: DevelopmentScenario,
   translate: ReturnType<typeof useTranslation>['t'],
@@ -308,11 +367,13 @@ function ScenarioCard({
 interface AgentsGpsCapturePageProps {
   logPropertyFn?: typeof logPropertyByGps
   fetchMarketIntelligenceFn?: typeof fetchPropertyMarketIntelligence
+  generatePackFn?: typeof generateProfessionalPack
 }
 
 export function AgentsGpsCapturePage({
   logPropertyFn = logPropertyByGps,
   fetchMarketIntelligenceFn = fetchPropertyMarketIntelligence,
+  generatePackFn = generateProfessionalPack,
 }: AgentsGpsCapturePageProps = {}) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language ?? 'en'
@@ -328,6 +389,12 @@ export function AgentsGpsCapturePage({
     useState<MarketIntelligenceSummary | null>(null)
   const [marketLoading, setMarketLoading] = useState(false)
   const [marketError, setMarketError] = useState<string | null>(null)
+  const [packType, setPackType] = useState<ProfessionalPackType>('universal')
+  const [packSummary, setPackSummary] = useState<ProfessionalPackSummary | null>(
+    null,
+  )
+  const [packLoading, setPackLoading] = useState(false)
+  const [packError, setPackError] = useState<string | null>(null)
 
   const toggleScenario = (scenario: DevelopmentScenario) => {
     setSelectedScenarios((current) => {
@@ -397,6 +464,18 @@ export function AgentsGpsCapturePage({
     return messages
   }, [scenarioKeys, t])
 
+  const selectedPackOption = useMemo(
+    () => PACK_OPTIONS.find((option) => option.value === packType) ?? PACK_OPTIONS[0],
+    [packType],
+  )
+
+  useEffect(() => {
+    setPackSummary(null)
+    setPackError(null)
+    setPackLoading(false)
+    setPackType('universal')
+  }, [result?.propertyId])
+
   useEffect(() => {
     if (!result) {
       setMarketReport(null)
@@ -436,6 +515,29 @@ export function AgentsGpsCapturePage({
       controller.abort()
     }
   }, [fetchMarketIntelligenceFn, result, t])
+
+  const handlePackSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!result) {
+      setPackError(t('agentsCapture.pack.missingProperty'))
+      return
+    }
+
+    setPackLoading(true)
+    setPackError(null)
+
+    try {
+      const summary = await generatePackFn(result.propertyId, packType)
+      setPackSummary(summary)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : t('agentsCapture.pack.errorFallback')
+      setPackError(message)
+      setPackSummary(null)
+    } finally {
+      setPackLoading(false)
+    }
+  }
 
   return (
     <AppLayout
@@ -649,6 +751,78 @@ export function AgentsGpsCapturePage({
                 </p>
               )}
               {marketReport && renderMarketReport(marketReport, t, locale)}
+            </aside>
+            <aside className="agents-capture__pack">
+              <h4>{t('agentsCapture.pack.title')}</h4>
+              <p className="agents-capture__status">
+                {t('agentsCapture.pack.subtitle')}
+              </p>
+              <form className="agents-capture__pack-form" onSubmit={handlePackSubmit}>
+                <label className="agents-capture__pack-field">
+                  <span>{t('agentsCapture.pack.selectLabel')}</span>
+                  <select
+                    value={packType}
+                    onChange={(event) =>
+                      setPackType(event.target.value as ProfessionalPackType)
+                    }
+                  >
+                    {PACK_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {t(option.labelKey)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="agents-capture__pack-description">
+                  {t(selectedPackOption.descriptionKey)}
+                </p>
+                <button
+                  type="submit"
+                  className="agents-capture__pack-button"
+                  disabled={packLoading}
+                >
+                  {packLoading
+                    ? t('agentsCapture.pack.generateLoading')
+                    : t('agentsCapture.pack.generate')}
+                </button>
+              </form>
+              {packError && (
+                <p className="agents-capture__error agents-capture__error--inline">
+                  {t('agentsCapture.pack.error', { message: packError })}
+                </p>
+              )}
+              {packSummary && (
+                <div className="agents-capture__pack-result">
+                  <p className="agents-capture__status">
+                    {t('agentsCapture.pack.generatedAt', {
+                      timestamp: new Date(packSummary.generatedAt).toLocaleString(
+                        locale,
+                      ),
+                    })}
+                  </p>
+                  <p className="agents-capture__status">
+                    {t('agentsCapture.pack.size', {
+                      size: formatFileSize(packSummary.sizeBytes, locale),
+                    })}
+                  </p>
+                  {packSummary.downloadUrl ? (
+                    <a
+                      href={packSummary.downloadUrl}
+                      className="agents-capture__pack-download"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t('agentsCapture.pack.downloadCta', {
+                        filename: packSummary.filename,
+                      })}
+                    </a>
+                  ) : (
+                    <p className="agents-capture__status">
+                      {t('agentsCapture.pack.noDownload')}
+                    </p>
+                  )}
+                </div>
+              )}
             </aside>
           </section>
         )}
