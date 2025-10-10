@@ -16,8 +16,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Enum as SQLEnum
-from sqlalchemy.types import Numeric as SQLDecimal
+from sqlalchemy.types import Enum as SQLEnum, Numeric as SQLDecimal
 
 try:
     from geoalchemy2 import Geometry

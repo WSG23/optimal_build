@@ -1,4 +1,5 @@
 import pytest
+
 from app.core.models.geometry import Door, GeometryGraph, Level, Space
 from app.core.rules.engine import RulesEngine
 

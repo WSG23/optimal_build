@@ -8,10 +8,11 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from fastapi.testclient import TestClient
+
 from app.api.v1 import TAGS_METADATA  # noqa: E402  (import after dependency checks)
 from app.core.config import settings  # noqa: E402
 from app.main import app  # noqa: E402
-from fastapi.testclient import TestClient
 
 
 def test_openapi_includes_expected_paths() -> None:

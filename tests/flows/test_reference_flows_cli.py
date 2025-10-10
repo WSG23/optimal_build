@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 import pytest
+
 import pytest_asyncio
 
 if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1":

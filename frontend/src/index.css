@@ -1742,6 +1742,107 @@ h3 {
     cursor: pointer;
 }
 
+.feasibility-pack {
+    margin-top: var(--ob-space-150);
+    background: #ffffff;
+    border-radius: var(--ob-radius-xl);
+    padding: var(--ob-space-175);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+}
+
+.feasibility-pack h2 {
+    margin: 0;
+}
+
+.feasibility-pack p {
+    margin: 0;
+    color: #475569;
+}
+
+.feasibility-pack__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+}
+
+.feasibility-pack__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+}
+
+.feasibility-pack__field span {
+    font-weight: var(--ob-font-weight-semibold);
+    color: #0f172a;
+}
+
+.feasibility-pack__field input,
+.feasibility-pack__field select {
+    padding: var(--ob-space-065) var(--ob-space-085);
+    border-radius: var(--ob-radius-md);
+    border: 1px solid var(--ob-color-border-subtle);
+    font-size: 0.95rem;
+    background: rgba(248, 250, 252, 0.65);
+}
+
+.feasibility-pack__field input:focus,
+.feasibility-pack__field select:focus {
+    outline: 2px solid var(--ob-color-brand-primary);
+    border-color: var(--ob-color-brand-primary);
+}
+
+.feasibility-pack__field small {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.feasibility-pack__submit {
+    align-self: flex-start;
+    padding: var(--ob-space-065) var(--ob-space-125);
+    border-radius: var(--ob-radius-pill);
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+    font-weight: var(--ob-font-weight-semibold);
+    border: none;
+    cursor: pointer;
+}
+
+.feasibility-pack__submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.feasibility-pack__error {
+    margin: 0;
+    color: #b91c1c;
+    background: rgba(248, 113, 113, 0.15);
+    padding: var(--ob-space-075) var(--ob-space-100);
+    border-radius: var(--ob-radius-md);
+}
+
+.feasibility-pack__result {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    color: #0f172a;
+}
+
+.feasibility-pack__download {
+    align-self: flex-start;
+    padding: var(--ob-space-065) var(--ob-space-120);
+    border-radius: var(--ob-radius-pill);
+    background: rgba(22, 163, 74, 0.14);
+    color: #166534;
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.feasibility-pack__download:hover {
+    background: rgba(22, 163, 74, 0.22);
+}
+
 .feasibility-results {
     background-color: var(--ob-color-surface-inverse);
     color: var(--ob-color-text-inverse);

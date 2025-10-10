@@ -1,11 +1,17 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { cssVar } from '@ob/tokens'
+import { cssVar } from '../../tokens'
 
 import { AppLayout } from '../../App'
 import { fetchBuildable, type BuildableSummary } from '../../api/buildable'
+import {
+  generateProfessionalPack,
+  type ProfessionalPackSummary,
+  type ProfessionalPackType,
+} from '../../api/agents'
 import { useTranslation } from '../../i18n'
+import { useRouterLocation } from '../../router'
 
 const DEFAULT_ASSUMPTIONS = {
   typFloorToFloorM: 3.4,
@@ -41,6 +47,52 @@ type PendingPayload = {
   efficiencyRatio: number
 }
 
+interface PackOption {
+  value: ProfessionalPackType
+  labelKey: string
+  descriptionKey: string
+}
+
+const PACK_OPTIONS: readonly PackOption[] = [
+  {
+    value: 'universal',
+    labelKey: 'agentsCapture.pack.options.universal.title',
+    descriptionKey: 'agentsCapture.pack.options.universal.description',
+  },
+  {
+    value: 'investment',
+    labelKey: 'agentsCapture.pack.options.investment.title',
+    descriptionKey: 'agentsCapture.pack.options.investment.description',
+  },
+  {
+    value: 'sales',
+    labelKey: 'agentsCapture.pack.options.sales.title',
+    descriptionKey: 'agentsCapture.pack.options.sales.description',
+  },
+  {
+    value: 'lease',
+    labelKey: 'agentsCapture.pack.options.lease.title',
+    descriptionKey: 'agentsCapture.pack.options.lease.description',
+  },
+] as const
+
+function formatFileSize(bytes: number | null, locale: string): string {
+  if (bytes == null || Number.isNaN(bytes)) {
+    return '—'
+  }
+  if (bytes < 1024) {
+    return `${new Intl.NumberFormat(locale).format(bytes)} B`
+  }
+  const units = ['KB', 'MB', 'GB'] as const
+  let value = bytes / 1024
+  let index = 0
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024
+    index += 1
+  }
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} ${units[index]}`
+}
+
 function anonymiseAddress(address: string): string {
   const trimmed = address.trim()
   if (!trimmed) {
@@ -54,8 +106,15 @@ function anonymiseAddress(address: string): string {
   return `${prefix}…${suffix}`
 }
 
-export function FeasibilityWizard() {
+interface FeasibilityWizardProps {
+  generatePackFn?: typeof generateProfessionalPack
+}
+
+export function FeasibilityWizard({
+  generatePackFn = generateProfessionalPack,
+}: FeasibilityWizardProps = {}) {
   const { t, i18n } = useTranslation()
+  const { search: routerSearch } = useRouterLocation()
   const [addressInput, setAddressInput] = useState('')
   const [addressError, setAddressError] = useState<string | null>(null)
   const [assumptionInputs, setAssumptionInputs] = useState<AssumptionInputs>(
@@ -76,6 +135,13 @@ export function FeasibilityWizard() {
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>(
     'idle',
   )
+  const [packPropertyId, setPackPropertyId] = useState<string>('')
+  const [packType, setPackType] = useState<ProfessionalPackType>('universal')
+  const [packSummary, setPackSummary] = useState<ProfessionalPackSummary | null>(
+    null,
+  )
+  const [packLoading, setPackLoading] = useState(false)
+  const [packError, setPackError] = useState<string | null>(null)
 
   const copyStatusColor = useMemo<string>(() => {
     if (copyState === 'copied') {
@@ -102,6 +168,31 @@ export function FeasibilityWizard() {
       }
     }
   }, [])
+
+  const propertyIdFromQuery = useMemo(() => {
+    if (!routerSearch) {
+      return ''
+    }
+    try {
+      const params = new URLSearchParams(routerSearch)
+      return params.get('propertyId') ?? ''
+    } catch {
+      return ''
+    }
+  }, [routerSearch])
+
+  useEffect(() => {
+    setPackPropertyId((current) =>
+      current === propertyIdFromQuery ? current : propertyIdFromQuery,
+    )
+    setPackSummary(null)
+    setPackError(null)
+    setPackLoading(false)
+  }, [propertyIdFromQuery])
+
+  const selectedPackOption = useMemo(() => {
+    return PACK_OPTIONS.find((option) => option.value === packType) ?? PACK_OPTIONS[0]
+  }, [packType])
 
   const numberFormatter = useMemo(
     () =>
@@ -350,6 +441,38 @@ export function FeasibilityWizard() {
       })
   }, [payload])
 
+  const handlePackSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      const trimmed = packPropertyId.trim()
+      if (!trimmed) {
+        setPackError(t('wizard.pack.missingProperty'))
+        setPackSummary(null)
+        return
+      }
+
+      setPackLoading(true)
+      setPackError(null)
+
+      Promise.resolve(generatePackFn(trimmed, packType))
+        .then((summary) => {
+          setPackSummary(summary)
+        })
+        .catch((error) => {
+          setPackSummary(null)
+          setPackError(
+            error instanceof Error
+              ? error.message
+              : t('wizard.pack.errorFallback'),
+          )
+        })
+        .finally(() => {
+          setPackLoading(false)
+        })
+    },
+    [generatePackFn, packPropertyId, packType, t],
+  )
+
   const renderAssumptionError = (key: keyof AssumptionInputs) => {
     const error = assumptionErrors[key]
     if (!error) {
@@ -593,6 +716,86 @@ export function FeasibilityWizard() {
               >
                 {t('wizard.assumptions.reset')}
               </button>
+            </section>
+
+            <section className="feasibility-pack">
+              <h2>{t('wizard.pack.title')}</h2>
+              <p>{t('wizard.pack.subtitle')}</p>
+              <form className="feasibility-pack__form" onSubmit={handlePackSubmit}>
+                <label className="feasibility-pack__field">
+                  <span>{t('wizard.pack.propertyLabel')}</span>
+                  <input
+                    type="text"
+                    value={packPropertyId}
+                    onChange={(event) => setPackPropertyId(event.target.value)}
+                    placeholder={t('wizard.pack.propertyPlaceholder')}
+                    data-testid="feasibility-pack-property"
+                  />
+                  <small>{t('wizard.pack.propertyHelper')}</small>
+                </label>
+                <label className="feasibility-pack__field">
+                  <span>{t('wizard.pack.typeLabel')}</span>
+                  <select
+                    value={packType}
+                    onChange={(event) =>
+                      setPackType(event.target.value as ProfessionalPackType)
+                    }
+                    data-testid="feasibility-pack-type"
+                  >
+                    {PACK_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {t(option.labelKey)}
+                      </option>
+                    ))}
+                  </select>
+                  <small>{t(selectedPackOption.descriptionKey)}</small>
+                </label>
+                <button
+                  type="submit"
+                  className="feasibility-pack__submit"
+                  disabled={packLoading}
+                  data-testid="feasibility-pack-submit"
+                >
+                  {packLoading
+                    ? t('wizard.pack.generateLoading')
+                    : t('wizard.pack.generate')}
+                </button>
+              </form>
+              {packError && (
+                <p className="feasibility-pack__error" role="alert">
+                  {t('wizard.pack.error', { message: packError })}
+                </p>
+              )}
+              {packSummary && (
+                <div className="feasibility-pack__result">
+                  <p>
+                    {t('wizard.pack.generatedAt', {
+                      timestamp: new Date(packSummary.generatedAt).toLocaleString(
+                        i18n.language || 'en',
+                      ),
+                    })}
+                  </p>
+                  <p>
+                    {t('wizard.pack.size', {
+                      size: formatFileSize(packSummary.sizeBytes, i18n.language || 'en'),
+                    })}
+                  </p>
+                  {packSummary.downloadUrl ? (
+                    <a
+                      href={packSummary.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="feasibility-pack__download"
+                    >
+                      {t('wizard.pack.downloadCta', {
+                        filename: packSummary.filename,
+                      })}
+                    </a>
+                  ) : (
+                    <p>{t('wizard.pack.noDownload')}</p>
+                  )}
+                </div>
+              )}
             </section>
           </section>
 

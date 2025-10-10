@@ -53,7 +53,7 @@ work even if this chat is lost later.
 
 ## 6. Feedback Loop
 
-- Run live walkthroughs with 2–3 agents.
+- Run live walkthroughs with 2–3 agents. *(Plan/notes in `docs/validation/live_walkthrough_plan.md`; outreach template in `docs/validation/agent_outreach_email.md`.)*
 - Capture their feedback on usefulness, wording, and speed.
 - Refine the summaries, tighten compliance messaging, and iterate on any rough
   spots.
@@ -82,10 +82,13 @@ sets of features, reusing the same data foundations:
 - Follow the workflow in `CONTRIBUTING.md` (testing loops, pre-commit retry
   cycle, reviewer expectations) so each iteration lands cleanly.
 - Update contributor docs and user-facing guides alongside the new features.
+  - Agent quickstart for marketing packs available in
+    `docs/agents/marketing_pack_quickstart.md`.
 
 ## 9. Launch Preparation
 
 - Create demos and quick-start guides for agents and developers.
+  - Capture-to-pack demo script available in `docs/demos/agents_capture_demo.md`.
 - Plan a private beta (for example: a small group of Singapore-based agents)
   before a wider release.
 
@@ -114,6 +117,8 @@ sets of features, reusing the same data foundations:
 - Wired the agent capture workspace to property-specific market intelligence
   and unlocked one-click generation of universal, investment, sales, or leasing
   marketing packs with immediate download feedback.
+- Extended the feasibility wizard so developers can generate those marketing
+  packs directly when a captured property identifier is available.
 
 This plan should make it easy to resume the conversation later and keep the team
 aligned on what “start” and “finish” look like for the flagship features.

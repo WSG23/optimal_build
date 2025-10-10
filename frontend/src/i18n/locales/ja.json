@@ -420,6 +420,23 @@
       },
       "reset": "既定値にリセット"
     },
+    "pack": {
+      "title": "マーケティングパック",
+      "subtitle": "このフィージビリティ結果からプロ向け資料を生成します。",
+      "propertyLabel": "物件ID",
+      "propertyPlaceholder": "取得済みの物件ID（UUID）を貼り付け",
+      "propertyHelper": "エージェントキャプチャから遷移するとIDが自動入力されます。既知の物件IDを直接貼り付けても利用できます。",
+      "typeLabel": "パック種類",
+      "generate": "パックを生成",
+      "generateLoading": "生成中…",
+      "error": "マーケティングパックを生成できません: {{message}}",
+      "errorFallback": "マーケティングパックを生成できません。",
+      "missingProperty": "マーケティングパックを生成する前に物件IDを入力してください。",
+      "downloadCta": "{{filename}} をダウンロード",
+      "generatedAt": "{{timestamp}} に生成",
+      "size": "推定サイズ: {{size}}",
+      "noDownload": "この環境ではダウンロードリンクを利用できません。"
+    },
     "states": {
       "idle": "ゾーニングを読み込むにはシード済みの住所を入力してください。",
       "empty": "この住所に対応するシード済み地番が見つかりませんでした。",
