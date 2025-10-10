@@ -649,6 +649,19 @@ export function CadDetectionPage() {
     return counts
   }, [aggregatedSuggestions])
 
+  const statusFilterSummary = useMemo(() => {
+    const pendingOnly = activeLayers.length === 1 && activeLayers[0] === 'pending'
+    if (pendingOnly) {
+      return t('detection.statusFilters.pendingOnly')
+    }
+    const approved = statusCounts.approved
+    const rejected = statusCounts.rejected
+    if (approved === 0 && rejected === 0) {
+      return t('detection.statusFilters.all')
+    }
+    return `${t('detection.statusFilters.approvedCount', { count: approved })} · ${t('detection.statusFilters.rejectedCount', { count: rejected })}`
+  }, [activeLayers, statusCounts, t])
+
   const hiddenStatusLabels = useMemo(() => {
     const focus: DetectionStatus[] = ['approved', 'rejected']
     const hidden = focus.filter((status) => !activeLayers.includes(status))
@@ -865,6 +878,21 @@ export function CadDetectionPage() {
         >
           {severityFilterSummary}
         </span>
+        <button
+          type="button"
+          className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
+          onClick={() => {
+            const isPendingFocus =
+              activeLayers.length === 1 && activeLayers[0] === 'pending'
+            if (isPendingFocus) {
+              setActiveLayers([...DEFAULT_LAYERS])
+            } else {
+              setActiveLayers(['pending'])
+            }
+          }}
+        >
+          {statusFilterSummary}
+        </button>
         <span className="cad-detection__shortcut-hint">
           {t('detection.severitySummary.toolbar.shortcut')}
         </span>
