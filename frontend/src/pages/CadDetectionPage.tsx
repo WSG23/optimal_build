@@ -300,18 +300,6 @@ export function CadDetectionPage() {
     [filteredSuggestions],
   )
 
-  const overlays = useMemo(
-    () => aggregatedSuggestions.map((item) => ({ key: item.key, text: item.suggestion.code })),
-    [aggregatedSuggestions],
-  )
-  const hints = useMemo(
-    () =>
-      aggregatedSuggestions
-        .map((item) => ({ key: item.key, text: item.suggestion.rationale }))
-        .filter((value): value is { key: string; text: string } => Boolean(value.text)),
-    [aggregatedSuggestions],
-  )
-
   const metricLabels = useMemo(
     () => ({
       front_setback_m: t('detection.override.prompts.frontSetback'),
@@ -322,6 +310,51 @@ export function CadDetectionPage() {
       gross_floor_area_sqm: t('detection.override.prompts.grossFloorArea'),
     }),
     [t],
+  )
+
+  const overlays = useMemo(
+    () =>
+      aggregatedSuggestions
+        .filter((item) => activeLayers.includes(item.status))
+        .map((item) => {
+          const metricLabel =
+            item.missingMetricKey &&
+            metricLabels[item.missingMetricKey as keyof typeof metricLabels]
+              ? metricLabels[item.missingMetricKey as keyof typeof metricLabels]
+              : item.missingMetricKey ?? null
+          const baseLabel =
+            metricLabel ??
+            item.suggestion.title ??
+            item.suggestion.code ??
+            item.key
+          const countSuffix =
+            item.count > 1
+              ? t('detection.countSuffix', { count: item.count })
+              : null
+          const statusLabel = t(STATUS_LABEL_KEYS[item.status])
+          const textParts = [baseLabel]
+          if (countSuffix) {
+            textParts.push(countSuffix)
+          }
+          textParts.push(`- ${statusLabel}`)
+          return { key: item.key, text: textParts.join(' ') }
+        }),
+    [activeLayers, aggregatedSuggestions, metricLabels, t],
+  )
+
+  const hints = useMemo(
+    () =>
+      aggregatedSuggestions
+        .filter(
+          (item) =>
+            Boolean(item.suggestion.rationale) &&
+            activeLayers.includes(item.status),
+        )
+        .map((item) => ({
+          key: item.key,
+          text: item.suggestion.rationale as string,
+        })),
+    [activeLayers, aggregatedSuggestions],
   )
 
   const units = useMemo<DetectedUnit[]>(
