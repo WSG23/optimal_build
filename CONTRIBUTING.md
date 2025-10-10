@@ -4,6 +4,52 @@ Thanks for your interest in contributing! This guide covers the basics to get
 your environment ready, follow our coding standards, and run the full suite of
 checks before opening a pull request.
 
+## 📚 REQUIRED READING (Before You Start)
+
+**All contributors (human and AI agents) MUST read these documents FIRST:**
+
+1. **[FEATURES.md](FEATURES.md)** - Complete product vision and requirements
+   - Defines all roles: Agents, Developers, Architects, Engineers
+   - Specifies every feature requirement
+   - **THIS IS THE SOURCE OF TRUTH**
+
+2. **[docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md)** - Comprehensive delivery roadmap
+   - Maps 100% of FEATURES.md into 6 phases
+   - Shows dependencies and priorities
+   - Includes acceptance criteria and estimates
+   - **ALWAYS CHECK THIS BEFORE STARTING NEW WORK**
+
+3. **[docs/NEXT_STEPS_FOR_CODEX.md](docs/NEXT_STEPS_FOR_CODEX.md)** - Current priorities
+   - Updated regularly with what to build next
+   - Shows completed vs. in-progress vs. not-started features
+   - **CHECK THIS TO KNOW WHAT TO WORK ON**
+
+4. **[CODING_RULES.md](CODING_RULES.md)** - Technical standards
+   - Migrations, async patterns, compliance checks
+   - Singapore-specific requirements
+   - **FOLLOW THESE RULES IN ALL CODE**
+
+### ⚠️ Why This Matters:
+
+- Building features NOT in FEATURES.md wastes time
+- Skipping the delivery plan creates integration conflicts
+- Ignoring priorities causes rework
+- Not following coding rules breaks the build
+
+### ✅ Onboarding Checklist:
+
+Before writing any code, confirm you've:
+- [ ] Read FEATURES.md completely
+- [ ] Reviewed feature_delivery_plan_v2.md for current phase
+- [ ] Checked NEXT_STEPS_FOR_CODEX.md for priorities
+- [ ] Read CODING_RULES.md for technical standards
+- [ ] Understand which phase you're working in
+- [ ] Know the acceptance criteria for your task
+
+**If you're an AI agent:** Include "I have read all required documents" in your first message.
+
+---
+
 ## Initial setup
 
 1. Create and activate a virtual environment.

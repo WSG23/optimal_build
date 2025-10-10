@@ -6,10 +6,11 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
+from sqlalchemy import select
+
 from app.flows.ingestion import material_standard_ingestion_flow
 from app.models.rkp import RefAlert, RefMaterialStandard
 from app.utils import metrics
-from sqlalchemy import select
 
 
 @pytest.mark.asyncio

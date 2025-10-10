@@ -653,7 +653,14 @@ export function AgentsGpsCapturePage({
             </div>
 
             <div className="agents-capture__cta">
-              <Link to="/feasibility" className="agents-capture__cta-link">
+              <Link
+                to={
+                  result.propertyId
+                    ? `/feasibility?propertyId=${encodeURIComponent(result.propertyId)}`
+                    : '/feasibility'
+                }
+                className="agents-capture__cta-link"
+              >
                 {t('agentsCapture.results.viewFeasibility')}
               </Link>
               <Link to="/finance" className="agents-capture__cta-link">

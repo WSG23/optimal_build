@@ -5,6 +5,7 @@ import pytest
 pytest.importorskip("ezdxf")
 
 import ezdxf  # type: ignore  # noqa: E402
+
 from app.models.imports import ImportRecord
 from backend.jobs.parse_cad import (
     _parse_dxf_payload,

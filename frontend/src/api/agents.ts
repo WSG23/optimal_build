@@ -7,7 +7,7 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 }
 
 const API_PREFIX = 'api/v1/agents/commercial-property/properties/log-gps'
-const PROPERTY_PREFIX = 'api/v1/agents/commercial-property/properties'
+const _PROPERTY_PREFIX = 'api/v1/agents/commercial-property/properties'
 const metaEnv =
   typeof import.meta !== 'undefined' && import.meta
     ? (import.meta as ImportMeta).env
@@ -191,7 +191,9 @@ function mapAddress(payload: Record<string, unknown>): AddressSummary {
   }
 }
 
-function mapUraZoning(payload: Record<string, unknown> | null): UraZoningSummary {
+function mapUraZoning(
+  payload: Record<string, unknown> | null,
+): UraZoningSummary {
   if (!payload) {
     return {
       zoneCode: undefined,
@@ -204,8 +206,9 @@ function mapUraZoning(payload: Record<string, unknown> | null): UraZoningSummary
     }
   }
   const useGroups = Array.isArray(payload.use_groups)
-    ? payload.use_groups
-        .filter((item): item is string => typeof item === 'string')
+    ? payload.use_groups.filter(
+        (item): item is string => typeof item === 'string',
+      )
     : []
 
   return {
@@ -219,9 +222,9 @@ function mapUraZoning(payload: Record<string, unknown> | null): UraZoningSummary
   }
 }
 
-function mapPropertyInfo(payload: Record<string, unknown> | null):
-  | PropertyInfoSummary
-  | null {
+function mapPropertyInfo(
+  payload: Record<string, unknown> | null,
+): PropertyInfoSummary | null {
   if (!payload) {
     return null
   }
@@ -286,9 +289,11 @@ function mapPhotoLocation(value: unknown): PropertyPhoto['location'] {
   }
 }
 
-function mapPhoto(payload: Record<string, unknown>): PropertyPhoto {
+function _mapPhoto(payload: Record<string, unknown>): PropertyPhoto {
   const autoTags = Array.isArray(payload.auto_tags)
-    ? payload.auto_tags.filter((item): item is string => typeof item === 'string')
+    ? payload.auto_tags.filter(
+        (item): item is string => typeof item === 'string',
+      )
     : []
   const tagList = Array.isArray(payload.tags)
     ? payload.tags.filter((item): item is string => typeof item === 'string')
@@ -332,7 +337,9 @@ function mapMetrics(
   )
 }
 
-function mapScenario(payload: RawQuickScenario): QuickAnalysisScenarioSummary | null {
+function mapScenario(
+  payload: RawQuickScenario,
+): QuickAnalysisScenarioSummary | null {
   if (!payload.scenario || typeof payload.scenario !== 'string') {
     return null
   }
@@ -412,7 +419,8 @@ export async function logPropertyByGps(
   const payload = await transport(apiBaseUrl, request, { signal })
 
   const quickAnalysisPayload =
-    payload.quick_analysis ?? ({
+    payload.quick_analysis ??
+    ({
       generated_at: payload.timestamp,
       scenarios: [],
     } satisfies RawQuickAnalysis)

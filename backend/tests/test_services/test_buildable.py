@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from app.models.rkp import RefRule
 from app.schemas.buildable import BuildableDefaults
 from app.services.buildable import ResolvedZone, calculate_buildable

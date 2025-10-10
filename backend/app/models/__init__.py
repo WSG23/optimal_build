@@ -23,28 +23,32 @@ if _ALIAS and _ALIAS in sys.modules:
     sys.modules[__name__] = _existing
 else:
     # Import model modules so their metadata is registered with SQLAlchemy.
+    from . import agent_advisory  # Added: agent advisory feedback model
+    from . import ai_agents  # Added: AI agents model
+    from . import projects  # Added: development projects model
+    from . import singapore_property  # Added: Singapore property model
+    from . import users  # Added: user authentication model
     from . import (  # noqa: F401  pylint: disable=unused-import
-        ai_agents,  # Added: AI agents model
         audit,
         entitlements,
         finance,
         imports,
         overlay,
-        projects,  # Added: development projects model
+        property as property_model,
         rkp,
         rulesets,
-        singapore_property,  # Added: Singapore property model
-        users,  # Added: user authentication model
     )
     from .base import Base  # noqa: F401
 
     _SUBMODULES: dict[str, ModuleType] = {
+        "agent_advisory": agent_advisory,  # Added: agent advisory feedback model
         "ai_agents": ai_agents,  # Added: AI agents model
         "audit": audit,
         "entitlements": entitlements,
         "finance": finance,
         "imports": imports,
         "overlay": overlay,
+        "property": property_model,
         "projects": projects,  # Added: development projects model
         "rkp": rkp,
         "rulesets": rulesets,

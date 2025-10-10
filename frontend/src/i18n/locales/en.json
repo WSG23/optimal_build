@@ -420,6 +420,23 @@
       },
       "reset": "Reset to defaults"
     },
+    "pack": {
+      "title": "Professional marketing packs",
+      "subtitle": "Generate agent-ready documentation directly from this feasibility screening.",
+      "propertyLabel": "Property ID",
+      "propertyPlaceholder": "Paste captured property ID (UUID)",
+      "propertyHelper": "Prefill by opening feasibility from the agent capture workspace or paste any known property reference.",
+      "typeLabel": "Pack type",
+      "generate": "Generate pack",
+      "generateLoading": "Generating…",
+      "error": "Unable to generate marketing pack: {{message}}",
+      "errorFallback": "Unable to generate marketing pack.",
+      "missingProperty": "Enter a property ID before generating a marketing pack.",
+      "downloadCta": "Download {{filename}}",
+      "generatedAt": "Generated {{timestamp}}",
+      "size": "Approximate size: {{size}}",
+      "noDownload": "Download link unavailable in this environment."
+    },
     "states": {
       "idle": "Enter a seeded address to load the zoning profile.",
       "empty": "We could not match this address to a seeded parcel yet.",

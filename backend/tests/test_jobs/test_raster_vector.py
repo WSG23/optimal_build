@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+
 from backend.jobs.raster_vector import vectorize_floorplan
 
 SAMPLE_PDF = (

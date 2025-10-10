@@ -12,6 +12,7 @@ import { FinanceWorkspace } from './modules/finance'
 import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligence'
 import '@ob/tokens.css'
 import './index.css'
+import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
   {
     path: '/agents/site-capture',
     element: <AgentsGpsCapturePage />,
+  },
+  {
+    path: '/agents/advisory',
+    element: <AgentAdvisoryPage />,
   },
   {
     path: '/visualizations/intelligence',

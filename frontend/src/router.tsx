@@ -20,6 +20,7 @@ interface RouterInstance {
 
 interface RouterContextValue {
   path: string
+  search: string
   navigate: (to: string) => void
 }
 
@@ -32,6 +33,51 @@ const getInitialPath = () => {
   return window.location.pathname || '/'
 }
 
+const getInitialSearch = () => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+  return window.location.search || ''
+}
+
+const resolvePath = (value: string): string => {
+  if (typeof window === 'undefined') {
+    if (value.includes('?')) {
+      return value.split('?')[0] || '/'
+    }
+    if (value.includes('#')) {
+      return value.split('#')[0] || '/'
+    }
+    return value || '/'
+  }
+  try {
+    const url = new URL(value, window.location.origin)
+    return url.pathname || '/'
+  } catch {
+    if (value.startsWith('?') || value.startsWith('#')) {
+      return window.location.pathname || '/'
+    }
+    const [path] = value.split('?')
+    return path.split('#')[0] || window.location.pathname || '/'
+  }
+}
+
+const resolveSearch = (value: string): string => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+  try {
+    const url = new URL(value, window.location.origin)
+    return url.search || ''
+  } catch {
+    if (value.startsWith('?')) {
+      return value
+    }
+    const [, searchPart] = value.split('?')
+    return searchPart ? `?${searchPart.split('#')[0]}` : ''
+  }
+}
+
 export function createBrowserRouter(routes: RouteDefinition[]): RouterInstance {
   return { routes }
 }
@@ -42,6 +88,7 @@ interface RouterProviderProps {
 
 export function RouterProvider({ router }: RouterProviderProps) {
   const [path, setPath] = useState<string>(() => getInitialPath())
+  const [search, setSearch] = useState<string>(() => getInitialSearch())
   const routes = useMemo(() => router.routes, [router])
 
   useEffect(() => {
@@ -51,6 +98,7 @@ export function RouterProvider({ router }: RouterProviderProps) {
 
     const handlePopState = () => {
       setPath(window.location.pathname || '/')
+      setSearch(window.location.search || '')
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -62,8 +110,12 @@ export function RouterProvider({ router }: RouterProviderProps) {
   const navigate = useCallback((to: string) => {
     if (typeof window !== 'undefined') {
       window.history.pushState({}, '', to)
+      setSearch(window.location.search || '')
+      setPath(window.location.pathname || resolvePath(to))
+      return
     }
-    setPath(to)
+    setSearch(resolveSearch(to))
+    setPath(resolvePath(to))
   }, [])
 
   const activeElement = useMemo(() => {
@@ -76,8 +128,8 @@ export function RouterProvider({ router }: RouterProviderProps) {
   }, [path, routes])
 
   const contextValue = useMemo<RouterContextValue>(
-    () => ({ path, navigate }),
-    [path, navigate],
+    () => ({ path, search, navigate }),
+    [navigate, path, search],
   )
 
   return (
@@ -157,9 +209,17 @@ export function Link({ to, children, onClick, ...rest }: LinkProps) {
 }
 
 export function useRouterPath() {
+  const location = useRouterLocation()
+  return location.path
+}
+
+export function useRouterLocation() {
   const context = useContext(RouterContext)
   if (!context) {
-    return getInitialPath()
+    return {
+      path: getInitialPath(),
+      search: getInitialSearch(),
+    }
   }
-  return context.path
+  return { path: context.path, search: context.search }
 }

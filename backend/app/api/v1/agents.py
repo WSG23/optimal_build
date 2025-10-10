@@ -7,7 +7,6 @@ from uuid import UUID, uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +14,7 @@ from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
+from app.services.agents.advisory import AgentAdvisoryService
 from app.services.agents.development_potential_scanner import (
     DevelopmentPotentialScanner,
 )
@@ -25,6 +25,7 @@ from app.services.agents.gps_property_logger import (
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import Address, GeocodingService
+from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -79,6 +80,7 @@ geocoding_service = GeocodingService()
 gps_logger = GPSPropertyLogger(geocoding_service, ura_service)
 market_data_service = MarketDataService()
 market_analytics = MarketIntelligenceAnalytics(market_data_service)
+advisory_service = AgentAdvisoryService()
 
 
 # Request/Response Models
@@ -130,6 +132,76 @@ class GPSLogResponse(BaseModel):
 class MarketIntelligenceResponse(BaseModel):
     property_id: UUID
     report: Dict[str, Any]
+
+
+class AdvisoryAssetMixSegment(BaseModel):
+    use: str
+    allocation_pct: float
+    target_gfa_sqm: float | None = None
+    rationale: str
+
+
+class AdvisoryAssetMix(BaseModel):
+    property_id: UUID
+    total_programmable_gfa_sqm: float | None = None
+    mix_recommendations: list[AdvisoryAssetMixSegment]
+    notes: list[str] = []
+
+
+class AdvisoryMarketPositioning(BaseModel):
+    market_tier: str
+    pricing_guidance: Dict[str, Dict[str, float]]
+    target_segments: list[Dict[str, Any]]
+    messaging: list[str]
+
+
+class AdvisoryTimelineMilestone(BaseModel):
+    milestone: str
+    month: int
+    expected_absorption_pct: float
+
+
+class AdvisoryAbsorptionForecast(BaseModel):
+    expected_months_to_stabilize: int
+    monthly_velocity_target: int
+    confidence: str
+    timeline: list[AdvisoryTimelineMilestone]
+
+
+class AdvisoryFeedbackItem(BaseModel):
+    id: UUID
+    property_id: UUID
+    submitted_by: Optional[str]
+    channel: Optional[str]
+    sentiment: str
+    notes: str
+    metadata: Dict[str, Any]
+    created_at: datetime
+
+
+class AdvisoryFeedbackRequest(BaseModel):
+    sentiment: str = Field(..., description="positive, neutral, or negative sentiment.")
+    notes: str = Field(
+        ..., min_length=3, description="Qualitative feedback from agents."
+    )
+    channel: Optional[str] = Field(
+        None, description="Communication channel (e.g., call, meeting, email)."
+    )
+    submitted_by: Optional[str] = Field(
+        None,
+        description="Optional identifier for the agent submitting the feedback if not authenticated.",
+    )
+    metadata: Dict[str, Any] | None = Field(
+        default=None,
+        description="Optional structured metadata such as objections or follow-up actions.",
+    )
+
+
+class AdvisorySummaryResponse(BaseModel):
+    asset_mix: AdvisoryAssetMix
+    market_positioning: AdvisoryMarketPositioning
+    absorption_forecast: AdvisoryAbsorptionForecast
+    feedback: list[AdvisoryFeedbackItem]
 
 
 class PropertyAnalysisRequest(BaseModel):
@@ -452,6 +524,116 @@ async def get_property_market_intelligence(
         property_id=property_uuid,
         report=payload,
     )
+
+
+def _convert_asset_mix(payload: dict[str, Any]) -> AdvisoryAssetMix:
+    mix_payload = payload.copy()
+    mix_payload["property_id"] = UUID(mix_payload["property_id"])
+    mix_payload["mix_recommendations"] = [
+        AdvisoryAssetMixSegment(**segment)
+        for segment in mix_payload.get("mix_recommendations", [])
+    ]
+    return AdvisoryAssetMix(**mix_payload)
+
+
+def _convert_feedback_items(items: list[dict[str, Any]]) -> list[AdvisoryFeedbackItem]:
+    converted: list[AdvisoryFeedbackItem] = []
+    for item in items:
+        converted.append(
+            AdvisoryFeedbackItem(
+                id=UUID(item["id"]),
+                property_id=UUID(item["property_id"]),
+                submitted_by=item.get("submitted_by"),
+                channel=item.get("channel"),
+                sentiment=item["sentiment"],
+                notes=item["notes"],
+                metadata=item.get("metadata", {}),
+                created_at=datetime.fromisoformat(item["created_at"]),
+            )
+        )
+    return converted
+
+
+@router.get(
+    "/properties/{property_id}/advisory", response_model=AdvisorySummaryResponse
+)
+async def get_property_advisory_summary(
+    property_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> AdvisorySummaryResponse:
+    """Return advisory insights (mix, positioning, absorption, feedback)."""
+
+    try:
+        summary = await advisory_service.build_summary(
+            property_id=property_id, session=db
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    asset_mix = _convert_asset_mix(summary.asset_mix)
+    market_positioning = AdvisoryMarketPositioning(**summary.market_positioning)
+    absorption_forecast = AdvisoryAbsorptionForecast(
+        **summary.absorption_forecast,
+        timeline=[
+            AdvisoryTimelineMilestone(**milestone)
+            for milestone in summary.absorption_forecast.get("timeline", [])
+        ],
+    )
+    feedback_items = _convert_feedback_items(summary.feedback)
+
+    return AdvisorySummaryResponse(
+        asset_mix=asset_mix,
+        market_positioning=market_positioning,
+        absorption_forecast=absorption_forecast,
+        feedback=feedback_items,
+    )
+
+
+@router.get(
+    "/properties/{property_id}/advisory/feedback",
+    response_model=list[AdvisoryFeedbackItem],
+)
+async def list_property_advisory_feedback(
+    property_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> list[AdvisoryFeedbackItem]:
+    """Return previously captured advisory feedback entries."""
+
+    items = await advisory_service.list_feedback(property_id=property_id, session=db)
+    return _convert_feedback_items(items)
+
+
+@router.post(
+    "/properties/{property_id}/advisory/feedback",
+    response_model=AdvisoryFeedbackItem,
+    status_code=201,
+)
+async def submit_property_advisory_feedback(
+    property_id: UUID,
+    payload: AdvisoryFeedbackRequest,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+    token: TokenData | None = Depends(get_optional_user),
+) -> AdvisoryFeedbackItem:
+    """Record market feedback from agents for developers to review."""
+
+    submitted_by = token.sub if token else payload.submitted_by
+    try:
+        stored = await advisory_service.record_feedback(
+            property_id=property_id,
+            session=db,
+            submitted_by=submitted_by,
+            sentiment=payload.sentiment,
+            notes=payload.notes,
+            channel=payload.channel,
+            metadata=payload.metadata or {},
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return _convert_feedback_items([stored])[0]
 
 
 def _build_mock_market_report(property_data: Property, months: int) -> Dict[str, Any]:

@@ -6,9 +6,6 @@ import io
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.models.property import Property, PropertyPhoto, PropertyType, RentalListing
-from app.services.agents.investment_memorandum import InvestmentHighlight
-from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
@@ -30,6 +27,10 @@ from reportlab.platypus import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.property import Property, PropertyPhoto, PropertyType, RentalListing
+from app.services.agents.investment_memorandum import InvestmentHighlight
+from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
 
 
 class FloorPlanDiagram(Flowable):

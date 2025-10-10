@@ -5,13 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Any
 
-from prefect import flow
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
-from app.services import alerts, standards
-from app.services import ingestion as ingestion_service
+from app.services import alerts, ingestion as ingestion_service, standards
 from app.utils.logging import get_logger, log_event
+from prefect import flow
 
 logger = get_logger(__name__)
 
