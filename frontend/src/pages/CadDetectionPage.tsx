@@ -301,14 +301,14 @@ export function CadDetectionPage() {
   )
 
   const overlays = useMemo(
-    () => aggregatedSuggestions.map((item) => item.suggestion.code),
+    () => aggregatedSuggestions.map((item) => ({ key: item.key, text: item.suggestion.code })),
     [aggregatedSuggestions],
   )
   const hints = useMemo(
     () =>
       aggregatedSuggestions
-        .map((item) => item.suggestion.rationale)
-        .filter((value): value is string => Boolean(value)),
+        .map((item) => ({ key: item.key, text: item.suggestion.rationale }))
+        .filter((value): value is { key: string; text: string } => Boolean(value.text)),
     [aggregatedSuggestions],
   )
 

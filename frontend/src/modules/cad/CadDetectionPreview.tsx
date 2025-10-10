@@ -7,8 +7,8 @@ import { DetectedUnit } from './types'
 
 interface CadDetectionPreviewProps {
   units: DetectedUnit[]
-  overlays: string[]
-  hints: string[]
+  overlays: Array<{ key: string; text: string }>
+  hints: Array<{ key: string; text: string }>
   zoneCode?: string | null
   locked?: boolean
   onProvideMetric?: (metricKey: string, value: number) => boolean | Promise<boolean>
@@ -105,7 +105,7 @@ export function CadDetectionPreview({
           ) : (
             <ul>
               {overlays.map((overlay) => (
-                <li key={overlay}>{overlay}</li>
+                <li key={overlay.key}>{overlay.text}</li>
               ))}
             </ul>
           )}
@@ -117,7 +117,7 @@ export function CadDetectionPreview({
           ) : (
             <ul>
               {hints.map((hint) => (
-                <li key={hint}>{hint}</li>
+                <li key={hint.key}>{hint.text}</li>
               ))}
             </ul>
           )}
