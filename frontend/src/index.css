@@ -1227,6 +1227,46 @@ h3 {
     color: #475569;
 }
 
+.cad-detection__filter-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.cad-detection__filter-banner-text span + span {
+    margin-left: 0.5rem;
+}
+
+.cad-detection__filter-banner-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.cad-detection__filter-banner-actions button {
+    border: none;
+    background: #f97316;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.cad-detection__filter-banner-actions button:hover,
+.cad-detection__filter-banner-actions button:focus-visible {
+    background: #ea580c;
+    outline: none;
+}
+
 @media (max-width: 640px) {
     .cad-detection__toolbar {
         flex-direction: column;

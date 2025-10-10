@@ -100,6 +100,8 @@
       "hiddenPending": "保留中のオーバーレイ {{count}} 件が非表示",
       "hiddenPendingTooltip": "重要度フィルターをリセットして保留中のオーバーレイを再表示",
       "helperAllVisible": "すべての重要度が表示されています。フィルターを使って優先度の高い項目から確認しましょう。",
+      "tooltip": "{{label}} — {{count}} 件のオーバーレイ ({{percent}}%)",
+      "tooltipHidden": "{{label}} — {{count}} 件のオーバーレイが非表示",
       "filters": {
         "all": "全ての重要度",
         "active": "表示中: {{list}}"
@@ -140,7 +142,14 @@
     "auditError": "監査ログを読み込めませんでした",
     "auditBaseline": "基準時間: {{minutes}} 分",
     "auditActual": "実績: {{minutes}} 分",
-    "auditContext": "コンテキスト: {{text}}"
+    "auditContext": "コンテキスト: {{text}}",
+    "filtersBanner": {
+      "title": "フィルターによりオーバーレイが表示されていません",
+      "status": "ステータスフィルターがすべてのオーバーレイを非表示にしています。",
+      "severity": "重要度フィルターがすべてのオーバーレイを非表示にしています。",
+      "resetStatus": "ステータスフィルターをリセット",
+      "resetSeverity": "重要度フィルターをリセット"
+    }
   },
   "pipelines": {
     "title": "推奨デフォルトパイプライン",

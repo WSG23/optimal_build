@@ -17,6 +17,8 @@ import ZoneLockControls from '../modules/cad/ZoneLockControls'
 import { DetectionStatus, DetectedUnit } from '../modules/cad/types'
 
 const DEFAULT_PROJECT_ID = 5821
+const DEFAULT_LAYERS: DetectionStatus[] = ['source', 'pending']
+const ALL_LAYERS: DetectionStatus[] = ['source', 'pending', 'approved', 'rejected']
 
 interface AggregatedSuggestion {
   key: string
@@ -315,8 +317,7 @@ export function CadDetectionPage() {
   )
   const [loadingImport, setLoadingImport] = useState(false)
   const [activeLayers, setActiveLayers] = useState<DetectionStatus[]>([
-    'source',
-    'pending',
+    ...DEFAULT_LAYERS,
   ])
   const [activeSeverities, setActiveSeverities] = useState<OverlaySeverity[]>([
     ...ALL_SEVERITIES,
@@ -512,6 +513,15 @@ export function CadDetectionPage() {
     [severitySummary],
   )
 
+  const hiddenSeverityCounts = useMemo(() => {
+    return ALL_SEVERITIES.reduce((acc, severity) => {
+      acc[severity] = activeSeverities.includes(severity)
+        ? 0
+        : severitySummary[severity]
+      return acc
+    }, {} as SeverityBuckets)
+  }, [activeSeverities, severitySummary])
+
   const hiddenPendingCount = useMemo(() => {
     const totalPending = aggregatedSuggestions.filter(
       (item) => item.status === 'pending',
@@ -521,6 +531,19 @@ export function CadDetectionPage() {
     )
     return totalPending.length - visiblePending.length
   }, [aggregatedSuggestions, filteredBySeverity])
+
+  const hiddenByStatus = useMemo(
+    () => aggregatedSuggestions.length > 0 && filteredByStatus.length === 0,
+    [aggregatedSuggestions.length, filteredByStatus.length],
+  )
+
+  const hiddenBySeverity = useMemo(
+    () =>
+      !hiddenByStatus && filteredByStatus.length > 0 && filteredBySeverity.length === 0,
+    [hiddenByStatus, filteredByStatus.length, filteredBySeverity.length],
+  )
+
+  const filtersHideAll = hiddenByStatus || hiddenBySeverity
 
   const severityFilterSummary = useMemo(() => {
     if (activeSeverities.length === ALL_SEVERITIES.length) {
@@ -639,6 +662,10 @@ export function CadDetectionPage() {
   const handleSeverityReset = useCallback(() => {
     setActiveSeverities([...ALL_SEVERITIES])
     setSavedSeverities(null)
+  }, [])
+
+  const handleLayerReset = useCallback(() => {
+    setActiveLayers([...DEFAULT_LAYERS])
   }, [])
 
   const applyDecisionBatch = useCallback(
@@ -810,6 +837,32 @@ export function CadDetectionPage() {
         </span>
       </div>
 
+      {filtersHideAll && (
+        <div className="cad-detection__filter-banner">
+          <strong>{t('detection.filtersBanner.title')}</strong>
+          <div className="cad-detection__filter-banner-text">
+            {hiddenByStatus && (
+              <span>{t('detection.filtersBanner.status')}</span>
+            )}
+            {hiddenBySeverity && (
+              <span>{t('detection.filtersBanner.severity')}</span>
+            )}
+          </div>
+          <div className="cad-detection__filter-banner-actions">
+            {hiddenByStatus && (
+              <button type="button" onClick={handleLayerReset}>
+                {t('detection.filtersBanner.resetStatus')}
+              </button>
+            )}
+            {hiddenBySeverity && (
+              <button type="button" onClick={handleSeverityReset}>
+                {t('detection.filtersBanner.resetSeverity')}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {error && <p className="cad-detection__error">{error}</p>}
 
       <CadDetectionPreview
@@ -818,6 +871,7 @@ export function CadDetectionPage() {
         hints={hints}
         severitySummary={severitySummary}
         severityPercentages={severityPercentages}
+        hiddenSeverityCounts={hiddenSeverityCounts}
         activeSeverities={activeSeverities}
         onToggleSeverity={handleSeverityToggle}
         onResetSeverity={handleSeverityReset}

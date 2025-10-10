@@ -37,6 +37,7 @@ const PreviewStoryWrapper = (
     | 'onToggleSeverity'
     | 'onResetSeverity'
     | 'isSeverityFiltered'
+    | 'hiddenSeverityCounts'
   >,
 ) => {
   const [activeSeverities, setActiveSeverities] = useState<SeverityKey[]>([
@@ -44,6 +45,16 @@ const PreviewStoryWrapper = (
   ])
   const { severitySummary, severityPercentages: providedPercentages, ...rest } = props
   const severityPercentages = providedPercentages ?? computePercentages(severitySummary)
+
+  const hiddenSeverityCounts = ALL_SEVERITIES.reduce(
+    (acc, severity) => {
+      acc[severity] = activeSeverities.includes(severity)
+        ? 0
+        : severitySummary[severity]
+      return acc
+    },
+    { high: 0, medium: 0, low: 0, none: 0 } as StoryProps['hiddenSeverityCounts'],
+  )
 
   const toggleSeverity = (severity: SeverityKey) => {
     setActiveSeverities((current) => {
@@ -68,6 +79,7 @@ const PreviewStoryWrapper = (
       <CadDetectionPreview
         severitySummary={severitySummary}
         severityPercentages={severityPercentages}
+        hiddenSeverityCounts={hiddenSeverityCounts}
         {...rest}
         activeSeverities={activeSeverities}
         onToggleSeverity={toggleSeverity}

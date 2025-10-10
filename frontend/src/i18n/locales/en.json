@@ -100,6 +100,8 @@
       "hiddenPending": "{{count}} pending overlays hidden",
       "hiddenPendingTooltip": "Reset severity filters to show all pending overlays",
       "helperAllVisible": "All severities visible. Use these filters to triage urgent issues first.",
+      "tooltip": "{{label}} — {{count}} overlays ({{percent}}%)",
+      "tooltipHidden": "{{label}} — {{count}} overlays hidden",
       "filters": {
         "all": "All severities",
         "active": "Active: {{list}}"
@@ -140,7 +142,14 @@
     "auditError": "Unable to load audit entries",
     "auditBaseline": "Baseline: {{minutes}} min",
     "auditActual": "Actual: {{minutes}} min",
-    "auditContext": "Context: {{text}}"
+    "auditContext": "Context: {{text}}",
+    "filtersBanner": {
+      "title": "Filters hide all overlays",
+      "status": "Status filters currently hide all overlays.",
+      "severity": "Severity filters currently hide all overlays.",
+      "resetStatus": "Reset status filters",
+      "resetSeverity": "Reset severity filters"
+    }
   },
   "pipelines": {
     "title": "Default pipeline suggestions",

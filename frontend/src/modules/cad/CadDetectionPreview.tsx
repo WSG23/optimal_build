@@ -30,6 +30,7 @@ interface CadDetectionPreviewProps {
   hints: Array<{ key: string; text: string }>
   severitySummary: SeveritySummary
   severityPercentages: SeveritySummary
+  hiddenSeverityCounts: SeveritySummary
   activeSeverities: OverlaySummary['severity'][]
   onToggleSeverity: SeverityToggleHandler
   onResetSeverity: SeverityResetHandler
@@ -58,6 +59,7 @@ export function CadDetectionPreview({
   hints,
   severitySummary,
   severityPercentages,
+  hiddenSeverityCounts,
   activeSeverities,
   onToggleSeverity,
   onResetSeverity,
@@ -188,6 +190,7 @@ export function CadDetectionPreview({
                         : t(`detection.severitySummary.${severityKey}`)
                     const count = severitySummary[severityKey]
                     const percent = severityPercentages[severityKey]
+                    const hiddenCount = hiddenSeverityCounts[severityKey]
                     const isActive = activeSeverities.includes(severityKey)
                     const badgeClass = [
                       'cad-overlay-summary__badge',
@@ -200,6 +203,16 @@ export function CadDetectionPreview({
                       minimumFractionDigits: percent % 1 === 0 ? 0 : 1,
                       maximumFractionDigits: 1,
                     }).format(percent)
+                    const tooltipText = hiddenCount > 0
+                      ? t('detection.severitySummary.tooltipHidden', {
+                          label,
+                          count: hiddenCount,
+                        })
+                      : t('detection.severitySummary.tooltip', {
+                          label,
+                          count,
+                          percent: formattedPercent,
+                        })
                     return (
                       <button
                         type="button"
@@ -209,11 +222,7 @@ export function CadDetectionPreview({
                           onToggleSeverity(severityKey)
                         }}
                         aria-pressed={isActive}
-                        title={t('detection.severitySummary.tooltip', {
-                          label,
-                          count,
-                          percent: formattedPercent,
-                        })}
+                        title={tooltipText}
                       >
                         {label} <strong>{count}</strong>
                       </button>
