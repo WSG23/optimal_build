@@ -7,7 +7,7 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 }
 
 const API_PREFIX = 'api/v1/agents/commercial-property/properties/log-gps'
-const PROPERTY_PREFIX = 'api/v1/agents/commercial-property/properties'
+const _PROPERTY_PREFIX = 'api/v1/agents/commercial-property/properties'
 const metaEnv =
   typeof import.meta !== 'undefined' && import.meta
     ? (import.meta as ImportMeta).env
@@ -289,7 +289,7 @@ function mapPhotoLocation(value: unknown): PropertyPhoto['location'] {
   }
 }
 
-function mapPhoto(payload: Record<string, unknown>): PropertyPhoto {
+function _mapPhoto(payload: Record<string, unknown>): PropertyPhoto {
   const autoTags = Array.isArray(payload.auto_tags)
     ? payload.auto_tags.filter(
         (item): item is string => typeof item === 'string',
