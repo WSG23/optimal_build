@@ -15,6 +15,10 @@
       "uploadFailed": "アップロードに失敗しました",
       "pipelineLoad": "提案を読み込めませんでした",
       "generic": "エラーが発生しました"
+    },
+    "actions": {
+      "save": "保存",
+      "cancel": "キャンセル"
     }
   },
   "app": {
@@ -88,6 +92,8 @@
       "prompt": "{metric} の値を入力してください",
       "prompts": {
         "frontSetback": "前面セットバック (m)",
+        "sideSetback": "側面セットバック (m)",
+        "rearSetback": "背面セットバック (m)",
         "maxHeight": "建物高さ (m)",
         "siteArea": "敷地面積 (㎡)",
         "grossFloorArea": "延床面積 (㎡)"

@@ -9,6 +9,7 @@ export interface DetectedUnit {
   missingMetricKey?: string
   overrideValue?: number | null
   overrideDisplay?: string
+  metricLabel?: string
 }
 
 export interface RoiMetrics {

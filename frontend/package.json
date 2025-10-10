@@ -9,8 +9,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "lint:tokens": "node ../scripts/enforce-feasibility-tokens.mjs",
     "lint": "eslint --ext .ts,.tsx src",
-    "test": "tsx --test src/**/*.test.tsx",
-    "test:coverage": "c8 --reporter=text --reporter=lcov --check-coverage --lines=80 tsx --test src/**/*.test.tsx",
+    "test": "node ../scripts/run-frontend-tests.mjs",
+    "test:coverage": "node ../scripts/run-frontend-tests.mjs --coverage",
     "test:e2e": "node scripts/run-e2e.js"
   },
   "dependencies": {

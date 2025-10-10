@@ -315,6 +315,8 @@ export function CadDetectionPage() {
   const metricLabels = useMemo(
     () => ({
       front_setback_m: t('detection.override.prompts.frontSetback'),
+      side_setback_m: t('detection.override.prompts.sideSetback'),
+      rear_setback_m: t('detection.override.prompts.rearSetback'),
       max_height_m: t('detection.override.prompts.maxHeight'),
       site_area_sqm: t('detection.override.prompts.siteArea'),
       gross_floor_area_sqm: t('detection.override.prompts.grossFloorArea'),
@@ -331,6 +333,10 @@ export function CadDetectionPage() {
           missingMetricKey && typeof overrides[missingMetricKey] === 'number'
             ? overrides[missingMetricKey]
             : null
+        const metricLabel =
+          missingMetricKey && metricLabels[missingMetricKey as keyof typeof metricLabels]
+            ? metricLabels[missingMetricKey as keyof typeof metricLabels]
+            : missingMetricKey ?? undefined
         const baseLabel =
           entry.suggestion.title || entry.suggestion.code || entry.key
         const label =
@@ -343,9 +349,9 @@ export function CadDetectionPage() {
             : deriveAreaSqm(entry.suggestion)
         const overrideDisplay =
           missingMetricKey && overrideValue != null
-            ? `${metricLabels[missingMetricKey as keyof typeof metricLabels] ?? missingMetricKey}: ${new Intl.NumberFormat(undefined, {
+            ? `${metricLabel ?? missingMetricKey}: ${new Intl.NumberFormat(undefined, {
                 maximumFractionDigits: 2,
-                minimumFractionDigits: overrideValue % 1 === 0 ? 0 : 2,
+                minimumFractionDigits: Number.isInteger(overrideValue) ? 0 : 2,
               }).format(overrideValue)}`
             : undefined
         return {
@@ -357,6 +363,7 @@ export function CadDetectionPage() {
           missingMetricKey: missingMetricKey ?? undefined,
           overrideValue,
           overrideDisplay,
+          metricLabel,
         }
       })
     },
@@ -441,50 +448,34 @@ export function CadDetectionPage() {
   }, [applyDecisionBatch])
 
   const handleProvideMetric = useCallback(
-    async (metricKey: string, currentValue?: number | null) => {
+    async (metricKey: string, value: number): Promise<boolean> => {
       if (!importSummary) {
-        return
+        return false
       }
-      const label = metricLabels[metricKey as keyof typeof metricLabels] ?? metricKey
-      const input = window.prompt(
-        t('detection.override.prompt', { metric: label }),
-        currentValue != null ? currentValue.toString() : '',
-      )
-      if (input === null) {
-        return
-      }
-      const parsed = Number.parseFloat(input)
-      if (!Number.isFinite(parsed) || parsed <= 0) {
+      if (!Number.isFinite(value) || value <= 0) {
         window.alert(t('common.errors.generic'))
-        return
+        return false
       }
       setMutationPending(true)
       try {
         await apiClient.updateImportOverrides(importSummary.importId, {
-          [metricKey]: parsed,
+          [metricKey]: value,
         })
         await apiClient.runOverlay(projectId)
         await refreshSuggestions()
         await fetchLatestImport()
         await refreshAudit()
+        return true
       } catch (err) {
         setError(
           err instanceof Error ? err.message : t('detection.loadError'),
         )
+        return false
       } finally {
         setMutationPending(false)
       }
     },
-    [
-      apiClient,
-      fetchLatestImport,
-      importSummary,
-      metricLabels,
-      projectId,
-      refreshAudit,
-      refreshSuggestions,
-      t,
-    ],
+    [apiClient, fetchLatestImport, importSummary, projectId, refreshAudit, refreshSuggestions, t],
   )
 
   const handleExport = useCallback(

@@ -355,6 +355,10 @@ def _apply_metric_overrides(
             updated["max_height_m"] = value
         elif key == "front_setback_m":
             updated["front_setback_m"] = value
+        elif key == "side_setback_m":
+            updated["side_setback_m"] = value
+        elif key == "rear_setback_m":
+            updated["rear_setback_m"] = value
 
     land_area = updated.get("land_area_sqm")
     gross_floor_area = updated.get("gross_floor_area_sqm")
@@ -381,6 +385,8 @@ _PARAMETER_METRIC_MAP: dict[str, str] = {
     "zoning.max_far": "plot_ratio",
     "zoning.max_building_height_m": "max_height_m",
     "zoning.setback.front_min_m": "front_setback_m",
+    "zoning.setback.side_min_m": "side_setback_m",
+    "zoning.setback.rear_min_m": "rear_setback_m",
     "zoning.site_coverage.max_percent": "site_coverage_percent",
 }
 
@@ -388,6 +394,8 @@ _METRIC_LABELS: dict[str, str] = {
     "plot_ratio": "Plot ratio",
     "max_height_m": "Building height (m)",
     "front_setback_m": "Front setback (m)",
+    "side_setback_m": "Side setback (m)",
+    "rear_setback_m": "Rear setback (m)",
     "site_coverage_percent": "Site coverage (%)",
 }
 
@@ -395,6 +403,8 @@ _METRIC_SEVERITY: dict[str, str] = {
     "plot_ratio": "high",
     "max_height_m": "high",
     "front_setback_m": "medium",
+    "side_setback_m": "medium",
+    "rear_setback_m": "medium",
     "site_coverage_percent": "medium",
 }
 

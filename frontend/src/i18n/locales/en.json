@@ -15,6 +15,10 @@
       "uploadFailed": "Upload failed",
       "pipelineLoad": "Unable to load suggestions",
       "generic": "Something went wrong"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel"
     }
   },
   "app": {
@@ -88,6 +92,8 @@
       "prompt": "Enter {metric} value",
       "prompts": {
         "frontSetback": "front setback (m)",
+        "sideSetback": "side setback (m)",
+        "rearSetback": "rear setback (m)",
         "maxHeight": "building height (m)",
         "siteArea": "site area (sqm)",
         "grossFloorArea": "gross floor area (sqm)"
