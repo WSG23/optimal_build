@@ -85,3 +85,7 @@ async def test_persist_result_includes_zone(async_session_factory):
         metadata = record.parse_result["metadata"]
         assert metadata["zone_code"] == "SG:industrial"
         assert metadata["parse_metadata"]["zone_code"] == "SG:industrial"
+        overrides = record.metric_overrides
+        assert overrides is not None
+        assert pytest.approx(overrides["side_setback_m"], rel=1e-6) == 0.5
+        assert pytest.approx(overrides["rear_setback_m"], rel=1e-6) == 0.2

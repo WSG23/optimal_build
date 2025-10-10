@@ -28,7 +28,11 @@ except ModuleNotFoundError:  # pragma: no cover - available in production enviro
     ifcopenshell = None  # type: ignore[assignment]
 
 from app.core import database as app_database
-from app.core.geometry import GeometrySerializer, GraphBuilder
+from app.core.geometry import (
+    GeometrySerializer,
+    GraphBuilder,
+    derive_setback_overrides,
+)
 from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
 from app.services.overlay_ingest import ingest_parsed_import_geometry
@@ -1074,7 +1078,18 @@ async def _persist_result(
     record.parse_status = "completed"
     metadata = dict(parsed.metadata)
     zone_code = getattr(record, "zone_code", None)
-    metric_overrides = getattr(record, "metric_overrides", None) or {}
+    metric_overrides = dict(getattr(record, "metric_overrides", None) or {})
+
+    auto_setbacks = derive_setback_overrides(
+        parsed.graph,
+        metadata.get("site_bounds"),
+    )
+    for key in ("side_setback_m", "rear_setback_m"):
+        value = auto_setbacks.get(key)
+        if value is not None and key not in metric_overrides:
+            metric_overrides[key] = value
+
+    record.metric_overrides = metric_overrides or None
     if zone_code:
         parse_metadata_section = metadata.get("parse_metadata")
         if isinstance(parse_metadata_section, Mapping):

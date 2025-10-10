@@ -14,7 +14,7 @@ from typing import Any
 from app.core.audit.ledger import append_event
 from app.core.config import settings
 from app.core.database import get_session
-from app.core.geometry import GeometrySerializer
+from app.core.geometry import GeometrySerializer, derive_setback_overrides
 from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
@@ -316,6 +316,13 @@ def _build_rule_metrics(
         gross_floor_area = total_area
     if gross_floor_area is not None:
         metrics["gross_floor_area_sqm"] = gross_floor_area
+
+    if metrics.get("side_setback_m") is None or metrics.get("rear_setback_m") is None:
+        site_bounds = metadata.get("site_bounds") or parse_meta.get("site_bounds")
+        auto_setbacks = derive_setback_overrides(geometry, site_bounds)
+        for key in ("side_setback_m", "rear_setback_m"):
+            if metrics.get(key) is None and auto_setbacks.get(key) is not None:
+                metrics[key] = auto_setbacks[key]
 
     if gross_floor_area is not None and land_area:
         try:
