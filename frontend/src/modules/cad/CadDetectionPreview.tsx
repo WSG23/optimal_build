@@ -35,6 +35,7 @@ interface CadDetectionPreviewProps {
   onResetSeverity: SeverityResetHandler
   isSeverityFiltered: boolean
   hiddenPendingCount: number
+  severityFilterSummary: string
   zoneCode?: string | null
   locked?: boolean
   onProvideMetric?: (
@@ -62,6 +63,7 @@ export function CadDetectionPreview({
   onResetSeverity,
   isSeverityFiltered,
   hiddenPendingCount,
+  severityFilterSummary,
   zoneCode,
   locked = false,
   onProvideMetric,
@@ -138,11 +140,16 @@ export function CadDetectionPreview({
             <span>{t('detection.summary.zone', { code: zoneCode })}</span>
           )}
           {hiddenPendingCount > 0 && (
-            <span className="cad-preview__summary-warning">
+            <button
+              type="button"
+              className="cad-preview__summary-warning"
+              onClick={onResetSeverity}
+              title={t('detection.severitySummary.hiddenPendingTooltip')}
+            >
               {t('detection.severitySummary.hiddenPending', {
                 count: hiddenPendingCount,
               })}
-            </span>
+            </button>
           )}
         </div>
       </header>
@@ -157,6 +164,9 @@ export function CadDetectionPreview({
               <div className="cad-overlay-summary">
                 <div className="cad-overlay-summary__heading">
                   <span>{t('detection.severitySummary.heading')}</span>
+                  <span className="cad-overlay-summary__filters">
+                    {severityFilterSummary}
+                  </span>
                   <button
                     type="button"
                     className="cad-overlay-summary__reset"
@@ -211,6 +221,11 @@ export function CadDetectionPreview({
                   })}
                 </div>
               </div>
+              {!isSeverityFiltered && hiddenPendingCount === 0 && (
+                <p className="cad-overlay-summary__helper">
+                  {t('detection.severitySummary.helperAllVisible')}
+                </p>
+              )}
               {infoOnly && (
                 <div className="cad-overlay-info-banner">
                   <span>{t('detection.severitySummary.infoOnly')}</span>
@@ -292,10 +307,28 @@ export function CadDetectionPreview({
               const isEditing = editingUnitId === unit.id
               const canEdit = Boolean(unit.missingMetricKey && onProvideMetric)
               const inputId = `cad-metric-${unit.id}`
+              const severityLabel =
+                unit.severity && unit.severity !== 'none'
+                  ? t(`detection.severity.${unit.severity}`)
+                  : unit.severity === 'none'
+                    ? t('detection.severity.none')
+                    : null
 
               return (
                 <tr key={unit.id}>
-                  <td>{unit.unitLabel}</td>
+                  <td>
+                    <span className="cad-unit-label">
+                      {unit.unitLabel}
+                    </span>
+                    {severityLabel && (
+                      <span
+                        className={`cad-unit-severity cad-unit-severity--${unit.severity}`}
+                        title={severityLabel}
+                      >
+                        {severityLabel}
+                      </span>
+                    )}
+                  </td>
                   <td>{unit.floor}</td>
                   <td>{unit.areaSqm.toFixed(1)}</td>
                   <td className={`cad-status cad-status--${unit.status}`}>

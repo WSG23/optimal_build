@@ -683,10 +683,28 @@ h3 {
     color: #92400e;
     font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.1rem 0.6rem;
+    padding: 0.15rem 0.7rem;
     border-radius: 999px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    border: none;
+    cursor: pointer;
+    transition: box-shadow 0.1s ease, transform 0.1s ease;
+}
+
+.cad-preview__summary-warning:hover,
+.cad-preview__summary-warning:focus-visible {
+    box-shadow: 0 0 0 2px rgba(146, 64, 14, 0.2);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+@media (max-width: 640px) {
+    .cad-preview__summary-warning {
+        order: 3;
+        width: 100%;
+        text-align: center;
+    }
 }
 
 .cad-preview__grid {
@@ -734,6 +752,18 @@ h3 {
     font-size: 0.85rem;
     font-weight: 600;
     color: #0f172a;
+}
+
+.cad-overlay-summary__filters {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #475569;
+}
+
+.cad-overlay-summary__helper {
+    margin: 0.25rem 0 0.5rem;
+    font-size: 0.78rem;
+    color: #475569;
 }
 
 .cad-overlay-summary__reset {
@@ -948,6 +978,43 @@ h3 {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #e2e8f0;
     text-align: left;
+}
+
+.cad-unit-label {
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.cad-unit-severity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 999px;
+    padding: 0.1rem 0.4rem;
+}
+
+.cad-unit-severity--high {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.cad-unit-severity--medium {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.cad-unit-severity--low {
+    background: #dcfce7;
+    color: #047857;
+}
+
+.cad-unit-severity--none {
+    background: #e2e8f0;
+    color: #475569;
 }
 
 .cad-status {

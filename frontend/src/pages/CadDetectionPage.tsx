@@ -496,6 +496,20 @@ export function CadDetectionPage() {
     return totalPending.length - visiblePending.length
   }, [aggregatedSuggestions, filteredBySeverity])
 
+  const severityFilterSummary = useMemo(() => {
+    if (activeSeverities.length === ALL_SEVERITIES.length) {
+      return t('detection.severitySummary.filters.all')
+    }
+    const labels = activeSeverities.map((severity) =>
+      severity === 'none'
+        ? t('detection.severitySummary.info')
+        : t(`detection.severitySummary.${severity}`),
+    )
+    return t('detection.severitySummary.filters.active', {
+      list: labels.join(', '),
+    })
+  }, [activeSeverities, t])
+
   const hints = useMemo(
     () =>
       filteredBySeverity
@@ -520,6 +534,12 @@ export function CadDetectionPage() {
         metricLabels[missingMetricKey as keyof typeof metricLabels]
           ? metricLabels[missingMetricKey as keyof typeof metricLabels]
           : (missingMetricKey ?? undefined)
+      const severityKey: OverlaySeverity =
+        entry.severity === 'high' ||
+        entry.severity === 'medium' ||
+        entry.severity === 'low'
+          ? entry.severity
+          : 'none'
       const baseLabel =
         entry.suggestion.title || entry.suggestion.code || entry.key
       const label =
@@ -538,17 +558,18 @@ export function CadDetectionPage() {
               },
             ).format(overrideValue)}`
           : undefined
-      return {
-        id: entry.key,
-        floor: index + 1,
-        unitLabel: label,
-        areaSqm,
-        status: entry.status,
-        missingMetricKey: missingMetricKey ?? undefined,
-        overrideValue,
-        overrideDisplay,
-        metricLabel,
-      }
+        return {
+          id: entry.key,
+          floor: index + 1,
+          unitLabel: label,
+          areaSqm,
+          status: entry.status,
+          severity: severityKey,
+          missingMetricKey: missingMetricKey ?? undefined,
+          overrideValue,
+          overrideDisplay,
+          metricLabel,
+        }
     })
   }, [filteredBySeverity, importSummary?.overrides, metricLabels, t])
 
@@ -746,6 +767,7 @@ export function CadDetectionPage() {
         onResetSeverity={handleSeverityReset}
         isSeverityFiltered={isSeverityFiltered}
         hiddenPendingCount={hiddenPendingCount}
+        severityFilterSummary={severityFilterSummary}
         zoneCode={importSummary?.zoneCode ?? null}
         locked={locked}
         onProvideMetric={handleProvideMetric}

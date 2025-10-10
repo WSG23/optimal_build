@@ -97,7 +97,13 @@
       "reset": "Reset",
       "infoOnly": "Only informational overlays are visible. Toggle severity filters to review pending requirements.",
       "infoOnlyAction": "Show actionable overlays",
-      "hiddenPending": "{{count}} pending overlays hidden"
+      "hiddenPending": "{{count}} pending overlays hidden",
+      "hiddenPendingTooltip": "Reset severity filters to show all pending overlays",
+      "helperAllVisible": "All severities visible. Use these filters to triage urgent issues first.",
+      "filters": {
+        "all": "All severities",
+        "active": "Active: {{list}}"
+      }
     },
     "layerHint": "{{statuses}} overlays are hidden by default. Toggle them on to review prior decisions.",
     "empty": "No units match the current filters.",

@@ -6,6 +6,7 @@ export interface DetectedUnit {
   unitLabel: string
   areaSqm: number
   status: DetectionStatus
+  severity?: 'high' | 'medium' | 'low' | 'none'
   missingMetricKey?: string
   overrideValue?: number | null
   overrideDisplay?: string
