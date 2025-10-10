@@ -5,13 +5,42 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { useTranslation } from '../../i18n'
 import { DetectedUnit } from './types'
 
+type OverlaySummary = {
+  key: string
+  title: string
+  count: number
+  statusLabel: string
+  severity: 'high' | 'medium' | 'low' | 'none'
+  severityLabel: string
+}
+
+type SeveritySummary = {
+  high: number
+  medium: number
+  low: number
+  none: number
+}
+
+type SeverityToggleHandler = (severity: OverlaySummary['severity']) => void
+type SeverityResetHandler = () => void
+
 interface CadDetectionPreviewProps {
   units: DetectedUnit[]
-  overlays: Array<{ key: string; text: string }>
+  overlays: OverlaySummary[]
   hints: Array<{ key: string; text: string }>
+  severitySummary: SeveritySummary
+  severityPercentages: SeveritySummary
+  activeSeverities: OverlaySummary['severity'][]
+  onToggleSeverity: SeverityToggleHandler
+  onResetSeverity: SeverityResetHandler
+  isSeverityFiltered: boolean
+  hiddenPendingCount: number
   zoneCode?: string | null
   locked?: boolean
-  onProvideMetric?: (metricKey: string, value: number) => boolean | Promise<boolean>
+  onProvideMetric?: (
+    metricKey: string,
+    value: number,
+  ) => boolean | Promise<boolean>
   provideMetricDisabled?: boolean
 }
 
@@ -26,6 +55,13 @@ export function CadDetectionPreview({
   units,
   overlays,
   hints,
+  severitySummary,
+  severityPercentages,
+  activeSeverities,
+  onToggleSeverity,
+  onResetSeverity,
+  isSeverityFiltered,
+  hiddenPendingCount,
   zoneCode,
   locked = false,
   onProvideMetric,
@@ -42,6 +78,13 @@ export function CadDetectionPreview({
   const fallbackDash = t('common.fallback.dash')
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState<string>('')
+  const severityOrder: OverlaySummary['severity'][] = [
+    'high',
+    'medium',
+    'low',
+    'none',
+  ]
+  const infoOnly = overlays.length > 0 && overlays.every((item) => item.severity === 'none')
 
   const beginEditing = (unit: DetectedUnit) => {
     if (!unit.missingMetricKey) {
@@ -94,6 +137,13 @@ export function CadDetectionPreview({
           {zoneCode && (
             <span>{t('detection.summary.zone', { code: zoneCode })}</span>
           )}
+          {hiddenPendingCount > 0 && (
+            <span className="cad-preview__summary-warning">
+              {t('detection.severitySummary.hiddenPending', {
+                count: hiddenPendingCount,
+              })}
+            </span>
+          )}
         </div>
       </header>
 
@@ -103,11 +153,105 @@ export function CadDetectionPreview({
           {overlays.length === 0 ? (
             <p>{fallbackDash}</p>
           ) : (
-            <ul>
-              {overlays.map((overlay) => (
-                <li key={overlay.key}>{overlay.text}</li>
-              ))}
-            </ul>
+            <>
+              <div className="cad-overlay-summary">
+                <div className="cad-overlay-summary__heading">
+                  <span>{t('detection.severitySummary.heading')}</span>
+                  <button
+                    type="button"
+                    className="cad-overlay-summary__reset"
+                    onClick={onResetSeverity}
+                    disabled={!isSeverityFiltered}
+                  >
+                    {t('detection.severitySummary.reset')}
+                  </button>
+                </div>
+                <div
+                  className="cad-overlay-summary__badges"
+                  role="group"
+                  aria-label={t('detection.severitySummary.heading')}
+                >
+                  {severityOrder.map((severityKey) => {
+                    const label =
+                      severityKey === 'none'
+                        ? t('detection.severitySummary.info')
+                        : t(`detection.severitySummary.${severityKey}`)
+                    const count = severitySummary[severityKey]
+                    const percent = severityPercentages[severityKey]
+                    const isActive = activeSeverities.includes(severityKey)
+                    const badgeClass = [
+                      'cad-overlay-summary__badge',
+                      `cad-overlay-summary__badge--${severityKey}`,
+                      isActive
+                        ? 'cad-overlay-summary__badge--active'
+                        : 'cad-overlay-summary__badge--inactive',
+                    ].join(' ')
+                    const formattedPercent = new Intl.NumberFormat(undefined, {
+                      minimumFractionDigits: percent % 1 === 0 ? 0 : 1,
+                      maximumFractionDigits: 1,
+                    }).format(percent)
+                    return (
+                      <button
+                        type="button"
+                        key={severityKey}
+                        className={badgeClass}
+                        onClick={() => {
+                          onToggleSeverity(severityKey)
+                        }}
+                        aria-pressed={isActive}
+                        title={t('detection.severitySummary.tooltip', {
+                          label,
+                          count,
+                          percent: formattedPercent,
+                        })}
+                      >
+                        {label} <strong>{count}</strong>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              {infoOnly && (
+                <div className="cad-overlay-info-banner">
+                  <span>{t('detection.severitySummary.infoOnly')}</span>
+                  {isSeverityFiltered && (
+                    <button
+                      type="button"
+                      className="cad-overlay-info-banner__action"
+                      onClick={onResetSeverity}
+                    >
+                      {t('detection.severitySummary.infoOnlyAction')}
+                    </button>
+                  )}
+                </div>
+              )}
+              <ul className="cad-overlay-list">
+                {overlays.map((overlay) => (
+                  <li key={overlay.key} className="cad-overlay-item">
+                    <div className="cad-overlay-item__header">
+                      <span className="cad-overlay-item__title">
+                        {overlay.title}
+                      </span>
+                      <span
+                        className={`cad-overlay-item__severity cad-overlay-item__severity--${overlay.severity}`}
+                      >
+                        {overlay.severityLabel}
+                      </span>
+                    </div>
+                    <div className="cad-overlay-item__meta">
+                      {overlay.count > 1 && (
+                        <span className="cad-overlay-item__count">
+                          {t('detection.countSuffix', { count: overlay.count })}
+                        </span>
+                      )}
+                      <span className="cad-overlay-item__status">
+                        {overlay.statusLabel}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </div>
         <div className="cad-preview__panel">
@@ -163,15 +307,18 @@ export function CadDetectionPreview({
                         </span>
                       )}
                     </div>
-                    {canEdit && (
-                      isEditing ? (
+                    {canEdit &&
+                      (isEditing ? (
                         <form
                           className="cad-metric-editor"
                           onSubmit={(event) => {
                             void handleSubmit(event, unit)
                           }}
                         >
-                          <label htmlFor={inputId} className="cad-metric-editor__label">
+                          <label
+                            htmlFor={inputId}
+                            className="cad-metric-editor__label"
+                          >
                             {unit.metricLabel ?? unit.missingMetricKey}
                           </label>
                           <input
@@ -179,7 +326,9 @@ export function CadDetectionPreview({
                             step="any"
                             id={inputId}
                             value={inputValue}
-                            placeholder={unit.metricLabel ?? unit.missingMetricKey ?? ''}
+                            placeholder={
+                              unit.metricLabel ?? unit.missingMetricKey ?? ''
+                            }
                             onChange={handleInputChange}
                             disabled={provideMetricDisabled}
                           />
@@ -212,8 +361,7 @@ export function CadDetectionPreview({
                             ? t('detection.override.edit')
                             : t('detection.override.add')}
                         </button>
-                      )
-                    )}
+                      ))}
                   </td>
                 </tr>
               )

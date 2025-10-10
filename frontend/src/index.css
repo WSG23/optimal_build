@@ -675,6 +675,18 @@ h3 {
     align-items: center;
     font-weight: 600;
     color: #1e3a8a;
+    flex-wrap: wrap;
+}
+
+.cad-preview__summary-warning {
+    background: #fde68a;
+    color: #92400e;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .cad-preview__grid {
@@ -696,6 +708,219 @@ h3 {
 .cad-preview__panel ul {
     margin: 0;
     padding-left: 1.25rem;
+}
+
+.cad-overlay-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.cad-overlay-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.cad-overlay-summary__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.cad-overlay-summary__reset {
+    border: none;
+    background: transparent;
+    color: #2563eb;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    padding: 0.1rem 0.2rem;
+}
+
+.cad-overlay-summary__reset:disabled {
+    color: #94a3b8;
+    cursor: default;
+}
+
+.cad-overlay-summary__badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.cad-overlay-summary__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition:
+        transform 0.1s ease,
+        box-shadow 0.1s ease,
+        opacity 0.1s ease;
+}
+
+.cad-overlay-summary__badge:hover,
+.cad-overlay-summary__badge:focus-visible {
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.15);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.cad-overlay-summary__badge strong {
+    font-size: 0.9rem;
+}
+
+.cad-overlay-summary__badge--high {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.cad-overlay-summary__badge--medium {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.cad-overlay-summary__badge--low {
+    background: #dcfce7;
+    color: #047857;
+}
+
+.cad-overlay-summary__badge--none {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.cad-overlay-summary__badge--active {
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+    transform: translateY(-1px);
+}
+
+.cad-overlay-summary__badge--inactive {
+    opacity: 0.6;
+}
+
+.cad-overlay-info-banner {
+    margin: 0.5rem 0 0.75rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.75rem;
+    background: #e0f2fe;
+    color: #0f172a;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.cad-overlay-info-banner__action {
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    cursor: pointer;
+}
+
+.cad-overlay-info-banner__action:hover,
+.cad-overlay-info-banner__action:focus-visible {
+    background: #1d4ed8;
+    outline: none;
+}
+
+.cad-overlay-item {
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.cad-overlay-item__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.cad-overlay-item__title {
+    font-weight: 600;
+    color: #0f172a;
+    flex: 1;
+    word-break: break-word;
+}
+
+.cad-overlay-item__severity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.cad-overlay-item__severity--high {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.cad-overlay-item__severity--medium {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.cad-overlay-item__severity--low {
+    background: #dcfce7;
+    color: #047857;
+}
+
+.cad-overlay-item__severity--none {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.cad-overlay-item__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.cad-overlay-item__count {
+    font-weight: 500;
+}
+
+.cad-overlay-item__status {
+    font-weight: 600;
+    color: #0f172a;
 }
 
 .cad-preview__lock-indicator {

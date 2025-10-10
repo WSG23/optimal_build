@@ -202,7 +202,14 @@ async def flow_session_factory() -> AsyncGenerator[
             pass
 
     async with engine.begin() as conn:
-        await conn.run_sync(BaseModel.metadata.create_all)
+        # Create tables one by one, skipping those with PostgreSQL-specific DDL
+        for table in BaseModel.metadata.sorted_tables:
+            try:
+                await conn.run_sync(table.create, checkfirst=True)
+            except Exception:
+                # Skip tables with PostgreSQL-specific syntax
+                # (e.g., gen_random_uuid in DEFAULT)
+                pass
 
     factory = async_sessionmaker(engine, expire_on_commit=False)
     try:

@@ -12,21 +12,29 @@ from backend.jobs.parse_cad import (
     _prepare_dxf_quicklook,
 )
 
-pytestmark = pytest.mark.no_db
-
 
 def _dxf_payload_mm() -> bytes:
+    """Create a test DXF with building footprint for setback calculation.
+
+    Site boundary: 0-4000mm x 0-3000mm (0-4m x 0-3m when scaled to meters)
+    Building footprint: 500-3500mm x 500-2800mm (0.5-3.5m x 0.5-2.8m)
+    Expected setbacks: left=0.5m, right=0.5m, front=0.5m, rear=0.2m
+    """
     doc = ezdxf.new()
     msp = doc.modelspace()
+    # Add site boundary on one layer
     msp.add_lwpolyline(
         [(0, 0), (4000, 0), (4000, 3000), (0, 3000)],
         format="xy",
         close=True,
+        dxfattribs={"layer": "SITE"},
     )
+    # Add building footprint on another layer
     msp.add_lwpolyline(
         [(500, 500), (3500, 500), (3500, 2800), (500, 2800)],
         format="xy",
         close=True,
+        dxfattribs={"layer": "BUILDING"},
     )
     with tempfile.NamedTemporaryFile(suffix=".dxf") as tmp:
         doc.saveas(tmp.name)
@@ -34,6 +42,7 @@ def _dxf_payload_mm() -> bytes:
         return tmp.read()
 
 
+@pytest.mark.no_db
 def test_prepare_dxf_quicklook_extracts_site_metrics():
     payload = _dxf_payload_mm()
 
@@ -48,6 +57,7 @@ def test_prepare_dxf_quicklook_extracts_site_metrics():
     assert pytest.approx(first_candidate.metadata["area_sqm"], rel=1e-6) == 12.0
 
 
+@pytest.mark.no_db
 def test_parse_dxf_payload_propagates_metadata():
     payload = _dxf_payload_mm()
 

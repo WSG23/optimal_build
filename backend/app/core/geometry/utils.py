@@ -47,6 +47,10 @@ def derive_setback_overrides(
     building_max_y = float("-inf")
 
     for space in graph.spaces.values():
+        # Skip spaces on SITE layer - they define the boundary, not the building
+        source_layer = space.metadata.get("source_layer", "").upper()
+        if source_layer == "SITE":
+            continue
         boundary = getattr(space, "boundary", None) or []
         if not boundary:
             continue

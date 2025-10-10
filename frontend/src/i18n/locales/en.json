@@ -82,6 +82,23 @@
     "pendingNotice": "{{count}} pending overlays — resolve to enable export.",
     "pendingNoticeSingle": "1 pending overlay — resolve to enable export.",
     "pendingTooltip": "Pending overlays must be resolved by providing data or recording a decision before export becomes available.",
+    "severity": {
+      "high": "High severity",
+      "medium": "Medium severity",
+      "low": "Low severity",
+      "none": "Informational"
+    },
+    "severitySummary": {
+      "heading": "Overlay severity",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "info": "Info",
+      "reset": "Reset",
+      "infoOnly": "Only informational overlays are visible. Toggle severity filters to review pending requirements.",
+      "infoOnlyAction": "Show actionable overlays",
+      "hiddenPending": "{{count}} pending overlays hidden"
+    },
     "layerHint": "{{statuses}} overlays are hidden by default. Toggle them on to review prior decisions.",
     "empty": "No units match the current filters.",
     "locked": "Zone is locked. Unlock to update review status.",

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { AuditEvent, CadImportSummary, OverlaySuggestion } from '../api/client'
+import type {
+  AuditEvent,
+  CadImportSummary,
+  OverlaySuggestion,
+} from '../api/client'
 import { AppLayout } from '../App'
 import { useApiClient } from '../api/client'
 import { useTranslation } from '../i18n'
@@ -21,7 +25,12 @@ interface AggregatedSuggestion {
   status: DetectionStatus
   missingMetricKey?: string
   totalArea: number
+  severity: OverlaySuggestion['severity'] | null
 }
+
+type OverlaySeverity = 'high' | 'medium' | 'low' | 'none'
+
+type SeverityBuckets = Record<OverlaySeverity, number>
 
 function normaliseStatus(status: string): DetectionStatus {
   const value = status.toLowerCase()
@@ -35,6 +44,35 @@ function normaliseStatus(status: string): DetectionStatus {
     return 'pending'
   }
   return 'source'
+}
+
+const SEVERITY_PRIORITY: Array<OverlaySuggestion['severity'] | null> = [
+  'high',
+  'medium',
+  'low',
+  null,
+]
+
+const ALL_SEVERITIES: OverlaySeverity[] = ['high', 'medium', 'low', 'none']
+
+function normaliseSeverity(
+  severity: OverlaySuggestion['severity'],
+): OverlaySuggestion['severity'] | null {
+  if (typeof severity !== 'string') {
+    return null
+  }
+  const value = severity.toLowerCase()
+  if (value === 'high' || value === 'medium' || value === 'low') {
+    return value
+  }
+  return null
+}
+
+function getSeverityPriority(
+  severity: OverlaySuggestion['severity'] | null,
+): number {
+  const priority = SEVERITY_PRIORITY.indexOf(severity ?? null)
+  return priority === -1 ? SEVERITY_PRIORITY.length : priority
 }
 
 function deriveAreaSqm(suggestion: OverlaySuggestion): number {
@@ -87,18 +125,18 @@ function getSuggestionTimestamp(suggestion: OverlaySuggestion): number {
   return 0
 }
 
-function getMissingMetricKey(suggestion: OverlaySuggestion): string | undefined {
+function getMissingMetricKey(
+  suggestion: OverlaySuggestion,
+): string | undefined {
   const payload = suggestion.enginePayload as {
     missing_metric?: unknown
-  }
-  const props = suggestion.props as {
     metric?: unknown
   }
   if (typeof payload?.missing_metric === 'string') {
     return payload.missing_metric
   }
-  if (typeof props?.metric === 'string') {
-    return props.metric
+  if (typeof payload?.metric === 'string') {
+    return payload.metric
   }
   return undefined
 }
@@ -153,6 +191,7 @@ export function aggregateOverlaySuggestions(
       missingMetricKey?: string
       count: number
       totalArea: number
+      severity: OverlaySuggestion['severity'] | null
     }
   >()
 
@@ -162,6 +201,7 @@ export function aggregateOverlaySuggestions(
     const groupKey = missingMetricKey ?? suggestion.code
     const timestamp = getSuggestionTimestamp(suggestion)
     const area = deriveAreaSqm(suggestion)
+    const severity = normaliseSeverity(suggestion.severity)
     const existing = groups.get(groupKey)
     if (!existing) {
       groups.set(groupKey, {
@@ -173,6 +213,7 @@ export function aggregateOverlaySuggestions(
         missingMetricKey,
         count: 1,
         totalArea: area,
+        severity,
       })
       return
     }
@@ -189,6 +230,13 @@ export function aggregateOverlaySuggestions(
       existing.latest = suggestion
       existing.latestTimestamp = timestamp
     }
+    if (
+      severity &&
+      (existing.severity == null ||
+        getSeverityPriority(severity) < getSeverityPriority(existing.severity))
+    ) {
+      existing.severity = severity
+    }
   })
 
   return Array.from(groups.values())
@@ -200,7 +248,54 @@ export function aggregateOverlaySuggestions(
       status: group.status,
       missingMetricKey: group.missingMetricKey,
       totalArea: group.totalArea,
+      severity: group.severity ?? normaliseSeverity(group.latest.severity),
     }))
+}
+
+export function countSeverityBuckets(
+  suggestions: AggregatedSuggestion[],
+  visibleStatuses: DetectionStatus[],
+): SeverityBuckets {
+  const buckets: SeverityBuckets = {
+    high: 0,
+    medium: 0,
+    low: 0,
+    none: 0,
+  }
+  suggestions.forEach((item) => {
+    if (!visibleStatuses.includes(item.status)) {
+      return
+    }
+    const severity = item.severity
+    if (severity === 'high' || severity === 'medium' || severity === 'low') {
+      buckets[severity] += 1
+    } else {
+      buckets.none += 1
+    }
+  })
+  return buckets
+}
+
+export function calculateSeverityPercentages(
+  summary: SeverityBuckets,
+): Record<OverlaySeverity, number> {
+  const total = summary.high + summary.medium + summary.low + summary.none
+  if (total === 0) {
+    return {
+      high: 0,
+      medium: 0,
+      low: 0,
+      none: 0,
+    }
+  }
+  const toPercent = (value: number) =>
+    Math.round((value / total) * 100 * 10) / 10
+  return {
+    high: toPercent(summary.high),
+    medium: toPercent(summary.medium),
+    low: toPercent(summary.low),
+    none: toPercent(summary.none),
+  }
 }
 
 export function CadDetectionPage() {
@@ -215,9 +310,17 @@ export function CadDetectionPage() {
   const [auditLoading, setAuditLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
-  const [importSummary, setImportSummary] = useState<CadImportSummary | null>(null)
+  const [importSummary, setImportSummary] = useState<CadImportSummary | null>(
+    null,
+  )
   const [loadingImport, setLoadingImport] = useState(false)
-  const [activeLayers, setActiveLayers] = useState<DetectionStatus[]>(['source', 'pending'])
+  const [activeLayers, setActiveLayers] = useState<DetectionStatus[]>([
+    'source',
+    'pending',
+  ])
+  const [activeSeverities, setActiveSeverities] = useState<OverlaySeverity[]>([
+    ...ALL_SEVERITIES,
+  ])
 
   const fetchLatestImport = useCallback(async () => {
     setLoadingImport(true)
@@ -228,7 +331,8 @@ export function CadDetectionPage() {
       setImportSummary(null)
       setError(
         (prev) =>
-          prev ?? (err instanceof Error ? err.message : t('detection.loadError')),
+          prev ??
+          (err instanceof Error ? err.message : t('detection.loadError')),
       )
     } finally {
       setLoadingImport(false)
@@ -300,6 +404,26 @@ export function CadDetectionPage() {
     [filteredSuggestions],
   )
 
+  const filteredByStatus = useMemo(
+    () =>
+      aggregatedSuggestions.filter((item) =>
+        activeLayers.includes(item.status),
+      ),
+    [activeLayers, aggregatedSuggestions],
+  )
+
+  const filteredBySeverity = useMemo(() => {
+    return filteredByStatus.filter((item) => {
+      const severityKey: OverlaySeverity =
+        item.severity === 'high' ||
+        item.severity === 'medium' ||
+        item.severity === 'low'
+          ? item.severity
+          : 'none'
+      return activeSeverities.includes(severityKey)
+    })
+  }, [activeSeverities, filteredByStatus])
+
   const metricLabels = useMemo(
     () => ({
       front_setback_m: t('detection.override.prompts.frontSetback'),
@@ -314,103 +438,125 @@ export function CadDetectionPage() {
 
   const overlays = useMemo(
     () =>
-      aggregatedSuggestions
-        .filter((item) => activeLayers.includes(item.status))
-        .map((item) => {
-          const metricLabel =
-            item.missingMetricKey &&
-            metricLabels[item.missingMetricKey as keyof typeof metricLabels]
-              ? metricLabels[item.missingMetricKey as keyof typeof metricLabels]
-              : item.missingMetricKey ?? null
-          const baseLabel =
-            metricLabel ??
-            item.suggestion.title ??
-            item.suggestion.code ??
-            item.key
-          const countSuffix =
-            item.count > 1
-              ? t('detection.countSuffix', { count: item.count })
-              : null
-          const statusLabel = t(STATUS_LABEL_KEYS[item.status])
-          const textParts = [baseLabel]
-          if (countSuffix) {
-            textParts.push(countSuffix)
-          }
-          textParts.push(`- ${statusLabel}`)
-          return { key: item.key, text: textParts.join(' ') }
-        }),
-    [activeLayers, aggregatedSuggestions, metricLabels, t],
+      filteredBySeverity.map((item) => {
+        const metricLabel =
+          item.missingMetricKey &&
+          metricLabels[item.missingMetricKey as keyof typeof metricLabels]
+            ? metricLabels[item.missingMetricKey as keyof typeof metricLabels]
+            : (item.missingMetricKey ?? null)
+        const baseLabel =
+          metricLabel ??
+          item.suggestion.title ??
+          item.suggestion.code ??
+          item.key
+        const severityKey: OverlaySeverity =
+          item.severity === 'high' ||
+          item.severity === 'medium' ||
+          item.severity === 'low'
+            ? item.severity
+            : 'none'
+        const severityLabel =
+          severityKey === 'none'
+            ? t('detection.severity.none')
+            : t(`detection.severity.${severityKey}`)
+        return {
+          key: item.key,
+          title: baseLabel,
+          count: item.count,
+          statusLabel: t(STATUS_LABEL_KEYS[item.status]),
+          severity: severityKey,
+          severityLabel,
+        }
+      }),
+    [filteredBySeverity, metricLabels, t],
   )
+
+  const severitySummary = useMemo(
+    () => countSeverityBuckets(aggregatedSuggestions, activeLayers),
+    [activeLayers, aggregatedSuggestions],
+  )
+
+  const isSeverityFiltered = useMemo(
+    () => activeSeverities.length !== ALL_SEVERITIES.length,
+    [activeSeverities],
+  )
+
+  const severityPercentages = useMemo(
+    () => calculateSeverityPercentages(severitySummary),
+    [severitySummary],
+  )
+
+  const hiddenPendingCount = useMemo(() => {
+    const totalPending = aggregatedSuggestions.filter(
+      (item) => item.status === 'pending',
+    )
+    const visiblePending = filteredBySeverity.filter(
+      (item) => item.status === 'pending',
+    )
+    return totalPending.length - visiblePending.length
+  }, [aggregatedSuggestions, filteredBySeverity])
 
   const hints = useMemo(
     () =>
-      aggregatedSuggestions
-        .filter(
-          (item) =>
-            Boolean(item.suggestion.rationale) &&
-            activeLayers.includes(item.status),
-        )
+      filteredBySeverity
+        .filter((item) => Boolean(item.suggestion.rationale))
         .map((item) => ({
           key: item.key,
           text: item.suggestion.rationale as string,
         })),
-    [activeLayers, aggregatedSuggestions],
+    [filteredBySeverity],
   )
 
-  const units = useMemo<DetectedUnit[]>(
-    () => {
-      const overrides = importSummary?.overrides ?? {}
-      return aggregatedSuggestions.map((entry, index) => {
-        const missingMetricKey = entry.missingMetricKey ?? null
-        const overrideValue =
-          missingMetricKey && typeof overrides[missingMetricKey] === 'number'
-            ? overrides[missingMetricKey]
-            : null
-        const metricLabel =
-          missingMetricKey && metricLabels[missingMetricKey as keyof typeof metricLabels]
-            ? metricLabels[missingMetricKey as keyof typeof metricLabels]
-            : missingMetricKey ?? undefined
-        const baseLabel =
-          entry.suggestion.title || entry.suggestion.code || entry.key
-        const label =
-          entry.count > 1
-            ? `${baseLabel} ${t('detection.countSuffix', { count: entry.count })}`
-            : baseLabel
-        const areaSqm =
-          entry.totalArea > 0
-            ? entry.totalArea
-            : deriveAreaSqm(entry.suggestion)
-        const overrideDisplay =
-          missingMetricKey && overrideValue != null
-            ? `${metricLabel ?? missingMetricKey}: ${new Intl.NumberFormat(undefined, {
+  const units = useMemo<DetectedUnit[]>(() => {
+    const overrides = importSummary?.overrides ?? {}
+    return filteredBySeverity.map((entry, index) => {
+      const missingMetricKey = entry.missingMetricKey ?? null
+      const overrideValue =
+        missingMetricKey && typeof overrides[missingMetricKey] === 'number'
+          ? overrides[missingMetricKey]
+          : null
+      const metricLabel =
+        missingMetricKey &&
+        metricLabels[missingMetricKey as keyof typeof metricLabels]
+          ? metricLabels[missingMetricKey as keyof typeof metricLabels]
+          : (missingMetricKey ?? undefined)
+      const baseLabel =
+        entry.suggestion.title || entry.suggestion.code || entry.key
+      const label =
+        entry.count > 1
+          ? `${baseLabel} ${t('detection.countSuffix', { count: entry.count })}`
+          : baseLabel
+      const areaSqm =
+        entry.totalArea > 0 ? entry.totalArea : deriveAreaSqm(entry.suggestion)
+      const overrideDisplay =
+        missingMetricKey && overrideValue != null
+          ? `${metricLabel ?? missingMetricKey}: ${new Intl.NumberFormat(
+              undefined,
+              {
                 maximumFractionDigits: 2,
                 minimumFractionDigits: Number.isInteger(overrideValue) ? 0 : 2,
-              }).format(overrideValue)}`
-            : undefined
-        return {
-          id: entry.key,
-          floor: index + 1,
-          unitLabel: label,
-          areaSqm,
-          status: entry.status,
-          missingMetricKey: missingMetricKey ?? undefined,
-          overrideValue,
-          overrideDisplay,
-          metricLabel,
-        }
-      })
-    },
-    [aggregatedSuggestions, importSummary?.overrides, metricLabels, t],
-  )
+              },
+            ).format(overrideValue)}`
+          : undefined
+      return {
+        id: entry.key,
+        floor: index + 1,
+        unitLabel: label,
+        areaSqm,
+        status: entry.status,
+        missingMetricKey: missingMetricKey ?? undefined,
+        overrideValue,
+        overrideDisplay,
+        metricLabel,
+      }
+    })
+  }, [filteredBySeverity, importSummary?.overrides, metricLabels, t])
 
-  const visibleUnits = useMemo(
-    () => units.filter((unit) => activeLayers.includes(unit.status)),
-    [units, activeLayers],
-  )
+  const visibleUnits = useMemo(() => units, [units])
 
   const pendingCount = useMemo(
-    () => aggregatedSuggestions.filter((entry) => entry.status === 'pending').length,
-    [aggregatedSuggestions],
+    () => filteredByStatus.filter((entry) => entry.status === 'pending').length,
+    [filteredByStatus],
   )
 
   const hiddenStatusLabels = useMemo(() => {
@@ -430,6 +576,22 @@ export function CadDetectionPage() {
     },
     [],
   )
+
+  const handleSeverityToggle = useCallback((severity: OverlaySeverity) => {
+    setActiveSeverities((current) => {
+      if (current.includes(severity)) {
+        if (current.length === 1) {
+          return current
+        }
+        return current.filter((value) => value !== severity)
+      }
+      return [...current, severity]
+    })
+  }, [])
+
+  const handleSeverityReset = useCallback(() => {
+    setActiveSeverities([...ALL_SEVERITIES])
+  }, [])
 
   const applyDecisionBatch = useCallback(
     async (decision: 'approved' | 'rejected') => {
@@ -500,15 +662,21 @@ export function CadDetectionPage() {
         await refreshAudit()
         return true
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : t('detection.loadError'),
-        )
+        setError(err instanceof Error ? err.message : t('detection.loadError'))
         return false
       } finally {
         setMutationPending(false)
       }
     },
-    [apiClient, fetchLatestImport, importSummary, projectId, refreshAudit, refreshSuggestions, t],
+    [
+      apiClient,
+      fetchLatestImport,
+      importSummary,
+      projectId,
+      refreshAudit,
+      refreshSuggestions,
+      t,
+    ],
   )
 
   const handleExport = useCallback(
@@ -571,6 +739,13 @@ export function CadDetectionPage() {
         units={visibleUnits}
         overlays={overlays}
         hints={hints}
+        severitySummary={severitySummary}
+        severityPercentages={severityPercentages}
+        activeSeverities={activeSeverities}
+        onToggleSeverity={handleSeverityToggle}
+        onResetSeverity={handleSeverityReset}
+        isSeverityFiltered={isSeverityFiltered}
+        hiddenPendingCount={hiddenPendingCount}
         zoneCode={importSummary?.zoneCode ?? null}
         locked={locked}
         onProvideMetric={handleProvideMetric}
