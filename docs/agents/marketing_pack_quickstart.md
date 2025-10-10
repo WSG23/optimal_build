@@ -1,83 +1,52 @@
-# Agent GPS Capture & Marketing Pack Guide
+# Agent Marketing Pack Quickstart
 
-This guide walks agents through the complete workflow for capturing a Singapore site, reviewing the quick analysis, and generating a professional marketing pack that can be shared with clients during the pilot phase.
+This guide walks agents through the end-to-end workflow from GPS capture to generating professional marketing packs in the staging environment.
 
-## 1. Before You Start
+## Prerequisites
 
-- Access the Agent workspace at `/agents/site-capture` using the staging credentials provided by the product team.
-- Keep the seeded coordinate list handy (Harbourfront, Telok Ayer, Jurong Industrial) so everyone sees the same data during validation.
-- Ensure a stable network connection; marketing pack downloads are disabled offline.
+- Access to the Agent workspace (`/agents/site-capture`) with staging credentials.
+- Seeded coordinates from the pilot dataset (Harbourfront, CBD, or Jurong).
+- Stable network connection for asset download.
 
-> **Compliance reminder**
-> Packs generated in staging are illustrative only. They must not be shared externally without explicit approval from the compliance team.
+## Workflow Overview
 
-## 2. Navigate to the Capture Workspace
+1. **Capture the site**
+   - Enter latitude/longitude in the GPS capture form and keep all default scenarios selected.
+   - Submit to generate quick analysis cards, amenities, and market intelligence contextual data.
 
-1. Sign in to the staging frontend.
-2. From the sidebar, choose **Agent Capture**.
-3. Confirm the header reads “Universal GPS site capture” and the marketing pack panel is visible on the right-hand side.
+2. **Review quick analysis output**
+   - Confirm the scenario headlines align with the development story you expect to tell.
+   - Note any missing metrics or confusing labels; these should be logged during the validation session.
 
-## 3. Capture a Site
+3. **Trigger marketing pack generation**
+   - In the “Professional marketing packs” sidebar, select the pack type that matches your objective:
+     - *Universal* – general purpose deck with zoning, metrics, and compliance notes.
+     - *Investment* – capital stack, financial sensitivities, and investor positioning.
+     - *Sales* – buyer-focused highlights and comparable transactions.
+     - *Lease* – tenant mix, absorption, and rent comparables.
+   - Click **Generate professional pack** and wait for the confirmation state.
 
-1. Enter the latitude and longitude supplied for the session. They default to the CBD if left unchanged.
-2. Leave all scenario checkboxes ticked unless the client conversation is tightly focused (e.g., heritage only).
-3. Click **Generate quick analysis**. The request usually completes within 5–8 seconds.
+4. **Download and review**
+   - Use the generated link to download the PDF.
+   - Check disclaimers, data accuracy, and visual hierarchy before sharing externally.
 
-When the capture succeeds you will see:
-- Address details and existing use.
-- Scenario cards (raw land, existing building, heritage, underused asset).
-- Map tile centred on the coordinates.
-- Nearby amenity call-outs.
-- Market intelligence snapshot (transactions, pipeline, yields).
+## Validation Talking Points
 
-## 4. Review the Analysis
+- Does the generated pack cover the narrative you typically deliver to clients?
+- Are disclaimers and compliance statements positioned appropriately?
+- Which data needs refinement before the pack is production-ready?
 
-- Scan the scenario headlines and metrics. Note any values that look incorrect or confusing; these should be flagged during the feedback session.
-- Check the disclaimers at the bottom of the page. They adapt to the scenarios returned (pre-development vs. sales/leasing language).
-- Use the market intelligence panel to confirm transaction counts, pipeline projects, and yield benchmarks reflect the narrative you plan to tell.
-
-## 5. Generate a Marketing Pack
-
-1. In the **Professional marketing packs** card, pick the pack type:
-   - **Universal** – balanced overview with zoning, scenarios, and compliance messaging.
-   - **Investment** – capital structure, financing assumptions, and investor language.
-   - **Sales** – positioning for buyers, comparables, and pricing signals.
-   - **Lease** – tenant mix, absorption, and rental comparables.
-2. Click **Generate professional pack**. A loading state appears while the PDF is assembled.
-3. Once complete you’ll see the generation timestamp, file size estimate, and a download link (if enabled in the environment).
-
-> Tip: keep the default pack type noted in your pipeline, so follow-on sessions start from the right context.
-
-## 6. Download & Quality Check
-
-1. Click the download link (opens in a new tab). Save the PDF locally.
-2. Review the first three pages:
-   - Cover story (title, address, compliance badge).
-   - Key metrics summary.
-   - Scenario outlooks with charts.
-3. Skim the disclaimer page to confirm the wording matches your client’s distribution rules.
-4. Capture any edits or data corrections that would make the pack client-ready and feed them back to the product team.
-
-## 7. Troubleshooting & Known Limitations
+## Troubleshooting
 
 | Symptom | Suggested Action |
 | --- | --- |
-| Pack fails to generate | Refresh the page and retry once. If it fails again, record the pack type, timestamp, and any console errors; file an issue tagged `marketing-pack`. |
-| Download link missing | Some staging environments operate in restricted mode. Note the pack type and timestamp so engineering can retrieve the PDF from storage. |
-| Analytics mismatch | Take a screenshot comparing expected vs. actual metrics and log under `agent-validation`. |
-| Map does not load | Ensure `VITE_MAPBOX_ACCESS_TOKEN` is configured locally; otherwise use the map fallback text. |
+| Pack fails to generate | Re-run after refreshing the page. If failures persist, collect console logs and open an issue tagged `agent-validation`. |
+| Missing download URL | Note the pack type and timestamp; attach to follow-up ticket for the engineering team. |
+| Data discrepancies | Capture screenshots with expected versus actual values for the analytics backlog. |
 
-## 8. Questions to Answer During Validation
+## Next Steps After Each Session
 
-- Does the quick analysis explain enough context for you to brief developers or investors?
-- Is the marketing pack language ready for client conversations, or does it need rewording?
-- Which metrics, charts, or disclaimers are missing for your asset type?
-- How long did each step take, and where did you feel friction?
+- Record feedback in the [live walkthrough plan](../validation/live_walkthrough_plan.md).
+- File actionable issues in the tracker (labels: `agent-validation`, `marketing-pack`).
+- Update go/no-go status before proceeding to developer tooling workstreams.
 
-## 9. Feedback & Next Steps
-
-- Document feedback in the [live walkthrough plan](../validation/live_walkthrough_plan.md) immediately after each session.
-- File actionable improvements in the issue tracker with labels `agent-validation` and, if relevant, `marketing-pack`.
-- Once at least two agents confirm the workflow meets expectations, we can move forward with developer tooling and documentation updates for contributors.
-
-Need help? Contact the product or engineering lead listed with your session invite, or raise questions in the `#agents-pilot` channel.

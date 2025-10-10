@@ -84,8 +84,6 @@ sets of features, reusing the same data foundations:
 - Update contributor docs and user-facing guides alongside the new features.
   - Agent quickstart for marketing packs available in
     `docs/agents/marketing_pack_quickstart.md`.
-  - Developer implementation guide for capture and packs published in
-    `docs/frontend/agents_site_capture.md`.
 
 ## 9. Launch Preparation
 
