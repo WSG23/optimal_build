@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Iterable, Optional
+from typing import Iterable, Mapping, Optional, Sequence
 from uuid import UUID
 
 from sqlalchemy import Select, func, select
@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend._compat.datetime import UTC
+from app.data.performance_benchmarks_seed import SEED_BENCHMARKS
 from app.models.business_performance import (
     AgentCommissionRecord,
     AgentDeal,
@@ -125,6 +126,91 @@ class AgentPerformanceService:
         result = await session.execute(stmt)
         return list(result.scalars().all())
 
+    async def upsert_benchmark(
+        self,
+        *,
+        session: AsyncSession,
+        metric_key: str,
+        asset_type: str | None = None,
+        deal_type: str | None = None,
+        cohort: str = "industry_avg",
+        effective_date: date | None = None,
+        value_numeric: float | None = None,
+        value_text: str | None = None,
+        source: str | None = None,
+        metadata: Mapping[str, object] | None = None,
+    ) -> PerformanceBenchmark:
+        stmt = select(PerformanceBenchmark).where(
+            PerformanceBenchmark.metric_key == metric_key,
+            PerformanceBenchmark.cohort == cohort,
+        )
+        if asset_type is None:
+            stmt = stmt.where(PerformanceBenchmark.asset_type.is_(None))
+        else:
+            stmt = stmt.where(PerformanceBenchmark.asset_type == asset_type)
+        if deal_type is None:
+            stmt = stmt.where(PerformanceBenchmark.deal_type.is_(None))
+        else:
+            stmt = stmt.where(PerformanceBenchmark.deal_type == deal_type)
+        if effective_date is None:
+            stmt = stmt.where(PerformanceBenchmark.effective_date.is_(None))
+        else:
+            stmt = stmt.where(PerformanceBenchmark.effective_date == effective_date)
+
+        result = await session.execute(stmt.limit(1))
+        benchmark = result.scalar_one_or_none()
+        if benchmark is None:
+            benchmark = PerformanceBenchmark(
+                metric_key=metric_key,
+                asset_type=asset_type,
+                deal_type=deal_type,
+                cohort=cohort,
+                effective_date=effective_date,
+            )
+            session.add(benchmark)
+
+        benchmark.value_numeric = value_numeric
+        benchmark.value_text = value_text
+        benchmark.source = source
+        if metadata is not None:
+            benchmark.metadata = dict(metadata)
+        await session.flush()
+        return benchmark
+
+    async def seed_default_benchmarks(
+        self,
+        *,
+        session: AsyncSession,
+        seeds: Sequence[Mapping[str, object]] | None = None,
+    ) -> int:
+        payload = seeds or SEED_BENCHMARKS
+        total = 0
+        for item in payload:
+            metric_key = str(item.get("metric_key"))
+            asset_type = item.get("asset_type")
+            deal_type = item.get("deal_type")
+            cohort = str(item.get("cohort", "industry_avg"))
+            effective = _coerce_date(item.get("effective_date"))
+            value_numeric = _coerce_float(item.get("value_numeric"))
+            value_text = item.get("value_text")
+            source = item.get("source")
+            metadata = item.get("metadata")
+            await self.upsert_benchmark(
+                session=session,
+                metric_key=metric_key,
+                asset_type=str(asset_type) if asset_type is not None else None,
+                deal_type=str(deal_type) if deal_type is not None else None,
+                cohort=cohort,
+                effective_date=effective,
+                value_numeric=value_numeric,
+                value_text=str(value_text) if value_text is not None else None,
+                source=str(source) if source is not None else None,
+                metadata=metadata if isinstance(metadata, Mapping) else None,
+            )
+            total += 1
+        await session.commit()
+        return total
+
     async def generate_daily_snapshots(
         self,
         *,
@@ -238,6 +324,27 @@ def _deal_cycle_days(deal: AgentDeal) -> Optional[float]:
         return delta.days + delta.seconds / 86400.0
     except Exception:  # pragma: no cover - defensive
         return None
+
+
+def _coerce_date(value: object) -> date | None:
+    if value is None:
+        return None
+    if isinstance(value, date):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, str) and value:
+        return date.fromisoformat(value)
+    raise TypeError(f"Unsupported effective_date value: {value!r}")
+
+
+def _coerce_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):  # pragma: no cover - defensive
+        raise TypeError(f"Expected numeric value, got {value!r}")
 
 
 __all__ = ["AgentPerformanceService"]
