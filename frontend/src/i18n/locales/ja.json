@@ -21,6 +21,77 @@
       "cancel": "キャンセル"
     }
   },
+  "agentPerformance": {
+    "title": "エージェント業績ダッシュボード",
+    "subtitle": "案件の進捗と監査ログを確認します。",
+    "common": {
+      "fallback": "—"
+    },
+    "errors": {
+      "loadDeals": "取引一覧を読み込めません。時間を置いて再試行してください。",
+      "loadTimeline": "タイムラインを取得できませんでした。"
+    },
+    "stages": {
+      "lead_captured": "リード取得",
+      "qualification": "資格確認",
+      "needs_analysis": "要件分析",
+      "proposal": "提案",
+      "negotiation": "交渉",
+      "agreement": "合意",
+      "due_diligence": "デューデリジェンス",
+      "awaiting_closure": "クローズ待ち",
+      "closed_won": "成約",
+      "closed_lost": "失注"
+    },
+    "timeline": {
+      "auditLabel": "監査トレイル",
+      "durationLabel": "滞在期間",
+      "changedBy": "更新者",
+      "note": "メモ",
+      "hash": "ハッシュ",
+      "signature": "署名"
+    },
+    "analytics": {
+      "title": "パフォーマンス分析",
+      "agentLabel": "エージェントID {id}",
+      "loading": "分析を読み込み中…",
+      "benchmarksLoading": "ベンチマークを読み込み中…",
+      "metrics": {
+        "openDeals": "進行中の案件",
+        "closedWon": "成約済み案件",
+        "grossPipelineValue": "総パイプライン",
+        "weightedPipelineValue": "加重パイプライン",
+        "conversionRate": "獲得率",
+        "avgCycleDays": "平均リードタイム",
+        "confirmedCommission": "確定済みコミッション",
+        "disputedCommission": "係争中コミッション"
+      },
+      "trend": {
+        "pipelineHeading": "パイプライン推移",
+        "grossLabel": "総パイプライン",
+        "weightedLabel": "加重パイプライン",
+        "conversionHeading": "獲得率とリードタイム",
+        "conversionSeriesLabel": "獲得率",
+        "cycleSeriesLabel": "平均リードタイム"
+      },
+      "benchmarks": {
+        "title": "ベンチマーク比較",
+        "conversion": "獲得率",
+        "cycle": "平均リードタイム",
+        "pipeline": "加重パイプライン価値",
+        "versus": "{cohort} {value} と比較",
+        "cohort": {
+          "industry_avg": "業界平均",
+          "top_quartile": "上位25%",
+          "internal_avg": "チーム平均"
+        }
+      },
+      "errors": {
+        "analytics": "パフォーマンス分析を読み込めませんでした。",
+        "benchmarks": "ベンチマークデータを取得できませんでした。"
+      }
+    }
+  },
   "app": {
     "title": "Optimal Build Studio",
     "tagline": "CAD ワークフローのコンプライアンスと設計調整を加速します。",

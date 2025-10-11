@@ -2673,3 +2673,151 @@ h3 {
 .agent-performance__error--inline {
     grid-column: 1 / -1;
 }
+
+.agent-performance__analytics {
+    margin-top: 2rem;
+    background: rgba(15, 23, 42, 0.04);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: grid;
+    gap: 1.5rem;
+}
+
+.agent-performance__analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.agent-performance__analytics-agent {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas,
+        'Liberation Mono', 'Courier New', monospace;
+    background: rgba(100, 116, 139, 0.14);
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+}
+
+.agent-performance__analytics-loading {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #475569;
+}
+
+.agent-performance__metrics-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.agent-performance__metric-card {
+    background: white;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.agent-performance__metric-card h4 {
+    margin: 0;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #475569;
+}
+
+.agent-performance__metric-card strong {
+    font-size: 1.35rem;
+    color: #0f172a;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.agent-performance__charts {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.agent-performance__chart-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.agent-performance__chart-card h4 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.agent-performance__benchmarks h4 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.agent-performance__benchmark-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+.agent-performance__benchmark-list li {
+    background: white;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.agent-performance__benchmark-list header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: baseline;
+}
+
+.agent-performance__benchmark-list header span {
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.agent-performance__benchmark-list header strong {
+    font-size: 1.1rem;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.agent-performance__benchmark-list p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #475569;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.agent-performance__benchmark-delta {
+    font-weight: 600;
+}
+
+.agent-performance__benchmark-delta--positive {
+    color: #047857;
+}
+
+.agent-performance__benchmark-delta--negative {
+    color: #b91c1c;
+}

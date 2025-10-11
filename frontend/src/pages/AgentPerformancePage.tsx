@@ -575,17 +575,17 @@ export default function AgentPerformancePage() {
       ? pipelineActual - pipelineBenchmarkValue
       : null
 
+  const benchmarksHasContent =
+    benchmarksLoading ||
+    benchmarksError ||
+    Boolean(conversionBenchmark || cycleBenchmark || pipelineBenchmark)
+
   const analyticsHasContent =
     Boolean(latestSnapshot) ||
     trendData.length > 0 ||
     analyticsLoading ||
     analyticsError ||
     benchmarksHasContent
-
-  const benchmarksHasContent =
-    benchmarksLoading ||
-    benchmarksError ||
-    Boolean(conversionBenchmark || cycleBenchmark || pipelineBenchmark)
 
   const benchmarkComparisons = useMemo(() => {
     if (!latestSnapshot) {
