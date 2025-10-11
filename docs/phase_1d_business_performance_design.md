@@ -93,7 +93,45 @@ Authentication/authorization:
 2. **Stage transitions & timeline (M2):** Stage event endpoints, audit logging, timeline API, Kanban drag/drop.
 3. **Commission ledger (M3):** Commission models/services APIs, audit integration, dispute handling UI.
 4. **Analytics & benchmarks (M4):** Snapshot job, performance API, dashboard charts, benchmark ingestion script + sample dataset.
-5. **Polish & docs (M5):** Update `feature_delivery_plan_v2.md`, add docs (`docs/agents/business_performance.md`), expand `TESTING_DOCUMENTATION_SUMMARY.md`.
+   5. **Polish & docs (M5):** Update `feature_delivery_plan_v2.md`, add docs (`docs/agents/business_performance.md`), expand `TESTING_DOCUMENTATION_SUMMARY.md`.
+
+### Milestone M4 design details
+
+**Snapshot goals**
+
+- Capture a daily roll-up of per-agent performance using the canonical metrics surfaced in the Agent Performance UI: open deal count, closed-won volume, weighted pipeline value (amount × confidence), average cycle duration, conversion rate, and ROI metadata (`roi_metrics` JSON for extensibility).
+- Compute snapshots via a scheduled async job (Prefect/management command) that iterates over active deals, reusing `AgentDealService.list_deals` and the commission ledger to include revenue-impact metrics (e.g., confirmed commission total).
+
+**Schema additions**
+
+- Extend `agent_performance_snapshots` with the following columns:
+  - `confirmed_commission_amount Numeric(16,2)`
+  - `disputed_commission_amount Numeric(16,2)`
+  - `snapshot_context JSONB` (storage for derived ratios, e.g., avg commission per won deal or pipeline coverage).
+- Add supporting index `idx_agent_performance_snapshots_agent_date (agent_id, as_of_date DESC)` for fast latest snapshot queries.
+- Create `performance_benchmarks` table (if not already present) seeded from static CSV import; columns include `metric_key`, `asset_type`, `deal_type`, `cohort`, `value_numeric`, `value_text`, `source`, `effective_date`.
+
+**Service/API outline**
+
+- New module `backend/app/services/deals/performance.py` with:
+  - `compute_agent_snapshot(session, agent_id, as_of_date) -> AgentPerformanceSnapshot`
+  - `generate_daily_snapshots(session, *, as_of_date=datetime.date)`, invoked by Prefect flow/CLI.
+  - Helper to merge commission data (confirmed/disputed) and timeline durations (average lead-to-close).
+- REST endpoints (FastAPI) under `/api/v1/deals/performance`:
+  - `GET /api/v1/deals/performance/summary?agent_id=…` returning latest snapshot via new schema `AgentPerformanceSnapshotResponse`.
+  - `GET /api/v1/deals/performance/benchmarks?metric_key=…,asset_type=…` returning filtered benchmark rows for charts.
+
+**Analytics flow**
+
+1. Daily job acquires active deal IDs, runs `compute_agent_snapshot`, persists to snapshot table (upsert on `(agent_id, as_of_date)`).
+2. Commission data piped through `AgentCommissionService.list_commissions` to aggregate confirmed/disputed totals and compute pay-out velocity metrics.
+3. Frontend dashboard (next milestone) reads `/summary` + `/benchmarks` to render trend lines (sparkline over previous 30 days), donut chart by stage, and benchmark comparisons.
+
+**Testing plan**
+
+- Unit tests for `compute_agent_snapshot` using fixture deals/commissions exercising various lifecycle combinations (open only, mixture of closed stages, disputed commissions).
+- API tests verifying `/performance/summary` returns latest snapshot, respects agent filtering, and merges ROI metrics from the legacy `roi` service when available.
+- Snapshot job integration test using in-memory SQLite to ensure idempotent upsert and accurate index usage.
 
 ## 6. Testing & Observability
 - **Backend tests:** Model integrity, service logic, API routers (FastAPI TestClient), Prefect flow unit tests guarded by feature flag.

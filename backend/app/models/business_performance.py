@@ -539,6 +539,83 @@ class AgentCommissionAdjustment(BaseModel):
     )
 
 
+class AgentPerformanceSnapshot(BaseModel):
+    """Daily snapshot of aggregated agent performance metrics."""
+
+    __tablename__ = "agent_performance_snapshots"
+
+    id: Mapped[str] = mapped_column(
+        UUID(), primary_key=True, default=lambda: str(uuid4())
+    )
+    agent_id: Mapped[str] = mapped_column(
+        UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    as_of_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    deals_open: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    deals_closed_won: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    deals_closed_lost: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    gross_pipeline_value: Mapped[float | None] = mapped_column(Numeric(18, 2))
+    weighted_pipeline_value: Mapped[float | None] = mapped_column(Numeric(18, 2))
+    confirmed_commission_amount: Mapped[float | None] = mapped_column(Numeric(18, 2))
+    disputed_commission_amount: Mapped[float | None] = mapped_column(Numeric(18, 2))
+    avg_cycle_days: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    conversion_rate: Mapped[float | None] = mapped_column(Numeric(6, 4))
+    roi_metrics: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
+    snapshot_context_json: Mapped[dict] = mapped_column(
+        "snapshot_context", JSONType, default=dict, nullable=False
+    )
+    snapshot_context = MetadataProxy()
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("agent_id", "as_of_date", name="uq_agent_snapshot_agent_date"),
+        Index("ix_agent_performance_snapshots_agent_date", "agent_id", "as_of_date"),
+    )
+
+
+class PerformanceBenchmark(BaseModel):
+    """Benchmark values for agent performance comparison."""
+
+    __tablename__ = "performance_benchmarks"
+
+    id: Mapped[str] = mapped_column(
+        UUID(), primary_key=True, default=lambda: str(uuid4())
+    )
+    metric_key: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    asset_type: Mapped[str] = mapped_column(String(50), nullable=True, index=True)
+    deal_type: Mapped[str] = mapped_column(String(50), nullable=True, index=True)
+    cohort: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    value_numeric: Mapped[float | None] = mapped_column(Numeric(18, 4))
+    value_text: Mapped[str | None] = mapped_column(String(255))
+    source: Mapped[str | None] = mapped_column(String(255))
+    effective_date: Mapped[date | None] = mapped_column(Date, index=True)
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
+    metadata = MetadataProxy()
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_performance_benchmarks_metric_asset_deal",
+            "metric_key",
+            "asset_type",
+            "deal_type",
+            "cohort",
+        ),
+    )
+
+
 __all__ = [
     "AgentDeal",
     "AgentDealStageEvent",
@@ -555,4 +632,6 @@ __all__ = [
     "CommissionAdjustmentType",
     "AgentCommissionRecord",
     "AgentCommissionAdjustment",
+    "AgentPerformanceSnapshot",
+    "PerformanceBenchmark",
 ]
