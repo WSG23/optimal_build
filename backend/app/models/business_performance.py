@@ -554,12 +554,12 @@ class AgentPerformanceSnapshot(BaseModel):
     deals_open: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     deals_closed_won: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     deals_closed_lost: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    gross_pipeline_value: Mapped[float | None] = mapped_column(Numeric(18, 2))
-    weighted_pipeline_value: Mapped[float | None] = mapped_column(Numeric(18, 2))
-    confirmed_commission_amount: Mapped[float | None] = mapped_column(Numeric(18, 2))
-    disputed_commission_amount: Mapped[float | None] = mapped_column(Numeric(18, 2))
-    avg_cycle_days: Mapped[float | None] = mapped_column(Numeric(10, 2))
-    conversion_rate: Mapped[float | None] = mapped_column(Numeric(6, 4))
+    gross_pipeline_value: Mapped[Optional[float]] = mapped_column(Numeric(18, 2))
+    weighted_pipeline_value: Mapped[Optional[float]] = mapped_column(Numeric(18, 2))
+    confirmed_commission_amount: Mapped[Optional[float]] = mapped_column(Numeric(18, 2))
+    disputed_commission_amount: Mapped[Optional[float]] = mapped_column(Numeric(18, 2))
+    avg_cycle_days: Mapped[Optional[float]] = mapped_column(Numeric(10, 2))
+    conversion_rate: Mapped[Optional[float]] = mapped_column(Numeric(6, 4))
     roi_metrics: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
     snapshot_context_json: Mapped[dict] = mapped_column(
         "snapshot_context", JSONType, default=dict, nullable=False
@@ -590,10 +590,10 @@ class PerformanceBenchmark(BaseModel):
     asset_type: Mapped[str] = mapped_column(String(50), nullable=True, index=True)
     deal_type: Mapped[str] = mapped_column(String(50), nullable=True, index=True)
     cohort: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    value_numeric: Mapped[float | None] = mapped_column(Numeric(18, 4))
-    value_text: Mapped[str | None] = mapped_column(String(255))
-    source: Mapped[str | None] = mapped_column(String(255))
-    effective_date: Mapped[date | None] = mapped_column(Date, index=True)
+    value_numeric: Mapped[Optional[float]] = mapped_column(Numeric(18, 4))
+    value_text: Mapped[Optional[str]] = mapped_column(String(255))
+    source: Mapped[Optional[str]] = mapped_column(String(255))
+    effective_date: Mapped[Optional[date]] = mapped_column(Date, index=True)
     metadata_json: Mapped[dict] = mapped_column(
         "metadata", JSONType, default=dict, nullable=False
     )
