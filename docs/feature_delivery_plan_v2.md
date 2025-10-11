@@ -182,7 +182,7 @@
 ### Phase 1D: Business Performance Management ⚠️ IN PROGRESS
 **Status:** 45% - Deal pipeline + commission ledger API (October 2025)
 
-**Delivered (Milestone M1/M2 foundations):**
+**Delivered (Milestone M1/M2/M3 foundations):**
 - ✅ Database schema for agent deals, stage history, contacts, and documents
 - ✅ Alembic migration `20250220_000011_add_business_performance_tables.py`
 - ✅ SQLAlchemy models in `backend/app/models/business_performance.py`
@@ -193,8 +193,10 @@
 - ✅ Timeline and API responses surface audit metadata (hash, signature, context) for each transition
 - ✅ Commission ledger schema, models, and migration (`agent_commission_records`, `agent_commission_adjustments`)
 - ✅ Commission service/API (`/commissions/...`) with audit-tracked status changes and adjustments
-- ✅ Backend service tests passing (`test_agent_deal_pipeline.py`, `test_agent_commissions.py`)
-- ⚠️ API smoke test skipped on Python 3.9 (runs on Python ≥3.10 / full FastAPI install)
+- ✅ Agent performance snapshot & benchmark schema, migration `20250220_000013_add_performance_snapshots.py`
+- ✅ Analytics service (`AgentPerformanceService`) with batch snapshot generation and benchmark lookup APIs (`/api/v1/performance/...`)
+- ✅ Backend service tests passing (`test_agent_deal_pipeline.py`, `test_agent_commissions.py`, `test_agent_performance.py`)
+- ⚠️ API smoke tests for deals/performance skipped on Python 3.9 sandbox (run on Python ≥3.10 / full FastAPI install)
 
 **Files Delivered:**
 - `backend/app/api/v1/deals.py` (REST endpoints)

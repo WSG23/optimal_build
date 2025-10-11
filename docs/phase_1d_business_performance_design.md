@@ -88,6 +88,10 @@ Authentication/authorization:
 - **State management:** use React Query hooks hitting new API layer functions (`frontend/src/api/deals.ts`). Align with patterns used in listing integrations.
 - **Testing:** Add component tests for pipeline board interactions and API hook mocks; snapshot tests for analytics charts referencing known data.
 
+**Backend test coverage:**
+- `backend/tests/test_services/test_agent_performance.py` covers `AgentPerformanceService` aggregation (deal/commission scenarios, daily snapshot generation).
+- `backend/tests/test_api/test_performance.py` validates `/api/v1/performance` endpoints (snapshots + benchmarks) when executed on Python ≥ 3.10 / real FastAPI.
+
 ## 5. Implementation Phasing
 1. **Foundation (Milestone M1):** Migrations, models, basic CRUD service, API list/create/update, Kanban read-only view. Tests for models and pipeline service.
 2. **Stage transitions & timeline (M2):** Stage event endpoints, audit logging, timeline API, Kanban drag/drop.
