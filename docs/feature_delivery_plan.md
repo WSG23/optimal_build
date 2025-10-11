@@ -84,6 +84,10 @@ sets of features, reusing the same data foundations:
 - Update contributor docs and user-facing guides alongside the new features.
   - Agent quickstart for marketing packs available in
     `docs/agents/marketing_pack_quickstart.md`.
+  - Developer guide for capture + advisory tooling in
+    `docs/frontend/agents_site_capture.md`.
+  - Mock listing integration workflow (Phase 1C scaffolding) documented in
+    `docs/frontend/listing_integrations_mock.md`.
 
 ## 9. Launch Preparation
 

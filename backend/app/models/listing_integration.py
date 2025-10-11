@@ -21,7 +21,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
 
-from app.models.base import UUID, BaseModel
+from app.models.base import UUID, BaseModel, MetadataProxy
 
 
 def _enum_values(enum_cls: type[Enum]) -> list[str]:
@@ -80,6 +80,7 @@ class ListingIntegrationAccount(BaseModel):
     refresh_token: Mapped[Optional[str]] = mapped_column(Text)
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    metadata = MetadataProxy()
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

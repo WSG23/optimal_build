@@ -160,11 +160,21 @@ def upgrade() -> None:
         "listing_publications",
         ["status"],
     )
+    op.create_index(
+        "ix_listing_publications_account_id",
+        "listing_publications",
+        ["account_id"],
+    )
 
 
 def downgrade() -> None:
     op.drop_index(
         "ix_listing_publications_status",
+        table_name="listing_publications",
+        if_exists=True,
+    )
+    op.drop_index(
+        "ix_listing_publications_account_id",
         table_name="listing_publications",
         if_exists=True,
     )

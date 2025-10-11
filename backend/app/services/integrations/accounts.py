@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Iterable, Optional
 from uuid import UUID
 
@@ -18,6 +18,8 @@ from app.models.listing_integration import (
 
 class ListingIntegrationAccountService:
     """Persist and retrieve external listing integration accounts."""
+
+    refresh_threshold: timedelta = timedelta(minutes=5)
 
     async def list_accounts(
         self, *, user_id: UUID, session: AsyncSession
@@ -70,7 +72,7 @@ class ListingIntegrationAccountService:
         account.refresh_token = refresh_token
         account.expires_at = expires_at
         if metadata is not None:
-            account.metadata_json = metadata
+            account.metadata = metadata
         account.status = ListingAccountStatus.CONNECTED
         await session.commit()
         await session.refresh(account)
@@ -100,6 +102,42 @@ class ListingIntegrationAccountService:
         await session.commit()
         await session.refresh(account)
         return account
+
+    def is_token_valid(
+        self,
+        account: ListingIntegrationAccount,
+        *,
+        now: datetime | None = None,
+    ) -> bool:
+        """Return ``True`` when the stored token is present and not expired."""
+
+        if not account.access_token:
+            return False
+        if account.expires_at is None:
+            return True
+        now = now or datetime.now(timezone.utc)
+        expires_at = account.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        return expires_at > now
+
+    def needs_refresh(
+        self,
+        account: ListingIntegrationAccount,
+        *,
+        now: datetime | None = None,
+    ) -> bool:
+        """Return ``True`` when the token is close to expiring."""
+
+        if account.refresh_token is None:
+            return False
+        if account.expires_at is None:
+            return False
+        now = now or datetime.now(timezone.utc)
+        expires_at = account.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        return expires_at <= now + self.refresh_threshold
 
     async def ensure_account_for_providers(
         self,

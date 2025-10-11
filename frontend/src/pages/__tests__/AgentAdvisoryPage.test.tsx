@@ -14,6 +14,14 @@ import React from 'react'
 import { TranslationProvider } from '../../i18n'
 import AgentAdvisoryPage from '../AgentAdvisoryPage'
 
+/**
+ * KNOWN ISSUE: This test may fail with async timing issues in JSDOM.
+ * See: ../../TESTING_KNOWN_ISSUES.md - "Frontend: React Testing Library Async Timing"
+ *
+ * If this test fails but the HTML dump shows content is rendered correctly,
+ * the feature is working - it's a test harness issue, not an application bug.
+ */
+
 const summaryPayload = {
   asset_mix: {
     property_id: 'test-property',

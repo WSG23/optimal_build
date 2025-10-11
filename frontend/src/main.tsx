@@ -13,6 +13,7 @@ import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligenc
 import '@ob/tokens.css'
 import './index.css'
 import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
+import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
   {
     path: '/agents/advisory',
     element: <AgentAdvisoryPage />,
+  },
+  {
+    path: '/agents/integrations',
+    element: <AgentIntegrationsPage />,
   },
   {
     path: '/visualizations/intelligence',
