@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, describe, it } from 'node:test'
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { JSDOM } from 'jsdom'
 import React from 'react'
 
@@ -48,12 +48,24 @@ describe('AgentIntegrationsPage', () => {
       if (url.includes('/accounts')) {
         return jsonResponse([])
       }
-      if (url.includes('/connect')) {
+      if (url.includes('/propertyguru/connect')) {
         expectJsonBody(init)
         return jsonResponse({
           id: 'account-1',
           user_id: 'user-1',
           provider: 'propertyguru',
+          status: 'connected',
+          metadata: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+      }
+      if (url.includes('/edgeprop/connect')) {
+        expectJsonBody(init)
+        return jsonResponse({
+          id: 'account-2',
+          user_id: 'user-1',
+          provider: 'edgeprop',
           status: 'connected',
           metadata: {},
           created_at: new Date().toISOString(),
@@ -97,16 +109,21 @@ describe('AgentIntegrationsPage', () => {
 
     await screen.findByRole('heading', { name: /Linked accounts/i }, { timeout: 2000 })
 
-    // Submit the connect form
-    fireEvent.submit(screen.getByText(/Link account/i).closest('form') as HTMLFormElement)
-    await screen.findByText(/Mock PropertyGuru account linked/i, undefined, {
+    const propertyGuruSection = screen.getByRole('heading', {
+      name: /PropertyGuru/i,
+    }).parentElement as HTMLElement
+
+    fireEvent.submit(propertyGuruSection.querySelector('form') as HTMLFormElement)
+    await screen.findByText(/propertyguru account linked/i, undefined, {
       timeout: 2000,
     })
 
-    // Submit the publish form
-    const publishForm = screen.getByText(/Publish mock listing/i).closest('form')
+    const publishForms = propertyGuruSection.querySelectorAll('form')
+    const publishForm = publishForms[publishForms.length - 1]
     assert.ok(publishForm)
-    const propertyInput = screen.getByPlaceholderText(/e.g. 4271b4aa/i)
+    const propertyInput = within(publishForm as HTMLElement).getByPlaceholderText(
+      /e.g. 4271b4aa/i,
+    )
     fireEvent.change(propertyInput, { target: { value: 'property-id' } })
     fireEvent.submit(publishForm as HTMLFormElement)
     await screen.findByText(/Published mock listing/i, undefined, { timeout: 2000 })
