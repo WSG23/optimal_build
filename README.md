@@ -1,5 +1,7 @@
 # Regstack Jurisdiction Plug-in Architecture
 
+> **🤖 AI AGENTS (Codex, Claude, etc.):** New chat window? Read [START_HERE.md](START_HERE.md) first! Then check [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) for current status.
+
 Regstack provides a jurisdiction-agnostic pipeline for normalising building regulations. This
 implementation introduces a plug-in registry, canonical schema, Alembic migrations, and a CLI for
 fetching and parsing regulations into PostgreSQL (or SQLite for tests).
