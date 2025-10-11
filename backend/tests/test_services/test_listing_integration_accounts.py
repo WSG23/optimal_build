@@ -44,6 +44,8 @@ async def test_upsert_and_list_accounts(async_session_factory):
         assert accounts[0].provider == ListingProvider.PROPERTYGURU
         assert service.is_token_valid(accounts[0])
         assert not service.needs_refresh(accounts[0])
+        assert service.access_token(accounts[0]) == "token"
+        assert service.refresh_token(accounts[0]) == "refresh"
 
 
 @pytest.mark.asyncio

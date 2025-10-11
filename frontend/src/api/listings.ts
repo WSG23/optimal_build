@@ -46,9 +46,9 @@ export async function fetchListingAccounts(signal?: AbortSignal) {
   return (await response.json()) as ListingIntegrationAccount[]
 }
 
-export async function connectMockPropertyGuru(code: string) {
+export async function connectMockAccount(provider: string, code: string) {
   const response = await fetch(
-    buildUrl('/api/v1/integrations/listings/propertyguru/connect'),
+    buildUrl(`/api/v1/integrations/listings/${provider}/connect`),
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -57,14 +57,17 @@ export async function connectMockPropertyGuru(code: string) {
   )
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error(detail || 'Failed to connect PropertyGuru account')
+    throw new Error(detail || `Failed to connect ${provider} account`)
   }
   return (await response.json()) as ListingIntegrationAccount
 }
 
-export async function publishMockPropertyGuru(payload: Record<string, unknown>) {
+export async function publishMockListing(
+  provider: string,
+  payload: Record<string, unknown>,
+) {
   const response = await fetch(
-    buildUrl('/api/v1/integrations/listings/propertyguru/publish'),
+    buildUrl(`/api/v1/integrations/listings/${provider}/publish`),
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -73,19 +76,19 @@ export async function publishMockPropertyGuru(payload: Record<string, unknown>) 
   )
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error(detail || 'Failed to publish listing')
+    throw new Error(detail || `Failed to publish ${provider} listing`)
   }
   return (await response.json()) as PublishResult
 }
 
-export async function disconnectMockPropertyGuru() {
+export async function disconnectMockAccount(provider: string) {
   const response = await fetch(
-    buildUrl('/api/v1/integrations/listings/propertyguru/disconnect'),
+    buildUrl(`/api/v1/integrations/listings/${provider}/disconnect`),
     { method: 'POST' },
   )
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error(detail || 'Failed to disconnect PropertyGuru account')
+    throw new Error(detail || `Failed to disconnect ${provider} account`)
   }
   return (await response.json()) as { status: string; provider: string }
 }

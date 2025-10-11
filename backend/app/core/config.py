@@ -164,6 +164,7 @@ class Settings:
     BUILDABLE_EFFICIENCY_RATIO: float
     BUILDABLE_USE_POSTGIS: bool
     ALLOW_VIEWER_MUTATIONS: bool
+    LISTING_TOKEN_SECRET: str
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -237,6 +238,14 @@ class Settings:
         self.BUILDABLE_USE_POSTGIS = _load_bool("BUILDABLE_USE_POSTGIS", False)
 
         self.ALLOW_VIEWER_MUTATIONS = _load_bool("ALLOW_VIEWER_MUTATIONS", False)
+
+        self.LISTING_TOKEN_SECRET = self._load_listing_token_secret()
+
+    def _load_listing_token_secret(self) -> str:
+        raw = os.getenv("LISTING_TOKEN_SECRET")
+        if raw and raw.strip():
+            return raw.strip()
+        return self.SECRET_KEY
 
 
 settings = Settings()

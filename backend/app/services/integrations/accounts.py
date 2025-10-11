@@ -9,17 +9,22 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.listing_integration import (
     ListingAccountStatus,
     ListingIntegrationAccount,
     ListingProvider,
 )
+from app.utils.encryption import TokenCipher
 
 
 class ListingIntegrationAccountService:
     """Persist and retrieve external listing integration accounts."""
 
     refresh_threshold: timedelta = timedelta(minutes=5)
+
+    def __init__(self) -> None:
+        self._cipher = TokenCipher(settings.LISTING_TOKEN_SECRET)
 
     async def list_accounts(
         self, *, user_id: UUID, session: AsyncSession
@@ -68,8 +73,8 @@ class ListingIntegrationAccountService:
             )
             session.add(account)
 
-        account.access_token = access_token
-        account.refresh_token = refresh_token
+        account.access_token = self._cipher.encrypt(access_token)
+        account.refresh_token = self._cipher.encrypt(refresh_token)
         account.expires_at = expires_at
         if metadata is not None:
             account.metadata = metadata
@@ -138,6 +143,12 @@ class ListingIntegrationAccountService:
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         return expires_at <= now + self.refresh_threshold
+
+    def access_token(self, account: ListingIntegrationAccount) -> Optional[str]:
+        return self._cipher.decrypt(account.access_token)
+
+    def refresh_token(self, account: ListingIntegrationAccount) -> Optional[str]:
+        return self._cipher.decrypt(account.refresh_token)
 
     async def ensure_account_for_providers(
         self,

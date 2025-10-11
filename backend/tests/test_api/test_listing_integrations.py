@@ -11,8 +11,10 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+@pytest.mark.parametrize("provider", ["propertyguru", "edgeprop"])
 @pytest.mark.asyncio
-async def test_propertyguru_mock_flow(
+async def test_mock_flow(
+    provider: str,
     app_client: AsyncClient,
     async_session_factory,
     market_demo_data,
@@ -44,14 +46,14 @@ async def test_propertyguru_mock_flow(
     }
 
     connect_response = await app_client.post(
-        "/api/v1/integrations/listings/propertyguru/connect",
+        f"/api/v1/integrations/listings/{provider}/connect",
         json={"code": "mock-code", "redirect_uri": "http://localhost/callback"},
         headers=headers,
     )
     assert connect_response.status_code == 200, connect_response.text
 
     publish_response = await app_client.post(
-        "/api/v1/integrations/listings/propertyguru/publish",
+        f"/api/v1/integrations/listings/{provider}/publish",
         json={
             "property_id": str(property_id),
             "external_id": "mock-listing-1",
@@ -70,7 +72,7 @@ async def test_propertyguru_mock_flow(
     assert accounts_response.status_code == 200
     accounts = accounts_response.json()
     assert len(accounts) == 1
-    assert accounts[0]["provider"] == "propertyguru"
+    assert accounts[0]["provider"] == provider
 
     async with async_session_factory() as session:
         await session.execute(
@@ -82,7 +84,7 @@ async def test_propertyguru_mock_flow(
         await session.commit()
 
     expired_response = await app_client.post(
-        "/api/v1/integrations/listings/propertyguru/publish",
+        f"/api/v1/integrations/listings/{provider}/publish",
         json={
             "property_id": str(property_id),
             "external_id": "mock-listing-2",
@@ -94,11 +96,13 @@ async def test_propertyguru_mock_flow(
     assert "expired" in expired_response.json()["detail"].lower()
 
     disconnect_response = await app_client.post(
-        "/api/v1/integrations/listings/propertyguru/disconnect",
+        f"/api/v1/integrations/listings/{provider}/disconnect",
         headers=headers,
     )
     assert disconnect_response.status_code == 200
-    assert disconnect_response.json()["status"] == "disconnected"
+    body = disconnect_response.json()
+    assert body["status"] == "disconnected"
+    assert body["provider"] == provider
 
 
 async def _fetch_demo_property_id(session: AsyncSession) -> str:
