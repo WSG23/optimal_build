@@ -28,6 +28,8 @@ This prevents you from:
 - ❌ Trying to fix documented limitations
 - ❌ Wasting time on non-problems
 
+**⚠️ IMPORTANT:** When you fix a known issue or discover a new test limitation, you MUST update this file. See step 7b below for the workflow.
+
 ### Step 3: Understand the Codebase (5 min)
 → Read [FEATURES.md](../FEATURES.md) (just scan headers)
 → Read [CODING_RULES.md](../CODING_RULES.md) (reference while coding)
@@ -162,6 +164,33 @@ Manual UI testing:
 - Test results inform commit message
 - Prevents shipping broken code
 - Gives user confidence in the implementation
+
+---
+
+**7b. Update TESTING_KNOWN_ISSUES.md if needed** (CRITICAL)
+
+When you encounter test issues, you MUST check and update TESTING_KNOWN_ISSUES.md:
+
+✅ **If you FIX a known issue:**
+- Move it from "Active Issues" to "Resolved Issues"
+- Add resolution date, who fixed it, and how
+- Update the "Files Changed" section
+- Example: "Backend: API Tests Skipped on Python 3.9 - RESOLVED"
+
+✅ **If you DISCOVER a test harness limitation (not a real bug):**
+- Check if it's already in "Active Issues"
+- If NEW, propose adding it to the user
+- Include: symptom, root cause, impact, workaround
+- Example: "Frontend tests timeout but app works correctly"
+
+✅ **If tests fail due to REAL bugs:**
+- Do NOT add to TESTING_KNOWN_ISSUES.md
+- Fix the bug instead
+
+**Why this matters:**
+- Prevents future AI agents from wasting time on known issues
+- Documents test infrastructure limitations vs real bugs
+- Builds institutional knowledge across sessions
 
 ---
 
