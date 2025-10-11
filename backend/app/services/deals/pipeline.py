@@ -24,6 +24,8 @@ from app.models.business_performance import (
     PipelineStage,
 )
 
+from .utils import audit_project_key
+
 
 class AgentDealService:
     """Create, update and inspect agent deal pipeline records."""
@@ -325,7 +327,7 @@ class AgentDealService:
     ) -> None:
         """Append a stage transition to the audit ledger."""
 
-        project_key = self._audit_project_key(deal)
+        project_key = audit_project_key(deal)
         if project_key is None:
             return
 
@@ -355,24 +357,6 @@ class AgentDealService:
         event_metadata = dict(event.metadata or {})
         event_metadata["audit_log_id"] = str(log_entry.id)
         event.metadata = event_metadata
-
-    @staticmethod
-    def _audit_project_key(deal: AgentDeal) -> int | None:
-        """Derive a deterministic integer key for audit ledger chaining."""
-
-        candidate_sources = [deal.project_id, deal.property_id, deal.id]
-        for source in candidate_sources:
-            if not source:
-                continue
-            try:
-                namespace = UUID(str(source))
-            except (TypeError, ValueError):
-                continue
-            # Map UUID to a stable positive 31-bit integer.
-            value = namespace.int & 0x7FFFFFFF
-            if value > 0:
-                return value
-        return None
 
     async def add_contact(
         self,

@@ -10,6 +10,7 @@ from app.models.business_performance import DealAssetType, DealType, PipelineSta
 from app.models.users import User
 from app.schemas.deals import DealWithTimelineSchema
 from app.services.deals import AgentDealService
+from app.services.deals.utils import audit_project_key
 from sqlalchemy import select
 
 
@@ -65,7 +66,7 @@ async def test_create_deal_seeds_stage_event(async_session_factory):
         assert str(event.changed_by) == str(agent_id)
         assert event.metadata.get("audit_log_id") is not None
 
-        project_key = service._audit_project_key(deal)  # type: ignore[attr-defined]
+        project_key = audit_project_key(deal)
         result = await session.execute(
             select(AuditLog).where(AuditLog.project_id == project_key)
         )
@@ -118,7 +119,7 @@ async def test_change_stage_updates_status(async_session_factory):
         assert timeline[-1].note == "Signed SPA"
         assert timeline[-1].metadata.get("audit_log_id") is not None
 
-        project_key = service._audit_project_key(deal)  # type: ignore[attr-defined]
+        project_key = audit_project_key(deal)
         result = await session.execute(
             select(AuditLog)
             .where(AuditLog.project_id == project_key)

@@ -22,6 +22,8 @@ from app.models.business_performance import (
     CommissionType,
 )
 
+from .utils import audit_project_key
+
 
 class AgentCommissionService:
     """Create and manage commission ledger entries for agent deals."""
@@ -207,7 +209,7 @@ class AgentCommissionService:
         actor_id: UUID | None,
         extra: Optional[dict] = None,
     ) -> Optional[AuditLog]:
-        project_key = self._audit_project_key(deal)
+        project_key = audit_project_key(deal)
         if project_key is None:
             return None
 
@@ -230,17 +232,3 @@ class AgentCommissionService:
             event_type=event_type,
             context=context,
         )
-
-    @staticmethod
-    def _audit_project_key(deal: AgentDeal) -> int | None:
-        candidate_sources = [deal.project_id, deal.property_id, deal.id]
-        for source in candidate_sources:
-            if not source:
-                continue
-            try:
-                key = UUID(str(source)).int & 0x7FFFFFFF
-            except (TypeError, ValueError):
-                continue
-            if key > 0:
-                return key
-        return None
