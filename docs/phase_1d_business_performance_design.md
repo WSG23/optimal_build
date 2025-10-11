@@ -70,9 +70,9 @@ Authentication/authorization:
 - Reuse existing `require_agent` / `require_viewer` dependencies (`app/api/deps.py`). Stage transitions and commission operations require write permissions.
 
 ### 3.3 Background jobs
-- Nightly `compute_agent_performance_snapshots` (Prefect flow) to roll up per-agent metrics (conversion rate by property type, weighted pipeline, average cycle).
-- Optional hourly job to recompute snapshots for active deals (Kanban performance numbers).
-- Benchmark ingest job triggered manually or via scheduled fetch if remote source available.
+- Nightly `agent_performance_snapshots_flow` (Prefect) or queue job `performance.generate_snapshots` to roll up per-agent metrics (conversion rate by property type, weighted pipeline, average cycle).
+- Optional hourly trigger to recompute snapshots for active deals (Kanban performance numbers) using the same flow/job.
+- Benchmark ingest handled via `seed_performance_benchmarks_flow` / `performance.seed_benchmarks` job when remote datasets refresh.
 
 ### 3.4 Integration with Audit Log
 - Every stage change writes an `AuditLog` row (`event_type="deal_stage_transition"`) with deterministic hash linking to previous entry for that project/deal; context includes IDs, stage, user.

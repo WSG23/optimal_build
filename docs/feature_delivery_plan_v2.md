@@ -195,6 +195,7 @@
 - ✅ Commission service/API (`/commissions/...`) with audit-tracked status changes and adjustments
 - ✅ Agent performance snapshot & benchmark schema, migration `20250220_000013_add_performance_snapshots.py`
 - ✅ Analytics service (`AgentPerformanceService`) with batch snapshot generation and benchmark lookup APIs (`/api/v1/performance/...`)
+- ✅ Prefect flows (`agent_performance_snapshots_flow`, `seed_performance_benchmarks_flow`) and queue jobs (`performance.generate_snapshots`, `performance.seed_benchmarks`) for automation
 - ✅ Backend service tests passing (`test_agent_deal_pipeline.py`, `test_agent_commissions.py`, `test_agent_performance.py`)
 - ⚠️ API smoke tests for deals/performance skipped on Python 3.9 sandbox (run on Python ≥3.10 / full FastAPI install)
 
@@ -207,7 +208,7 @@
 - `backend/tests/test_services/test_agent_commissions.py` (✅ passing)
 - `backend/tests/test_api/test_deals.py` (⚠️ skipped Python 3.9)
 
-**Test Status:** Backend service layer fully tested and passing (`python3 -m pytest backend/tests/test_services/test_agent_commissions.py backend/tests/test_services/test_agent_deal_pipeline.py`). API smoke endpoints execute on Python ≥3.10 (`backend/tests/test_api/test_deals.py`).
+**Test Status:** Backend service layer fully tested and passing (`python3 -m pytest backend/tests/test_services/test_agent_performance.py backend/tests/test_services/test_agent_commissions.py backend/tests/test_services/test_agent_deal_pipeline.py`). API smoke endpoints (deals + performance) execute on Python ≥3.10 (`backend/tests/test_api/test_deals.py`, `backend/tests/test_api/test_performance.py`).
 
 **Requirements (from FEATURES.md lines 63-68):**
 - Cross-Asset Deal Pipeline tracker
