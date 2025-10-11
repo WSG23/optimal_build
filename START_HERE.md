@@ -2,11 +2,12 @@
 
 **New to this project? Read these files IN ORDER:**
 
-1. **FEATURES.md** - What we're building (full feature specification)
-2. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
-3. **docs/NEXT_STEPS_FOR_CODEX.md** - How to choose your next task (decision tree)
-4. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
-5. **CLAUDE.md** - Coding guidelines and mandatory workflows
+1. **UI_STATUS.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
+2. **FEATURES.md** - What we're building (full feature specification)
+3. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
+4. **docs/NEXT_STEPS_FOR_CODEX.md** - How to choose your next task (decision tree)
+5. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
+6. **CLAUDE.md** - Coding guidelines and mandatory workflows
 
 ---
 

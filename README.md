@@ -1,6 +1,9 @@
 # Regstack Jurisdiction Plug-in Architecture
 
-> **🤖 AI AGENTS (Codex, Claude, etc.):** New chat window? Read [START_HERE.md](START_HERE.md) first! Then check [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) for current status.
+> **🤖 AI AGENTS (Codex, Claude, etc.):** New chat window?
+> 1. **READ [UI_STATUS.md](UI_STATUS.md) FIRST** ⚠️ (prevents wasting time on test UI)
+> 2. Then read [START_HERE.md](START_HERE.md)
+> 3. Check [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) for current status
 
 Regstack provides a jurisdiction-agnostic pipeline for normalising building regulations. This
 implementation introduces a plug-in registry, canonical schema, Alembic migrations, and a CLI for

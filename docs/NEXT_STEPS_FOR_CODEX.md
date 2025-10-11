@@ -12,6 +12,19 @@
 
 **New to this project? Follow these steps:**
 
+### Step 0: Understand Frontend UI Status (3 min) 🚨 CRITICAL
+→ Read [UI_STATUS.md](../UI_STATUS.md) FIRST
+
+**This prevents massive waste of time:**
+- ❌ Polishing test UI that will be replaced
+- ❌ Treating test harness as production code
+- ❌ Adding offline fallback / professional error handling to temporary scaffolding
+- ❌ Applying B2B professional tool standards to development tools
+
+**CRITICAL FACT:** All frontend UI was created by AI agents as test harnesses. Product owner was NOT involved in UI design. DO NOT polish it.
+
+**Before touching ANY frontend file, read UI_STATUS.md.**
+
 ### Step 1: Check Current Status (5 min)
 → Read [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md), beginning with the "📊 Current Progress Snapshot" section
 
