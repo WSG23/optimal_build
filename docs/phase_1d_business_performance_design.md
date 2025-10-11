@@ -2,6 +2,8 @@
 
 _Last updated: 2025-10-11 (Codex)_
 
+> **Implementation snapshot (2025-10-11):** Milestone M1 delivered – database schema, models, service layer, and deal CRUD/stage APIs are now in place with backend tests validating the workflow. Stage transitions emit `deal_stage_transition` audit ledger entries (deterministic UUID→int mapping) and timeline responses now include `duration_seconds`. Remaining milestones (commissions, analytics, benchmarks) are pending.
+
 ## 1. Objectives & Scope
 - Deliver the four Phase 1D deliverables listed in `FEATURES.md`: Cross-Asset Deal Pipeline, ROI Analytics dashboard, Commission Protection system, and Performance Benchmarking.
 - Provide a cohesive foundation that reuses existing Phase 1A–1C data (properties, projects, advisory outputs, listings) while remaining functional even if some upstream data is missing.

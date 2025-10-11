@@ -49,4 +49,3 @@ This guide walks agents through the end-to-end workflow from GPS capture to gene
 - Record feedback in the [live walkthrough plan](../validation/live_walkthrough_plan.md).
 - File actionable issues in the tracker (labels: `agent-validation`, `marketing-pack`).
 - Update go/no-go status before proceeding to developer tooling workstreams.
-

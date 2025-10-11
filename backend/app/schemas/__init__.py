@@ -2,6 +2,14 @@
 
 from .compliance import ComplianceCheckRequest, ComplianceCheckResponse  # noqa: F401
 from .costs import CostIndex  # noqa: F401
+from .deals import (  # noqa: F401
+    DealCreate,
+    DealSchema,
+    DealStageChangeRequest,
+    DealStageEventSchema,
+    DealUpdate,
+    DealWithTimelineSchema,
+)
 from .entitlements import (  # noqa: F401
     EntApprovalTypeCreate,
     EntApprovalTypeSchema,
@@ -70,6 +78,12 @@ __all__ = [
     "CostEscalationInput",
     "CostIndexProvenance",
     "CostIndexSnapshot",
+    "DealCreate",
+    "DealSchema",
+    "DealStageChangeRequest",
+    "DealStageEventSchema",
+    "DealUpdate",
+    "DealWithTimelineSchema",
     "DetectedFloor",
     "DscrEntrySchema",
     "DscrInputs",

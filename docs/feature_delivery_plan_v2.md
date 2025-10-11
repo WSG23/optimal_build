@@ -45,11 +45,15 @@
 - Token encryption system - 100%
 
 ### ⏸️ What's In Progress:
+
+**Phase 1D: Business Performance Management** - 30%
+- Deal Pipeline API complete ✅ (service layer + REST endpoints)
+- Remaining: ROI Analytics, Commission Protection, Performance Benchmarking
+
+**Other:**
 - Agent Validation (waiting for real user sessions)
 
 ### ❌ What's Not Started:
-
-**Phase 1D:** Business Performance Management (next priority)
 
 **Phase 2+:** Developer Tools, Architect Tools, Engineer Tools, Platform Integration
 
@@ -175,8 +179,28 @@
 
 ---
 
-### Phase 1D: Business Performance Management ❌ NOT STARTED
-**Status:** 0% - Depends on 1B and 1C data
+### Phase 1D: Business Performance Management ⚠️ IN PROGRESS
+**Status:** 35% - Deal pipeline API + audit logging (October 2025)
+
+**Delivered (Milestone M1 - Deal Pipeline):**
+- ✅ Database schema for agent deals, stage history, contacts, and documents
+- ✅ Alembic migration `20250220_000011_add_business_performance_tables.py`
+- ✅ SQLAlchemy models in `backend/app/models/business_performance.py`
+- ✅ Service layer (`AgentDealService`) with full CRUD + stage transitions
+- ✅ REST API endpoints (`/api/v1/deals`) with auth integration
+- ✅ Stage transitions append audit ledger (`deal_stage_transition`) events with hashed chains
+- ✅ Timeline responses provide per-stage `duration_seconds`
+- ✅ Backend service tests passing (`test_agent_deal_pipeline.py`)
+- ⚠️ API smoke test skipped on Python 3.9 (will work on Python 3.10+ or real FastAPI)
+
+**Files Delivered:**
+- `backend/app/api/v1/deals.py` (REST endpoints)
+- `backend/app/services/deals/pipeline.py` (AgentDealService)
+- `backend/app/schemas/deals.py` (Pydantic schemas)
+- `backend/tests/test_services/test_agent_deal_pipeline.py` (✅ passing)
+- `backend/tests/test_api/test_deals.py` (⚠️ skipped Python 3.9)
+
+**Test Status:** Backend service layer fully tested and passing (`python3 -m pytest backend/tests/test_services/test_agent_deal_pipeline.py`)
 
 **Requirements (from FEATURES.md lines 63-68):**
 - Cross-Asset Deal Pipeline tracker

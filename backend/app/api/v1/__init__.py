@@ -13,8 +13,7 @@ class _RouterModule(Protocol):
 class Router(Protocol):
     """Subset of FastAPI's router interface used within the aggregator."""
 
-    def include_router(self, router: "Router") -> None:
-        ...
+    def include_router(self, router: "Router") -> None: ...
 
 
 TAGS_METADATA: Final[list[dict[str, str]]] = [
@@ -45,6 +44,13 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
         "name": "compliance",
         "description": "Compliance assessment endpoints for jurisdiction-specific checks.",
     },
+    {
+        "name": "Business Performance",
+        "description": (
+            "Agent business performance APIs covering pipeline management, "
+            "commission tracking, and analytics foundations."
+        ),
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -73,6 +79,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "singapore_property_api",  # Singapore property with BCA/URA compliance
     "market_intelligence",  # Market intelligence analytics API
     "agents",  # Commercial property advisor agent endpoints
+    "deals",  # Business performance pipeline endpoints
     "advanced_intelligence",  # Investigation analytics stubs
     "listings",
 )

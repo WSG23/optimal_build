@@ -2,12 +2,11 @@
 
 import os
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-
 from pydantic import BaseModel
 
 # Configuration - read SECRET_KEY from environment variable
@@ -93,8 +92,8 @@ async def get_current_user(
 
 
 async def get_optional_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(optional_security),
-) -> TokenData | None:
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+) -> Optional[TokenData]:
     """Return authenticated user if a bearer token is provided, otherwise ``None``."""
 
     if credentials is None:

@@ -26,6 +26,7 @@ Follow these guardrails when you take over the keyboard:
    - Be precise about file paths (use inline `path:line` references).
    - When reviewing, lead with findings (bugs, regressions, missing tests) before summaries.
    - Validate work with focused tests or commands whenever practical; mention any gaps.
+   - **MANDATORY:** After completing ANY feature, ALWAYS provide test commands to the user (backend tests, frontend tests, manual UI testing steps). See `docs/NEXT_STEPS_FOR_CODEX.md` section "MANDATORY TESTING CHECKLIST" for the template.
 
 5. **Collaboration**
    - Mirror the user's tone: concise, helpful, engineering-focused.

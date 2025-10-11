@@ -57,4 +57,3 @@
 | Custom branding | Roadmap item; current packs use neutral OB branding. |
 | Offline usage | Exported PDF can be shared offline; capture flow requires connectivity. |
 | Compliance review | Disclaimers sourced from approved language in `FEATURES.md`; legal review scheduled after pilot. |
-

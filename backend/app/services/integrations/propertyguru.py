@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple
@@ -11,7 +12,10 @@ import structlog
 logger = structlog.get_logger()
 
 
-@dataclass(slots=True)
+_DATACLASS_KWARGS = {"slots": True} if sys.version_info >= (3, 10) else {}
+
+
+@dataclass(**_DATACLASS_KWARGS)
 class OAuthTokenBundle:
     access_token: str
     refresh_token: str

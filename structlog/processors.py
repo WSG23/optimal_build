@@ -10,9 +10,9 @@ from typing import Any
 try:  # Python 3.11 provides datetime.UTC; older versions require timezone.utc
     from datetime import UTC, datetime  # type: ignore[attr-defined]
 except ImportError:  # pragma: no cover - fallback for Python < 3.11
-    from datetime import datetime
+    from datetime import datetime, timezone
 
-    UTC = UTC
+    UTC = timezone.utc
 
 __all__ = [
     "JSONRenderer",

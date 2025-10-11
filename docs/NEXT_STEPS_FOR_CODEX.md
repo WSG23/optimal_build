@@ -35,6 +35,12 @@ This prevents you from:
 ### Step 4: Choose Your Task (5 min)
 → Use the decision tree below
 
+### Step 5: After Implementation - ALWAYS Suggest Tests ⚠️
+→ When you complete ANY feature, you MUST provide test commands to the user
+→ See "MANDATORY TESTING CHECKLIST" section below (step 7)
+
+**Non-negotiable:** Every implementation ends with test suggestions, even if you can't run them yourself.
+
 ---
 
 ## 🌳 Decision Tree: What Should I Build?
@@ -117,23 +123,55 @@ This prevents you from:
 
 ### After Completing Work:
 
-**7. Update feature_delivery_plan_v2.md** (CRITICAL)
+**⚠️ MANDATORY TESTING CHECKLIST**
+
+**7. Run tests and provide user with test commands** (CRITICAL - DO NOT SKIP)
+
+When you complete ANY feature implementation, you MUST:
+
+✅ **a) Run backend tests locally (if you can):**
+```bash
+python -m pytest backend/tests/test_[your_feature].py -v
+```
+
+✅ **b) ALWAYS suggest test commands to the user:**
+```markdown
+"I've completed [feature name]. Please run these tests locally to verify:
+
+Backend tests:
+python -m pytest backend/tests/test_services/test_[feature].py -v
+python -m pytest backend/tests/test_api/test_[feature].py -v
+
+Frontend tests (if applicable):
+npm run lint
+NODE_ENV=test node --test --import tsx --import ./scripts/test-bootstrap.mjs frontend/src/pages/__tests__/[Feature]Page.test.tsx
+
+Manual UI testing:
+1. Start the server: make dev
+2. Navigate to: http://localhost:4400/#/[route]
+3. Test: [specific actions to verify]"
+```
+
+✅ **c) Document test results in your message:**
+- If tests pass: "✅ All tests passing"
+- If tests skip: "⚠️ Test skipped because [reason]"
+- If tests fail: "❌ Tests failing - needs debugging"
+
+**Why this matters:**
+- User needs to verify your work locally
+- Test results inform commit message
+- Prevents shipping broken code
+- Gives user confidence in the implementation
+
+---
+
+**8. Update feature_delivery_plan_v2.md** (CRITICAL)
 ```diff
 - ### Phase X: Feature Name ❌ NOT STARTED
 + ### Phase X: Feature Name ✅ COMPLETE
 + **Status:** 100% - Completed [Month] 2025
 + **Test Status:** [Backend passing / Frontend status]
 + **Files Delivered:** [list key files]
-```
-
-**8. Run tests and document results**
-```bash
-# Backend
-python -m pytest backend/tests/test_[your_feature].py -v
-
-# Frontend (if applicable)
-npm run lint
-NODE_ENV=test node --test ...
 ```
 
 **9. Commit with descriptive message**

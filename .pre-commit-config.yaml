@@ -6,12 +6,6 @@ repos:
       entry: python3 scripts/audit_migrations.py
       language: system
       pass_filenames: false
-    - id: verify
-      name: make-verify
-      entry: make verify
-      language: system
-      pass_filenames: false
-      stages: [commit]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0

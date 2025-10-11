@@ -73,9 +73,25 @@ def get_property(session: Session, property_id: str):  # Missing async
 
 ## 3. Testing Before Commits
 
-**Rule:** Run `make verify` before committing or opening a pull request.
+**Rule:** Run `make format` then `make verify` before committing or opening a pull request.
 
-**Why:** It catches formatting issues, lint failures, and test regressions before they reach `main`.
+**Why:**
+- `make format` fixes all formatting issues (black, isort, ruff)
+- `make verify` catches lint failures and test regressions
+- Running format first prevents pre-commit hook failures
+
+**Workflow:**
+```bash
+# 1. Format code (fixes issues automatically)
+make format
+
+# 2. Verify everything passes (checks only, no modifications)
+make verify
+
+# 3. Commit (pre-commit hooks should pass immediately)
+git add .
+git commit -m "your message"
+```
 
 **Tip:** See [CONTRIBUTING.md](CONTRIBUTING.md#testing-and-quality-checks) for the full testing and linting workflow.
 
@@ -212,10 +228,13 @@ import app.models.audit
 - See [pyproject.toml](pyproject.toml) for detailed tool settings
 
 **Quick Check:**
-Run formatters before committing:
+Always run formatters before committing:
 ```bash
-make format  # Runs black and ruff with --fix
+make format  # Runs black, isort, and ruff with --fix
+make verify  # Verify everything passes (runs format-check, lint, tests)
 ```
+
+**Note:** Pre-commit hooks will auto-format files, but running `make format` first prevents the "hooks modify files → commit fails" cycle.
 
 ---
 
