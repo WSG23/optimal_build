@@ -14,7 +14,9 @@ from httpx import AsyncClient
 
 @pytest_asyncio.fixture
 async def deals_client(async_session_factory):
+    from app.api.deps import require_reviewer, require_viewer
     from app.core.database import get_session
+    from app.core.jwt_auth import get_optional_user
     from fastapi import APIRouter, FastAPI
 
     if not hasattr(APIRouter, "patch"):
@@ -45,7 +47,19 @@ async def deals_client(async_session_factory):
         async with async_session_factory() as session:
             yield session
 
+    async def _override_require_reviewer():
+        return "admin"
+
+    async def _override_require_viewer():
+        return "admin"
+
+    async def _override_get_optional_user():
+        return None
+
     app.dependency_overrides[get_session] = _override_get_session
+    app.dependency_overrides[require_reviewer] = _override_require_reviewer
+    app.dependency_overrides[require_viewer] = _override_require_viewer
+    app.dependency_overrides[get_optional_user] = _override_get_optional_user
     app.include_router(router, prefix="/api/v1")
 
     async with AsyncClient(
@@ -53,7 +67,7 @@ async def deals_client(async_session_factory):
     ) as client:
         yield client
 
-    app.dependency_overrides.pop(get_session, None)
+    app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture(autouse=True)
