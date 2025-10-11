@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 
 import {
   runFinanceFeasibility,
+  listFinanceScenarios,
   type FinanceFeasibilityRequest,
 } from '../finance'
 
@@ -170,6 +171,58 @@ describe('finance API mapping', () => {
       assert.equal(summaries.length, 1)
       assert.equal(summaries[0]?.scenarioId, 26)
       assert.equal(summaries[0]?.projectId, 401)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('falls back to offline feasibility data when the request hits a network error', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () => {
+      throw new TypeError('Load failed')
+    }) as typeof globalThis.fetch
+
+    const request: FinanceFeasibilityRequest = {
+      projectId: 510,
+      scenario: {
+        name: 'Offline Mixed-Use Scenario',
+        currency: 'USD',
+        costEscalation: {
+          amount: '24000000.00',
+          basePeriod: '2024-Q1',
+          seriesName: 'construction_all_in',
+          jurisdiction: 'SG',
+        },
+        cashFlow: {
+          discountRate: '0.08',
+          cashFlows: [],
+        },
+      },
+    }
+
+    try {
+      const summary = await runFinanceFeasibility(request)
+      assert.equal(summary.projectId, 510)
+      assert.equal(summary.scenarioName, 'Offline Mixed-Use Scenario')
+      assert.equal(summary.currency, 'USD')
+      assert.ok(summary.results.length > 0)
+      assert.ok(summary.capitalStack)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('provides an offline scenario list when listing scenarios fails with a network error', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () => {
+      throw new TypeError('Network request failed')
+    }) as typeof globalThis.fetch
+
+    try {
+      const scenarios = await listFinanceScenarios({ projectId: 777 })
+      assert.equal(scenarios.length, 1)
+      assert.equal(scenarios[0]?.projectId, 777)
+      assert.ok(scenarios[0]?.capitalStack)
     } finally {
       globalThis.fetch = originalFetch
     }

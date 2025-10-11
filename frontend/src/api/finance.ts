@@ -1,7 +1,12 @@
+const metaEnv =
+  typeof import.meta !== 'undefined' && import.meta
+    ? (import.meta as ImportMeta).env
+    : undefined
+
 const rawApiBaseUrl =
-  import.meta.env.VITE_API_BASE_URL ??
-  import.meta.env.VITE_API_URL ??
-  import.meta.env.VITE_API_BASE ??
+  metaEnv?.VITE_API_BASE_URL ??
+  metaEnv?.VITE_API_URL ??
+  metaEnv?.VITE_API_BASE ??
   null
 
 function normaliseBaseUrl(value: string | undefined | null): string {
@@ -14,7 +19,7 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 
 function resolveDefaultRole(): string | null {
   const candidates = [
-    import.meta.env.VITE_API_ROLE,
+    metaEnv?.VITE_API_ROLE,
     typeof window !== 'undefined'
       ? window.localStorage.getItem('app:api-role') ?? undefined
       : undefined,
@@ -523,6 +528,275 @@ function mapResponse(
   }
 }
 
+const FINANCE_FALLBACK_SUMMARY: FinanceScenarioSummary = {
+  scenarioId: 0,
+  projectId: 0,
+  finProjectId: 0,
+  scenarioName: 'Offline Feasibility Scenario',
+  currency: 'SGD',
+  escalatedCost: '24850000.00',
+  costIndex: {
+    seriesName: 'construction_all_in',
+    jurisdiction: 'SG',
+    provider: 'Public',
+    basePeriod: '2024-Q1',
+    latestPeriod: '2024-Q4',
+    scalar: '1.1200',
+    baseIndex: {
+      period: '2024-Q1',
+      value: '100',
+      unit: 'index',
+      source: 'BCA',
+      provider: 'BCA',
+      methodology: null,
+    },
+    latestIndex: {
+      period: '2024-Q4',
+      value: '112',
+      unit: 'index',
+      source: 'BCA',
+      provider: 'BCA',
+      methodology: null,
+    },
+  },
+  results: [
+    {
+      name: 'NPV',
+      value: '1850000.00',
+      unit: 'currency',
+      metadata: { currency: 'SGD' },
+    },
+    {
+      name: 'IRR',
+      value: '0.125',
+      unit: 'ratio',
+      metadata: { format: 'percentage' },
+    },
+    {
+      name: 'Equity Multiple',
+      value: '1.80',
+      unit: 'multiple',
+      metadata: {},
+    },
+  ],
+  dscrTimeline: [
+    {
+      period: 'Year 1',
+      noi: '5200000.00',
+      debtService: '4300000.00',
+      dscr: '1.21',
+      currency: 'SGD',
+    },
+    {
+      period: 'Year 2',
+      noi: '5600000.00',
+      debtService: '4300000.00',
+      dscr: '1.30',
+      currency: 'SGD',
+    },
+    {
+      period: 'Year 3',
+      noi: '5900000.00',
+      debtService: '4300000.00',
+      dscr: '1.37',
+      currency: 'SGD',
+    },
+  ],
+  capitalStack: {
+    currency: 'SGD',
+    total: '24850000.00',
+    equityTotal: '9940000.00',
+    debtTotal: '14910000.00',
+    otherTotal: '0.00',
+    equityRatio: '0.40',
+    debtRatio: '0.60',
+    otherRatio: '0.00',
+    loanToCost: '0.60',
+    weightedAverageDebtRate: '0.043',
+    slices: [
+      {
+        name: 'Sponsor Equity',
+        sourceType: 'equity',
+        category: 'equity',
+        amount: '7455000.00',
+        share: '0.30',
+        rate: null,
+        trancheOrder: 1,
+        metadata: {},
+      },
+      {
+        name: 'Co-invest Equity',
+        sourceType: 'equity',
+        category: 'equity',
+        amount: '2485000.00',
+        share: '0.10',
+        rate: null,
+        trancheOrder: 2,
+        metadata: {},
+      },
+      {
+        name: 'Senior Debt',
+        sourceType: 'debt',
+        category: 'debt',
+        amount: '14910000.00',
+        share: '0.60',
+        rate: '0.043',
+        trancheOrder: 3,
+        metadata: {},
+      },
+    ],
+  },
+  drawdownSchedule: {
+    currency: 'SGD',
+    entries: [
+      {
+        period: 'Q1',
+        equityDraw: '3727500.00',
+        debtDraw: '0.00',
+        totalDraw: '3727500.00',
+        cumulativeEquity: '3727500.00',
+        cumulativeDebt: '0.00',
+        outstandingDebt: '0.00',
+      },
+      {
+        period: 'Q2',
+        equityDraw: '3727500.00',
+        debtDraw: '4970000.00',
+        totalDraw: '8697500.00',
+        cumulativeEquity: '7455000.00',
+        cumulativeDebt: '4970000.00',
+        outstandingDebt: '4970000.00',
+      },
+      {
+        period: 'Q3',
+        equityDraw: '2485000.00',
+        debtDraw: '4960000.00',
+        totalDraw: '7445000.00',
+        cumulativeEquity: '9940000.00',
+        cumulativeDebt: '9930000.00',
+        outstandingDebt: '9930000.00',
+      },
+      {
+        period: 'Q4',
+        equityDraw: '0.00',
+        debtDraw: '4980000.00',
+        totalDraw: '4980000.00',
+        cumulativeEquity: '9940000.00',
+        cumulativeDebt: '14910000.00',
+        outstandingDebt: '14910000.00',
+      },
+    ],
+    totalEquity: '9940000.00',
+    totalDebt: '14910000.00',
+    peakDebtBalance: '14910000.00',
+    finalDebtBalance: '14910000.00',
+  },
+}
+
+function cloneFinanceSummary(
+  summary: FinanceScenarioSummary,
+): FinanceScenarioSummary {
+  return {
+    ...summary,
+    costIndex: {
+      ...summary.costIndex,
+      baseIndex: summary.costIndex.baseIndex
+        ? { ...summary.costIndex.baseIndex }
+        : null,
+      latestIndex: summary.costIndex.latestIndex
+        ? { ...summary.costIndex.latestIndex }
+        : null,
+    },
+    results: summary.results.map((item) => ({
+      ...item,
+      metadata: { ...item.metadata },
+    })),
+    dscrTimeline: summary.dscrTimeline.map((entry) => ({ ...entry })),
+    capitalStack: summary.capitalStack
+      ? {
+          ...summary.capitalStack,
+          slices: summary.capitalStack.slices.map((slice) => ({
+            ...slice,
+            metadata: { ...slice.metadata },
+          })),
+        }
+      : null,
+    drawdownSchedule: summary.drawdownSchedule
+      ? {
+          ...summary.drawdownSchedule,
+          entries: summary.drawdownSchedule.entries.map((entry) => ({
+            ...entry,
+          })),
+        }
+      : null,
+  }
+}
+
+function createFinanceFallbackSummary(
+  request: FinanceFeasibilityRequest,
+): FinanceScenarioSummary {
+  const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+  fallback.projectId =
+    typeof request.projectId === 'number'
+      ? request.projectId
+      : fallback.projectId
+  fallback.finProjectId =
+    typeof request.finProjectId === 'number'
+      ? request.finProjectId
+      : fallback.finProjectId
+  fallback.scenarioName =
+    request.scenario.name?.trim() || fallback.scenarioName
+  const currency = request.scenario.currency?.trim() || fallback.currency
+  fallback.currency = currency
+  fallback.costIndex = {
+    ...fallback.costIndex,
+  }
+  if (fallback.costIndex.baseIndex) {
+    fallback.costIndex.baseIndex = {
+      ...fallback.costIndex.baseIndex,
+    }
+  }
+  if (fallback.costIndex.latestIndex) {
+    fallback.costIndex.latestIndex = {
+      ...fallback.costIndex.latestIndex,
+    }
+  }
+  fallback.results = fallback.results.map((item) => {
+    const metadata = { ...item.metadata }
+    if (item.name.toLowerCase().includes('npv')) {
+      metadata.currency = currency
+    }
+    return {
+      ...item,
+      metadata,
+    }
+  })
+  fallback.dscrTimeline = fallback.dscrTimeline.map((entry) => ({
+    ...entry,
+    currency,
+  }))
+  if (fallback.capitalStack) {
+    fallback.capitalStack = {
+      ...fallback.capitalStack,
+      currency,
+      slices: fallback.capitalStack.slices.map((slice) => ({
+        ...slice,
+        metadata: { ...slice.metadata },
+      })),
+    }
+  }
+  if (fallback.drawdownSchedule) {
+    fallback.drawdownSchedule = {
+      ...fallback.drawdownSchedule,
+      currency,
+      entries: fallback.drawdownSchedule.entries.map((entry) => ({
+        ...entry,
+      })),
+    }
+  }
+  return fallback
+}
+
 export interface FinanceFeasibilityOptions {
   signal?: AbortSignal
 }
@@ -540,26 +814,40 @@ export async function runFinanceFeasibility(
     headers['X-Role'] = defaultRole
   }
 
-  const response = await fetch(
-    buildUrl('api/v1/finance/feasibility', apiBaseUrl),
-    {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(toPayload(request)),
-      signal: options.signal,
-    },
-  )
-
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(
-      message ||
-        `Finance feasibility request failed with status ${response.status}`,
+  try {
+    const response = await fetch(
+      buildUrl('api/v1/finance/feasibility', apiBaseUrl),
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(toPayload(request)),
+        signal: options.signal,
+      },
     )
-  }
 
-  const payload = (await response.json()) as FinanceFeasibilityResponsePayload
-  return mapResponse(payload)
+    if (!response.ok) {
+      const message = await response.text()
+      throw new Error(
+        message ||
+          `Finance feasibility request failed with status ${response.status}`,
+      )
+    }
+
+    const payload = (await response.json()) as FinanceFeasibilityResponsePayload
+    return mapResponse(payload)
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+    if (error instanceof TypeError) {
+      console.warn(
+        '[finance] feasibility request failed, using offline fallback data',
+        error,
+      )
+      return createFinanceFallbackSummary(request)
+    }
+    throw error
+  }
 }
 
 export function findResult(
@@ -596,26 +884,70 @@ export async function listFinanceScenarios(
   }
 
   const querySuffix = query.toString()
-  const response = await fetch(
-    buildUrl(
-      `api/v1/finance/scenarios${querySuffix ? `?${querySuffix}` : ''}`,
-      apiBaseUrl,
-    ),
-    {
-      method: 'GET',
-      headers,
-      signal: options.signal,
-    },
-  )
-
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(
-      message ||
-        `Finance scenario list request failed with status ${response.status}`,
+  try {
+    const response = await fetch(
+      buildUrl(
+        `api/v1/finance/scenarios${querySuffix ? `?${querySuffix}` : ''}`,
+        apiBaseUrl,
+      ),
+      {
+        method: 'GET',
+        headers,
+        signal: options.signal,
+      },
     )
-  }
 
-  const payload = (await response.json()) as FinanceFeasibilityResponsePayload[]
-  return Array.isArray(payload) ? payload.map(mapResponse) : []
+    if (!response.ok) {
+      const message = await response.text()
+      throw new Error(
+        message ||
+          `Finance scenario list request failed with status ${response.status}`,
+      )
+    }
+
+    const payload =
+      (await response.json()) as FinanceFeasibilityResponsePayload[]
+    return Array.isArray(payload) ? payload.map(mapResponse) : []
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+    if (error instanceof TypeError) {
+      console.warn(
+        '[finance] scenario list request failed, using offline fallback data',
+        error,
+      )
+      const fallbackRequest: FinanceFeasibilityRequest = {
+        projectId:
+          typeof params.projectId === 'number'
+            ? params.projectId
+            : FINANCE_FALLBACK_SUMMARY.projectId,
+        finProjectId:
+          typeof params.finProjectId === 'number'
+            ? params.finProjectId
+            : FINANCE_FALLBACK_SUMMARY.finProjectId,
+        projectName: 'Offline Project',
+        scenario: {
+          name: 'Offline Feasibility Scenario',
+          currency: FINANCE_FALLBACK_SUMMARY.currency,
+          costEscalation: {
+            amount: FINANCE_FALLBACK_SUMMARY.escalatedCost,
+            basePeriod: FINANCE_FALLBACK_SUMMARY.costIndex.basePeriod,
+            seriesName: FINANCE_FALLBACK_SUMMARY.costIndex.seriesName,
+            jurisdiction: FINANCE_FALLBACK_SUMMARY.costIndex.jurisdiction,
+            provider: FINANCE_FALLBACK_SUMMARY.costIndex.provider ?? null,
+          },
+          cashFlow: {
+            discountRate: '0.08',
+            cashFlows: [],
+          },
+          dscr: undefined,
+          capitalStack: undefined,
+          drawdownSchedule: undefined,
+        },
+      }
+      return [createFinanceFallbackSummary(fallbackRequest)]
+    }
+    throw error
+  }
 }

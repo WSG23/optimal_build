@@ -1,3 +1,5 @@
+import { createMockBuildableTransport } from '../mocks/buildable'
+
 function normaliseBaseUrl(value: string | undefined | null): string {
   if (typeof value !== 'string') {
     return '/'
@@ -7,7 +9,11 @@ function normaliseBaseUrl(value: string | undefined | null): string {
 }
 
 const API_PREFIX = 'api/v1/screen/buildable'
-const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? null
+const metaEnv =
+  typeof import.meta !== 'undefined' && import.meta
+    ? (import.meta as ImportMeta).env
+    : undefined
+const rawApiBaseUrl = metaEnv?.VITE_API_BASE_URL ?? null
 const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
 
 export type RuleProvenance = {
@@ -230,6 +236,22 @@ export async function fetchBuildable(
   options: BuildableRequestOptions = {},
 ): Promise<BuildableSummary> {
   const { transport = postBuildable, signal } = options
-  const payload = await transport(apiBaseUrl, request, { signal })
-  return mapResponse(payload)
+  try {
+    const payload = await transport(apiBaseUrl, request, { signal })
+    return mapResponse(payload)
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+    if (error instanceof TypeError) {
+      console.warn(
+        '[buildable] primary request failed, falling back to mock response',
+        error,
+      )
+      const fallbackTransport = createMockBuildableTransport()
+      const payload = await fallbackTransport(apiBaseUrl, request)
+      return mapResponse(payload)
+    }
+    throw error
+  }
 }

@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, describe, it } from 'node:test'
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { JSDOM } from 'jsdom'
 import React from 'react'
 
 import { TranslationProvider } from '../../i18n'
-import AgentPerformancePage from '../AgentPerformancePage'
+
+let rtlRender: typeof import('@testing-library/react').render
+let rtlCleanup: typeof import('@testing-library/react').cleanup
+let rtlScreen: typeof import('@testing-library/react').screen
 
 function makeMockResponse(body: unknown, status = 200): Response {
   return {
@@ -24,11 +26,13 @@ function makeMockResponse(body: unknown, status = 200): Response {
 
 describe('AgentPerformancePage analytics', () => {
   let dom: JSDOM
+  let AgentPerformancePage: typeof import('../AgentPerformancePage').default
+
   const originalFetch = globalThis.fetch
   const originalResizeObserver = (globalThis as { ResizeObserver?: unknown })
     .ResizeObserver
 
-  beforeEach(() => {
+  beforeEach(async () => {
     dom = new JSDOM('<!doctype html><html><body></body></html>', {
       url: 'http://localhost/agents/performance',
     })
@@ -37,10 +41,16 @@ describe('AgentPerformancePage analytics', () => {
       window: Window & typeof globalThis
       document: Document
       navigator: Navigator
+      HTMLElement: typeof HTMLElement
+      Node: typeof Node
+      getComputedStyle: typeof window.getComputedStyle
     }
-    globalWithDom.window = dom.window
+    globalWithDom.window = dom.window as Window & typeof globalThis
     globalWithDom.document = dom.window.document
     globalWithDom.navigator = dom.window.navigator
+    globalWithDom.HTMLElement = dom.window.HTMLElement
+    globalWithDom.Node = dom.window.Node
+    globalWithDom.getComputedStyle = dom.window.getComputedStyle.bind(dom.window)
 
     class MockResizeObserver {
       observe() {}
@@ -50,6 +60,11 @@ describe('AgentPerformancePage analytics', () => {
 
     ;(globalThis as { ResizeObserver?: unknown }).ResizeObserver =
       MockResizeObserver
+
+    const rtl = await import('@testing-library/react')
+    rtlRender = rtl.render
+    rtlCleanup = rtl.cleanup
+    rtlScreen = rtl.screen
 
     const dealsResponse = [
       {
@@ -211,19 +226,15 @@ describe('AgentPerformancePage analytics', () => {
 
       throw new Error(`Unexpected fetch: ${url.href}`)
     }) as typeof globalThis.fetch
+
+    AgentPerformancePage = (await import('../AgentPerformancePage')).default
   })
 
   afterEach(() => {
-    cleanup()
-    dom.window.close()
-    const globalWithDom = globalThis as {
-      window?: Window & typeof globalThis
-      document?: Document
-      navigator?: Navigator
+    if (rtlCleanup) {
+      rtlCleanup()
     }
-    delete globalWithDom.window
-    delete globalWithDom.document
-    delete globalWithDom.navigator
+    dom.window.close()
 
     globalThis.fetch = originalFetch
     if (originalResizeObserver) {
@@ -235,24 +246,19 @@ describe('AgentPerformancePage analytics', () => {
   })
 
   it('renders analytics metrics, charts, and benchmarks', async () => {
-    render(
+    rtlRender(
       <TranslationProvider>
         <AgentPerformancePage />
       </TranslationProvider>,
     )
 
-    await waitFor(() => {
-      assert.ok(screen.getByText(/Deals won/i))
-    })
+    assert.ok(await rtlScreen.findByText(/Deals won/i))
+    assert.ok(await rtlScreen.findByText(/SGD\s*1,800,000/i))
+    const conversionMatches = await rtlScreen.findAllByText(/42\.0%/)
+    assert.ok(conversionMatches.length >= 1)
 
-    assert.ok(screen.getByText(/Weighted pipeline/i))
-    assert.ok(screen.getByText(/Conversion rate/i))
-
-    await waitFor(() => {
-      assert.ok(screen.getByText(/Benchmark comparison/i))
-    })
-
-    assert.ok(screen.getByText(/industry avg/i))
-    assert.ok(screen.getByText(/\+7\.0 pts/))
+    assert.ok(await rtlScreen.findByText(/Benchmark comparison/i))
+    assert.ok(await rtlScreen.findByText(/industry avg 35\.0%/i))
+    assert.ok(await rtlScreen.findByText(/\+7\.0 pts/))
   })
 })

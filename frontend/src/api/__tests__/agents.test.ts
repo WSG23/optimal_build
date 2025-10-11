@@ -249,4 +249,15 @@ describe('agents API mapping', () => {
       globalThis.fetch = originalFetch
     }
   })
+
+  it('falls back to offline GPS data when the network request fails', async () => {
+    const request = { latitude: 1.301, longitude: 103.832 }
+    const summary = await logPropertyByGps(request, async () => {
+      throw new TypeError('Network timeout')
+    })
+
+    assert.equal(summary.propertyId, 'offline-property')
+    assert.equal(summary.coordinates.latitude, 1.301)
+    assert.ok(summary.quickAnalysis.scenarios.length > 0)
+  })
 })

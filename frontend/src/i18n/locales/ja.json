@@ -79,7 +79,7 @@
         "conversion": "獲得率",
         "cycle": "平均リードタイム",
         "pipeline": "加重パイプライン価値",
-        "versus": "{cohort} {value} と比較",
+        "versus": "{{cohort}} {{value}} と比較",
         "cohort": {
           "industry_avg": "業界平均",
           "top_quartile": "上位25%",

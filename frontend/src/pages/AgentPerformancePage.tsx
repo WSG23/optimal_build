@@ -158,13 +158,6 @@ function formatDayDelta(delta: number | null): string {
   return `${sign}${delta.toFixed(0)}d`
 }
 
-function toPercentValue(value: number | null): number | null {
-  if (value === null || Number.isNaN(value)) {
-    return null
-  }
-  return Math.abs(value) <= 1 ? value * 100 : value
-}
-
 function formatCurrencyDelta(
   delta: number | null,
   currency: string,
@@ -189,6 +182,23 @@ function formatCurrencyDelta(
     })
     return `${sign}${currency} ${fallback}`
   }
+}
+
+function isAbortError(error: unknown, controller?: AbortController): boolean {
+  if (controller?.signal.aborted) {
+    return true
+  }
+  if (error && typeof error === 'object' && 'name' in error) {
+    return (error as { name?: unknown }).name === 'AbortError'
+  }
+  return false
+}
+
+function toPercentValue(value: number | null): number | null {
+  if (value === null || Number.isNaN(value)) {
+    return null
+  }
+  return Math.abs(value) <= 1 ? value * 100 : value
 }
 
 const STAGE_TRANSLATION_KEYS: Record<DealStage, string> = {
@@ -356,6 +366,9 @@ export default function AgentPerformancePage() {
         }
       })
       .catch((error: unknown) => {
+        if (isAbortError(error, abort)) {
+          return
+        }
         console.error('Failed to load deals', error)
         setDealError(t('agentPerformance.errors.loadDeals'))
       })
@@ -380,6 +393,9 @@ export default function AgentPerformancePage() {
         setTimeline(events)
       })
       .catch((error: unknown) => {
+        if (isAbortError(error, abort)) {
+          return
+        }
         console.error('Failed to load timeline', error)
         setTimelineError(t('agentPerformance.errors.loadTimeline'))
       })

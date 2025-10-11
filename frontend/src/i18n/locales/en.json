@@ -79,7 +79,7 @@
         "conversion": "Conversion rate",
         "cycle": "Average cycle time",
         "pipeline": "Weighted pipeline value",
-        "versus": "vs {cohort} {value}",
+        "versus": "vs {{cohort}} {{value}}",
         "cohort": {
           "industry_avg": "industry avg",
           "top_quartile": "top quartile",

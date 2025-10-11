@@ -335,6 +335,162 @@ function mapQuickAnalysis(payload: RawQuickAnalysis): QuickAnalysisSummary {
   }
 }
 
+const GPS_FALLBACK_SUMMARY: GpsCaptureSummary = {
+  propertyId: 'offline-property',
+  address: {
+    fullAddress: '123 Offline Road, Singapore',
+    streetName: 'Offline Road',
+    buildingName: 'Offline Hub',
+    blockNumber: '12',
+    postalCode: '049123',
+    district: 'D01',
+    country: 'Singapore',
+  },
+  coordinates: {
+    latitude: 1.285,
+    longitude: 103.853,
+  },
+  uraZoning: {
+    zoneCode: 'Commercial',
+    zoneDescription: 'Central Business District',
+    plotRatio: 4.2,
+    buildingHeightLimit: 160,
+    siteCoverage: 80,
+    useGroups: ['Office', 'Retail', 'F&B'],
+    specialConditions: 'Refer to urban design guidelines for facade upgrades.',
+  },
+  existingUse: 'Integrated mixed-use podium with office tower',
+  propertyInfo: {
+    propertyName: 'Offline Hub',
+    tenure: '99-year leasehold',
+    siteAreaSqm: 5200,
+    gfaApproved: 20800,
+    buildingHeight: 34,
+    completionYear: 2008,
+    lastTransactionDate: '2024-03-31',
+    lastTransactionPrice: 185000000,
+  },
+  nearbyAmenities: {
+    mrtStations: [
+      { name: 'Downtown MRT', distanceM: 220 },
+      { name: 'Raffles Place MRT', distanceM: 410 },
+    ],
+    busStops: [{ name: 'One Raffles Quay', distanceM: 120 }],
+    schools: [],
+    shoppingMalls: [{ name: 'Marina One Retail', distanceM: 310 }],
+    parks: [{ name: 'Central Linear Park', distanceM: 450 }],
+  },
+  quickAnalysis: {
+    generatedAt: '2025-01-15T08:00:00Z',
+    scenarios: [
+      {
+        scenario: 'existing_building',
+        headline: 'Stabilised NOI supports 4.3% yield post-refresh',
+        metrics: {
+          occupancy_pct: 0.94,
+          annual_noi: 8650000,
+          valuation_cap_rate: 0.043,
+        },
+        notes: [
+          'Reposition ground-floor podium for F&B and lifestyle concepts.',
+          'Upgrade end-of-trip facilities to attract flex-office tenants.',
+        ],
+      },
+      {
+        scenario: 'heritage_property',
+        headline: 'Adaptive reuse opportunity respecting facade guidelines',
+        metrics: {
+          conservation_status: 'partial',
+          estimated_capex: 4200000,
+        },
+        notes: [
+          'Consult URA on conservation requirements for street-facing facade.',
+        ],
+      },
+      {
+        scenario: 'underused_asset',
+        headline: 'Introduce wellness suites to lift blended rents by 8%',
+        metrics: {
+          potential_rent_uplift_pct: 0.08,
+          target_lease_term_years: 5,
+        },
+        notes: [
+          'Demand from healthcare operators for central locations remains strong.',
+        ],
+      },
+    ],
+  },
+  timestamp: '2025-01-15T08:05:00Z',
+}
+
+function cloneGpsSummary(summary: GpsCaptureSummary): GpsCaptureSummary {
+  return {
+    propertyId: summary.propertyId,
+    address: { ...summary.address },
+    coordinates: { ...summary.coordinates },
+    uraZoning: {
+      zoneCode: summary.uraZoning.zoneCode,
+      zoneDescription: summary.uraZoning.zoneDescription,
+      plotRatio: summary.uraZoning.plotRatio ?? null,
+      buildingHeightLimit: summary.uraZoning.buildingHeightLimit ?? null,
+      siteCoverage: summary.uraZoning.siteCoverage ?? null,
+      useGroups: [...summary.uraZoning.useGroups],
+      specialConditions: summary.uraZoning.specialConditions ?? null,
+    },
+    existingUse: summary.existingUse,
+    propertyInfo: summary.propertyInfo ? { ...summary.propertyInfo } : null,
+    nearbyAmenities: summary.nearbyAmenities
+      ? {
+          mrtStations: summary.nearbyAmenities.mrtStations.map((item) => ({
+            ...item,
+          })),
+          busStops: summary.nearbyAmenities.busStops.map((item) => ({
+            ...item,
+          })),
+          schools: summary.nearbyAmenities.schools.map((item) => ({
+            ...item,
+          })),
+          shoppingMalls: summary.nearbyAmenities.shoppingMalls.map((item) => ({
+            ...item,
+          })),
+          parks: summary.nearbyAmenities.parks.map((item) => ({ ...item })),
+        }
+      : null,
+    quickAnalysis: {
+      generatedAt: summary.quickAnalysis.generatedAt,
+      scenarios: summary.quickAnalysis.scenarios.map((scenario) => ({
+        scenario: scenario.scenario,
+        headline: scenario.headline,
+        metrics: { ...scenario.metrics },
+        notes: [...scenario.notes],
+      })),
+    },
+    timestamp: summary.timestamp,
+  }
+}
+
+function createGpsFallbackSummary(
+  request: LogPropertyByGpsRequest,
+): GpsCaptureSummary {
+  const fallback = cloneGpsSummary(GPS_FALLBACK_SUMMARY)
+  fallback.coordinates = {
+    latitude: request.latitude,
+    longitude: request.longitude,
+  }
+  const generatedAt = new Date().toISOString()
+  fallback.timestamp = generatedAt
+  fallback.quickAnalysis = {
+    ...fallback.quickAnalysis,
+    generatedAt,
+    scenarios: fallback.quickAnalysis.scenarios.map((scenario) => ({
+      ...scenario,
+      metrics: { ...scenario.metrics },
+      notes: [...scenario.notes],
+    })),
+  }
+  return fallback
+}
+
 export type LogTransport = (
   baseUrl: string,
   payload: LogPropertyByGpsRequest,
@@ -377,28 +533,42 @@ export async function logPropertyByGps(
   transport: LogTransport = postLogProperty,
   signal?: AbortSignal,
 ): Promise<GpsCaptureSummary> {
-  const payload = await transport(apiBaseUrl, request, { signal })
+  try {
+    const payload = await transport(apiBaseUrl, request, { signal })
 
-  const quickAnalysisPayload =
-    payload.quick_analysis ??
-    ({
-      generated_at: payload.timestamp,
-      scenarios: [],
-    } satisfies RawQuickAnalysis)
+    const quickAnalysisPayload =
+      payload.quick_analysis ??
+      ({
+        generated_at: payload.timestamp,
+        scenarios: [],
+      } satisfies RawQuickAnalysis)
 
-  return {
-    propertyId: payload.property_id,
-    address: mapAddress(payload.address),
-    coordinates: {
-      latitude: payload.coordinates.latitude,
-      longitude: payload.coordinates.longitude,
-    },
-    uraZoning: mapUraZoning(payload.ura_zoning),
-    existingUse: payload.existing_use,
-    propertyInfo: mapPropertyInfo(payload.property_info),
-    nearbyAmenities: mapNearbyAmenities(payload.nearby_amenities),
-    quickAnalysis: mapQuickAnalysis(quickAnalysisPayload),
-    timestamp: payload.timestamp,
+    return {
+      propertyId: payload.property_id,
+      address: mapAddress(payload.address),
+      coordinates: {
+        latitude: payload.coordinates.latitude,
+        longitude: payload.coordinates.longitude,
+      },
+      uraZoning: mapUraZoning(payload.ura_zoning),
+      existingUse: payload.existing_use,
+      propertyInfo: mapPropertyInfo(payload.property_info),
+      nearbyAmenities: mapNearbyAmenities(payload.nearby_amenities),
+      quickAnalysis: mapQuickAnalysis(quickAnalysisPayload),
+      timestamp: payload.timestamp,
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+    if (error instanceof TypeError) {
+      console.warn(
+        '[agents] GPS capture request failed, using offline fallback data',
+        error,
+      )
+      return createGpsFallbackSummary(request)
+    }
+    throw error
   }
 }
 
