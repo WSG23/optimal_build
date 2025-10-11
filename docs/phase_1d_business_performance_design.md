@@ -49,7 +49,7 @@ Indices:
 ## 3. Backend Architecture
 
 ### 3.1 Services
-- `app/services/deals/pipeline.py`: CRUD for `AgentDeal`, stage transition helpers that append `AgentDealStageEvent`, and weighted pipeline calculations.
+- `app/services/deals/pipeline.py`: CRUD for `AgentDeal`, stage transition helpers that append `AgentDealStageEvent`, weighted pipeline calculations, and `timeline_with_audit()` to enrich stage history with hashed audit ledger entries.
 - `app/services/deals/commission.py`: Commission lifecycle management; emits audit log events (`deal_commission_introduced`, `deal_commission_confirmed`, etc.) via the existing `audit_logs` chain.
 - `app/services/deals/performance.py`: Aggregation routines to compute metrics per agent/property type; writes to `agent_performance_snapshots`.
 - `app/services/deals/benchmark_ingest.py`: Loader for CSV/JSON benchmark data (invoked via Prefect or management CLI).
@@ -81,7 +81,7 @@ Authentication/authorization:
 ## 4. Frontend Plan
 - **New route:** `/agents/performance` (or extend integrations page) containing two tabs: `Pipeline` (Kanban) and `Analytics`.
 - **Pipeline Kanban (`PipelineBoard` component)**: Columns map to `PipelineStage`; cards display counterparty, asset type, estimated value, latest activity, and quick actions (move stage, log note).
-- **Deal detail drawer:** Shows timeline (stage events + commission history), contact list, documents, manual adjustments.
+- **Deal detail drawer:** Shows timeline (stage events + commission history) with audit hash/signature badges, contact list, documents, manual adjustments.
 - **Analytics dashboard:** charts using existing design-system components (bar charts, donut). Data sources: `/performance/summary` and `/performance/benchmarks`.
 - **Commission dispute UI:** modal to mark commission as disputed, collects reason, optionally attaches doc (URI stored via `agent_deal_documents`).
 - **State management:** use React Query hooks hitting new API layer functions (`frontend/src/api/deals.ts`). Align with patterns used in listing integrations.

@@ -190,6 +190,7 @@
 - ✅ REST API endpoints (`/api/v1/deals`) with auth integration
 - ✅ Stage transitions append audit ledger (`deal_stage_transition`) events with hashed chains
 - ✅ Timeline responses provide per-stage `duration_seconds`
+- ✅ Timeline and API responses surface audit metadata (hash, signature, context) for each transition
 - ✅ Backend service tests passing (`test_agent_deal_pipeline.py`)
 - ⚠️ API smoke test skipped on Python 3.9 (will work on Python 3.10+ or real FastAPI)
 

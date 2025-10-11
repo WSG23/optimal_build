@@ -11,7 +11,8 @@ from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.audit.ledger import append_event
+from app.core.audit.ledger import append_event, serialise_log
+from app.models.audit import AuditLog
 from app.models.business_performance import (
     AgentDeal,
     AgentDealContact,
@@ -285,6 +286,35 @@ class AgentDealService:
         result = await session.execute(stmt)
         return list(result.scalars())
 
+    async def timeline_with_audit(
+        self,
+        *,
+        session: AsyncSession,
+        deal: AgentDeal,
+    ) -> tuple[list[AgentDealStageEvent], dict[str, dict[str, object]]]:
+        """Return ordered stage events alongside their audit summaries."""
+
+        events = await self.timeline(session=session, deal=deal)
+        audit_ids: set[int] = set()
+        for event in events:
+            audit_id = None
+            if event.metadata:
+                audit_id = event.metadata.get("audit_log_id")
+            if audit_id:
+                try:
+                    audit_ids.add(int(audit_id))
+                except (TypeError, ValueError):
+                    continue
+
+        audit_map: dict[str, dict[str, object]] = {}
+        if audit_ids:
+            stmt = select(AuditLog).where(AuditLog.id.in_(audit_ids))
+            result = await session.execute(stmt)
+            for log in result.scalars().all():
+                audit_map[str(log.id)] = serialise_log(log)
+
+        return events, audit_map
+
     async def _record_stage_audit(
         self,
         *,
@@ -323,7 +353,7 @@ class AgentDealService:
             recorded_at=recorded_at,
         )
         event_metadata = dict(event.metadata or {})
-        event_metadata["audit_log_id"] = log_entry.id
+        event_metadata["audit_log_id"] = str(log_entry.id)
         event.metadata = event_metadata
 
     @staticmethod

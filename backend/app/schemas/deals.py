@@ -86,13 +86,19 @@ class DealStageEventSchema(BaseModel):
     recorded_at: datetime
     metadata: dict[str, Any]
     duration_seconds: float | None = None
+    audit_log: dict[str, Any] | None = None
 
     @classmethod
     def from_orm_event(
-        cls, event: AgentDealStageEvent, *, duration_seconds: float | None = None
+        cls,
+        event: AgentDealStageEvent,
+        *,
+        duration_seconds: float | None = None,
+        audit_log: dict[str, Any] | None = None,
     ) -> "DealStageEventSchema":
         payload = cls.model_validate(event).model_dump()
         payload["duration_seconds"] = duration_seconds
+        payload["audit_log"] = audit_log
         return cls.model_validate(payload)
 
 
@@ -133,7 +139,11 @@ class DealWithTimelineSchema(DealSchema):
 
     @classmethod
     def from_orm_deal(
-        cls, deal: AgentDeal, *, timeline: list[AgentDealStageEvent]
+        cls,
+        deal: AgentDeal,
+        *,
+        timeline: list[AgentDealStageEvent],
+        audit_logs: dict[str, dict[str, Any]] | None = None,
     ) -> "DealWithTimelineSchema":
         data = cls.model_validate(deal).model_dump()
         data["timeline"] = []
@@ -149,9 +159,18 @@ class DealWithTimelineSchema(DealSchema):
                 duration_seconds = (
                     next_event.recorded_at - event.recorded_at
                 ).total_seconds()
+            audit_log = None
+            if audit_logs:
+                audit_id = None
+                if event.metadata:
+                    audit_id = event.metadata.get("audit_log_id")
+                if audit_id:
+                    audit_log = audit_logs.get(str(audit_id))
             data["timeline"].append(
                 DealStageEventSchema.from_orm_event(
-                    event, duration_seconds=duration_seconds
+                    event,
+                    duration_seconds=duration_seconds,
+                    audit_log=audit_log,
                 )
             )
         return cls.model_validate(data)

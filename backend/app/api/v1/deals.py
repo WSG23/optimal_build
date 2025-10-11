@@ -203,8 +203,12 @@ async def change_stage(
         metadata=payload.metadata,
         occurred_at=payload.occurred_at,
     )
-    timeline = await service.timeline(session=session, deal=record)
-    return DealWithTimelineSchema.from_orm_deal(record, timeline=timeline)
+    timeline, audit_logs = await service.timeline_with_audit(
+        session=session, deal=record
+    )
+    return DealWithTimelineSchema.from_orm_deal(
+        record, timeline=timeline, audit_logs=audit_logs
+    )
 
 
 @router.get("/{deal_id}/timeline", response_model=list[DealStageEventSchema])
@@ -218,8 +222,34 @@ async def get_timeline(
     record = await service.get_deal(session=session, deal_id=deal_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Deal not found")
-    timeline = await service.timeline(session=session, deal=record)
-    return [DealStageEventSchema.from_orm_event(event) for event in timeline]
+    timeline, audit_logs = await service.timeline_with_audit(
+        session=session, deal=record
+    )
+    serialised = []
+    for index, event in enumerate(timeline):
+        next_event = timeline[index + 1] if index + 1 < len(timeline) else None
+        duration_seconds: float | None = None
+        if (
+            event.recorded_at
+            and next_event
+            and next_event.recorded_at
+            and next_event.recorded_at >= event.recorded_at
+        ):
+            duration_seconds = (next_event.recorded_at - event.recorded_at).total_seconds()
+        audit_log = None
+        audit_id = None
+        if event.metadata:
+            audit_id = event.metadata.get("audit_log_id")
+        if audit_id:
+            audit_log = audit_logs.get(str(audit_id))
+        serialised.append(
+            DealStageEventSchema.from_orm_event(
+                event,
+                duration_seconds=duration_seconds,
+                audit_log=audit_log,
+            )
+        )
+    return serialised
 
 
 __all__ = ["router"]

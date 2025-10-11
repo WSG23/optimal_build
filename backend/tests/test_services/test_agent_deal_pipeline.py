@@ -57,7 +57,7 @@ async def test_create_deal_seeds_stage_event(async_session_factory):
         assert deal.pipeline_stage == PipelineStage.LEAD_CAPTURED
         assert deal.metadata["priority"] == "high"
 
-        timeline = await service.timeline(session=session, deal=deal)
+        timeline, audit_map = await service.timeline_with_audit(session=session, deal=deal)
         assert len(timeline) == 1
         event = timeline[0]
         assert event.to_stage == PipelineStage.LEAD_CAPTURED
@@ -73,6 +73,8 @@ async def test_create_deal_seeds_stage_event(async_session_factory):
         assert len(logs) == 1
         assert logs[0].context.get("deal_id") == str(deal.id)
         assert logs[0].context.get("to_stage") == PipelineStage.LEAD_CAPTURED.value
+        audit_log = audit_map.get(str(logs[0].id))
+        assert audit_log is not None
 
 
 @pytest.mark.asyncio
@@ -111,7 +113,7 @@ async def test_change_stage_updates_status(async_session_factory):
         assert deal.status.name == "CLOSED_WON"
         assert deal.actual_close_date is not None
 
-        timeline = await service.timeline(session=session, deal=deal)
+        timeline, audit_map = await service.timeline_with_audit(session=session, deal=deal)
         assert len(timeline) == 2
         assert timeline[-1].note == "Signed SPA"
         assert timeline[-1].metadata.get("audit_log_id") is not None
@@ -126,5 +128,8 @@ async def test_change_stage_updates_status(async_session_factory):
         assert len(logs) == 2
         assert logs[-1].context.get("to_stage") == PipelineStage.CLOSED_WON.value
 
-        timeline_schema = DealWithTimelineSchema.from_orm_deal(deal, timeline=timeline)
+        timeline_schema = DealWithTimelineSchema.from_orm_deal(
+            deal, timeline=timeline, audit_logs=audit_map
+        )
         assert timeline_schema.timeline[0].duration_seconds is not None
+        assert timeline_schema.timeline[0].audit_log is not None
