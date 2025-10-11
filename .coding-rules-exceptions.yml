@@ -9,6 +9,8 @@ exceptions:
     - backend/migrations/versions/20250220_000009_add_agent_advisory_feedback.py
     # Listing integration - uses if_exists=True guards in downgrade
     - backend/migrations/versions/20250220_000010_add_listing_integration_tables.py
+    # Business performance tables - uses if_exists=True guards in downgrade
+    - backend/migrations/versions/20250220_000011_add_business_performance_tables.py
     # Regstack migrations - different schema
     - db/versions/20250216000000_init_regstack.py
     - db/versions/20250217000100_add_provenance_checksum.py
