@@ -222,6 +222,8 @@ class AgentPerformanceService:
         processed: list[AgentPerformanceSnapshot] = []
 
         targeted = list(agent_ids) if agent_ids else await self._all_agent_ids(session)
+        if not targeted:
+            return []
         for agent_id in targeted:
             snapshot = await self.compute_snapshot(
                 session=session,
@@ -300,13 +302,15 @@ class AgentPerformanceService:
         return snapshot
 
     async def _all_agent_ids(self, session: AsyncSession) -> list[UUID]:
-        stmt = select(AgentDeal.agent_id).distinct()
+        from sqlalchemy import cast, String
+
+        stmt = select(cast(AgentDeal.agent_id, String)).distinct()
         result = await session.execute(stmt)
         ids = []
         for value in result.scalars():
             try:
                 ids.append(UUID(str(value)))
-            except (TypeError, ValueError):  # pragma: no cover - defensive check
+            except (TypeError, ValueError):
                 continue
         return ids
 

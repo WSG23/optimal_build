@@ -6,10 +6,13 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 from app.models.business_performance import (
+    AgentDeal,
     CommissionStatus,
     CommissionType,
     DealAssetType,
+    DealStatus,
     DealType,
+    PipelineStage,
 )
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
@@ -152,3 +155,41 @@ async def test_seed_benchmarks(async_session_factory):
         )
         assert len(benchmarks) >= 1
         assert float(benchmarks[0].value_numeric or 0.0) == pytest.approx(0.33)
+
+
+@pytest.mark.asyncio
+async def test_generate_skips_invalid_agent_ids(async_session_factory):
+    performance_service = AgentPerformanceService()
+
+    async with async_session_factory() as session:
+        # Insert a valid deal
+        deal_service = AgentDealService()
+        agent_id = uuid4()
+        await deal_service.create_deal(
+            session=session,
+            agent_id=agent_id,
+            title="Valid Deal",
+            asset_type=DealAssetType.OFFICE,
+            deal_type=DealType.SELL_SIDE,
+            created_by=agent_id,
+        )
+
+        # Simulate legacy/truncated data
+        session.add(
+            AgentDeal(
+                agent_id="f",
+                title="Bad Deal",
+                asset_type=DealAssetType.OFFICE,
+                deal_type=DealType.SELL_SIDE,
+                pipeline_stage=PipelineStage.LEAD_CAPTURED,
+                status=DealStatus.OPEN,
+            )
+        )
+        await session.commit()
+
+        snapshots = await performance_service.generate_daily_snapshots(
+            session=session,
+            as_of=None,
+        )
+        assert len(snapshots) == 1
+        assert str(snapshots[0].agent_id) == str(agent_id)
