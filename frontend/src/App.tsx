@@ -28,6 +28,7 @@ export function AppLayout({
     { path: '/feasibility', label: t('nav.feasibility') },
     { path: '/finance', label: t('nav.finance') },
     { path: '/agents/site-capture', label: t('nav.agentCapture') },
+    { path: '/agents/performance', label: t('nav.agentPerformance') },
     { path: '/visualizations/intelligence', label: t('nav.intelligence') },
   ]
 

@@ -14,6 +14,7 @@ import '@ob/tokens.css'
 import './index.css'
 import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
 import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
+import AgentPerformancePage from './pages/AgentPerformancePage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
   {
     path: '/agents/integrations',
     element: <AgentIntegrationsPage />,
+  },
+  {
+    path: '/agents/performance',
+    element: <AgentPerformancePage />,
   },
   {
     path: '/visualizations/intelligence',

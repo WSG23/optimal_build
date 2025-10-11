@@ -80,7 +80,7 @@ Authentication/authorization:
 
 ## 4. Frontend Plan
 - **New route:** `/agents/performance` (or extend integrations page) containing two tabs: `Pipeline` (Kanban) and `Analytics`.
-- **Pipeline Kanban (`PipelineBoard` component)**: Columns map to `PipelineStage`; cards display counterparty, asset type, estimated value, latest activity, and quick actions (move stage, log note).
+- **Pipeline Kanban (`PipelineBoard` component)**: Columns map to `PipelineStage`; cards display counterparty, asset type, estimated value, latest activity, and quick actions (move stage, log note). Initial implementation lives at `/agents/performance` with audit-aware timeline panel.
 - **Deal detail drawer:** Shows timeline (stage events + commission history) with audit hash/signature badges, contact list, documents, manual adjustments.
 - **Analytics dashboard:** charts using existing design-system components (bar charts, donut). Data sources: `/performance/summary` and `/performance/benchmarks`.
 - **Commission dispute UI:** modal to mark commission as disputed, collects reason, optionally attaches doc (URI stored via `agent_deal_documents`).

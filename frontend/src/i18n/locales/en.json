@@ -21,6 +21,37 @@
       "cancel": "Cancel"
     }
   },
+  "agentPerformance": {
+    "title": "Agent business performance",
+    "subtitle": "Track deal momentum and review audit-stamped stage changes.",
+    "common": {
+      "fallback": "—"
+    },
+    "errors": {
+      "loadDeals": "Unable to load deals. Please try again later.",
+      "loadTimeline": "Unable to load the deal timeline."
+    },
+    "stages": {
+      "lead_captured": "Lead captured",
+      "qualification": "Qualification",
+      "needs_analysis": "Needs analysis",
+      "proposal": "Proposal",
+      "negotiation": "Negotiation",
+      "agreement": "Agreement",
+      "due_diligence": "Due diligence",
+      "awaiting_closure": "Awaiting closure",
+      "closed_won": "Closed won",
+      "closed_lost": "Closed lost"
+    },
+    "timeline": {
+      "auditLabel": "Audit trail",
+      "durationLabel": "Stage duration",
+      "changedBy": "Changed by",
+      "note": "Notes",
+      "hash": "Hash",
+      "signature": "Signature"
+    }
+  },
   "app": {
     "title": "Optimal Build Studio",
     "tagline": "Accelerate compliance and design coordination across your CAD workflows.",
@@ -34,7 +65,8 @@
     "feasibility": "Feasibility wizard",
     "finance": "Finance workspace",
     "intelligence": "Advanced intelligence",
-    "agentCapture": "Agent GPS capture"
+    "agentCapture": "Agent GPS capture",
+    "agentPerformance": "Agent performance"
   },
   "home": {
     "cards": {
