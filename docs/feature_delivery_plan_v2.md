@@ -180,9 +180,9 @@
 ---
 
 ### Phase 1D: Business Performance Management ⚠️ IN PROGRESS
-**Status:** 35% - Deal pipeline API + audit logging (October 2025)
+**Status:** 45% - Deal pipeline + commission ledger API (October 2025)
 
-**Delivered (Milestone M1 - Deal Pipeline):**
+**Delivered (Milestone M1/M2 foundations):**
 - ✅ Database schema for agent deals, stage history, contacts, and documents
 - ✅ Alembic migration `20250220_000011_add_business_performance_tables.py`
 - ✅ SQLAlchemy models in `backend/app/models/business_performance.py`
@@ -191,17 +191,21 @@
 - ✅ Stage transitions append audit ledger (`deal_stage_transition`) events with hashed chains
 - ✅ Timeline responses provide per-stage `duration_seconds`
 - ✅ Timeline and API responses surface audit metadata (hash, signature, context) for each transition
-- ✅ Backend service tests passing (`test_agent_deal_pipeline.py`)
-- ⚠️ API smoke test skipped on Python 3.9 (will work on Python 3.10+ or real FastAPI)
+- ✅ Commission ledger schema, models, and migration (`agent_commission_records`, `agent_commission_adjustments`)
+- ✅ Commission service/API (`/commissions/...`) with audit-tracked status changes and adjustments
+- ✅ Backend service tests passing (`test_agent_deal_pipeline.py`, `test_agent_commissions.py`)
+- ⚠️ API smoke test skipped on Python 3.9 (runs on Python ≥3.10 / full FastAPI install)
 
 **Files Delivered:**
 - `backend/app/api/v1/deals.py` (REST endpoints)
 - `backend/app/services/deals/pipeline.py` (AgentDealService)
+- `backend/app/services/deals/commission.py` (AgentCommissionService)
 - `backend/app/schemas/deals.py` (Pydantic schemas)
 - `backend/tests/test_services/test_agent_deal_pipeline.py` (✅ passing)
+- `backend/tests/test_services/test_agent_commissions.py` (✅ passing)
 - `backend/tests/test_api/test_deals.py` (⚠️ skipped Python 3.9)
 
-**Test Status:** Backend service layer fully tested and passing (`python3 -m pytest backend/tests/test_services/test_agent_deal_pipeline.py`)
+**Test Status:** Backend service layer fully tested and passing (`python3 -m pytest backend/tests/test_services/test_agent_commissions.py backend/tests/test_services/test_agent_deal_pipeline.py`). API smoke endpoints execute on Python ≥3.10 (`backend/tests/test_api/test_deals.py`).
 
 **Requirements (from FEATURES.md lines 63-68):**
 - Cross-Asset Deal Pipeline tracker

@@ -142,6 +142,75 @@ async def test_create_and_update_deal_pipeline(deals_client, async_session_facto
     assert timeline[1]["note"] == "Term sheet issued"
 
 
+@pytest.mark.asyncio
+async def test_commission_endpoints(deals_client, async_session_factory):
+    agent_id = uuid4()
+
+    async with async_session_factory() as session:
+        session.add(
+            User(
+                id=str(agent_id),
+                email="commission-agent@example.com",
+                username="commission_agent",
+                full_name="Commission Agent",
+                hashed_password="secret",
+            )
+        )
+        await session.commit()
+
+    deal_payload = {
+        "title": "Harbourfront Commission",
+        "asset_type": "office",
+        "deal_type": "sell_side",
+        "agent_id": str(agent_id),
+    }
+    response = await deals_client.post("/api/v1/deals", json=deal_payload)
+    assert response.status_code == 201, response.text
+    deal_id = response.json()["id"]
+
+    commission_payload = {
+        "agent_id": str(agent_id),
+        "commission_type": "exclusive",
+        "basis_amount": "100000.00",
+        "commission_rate": "0.02",
+        "commission_amount": "2000.00",
+    }
+    create_commission = await deals_client.post(
+        f"/api/v1/deals/{deal_id}/commissions", json=commission_payload
+    )
+    assert create_commission.status_code == 201, create_commission.text
+    commission = create_commission.json()
+    assert commission["commission_type"] == "exclusive"
+    commission_id = commission["id"]
+
+    list_commissions = await deals_client.get(
+        f"/api/v1/deals/{deal_id}/commissions"
+    )
+    assert list_commissions.status_code == 200
+    records = list_commissions.json()
+    assert len(records) == 1
+
+    status_payload = {"status": "confirmed"}
+    status_response = await deals_client.post(
+        f"/api/v1/deals/commissions/{commission_id}/status", json=status_payload
+    )
+    assert status_response.status_code == 200, status_response.text
+    assert status_response.json()["status"] == "confirmed"
+
+    adjustment_payload = {
+        "adjustment_type": "bonus",
+        "amount": "500.00",
+        "note": "Quarterly incentive",
+    }
+    adjustment_response = await deals_client.post(
+        f"/api/v1/deals/commissions/{commission_id}/adjustments",
+        json=adjustment_payload,
+    )
+    assert adjustment_response.status_code == 201, adjustment_response.text
+    adjustment = adjustment_response.json()
+    assert adjustment["adjustment_type"] == "bonus"
+
+
 pytestmark = pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="FastAPI stub lacks request dependency injection for bearer security on Python < 3.10",

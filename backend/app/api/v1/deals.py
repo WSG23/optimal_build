@@ -11,8 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import Role, require_reviewer, require_viewer
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
-from app.models.business_performance import DealStatus, PipelineStage
+from app.models.business_performance import CommissionStatus, DealStatus, PipelineStage
 from app.schemas.deals import (
+    CommissionAdjustmentCreate,
+    CommissionAdjustmentResponse,
+    CommissionCreate,
+    CommissionResponse,
+    CommissionStatusChangeRequest,
     DealCreate,
     DealSchema,
     DealStageChangeRequest,
@@ -20,11 +25,12 @@ from app.schemas.deals import (
     DealUpdate,
     DealWithTimelineSchema,
 )
-from app.services.deals import AgentDealService
+from app.services.deals import AgentCommissionService, AgentDealService
 
 router = APIRouter(prefix="/deals", tags=["Business Performance"])
 
 service = AgentDealService()
+commission_service = AgentCommissionService()
 
 
 def _resolve_agent_id(
@@ -209,6 +215,142 @@ async def change_stage(
     return DealWithTimelineSchema.from_orm_deal(
         record, timeline=timeline, audit_logs=audit_logs
     )
+
+
+@router.get("/{deal_id}/commissions", response_model=list[CommissionResponse])
+async def list_commissions(
+    deal_id: UUID,
+    status_filter: CommissionStatus | None = Query(default=None, alias="status"),
+    _: Role = Depends(require_viewer),
+    session: AsyncSession = Depends(get_session),
+) -> list[CommissionResponse]:
+    deal = await service.get_deal(session=session, deal_id=deal_id)
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    statuses = [status_filter] if status_filter else None
+    records = await commission_service.list_commissions(
+        session=session, deal_id=deal_id, statuses=statuses
+    )
+    return [CommissionResponse.from_orm_record(record) for record in records]
+
+
+@router.post(
+    "/{deal_id}/commissions",
+    response_model=CommissionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_commission(
+    deal_id: UUID,
+    payload: CommissionCreate,
+    _: Role = Depends(require_reviewer),
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+) -> CommissionResponse:
+    deal = await service.get_deal(session=session, deal_id=deal_id)
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    actor = _maybe_actor(token)
+    record = await commission_service.create_commission(
+        session=session,
+        deal=deal,
+        agent_id=payload.agent_id,
+        commission_type=payload.commission_type,
+        status=payload.status,
+        basis_amount=float(payload.basis_amount)
+        if payload.basis_amount is not None
+        else None,
+        basis_currency=payload.basis_currency,
+        commission_rate=float(payload.commission_rate)
+        if payload.commission_rate is not None
+        else None,
+        commission_amount=float(payload.commission_amount)
+        if payload.commission_amount is not None
+        else None,
+        introduced_at=payload.introduced_at,
+        metadata=payload.metadata,
+        actor_id=actor,
+    )
+    return CommissionResponse.from_orm_record(record)
+
+
+@router.post(
+    "/commissions/{commission_id}/status",
+    response_model=CommissionResponse,
+)
+async def update_commission_status(
+    commission_id: UUID,
+    payload: CommissionStatusChangeRequest,
+    _: Role = Depends(require_reviewer),
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+) -> CommissionResponse:
+    record = await commission_service.get_commission(
+        session=session, commission_id=commission_id
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="Commission not found")
+
+    # deal_id might be UUID object or string depending on context
+    deal_uuid = record.deal_id if isinstance(record.deal_id, UUID) else UUID(record.deal_id)
+
+    deal = await service.get_deal(session=session, deal_id=deal_uuid)
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    actor = _maybe_actor(token)
+    updated = await commission_service.update_status(
+        session=session,
+        deal=deal,
+        record=record,
+        status=payload.status,
+        occurred_at=payload.occurred_at,
+        metadata=payload.metadata,
+        actor_id=actor,
+    )
+    return CommissionResponse.from_orm_record(updated)
+
+
+@router.post(
+    "/commissions/{commission_id}/adjustments",
+    response_model=CommissionAdjustmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_commission_adjustment(
+    commission_id: UUID,
+    payload: CommissionAdjustmentCreate,
+    _: Role = Depends(require_reviewer),
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+) -> CommissionAdjustmentResponse:
+    record = await commission_service.get_commission(
+        session=session, commission_id=commission_id
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="Commission not found")
+
+    # deal_id might be UUID object or string depending on context
+    deal_uuid = record.deal_id if isinstance(record.deal_id, UUID) else UUID(record.deal_id)
+
+    deal = await service.get_deal(session=session, deal_id=deal_uuid)
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    actor = _maybe_actor(token)
+    adjustment = await commission_service.create_adjustment(
+        session=session,
+        deal=deal,
+        record=record,
+        adjustment_type=payload.adjustment_type,
+        amount=float(payload.amount) if payload.amount is not None else None,
+        currency=payload.currency,
+        note=payload.note,
+        metadata=payload.metadata,
+        actor_id=actor,
+        recorded_at=payload.recorded_at,
+    )
+    return CommissionAdjustmentResponse.from_orm_adjustment(adjustment)
 
 
 @router.get("/{deal_id}/timeline", response_model=list[DealStageEventSchema])

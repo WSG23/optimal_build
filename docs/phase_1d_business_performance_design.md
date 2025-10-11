@@ -50,6 +50,7 @@ Indices:
 
 ### 3.1 Services
 - `app/services/deals/pipeline.py`: CRUD for `AgentDeal`, stage transition helpers that append `AgentDealStageEvent`, weighted pipeline calculations, and `timeline_with_audit()` to enrich stage history with hashed audit ledger entries.
+- `app/services/deals/commission.py`: Commission ledger helper wrapping create/status/adjustment flows, each emitting audit log entries (`deal_commission_*` events).
 - `app/services/deals/commission.py`: Commission lifecycle management; emits audit log events (`deal_commission_introduced`, `deal_commission_confirmed`, etc.) via the existing `audit_logs` chain.
 - `app/services/deals/performance.py`: Aggregation routines to compute metrics per agent/property type; writes to `agent_performance_snapshots`.
 - `app/services/deals/benchmark_ingest.py`: Loader for CSV/JSON benchmark data (invoked via Prefect or management CLI).

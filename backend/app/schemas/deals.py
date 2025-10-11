@@ -10,8 +10,13 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.business_performance import (
+    AgentCommissionAdjustment,
+    AgentCommissionRecord,
     AgentDeal,
     AgentDealStageEvent,
+    CommissionAdjustmentType,
+    CommissionStatus,
+    CommissionType,
     DealAssetType,
     DealStatus,
     DealType,
@@ -176,6 +181,125 @@ class DealWithTimelineSchema(DealSchema):
         return cls.model_validate(data)
 
 
+class CommissionCreate(BaseModel):
+    """Payload for creating a commission record."""
+
+    agent_id: UUID
+    commission_type: CommissionType
+    status: CommissionStatus = CommissionStatus.PENDING
+    basis_amount: Decimal | None = None
+    basis_currency: str = Field(default="SGD", min_length=3, max_length=3)
+    commission_rate: Decimal | None = None
+    commission_amount: Decimal | None = None
+    introduced_at: datetime | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class CommissionStatusChangeRequest(BaseModel):
+    """Request payload for a commission status transition."""
+
+    status: CommissionStatus
+    occurred_at: datetime | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class CommissionAdjustmentCreate(BaseModel):
+    """Payload for recording a commission adjustment."""
+
+    adjustment_type: CommissionAdjustmentType
+    amount: Decimal | None = None
+    currency: str = Field(default="SGD", min_length=3, max_length=3)
+    note: str | None = None
+    recorded_at: datetime | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class CommissionAdjustmentResponse(BaseModel):
+    """Serialised commission adjustment."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    commission_id: UUID
+    adjustment_type: CommissionAdjustmentType
+    amount: Decimal | None = None
+    currency: str
+    note: str | None = None
+    recorded_by: UUID | None = None
+    recorded_at: datetime
+    metadata: dict[str, Any]
+    audit_log_id: int | None = None
+
+    @classmethod
+    def from_orm_adjustment(
+        cls, adjustment: AgentCommissionAdjustment
+    ) -> "CommissionAdjustmentResponse":
+        return cls.model_validate(adjustment)
+
+
+class CommissionResponse(BaseModel):
+    """Commission record including adjustments."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    deal_id: UUID
+    agent_id: UUID
+    commission_type: CommissionType
+    status: CommissionStatus
+    basis_amount: Decimal | None = None
+    basis_currency: str
+    commission_rate: Decimal | None = None
+    commission_amount: Decimal | None = None
+    introduced_at: datetime | None = None
+    confirmed_at: datetime | None = None
+    invoiced_at: datetime | None = None
+    paid_at: datetime | None = None
+    disputed_at: datetime | None = None
+    resolved_at: datetime | None = None
+    metadata: dict[str, Any]
+    audit_log_id: int | None = None
+    created_at: datetime
+    updated_at: datetime
+    adjustments: list[CommissionAdjustmentResponse] = Field(default_factory=list, exclude=True)
+
+    @classmethod
+    def from_orm_record(
+        cls, record: AgentCommissionRecord
+    ) -> "CommissionResponse":
+        # Build dict manually to avoid lazy-loading adjustments during validation
+        data = {
+            "id": record.id,
+            "deal_id": record.deal_id,
+            "agent_id": record.agent_id,
+            "commission_type": record.commission_type,
+            "status": record.status,
+            "basis_amount": record.basis_amount,
+            "basis_currency": record.basis_currency,
+            "commission_rate": record.commission_rate,
+            "commission_amount": record.commission_amount,
+            "introduced_at": record.introduced_at,
+            "confirmed_at": record.confirmed_at,
+            "invoiced_at": record.invoiced_at,
+            "paid_at": record.paid_at,
+            "disputed_at": record.disputed_at,
+            "resolved_at": record.resolved_at,
+            "metadata": record.metadata,
+            "audit_log_id": record.audit_log_id,
+            "created_at": record.created_at,
+            "updated_at": record.updated_at,
+            "adjustments": [],
+        }
+        model = cls.model_validate(data)
+        # Only access adjustments if explicitly loaded
+        if hasattr(record, "__dict__") and "adjustments" in record.__dict__:
+            model.adjustments = [
+                CommissionAdjustmentResponse.from_orm_adjustment(adj)
+                for adj in record.adjustments
+            ]
+        return model
+
+
 __all__ = [
     "DealCreate",
     "DealSchema",
@@ -183,4 +307,9 @@ __all__ = [
     "DealStageEventSchema",
     "DealUpdate",
     "DealWithTimelineSchema",
+    "CommissionCreate",
+    "CommissionResponse",
+    "CommissionStatusChangeRequest",
+    "CommissionAdjustmentCreate",
+    "CommissionAdjustmentResponse",
 ]
