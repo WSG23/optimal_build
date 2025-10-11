@@ -13,6 +13,11 @@ from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.business_performance import DealStatus, PipelineStage
 from app.schemas.deals import (
+    CommissionAdjustmentCreate,
+    CommissionAdjustmentResponse,
+    CommissionCreate,
+    CommissionResponse,
+    CommissionStatusChangeRequest,
     DealCreate,
     DealSchema,
     DealStageChangeRequest,
@@ -20,11 +25,12 @@ from app.schemas.deals import (
     DealUpdate,
     DealWithTimelineSchema,
 )
-from app.services.deals import AgentDealService
+from app.services.deals import AgentCommissionService, AgentDealService
 
 router = APIRouter(prefix="/deals", tags=["Business Performance"])
 
 service = AgentDealService()
+commission_service = AgentCommissionService()
 
 
 def _resolve_agent_id(

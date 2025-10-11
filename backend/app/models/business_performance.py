@@ -13,6 +13,7 @@ from sqlalchemy import (
     Enum as SQLEnum,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -203,6 +204,9 @@ class AgentDeal(BaseModel):
     documents: Mapped[list["AgentDealDocument"]] = relationship(
         "AgentDealDocument", back_populates="deal", cascade="all, delete-orphan"
     )
+    commissions: Mapped[list["AgentCommissionRecord"]] = relationship(
+        "AgentCommissionRecord", back_populates="deal", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("ix_agent_deals_agent_stage", "agent_id", "pipeline_stage"),
@@ -354,6 +358,187 @@ class AgentDealDocument(BaseModel):
     )
 
 
+class CommissionType(str, Enum):
+    """Roles for commission attribution."""
+
+    INTRODUCER = "introducer"
+    EXCLUSIVE = "exclusive"
+    CO_BROKE = "co_broke"
+    REFERRAL = "referral"
+    BONUS = "bonus"
+
+
+class CommissionStatus(str, Enum):
+    """Lifecycle states for commission payout."""
+
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    INVOICED = "invoiced"
+    PAID = "paid"
+    DISPUTED = "disputed"
+    WRITTEN_OFF = "written_off"
+
+
+class CommissionAdjustmentType(str, Enum):
+    """Classification for commission adjustments."""
+
+    CLAWBACK = "clawback"
+    BONUS = "bonus"
+    CORRECTION = "correction"
+
+
+class AgentCommissionRecord(BaseModel):
+    """Ledger of commission entitlements for a deal."""
+
+    __tablename__ = "agent_commission_records"
+
+    id: Mapped[str] = mapped_column(
+        UUID(), primary_key=True, default=lambda: str(uuid4())
+    )
+    deal_id: Mapped[str] = mapped_column(
+        UUID(),
+        ForeignKey("agent_deals.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    agent_id: Mapped[str] = mapped_column(
+        UUID(),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    commission_type: Mapped[CommissionType] = mapped_column(
+        SQLEnum(
+            CommissionType,
+            name="commission_type",
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+    )
+    status: Mapped[CommissionStatus] = mapped_column(
+        SQLEnum(
+            CommissionStatus,
+            name="commission_status",
+            values_callable=_enum_values,
+        ),
+        default=CommissionStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
+    basis_amount: Mapped[Optional[float]] = mapped_column(Numeric(16, 2))
+    basis_currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, default="SGD", server_default="SGD"
+    )
+    commission_rate: Mapped[Optional[float]] = mapped_column(Numeric(5, 4))
+    commission_amount: Mapped[Optional[float]] = mapped_column(Numeric(16, 2))
+    introduced_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    confirmed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    invoiced_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    disputed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
+    metadata = MetadataProxy()
+    audit_log_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("audit_logs.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    deal: Mapped[AgentDeal] = relationship("AgentDeal", back_populates="commissions")
+    adjustments: Mapped[list["AgentCommissionAdjustment"]] = relationship(
+        "AgentCommissionAdjustment",
+        back_populates="commission",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        Index("ix_agent_commission_records_deal_status", "deal_id", "status"),
+        Index("ix_agent_commission_records_agent_status", "agent_id", "status"),
+        UniqueConstraint(
+            "deal_id",
+            "agent_id",
+            "commission_type",
+            name="uq_agent_commission_unique_type",
+        ),
+    )
+
+
+class AgentCommissionAdjustment(BaseModel):
+    """Adjustments applied to a commission record (clawbacks, bonuses, etc)."""
+
+    __tablename__ = "agent_commission_adjustments"
+
+    id: Mapped[str] = mapped_column(
+        UUID(), primary_key=True, default=lambda: str(uuid4())
+    )
+    commission_id: Mapped[str] = mapped_column(
+        UUID(),
+        ForeignKey("agent_commission_records.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    adjustment_type: Mapped[CommissionAdjustmentType] = mapped_column(
+        SQLEnum(
+            CommissionAdjustmentType,
+            name="commission_adjustment_type",
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+    )
+    amount: Mapped[Optional[float]] = mapped_column(Numeric(16, 2))
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, default="SGD", server_default="SGD"
+    )
+    note: Mapped[Optional[str]] = mapped_column(Text)
+    recorded_by: Mapped[Optional[str]] = mapped_column(
+        UUID(),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    metadata_json: Mapped[dict] = mapped_column(
+        "metadata", JSONType, default=dict, nullable=False
+    )
+    metadata = MetadataProxy()
+    audit_log_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("audit_logs.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    commission: Mapped[AgentCommissionRecord] = relationship(
+        "AgentCommissionRecord", back_populates="adjustments"
+    )
+
+    __table_args__ = (
+        Index("ix_agent_commission_adjustments_type", "adjustment_type"),
+        Index("ix_agent_commission_adjustments_recorded_at", "recorded_at"),
+    )
+
+
 __all__ = [
     "AgentDeal",
     "AgentDealStageEvent",
@@ -365,4 +550,9 @@ __all__ = [
     "PipelineStage",
     "DealContactType",
     "DealDocumentType",
+    "CommissionType",
+    "CommissionStatus",
+    "CommissionAdjustmentType",
+    "AgentCommissionRecord",
+    "AgentCommissionAdjustment",
 ]
