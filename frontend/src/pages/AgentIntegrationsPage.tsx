@@ -12,6 +12,7 @@ import {
 const PROVIDERS = [
   { key: 'propertyguru', label: 'PropertyGuru (mock)' },
   { key: 'edgeprop', label: 'EdgeProp (mock)' },
+  { key: 'zoho_crm', label: 'Zoho CRM (mock)' },
 ] as const
 
 type ProviderKey = (typeof PROVIDERS)[number]['key']
@@ -19,6 +20,14 @@ type ProviderKey = (typeof PROVIDERS)[number]['key']
 type ProviderState = Record<ProviderKey, string>
 
 type PublishState = Record<ProviderKey, { propertyId: string; externalId: string }>
+
+const PROVIDER_LABEL: Record<ProviderKey, string> = PROVIDERS.reduce(
+  (acc, provider) => ({
+    ...acc,
+    [provider.key]: provider.label,
+  }),
+  {} as Record<ProviderKey, string>,
+)
 
 function createDefaultCodes(): ProviderState {
   return PROVIDERS.reduce<ProviderState>((acc, provider) => {
@@ -83,7 +92,7 @@ export function AgentIntegrationsPage() {
         const filtered = current.filter((row) => row.id !== account.id)
         return [...filtered, account]
       })
-      setMessage(`${provider} account linked.`)
+      setMessage(`${PROVIDER_LABEL[provider]} account linked.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect account')
     }
@@ -106,7 +115,7 @@ export function AgentIntegrationsPage() {
         external_id: externalId.trim() || `${provider}-listing`,
         title: `Mock listing (${provider})`,
       })
-      setMessage(`${provider} published ${result.listing_id}.`)
+      setMessage(`${PROVIDER_LABEL[provider]} published ${result.listing_id}.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to publish listing')
     }
@@ -119,7 +128,7 @@ export function AgentIntegrationsPage() {
       setAccounts((existing) =>
         existing.filter((account) => account.provider !== provider),
       )
-      setMessage(`${provider} account disconnected.`)
+      setMessage(`${PROVIDER_LABEL[provider]} account disconnected.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to disconnect account')
     }

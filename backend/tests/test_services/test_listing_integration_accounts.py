@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 import pytest
+
 from app.models.listing_integration import ListingProvider
 from app.models.users import User
 from app.services.integrations.accounts import ListingIntegrationAccountService

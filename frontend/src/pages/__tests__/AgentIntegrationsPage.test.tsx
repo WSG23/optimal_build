@@ -72,8 +72,21 @@ describe('AgentIntegrationsPage', () => {
           updated_at: new Date().toISOString(),
         })
       }
+      if (url.includes('/zoho_crm/connect')) {
+        expectJsonBody(init)
+        return jsonResponse({
+          id: 'account-3',
+          user_id: 'user-1',
+          provider: 'zoho_crm',
+          status: 'connected',
+          metadata: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+      }
       if (url.includes('/disconnect')) {
-        return jsonResponse({ status: 'disconnected', provider: 'propertyguru' })
+        const provider = url.split('/').slice(-2)[0]
+        return jsonResponse({ status: 'disconnected', provider })
       }
       if (url.includes('/publish')) {
         expectJsonBody(init)
@@ -114,7 +127,7 @@ describe('AgentIntegrationsPage', () => {
     }).parentElement as HTMLElement
 
     fireEvent.submit(propertyGuruSection.querySelector('form') as HTMLFormElement)
-    await screen.findByText(/propertyguru account linked/i, undefined, {
+    await screen.findByText(/PropertyGuru .*account linked/i, undefined, {
       timeout: 2000,
     })
 

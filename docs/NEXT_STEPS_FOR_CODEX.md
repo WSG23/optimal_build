@@ -1,307 +1,348 @@
-# IMMEDIATE NEXT STEPS FOR CODEX
+# NEXT STEPS GUIDE FOR CODEX (AND OTHER AI AGENTS)
 
-> **Last Updated:** 2025-10-11 by Claude
-> **Current Phase:** Phase 1C completion → Next options
-
----
-
-## 📋 Current Status
-
-**You just completed:** Phase 1C Listing Integrations (Mock Flow with Token Lifecycle) ✅
-
-### ✅ Recently Completed Phases:
-
-| Phase | Feature | Status | Test Status |
-|-------|---------|--------|-------------|
-| **1A** | Agent GPS Capture | ✅ Complete | ✅ Backend passing |
-| **1A** | Marketing Pack Generation | ✅ Complete | ✅ Backend passing |
-| **1B** | Agent Advisory (Asset Mix, Positioning, Absorption, Feedback) | ✅ Complete | ✅ Backend passing, ⚠️ Frontend timing issue (documented) |
-| **1C** | Listing Integrations Mock (PropertyGuru + Token Lifecycle) | ✅ Complete | ✅ Backend passing, ⚠️ Frontend timing issue (documented) |
-
-### 📊 Overall Progress:
-- ✅ **~75%** of Phase 1 (Agent Foundation) complete
-- ⏸️ Waiting for human-led agent validation sessions
-- ⚠️ Frontend tests have known JSDOM timing issues → See [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md)
-
-### 🔍 What We Just Verified (2025-10-11):
-- ✅ Backend test passes: `test_propertyguru_mock_flow` exercises full token lifecycle
-- ✅ Token helpers work: `is_token_valid()` and `needs_refresh()` in accounts.py
-- ✅ 401 on expired tokens works correctly
-- ✅ Database migration applied: `listing_integration_accounts` and `listing_publications` tables exist
-- ⚠️ Frontend test fails due to documented JSDOM async timing issue (feature works)
+> **⚠️ IMPORTANT:** This is a **DECISION GUIDE**, not a status tracker.
+>
+> **For current project status:** See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — start with the "📊 Current Progress Snapshot" section
+>
+> **Last Updated:** 2025-10-11
 
 ---
 
-## 🎯 What You Should Work On Next
+## 🎯 Quick Start (20 Minutes)
 
-### CHOOSE ONE OF THESE OPTIONS:
+**New to this project? Follow these steps:**
 
-#### ⭐ **Option A: Harden Phase 1C - Token Encryption** (RECOMMENDED)
+### Step 1: Check Current Status (5 min)
+→ Read [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md), beginning with the "📊 Current Progress Snapshot" section
 
-**Why this first:**
-- Security requirement before accepting real OAuth credentials
-- Prevents storing plaintext tokens in production
-- Relatively small, focused task
+Look for:
+- ✅ What's complete
+- ⏸️ What's in progress
+- ❌ What's not started
 
-**What to build:**
-1. Add encryption/decryption for `access_token` and `refresh_token` fields
-   - Use `cryptography.fernet.Fernet` or AWS KMS
-   - Store encryption key in environment variable
-   - Encrypt before save, decrypt on load
-2. Update `ListingIntegrationAccountService` to handle encryption
-3. Add tests for encrypted token storage/retrieval
+### Step 2: Check for Known Issues (5 min)
+→ Read [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md)
 
-**Files to modify:**
-- `backend/app/services/integrations/accounts.py` - Add encryption helpers
-- `backend/app/models/listing_integration.py` - Add property methods for token access
-- `backend/tests/test_services/test_listing_integration_accounts.py` - Test encryption
+This prevents you from:
+- ❌ Investigating known test harness issues
+- ❌ Trying to fix documented limitations
+- ❌ Wasting time on non-problems
 
-**Acceptance criteria:**
-- Tokens stored encrypted in database
-- Service can decrypt and use tokens
-- Tests verify encryption/decryption works
-- Environment variable for encryption key
+### Step 3: Understand the Codebase (5 min)
+→ Read [FEATURES.md](../FEATURES.md) (just scan headers)
+→ Read [CODING_RULES.md](../CODING_RULES.md) (reference while coding)
 
-**Estimated effort:** 1-2 days
-
-**References:**
-- [Cryptography docs](https://cryptography.io/en/latest/fernet/)
-- Similar pattern in existing codebase: `backend/app/core/security.py`
+### Step 4: Choose Your Task (5 min)
+→ Use the decision tree below
 
 ---
 
-#### **Option B: Extend Mock Pattern to EdgeProp + Zoho**
+## 🌳 Decision Tree: What Should I Build?
 
-**Why this:**
-- Completes the mock integration foundation
-- Validates the abstraction pattern works for multiple providers
-- Enables testing multi-platform publishing
+### Question 1: Is there a ❌ NOT STARTED task in current phase?
 
-**What to build:**
-1. Create `EdgePropClient` similar to `PropertyGuruClient`
-2. Create `ZohoCRMClient` for lead management
-3. Add endpoints for EdgeProp and Zoho in `listings.py`
-4. Update frontend to show all three providers
+**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — use the current phase callout in "📊 Current Progress Snapshot"
 
-**Files to create/modify:**
-- `backend/app/services/integrations/edgeprop.py` - New client
-- `backend/app/services/integrations/zoho.py` - New client
-- `backend/app/api/v1/listings.py` - Add new endpoints
-- `frontend/src/pages/AgentIntegrationsPage.tsx` - Show all providers
-- `backend/tests/test_api/test_listing_integrations.py` - Test new flows
+**If YES:** Build that task (skip to "How to Start")
 
-**Acceptance criteria:**
-- Can connect/disconnect EdgeProp and Zoho accounts
-- Can publish listings to all three platforms
-- Token lifecycle works for all providers
-- Tests exercise all three mocks
-
-**Estimated effort:** 3-4 days
+**If NO:** Go to Question 2
 
 ---
 
-#### **Option C: Real PropertyGuru OAuth Implementation**
+### Question 2: Is current phase blocked?
 
-**Why this:**
-- Enables real production integration
-- Tests with actual API
-- Validates token refresh flow
+**Common blockers:**
+- "Waiting for API credentials"
+- "Waiting for user validation"
+- "Depends on Phase X completion"
 
-**BLOCKERS:**
-- ⚠️ Requires PropertyGuru API credentials from user
-- ⚠️ Requires Option A (encryption) to be done first
-- ⚠️ May need production OAuth callback URL
+**If BLOCKED:** Go to Question 3
 
-**What to build:**
-1. Implement real OAuth flow (authorization_code grant)
-2. Implement token refresh using refresh_token
-3. Implement real listing publish API call
-4. Handle API errors and rate limiting
-
-**Files to modify:**
-- `backend/app/services/integrations/propertyguru.py` - Replace mocks with real HTTP
-- `backend/app/api/v1/listings.py` - Update OAuth callback handling
-- `frontend/src/pages/AgentIntegrationsPage.tsx` - Real OAuth redirect flow
-
-**Acceptance criteria:**
-- OAuth flow redirects to PropertyGuru and back
-- Stores real access/refresh tokens (encrypted)
-- Can publish real listing to PropertyGuru
-- Token refresh works automatically
-
-**Estimated effort:** 5-7 days
-
-**Prerequisites:**
-1. Complete Option A (encryption) first
-2. Obtain PropertyGuru API credentials from user
-3. Configure OAuth callback URL
+**If NOT BLOCKED:** Something's wrong - ask the user
 
 ---
 
-#### **Option D: Move to Phase 1D - Business Performance**
+### Question 3: What's the next unblocked phase?
 
-**What this is:**
-- Agent deal tracking
-- Commission calculations
-- Performance analytics
-- Portfolio management
+**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — review the "Phase 1D: Business Performance Management" section and the phases that follow
 
-**Why NOT recommended yet:**
-- Phase 1B/1C validation hasn't happened yet
-- Better to harden existing work first
-- User may have feedback on advisory/integrations
+**Look for:**
+- Phase marked ❌ NOT STARTED
+- No dependency blockers
+- No external requirements
 
-**When to do this:**
-- After user validates Phase 1A-1C
-- After at least Option A (encryption) is done
+**Found one?** Build that (skip to "How to Start")
+
+**All phases blocked?** Ask the user for direction
 
 ---
 
-## 🚫 What NOT to Do Next
+## 📚 How to Start a New Phase
 
-**DO NOT start these yet:**
-- ❌ Phase 2 (Developer Tools) - must finish Phase 1 and validate first
-- ❌ Phase 3 (Architects) - way too early
-- ❌ Phase 4 (Engineers) - way too early
-- ❌ Phase 5 (Gov APIs) - can start later in parallel
-- ❌ Phase 6 (Polish) - much later
+### Before Writing Code:
 
-**Why?**
-- The delivery plan follows logical dependencies
-- Each phase must be validated before moving on
-- Jumping ahead creates integration debt
+**1. Read the phase requirements**
+- Location: [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
+- Find your phase section
+- Note: Requirements, Acceptance Criteria, Estimated Effort
 
----
+**2. Check FEATURES.md for details**
+- The plan will reference section headers (e.g., "Phase 1D: Business Performance Management")
+- Read those sections in [FEATURES.md](../FEATURES.md)
+- This is the detailed specification
 
-## 📚 Key Documents You Must Reference
+**3. Verify dependencies**
+- Check "Dependencies" section in the phase
+- Ensure prerequisite phases are ✅ COMPLETE
+- If blocked, choose a different phase
 
-**Before starting work:**
-1. ✅ Read this file (NEXT_STEPS_FOR_CODEX.md)
-2. ✅ Check [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) - Known test issues
-3. ✅ Review [FEATURES.md](../FEATURES.md) - Source of truth for requirements
-4. ✅ Check [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) - Full roadmap
+### While Building:
 
-**While coding:**
-- [CODING_RULES.md](../CODING_RULES.md) - Code standards and patterns
-- [TESTING_DOCUMENTATION_SUMMARY.md](../TESTING_DOCUMENTATION_SUMMARY.md) - Testing workflows
+**4. Follow CODING_RULES.md**
+- [CODING_RULES.md](../CODING_RULES.md) has:
+  - Migration patterns
+  - Async/await standards
+  - Import ordering rules
+  - Singapore compliance requirements
 
-**After completing features:**
-- Update this file (NEXT_STEPS_FOR_CODEX.md)
-- Update [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
-- Run tests and document status
+**5. Write tests as you go**
+- Backend tests: Always write and make them pass
+- Frontend tests: Write them, but known JSDOM timing issues exist
+- Document test status in commit message
 
----
+**6. Check for existing patterns**
+- Look at completed phases for patterns
+- Reuse service/API/frontend structures
+- Keep consistency
 
-## ✅ Definition of Done
+### After Completing Work:
 
-Before marking ANY feature complete, ensure:
-
-### Code Quality:
-- [ ] All backend tests pass
-- [ ] Code follows CODING_RULES.md
-- [ ] No linting errors
-- [ ] Imports properly ordered
-
-### Functionality:
-- [ ] Feature works as described in FEATURES.md
-- [ ] Manual testing confirms behavior
-- [ ] Error cases handled gracefully
-
-### Documentation:
-- [ ] Code comments explain complex logic
-- [ ] API documentation updated (if applicable)
-- [ ] This file (NEXT_STEPS_FOR_CODEX.md) updated
-- [ ] feature_delivery_plan_v2.md status updated
-
-### Testing:
-- [ ] Backend tests written and passing
-- [ ] Frontend tests written (even if timing issues exist)
-- [ ] Test coverage documented
-
-### Known Issues:
-- [ ] Frontend JSDOM timing issues documented in TESTING_KNOWN_ISSUES.md
-- [ ] Workarounds clearly noted
-- [ ] Manual testing confirms feature works despite test issues
-
----
-
-## 📊 Progress Tracking
-
-### Current Phase Status:
-```
-Phase 1A: GPS Capture + Marketing ✅ COMPLETE
-Phase 1B: Agent Advisory ✅ COMPLETE
-Phase 1C: Listing Integrations (Mock) ✅ COMPLETE
-Phase 1C: Token Encryption ❌ NOT STARTED ← RECOMMENDED NEXT
-Phase 1C: EdgeProp/Zoho Mocks ❌ NOT STARTED
-Phase 1C: Real PropertyGuru OAuth ❌ NOT STARTED (blocked on credentials)
-Phase 1D: Business Performance ❌ NOT STARTED
+**7. Update feature_delivery_plan_v2.md** (CRITICAL)
+```diff
+- ### Phase X: Feature Name ❌ NOT STARTED
++ ### Phase X: Feature Name ✅ COMPLETE
++ **Status:** 100% - Completed [Month] 2025
++ **Test Status:** [Backend passing / Frontend status]
++ **Files Delivered:** [list key files]
 ```
 
-### When You Complete a Feature:
-1. Update status in this file
-2. Update `feature_delivery_plan_v2.md`
-3. Commit with message: `Complete [feature name] - Phase [X][Y]`
-4. Run tests and document results
-5. Update TESTING_KNOWN_ISSUES.md if new issues found
+**8. Run tests and document results**
+```bash
+# Backend
+python -m pytest backend/tests/test_[your_feature].py -v
+
+# Frontend (if applicable)
+npm run lint
+NODE_ENV=test node --test ...
+```
+
+**9. Commit with descriptive message**
+```bash
+git commit -m "Complete Phase X: Feature Name
+
+- Delivered: [key features]
+- Tests: Backend passing, Frontend [status]
+- Files: [key files created/modified]
+
+See feature_delivery_plan_v2.md for full details."
+```
 
 ---
 
-## 🤝 When to Ask for Help
+## 🚫 What NOT to Do
 
-**ASK the user when:**
-- ✅ You need PropertyGuru/EdgeProp/Zoho API credentials
-- ✅ You're unsure about encryption key management approach
-- ✅ You need validation of implementation decisions
-- ✅ You encounter blockers that prevent progress
-- ✅ You want to clarify feature requirements from FEATURES.md
-- ✅ You discover new test issues that need documenting
+### ❌ Don't Duplicate Status in This File
 
-**DON'T ask about:**
-- ❌ General implementation decisions (you can make those)
-- ❌ Code structure (follow CODING_RULES.md)
-- ❌ Testing approach (follow existing patterns)
-- ❌ Documentation format (follow existing docs)
-- ❌ Known test timing issues (documented in TESTING_KNOWN_ISSUES.md)
+**WRONG:**
+```markdown
+Phase 1B: ✅ COMPLETE
+Phase 1C: ✅ COMPLETE
+Phase 1D: ❌ NOT STARTED ← Do this next
+```
 
----
+**This creates two sources of truth and they WILL get out of sync.**
 
-## 🔄 Validation Checkpoint
-
-**After Phase 1 is complete:**
-- Human will conduct agent validation sessions
-- Feedback will be incorporated
-- Then proceed to Phase 2 (Developer tools)
-
-**Do not skip validation!** It's critical for ensuring product-market fit.
+**RIGHT:**
+```markdown
+For current status, see the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md
+```
 
 ---
 
-## 📞 Quick Reference for New AI Agents
+### ❌ Don't Skip the Delivery Plan
 
-**"I'm a new AI agent picking up this project. Where do I start?"**
+**WRONG:** Just ask user "what should I build?"
 
-1. ✅ Read [docs/README.md](README.md) - Start here (5 min)
-2. ✅ Read this file - Current status and next tasks (10 min)
-3. ✅ Read [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) - Don't waste time on known issues (5 min)
-4. ✅ Choose Option A, B, or C above and start building
-
-**"What's the current state?"**
-- Phase 1A/1B/1C mock flows are complete
-- Backend tests passing
-- Frontend tests have known timing issues (not bugs)
-- Next: Choose token encryption, extend mocks, or real OAuth
-
-**"Are there any known issues?"**
-- Yes! Frontend JSDOM timing issues → See TESTING_KNOWN_ISSUES.md
-- Don't try to fix them - they're documented test harness limitations
-- Features work correctly in manual testing
-
-**"What should I build next?"**
-- **Recommended:** Option A (Token Encryption) - 1-2 days, critical for security
-- **Alternative:** Option B (EdgeProp/Zoho Mocks) - 3-4 days, extends pattern
-- **Blocked:** Option C (Real OAuth) - needs credentials and encryption first
+**RIGHT:**
+1. Check delivery plan for current phase
+2. If unclear or blocked, THEN ask user
 
 ---
 
-**Ready to start? Pick Option A (Token Encryption) and let's make it production-ready!** 🔐
+### ❌ Don't Start Phase 2 Before Phase 1 Done
+
+**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — look at the "Phase 1 Completion Gate" checklist
+
+**Phase 1 Completion Gate:**
+- All 6 Agent tools implemented
+- User validation complete
+- Feedback incorporated
+
+**Don't jump ahead** - the phases have dependencies.
+
+---
+
+## 🎯 Common Scenarios
+
+### Scenario 1: "I'm starting fresh on this project"
+
+**Do this:**
+1. Read the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md (5 min)
+2. Read TESTING_KNOWN_ISSUES.md (5 min)
+3. Find first ❌ NOT STARTED task without blockers
+4. Read that phase's requirements
+5. Start building
+
+**Time to first code:** ~20 minutes
+
+---
+
+### Scenario 2: "Previous AI agent just finished Phase X"
+
+**Do this:**
+1. Verify Phase X shows ✅ COMPLETE in feature_delivery_plan_v2.md
+2. Look for next ❌ NOT STARTED phase
+3. Check for blockers
+4. If blocked, find next unblocked phase
+5. Start building
+
+**Time to continue:** ~10 minutes
+
+---
+
+### Scenario 3: "Tests are failing - is this a bug?"
+
+**Do this:**
+1. Check TESTING_KNOWN_ISSUES.md first
+2. Is it listed there? → Not a bug, skip it
+3. Not listed? → Investigate as real bug
+4. If new issue found → Document it (see workflow in TESTING_KNOWN_ISSUES.md)
+
+---
+
+### Scenario 4: "Phase is blocked on API credentials"
+
+**Do this:**
+1. Note the blocker in your message to user
+2. Find next unblocked phase
+3. Build that instead
+4. Keep momentum going
+
+**Don't:** Wait around for credentials
+
+---
+
+### Scenario 5: "User says 'continue where we left off'"
+
+**Do this:**
+1. Read the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md
+2. Find the most recent ✅ COMPLETE phase
+3. Look for next ❌ NOT STARTED
+4. That's where you left off
+5. Confirm with user if unclear
+
+---
+
+## 📊 Understanding Phase Dependencies
+
+### Phase Order (from delivery plan):
+
+```
+Phase 1: Agent Foundation (A → B → C → D)
+  ├─ 1A: GPS Capture ✅ No dependencies
+  ├─ 1B: Advisory ⚠️ Can start (uses 1A data)
+  ├─ 1C: Integrations ⚠️ Can start (parallel with 1B)
+  └─ 1D: Performance ⚠️ Uses data from 1B + 1C
+
+Phase 2: Developer Foundation (depends on Phase 1 complete)
+  └─ Can't start until Phase 1 validated
+
+Phase 3+: Later phases (depend on Phase 2)
+```
+
+**Key rule:** Don't skip ahead. Validate before moving to next major phase.
+
+---
+
+## 🤝 When to Ask the User
+
+### ASK when:
+- ✅ Current phase is blocked and ALL phases are blocked
+- ✅ Requirements are ambiguous or contradictory
+- ✅ You need external credentials/API access
+- ✅ Major architectural decision needed
+- ✅ Validation results change priorities
+
+### DON'T ASK when:
+- ❌ Status is clear in feature_delivery_plan_v2.md
+- ❌ Test failure is in TESTING_KNOWN_ISSUES.md
+- ❌ Coding pattern exists in codebase
+- ❌ Answer is in FEATURES.md or CODING_RULES.md
+
+**Be autonomous** - most answers are in the docs.
+
+---
+
+## 🔄 Update Workflow
+
+### When You Complete a Phase:
+
+**1. Update feature_delivery_plan_v2.md (Required)**
+- Change ❌ NOT STARTED → ✅ COMPLETE
+- Add completion date
+- Add test status
+- List key files delivered
+
+**2. Do NOT Update This File**
+- This file is a guide, not a status tracker
+- Status lives in feature_delivery_plan_v2.md only
+
+**3. Update TESTING_KNOWN_ISSUES.md (If Applicable)**
+- Add new issues to "Active Issues"
+- Move resolved issues to "Resolved Issues"
+- Follow the workflow in that document
+
+---
+
+## 📞 Quick Reference
+
+| Question | Answer |
+|----------|--------|
+| **"What's the current status?"** | [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — see "📊 Current Progress Snapshot" |
+| **"What should I build next?"** | Use decision tree above |
+| **"Are there known test issues?"** | [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) |
+| **"What are the requirements?"** | [FEATURES.md](../FEATURES.md) + phase section in delivery plan |
+| **"How should I write code?"** | [CODING_RULES.md](../CODING_RULES.md) |
+| **"How do I update docs?"** | See "Update Workflow" above |
+
+---
+
+## 🎯 Success Checklist
+
+Before saying "I'm done with Phase X":
+
+- [ ] ✅ Feature works as specified in FEATURES.md
+- [ ] ✅ Backend tests written and passing
+- [ ] ✅ Frontend tests written (even if timing issues exist)
+- [ ] ✅ Code follows CODING_RULES.md
+- [ ] ✅ feature_delivery_plan_v2.md updated (status → ✅ COMPLETE)
+- [ ] ✅ Commit message describes what was delivered
+- [ ] ✅ Known issues documented (if any)
+
+---
+
+## 🚀 Ready to Start?
+
+**Go to:** the "📊 Current Progress Snapshot" section in [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
+
+Find your next task and start building! 💪

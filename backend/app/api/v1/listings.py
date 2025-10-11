@@ -12,13 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import Role, get_request_role
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
-from app.models.listing_integration import (
-    ListingIntegrationAccount,
-    ListingProvider,
-)
+from app.models.listing_integration import ListingIntegrationAccount, ListingProvider
 from app.services.integrations.accounts import ListingIntegrationAccountService
 from app.services.integrations.edgeprop import EdgePropClient
 from app.services.integrations.propertyguru import PropertyGuruClient
+from app.services.integrations.zoho import ZohoClient
 
 router = APIRouter(prefix="/integrations/listings", tags=["Commercial Property Agent"])
 
@@ -26,6 +24,7 @@ account_service = ListingIntegrationAccountService()
 CLIENTS: Dict[ListingProvider, Any] = {
     ListingProvider.PROPERTYGURU: PropertyGuruClient(),
     ListingProvider.EDGEPROP: EdgePropClient(),
+    ListingProvider.ZOHO_CRM: ZohoClient(),
 }
 logger = structlog.get_logger()
 

@@ -150,6 +150,23 @@ class ListingIntegrationAccountService:
     def refresh_token(self, account: ListingIntegrationAccount) -> Optional[str]:
         return self._cipher.decrypt(account.refresh_token)
 
+    async def store_tokens(
+        self,
+        *,
+        account: ListingIntegrationAccount,
+        access_token: str,
+        refresh_token: str,
+        expires_at: datetime,
+        session: AsyncSession,
+    ) -> ListingIntegrationAccount:
+        account.access_token = self._cipher.encrypt(access_token)
+        account.refresh_token = self._cipher.encrypt(refresh_token)
+        account.expires_at = expires_at
+        account.status = ListingAccountStatus.CONNECTED
+        await session.commit()
+        await session.refresh(account)
+        return account
+
     async def ensure_account_for_providers(
         self,
         *,
