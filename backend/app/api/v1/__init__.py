@@ -80,6 +80,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "market_intelligence",  # Market intelligence analytics API
     "agents",  # Commercial property advisor agent endpoints
     "deals",  # Business performance pipeline endpoints
+    "performance",  # Agent performance analytics endpoints
     "advanced_intelligence",  # Investigation analytics stubs
     "listings",
 )

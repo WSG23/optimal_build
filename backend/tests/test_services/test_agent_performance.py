@@ -1,0 +1,122 @@
+from __future__ import annotations
+
+from importlib import import_module
+from uuid import uuid4
+
+import pytest
+import pytest_asyncio
+from app.models.business_performance import (
+    CommissionStatus,
+    CommissionType,
+    DealAssetType,
+    DealType,
+)
+from app.models.users import User
+from app.services.deals import AgentCommissionService, AgentDealService
+from app.services.deals.performance import AgentPerformanceService
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _override_async_session_factory(flow_session_factory, monkeypatch):
+    module = import_module("app.core.database")
+    monkeypatch.setattr(
+        module,
+        "AsyncSessionLocal",
+        flow_session_factory,
+        raising=False,
+    )
+    yield
+
+
+@pytest.mark.asyncio
+async def test_compute_snapshot(async_session_factory):
+    deal_service = AgentDealService()
+    commission_service = AgentCommissionService()
+    performance_service = AgentPerformanceService()
+
+    agent_id = uuid4()
+
+    async with async_session_factory() as session:
+        session.add(
+            User(
+                id=str(agent_id),
+                email="snapshot-agent@example.com",
+                username="snapshot_agent",
+                full_name="Snapshot Agent",
+                hashed_password="secret",
+            )
+        )
+        await session.commit()
+
+        closed_deal = await deal_service.create_deal(
+            session=session,
+            agent_id=agent_id,
+            title="Closed Tower Sale",
+            asset_type=DealAssetType.OFFICE,
+            deal_type=DealType.SELL_SIDE,
+            estimated_value_amount=1_000_000.0,
+            confidence=0.5,
+            created_by=agent_id,
+        )
+        await deal_service.change_stage(
+            session=session,
+            deal=closed_deal,
+            to_stage=closed_deal.pipeline_stage.CLOSED_WON,  # type: ignore[attr-defined]
+            changed_by=agent_id,
+        )
+
+        open_deal = await deal_service.create_deal(
+            session=session,
+            agent_id=agent_id,
+            title="Open Retail Prospect",
+            asset_type=DealAssetType.RETAIL,
+            deal_type=DealType.LEASE,
+            estimated_value_amount=500_000.0,
+            confidence=0.2,
+            created_by=agent_id,
+        )
+
+        commission = await commission_service.create_commission(
+            session=session,
+            deal=closed_deal,
+            agent_id=agent_id,
+            commission_type=CommissionType.EXCLUSIVE,
+            basis_amount=100_000.0,
+            commission_rate=0.05,
+            commission_amount=5_000.0,
+        )
+        await commission_service.update_status(
+            session=session,
+            deal=closed_deal,
+            record=commission,
+            status=CommissionStatus.CONFIRMED,
+        )
+
+        snapshot = await performance_service.compute_snapshot(
+            session=session,
+            agent_id=agent_id,
+        )
+
+        assert str(snapshot.agent_id) == str(agent_id)
+        assert snapshot.deals_open == 1
+        assert snapshot.deals_closed_won == 1
+        assert snapshot.deals_closed_lost == 0
+        assert float(snapshot.gross_pipeline_value or 0.0) == pytest.approx(1_500_000.0)
+        assert float(snapshot.weighted_pipeline_value or 0.0) == pytest.approx(
+            1_000_000.0 * 0.5 + 500_000.0 * 0.2
+        )
+        assert float(snapshot.confirmed_commission_amount or 0.0) == pytest.approx(5_000.0)
+        assert snapshot.disputed_commission_amount in (None, 0.0)
+        assert snapshot.conversion_rate is not None
+
+        snapshots = await performance_service.list_snapshots(
+            session=session, agent_id=agent_id
+        )
+        assert len(snapshots) == 1
+
+        generated = await performance_service.generate_daily_snapshots(
+            session=session,
+            agent_ids=[agent_id],
+        )
+        assert len(generated) == 1
+        assert str(generated[0].agent_id) == str(agent_id)
