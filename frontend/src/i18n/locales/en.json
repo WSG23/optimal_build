@@ -50,6 +50,46 @@
       "note": "Notes",
       "hash": "Hash",
       "signature": "Signature"
+    },
+    "analytics": {
+      "title": "Performance analytics",
+      "agentLabel": "Agent ID {id}",
+      "loading": "Loading analytics…",
+      "benchmarksLoading": "Loading benchmarks…",
+      "metrics": {
+        "openDeals": "Open deals",
+        "closedWon": "Deals won",
+        "grossPipelineValue": "Gross pipeline",
+        "weightedPipelineValue": "Weighted pipeline",
+        "conversionRate": "Conversion rate",
+        "avgCycleDays": "Average cycle length",
+        "confirmedCommission": "Confirmed commission",
+        "disputedCommission": "Disputed commission"
+      },
+      "trend": {
+        "pipelineHeading": "Pipeline value trend",
+        "grossLabel": "Gross pipeline",
+        "weightedLabel": "Weighted pipeline",
+        "conversionHeading": "Conversion & cycle trend",
+        "conversionSeriesLabel": "Conversion rate",
+        "cycleSeriesLabel": "Average cycle days"
+      },
+      "benchmarks": {
+        "title": "Benchmark comparison",
+        "conversion": "Conversion rate",
+        "cycle": "Average cycle time",
+        "pipeline": "Weighted pipeline value",
+        "versus": "vs {cohort} {value}",
+        "cohort": {
+          "industry_avg": "industry avg",
+          "top_quartile": "top quartile",
+          "internal_avg": "team avg"
+        }
+      },
+      "errors": {
+        "analytics": "Unable to load performance analytics.",
+        "benchmarks": "Unable to load benchmark data."
+      }
     }
   },
   "app": {
