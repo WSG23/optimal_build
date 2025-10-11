@@ -52,7 +52,7 @@ async def performance_client(async_session_factory):
 
     app.dependency_overrides[get_session] = _override_get_session
     app.dependency_overrides[require_viewer] = _override_require_viewer
-    app.include_router(router, prefix="/api/v1/performance")
+    app.include_router(router, prefix="/api/v1")
 
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         yield client
