@@ -13,10 +13,10 @@ from app.models.business_performance import (
     CommissionType,
     DealAssetType,
     DealType,
-    PerformanceBenchmark,
 )
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
+from app.services.deals.performance import AgentPerformanceService
 from fastapi import APIRouter, FastAPI
 from httpx import AsyncClient
 
@@ -109,14 +109,15 @@ async def test_performance_endpoints(performance_client, async_session_factory):
             commission_amount=3_000.0,
         )
 
-        benchmark = PerformanceBenchmark(
+        performance_service = AgentPerformanceService()
+        await performance_service.upsert_benchmark(
+            session=session,
             metric_key="conversion_rate",
             asset_type="office",
             deal_type="sell_side",
             cohort="industry_avg",
             value_numeric=0.35,
         )
-        session.add(benchmark)
         await session.commit()
 
     snapshot_request = {

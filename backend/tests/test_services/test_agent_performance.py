@@ -120,3 +120,35 @@ async def test_compute_snapshot(async_session_factory):
         )
         assert len(generated) == 1
         assert str(generated[0].agent_id) == str(agent_id)
+
+
+@pytest.mark.asyncio
+async def test_seed_benchmarks(async_session_factory):
+    performance_service = AgentPerformanceService()
+
+    async with async_session_factory() as session:
+        seeds = [
+            {
+                "metric_key": "conversion_rate",
+                "asset_type": "office",
+                "deal_type": "sell_side",
+                "cohort": "industry_avg",
+                "value_numeric": 0.33,
+                "source": "test",
+                "effective_date": "2024-02-01",
+            }
+        ]
+
+        count = await performance_service.seed_default_benchmarks(
+            session=session, seeds=seeds
+        )
+        assert count == 1
+
+        benchmarks = await performance_service.list_benchmarks(
+            session=session,
+            metric_key="conversion_rate",
+            asset_type="office",
+            deal_type="sell_side",
+        )
+        assert len(benchmarks) >= 1
+        assert float(benchmarks[0].value_numeric or 0.0) == pytest.approx(0.33)
