@@ -9,11 +9,14 @@ import { TranslationProvider } from '../../i18n'
 import AgentIntegrationsPage from '../AgentIntegrationsPage'
 
 /**
- * KNOWN ISSUE: This test may fail with async timing issues in JSDOM.
+ * ⚠️ KNOWN ISSUE: This test may fail with async timing issues in JSDOM.
+ *
  * See: ../../TESTING_KNOWN_ISSUES.md - "Frontend: React Testing Library Async Timing"
  *
  * If this test fails but the HTML dump shows content is rendered correctly,
  * the feature is working - it's a test harness issue, not an application bug.
+ *
+ * When this is fixed, update TESTING_KNOWN_ISSUES.md per the maintenance checklist.
  */
 
 describe('AgentIntegrationsPage', () => {

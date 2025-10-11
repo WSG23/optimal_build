@@ -55,7 +55,12 @@
 - [frontend/agents_site_capture.md](frontend/agents_site_capture.md) - Developer implementation guide
 - [demos/agents_capture_demo.md](demos/agents_capture_demo.md) - Demo script
 
-### Validation & Testing:
+### Testing & Quality:
+- [../TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) - **Known test harness issues** (critical for AI agents)
+- [../TESTING_DOCUMENTATION_SUMMARY.md](../TESTING_DOCUMENTATION_SUMMARY.md) - Overview of testing workflows
+- [../TESTING_ADVISORY.md](../TESTING_ADVISORY.md) - Phase 1B testing guide
+
+### Validation & User Research:
 - [validation/live_walkthrough_plan.md](validation/live_walkthrough_plan.md) - User validation tracking
 - [validation/outreach_drafts.md](validation/outreach_drafts.md) - User outreach templates
 
@@ -89,6 +94,12 @@
 
 **Question:** "How do users use this feature?"
 → Check feature-specific guides in `agents/` or `frontend/`
+
+**Question:** "Test is failing - is this a known issue?"
+→ Check [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md)
+
+**Question:** "I fixed a test issue - how do I update docs?"
+→ Check [TESTING_DOCUMENTATION_SUMMARY.md](../TESTING_DOCUMENTATION_SUMMARY.md)
 
 ---
 

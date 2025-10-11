@@ -2,8 +2,60 @@
 
 This document tracks known issues with the test harness that do **not** indicate bugs in the application code.
 
-## Frontend: React Testing Library Async Timing
+## Purpose
 
+This document helps both **human developers** and **AI agents** (Claude, Codex) distinguish between:
+- ❌ Real bugs that need fixing
+- ⚠️ Known test harness limitations that don't indicate broken functionality
+
+**Why this matters for AI agents:**
+AI agents have no memory between sessions and can't ask teammates about recurring issues. Without this documentation, an AI agent will waste time investigating and potentially "fixing" working code.
+
+---
+
+## Workflow for Adding New Issues
+
+**When an AI agent discovers a potential "known issue":**
+1. 🤖 AI explains the issue and proposes documenting it
+2. 👤 Human decides: "Document it" / "No, fix it" / "Document until Phase X"
+3. 🤖 AI adds/updates documentation with human approval
+4. 📝 Add "Documented by: [Human/AI name] on YYYY-MM-DD"
+
+**When a human discovers a known issue:**
+1. Add it to "Active Issues" below using the template
+2. Add code comments pointing to this doc
+3. Note discovery date and who found it
+
+---
+
+## Workflow for Resolving Issues
+
+**When an AI agent fixes a known issue:**
+1. 🤖 AI fixes the issue and verifies tests pass
+2. 🤖 AI proposes documentation updates (see checklist below)
+3. 👤 Human reviews: "Approved" / "Modify the documentation" / "Not actually fixed"
+4. 🤖 AI updates documentation with human approval
+
+**When a human fixes a known issue:**
+1. Fix the issue and verify tests pass
+2. Follow the maintenance checklist below
+3. Or ask an AI agent to update the documentation for you
+
+**MAINTENANCE CHECKLIST** - What needs updating:
+1. ✅ Move the issue from "Active Issues" to "Resolved Issues" section
+2. ✅ Add resolution date, who fixed it, and fix description
+3. ✅ Remove or update code comments that reference this issue
+4. ✅ Search codebase for `TESTING_KNOWN_ISSUES.md` references and update them
+5. ✅ Update affected test files to remove workarounds
+6. ✅ Verify all tests now pass without workarounds
+
+---
+
+## Active Issues
+
+### Frontend: React Testing Library Async Timing
+
+**Documented by:** Claude on 2025-10-11
 **Affects:** Phase 1B (Agent Advisory), Phase 1C (Listing Integrations)
 
 **Symptom:**
@@ -64,7 +116,10 @@ React state updates complete after `waitFor()` timeout in the JSDOM test environ
 
 ---
 
-## SQLite vs PostgreSQL SQL Compatibility
+### SQLite vs PostgreSQL SQL Compatibility
+
+**Documented by:** Claude on 2025-10-11
+**Affects:** Backend tests using raw SQL
 
 **Symptom:**
 Raw SQL queries using PostgreSQL-specific syntax fail in tests.
@@ -91,3 +146,51 @@ await session.execute(
 ```
 
 **Note:** Production uses PostgreSQL, but tests use in-memory SQLite for speed.
+
+---
+
+## Resolved Issues
+
+*No issues resolved yet. When an issue is fixed, move it from "Active Issues" above to this section with resolution details.*
+
+---
+
+### Example of AI Agent Resolution Workflow
+
+Here's how it would work when an AI agent fixes an issue:
+
+```
+🤖 AI: "I've fixed the React Testing Library async timing issue. All tests now pass
+       consistently. Here's what I changed:
+
+       - Configured React Testing Library with 5000ms default timeout
+       - Added proper `act()` wrappers around async state updates
+       - Updated test setup in test-bootstrap.mjs
+
+       Tests now pass:
+       ✅ frontend/src/pages/__tests__/AgentAdvisoryPage.test.tsx
+       ✅ frontend/src/pages/__tests__/AgentIntegrationsPage.test.tsx
+
+       Should I update TESTING_KNOWN_ISSUES.md to move this to 'Resolved Issues'
+       and remove the warning comments from the test files?"
+
+👤 You: "Yes, approved"
+
+🤖 AI: *Updates documentation following the maintenance checklist*
+```
+
+---
+
+### Template for Resolved Issues:
+```
+### [Issue Name] - RESOLVED
+
+**Resolution Date:** YYYY-MM-DD
+**Resolved By:** @username or AI agent name
+**Fix Description:** Brief description of how it was fixed
+**Files Changed:**
+- `path/to/file.ts` - what changed
+- `path/to/test.tsx` - what changed
+
+**Original Issue:** [Brief description or link to git history]
+```
