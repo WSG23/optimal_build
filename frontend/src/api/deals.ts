@@ -48,6 +48,7 @@ export const DEAL_STAGE_ORDER: DealStage[] = [
 
 export interface DealSummary {
   id: string
+  agentId: string
   title: string
   description: string | null
   assetType: string
@@ -106,6 +107,7 @@ function toNumberOrNull(value: unknown): number | null {
 function mapDeal(payload: Record<string, unknown>): DealSummary {
   return {
     id: String(payload.id ?? ''),
+    agentId: String(payload.agent_id ?? ''),
     title: String(payload.title ?? ''),
     description:
       typeof payload.description === 'string' || payload.description === null
