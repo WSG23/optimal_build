@@ -261,6 +261,7 @@
   - [ ] Edge cases: Long text, large numbers, missing data handled
   - [ ] Visual quality: Alignment, spacing, colors, responsive design
   - [ ] Accessibility: Keyboard nav, screen reader, focus management
+- [ ] Browser opened to UI page for user testing
 - [ ] Manual test script provided to user with specific scenarios
 - [ ] User confirmed: "✅ All manual tests passing"
 - [ ] Merge to main and mark ✅ complete

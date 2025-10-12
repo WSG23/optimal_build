@@ -320,7 +320,10 @@ Updated docs/feature_delivery_plan_v2.md:
 
 🛑 **For UI/UX work: Do not proceed to commit until user completes manual testing**
 
-When implementing customer-facing UI components, you MUST provide a detailed manual test script.
+When implementing customer-facing UI components, you MUST:
+1. **Open the browser** to the UI page for the user to test (use `open "http://localhost:4400/#/[route]"`)
+2. Provide a detailed manual test script (see template below)
+3. Wait for user confirmation before proceeding to commit
 
 **When manual testing is REQUIRED:**
 - ✅ ANY customer-facing UI component (buttons, forms, cards, lists, etc.)
