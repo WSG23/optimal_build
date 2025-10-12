@@ -224,38 +224,61 @@ When you finish implementing a feature/milestone, you MUST update the status doc
 
 ✅ **Step 1: Update "📊 Current Progress Snapshot" section (lines 7-59)**
 
-Find your phase and update the percentage + remaining items:
-```diff
-Example for Phase 1D after completing ROI Analytics:
+Find your phase and update the percentage + remaining items.
 
-- **Phase 1D: Business Performance Management** - 45%
-+ **Phase 1D: Business Performance Management** - 60%
-- Remaining: ROI Analytics, Commission Protection, Performance Benchmarking
-+ Remaining: Commission Protection, Performance Benchmarking
+**For Backend Work:**
+```diff
+Example for Phase 1D after completing ROI Analytics backend:
+
+- **Phase 1D: Business Performance Management** - Backend 45%, UI 30%
++ **Phase 1D: Business Performance Management** - Backend 60%, UI 30%
+- Backend: Deal Pipeline API ✅, Remaining: ROI Analytics, Commission Protection
++ Backend: Deal Pipeline API ✅, ROI Analytics ✅, Remaining: Commission Protection
+```
+
+**For UI/UX Work:**
+```diff
+Example for Phase 1D after completing Pipeline Kanban UI:
+
+- **Phase 1D: Business Performance Management** - Backend 60%, UI 30%
++ **Phase 1D: Business Performance Management** - Backend 60%, UI 50%
+- UI: Production shell ✅, Remaining: Pipeline Kanban, Analytics panels
++ UI: Production shell ✅, Pipeline Kanban ✅, Remaining: Analytics panels
 ```
 
 **How to calculate percentage:**
 - Count total milestones in phase (e.g., 3 milestones: Deal Pipeline, ROI Analytics, Commission Protection)
 - Divide completed by total (e.g., 2/3 = 66%, round to 60-65%)
+- **Track Backend and UI separately** - they progress independently
 
 ✅ **Step 2: Update detailed phase section (find "Phase X:" heading)**
 
-Add what you delivered to the phase's status:
+**For Backend Work:**
+Add to "Delivered (Milestone MX)" section:
 ```diff
-Example:
-
-- **Status:** 45% - Deal pipeline + commission ledger API (October 2025)
-+ **Status:** 60% - Deal pipeline + commission + ROI analytics (October 2025)
-
-Add to "Delivered" section:
++ **Delivered (Milestone M4 - ROI Analytics):**
 + - ✅ ROI metrics aggregation in performance snapshots
 + - ✅ compute_project_roi() integration from app.core.metrics
 + - ✅ Snapshot context derivation (pipeline metadata)
 + - ✅ Tests: test_agent_performance.py passing (4/4)
+```
 
-Update "Test Status" if needed:
-- Backend service tests passing (test_agent_deal_pipeline.py, test_agent_commissions.py)
-+ Backend service tests passing (test_agent_deal_pipeline.py, test_agent_commissions.py, test_agent_performance.py)
+**For UI/UX Work:**
+Add to "UI/UX Status" section (comes after Test Status, before Requirements):
+```diff
++ **UI/UX Status (Production Customer-Facing Interface):**
++
++ **Delivered:**
++ - ✅ Pipeline Kanban board component
++ - ✅ Deal detail drawer with timeline/commissions
++
++ **In Progress (YYYY-MM-DD):**
++ - 🔄 Analytics panel
++ - 🔄 ROI panel
++
++ **UI Files:**
++ - frontend/src/app/pages/business-performance/PipelineBoard.tsx
++ - frontend/src/app/pages/business-performance/DealDrawer.tsx
 ```
 
 ✅ **Step 3: Stage the documentation with your code changes**

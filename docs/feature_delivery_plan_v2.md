@@ -1,7 +1,7 @@
 # Complete Platform Delivery Roadmap
-## Comprehensive Implementation Plan for All FEATURES.md Components
+## Comprehensive Implementation Plan for All FEATURES.md Components (Backend + UI)
 
-> **Source of Truth:** This document maps every feature from `FEATURES.md` into a phased delivery plan. This supersedes the original `feature_delivery_plan.md` which only covered Agent GPS capture (Phase 1A).
+> **Source of Truth:** This document tracks **BOTH backend AND UI/UX** implementation status. It maps every feature from `FEATURES.md` into a phased delivery plan with backend and UI progress tracked together. This supersedes the original `feature_delivery_plan.md` which only covered Agent GPS capture (Phase 1A).
 
 ---
 
@@ -19,23 +19,19 @@
 
 ### ✅ What's Complete:
 
-**Phase 1A: GPS Capture + Marketing** - 100%
-- Agent GPS Capture + Quick Analysis
-- Marketing Pack Generator (4 types)
+**Phase 1A: GPS Capture + Marketing** - Backend 100%, UI Pending
+- Backend: Agent GPS Capture ✅, Quick Analysis ✅, Marketing Pack Generator ✅
+- UI: Test harness exists (archived in test-ui-harness branch), production UI not designed
 - Tests: Backend passing ✅
 
-**Phase 1B: Agent Advisory Services** - 100%
-- Asset Mix Strategy tool
-- Market Positioning calculator
-- Absorption Forecasting engine
-- Buyer/Tenant Feedback Loop
+**Phase 1B: Agent Advisory Services** - Backend 100%, UI Pending
+- Backend: Asset Mix Strategy ✅, Market Positioning ✅, Absorption Forecasting ✅, Feedback Loop ✅
+- UI: Test harness exists (archived in test-ui-harness branch), production UI not designed
 - Tests: Backend passing ✅, Frontend has documented timing issue ⚠️
 
-**Phase 1C: Listing Integrations (Mocks)** - 100%
-- PropertyGuru mock with token lifecycle
-- EdgeProp mock
-- Zoho CRM mock
-- Token encryption (Fernet) ✅
+**Phase 1C: Listing Integrations (Mocks)** - Backend 100%, UI Pending
+- Backend: PropertyGuru mock ✅, EdgeProp mock ✅, Zoho CRM mock ✅, Token encryption ✅
+- UI: Test harness exists (archived in test-ui-harness branch), production UI not designed
 - Tests: Backend passing ✅, Frontend has documented timing issue ⚠️
 - Note: Real OAuth pending API credentials
 
@@ -46,10 +42,9 @@
 
 ### ⏸️ What's In Progress:
 
-**Phase 1D: Business Performance Management** - 60%
-- Deal Pipeline API complete ✅ (service layer + REST endpoints)
-- ROI Analytics complete ✅ (metrics aggregation + snapshot context)
-- Remaining: Commission Protection, Performance Benchmarking
+**Phase 1D: Business Performance Management** - Backend 60%, UI 30%
+- Backend: Deal Pipeline API ✅, ROI Analytics ✅, Remaining: Commission Protection, Performance Benchmarking
+- UI: Production shell ✅, Pipeline Kanban 🔄 (in progress), Analytics/ROI panels pending
 
 **Other:**
 - Agent Validation (waiting for real user sessions)
@@ -218,6 +213,49 @@
 - `backend/tests/test_api/test_deals.py` (⚠️ skipped Python 3.9)
 
 **Test Status:** Backend service layer fully tested and passing (`python3 -m pytest backend/tests/test_services/test_agent_performance.py backend/tests/test_services/test_agent_commissions.py backend/tests/test_services/test_agent_deal_pipeline.py`). API smoke endpoints (deals + performance) execute on Python ≥3.10 (`backend/tests/test_api/test_deals.py`, `backend/tests/test_api/test_performance.py`).
+
+---
+
+**UI/UX Status (Production Customer-Facing Interface):**
+
+**Delivered:**
+- ✅ Production shell + navigation (`frontend/src/app/layout/AppShell.tsx`, `AppNavigation.tsx`)
+- ✅ Navigation config with `/app/performance` route (`frontend/src/app/navigation.ts`)
+- ✅ Business Performance page scaffold (`frontend/src/app/pages/business-performance/BusinessPerformancePage.tsx`)
+
+**In Progress (2025-10-12):**
+- 🔄 Pipeline Kanban board component
+- 🔄 Deal insights panel
+- 🔄 Analytics panel
+- 🔄 ROI panel
+
+**UI Design Specifications:**
+- **Primary Persona:** Agent Team Leads validating performance before presenting to developers/investors
+- **Data Sources:** `/api/v1/deals`, `/api/v1/deals/{id}/timeline`, `/api/v1/deals/{id}/commissions`, `/api/v1/performance/summary`, `/api/v1/performance/snapshots`, `/api/v1/performance/benchmarks`
+- **Key Components:**
+  - Pipeline Kanban: Columns per `PipelineStage` (Lead captured → Closed lost), cards with deal title, asset type, value, confidence %, audit badge
+  - Deal Detail Drawer: Timeline (stage history + audit metadata), Commissions (status, amounts, dispute CTA), Contacts/Docs
+  - Analytics/Benchmarks: KPI cards (open deals, won, pipeline values, conversion rate, cycle time), trend charts, benchmark comparisons, ROI metrics
+  - States: Empty/loading/error/dispute handling, offline snapshot refresh
+
+**UI Files:**
+- `frontend/src/app/layout/` - AppShell layout
+- `frontend/src/app/components/` - AppNavigation
+- `frontend/src/app/pages/business-performance/` - 5 component files + types
+- `frontend/src/router.tsx` - Route integration
+- `frontend/src/index.css` - Styling
+
+**UI Implementation Checklist:**
+- [ ] Wireframe artifacts exported (Figma or markdown diagrams)
+- [ ] Copy deck approved (en.json translations)
+- [ ] Component contracts defined (TypeScript interfaces in `src/types`)
+- [ ] API client hooks production-ready (no offline fallbacks)
+- [ ] Storybook/visual tests for key components
+- [ ] Accessibility review (keyboard nav, focus management)
+- [ ] QA script: stage change → analytics update → benchmark fetch
+- [ ] Merge to main and mark ✅ complete
+
+---
 
 **Requirements (from FEATURES.md lines 63-68):**
 - Cross-Asset Deal Pipeline tracker

@@ -213,6 +213,24 @@ export function useRouterPath() {
   return location.path
 }
 
+export function useRouterController() {
+  const context = useContext(RouterContext)
+  if (!context) {
+    const path = getInitialPath()
+    const search = getInitialSearch()
+    return {
+      path,
+      search,
+      navigate: (to: string) => {
+        if (typeof window !== 'undefined') {
+          window.location.href = to
+        }
+      },
+    }
+  }
+  return context
+}
+
 export function useRouterLocation() {
   const context = useContext(RouterContext)
   if (!context) {

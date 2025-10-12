@@ -15,6 +15,8 @@ import './index.css'
 import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
 import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
 import AgentPerformancePage from './pages/AgentPerformancePage'
+import { AppShell } from './app/layout/AppShell'
+import { BusinessPerformancePage } from './app/pages/business-performance/BusinessPerformancePage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -22,53 +24,67 @@ if (hash.startsWith('#/')) {
   window.history.replaceState(null, '', targetPath)
 }
 
+const businessPerformanceElement = (
+  <AppShell
+    activeItem="performance"
+    title="Business performance"
+    description="Track deal momentum, commissions, analytics, and automation ROI across your Singapore commercial pipeline."
+  >
+    <BusinessPerformancePage />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
-    path: '/home',
-    element: <HomeOverview />,
-  },
-  {
     path: '/',
+    element: businessPerformanceElement,
+  },
+  {
+    path: '/app/performance',
+    element: businessPerformanceElement,
+  },
+  {
+    path: '/legacy/home',
     element: <HomeOverview />,
   },
   {
-    path: '/cad/upload',
+    path: '/legacy/cad/upload',
     element: <CadUploadPage />,
   },
   {
-    path: '/cad/detection',
+    path: '/legacy/cad/detection',
     element: <CadDetectionPage />,
   },
   {
-    path: '/cad/pipelines',
+    path: '/legacy/cad/pipelines',
     element: <CadPipelinesPage />,
   },
   {
-    path: '/feasibility',
+    path: '/legacy/feasibility',
     element: <FeasibilityWizard />,
   },
   {
-    path: '/finance',
+    path: '/legacy/finance',
     element: <FinanceWorkspace />,
   },
   {
-    path: '/agents/site-capture',
+    path: '/legacy/agents/site-capture',
     element: <AgentsGpsCapturePage />,
   },
   {
-    path: '/agents/advisory',
+    path: '/legacy/agents/advisory',
     element: <AgentAdvisoryPage />,
   },
   {
-    path: '/agents/integrations',
+    path: '/legacy/agents/integrations',
     element: <AgentIntegrationsPage />,
   },
   {
-    path: '/agents/performance',
+    path: '/legacy/agents/performance',
     element: <AgentPerformancePage />,
   },
   {
-    path: '/visualizations/intelligence',
+    path: '/legacy/visualizations/intelligence',
     element: <AdvancedIntelligencePage />,
   },
 ])
