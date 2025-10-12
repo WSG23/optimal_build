@@ -316,7 +316,228 @@ Updated docs/feature_delivery_plan_v2.md:
 
 ---
 
-**8. Commit with descriptive message** (after updating docs above)
+**7d. Manual Testing (REQUIRED for UI/UX work)** ⚠️ BLOCKING STEP
+
+🛑 **For UI/UX work: Do not proceed to commit until user completes manual testing**
+
+When implementing customer-facing UI components, you MUST provide a detailed manual test script.
+
+**When manual testing is REQUIRED:**
+- ✅ ANY customer-facing UI component (buttons, forms, cards, lists, etc.)
+- ✅ New pages or navigation changes
+- ✅ Form submissions or data entry
+- ✅ Charts, visualizations, or dashboards
+- ✅ Modals, drawers, popovers, or overlays
+- ✅ Interactive widgets (drag-drop, filters, sorting, pagination)
+- ✅ Any visual changes (styling, layout, colors, spacing)
+
+**When manual testing is OPTIONAL:**
+- ⚠️ Backend-only changes (no UI impact)
+- ⚠️ Documentation updates
+- ⚠️ Configuration or infrastructure changes
+
+**Template for Manual Test Script:**
+
+Provide this to the user:
+```markdown
+## Manual Testing Required: [Component/Feature Name]
+
+### Setup
+1. Start server: `make dev`
+2. Navigate to: `http://localhost:4400/#/[route]`
+3. Test as user role: [Agent/Developer/Architect]
+4. Prerequisites: [Any data setup needed]
+
+### Test Scenarios
+
+**1. Happy Path (Primary User Journey)**
+- **Action:** [e.g., Click "Create Deal" button]
+- **Expected:** [e.g., Modal opens with form fields for deal details]
+- **Verify:**
+  - [ ] UI renders correctly (no layout breaks)
+  - [ ] All interactive elements work
+  - [ ] Data submits successfully
+  - [ ] Success feedback shown
+
+**2. Empty State**
+- **Action:** [e.g., Load page with no existing deals]
+- **Expected:** [e.g., Empty state message with CTA to create first deal]
+- **Verify:**
+  - [ ] Message is clear and user-friendly
+  - [ ] CTA button is prominent and actionable
+  - [ ] No broken UI or console errors
+
+**3. Error State**
+- **Action:** [e.g., Submit form with invalid data / trigger API error]
+- **Expected:** [e.g., Validation errors display inline OR error message shows]
+- **Verify:**
+  - [ ] Error messages are user-friendly (not technical jargon)
+  - [ ] Errors point to specific fields/issues
+  - [ ] User knows how to fix the problem
+  - [ ] UI remains functional after error
+
+**4. Loading State**
+- **Action:** [e.g., Trigger API call (may need network throttling)]
+- **Expected:** [e.g., Loading spinner/skeleton appears while fetching]
+- **Verify:**
+  - [ ] Loading indicator is visible
+  - [ ] UI doesn't flash or jump when data loads
+  - [ ] Layout is stable (no content shift)
+  - [ ] User can't trigger duplicate actions
+
+**5. Complete Interaction Flow**
+- **Action:** [e.g., Create deal → view in pipeline → update stage → see analytics]
+- **Expected:** [e.g., User completes entire workflow without confusion]
+- **Verify:**
+  - [ ] Navigation between steps is clear
+  - [ ] User feedback at each step
+  - [ ] No dead ends or confusing states
+  - [ ] User achieves their goal successfully
+
+**6. Edge Cases**
+- **Long text:** [e.g., Deal name with 100+ characters]
+  - [ ] Text truncates gracefully with ellipsis or wraps properly
+- **Large numbers:** [e.g., Values over $1,000,000,000]
+  - [ ] Numbers format correctly with commas/currency
+- **Missing optional data:** [e.g., Deal without description]
+  - [ ] UI handles gracefully (shows "—" or hides field)
+- **Slow network:** [Throttle to Fast 3G in DevTools]
+  - [ ] Loading states work correctly
+  - [ ] No timeouts or hanging requests
+- **Browser compatibility:** [Test in Chrome, Safari, Firefox]
+  - [ ] UI works consistently across browsers
+
+**7. Visual Quality**
+- [ ] No alignment issues (elements properly aligned)
+- [ ] Consistent spacing (padding/margins follow design system)
+- [ ] Colors match design (no random colors)
+- [ ] Typography correct (font sizes, weights, line heights)
+- [ ] Icons render properly (no broken images)
+- [ ] Responsive design works (test mobile viewport 375px width)
+
+**8. Accessibility**
+- [ ] **Keyboard navigation:** Tab through all interactive elements
+- [ ] **Focus indicators:** Clear visual focus on active element
+- [ ] **Screen reader:** Test with VoiceOver (Mac) or NVDA (Windows)
+  - [ ] All buttons/links have descriptive labels
+  - [ ] Form fields have associated labels
+  - [ ] Error messages are announced
+- [ ] **Color contrast:** Text readable (use browser DevTools)
+
+---
+
+### Test Results
+
+Please complete the above tests and reply:
+
+**"✅ Manual testing complete - all scenarios passing"**
+
+OR if issues found:
+
+**"❌ Manual testing found issues: [describe problems]"**
+
+---
+
+**I will wait for your test confirmation before proceeding to commit.**
+```
+
+**Example for Phase 1D Pipeline Kanban:**
+```markdown
+## Manual Testing Required: Pipeline Kanban Board
+
+### Setup
+1. Start server: `make dev`
+2. Navigate to: `http://localhost:4400/#/app/performance`
+3. Test as: Agent Team Lead
+4. Prerequisites: Ensure backend has test deals in database
+
+### Test Scenarios
+
+**1. Happy Path: View and Move Deals**
+- **Action:** View pipeline board with deals in various stages
+- **Expected:** Kanban columns show deals grouped by stage
+- **Verify:**
+  - [ ] All deals render in correct stage columns
+  - [ ] Deal cards show: title, asset type, value, confidence %
+  - [ ] Can drag deal card to different stage
+  - [ ] Card updates position and backend updates stage
+
+**2. Empty State**
+- **Action:** View pipeline with no deals (clear DB or filter to empty result)
+- **Expected:** Empty state message: "No deals yet. Create your first deal to get started."
+- **Verify:**
+  - [ ] Message is centered and clear
+  - [ ] "Create Deal" CTA button is prominent
+  - [ ] No broken Kanban layout
+
+**3. Error State**
+- **Action:** Disconnect network, try to move deal to new stage
+- **Expected:** Error toast/message: "Failed to update deal stage. Please try again."
+- **Verify:**
+  - [ ] Error message appears
+  - [ ] Deal reverts to original position
+  - [ ] User can retry action
+
+**4. Loading State**
+- **Action:** Load page (throttle network to Fast 3G)
+- **Expected:** Loading skeletons appear in each column
+- **Verify:**
+  - [ ] Skeleton cards visible while loading
+  - [ ] No layout shift when real data loads
+  - [ ] Smooth transition from skeleton to cards
+
+**5. Complete Flow: Create → Move → View**
+- **Action:** Create new deal → appears in "Lead captured" → drag to "Qualified" → view timeline
+- **Expected:** Deal moves through pipeline and timeline shows stage history
+- **Verify:**
+  - [ ] New deal appears immediately in correct column
+  - [ ] Drag-and-drop feels smooth
+  - [ ] Timeline shows stage transition with timestamp
+  - [ ] Audit metadata visible (hash, changed by)
+
+**6. Edge Cases**
+- **Long deal name:** "Very Long Commercial Property Name That Exceeds Normal Length at Marina Bay Waterfront District"
+  - [ ] Truncates with ellipsis, full name in tooltip
+- **Large value:** $1,234,567,890
+  - [ ] Formats as "$1.2B" or "$1,234,567,890" with commas
+- **100+ deals:** Populate DB with many deals
+  - [ ] Performance acceptable (no lag when scrolling)
+  - [ ] Columns scroll independently if needed
+
+**7. Visual Quality**
+- [ ] Card spacing consistent within columns
+- [ ] Column widths equal
+- [ ] Deal cards have subtle shadow/border
+- [ ] Confidence % shows as colored badge (green high, yellow medium, red low)
+- [ ] Asset type icons render correctly
+
+**8. Accessibility**
+- [ ] Tab to each deal card
+- [ ] Enter key opens deal details
+- [ ] Arrow keys navigate between cards
+- [ ] Screen reader announces: "Deal card: [name], [stage], [value]"
+
+Please test and confirm: ✅ All scenarios passing
+```
+
+**Why this step is critical:**
+- Automated tests don't catch visual bugs (alignment, colors, spacing)
+- UX flow issues require human judgment (is it confusing? intuitive?)
+- Accessibility problems need manual verification (keyboard nav, screen reader)
+- User experience quality depends on manual testing
+- Frontend tests don't validate actual browser rendering
+- Edge cases often slip through without manual verification
+
+**What happens next:**
+1. You provide test script (above template)
+2. User completes manual testing
+3. User confirms: "✅ All scenarios passing" OR reports issues
+4. If passing → proceed to Step 8 (commit)
+5. If issues → fix them, ask user to retest
+
+---
+
+**8. Commit with descriptive message** (after docs updated AND manual testing complete)
 ```bash
 git commit -m "Complete Phase X Milestone: Feature Name
 

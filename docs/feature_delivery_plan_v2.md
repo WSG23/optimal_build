@@ -252,7 +252,17 @@
 - [ ] API client hooks production-ready (no offline fallbacks)
 - [ ] Storybook/visual tests for key components
 - [ ] Accessibility review (keyboard nav, focus management)
-- [ ] QA script: stage change → analytics update → benchmark fetch
+- [ ] Manual QA completed (see NEXT_STEPS_FOR_CODEX.md Step 7d):
+  - [ ] Happy path: Primary user journey works end-to-end
+  - [ ] Empty states: Render with clear messaging and CTAs
+  - [ ] Error states: User-friendly error messages display
+  - [ ] Loading states: No UI flash or layout shift
+  - [ ] Complete flow: All interactions chain correctly
+  - [ ] Edge cases: Long text, large numbers, missing data handled
+  - [ ] Visual quality: Alignment, spacing, colors, responsive design
+  - [ ] Accessibility: Keyboard nav, screen reader, focus management
+- [ ] Manual test script provided to user with specific scenarios
+- [ ] User confirmed: "✅ All manual tests passing"
 - [ ] Merge to main and mark ✅ complete
 
 ---
