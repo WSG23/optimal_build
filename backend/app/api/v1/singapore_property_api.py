@@ -15,6 +15,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from backend._compat.datetime import utcnow
+
 from app.core.config import settings
 from app.core.jwt_auth import TokenData, get_current_user
 from app.models.singapore_property import (
@@ -393,7 +395,7 @@ def update_property(
 
     # Re-run compliance checks
     update_property_compliance_sync(property_obj)
-    property_obj.updated_at = datetime.utcnow()
+    property_obj.updated_at = utcnow()
 
     db.commit()
     db.refresh(property_obj)
@@ -692,8 +694,8 @@ async def check_compliance(
             else None
         ),
         owner_email=current_user.email,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=utcnow(),
+        updated_at=utcnow(),
     )
 
     async with AsyncSessionLocal() as session:

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.database import _resolve_database_url
 from app.models.rkp import RefRule
 from app.models.singapore_property import ComplianceStatus, SingaporeProperty
+from backend._compat.datetime import utcnow
 
 _T = TypeVar("_T")
 
@@ -581,7 +582,7 @@ async def run_full_compliance_check(
             "ura_check": ura_check,
             "bca_check": bca_check,
             "gfa_calculation": gfa_calc,
-            "checked_at": datetime.utcnow().isoformat(),
+            "checked_at": utcnow().isoformat(),
         },
     }
 
@@ -612,7 +613,7 @@ async def update_property_compliance(
     )
     property.compliance_notes = compliance_result["compliance_notes"]
     property.compliance_data = compliance_result["compliance_data"]
-    property.compliance_last_checked = datetime.utcnow()
+    property.compliance_last_checked = utcnow()
 
     # Update GFA utilization metrics
     gfa_calc = compliance_result["compliance_data"]["gfa_calculation"]

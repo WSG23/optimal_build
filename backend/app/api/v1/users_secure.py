@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from pydantic import BaseModel, field_validator
 
+from backend._compat.datetime import utcnow
+
 try:  # pragma: no cover - optional dependency
     import email_validator  # type: ignore  # noqa: F401
 
@@ -84,7 +86,7 @@ def signup(user_data: UserSignup):
         "full_name": user_data.full_name,
         "company_name": user_data.company_name,
         "hashed_password": hash_password(user_data.password),  # Hash the password!
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": utcnow().isoformat(),
         "is_active": True,
     }
 

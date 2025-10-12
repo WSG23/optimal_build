@@ -18,6 +18,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from backend._compat.datetime import utcnow
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -67,7 +68,7 @@ class MarketReport:
         self.absorption = absorption_trends
         self.cycle = market_cycle_position
         self.recommendations = recommendations
-        self.generated_at = datetime.utcnow()
+        self.generated_at = utcnow()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""

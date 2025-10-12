@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple
 
+from backend._compat.datetime import utcnow
+
 import structlog
 
 logger = structlog.get_logger()
@@ -36,7 +38,7 @@ class EdgePropClient:
         self, code: str, redirect_uri: str
     ) -> OAuthBundle:
         logger.info("edgeprop.exchange_code", redirect_uri=redirect_uri)
-        now = datetime.utcnow()
+        now = utcnow()
         return OAuthBundle(
             access_token=f"edgeprop-access-{code}",
             refresh_token=f"edgeprop-refresh-{code}",
@@ -45,7 +47,7 @@ class EdgePropClient:
 
     async def refresh_tokens(self, refresh_token: str) -> OAuthBundle:
         logger.info("edgeprop.refresh_token")
-        now = datetime.utcnow()
+        now = utcnow()
         return OAuthBundle(
             access_token=f"edgeprop-access-{refresh_token[:8]}",
             refresh_token=refresh_token,

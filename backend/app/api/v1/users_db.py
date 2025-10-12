@@ -22,6 +22,7 @@ from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_curre
 from app.schemas.user import UserSignupBase
 from app.utils.db import session_dependency
 from app.utils.security import hash_password, verify_password
+from backend._compat.datetime import utcnow
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"
@@ -46,7 +47,7 @@ class UserDB(Base):
     full_name = Column(String, nullable=False)
     company_name = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     is_active = Column(Boolean, default=True)
 
 

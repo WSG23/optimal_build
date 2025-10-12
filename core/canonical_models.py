@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
+from backend._compat.datetime import utcnow
 from pydantic import BaseModel, Field
 from sqlalchemy import (
     JSON,
@@ -37,7 +38,7 @@ class JurisdictionORM(RegstackBase):
     code: Mapped[str] = mapped_column(String(length=50), primary_key=True)
     name: Mapped[str] = mapped_column(String(length=255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=utcnow
     )
 
     regulations: Mapped[list[RegulationORM]] = relationship(
@@ -120,7 +121,7 @@ class ProvenanceORM(RegstackBase):
     )
     source_uri: Mapped[str] = mapped_column(String(length=1024), nullable=False)
     fetched_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=utcnow
     )
     fetch_parameters: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     raw_content: Mapped[str] = mapped_column(Text, nullable=False)

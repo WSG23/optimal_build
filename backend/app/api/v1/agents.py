@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, Upload
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend._compat.datetime import utcnow
 from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
@@ -312,7 +313,7 @@ async def log_property_by_gps(
             scenarios=request.development_scenarios,
         )
         quick_analysis_payload = result.quick_analysis or {
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": utcnow().isoformat(),
             "scenarios": [],
         }
         quick_analysis = QuickAnalysisEnvelope.model_validate(quick_analysis_payload)
@@ -354,7 +355,7 @@ def _build_mock_gps_response(
 ) -> GPSLogResponse:
     """Return a deterministic sample response when live services are unavailable."""
 
-    generated_at = datetime.utcnow()
+    generated_at = utcnow()
     resolved_scenarios = scenarios or DevelopmentScenario.default_set()
 
     quick_scenarios: list[QuickAnalysisScenario] = []
@@ -655,7 +656,7 @@ async def submit_property_advisory_feedback(
 def _build_mock_market_report(property_data: Property, months: int) -> Dict[str, Any]:
     """Return a deterministic market intelligence payload when analytics fail."""
 
-    end_date = datetime.utcnow().date()
+    end_date = utcnow().date()
     start_date = (end_date - timedelta(days=months * 30)).isoformat()
     period = {"start": start_date, "end": end_date.isoformat()}
     property_type = getattr(
@@ -716,7 +717,7 @@ def _build_mock_market_report(property_data: Property, months: int) -> Dict[str,
     }
 
     return {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": utcnow().isoformat() + "Z",
         "property_type": property_type,
         "location": district,
         "period": period,
@@ -773,7 +774,7 @@ async def analyze_development_potential(
         return {
             "property_id": property_id,
             "analysis_type": request.analysis_type,
-            "analysis_date": datetime.utcnow().isoformat(),
+            "analysis_date": utcnow().isoformat(),
             "results": analysis_result,
         }
 
@@ -981,7 +982,7 @@ async def sync_market_data(
 
         return {
             "status": "completed",
-            "sync_time": datetime.utcnow().isoformat(),
+            "sync_time": utcnow().isoformat(),
             "results": results,
         }
 
@@ -1218,7 +1219,7 @@ async def generate_professional_pack(
             "property_id": property_id,
             "filename": filename,
             "download_url": url,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": utcnow().isoformat(),
             "size_bytes": len(pdf_buffer.getvalue()),
         }
 
@@ -1254,7 +1255,7 @@ async def generate_email_flyer(
             "flyer_type": material_type,
             "filename": filename,
             "download_url": url,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": utcnow().isoformat(),
             "size_bytes": len(pdf_buffer.getvalue()),
         }
 

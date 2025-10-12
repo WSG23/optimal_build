@@ -13,6 +13,8 @@ from app.core.jwt_auth import TokenData, get_current_user
 from app.utils.db import session_dependency
 from pydantic import BaseModel, Field
 
+from backend._compat.datetime import utcnow
+
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./projects.db"
 engine = create_engine(
@@ -38,8 +40,8 @@ class ProjectDB(Base):
     status = Column(String, default="planning")
     budget = Column(Float, nullable=True)
     owner_email = Column(String, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     is_active = Column(Boolean, default=True)
 
 
@@ -171,7 +173,7 @@ async def update_project(
     for field, value in update_data.items():
         setattr(project, field, value)
 
-    project.updated_at = datetime.utcnow()
+    project.updated_at = utcnow()
 
     db.commit()
     db.refresh(project)
@@ -196,7 +198,7 @@ async def delete_project(
         raise HTTPException(status_code=404, detail="Project not found")
 
     project.is_active = False
-    project.updated_at = datetime.utcnow()
+    project.updated_at = utcnow()
 
     db.commit()
 

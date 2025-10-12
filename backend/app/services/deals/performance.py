@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime
 from typing import Iterable, Mapping, Optional, Sequence
 from uuid import UUID
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend._compat.datetime import UTC
+from app.core.metrics import RoiSnapshot, compute_project_roi
 from app.data.performance_benchmarks_seed import SEED_BENCHMARKS
 from app.models.business_performance import (
     AgentCommissionRecord,
@@ -19,6 +21,8 @@ from app.models.business_performance import (
     PerformanceBenchmark,
     PipelineStage,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AgentPerformanceService:
@@ -81,8 +85,19 @@ class AgentPerformanceService:
             else None
         )
 
-        snapshot.roi_metrics = snapshot.roi_metrics or {}
+        snapshot.roi_metrics = await self._aggregate_roi_metrics(
+            session=session,
+            deals=deals,
+        )
         snapshot.snapshot_context = snapshot.snapshot_context or {}
+        snapshot.snapshot_context.update(
+            _derive_snapshot_context(
+                gross_pipeline=gross_pipeline,
+                weighted_pipeline=weighted_pipeline,
+                deals_open=deals_open,
+                deals_closed_won=deals_closed_won,
+            )
+        )
 
         await session.commit()
         await session.refresh(snapshot)
@@ -314,6 +329,74 @@ class AgentPerformanceService:
                 continue
         return ids
 
+    async def _aggregate_roi_metrics(
+        self,
+        *,
+        session: AsyncSession,
+        deals: Iterable[AgentDeal],
+    ) -> dict[str, object]:
+        project_snapshots: dict[int, RoiSnapshot] = {}
+        offline_snapshots: dict[int, dict[str, object]] = {}
+
+        for deal in deals:
+            metadata = getattr(deal, "metadata", {}) or {}
+            if not isinstance(metadata, dict):
+                continue
+
+            # Capture explicit ROI payloads recorded on the deal metadata.
+            raw_roi = metadata.get("roi_metrics")
+            if isinstance(raw_roi, Mapping):
+                normalised = _normalise_roi_snapshot(raw_roi)
+                if normalised is not None:
+                    offline_snapshots[normalised["project_id"]] = normalised
+
+            for key in ("roi_project_id", "overlay_project_id", "overlay_project"):
+                project_id = _safe_int(metadata.get(key))
+                if project_id is None:
+                    continue
+                if project_id in project_snapshots:
+                    continue
+                try:
+                    snapshot = await compute_project_roi(
+                        session,
+                        project_id=project_id,
+                    )
+                except Exception as exc:  # pragma: no cover - defensive logging
+                    logger.warning(
+                        "Unable to compute ROI metrics for project %s: %s",
+                        project_id,
+                        exc,
+                    )
+                    continue
+                project_snapshots[project_id] = snapshot
+
+        combined: dict[int, dict[str, object]] = {}
+
+        for project_id, snapshot in project_snapshots.items():
+            combined[project_id] = snapshot.as_dict()
+
+        for project_id, payload in offline_snapshots.items():
+            existing = combined.get(project_id)
+            if existing is None:
+                combined[project_id] = payload
+                continue
+            current_score = _safe_float(payload.get("automation_score")) or 0.0
+            existing_score = _safe_float(existing.get("automation_score")) or 0.0
+            if current_score >= existing_score:
+                combined[project_id] = payload
+
+        if not combined:
+            return {}
+
+        ordered_projects = [
+            combined[project_id] for project_id in sorted(combined.keys())
+        ]
+        summary = _summarise_roi_snapshots(ordered_projects)
+        return {
+            "projects": ordered_projects,
+            "summary": summary,
+        }
+
 
 def _deal_cycle_days(deal: AgentDeal) -> Optional[float]:
     try:
@@ -328,6 +411,144 @@ def _deal_cycle_days(deal: AgentDeal) -> Optional[float]:
         return delta.days + delta.seconds / 86400.0
     except Exception:  # pragma: no cover - defensive
         return None
+
+
+def _safe_int(value: object) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped == "":
+            return None
+        try:
+            return int(stripped)
+        except ValueError:
+            return None
+    return None
+
+
+def _safe_float(value: object) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped == "":
+            return None
+        try:
+            return float(stripped)
+        except ValueError:
+            return None
+    return None
+
+
+def _normalise_roi_snapshot(
+    payload: Mapping[str, object]
+) -> dict[str, object] | None:
+    project_id = _safe_int(payload.get("project_id"))
+    if project_id is None:
+        return None
+    return {
+        "project_id": project_id,
+        "iterations": _safe_int(payload.get("iterations")) or 0,
+        "total_suggestions": _safe_int(payload.get("total_suggestions")) or 0,
+        "decided_suggestions": _safe_int(payload.get("decided_suggestions")) or 0,
+        "accepted_suggestions": _safe_int(payload.get("accepted_suggestions")) or 0,
+        "acceptance_rate": _safe_float(payload.get("acceptance_rate")) or 0.0,
+        "review_hours_saved": _safe_float(payload.get("review_hours_saved")) or 0.0,
+        "automation_score": _safe_float(payload.get("automation_score")) or 0.0,
+        "savings_percent": _safe_int(payload.get("savings_percent")) or 0,
+        "payback_weeks": _safe_int(payload.get("payback_weeks")) or 0,
+        "baseline_hours": _safe_float(payload.get("baseline_hours")) or 0.0,
+        "actual_hours": _safe_float(payload.get("actual_hours")) or 0.0,
+    }
+
+
+def _summarise_roi_snapshots(
+    snapshots: Sequence[Mapping[str, object]]
+) -> dict[str, object]:
+    if not snapshots:
+        return {}
+
+    project_count = len(snapshots)
+    review_hours_saved = sum(
+        _safe_float(item.get("review_hours_saved")) or 0.0 for item in snapshots
+    )
+    baseline_hours = sum(
+        _safe_float(item.get("baseline_hours")) or 0.0 for item in snapshots
+    )
+    actual_hours = sum(
+        _safe_float(item.get("actual_hours")) or 0.0 for item in snapshots
+    )
+    iterations = sum(_safe_int(item.get("iterations")) or 0 for item in snapshots)
+    automation_scores = [
+        _safe_float(item.get("automation_score")) or 0.0 for item in snapshots
+    ]
+    acceptance_rates = [
+        _safe_float(item.get("acceptance_rate")) or 0.0 for item in snapshots
+    ]
+    paybacks = [
+        _safe_int(item.get("payback_weeks")) or 0 for item in snapshots
+    ]
+    savings_percent = [
+        _safe_int(item.get("savings_percent")) or 0 for item in snapshots
+    ]
+
+    average_automation = (
+        sum(automation_scores) / len(automation_scores) if automation_scores else 0.0
+    )
+    average_acceptance = (
+        sum(acceptance_rates) / len(acceptance_rates) if acceptance_rates else 0.0
+    )
+    average_savings_percent = (
+        sum(savings_percent) / len(savings_percent) if savings_percent else 0.0
+    )
+    best_payback = min((value for value in paybacks if value > 0), default=None)
+
+    return {
+        "project_count": project_count,
+        "total_review_hours_saved": round(review_hours_saved, 2),
+        "total_baseline_hours": round(baseline_hours, 2),
+        "total_actual_hours": round(actual_hours, 2),
+        "total_iterations": iterations,
+        "average_automation_score": round(average_automation, 4),
+        "average_acceptance_rate": round(average_acceptance, 4),
+        "savings_percent_average": round(average_savings_percent, 2),
+        "best_payback_weeks": best_payback,
+    }
+
+
+def _derive_snapshot_context(
+    *,
+    gross_pipeline: float,
+    weighted_pipeline: float,
+    deals_open: int,
+    deals_closed_won: int,
+) -> dict[str, object]:
+    weighted_ratio = None
+    if gross_pipeline > 0:
+        weighted_ratio = (weighted_pipeline or 0.0) / gross_pipeline
+    average_pipeline_open = (
+        gross_pipeline / deals_open if deals_open and gross_pipeline else None
+    )
+    win_ratio = (
+        deals_closed_won / (deals_open + deals_closed_won)
+        if (deals_open + deals_closed_won) > 0
+        else None
+    )
+    return {
+        "weighted_to_gross_ratio": round(weighted_ratio, 4)
+        if weighted_ratio is not None
+        else None,
+        "average_pipeline_per_open_deal": round(average_pipeline_open, 2)
+        if average_pipeline_open is not None
+        else None,
+        "win_ratio": round(win_ratio, 4) if win_ratio is not None else None,
+        "generated_at": datetime.now(UTC).isoformat(),
+    }
 
 
 def _coerce_date(value: object) -> date | None:

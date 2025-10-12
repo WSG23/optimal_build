@@ -8,6 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import require_viewer
+from backend._compat.datetime import utcnow
 
 router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligence"])
 
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligenc
 def _timestamp() -> str:
     """Return an ISO-formatted timestamp used by the dummy payloads."""
 
-    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    return utcnow().isoformat(timespec="seconds") + "Z"
 
 
 def _sample_graph_payload(_: str) -> dict[str, Any]:

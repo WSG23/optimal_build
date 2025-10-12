@@ -10,6 +10,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend._compat.datetime import utcnow
 from app.models.market import AbsorptionTracking, MarketIndex
 from app.models.property import MarketTransaction, Property, PropertyType, RentalListing
 
@@ -168,7 +169,7 @@ class MarketDataService:
         property_types: Optional[List[PropertyType]] = None,
     ) -> Dict[str, Any]:
         """Sync data from a specific provider."""
-        sync_start = datetime.utcnow()
+        sync_start = utcnow()
 
         if not property_types:
             property_types = list(PropertyType)

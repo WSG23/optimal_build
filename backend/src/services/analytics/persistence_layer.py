@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List
 
+from backend._compat.datetime import utcnow
+
 
 @dataclass
 class StoredResult:
@@ -21,7 +23,7 @@ class AnalyticsPersistence:
     _results: Dict[str, StoredResult] = field(default_factory=dict)
 
     def save(self, key: str, value: float) -> StoredResult:
-        result = StoredResult(key=key, value=value, stored_at=datetime.utcnow())
+        result = StoredResult(key=key, value=value, stored_at=utcnow())
         self._results[key] = result
         return result
 

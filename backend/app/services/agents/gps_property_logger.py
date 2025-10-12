@@ -18,6 +18,8 @@ except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missi
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend._compat.datetime import utcnow
+
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.geocoding import Address, GeocodingService
@@ -68,7 +70,7 @@ class PropertyLogResult:
         self.property_info = property_info
         self.nearby_amenities = nearby_amenities
         self.quick_analysis = quick_analysis
-        self.timestamp = timestamp or datetime.utcnow()
+        self.timestamp = timestamp or utcnow()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
@@ -321,7 +323,7 @@ class GPSPropertyLogger:
     ):
         """Update existing property with latest information."""
         # Update fields that might have changed
-        property_record.updated_at = datetime.utcnow()
+        property_record.updated_at = utcnow()
 
         if ura_zoning:
             property_record.zoning_code = ura_zoning.zone_code
@@ -436,7 +438,7 @@ class GPSPropertyLogger:
                 )
 
         return {
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": utcnow().isoformat(),
             "scenarios": insights,
         }
 

@@ -9,6 +9,7 @@ import structlog
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend._compat.datetime import utcnow
 from app.models.property import DevelopmentAnalysis, Property, PropertyType, TenureType
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.buildable import BuildableInput, BuildableService
@@ -436,7 +437,7 @@ class DevelopmentPotentialScanner:
         analysis_record = {
             "property_id": property_id,
             "analysis_type": analysis_type,
-            "analysis_date": datetime.utcnow(),
+            "analysis_date": utcnow(),
             "gfa_potential_sqm": getattr(analysis_result, "gfa_potential", None),
             "optimal_use_mix": getattr(analysis_result, "optimal_use_mix", None),
             "site_constraints": {

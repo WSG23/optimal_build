@@ -24,6 +24,21 @@ router = APIRouter(prefix="/performance", tags=["Business Performance"])
 service = AgentPerformanceService()
 
 
+@router.get("/summary", response_model=AgentPerformanceSnapshotResponse)
+async def get_performance_summary(
+    agent_id: UUID = Query(...),
+    as_of: date | None = Query(default=None),
+    _: str = Depends(require_viewer),
+    session: AsyncSession = Depends(get_session),
+) -> AgentPerformanceSnapshotResponse:
+    snapshot = await service.compute_snapshot(
+        session=session,
+        agent_id=agent_id,
+        as_of=as_of,
+    )
+    return AgentPerformanceSnapshotResponse.from_orm_snapshot(snapshot)
+
+
 @router.post("/snapshots", response_model=AgentPerformanceSnapshotResponse)
 async def create_snapshot(
     payload: SnapshotRequest,

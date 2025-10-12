@@ -37,6 +37,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
 
 
 from app.models.base import UUID, BaseModel
+from backend._compat.datetime import utcnow
 
 
 class PropertyZoning(str, Enum):
@@ -236,10 +237,8 @@ class SingaporeProperty(BaseModel):
     school_distance_km = Column(DECIMAL(5, 2))
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
     data_source = Column(String(100))  # URA, OneMap, manual entry
 
     # JSON fields for flexible data

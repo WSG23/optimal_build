@@ -19,6 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
+from backend._compat.datetime import utcnow
 
 
 class AIAgentType(str, Enum):
@@ -80,10 +81,8 @@ class AIAgent(BaseModel):
     limitations = Column(JSON)  # Known limitations
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
     # Relationships
     sessions = relationship(
@@ -134,9 +133,9 @@ class AIAgentSession(BaseModel):
     recommendations = Column(JSON)  # Agent recommendations
 
     # Timestamps
-    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime, default=utcnow, nullable=False)
     completed_at = Column(DateTime)
-    last_activity = Column(DateTime, default=datetime.utcnow)
+    last_activity = Column(DateTime, default=utcnow)
 
     # Relationships
     agent = relationship("AIAgent", back_populates="sessions")

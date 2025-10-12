@@ -35,6 +35,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
 
 
 from app.models.base import UUID, BaseModel
+from backend._compat.datetime import utcnow
 
 
 class PropertyType(str, Enum):
@@ -301,7 +302,7 @@ class DevelopmentPipeline(BaseModel):
 
     # Data Source
     data_source = Column(String(50))
-    last_updated = Column(DateTime, default=datetime.utcnow)
+    last_updated = Column(DateTime, default=utcnow)
 
     __table_args__ = (
         Index("idx_pipeline_status", "development_status"),
@@ -366,7 +367,7 @@ class DevelopmentAnalysis(BaseModel):
     analysis_type = Column(
         String(50), nullable=False
     )  # raw_land, existing_building, historical
-    analysis_date = Column(DateTime, default=datetime.utcnow)
+    analysis_date = Column(DateTime, default=utcnow)
 
     # Development Potential
     gfa_potential_sqm = Column(SQLDecimal(12, 2))

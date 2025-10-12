@@ -20,6 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
+from backend._compat.datetime import utcnow
 
 
 class ProjectType(str, Enum):
@@ -178,10 +179,8 @@ class Project(BaseModel):
     csc_date = Column(Date)  # Certificate of Statutory Completion date
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
     created_by = Column(String(100))
 
     # Relationships

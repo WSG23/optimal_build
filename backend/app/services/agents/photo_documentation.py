@@ -8,6 +8,8 @@ from uuid import UUID, uuid4
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend._compat.datetime import utcnow
+
 try:  # pragma: no cover - optional runtime dependency
     from PIL import Image
 except ModuleNotFoundError:  # pragma: no cover
@@ -45,7 +47,7 @@ class PhotoMetadata:
         self.property_id = property_id
         self.storage_key = storage_key
         self.location = location
-        self.capture_timestamp = capture_timestamp or datetime.utcnow()
+        self.capture_timestamp = capture_timestamp or utcnow()
         self.auto_tagged_conditions = auto_tagged_conditions or []
         self.camera_info = camera_info or {}
         self.file_size = file_size

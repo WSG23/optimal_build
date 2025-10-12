@@ -137,6 +137,13 @@ async def test_performance_endpoints(performance_client, async_session_factory):
     snapshots = list_response.json()
     assert len(snapshots) >= 1
 
+    summary_response = await performance_client.get(
+        f"/api/v1/performance/summary?agent_id={agent_id}"
+    )
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary["agent_id"] == str(agent_id)
+
     # Call generate without agent_ids parameter to generate for all agents
     generate_response = await performance_client.post(
         "/api/v1/performance/snapshots/generate"

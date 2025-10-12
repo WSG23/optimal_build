@@ -78,6 +78,24 @@ async def test_compute_snapshot(async_session_factory):
             confidence=0.2,
             created_by=agent_id,
         )
+        open_deal.metadata = {
+            "roi_metrics": {
+                "project_id": 101,
+                "iterations": 6,
+                "total_suggestions": 18,
+                "decided_suggestions": 12,
+                "accepted_suggestions": 9,
+                "acceptance_rate": 0.75,
+                "review_hours_saved": 14.5,
+                "automation_score": 0.62,
+                "savings_percent": 62,
+                "payback_weeks": 3,
+                "baseline_hours": 22.0,
+                "actual_hours": 7.5,
+            }
+        }
+        session.add(open_deal)
+        await session.commit()
 
         commission = await commission_service.create_commission(
             session=session,
@@ -111,6 +129,11 @@ async def test_compute_snapshot(async_session_factory):
         assert float(snapshot.confirmed_commission_amount or 0.0) == pytest.approx(5_000.0)
         assert snapshot.disputed_commission_amount in (None, 0.0)
         assert snapshot.conversion_rate is not None
+        assert snapshot.roi_metrics
+        summary = snapshot.roi_metrics.get("summary", {})
+        assert summary.get("project_count") == 1
+        projects = snapshot.roi_metrics.get("projects", [])
+        assert projects and projects[0]["project_id"] == 101
 
         snapshots = await performance_service.list_snapshots(
             session=session, agent_id=agent_id
