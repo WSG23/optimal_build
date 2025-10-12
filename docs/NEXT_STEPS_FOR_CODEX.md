@@ -207,22 +207,106 @@ When you encounter test issues, you MUST check and update TESTING_KNOWN_ISSUES.m
 
 ---
 
-**8. Update feature_delivery_plan_v2.md** (CRITICAL)
+**7c. Update feature_delivery_plan_v2.md BEFORE asking user to commit** ⚠️ BLOCKING STEP
+
+🛑 **STOP: Do not proceed to commit until you complete this step.**
+
+When you finish implementing a feature/milestone, you MUST update the status document **in the same commit** as your code changes.
+
+**Why this is mandatory:**
+- `feature_delivery_plan_v2.md` is the **SINGLE SOURCE OF TRUTH** for project status
+- Other AI agents in new chat windows rely on it to know what's done
+- User relies on it to track progress across sessions
+- Outdated status creates confusion and duplicate work
+- This document will be referenced for 6-12 months during pre-launch development
+
+**Required updates:**
+
+✅ **Step 1: Update "📊 Current Progress Snapshot" section (lines 7-59)**
+
+Find your phase and update the percentage + remaining items:
 ```diff
-- ### Phase X: Feature Name ❌ NOT STARTED
-+ ### Phase X: Feature Name ✅ COMPLETE
-+ **Status:** 100% - Completed [Month] 2025
-+ **Test Status:** [Backend passing / Frontend status]
-+ **Files Delivered:** [list key files]
+Example for Phase 1D after completing ROI Analytics:
+
+- **Phase 1D: Business Performance Management** - 45%
++ **Phase 1D: Business Performance Management** - 60%
+- Remaining: ROI Analytics, Commission Protection, Performance Benchmarking
++ Remaining: Commission Protection, Performance Benchmarking
 ```
 
-**9. Commit with descriptive message**
-```bash
-git commit -m "Complete Phase X: Feature Name
+**How to calculate percentage:**
+- Count total milestones in phase (e.g., 3 milestones: Deal Pipeline, ROI Analytics, Commission Protection)
+- Divide completed by total (e.g., 2/3 = 66%, round to 60-65%)
 
-- Delivered: [key features]
-- Tests: Backend passing, Frontend [status]
-- Files: [key files created/modified]
+✅ **Step 2: Update detailed phase section (find "Phase X:" heading)**
+
+Add what you delivered to the phase's status:
+```diff
+Example:
+
+- **Status:** 45% - Deal pipeline + commission ledger API (October 2025)
++ **Status:** 60% - Deal pipeline + commission + ROI analytics (October 2025)
+
+Add to "Delivered" section:
++ - ✅ ROI metrics aggregation in performance snapshots
++ - ✅ compute_project_roi() integration from app.core.metrics
++ - ✅ Snapshot context derivation (pipeline metadata)
++ - ✅ Tests: test_agent_performance.py passing (4/4)
+
+Update "Test Status" if needed:
+- Backend service tests passing (test_agent_deal_pipeline.py, test_agent_commissions.py)
++ Backend service tests passing (test_agent_deal_pipeline.py, test_agent_commissions.py, test_agent_performance.py)
+```
+
+✅ **Step 3: Stage the documentation with your code changes**
+```bash
+git add docs/feature_delivery_plan_v2.md
+# This goes in the SAME commit as your feature code
+```
+
+✅ **Step 4: Mention documentation update in commit message**
+```bash
+git commit -m "Add Phase 1D ROI Analytics
+
+Backend changes:
+- ROI metrics aggregation in performance snapshots
+- compute_project_roi() integration
+- Snapshot context derivation
+
+Tests: 4/4 passing
+
+Updated docs/feature_delivery_plan_v2.md:
+- Phase 1D progress: 45% → 60%
+- Added ROI Analytics to delivered milestones
+```
+
+**When to update:**
+- ✅ After tests pass (Step 7a-7b complete)
+- ✅ Before asking user to commit
+- ✅ Every time you complete a milestone/feature
+- ✅ Even for partial progress (e.g., backend done, frontend pending)
+
+**What if you're not sure what to write?**
+- Look at completed phases (1A, 1B, 1C) for examples
+- Match the formatting and structure
+- Ask user: "I completed X. Should I update feature_delivery_plan_v2.md to show X% progress?"
+
+---
+
+**8. Commit with descriptive message** (after updating docs above)
+```bash
+git commit -m "Complete Phase X Milestone: Feature Name
+
+Backend/Frontend changes:
+- [Key feature 1]
+- [Key feature 2]
+
+Tests: [Backend X/X passing, Frontend status]
+Files: [Key files created/modified]
+
+Updated feature_delivery_plan_v2.md:
+- Phase X progress: Y% → Z%
+- Added [Feature Name] to delivered milestones
 
 See feature_delivery_plan_v2.md for full details."
 ```

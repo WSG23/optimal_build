@@ -13,9 +13,17 @@
 
 ## ⚠️ CRITICAL: When You Complete Work
 
-**Update `docs/feature_delivery_plan_v2.md`** - Move items from "In Progress" to "Complete"
+🛑 **MANDATORY: Update `docs/feature_delivery_plan_v2.md` BEFORE asking user to commit**
 
 This is the **SINGLE SOURCE OF TRUTH** for project status. All AI agents reference this file.
+
+**Every time you complete a feature/milestone:**
+1. ✅ Update "📊 Current Progress Snapshot" (update percentage + remaining items)
+2. ✅ Update detailed phase section (add what you delivered)
+3. ✅ Stage docs with code: `git add docs/feature_delivery_plan_v2.md`
+4. ✅ Include in same commit as your code changes
+
+**See Step 7c in [NEXT_STEPS_FOR_CODEX.md](docs/NEXT_STEPS_FOR_CODEX.md) for detailed instructions.**
 
 ---
 

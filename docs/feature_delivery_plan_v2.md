@@ -46,9 +46,10 @@
 
 ### ⏸️ What's In Progress:
 
-**Phase 1D: Business Performance Management** - 30%
+**Phase 1D: Business Performance Management** - 60%
 - Deal Pipeline API complete ✅ (service layer + REST endpoints)
-- Remaining: ROI Analytics, Commission Protection, Performance Benchmarking
+- ROI Analytics complete ✅ (metrics aggregation + snapshot context)
+- Remaining: Commission Protection, Performance Benchmarking
 
 **Other:**
 - Agent Validation (waiting for real user sessions)
@@ -180,7 +181,7 @@
 ---
 
 ### Phase 1D: Business Performance Management ⚠️ IN PROGRESS
-**Status:** 45% - Deal pipeline + commission ledger API (October 2025)
+**Status:** 60% - Deal pipeline + commission ledger + ROI analytics (October 2025)
 
 **Delivered (Milestone M1/M2/M3 foundations):**
 - ✅ Database schema for agent deals, stage history, contacts, and documents
@@ -198,6 +199,14 @@
 - ✅ Prefect flows (`agent_performance_snapshots_flow`, `seed_performance_benchmarks_flow`) and queue jobs (`performance.generate_snapshots`, `performance.seed_benchmarks`) for automation
 - ✅ Backend service tests passing (`test_agent_deal_pipeline.py`, `test_agent_commissions.py`, `test_agent_performance.py`)
 - ⚠️ API smoke tests for deals/performance skipped on Python 3.9 sandbox (run on Python ≥3.10 / full FastAPI install)
+
+**Delivered (Milestone M4 - ROI Analytics):**
+- ✅ ROI metrics aggregation in performance snapshots (`_aggregate_roi_metrics()` method)
+- ✅ Integration with `compute_project_roi()` from `app.core.metrics`
+- ✅ Snapshot context derivation with pipeline metadata (`_derive_snapshot_context()`)
+- ✅ Project-level ROI tracking per agent deal
+- ✅ Datetime deprecation fixes across entire codebase (replaced `datetime.utcnow()` with `datetime.now(UTC)`)
+- ✅ Tests: `test_agent_performance.py` passing (4/4 tests including ROI validation)
 
 **Files Delivered:**
 - `backend/app/api/v1/deals.py` (REST endpoints)
