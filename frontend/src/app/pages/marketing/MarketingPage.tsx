@@ -22,6 +22,7 @@ export function MarketingPage() {
   const [selectedPackType, setSelectedPackType] =
     useState<ProfessionalPackType>('universal')
   const [notes, setNotes] = useState('')
+  const [notice, setNotice] = useState<string | null>(null)
   const [modules] = useState(() => ({
     siteOverview: true,
     quickAnalysis: true,
@@ -39,10 +40,12 @@ export function MarketingPage() {
       return
     }
     try {
-      await generatePack(propertyId.trim(), selectedPackType)
+      const summary = await generatePack(propertyId.trim(), selectedPackType)
+      setNotice(summary.warning ?? null)
       setNotes('')
       clearError()
     } catch {
+      setNotice(null)
       // error handled in hook state
     }
   }
@@ -128,7 +131,11 @@ export function MarketingPage() {
           >
             {isGenerating ? 'Generating…' : 'Generate pack'}
           </button>
-          {error && <span className="mkt-error">{error}</span>}
+          {error ? (
+            <span className="mkt-error">{error}</span>
+          ) : notice ? (
+            <span className="mkt-warning">{notice}</span>
+          ) : null}
         </footer>
       </section>
 
@@ -163,6 +170,10 @@ export function MarketingPage() {
                       <a href={pack.downloadUrl} target="_blank" rel="noreferrer">
                         Download
                       </a>
+                    ) : pack.isFallback ? (
+                      <span title={pack.warning ?? 'Preview pack generated offline'}>
+                        Preview only
+                      </span>
                     ) : (
                       'Pending link'
                     )}
@@ -227,4 +238,3 @@ function formatSize(value: number | null) {
   }
   return `${(value / (1024 * 1024)).toFixed(1)} MB`
 }
-

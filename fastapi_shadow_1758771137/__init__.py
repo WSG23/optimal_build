@@ -525,6 +525,22 @@ class APIRouter:
             path, methods=["PUT"], response_model=response_model, **kwargs
         )
 
+    def patch(
+        self,
+        path: str,
+        *,
+        response_model: type | None = None,
+        status_code: int | None = None,
+        **kwargs: Any,
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return self._decorator(
+            path,
+            methods=["PATCH"],
+            response_model=response_model,
+            status_code=status_code,
+            **kwargs,
+        )
+
     def delete(
         self,
         path: str,

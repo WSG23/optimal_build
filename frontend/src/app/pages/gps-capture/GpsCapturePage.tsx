@@ -98,10 +98,15 @@ export function GpsCapturePage() {
           ...prev,
         ])
         setMarketLoading(true)
-        const intelligence = await fetchPropertyMarketIntelligence(
-          summary.propertyId,
-        )
-        setMarketSummary(intelligence)
+        try {
+          const intelligence = await fetchPropertyMarketIntelligence(
+            summary.propertyId,
+          )
+          setMarketSummary(intelligence)
+          setMarketError(intelligence.warning ?? null)
+        } finally {
+          setMarketLoading(false)
+        }
       } catch (error) {
         console.error('GPS capture failed', error)
         setCaptureError(
@@ -111,7 +116,6 @@ export function GpsCapturePage() {
         )
       } finally {
         setCaptureLoading(false)
-        setMarketLoading(false)
       }
     },
     [latitude, longitude, selectedScenarios],
@@ -130,6 +134,7 @@ export function GpsCapturePage() {
           captureSummary.propertyId,
           packType,
         )
+        setPackError(pack.warning ?? null)
         setPacks((prev) => [pack, ...prev])
       } catch (error) {
         console.error('Failed to generate pack', error)
@@ -354,6 +359,10 @@ export function GpsCapturePage() {
                     {new Date(pack.generatedAt).toLocaleString()} —{' '}
                     {pack.downloadUrl ? (
                       <a href={pack.downloadUrl}>Download</a>
+                    ) : pack.isFallback ? (
+                      <span title={pack.warning ?? 'Preview pack generated offline'}>
+                        Preview only
+                      </span>
                     ) : (
                       'Download link unavailable'
                     )}

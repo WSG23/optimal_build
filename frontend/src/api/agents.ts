@@ -335,8 +335,14 @@ function mapQuickAnalysis(payload: RawQuickAnalysis): QuickAnalysisSummary {
   }
 }
 
+const OFFLINE_PROPERTY_ID = 'offline-property'
+const OFFLINE_MARKET_WARNING =
+  'Using offline market intelligence preview. Backend data unavailable.'
+const OFFLINE_PACK_WARNING =
+  'Using offline preview pack. Backend generator unavailable.'
+
 const GPS_FALLBACK_SUMMARY: GpsCaptureSummary = {
-  propertyId: 'offline-property',
+  propertyId: OFFLINE_PROPERTY_ID,
   address: {
     fullAddress: '123 Offline Road, Singapore',
     streetName: 'Offline Road',
@@ -582,6 +588,8 @@ export const DEFAULT_SCENARIO_ORDER: readonly DevelopmentScenario[] = [
 export interface MarketIntelligenceSummary {
   propertyId: string
   report: Record<string, unknown>
+  isFallback: boolean
+  warning?: string
 }
 
 export type ProfessionalPackType =
@@ -597,6 +605,8 @@ export interface ProfessionalPackSummary {
   downloadUrl: string | null
   generatedAt: string
   sizeBytes: number | null
+  isFallback: boolean
+  warning?: string
 }
 
 export async function fetchPropertyMarketIntelligence(
@@ -604,49 +614,82 @@ export async function fetchPropertyMarketIntelligence(
   months = 12,
   signal?: AbortSignal,
 ): Promise<MarketIntelligenceSummary> {
+  if (propertyId === OFFLINE_PROPERTY_ID) {
+    return {
+      propertyId,
+      report: createOfflineMarketIntelligenceReport(months),
+      isFallback: true,
+      warning: OFFLINE_MARKET_WARNING,
+    }
+  }
+
   const params = new URLSearchParams()
   if (months) {
     params.set('months', String(months))
   }
 
-  const response = await fetch(
-    buildUrl(
-      `api/v1/agents/commercial-property/properties/${propertyId}/market-intelligence?${params.toString()}`,
-    ),
-    {
-      method: 'GET',
-      signal,
-    },
-  )
-
-  const contentType = response.headers?.get?.('content-type') ?? ''
-
-  if (!response.ok) {
-    const detail = contentType.includes('application/json')
-      ? await response.json().then((data: Record<string, unknown>) => {
-          const errorDetail = data?.detail
-          return typeof errorDetail === 'string' ? errorDetail : undefined
-        })
-      : await response.text()
-
-    throw new Error(
-      detail ||
-        `Request to market-intelligence failed with ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`,
+  try {
+    const response = await fetch(
+      buildUrl(
+        `api/v1/agents/commercial-property/properties/${propertyId}/market-intelligence?${params.toString()}`,
+      ),
+      {
+        method: 'GET',
+        signal,
+      },
     )
-  }
 
-  if (!contentType.includes('application/json')) {
-    throw new Error('Expected JSON response from market-intelligence endpoint')
-  }
+    const contentType = response.headers?.get?.('content-type') ?? ''
 
-  const payload = (await response.json()) as {
-    property_id: string
-    report: Record<string, unknown>
-  }
+    if (!response.ok) {
+      const detail = contentType.includes('application/json')
+        ? await response.json().then((data: Record<string, unknown>) => {
+            const errorDetail = data?.detail
+            return typeof errorDetail === 'string' ? errorDetail : undefined
+          })
+        : await response.text()
 
-  return {
-    propertyId: payload.property_id,
-    report: payload.report ?? {},
+      return {
+        propertyId,
+        report: createOfflineMarketIntelligenceReport(months),
+        isFallback: true,
+        warning: detail
+          ? `${OFFLINE_MARKET_WARNING} (${detail})`
+          : OFFLINE_MARKET_WARNING,
+      }
+    }
+
+    if (!contentType.includes('application/json')) {
+      return {
+        propertyId,
+        report: createOfflineMarketIntelligenceReport(months),
+        isFallback: true,
+        warning: `${OFFLINE_MARKET_WARNING} (Unexpected response format)`,
+      }
+    }
+
+    const payload = (await response.json()) as {
+      property_id: string
+      report: Record<string, unknown>
+    }
+
+    return {
+      propertyId: payload.property_id,
+      report: payload.report ?? {},
+      isFallback: false,
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+    const detail =
+      error instanceof Error ? error.message : 'Unable to load market intelligence.'
+    return {
+      propertyId,
+      report: createOfflineMarketIntelligenceReport(months),
+      isFallback: true,
+      warning: `${OFFLINE_MARKET_WARNING} (${detail})`,
+    }
   }
 }
 
@@ -655,51 +698,150 @@ export async function generateProfessionalPack(
   packType: ProfessionalPackType,
   signal?: AbortSignal,
 ): Promise<ProfessionalPackSummary> {
+  if (propertyId === OFFLINE_PROPERTY_ID) {
+    return createOfflinePackSummary(
+      propertyId,
+      packType,
+      OFFLINE_PACK_WARNING,
+    )
+  }
+
   const url = buildUrl(
     `api/v1/agents/commercial-property/properties/${propertyId}/generate-pack/${packType}`,
   )
 
-  const response = await fetch(url, {
-    method: 'POST',
-    signal,
-  })
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      signal,
+    })
 
-  const contentType = response.headers?.get?.('content-type') ?? ''
+    const contentType = response.headers?.get?.('content-type') ?? ''
 
-  if (!response.ok) {
-    const detail = contentType.includes('application/json')
-      ? await response.json().then((data: Record<string, unknown>) => {
-          const message = data?.detail
-          return typeof message === 'string' ? message : undefined
-        })
-      : await response.text()
+    if (!response.ok) {
+      const detail = contentType.includes('application/json')
+        ? await response.json().then((data: Record<string, unknown>) => {
+            const message = data?.detail
+            return typeof message === 'string' ? message : undefined
+          })
+        : await response.text()
 
-    throw new Error(
-      detail ||
-        `Request to generate ${packType} pack failed with ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`,
+      return createOfflinePackSummary(
+        propertyId,
+        packType,
+        detail
+          ? `${OFFLINE_PACK_WARNING} (${detail})`
+          : OFFLINE_PACK_WARNING,
+      )
+    }
+
+    if (!contentType.includes('application/json')) {
+      return createOfflinePackSummary(
+        propertyId,
+        packType,
+        `${OFFLINE_PACK_WARNING} (Unexpected response format)`,
+      )
+    }
+
+    const payload = (await response.json()) as {
+      pack_type: ProfessionalPackType
+      property_id: string
+      filename: string
+      download_url?: string | null
+      generated_at: string
+      size_bytes?: number | null
+    }
+
+    return {
+      packType: payload.pack_type,
+      propertyId: payload.property_id,
+      filename: payload.filename,
+      downloadUrl: payload.download_url ?? null,
+      generatedAt: payload.generated_at,
+      sizeBytes:
+        typeof payload.size_bytes === 'number' ? payload.size_bytes : null,
+      isFallback: false,
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+    const detail =
+      error instanceof Error ? error.message : 'Unable to reach pack generator.'
+    return createOfflinePackSummary(
+      propertyId,
+      packType,
+      `${OFFLINE_PACK_WARNING} (${detail})`,
     )
   }
+}
 
-  if (!contentType.includes('application/json')) {
-    throw new Error('Expected JSON response from professional pack endpoint')
+function createOfflinePackSummary(
+  propertyId: string,
+  packType: ProfessionalPackType,
+  warning?: string,
+): ProfessionalPackSummary {
+  const timestamp = new Date().toISOString()
+  const filename = `${packType}_pack_preview_${timestamp.slice(0, 10)}.pdf`
+  return {
+    packType,
+    propertyId,
+    filename,
+    downloadUrl: null,
+    generatedAt: timestamp,
+    sizeBytes: null,
+    isFallback: true,
+    warning,
   }
+}
 
-  const payload = (await response.json()) as {
-    pack_type: ProfessionalPackType
-    property_id: string
-    filename: string
-    download_url?: string | null
-    generated_at: string
-    size_bytes?: number | null
-  }
+function createOfflineMarketIntelligenceReport(months: number) {
+  const end = new Date()
+  const start = new Date(end)
+  start.setMonth(end.getMonth() - Math.max(1, months))
 
   return {
-    packType: payload.pack_type,
-    propertyId: payload.property_id,
-    filename: payload.filename,
-    downloadUrl: payload.download_url ?? null,
-    generatedAt: payload.generated_at,
-    sizeBytes:
-      typeof payload.size_bytes === 'number' ? payload.size_bytes : null,
+    property_type: 'Mixed Use',
+    location: 'CBD',
+    generated_at: end.toISOString(),
+    period: {
+      start: start.toISOString(),
+      end: end.toISOString(),
+    },
+    comparables_analysis: {
+      transaction_count: 18,
+      average_psf: 2480,
+      median_psf: 2440,
+      highest_psf: 2725,
+      lowest_psf: 2190,
+      trend: 'stable',
+    },
+    supply_dynamics: {
+      projects_in_pipeline: 5,
+      completions_next_12_months: 2,
+      occupancy_rate: 0.93,
+      headline: 'Limited new supply supports rental stability through the next cycle.',
+    },
+    yield_benchmarks: {
+      core_yield: 0.041,
+      value_add_yield: 0.047,
+      opportunistic_yield: 0.052,
+      commentary: 'CBD mixed-use yields tightened 15 bps over the past quarter.',
+    },
+    absorption_trends: {
+      average_absorption_months: 7,
+      leasing_velocity: 'improving',
+      pre_commitment_rate: 0.68,
+      notes: 'Flight-to-quality demand continues for premium CBD assets.',
+    },
+    market_cycle_position: {
+      phase: 'Expansion',
+      confidence: 'medium',
+      catalysts: [
+        'Office-to-flex conversions sustaining occupancy',
+        'Retail footfall exceeding pre-pandemic baseline',
+      ],
+      risks: ['Interest rate volatility moderating investor bids'],
+    },
   }
 }

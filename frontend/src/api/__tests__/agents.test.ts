@@ -148,12 +148,13 @@ describe('agents API mapping', () => {
         'request url includes months filter',
       )
       assert.equal(summary.report.comparables_analysis.transaction_count, 5)
+      assert.equal(summary.isFallback, false)
     } finally {
       globalThis.fetch = originalFetch
     }
   })
 
-  it('raises an error when the market intelligence endpoint returns a failure status', async () => {
+  it('returns an offline market intelligence report when the endpoint fails', async () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async () => ({
       ok: false,
@@ -167,10 +168,11 @@ describe('agents API mapping', () => {
     })) as typeof globalThis.fetch
 
     try {
-      await assert.rejects(
-        () => fetchPropertyMarketIntelligence('abc123'),
-        /service unavailable/,
-      )
+      const summary = await fetchPropertyMarketIntelligence('abc123')
+      assert.equal(summary.propertyId, 'abc123')
+      assert.equal(summary.isFallback, true)
+      assert.ok(summary.warning?.includes('service unavailable'))
+      assert.ok(summary.report.comparables_analysis)
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -220,12 +222,13 @@ describe('agents API mapping', () => {
       assert.equal(summary.filename, 'sales_brochure.pdf')
       assert.equal(summary.downloadUrl, 'https://example.com/sales.pdf')
       assert.equal(summary.sizeBytes, 42_000)
+      assert.equal(summary.isFallback, false)
     } finally {
       globalThis.fetch = originalFetch
     }
   })
 
-  it('propagates API errors when professional pack generation fails', async () => {
+  it('returns an offline pack summary when professional pack generation fails', async () => {
     const originalFetch = globalThis.fetch
 
     globalThis.fetch = (async () => ({
@@ -241,10 +244,12 @@ describe('agents API mapping', () => {
     })) as typeof globalThis.fetch
 
     try {
-      await assert.rejects(
-        () => generateProfessionalPack('abc123', 'investment'),
-        /generation throttled/,
-      )
+      const summary = await generateProfessionalPack('abc123', 'investment')
+      assert.equal(summary.propertyId, 'abc123')
+      assert.equal(summary.packType, 'investment')
+      assert.equal(summary.isFallback, true)
+      assert.equal(summary.downloadUrl, null)
+      assert.ok(summary.warning?.includes('generation throttled'))
     } finally {
       globalThis.fetch = originalFetch
     }

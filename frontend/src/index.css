@@ -3833,6 +3833,11 @@ h3 {
     font-size: 0.85rem;
 }
 
+.mkt-warning {
+    color: #92400e;
+    font-size: 0.85rem;
+}
+
 .mkt-table {
     width: 100%;
     border-collapse: collapse;

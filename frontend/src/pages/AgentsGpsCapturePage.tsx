@@ -395,6 +395,7 @@ export function AgentsGpsCapturePage({
   )
   const [packLoading, setPackLoading] = useState(false)
   const [packError, setPackError] = useState<string | null>(null)
+  const [packNotice, setPackNotice] = useState<string | null>(null)
 
   const toggleScenario = (scenario: DevelopmentScenario) => {
     setSelectedScenarios((current) => {
@@ -472,6 +473,7 @@ export function AgentsGpsCapturePage({
   useEffect(() => {
     setPackSummary(null)
     setPackError(null)
+    setPackNotice(null)
     setPackLoading(false)
     setPackType('universal')
   }, [result?.propertyId])
@@ -492,17 +494,16 @@ export function AgentsGpsCapturePage({
       .then((report) => {
         if (!cancelled) {
           setMarketReport(report)
+          setMarketError(report.warning ?? null)
         }
       })
       .catch((err) => {
         if (cancelled || err?.name === 'AbortError') {
           return
         }
-        setMarketError(
-          err instanceof Error
-            ? err.message
-            : t('agentsCapture.errors.market'),
-        )
+        const fallbackMessage =
+          err instanceof Error ? err.message : t('agentsCapture.errors.market')
+        setMarketError(fallbackMessage)
       })
       .finally(() => {
         if (!cancelled) {
@@ -525,14 +526,17 @@ export function AgentsGpsCapturePage({
 
     setPackLoading(true)
     setPackError(null)
+    setPackNotice(null)
 
     try {
       const summary = await generatePackFn(result.propertyId, packType)
       setPackSummary(summary)
+      setPackNotice(summary.warning ?? null)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : t('agentsCapture.pack.errorFallback')
       setPackError(message)
+      setPackNotice(null)
       setPackSummary(null)
     } finally {
       setPackLoading(false)
@@ -827,6 +831,9 @@ export function AgentsGpsCapturePage({
                     <p className="agents-capture__status">
                       {t('agentsCapture.pack.noDownload')}
                     </p>
+                  )}
+                  {packNotice && (
+                    <p className="agents-capture__status">{packNotice}</p>
                   )}
                 </div>
               )}
