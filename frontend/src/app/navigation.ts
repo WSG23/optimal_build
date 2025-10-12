@@ -25,7 +25,6 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'GPS Capture',
     path: '/app/gps-capture',
     description: 'Mobile-first site capture and quick feasibility analysis.',
-    comingSoon: true,
   },
   {
     key: 'marketing',
@@ -49,4 +48,3 @@ export const NAV_ITEMS: NavItem[] = [
     comingSoon: true,
   },
 ]
-

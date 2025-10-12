@@ -17,6 +17,7 @@ import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
 import AgentPerformancePage from './pages/AgentPerformancePage'
 import { AppShell } from './app/layout/AppShell'
 import { BusinessPerformancePage } from './app/pages/business-performance/BusinessPerformancePage'
+import { GpsCapturePage } from './app/pages/gps-capture/GpsCapturePage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -34,6 +35,16 @@ const businessPerformanceElement = (
   </AppShell>
 )
 
+const gpsCaptureElement = (
+  <AppShell
+    activeItem="gpsCapture"
+    title="GPS capture & quick analysis"
+    description="Capture sites in the field, run instant scenario analysis, review market intelligence, and generate marketing packs."
+  >
+    <GpsCapturePage />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -42,6 +53,10 @@ const router = createBrowserRouter([
   {
     path: '/app/performance',
     element: businessPerformanceElement,
+  },
+  {
+    path: '/app/gps-capture',
+    element: gpsCaptureElement,
   },
   {
     path: '/legacy/home',
