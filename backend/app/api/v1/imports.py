@@ -539,7 +539,7 @@ async def upload_import(
     gross_floor_area_sqm: float | None = Form(default=None),
     max_height_m: float | None = Form(default=None),
     front_setback_m: float | None = Form(default=None),
-    zone_header: str | None = Header(default=None, alias="X-Zone-Code"),
+    x_zone_code: str | None = Header(None),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_reviewer),
 ) -> ImportResult:
@@ -571,7 +571,7 @@ async def upload_import(
     )
 
     import_id = str(uuid4())
-    selected_zone = zone_code or zone_header
+    selected_zone = zone_code or x_zone_code
     normalised_zone = _normalise_zone_code(selected_zone)
 
     overrides: dict[str, float] = {}

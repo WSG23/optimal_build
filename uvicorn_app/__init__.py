@@ -8,6 +8,7 @@ import contextlib
 import json
 import signal
 from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
 from http import HTTPStatus
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple
