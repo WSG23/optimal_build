@@ -3536,6 +3536,21 @@ h3 {
     border: 1px solid rgba(148, 163, 184, 0.35);
     padding: 0.55rem 0.75rem;
     font-size: 0.9rem;
+    background: #ffffff;
+}
+
+.gps-form__scenarios {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.45rem;
+}
+
+.gps-form__scenarios label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: #334155;
 }
 
 .gps-form__submit {
@@ -3629,11 +3644,31 @@ h3 {
     font-size: 0.85rem;
 }
 
+.gps-pack-options button[disabled] {
+    opacity: 0.6;
+    cursor: wait;
+}
+
 .gps-pack-history {
     border-top: 1px solid rgba(226, 232, 240, 0.6);
     padding-top: 0.75rem;
     font-size: 0.85rem;
     color: #475569;
+}
+
+.gps-pack-history ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.gps-pack-history li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .gps-page__captures table {
@@ -3649,3 +3684,63 @@ h3 {
     border-bottom: 1px solid rgba(226, 232, 240, 0.6);
 }
 
+.gps-error {
+    color: #b91c1c;
+    font-size: 0.8rem;
+}
+
+.gps-capture-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    color: #334155;
+}
+
+.gps-panel__notes {
+    margin: 0.5rem 0 0;
+    padding-left: 1.1rem;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+/* Placeholder pages ------------------------------------------------------- */
+
+.mkt-page,
+.adv-page,
+.int-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.mkt-card,
+.adv-card,
+.int-card {
+    background: rgba(248, 250, 252, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 1.2rem;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    color: #1f2937;
+}
+
+.mkt-card ul,
+.adv-card ul,
+.int-card ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: #475569;
+}
+
+.mkt-card code,
+.adv-card code,
+.int-card code {
+    background: rgba(226, 232, 240, 0.4);
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+}

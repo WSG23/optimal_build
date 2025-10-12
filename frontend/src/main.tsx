@@ -18,6 +18,9 @@ import AgentPerformancePage from './pages/AgentPerformancePage'
 import { AppShell } from './app/layout/AppShell'
 import { BusinessPerformancePage } from './app/pages/business-performance/BusinessPerformancePage'
 import { GpsCapturePage } from './app/pages/gps-capture/GpsCapturePage'
+import { MarketingPage } from './app/pages/marketing/MarketingPage'
+import { AdvisoryPage } from './app/pages/advisory/AdvisoryPage'
+import { IntegrationsPage } from './app/pages/integrations/IntegrationsPage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -45,6 +48,36 @@ const gpsCaptureElement = (
   </AppShell>
 )
 
+const marketingElement = (
+  <AppShell
+    activeItem="marketing"
+    title="Marketing packs"
+    description="Generate, track, and share professional marketing packs for developers and investors."
+  >
+    <MarketingPage />
+  </AppShell>
+)
+
+const advisoryElement = (
+  <AppShell
+    activeItem="advisory"
+    title="Advisory console"
+    description="Review asset mix strategy, pricing guidance, absorption forecasts, and market feedback in one workspace."
+  >
+    <AdvisoryPage />
+  </AppShell>
+)
+
+const integrationsElement = (
+  <AppShell
+    activeItem="integrations"
+    title="Listing integrations"
+    description="Connect PropertyGuru, EdgeProp, Zoho, and future portals to publish and monitor listings."
+  >
+    <IntegrationsPage />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -57,6 +90,18 @@ const router = createBrowserRouter([
   {
     path: '/app/gps-capture',
     element: gpsCaptureElement,
+  },
+  {
+    path: '/app/marketing',
+    element: marketingElement,
+  },
+  {
+    path: '/app/advisory',
+    element: advisoryElement,
+  },
+  {
+    path: '/app/integrations',
+    element: integrationsElement,
   },
   {
     path: '/legacy/home',

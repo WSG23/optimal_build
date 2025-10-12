@@ -234,3 +234,41 @@ export async function fetchDealSummary(
   const payload = (await response.json()) as Record<string, unknown>
   return mapDeal(payload)
 }
+
+function mapCommission(payload: Record<string, unknown>): DealCommission {
+  return {
+    id: String(payload.id ?? ''),
+    commissionType: String(payload.commission_type ?? ''),
+    status: String(payload.status ?? '').toLowerCase(),
+    basisAmount: toNumberOrNull(payload.basis_amount),
+    basisCurrency: String(payload.basis_currency ?? 'SGD'),
+    commissionRate: toNumberOrNull(payload.commission_rate),
+    commissionAmount: toNumberOrNull(payload.commission_amount),
+    introducedAt:
+      typeof payload.introduced_at === 'string' ? payload.introduced_at : null,
+    confirmedAt:
+      typeof payload.confirmed_at === 'string' ? payload.confirmed_at : null,
+    invoicedAt:
+      typeof payload.invoiced_at === 'string' ? payload.invoiced_at : null,
+    paidAt: typeof payload.paid_at === 'string' ? payload.paid_at : null,
+    disputedAt:
+      typeof payload.disputed_at === 'string' ? payload.disputed_at : null,
+    resolvedAt:
+      typeof payload.resolved_at === 'string' ? payload.resolved_at : null,
+  }
+}
+
+export async function fetchDealCommissions(
+  dealId: string,
+  signal?: AbortSignal,
+): Promise<DealCommission[]> {
+  const response = await fetch(
+    buildUrl(`/api/v1/deals/${dealId}/commissions`),
+    { signal },
+  )
+  if (!response.ok) {
+    throw new Error('Failed to load commission ledger')
+  }
+  const payload = (await response.json()) as Record<string, unknown>[]
+  return payload.map(mapCommission)
+}

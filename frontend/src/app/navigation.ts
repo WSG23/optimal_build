@@ -31,20 +31,17 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Marketing Packs',
     path: '/app/marketing',
     description: 'Document generator for site packages and investment memos.',
-    comingSoon: true,
   },
   {
     key: 'advisory',
     label: 'Advisory Console',
     path: '/app/advisory',
     description: 'Asset mix strategy, pricing guidance, and absorption insights.',
-    comingSoon: true,
   },
   {
     key: 'integrations',
     label: 'Listing Integrations',
     path: '/app/integrations',
     description: 'Account linking and listing publication workflows.',
-    comingSoon: true,
   },
 ]
