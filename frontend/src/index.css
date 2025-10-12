@@ -3744,3 +3744,127 @@ h3 {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.85rem;
 }
+
+.mkt-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.mkt-card__timestamp {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.mkt-generator {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.mkt-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.mkt-form label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.mkt-form input,
+.mkt-form select,
+.mkt-notes textarea {
+    border-radius: 0.65rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+    background: #ffffff;
+}
+
+.mkt-modules ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    color: #334155;
+}
+
+.mkt-notes textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.mkt-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mkt-actions button {
+    padding: 0.75rem 1.4rem;
+    border-radius: 0.8rem;
+    border: none;
+    background: linear-gradient(135deg, #4c1d95, #6d28d9);
+    color: #f8fafc;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mkt-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.mkt-actions button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 20px rgba(76, 29, 149, 0.25);
+}
+
+.mkt-error {
+    color: #b91c1c;
+    font-size: 0.85rem;
+}
+
+.mkt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.mkt-table th,
+.mkt-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    text-align: left;
+}
+
+.mkt-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(129, 140, 248, 0.18);
+    color: #312e81;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.08rem;
+}
+
+.mkt-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: rgba(17, 24, 39, 0.92);
+    color: #f8fafc;
+    padding: 0.85rem 1.1rem;
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.35);
+    font-size: 0.9rem;
+}
