@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import enum
 from typing import Dict
+from uuid import uuid4
 
 from sqlalchemy import (
     Boolean,
@@ -17,11 +18,10 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
-from app.models.base import Base
+from app.models.base import UUID, Base, MetadataProxy
 
 
 class ChecklistCategory(str, enum.Enum):
@@ -59,9 +59,7 @@ class DeveloperChecklistTemplate(Base):
 
     __tablename__ = "developer_checklist_templates"
 
-    id = Column(
-        PGUUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
+    id = Column(UUID(), primary_key=True, default=uuid4)
     development_scenario = Column(String(50), nullable=False, index=True)
     category = Column(Enum(ChecklistCategory), nullable=False, index=True)
     item_title = Column(String(255), nullable=False)
@@ -103,12 +101,10 @@ class DeveloperPropertyChecklist(Base):
 
     __tablename__ = "developer_property_checklists"
 
-    id = Column(
-        PGUUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
-    )
-    property_id = Column(PGUUID(as_uuid=True), nullable=False, index=True)
+    id = Column(UUID(), primary_key=True, default=uuid4)
+    property_id = Column(UUID(), nullable=False, index=True)
     template_id = Column(
-        PGUUID(as_uuid=True),
+        UUID(),
         ForeignKey("developer_checklist_templates.id", ondelete="SET NULL"),
         nullable=True,
     )
@@ -124,15 +120,16 @@ class DeveloperPropertyChecklist(Base):
         index=True,
     )
     assigned_to = Column(
-        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        UUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     due_date = Column(Date, nullable=True)
     completed_date = Column(Date, nullable=True)
     completed_by = Column(
-        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        UUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     notes = Column(Text, nullable=True)
-    checklist_metadata = Column("metadata", JSON, nullable=False, server_default="{}")
+    metadata_json = Column("metadata", JSONB, nullable=False, server_default="{}")
+    metadata = MetadataProxy()
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -176,7 +173,7 @@ class DeveloperPropertyChecklist(Base):
             ),
             "completed_by": str(self.completed_by) if self.completed_by else None,
             "notes": self.notes,
-            "metadata": self.checklist_metadata,
+            "metadata": self.metadata_json,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }

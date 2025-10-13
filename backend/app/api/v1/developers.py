@@ -8,8 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_optional_user
-from app.core.auth import TokenData
+from app.core.database import get_session
 from app.models.developer_checklists import ChecklistStatus
 from app.services.developer_checklist_service import DeveloperChecklistService
 from pydantic import BaseModel
@@ -65,8 +64,7 @@ async def get_property_checklists(
     property_id: UUID,
     development_scenario: Optional[str] = None,
     status: Optional[str] = None,
-    session: AsyncSession = Depends(get_db),
-    token: TokenData | None = Depends(get_optional_user),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Get due diligence checklist items for a property.
@@ -100,8 +98,7 @@ async def get_property_checklists(
 )
 async def get_checklist_summary(
     property_id: UUID,
-    session: AsyncSession = Depends(get_db),
-    token: TokenData | None = Depends(get_optional_user),
+    session: AsyncSession = Depends(get_session),
 ):
     """Get a summary of checklist completion status for a property."""
     summary = await DeveloperChecklistService.get_checklist_summary(
@@ -117,8 +114,7 @@ async def get_checklist_summary(
 async def update_checklist_item(
     checklist_id: UUID,
     request: UpdateChecklistStatusRequest,
-    session: AsyncSession = Depends(get_db),
-    token: TokenData | None = Depends(get_optional_user),
+    session: AsyncSession = Depends(get_session),
 ):
     """Update a checklist item's status and notes."""
     try:

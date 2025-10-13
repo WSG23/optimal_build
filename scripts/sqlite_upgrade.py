@@ -27,6 +27,7 @@ async def apply_migrations(database_url: str) -> None:
     engine = create_async_engine(database_url)
     try:
         import backend.app.models.audit  # noqa: F401
+        import backend.app.models.developer_checklists  # noqa: F401
         import backend.app.models.entitlements  # noqa: F401
         import backend.app.models.finance  # noqa: F401
         import backend.app.models.imports  # noqa: F401
