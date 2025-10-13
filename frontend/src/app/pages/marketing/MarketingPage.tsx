@@ -6,36 +6,26 @@ const PACK_TYPES: Array<{
   type: ProfessionalPackType
   label: string
   description: string
-  icon: string
-  color: string
 }> = [
   {
     type: 'universal',
     label: 'Universal Site Pack',
-    description: 'Comprehensive 11-page analysis with all scenarios',
-    icon: '📊',
-    color: '#2563eb',
+    description: 'Comprehensive analysis with all development scenarios',
   },
   {
     type: 'investment',
     label: 'Investment Memorandum',
-    description: 'Financial analysis for investors',
-    icon: '💼',
-    color: '#16a34a',
+    description: 'Financial analysis for institutional investors',
   },
   {
     type: 'sales',
     label: 'Sales Brief',
-    description: 'Marketing material for property sales',
-    icon: '🏢',
-    color: '#dc2626',
+    description: 'Professional marketing material for property sales',
   },
   {
     type: 'lease',
     label: 'Lease Brochure',
-    description: 'Leasing collateral with amenities',
-    icon: '📋',
-    color: '#9333ea',
+    description: 'Leasing collateral with amenity documentation',
   },
 ]
 
@@ -67,7 +57,7 @@ export function MarketingPage() {
     try {
       const summary = await generatePack(propertyId.trim(), selectedPackType)
       setNotice(summary.warning ?? null)
-      setPropertyId('') // Clear form after successful generation
+      setPropertyId('')
       clearError()
     } catch {
       setNotice(null)
@@ -79,35 +69,48 @@ export function MarketingPage() {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Hero Section */}
-      <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '1rem',
-        padding: '2.5rem',
-        marginBottom: '2rem',
-        color: 'white',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-      }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.5rem', margin: 0 }}>
+    <div style={{
+      padding: '3rem 2rem',
+      maxWidth: '980px',
+      margin: '0 auto',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
+      color: '#1d1d1f',
+    }}>
+      {/* Header */}
+      <header style={{ marginBottom: '3rem' }}>
+        <h1 style={{
+          fontSize: '3rem',
+          fontWeight: 700,
+          letterSpacing: '-0.015em',
+          margin: '0 0 0.5rem',
+          lineHeight: 1.1,
+        }}>
           Marketing Packs
         </h1>
-        <p style={{ fontSize: '1.125rem', opacity: 0.95, margin: '0.5rem 0 0' }}>
-          Generate professional PDF materials for investors, buyers, and tenants
+        <p style={{
+          fontSize: '1.25rem',
+          color: '#6e6e73',
+          fontWeight: 400,
+          margin: 0,
+          letterSpacing: '-0.01em',
+        }}>
+          Professional materials for investors and stakeholders
         </p>
-        <div style={{ marginTop: '1rem', fontSize: '0.875rem', opacity: 0.9 }}>
-          {formattedDate} • {packs.length} packs generated
-        </div>
-      </div>
+      </header>
 
-      {/* Pack Type Selector - Card Grid */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem', color: '#0f172a' }}>
-          Choose Pack Type
+      {/* Pack Type Selector */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{
+          fontSize: '1.75rem',
+          fontWeight: 600,
+          letterSpacing: '-0.01em',
+          margin: '0 0 1.5rem',
+        }}>
+          Choose a template
         </h2>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '1rem',
         }}>
           {PACK_TYPES.map((pack) => {
@@ -119,51 +122,60 @@ export function MarketingPage() {
                 onClick={() => setSelectedPackType(pack.type)}
                 disabled={isGenerating}
                 style={{
-                  background: isSelected ? 'white' : '#f8fafc',
-                  border: `2px solid ${isSelected ? pack.color : '#e2e8f0'}`,
-                  borderRadius: '0.75rem',
-                  padding: '1.25rem',
+                  background: isSelected ? '#f5f5f7' : 'white',
+                  border: `1px solid ${isSelected ? '#1d1d1f' : '#d2d2d7'}`,
+                  borderRadius: '18px',
+                  padding: '1.5rem',
                   cursor: isGenerating ? 'not-allowed' : 'pointer',
                   textAlign: 'left',
-                  transition: 'all 0.2s ease',
-                  boxShadow: isSelected
-                    ? `0 4px 6px -1px ${pack.color}33, 0 2px 4px -1px ${pack.color}22`
-                    : '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                  opacity: isGenerating ? 0.6 : 1,
-                  transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  opacity: isGenerating ? 0.4 : 1,
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isGenerating && !isSelected) {
-                    e.currentTarget.style.borderColor = pack.color
-                    e.currentTarget.style.transform = 'scale(1.02)'
+                  if (!isGenerating) {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.borderColor = '#e2e8f0'
-                    e.currentTarget.style.transform = 'scale(1)'
-                  }
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'none'
                 }}
               >
-                <div style={{
-                  fontSize: '2.5rem',
-                  marginBottom: '0.75rem',
-                  filter: isSelected ? 'none' : 'grayscale(0.5)',
-                }}>
-                  {pack.icon}
-                </div>
+                {isSelected && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: '#1d1d1f',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    color: 'white',
+                  }}>
+                    ✓
+                  </div>
+                )}
                 <div style={{
                   fontSize: '1.125rem',
                   fontWeight: 600,
-                  color: isSelected ? pack.color : '#0f172a',
+                  color: '#1d1d1f',
                   marginBottom: '0.5rem',
+                  letterSpacing: '-0.01em',
                 }}>
                   {pack.label}
                 </div>
                 <div style={{
-                  fontSize: '0.875rem',
-                  color: '#64748b',
+                  fontSize: '0.9375rem',
+                  color: '#6e6e73',
                   lineHeight: 1.5,
+                  letterSpacing: '-0.005em',
                 }}>
                   {pack.description}
                 </div>
@@ -171,19 +183,24 @@ export function MarketingPage() {
             )
           })}
         </div>
-      </div>
+      </section>
 
       {/* Generation Form */}
-      <div style={{
+      <section style={{
         background: 'white',
-        borderRadius: '1rem',
+        border: '1px solid #d2d2d7',
+        borderRadius: '18px',
         padding: '2rem',
-        marginBottom: '2rem',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        marginBottom: '3rem',
       }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem', color: '#0f172a' }}>
+        <h3 style={{
+          fontSize: '1.25rem',
+          fontWeight: 600,
+          margin: '0 0 1.5rem',
+          letterSpacing: '-0.01em',
+        }}>
           Generate {selectedPackInfo?.label}
-        </h2>
+        </h3>
 
         <div style={{ marginBottom: '1.5rem' }}>
           <label
@@ -191,35 +208,40 @@ export function MarketingPage() {
             style={{
               display: 'block',
               fontSize: '0.875rem',
-              fontWeight: 600,
-              color: '#374151',
+              fontWeight: 500,
+              color: '#1d1d1f',
               marginBottom: '0.5rem',
+              letterSpacing: '-0.005em',
             }}
           >
-            Property ID <span style={{ color: '#dc2626' }}>*</span>
+            Property ID
           </label>
           <input
             id="property-id"
             type="text"
-            placeholder="e.g. 4b7c0f9e-a1b2-c3d4-e5f6-1234567890ab"
+            placeholder="Enter property identifier"
             value={propertyId}
             onChange={(event) => setPropertyId(event.target.value)}
             disabled={isGenerating}
             style={{
               width: '100%',
-              padding: '0.75rem 1rem',
+              padding: '0.875rem 1rem',
               fontSize: '1rem',
-              border: '2px solid #e2e8f0',
-              borderRadius: '0.5rem',
+              border: '1px solid #d2d2d7',
+              borderRadius: '12px',
               outline: 'none',
-              transition: 'border-color 0.2s ease',
-              background: isGenerating ? '#f8fafc' : 'white',
+              transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+              background: isGenerating ? '#f5f5f7' : 'white',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+              letterSpacing: '-0.005em',
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = selectedPackInfo?.color || '#2563eb'
+              e.currentTarget.style.borderColor = '#1d1d1f'
+              e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.04)'
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#e2e8f0'
+              e.currentTarget.style.borderColor = '#d2d2d7'
+              e.currentTarget.style.boxShadow = 'none'
             }}
           />
         </div>
@@ -230,246 +252,231 @@ export function MarketingPage() {
           disabled={isGenerating || propertyId.trim() === ''}
           style={{
             width: '100%',
-            padding: '1rem 2rem',
-            fontSize: '1rem',
-            fontWeight: 600,
+            padding: '0.875rem 1.5rem',
+            fontSize: '1.0625rem',
+            fontWeight: 500,
             color: 'white',
-            background: isGenerating || !propertyId.trim()
-              ? '#94a3b8'
-              : selectedPackInfo?.color || '#2563eb',
+            background: isGenerating || !propertyId.trim() ? '#d2d2d7' : '#1d1d1f',
             border: 'none',
-            borderRadius: '0.5rem',
+            borderRadius: '12px',
             cursor: isGenerating || !propertyId.trim() ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            letterSpacing: '-0.005em',
           }}
           onMouseEnter={(e) => {
             if (!isGenerating && propertyId.trim()) {
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+              e.currentTarget.style.background = '#424245'
             }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)'
-            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+            if (!isGenerating && propertyId.trim()) {
+              e.currentTarget.style.background = '#1d1d1f'
+            }
           }}
         >
-          {isGenerating
-            ? `⏳ Generating ${formatPackLabel(generatingType || selectedPackType)}...`
-            : `🚀 Generate ${selectedPackInfo?.label}`}
+          {isGenerating ? 'Generating...' : 'Generate'}
         </button>
 
         {error && (
           <div style={{
             marginTop: '1rem',
-            padding: '1rem',
-            background: '#fee2e2',
-            border: '1px solid #fecaca',
-            borderRadius: '0.5rem',
-            color: '#991b1b',
-            fontSize: '0.875rem',
+            padding: '0.875rem 1rem',
+            background: '#fff5f5',
+            border: '1px solid #ffe0e0',
+            borderRadius: '12px',
+            color: '#d70015',
+            fontSize: '0.9375rem',
+            letterSpacing: '-0.005em',
           }}>
-            <strong>Error:</strong> {error}
+            {error}
           </div>
         )}
         {notice && (
           <div style={{
             marginTop: '1rem',
-            padding: '1rem',
-            background: '#fef3c7',
-            border: '1px solid #fde68a',
-            borderRadius: '0.5rem',
-            color: '#92400e',
-            fontSize: '0.875rem',
+            padding: '0.875rem 1rem',
+            background: '#fff9e6',
+            border: '1px solid #ffe8b3',
+            borderRadius: '12px',
+            color: '#996600',
+            fontSize: '0.9375rem',
+            letterSpacing: '-0.005em',
           }}>
-            <strong>Notice:</strong> {notice}
+            {notice}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Generated Packs List */}
-      <div style={{
-        background: 'white',
-        borderRadius: '1rem',
-        padding: '2rem',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-      }}>
-        <h2 style={{
-          fontSize: '1.5rem',
-          fontWeight: 600,
-          marginBottom: '1.5rem',
-          color: '#0f172a',
+      <section>
+        <div style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          marginBottom: '1.5rem',
         }}>
-          Generated Packs
-          <span style={{
-            background: '#e0f2fe',
-            color: '#0369a1',
-            fontSize: '0.875rem',
+          <h2 style={{
+            fontSize: '1.75rem',
             fontWeight: 600,
-            padding: '0.25rem 0.75rem',
-            borderRadius: '999px',
+            letterSpacing: '-0.01em',
+            margin: 0,
           }}>
-            {packs.length}
+            Library
+          </h2>
+          <span style={{
+            fontSize: '0.9375rem',
+            color: '#6e6e73',
+            fontWeight: 400,
+          }}>
+            {packs.length} {packs.length === 1 ? 'pack' : 'packs'}
           </span>
-        </h2>
+        </div>
 
         {packs.length === 0 ? (
           <div style={{
-            padding: '3rem 2rem',
+            padding: '4rem 2rem',
             textAlign: 'center',
-            background: '#f8fafc',
-            borderRadius: '0.75rem',
-            border: '2px dashed #cbd5e1',
+            background: 'white',
+            border: '1px solid #d2d2d7',
+            borderRadius: '18px',
           }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📄</div>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              margin: '0 auto 1.5rem',
+              background: '#f5f5f7',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+            }}>
+              📄
+            </div>
             <p style={{
               fontSize: '1.125rem',
               fontWeight: 500,
-              color: '#475569',
+              color: '#1d1d1f',
               marginBottom: '0.5rem',
+              letterSpacing: '-0.01em',
             }}>
-              No packs generated yet
+              No packs yet
             </p>
-            <p style={{ fontSize: '0.875rem', color: '#94a3b8', margin: 0 }}>
-              Select a pack type and property ID above to generate your first marketing material
+            <p style={{
+              fontSize: '0.9375rem',
+              color: '#6e6e73',
+              margin: 0,
+              letterSpacing: '-0.005em',
+            }}>
+              Generated materials will appear here
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {packs.map((pack, index) => {
-              const packInfo = PACK_TYPES.find((p) => p.type === pack.packType)
-              return (
-                <div
-                  key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}-${index}`}
-                  style={{
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {packs.map((pack, index) => (
+              <div
+                key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}-${index}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1.5rem',
+                  padding: '1.25rem 1.5rem',
+                  background: 'white',
+                  border: '1px solid #d2d2d7',
+                  borderRadius: '16px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f5f5f7'
+                  e.currentTarget.style.borderColor = '#b8b8bd'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white'
+                  e.currentTarget.style.borderColor = '#d2d2d7'
+                }}
+              >
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '1.0625rem',
+                    fontWeight: 500,
+                    color: '#1d1d1f',
+                    marginBottom: '0.25rem',
+                    letterSpacing: '-0.005em',
+                  }}>
+                    {formatPackLabel(pack.packType)}
+                  </div>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: '#6e6e73',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '1.5rem',
-                    padding: '1.25rem',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '0.75rem',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f1f5f9'
-                    e.currentTarget.style.borderColor = packInfo?.color || '#cbd5e1'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc'
-                    e.currentTarget.style.borderColor = '#e2e8f0'
-                  }}
-                >
-                  {/* Icon */}
-                  <div style={{
-                    fontSize: '2.5rem',
-                    flexShrink: 0,
+                    gap: '0.75rem',
+                    letterSpacing: '-0.005em',
                   }}>
-                    {packInfo?.icon || '📄'}
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: '1.125rem',
-                      fontWeight: 600,
-                      color: '#0f172a',
-                      marginBottom: '0.25rem',
+                    <span style={{
+                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+                      fontSize: '0.8125rem',
                     }}>
-                      {formatPackLabel(pack.packType)}
-                    </div>
-                    <div style={{
-                      fontSize: '0.875rem',
-                      color: '#64748b',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      flexWrap: 'wrap',
-                    }}>
-                      <span style={{
-                        fontFamily: 'monospace',
-                        background: '#e2e8f0',
-                        padding: '0.125rem 0.5rem',
-                        borderRadius: '0.25rem',
-                      }}>
-                        {pack.propertyId.length > 16
-                          ? `${pack.propertyId.substring(0, 16)}...`
-                          : pack.propertyId}
-                      </span>
-                      <span>•</span>
-                      <span>{new Date(pack.generatedAt).toLocaleString()}</span>
-                      <span>•</span>
-                      <span style={{ fontWeight: 500 }}>{formatSize(pack.sizeBytes)}</span>
-                    </div>
-                  </div>
-
-                  {/* Action */}
-                  <div style={{ flexShrink: 0 }}>
-                    {pack.downloadUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(pack.downloadUrl!)}
-                        style={{
-                          padding: '0.75rem 1.5rem',
-                          fontSize: '0.875rem',
-                          fontWeight: 600,
-                          color: 'white',
-                          background: packInfo?.color || '#2563eb',
-                          border: 'none',
-                          borderRadius: '0.5rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          whiteSpace: 'nowrap',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)'
-                          e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)'
-                          e.currentTarget.style.boxShadow = 'none'
-                        }}
-                      >
-                        ⬇️ Download PDF
-                      </button>
-                    ) : pack.isFallback ? (
-                      <span
-                        style={{
-                          padding: '0.75rem 1.5rem',
-                          fontSize: '0.875rem',
-                          color: '#94a3b8',
-                          background: '#f1f5f9',
-                          borderRadius: '0.5rem',
-                          display: 'inline-block',
-                        }}
-                        title={pack.warning ?? 'Preview pack generated offline'}
-                      >
-                        Preview Only
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          padding: '0.75rem 1.5rem',
-                          fontSize: '0.875rem',
-                          color: '#94a3b8',
-                          background: '#f1f5f9',
-                          borderRadius: '0.5rem',
-                          display: 'inline-block',
-                        }}
-                      >
-                        Pending...
-                      </span>
-                    )}
+                      {pack.propertyId.length > 20
+                        ? `${pack.propertyId.substring(0, 20)}...`
+                        : pack.propertyId}
+                    </span>
+                    <span style={{ color: '#d2d2d7' }}>·</span>
+                    <span>{formatSize(pack.sizeBytes)}</span>
                   </div>
                 </div>
-              )
-            })}
+
+                {/* Action */}
+                <div style={{ flexShrink: 0 }}>
+                  {pack.downloadUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(pack.downloadUrl!)}
+                      style={{
+                        padding: '0.5rem 1.25rem',
+                        fontSize: '0.9375rem',
+                        fontWeight: 500,
+                        color: '#1d1d1f',
+                        background: 'transparent',
+                        border: '1px solid #d2d2d7',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '-0.005em',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#1d1d1f'
+                        e.currentTarget.style.color = 'white'
+                        e.currentTarget.style.borderColor = '#1d1d1f'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = '#1d1d1f'
+                        e.currentTarget.style.borderColor = '#d2d2d7'
+                      }}
+                    >
+                      Download
+                    </button>
+                  ) : (
+                    <span
+                      style={{
+                        padding: '0.5rem 1.25rem',
+                        fontSize: '0.9375rem',
+                        color: '#86868b',
+                        letterSpacing: '-0.005em',
+                      }}
+                    >
+                      {pack.isFallback ? 'Preview' : 'Processing'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }
