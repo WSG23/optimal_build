@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ProfessionalPackType } from '../../../api/agents'
 import { useMarketingPacks } from './hooks/useMarketingPacks'
 
@@ -6,26 +6,41 @@ const PACK_TYPES: Array<{
   type: ProfessionalPackType
   label: string
   description: string
+  icon: string
+  estimatedTime: string
+  estimatedSize: string
 }> = [
   {
     type: 'universal',
     label: 'Universal Site Pack',
     description: 'Comprehensive analysis with all development scenarios',
+    icon: '📊',
+    estimatedTime: '45-60s',
+    estimatedSize: '~2.5 MB',
   },
   {
     type: 'investment',
     label: 'Investment Memorandum',
     description: 'Financial analysis for institutional investors',
+    icon: '💼',
+    estimatedTime: '30-40s',
+    estimatedSize: '~1.5 MB',
   },
   {
     type: 'sales',
     label: 'Sales Brief',
     description: 'Professional marketing material for property sales',
+    icon: '🏢',
+    estimatedTime: '20-30s',
+    estimatedSize: '~1.2 MB',
   },
   {
     type: 'lease',
     label: 'Lease Brochure',
     description: 'Leasing collateral with amenity documentation',
+    icon: '📋',
+    estimatedTime: '20-30s',
+    estimatedSize: '~1.2 MB',
   },
 ]
 
@@ -42,11 +57,6 @@ export function MarketingPage() {
   const [selectedPackType, setSelectedPackType] =
     useState<ProfessionalPackType>('universal')
   const [notice, setNotice] = useState<string | null>(null)
-
-  const formattedDate = useMemo(
-    () => new Date().toLocaleString(undefined, { dateStyle: 'medium' }),
-    [],
-  )
 
   const selectedPackInfo = PACK_TYPES.find((p) => p.type === selectedPackType)
 
@@ -163,21 +173,39 @@ export function MarketingPage() {
                   </div>
                 )}
                 <div style={{
-                  fontSize: '1.125rem',
-                  fontWeight: 600,
-                  color: '#1d1d1f',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
                   marginBottom: '0.5rem',
-                  letterSpacing: '-0.01em',
                 }}>
-                  {pack.label}
+                  <span style={{ fontSize: '1.5rem' }}>{pack.icon}</span>
+                  <div style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 600,
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.01em',
+                  }}>
+                    {pack.label}
+                  </div>
                 </div>
                 <div style={{
                   fontSize: '0.9375rem',
                   color: '#6e6e73',
                   lineHeight: 1.5,
                   letterSpacing: '-0.005em',
+                  marginBottom: '0.75rem',
                 }}>
                   {pack.description}
+                </div>
+                <div style={{
+                  display: 'flex',
+                  gap: '1rem',
+                  fontSize: '0.8125rem',
+                  color: '#86868b',
+                  letterSpacing: '-0.005em',
+                }}>
+                  <span>⏱️ {pack.estimatedTime}</span>
+                  <span>📦 {pack.estimatedSize}</span>
                 </div>
               </button>
             )
@@ -274,7 +302,11 @@ export function MarketingPage() {
             }
           }}
         >
-          {isGenerating ? 'Generating...' : 'Generate'}
+          {isGenerating && generatingType
+            ? `Generating... (${selectedPackInfo?.estimatedTime})`
+            : isGenerating
+              ? 'Generating...'
+              : 'Generate'}
         </button>
 
         {error && (
