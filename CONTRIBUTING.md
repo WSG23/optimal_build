@@ -238,3 +238,215 @@ make lint
 - **Security:** Review gitleaks output, look for exposed secrets, and evaluate
   the change for security impacts (authentication, authorization, sensitive
   data handling).
+
+---
+
+## PDF Development Guidelines
+
+When working with PDF generation features, follow these guidelines to prevent common issues:
+
+### Before Starting PDF Work
+
+1. **Review Existing Code**
+   - Study `backend/app/services/agents/pdf_generator.py` (base class)
+   - Review `backend/app/services/agents/universal_site_pack.py` (example implementation)
+   - Check `docs/PDF_TESTING_CHECKLIST.md` for testing requirements
+
+2. **Choose the Right Template**
+   - **Use SimpleDocTemplate** for most cases (standard margins, simple layout)
+   - **Avoid BaseDocTemplate** unless you need complex multi-template layouts
+   - If using BaseDocTemplate, test immediately with minimal content first
+
+3. **Set PDF Metadata** (Required for Safari Compatibility)
+   ```python
+   doc = SimpleDocTemplate(
+       buffer, pagesize=A4,
+       title="Your PDF Title",      # REQUIRED
+       author="Your Organization"    # REQUIRED
+   )
+   ```
+
+### During Development
+
+#### Best Practices
+
+1. **Start Simple**
+   ```python
+   # Start with minimal test
+   story = [Paragraph("Hello World", styles['Normal'])]
+   doc.build(story)
+   # Verify this works BEFORE adding complexity
+   ```
+
+2. **Use Standard Fonts**
+   ```python
+   # ✅ GOOD: Standard PDF fonts (no embedding needed)
+   - Helvetica, Helvetica-Bold
+   - Times-Roman, Times-Bold
+   - Courier
+
+   # ❌ AVOID: Custom fonts require embedding
+   - Custom TTF/OTF fonts
+   ```
+
+3. **Test After Every Change**
+   - Generate PDF after each code change
+   - Open in Preview/Safari immediately
+   - Don't wait until "feature complete" to test
+
+4. **Use Absolute URLs for Downloads**
+   ```python
+   # ✅ GOOD: Absolute URL works from any frontend port
+   download_url = f"http://localhost:9400/api/v1/agents/files/{property_id}/{filename}"
+
+   # ❌ BAD: Relative URL fails when frontend on different port
+   download_url = f"/api/v1/agents/files/{property_id}/{filename}"
+   ```
+
+### Testing Requirements (MANDATORY)
+
+Before committing PDF code:
+
+1. **Automated Tests**
+   ```bash
+   # Run PDF validation tests
+   pytest backend/tests/test_services/test_universal_site_pack.py -v
+   ```
+
+2. **Manual Browser Testing** (Required)
+   - [ ] Generate PDF via API
+   - [ ] Open in **Safari** (strictest - test this first!)
+   - [ ] Open in Chrome/Brave
+   - [ ] Open in Firefox (if available)
+   - [ ] Verify all content visible in each browser
+
+3. **Content Verification**
+   ```python
+   # Use PyPDF to validate
+   from pypdf import PdfReader
+   reader = PdfReader('generated.pdf')
+   print(f"Pages: {len(reader.pages)}")
+   print(f"Text: {reader.pages[0].extract_text()[:200]}")
+   ```
+
+4. **Frontend Integration** (if applicable)
+   - [ ] Click download button from frontend
+   - [ ] Verify file downloads to Downloads folder
+   - [ ] Open downloaded file, verify content visible
+
+### Common Pitfalls to Avoid
+
+#### 1. BaseDocTemplate Issues
+```python
+# ❌ WRONG: Complex template setup often breaks
+doc = BaseDocTemplate(buffer)
+frame = Frame(0, 0, A4[0], A4[1])
+template = PageTemplate(frames=[frame])
+doc.addPageTemplates([template])
+# Result: Blank PDF (flowables not rendering)
+
+# ✅ RIGHT: Use SimpleDocTemplate
+doc = SimpleDocTemplate(buffer, pagesize=A4)
+```
+
+#### 2. Missing Metadata
+```python
+# ❌ WRONG: No metadata (Safari shows blank)
+doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+# ✅ RIGHT: Include metadata
+doc = SimpleDocTemplate(
+    buffer, pagesize=A4,
+    title="My PDF", author="Company Name"
+)
+```
+
+#### 3. Relative URLs
+```python
+# ❌ WRONG: Relative URL
+return {"download_url": "/api/v1/files/..."}
+
+# ✅ RIGHT: Absolute URL
+return {"download_url": "http://localhost:9400/api/v1/files/..."}
+```
+
+#### 4. Assuming "File Created" = "Has Content"
+```python
+# ❌ WRONG: Just check file exists
+assert pdf_file.exists()
+
+# ✅ RIGHT: Verify content extractable
+from pypdf import PdfReader
+reader = PdfReader(pdf_file)
+text = reader.pages[0].extract_text()
+assert len(text) > 100  # Has actual content
+```
+
+### Pre-Commit Checklist
+
+When modifying PDF code, the pre-commit hook will prompt you to confirm:
+
+- [ ] Generated test PDF via API
+- [ ] Opened PDF in Safari (verified content visible)
+- [ ] Opened PDF in Chrome/Brave (verified content visible)
+- [ ] Tested download from frontend (if applicable)
+- [ ] Run automated tests (all passing)
+
+**See [docs/PDF_TESTING_CHECKLIST.md](docs/PDF_TESTING_CHECKLIST.md) for complete checklist**
+
+### Quick Test Commands
+
+```bash
+# 1. Generate test PDF
+curl -X POST "http://localhost:9400/api/v1/agents/commercial-property/properties/{property_id}/generate-pack/universal" \
+  -H "Content-Type: application/json"
+
+# 2. Copy to /tmp for easy access
+cp .storage/uploads/reports/{property_id}/*.pdf /tmp/test.pdf
+
+# 3. Open in browsers
+open -a Safari /tmp/test.pdf
+open -a "Google Chrome" /tmp/test.pdf
+
+# 4. Validate with PyPDF
+python3 << EOF
+from pypdf import PdfReader
+reader = PdfReader('/tmp/test.pdf')
+print(f'Pages: {len(reader.pages)}')
+print(f'Text: {reader.pages[0].extract_text()[:200]}')
+EOF
+```
+
+### When PDF Appears Blank
+
+If PDF shows blank in browser:
+
+1. **Check Metadata**
+   ```python
+   # Add title/author to SimpleDocTemplate
+   doc = SimpleDocTemplate(..., title="...", author="...")
+   ```
+
+2. **Verify Using SimpleDocTemplate**
+   ```python
+   # Not BaseDocTemplate
+   from reportlab.platypus import SimpleDocTemplate  # ✅
+   ```
+
+3. **Test Content Extraction**
+   ```python
+   from pypdf import PdfReader
+   text = reader.pages[0].extract_text()
+   print(f"Has content: {len(text) > 0}")
+   ```
+
+4. **Check Safari First**
+   - Safari is strictest
+   - If works in Safari, likely works everywhere
+   - If blank in Safari, check metadata
+
+### Related Documentation
+
+- [docs/PDF_TESTING_CHECKLIST.md](docs/PDF_TESTING_CHECKLIST.md) - Complete testing checklist
+- [CODING_RULES.md](CODING_RULES.md) - General coding standards
+- [docs/TESTING_KNOWN_ISSUES.md](docs/TESTING_KNOWN_ISSUES.md) - Known test limitations

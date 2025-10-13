@@ -7,6 +7,13 @@ repos:
       language: system
       pass_filenames: false
 
+    - id: pdf-smoke-test
+      name: PDF generation smoke test
+      entry: python3 scripts/smoke_test_pdfs.py
+      language: system
+      pass_filenames: false
+      files: ^backend/app/(services/agents|api/v1/agents).*\.(py)$
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0
   hooks:
