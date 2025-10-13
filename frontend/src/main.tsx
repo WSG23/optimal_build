@@ -21,6 +21,7 @@ import { GpsCapturePage } from './app/pages/gps-capture/GpsCapturePage'
 import { MarketingPage } from './app/pages/marketing/MarketingPage'
 import { AdvisoryPage } from './app/pages/advisory/AdvisoryPage'
 import { IntegrationsPage } from './app/pages/integrations/IntegrationsPage'
+import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitionPage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -78,6 +79,16 @@ const integrationsElement = (
   </AppShell>
 )
 
+const siteAcquisitionElement = (
+  <AppShell
+    activeItem="siteAcquisition"
+    title="Site acquisition"
+    description="Comprehensive property capture and development feasibility analysis for developers."
+  >
+    <SiteAcquisitionPage />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -102,6 +113,10 @@ const router = createBrowserRouter([
   {
     path: '/app/integrations',
     element: integrationsElement,
+  },
+  {
+    path: '/app/site-acquisition',
+    element: siteAcquisitionElement,
   },
   {
     path: '/legacy/home',
