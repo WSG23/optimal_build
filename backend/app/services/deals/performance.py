@@ -535,12 +535,14 @@ def _derive_snapshot_context(
         else None
     )
     return {
-        "weighted_to_gross_ratio": round(weighted_ratio, 4)
-        if weighted_ratio is not None
-        else None,
-        "average_pipeline_per_open_deal": round(average_pipeline_open, 2)
-        if average_pipeline_open is not None
-        else None,
+        "weighted_to_gross_ratio": (
+            round(weighted_ratio, 4) if weighted_ratio is not None else None
+        ),
+        "average_pipeline_per_open_deal": (
+            round(average_pipeline_open, 2)
+            if average_pipeline_open is not None
+            else None
+        ),
         "win_ratio": round(win_ratio, 4) if win_ratio is not None else None,
         "generated_at": datetime.now(UTC).isoformat(),
     }
