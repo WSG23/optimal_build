@@ -6,10 +6,16 @@ import io
 from uuid import UUID
 
 import pytest
-import pytest_asyncio
-from app.models.property import DevelopmentAnalysis, MarketTransaction, Property, PropertyType
-from app.services.agents.universal_site_pack import UniversalSitePackGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest_asyncio
+from app.models.property import (
+    DevelopmentAnalysis,
+    MarketTransaction,
+    Property,
+    PropertyType,
+)
+from app.services.agents.universal_site_pack import UniversalSitePackGenerator
 
 
 @pytest_asyncio.fixture
@@ -67,9 +73,7 @@ async def test_universal_site_pack_generates_pdf(
     """Test that Universal Site Pack generates a non-empty PDF."""
     generator = UniversalSitePackGenerator()
 
-    pdf_buffer = await generator.generate(
-        property_id=test_property.id, session=session
-    )
+    pdf_buffer = await generator.generate(property_id=test_property.id, session=session)
 
     # Basic checks
     assert pdf_buffer is not None
@@ -77,7 +81,9 @@ async def test_universal_site_pack_generates_pdf(
 
     # Check PDF size
     pdf_size = len(pdf_buffer.getvalue())
-    assert pdf_size > 10000, f"PDF too small ({pdf_size} bytes), likely blank or missing content"
+    assert (
+        pdf_size > 10000
+    ), f"PDF too small ({pdf_size} bytes), likely blank or missing content"
     assert pdf_size < 10000000, f"PDF too large ({pdf_size} bytes), possible issue"
 
 
@@ -90,32 +96,42 @@ async def test_universal_site_pack_has_content(
     from pypdf import PdfReader
 
     generator = UniversalSitePackGenerator()
-    pdf_buffer = await generator.generate(
-        property_id=test_property.id, session=session
-    )
+    pdf_buffer = await generator.generate(property_id=test_property.id, session=session)
 
     # Read PDF and extract text
     pdf_buffer.seek(0)
     reader = PdfReader(pdf_buffer)
 
     # Check page count
-    assert len(reader.pages) >= 10, f"PDF should have at least 10 pages, got {len(reader.pages)}"
+    assert (
+        len(reader.pages) >= 10
+    ), f"PDF should have at least 10 pages, got {len(reader.pages)}"
 
     # Check page 1 (cover page) content
     page1_text = reader.pages[0].extract_text()
-    assert len(page1_text) > 100, f"Page 1 has insufficient text ({len(page1_text)} chars)"
+    assert (
+        len(page1_text) > 100
+    ), f"Page 1 has insufficient text ({len(page1_text)} chars)"
     assert "Universal Site Pack" in page1_text, "Cover page missing title"
     assert test_property.name in page1_text, "Cover page missing property name"
 
     # Check page 2 (executive summary) content
     page2_text = reader.pages[1].extract_text()
-    assert len(page2_text) > 100, f"Page 2 has insufficient text ({len(page2_text)} chars)"
-    assert "Executive Summary" in page2_text or "Summary" in page2_text, "Page 2 missing section header"
+    assert (
+        len(page2_text) > 100
+    ), f"Page 2 has insufficient text ({len(page2_text)} chars)"
+    assert (
+        "Executive Summary" in page2_text or "Summary" in page2_text
+    ), "Page 2 missing section header"
 
     # Check page 3 (site analysis) content
     page3_text = reader.pages[2].extract_text()
-    assert len(page3_text) > 100, f"Page 3 has insufficient text ({len(page3_text)} chars)"
-    assert "Site Analysis" in page3_text or "Analysis" in page3_text, "Page 3 missing section header"
+    assert (
+        len(page3_text) > 100
+    ), f"Page 3 has insufficient text ({len(page3_text)} chars)"
+    assert (
+        "Site Analysis" in page3_text or "Analysis" in page3_text
+    ), "Page 3 missing section header"
 
 
 @pytest.mark.asyncio
@@ -127,9 +143,7 @@ async def test_universal_site_pack_has_metadata(
     from pypdf import PdfReader
 
     generator = UniversalSitePackGenerator()
-    pdf_buffer = await generator.generate(
-        property_id=test_property.id, session=session
-    )
+    pdf_buffer = await generator.generate(property_id=test_property.id, session=session)
 
     pdf_buffer.seek(0)
     reader = PdfReader(pdf_buffer)
@@ -179,9 +193,7 @@ async def test_universal_site_pack_fonts_not_embedded(
     from pypdf import PdfReader
 
     generator = UniversalSitePackGenerator()
-    pdf_buffer = await generator.generate(
-        property_id=test_property.id, session=session
-    )
+    pdf_buffer = await generator.generate(property_id=test_property.id, session=session)
 
     pdf_buffer.seek(0)
     reader = PdfReader(pdf_buffer)

@@ -1228,9 +1228,7 @@ async def generate_professional_pack(
 
         # Convert to API download URL (absolute URL for cross-origin requests)
         # Use the backend's base URL so frontend can access it regardless of its port
-        download_url = (
-            f"http://localhost:9400/api/v1/agents/commercial-property/files/{property_id}/{filename}"
-        )
+        download_url = f"http://localhost:9400/api/v1/agents/commercial-property/files/{property_id}/{filename}"
 
         return {
             "pack_type": pack_type,
