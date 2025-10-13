@@ -7,9 +7,6 @@ import logging
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.models.market import YieldBenchmark
-from app.models.property import DevelopmentAnalysis, MarketTransaction, Property
-from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from reportlab.platypus import (
@@ -22,6 +19,10 @@ from reportlab.platypus import (
 )
 from sqlalchemy import String, cast, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.market import YieldBenchmark
+from app.models.property import DevelopmentAnalysis, MarketTransaction, Property
+from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,8 @@ class UniversalSitePackGenerator(PDFGenerator):
             leftMargin=0.75 * inch,
             topMargin=inch,
             bottomMargin=inch,
+            title="Universal Site Pack",
+            author="Commercial Property Advisors",
         )
 
         # Build content
