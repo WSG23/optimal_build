@@ -264,6 +264,77 @@ def check_singapore_compliance(
     )
 
 
+def check_formatting(repo_root: Path) -> tuple[bool, list[str]]:
+    """Check if code needs formatting (Rule 3)."""
+    errors = []
+
+    # Run black in check mode
+    result = subprocess.run(
+        [sys.executable, "-m", "black", "--check", "--quiet", "backend/", "scripts/"],
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+    )
+
+    if result.returncode != 0:
+        errors.append(
+            "RULE VIOLATION: Code needs formatting (black)\n"
+            "  -> Rule 3: Run 'make format' before committing\n"
+            "  -> See CODING_RULES.md section 3\n"
+            f"  -> Files need formatting:\n{result.stderr or result.stdout}"
+        )
+
+    # Run isort in check mode
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "isort",
+            "--check-only",
+            "--quiet",
+            "backend/",
+            "scripts/",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+    )
+
+    if result.returncode != 0:
+        errors.append(
+            "RULE VIOLATION: Import ordering needs fixing (isort)\n"
+            "  -> Rule 3: Run 'make format' before committing\n"
+            "  -> See CODING_RULES.md section 3"
+        )
+
+    return len(errors) == 0, errors
+
+
+def check_code_quality(repo_root: Path) -> tuple[bool, list[str]]:
+    """Check for code quality issues like unused variables (Rule 7)."""
+    errors = []
+
+    # Run ruff in check mode (only for Python files we can control)
+    result = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "backend/", "scripts/"],
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+    )
+
+    if result.returncode != 0:
+        # Parse output to show key violations
+        output = result.stdout or result.stderr
+        errors.append(
+            "RULE VIOLATION: Code quality issues found (ruff)\n"
+            "  -> Rule 7: Fix unused variables, exception chaining, etc.\n"
+            "  -> See CODING_RULES.md section 7\n"
+            f"  -> Issues found:\n{output[:500]}"  # Limit output
+        )
+
+    return len(errors) == 0, errors
+
+
 def check_contributing_guidelines(repo_root: Path) -> tuple[bool, list[str]]:
     """Validate key expectations documented in CONTRIBUTING.md."""
 
@@ -349,12 +420,20 @@ def main() -> int:
             lambda: check_async_patterns(repo_root, exceptions),
         ),
         (
+            "Rule 3: Code Formatting",
+            lambda: check_formatting(repo_root),
+        ),
+        (
             "Rule 4: Dependency Pinning",
             lambda: check_dependency_files(repo_root, exceptions),
         ),
         (
             "Rule 5: Singapore Compliance",
             lambda: check_singapore_compliance(repo_root, modified_files, exceptions),
+        ),
+        (
+            "Rule 7: Code Quality",
+            lambda: check_code_quality(repo_root),
         ),
     ]
 

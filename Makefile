@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules status hooks
+.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules ai-preflight status hooks
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -175,6 +175,22 @@ verify: ## Run formatting checks, linting, coding rules, and tests
 check-coding-rules: ## Verify compliance with CODING_RULES.md
 	@echo "Checking coding rules compliance..."
 	@$(PY) scripts/check_coding_rules.py
+
+ai-preflight: ## Pre-flight check for AI agents before code generation
+	@echo "=========================================="
+	@echo "AI AGENT PRE-FLIGHT CHECKS"
+	@echo "=========================================="
+	@echo ""
+	@echo "Running coding rules verification..."
+	@$(MAKE) check-coding-rules
+	@echo ""
+	@echo "✓ Pre-flight checks passed!"
+	@echo "✓ Safe to generate code."
+	@echo ""
+	@echo "REMINDER: After code generation, run:"
+	@echo "  1. make format"
+	@echo "  2. make verify"
+	@echo "=========================================="
 
 regstack-migrate: ## Run Alembic migrations for the Regstack schema
 	ALEMBIC_INI=db/alembic.ini \

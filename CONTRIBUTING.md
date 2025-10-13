@@ -48,6 +48,33 @@ Before writing any code, confirm you've:
 
 **If you're an AI agent:** Include "I have read all required documents" in your first message.
 
+### AI Agent Code Generation Workflow
+
+All AI agents (Claude, Codex, etc.) MUST follow this workflow:
+
+**BEFORE writing code:**
+1. Run `make ai-preflight` to verify the current codebase state
+2. Check that all coding rules checks pass
+3. Review CODING_RULES.md sections relevant to your task
+
+**DURING code generation:**
+1. Follow all 7 rules in CODING_RULES.md
+2. Never edit existing migration files (Rule 1)
+3. Use async/await for all database/API operations (Rule 2)
+4. Follow import ordering conventions (Rule 6)
+5. Avoid unused variables and use proper exception chaining (Rule 7)
+
+**AFTER writing code (MANDATORY):**
+1. **Run `make format`** - Fixes formatting, import ordering
+2. **Run `make verify`** - Runs format-check, lint, coding rules, tests
+3. Fix any violations before presenting code to the user
+4. Never present code that fails `make verify`
+
+**If verification fails:**
+- Fix the issues immediately
+- Re-run `make format` and `make verify`
+- Only present code after all checks pass
+
 ---
 
 ## Initial setup
