@@ -434,6 +434,8 @@ function formatScenarioLabel(value: DevelopmentScenario) {
       return 'Heritage property'
     case 'underused_asset':
       return 'Underused asset'
+    case 'mixed_use_redevelopment':
+      return 'Mixed-use redevelopment'
     default:
       return value
   }

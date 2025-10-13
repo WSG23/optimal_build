@@ -35,6 +35,12 @@ const SCENARIO_OPTIONS: Array<{
     description: 'Underutilized asset repositioning and value-add',
     icon: '♻️',
   },
+  {
+    value: 'mixed_use_redevelopment',
+    label: 'Mixed-Use Redevelopment',
+    description: 'Complex mixed-use project with residential, commercial, and retail components',
+    icon: '🏙️',
+  },
 ]
 
 export function SiteAcquisitionPage() {
@@ -245,7 +251,7 @@ export function SiteAcquisitionPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '1rem',
               marginBottom: '2rem',
             }}

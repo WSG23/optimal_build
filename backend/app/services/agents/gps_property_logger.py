@@ -33,6 +33,7 @@ class DevelopmentScenario(str, Enum):
     EXISTING_BUILDING = "existing_building"
     HERITAGE_PROPERTY = "heritage_property"
     UNDERUSED_ASSET = "underused_asset"
+    MIXED_USE_REDEVELOPMENT = "mixed_use_redevelopment"
 
     @classmethod
     def default_set(cls) -> List["DevelopmentScenario"]:
@@ -43,6 +44,7 @@ class DevelopmentScenario(str, Enum):
             cls.EXISTING_BUILDING,
             cls.HERITAGE_PROPERTY,
             cls.UNDERUSED_ASSET,
+            cls.MIXED_USE_REDEVELOPMENT,
         ]
 
 
@@ -434,6 +436,16 @@ class GPSPropertyLogger:
                         property_type,
                     )
                 )
+            elif scenario == DevelopmentScenario.MIXED_USE_REDEVELOPMENT:
+                insights.append(
+                    self._quick_mixed_use_analysis(
+                        ura_zoning,
+                        property_info,
+                        existing_use,
+                        nearby_amenities,
+                        transactions,
+                    )
+                )
 
         return {
             "generated_at": utcnow().isoformat(),
@@ -681,6 +693,98 @@ class GPSPropertyLogger:
                 "average_monthly_rent": average_rent,
                 "rental_comparable_count": rental_count,
                 "property_type": property_type.value,
+            },
+            "notes": notes,
+        }
+
+    def _quick_mixed_use_analysis(
+        self,
+        ura_zoning: Optional[Any],
+        property_info: Optional[Any],
+        existing_use: Optional[str],
+        nearby_amenities: Optional[Dict[str, Any]],
+        transactions: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Analyze mixed-use redevelopment potential."""
+        site_area = (
+            self._safe_float(getattr(property_info, "site_area_sqm", None))
+            if property_info
+            else None
+        )
+        plot_ratio = (
+            self._safe_float(getattr(ura_zoning, "plot_ratio", None))
+            if ura_zoning
+            else None
+        )
+        use_groups = getattr(ura_zoning, "use_groups", []) if ura_zoning else []
+
+        notes = []
+        potential_gfa = None
+
+        if site_area and plot_ratio:
+            potential_gfa = site_area * plot_ratio
+            notes.append(
+                f"Mixed-use GFA potential: {potential_gfa:,.0f} sqm across multiple uses"
+            )
+
+        # Check zoning flexibility for mixed-use
+        if len(use_groups) >= 2:
+            notes.append(
+                f"Zoning permits {len(use_groups)} use groups — ideal for mixed-use"
+            )
+            headline = (
+                f"Mixed-use opportunity with {len(use_groups)}-use zoning flexibility"
+            )
+        elif len(use_groups) == 1:
+            notes.append(
+                "Single-use zoning may limit mixed-use potential — check URA for amendments"
+            )
+            headline = "Single-use zoning limits mixed-use flexibility"
+        else:
+            headline = "Zoning data unavailable — verify mixed-use feasibility with URA"
+
+        # Assess location suitability
+        amenity_count = 0
+        if nearby_amenities:
+            amenity_count = len(nearby_amenities.get("mrt_stations", [])) + len(
+                nearby_amenities.get("shopping_malls", [])
+            )
+
+        if amenity_count >= 3:
+            notes.append(
+                "Strong amenity infrastructure supports residential + retail + office mix"
+            )
+        elif amenity_count > 0:
+            notes.append(
+                "Moderate amenity access — consider residential + single commercial use"
+            )
+
+        # Market activity indicator
+        recent_transactions = len(
+            [
+                t
+                for t in transactions
+                if t.get("transaction_date")
+                and t.get("transaction_date") >= "2020-01-01"
+            ]
+        )
+
+        if recent_transactions >= 5:
+            notes.append(
+                f"{recent_transactions} recent transactions signal active market"
+            )
+
+        return {
+            "scenario": DevelopmentScenario.MIXED_USE_REDEVELOPMENT.value,
+            "headline": headline,
+            "metrics": {
+                "site_area_sqm": site_area,
+                "plot_ratio": plot_ratio,
+                "potential_gfa_sqm": potential_gfa,
+                "permitted_use_groups": len(use_groups),
+                "nearby_amenities_count": amenity_count,
+                "recent_transactions": recent_transactions,
+                "existing_use": existing_use,
             },
             "notes": notes,
         }

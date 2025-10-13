@@ -27,6 +27,7 @@ export type DevelopmentScenario =
   | 'existing_building'
   | 'heritage_property'
   | 'underused_asset'
+  | 'mixed_use_redevelopment'
 
 export interface CoordinatePair {
   latitude: number
@@ -583,6 +584,7 @@ export const DEFAULT_SCENARIO_ORDER: readonly DevelopmentScenario[] = [
   'existing_building',
   'heritage_property',
   'underused_asset',
+  'mixed_use_redevelopment',
 ]
 
 export interface MarketIntelligenceSummary {
