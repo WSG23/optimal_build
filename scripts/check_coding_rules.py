@@ -207,6 +207,55 @@ def check_dependency_files(
         except Exception as e:
             errors.append(f"Warning: Could not check {req_file}: {e}")
 
+    # Check black version synchronization (CRITICAL for formatting consistency)
+    black_versions = {}
+    try:
+        # Check requirements.txt
+        req_txt = repo_root / "backend" / "requirements.txt"
+        if req_txt.exists():
+            for line in req_txt.read_text().splitlines():
+                if line.strip().startswith("black=="):
+                    black_versions["requirements.txt"] = line.strip().split("==")[1]
+
+        # Check requirements-dev.txt
+        req_dev = repo_root / "backend" / "requirements-dev.txt"
+        if req_dev.exists():
+            for line in req_dev.read_text().splitlines():
+                if line.strip().startswith("black=="):
+                    black_versions["requirements-dev.txt"] = line.strip().split("==")[1]
+
+        # Check .pre-commit-config.yaml
+        precommit_yaml = repo_root / ".pre-commit-config.yaml"
+        if precommit_yaml.exists():
+            content = precommit_yaml.read_text()
+            # Look for black repo rev
+            lines = content.splitlines()
+            for i, line in enumerate(lines):
+                if "github.com/psf/black" in line:
+                    # Next few lines should have rev:
+                    for j in range(i + 1, min(i + 5, len(lines))):
+                        if "rev:" in lines[j]:
+                            rev = lines[j].split("rev:")[1].strip()
+                            black_versions[".pre-commit-config.yaml"] = rev.strip('"\'')
+                            break
+                    break
+
+        # Check if all black versions match
+        if len(black_versions) > 1:
+            versions_list = list(black_versions.values())
+            if not all(v == versions_list[0] for v in versions_list):
+                errors.append(
+                    "RULE VIOLATION: Black version mismatch across configuration files\n"
+                    f"  -> Found versions: {black_versions}\n"
+                    "  -> Rule 4: Black versions MUST match in requirements.txt, "
+                    "requirements-dev.txt, and .pre-commit-config.yaml\n"
+                    "  -> This causes 'make format' to produce different output "
+                    "than pre-commit hooks\n"
+                    "  -> See CODING_RULES.md section 4"
+                )
+    except Exception as e:
+        errors.append(f"Warning: Could not check black version synchronization: {e}")
+
     return len(errors) == 0, errors
 
 

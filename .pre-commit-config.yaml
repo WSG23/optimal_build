@@ -16,7 +16,7 @@ repos:
     - id: check-merge-conflict
 
 - repo: https://github.com/psf/black
-  rev: 24.8.0
+  rev: 24.8.0  # MUST match requirements.txt and requirements-dev.txt
   hooks:
     - id: black
       args: ["--line-length=88"]

@@ -102,17 +102,24 @@ git commit -m "your message"
 
 ## 4. Dependency Management
 
-**Rule:** When adding new dependencies, update the appropriate dependency file. Never install packages without tracking them.
+**Rule:** When adding new dependencies, update the appropriate dependency file. Never install packages without tracking them. For formatters and linters, versions MUST match across all configuration files.
 
 **Backend (Python):**
 - Add to `backend/requirements.txt` (production) or `backend/requirements-dev.txt` (dev/test only)
 - Pin exact versions: `fastapi==0.104.1`
+- **CRITICAL:** Black version in `requirements.txt` MUST match `.pre-commit-config.yaml` to avoid formatting inconsistencies
 
 **Frontend (TypeScript/React):**
 - Add to `frontend/package.json` using `npm install --save <package>` or `npm install --save-dev <package>`
 - Admin UI: Add to `ui-admin/package.json`
 
-**Why:** Keeps dependencies reproducible across environments and prevents "works on my machine" issues.
+**Version Synchronization (IMPORTANT):**
+When updating formatter/linter versions, update ALL occurrences:
+- **Black:** Update in `requirements.txt`, `requirements-dev.txt`, AND `.pre-commit-config.yaml` (all 3 must match)
+- **Ruff:** Update in `requirements.txt` AND `.pre-commit-config.yaml`
+- Failing to sync versions causes "code formatted by venv → reformatted by pre-commit hooks" issues
+
+**Why:** Keeps dependencies reproducible across environments and prevents "works on my machine" issues. Version mismatches in formatters cause commit failures where `make format` produces different output than pre-commit hooks.
 
 **Examples:**
 ```bash
@@ -124,8 +131,19 @@ pip install pydantic==2.4.2
 cd frontend
 npm install --save axios
 
+# ✅ Correct - update black version everywhere
+# Step 1: Update requirements files
+echo "black==24.8.0" >> backend/requirements.txt
+echo "black==24.8.0" >> backend/requirements-dev.txt
+# Step 2: Update .pre-commit-config.yaml rev: 24.8.0
+# Step 3: pip install and pre-commit install --install-hooks
+
 # ❌ Wrong - untracked dependencies
 pip install some-random-package  # Not added to requirements.txt
+
+# ❌ Wrong - version mismatch
+# requirements.txt has black==23.11.0
+# .pre-commit-config.yaml has rev: 24.8.0  # MISMATCH!
 ```
 
 ---
