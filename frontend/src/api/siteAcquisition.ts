@@ -3,7 +3,18 @@
  * Wraps GPS logging and feasibility APIs with developer-specific features
  */
 
-import { logPropertyByGps, type DevelopmentScenario, type GpsCaptureSummary } from './agents'
+import {
+  fetchChecklistSummary as fetchChecklistSummaryFromAgents,
+  fetchPropertyChecklist as fetchPropertyChecklistFromAgents,
+  logPropertyByGps,
+  updateChecklistItem as updateChecklistItemFromAgents,
+  type ChecklistItem,
+  type ChecklistStatus,
+  type ChecklistSummary,
+  type DevelopmentScenario,
+  type GpsCaptureSummary,
+  type UpdateChecklistRequest,
+} from './agents'
 
 export interface SiteAcquisitionRequest {
   latitude: number
@@ -41,4 +52,41 @@ export async function capturePropertyForDevelopment(
   return result
 }
 
-export type { DevelopmentScenario, GpsCaptureSummary }
+/**
+ * Fetch due diligence checklist for a property
+ */
+export async function fetchPropertyChecklist(
+  propertyId: string,
+  developmentScenario?: DevelopmentScenario,
+  status?: ChecklistStatus,
+): Promise<ChecklistItem[]> {
+  return fetchPropertyChecklistFromAgents(propertyId, developmentScenario, status)
+}
+
+/**
+ * Fetch checklist summary statistics
+ */
+export async function fetchChecklistSummary(
+  propertyId: string,
+): Promise<ChecklistSummary | null> {
+  return fetchChecklistSummaryFromAgents(propertyId)
+}
+
+/**
+ * Update a checklist item status or notes
+ */
+export async function updateChecklistItem(
+  checklistId: string,
+  updates: UpdateChecklistRequest,
+): Promise<ChecklistItem | null> {
+  return updateChecklistItemFromAgents(checklistId, updates)
+}
+
+export type {
+  ChecklistItem,
+  ChecklistStatus,
+  ChecklistSummary,
+  DevelopmentScenario,
+  GpsCaptureSummary,
+  UpdateChecklistRequest,
+}

@@ -847,3 +847,182 @@ function createOfflineMarketIntelligenceReport(months: number) {
     },
   }
 }
+
+// ========== Developer Checklist Types ==========
+
+export type ChecklistCategory =
+  | 'title_verification'
+  | 'zoning_compliance'
+  | 'environmental_assessment'
+  | 'structural_survey'
+  | 'heritage_constraints'
+  | 'utility_capacity'
+  | 'access_rights'
+
+export type ChecklistStatus = 'pending' | 'in_progress' | 'completed' | 'blocked'
+
+export type ChecklistPriority = 'critical' | 'high' | 'medium' | 'low'
+
+export interface ChecklistItem {
+  id: string
+  propertyId: string
+  developmentScenario: DevelopmentScenario
+  category: ChecklistCategory
+  itemTitle: string
+  itemDescription?: string
+  status: ChecklistStatus
+  priority: ChecklistPriority
+  assignedTo?: string | null
+  dueDate?: string | null
+  completedAt?: string | null
+  notes?: string | null
+  requiresProfessional: boolean
+  professionalType?: string | null
+  typicalDurationDays?: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChecklistSummary {
+  propertyId: string
+  total: number
+  completed: number
+  completionPercentage: number
+  byCategoryStatus: Record<string, { total: number; completed: number }>
+}
+
+export interface UpdateChecklistRequest {
+  status?: ChecklistStatus
+  notes?: string
+  assignedTo?: string
+  completedAt?: string
+}
+
+// ========== Developer Checklist API Functions ==========
+
+export async function fetchPropertyChecklist(
+  propertyId: string,
+  developmentScenario?: DevelopmentScenario,
+  status?: ChecklistStatus,
+): Promise<ChecklistItem[]> {
+  const params = new URLSearchParams()
+  if (developmentScenario) {
+    params.append('development_scenario', developmentScenario)
+  }
+  if (status) {
+    params.append('status', status)
+  }
+
+  const queryString = params.toString()
+  const url = buildUrl(
+    `api/v1/developers/properties/${propertyId}/checklists${queryString ? `?${queryString}` : ''}`,
+  )
+
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Checklist fetch failed: ${response.statusText}`)
+    }
+    const data = await response.json()
+
+    if (!Array.isArray(data.items)) {
+      return []
+    }
+
+    return data.items.map((item: Record<string, unknown>): ChecklistItem => ({
+      id: item.id,
+      propertyId: item.property_id,
+      developmentScenario: item.development_scenario,
+      category: item.category,
+      itemTitle: item.item_title,
+      itemDescription: item.item_description ?? undefined,
+      status: item.status,
+      priority: item.priority,
+      assignedTo: item.assigned_to ?? null,
+      dueDate: item.due_date ?? null,
+      completedAt: item.completed_at ?? null,
+      notes: item.notes ?? null,
+      requiresProfessional: item.requires_professional ?? false,
+      professionalType: item.professional_type ?? null,
+      typicalDurationDays: item.typical_duration_days ?? null,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch property checklist:', error)
+    return []
+  }
+}
+
+export async function fetchChecklistSummary(
+  propertyId: string,
+): Promise<ChecklistSummary | null> {
+  const url = buildUrl(
+    `api/v1/developers/properties/${propertyId}/checklists/summary`,
+  )
+
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Checklist summary fetch failed: ${response.statusText}`)
+    }
+    const data = await response.json()
+
+    return {
+      propertyId: data.property_id,
+      total: data.total ?? 0,
+      completed: data.completed ?? 0,
+      completionPercentage: data.completion_percentage ?? 0,
+      byCategoryStatus: data.by_category_status ?? {},
+    }
+  } catch (error) {
+    console.error('Failed to fetch checklist summary:', error)
+    return null
+  }
+}
+
+export async function updateChecklistItem(
+  checklistId: string,
+  updates: UpdateChecklistRequest,
+): Promise<ChecklistItem | null> {
+  const url = buildUrl(`api/v1/developers/checklists/${checklistId}`)
+
+  try {
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Checklist update failed: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    return {
+      id: data.id,
+      propertyId: data.property_id,
+      developmentScenario: data.development_scenario,
+      category: data.category,
+      itemTitle: data.item_title,
+      itemDescription: data.item_description ?? undefined,
+      status: data.status,
+      priority: data.priority,
+      assignedTo: data.assigned_to ?? null,
+      dueDate: data.due_date ?? null,
+      completedAt: data.completed_at ?? null,
+      notes: data.notes ?? null,
+      requiresProfessional: data.requires_professional ?? false,
+      professionalType: data.professional_type ?? null,
+      typicalDurationDays: data.typical_duration_days ?? null,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    }
+  } catch (error) {
+    console.error('Failed to update checklist item:', error)
+    return null
+  }
+}

@@ -3,12 +3,22 @@
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime
-from typing import Dict, Optional
-from uuid import UUID
+from typing import Dict
 
-from sqlalchemy import Boolean, Column, Date, DateTime, Enum, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import JSON, UUID as PGUUID
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base
@@ -49,7 +59,9 @@ class DeveloperChecklistTemplate(Base):
 
     __tablename__ = "developer_checklist_templates"
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        PGUUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     development_scenario = Column(String(50), nullable=False, index=True)
     category = Column(Enum(ChecklistCategory), nullable=False, index=True)
     item_title = Column(String(255), nullable=False)
@@ -59,7 +71,9 @@ class DeveloperChecklistTemplate(Base):
     requires_professional = Column(Boolean, nullable=False, default=False)
     professional_type = Column(String(100), nullable=True)
     display_order = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
     updated_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -69,7 +83,9 @@ class DeveloperChecklistTemplate(Base):
 
     # Relationships
     property_checklists = relationship(
-        "DeveloperPropertyChecklist", back_populates="template", cascade="all, delete-orphan"
+        "DeveloperPropertyChecklist",
+        back_populates="template",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
@@ -87,7 +103,9 @@ class DeveloperPropertyChecklist(Base):
 
     __tablename__ = "developer_property_checklists"
 
-    id = Column(PGUUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        PGUUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     property_id = Column(PGUUID(as_uuid=True), nullable=False, index=True)
     template_id = Column(
         PGUUID(as_uuid=True),
@@ -99,7 +117,12 @@ class DeveloperPropertyChecklist(Base):
     item_title = Column(String(255), nullable=False)
     item_description = Column(Text, nullable=True)
     priority = Column(Enum(ChecklistPriority), nullable=False)
-    status = Column(Enum(ChecklistStatus), nullable=False, default=ChecklistStatus.PENDING, index=True)
+    status = Column(
+        Enum(ChecklistStatus),
+        nullable=False,
+        default=ChecklistStatus.PENDING,
+        index=True,
+    )
     assigned_to = Column(
         PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
@@ -110,7 +133,9 @@ class DeveloperPropertyChecklist(Base):
     )
     notes = Column(Text, nullable=True)
     metadata = Column(JSON, nullable=False, server_default="{}")
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
     updated_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -119,7 +144,9 @@ class DeveloperPropertyChecklist(Base):
     )
 
     # Relationships
-    template = relationship("DeveloperChecklistTemplate", back_populates="property_checklists")
+    template = relationship(
+        "DeveloperChecklistTemplate", back_populates="property_checklists"
+    )
 
     def __repr__(self) -> str:
         """String representation."""
@@ -144,7 +171,9 @@ class DeveloperPropertyChecklist(Base):
             "status": self.status.value,
             "assigned_to": str(self.assigned_to) if self.assigned_to else None,
             "due_date": self.due_date.isoformat() if self.due_date else None,
-            "completed_date": self.completed_date.isoformat() if self.completed_date else None,
+            "completed_date": (
+                self.completed_date.isoformat() if self.completed_date else None
+            ),
             "completed_by": str(self.completed_by) if self.completed_by else None,
             "notes": self.notes,
             "metadata": self.metadata,

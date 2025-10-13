@@ -1,6 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   capturePropertyForDevelopment,
+  fetchChecklistSummary,
+  fetchPropertyChecklist,
+  updateChecklistItem,
+  type ChecklistItem,
+  type ChecklistSummary,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
 } from '../../../api/siteAcquisition'
@@ -43,6 +48,13 @@ const SCENARIO_OPTIONS: Array<{
   },
 ]
 
+function formatCategoryName(category: string): string {
+  return category
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 export function SiteAcquisitionPage() {
   const [latitude, setLatitude] = useState('1.3000')
   const [longitude, setLongitude] = useState('103.8500')
@@ -50,6 +62,39 @@ export function SiteAcquisitionPage() {
   const [isCapturing, setIsCapturing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [capturedProperty, setCapturedProperty] = useState<SiteAcquisitionResult | null>(null)
+
+  // Checklist state
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([])
+  const [checklistSummary, setChecklistSummary] = useState<ChecklistSummary | null>(null)
+  const [isLoadingChecklist, setIsLoadingChecklist] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  // Load checklist when property is captured
+  useEffect(() => {
+    async function loadChecklist() {
+      if (!capturedProperty) {
+        setChecklistItems([])
+        setChecklistSummary(null)
+        return
+      }
+
+      setIsLoadingChecklist(true)
+      try {
+        const [items, summary] = await Promise.all([
+          fetchPropertyChecklist(capturedProperty.propertyId),
+          fetchChecklistSummary(capturedProperty.propertyId),
+        ])
+        setChecklistItems(items)
+        setChecklistSummary(summary)
+      } catch (err) {
+        console.error('Failed to load checklist:', err)
+      } finally {
+        setIsLoadingChecklist(false)
+      }
+    }
+
+    loadChecklist()
+  }, [capturedProperty])
 
   function toggleScenario(scenario: DevelopmentScenario) {
     setSelectedScenarios((prev) =>
@@ -89,6 +134,25 @@ export function SiteAcquisitionPage() {
       setError(err instanceof Error ? err.message : 'Failed to capture property')
     } finally {
       setIsCapturing(false)
+    }
+  }
+
+  async function handleChecklistUpdate(
+    itemId: string,
+    newStatus: 'pending' | 'in_progress' | 'completed' | 'blocked',
+  ) {
+    const updated = await updateChecklistItem(itemId, { status: newStatus })
+    if (updated) {
+      // Update local state
+      setChecklistItems((prev) =>
+        prev.map((item) => (item.id === itemId ? updated : item)),
+      )
+
+      // Reload summary
+      if (capturedProperty) {
+        const summary = await fetchChecklistSummary(capturedProperty.propertyId)
+        setChecklistSummary(summary)
+      }
     }
   }
 
@@ -406,7 +470,7 @@ export function SiteAcquisitionPage() {
         </form>
       </section>
 
-      {/* Placeholder sections */}
+      {/* Due Diligence Checklist */}
       <section
         style={{
           background: 'white',
@@ -416,33 +480,278 @@ export function SiteAcquisitionPage() {
           marginBottom: '2rem',
         }}
       >
-        <h2
-          style={{
-            fontSize: '1.5rem',
-            fontWeight: 600,
-            marginBottom: '1rem',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          Due Diligence Checklist
-        </h2>
         <div
           style={{
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '1.5rem',
           }}
         >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
-          <p style={{ margin: 0, fontSize: '1.0625rem' }}>
-            Capture a property to view the comprehensive due diligence checklist
-          </p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
-            Automatically generated based on selected development scenarios
-          </p>
+          <div>
+            <h2
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Due Diligence Checklist
+            </h2>
+            {checklistSummary && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.9375rem',
+                  color: '#6e6e73',
+                }}
+              >
+                {checklistSummary.completed} of {checklistSummary.total} items completed (
+                {checklistSummary.completionPercentage.toFixed(0)}%)
+              </p>
+            )}
+          </div>
         </div>
+
+        {isLoadingChecklist ? (
+          <div
+            style={{
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+            }}
+          >
+            <p>Loading checklist...</p>
+          </div>
+        ) : !capturedProperty ? (
+          <div
+            style={{
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#f5f5f7',
+              borderRadius: '12px',
+            }}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+            <p style={{ margin: 0, fontSize: '1.0625rem' }}>
+              Capture a property to view the comprehensive due diligence checklist
+            </p>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
+              Automatically generated based on selected development scenarios
+            </p>
+          </div>
+        ) : checklistItems.length === 0 ? (
+          <div
+            style={{
+              padding: '2rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#f5f5f7',
+              borderRadius: '12px',
+            }}
+          >
+            <p>No checklist items found for this property.</p>
+          </div>
+        ) : (
+          <>
+            {/* Progress bar */}
+            {checklistSummary && (
+              <div
+                style={{
+                  marginBottom: '1.5rem',
+                  background: '#f5f5f7',
+                  borderRadius: '12px',
+                  height: '8px',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${checklistSummary.completionPercentage}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #0071e3 0%, #005bb5 100%)',
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Group by category */}
+            {Object.entries(
+              checklistItems.reduce((acc, item) => {
+                const category = item.category
+                if (!acc[category]) {
+                  acc[category] = []
+                }
+                acc[category].push(item)
+                return acc
+              }, {} as Record<string, ChecklistItem[]>),
+            ).map(([category, items]) => (
+              <div
+                key={category}
+                style={{
+                  marginBottom: '1.5rem',
+                  border: '1px solid #e5e5e7',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedCategory(selectedCategory === category ? null : category)
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '1rem 1.25rem',
+                    background: '#f5f5f7',
+                    border: 'none',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                  }}
+                >
+                  <span>{formatCategoryName(category)}</span>
+                  <span
+                    style={{
+                      fontSize: '0.875rem',
+                      color: '#6e6e73',
+                    }}
+                  >
+                    {items.filter((item) => item.status === 'completed').length}/{items.length}
+                  </span>
+                </button>
+                {(selectedCategory === category || selectedCategory === null) && (
+                  <div style={{ padding: '0' }}>
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          padding: '1rem 1.25rem',
+                          borderTop: '1px solid #e5e5e7',
+                          display: 'flex',
+                          gap: '1rem',
+                          alignItems: 'flex-start',
+                        }}
+                      >
+                        <select
+                          value={item.status}
+                          onChange={(e) =>
+                            handleChecklistUpdate(
+                              item.id,
+                              e.target.value as 'pending' | 'in_progress' | 'completed' | 'blocked',
+                            )
+                          }
+                          style={{
+                            padding: '0.5rem',
+                            border: '1px solid #d2d2d7',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            background: 'white',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                          <option value="blocked">Blocked</option>
+                        </select>
+                        <div style={{ flex: 1 }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '0.75rem',
+                              alignItems: 'center',
+                              marginBottom: '0.25rem',
+                            }}
+                          >
+                            <h4
+                              style={{
+                                margin: 0,
+                                fontSize: '0.9375rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {item.itemTitle}
+                            </h4>
+                            {item.priority === 'critical' && (
+                              <span
+                                style={{
+                                  padding: '0.125rem 0.5rem',
+                                  background: '#fee2e2',
+                                  color: '#991b1b',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  borderRadius: '6px',
+                                }}
+                              >
+                                CRITICAL
+                              </span>
+                            )}
+                            {item.priority === 'high' && (
+                              <span
+                                style={{
+                                  padding: '0.125rem 0.5rem',
+                                  background: '#fef3c7',
+                                  color: '#92400e',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  borderRadius: '6px',
+                                }}
+                              >
+                                HIGH
+                              </span>
+                            )}
+                          </div>
+                          {item.itemDescription && (
+                            <p
+                              style={{
+                                margin: '0.5rem 0 0',
+                                fontSize: '0.875rem',
+                                color: '#6e6e73',
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {item.itemDescription}
+                            </p>
+                          )}
+                          {item.requiresProfessional && item.professionalType && (
+                            <p
+                              style={{
+                                margin: '0.5rem 0 0',
+                                fontSize: '0.8125rem',
+                                color: '#0071e3',
+                              }}
+                            >
+                              Requires: {item.professionalType}
+                            </p>
+                          )}
+                          {item.dueDate && (
+                            <p
+                              style={{
+                                margin: '0.25rem 0 0',
+                                fontSize: '0.8125rem',
+                                color: '#6e6e73',
+                              }}
+                            >
+                              Due: {new Date(item.dueDate).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </>
+        )}
       </section>
 
       <section
