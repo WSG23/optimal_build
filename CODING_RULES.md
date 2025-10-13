@@ -73,25 +73,28 @@ def get_property(session: Session, property_id: str):  # Missing async
 
 ## 3. Testing Before Commits
 
-**Rule:** Run `make format` then `make verify` before committing or opening a pull request.
+**Rule:** **ALWAYS** run `make format` then `make verify` before committing or opening a pull request. This is **MANDATORY** - no exceptions.
 
 **Why:**
-- `make format` fixes all formatting issues (black, isort, ruff)
-- `make verify` catches lint failures and test regressions
-- Running format first prevents pre-commit hook failures
+- `make format` fixes all formatting issues (black, isort, ruff) and catches syntax errors
+- `make verify` catches lint failures, unused variables, and test regressions
+- Running format first prevents pre-commit hook failures and failed commits
+- Skipping these steps wastes time with "commit fails → fix issues → re-commit" cycles
 
-**Workflow:**
+**Mandatory Workflow:**
 ```bash
-# 1. Format code (fixes issues automatically)
+# STEP 1 (MANDATORY): Format code first
 make format
 
-# 2. Verify everything passes (checks only, no modifications)
+# STEP 2 (MANDATORY): Verify everything passes
 make verify
 
-# 3. Commit (pre-commit hooks should pass immediately)
+# STEP 3: Only commit after both pass
 git add .
 git commit -m "your message"
 ```
+
+**⚠️ Warning:** If you skip `make format`, pre-commit hooks will modify your files automatically, causing the commit to fail. You'll then need to re-stage the auto-fixed files and commit again.
 
 **Tip:** See [CONTRIBUTING.md](CONTRIBUTING.md#testing-and-quality-checks) for the full testing and linting workflow.
 
@@ -238,6 +241,86 @@ make verify  # Verify everything passes (runs format-check, lint, tests)
 
 ---
 
+## 7. Code Quality Standards
+
+**Rule:** Write clean, maintainable Python code following PEP 8 and Ruff linting standards. Avoid common code smells caught by automated linters.
+
+**Why:** Clean code is easier to maintain, debug, and extend. The pre-commit hooks enforce these standards automatically, but writing code correctly the first time prevents commit failures.
+
+**Key Standards:**
+
+1. **No unused variables or imports** (Ruff F841, F401)
+   - Remove any variables that are assigned but never used
+   - Remove any imports that aren't referenced
+
+2. **Proper exception chaining** (Ruff B904)
+   - Use `from err` to chain exceptions and preserve stack traces
+   - Use `from None` to suppress the original exception when it's not relevant
+   - Re-raise caught `HTTPException` without modification
+
+3. **No mutable default arguments** (Ruff B006)
+   - Never use `def func(items=[]):`
+   - Use `def func(items=None):` and initialize inside the function
+
+4. **Type hints on public APIs** (gradual adoption)
+   - Add type hints to function signatures for better IDE support
+   - Use `Optional[T]` for nullable parameters
+
+**Examples:**
+
+```python
+# ✅ Correct - no unused variables
+await generator.save_to_storage(...)
+# Variable not assigned if not needed
+
+# ❌ Wrong - unused variable
+storage_url = await generator.save_to_storage(...)  # Assigned but never used!
+
+# ✅ Correct - proper exception chaining
+try:
+    risky_operation()
+except ValueError as e:
+    raise CustomError("Operation failed") from e  # Preserves original stack trace
+
+# ✅ Correct - suppress original exception when not relevant
+try:
+    file_path.resolve()
+except Exception:
+    raise HTTPException(status_code=403, detail="Invalid path") from None
+
+# ✅ Correct - re-raise HTTPException without modification
+except HTTPException:
+    raise  # Don't wrap or chain HTTPException
+
+# ❌ Wrong - missing exception chain
+except ValueError:
+    raise CustomError("Operation failed")  # Lost original error context!
+
+# ✅ Correct - no mutable defaults
+def process_items(items: Optional[List[str]] = None) -> List[str]:
+    if items is None:
+        items = []
+    return items
+
+# ❌ Wrong - mutable default argument
+def process_items(items: List[str] = []) -> List[str]:  # Dangerous!
+    return items
+```
+
+**Automatic Enforcement:**
+- Ruff runs automatically via pre-commit hooks
+- Run `make format` to auto-fix many issues
+- Run `make verify` to check for violations
+
+**Common Ruff Codes:**
+- `F841` - Unused variable
+- `F401` - Unused import
+- `B904` - Exception must use `raise ... from err` or `from None`
+- `B006` - Mutable default argument
+- See [Ruff rules documentation](https://docs.astral.sh/ruff/rules/) for full list
+
+---
+
 ## Questions?
 
 If a rule is unclear or seems wrong for a specific case:
@@ -245,4 +328,4 @@ If a rule is unclear or seems wrong for a specific case:
 2. Propose a rule change by updating this document in a separate PR
 3. Document exceptions inline with `# Exception: <reason>` comments
 
-**Last updated:** 2025-10-08
+**Last updated:** 2025-10-13
