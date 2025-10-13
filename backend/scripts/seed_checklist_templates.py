@@ -1,6 +1,6 @@
 """Seed checklist templates for all development scenarios.
 
-Run with: python -m scripts.seed_checklist_templates
+Run with: python -m backend.scripts.seed_checklist_templates
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from uuid import uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import async_engine, async_session_maker
+from app.core.database import AsyncSessionLocal, engine
 from app.models.developer_checklists import (
     ChecklistCategory,
     ChecklistPriority,
@@ -261,7 +261,7 @@ CHECKLIST_TEMPLATES = [
 
 async def seed_templates():
     """Seed checklist templates into the database."""
-    async with async_session_maker() as session:
+    async with AsyncSessionLocal() as session:
         # Check if templates already exist
         result = await session.execute(select(DeveloperChecklistTemplate).limit(1))
         existing = result.scalar_one_or_none()
@@ -294,7 +294,7 @@ async def main():
     """Main entry point."""
     print("🌱 Starting checklist template seed...")
 
-    async with async_engine.begin() as conn:
+    async with engine.begin() as conn:
         # Ensure tables exist
         print("   Checking database tables...")
 

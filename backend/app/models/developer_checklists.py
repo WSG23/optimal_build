@@ -132,7 +132,7 @@ class DeveloperPropertyChecklist(Base):
         PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     notes = Column(Text, nullable=True)
-    metadata = Column(JSON, nullable=False, server_default="{}")
+    checklist_metadata = Column("metadata", JSON, nullable=False, server_default="{}")
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -176,7 +176,7 @@ class DeveloperPropertyChecklist(Base):
             ),
             "completed_by": str(self.completed_by) if self.completed_by else None,
             "notes": self.notes,
-            "metadata": self.metadata,
+            "metadata": self.checklist_metadata,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
