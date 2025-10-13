@@ -6,11 +6,13 @@ from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
 import structlog
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend._compat.datetime import utcnow
 from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
@@ -26,7 +28,6 @@ from app.services.agents.gps_property_logger import (
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import Address, GeocodingService
-from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -503,10 +504,21 @@ async def get_property_market_intelligence(
         raise HTTPException(status_code=404, detail="Property not found")
 
     location = property_data.district or "all"
+    property_type = property_data.property_type
+    if isinstance(property_type, str):
+        try:
+            property_type = PropertyType(property_type)
+        except ValueError:
+            logger.warning(
+                "unknown_property_type_string",
+                property_id=str(property_uuid),
+                value=property_type,
+            )
+            property_type = PropertyType.OFFICE
 
     try:
         report = await market_analytics.generate_market_report(
-            property_type=property_data.property_type,
+            property_type=property_type,
             location=location,
             period_months=months,
             session=db,
@@ -1209,22 +1221,68 @@ async def generate_professional_pack(
         else:
             raise HTTPException(status_code=400, detail="Invalid pack type")
 
-        # Save to storage and get URL
-        url = await generator.save_to_storage(
+        # Save to storage (for record keeping)
+        await generator.save_to_storage(
             pdf_buffer=pdf_buffer, filename=filename, property_id=property_id
+        )
+
+        # Convert to API download URL
+        download_url = (
+            f"/api/v1/agents/commercial-property/files/{property_id}/{filename}"
         )
 
         return {
             "pack_type": pack_type,
             "property_id": property_id,
             "filename": filename,
-            "download_url": url,
+            "download_url": download_url,
             "generated_at": utcnow().isoformat(),
             "size_bytes": len(pdf_buffer.getvalue()),
         }
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/files/{property_id}/{filename}")
+async def download_generated_file(
+    property_id: str,
+    filename: str,
+) -> FileResponse:
+    """
+    Download a generated PDF file from storage.
+
+    This endpoint serves files that were previously generated and stored.
+    """
+    import os
+    from pathlib import Path as PathLib
+
+    # Construct the file path in storage
+    storage_base = PathLib(os.getenv("STORAGE_LOCAL_PATH", ".storage"))
+    storage_prefix = os.getenv("STORAGE_PREFIX", "uploads")
+    file_path = storage_base / storage_prefix / "reports" / property_id / filename
+
+    # Security check: ensure the resolved path is within storage directory
+    try:
+        file_path = file_path.resolve()
+        storage_base_resolved = (storage_base / storage_prefix).resolve()
+        if not str(file_path).startswith(str(storage_base_resolved)):
+            raise HTTPException(status_code=403, detail="Access denied")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=403, detail="Invalid file path") from None
+
+    # Check if file exists
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Return the file
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/pdf",
+        filename=filename,
+    )
 
 
 @router.post("/properties/{property_id}/generate-flyer")

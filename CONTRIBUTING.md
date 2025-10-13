@@ -19,7 +19,7 @@ checks before opening a pull request.
    - Includes acceptance criteria and estimates
    - **ALWAYS CHECK THIS BEFORE STARTING NEW WORK**
 
-3. **[docs/NEXT_STEPS_FOR_CODEX.md](docs/NEXT_STEPS_FOR_CODEX.md)** - Current priorities
+3. **[docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md)** - Current priorities
    - Updated regularly with what to build next
    - Shows completed vs. in-progress vs. not-started features
    - **CHECK THIS TO KNOW WHAT TO WORK ON**
@@ -41,7 +41,7 @@ checks before opening a pull request.
 Before writing any code, confirm you've:
 - [ ] Read FEATURES.md completely
 - [ ] Reviewed feature_delivery_plan_v2.md for current phase
-- [ ] Checked NEXT_STEPS_FOR_CODEX.md for priorities
+- [ ] Checked NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md for priorities
 - [ ] Read CODING_RULES.md for technical standards
 - [ ] Understand which phase you're working in
 - [ ] Know the acceptance criteria for your task

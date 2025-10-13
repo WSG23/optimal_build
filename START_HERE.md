@@ -5,7 +5,7 @@
 1. **UI_STATUS.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
 2. **FEATURES.md** - What we're building (full feature specification)
 3. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
-4. **docs/NEXT_STEPS_FOR_CODEX.md** - How to choose your next task (decision tree)
+4. **docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md** - How to choose your next task (decision tree)
 5. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
 6. **CLAUDE.md** - Coding guidelines and mandatory workflows
 
@@ -23,7 +23,7 @@ This is the **SINGLE SOURCE OF TRUTH** for project status. All AI agents referen
 3. ✅ Stage docs with code: `git add docs/feature_delivery_plan_v2.md`
 4. ✅ Include in same commit as your code changes
 
-**See Step 7c in [NEXT_STEPS_FOR_CODEX.md](docs/NEXT_STEPS_FOR_CODEX.md) for detailed instructions.**
+**See Step 7c in [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for detailed instructions.**
 
 ---
 
@@ -58,7 +58,7 @@ python3 -m pytest backend/tests/test_services/test_*.py -v
 python3 -m pytest backend/tests/test_api/test_*.py -v
 ```
 
-See `docs/NEXT_STEPS_FOR_CODEX.md` section "MANDATORY TESTING CHECKLIST" for full template.
+See `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` section "MANDATORY TESTING CHECKLIST" for full template.
 
 ---
 

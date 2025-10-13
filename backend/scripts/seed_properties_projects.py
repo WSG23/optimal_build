@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Sequence
 from uuid import UUID, uuid4
@@ -13,11 +13,21 @@ from uuid import UUID, uuid4
 import structlog
 from app.core.database import AsyncSessionLocal, engine
 from app.models.projects import Project, ProjectPhase, ProjectType
-from app.models.property import Property, PropertyStatus, PropertyType, TenureType
-from sqlalchemy import delete, select
+from app.models.property import (
+    DevelopmentAnalysis,
+    MarketTransaction,
+    Property,
+    PropertyStatus,
+    PropertyType,
+    TenureType,
+)
+from app.models.market import YieldBenchmark
+from sqlalchemy import delete, select, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
+
+MARKET_DEMO_PROPERTY_ID = UUID("d47174ee-bb6f-4f3f-8baa-141d7c5d9051")
 
 
 @dataclass
@@ -37,6 +47,7 @@ _PROPERTIES: Sequence[dict[str, object]] = (
         "name": "Market Demo Tower",
         "address": "1 Demo Way, Singapore",
         "postal_code": "049999",
+        "location": "SRID=4326;POINT(103.8198 1.2894)",
         "property_type": PropertyType.OFFICE,
         "status": PropertyStatus.EXISTING,
         "district": "D01",
@@ -97,13 +108,188 @@ _PROJECTS: Sequence[dict[str, object]] = (
 
 
 async def _purge_existing(session: AsyncSession) -> None:
+    for payload in _PROPERTIES:
+        property_id = payload["id"]
+        property_type = payload.get("property_type")
+        district = payload.get("district")
+
+        await session.execute(
+            delete(MarketTransaction).where(
+                MarketTransaction.property_id == property_id
+            )
+        )
+        await session.execute(
+            delete(DevelopmentAnalysis).where(
+                DevelopmentAnalysis.property_id == property_id
+            )
+        )
+        if district and property_type:
+            property_type_value = (
+                property_type.value
+                if hasattr(property_type, "value")
+                else str(property_type)
+            )
+            await session.execute(
+                delete(YieldBenchmark).where(
+                    YieldBenchmark.district == district,
+                    cast(YieldBenchmark.property_type, String)
+                    == property_type_value,
+                )
+            )
+
     await session.execute(
         delete(Property).where(Property.data_source == "seed_properties")
     )
-    await session.execute(
-        delete(Project).where(Project.project_code.in_(["FIN-DEMO-191", "MWR-2025"]))
-    )
+
+    # NOTE: Skip purging projects until schema updated with required columns
+    # await session.execute(
+    #     delete(Project).where(Project.project_code.in_(["FIN-DEMO-191", "MWR-2025"]))
+    # )
     await session.commit()
+
+
+async def _seed_market_demo_enrichments(session: AsyncSession) -> None:
+    """Populate development analyses, transactions, and benchmarks for demo tower."""
+
+    property_record = await session.get(Property, MARKET_DEMO_PROPERTY_ID)
+    if property_record is None:
+        return
+
+    # Development analysis (only seed once)
+    existing_analysis = await session.execute(
+        select(DevelopmentAnalysis).where(
+            DevelopmentAnalysis.property_id == MARKET_DEMO_PROPERTY_ID
+        )
+    )
+    if existing_analysis.scalars().first() is None:
+        session.add(
+            DevelopmentAnalysis(
+                property_id=MARKET_DEMO_PROPERTY_ID,
+                analysis_type="existing_building",
+                analysis_date=datetime(2025, 9, 15, 9, 0, 0),
+                gfa_potential_sqm=Decimal("58000"),
+                optimal_use_mix={"office": 0.62, "retail": 0.25, "amenities": 0.13},
+                market_value_estimate=Decimal("365000000"),
+                projected_cap_rate=Decimal("0.043"),
+                site_constraints=[
+                    "Setback requirements along Demo Way frontage",
+                    "Loading/unloading bay access limited to 2 entrances",
+                ],
+                regulatory_constraints={"plot_ratio_cap": 12.0},
+                development_opportunities=[
+                    "Convert podium levels to lifestyle retail cluster",
+                    "Introduce wellness floors to lift blended rents",
+                ],
+                value_add_potential={"noi_uplift_pct": 0.12},
+                development_scenarios=[
+                    {
+                        "name": "Premium Grade A repositioning",
+                        "gfa": 52000,
+                        "estimated_cost": 42000000,
+                        "target_rent_psf": 14.2,
+                    },
+                    {
+                        "name": "Flex office + hospitality hybrid",
+                        "gfa": 50500,
+                        "estimated_cost": 38000000,
+                        "target_rent_psf": 13.6,
+                    },
+                ],
+                recommended_scenario="Premium Grade A repositioning",
+                assumptions={
+                    "fit_out_cost_psf": 95,
+                    "downtime_months": 6,
+                    "stabilized_occupancy_pct": 94,
+                },
+                methodology="market_comparables",
+                confidence_level=Decimal("0.82"),
+            )
+        )
+
+    # Comparable transactions (seed if none)
+    existing_transactions = await session.execute(
+        select(MarketTransaction).where(
+            MarketTransaction.property_id == MARKET_DEMO_PROPERTY_ID
+        )
+    )
+    if existing_transactions.scalars().first() is None:
+        transaction_payloads = [
+            {
+                "transaction_date": date(2025, 6, 20),
+                "sale_price": Decimal("78500000"),
+                "psf_price": Decimal("2780"),
+                "buyer_type": "institutional",
+                "market_segment": "CBD",
+            },
+            {
+                "transaction_date": date(2025, 4, 18),
+                "sale_price": Decimal("76400000"),
+                "psf_price": Decimal("2710"),
+                "buyer_type": "reit",
+                "market_segment": "CBD",
+            },
+            {
+                "transaction_date": date(2025, 1, 27),
+                "sale_price": Decimal("74250000"),
+                "psf_price": Decimal("2650"),
+                "buyer_type": "family_office",
+                "market_segment": "CBD",
+            },
+        ]
+
+        for payload in transaction_payloads:
+            session.add(
+                MarketTransaction(
+                    property_id=MARKET_DEMO_PROPERTY_ID,
+                    transaction_date=payload["transaction_date"],
+                    transaction_type="sale",
+                    sale_price=payload["sale_price"],
+                    psf_price=payload["psf_price"],
+                    buyer_type=payload["buyer_type"],
+                    market_segment=payload["market_segment"],
+                    data_source="seed_properties",
+                )
+            )
+
+    property_type_value = PropertyType.OFFICE.value
+    existing_benchmarks = await session.execute(
+        select(YieldBenchmark).where(
+            YieldBenchmark.district == (property_record.district or "D01"),
+            cast(YieldBenchmark.property_type, String) == property_type_value,
+        )
+    )
+    if existing_benchmarks.scalars().first() is None:
+        benchmark_dates = [date(2025, month, 1) for month in range(1, 7)]
+        for idx, benchmark_date in enumerate(benchmark_dates):
+            session.add(
+                YieldBenchmark(
+                    benchmark_date=benchmark_date,
+                    period_type="monthly",
+                    country="Singapore",
+                    district=property_record.district or "D01",
+                    location_tier="prime",
+                    property_type=PropertyType.OFFICE,
+                    property_grade="A",
+                    cap_rate_mean=Decimal("0.044") + Decimal(idx) * Decimal("0.0003"),
+                    cap_rate_median=Decimal("0.043") + Decimal(idx) * Decimal("0.0002"),
+                    cap_rate_p25=Decimal("0.041"),
+                    cap_rate_p75=Decimal("0.046"),
+                    rental_yield_mean=Decimal("0.039"),
+                    rental_yield_median=Decimal("0.0385"),
+                    rental_psf_mean=Decimal("11.80") + Decimal(idx) * Decimal("0.10"),
+                    rental_psf_median=Decimal("11.60") + Decimal(idx) * Decimal("0.10"),
+                    occupancy_rate_mean=Decimal("0.935"),
+                    vacancy_rate_mean=Decimal("0.065"),
+                    sale_psf_mean=Decimal("2950") + Decimal(idx) * Decimal("15"),
+                    sale_psf_median=Decimal("2900") + Decimal(idx) * Decimal("15"),
+                    transaction_count=48 + idx * 2,
+                    total_transaction_value=Decimal("320000000")
+                    + Decimal(idx) * Decimal("4500000"),
+                    sample_size=62 + idx,
+                    data_quality_score=Decimal("0.82"),
+                    data_sources=["seed_properties"],
+                )
+            )
 
 
 async def seed_properties_and_projects(
@@ -114,31 +300,32 @@ async def seed_properties_and_projects(
     if reset_existing:
         await _purge_existing(session)
 
-    # Seed projects first to ensure foreign-key references are valid
+    # NOTE: Skip seeding projects - table schema doesn't have required columns yet
+    # Once migration is created to add project_name, project_code, etc., uncomment this
     project_count = 0
-    for payload in _PROJECTS:
-        if "id" in payload:
-            existing_by_id = await session.get(Project, payload["id"])
-            if existing_by_id:
-                continue
-        existing = await session.execute(
-            select(Project).where(Project.project_code == payload["project_code"])
-        )
-        if existing.scalar_one_or_none():
-            continue
-        record = Project(
-            project_name=payload["project_name"],
-            project_code=payload["project_code"],
-            description=payload.get("description"),
-            owner_email=payload.get("owner_email"),
-            project_type=payload["project_type"],
-            current_phase=payload.get("current_phase"),
-            estimated_cost_sgd=payload.get("estimated_cost_sgd"),
-        )
-        if "id" in payload:
-            record.id = payload["id"]
-        session.add(record)
-        project_count += 1
+    # for payload in _PROJECTS:
+    #     if "id" in payload:
+    #         existing_by_id = await session.get(Project, payload["id"])
+    #         if existing_by_id:
+    #             continue
+    #     existing = await session.execute(
+    #         select(Project).where(Project.project_code == payload["project_code"])
+    #     )
+    #     if existing.scalar_one_or_none():
+    #         continue
+    #     record = Project(
+    #         project_name=payload["project_name"],
+    #         project_code=payload["project_code"],
+    #         description=payload.get("description"),
+    #         owner_email=payload.get("owner_email"),
+    #         project_type=payload["project_type"],
+    #         current_phase=payload.get("current_phase"),
+    #         estimated_cost_sgd=payload.get("estimated_cost_sgd"),
+    #     )
+    #     if "id" in payload:
+    #         record.id = payload["id"]
+    #     session.add(record)
+    #     project_count += 1
 
     # Seed properties
     property_count = 0
@@ -151,6 +338,10 @@ async def seed_properties_and_projects(
         session.add(record)
         property_count += 1
 
+    await session.commit()
+
+    # Add demo analytics/benchmarks for the primary property
+    await _seed_market_demo_enrichments(session)
     await session.commit()
     return SeedSummary(projects=project_count, properties=property_count)
 

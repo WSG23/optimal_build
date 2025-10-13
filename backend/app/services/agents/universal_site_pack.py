@@ -6,22 +6,24 @@ import io
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch
-from reportlab.platypus import (
-    ListFlowable,
-    ListItem,
-    PageBreak,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-)
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.market import YieldBenchmark
 from app.models.property import DevelopmentAnalysis, MarketTransaction, Property
 from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    BaseDocTemplate,
+    Frame,
+    ListFlowable,
+    ListItem,
+    NextPageTemplate,
+    PageBreak,
+    PageTemplate,
+    Paragraph,
+    Spacer,
+)
+from sqlalchemy import String, cast, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UniversalSitePackGenerator(PDFGenerator):
@@ -41,20 +43,59 @@ class UniversalSitePackGenerator(PDFGenerator):
         # Create PDF buffer
         buffer = io.BytesIO()
 
-        # Create document
-        doc = SimpleDocTemplate(
+        # Create document with BaseDocTemplate for custom page templates
+        doc = BaseDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=0.75 * inch,
-            leftMargin=0.75 * inch,
-            topMargin=inch,
-            bottomMargin=inch,
         )
+
+        # Define frames for different page types
+        # Cover page frame (full page, no margins)
+        cover_frame = Frame(
+            0,
+            0,
+            A4[0],
+            A4[1],
+            id="cover_frame",
+            leftPadding=0,
+            bottomPadding=0,
+            rightPadding=0,
+            topPadding=0,
+            showBoundary=0,
+        )
+
+        # Content page frame (with margins)
+        content_frame = Frame(
+            0.75 * inch,
+            inch,
+            A4[0] - 1.5 * inch,
+            A4[1] - 2 * inch,
+            id="content_frame",
+            leftPadding=0,
+            bottomPadding=0,
+            rightPadding=0,
+            topPadding=0,
+            showBoundary=0,
+        )
+
+        # Create page templates
+        cover_template = PageTemplate(
+            id="cover",
+            frames=[cover_frame],
+        )
+
+        content_template = PageTemplate(
+            id="content",
+            frames=[content_frame],
+        )
+
+        # Add templates to document
+        doc.addPageTemplates([cover_template, content_template])
 
         # Build content
         story = []
 
-        # 1. Cover Page
+        # 1. Cover Page (uses cover template)
         cover = CoverPage(
             title="Universal Site Pack",
             subtitle="Comprehensive Development Potential Analysis",
@@ -70,7 +111,12 @@ class UniversalSitePackGenerator(PDFGenerator):
             },
         )
         story.append(cover)
+        # Switch to content template for all remaining pages
+        story.append(NextPageTemplate("content"))
         story.append(PageBreak())
+
+        # Note: NextPageTemplate would go here if we need explicit template switching
+        # For now, the second PageTemplate (content) will be used automatically
 
         # 2. Executive Summary (Page 2-3)
         story.extend(self._create_executive_summary(property_data, market_data))
@@ -160,10 +206,16 @@ class UniversalSitePackGenerator(PDFGenerator):
         transactions = result.scalars().all()
 
         # Yield benchmarks
+        # Cast enum to text to avoid PostgreSQL operator mismatch errors
+        property_type_value = (
+            property_obj.property_type.value
+            if hasattr(property_obj.property_type, "value")
+            else str(property_obj.property_type)
+        )
         stmt = (
             select(YieldBenchmark)
             .where(
-                YieldBenchmark.property_type == property_obj.property_type,
+                cast(YieldBenchmark.property_type, String) == property_type_value,
                 YieldBenchmark.district == property_obj.district,
             )
             .order_by(YieldBenchmark.benchmark_date.desc())

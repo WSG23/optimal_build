@@ -15,14 +15,12 @@ try:  # pragma: no cover - geoalchemy may be optional in some environments
     from geoalchemy2.elements import WKTElement
 except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missing
     WKTElement = None  # type: ignore[assignment]
-from sqlalchemy import insert, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend._compat.datetime import utcnow
-
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.geocoding import Address, GeocodingService
+from backend._compat.datetime import utcnow
+from sqlalchemy import insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger()
 
@@ -256,14 +254,13 @@ class GPSPropertyLogger:
         property_id = uuid4()
 
         # Create point geometry
-        point = f"POINT({longitude} {latitude})"
-        location_value: Any
-        if WKTElement is not None:
-            location_value = WKTElement(point, srid=4326)
-        elif hasattr(Property.location, "ST_GeomFromText"):
-            location_value = ST_GeomFromText(point, 4326)
-        else:
-            location_value = point
+        point = f"SRID=4326;POINT({longitude} {latitude})"
+        location_value: Any = point
+        if hasattr(Property.location, "ST_GeomFromText"):
+            try:
+                location_value = ST_GeomFromText(point.replace("SRID=4326;", ""), 4326)
+            except Exception:
+                location_value = point
 
         property_data = {
             "id": property_id,

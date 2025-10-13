@@ -1,4 +1,4 @@
-# NEXT STEPS GUIDE FOR CODEX (AND OTHER AI AGENTS)
+# NEXT STEPS GUIDE FOR AI AGENTS AND DEVELOPERS
 
 > **⚠️ IMPORTANT:** This is a **DECISION GUIDE**, not a status tracker.
 >
@@ -428,6 +428,11 @@ Provide this to the user:
 - [ ] **Color contrast:** Text readable (use browser DevTools)
 
 ---
+
+**Document the current status so the next builder isn’t guessing:**
+- After sharing the script, update [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for that phase with the manual-testing status (**Pending**, **In Progress**, or **Complete**) and list any blockers.
+- Capture the active environment context (for example, “Backend reset running”, “Using fallback propertyId”, “Waiting on Claude seed script”). When the situation changes, update the note.
+- If manual tests are blocked, call it out in the plan doc and in your handoff message so the next agent knows exactly what remains.
 
 ### Test Results
 

@@ -26,7 +26,7 @@
 
 ---
 
-### 3. [NEXT_STEPS_FOR_CODEX.md](NEXT_STEPS_FOR_CODEX.md) - WHAT to build next
+### 3. [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) - WHAT to build next
 **Read before starting work!** This tells you current priorities.
 - Updated regularly with latest status
 - Shows what's complete, in-progress, not-started
@@ -81,7 +81,7 @@
 ## 🎯 Quick Decision Tree
 
 **Question:** "What should I build next?"
-→ Check [NEXT_STEPS_FOR_CODEX.md](NEXT_STEPS_FOR_CODEX.md)
+→ Check [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md)
 
 **Question:** "Is this feature in scope?"
 → Check [FEATURES.md](../FEATURES.md)
@@ -113,7 +113,7 @@
 - Skip validation gates
 
 ### ✅ DO:
-- Always check NEXT_STEPS_FOR_CODEX.md before starting
+- Always check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md before starting
 - Follow the phase order in feature_delivery_plan_v2.md
 - Get validation feedback between phases
 - Update progress in the delivery plan as you go
@@ -148,7 +148,7 @@
 
 **For strategic questions:** Review FEATURES.md and feature_delivery_plan_v2.md
 **For technical questions:** Check CODING_RULES.md and existing code
-**For priority questions:** Check NEXT_STEPS_FOR_CODEX.md
+**For priority questions:** Check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 **For user questions:** Check feature-specific guides
 
 **Still unclear?** Ask the project owner before proceeding.
@@ -159,7 +159,7 @@
 
 **After completing a feature:**
 1. Update status in `feature_delivery_plan_v2.md` (❌ → ✅)
-2. Update `NEXT_STEPS_FOR_CODEX.md` with new priorities
+2. Update `NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` with new priorities
 3. Add user guide if customer-facing feature
 4. Update this README if major milestone reached
 

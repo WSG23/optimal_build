@@ -7,6 +7,13 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from app.models.market import MarketCycle, YieldBenchmark
+from app.models.property import MarketTransaction, Property, RentalListing
+from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
+from app.services.finance import (
+    calculate_comprehensive_metrics,
+    value_property_multiple_approaches,
+)
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
@@ -21,16 +28,8 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from sqlalchemy import select
+from sqlalchemy import String, cast, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.market import MarketCycle, YieldBenchmark
-from app.models.property import MarketTransaction, Property, RentalListing
-from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
-from app.services.finance import (
-    calculate_comprehensive_metrics,
-    value_property_multiple_approaches,
-)
 
 
 class InvestmentHighlight(Flowable):
@@ -256,9 +255,15 @@ class InvestmentMemorandumGenerator(PDFGenerator):
     ) -> Dict[str, Any]:
         """Load market intelligence data."""
         # Yield benchmarks
+        property_type_value = (
+            property_obj.property_type.value
+            if hasattr(property_obj.property_type, "value")
+            else str(property_obj.property_type)
+        )
+
         stmt = (
             select(YieldBenchmark)
-            .where(YieldBenchmark.property_type == property_obj.property_type)
+            .where(cast(YieldBenchmark.property_type, String) == property_type_value)
             .order_by(YieldBenchmark.benchmark_date.desc())
             .limit(12)
         )
@@ -268,7 +273,7 @@ class InvestmentMemorandumGenerator(PDFGenerator):
         # Market cycle
         stmt = (
             select(MarketCycle)
-            .where(MarketCycle.property_type == property_obj.property_type)
+            .where(cast(MarketCycle.property_type, String) == property_type_value)
             .order_by(MarketCycle.cycle_date.desc())
             .limit(1)
         )
@@ -280,7 +285,7 @@ class InvestmentMemorandumGenerator(PDFGenerator):
             select(MarketTransaction)
             .where(
                 MarketTransaction.property.has(
-                    Property.property_type == property_obj.property_type
+                    cast(Property.property_type, String) == property_type_value
                 )
             )
             .order_by(MarketTransaction.transaction_date.desc())

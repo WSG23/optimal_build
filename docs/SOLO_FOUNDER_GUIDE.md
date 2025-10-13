@@ -179,7 +179,7 @@ Good:
 - Review last week's progress
 - Check feature_delivery_plan_v2.md for current phase
 - Plan this week's features (2-3 small features max)
-- Update NEXT_STEPS_FOR_CODEX.md if needed
+- Update NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md if needed
 
 **Tuesday-Thursday (Coding Days):**
 - Morning: Start AI agent (Codex/Claude) with clear task
@@ -298,7 +298,7 @@ As a solo founder, celebrating wins is critical for motivation:
 "Codex, read these documents:
 - FEATURES.md
 - docs/feature_delivery_plan_v2.md
-- docs/NEXT_STEPS_FOR_CODEX.md
+- docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 
 Confirm you understand we're in Phase [X] building [feature name].
 Do NOT start any other features."
@@ -334,7 +334,7 @@ What's left to do?"
 2. Update documentation
 3. Run `make verify`
 4. Create a commit with clear message
-5. Update NEXT_STEPS_FOR_CODEX.md to mark this done"
+5. Update NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md to mark this done"
 ```
 
 ---
@@ -555,7 +555,7 @@ Building this solo will teach you:
 **This Week:**
 1. Commit the new documentation (CONTRIBUTING.md, docs/README.md, etc.)
 2. Have Codex read all required docs and confirm understanding
-3. Start Phase 1B (Development Advisory) per NEXT_STEPS_FOR_CODEX.md
+3. Start Phase 1B (Development Advisory) per NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 
 **This Month:**
 1. Complete Phase 1B and 1C

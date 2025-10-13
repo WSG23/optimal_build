@@ -10,10 +10,10 @@
 > **Last Updated:** 2025-10-11
 >
 > **⚠️ IMPORTANT:** This is the **SINGLE SOURCE OF TRUTH** for project status.
-> All other documents (NEXT_STEPS_FOR_CODEX.md, etc.) reference this document.
+> All other documents (NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md, etc.) reference this document.
 > When you complete work, update THIS file only.
 >
-> **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_CODEX.md](NEXT_STEPS_FOR_CODEX.md) for guidance on choosing your next task.
+> **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for guidance on choosing your next task.
 
 **Overall Completion: ~75% of Phase 1 (Agent Foundation)**
 
@@ -252,7 +252,7 @@
 - [ ] API client hooks production-ready (no offline fallbacks)
 - [ ] Storybook/visual tests for key components
 - [ ] Accessibility review (keyboard nav, focus management)
-- [ ] Manual QA completed (see NEXT_STEPS_FOR_CODEX.md Step 7d):
+- [ ] Manual QA completed (see NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md Step 7d):
   - [ ] Happy path: Primary user journey works end-to-end
   - [ ] Empty states: Render with clear messaging and CTAs
   - [ ] Error states: User-friendly error messages display

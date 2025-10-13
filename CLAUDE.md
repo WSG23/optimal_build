@@ -26,7 +26,7 @@ Follow these guardrails when you take over the keyboard:
    - Be precise about file paths (use inline `path:line` references).
    - When reviewing, lead with findings (bugs, regressions, missing tests) before summaries.
    - Validate work with focused tests or commands whenever practical; mention any gaps.
-   - **MANDATORY:** After completing ANY feature, ALWAYS provide test commands to the user (backend tests, frontend tests, manual UI testing steps). See `docs/NEXT_STEPS_FOR_CODEX.md` section "MANDATORY TESTING CHECKLIST" for the template.
+   - **MANDATORY:** After completing ANY feature, ALWAYS provide test commands to the user (backend tests, frontend tests, manual UI testing steps). See `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` section "MANDATORY TESTING CHECKLIST" for the template.
    - **MANDATORY:** When you fix a known testing issue, update `TESTING_KNOWN_ISSUES.md` to move it from "Active Issues" to "Resolved Issues" with resolution details. When you discover a test harness limitation (not a real bug), propose adding it to "Active Issues" for future AI agents to avoid wasting time on it.
 
 5. **Collaboration**

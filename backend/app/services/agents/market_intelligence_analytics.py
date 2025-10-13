@@ -1,7 +1,7 @@
 """Market Intelligence Analytics Service for commercial property analysis."""
 
 import statistics
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -14,11 +14,6 @@ try:  # pragma: no cover - optional dependency
     import numpy as np
 except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
     np = None  # type: ignore[assignment]
-from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
-from backend._compat.datetime import utcnow
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -27,6 +22,10 @@ from app.models.market import (
 )
 from app.models.property import MarketTransaction, Property, PropertyType
 from app.services.agents.market_data_service import MarketDataService
+from backend._compat.datetime import utcnow
+from sqlalchemy import String, and_, cast, literal, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 try:  # pragma: no cover - optional metrics dependency
     from app.core.metrics import MetricsCollector
@@ -307,12 +306,19 @@ class MarketIntelligenceAnalytics:
     ) -> dict[str, Any]:
         """Analyze yield benchmarks and trends."""
 
-        # Get yield benchmarks
+        # Normalize property type for databases where enum metadata may be missing
+        property_type_value = (
+            property_type.value
+            if isinstance(property_type, PropertyType)
+            else str(property_type)
+        )
+
         stmt = (
             select(YieldBenchmark)
             .where(
                 and_(
-                    YieldBenchmark.property_type == property_type,
+                    cast(YieldBenchmark.property_type, String)
+                    == literal(property_type_value, String()),
                     YieldBenchmark.benchmark_date.between(period[0], period[1]),
                 )
             )

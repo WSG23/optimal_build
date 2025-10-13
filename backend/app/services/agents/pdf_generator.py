@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
+from app.services.storage import StorageService, get_storage_service
 from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.linecharts import HorizontalLineChart
 from reportlab.graphics.charts.piecharts import Pie
@@ -18,8 +19,6 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Flowable, Paragraph, Table, TableStyle
-
-from app.services.storage import StorageService
 
 
 class PageNumberCanvas(canvas.Canvas):
@@ -160,7 +159,7 @@ class PDFGenerator:
     """Base PDF generator with common functionality."""
 
     def __init__(self, storage_service: Optional[StorageService] = None):
-        self.storage_service = storage_service or StorageService()
+        self.storage_service = storage_service or get_storage_service()
         self.styles = self._setup_styles()
 
     def _setup_styles(self) -> Dict[str, ParagraphStyle]:
@@ -378,11 +377,12 @@ class PDFGenerator:
         """Save PDF to storage and return URL."""
         key = f"reports/{property_id or 'general'}/{filename}"
 
-        await self.storage_service.upload(
-            key=key, data=pdf_buffer.getvalue(), content_type="application/pdf"
+        # Use store_bytes which is the correct StorageService method
+        result = self.storage_service.store_bytes(
+            key=key, payload=pdf_buffer.getvalue(), content_type="application/pdf"
         )
 
-        return await self.storage_service.get_public_url(key)
+        return result.uri
 
     def format_currency(self, value: Union[int, float], currency: str = "SGD") -> str:
         """Format currency values."""
