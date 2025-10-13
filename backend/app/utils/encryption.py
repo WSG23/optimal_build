@@ -7,8 +7,7 @@ import hashlib
 from typing import Optional
 
 try:
-    from cryptography.fernet import Fernet as _Fernet
-    from cryptography.fernet import InvalidToken as _InvalidToken
+    from cryptography.fernet import Fernet as _Fernet, InvalidToken as _InvalidToken
 
     Fernet = _Fernet
     InvalidToken = _InvalidToken

@@ -9,11 +9,11 @@ import structlog
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend._compat.datetime import utcnow
 from app.models.property import DevelopmentAnalysis, Property, PropertyType, TenureType
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.buildable import BuildableInput, BuildableService
 from app.services.finance.calculator import FinanceCalculator
+from backend._compat.datetime import utcnow
 from pydantic import BaseModel
 
 logger = structlog.get_logger()

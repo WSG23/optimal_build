@@ -11,7 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
-from app.models.business_performance import AgentPerformanceSnapshot, PerformanceBenchmark
+from app.models.business_performance import (
+    AgentPerformanceSnapshot,
+    PerformanceBenchmark,
+)
 from app.schemas.performance import (
     AgentPerformanceSnapshotResponse,
     BenchmarkResponse,

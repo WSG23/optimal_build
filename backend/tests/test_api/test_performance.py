@@ -7,12 +7,13 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from fastapi import APIRouter, FastAPI
+
 import pytest_asyncio
 from app.models.business_performance import CommissionType, DealAssetType, DealType
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
 from app.services.deals.performance import AgentPerformanceService
-from fastapi import APIRouter, FastAPI
 from httpx import AsyncClient
 
 

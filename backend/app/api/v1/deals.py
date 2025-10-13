@@ -293,7 +293,9 @@ async def update_commission_status(
         raise HTTPException(status_code=404, detail="Commission not found")
 
     # deal_id might be UUID object or string depending on context
-    deal_uuid = record.deal_id if isinstance(record.deal_id, UUID) else UUID(record.deal_id)
+    deal_uuid = (
+        record.deal_id if isinstance(record.deal_id, UUID) else UUID(record.deal_id)
+    )
 
     deal = await service.get_deal(session=session, deal_id=deal_uuid)
     if deal is None:
@@ -331,7 +333,9 @@ async def create_commission_adjustment(
         raise HTTPException(status_code=404, detail="Commission not found")
 
     # deal_id might be UUID object or string depending on context
-    deal_uuid = record.deal_id if isinstance(record.deal_id, UUID) else UUID(record.deal_id)
+    deal_uuid = (
+        record.deal_id if isinstance(record.deal_id, UUID) else UUID(record.deal_id)
+    )
 
     deal = await service.get_deal(session=session, deal_id=deal_uuid)
     if deal is None:
@@ -377,7 +381,9 @@ async def get_timeline(
             and next_event.recorded_at
             and next_event.recorded_at >= event.recorded_at
         ):
-            duration_seconds = (next_event.recorded_at - event.recorded_at).total_seconds()
+            duration_seconds = (
+                next_event.recorded_at - event.recorded_at
+            ).total_seconds()
         audit_log = None
         audit_id = None
         if event.metadata:

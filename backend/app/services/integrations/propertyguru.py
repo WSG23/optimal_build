@@ -7,9 +7,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple
 
-from backend._compat.datetime import utcnow
-
 import structlog
+
+from backend._compat.datetime import utcnow
 
 logger = structlog.get_logger()
 

@@ -15,8 +15,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from backend._compat.datetime import utcnow
-
 from app.core.config import settings
 from app.core.jwt_auth import TokenData, get_current_user
 from app.models.singapore_property import (
@@ -33,6 +31,7 @@ from app.utils.singapore_compliance import (
     run_full_compliance_check_sync,
     update_property_compliance_sync,
 )
+from backend._compat.datetime import utcnow
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])

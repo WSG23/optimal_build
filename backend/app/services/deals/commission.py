@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from backend._compat.datetime import UTC
 from app.core.audit.ledger import append_event
 from app.models.audit import AuditLog
 from app.models.business_performance import (
@@ -21,6 +20,7 @@ from app.models.business_performance import (
     CommissionStatus,
     CommissionType,
 )
+from backend._compat.datetime import UTC
 
 from .utils import audit_project_key
 
@@ -219,7 +219,9 @@ class AgentCommissionService:
             "commission_type": record.commission_type.value,
             "status": record.status.value,
             "agent_id": str(record.agent_id),
-            "amount": float(record.commission_amount) if record.commission_amount else None,
+            "amount": float(record.commission_amount)
+            if record.commission_amount
+            else None,
             "basis_amount": float(record.basis_amount) if record.basis_amount else None,
             "actor_id": str(actor_id) if actor_id else None,
         }

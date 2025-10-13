@@ -7,13 +7,6 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from app.models.market import MarketCycle, YieldBenchmark
-from app.models.property import MarketTransaction, Property, RentalListing
-from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
-from app.services.finance import (
-    calculate_comprehensive_metrics,
-    value_property_multiple_approaches,
-)
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
@@ -30,6 +23,14 @@ from reportlab.platypus import (
 )
 from sqlalchemy import String, cast, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.market import MarketCycle, YieldBenchmark
+from app.models.property import MarketTransaction, Property, RentalListing
+from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
+from app.services.finance import (
+    calculate_comprehensive_metrics,
+    value_property_multiple_approaches,
+)
 
 
 class InvestmentHighlight(Flowable):

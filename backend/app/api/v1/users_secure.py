@@ -5,9 +5,8 @@ from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from pydantic import BaseModel, field_validator
-
 from backend._compat.datetime import utcnow
+from pydantic import BaseModel, field_validator
 
 try:  # pragma: no cover - optional dependency
     import email_validator  # type: ignore  # noqa: F401

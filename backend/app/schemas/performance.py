@@ -6,12 +6,11 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from app.models.business_performance import (
     AgentPerformanceSnapshot,
     PerformanceBenchmark,
 )
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SnapshotRequest(BaseModel):
@@ -69,9 +68,7 @@ class BenchmarkResponse(BaseModel):
     updated_at: datetime
 
     @classmethod
-    def from_orm_benchmark(
-        cls, benchmark: PerformanceBenchmark
-    ) -> "BenchmarkResponse":
+    def from_orm_benchmark(cls, benchmark: PerformanceBenchmark) -> "BenchmarkResponse":
         return cls.model_validate(benchmark)
 
 

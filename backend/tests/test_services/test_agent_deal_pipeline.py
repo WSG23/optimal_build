@@ -4,6 +4,8 @@ from importlib import import_module
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import select
+
 import pytest_asyncio
 from app.models.audit import AuditLog
 from app.models.business_performance import DealAssetType, DealType, PipelineStage
@@ -11,7 +13,6 @@ from app.models.users import User
 from app.schemas.deals import DealWithTimelineSchema
 from app.services.deals import AgentDealService
 from app.services.deals.utils import audit_project_key
-from sqlalchemy import select
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -58,7 +59,9 @@ async def test_create_deal_seeds_stage_event(async_session_factory):
         assert deal.pipeline_stage == PipelineStage.LEAD_CAPTURED
         assert deal.metadata["priority"] == "high"
 
-        timeline, audit_map = await service.timeline_with_audit(session=session, deal=deal)
+        timeline, audit_map = await service.timeline_with_audit(
+            session=session, deal=deal
+        )
         assert len(timeline) == 1
         event = timeline[0]
         assert event.to_stage == PipelineStage.LEAD_CAPTURED
@@ -114,7 +117,9 @@ async def test_change_stage_updates_status(async_session_factory):
         assert deal.status.name == "CLOSED_WON"
         assert deal.actual_close_date is not None
 
-        timeline, audit_map = await service.timeline_with_audit(session=session, deal=deal)
+        timeline, audit_map = await service.timeline_with_audit(
+            session=session, deal=deal
+        )
         assert len(timeline) == 2
         assert timeline[-1].note == "Signed SPA"
         assert timeline[-1].metadata.get("audit_log_id") is not None

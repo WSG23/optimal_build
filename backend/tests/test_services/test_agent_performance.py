@@ -4,6 +4,7 @@ from importlib import import_module
 from uuid import uuid4
 
 import pytest
+
 import pytest_asyncio
 from app.models.business_performance import (
     AgentDeal,
@@ -126,7 +127,9 @@ async def test_compute_snapshot(async_session_factory):
         assert float(snapshot.weighted_pipeline_value or 0.0) == pytest.approx(
             1_000_000.0 * 0.5 + 500_000.0 * 0.2
         )
-        assert float(snapshot.confirmed_commission_amount or 0.0) == pytest.approx(5_000.0)
+        assert float(snapshot.confirmed_commission_amount or 0.0) == pytest.approx(
+            5_000.0
+        )
         assert snapshot.disputed_commission_amount in (None, 0.0)
         assert snapshot.conversion_rate is not None
         assert snapshot.roi_metrics

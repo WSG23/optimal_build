@@ -11,9 +11,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.jwt_auth import TokenData, get_current_user
 from app.utils.db import session_dependency
-from pydantic import BaseModel, Field
-
 from backend._compat.datetime import utcnow
+from pydantic import BaseModel, Field
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./projects.db"

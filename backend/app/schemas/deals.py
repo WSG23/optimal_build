@@ -7,8 +7,6 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from app.models.business_performance import (
     AgentCommissionAdjustment,
     AgentCommissionRecord,
@@ -22,6 +20,7 @@ from app.models.business_performance import (
     DealType,
     PipelineStage,
 )
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DealCreate(BaseModel):
@@ -261,12 +260,12 @@ class CommissionResponse(BaseModel):
     audit_log_id: int | None = None
     created_at: datetime
     updated_at: datetime
-    adjustments: list[CommissionAdjustmentResponse] = Field(default_factory=list, exclude=True)
+    adjustments: list[CommissionAdjustmentResponse] = Field(
+        default_factory=list, exclude=True
+    )
 
     @classmethod
-    def from_orm_record(
-        cls, record: AgentCommissionRecord
-    ) -> "CommissionResponse":
+    def from_orm_record(cls, record: AgentCommissionRecord) -> "CommissionResponse":
         # Build dict manually to avoid lazy-loading adjustments during validation
         data = {
             "id": record.id,

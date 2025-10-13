@@ -7,6 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+
 import pytest_asyncio
 from app.models.users import User
 from httpx import AsyncClient
@@ -14,10 +15,11 @@ from httpx import AsyncClient
 
 @pytest_asyncio.fixture
 async def deals_client(async_session_factory):
+    from fastapi import APIRouter, FastAPI
+
     from app.api.deps import require_reviewer, require_viewer
     from app.core.database import get_session
     from app.core.jwt_auth import get_optional_user
-    from fastapi import APIRouter, FastAPI
 
     if not hasattr(APIRouter, "patch"):
 
@@ -183,9 +185,7 @@ async def test_commission_endpoints(deals_client, async_session_factory):
     assert commission["commission_type"] == "exclusive"
     commission_id = commission["id"]
 
-    list_commissions = await deals_client.get(
-        f"/api/v1/deals/{deal_id}/commissions"
-    )
+    list_commissions = await deals_client.get(f"/api/v1/deals/{deal_id}/commissions")
     assert list_commissions.status_code == 200
     records = list_commissions.json()
     assert len(records) == 1
