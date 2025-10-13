@@ -52,6 +52,13 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
             "commission tracking, and analytics foundations."
         ),
     },
+    {
+        "name": "developers",
+        "description": (
+            "Developer workspace APIs for comprehensive site acquisition, "
+            "due diligence checklists, and development feasibility management."
+        ),
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -84,6 +91,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "performance",  # Agent performance analytics endpoints
     "advanced_intelligence",  # Investigation analytics stubs
     "listings",
+    "developers",  # Developer workspace endpoints (site acquisition, checklists)
 )
 
 
