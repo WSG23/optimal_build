@@ -15,7 +15,7 @@
 >
 > **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for guidance on choosing your next task.
 
-**Overall Completion: ~85% of Phase 1 (Agent Foundation)**
+**Overall Completion: ~90% of Phase 1 (Agent Foundation)**
 
 ### ✅ What's Complete:
 
@@ -29,10 +29,10 @@
 - UI: Advisory Services page with all 4 features ✅
 - Tests: Backend passing ✅, Manual UI testing complete ✅
 
-**Phase 1C: Listing Integrations (Mocks)** - Backend 100%, UI Pending
+**Phase 1C: Listing Integrations (Mocks)** - Backend 100%, UI 100% ✅ COMPLETE
 - Backend: PropertyGuru mock ✅, EdgeProp mock ✅, Zoho CRM mock ✅, Token encryption ✅
-- UI: Test harness exists (archived in test-ui-harness branch), production UI not designed
-- Tests: Backend passing ✅, Frontend has documented timing issue ⚠️
+- UI: Listing Integrations page with OAuth connection flows ✅
+- Tests: Backend passing ✅, Manual UI testing complete ✅
 - Note: Real OAuth pending API credentials
 
 **Infrastructure:**
@@ -72,7 +72,7 @@
 
 ---
 
-## 📋 PHASE 1: AGENT FOUNDATION (85% Complete)
+## 📋 PHASE 1: AGENT FOUNDATION (90% Complete)
 
 **Goal:** Complete all 6 Agent tools so agents can work entire development lifecycle
 
@@ -149,9 +149,9 @@
 ---
 
 ### Phase 1C: Listing Integrations ✅ COMPLETE (Mocks)
-**Status:** 100% - Mock integrations completed October 2025
+**Status:** 100% - Backend + UI Complete (2025-10-13)
 
-**Delivered (from FEATURES.md lines 56-61):**
+**Backend Deliverables (from FEATURES.md lines 56-61):**
 - ✅ PropertyGuru mock integration with token lifecycle
 - ✅ EdgeProp mock integration
 - ✅ Zoho CRM mock integration
@@ -160,23 +160,32 @@
 - ✅ Token expiry detection (401 responses)
 - ✅ Token refresh helpers (`is_token_valid`, `needs_refresh`)
 
+**UI/UX Deliverables (2025-10-13):**
+- ✅ Listing Integrations page with Apple minimalist design
+- ✅ 3 provider integration cards (PropertyGuru, EdgeProp, Zoho CRM)
+- ✅ Color-coded provider branding (blue, orange, red)
+- ✅ OAuth connection flow with mock code generation
+- ✅ Account status display and connection management
+- ✅ Publish listing modal with form validation
+- ✅ Authentication error handling (401 graceful state)
+- ✅ Provider-specific themed buttons
+
 **Test Status:**
 - ✅ Backend tests: PASSING (3/3 service + API tests)
-- ⚠️ Frontend tests: Known JSDOM timing issue (see TESTING_KNOWN_ISSUES.md)
-- ✅ Manual testing: Feature works correctly
+- ✅ Manual UI testing: Complete (all integration flows working)
+- ⚠️ Frontend unit tests: Known JSDOM timing issue (see TESTING_KNOWN_ISSUES.md)
 
 **Files Delivered:**
-- `backend/app/services/integrations/accounts.py` (with encryption)
-- `backend/app/services/integrations/propertyguru.py`
-- `backend/app/services/integrations/edgeprop.py`
-- `backend/app/services/integrations/zoho.py`
-- `backend/app/utils/encryption.py` (TokenCipher)
-- `backend/app/api/v1/listings.py`
-- `frontend/src/pages/AgentIntegrationsPage.tsx`
-- `frontend/src/api/listings.ts`
-- `backend/tests/test_services/test_listing_integration_accounts.py`
-- `backend/tests/test_api/test_listing_integrations.py`
-- `docs/frontend/listing_integrations_mock.md`
+- Backend: `backend/app/services/integrations/accounts.py` (with encryption)
+- Backend: `backend/app/services/integrations/propertyguru.py`
+- Backend: `backend/app/services/integrations/edgeprop.py`
+- Backend: `backend/app/services/integrations/zoho.py`
+- Backend: `backend/app/utils/encryption.py` (TokenCipher)
+- Backend API: `backend/app/api/v1/listings.py`
+- Frontend UI: `frontend/src/app/pages/integrations/IntegrationsPage.tsx`
+- Frontend API: `frontend/src/api/listings.ts`
+- Tests: `backend/tests/test_services/test_listing_integration_accounts.py`
+- Tests: `backend/tests/test_api/test_listing_integrations.py`
 
 **What's NOT Done (Pending):**
 - ❌ Real PropertyGuru OAuth (requires API credentials)
