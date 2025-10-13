@@ -236,7 +236,10 @@ def check_dependency_files(
                     for j in range(i + 1, min(i + 5, len(lines))):
                         if "rev:" in lines[j]:
                             rev = lines[j].split("rev:")[1].strip()
-                            black_versions[".pre-commit-config.yaml"] = rev.strip('"\'')
+                            # Strip comments
+                            if "#" in rev:
+                                rev = rev.split("#")[0].strip()
+                            black_versions[".pre-commit-config.yaml"] = rev.strip("\"'")
                             break
                     break
 

@@ -8,12 +8,7 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from app.models.business_performance import (
-    CommissionStatus,
-    CommissionType,
-    DealAssetType,
-    DealType,
-)
+from app.models.business_performance import CommissionType, DealAssetType, DealType
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
 from app.services.deals.performance import AgentPerformanceService
@@ -34,7 +29,9 @@ async def performance_client(async_session_factory):
         / "v1"
         / "performance.py"
     )
-    spec = importlib.util.spec_from_file_location("temp_performance_router", module_path)
+    spec = importlib.util.spec_from_file_location(
+        "temp_performance_router", module_path
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError("Unable to load performance router module for testing")
     module = importlib.util.module_from_spec(spec)

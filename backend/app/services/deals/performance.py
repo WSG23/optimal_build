@@ -7,11 +7,11 @@ from datetime import date, datetime
 from typing import Iterable, Mapping, Optional, Sequence
 from uuid import UUID
 
+from backend._compat.datetime import UTC
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from backend._compat.datetime import UTC
 from app.core.metrics import RoiSnapshot, compute_project_roi
 from app.data.performance_benchmarks_seed import SEED_BENCHMARKS
 from app.models.business_performance import (
@@ -19,7 +19,6 @@ from app.models.business_performance import (
     AgentDeal,
     AgentPerformanceSnapshot,
     PerformanceBenchmark,
-    PipelineStage,
 )
 
 logger = logging.getLogger(__name__)
@@ -317,7 +316,7 @@ class AgentPerformanceService:
         return snapshot
 
     async def _all_agent_ids(self, session: AsyncSession) -> list[UUID]:
-        from sqlalchemy import cast, String
+        from sqlalchemy import String, cast
 
         stmt = select(cast(AgentDeal.agent_id, String)).distinct()
         result = await session.execute(stmt)
@@ -445,9 +444,7 @@ def _safe_float(value: object) -> float | None:
     return None
 
 
-def _normalise_roi_snapshot(
-    payload: Mapping[str, object]
-) -> dict[str, object] | None:
+def _normalise_roi_snapshot(payload: Mapping[str, object]) -> dict[str, object] | None:
     project_id = _safe_int(payload.get("project_id"))
     if project_id is None:
         return None
@@ -490,9 +487,7 @@ def _summarise_roi_snapshots(
     acceptance_rates = [
         _safe_float(item.get("acceptance_rate")) or 0.0 for item in snapshots
     ]
-    paybacks = [
-        _safe_int(item.get("payback_weeks")) or 0 for item in snapshots
-    ]
+    paybacks = [_safe_int(item.get("payback_weeks")) or 0 for item in snapshots]
     savings_percent = [
         _safe_int(item.get("savings_percent")) or 0 for item in snapshots
     ]
@@ -568,8 +563,8 @@ def _coerce_float(value: object) -> float | None:
         return None
     try:
         return float(value)
-    except (TypeError, ValueError):  # pragma: no cover - defensive
-        raise TypeError(f"Expected numeric value, got {value!r}")
+    except (TypeError, ValueError) as e:  # pragma: no cover - defensive
+        raise TypeError(f"Expected numeric value, got {value!r}") from e
 
 
 __all__ = ["AgentPerformanceService"]

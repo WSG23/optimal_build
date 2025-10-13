@@ -3,27 +3,27 @@
 from __future__ import annotations
 
 import io
+import logging
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.models.market import YieldBenchmark
 from app.models.property import DevelopmentAnalysis, MarketTransaction, Property
-from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
+from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from reportlab.platypus import (
-    BaseDocTemplate,
-    Frame,
     ListFlowable,
     ListItem,
-    NextPageTemplate,
     PageBreak,
-    PageTemplate,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
 )
 from sqlalchemy import String, cast, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 
 class UniversalSitePackGenerator(PDFGenerator):
@@ -44,114 +44,115 @@ class UniversalSitePackGenerator(PDFGenerator):
         buffer = io.BytesIO()
 
         # Create document with BaseDocTemplate for custom page templates
-        doc = BaseDocTemplate(
+        doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
+            rightMargin=0.75 * inch,
+            leftMargin=0.75 * inch,
+            topMargin=inch,
+            bottomMargin=inch,
         )
-
-        # Define frames for different page types
-        # Cover page frame (full page, no margins)
-        cover_frame = Frame(
-            0,
-            0,
-            A4[0],
-            A4[1],
-            id="cover_frame",
-            leftPadding=0,
-            bottomPadding=0,
-            rightPadding=0,
-            topPadding=0,
-            showBoundary=0,
-        )
-
-        # Content page frame (with margins)
-        content_frame = Frame(
-            0.75 * inch,
-            inch,
-            A4[0] - 1.5 * inch,
-            A4[1] - 2 * inch,
-            id="content_frame",
-            leftPadding=0,
-            bottomPadding=0,
-            rightPadding=0,
-            topPadding=0,
-            showBoundary=0,
-        )
-
-        # Create page templates
-        cover_template = PageTemplate(
-            id="cover",
-            frames=[cover_frame],
-        )
-
-        content_template = PageTemplate(
-            id="content",
-            frames=[content_frame],
-        )
-
-        # Add templates to document
-        doc.addPageTemplates([cover_template, content_template])
 
         # Build content
         story = []
+        logger.info(f"Starting PDF generation for property {property_id}")
 
-        # 1. Cover Page (uses cover template)
-        cover = CoverPage(
-            title="Universal Site Pack",
-            subtitle="Comprehensive Development Potential Analysis",
-            property_info={
-                "Property": property_data["property"].name,
-                "Address": property_data["property"].address,
-                "Land Area": self.format_area(
-                    property_data["property"].land_area_sqm or 0
-                ),
-                "Current Use": property_data["property"]
-                .property_type.value.replace("_", " ")
-                .title(),
-            },
+        # 1. Cover Page (simple version for SimpleDocTemplate)
+        story.append(Spacer(1, 2 * inch))
+        story.append(Paragraph("Universal Site Pack", self.styles["CustomTitle"]))
+        story.append(Spacer(1, 0.5 * inch))
+        story.append(
+            Paragraph(
+                "Comprehensive Development Potential Analysis",
+                self.styles["CustomHeading1"],
+            )
         )
-        story.append(cover)
-        # Switch to content template for all remaining pages
-        story.append(NextPageTemplate("content"))
-        story.append(PageBreak())
+        story.append(Spacer(1, inch))
 
-        # Note: NextPageTemplate would go here if we need explicit template switching
-        # For now, the second PageTemplate (content) will be used automatically
+        # Property information
+        property_info_data = [
+            ["Property:", property_data["property"].name],
+            ["Address:", property_data["property"].address or "N/A"],
+            [
+                "Land Area:",
+                self.format_area(property_data["property"].land_area_sqm or 0),
+            ],
+            [
+                "Current Use:",
+                property_data["property"].property_type.value.replace("_", " ").title(),
+            ],
+        ]
+        property_info_table = self._create_data_table(
+            property_info_data, col_widths=[2 * inch, 4 * inch]
+        )
+        story.append(property_info_table)
+        logger.info(f"Added cover page. Story length: {len(story)}")
+
+        # Start content pages
+        story.append(PageBreak())
+        logger.info(f"Added PageBreak after cover. Story length: {len(story)}")
 
         # 2. Executive Summary (Page 2-3)
-        story.extend(self._create_executive_summary(property_data, market_data))
+        exec_summary = self._create_executive_summary(property_data, market_data)
+        logger.info(f"Executive Summary generated {len(exec_summary)} flowables")
+        story.extend(exec_summary)
         story.append(PageBreak())
 
         # 3. Site Analysis (Page 4-5)
-        story.extend(self._create_site_analysis(property_data))
+        site_analysis = self._create_site_analysis(property_data)
+        logger.info(f"Site Analysis generated {len(site_analysis)} flowables")
+        story.extend(site_analysis)
         story.append(PageBreak())
 
         # 4. Zoning & Regulatory (Page 6-7)
-        story.extend(self._create_zoning_section(property_data))
+        zoning = self._create_zoning_section(property_data)
+        logger.info(f"Zoning section generated {len(zoning)} flowables")
+        story.extend(zoning)
         story.append(PageBreak())
 
         # 5. Market Analysis (Page 8-10)
-        story.extend(self._create_market_analysis(market_data))
+        market_analysis = self._create_market_analysis(market_data)
+        logger.info(f"Market Analysis generated {len(market_analysis)} flowables")
+        story.extend(market_analysis)
         story.append(PageBreak())
 
         # 6. Development Scenarios (Page 11-14)
-        story.extend(self._create_development_scenarios(property_data))
+        dev_scenarios = self._create_development_scenarios(property_data)
+        logger.info(f"Development Scenarios generated {len(dev_scenarios)} flowables")
+        story.extend(dev_scenarios)
         story.append(PageBreak())
 
         # 7. Financial Analysis (Page 15-17)
-        story.extend(self._create_financial_analysis(property_data))
+        financial_analysis = self._create_financial_analysis(property_data)
+        logger.info(f"Financial Analysis generated {len(financial_analysis)} flowables")
+        story.extend(financial_analysis)
         story.append(PageBreak())
 
         # 8. Risk Assessment (Page 18)
-        story.extend(self._create_risk_assessment(property_data))
+        risk_assessment = self._create_risk_assessment(property_data)
+        logger.info(f"Risk Assessment generated {len(risk_assessment)} flowables")
+        story.extend(risk_assessment)
         story.append(PageBreak())
 
         # 9. Implementation Timeline (Page 19)
-        story.extend(self._create_implementation_timeline(property_data))
+        implementation_timeline = self._create_implementation_timeline(property_data)
+        logger.info(
+            f"Implementation Timeline generated {len(implementation_timeline)} flowables"
+        )
+        story.extend(implementation_timeline)
         story.append(PageBreak())
 
         # 10. Disclaimers & Appendix (Page 20)
-        story.extend(self._create_appendix_disclaimers())
+        appendix_disclaimers = self._create_appendix_disclaimers()
+        logger.info(
+            f"Appendix/Disclaimers generated {len(appendix_disclaimers)} flowables"
+        )
+        story.extend(appendix_disclaimers)
+
+        # Log final story summary before building
+        logger.info(
+            f"Final story contains {len(story)} total flowables. Building PDF..."
+        )
 
         # Build PDF with custom canvas for page numbers
         doc.build(
@@ -165,6 +166,8 @@ class UniversalSitePackGenerator(PDFGenerator):
         )
 
         buffer.seek(0)
+        pdf_size = len(buffer.getvalue())
+        logger.info(f"PDF generation complete. PDF size: {pdf_size} bytes")
         return buffer
 
     async def _load_property_data(
