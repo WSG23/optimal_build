@@ -6,10 +6,8 @@ from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
 import structlog
-from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +26,8 @@ from app.services.agents.gps_property_logger import (
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.ura_integration import ura_service
 from app.services.geocoding import Address, GeocodingService
+from backend._compat.datetime import utcnow
+from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -1226,9 +1226,10 @@ async def generate_professional_pack(
             pdf_buffer=pdf_buffer, filename=filename, property_id=property_id
         )
 
-        # Convert to API download URL
+        # Convert to API download URL (absolute URL for cross-origin requests)
+        # Use the backend's base URL so frontend can access it regardless of its port
         download_url = (
-            f"/api/v1/agents/commercial-property/files/{property_id}/{filename}"
+            f"http://localhost:9400/api/v1/agents/commercial-property/files/{property_id}/{filename}"
         )
 
         return {
