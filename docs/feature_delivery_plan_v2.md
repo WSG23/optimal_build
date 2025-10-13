@@ -15,7 +15,7 @@
 >
 > **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for guidance on choosing your next task.
 
-**Overall Completion: ~80% of Phase 1 (Agent Foundation)**
+**Overall Completion: ~85% of Phase 1 (Agent Foundation)**
 
 ### ✅ What's Complete:
 
@@ -24,10 +24,10 @@
 - UI: Marketing Packs page with modern card-based design ✅
 - Tests: Backend passing ✅, Manual UI testing complete ✅
 
-**Phase 1B: Agent Advisory Services** - Backend 100%, UI Pending
+**Phase 1B: Agent Advisory Services** - Backend 100%, UI 100% ✅ COMPLETE
 - Backend: Asset Mix Strategy ✅, Market Positioning ✅, Absorption Forecasting ✅, Feedback Loop ✅
-- UI: Test harness exists (archived in test-ui-harness branch), production UI not designed
-- Tests: Backend passing ✅, Frontend has documented timing issue ⚠️
+- UI: Advisory Services page with all 4 features ✅
+- Tests: Backend passing ✅, Manual UI testing complete ✅
 
 **Phase 1C: Listing Integrations (Mocks)** - Backend 100%, UI Pending
 - Backend: PropertyGuru mock ✅, EdgeProp mock ✅, Zoho CRM mock ✅, Token encryption ✅
@@ -72,7 +72,7 @@
 
 ---
 
-## 📋 PHASE 1: AGENT FOUNDATION (80% Complete)
+## 📋 PHASE 1: AGENT FOUNDATION (85% Complete)
 
 **Goal:** Complete all 6 Agent tools so agents can work entire development lifecycle
 
@@ -109,31 +109,42 @@
 ---
 
 ### Phase 1B: Development Advisory Services ✅ COMPLETE
-**Status:** 100% - Completed October 2025
+**Status:** 100% - Backend + UI Complete (2025-10-13)
 
-**Delivered (from FEATURES.md lines 49-54):**
+**Backend Deliverables (from FEATURES.md lines 49-54):**
 - ✅ Asset Mix Strategy tool (mixed-use optimizer)
 - ✅ Market Positioning calculator (pricing, tenant mix)
 - ✅ Absorption Forecasting engine (velocity predictions)
 - ✅ Buyer/Tenant Feedback Loop system
 
+**UI/UX Deliverables (2025-10-13):**
+- ✅ Advisory Services page with Apple minimalist design
+- ✅ Property ID input with load functionality
+- ✅ Asset Mix Strategy display with allocation percentages
+- ✅ Market Positioning pricing guidance grid
+- ✅ Absorption Forecast with 3-metric cards and timeline
+- ✅ Market Feedback submission form and history
+- ✅ Error handling and empty states
+
 **Test Status:**
 - ✅ Backend tests: PASSING
-- ⚠️ Frontend tests: Known JSDOM timing issue (see TESTING_KNOWN_ISSUES.md)
-- ✅ Manual testing: Feature works correctly
+- ✅ Manual UI testing: Complete (all 4 features working)
+- ⚠️ Frontend unit tests: Known JSDOM timing issue (see TESTING_KNOWN_ISSUES.md)
 
 **Files Delivered:**
-- `backend/app/services/agents/advisory.py`
-- `backend/app/api/v1/agents.py`
-- `frontend/src/pages/AgentAdvisoryPage.tsx`
-- `backend/tests/test_api/test_agent_advisory.py`
-- Tests in `backend/tests/test_services/`
+- Backend: `backend/app/services/agents/advisory.py`
+- Backend API: `backend/app/api/v1/agents.py`
+- Frontend UI: `frontend/src/app/pages/advisory/AdvisoryPage.tsx`
+- Frontend API: `frontend/src/api/advisory.ts`
+- Tests: `backend/tests/test_api/test_agent_advisory.py`
+- Tests: `backend/tests/test_services/`
 
 **Acceptance Criteria Met:**
 - ✅ Agent can input property data and get mix recommendations
 - ✅ Pricing strategy suggestions based on market data
-- ✅ Absorption velocity predictions with confidence intervals
-- ✅ Feedback loop implemented and tested
+- ✅ Absorption velocity predictions with confidence intervals and timeline
+- ✅ Feedback loop submission and display
+- ✅ Clean UI with all 4 advisory features accessible
 
 ---
 
