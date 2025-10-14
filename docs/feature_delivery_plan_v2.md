@@ -352,8 +352,8 @@
 
 **Goal:** Complete all 9 Developer tools so developers can manage full project lifecycle
 
-### Phase 2A: Universal GPS Site Acquisition ⚠️ 5% STARTED
-**Status:** Backend exists, developer UI scaffolded (scenario selector + checklists live)
+### Phase 2A: Universal GPS Site Acquisition ⚠️ 15% STARTED
+**Status:** Backend exists, developer UI scaffolded (scenario selector + checklists live); checklist + condition report flows re-validated locally (Oct 14, 2025) with PDF fallback confirmed
 
 **Requirements (from FEATURES.md lines 86-96):**
 - Mobile property capture (GPS-enabled)
@@ -364,6 +364,7 @@
 **What Exists:**
 - ✅ GPS logging backend
 - ✅ Quick analysis scenarios
+- ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint)
 - ⚠️ UI partially integrated with feasibility workspace
 
 **What's Missing:**
