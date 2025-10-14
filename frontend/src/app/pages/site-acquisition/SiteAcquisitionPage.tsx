@@ -245,6 +245,14 @@ export function SiteAcquisitionPage() {
     [activeScenario, scenarioLookup],
   )
 
+  const quickAnalysisScenarios = capturedProperty?.quickAnalysis.scenarios ?? []
+  const comparisonScenarios =
+    activeScenario === 'all'
+      ? quickAnalysisScenarios
+      : quickAnalysisScenarios.filter(
+          (scenario) => scenario.scenario === activeScenario,
+        )
+
   useEffect(() => {
     setSelectedCategory(null)
   }, [activeScenario])
@@ -1057,23 +1065,158 @@ export function SiteAcquisitionPage() {
         >
           Multi-Scenario Comparison
         </h2>
-        <div
-          style={{
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '12px',
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-          <p style={{ margin: 0, fontSize: '1.0625rem' }}>
-            Side-by-side scenario comparison will appear here
-          </p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
-            Cost analysis, timeline, ROI/IRR, and risk assessment matrix
-          </p>
-        </div>
+        {!capturedProperty ? (
+          <div
+            style={{
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#f5f5f7',
+              borderRadius: '12px',
+            }}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
+            <p style={{ margin: 0, fontSize: '1.0625rem' }}>
+              Capture a property to review scenario economics and development posture
+            </p>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
+              Financial and planning metrics for each developer scenario appear here.
+            </p>
+          </div>
+        ) : quickAnalysisScenarios.length === 0 ? (
+          <div
+            style={{
+              padding: '2.5rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#f5f5f7',
+              borderRadius: '12px',
+            }}
+          >
+            <p style={{ margin: 0 }}>
+              Quick analysis metrics unavailable for this capture. Try regenerating the
+              scenarios.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              {quickAnalysisScenarios.map((scenario) => {
+                const label =
+                  scenarioLookup.get(scenario.scenario)?.label ??
+                  formatCategoryName(scenario.scenario)
+                const isActive =
+                  activeScenario === 'all' || scenario.scenario === activeScenario
+                return (
+                  <div
+                    key={scenario.scenario}
+                    style={{
+                      border: `2px solid ${isActive ? '#1d1d1f' : '#e5e5e7'}`,
+                      borderRadius: '12px',
+                      padding: '1.25rem',
+                      flex: '1 1 280px',
+                      background: isActive ? '#ffffff' : '#f5f5f7',
+                      transition: 'border 0.2s ease',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: '1.0625rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {label}
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: '0.8125rem',
+                          fontWeight: 600,
+                          color: '#6e6e73',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {scenario.headline}
+                      </span>
+                    </div>
+                    <dl
+                      style={{
+                        margin: 0,
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                        gap: '0.75rem',
+                        fontSize: '0.875rem',
+                        color: '#3a3a3c',
+                      }}
+                    >
+                      {Object.entries(scenario.metrics).map(([key, value]) => (
+                        <div key={key} style={{ display: 'flex', flexDirection: 'column' }}>
+                          <dt
+                            style={{
+                              fontWeight: 600,
+                              color: '#6e6e73',
+                              marginBottom: '0.15rem',
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            {key.replace(/_/g, ' ')}
+                          </dt>
+                          <dd style={{ margin: 0 }}>{value ?? '—'}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {scenario.notes.length > 0 && (
+                      <ul
+                        style={{
+                          margin: '1rem 0 0',
+                          paddingLeft: '1.1rem',
+                          color: '#3a3a3c',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {scenario.notes.map((note) => (
+                          <li key={note}>{note}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {activeScenario !== 'all' && comparisonScenarios.length > 0 && (
+              <div
+                style={{
+                  padding: '1.25rem',
+                  background: '#f0f9ff',
+                  borderRadius: '12px',
+                  border: '1px solid #bae6fd',
+                }}
+              >
+                <strong>Scenario focus:</strong> Viewing{' '}
+                {scenarioLookup.get(activeScenario)?.label ??
+                  formatCategoryName(activeScenario)}{' '}
+                metrics. Switch back to “All scenarios” to compare options side-by-side.
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <section
