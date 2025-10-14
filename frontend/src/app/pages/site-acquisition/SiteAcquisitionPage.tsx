@@ -4,10 +4,12 @@ import {
   fetchChecklistSummary,
   fetchPropertyChecklist,
   fetchConditionAssessment,
+  saveConditionAssessment,
   updateChecklistItem,
   type ChecklistItem,
   type ChecklistSummary,
   type ConditionAssessment,
+  type ConditionAssessmentUpsertRequest,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
 } from '../../../api/siteAcquisition'
@@ -49,6 +51,75 @@ const SCENARIO_OPTIONS: Array<{
     icon: '🏙️',
   },
 ]
+
+const CONDITION_RATINGS = ['A', 'B', 'C', 'D', 'E']
+const CONDITION_RISK_LEVELS = ['low', 'moderate', 'elevated', 'high', 'critical']
+const DEFAULT_CONDITION_SYSTEMS = [
+  'Structural frame & envelope',
+  'Mechanical & electrical systems',
+  'Compliance & envelope maintenance',
+]
+
+type AssessmentDraftSystem = {
+  name: string
+  rating: string
+  score: string
+  notes: string
+  recommendedActions: string
+}
+
+type ConditionAssessmentDraft = {
+  scenario: DevelopmentScenario | 'all'
+  overallRating: string
+  overallScore: string
+  riskLevel: string
+  summary: string
+  scenarioContext: string
+  systems: AssessmentDraftSystem[]
+  recommendedActionsText: string
+}
+
+function buildAssessmentDraft(
+  assessment: ConditionAssessment | null,
+  activeScenario: DevelopmentScenario | 'all',
+): ConditionAssessmentDraft {
+  const targetScenario =
+    assessment?.scenario ?? (activeScenario === 'all' ? 'all' : activeScenario)
+  const systemsFromAssessment = assessment?.systems ?? []
+
+  const systems: AssessmentDraftSystem[] = (
+    systemsFromAssessment.length > 0
+      ? systemsFromAssessment
+      : DEFAULT_CONDITION_SYSTEMS.map((name) => ({
+          name,
+          rating: 'B',
+          score: 70,
+          notes: '',
+          recommendedActions: '',
+        }))
+  ).map((system) => ({
+    name: system.name,
+    rating: system.rating,
+    score: String(system.score ?? 0),
+    notes: system.notes ?? '',
+    recommendedActions: Array.isArray(system.recommendedActions)
+      ? system.recommendedActions.join('\n')
+      : '',
+  }))
+
+  return {
+    scenario: targetScenario,
+    overallRating: assessment?.overallRating ?? 'B',
+    overallScore: String(assessment?.overallScore ?? 75),
+    riskLevel: assessment?.riskLevel ?? 'moderate',
+    summary: assessment?.summary ?? '',
+    scenarioContext: assessment?.scenarioContext ?? '',
+    systems,
+    recommendedActionsText: assessment?.recommendedActions
+      ? assessment.recommendedActions.join('\n')
+      : '',
+  }
+}
 
 function formatCategoryName(category: string): string {
   return category
@@ -154,6 +225,14 @@ export function SiteAcquisitionPage() {
   const [conditionAssessment, setConditionAssessment] =
     useState<ConditionAssessment | null>(null)
   const [isLoadingCondition, setIsLoadingCondition] = useState(false)
+  const [isEditingAssessment, setIsEditingAssessment] = useState(false)
+  const [assessmentDraft, setAssessmentDraft] = useState<ConditionAssessmentDraft>(() =>
+    buildAssessmentDraft(null, 'all'),
+  )
+  const [isSavingAssessment, setIsSavingAssessment] = useState(false)
+  const [assessmentSaveMessage, setAssessmentSaveMessage] = useState<string | null>(
+    null,
+  )
 
   const scenarioLookup = useMemo(
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
@@ -290,6 +369,121 @@ export function SiteAcquisitionPage() {
       cancelled = true
     }
   }, [capturedProperty, activeScenario])
+
+  useEffect(() => {
+    if (!capturedProperty) {
+      setAssessmentDraft(buildAssessmentDraft(null, 'all'))
+      setIsEditingAssessment(false)
+      return
+    }
+    setAssessmentDraft(buildAssessmentDraft(conditionAssessment, activeScenario))
+  }, [capturedProperty, conditionAssessment, activeScenario])
+
+  function handleAssessmentFieldChange(
+    field: keyof ConditionAssessmentDraft,
+    value: string,
+  ) {
+    setAssessmentDraft((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  function handleAssessmentSystemChange(
+    index: number,
+    field: keyof AssessmentDraftSystem,
+    value: string,
+  ) {
+    setAssessmentDraft((prev) => {
+      const systems = [...prev.systems]
+      systems[index] = {
+        ...systems[index],
+        [field]: value,
+      }
+      return { ...prev, systems }
+    })
+  }
+
+  async function handleAssessmentSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
+    if (!capturedProperty) {
+      return
+    }
+
+    setIsSavingAssessment(true)
+    setAssessmentSaveMessage(null)
+
+    try {
+      const systemsPayload: ConditionAssessmentUpsertRequest['systems'] = assessmentDraft.systems.map(
+        (system) => {
+          const parsedScore = Number(system.score)
+          const scoreValue = Number.isNaN(parsedScore) ? 0 : parsedScore
+          return {
+            name: system.name,
+            rating: system.rating,
+            score: scoreValue,
+            notes: system.notes,
+            recommendedActions: system.recommendedActions
+              .split('\n')
+              .map((line) => line.trim())
+              .filter((line) => line.length > 0),
+          }
+        },
+      )
+
+      const parsedOverallScore = Number(assessmentDraft.overallScore)
+      const overallScoreValue = Number.isNaN(parsedOverallScore)
+        ? 0
+        : parsedOverallScore
+
+      const payload: ConditionAssessmentUpsertRequest = {
+        scenario: assessmentDraft.scenario,
+        overallRating: assessmentDraft.overallRating,
+        overallScore: overallScoreValue,
+        riskLevel: assessmentDraft.riskLevel,
+        summary: assessmentDraft.summary,
+        scenarioContext:
+          assessmentDraft.scenarioContext.trim() === ''
+            ? undefined
+            : assessmentDraft.scenarioContext,
+        systems: systemsPayload,
+        recommendedActions: assessmentDraft.recommendedActionsText
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0),
+      }
+
+      const saved = await saveConditionAssessment(
+        capturedProperty.propertyId,
+        payload,
+      )
+
+      if (saved) {
+        const refreshed = await fetchConditionAssessment(
+          capturedProperty.propertyId,
+          activeScenario,
+        )
+        setConditionAssessment(refreshed)
+        setAssessmentDraft(buildAssessmentDraft(refreshed, activeScenario))
+        setAssessmentSaveMessage('Inspection saved successfully.')
+        setIsEditingAssessment(false)
+      } else {
+        setAssessmentSaveMessage('Unable to save inspection data. Please try again.')
+      }
+    } catch (error) {
+      console.error('Failed to save inspection assessment:', error)
+      setAssessmentSaveMessage('Unable to save inspection data. Please try again.')
+    } finally {
+      setIsSavingAssessment(false)
+    }
+  }
+
+  function resetAssessmentDraft() {
+    setAssessmentDraft(buildAssessmentDraft(conditionAssessment, activeScenario))
+    setAssessmentSaveMessage(null)
+  }
 
   function toggleScenario(scenario: DevelopmentScenario) {
     setSelectedScenarios((prev) =>
@@ -1386,6 +1580,18 @@ export function SiteAcquisitionPage() {
                     {conditionAssessment.scenarioContext}
                   </p>
                 )}
+                {conditionAssessment.recordedAt && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.8125rem',
+                      color: '#6e6e73',
+                    }}
+                  >
+                    Inspection recorded{' '}
+                    {new Date(conditionAssessment.recordedAt).toLocaleString()}
+                  </p>
+                )}
               </div>
               <div
                 style={{
@@ -1490,6 +1696,375 @@ export function SiteAcquisitionPage() {
                   </ul>
                 </div>
               ))}
+            </div>
+
+            <div
+              style={{
+                border: '1px solid #e5e5e7',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: '1.0625rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Record Inspection Assessment
+                </h3>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingAssessment((prev) => !prev)
+                      setAssessmentSaveMessage(null)
+                    }}
+                    style={{
+                      border: '1px solid #1d1d1f',
+                      background: isEditingAssessment ? '#1d1d1f' : 'white',
+                      color: isEditingAssessment ? 'white' : '#1d1d1f',
+                      borderRadius: '9999px',
+                      padding: '0.4rem 0.95rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {isEditingAssessment ? 'Close editor' : 'Open editor'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetAssessmentDraft}
+                    disabled={isSavingAssessment}
+                    style={{
+                      border: '1px solid #d2d2d7',
+                      background: 'white',
+                      color: '#1d1d1f',
+                      borderRadius: '9999px',
+                      padding: '0.4rem 0.95rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+              {assessmentSaveMessage && (
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '0.85rem',
+                    color: assessmentSaveMessage.includes('success')
+                      ? '#15803d'
+                      : '#c53030',
+                  }}
+                >
+                  {assessmentSaveMessage}
+                </p>
+              )}
+              {isEditingAssessment && (
+                <form
+                  onSubmit={handleAssessmentSubmit}
+                  style={{ display: 'grid', gap: '1.25rem' }}
+                >
+                  <div
+                    style={{
+                      display: 'grid',
+                      gap: '1rem',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    }}
+                  >
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario</span>
+                      <select
+                        value={assessmentDraft.scenario}
+                        onChange={(e) =>
+                          handleAssessmentFieldChange(
+                            'scenario',
+                            e.target.value as DevelopmentScenario | 'all',
+                          )
+                        }
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #d2d2d7',
+                          padding: '0.55rem 0.75rem',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        <option value="all">All scenarios</option>
+                        {SCENARIO_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall rating</span>
+                      <select
+                        value={assessmentDraft.overallRating}
+                        onChange={(e) => handleAssessmentFieldChange('overallRating', e.target.value)}
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #d2d2d7',
+                          padding: '0.55rem 0.75rem',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        {CONDITION_RATINGS.map((rating) => (
+                          <option key={rating} value={rating}>
+                            {rating}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall score</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={assessmentDraft.overallScore}
+                        onChange={(e) => handleAssessmentFieldChange('overallScore', e.target.value)}
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #d2d2d7',
+                          padding: '0.55rem 0.75rem',
+                          fontSize: '0.9rem',
+                        }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Risk level</span>
+                      <select
+                        value={assessmentDraft.riskLevel}
+                        onChange={(e) => handleAssessmentFieldChange('riskLevel', e.target.value)}
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #d2d2d7',
+                          padding: '0.55rem 0.75rem',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        {CONDITION_RISK_LEVELS.map((risk) => (
+                          <option key={risk} value={risk}>
+                            {risk.charAt(0).toUpperCase() + risk.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Summary</span>
+                    <textarea
+                      value={assessmentDraft.summary}
+                      onChange={(e) => handleAssessmentFieldChange('summary', e.target.value)}
+                      rows={3}
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </label>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario context</span>
+                    <textarea
+                      value={assessmentDraft.scenarioContext}
+                      onChange={(e) =>
+                        handleAssessmentFieldChange('scenarioContext', e.target.value)
+                      }
+                      rows={2}
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </label>
+
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    {assessmentDraft.systems.map((system, index) => (
+                      <div
+                        key={`${system.name}-${index}`}
+                        style={{
+                          border: '1px solid #e5e5e7',
+                          borderRadius: '12px',
+                          padding: '1rem',
+                          display: 'grid',
+                          gap: '0.75rem',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <strong>{system.name}</strong>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <select
+                              value={system.rating}
+                              onChange={(e) =>
+                                handleAssessmentSystemChange(index, 'rating', e.target.value)
+                              }
+                              style={{
+                                borderRadius: '8px',
+                                border: '1px solid #d2d2d7',
+                                padding: '0.45rem 0.65rem',
+                                fontSize: '0.85rem',
+                              }}
+                            >
+                              {CONDITION_RATINGS.map((rating) => (
+                                <option key={rating} value={rating}>
+                                  {rating}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              min={0}
+                              max={100}
+                              value={system.score}
+                              onChange={(e) =>
+                                handleAssessmentSystemChange(index, 'score', e.target.value)
+                              }
+                              style={{
+                                borderRadius: '8px',
+                                border: '1px solid #d2d2d7',
+                                padding: '0.45rem 0.65rem',
+                                width: '80px',
+                                fontSize: '0.85rem',
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <textarea
+                          value={system.notes}
+                          onChange={(e) =>
+                            handleAssessmentSystemChange(index, 'notes', e.target.value)
+                          }
+                          rows={2}
+                          placeholder="Key findings"
+                          style={{
+                            borderRadius: '8px',
+                            border: '1px solid #d2d2d7',
+                            padding: '0.65rem',
+                            fontSize: '0.85rem',
+                          }}
+                        />
+                        <textarea
+                          value={system.recommendedActions}
+                          onChange={(e) =>
+                            handleAssessmentSystemChange(
+                              index,
+                              'recommendedActions',
+                              e.target.value,
+                            )
+                          }
+                          rows={2}
+                          placeholder="Recommended actions (one per line)"
+                          style={{
+                            borderRadius: '8px',
+                            border: '1px solid #d2d2d7',
+                            padding: '0.65rem',
+                            fontSize: '0.85rem',
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                      Global recommended actions
+                    </span>
+                    <textarea
+                      value={assessmentDraft.recommendedActionsText}
+                      onChange={(e) =>
+                        handleAssessmentFieldChange('recommendedActionsText', e.target.value)
+                      }
+                      rows={2}
+                      placeholder="List actions (one per line)"
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </label>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: '0.75rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingAssessment(false)
+                        setAssessmentSaveMessage(null)
+                      }}
+                      disabled={isSavingAssessment}
+                      style={{
+                        border: '1px solid #d2d2d7',
+                        background: 'white',
+                        color: '#1d1d1f',
+                        borderRadius: '9999px',
+                        padding: '0.55rem 1.25rem',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSavingAssessment}
+                      style={{
+                        border: 'none',
+                        background: '#1d1d1f',
+                        color: 'white',
+                        borderRadius: '9999px',
+                        padding: '0.55rem 1.5rem',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {isSavingAssessment ? 'Saving…' : 'Save inspection'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         )}

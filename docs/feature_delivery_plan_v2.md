@@ -372,6 +372,7 @@
 - ✅ Due diligence checklist system (seeded data + developer checklist UI)
 - ✅ Property condition assessment insights (heuristic engine + UI wiring; advanced tooling pending)
 - ✅ Multi-scenario comparison (scenario metrics + notes rendered in UI)
+- ✅ Manual inspection capture (developers can override condition assessments with inspection data)
 
 **Acceptance Criteria:**
 - Developer captures site with enhanced property details

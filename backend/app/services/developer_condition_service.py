@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
-from typing import List, Optional
+from datetime import date, datetime
+from typing import Any, List, Optional
 from uuid import UUID
 
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.developer_condition import DeveloperConditionAssessmentRecord
 from app.models.property import Property, PropertyType
 
 
@@ -22,12 +24,36 @@ class ConditionSystem:
     notes: str
     recommended_actions: List[str]
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "rating": self.rating,
+            "score": self.score,
+            "notes": self.notes,
+            "recommended_actions": list(self.recommended_actions),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "ConditionSystem":
+        return cls(
+            name=str(payload.get("name", "")),
+            rating=str(payload.get("rating", "")),
+            score=int(payload.get("score", 0)),
+            notes=str(payload.get("notes", "")),
+            recommended_actions=[
+                str(item)
+                for item in payload.get("recommended_actions", [])
+                if isinstance(item, (str, int, float))
+            ],
+        )
+
 
 @dataclass(slots=True)
 class ConditionAssessment:
     """Aggregated condition assessment for a property."""
 
     property_id: UUID
+    scenario: Optional[str]
     overall_score: int
     overall_rating: str
     risk_level: str
@@ -35,6 +61,7 @@ class ConditionAssessment:
     scenario_context: Optional[str]
     systems: List[ConditionSystem]
     recommended_actions: List[str]
+    recorded_at: Optional[datetime] = None
 
 
 class DeveloperConditionService:
@@ -47,6 +74,15 @@ class DeveloperConditionService:
         scenario: Optional[str] = None,
     ) -> ConditionAssessment:
         """Generate a heuristic condition assessment for a property."""
+
+        scenario_key = _normalise_scenario(scenario)
+        stored = await DeveloperConditionService._get_latest_assessment(
+            session=session,
+            property_id=property_id,
+            scenario=scenario_key,
+        )
+        if stored is not None:
+            return DeveloperConditionService._record_to_assessment(stored)
 
         property_record = await session.get(Property, property_id)
         if property_record is None:
@@ -61,7 +97,9 @@ class DeveloperConditionService:
         risk_level = _determine_risk_level(overall_rating)
 
         scenario_context = (
-            _describe_scenario_context(property_record, scenario) if scenario else None
+            _describe_scenario_context(property_record, scenario_key)
+            if scenario_key
+            else None
         )
 
         systems = [
@@ -70,7 +108,7 @@ class DeveloperConditionService:
             _build_compliance_system(property_record, age_band),
         ]
         recommended_actions = _build_action_plan(
-            property_record, overall_rating, scenario
+            property_record, overall_rating, scenario_key
         )
 
         summary = _build_summary(
@@ -79,6 +117,7 @@ class DeveloperConditionService:
 
         return ConditionAssessment(
             property_id=property_id,
+            scenario=scenario_key,
             overall_score=overall_score,
             overall_rating=overall_rating,
             risk_level=risk_level,
@@ -86,6 +125,102 @@ class DeveloperConditionService:
             scenario_context=scenario_context,
             systems=systems,
             recommended_actions=recommended_actions,
+            recorded_at=None,
+        )
+
+    @staticmethod
+    async def record_assessment(
+        session: AsyncSession,
+        *,
+        property_id: UUID,
+        scenario: Optional[str],
+        overall_rating: str,
+        overall_score: int,
+        risk_level: str,
+        summary: str,
+        scenario_context: Optional[str],
+        systems: List[ConditionSystem],
+        recommended_actions: List[str],
+        recorded_by: Optional[UUID] = None,
+    ) -> ConditionAssessment:
+        """Store a developer-provided condition assessment and return it."""
+
+        scenario_key = _normalise_scenario(scenario)
+        record = DeveloperConditionAssessmentRecord(
+            property_id=property_id,
+            scenario=scenario_key,
+            overall_rating=overall_rating,
+            overall_score=overall_score,
+            risk_level=risk_level,
+            summary=summary,
+            scenario_context=scenario_context,
+            systems=[system.to_dict() for system in systems],
+            recommended_actions=list(recommended_actions),
+            recorded_by=recorded_by,
+        )
+        session.add(record)
+        await session.flush()
+        await session.refresh(record)
+        return DeveloperConditionService._record_to_assessment(record)
+
+    @staticmethod
+    async def _get_latest_assessment(
+        session: AsyncSession,
+        property_id: UUID,
+        scenario: Optional[str],
+    ) -> Optional[DeveloperConditionAssessmentRecord]:
+        filters = [DeveloperConditionAssessmentRecord.property_id == property_id]
+        scenario_key = _normalise_scenario(scenario)
+        query = (
+            select(DeveloperConditionAssessmentRecord)
+            .where(*filters)
+            .order_by(desc(DeveloperConditionAssessmentRecord.recorded_at))
+        )
+
+        if scenario_key is not None:
+            query = query.where(
+                DeveloperConditionAssessmentRecord.scenario == scenario_key
+            )
+        result = await session.execute(query)
+        record = result.scalars().first()
+
+        if record is None and scenario_key is not None:
+            fallback_query = (
+                select(DeveloperConditionAssessmentRecord)
+                .where(
+                    DeveloperConditionAssessmentRecord.property_id == property_id,
+                    DeveloperConditionAssessmentRecord.scenario.is_(None),
+                )
+                .order_by(desc(DeveloperConditionAssessmentRecord.recorded_at))
+            )
+            fallback_result = await session.execute(fallback_query)
+            record = fallback_result.scalars().first()
+
+        return record
+
+    @staticmethod
+    def _record_to_assessment(
+        record: DeveloperConditionAssessmentRecord,
+    ) -> ConditionAssessment:
+        systems_payload = record.systems if isinstance(record.systems, list) else []
+        systems = [
+            ConditionSystem.from_dict(item)
+            for item in systems_payload
+            if isinstance(item, dict)
+        ]
+        actions = [str(item) for item in record.recommended_actions or []]
+
+        return ConditionAssessment(
+            property_id=record.property_id,
+            scenario=record.scenario,
+            overall_score=record.overall_score,
+            overall_rating=record.overall_rating,
+            risk_level=record.risk_level,
+            summary=record.summary,
+            scenario_context=record.scenario_context,
+            systems=systems,
+            recommended_actions=actions,
+            recorded_at=record.recorded_at,
         )
 
 
@@ -309,6 +444,17 @@ def _build_summary(
     if scenario_context:
         summary = f"{summary} {scenario_context}"
     return summary
+
+
+def _normalise_scenario(value: Optional[str]) -> Optional[str]:
+    """Normalise scenario keys used for storage and comparisons."""
+
+    if value is None:
+        return None
+    slug = value.strip().lower()
+    if not slug or slug == "all":
+        return None
+    return slug
 
 
 __all__ = [

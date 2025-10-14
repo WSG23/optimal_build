@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -15,6 +15,7 @@ from app.models.developer_checklists import ChecklistStatus
 from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.developer_condition_service import (
     ConditionAssessment,
+    ConditionSystem,
     DeveloperConditionService,
 )
 
@@ -88,6 +89,7 @@ class ConditionAssessmentResponse(BaseModel):
     """Developer-friendly property condition assessment."""
 
     property_id: str
+    scenario: Optional[str] = None
     overall_score: int
     overall_rating: str
     risk_level: str
@@ -95,6 +97,38 @@ class ConditionAssessmentResponse(BaseModel):
     scenario_context: Optional[str] = None
     systems: List[ConditionSystemResponse]
     recommended_actions: List[str]
+    recorded_at: Optional[str] = None
+
+
+class ConditionSystemRequest(BaseModel):
+    """Payload for persisting inspection system data."""
+
+    model_config = {"populate_by_name": True}
+
+    name: str
+    rating: str
+    score: int
+    notes: str
+    recommended_actions: List[str] = Field(
+        default_factory=list, alias="recommendedActions"
+    )
+
+
+class ConditionAssessmentUpsertRequest(BaseModel):
+    """Payload for saving developer inspection assessments."""
+
+    model_config = {"populate_by_name": True}
+
+    scenario: Optional[str] = None
+    overall_rating: str = Field(alias="overallRating")
+    overall_score: int = Field(alias="overallScore")
+    risk_level: str = Field(alias="riskLevel")
+    summary: str
+    scenario_context: Optional[str] = Field(default=None, alias="scenarioContext")
+    systems: List[ConditionSystemRequest]
+    recommended_actions: List[str] = Field(
+        default_factory=list, alias="recommendedActions"
+    )
 
 
 @router.get(
@@ -207,37 +241,98 @@ async def get_condition_assessment(
     contextualise the recommendation set.
     """
 
+    scenario_key = _normalise_scenario_param(scenario)
     try:
         assessment: ConditionAssessment = (
             await DeveloperConditionService.generate_assessment(
                 session=session,
                 property_id=property_id,
-                scenario=scenario,
+                scenario=scenario_key,
             )
         )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    response_payload = ConditionAssessmentResponse(
+    return _serialize_condition_assessment(assessment)
+
+
+@router.put(
+    "/properties/{property_id}/condition-assessment",
+    response_model=ConditionAssessmentResponse,
+)
+async def upsert_condition_assessment(
+    property_id: UUID,
+    request: ConditionAssessmentUpsertRequest,
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+):
+    """Persist a developer inspection assessment for a property."""
+
+    scenario_key = _normalise_scenario_param(request.scenario)
+    recorded_by = UUID(token.user_id) if token and token.user_id else None
+    systems = [
+        ConditionSystem(
+            name=item.name,
+            rating=item.rating,
+            score=item.score,
+            notes=item.notes,
+            recommended_actions=item.recommended_actions,
+        )
+        for item in request.systems
+    ]
+
+    assessment = await DeveloperConditionService.record_assessment(
+        session=session,
+        property_id=property_id,
+        scenario=scenario_key,
+        overall_rating=request.overall_rating,
+        overall_score=request.overall_score,
+        risk_level=request.risk_level,
+        summary=request.summary,
+        scenario_context=request.scenario_context,
+        systems=systems,
+        recommended_actions=request.recommended_actions,
+        recorded_by=recorded_by,
+    )
+    await session.commit()
+    return _serialize_condition_assessment(assessment)
+
+
+def _serialize_condition_system(system: ConditionSystem) -> ConditionSystemResponse:
+    return ConditionSystemResponse(
+        name=system.name,
+        rating=system.rating,
+        score=system.score,
+        notes=system.notes,
+        recommended_actions=system.recommended_actions,
+    )
+
+
+def _serialize_condition_assessment(
+    assessment: ConditionAssessment,
+) -> ConditionAssessmentResponse:
+    recorded_at = assessment.recorded_at.isoformat() if assessment.recorded_at else None
+    return ConditionAssessmentResponse(
         property_id=str(assessment.property_id),
+        scenario=assessment.scenario,
         overall_score=assessment.overall_score,
         overall_rating=assessment.overall_rating,
         risk_level=assessment.risk_level,
         summary=assessment.summary,
         scenario_context=assessment.scenario_context,
-        systems=[
-            ConditionSystemResponse(
-                name=system.name,
-                rating=system.rating,
-                score=system.score,
-                notes=system.notes,
-                recommended_actions=system.recommended_actions,
-            )
-            for system in assessment.systems
-        ],
+        systems=[_serialize_condition_system(system) for system in assessment.systems],
         recommended_actions=assessment.recommended_actions,
+        recorded_at=recorded_at,
     )
-    return response_payload
+
+
+def _normalise_scenario_param(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    slug = value.strip().lower()
+    if not slug or slug == "all":
+        return None
+    return slug
 
 
 __all__ = ["router"]

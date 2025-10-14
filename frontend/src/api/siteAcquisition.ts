@@ -39,8 +39,21 @@ export interface ConditionSystem {
 
 export interface ConditionAssessment {
   propertyId: string
+  scenario?: DevelopmentScenario | null
   overallScore: number
   overallRating: string
+  riskLevel: string
+  summary: string
+  scenarioContext?: string | null
+  systems: ConditionSystem[]
+  recommendedActions: string[]
+  recordedAt?: string | null
+}
+
+export interface ConditionAssessmentUpsertRequest {
+  scenario?: DevelopmentScenario | 'all'
+  overallRating: string
+  overallScore: number
   riskLevel: string
   summary: string
   scenarioContext?: string | null
@@ -128,6 +141,10 @@ export async function fetchConditionAssessment(
   const payload = await response.json()
   return {
     propertyId: payload.property_id ?? propertyId,
+    scenario:
+      typeof payload.scenario === 'string'
+        ? (payload.scenario as DevelopmentScenario)
+        : null,
     overallScore: Number(payload.overall_score ?? 0),
     overallRating: payload.overall_rating ?? 'C',
     riskLevel: payload.risk_level ?? 'moderate',
@@ -147,6 +164,59 @@ export async function fetchConditionAssessment(
     recommendedActions: Array.isArray(payload.recommended_actions)
       ? (payload.recommended_actions as string[])
       : [],
+    recordedAt:
+      typeof payload.recorded_at === 'string' ? payload.recorded_at : null,
+  }
+}
+
+export async function saveConditionAssessment(
+  propertyId: string,
+  payload: ConditionAssessmentUpsertRequest,
+): Promise<ConditionAssessment | null> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/properties/${propertyId}/condition-assessment`),
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    },
+  )
+
+  if (!response.ok) {
+    console.error('Failed to save condition assessment:', response.statusText)
+    return null
+  }
+
+  const data = await response.json()
+  return {
+    propertyId: data.property_id ?? propertyId,
+    scenario:
+      typeof data.scenario === 'string'
+        ? (data.scenario as DevelopmentScenario)
+        : null,
+    overallScore: Number(data.overall_score ?? 0),
+    overallRating: data.overall_rating ?? 'C',
+    riskLevel: data.risk_level ?? 'moderate',
+    summary: data.summary ?? '',
+    scenarioContext: data.scenario_context ?? null,
+    systems: Array.isArray(data.systems)
+      ? data.systems.map((system: Record<string, unknown>) => ({
+          name: String(system.name ?? ''),
+          rating: String(system.rating ?? ''),
+          score: Number(system.score ?? 0),
+          notes: String(system.notes ?? ''),
+          recommendedActions: Array.isArray(system.recommended_actions)
+            ? (system.recommended_actions as string[])
+            : [],
+        }))
+      : [],
+    recommendedActions: Array.isArray(data.recommended_actions)
+      ? (data.recommended_actions as string[])
+      : [],
+    recordedAt:
+      typeof data.recorded_at === 'string' ? data.recorded_at : null,
   }
 }
 
@@ -159,4 +229,7 @@ export type {
   UpdateChecklistRequest,
   ConditionAssessment,
   ConditionSystem,
+  ConditionAssessmentUpsertRequest,
 }
+
+export { saveConditionAssessment }
