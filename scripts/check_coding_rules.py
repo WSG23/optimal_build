@@ -387,6 +387,56 @@ def check_code_quality(repo_root: Path) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
+def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
+    """Ensure AI planning docs reference the mandatory testing guides (Rule 8)."""
+
+    errors: list[str] = []
+
+    guidance_file = repo_root / "docs" / "NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"
+    plan_file = repo_root / "docs" / "feature_delivery_plan_v2.md"
+
+    required_refs = [
+        "TESTING_KNOWN_ISSUES.md",
+        "UI_STATUS.md",
+        "TESTING_DOCUMENTATION_SUMMARY.md",
+        "README.md",
+    ]
+
+    def _read(path: Path) -> str:
+        try:
+            return path.read_text(encoding="utf-8")
+        except OSError as exc:  # pragma: no cover - surface unexpected IO issues
+            errors.append(
+                f"RULE VIOLATION: Unable to read {path} while enforcing Rule 8.\n"
+                f"  -> {exc}"
+            )
+            return ""
+
+    guidance_content = _read(guidance_file)
+    plan_content = _read(plan_file)
+
+    if not guidance_content or not plan_content:
+        return len(errors) == 0, errors
+
+    for ref in required_refs:
+        if ref not in guidance_content:
+            errors.append(
+                "RULE VIOLATION: docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md "
+                f"must reference '{ref}'.\n"
+                "  -> Rule 8: AI plans must cite the canonical testing guides.\n"
+                "  -> See CODING_RULES.md section 8."
+            )
+        if ref not in plan_content:
+            errors.append(
+                "RULE VIOLATION: docs/feature_delivery_plan_v2.md must reference "
+                f"'{ref}' within relevant phase guidance.\n"
+                "  -> Rule 8: AI plans must cite the canonical testing guides.\n"
+                "  -> See CODING_RULES.md section 8."
+            )
+
+    return len(errors) == 0, errors
+
+
 def check_contributing_guidelines(repo_root: Path) -> tuple[bool, list[str]]:
     """Validate key expectations documented in CONTRIBUTING.md."""
 
@@ -486,6 +536,10 @@ def main() -> int:
         (
             "Rule 7: Code Quality",
             lambda: check_code_quality(repo_root),
+        ),
+        (
+            "Rule 8: AI Planning References",
+            lambda: check_ai_guidance_references(repo_root),
         ),
     ]
 

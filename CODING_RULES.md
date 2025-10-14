@@ -339,6 +339,26 @@ def process_items(items: List[str] = []) -> List[str]:  # Dangerous!
 
 ---
 
+## 8. AI Agent Planning References
+
+**Rule:** Plans, “next steps,” and wrap-up instructions produced by AI agents must cite the canonical testing guides so humans can run the right checks.
+
+**Why:** Phase gates depend on manual walkthroughs and targeted smoke suites. Referencing the official docs keeps every agent in sync with the approved testing scope.
+
+**How to follow:**
+- Before proposing work, open:
+  - `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`
+  - Your phase section in `docs/feature_delivery_plan_v2.md`
+  - `TESTING_KNOWN_ISSUES.md`, `UI_STATUS.md`, `TESTING_DOCUMENTATION_SUMMARY.md`, and the `README` (`make dev` notes for log monitoring)
+- Mirror those references (or the exact commands they prescribe) in your response.
+- If expectations change, update the docs first so the automation stays accurate.
+
+**Automatic Enforcement:**
+- `scripts/check_coding_rules.py` verifies the guidance docs contain the mandatory references. Do not remove them without adding a replacement rule.
+- During reviews, reject any “next steps” that omit the required citations.
+
+---
+
 ## Questions?
 
 If a rule is unclear or seems wrong for a specific case:

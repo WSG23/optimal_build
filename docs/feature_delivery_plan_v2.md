@@ -380,6 +380,12 @@
 - Gets instant multi-scenario feasibility comparison
 - Due diligence checklist auto-populates by scenario
 
+**Testing references:**
+- [`TESTING_KNOWN_ISSUES.md`](../TESTING_KNOWN_ISSUES.md) — "Phase 2A" section lists mandatory manual walkthroughs (capture, checklist, assessment, PDF export)
+- [`UI_STATUS.md`](../UI_STATUS.md) — details the developer workspace components that must render after changes
+- [`TESTING_DOCUMENTATION_SUMMARY.md`](../TESTING_DOCUMENTATION_SUMMARY.md) — outlines the smoke/coverage expectations for developer exports
+- [`README.md`](../README.md) — see the `make dev` guidance for monitoring `.devstack/backend.log` during verification
+
 **Estimated Effort:** 2-3 weeks (mostly frontend, reuse Agent backend)
 
 ---

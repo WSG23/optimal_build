@@ -117,6 +117,14 @@ This prevents you from:
 - Ensure prerequisite phases are ✅ COMPLETE
 - If blocked, choose a different phase
 
+**4. Review mandatory testing guides**
+- Locate the phase-specific testing notes in:
+  - [`TESTING_KNOWN_ISSUES.md`](../TESTING_KNOWN_ISSUES.md) – search for the phase name (e.g., "Phase 2A") to see manual flows that must be re-run
+  - [`UI_STATUS.md`](../UI_STATUS.md) – confirm which UI surfaces require verification
+  - [`TESTING_DOCUMENTATION_SUMMARY.md`](../TESTING_DOCUMENTATION_SUMMARY.md) – find the "minimum coverage" smoke or regression suites
+  - [`README.md`](../README.md) – the `make dev` section explains how to monitor `.devstack/backend.log` while testing
+- Keep those checklists open so your "Next steps" always match the documented expectations
+
 ### While Building:
 
 **4. Follow CODING_RULES.md**
