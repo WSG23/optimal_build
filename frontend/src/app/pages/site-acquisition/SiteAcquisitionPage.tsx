@@ -460,6 +460,24 @@ export function SiteAcquisitionPage() {
       ),
     [scenarioAssessments],
   )
+  const scenarioFilterOptions = useMemo(() => {
+    const collected = new Set<DevelopmentScenario>()
+    availableChecklistScenarios.forEach((scenario) => collected.add(scenario))
+    quickAnalysisScenarios.forEach((scenario) =>
+      collected.add(scenario.scenario as DevelopmentScenario),
+    )
+    scenarioOverrideEntries.forEach((assessment) =>
+      collected.add(assessment.scenario),
+    )
+    return Array.from(collected)
+  }, [availableChecklistScenarios, quickAnalysisScenarios, scenarioOverrideEntries])
+  const scenarioFocusOptions = useMemo(
+    () =>
+      ['all', ...scenarioFilterOptions] as Array<
+        'all' | DevelopmentScenario
+      >,
+    [scenarioFilterOptions],
+  )
 
   useEffect(() => {
     if (scenarioOverrideEntries.length === 0) {
@@ -1238,6 +1256,100 @@ export function SiteAcquisitionPage() {
           )}
         </form>
       </section>
+
+      {capturedProperty && scenarioFocusOptions.length > 0 && (
+        <section
+          style={{
+            background: '#f5f5f7',
+            border: '1px solid #e5e5e7',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            marginBottom: '2rem',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              marginBottom: '1rem',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <span
+                style={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#6e6e73',
+                }}
+              >
+                Scenario focus
+              </span>
+              <span style={{ fontSize: '0.95rem', color: '#3a3a3c' }}>
+                Switch context to see checklist, feasibility, and inspections for the
+                selected development path.
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: '0.85rem',
+                color: '#3a3a3c',
+              }}
+            >
+              Active: {activeScenario === 'all'
+                ? 'All scenarios'
+                : formatScenarioLabel(activeScenario)}
+            </span>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+            }}
+          >
+            {scenarioFocusOptions.map((scenarioKey) => {
+              const option =
+                scenarioKey === 'all' ? null : scenarioLookup.get(scenarioKey)
+              const label =
+                scenarioKey === 'all'
+                  ? 'All scenarios'
+                  : option?.label ?? formatScenarioLabel(scenarioKey)
+              const icon = scenarioKey === 'all' ? '🌐' : option?.icon ?? '🏗️'
+              const isActive = activeScenario === scenarioKey
+
+              return (
+                <button
+                  key={scenarioKey}
+                  type="button"
+                  onClick={() => setActiveScenario(scenarioKey)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    borderRadius: '9999px',
+                    border: `1px solid ${isActive ? '#0071e3' : '#d2d2d7'}`,
+                    background: isActive ? '#dbeafe' : 'white',
+                    color: isActive ? '#0c4a6e' : '#1d1d1f',
+                    padding: '0.55rem 1.1rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+                  <span>{label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Due Diligence Checklist */}
       <section
