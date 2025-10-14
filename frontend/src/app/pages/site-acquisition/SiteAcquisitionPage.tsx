@@ -1113,6 +1113,7 @@ export function SiteAcquisitionPage() {
                   formatCategoryName(scenario.scenario)
                 const isActive =
                   activeScenario === 'all' || scenario.scenario === activeScenario
+                const scenarioKey = scenario.scenario
                 return (
                   <div
                     key={scenario.scenario}
@@ -1142,17 +1143,47 @@ export function SiteAcquisitionPage() {
                       >
                         {label}
                       </h3>
-                      <span
+                      <div
                         style={{
-                          fontSize: '0.8125rem',
-                          fontWeight: 600,
-                          color: '#6e6e73',
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
                         }}
                       >
-                        {scenario.headline}
-                      </span>
+                        <span
+                          style={{
+                            fontSize: '0.8125rem',
+                            fontWeight: 600,
+                            color: '#6e6e73',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {scenario.headline}
+                        </span>
+                        {activeScenario !== scenarioKey && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveScenario(
+                                scenarioKey as DevelopmentScenario | 'all',
+                              )
+                            }
+                            style={{
+                              border: '1px solid #1d1d1f',
+                              background: 'white',
+                              color: '#1d1d1f',
+                              borderRadius: '9999px',
+                              padding: '0.25rem 0.75rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Focus
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <dl
                       style={{
