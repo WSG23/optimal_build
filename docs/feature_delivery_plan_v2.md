@@ -370,7 +370,7 @@
 - ⚠️ Developer-specific UI (layout works but needs polish beyond developer view)
 - ✅ Scenario selector frontend (developer scenarios available in UI)
 - ✅ Due diligence checklist system (seeded data + developer checklist UI)
-- ⚠️ Property condition assessment tools (developer placeholder shipped; engine pending)
+- ✅ Property condition assessment insights (heuristic engine + UI wiring; advanced tooling pending)
 
 **Acceptance Criteria:**
 - Developer captures site with enhanced property details

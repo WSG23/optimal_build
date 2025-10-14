@@ -191,6 +191,8 @@ function mapAddress(payload: Record<string, unknown>): AddressSummary {
   }
 }
 
+export { buildUrl }
+
 function mapUraZoning(
   payload: Record<string, unknown> | null,
 ): UraZoningSummary {

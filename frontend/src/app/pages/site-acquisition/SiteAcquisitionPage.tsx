@@ -3,9 +3,11 @@ import {
   capturePropertyForDevelopment,
   fetchChecklistSummary,
   fetchPropertyChecklist,
+  fetchConditionAssessment,
   updateChecklistItem,
   type ChecklistItem,
   type ChecklistSummary,
+  type ConditionAssessment,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
 } from '../../../api/siteAcquisition'
@@ -149,6 +151,9 @@ export function SiteAcquisitionPage() {
     DevelopmentScenario[]
   >([])
   const [activeScenario, setActiveScenario] = useState<DevelopmentScenario | 'all'>('all')
+  const [conditionAssessment, setConditionAssessment] =
+    useState<ConditionAssessment | null>(null)
+  const [isLoadingCondition, setIsLoadingCondition] = useState(false)
 
   const scenarioLookup = useMemo(
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
@@ -164,6 +169,7 @@ export function SiteAcquisitionPage() {
         setAvailableChecklistScenarios([])
         setActiveScenario('all')
         setSelectedCategory(null)
+        setConditionAssessment(null)
         return
       }
 
@@ -242,6 +248,40 @@ export function SiteAcquisitionPage() {
   useEffect(() => {
     setSelectedCategory(null)
   }, [activeScenario])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadConditionAssessment() {
+      if (!capturedProperty) {
+        setConditionAssessment(null)
+        return
+      }
+      setIsLoadingCondition(true)
+      try {
+        const assessment = await fetchConditionAssessment(
+          capturedProperty.propertyId,
+          activeScenario,
+        )
+        if (!cancelled) {
+          setConditionAssessment(assessment)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to fetch condition assessment:', error)
+          setConditionAssessment(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingCondition(false)
+        }
+      }
+    }
+
+    loadConditionAssessment()
+    return () => {
+      cancelled = true
+    }
+  }, [capturedProperty, activeScenario])
 
   function toggleScenario(scenario: DevelopmentScenario) {
     setSelectedScenarios((prev) =>
@@ -1054,23 +1094,231 @@ export function SiteAcquisitionPage() {
         >
           Property Condition Assessment
         </h2>
-        <div
-          style={{
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '12px',
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
-          <p style={{ margin: 0, fontSize: '1.0625rem' }}>
-            Developer condition assessment toolkit coming soon
-          </p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
-            Scenario-specific building scores, intrusive survey guidance, and capex planning support will live here.
-          </p>
-        </div>
+        {isLoadingCondition ? (
+          <div
+            style={{
+              padding: '2.5rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#f5f5f7',
+              borderRadius: '12px',
+            }}
+          >
+            <p style={{ margin: 0 }}>Analysing building condition...</p>
+          </div>
+        ) : !capturedProperty ? (
+          <div
+            style={{
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#f5f5f7',
+              borderRadius: '12px',
+            }}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
+            <p style={{ margin: 0, fontSize: '1.0625rem' }}>
+              Capture a property to generate the developer condition assessment
+            </p>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
+              Structural, M&amp;E, and compliance insights will appear here with targeted actions.
+            </p>
+          </div>
+        ) : !conditionAssessment ? (
+          <div
+            style={{
+              padding: '2.5rem 2rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#fff7ed',
+              borderRadius: '12px',
+              border: '1px solid #fed7aa',
+            }}
+          >
+            <p style={{ margin: 0 }}>
+              Unable to load condition assessment. Please retry after refreshing the capture.
+            </p>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.75rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '1.5rem',
+                alignItems: 'flex-start',
+              }}
+            >
+              <div
+                style={{
+                  flex: '1 1 260px',
+                  background: '#f5f5f7',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: '#6e6e73',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Overall Rating
+                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <span style={{ fontSize: '2.5rem', fontWeight: 700 }}>
+                    {conditionAssessment.overallRating}
+                  </span>
+                  <span style={{ fontSize: '1rem', color: '#6e6e73' }}>
+                    {conditionAssessment.overallScore}/100 · {conditionAssessment.riskLevel} risk
+                  </span>
+                </div>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '0.9375rem',
+                    color: '#3a3a3c',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {conditionAssessment.summary}
+                </p>
+                {conditionAssessment.scenarioContext && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.875rem',
+                      color: '#0071e3',
+                    }}
+                  >
+                    {conditionAssessment.scenarioContext}
+                  </p>
+                )}
+              </div>
+              <div
+                style={{
+                  flex: '1 1 280px',
+                  background: '#f5f5f7',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                }}
+              >
+                <h3
+                  style={{
+                    margin: '0 0 0.75rem',
+                    fontSize: '1.0625rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Immediate Actions
+                </h3>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: '1.2rem',
+                    color: '#3a3a3c',
+                    fontSize: '0.9375rem',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {conditionAssessment.recommendedActions.map((action) => (
+                    <li key={action}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gap: '1rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              }}
+            >
+              {conditionAssessment.systems.map((system) => (
+                <div
+                  key={system.name}
+                  style={{
+                    border: '1px solid #e5e5e7',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                    }}
+                  >
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: '1.0625rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {system.name}
+                    </h3>
+                    <span
+                      style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: '#6e6e73',
+                      }}
+                    >
+                      Rating {system.rating} · {system.score}/100
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.9rem',
+                      color: '#3a3a3c',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {system.notes}
+                  </p>
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: '1.1rem',
+                      fontSize: '0.875rem',
+                      color: '#3a3a3c',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {system.recommendedActions.map((action) => (
+                      <li key={action}>{action}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   )
