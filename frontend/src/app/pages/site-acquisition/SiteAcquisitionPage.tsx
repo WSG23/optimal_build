@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from '../../../router'
 import {
   capturePropertyForDevelopment,
   fetchChecklistSummary,
@@ -82,6 +83,9 @@ type ConditionAssessmentDraft = {
   systems: AssessmentDraftSystem[]
   recommendedActionsText: string
 }
+
+type QuickAnalysisEntry =
+  SiteAcquisitionResult['quickAnalysis']['scenarios'][number]
 
 function buildAssessmentDraft(
   assessment: ConditionAssessment | null,
@@ -478,6 +482,19 @@ export function SiteAcquisitionPage() {
       >,
     [scenarioFilterOptions],
   )
+  const formatScenarioLabel = useCallback(
+    (scenario: ConditionAssessment['scenario']) => {
+      if (!scenario || (typeof scenario === 'string' && scenario === 'all')) {
+        return 'All scenarios'
+      }
+      const entry = scenarioLookup.get(scenario as DevelopmentScenario)
+      if (entry) {
+        return entry.label
+      }
+      return formatCategoryName(String(scenario))
+    },
+    [scenarioLookup],
+  )
   const formatNumberMetric = useCallback(
     (value: number | null | undefined, options?: Intl.NumberFormatOptions) => {
       if (value === null || value === undefined || Number.isNaN(value)) {
@@ -513,6 +530,106 @@ export function SiteAcquisitionPage() {
     }
     return `${formatNumberMetric(distanceM, { maximumFractionDigits: 0 })} m`
   }, [formatNumberMetric])
+  const buildFeasibilitySignals = useCallback(
+    (entry: QuickAnalysisEntry) => {
+      const opportunities: string[] = []
+      const risks: string[] = []
+      const metrics = entry.metrics ?? {}
+
+      const metric = (key: string) => safeNumber(metrics[key])
+
+      switch (entry.scenario) {
+        case 'raw_land': {
+          const potentialGfa = metric('potential_gfa_sqm')
+          const siteArea = metric('site_area_sqm')
+          const plotRatio = metric('plot_ratio')
+          if (potentialGfa && siteArea) {
+            opportunities.push(
+              `Potential GFA of ${formatNumberMetric(potentialGfa, {
+                maximumFractionDigits: 0,
+              })} sqm`,
+            )
+          }
+          if (!plotRatio) {
+            risks.push('Plot ratio unavailable — confirm URA control parameters.')
+          }
+          if (!siteArea) {
+            risks.push('Site area missing — gather survey or title data.')
+          }
+          break
+        }
+        case 'existing_building': {
+          const uplift = metric('gfa_uplift_sqm')
+          const averagePsf = metric('average_psf_price')
+          if (uplift && uplift > 0) {
+            opportunities.push(
+              `Unlock ≈ ${formatNumberMetric(uplift, {
+                maximumFractionDigits: 0,
+              })} sqm of additional GFA.`,
+            )
+          } else {
+            risks.push('Limited GFA uplift — focus on retrofit efficiency.')
+          }
+          if (!averagePsf) {
+            risks.push('No recent transaction comps — check market data sources.')
+          }
+          break
+        }
+        case 'heritage_property': {
+          const heritageRisk = (metrics['heritage_risk'] ?? '').toString().toLowerCase()
+          if (heritageRisk === 'high') {
+            risks.push('High heritage risk — expect conservation dialogue.')
+          } else if (heritageRisk === 'medium') {
+            risks.push('Moderate heritage constraints — document mitigation plan.')
+          } else {
+            opportunities.push('Heritage considerations manageable based on current data.')
+          }
+          break
+        }
+        case 'underused_asset': {
+          const mrtCount = metric('nearby_mrt_count')
+          const averageRent = metric('average_monthly_rent')
+          const buildingHeight = metric('building_height_m')
+          if (mrtCount && mrtCount > 0) {
+            opportunities.push(`${mrtCount} MRT stations support reuse potential.`)
+          } else {
+            risks.push('Limited transit access — budget for last-mile improvements.')
+          }
+          if (buildingHeight && buildingHeight < 20) {
+            opportunities.push('Low-rise profile — vertical expansion is feasible.')
+          }
+          if (!averageRent) {
+            risks.push('Missing rental comps — collect updated leasing benchmarks.')
+          }
+          break
+        }
+        case 'mixed_use_redevelopment': {
+          const plotRatio = metric('plot_ratio')
+          const useGroups = Array.isArray(metrics['use_groups'])
+            ? (metrics['use_groups'] as string[])
+            : []
+          if (plotRatio && plotRatio > 0) {
+            opportunities.push(`Zoning plot ratio ${plotRatio} supports higher density.`)
+          }
+          if (useGroups.length) {
+            opportunities.push(`Permitted uses include: ${useGroups.join(', ')}.`)
+          }
+          if (!plotRatio) {
+            risks.push('Plot ratio not defined — confirm with URA before design.')
+          }
+          break
+        }
+        default: {
+          if (entry.notes.length) {
+            opportunities.push(...entry.notes)
+          }
+        }
+      }
+
+      return { opportunities, risks }
+    },
+    [formatNumberMetric],
+  )
   const propertyInfoSummary = capturedProperty?.propertyInfo ?? null
   const zoningSummary = capturedProperty?.uraZoning ?? null
   const nearestMrtStation =
@@ -559,6 +676,28 @@ export function SiteAcquisitionPage() {
       (assessment) => assessment.scenario !== baseScenarioAssessment.scenario,
     )
   }, [scenarioOverrideEntries, baseScenarioAssessment])
+  const feasibilitySignals = useMemo(() => {
+    if (!quickAnalysisScenarios.length) {
+      return []
+    }
+    return quickAnalysisScenarios.map((entry) => {
+      const scenario =
+        typeof entry.scenario === 'string'
+          ? (entry.scenario as DevelopmentScenario)
+          : 'raw_land'
+      const label =
+        scenario === 'all'
+          ? 'All scenarios'
+          : scenarioLookup.get(scenario)?.label ?? formatScenarioLabel(scenario)
+      const signals = buildFeasibilitySignals(entry)
+      return {
+        scenario,
+        label,
+        opportunities: signals.opportunities,
+        risks: signals.risks,
+      }
+    })
+  }, [quickAnalysisScenarios, scenarioLookup, buildFeasibilitySignals])
 
   const describeRatingChange = useCallback(
     (current: string, reference: string) => {
@@ -709,19 +848,6 @@ export function SiteAcquisitionPage() {
       riskChanged: latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel,
     }
   }, [latestAssessmentEntry, previousAssessmentEntry])
-  const formatScenarioLabel = useCallback(
-    (scenario: ConditionAssessment['scenario']) => {
-      if (!scenario) {
-        return 'All scenarios'
-      }
-      const entry = scenarioLookup.get(scenario)
-      if (entry) {
-        return entry.label
-      }
-      return formatCategoryName(scenario)
-    },
-    [scenarioLookup],
-  )
   const formatRecordedTimestamp = useCallback((timestamp?: string | null) => {
     if (!timestamp) {
       return 'Draft assessment'
@@ -2189,6 +2315,174 @@ export function SiteAcquisitionPage() {
                 )
               })}
             </div>
+
+            {feasibilitySignals.length > 0 && (
+              <div
+                style={{
+                  border: '1px solid #d2d2d7',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  background: '#f8fafc',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.25rem',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    alignItems: 'center',
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: '1.125rem',
+                      fontWeight: 600,
+                      margin: 0,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    Feasibility Signals
+                  </h3>
+                  {propertyId && (
+                    <Link
+                      to={`/legacy/feasibility?propertyId=${encodeURIComponent(propertyId)}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        padding: '0.45rem 0.9rem',
+                        borderRadius: '9999px',
+                        border: '1px solid #0f172a',
+                        background: '#0f172a',
+                        color: 'white',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Open Feasibility Workspace →
+                    </Link>
+                  )}
+                </div>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '0.9rem',
+                    color: '#334155',
+                  }}
+                >
+                  Highlights derived from quick analysis. Prioritise these before handing
+                  off to the feasibility team.
+                </p>
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: '1rem',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                  }}
+                >
+                  {feasibilitySignals.map((entry) => (
+                    <div
+                      key={entry.scenario}
+                      style={{
+                        background: 'white',
+                        borderRadius: '10px',
+                        border: '1px solid #e2e8f0',
+                        padding: '1.1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.6rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>
+                          {entry.label}
+                        </strong>
+                      </div>
+                      {entry.opportunities.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.35rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#047857',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.08em',
+                            }}
+                          >
+                            Opportunities
+                          </span>
+                          <ul
+                            style={{
+                              margin: 0,
+                              paddingLeft: '1.1rem',
+                              fontSize: '0.85rem',
+                              color: '#065f46',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {entry.opportunities.map((message) => (
+                              <li key={message}>{message}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {entry.risks.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.35rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#b91c1c',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.08em',
+                            }}
+                          >
+                            Risks & Follow-ups
+                          </span>
+                          <ul
+                            style={{
+                              margin: 0,
+                              paddingLeft: '1.1rem',
+                              fontSize: '0.85rem',
+                              color: '#7f1d1d',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {entry.risks.map((message) => (
+                              <li key={message}>{message}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {entry.opportunities.length === 0 && entry.risks.length === 0 && (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.85rem',
+                            color: '#475569',
+                          }}
+                        >
+                          No automated guidance produced. Review the scenario notes for
+                          additional context.
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {activeScenario !== 'all' && comparisonScenarios.length > 0 && (
               <div
@@ -3968,4 +4262,14 @@ export function SiteAcquisitionPage() {
       </section>
     </div>
   )
+}
+function safeNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
 }

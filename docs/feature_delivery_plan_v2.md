@@ -365,7 +365,7 @@
 - ✅ GPS logging backend
 - ✅ Quick analysis scenarios
 - ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint)
-- ⚠️ UI partially integrated with feasibility workspace (needs deeper linkage with feasibility overlays)
+- ✅ Feasibility signals surfaced in developer UI (Oct 14 2025) with deep link to `/feasibility`
 
 **What's Missing:**
 - ✅ Developer-specific UI (scenario focus controls, property overview cards, developer tone completed Oct 14 2025)

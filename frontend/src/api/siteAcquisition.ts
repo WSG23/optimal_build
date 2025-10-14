@@ -327,6 +327,62 @@ export async function fetchScenarioAssessments(
   }))
 }
 
+export interface ConditionReportChecklistSummary {
+  total: number
+  completed: number
+  inProgress: number
+  pending: number
+  notApplicable: number
+  completionPercentage: number
+}
+
+export interface ConditionReport {
+  propertyId: string
+  propertyName?: string | null
+  address?: string | null
+  generatedAt: string
+  scenarioAssessments: ConditionAssessment[]
+  history: ConditionAssessment[]
+  checklistSummary?: ConditionReportChecklistSummary | null
+}
+
+export async function exportConditionReport(
+  propertyId: string,
+  format: 'json' | 'pdf' = 'json',
+): Promise<{ blob: Blob; filename: string }> {
+  const url = buildUrl(
+    `api/v1/developers/properties/${propertyId}/condition-assessment/report?format=${format}`,
+  )
+  const response = await fetch(url)
+  if (!response.ok) {
+    let detail = response.statusText
+    try {
+      const errorPayload = await response.json()
+      if (typeof errorPayload.detail === 'string') {
+        detail = errorPayload.detail
+      }
+    } catch (_err) {
+      // ignore JSON parsing errors and fall back to status text
+    }
+    throw new Error(detail || 'Failed to export condition report.')
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const extension = format === 'pdf' ? 'pdf' : 'json'
+  const filename = `condition-report-${propertyId}-${timestamp}.${extension}`
+
+  if (format === 'pdf') {
+    const blob = await response.blob()
+    return { blob, filename }
+  }
+
+  const data: ConditionReport = await response.json()
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: 'application/json',
+  })
+  return { blob, filename }
+}
+
 export type {
   ChecklistItem,
   ChecklistStatus,
@@ -337,4 +393,6 @@ export type {
   ConditionAssessment,
   ConditionSystem,
   ConditionAssessmentUpsertRequest,
+  ConditionReport,
+  ConditionReportChecklistSummary,
 }
