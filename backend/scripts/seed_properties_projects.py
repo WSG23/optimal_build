@@ -5,14 +5,15 @@ from __future__ import annotations
 import argparse
 import asyncio
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Sequence
 from uuid import UUID, uuid4
 
 import structlog
 from app.core.database import AsyncSessionLocal, engine
-from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.market import YieldBenchmark
+from app.models.projects import ProjectPhase, ProjectType
 from app.models.property import (
     DevelopmentAnalysis,
     MarketTransaction,
@@ -21,8 +22,11 @@ from app.models.property import (
     PropertyType,
     TenureType,
 )
-from app.models.market import YieldBenchmark
-from sqlalchemy import delete, select, cast, String
+from app.services.developer_checklist_service import (
+    DEFAULT_TEMPLATE_DEFINITIONS,
+    DeveloperChecklistService,
+)
+from sqlalchemy import String, cast, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
@@ -36,9 +40,14 @@ class SeedSummary:
 
     projects: int
     properties: int
+    developer_checklists: int = 0
 
     def as_dict(self) -> dict[str, int]:
-        return {"projects": self.projects, "properties": self.properties}
+        return {
+            "projects": self.projects,
+            "properties": self.properties,
+            "developer_checklists": self.developer_checklists,
+        }
 
 
 _PROPERTIES: Sequence[dict[str, object]] = (
@@ -132,8 +141,7 @@ async def _purge_existing(session: AsyncSession) -> None:
             await session.execute(
                 delete(YieldBenchmark).where(
                     YieldBenchmark.district == district,
-                    cast(YieldBenchmark.property_type, String)
-                    == property_type_value,
+                    cast(YieldBenchmark.property_type, String) == property_type_value,
                 )
             )
 
@@ -292,6 +300,48 @@ async def _seed_market_demo_enrichments(session: AsyncSession) -> None:
             )
 
 
+async def _seed_developer_checklists(
+    session: AsyncSession, property_ids: Sequence[UUID]
+) -> int:
+    """Ensure developer checklist templates and property items exist."""
+    if not property_ids:
+        return 0
+
+    scenario_keys = sorted(
+        {
+            definition["development_scenario"]
+            for definition in DEFAULT_TEMPLATE_DEFINITIONS
+        }
+    )
+    if not scenario_keys:
+        logger.warning(
+            "seed_properties_projects.developer_checklists.undefined_scenarios"
+        )
+        return 0
+
+    total_created = 0
+    for property_id in property_ids:
+        property_record = await session.get(Property, property_id)
+        if property_record is None:
+            continue
+
+        created_items = await DeveloperChecklistService.auto_populate_checklist(
+            session=session,
+            property_id=property_id,
+            development_scenarios=list(scenario_keys),
+        )
+        if created_items:
+            logger.info(
+                "seed_properties_projects.developer_checklists.created",
+                property_id=str(property_id),
+                items=len(created_items),
+                scenarios=len(scenario_keys),
+            )
+        total_created += len(created_items)
+
+    return total_created
+
+
 async def seed_properties_and_projects(
     session: AsyncSession,
     *,
@@ -329,6 +379,7 @@ async def seed_properties_and_projects(
 
     # Seed properties
     property_count = 0
+    property_ids = [payload["id"] for payload in _PROPERTIES]
     for payload in _PROPERTIES:
         existing = await session.get(Property, payload["id"])
         if existing:
@@ -343,7 +394,22 @@ async def seed_properties_and_projects(
     # Add demo analytics/benchmarks for the primary property
     await _seed_market_demo_enrichments(session)
     await session.commit()
-    return SeedSummary(projects=project_count, properties=property_count)
+
+    checklist_items_created = await _seed_developer_checklists(session, property_ids)
+    await session.commit()
+
+    if checklist_items_created:
+        logger.info(
+            "seed_properties_projects.developer_checklists.summary",
+            properties=len(property_ids),
+            items_created=checklist_items_created,
+        )
+
+    return SeedSummary(
+        projects=project_count,
+        properties=property_count,
+        developer_checklists=checklist_items_created,
+    )
 
 
 async def _run_async(reset_existing: bool) -> SeedSummary:

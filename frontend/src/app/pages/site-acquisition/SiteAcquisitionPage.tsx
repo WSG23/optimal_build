@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   capturePropertyForDevelopment,
   fetchChecklistSummary,
@@ -55,6 +55,83 @@ function formatCategoryName(category: string): string {
     .join(' ')
 }
 
+function computeChecklistSummary(
+  items: ChecklistItem[],
+  propertyId: string,
+): ChecklistSummary {
+  const totals = {
+    total: items.length,
+    completed: 0,
+    inProgress: 0,
+    pending: 0,
+    notApplicable: 0,
+  }
+
+  const byCategoryStatus: Record<
+    string,
+    {
+      total: number
+      completed: number
+      inProgress: number
+      pending: number
+      notApplicable: number
+    }
+  > = {}
+
+  items.forEach((item) => {
+    switch (item.status) {
+      case 'completed':
+        totals.completed += 1
+        break
+      case 'in_progress':
+        totals.inProgress += 1
+        break
+      case 'not_applicable':
+        totals.notApplicable += 1
+        break
+      default:
+        totals.pending += 1
+        break
+    }
+
+    const categoryEntry =
+      byCategoryStatus[item.category] ?? {
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        pending: 0,
+        notApplicable: 0,
+      }
+
+    categoryEntry.total += 1
+    if (item.status === 'completed') {
+      categoryEntry.completed += 1
+    } else if (item.status === 'in_progress') {
+      categoryEntry.inProgress += 1
+    } else if (item.status === 'not_applicable') {
+      categoryEntry.notApplicable += 1
+    } else {
+      categoryEntry.pending += 1
+    }
+
+    byCategoryStatus[item.category] = categoryEntry
+  })
+
+  const completionPercentage =
+    totals.total > 0 ? Math.round((totals.completed / totals.total) * 100) : 0
+
+  return {
+    propertyId,
+    total: totals.total,
+    completed: totals.completed,
+    inProgress: totals.inProgress,
+    pending: totals.pending,
+    notApplicable: totals.notApplicable,
+    completionPercentage,
+    byCategoryStatus,
+  }
+}
+
 export function SiteAcquisitionPage() {
   const [latitude, setLatitude] = useState('1.3000')
   const [longitude, setLongitude] = useState('103.8500')
@@ -68,6 +145,15 @@ export function SiteAcquisitionPage() {
   const [checklistSummary, setChecklistSummary] = useState<ChecklistSummary | null>(null)
   const [isLoadingChecklist, setIsLoadingChecklist] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [availableChecklistScenarios, setAvailableChecklistScenarios] = useState<
+    DevelopmentScenario[]
+  >([])
+  const [activeScenario, setActiveScenario] = useState<DevelopmentScenario | 'all'>('all')
+
+  const scenarioLookup = useMemo(
+    () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
+    [],
+  )
 
   // Load checklist when property is captured
   useEffect(() => {
@@ -75,6 +161,9 @@ export function SiteAcquisitionPage() {
       if (!capturedProperty) {
         setChecklistItems([])
         setChecklistSummary(null)
+        setAvailableChecklistScenarios([])
+        setActiveScenario('all')
+        setSelectedCategory(null)
         return
       }
 
@@ -84,8 +173,37 @@ export function SiteAcquisitionPage() {
           fetchPropertyChecklist(capturedProperty.propertyId),
           fetchChecklistSummary(capturedProperty.propertyId),
         ])
-        setChecklistItems(items)
+        const sortedItems = [...items].sort((a, b) => {
+          const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
+          const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
+          if (orderA !== orderB) {
+            return orderA - orderB
+          }
+          return a.itemTitle.localeCompare(b.itemTitle)
+        })
+        setChecklistItems(sortedItems)
         setChecklistSummary(summary)
+        const scenarioSet = new Set<DevelopmentScenario>()
+        sortedItems.forEach((item) => {
+          if (scenarioLookup.has(item.developmentScenario)) {
+            scenarioSet.add(item.developmentScenario)
+          }
+        })
+        const scenarios = Array.from(scenarioSet)
+        setAvailableChecklistScenarios(scenarios)
+        setActiveScenario((prev) => {
+          if (scenarios.length === 0) {
+            return 'all'
+          }
+          if (prev !== 'all' && scenarios.includes(prev)) {
+            return prev
+          }
+          if (scenarios.length === 1) {
+            return scenarios[0]
+          }
+          return 'all'
+        })
+        setSelectedCategory(null)
       } catch (err) {
         console.error('Failed to load checklist:', err)
       } finally {
@@ -94,7 +212,36 @@ export function SiteAcquisitionPage() {
     }
 
     loadChecklist()
-  }, [capturedProperty])
+  }, [capturedProperty, scenarioLookup])
+
+  const filteredChecklistItems = useMemo(
+    () =>
+      activeScenario === 'all'
+        ? checklistItems
+        : checklistItems.filter(
+            (item) => item.developmentScenario === activeScenario,
+          ),
+    [checklistItems, activeScenario],
+  )
+
+  const displaySummary = useMemo(() => {
+    if (!capturedProperty) {
+      return null
+    }
+    if (activeScenario === 'all' && checklistSummary) {
+      return checklistSummary
+    }
+    return computeChecklistSummary(filteredChecklistItems, capturedProperty.propertyId)
+  }, [activeScenario, capturedProperty, checklistSummary, filteredChecklistItems])
+
+  const activeScenarioDetails = useMemo(
+    () => (activeScenario === 'all' ? null : scenarioLookup.get(activeScenario)),
+    [activeScenario, scenarioLookup],
+  )
+
+  useEffect(() => {
+    setSelectedCategory(null)
+  }, [activeScenario])
 
   function toggleScenario(scenario: DevelopmentScenario) {
     setSelectedScenarios((prev) =>
@@ -139,7 +286,7 @@ export function SiteAcquisitionPage() {
 
   async function handleChecklistUpdate(
     itemId: string,
-    newStatus: 'pending' | 'in_progress' | 'completed' | 'blocked',
+    newStatus: 'pending' | 'in_progress' | 'completed' | 'not_applicable',
   ) {
     const updated = await updateChecklistItem(itemId, { status: newStatus })
     if (updated) {
@@ -499,7 +646,7 @@ export function SiteAcquisitionPage() {
             >
               Due Diligence Checklist
             </h2>
-            {checklistSummary && (
+            {displaySummary && (
               <p
                 style={{
                   margin: 0,
@@ -507,12 +654,90 @@ export function SiteAcquisitionPage() {
                   color: '#6e6e73',
                 }}
               >
-                {checklistSummary.completed} of {checklistSummary.total} items completed (
-                {checklistSummary.completionPercentage.toFixed(0)}%)
+                {activeScenario === 'all'
+                  ? 'Overall progress'
+                  : `${activeScenarioDetails?.label ?? 'Scenario'}`}
+                : {displaySummary.completed} of {displaySummary.total} items completed (
+                {displaySummary.completionPercentage.toFixed(0)}%)
+              </p>
+            )}
+            {activeScenarioDetails?.description && (
+              <p
+                style={{
+                  margin: '0.25rem 0 0',
+                  fontSize: '0.875rem',
+                  color: '#86868b',
+                }}
+              >
+                {activeScenarioDetails.description}
               </p>
             )}
           </div>
         </div>
+
+        {availableChecklistScenarios.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveScenario('all')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 0.85rem',
+                borderRadius: '9999px',
+                border: `1px solid ${
+                  activeScenario === 'all' ? '#1d1d1f' : '#d2d2d7'
+                }`,
+                background: activeScenario === 'all' ? '#1d1d1f' : '#f5f5f7',
+                color: activeScenario === 'all' ? 'white' : '#1d1d1f',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              All scenarios
+            </button>
+            {availableChecklistScenarios.map((scenario) => {
+              const option = scenarioLookup.get(scenario)
+              const isActive = activeScenario === scenario
+              return (
+                <button
+                  key={scenario}
+                  type="button"
+                  onClick={() => setActiveScenario(scenario)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: '9999px',
+                    border: `1px solid ${isActive ? '#1d1d1f' : '#d2d2d7'}`,
+                    background: isActive ? '#1d1d1f' : '#f5f5f7',
+                    color: isActive ? 'white' : '#1d1d1f',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {option?.icon ? (
+                    <span style={{ fontSize: '1rem' }}>{option.icon}</span>
+                  ) : null}
+                  <span>{option?.label ?? formatCategoryName(scenario)}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {isLoadingChecklist ? (
           <div
@@ -554,10 +779,25 @@ export function SiteAcquisitionPage() {
           >
             <p>No checklist items found for this property.</p>
           </div>
+        ) : filteredChecklistItems.length === 0 ? (
+          <div
+            style={{
+              padding: '2rem',
+              textAlign: 'center',
+              color: '#6e6e73',
+              background: '#f5f5f7',
+              borderRadius: '12px',
+            }}
+          >
+            <p>
+              No checklist items for{' '}
+              {activeScenarioDetails?.label ?? 'this scenario'} yet.
+            </p>
+          </div>
         ) : (
           <>
             {/* Progress bar */}
-            {checklistSummary && (
+            {displaySummary && (
               <div
                 style={{
                   marginBottom: '1.5rem',
@@ -569,7 +809,7 @@ export function SiteAcquisitionPage() {
               >
                 <div
                   style={{
-                    width: `${checklistSummary.completionPercentage}%`,
+                    width: `${displaySummary.completionPercentage}%`,
                     height: '100%',
                     background: 'linear-gradient(90deg, #0071e3 0%, #005bb5 100%)',
                     transition: 'width 0.3s ease',
@@ -580,7 +820,7 @@ export function SiteAcquisitionPage() {
 
             {/* Group by category */}
             {Object.entries(
-              checklistItems.reduce((acc, item) => {
+              filteredChecklistItems.reduce((acc, item) => {
                 const category = item.category
                 if (!acc[category]) {
                   acc[category] = []
@@ -645,7 +885,11 @@ export function SiteAcquisitionPage() {
                           onChange={(e) =>
                             handleChecklistUpdate(
                               item.id,
-                              e.target.value as 'pending' | 'in_progress' | 'completed' | 'blocked',
+                              e.target.value as
+                                | 'pending'
+                                | 'in_progress'
+                                | 'completed'
+                                | 'not_applicable',
                             )
                           }
                           style={{
@@ -660,7 +904,7 @@ export function SiteAcquisitionPage() {
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>
                           <option value="completed">Completed</option>
-                          <option value="blocked">Blocked</option>
+                          <option value="not_applicable">Not Applicable</option>
                         </select>
                         <div style={{ flex: 1 }}>
                           <div
@@ -821,10 +1065,10 @@ export function SiteAcquisitionPage() {
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
           <p style={{ margin: 0, fontSize: '1.0625rem' }}>
-            Detailed property condition analysis coming soon
+            Developer condition assessment toolkit coming soon
           </p>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
-            Building scoring, renovation costs, structural and M&E systems evaluation
+            Scenario-specific building scores, intrusive survey guidance, and capex planning support will live here.
           </p>
         </div>
       </section>

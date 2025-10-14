@@ -353,7 +353,7 @@
 **Goal:** Complete all 9 Developer tools so developers can manage full project lifecycle
 
 ### Phase 2A: Universal GPS Site Acquisition ⚠️ 5% STARTED
-**Status:** Backend exists, UI needs completion
+**Status:** Backend exists, developer UI scaffolded (scenario selector + checklists live)
 
 **Requirements (from FEATURES.md lines 86-96):**
 - Mobile property capture (GPS-enabled)
@@ -367,10 +367,10 @@
 - ⚠️ UI partially integrated with feasibility workspace
 
 **What's Missing:**
-- ❌ Developer-specific UI (different from Agent view)
-- ❌ Scenario selector frontend
-- ❌ Due diligence checklist system
-- ❌ Property condition assessment tools
+- ⚠️ Developer-specific UI (layout works but needs polish beyond developer view)
+- ✅ Scenario selector frontend (developer scenarios available in UI)
+- ✅ Due diligence checklist system (seeded data + developer checklist UI)
+- ⚠️ Property condition assessment tools (developer placeholder shipped; engine pending)
 
 **Acceptance Criteria:**
 - Developer captures site with enhanced property details

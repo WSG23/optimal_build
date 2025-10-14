@@ -859,7 +859,11 @@ export type ChecklistCategory =
   | 'utility_capacity'
   | 'access_rights'
 
-export type ChecklistStatus = 'pending' | 'in_progress' | 'completed' | 'blocked'
+export type ChecklistStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'not_applicable'
 
 export type ChecklistPriority = 'critical' | 'high' | 'medium' | 'low'
 
@@ -879,16 +883,28 @@ export interface ChecklistItem {
   requiresProfessional: boolean
   professionalType?: string | null
   typicalDurationDays?: number | null
+  displayOrder?: number | null
   createdAt: string
   updatedAt: string
+}
+
+export interface ChecklistCategoryStatus {
+  total: number
+  completed: number
+  inProgress: number
+  pending: number
+  notApplicable: number
 }
 
 export interface ChecklistSummary {
   propertyId: string
   total: number
   completed: number
+  inProgress: number
+  pending: number
+  notApplicable: number
   completionPercentage: number
-  byCategoryStatus: Record<string, { total: number; completed: number }>
+  byCategoryStatus: Record<string, ChecklistCategoryStatus>
 }
 
 export interface UpdateChecklistRequest {
@@ -925,11 +941,13 @@ export async function fetchPropertyChecklist(
     }
     const data = await response.json()
 
-    if (!Array.isArray(data.items)) {
-      return []
-    }
+    const itemsArray = Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data)
+      ? data
+      : []
 
-    return data.items.map((item: Record<string, unknown>): ChecklistItem => ({
+    return itemsArray.map((item: Record<string, unknown>): ChecklistItem => ({
       id: item.id,
       propertyId: item.property_id,
       developmentScenario: item.development_scenario,
@@ -940,11 +958,12 @@ export async function fetchPropertyChecklist(
       priority: item.priority,
       assignedTo: item.assigned_to ?? null,
       dueDate: item.due_date ?? null,
-      completedAt: item.completed_at ?? null,
+      completedAt: (item.completed_at ?? item.completed_date) ?? null,
       notes: item.notes ?? null,
       requiresProfessional: item.requires_professional ?? false,
       professionalType: item.professional_type ?? null,
       typicalDurationDays: item.typical_duration_days ?? null,
+      displayOrder: item.display_order ?? null,
       createdAt: item.created_at,
       updatedAt: item.updated_at,
     }))
@@ -968,12 +987,36 @@ export async function fetchChecklistSummary(
     }
     const data = await response.json()
 
+    const byCategoryStatusRaw = data.by_category_status ?? {}
+    const byCategoryStatus: Record<string, ChecklistCategoryStatus> = {}
+    if (
+      byCategoryStatusRaw &&
+      typeof byCategoryStatusRaw === 'object' &&
+      !Array.isArray(byCategoryStatusRaw)
+    ) {
+      for (const [category, summary] of Object.entries(byCategoryStatusRaw)) {
+        if (summary && typeof summary === 'object') {
+          const typedSummary = summary as Record<string, unknown>
+          byCategoryStatus[category] = {
+            total: Number(typedSummary.total ?? 0),
+            completed: Number(typedSummary.completed ?? 0),
+            inProgress: Number(typedSummary.in_progress ?? 0),
+            pending: Number(typedSummary.pending ?? 0),
+            notApplicable: Number(typedSummary.not_applicable ?? 0),
+          }
+        }
+      }
+    }
+
     return {
-      propertyId: data.property_id,
+      propertyId: data.property_id ?? propertyId,
       total: data.total ?? 0,
       completed: data.completed ?? 0,
+      inProgress: data.in_progress ?? 0,
+      pending: data.pending ?? 0,
+      notApplicable: data.not_applicable ?? 0,
       completionPercentage: data.completion_percentage ?? 0,
-      byCategoryStatus: data.by_category_status ?? {},
+      byCategoryStatus,
     }
   } catch (error) {
     console.error('Failed to fetch checklist summary:', error)
