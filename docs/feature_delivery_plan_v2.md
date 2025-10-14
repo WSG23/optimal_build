@@ -365,10 +365,10 @@
 - ✅ GPS logging backend
 - ✅ Quick analysis scenarios
 - ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint)
-- ⚠️ UI partially integrated with feasibility workspace
+- ⚠️ UI partially integrated with feasibility workspace (needs deeper linkage with feasibility overlays)
 
 **What's Missing:**
-- ⚠️ Developer-specific UI (layout works but needs polish beyond developer view)
+- ✅ Developer-specific UI (scenario focus controls, property overview cards, developer tone completed Oct 14 2025)
 - ✅ Scenario selector frontend (developer scenarios available in UI)
 - ✅ Due diligence checklist system (seeded data + developer checklist UI)
 - ✅ Property condition assessment insights (heuristic engine + UI wiring; advanced tooling pending)
