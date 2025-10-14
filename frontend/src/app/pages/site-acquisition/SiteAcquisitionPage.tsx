@@ -6,6 +6,7 @@ import {
   fetchConditionAssessment,
   fetchConditionAssessmentHistory,
   fetchScenarioAssessments,
+  exportConditionReport,
   saveConditionAssessment,
   updateChecklistItem,
   type ChecklistItem,
@@ -256,6 +257,8 @@ export function SiteAcquisitionPage() {
   const scenarioAssessmentsRequestIdRef = useRef(0)
   const [scenarioComparisonBase, setScenarioComparisonBase] =
     useState<DevelopmentScenario | null>(null)
+  const [isExportingReport, setIsExportingReport] = useState(false)
+  const [reportExportMessage, setReportExportMessage] = useState<string | null>(null)
   const propertyId = capturedProperty?.propertyId ?? null
 
   const scenarioLookup = useMemo(
@@ -883,6 +886,42 @@ export function SiteAcquisitionPage() {
         const summary = await fetchChecklistSummary(capturedProperty.propertyId)
         setChecklistSummary(summary)
       }
+    }
+  }
+
+  async function handleReportExport(format: 'json' | 'pdf') {
+    if (!capturedProperty) {
+      return
+    }
+    try {
+      setIsExportingReport(true)
+      setReportExportMessage(null)
+      const { blob, filename } = await exportConditionReport(
+        capturedProperty.propertyId,
+        format,
+      )
+      const downloadUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(downloadUrl)
+      setReportExportMessage(
+        format === 'pdf'
+          ? 'Condition report downloaded (PDF).'
+          : 'Condition report downloaded (JSON).',
+      )
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to download condition report.'
+      console.error('Failed to export condition report:', error)
+      setReportExportMessage(message)
+    } finally {
+      setIsExportingReport(false)
     }
   }
 
@@ -2742,38 +2781,94 @@ export function SiteAcquisitionPage() {
                 >
                   Scenario Overrides
                 </h3>
-                {scenarioOverrideEntries.length > 1 && baseScenarioAssessment && (
-                  <label
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem',
+                    alignItems: 'center',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleReportExport('json')}
+                    disabled={!capturedProperty || isExportingReport}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      fontSize: '0.85rem',
-                      color: '#3a3a3c',
+                      border: '1px solid #1d1d1f',
+                      background: '#1d1d1f',
+                      color: 'white',
+                      borderRadius: '9999px',
+                      padding: '0.4rem 0.9rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      cursor: isExportingReport ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    <span style={{ fontWeight: 600 }}>Baseline scenario</span>
-                    <select
-                      value={baseScenarioAssessment.scenario}
-                      onChange={(event) =>
-                        setScenarioComparisonBase(event.target.value as DevelopmentScenario)
-                      }
+                    {isExportingReport ? 'Preparing JSON…' : 'Download JSON'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReportExport('pdf')}
+                    disabled={!capturedProperty || isExportingReport}
+                    style={{
+                      border: '1px solid #1d1d1f',
+                      background: 'white',
+                      color: '#1d1d1f',
+                      borderRadius: '9999px',
+                      padding: '0.4rem 0.9rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      cursor: isExportingReport ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {isExportingReport ? 'Preparing PDF…' : 'Download PDF'}
+                  </button>
+                  {scenarioOverrideEntries.length > 1 && baseScenarioAssessment && (
+                    <label
                       style={{
-                        borderRadius: '8px',
-                        border: '1px solid #d2d2d7',
-                        padding: '0.4rem 0.6rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
                         fontSize: '0.85rem',
+                        color: '#3a3a3c',
                       }}
                     >
-                      {scenarioOverrideEntries.map((entry) => (
-                        <option key={entry.scenario} value={entry.scenario}>
-                          {formatScenarioLabel(entry.scenario)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
+                      <span style={{ fontWeight: 600 }}>Baseline scenario</span>
+                      <select
+                        value={baseScenarioAssessment.scenario}
+                        onChange={(event) =>
+                          setScenarioComparisonBase(event.target.value as DevelopmentScenario)
+                        }
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #d2d2d7',
+                          padding: '0.4rem 0.6rem',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        {scenarioOverrideEntries.map((entry) => (
+                          <option key={entry.scenario} value={entry.scenario}>
+                            {formatScenarioLabel(entry.scenario)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </div>
               </div>
+              {reportExportMessage && (
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '0.85rem',
+                    color: reportExportMessage.toLowerCase().includes('unable')
+                      ? '#c53030'
+                      : '#15803d',
+                  }}
+                >
+                  {reportExportMessage}
+                </p>
+              )}
               {scenarioAssessmentsError ? (
                 <p
                   style={{
@@ -2813,6 +2908,77 @@ export function SiteAcquisitionPage() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {scenarioOverrideEntries.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '0.75rem',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.25rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                          }}
+                        >
+                          Compare against
+                        </span>
+                        <span style={{ fontSize: '0.95rem', color: '#1d1d1f' }}>
+                          Choose the baseline inspection to benchmark other scenarios.
+                        </span>
+                      </div>
+                      <label
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          fontSize: '0.9rem',
+                          color: '#3a3a3c',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>Baseline scenario</span>
+                        <select
+                          value={baseScenarioAssessment?.scenario ?? ''}
+                          onChange={(event) => {
+                            const selected = event.target.value as DevelopmentScenario
+                            if (selected) {
+                              setScenarioComparisonBase(selected)
+                            }
+                          }}
+                          style={{
+                            borderRadius: '9999px',
+                            border: '1px solid #d2d2d7',
+                            padding: '0.4rem 0.9rem',
+                            background: 'white',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {scenarioOverrideEntries.map((assessment) => (
+                            <option key={assessment.scenario} value={assessment.scenario}>
+                              {formatScenarioLabel(assessment.scenario)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  )}
+
                   {baseScenarioAssessment && (
                     <div
                       style={{
