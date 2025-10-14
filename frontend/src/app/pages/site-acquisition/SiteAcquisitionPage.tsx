@@ -478,6 +478,47 @@ export function SiteAcquisitionPage() {
       >,
     [scenarioFilterOptions],
   )
+  const formatNumberMetric = useCallback(
+    (value: number | null | undefined, options?: Intl.NumberFormatOptions) => {
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return '—'
+      }
+      const formatter = new Intl.NumberFormat('en-SG', {
+        maximumFractionDigits: 1,
+        ...options,
+      })
+      return formatter.format(value)
+    },
+    [],
+  )
+  const formatCurrency = useCallback(
+    (value: number | null | undefined) => {
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return '—'
+      }
+      return new Intl.NumberFormat('en-SG', {
+        style: 'currency',
+        currency: 'SGD',
+        maximumFractionDigits: 0,
+      }).format(value)
+    },
+    [],
+  )
+  const formatPointOfInterest = useCallback((distanceM: number | null) => {
+    if (distanceM === null || distanceM === undefined || Number.isNaN(distanceM)) {
+      return '—'
+    }
+    if (distanceM >= 1000) {
+      return `${formatNumberMetric(distanceM / 1000, { maximumFractionDigits: 2 })} km`
+    }
+    return `${formatNumberMetric(distanceM, { maximumFractionDigits: 0 })} m`
+  }, [formatNumberMetric])
+  const propertyInfoSummary = capturedProperty?.propertyInfo ?? null
+  const zoningSummary = capturedProperty?.uraZoning ?? null
+  const nearestMrtStation =
+    capturedProperty?.nearbyAmenities?.mrtStations?.[0] ?? null
+  const nearestBusStop =
+    capturedProperty?.nearbyAmenities?.busStops?.[0] ?? null
 
   useEffect(() => {
     if (scenarioOverrideEntries.length === 0) {
@@ -1256,6 +1297,238 @@ export function SiteAcquisitionPage() {
           )}
         </form>
       </section>
+
+      {capturedProperty && (
+        <section
+          style={{
+            background: 'white',
+            border: '1px solid #d2d2d7',
+            borderRadius: '18px',
+            padding: '2rem',
+            marginBottom: '2rem',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              marginBottom: '1.5rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Property Overview
+          </h2>
+          <div
+            style={{
+              display: 'grid',
+              gap: '1.25rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            }}
+          >
+            <div
+              style={{
+                border: '1px solid #e5e5e7',
+                borderRadius: '14px',
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#6e6e73',
+                }}
+              >
+                Address & Current Use
+              </span>
+              <strong style={{ fontSize: '1rem', lineHeight: 1.4 }}>
+                {capturedProperty.address.fullAddress || '—'}
+              </strong>
+              <span style={{ color: '#3a3a3c', fontSize: '0.9rem' }}>
+                {capturedProperty.existingUse || 'Existing use unavailable'}
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                Captured {new Date(capturedProperty.timestamp).toLocaleString('en-SG')}
+              </span>
+            </div>
+
+            <div
+              style={{
+                border: '1px solid #e5e5e7',
+                borderRadius: '14px',
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#6e6e73',
+                }}
+              >
+                URA Zoning
+              </span>
+              <strong style={{ fontSize: '1rem' }}>
+                {zoningSummary?.zoneCode ?? '—'}
+              </strong>
+              <span style={{ color: '#3a3a3c', fontSize: '0.9rem' }}>
+                {zoningSummary?.zoneDescription ?? 'Zone description unavailable'}
+              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap',
+                  marginTop: '0.5rem',
+                  fontSize: '0.85rem',
+                  color: '#3a3a3c',
+                }}
+              >
+                <span>
+                  Plot ratio:{' '}
+                  <strong>{formatNumberMetric(zoningSummary?.plotRatio, { maximumFractionDigits: 2 })}</strong>
+                </span>
+                {zoningSummary?.buildingHeightLimit !== null &&
+                  zoningSummary?.buildingHeightLimit !== undefined && (
+                    <span>
+                      Height limit:{' '}
+                      <strong>
+                        {formatNumberMetric(zoningSummary.buildingHeightLimit, {
+                          maximumFractionDigits: 0,
+                        })}{' '}
+                        m
+                      </strong>
+                    </span>
+                  )}
+              </div>
+            </div>
+
+            <div
+              style={{
+                border: '1px solid #e5e5e7',
+                borderRadius: '14px',
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#6e6e73',
+                }}
+              >
+                Property Stats
+              </span>
+              <div
+                style={{
+                  display: 'grid',
+                  gap: '0.4rem',
+                  fontSize: '0.9rem',
+                  color: '#3a3a3c',
+                }}
+              >
+                <span>
+                  Tenure:{' '}
+                  <strong>{propertyInfoSummary?.tenure ?? '—'}</strong>
+                </span>
+                <span>
+                  Site area:{' '}
+                  <strong>
+                    {propertyInfoSummary?.siteAreaSqm
+                      ? `${formatNumberMetric(propertyInfoSummary.siteAreaSqm, {
+                          maximumFractionDigits: 0,
+                        })} sqm`
+                      : '—'}
+                  </strong>
+                </span>
+                <span>
+                  GFA approved:{' '}
+                  <strong>
+                    {propertyInfoSummary?.gfaApproved
+                      ? `${formatNumberMetric(propertyInfoSummary.gfaApproved, {
+                          maximumFractionDigits: 0,
+                        })} sqm`
+                      : '—'}
+                  </strong>
+                </span>
+                <span>
+                  Last transaction:{' '}
+                  <strong>
+                    {propertyInfoSummary?.lastTransactionDate
+                      ? new Date(
+                          propertyInfoSummary.lastTransactionDate,
+                        ).toLocaleDateString('en-SG')
+                      : '—'}
+                  </strong>
+                </span>
+                <span>
+                  Price:{' '}
+                  <strong>
+                    {formatCurrency(propertyInfoSummary?.lastTransactionPrice)}
+                  </strong>
+                </span>
+              </div>
+            </div>
+
+            {(nearestMrtStation || nearestBusStop) && (
+              <div
+                style={{
+                  border: '1px solid #e5e5e7',
+                  borderRadius: '14px',
+                  padding: '1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#6e6e73',
+                  }}
+                >
+                  Nearby Connections
+                </span>
+                <div style={{ display: 'grid', gap: '0.4rem', fontSize: '0.9rem' }}>
+                  {nearestMrtStation && (
+                    <span>
+                      🚇 {nearestMrtStation.name}{' '}
+                      <strong>{formatPointOfInterest(nearestMrtStation.distanceM)}</strong>
+                    </span>
+                  )}
+                  {nearestBusStop && (
+                    <span>
+                      🚌 {nearestBusStop.name}{' '}
+                      <strong>{formatPointOfInterest(nearestBusStop.distanceM)}</strong>
+                    </span>
+                  )}
+                  {!nearestMrtStation && !nearestBusStop && (
+                    <span>Transport data unavailable.</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {capturedProperty && scenarioFocusOptions.length > 0 && (
         <section
