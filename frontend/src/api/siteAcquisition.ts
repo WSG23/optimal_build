@@ -220,6 +220,113 @@ export async function saveConditionAssessment(
   }
 }
 
+export async function fetchConditionAssessmentHistory(
+  propertyId: string,
+  scenario?: DevelopmentScenario | 'all',
+  limit = 20,
+): Promise<ConditionAssessment[]> {
+  const params = new URLSearchParams()
+  if (scenario && scenario !== 'all') {
+    params.append('scenario', scenario)
+  }
+  if (limit) {
+    params.append('limit', String(limit))
+  }
+
+  const url = buildUrl(
+    `api/v1/developers/properties/${propertyId}/condition-assessment/history${
+      params.toString() ? `?${params.toString()}` : ''
+    }`,
+  )
+  const response = await fetch(url)
+  if (!response.ok) {
+    console.error('Failed to fetch condition assessment history:', response.statusText)
+    return []
+  }
+
+  const data = await response.json()
+  if (!Array.isArray(data)) {
+    return []
+  }
+
+  return data.map((entry: Record<string, unknown>): ConditionAssessment => ({
+    propertyId: entry.property_id ?? propertyId,
+    scenario:
+      typeof entry.scenario === 'string'
+        ? (entry.scenario as DevelopmentScenario)
+        : null,
+    overallScore: Number(entry.overall_score ?? 0),
+    overallRating: entry.overall_rating ?? 'C',
+    riskLevel: entry.risk_level ?? 'moderate',
+    summary: entry.summary ?? '',
+    scenarioContext: entry.scenario_context ?? null,
+    systems: Array.isArray(entry.systems)
+      ? entry.systems.map((system: Record<string, unknown>) => ({
+          name: String(system.name ?? ''),
+          rating: String(system.rating ?? ''),
+          score: Number(system.score ?? 0),
+          notes: String(system.notes ?? ''),
+          recommendedActions: Array.isArray(system.recommended_actions)
+            ? (system.recommended_actions as string[])
+            : [],
+        }))
+      : [],
+    recommendedActions: Array.isArray(entry.recommended_actions)
+      ? (entry.recommended_actions as string[])
+      : [],
+    recordedAt:
+      typeof entry.recorded_at === 'string' ? entry.recorded_at : null,
+  }))
+}
+
+export async function fetchScenarioAssessments(
+  propertyId: string,
+): Promise<ConditionAssessment[]> {
+  const url = buildUrl(
+    `api/v1/developers/properties/${propertyId}/condition-assessment/scenarios`,
+  )
+
+  const response = await fetch(url)
+  if (!response.ok) {
+    console.error('Failed to fetch scenario assessments:', response.statusText)
+    return []
+  }
+
+  const data = await response.json()
+  if (!Array.isArray(data)) {
+    return []
+  }
+
+  return data.map((entry: Record<string, unknown>): ConditionAssessment => ({
+    propertyId: entry.property_id ?? propertyId,
+    scenario:
+      typeof entry.scenario === 'string'
+        ? (entry.scenario as DevelopmentScenario)
+        : null,
+    overallScore: Number(entry.overall_score ?? 0),
+    overallRating: entry.overall_rating ?? 'C',
+    riskLevel: entry.risk_level ?? 'moderate',
+    summary: entry.summary ?? '',
+    scenarioContext: entry.scenario_context ?? null,
+    systems: Array.isArray(entry.systems)
+      ? entry.systems.map((system: Record<string, unknown>) => ({
+          name: String(system.name ?? ''),
+          rating: String(system.rating ?? ''),
+          score: Number(system.score ?? 0),
+          notes: String(system.notes ?? ''),
+          recommendedActions: Array.isArray(system.recommended_actions)
+            ? (system.recommended_actions as string[])
+            : [],
+        }))
+      : [],
+    recommendedActions: Array.isArray(entry.recommended_actions)
+      ? (entry.recommended_actions as string[])
+      : [],
+    recordedAt:
+      typeof entry.recorded_at === 'string' ? entry.recorded_at : null,
+  }))
+}
+
 export type {
   ChecklistItem,
   ChecklistStatus,
@@ -231,5 +338,3 @@ export type {
   ConditionSystem,
   ConditionAssessmentUpsertRequest,
 }
-
-export { saveConditionAssessment }

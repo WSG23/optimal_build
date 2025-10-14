@@ -3,21 +3,36 @@
 from __future__ import annotations
 
 import re
+import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
 from html.parser import HTMLParser
 
+if sys.version_info >= (3, 10):
 
-@dataclass(slots=True)
-class ParsedClause:
-    """Structured clause extracted from a reference document."""
+    @dataclass(slots=True)
+    class ParsedClause:
+        """Structured clause extracted from a reference document."""
 
-    clause_ref: str
-    heading: str
-    text: str
-    page_from: int
-    page_to: int
-    quality: str = "high"
+        clause_ref: str
+        heading: str
+        text: str
+        page_from: int
+        page_to: int
+        quality: str = "high"
+
+else:
+
+    @dataclass
+    class ParsedClause:
+        """Structured clause extracted from a reference document."""
+
+        clause_ref: str
+        heading: str
+        text: str
+        page_from: int
+        page_to: int
+        quality: str = "high"
 
 
 class ClauseParser:

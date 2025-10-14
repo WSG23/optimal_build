@@ -1,8 +1,10 @@
 """Market Intelligence Analytics Service for commercial property analysis."""
 
+from __future__ import annotations
+
 import statistics
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 try:  # pragma: no cover - optional dependency
@@ -14,10 +16,6 @@ try:  # pragma: no cover - optional dependency
     import numpy as np
 except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
     np = None  # type: ignore[assignment]
-from sqlalchemy import String, and_, cast, literal, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -27,6 +25,9 @@ from app.models.market import (
 from app.models.property import MarketTransaction, Property, PropertyType
 from app.services.agents.market_data_service import MarketDataService
 from backend._compat.datetime import utcnow
+from sqlalchemy import String, and_, cast, literal, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 try:  # pragma: no cover - optional metrics dependency
     from app.core.metrics import MetricsCollector
@@ -95,7 +96,7 @@ class MarketIntelligenceAnalytics:
     def __init__(
         self,
         market_data_service: MarketDataService,
-        metrics_collector: MetricsCollector | None = None,
+        metrics_collector: Optional[MetricsCollector] = None,
     ):
         if pd is None or np is None:
             raise ImportError(
@@ -110,7 +111,7 @@ class MarketIntelligenceAnalytics:
         location: str,
         period_months: int,
         session: AsyncSession,
-        competitive_set_id: UUID | None = None,
+        competitive_set_id: Optional[UUID] = None,
     ) -> MarketReport:
         """
         Generate comprehensive market intelligence report.

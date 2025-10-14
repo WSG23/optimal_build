@@ -134,3 +134,33 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
             scenario="raw_land",
         )
         assert fallback.summary == "Generic inspection"
+
+        history = await DeveloperConditionService.get_assessment_history(
+            session=session,
+            property_id=property_id,
+            scenario="existing_building",
+            limit=5,
+        )
+        assert len(history) == 2
+        assert history[0].summary == "Inspection summary"
+        assert history[1].summary == "Generic inspection"
+
+        full_history = await DeveloperConditionService.get_assessment_history(
+            session=session,
+            property_id=property_id,
+            scenario=None,
+        )
+        assert len(full_history) == 2
+
+        # Ensure we can retrieve the latest assessment per scenario
+        scenario_latest = (
+            await DeveloperConditionService.get_latest_assessments_by_scenario(
+                session=session,
+                property_id=property_id,
+            )
+        )
+        summary_by_scenario = {item.scenario: item.summary for item in scenario_latest}
+        # Latest entry for existing_building should be the manual override
+        assert summary_by_scenario["existing_building"] == "Inspection summary"
+        # Global fallback assessment is also included (scenario None)
+        assert summary_by_scenario[None] == "Generic inspection"

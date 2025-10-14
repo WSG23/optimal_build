@@ -2,19 +2,30 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, List, Optional
 from uuid import UUID
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.developer_condition import DeveloperConditionAssessmentRecord
 from app.models.property import Property, PropertyType
 
+if sys.version_info >= (3, 10):
+    _dataclass = dataclass
+else:
 
-@dataclass(slots=True)
+    def _dataclass(cls=None, /, **kwargs):
+        kwargs.pop("slots", None)
+        if cls is None:
+            return lambda wrapped: dataclass(wrapped, **kwargs)
+        return dataclass(cls, **kwargs)
+
+
+@_dataclass(slots=True)
 class ConditionSystem:
     """Represents the condition of a building subsystem."""
 
@@ -48,7 +59,7 @@ class ConditionSystem:
         )
 
 
-@dataclass(slots=True)
+@_dataclass(slots=True)
 class ConditionAssessment:
     """Aggregated condition assessment for a property."""
 
@@ -162,6 +173,70 @@ class DeveloperConditionService:
         await session.flush()
         await session.refresh(record)
         return DeveloperConditionService._record_to_assessment(record)
+
+    @staticmethod
+    async def get_assessment_history(
+        session: AsyncSession,
+        *,
+        property_id: UUID,
+        scenario: Optional[str] = None,
+        limit: Optional[int] = None,
+    ) -> List[ConditionAssessment]:
+        """Return inspection history ordered from most recent to oldest."""
+
+        scenario_key = _normalise_scenario(scenario)
+        query = (
+            select(DeveloperConditionAssessmentRecord)
+            .where(DeveloperConditionAssessmentRecord.property_id == property_id)
+            .order_by(desc(DeveloperConditionAssessmentRecord.recorded_at))
+        )
+
+        if scenario_key is not None:
+            query = query.where(
+                or_(
+                    DeveloperConditionAssessmentRecord.scenario == scenario_key,
+                    DeveloperConditionAssessmentRecord.scenario.is_(None),
+                )
+            )
+
+        if limit:
+            query = query.limit(limit)
+
+        result = await session.execute(query)
+        records = list(result.scalars().all())
+        return [
+            DeveloperConditionService._record_to_assessment(record)
+            for record in records
+        ]
+
+    @staticmethod
+    async def get_latest_assessments_by_scenario(
+        session: AsyncSession,
+        *,
+        property_id: UUID,
+    ) -> List[ConditionAssessment]:
+        """
+        Return the most recent stored assessment for each scenario.
+
+        Entries without a scenario (global overrides) are included with a `None` scenario
+        key so the caller can decide whether to surface them.
+        """
+
+        query = (
+            select(DeveloperConditionAssessmentRecord)
+            .where(DeveloperConditionAssessmentRecord.property_id == property_id)
+            .order_by(desc(DeveloperConditionAssessmentRecord.recorded_at))
+        )
+        result = await session.execute(query)
+        records = []
+        seen: set[Optional[str]] = set()
+        for record in result.scalars():
+            scenario_key = record.scenario
+            if scenario_key in seen:
+                continue
+            seen.add(scenario_key)
+            records.append(DeveloperConditionService._record_to_assessment(record))
+        return records
 
     @staticmethod
     async def _get_latest_assessment(

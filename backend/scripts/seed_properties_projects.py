@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 import structlog
 from app.core.database import AsyncSessionLocal, engine
+from app.models.developer_checklists import DeveloperChecklistTemplate
 from app.models.market import YieldBenchmark
 from app.models.projects import ProjectPhase, ProjectType
 from app.models.property import (
@@ -23,7 +24,6 @@ from app.models.property import (
     TenureType,
 )
 from app.services.developer_checklist_service import (
-    DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
 )
 from sqlalchemy import String, cast, delete, select
@@ -307,12 +307,10 @@ async def _seed_developer_checklists(
     if not property_ids:
         return 0
 
-    scenario_keys = sorted(
-        {
-            definition["development_scenario"]
-            for definition in DEFAULT_TEMPLATE_DEFINITIONS
-        }
+    result = await session.execute(
+        select(DeveloperChecklistTemplate.development_scenario).distinct()
     )
+    scenario_keys = sorted(row[0] for row in result.all() if row[0])
     if not scenario_keys:
         logger.warning(
             "seed_properties_projects.developer_checklists.undefined_scenarios"

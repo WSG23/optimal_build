@@ -5,10 +5,12 @@ Revises: 20250220_000013
 Create Date: 2025-10-13
 
 """
+
 from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -76,7 +78,9 @@ def upgrade() -> None:
         sa.Column("item_description", sa.Text(), nullable=True),
         sa.Column("priority", CHECKLIST_PRIORITY_ENUM, nullable=False),
         sa.Column("typical_duration_days", sa.Integer, nullable=True),
-        sa.Column("requires_professional", sa.Boolean, nullable=False, server_default="false"),
+        sa.Column(
+            "requires_professional", sa.Boolean, nullable=False, server_default="false"
+        ),
         sa.Column("professional_type", sa.String(length=100), nullable=True),
         sa.Column("display_order", sa.Integer, nullable=False, server_default="0"),
         sa.Column(
@@ -131,7 +135,9 @@ def upgrade() -> None:
         sa.Column("item_title", sa.String(length=255), nullable=False),
         sa.Column("item_description", sa.Text(), nullable=True),
         sa.Column("priority", CHECKLIST_PRIORITY_ENUM, nullable=False),
-        sa.Column("status", CHECKLIST_STATUS_ENUM, nullable=False, server_default="pending"),
+        sa.Column(
+            "status", CHECKLIST_STATUS_ENUM, nullable=False, server_default="pending"
+        ),
         sa.Column(
             "assigned_to",
             postgresql.UUID(as_uuid=True),
@@ -188,32 +194,34 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Drop due diligence checklist tables."""
-    # Drop indexes
-    op.drop_index(
-        "ix_developer_property_checklists_property_scenario",
-        table_name="developer_property_checklists",
-        if_exists=True,
-    )
-    op.drop_index(
-        "ix_developer_property_checklists_status",
-        table_name="developer_property_checklists",
-        if_exists=True,
-    )
-    op.drop_index(
-        "ix_developer_property_checklists_property",
-        table_name="developer_property_checklists",
-        if_exists=True,
-    )
+    bind = op.get_bind()
+    inspector = inspect(bind)
 
-    op.drop_index(
-        "ix_developer_checklist_templates_scenario_category",
-        table_name="developer_checklist_templates",
-        if_exists=True,
-    )
+    if "developer_property_checklists" in inspector.get_table_names():
+        op.drop_index(
+            "ix_developer_property_checklists_property_scenario",
+            table_name="developer_property_checklists",
+            if_exists=True,
+        )
+        op.drop_index(
+            "ix_developer_property_checklists_status",
+            table_name="developer_property_checklists",
+            if_exists=True,
+        )
+        op.drop_index(
+            "ix_developer_property_checklists_property",
+            table_name="developer_property_checklists",
+            if_exists=True,
+        )
+        op.drop_table("developer_property_checklists", if_exists=True)
 
-    # Drop tables
-    op.drop_table("developer_property_checklists", if_exists=True)
-    op.drop_table("developer_checklist_templates", if_exists=True)
+    if "developer_checklist_templates" in inspector.get_table_names():
+        op.drop_index(
+            "ix_developer_checklist_templates_scenario_category",
+            table_name="developer_checklist_templates",
+            if_exists=True,
+        )
+        op.drop_table("developer_checklist_templates", if_exists=True)
 
     # Drop ENUMs
     CHECKLIST_PRIORITY_ENUM.drop(op.get_bind(), checkfirst=True)

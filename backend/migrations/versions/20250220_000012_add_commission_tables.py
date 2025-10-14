@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "20250220_000012"
-down_revision = "20250220_000011_add_business_performance_tables"
+down_revision = "20250220_000011"
 branch_labels = None
 depends_on = None
 
@@ -211,29 +212,34 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_agent_commission_adjustments_recorded_at",
-        table_name="agent_commission_adjustments",
-        if_exists=True,
-    )
-    op.drop_index(
-        "ix_agent_commission_adjustments_type",
-        table_name="agent_commission_adjustments",
-        if_exists=True,
-    )
-    op.drop_table("agent_commission_adjustments", if_exists=True)
+    bind = op.get_bind()
+    inspector = inspect(bind)
 
-    op.drop_index(
-        "ix_agent_commission_records_agent_status",
-        table_name="agent_commission_records",
-        if_exists=True,
-    )
-    op.drop_index(
-        "ix_agent_commission_records_deal_status",
-        table_name="agent_commission_records",
-        if_exists=True,
-    )
-    op.drop_table("agent_commission_records", if_exists=True)
+    if "agent_commission_adjustments" in inspector.get_table_names():
+        op.drop_index(
+            "ix_agent_commission_adjustments_recorded_at",
+            table_name="agent_commission_adjustments",
+            if_exists=True,
+        )
+        op.drop_index(
+            "ix_agent_commission_adjustments_type",
+            table_name="agent_commission_adjustments",
+            if_exists=True,
+        )
+        op.drop_table("agent_commission_adjustments", if_exists=True)
+
+    if "agent_commission_records" in inspector.get_table_names():
+        op.drop_index(
+            "ix_agent_commission_records_agent_status",
+            table_name="agent_commission_records",
+            if_exists=True,
+        )
+        op.drop_index(
+            "ix_agent_commission_records_deal_status",
+            table_name="agent_commission_records",
+            if_exists=True,
+        )
+        op.drop_table("agent_commission_records", if_exists=True)
 
     COMMISSION_ADJUSTMENT_TYPE_ENUM.drop(op.get_bind(), checkfirst=True)
     COMMISSION_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)

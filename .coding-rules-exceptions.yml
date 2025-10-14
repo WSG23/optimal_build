@@ -11,6 +11,11 @@ exceptions:
     - backend/migrations/versions/20250220_000010_add_listing_integration_tables.py
     # Business performance tables - uses if_exists=True guards in downgrade
     - backend/migrations/versions/20250220_000011_add_business_performance_tables.py
+    # Commission/performance/developer tables added in Phase 2A (uses if_exists guards)
+    - backend/migrations/versions/20250220_000012_add_commission_tables.py
+    - backend/migrations/versions/20250220_000013_add_performance_snapshots.py
+    - backend/migrations/versions/20251013_000014_add_developer_due_diligence_checklists.py
+    - backend/migrations/versions/20251013_000015_add_developer_condition_assessments.py
     # Regstack migrations - different schema
     - db/versions/20250216000000_init_regstack.py
     - db/versions/20250217000100_add_provenance_checksum.py

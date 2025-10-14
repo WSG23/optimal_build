@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "20250220_000013"
-down_revision = "20250220_000012_add_commission_tables"
+down_revision = "20250220_000012"
 branch_labels = None
 depends_on = None
 
@@ -30,9 +31,7 @@ def upgrade() -> None:
         ),
         sa.Column("as_of_date", sa.Date(), nullable=False),
         sa.Column("deals_open", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column(
-            "deals_closed_won", sa.Integer(), nullable=False, server_default="0"
-        ),
+        sa.Column("deals_closed_won", sa.Integer(), nullable=False, server_default="0"),
         sa.Column(
             "deals_closed_lost", sa.Integer(), nullable=False, server_default="0"
         ),
@@ -128,21 +127,26 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_performance_benchmarks_effective_date",
-        table_name="performance_benchmarks",
-        if_exists=True,
-    )
-    op.drop_index(
-        "ix_performance_benchmarks_metric_asset_deal",
-        table_name="performance_benchmarks",
-        if_exists=True,
-    )
-    op.drop_table("performance_benchmarks", if_exists=True)
+    bind = op.get_bind()
+    inspector = inspect(bind)
 
-    op.drop_index(
-        "ix_agent_performance_snapshots_agent_date",
-        table_name="agent_performance_snapshots",
-        if_exists=True,
-    )
-    op.drop_table("agent_performance_snapshots", if_exists=True)
+    if "performance_benchmarks" in inspector.get_table_names():
+        op.drop_index(
+            "ix_performance_benchmarks_effective_date",
+            table_name="performance_benchmarks",
+            if_exists=True,
+        )
+        op.drop_index(
+            "ix_performance_benchmarks_metric_asset_deal",
+            table_name="performance_benchmarks",
+            if_exists=True,
+        )
+        op.drop_table("performance_benchmarks", if_exists=True)
+
+    if "agent_performance_snapshots" in inspector.get_table_names():
+        op.drop_index(
+            "ix_agent_performance_snapshots_agent_date",
+            table_name="agent_performance_snapshots",
+            if_exists=True,
+        )
+        op.drop_table("agent_performance_snapshots", if_exists=True)

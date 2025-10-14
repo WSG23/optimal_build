@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   capturePropertyForDevelopment,
   fetchChecklistSummary,
   fetchPropertyChecklist,
   fetchConditionAssessment,
+  fetchConditionAssessmentHistory,
+  fetchScenarioAssessments,
   saveConditionAssessment,
   updateChecklistItem,
   type ChecklistItem,
@@ -59,6 +61,7 @@ const DEFAULT_CONDITION_SYSTEMS = [
   'Mechanical & electrical systems',
   'Compliance & envelope maintenance',
 ]
+const HISTORY_FETCH_LIMIT = 10
 
 type AssessmentDraftSystem = {
   name: string
@@ -233,11 +236,123 @@ export function SiteAcquisitionPage() {
   const [assessmentSaveMessage, setAssessmentSaveMessage] = useState<string | null>(
     null,
   )
+  const [assessmentHistory, setAssessmentHistory] = useState<ConditionAssessment[]>([])
+  const [isLoadingAssessmentHistory, setIsLoadingAssessmentHistory] = useState(false)
+  const [assessmentHistoryError, setAssessmentHistoryError] = useState<string | null>(
+    null,
+  )
+  const [historyViewMode, setHistoryViewMode] = useState<'timeline' | 'compare'>(
+    'timeline',
+  )
+  const historyRequestIdRef = useRef(0)
+  const [scenarioAssessments, setScenarioAssessments] = useState<ConditionAssessment[]>(
+    [],
+  )
+  const [isLoadingScenarioAssessments, setIsLoadingScenarioAssessments] =
+    useState(false)
+  const [scenarioAssessmentsError, setScenarioAssessmentsError] = useState<string | null>(
+    null,
+  )
+  const scenarioAssessmentsRequestIdRef = useRef(0)
+  const [scenarioComparisonBase, setScenarioComparisonBase] =
+    useState<DevelopmentScenario | null>(null)
+  const propertyId = capturedProperty?.propertyId ?? null
 
   const scenarioLookup = useMemo(
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
     [],
   )
+
+  const loadAssessmentHistory = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const requestId = historyRequestIdRef.current + 1
+      historyRequestIdRef.current = requestId
+
+      if (!propertyId) {
+        setAssessmentHistory([])
+        setAssessmentHistoryError(null)
+        setIsLoadingAssessmentHistory(false)
+        return
+      }
+
+      if (!options?.silent) {
+        setIsLoadingAssessmentHistory(true)
+      }
+      try {
+        const entries = await fetchConditionAssessmentHistory(
+          propertyId,
+          activeScenario,
+          HISTORY_FETCH_LIMIT,
+        )
+        if (historyRequestIdRef.current === requestId) {
+          setAssessmentHistory(entries)
+          setAssessmentHistoryError(null)
+        }
+      } catch (error) {
+        console.error('Failed to fetch condition assessment history:', error)
+        if (historyRequestIdRef.current === requestId) {
+          setAssessmentHistory([])
+          setAssessmentHistoryError('Unable to load inspection history.')
+        }
+      } finally {
+        if (!options?.silent && historyRequestIdRef.current === requestId) {
+          setIsLoadingAssessmentHistory(false)
+        }
+      }
+    },
+    [propertyId, activeScenario],
+  )
+
+  const loadScenarioAssessments = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const requestId = scenarioAssessmentsRequestIdRef.current + 1
+      scenarioAssessmentsRequestIdRef.current = requestId
+
+      if (!propertyId) {
+        setScenarioAssessments([])
+        setScenarioAssessmentsError(null)
+        setIsLoadingScenarioAssessments(false)
+        return
+      }
+
+      if (!options?.silent) {
+        setIsLoadingScenarioAssessments(true)
+      }
+      try {
+        const assessments = await fetchScenarioAssessments(propertyId)
+        if (scenarioAssessmentsRequestIdRef.current === requestId) {
+          setScenarioAssessments(assessments)
+          setScenarioAssessmentsError(null)
+        }
+      } catch (error) {
+        console.error('Failed to fetch scenario assessments:', error)
+        if (scenarioAssessmentsRequestIdRef.current === requestId) {
+          setScenarioAssessments([])
+          setScenarioAssessmentsError('Unable to load scenario overrides.')
+        }
+      } finally {
+        if (
+          !options?.silent &&
+          scenarioAssessmentsRequestIdRef.current === requestId
+        ) {
+          setIsLoadingScenarioAssessments(false)
+        }
+      }
+    },
+    [propertyId],
+  )
+
+  useEffect(() => {
+    void loadAssessmentHistory()
+  }, [loadAssessmentHistory])
+
+  useEffect(() => {
+    void loadScenarioAssessments()
+  }, [loadScenarioAssessments])
+
+  useEffect(() => {
+    setHistoryViewMode('timeline')
+  }, [propertyId])
 
   // Load checklist when property is captured
   useEffect(() => {
@@ -331,6 +446,230 @@ export function SiteAcquisitionPage() {
       : quickAnalysisScenarios.filter(
           (scenario) => scenario.scenario === activeScenario,
         )
+  const scenarioOverrideEntries = useMemo(
+    () =>
+      scenarioAssessments.filter(
+        (
+          assessment,
+        ): assessment is ConditionAssessment & {
+          scenario: DevelopmentScenario
+        } => assessment.scenario !== null,
+      ),
+    [scenarioAssessments],
+  )
+
+  useEffect(() => {
+    if (scenarioOverrideEntries.length === 0) {
+      if (scenarioComparisonBase !== null) {
+        setScenarioComparisonBase(null)
+      }
+      return
+    }
+    if (
+      !scenarioComparisonBase ||
+      !scenarioOverrideEntries.some(
+        (assessment) => assessment.scenario === scenarioComparisonBase,
+      )
+    ) {
+      setScenarioComparisonBase(scenarioOverrideEntries[0].scenario)
+    }
+  }, [scenarioOverrideEntries, scenarioComparisonBase])
+
+  const baseScenarioAssessment = useMemo(() => {
+    if (scenarioOverrideEntries.length === 0) {
+      return null
+    }
+    if (!scenarioComparisonBase) {
+      return scenarioOverrideEntries[0]
+    }
+    return (
+      scenarioOverrideEntries.find(
+        (assessment) => assessment.scenario === scenarioComparisonBase,
+      ) ?? scenarioOverrideEntries[0]
+    )
+  }, [scenarioOverrideEntries, scenarioComparisonBase])
+
+  const scenarioComparisonEntries = useMemo(() => {
+    if (!baseScenarioAssessment) {
+      return []
+    }
+    return scenarioOverrideEntries.filter(
+      (assessment) => assessment.scenario !== baseScenarioAssessment.scenario,
+    )
+  }, [scenarioOverrideEntries, baseScenarioAssessment])
+
+  const describeRatingChange = useCallback(
+    (current: string, reference: string) => {
+      const currentIndex = CONDITION_RATINGS.indexOf(current)
+      const referenceIndex = CONDITION_RATINGS.indexOf(reference)
+      if (currentIndex === -1 || referenceIndex === -1) {
+        if (current === reference) {
+          return { text: 'Rating unchanged.', tone: 'neutral' as const }
+        }
+        return {
+          text: `Rating changed from ${reference} to ${current}.`,
+          tone: 'neutral' as const,
+        }
+      }
+      if (currentIndex === referenceIndex) {
+        return { text: 'Rating unchanged.', tone: 'neutral' as const }
+      }
+      if (currentIndex < referenceIndex) {
+        return {
+          text: `Rating improved from ${reference} to ${current}.`,
+          tone: 'positive' as const,
+        }
+      }
+      return {
+        text: `Rating declined from ${reference} to ${current}.`,
+        tone: 'negative' as const,
+      }
+    },
+    [],
+  )
+
+  const describeRiskChange = useCallback(
+    (current: string, reference: string) => {
+      const currentIndex = CONDITION_RISK_LEVELS.indexOf(current)
+      const referenceIndex = CONDITION_RISK_LEVELS.indexOf(reference)
+      if (currentIndex === -1 || referenceIndex === -1) {
+        if (current === reference) {
+          return { text: 'Risk level unchanged.', tone: 'neutral' as const }
+        }
+        return {
+          text: `Risk level changed from ${reference} to ${current}.`,
+          tone: 'neutral' as const,
+        }
+      }
+      if (currentIndex === referenceIndex) {
+        return { text: 'Risk level unchanged.', tone: 'neutral' as const }
+      }
+      if (currentIndex < referenceIndex) {
+        return {
+          text: `Risk eased from ${reference} to ${current}.`,
+          tone: 'positive' as const,
+        }
+      }
+      return {
+        text: `Risk intensified from ${reference} to ${current}.`,
+        tone: 'negative' as const,
+      }
+    },
+    [],
+  )
+
+  const latestAssessmentEntry = useMemo(
+    () => (assessmentHistory.length > 0 ? assessmentHistory[0] : null),
+    [assessmentHistory],
+  )
+  const previousAssessmentEntry = useMemo(
+    () => (assessmentHistory.length > 1 ? assessmentHistory[1] : null),
+    [assessmentHistory],
+  )
+  const systemComparisons = useMemo(() => {
+    if (!latestAssessmentEntry && !previousAssessmentEntry) {
+      return []
+    }
+    const names = new Set<string>()
+    ;(latestAssessmentEntry?.systems ?? []).forEach((system) => {
+      names.add(system.name)
+    })
+    ;(previousAssessmentEntry?.systems ?? []).forEach((system) => {
+      names.add(system.name)
+    })
+    return Array.from(names).map((name) => {
+      const latestSystem =
+        latestAssessmentEntry?.systems.find((system) => system.name === name) ?? null
+      const previousSystem =
+        previousAssessmentEntry?.systems.find((system) => system.name === name) ?? null
+      const scoreDelta =
+        latestSystem && previousSystem
+          ? latestSystem.score - previousSystem.score
+          : undefined
+      return {
+        name,
+        latest: latestSystem,
+        previous: previousSystem,
+        scoreDelta,
+      }
+    })
+  }, [latestAssessmentEntry, previousAssessmentEntry])
+  const recommendedActionDiff = useMemo(() => {
+    if (!latestAssessmentEntry || !previousAssessmentEntry) {
+      return { newActions: [], clearedActions: [] }
+    }
+    const latestSet = new Set(latestAssessmentEntry.recommendedActions)
+    const previousSet = new Set(previousAssessmentEntry.recommendedActions)
+    const newActions = Array.from(latestSet).filter((action) => !previousSet.has(action))
+    const clearedActions = Array.from(previousSet).filter(
+      (action) => !latestSet.has(action),
+    )
+    return { newActions, clearedActions }
+  }, [latestAssessmentEntry, previousAssessmentEntry])
+  const comparisonSummary = useMemo(() => {
+    if (!latestAssessmentEntry || !previousAssessmentEntry) {
+      return null
+    }
+    const scoreDelta = latestAssessmentEntry.overallScore - previousAssessmentEntry.overallScore
+    const latestRatingIndex = CONDITION_RATINGS.indexOf(latestAssessmentEntry.overallRating)
+    const previousRatingIndex = CONDITION_RATINGS.indexOf(previousAssessmentEntry.overallRating)
+    let ratingTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'
+    if (latestRatingIndex !== -1 && previousRatingIndex !== -1) {
+      if (latestRatingIndex < previousRatingIndex) {
+        ratingTrend = 'improved'
+      } else if (latestRatingIndex > previousRatingIndex) {
+        ratingTrend = 'declined'
+      } else {
+        ratingTrend = 'same'
+      }
+    } else if (latestAssessmentEntry.overallRating !== previousAssessmentEntry.overallRating) {
+      ratingTrend = 'changed'
+    }
+    const latestRiskIndex = CONDITION_RISK_LEVELS.indexOf(latestAssessmentEntry.riskLevel)
+    const previousRiskIndex = CONDITION_RISK_LEVELS.indexOf(previousAssessmentEntry.riskLevel)
+    let riskTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'
+    if (latestRiskIndex !== -1 && previousRiskIndex !== -1) {
+      if (latestRiskIndex < previousRiskIndex) {
+        riskTrend = 'improved'
+      } else if (latestRiskIndex > previousRiskIndex) {
+        riskTrend = 'declined'
+      } else {
+        riskTrend = 'same'
+      }
+    } else if (latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel) {
+      riskTrend = 'changed'
+    }
+    return {
+      scoreDelta,
+      ratingTrend,
+      riskTrend,
+      ratingChanged: latestAssessmentEntry.overallRating !== previousAssessmentEntry.overallRating,
+      riskChanged: latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel,
+    }
+  }, [latestAssessmentEntry, previousAssessmentEntry])
+  const formatScenarioLabel = useCallback(
+    (scenario: ConditionAssessment['scenario']) => {
+      if (!scenario) {
+        return 'All scenarios'
+      }
+      const entry = scenarioLookup.get(scenario)
+      if (entry) {
+        return entry.label
+      }
+      return formatCategoryName(scenario)
+    },
+    [scenarioLookup],
+  )
+  const formatRecordedTimestamp = useCallback((timestamp?: string | null) => {
+    if (!timestamp) {
+      return 'Draft assessment'
+    }
+    const parsed = new Date(timestamp)
+    if (Number.isNaN(parsed.getTime())) {
+      return timestamp
+    }
+    return parsed.toLocaleString()
+  }, [])
 
   useEffect(() => {
     setSelectedCategory(null)
@@ -467,6 +806,8 @@ export function SiteAcquisitionPage() {
         )
         setConditionAssessment(refreshed)
         setAssessmentDraft(buildAssessmentDraft(refreshed, activeScenario))
+        await loadAssessmentHistory({ silent: true })
+        await loadScenarioAssessments({ silent: true })
         setAssessmentSaveMessage('Inspection saved successfully.')
         setIsEditingAssessment(false)
       } else {
@@ -1696,6 +2037,1011 @@ export function SiteAcquisitionPage() {
                   </ul>
                 </div>
               ))}
+            </div>
+
+            <div
+              style={{
+                border: '1px solid #e5e5e7',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: '1.0625rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Inspection History
+                </h3>
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setHistoryViewMode('timeline')}
+                    style={{
+                      border: '1px solid #1d1d1f',
+                      background: historyViewMode === 'timeline' ? '#1d1d1f' : 'white',
+                      color: historyViewMode === 'timeline' ? 'white' : '#1d1d1f',
+                      borderRadius: '9999px',
+                      padding: '0.4rem 0.9rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Timeline
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHistoryViewMode('compare')}
+                    style={{
+                      border: '1px solid #1d1d1f',
+                      background: historyViewMode === 'compare' ? '#1d1d1f' : 'white',
+                      color: historyViewMode === 'compare' ? 'white' : '#1d1d1f',
+                      borderRadius: '9999px',
+                      padding: '0.4rem 0.9rem',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Compare
+                  </button>
+                </div>
+              </div>
+              {assessmentHistoryError ? (
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '0.85rem',
+                    color: '#c53030',
+                  }}
+                >
+                  {assessmentHistoryError}
+                </p>
+              ) : isLoadingAssessmentHistory ? (
+                <div
+                  style={{
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    color: '#6e6e73',
+                    background: '#f5f5f7',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                    Loading inspection history...
+                  </p>
+                </div>
+              ) : assessmentHistory.length === 0 ? (
+                <div
+                  style={{
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    color: '#6e6e73',
+                    background: '#f5f5f7',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                    No developer inspections recorded yet.
+                  </p>
+                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem' }}>
+                    Save an inspection above to start the audit trail.
+                  </p>
+                </div>
+              ) : historyViewMode === 'timeline' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                  {assessmentHistory.map((entry, index) => {
+                    const key = `${entry.recordedAt ?? 'draft'}-${index}`
+                    const matchesScenario =
+                      activeScenario === 'all' ||
+                      !entry.scenario ||
+                      entry.scenario === activeScenario
+                    const recommendedPreview = entry.recommendedActions.slice(0, 2)
+                    const remainingActions =
+                      entry.recommendedActions.length - recommendedPreview.length
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          border: '1px solid #e5e5e7',
+                          borderLeft: `4px solid ${
+                            index === 0 ? '#0a84ff' : matchesScenario ? '#34c759' : '#d2d2d7'
+                          }`,
+                          borderRadius: '10px',
+                          padding: '1rem 1.25rem',
+                          background: index === 0 ? '#f0f9ff' : '#ffffff',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <div
+                            style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                letterSpacing: '0.08em',
+                                textTransform: 'uppercase',
+                                color: '#6e6e73',
+                              }}
+                            >
+                              {index === 0 ? 'Most recent inspection' : `Inspection ${index + 1}`}
+                            </span>
+                            <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>
+                              {formatScenarioLabel(entry.scenario)}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+                            {formatRecordedTimestamp(entry.recordedAt)}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                            Rating {entry.overallRating}
+                          </span>
+                          <span style={{ fontSize: '0.875rem', color: '#3a3a3c' }}>
+                            {entry.overallScore}/100
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.8rem',
+                              color: '#6e6e73',
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            {entry.riskLevel} risk
+                          </span>
+                        </div>
+                        {entry.summary && (
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: '0.9rem',
+                              color: '#3a3a3c',
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {entry.summary}
+                          </p>
+                        )}
+                        {entry.scenarioContext && (
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: '0.8125rem',
+                              color: '#0071e3',
+                            }}
+                          >
+                            {entry.scenarioContext}
+                          </p>
+                        )}
+                        {recommendedPreview.length > 0 && (
+                          <ul
+                            style={{
+                              margin: '0.25rem 0 0',
+                              paddingLeft: '1.1rem',
+                              fontSize: '0.85rem',
+                              color: '#3a3a3c',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {recommendedPreview.map((action) => (
+                              <li key={action}>{action}</li>
+                            ))}
+                            {remainingActions > 0 && (
+                              <li
+                                key="more"
+                                style={{
+                                  listStyle: 'none',
+                                  marginLeft: '-1.1rem',
+                                  color: '#6e6e73',
+                                }}
+                              >
+                                +{remainingActions} more action
+                                {remainingActions > 1 ? 's' : ''}
+                              </li>
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : previousAssessmentEntry ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {comparisonSummary &&
+                    latestAssessmentEntry &&
+                    previousAssessmentEntry && (
+                      <div
+                        style={{
+                          border: '1px solid #e5e5e7',
+                          borderRadius: '10px',
+                          padding: '1.1rem 1.25rem',
+                          background: '#f5f5f7',
+                          display: 'grid',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem',
+                            alignItems: 'baseline',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: '0.8125rem',
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.08em',
+                              color: '#6e6e73',
+                            }}
+                          >
+                            Overall score
+                          </span>
+                          <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>
+                            {latestAssessmentEntry.overallScore}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '0.875rem',
+                              fontWeight: 600,
+                              color:
+                                comparisonSummary.scoreDelta > 0
+                                  ? '#15803d'
+                                  : comparisonSummary.scoreDelta < 0
+                                  ? '#c53030'
+                                  : '#6e6e73',
+                            }}
+                          >
+                            {comparisonSummary.scoreDelta > 0 ? '+' : ''}
+                            {comparisonSummary.scoreDelta}
+                          </span>
+                        </div>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.875rem',
+                            color: '#3a3a3c',
+                          }}
+                        >
+                          {comparisonSummary.scoreDelta === 0
+                            ? 'Overall score held steady vs previous inspection.'
+                            : comparisonSummary.scoreDelta > 0
+                            ? `Improved by ${comparisonSummary.scoreDelta} points from ${previousAssessmentEntry.overallScore}.`
+                            : `Declined by ${Math.abs(
+                                comparisonSummary.scoreDelta,
+                              )} points from ${previousAssessmentEntry.overallScore}.`}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.875rem',
+                            color: '#3a3a3c',
+                          }}
+                        >
+                          {comparisonSummary.ratingChanged
+                            ? `Rating ${
+                                comparisonSummary.ratingTrend === 'improved'
+                                  ? 'improved'
+                                  : comparisonSummary.ratingTrend === 'declined'
+                                  ? 'declined'
+                                  : 'changed'
+                              } from ${previousAssessmentEntry.overallRating} to ${latestAssessmentEntry.overallRating}.`
+                            : 'Rating unchanged from previous inspection.'}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.875rem',
+                            color: '#3a3a3c',
+                          }}
+                        >
+                          {comparisonSummary.riskChanged
+                            ? `Risk level ${
+                                comparisonSummary.riskTrend === 'improved'
+                                  ? 'eased'
+                                  : comparisonSummary.riskTrend === 'declined'
+                                  ? 'intensified'
+                                  : 'changed'
+                              } from ${previousAssessmentEntry.riskLevel} to ${latestAssessmentEntry.riskLevel}.`
+                            : 'Risk level unchanged.'}
+                        </p>
+                      </div>
+                    )}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gap: '1rem',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                    }}
+                  >
+                    <div
+                      style={{
+                        border: '1px solid #e5e5e7',
+                        borderRadius: '10px',
+                        padding: '1.25rem',
+                        display: 'grid',
+                        gap: '0.6rem',
+                        background: '#f0f9ff',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            color: '#0a84ff',
+                          }}
+                        >
+                          Current inspection
+                        </span>
+                        <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
+                          {formatRecordedTimestamp(latestAssessmentEntry?.recordedAt)}
+                        </span>
+                      </div>
+                      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+                        {formatScenarioLabel(latestAssessmentEntry?.scenario ?? null)}
+                      </strong>
+                      <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
+                        Rating {latestAssessmentEntry?.overallRating} ·{' '}
+                        {latestAssessmentEntry?.overallScore}/100 ·{' '}
+                        {latestAssessmentEntry?.riskLevel} risk
+                      </span>
+                      {latestAssessmentEntry?.summary && (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.875rem',
+                            color: '#3a3a3c',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {latestAssessmentEntry.summary}
+                        </p>
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        border: '1px solid #e5e5e7',
+                        borderRadius: '10px',
+                        padding: '1.25rem',
+                        display: 'grid',
+                        gap: '0.6rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            color: '#6e6e73',
+                          }}
+                        >
+                          Previous inspection
+                        </span>
+                        <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
+                          {formatRecordedTimestamp(previousAssessmentEntry?.recordedAt)}
+                        </span>
+                      </div>
+                      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+                        {formatScenarioLabel(previousAssessmentEntry?.scenario ?? null)}
+                      </strong>
+                      <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
+                        Rating {previousAssessmentEntry?.overallRating} ·{' '}
+                        {previousAssessmentEntry?.overallScore}/100 ·{' '}
+                        {previousAssessmentEntry?.riskLevel} risk
+                      </span>
+                      {previousAssessmentEntry?.summary && (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.875rem',
+                            color: '#3a3a3c',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {previousAssessmentEntry.summary}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      border: '1px solid #e5e5e7',
+                      borderRadius: '10px',
+                      padding: '1.25rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    <h4
+                      style={{
+                        margin: 0,
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      System comparison
+                    </h4>
+                    <div
+                      style={{
+                        display: 'grid',
+                        rowGap: '0.6rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns:
+                            'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          color: '#6e6e73',
+                        }}
+                      >
+                        <span>System</span>
+                        <span>Current</span>
+                        <span>Previous</span>
+                        <span>Delta Score</span>
+                      </div>
+                      {systemComparisons.map((entry) => {
+                        const scoreDeltaValue =
+                          typeof entry.scoreDelta === 'number' ? entry.scoreDelta : null
+                        return (
+                          <div
+                            key={entry.name}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns:
+                                'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
+                              alignItems: 'center',
+                              background: '#f8f9fa',
+                              borderRadius: '8px',
+                              padding: '0.6rem 0.75rem',
+                              fontSize: '0.85rem',
+                              color: '#3a3a3c',
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>{entry.name}</span>
+                            <span>
+                              {entry.latest
+                                ? `${entry.latest.rating} · ${entry.latest.score}`
+                                : '—'}
+                            </span>
+                            <span>
+                              {entry.previous
+                                ? `${entry.previous.rating} · ${entry.previous.score}`
+                                : '—'}
+                            </span>
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                color:
+                                  scoreDeltaValue === null
+                                    ? '#6e6e73'
+                                    : scoreDeltaValue > 0
+                                    ? '#15803d'
+                                    : scoreDeltaValue < 0
+                                    ? '#c53030'
+                                    : '#6e6e73',
+                              }}
+                            >
+                              {scoreDeltaValue === null
+                                ? '—'
+                                : `${scoreDeltaValue > 0 ? '+' : ''}${scoreDeltaValue}`}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      border: '1px solid #e5e5e7',
+                      borderRadius: '10px',
+                      padding: '1.25rem',
+                      display: 'grid',
+                      gap: '0.75rem',
+                      background: '#f9f9fb',
+                    }}
+                  >
+                    <h4
+                      style={{
+                        margin: 0,
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Recommended actions
+                    </h4>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gap: '0.75rem',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      }}
+                    >
+                      <div>
+                        <strong
+                          style={{
+                            fontSize: '0.85rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: '#15803d',
+                          }}
+                        >
+                          New this cycle
+                        </strong>
+                        {recommendedActionDiff.newActions.length > 0 ? (
+                          <ul
+                            style={{
+                              margin: '0.4rem 0 0',
+                              paddingLeft: '1.1rem',
+                              fontSize: '0.85rem',
+                              color: '#3a3a3c',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {recommendedActionDiff.newActions.map((action) => (
+                              <li key={action}>{action}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p
+                            style={{
+                              margin: '0.35rem 0 0',
+                              fontSize: '0.825rem',
+                              color: '#6e6e73',
+                            }}
+                          >
+                            No new actions added.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <strong
+                          style={{
+                            fontSize: '0.85rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: '#c53030',
+                          }}
+                        >
+                          Completed / removed
+                        </strong>
+                        {recommendedActionDiff.clearedActions.length > 0 ? (
+                          <ul
+                            style={{
+                              margin: '0.4rem 0 0',
+                              paddingLeft: '1.1rem',
+                              fontSize: '0.85rem',
+                              color: '#3a3a3c',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {recommendedActionDiff.clearedActions.map((action) => (
+                              <li key={action}>{action}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p
+                            style={{
+                              margin: '0.35rem 0 0',
+                              fontSize: '0.825rem',
+                              color: '#6e6e73',
+                            }}
+                          >
+                            No actions closed out.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    color: '#6e6e73',
+                    background: '#f5f5f7',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                    Capture one more inspection to unlock comparison view.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div
+              style={{
+                border: '1px solid #e5e5e7',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: '1.0625rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Scenario Overrides
+                </h3>
+                {scenarioOverrideEntries.length > 1 && baseScenarioAssessment && (
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.85rem',
+                      color: '#3a3a3c',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600 }}>Baseline scenario</span>
+                    <select
+                      value={baseScenarioAssessment.scenario}
+                      onChange={(event) =>
+                        setScenarioComparisonBase(event.target.value as DevelopmentScenario)
+                      }
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.4rem 0.6rem',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      {scenarioOverrideEntries.map((entry) => (
+                        <option key={entry.scenario} value={entry.scenario}>
+                          {formatScenarioLabel(entry.scenario)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+              {scenarioAssessmentsError ? (
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '0.85rem',
+                    color: '#c53030',
+                  }}
+                >
+                  {scenarioAssessmentsError}
+                </p>
+              ) : isLoadingScenarioAssessments ? (
+                <div
+                  style={{
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    color: '#6e6e73',
+                    background: '#f5f5f7',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>Loading scenario overrides...</p>
+                </div>
+              ) : scenarioOverrideEntries.length === 0 ? (
+                <div
+                  style={{
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    color: '#6e6e73',
+                    background: '#f5f5f7',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                    No scenario-specific overrides recorded yet. Save an inspection for a
+                    specific scenario to compare outcomes.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {baseScenarioAssessment && (
+                    <div
+                      style={{
+                        border: '1px solid #d2d2d7',
+                        borderRadius: '12px',
+                        padding: '1.25rem',
+                        background: '#f5f5f7',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.6rem',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: '#6e6e73',
+                        }}
+                      >
+                        Baseline scenario
+                      </span>
+                      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+                        {formatScenarioLabel(baseScenarioAssessment.scenario)}
+                      </strong>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '0.75rem',
+                          alignItems: 'center',
+                          color: '#3a3a3c',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        <span>Rating {baseScenarioAssessment.overallRating}</span>
+                        <span>{baseScenarioAssessment.overallScore}/100 score</span>
+                        <span style={{ textTransform: 'capitalize' }}>
+                          {baseScenarioAssessment.riskLevel} risk
+                        </span>
+                      </div>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.9rem',
+                          color: '#3a3a3c',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {baseScenarioAssessment.summary}
+                      </p>
+                      {baseScenarioAssessment.scenarioContext && (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.85rem',
+                            color: '#0071e3',
+                          }}
+                        >
+                          {baseScenarioAssessment.scenarioContext}
+                        </p>
+                      )}
+                      {baseScenarioAssessment.recommendedActions.length > 0 && (
+                        <div style={{ display: 'grid', gap: '0.4rem' }}>
+                          <strong style={{ fontSize: '0.85rem' }}>Actions</strong>
+                          <ul
+                            style={{
+                              margin: 0,
+                              paddingLeft: '1.1rem',
+                              fontSize: '0.85rem',
+                              color: '#3a3a3c',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {baseScenarioAssessment.recommendedActions.map((action) => (
+                              <li key={action}>{action}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {scenarioComparisonEntries.length === 0 ? (
+                    <div
+                      style={{
+                        padding: '1.25rem',
+                        border: '1px solid #d2d2d7',
+                        borderRadius: '12px',
+                        background: '#ffffff',
+                        color: '#6e6e73',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      Capture another scenario-specific override to compare with the baseline.
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gap: '1rem',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                      }}
+                    >
+                      {scenarioComparisonEntries.map((assessment) => {
+                        if (!baseScenarioAssessment) {
+                          return null
+                        }
+                        const scoreDelta = assessment.overallScore - baseScenarioAssessment.overallScore
+                        const ratingInfo = describeRatingChange(
+                          assessment.overallRating,
+                          baseScenarioAssessment.overallRating,
+                        )
+                        const riskInfo = describeRiskChange(
+                          assessment.riskLevel,
+                          baseScenarioAssessment.riskLevel,
+                        )
+                        const toneColorMap: Record<'positive' | 'negative' | 'neutral', string> = {
+                          positive: '#15803d',
+                          negative: '#c53030',
+                          neutral: '#6e6e73',
+                        }
+
+                        return (
+                          <div
+                            key={assessment.scenario}
+                            style={{
+                              border: '1px solid #e5e5e7',
+                              borderRadius: '12px',
+                              padding: '1.25rem',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.6rem',
+                              background: '#ffffff',
+                            }}
+                          >
+                            <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+                              {formatScenarioLabel(assessment.scenario)}
+                            </strong>
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.4rem',
+                                fontSize: '0.9rem',
+                                color: '#3a3a3c',
+                              }}
+                            >
+                              <span>
+                                Score {assessment.overallScore}/100{' '}
+                                <span
+                                  style={{
+                                    color:
+                                      scoreDelta > 0
+                                        ? '#15803d'
+                                        : scoreDelta < 0
+                                        ? '#c53030'
+                                        : '#6e6e73',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {scoreDelta === 0
+                                    ? 'Δ 0'
+                                    : `Δ ${scoreDelta > 0 ? '+' : ''}${scoreDelta}`}
+                                </span>
+                              </span>
+                              <span
+                                style={{
+                                  color: toneColorMap[ratingInfo.tone],
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {ratingInfo.text}
+                              </span>
+                              <span
+                                style={{
+                                  color: toneColorMap[riskInfo.tone],
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {riskInfo.text}
+                              </span>
+                            </div>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: '0.9rem',
+                                color: '#3a3a3c',
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {assessment.summary}
+                            </p>
+                            {assessment.scenarioContext && (
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: '0.85rem',
+                                  color: '#0071e3',
+                                }}
+                              >
+                                {assessment.scenarioContext}
+                              </p>
+                            )}
+                            {assessment.recommendedActions.length > 0 && (
+                              <div style={{ display: 'grid', gap: '0.4rem' }}>
+                                <strong style={{ fontSize: '0.85rem' }}>Actions</strong>
+                                <ul
+                                  style={{
+                                    margin: 0,
+                                    paddingLeft: '1.1rem',
+                                    fontSize: '0.85rem',
+                                    color: '#3a3a3c',
+                                    lineHeight: 1.4,
+                                  }}
+                                >
+                                  {assessment.recommendedActions.map((action) => (
+                                    <li key={action}>{action}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div

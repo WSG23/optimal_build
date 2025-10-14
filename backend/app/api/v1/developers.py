@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -296,6 +296,47 @@ async def upsert_condition_assessment(
     )
     await session.commit()
     return _serialize_condition_assessment(assessment)
+
+
+@router.get(
+    "/properties/{property_id}/condition-assessment/history",
+    response_model=List[ConditionAssessmentResponse],
+)
+async def get_condition_assessment_history(
+    property_id: UUID,
+    scenario: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=200),
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+):
+    """Return stored inspection assessments ordered by most recent first."""
+
+    scenario_key = _normalise_scenario_param(scenario)
+    history = await DeveloperConditionService.get_assessment_history(
+        session=session,
+        property_id=property_id,
+        scenario=scenario_key,
+        limit=limit,
+    )
+    return [_serialize_condition_assessment(item) for item in history]
+
+
+@router.get(
+    "/properties/{property_id}/condition-assessment/scenarios",
+    response_model=List[ConditionAssessmentResponse],
+)
+async def get_condition_assessment_scenarios(
+    property_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+):
+    """Return the latest stored inspection assessment for each scenario."""
+
+    assessments = await DeveloperConditionService.get_latest_assessments_by_scenario(
+        session=session,
+        property_id=property_id,
+    )
+    return [_serialize_condition_assessment(assessment) for assessment in assessments]
 
 
 def _serialize_condition_system(system: ConditionSystem) -> ConditionSystemResponse:

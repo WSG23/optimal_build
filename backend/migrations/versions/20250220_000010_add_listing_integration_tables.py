@@ -8,7 +8,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "20250220_000010"
-down_revision = "20250220_000009_add_agent_advisory_feedback"
+down_revision = "20250220_000009"
 branch_labels = None
 depends_on = None
 
@@ -41,9 +41,69 @@ PUBLICATION_STATUS_ENUM = sa.Enum(
 
 
 def upgrade() -> None:
-    LISTING_PROVIDER_ENUM.create(op.get_bind(), checkfirst=True)
-    ACCOUNT_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
-    PUBLICATION_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
+    # Recreate enums defensively so the migration is idempotent if partially applied.
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE t.typname = 'listing_provider'
+                      AND n.nspname = 'public'
+                ) THEN
+                    DROP TYPE public.listing_provider CASCADE;
+                END IF;
+                CREATE TYPE public.listing_provider AS ENUM ('propertyguru', 'edgeprop', 'zoho_crm');
+            END
+            $$;
+            """
+        )
+    )
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE t.typname = 'listing_account_status'
+                      AND n.nspname = 'public'
+                ) THEN
+                    DROP TYPE public.listing_account_status CASCADE;
+                END IF;
+                CREATE TYPE public.listing_account_status AS ENUM ('connected', 'disconnected', 'revoked');
+            END
+            $$;
+            """
+        )
+    )
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE t.typname = 'listing_publication_status'
+                      AND n.nspname = 'public'
+                ) THEN
+                    DROP TYPE public.listing_publication_status CASCADE;
+                END IF;
+                CREATE TYPE public.listing_publication_status AS ENUM (
+                    'draft', 'queued', 'published', 'failed', 'archived'
+                );
+            END
+            $$;
+            """
+        )
+    )
 
     op.create_table(
         "listing_integration_accounts",
