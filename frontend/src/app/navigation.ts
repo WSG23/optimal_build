@@ -77,7 +77,6 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     path: '/app/asset-feasibility',
     description: 'Multi-use optimizer and asset-specific modeling.',
     workspace: 'developer',
-    comingSoon: true,
   },
   {
     key: 'financialControl',

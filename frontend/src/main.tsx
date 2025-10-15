@@ -89,6 +89,16 @@ const siteAcquisitionElement = (
   </AppShell>
 )
 
+const developerFeasibilityElement = (
+  <AppShell
+    activeItem="assetFeasibility"
+    title="Feasibility workspace"
+    description="Run feasibility checks, document pack generation, and advisory workflows."
+  >
+    <FeasibilityWizard withLayout={false} />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -119,6 +129,10 @@ const router = createBrowserRouter([
     element: siteAcquisitionElement,
   },
   {
+    path: '/app/asset-feasibility',
+    element: developerFeasibilityElement,
+  },
+  {
     path: '/legacy/home',
     element: <HomeOverview />,
   },
@@ -136,7 +150,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/legacy/feasibility',
-    element: <FeasibilityWizard />,
+    element: developerFeasibilityElement,
   },
   {
     path: '/legacy/finance',

@@ -943,6 +943,92 @@ curl -X POST http://localhost:9400/api/v1/singapore-property/calculate/buildable
 
 ---
 
+## Developer Site Acquisition (Phase 2A)
+
+**Tag:** `developers`
+**Prefix:** `/api/v1/developers`
+
+### `GET /api/v1/developers/properties/{property_id}/condition-assessment/report`
+
+Return the full developer inspection report for a captured property. Supports JSON (default) and PDF export.
+
+**Query Parameters**
+- `format` *(optional)*: `"json"` *(default)* or `"pdf"`
+
+**Example – JSON report**
+```bash
+PROPERTY_ID="a2c7df09-2ed7-4f8f-8c4d-2e8d2f2f3b1d"
+curl -X GET "http://localhost:9400/api/v1/developers/properties/${PROPERTY_ID}/condition-assessment/report" \
+  -H "X-Role: admin"
+```
+
+**Response:** `200 OK`
+```json
+{
+  "propertyId": "a2c7df09-2ed7-4f8f-8c4d-2e8d2f2f3b1d",
+  "propertyName": "Developer Demo Tower",
+  "generatedAt": "2025-10-14T12:05:33.184623",
+  "scenarioAssessments": [
+    {
+      "scenario": "raw_land",
+      "overallScore": 78,
+      "overallRating": "B",
+      "riskLevel": "moderate",
+      "summary": "Raw land inspection notes",
+      "systems": [
+        {
+          "name": "Structural frame & envelope",
+          "rating": "B",
+          "score": 75,
+          "notes": "Undeveloped — structural plan not yet required.",
+          "recommendedActions": ["Commission geotechnical survey"]
+        }
+      ],
+      "recommendedActions": [
+        "Complete soil investigation before schematic design"
+      ],
+      "recordedAt": "2025-10-14T12:05:33.123456"
+    }
+  ],
+  "history": [
+    {
+      "scenario": "raw_land",
+      "overallRating": "B",
+      "summary": "Raw land inspection notes"
+    },
+    {
+      "scenario": null,
+      "overallRating": "C",
+      "summary": "General fallback assessment"
+    }
+  ],
+  "checklistSummary": {
+    "total": 12,
+    "completed": 5,
+    "inProgress": 3,
+    "pending": 3,
+    "notApplicable": 1,
+    "completionPercentage": 42
+  }
+}
+```
+
+**Example – PDF export**
+```bash
+curl -X GET "http://localhost:9400/api/v1/developers/properties/${PROPERTY_ID}/condition-assessment/report?format=pdf" \
+  -H "X-Role: admin" \
+  -o condition-report.pdf
+```
+
+**Response:** `200 OK`
+```
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="condition-report-${PROPERTY_ID}.pdf"
+%PDF-1.4 …binary content…
+```
+
+---
+
 ## Known Limitations & Future Work
 
 ### Current MVP Limitations

@@ -2,22 +2,27 @@
 
 from __future__ import annotations
 
+import html
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus
+from app.models.property import Property
 from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.developer_condition_service import (
     ConditionAssessment,
     ConditionSystem,
     DeveloperConditionService,
 )
+from app.utils.render import render_html_to_pdf
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 
@@ -128,6 +133,37 @@ class ConditionAssessmentUpsertRequest(BaseModel):
     systems: List[ConditionSystemRequest]
     recommended_actions: List[str] = Field(
         default_factory=list, alias="recommendedActions"
+    )
+
+
+class ChecklistProgressResponse(BaseModel):
+    """Summary of checklist completion."""
+
+    model_config = {"populate_by_name": True}
+
+    total: int
+    completed: int
+    in_progress: int = Field(alias="inProgress")
+    pending: int
+    not_applicable: int = Field(alias="notApplicable")
+    completion_percentage: int = Field(alias="completionPercentage")
+
+
+class ConditionReportResponse(BaseModel):
+    """Structured condition assessment export."""
+
+    model_config = {"populate_by_name": True}
+
+    property_id: str = Field(alias="propertyId")
+    property_name: Optional[str] = Field(default=None, alias="propertyName")
+    address: Optional[str] = None
+    generated_at: str = Field(alias="generatedAt")
+    scenario_assessments: List[ConditionAssessmentResponse] = Field(
+        alias="scenarioAssessments"
+    )
+    history: List[ConditionAssessmentResponse]
+    checklist_summary: Optional[ChecklistProgressResponse] = Field(
+        default=None, alias="checklistSummary"
     )
 
 
@@ -339,6 +375,79 @@ async def get_condition_assessment_scenarios(
     return [_serialize_condition_assessment(assessment) for assessment in assessments]
 
 
+@router.get(
+    "/properties/{property_id}/condition-assessment/report",
+)
+async def export_condition_report(
+    property_id: UUID,
+    format: str = Query("json", pattern="^(json|pdf)$"),
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+):
+    """Return a structured condition report in JSON (default) or PDF format."""
+
+    property_record = await session.get(Property, property_id)
+    if property_record is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    scenario_assessments = (
+        await DeveloperConditionService.get_latest_assessments_by_scenario(
+            session=session,
+            property_id=property_id,
+        )
+    )
+    history = await DeveloperConditionService.get_assessment_history(
+        session=session,
+        property_id=property_id,
+        scenario=None,
+        limit=10,
+    )
+    checklist_summary_raw = await DeveloperChecklistService.get_checklist_summary(
+        session, property_id
+    )
+
+    report = ConditionReportResponse(
+        property_id=str(property_id),
+        property_name=property_record.name,
+        address=property_record.address,
+        generated_at=datetime.utcnow().isoformat(),
+        scenario_assessments=[
+            _serialize_condition_assessment(assessment)
+            for assessment in scenario_assessments
+        ],
+        history=[_serialize_condition_assessment(assessment) for assessment in history],
+        checklist_summary=(
+            ChecklistProgressResponse(
+                total=checklist_summary_raw["total"],
+                completed=checklist_summary_raw["completed"],
+                in_progress=checklist_summary_raw["in_progress"],
+                pending=checklist_summary_raw["pending"],
+                not_applicable=checklist_summary_raw["not_applicable"],
+                completion_percentage=checklist_summary_raw["completion_percentage"],
+            )
+            if checklist_summary_raw
+            else None
+        ),
+    )
+
+    if format == "pdf":
+        html_body = _render_condition_report_html(report)
+        pdf_data = render_html_to_pdf(html_body)
+        if pdf_data is None:
+            raise HTTPException(
+                status_code=503,
+                detail="PDF generation not available on this environment.",
+            )
+        filename = f"condition-report-{property_id}.pdf"
+        return Response(
+            content=pdf_data,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    return JSONResponse(content=report.model_dump(by_alias=True))
+
+
 def _serialize_condition_system(system: ConditionSystem) -> ConditionSystemResponse:
     return ConditionSystemResponse(
         name=system.name,
@@ -377,3 +486,101 @@ def _normalise_scenario_param(value: Optional[str]) -> Optional[str]:
 
 
 __all__ = ["router"]
+
+
+def _render_condition_report_html(report: ConditionReportResponse) -> str:
+    """Render a simple HTML report suitable for PDF conversion."""
+
+    def _escape(value: Optional[str]) -> str:
+        return html.escape(value or "")
+
+    scenario_rows = []
+    for scenario_assessment in report.scenario_assessments:
+        systems_html = "".join(
+            f"<li><strong>{_escape(system.name)}</strong>: "
+            f"rating {_escape(system.rating)}, score {system.score}/100 "
+            f"- {_escape(system.notes)}</li>"
+            for system in scenario_assessment.systems
+        )
+        recommended_html = "".join(
+            f"<li>{_escape(action)}</li>"
+            for action in scenario_assessment.recommended_actions
+        )
+        scenario_rows.append(
+            f"""
+            <section>
+              <h3>{_escape(scenario_assessment.scenario or "All scenarios")}</h3>
+              <p><strong>Rating:</strong> {scenario_assessment.overall_rating} &nbsp;
+                 <strong>Score:</strong> {scenario_assessment.overall_score}/100 &nbsp;
+                 <strong>Risk:</strong> {_escape(scenario_assessment.risk_level)}</p>
+              <p>{_escape(scenario_assessment.summary)}</p>
+              {"<p><em>" + _escape(scenario_assessment.scenario_context) + "</em></p>" if scenario_assessment.scenario_context else ""}
+              <h4>Systems</h4>
+              <ul>{systems_html}</ul>
+              {"<h4>Recommended actions</h4><ul>" + recommended_html + "</ul>" if recommended_html else ""}
+            </section>
+            """
+        )
+
+    history_rows = []
+    for history_entry in report.history:
+        history_rows.append(
+            f"""
+            <li>
+              <strong>{_escape(history_entry.recorded_at or '')}</strong>:
+              scenario {_escape(history_entry.scenario or 'n/a')},
+              rating {history_entry.overall_rating},
+              score {history_entry.overall_score}/100,
+              risk {_escape(history_entry.risk_level)}
+            </li>
+            """
+        )
+
+    checklist_html = ""
+    if report.checklist_summary:
+        summary = report.checklist_summary
+        checklist_html = f"""
+        <section>
+          <h3>Checklist Summary</h3>
+          <p>
+            Total {summary.total} · Completed {summary.completed} ·
+            In progress {summary.in_progress} · Pending {summary.pending} ·
+            Not applicable {summary.not_applicable} ·
+            Completion {summary.completion_percentage}%
+          </p>
+        </section>
+        """
+
+    html_report = f"""
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Condition Report</title>
+        <style>
+          body {{ font-family: Arial, sans-serif; margin: 2rem; color: #1d1d1f; }}
+          h1, h2, h3 {{ margin-bottom: 0.5rem; }}
+          section {{ margin-bottom: 2rem; }}
+          ul {{ padding-left: 1.2rem; }}
+        </style>
+      </head>
+      <body>
+        <h1>Condition Summary</h1>
+        <p><strong>Property:</strong> {_escape(report.property_name)}<br/>
+           <strong>Address:</strong> {_escape(report.address)}<br/>
+           <strong>Generated:</strong> {_escape(report.generated_at)}</p>
+
+        <h2>Scenario Assessments</h2>
+        {''.join(scenario_rows)}
+
+        {checklist_html}
+
+        <section>
+          <h3>Recent History</h3>
+          <ul>
+            {''.join(history_rows)}
+          </ul>
+        </section>
+      </body>
+    </html>
+    """
+    return html_report

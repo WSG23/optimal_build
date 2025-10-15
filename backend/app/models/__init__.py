@@ -28,6 +28,7 @@ else:
         ai_agents,  # Added: AI agents model
         audit,
         business_performance,
+        developer_checklists,
         developer_condition,  # Added: developer condition assessments
         entitlements,
         finance,
@@ -51,6 +52,7 @@ else:
         "developer_condition": developer_condition,
         "audit": audit,
         "business_performance": business_performance,
+        "developer_checklists": developer_checklists,
         "entitlements": entitlements,
         "finance": finance,
         "imports": imports,

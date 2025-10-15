@@ -108,10 +108,12 @@ function anonymiseAddress(address: string): string {
 
 interface FeasibilityWizardProps {
   generatePackFn?: typeof generateProfessionalPack
+  withLayout?: boolean
 }
 
 export function FeasibilityWizard({
   generatePackFn = generateProfessionalPack,
+  withLayout = true,
 }: FeasibilityWizardProps = {}) {
   const { t, i18n } = useTranslation()
   const { search: routerSearch } = useRouterLocation()
@@ -122,7 +124,7 @@ export function FeasibilityWizard({
       typFloorToFloorM: DEFAULT_ASSUMPTIONS.typFloorToFloorM.toString(),
       efficiencyRatio: DEFAULT_ASSUMPTIONS.efficiencyRatio.toString(),
     }),
-  )
+  );
   const [assumptionErrors, setAssumptionErrors] = useState<AssumptionErrors>({})
   const [appliedAssumptions, setAppliedAssumptions] = useState({
     ...DEFAULT_ASSUMPTIONS,
@@ -611,13 +613,8 @@ export function FeasibilityWizard({
     </div>
   )
 
-  return (
-    <AppLayout
-      title={t('wizard.title')}
-      subtitle={t('wizard.description')}
-      actions={headerActions}
-    >
-      <div className="feasibility-wizard" data-testid="feasibility-wizard">
+  const wizardBody = (
+    <div className="feasibility-wizard" data-testid="feasibility-wizard">
         <div className="feasibility-wizard__layout">
           <section className="feasibility-wizard__controls">
             <form
@@ -921,6 +918,24 @@ export function FeasibilityWizard({
           {liveAnnouncement}
         </div>
       </div>
+  )
+
+  if (!withLayout) {
+    return (
+      <div className="feasibility-wizard__container">
+        {headerActions}
+        {wizardBody}
+      </div>
+    )
+  }
+
+  return (
+    <AppLayout
+      title={t('wizard.title')}
+      subtitle={t('wizard.description')}
+      actions={headerActions}
+    >
+      {wizardBody}
     </AppLayout>
   )
 }

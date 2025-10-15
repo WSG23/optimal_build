@@ -2349,7 +2349,7 @@ export function SiteAcquisitionPage() {
                   </h3>
                   {propertyId && (
                     <Link
-                      to={`/legacy/feasibility?propertyId=${encodeURIComponent(propertyId)}`}
+                      to={`/app/asset-feasibility?propertyId=${encodeURIComponent(propertyId)}`}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
