@@ -7,8 +7,8 @@
 
 ## High-Confidence Duplicates
 
-### Parallel Alembic Trees
-Two Alembic directory trees (`backend/migrations` and `backend/alembic`) currently store the same migration templates and a shared subset of migration revisions.
+### Parallel Alembic Trees (Resolved 2025-10-16)
+Two Alembic directory trees (`backend/migrations` and `backend/alembic`) previously stored the same migration templates and a shared subset of migration revisions. The duplicated `backend/alembic` tree has now been removed; all canonical migrations live under `backend/migrations`. The table below is retained for historical context.
 
 | Duplicate Content | Paths |
 | --- | --- |
@@ -21,7 +21,7 @@ Two Alembic directory trees (`backend/migrations` and `backend/alembic`) current
 | Revision `20240816_000004_add_entitlements_tables.py` | `backend/migrations/versions/20240816_000004_add_entitlements_tables.py`, `backend/alembic/versions/20240816_000004_add_entitlements_tables.py` |
 | Revision `20240919_000005_enable_postgis_geometry.py` | `backend/migrations/versions/20240919_000005_enable_postgis_geometry.py`, `backend/alembic/versions/20240919_000005_enable_postgis_geometry.py` |
 
-> **Follow-up consideration:** the `backend/alembic/versions` tree additionally contains revisions (`20250105_*` and a branch merge) that are absent from `backend/migrations/versions`, while `backend/migrations` hosts newer 2025–2026 revisions that are missing from the alembic copy. Consolidating the canonical migration location would eliminate this confusion.
+> **Follow-up consideration:** When running Alembic from the backend root, use `backend/alembic.ini` (now pointing at `backend/migrations`) or `python -m backend.migrations`. Additional duplicate Alembic trees should not be reintroduced.
 
 ### Sample CAD Fixtures and Upload Mirrors
 Multiple copies of identical CAD samples and their derived metadata exist under `.storage/uploads` alongside the canonical fixtures in `samples/` and `backend/tests/samples/`.

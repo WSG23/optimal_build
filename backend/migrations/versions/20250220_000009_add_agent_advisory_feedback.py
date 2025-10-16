@@ -6,7 +6,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20250220_000009"
-down_revision = "0773c87952ef"  # singapore_properties table
+down_revision = "00c02bae771e"  # merge of singapore_properties + imports updates
 branch_labels = None
 depends_on = None
 

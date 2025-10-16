@@ -7,6 +7,7 @@ Create Date: 2025-01-05 00:00:07
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy import inspect
 
 # revision identifiers, used by Alembic.
 revision = "20250105_000007"
@@ -22,4 +23,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_column("imports", "zone_code")
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    column_names = {column["name"] for column in inspector.get_columns("imports")}
+    if "zone_code" in column_names:
+        with op.batch_alter_table("imports") as batch_op:
+            batch_op.drop_column("zone_code")
