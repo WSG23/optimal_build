@@ -1,0 +1,40 @@
+name: Duplicate File Audit
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  duplicate-scan:
+    name: Scan Repository For Duplicate Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate duplicate report
+        run: |
+          python scripts/find_duplicate_files.py --ignore-dir .storage --json > duplicate_scan.json
+
+      - name: Upload duplicate report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: duplicate-scan
+          path: duplicate_scan.json
+
+      - name: Fail if duplicates remain
+        run: |
+          python scripts/find_duplicate_files.py --ignore-dir .storage --fail-on-duplicates
