@@ -42,3 +42,10 @@ Multiple copies of identical CAD samples and their derived metadata exist under 
 - Run `python scripts/find_duplicate_files.py --json` for a machine-readable summary.
 - Append `--ignore-dir <name>` to skip additional directories (for example, CI artefacts) without editing the script.
 - Adjust `--min-size` when you need to include empty placeholder files in the scan.
+- Pass `--max-groups <n>` to stop scanning after *n* duplicate hashes, or `--fail-on-duplicates` to exit with a non-zero status when duplicates are detected.
+
+## Automation
+- `.github/workflows/duplicate-scan.yml` runs automatically on every push to `main`, every Monday at 06:00 UTC, and whenever triggered manually from the Actions tab.
+- Each run uploads `duplicate_scan.json` as an artifact and uses `--fail-on-duplicates` to ensure new duplicate hashes break the build.
+- The workflow skips `.storage` artefacts so the focus stays on repository-managed files.
+- The latest local baseline JSON (generated via `python scripts/find_duplicate_files.py --ignore-dir .storage --json`) lives at `docs/duplicate_scan_baseline.json`.
