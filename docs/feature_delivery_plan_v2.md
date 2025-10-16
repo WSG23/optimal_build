@@ -348,12 +348,12 @@
 
 ---
 
-## 📋 PHASE 2: DEVELOPER FOUNDATION (5% Complete)
+## 📋 PHASE 2: DEVELOPER FOUNDATION (10% Complete)
 
 **Goal:** Complete all 9 Developer tools so developers can manage full project lifecycle
 
-### Phase 2A: Universal GPS Site Acquisition ⚠️ 15% STARTED
-**Status:** Backend exists, developer UI scaffolded (scenario selector + checklists live); checklist + condition report flows re-validated locally (Oct 14, 2025) with PDF fallback confirmed
+### Phase 2A: Universal GPS Site Acquisition ⚠️ 20% STARTED
+**Status:** Backend exists, developer UI scaffolded (scenario selector + checklists live); condition-report export documented + covered by API tests (Oct 16, 2025); checklist + condition report flows re-validated locally (Oct 14-16, 2025) with PDF fallback confirmed and legacy route now reuses AppShell workspace switcher
 
 **Requirements (from FEATURES.md lines 86-96):**
 - Mobile property capture (GPS-enabled)
@@ -364,16 +364,16 @@
 **What Exists:**
 - ✅ GPS logging backend
 - ✅ Quick analysis scenarios
-- ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint)
-- ✅ Feasibility signals surfaced in developer UI (Oct 14 2025) with deep link to `/feasibility`
+- ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint) with docs + tests (Oct 16 2025)
+- ✅ Feasibility signals surfaced in developer UI (Oct 14 2025) with deep link to developer workspace (legacy + `/app/asset-feasibility`)
 
 **What's Missing:**
-- ✅ Developer-specific UI (scenario focus controls, property overview cards, developer tone completed Oct 14 2025)
-- ✅ Scenario selector frontend (developer scenarios available in UI)
-- ✅ Due diligence checklist system (seeded data + developer checklist UI)
-- ✅ Property condition assessment insights (heuristic engine + UI wiring; advanced tooling pending)
-- ✅ Multi-scenario comparison (scenario metrics + notes rendered in UI)
-- ✅ Manual inspection capture (developers can override condition assessments with inspection data)
+- ⏳ Developer-specific UI polish for scenario focus controls + property overview cards (baseline delivered Oct 14 2025, needs usability pass)
+- ⏳ Scenario selector frontend enhancements (history modal, comparison table)
+- ❌ Due diligence checklist authoring + bulk import tooling
+- ❌ Property condition assessment insights beyond heuristics (tie-in to specialist assessments)
+- ❌ Multi-scenario comparison dashboard (side-by-side scorecards, PDF parity)
+- ❌ Manual inspection capture (developers can override condition assessments with inspection data)
 
 **Acceptance Criteria:**
 - Developer captures site with enhanced property details

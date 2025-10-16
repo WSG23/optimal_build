@@ -958,8 +958,10 @@ Return the full developer inspection report for a captured property. Supports JS
 **Example – JSON report**
 ```bash
 PROPERTY_ID="a2c7df09-2ed7-4f8f-8c4d-2e8d2f2f3b1d"
+# Optional: include Authorization header if your environment enforces JWT
 curl -X GET "http://localhost:9400/api/v1/developers/properties/${PROPERTY_ID}/condition-assessment/report" \
-  -H "X-Role: admin"
+  -H "X-Role: admin" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **Response:** `200 OK`
@@ -1017,6 +1019,7 @@ curl -X GET "http://localhost:9400/api/v1/developers/properties/${PROPERTY_ID}/c
 ```bash
 curl -X GET "http://localhost:9400/api/v1/developers/properties/${PROPERTY_ID}/condition-assessment/report?format=pdf" \
   -H "X-Role: admin" \
+  -H "Authorization: Bearer $TOKEN" \
   -o condition-report.pdf
 ```
 
@@ -1026,6 +1029,10 @@ Content-Type: application/pdf
 Content-Disposition: attachment; filename="condition-report-${PROPERTY_ID}.pdf"
 %PDF-1.4 …binary content…
 ```
+
+**Error responses**
+- `404 Not Found` – the property does not exist or is not accessible to the caller
+- `503 Service Unavailable` – PDF renderer is unavailable (JSON export continues to work)
 
 ---
 

@@ -2378,6 +2378,68 @@ export function SiteAcquisitionPage() {
                   Highlights derived from quick analysis. Prioritise these before handing
                   off to the feasibility team.
                 </p>
+                {capturedProperty && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleReportExport('json')}
+                      disabled={isExportingReport}
+                      style={{
+                        border: '1px solid #0f172a',
+                        background: '#0f172a',
+                        color: '#fff',
+                        borderRadius: '9999px',
+                        padding: '0.45rem 0.95rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        cursor: isExportingReport ? 'not-allowed' : 'pointer',
+                        transition: 'background 0.2s ease, color 0.2s ease',
+                      }}
+                    >
+                      {isExportingReport ? 'Preparing JSON…' : 'Download JSON'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleReportExport('pdf')}
+                      disabled={isExportingReport}
+                      style={{
+                        border: '1px solid #0f172a',
+                        background: 'transparent',
+                        color: '#0f172a',
+                        borderRadius: '9999px',
+                        padding: '0.45rem 0.95rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        cursor: isExportingReport ? 'not-allowed' : 'pointer',
+                        transition: 'background 0.2s ease, color 0.2s ease',
+                      }}
+                    >
+                      {isExportingReport ? 'Preparing PDF…' : 'Download PDF'}
+                    </button>
+                    {reportExportMessage && (
+                      <span
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 500,
+                          color: reportExportMessage
+                            .toLowerCase()
+                            .includes('unable')
+                            ? '#c53030'
+                            : '#15803d',
+                        }}
+                      >
+                        {reportExportMessage}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div
                   style={{
                     display: 'grid',
@@ -3535,19 +3597,6 @@ export function SiteAcquisitionPage() {
                   )}
                 </div>
               </div>
-              {reportExportMessage && (
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '0.85rem',
-                    color: reportExportMessage.toLowerCase().includes('unable')
-                      ? '#c53030'
-                      : '#15803d',
-                  }}
-                >
-                  {reportExportMessage}
-                </p>
-              )}
               {scenarioAssessmentsError ? (
                 <p
                   style={{
