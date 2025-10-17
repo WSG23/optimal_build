@@ -1177,6 +1177,209 @@ export function SiteAcquisitionPage() {
   const nearestBusStop =
     capturedProperty?.nearbyAmenities?.busStops?.[0] ?? null
 
+  const propertyOverviewCards = useMemo(() => {
+    if (!capturedProperty) {
+      return []
+    }
+
+    const info = propertyInfoSummary
+    const zoning = zoningSummary
+
+    const formatArea = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      const precision = value >= 1000 ? 0 : 2
+      return `${formatNumberMetric(value, { maximumFractionDigits: precision })} sqm`
+    }
+
+    const formatHeight = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      return `${formatNumberMetric(value, { maximumFractionDigits: 1 })} m`
+    }
+
+    const formatPlotRatio = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      return formatNumberMetric(value, { maximumFractionDigits: 2 })
+    }
+
+    const formatSiteCoverage = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      let percent = value
+      if (percent <= 1) {
+        percent = percent * 100
+      }
+      return `${formatNumberMetric(percent, {
+        maximumFractionDigits: percent >= 100 ? 0 : 1,
+      })}%`
+    }
+
+    const formatDistance = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      if (value >= 1000) {
+        return `${formatNumberMetric(value / 1000, {
+          maximumFractionDigits: 1,
+        })} km`
+      }
+      return `${formatNumberMetric(value, { maximumFractionDigits: 0 })} m`
+    }
+
+    const formatDate = (value: string | null | undefined) => {
+      if (!value) {
+        return '—'
+      }
+      const parsed = new Date(value)
+      if (Number.isNaN(parsed.getTime())) {
+        return value
+      }
+      return new Intl.DateTimeFormat('en-SG', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(parsed)
+    }
+
+    const cards: Array<{
+      title: string
+      subtitle?: string | null
+      items: Array<{ label: string; value: string }>
+      tags?: string[]
+      note?: string | null
+    }> = []
+
+    cards.push({
+      title: 'Location & tenure',
+      items: [
+        {
+          label: 'Address',
+          value: capturedProperty.address.fullAddress || '—',
+        },
+        {
+          label: 'District',
+          value: capturedProperty.address.district || '—',
+        },
+        {
+          label: 'Tenure',
+          value: info?.tenure ?? '—',
+        },
+        {
+          label: 'Completion year',
+          value: info?.completionYear
+            ? formatNumberMetric(info.completionYear, {
+                maximumFractionDigits: 0,
+              })
+            : '—',
+        },
+      ],
+    })
+
+    cards.push({
+      title: 'Site metrics',
+      items: [
+        { label: 'Site area', value: formatArea(info?.siteAreaSqm) },
+        { label: 'Approved GFA', value: formatArea(info?.gfaApproved) },
+        { label: 'Building height', value: formatHeight(info?.buildingHeight) },
+        {
+          label: 'Plot ratio',
+          value: formatPlotRatio(zoning?.plotRatio),
+        },
+      ],
+    })
+
+    cards.push({
+      title: 'Zoning & planning',
+      subtitle:
+        zoning?.zoneDescription ??
+        zoning?.zoneCode ??
+        'Zoning details unavailable',
+      items: [
+        {
+          label: 'Building height limit',
+          value: formatHeight(zoning?.buildingHeightLimit),
+        },
+        {
+          label: 'Site coverage',
+          value:
+            zoning?.siteCoverage !== null && zoning?.siteCoverage !== undefined
+              ? formatSiteCoverage(zoning.siteCoverage)
+              : '—',
+        },
+        {
+          label: 'Special conditions',
+          value: zoning?.specialConditions ?? '—',
+        },
+      ],
+      tags: zoning?.useGroups ?? [],
+    })
+
+    cards.push({
+      title: 'Market & connectivity',
+      items: [
+        {
+          label: 'Existing use',
+          value:
+            capturedProperty.existingUse && capturedProperty.existingUse.trim()
+              ? capturedProperty.existingUse
+              : '—',
+        },
+        {
+          label: 'Last transaction',
+          value:
+            info?.lastTransactionDate || info?.lastTransactionPrice
+              ? [
+                  formatDate(info?.lastTransactionDate),
+                  info?.lastTransactionPrice
+                    ? formatCurrency(info.lastTransactionPrice)
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              : '—',
+        },
+        {
+          label: 'Nearest MRT',
+          value: nearestMrtStation
+            ? `${nearestMrtStation.name} (${formatDistance(
+                nearestMrtStation.distanceM,
+              )})`
+            : '—',
+        },
+        {
+          label: 'Nearest bus stop',
+          value: nearestBusStop
+            ? `${nearestBusStop.name} (${formatDistance(
+                nearestBusStop.distanceM,
+              )})`
+            : '—',
+        },
+      ],
+      note: `Lat ${formatNumberMetric(
+        capturedProperty.coordinates.latitude,
+        { maximumFractionDigits: 6 },
+      )}, Lon ${formatNumberMetric(capturedProperty.coordinates.longitude, {
+        maximumFractionDigits: 6,
+      })}`,
+    })
+
+    return cards
+  }, [
+    capturedProperty,
+    formatCurrency,
+    formatNumberMetric,
+    propertyInfoSummary,
+    zoningSummary,
+    nearestBusStop,
+    nearestMrtStation,
+  ])
+
   useEffect(() => {
     if (scenarioOverrideEntries.length === 0) {
       if (scenarioComparisonBase !== null) {
@@ -1237,7 +1440,12 @@ export function SiteAcquisitionPage() {
         risks: signals.risks,
       }
     })
-  }, [quickAnalysisScenarios, scenarioLookup, buildFeasibilitySignals])
+  }, [
+    quickAnalysisScenarios,
+    scenarioLookup,
+    buildFeasibilitySignals,
+    formatScenarioLabel,
+  ])
 
   const describeRatingChange = useCallback(
     (current: string, reference: string) => {
@@ -3024,7 +3232,127 @@ export function SiteAcquisitionPage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             }}
           >
-
+            {propertyOverviewCards.map((card, index) => (
+              <article
+                key={`${card.title}-${index}`}
+                style={{
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '16px',
+                  padding: '1.25rem',
+                  background: '#f9fafb',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.9rem',
+                  minHeight: '100%',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                    }}
+                  >
+                    {card.title}
+                  </span>
+                  {card.subtitle && (
+                    <span
+                      style={{
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        color: '#111827',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {card.subtitle}
+                    </span>
+                  )}
+                </div>
+                <dl
+                  style={{
+                    margin: 0,
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                    gap: '0.75rem',
+                  }}
+                >
+                  {card.items.map((item) => (
+                    <div
+                      key={`${card.title}-${item.label}`}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.2rem',
+                      }}
+                    >
+                      <dt
+                        style={{
+                          margin: 0,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          color: '#9ca3af',
+                        }}
+                      >
+                        {item.label}
+                      </dt>
+                      <dd
+                        style={{
+                          margin: 0,
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          color: '#1f2937',
+                        }}
+                      >
+                        {item.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                {card.tags && card.tags.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    {card.tags.map((tag) => (
+                      <span
+                        key={`${card.title}-${tag}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '9999px',
+                          background: '#e0e7ff',
+                          color: '#3730a3',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {card.note && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.75rem',
+                      color: '#6b7280',
+                    }}
+                  >
+                    {card.note}
+                  </p>
+                )}
+              </article>
+            ))}
           </div>
         </section>
       )}

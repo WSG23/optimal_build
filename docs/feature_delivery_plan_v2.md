@@ -368,7 +368,8 @@
 - ✅ Feasibility signals surfaced in developer UI (Oct 14 2025) with deep link to developer workspace (legacy + `/app/asset-feasibility`)
 
 **What's Missing:**
-- ⏳ Developer-specific UI polish for scenario focus controls + property overview cards (baseline delivered Oct 14 2025, needs usability pass)
+- ⏳ Scenario focus controls need usability pass (active/inactive states, shortcuts)
+- ✅ Property overview cards with zoning + site metrics (Oct 18 2025)
 - ⏳ Scenario selector frontend enhancements (history modal, comparison table)
 - ✅ Due diligence checklist authoring + bulk import tooling (Oct 17 2025)
 - ❌ Property condition assessment insights beyond heuristics (tie-in to specialist assessments)
