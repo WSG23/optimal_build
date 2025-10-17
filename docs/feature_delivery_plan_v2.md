@@ -7,7 +7,7 @@
 
 ## 📊 Current Progress Snapshot
 
-> **Last Updated:** 2025-10-13
+> **Last Updated:** 2025-10-17
 >
 > **⚠️ IMPORTANT:** This is the **SINGLE SOURCE OF TRUTH** for project status.
 > All other documents (NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md, etc.) reference this document.
@@ -370,7 +370,7 @@
 **What's Missing:**
 - ⏳ Developer-specific UI polish for scenario focus controls + property overview cards (baseline delivered Oct 14 2025, needs usability pass)
 - ⏳ Scenario selector frontend enhancements (history modal, comparison table)
-- ❌ Due diligence checklist authoring + bulk import tooling
+- ✅ Due diligence checklist authoring + bulk import tooling (Oct 17 2025)
 - ❌ Property condition assessment insights beyond heuristics (tie-in to specialist assessments)
 - ❌ Multi-scenario comparison dashboard (side-by-side scorecards, PDF parity)
 - ❌ Manual inspection capture (developers can override condition assessments with inspection data)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.machinery
+import importlib.util
 import sys
 import uuid
 from collections.abc import AsyncGenerator, Callable, Iterator
@@ -11,10 +12,9 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import Any, cast
+from typing import Any, Optional, Union, cast
 
 import pytest
-
 from backend._sqlalchemy_stub import ensure_sqlalchemy
 from httpx import AsyncClient
 
@@ -62,9 +62,6 @@ if load_optional_package is not None:
     try:
         load_optional_package("fastapi", "fastapi", "FastAPI")
     except ModuleNotFoundError:
-        import importlib.util
-        import sys
-
         fastapi_path = _REPO_ROOT / "fastapi" / "__init__.py"
         if fastapi_path.exists():
             spec = importlib.util.spec_from_file_location("fastapi", fastapi_path)
@@ -112,10 +109,84 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 # isort: on
 
+_MINIMAL_APP_ERROR: Exception | None = None
+
 try:
-    from app.main import app
-except Exception:  # pragma: no cover - fallback when FastAPI stub lacks features
+    from app.main import app  # type: ignore[assignment]
+except (
+    Exception
+):  # pragma: no cover - build a minimal app when full stack is unavailable
     app = None
+    try:
+        from fastapi import FastAPI
+
+        try:
+            from fastapi import responses as fastapi_responses  # type: ignore
+        except ImportError:
+            fastapi_responses = None  # type: ignore[assignment]
+
+        if fastapi_responses is None or not hasattr(fastapi_responses, "JSONResponse"):
+            import json
+            import types
+
+            responses_module = types.ModuleType("fastapi.responses")
+
+            class _Response:
+                def __init__(
+                    self,
+                    content: Optional[Union[bytes, str]] = None,
+                    status_code: int = 200,
+                    headers: Optional[dict[str, str]] = None,
+                    media_type: Optional[str] = None,
+                ) -> None:
+                    self.body = content
+                    self.status_code = status_code
+                    self.headers = headers or {}
+                    self.media_type = media_type or "text/plain"
+
+            class _JSONResponse(_Response):
+                def __init__(
+                    self,
+                    content: object,
+                    status_code: int = 200,
+                    headers: dict[str, str] | None = None,
+                ) -> None:
+                    super().__init__(
+                        json.dumps(content),
+                        status_code=status_code,
+                        headers=headers,
+                        media_type="application/json",
+                    )
+
+            responses_module.Response = _Response  # type: ignore[attr-defined]
+            responses_module.JSONResponse = _JSONResponse  # type: ignore[attr-defined]
+            sys.modules["fastapi.responses"] = responses_module
+
+        module_name = "test_app.api.v1.developers"
+        developers_path = (
+            _REPO_ROOT / "backend" / "app" / "api" / "v1" / "developers.py"
+        )
+        if not developers_path.exists():  # pragma: no cover - repository layout changed
+            raise FileNotFoundError(
+                f"Missing developers API module at {developers_path}"
+            )
+
+        spec = importlib.util.spec_from_file_location(module_name, developers_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(
+                f"Unable to load developers API module from {developers_path}"
+            )
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        developers_router = module.router  # type: ignore[attr-defined]
+    except Exception as import_error:  # pragma: no cover - FastAPI stub missing
+        _MINIMAL_APP_ERROR = import_error
+    else:
+        minimal_app = FastAPI(title="Developer Checklist Test App")
+        minimal_app.include_router(developers_router, prefix="/api/v1")
+        app = minimal_app
+        _MINIMAL_APP_ERROR = None
 from sqlalchemy import Integer, String
 
 # Importing ``app.models`` ensures all model metadata is registered.
@@ -324,7 +395,10 @@ async def app_client(
             yield db_session
 
     if app is None:
-        pytest.skip("FastAPI app is unavailable in the current test environment")
+        reason = "FastAPI app is unavailable in the current test environment"
+        if _MINIMAL_APP_ERROR is not None:
+            reason = f"{reason}: {_MINIMAL_APP_ERROR}"
+        pytest.skip(reason)
 
     app.dependency_overrides[get_session] = _override_get_session
     async with AsyncClient(

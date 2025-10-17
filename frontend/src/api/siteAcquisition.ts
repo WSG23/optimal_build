@@ -9,9 +9,22 @@ import {
   logPropertyByGps,
   buildUrl,
   updateChecklistItem as updateChecklistItemFromAgents,
+  fetchChecklistTemplates as fetchChecklistTemplatesFromAgents,
+  createChecklistTemplate as createChecklistTemplateFromAgents,
+  updateChecklistTemplate as updateChecklistTemplateFromAgents,
+  deleteChecklistTemplate as deleteChecklistTemplateFromAgents,
+  importChecklistTemplates as importChecklistTemplatesFromAgents,
+  OFFLINE_PROPERTY_ID,
+  DEFAULT_SCENARIO_ORDER,
   type ChecklistItem,
   type ChecklistStatus,
   type ChecklistSummary,
+  type ChecklistTemplate as AgentsChecklistTemplate,
+  type ChecklistTemplateDraft as AgentsChecklistTemplateDraft,
+  type ChecklistTemplateUpdate as AgentsChecklistTemplateUpdate,
+  type ChecklistTemplateImportResult as AgentsChecklistTemplateImportResult,
+  type ChecklistCategory,
+  type ChecklistPriority,
   type DevelopmentScenario,
   type GpsCaptureSummary,
   type UpdateChecklistRequest,
@@ -60,6 +73,12 @@ export interface ConditionAssessmentUpsertRequest {
   systems: ConditionSystem[]
   recommendedActions: string[]
 }
+
+export type ChecklistTemplate = AgentsChecklistTemplate
+export type ChecklistTemplateDraft = AgentsChecklistTemplateDraft
+export type ChecklistTemplateUpdate = AgentsChecklistTemplateUpdate
+export type ChecklistTemplateImportResult =
+  AgentsChecklistTemplateImportResult
 
 /**
  * Capture a property for site acquisition with enhanced developer features
@@ -383,6 +402,14 @@ export async function exportConditionReport(
   return { blob, filename }
 }
 
+export {
+  fetchChecklistTemplatesFromAgents as fetchChecklistTemplates,
+  createChecklistTemplateFromAgents as createChecklistTemplate,
+  updateChecklistTemplateFromAgents as updateChecklistTemplate,
+  deleteChecklistTemplateFromAgents as deleteChecklistTemplate,
+  importChecklistTemplatesFromAgents as importChecklistTemplates,
+}
+
 export type {
   ChecklistItem,
   ChecklistStatus,
@@ -395,4 +422,12 @@ export type {
   ConditionAssessmentUpsertRequest,
   ConditionReport,
   ConditionReportChecklistSummary,
+  ChecklistTemplate,
+  ChecklistTemplateDraft,
+  ChecklistTemplateUpdate,
+  ChecklistTemplateImportResult,
+  ChecklistCategory,
+  ChecklistPriority,
 }
+
+export { OFFLINE_PROPERTY_ID, DEFAULT_SCENARIO_ORDER }

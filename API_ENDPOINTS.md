@@ -1036,6 +1036,101 @@ Content-Disposition: attachment; filename="condition-report-${PROPERTY_ID}.pdf"
 
 ---
 
+### Checklist Template Authoring
+
+Authoring endpoints let the developer workspace define scenario-specific due diligence checklists. All endpoints honour the `X-Role`/JWT guards used across the developer API.
+
+#### `GET /api/v1/developers/checklists/templates`
+
+Return all template definitions. Pass `?developmentScenario=raw_land` (or any scenario slug) to filter.
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "9fe3a9b3-4a88-4825-85f4-1a3d3bd3a6ad",
+    "developmentScenario": "raw_land",
+    "category": "title_verification",
+    "itemTitle": "Confirm land ownership and title status",
+    "itemDescription": "Retrieve SLA title extracts and confirm that there are no caveats or encumbrances on the parcel.",
+    "priority": "critical",
+    "typicalDurationDays": 5,
+    "requiresProfessional": true,
+    "professionalType": "Conveyancing lawyer",
+    "displayOrder": 10,
+    "createdAt": "2025-10-17T04:21:33.814932",
+    "updatedAt": "2025-10-17T04:21:33.814932"
+  }
+]
+```
+
+#### `POST /api/v1/developers/checklists/templates`
+
+Create a new template. Body accepts camelCase fields:
+
+```json
+{
+  "developmentScenario": "adaptive_reuse",
+  "category": "environmental_assessment",
+  "itemTitle": "Perform indoor air-quality audit",
+  "itemDescription": "Assess ventilation gaps, mould risk, and remediation scope for prolonged vacancy.",
+  "priority": "high",
+  "typicalDurationDays": 6,
+  "requiresProfessional": true,
+  "professionalType": "Environmental consultant",
+  "displayOrder": 30
+}
+```
+
+**Responses**
+- `201 Created` – returns the persisted template
+- `409 Conflict` – template already exists for the scenario + title combination
+
+#### `PUT /api/v1/developers/checklists/templates/{template_id}`
+
+Update an existing template. All fields are optional; only pass what you need to change.
+
+**Responses**
+- `200 OK` – returns the updated template
+- `404 Not Found` – unknown template id
+- `409 Conflict` – update would duplicate another template in the same scenario
+
+#### `DELETE /api/v1/developers/checklists/templates/{template_id}`
+
+Remove a template. Returns `204 No Content` on success, `404` if the template does not exist.
+
+#### `POST /api/v1/developers/checklists/templates/import`
+
+Bulk create/update templates. Accepts `templates` (array of JSON objects with the same shape as the create endpoint) and `replaceExisting` (boolean). When `replaceExisting` is `true`, any template not present in the payload is removed for scenarios included in the import batch.
+
+```json
+{
+  "replaceExisting": true,
+  "templates": [
+    {
+      "developmentScenario": "heritage_property",
+      "category": "heritage_constraints",
+      "itemTitle": "Coordinate URA conservation requirements",
+      "priority": "critical",
+      "requiresProfessional": true,
+      "professionalType": "Heritage architect",
+      "displayOrder": 10
+    }
+  ]
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "created": 1,
+  "updated": 0,
+  "deleted": 2
+}
+```
+
+---
+
 ## Known Limitations & Future Work
 
 ### Current MVP Limitations

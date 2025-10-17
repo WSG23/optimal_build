@@ -22,6 +22,7 @@ import { MarketingPage } from './app/pages/marketing/MarketingPage'
 import { AdvisoryPage } from './app/pages/advisory/AdvisoryPage'
 import { IntegrationsPage } from './app/pages/integrations/IntegrationsPage'
 import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitionPage'
+import { ChecklistTemplateManager } from './app/pages/site-acquisition/ChecklistTemplateManager'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -89,6 +90,16 @@ const siteAcquisitionElement = (
   </AppShell>
 )
 
+const checklistTemplateManagerElement = (
+  <AppShell
+    activeItem="siteAcquisition"
+    title="Checklist templates"
+    description="Author and import scenario-specific due diligence checklists."
+  >
+    <ChecklistTemplateManager />
+  </AppShell>
+)
+
 const developerFeasibilityElement = (
   <AppShell
     activeItem="assetFeasibility"
@@ -127,6 +138,10 @@ const router = createBrowserRouter([
   {
     path: '/app/site-acquisition',
     element: siteAcquisitionElement,
+  },
+  {
+    path: '/app/site-acquisition/checklist-templates',
+    element: checklistTemplateManagerElement,
   },
   {
     path: '/app/asset-feasibility',

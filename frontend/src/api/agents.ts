@@ -338,7 +338,7 @@ function mapQuickAnalysis(payload: RawQuickAnalysis): QuickAnalysisSummary {
   }
 }
 
-const OFFLINE_PROPERTY_ID = 'offline-property'
+export const OFFLINE_PROPERTY_ID = 'offline-property'
 const OFFLINE_MARKET_WARNING =
   'Using offline market intelligence preview. Backend data unavailable.'
 const OFFLINE_PACK_WARNING =
@@ -916,6 +916,51 @@ export interface UpdateChecklistRequest {
   completedAt?: string
 }
 
+export interface ChecklistTemplate {
+  id: string
+  developmentScenario: string
+  category: ChecklistCategory
+  itemTitle: string
+  itemDescription?: string | null
+  priority: ChecklistPriority
+  typicalDurationDays?: number | null
+  requiresProfessional: boolean
+  professionalType?: string | null
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChecklistTemplateDraft {
+  developmentScenario: string
+  category: ChecklistCategory
+  itemTitle: string
+  itemDescription?: string | null
+  priority: ChecklistPriority
+  typicalDurationDays?: number | null
+  requiresProfessional?: boolean
+  professionalType?: string | null
+  displayOrder?: number | null
+}
+
+export interface ChecklistTemplateUpdate {
+  developmentScenario?: string
+  category?: ChecklistCategory
+  itemTitle?: string
+  itemDescription?: string | null
+  priority?: ChecklistPriority
+  typicalDurationDays?: number | null
+  requiresProfessional?: boolean
+  professionalType?: string | null
+  displayOrder?: number | null
+}
+
+export interface ChecklistTemplateImportResult {
+  created: number
+  updated: number
+  deleted: number
+}
+
 // ========== Developer Checklist API Functions ==========
 
 export async function fetchPropertyChecklist(
@@ -1069,5 +1114,244 @@ export async function updateChecklistItem(
   } catch (error) {
     console.error('Failed to update checklist item:', error)
     return null
+  }
+}
+
+function mapChecklistTemplateResponse(
+  payload: Record<string, unknown>,
+): ChecklistTemplate {
+  const requiresProfessionalRaw = payload.requiresProfessional
+  const requiresProfessional =
+    typeof requiresProfessionalRaw === 'boolean'
+      ? requiresProfessionalRaw
+      : Boolean(requiresProfessionalRaw)
+
+  const durationValue = payload.typicalDurationDays
+  const typicalDurationNumber =
+    typeof durationValue === 'number'
+      ? durationValue
+      : typeof durationValue === 'string' && durationValue.trim() !== ''
+      ? Number(durationValue)
+      : null
+
+  const displayOrderValue = payload.displayOrder
+  const displayOrderNumber =
+    typeof displayOrderValue === 'number'
+      ? displayOrderValue
+      : typeof displayOrderValue === 'string' && displayOrderValue.trim() !== ''
+      ? Number(displayOrderValue)
+      : null
+
+  return {
+    id: String(payload.id ?? ''),
+    developmentScenario: String(payload.developmentScenario ?? ''),
+    category: String(payload.category ?? '') as ChecklistCategory,
+    itemTitle: String(payload.itemTitle ?? ''),
+    itemDescription:
+      typeof payload.itemDescription === 'string'
+        ? payload.itemDescription
+        : null,
+    priority: String(payload.priority ?? 'medium') as ChecklistPriority,
+    typicalDurationDays:
+      typeof typicalDurationNumber === 'number' &&
+      Number.isFinite(typicalDurationNumber)
+        ? typicalDurationNumber
+        : null,
+    requiresProfessional,
+    professionalType:
+      requiresProfessional &&
+      typeof payload.professionalType === 'string' &&
+      payload.professionalType.trim() !== ''
+        ? payload.professionalType
+        : null,
+    displayOrder:
+      typeof displayOrderNumber === 'number' &&
+      Number.isFinite(displayOrderNumber)
+        ? displayOrderNumber
+        : 0,
+    createdAt: String(payload.createdAt ?? ''),
+    updatedAt: String(payload.updatedAt ?? ''),
+  }
+}
+
+export async function fetchChecklistTemplates(
+  developmentScenario?: string,
+): Promise<ChecklistTemplate[]> {
+  const params = new URLSearchParams()
+  if (developmentScenario && developmentScenario !== 'all') {
+    params.append('developmentScenario', developmentScenario)
+  }
+
+  const query = params.toString()
+  const url = buildUrl(
+    `api/v1/developers/checklists/templates${query ? `?${query}` : ''}`,
+  )
+
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Template fetch failed: ${response.statusText}`)
+    }
+    const data = await response.json()
+    if (!Array.isArray(data)) {
+      return []
+    }
+    return data.map((item: Record<string, unknown>) =>
+      mapChecklistTemplateResponse(item),
+    )
+  } catch (error) {
+    console.error('Failed to fetch checklist templates:', error)
+    return []
+  }
+}
+
+function buildTemplatePayload(
+  template: ChecklistTemplateDraft | ChecklistTemplateUpdate,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {}
+
+  if (Object.prototype.hasOwnProperty.call(template, 'developmentScenario')) {
+    payload.developmentScenario = template.developmentScenario
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'category')) {
+    payload.category = template.category
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'itemTitle')) {
+    payload.itemTitle = template.itemTitle
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'itemDescription')) {
+    payload.itemDescription = template.itemDescription
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'priority')) {
+    payload.priority = template.priority
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'typicalDurationDays')) {
+    const value = template.typicalDurationDays
+    payload.typicalDurationDays =
+      value === null || value === undefined || value === ''
+        ? null
+        : Number(value)
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'requiresProfessional')) {
+    payload.requiresProfessional = Boolean(template.requiresProfessional)
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'professionalType')) {
+    payload.professionalType = template.professionalType
+  }
+  if (Object.prototype.hasOwnProperty.call(template, 'displayOrder')) {
+    const value = template.displayOrder
+    payload.displayOrder =
+      value === null || value === undefined || value === ''
+        ? null
+        : Number(value)
+  }
+
+  return payload
+}
+
+export async function createChecklistTemplate(
+  template: ChecklistTemplateDraft,
+): Promise<ChecklistTemplate | null> {
+  const draftPayload = {
+    ...template,
+    requiresProfessional: template.requiresProfessional ?? false,
+  }
+
+  const response = await fetch(
+    buildUrl('api/v1/developers/checklists/templates'),
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(buildTemplatePayload(draftPayload)),
+    },
+  )
+
+  if (!response.ok) {
+    console.error('Failed to create checklist template:', response.statusText)
+    return null
+  }
+
+  const data = await response.json()
+  return mapChecklistTemplateResponse(data)
+}
+
+export async function updateChecklistTemplate(
+  templateId: string,
+  updates: ChecklistTemplateUpdate,
+): Promise<ChecklistTemplate | null> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/checklists/templates/${templateId}`),
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(buildTemplatePayload(updates)),
+    },
+  )
+
+  if (!response.ok) {
+    console.error('Failed to update checklist template:', response.statusText)
+    return null
+  }
+
+  const data = await response.json()
+  return mapChecklistTemplateResponse(data)
+}
+
+export async function deleteChecklistTemplate(
+  templateId: string,
+): Promise<boolean> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/checklists/templates/${templateId}`),
+    {
+      method: 'DELETE',
+    },
+  )
+
+  if (response.status === 204) {
+    return true
+  }
+
+  if (response.status === 404) {
+    return false
+  }
+
+  console.error('Failed to delete checklist template:', response.statusText)
+  return false
+}
+
+export async function importChecklistTemplates(
+  templates: ChecklistTemplateDraft[],
+  replaceExisting: boolean,
+): Promise<ChecklistTemplateImportResult | null> {
+  const response = await fetch(
+    buildUrl('api/v1/developers/checklists/templates/import'),
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        templates: templates.map((template) =>
+          buildTemplatePayload(template),
+        ),
+        replaceExisting,
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    console.error('Failed to import checklist templates:', response.statusText)
+    return null
+  }
+
+  const data = await response.json()
+  return {
+    created: Number(data.created ?? 0),
+    updated: Number(data.updated ?? 0),
+    deleted: Number(data.deleted ?? 0),
   }
 }
