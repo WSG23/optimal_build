@@ -6,6 +6,8 @@ import io
 from uuid import UUID
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import pytest_asyncio
 from app.models.property import (
     DevelopmentAnalysis,
@@ -14,7 +16,6 @@ from app.models.property import (
     PropertyType,
 )
 from app.services.agents.universal_site_pack import UniversalSitePackGenerator
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture
