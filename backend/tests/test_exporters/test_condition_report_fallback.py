@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 import pytest
+
 from app.api.v1.developers import (
     ChecklistProgressResponse,
     ConditionAssessmentResponse,

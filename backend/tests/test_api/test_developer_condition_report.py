@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.developer_condition_service import (
@@ -12,8 +15,6 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from httpx import AsyncClient
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 @pytest.mark.asyncio

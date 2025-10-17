@@ -3,12 +3,13 @@ from __future__ import annotations
 import uuid
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
 )
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 @pytest.mark.asyncio

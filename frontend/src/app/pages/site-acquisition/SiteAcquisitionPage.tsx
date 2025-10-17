@@ -988,7 +988,6 @@ export function SiteAcquisitionPage() {
     },
     [scenarioLookup],
   )
-  const scenarioComparisonVisible = scenarioComparisonTableRows.length > 0
   const scenarioComparisonRef = useRef<HTMLDivElement | null>(null)
   const formatNumberMetric = useCallback(
     (value: number | null | undefined, options?: Intl.NumberFormatOptions) => {
@@ -1107,45 +1106,6 @@ export function SiteAcquisitionPage() {
       timeStyle: 'short',
     }).format(parsed)
   }, [])
-  const activeScenarioSummary = useMemo(() => {
-    const targetKey: ScenarioComparisonKey =
-      activeScenario === 'all' ? 'all' : (activeScenario as DevelopmentScenario)
-    const row = scenarioComparisonData.find((entry) => entry.key === targetKey)
-    if (!row) {
-      const scenarioCount = Math.max(scenarioFocusOptions.length - 1, 0)
-      return {
-        label: targetKey === 'all' ? 'All scenarios' : formatScenarioLabel(targetKey),
-        headline:
-          scenarioCount > 0
-            ? `${scenarioCount} tracked scenarios`
-            : 'No scenarios selected yet',
-        detail: null as string | null,
-      }
-    }
-
-    const headline =
-      row.quickHeadline ??
-      (row.conditionRating
-        ? `Condition ${row.conditionRating}${
-            row.conditionScore !== null ? ` · ${row.conditionScore}/100` : ''
-          }`
-        : 'Scenario summary unavailable')
-    const detailMetric = row.quickMetrics[0]
-    const detail = detailMetric
-      ? `${detailMetric.label}: ${detailMetric.value}`
-      : null
-
-    return {
-      label: row.label,
-      headline,
-      detail,
-    }
-  }, [
-    activeScenario,
-    scenarioComparisonData,
-    scenarioFocusOptions.length,
-    formatScenarioLabel,
-  ])
   const handleScenarioComparisonScroll = useCallback(() => {
     scenarioComparisonRef.current?.scrollIntoView({
       behavior: 'smooth',
@@ -1502,6 +1462,155 @@ export function SiteAcquisitionPage() {
       (assessment) => assessment.scenario !== baseScenarioAssessment.scenario,
     )
   }, [scenarioOverrideEntries, baseScenarioAssessment])
+  const scenarioComparisonData = useMemo<ScenarioComparisonDatum[]>(() => {
+    const scenarioOrder = new Map(
+      DEFAULT_SCENARIO_ORDER.map((scenario, index) => [scenario, index]),
+    )
+    const keys = new Set<ScenarioComparisonKey>()
+    keys.add('all')
+    quickAnalysisScenarios.forEach((scenario) => {
+      if (typeof scenario.scenario === 'string') {
+        keys.add(scenario.scenario as DevelopmentScenario)
+      }
+    })
+    Object.keys(scenarioChecklistProgress).forEach((scenario) => {
+      keys.add(scenario as DevelopmentScenario)
+    })
+    scenarioAssessments.forEach((assessment) => {
+      if (assessment.scenario) {
+        keys.add(assessment.scenario)
+      }
+    })
+
+    const sorted = Array.from(keys).sort((a, b) => {
+      if (a === 'all') return -1
+      if (b === 'all') return 1
+      return (scenarioOrder.get(a) ?? 999) - (scenarioOrder.get(b) ?? 999)
+    })
+
+    return sorted.map((scenarioKey) => {
+      const isAll = scenarioKey === 'all'
+      const option = !isAll
+        ? scenarioLookup.get(scenarioKey as DevelopmentScenario)
+        : null
+      const label = isAll
+        ? 'All scenarios'
+        : option?.label ?? formatScenarioLabel(scenarioKey as DevelopmentScenario)
+      const icon = isAll ? '🌐' : option?.icon ?? '🏗️'
+
+      let quickHeadline: string | null = null
+      let quickMetrics: ScenarioComparisonMetric[] = []
+      if (isAll) {
+        const scenarioCount = Math.max(sorted.length - 1, 0)
+        quickHeadline = `Aggregate across ${scenarioCount} tracked scenarios.`
+        if (displaySummary) {
+          quickMetrics = [
+            {
+              label: 'Checklist',
+              value: `${displaySummary.completed}/${displaySummary.total}`,
+            },
+            {
+              label: 'Completion',
+              value: `${displaySummary.completionPercentage}%`,
+            },
+          ]
+        }
+      } else {
+        const quickEntry = quickAnalysisScenarios.find(
+          (entry) => entry.scenario === scenarioKey,
+        )
+        quickHeadline = quickEntry?.headline ?? null
+        quickMetrics = summariseScenarioMetrics(quickEntry?.metrics ?? {})
+      }
+
+      const checklistEntry = isAll
+        ? displaySummary
+        : scenarioChecklistProgress[scenarioKey as DevelopmentScenario]
+      const checklistCompleted =
+        typeof checklistEntry?.completed === 'number'
+          ? checklistEntry.completed
+          : null
+      const checklistTotal =
+        typeof checklistEntry?.total === 'number' ? checklistEntry.total : null
+      const checklistPercent =
+        checklistCompleted !== null &&
+        checklistTotal &&
+        checklistTotal > 0
+          ? Math.round((checklistCompleted / checklistTotal) * 100)
+          : null
+
+      let conditionEntry: ConditionAssessment | null = null
+      if (isAll) {
+        if (
+          conditionAssessment &&
+          (!conditionAssessment.scenario || conditionAssessment.scenario === 'all')
+        ) {
+          conditionEntry = conditionAssessment
+        }
+      } else {
+        const mapped = scenarioAssessmentsMap.get(
+          scenarioKey as DevelopmentScenario,
+        )
+        if (mapped) {
+          conditionEntry = mapped
+        } else if (conditionAssessment?.scenario === scenarioKey) {
+          conditionEntry = conditionAssessment
+        }
+      }
+
+      const insights = isAll
+        ? combinedConditionInsights
+        : convertAssessmentInsights(conditionEntry)
+      const sortedInsights = [...insights].sort((a, b) => {
+        const rankA = insightSeverityOrder[a.severity]
+        const rankB = insightSeverityOrder[b.severity]
+        if (rankA !== rankB) {
+          return rankA - rankB
+        }
+        return a.title.localeCompare(b.title)
+      })
+      const primaryInsight = sortedInsights[0] ?? null
+
+      const conditionRating = conditionEntry?.overallRating ?? null
+      const conditionScore =
+        typeof conditionEntry?.overallScore === 'number'
+          ? conditionEntry.overallScore
+          : typeof conditionEntry?.overallScore === 'string'
+          ? Number(conditionEntry.overallScore)
+          : null
+      const riskLevel = conditionEntry?.riskLevel ?? null
+      const recommendedAction = isAll
+        ? conditionAssessment?.recommendedActions?.[0] ?? null
+        : conditionEntry?.recommendedActions?.[0] ?? null
+
+      return {
+        key: scenarioKey,
+        label,
+        icon,
+        quickHeadline,
+        quickMetrics,
+        conditionRating,
+        conditionScore,
+        riskLevel,
+        checklistCompleted,
+        checklistTotal,
+        checklistPercent,
+        insights,
+        primaryInsight,
+        recommendedAction,
+      }
+    })
+  }, [
+    quickAnalysisScenarios,
+    scenarioChecklistProgress,
+    scenarioAssessmentsMap,
+    conditionAssessment,
+    combinedConditionInsights,
+    displaySummary,
+    scenarioLookup,
+    summariseScenarioMetrics,
+    convertAssessmentInsights,
+  ])
   useEffect(() => {
     if (!capturedProperty || !capturedProperty.quickAnalysis) {
       setQuickAnalysisHistory([])
@@ -1749,159 +1858,50 @@ export function SiteAcquisitionPage() {
       : backendInsightCount > 0
       ? 'Heuristic insights generated from property data and specialist playbooks.'
       : 'Inspection deltas compared with previous assessments.'
-  const scenarioComparisonData = useMemo<ScenarioComparisonDatum[]>(() => {
-    const scenarioOrder = new Map(
-      DEFAULT_SCENARIO_ORDER.map((scenario, index) => [scenario, index]),
-    )
-    const keys = new Set<ScenarioComparisonKey>()
-    keys.add('all')
-    quickAnalysisScenarios.forEach((scenario) => {
-      if (typeof scenario.scenario === 'string') {
-        keys.add(scenario.scenario as DevelopmentScenario)
-      }
-    })
-    Object.keys(scenarioChecklistProgress).forEach((scenario) => {
-      keys.add(scenario as DevelopmentScenario)
-    })
-    scenarioAssessments.forEach((assessment) => {
-      if (assessment.scenario) {
-        keys.add(assessment.scenario)
-      }
-    })
-
-    const sorted = Array.from(keys).sort((a, b) => {
-      if (a === 'all') return -1
-      if (b === 'all') return 1
-      return (scenarioOrder.get(a) ?? 999) - (scenarioOrder.get(b) ?? 999)
-    })
-
-    return sorted.map((scenarioKey) => {
-      const isAll = scenarioKey === 'all'
-      const option = !isAll
-        ? scenarioLookup.get(scenarioKey as DevelopmentScenario)
-        : null
-      const label = isAll
-        ? 'All scenarios'
-        : option?.label ?? formatScenarioLabel(scenarioKey as DevelopmentScenario)
-      const icon = isAll ? '🌐' : option?.icon ?? '🏗️'
-
-      let quickHeadline: string | null = null
-      let quickMetrics: ScenarioComparisonMetric[] = []
-      if (isAll) {
-        const scenarioCount = Math.max(sorted.length - 1, 0)
-        quickHeadline = `Aggregate across ${scenarioCount} tracked scenarios.`
-        if (displaySummary) {
-          quickMetrics = [
-            {
-              label: 'Checklist',
-              value: `${displaySummary.completed}/${displaySummary.total}`,
-            },
-            {
-              label: 'Completion',
-              value: `${displaySummary.completionPercentage}%`,
-            },
-          ]
-        }
-      } else {
-        const quickEntry = quickAnalysisScenarios.find(
-          (entry) => entry.scenario === scenarioKey,
-        )
-        quickHeadline = quickEntry?.headline ?? null
-        quickMetrics = summariseScenarioMetrics(quickEntry?.metrics ?? {})
-      }
-
-      const checklistEntry = isAll
-        ? displaySummary
-        : scenarioChecklistProgress[scenarioKey as DevelopmentScenario]
-      const checklistCompleted =
-        typeof checklistEntry?.completed === 'number'
-          ? checklistEntry.completed
-          : null
-      const checklistTotal =
-        typeof checklistEntry?.total === 'number' ? checklistEntry.total : null
-      const checklistPercent =
-        checklistCompleted !== null &&
-        checklistTotal &&
-        checklistTotal > 0
-          ? Math.round((checklistCompleted / checklistTotal) * 100)
-          : null
-
-      let conditionEntry: ConditionAssessment | null = null
-      if (isAll) {
-        if (
-          conditionAssessment &&
-          (!conditionAssessment.scenario || conditionAssessment.scenario === 'all')
-        ) {
-          conditionEntry = conditionAssessment
-        }
-      } else {
-        const mapped = scenarioAssessmentsMap.get(
-          scenarioKey as DevelopmentScenario,
-        )
-        if (mapped) {
-          conditionEntry = mapped
-        } else if (conditionAssessment?.scenario === scenarioKey) {
-          conditionEntry = conditionAssessment
-        }
-      }
-
-      const insights = isAll
-        ? combinedConditionInsights
-        : convertAssessmentInsights(conditionEntry)
-      const sortedInsights = [...insights].sort((a, b) => {
-        const rankA = insightSeverityOrder[a.severity]
-        const rankB = insightSeverityOrder[b.severity]
-        if (rankA !== rankB) {
-          return rankA - rankB
-        }
-        return a.title.localeCompare(b.title)
-      })
-      const primaryInsight = sortedInsights[0] ?? null
-
-      const conditionRating = conditionEntry?.overallRating ?? null
-      const conditionScore =
-        typeof conditionEntry?.overallScore === 'number'
-          ? conditionEntry.overallScore
-          : typeof conditionEntry?.overallScore === 'string'
-          ? Number(conditionEntry.overallScore)
-          : null
-      const riskLevel = conditionEntry?.riskLevel ?? null
-      const recommendedAction = isAll
-        ? conditionAssessment?.recommendedActions?.[0] ?? null
-        : conditionEntry?.recommendedActions?.[0] ?? null
-
-      return {
-        key: scenarioKey,
-        label,
-        icon,
-        quickHeadline,
-        quickMetrics,
-        conditionRating,
-        conditionScore,
-        riskLevel,
-        checklistCompleted,
-        checklistTotal,
-        checklistPercent,
-        insights,
-        primaryInsight,
-        recommendedAction,
-      }
-    })
-  }, [
-    quickAnalysisScenarios,
-    scenarioChecklistProgress,
-    scenarioAssessmentsMap,
-    conditionAssessment,
-    combinedConditionInsights,
-    displaySummary,
-    scenarioLookup,
-    summariseScenarioMetrics,
-    convertAssessmentInsights,
-  ])
   const scenarioComparisonTableRows = useMemo(
     () => scenarioComparisonData.filter((row) => row.key !== 'all'),
     [scenarioComparisonData],
   )
+  const scenarioComparisonVisible = scenarioComparisonTableRows.length > 0
+  const activeScenarioSummary = useMemo(() => {
+    const targetKey: ScenarioComparisonKey =
+      activeScenario === 'all' ? 'all' : (activeScenario as DevelopmentScenario)
+    const row = scenarioComparisonData.find((entry) => entry.key === targetKey)
+    if (!row) {
+      const scenarioCount = Math.max(scenarioFocusOptions.length - 1, 0)
+      return {
+        label: targetKey === 'all' ? 'All scenarios' : formatScenarioLabel(targetKey),
+        headline:
+          scenarioCount > 0
+            ? `${scenarioCount} tracked scenarios`
+            : 'No scenarios selected yet',
+        detail: null as string | null,
+      }
+    }
+
+    const headline =
+      row.quickHeadline ??
+      (row.conditionRating
+        ? `Condition ${row.conditionRating}${
+            row.conditionScore !== null ? ` · ${row.conditionScore}/100` : ''
+          }`
+        : 'Scenario summary unavailable')
+    const detailMetric = row.quickMetrics[0]
+    const detail = detailMetric
+      ? `${detailMetric.label}: ${detailMetric.value}`
+      : null
+
+    return {
+      label: row.label,
+      headline,
+      detail,
+    }
+  }, [
+    activeScenario,
+    scenarioComparisonData,
+    scenarioFocusOptions.length,
+    formatScenarioLabel,
+  ])
   const recommendedActionDiff = useMemo(() => {
     if (!latestAssessmentEntry || !previousAssessmentEntry) {
       return { newActions: [], clearedActions: [] }
