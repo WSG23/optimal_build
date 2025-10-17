@@ -366,12 +366,12 @@
 - ✅ Quick analysis scenarios
 - ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint) with docs + tests (Oct 16 2025)
 - ✅ Feasibility signals surfaced in developer UI (Oct 14 2025) with deep link to developer workspace (legacy + `/app/asset-feasibility`)
-
-**What's Missing:**
+- ✅ Scenario selector enhancements (history modal + comparison table quick access) (Oct 18 2025)
 - ✅ Scenario focus controls now surface per-scenario progress + quick actions (Oct 18 2025)
 - ✅ Property overview cards with zoning + site metrics (Oct 18 2025)
-- ⏳ Scenario selector frontend enhancements (history modal, comparison table)
 - ✅ Due diligence checklist authoring + bulk import tooling (Oct 17 2025)
+
+**What's Missing:**
 - ❌ Property condition assessment insights beyond heuristics (tie-in to specialist assessments)
 - ❌ Multi-scenario comparison dashboard (side-by-side scorecards, PDF parity)
 - ❌ Manual inspection capture (developers can override condition assessments with inspection data)
