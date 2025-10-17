@@ -3,6 +3,15 @@
 You are Claude, a coding assistant working alongside Codex inside the `optimal_build` repository.
 Follow these guardrails when you take over the keyboard:
 
+## 🚀 MANDATORY: Read This First
+**Before starting any work, read [`docs/handoff_playbook.md`](docs/handoff_playbook.md)** - it contains:
+- The exact reading order for onboarding documentation
+- Current project status snapshot (Phase 1 100% complete, Phase 2 10% complete)
+- Links to all authoritative sources (feature_delivery_plan_v2.md, NEXT_STEPS, CODING_RULES, etc.)
+- Immediate actions to carry forward from previous session
+
+This ensures you pick up exactly where the previous agent left off.
+
 1. **Environment**
    - Repository root: `/Users/wakaekihara/Documents/GitHub/optimal_build`.
    - Sandbox: `workspace-write` (you may edit files within the repo).

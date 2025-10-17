@@ -37,6 +37,7 @@
 - Always run `make format` followed by `make verify` before presenting changes.
 - Apply every rule in `CODING_RULES.md`; document temporary exceptions in `.coding-rules-exceptions.yml`.
 - Provide explicit backend/frontend test commands and manual walkthrough steps with every delivery (see the mandatory testing checklist in `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`).
+- **Note:** Pre-commit hooks automatically enforce `make format` and `make verify` checks when you commit. If hooks fail, fix violations before bypassing with `--no-verify`.
 
 ## When You Finish Work
 - Update `docs/feature_delivery_plan_v2.md` immediately—snapshot, detailed phase section, and any dependency notes.

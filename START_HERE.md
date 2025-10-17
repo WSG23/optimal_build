@@ -62,4 +62,18 @@ See `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` section "MANDATORY TESTING
 
 ---
 
+## 🔄 Session Handoff
+
+**Returning to work or starting a new session?**
+
+Read [`docs/handoff_playbook.md`](docs/handoff_playbook.md) for:
+- Quick project status snapshot (updated 2025-10-17)
+- Immediate actions to carry forward
+- Phase 2 build targets and priorities
+- Workflow guardrails and quality gates
+
+This ensures continuity between sessions and alignment with previous work.
+
+---
+
 **Ready to start? Go read `docs/feature_delivery_plan_v2.md` first!** 📊
