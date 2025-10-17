@@ -885,6 +885,20 @@ export function SiteAcquisitionPage() {
       >,
     [scenarioFilterOptions],
   )
+  const scenarioChecklistProgress = useMemo(() => {
+    const progress: Record<string, { total: number; completed: number }> = {}
+    checklistItems.forEach((item) => {
+      const key = item.developmentScenario
+      if (!progress[key]) {
+        progress[key] = { total: 0, completed: 0 }
+      }
+      progress[key].total += 1
+      if (item.status === 'completed') {
+        progress[key].completed += 1
+      }
+    })
+    return progress
+  }, [checklistItems])
   const formatScenarioLabel = useCallback(
     (scenario: ConditionAssessment['scenario']) => {
       if (!scenario || (typeof scenario === 'string' && scenario === 'all')) {
@@ -3486,12 +3500,24 @@ export function SiteAcquisitionPage() {
                   : option?.label ?? formatScenarioLabel(scenarioKey)
               const icon = scenarioKey === 'all' ? '🌐' : option?.icon ?? '🏗️'
               const isActive = activeScenario === scenarioKey
+              const progressStats =
+                scenarioKey === 'all'
+                  ? displaySummary
+                  : scenarioChecklistProgress[scenarioKey]
+              const progressLabel = progressStats
+                ? `${progressStats.completed}/${progressStats.total || 0}`
+                : null
+              const progressPercent =
+                progressStats && progressStats.total > 0
+                  ? Math.round((progressStats.completed / progressStats.total) * 100)
+                  : null
 
               return (
                 <button
                   key={scenarioKey}
                   type="button"
                   onClick={() => setActiveScenario(scenarioKey)}
+                  aria-pressed={isActive}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -3509,6 +3535,31 @@ export function SiteAcquisitionPage() {
                 >
                   <span style={{ fontSize: '1.2rem' }}>{icon}</span>
                   <span>{label}</span>
+                  {progressLabel && (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '2.5rem',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '9999px',
+                        background: isActive ? '#1d4ed8' : '#e5e7eb',
+                        color: isActive ? 'white' : '#1f2937',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}
+                      title={
+                        progressPercent !== null
+                          ? `${progressStats?.completed ?? 0} of ${
+                              progressStats?.total ?? 0
+                            } items completed (${progressPercent}%)`
+                          : undefined
+                      }
+                    >
+                      {progressLabel}
+                    </span>
+                  )}
                 </button>
               )
             })}
