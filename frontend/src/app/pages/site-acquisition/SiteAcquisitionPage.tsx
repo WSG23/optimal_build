@@ -72,6 +72,7 @@ type QuickAnalysisSnapshot = {
   propertyId: string
   generatedAt: string
   scenarios: SiteAcquisitionResult['quickAnalysis']['scenarios']
+  comparison: ScenarioComparisonDatum[]
 }
 
 const QUICK_ANALYSIS_HISTORY_LIMIT = 5
@@ -408,6 +409,30 @@ type ConditionAssessmentDraft = {
   recommendedActionsText: string
 }
 
+type ScenarioComparisonKey = 'all' | DevelopmentScenario
+
+type ScenarioComparisonMetric = {
+  label: string
+  value: string
+}
+
+type ScenarioComparisonDatum = {
+  key: ScenarioComparisonKey
+  label: string
+  icon: string
+  quickHeadline: string | null
+  quickMetrics: ScenarioComparisonMetric[]
+  conditionRating: string | null
+  conditionScore: number | null
+  riskLevel: string | null
+  checklistCompleted: number | null
+  checklistTotal: number | null
+  checklistPercent: number | null
+  insights: ConditionInsightView[]
+  primaryInsight: ConditionInsightView | null
+  recommendedAction: string | null
+}
+
 type QuickAnalysisEntry =
   SiteAcquisitionResult['quickAnalysis']['scenarios'][number]
 
@@ -594,6 +619,11 @@ export function SiteAcquisitionPage() {
     QuickAnalysisSnapshot[]
   >([])
   const [isQuickAnalysisHistoryOpen, setQuickAnalysisHistoryOpen] = useState(false)
+  useEffect(() => {
+    if (quickAnalysisHistory.length === 0 && isQuickAnalysisHistoryOpen) {
+      setQuickAnalysisHistoryOpen(false)
+    }
+  }, [quickAnalysisHistory.length, isQuickAnalysisHistoryOpen])
 
   const scenarioLookup = useMemo(
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
@@ -911,6 +941,40 @@ export function SiteAcquisitionPage() {
     })
     return progress
   }, [checklistItems])
+  const convertAssessmentInsights = useCallback(
+    (assessment: ConditionAssessment | null | undefined): ConditionInsightView[] => {
+      if (!assessment?.insights) {
+        return []
+      }
+      return assessment.insights.map((insight, index) => ({
+        id: insight.id || `assessment-insight-${index}`,
+        severity: normaliseInsightSeverity(insight.severity),
+        title: insight.title,
+        detail: insight.detail,
+        specialist: insight.specialist ?? null,
+      }))
+    },
+    [],
+  )
+  const scenarioAssessmentsMap = useMemo(() => {
+    const map = new Map<DevelopmentScenario, ConditionAssessment>()
+    scenarioAssessments.forEach((assessment) => {
+      if (assessment.scenario) {
+        map.set(assessment.scenario, assessment)
+      }
+    })
+    if (
+      conditionAssessment &&
+      conditionAssessment.scenario &&
+      conditionAssessment.scenario !== 'all'
+    ) {
+      map.set(
+        conditionAssessment.scenario as DevelopmentScenario,
+        conditionAssessment,
+      )
+    }
+    return map
+  }, [scenarioAssessments, conditionAssessment])
   const formatScenarioLabel = useCallback(
     (scenario: ConditionAssessment['scenario']) => {
       if (!scenario || (typeof scenario === 'string' && scenario === 'all')) {
@@ -924,48 +988,7 @@ export function SiteAcquisitionPage() {
     },
     [scenarioLookup],
   )
-  const scenarioComparisonRows = useMemo(() => {
-    if (!capturedProperty || !capturedProperty.quickAnalysis) {
-      return []
-    }
-    return capturedProperty.quickAnalysis.scenarios.map((entry) => {
-      const scenarioKey = entry.scenario as DevelopmentScenario
-      return {
-        key: scenarioKey,
-        label: scenarioLookup.get(scenarioKey)?.label ?? formatScenarioLabel(scenarioKey),
-        headline: entry.headline,
-        metrics: entry.metrics ?? {},
-      }
-    })
-  }, [capturedProperty, scenarioLookup, formatScenarioLabel])
-  const scenarioComparisonMetricKeys = useMemo(() => {
-    if (scenarioComparisonRows.length === 0) {
-      return []
-    }
-    const available = new Set<string>()
-    scenarioComparisonRows.forEach((row) => {
-      Object.entries(row.metrics).forEach(([key, metricValue]) => {
-        if (metricValue !== null && metricValue !== undefined && metricValue !== '') {
-          available.add(key)
-        }
-      })
-    })
-    const keys: string[] = []
-    for (const key of SCENARIO_METRIC_PRIORITY) {
-      if (available.has(key)) {
-        keys.push(key)
-      }
-      if (keys.length >= 4) {
-        break
-      }
-    }
-    if (keys.length === 0) {
-      keys.push(...Array.from(available).slice(0, 3))
-    }
-    return keys
-  }, [scenarioComparisonRows])
-  const scenarioComparisonVisible =
-    scenarioComparisonRows.length > 0 && scenarioComparisonMetricKeys.length > 0
+  const scenarioComparisonVisible = scenarioComparisonTableRows.length > 0
   const scenarioComparisonRef = useRef<HTMLDivElement | null>(null)
   const formatNumberMetric = useCallback(
     (value: number | null | undefined, options?: Intl.NumberFormatOptions) => {
@@ -1085,10 +1108,13 @@ export function SiteAcquisitionPage() {
     }).format(parsed)
   }, [])
   const activeScenarioSummary = useMemo(() => {
-    if (activeScenario === 'all') {
+    const targetKey: ScenarioComparisonKey =
+      activeScenario === 'all' ? 'all' : (activeScenario as DevelopmentScenario)
+    const row = scenarioComparisonData.find((entry) => entry.key === targetKey)
+    if (!row) {
       const scenarioCount = Math.max(scenarioFocusOptions.length - 1, 0)
       return {
-        label: 'All scenarios',
+        label: targetKey === 'all' ? 'All scenarios' : formatScenarioLabel(targetKey),
         headline:
           scenarioCount > 0
             ? `${scenarioCount} tracked scenarios`
@@ -1096,37 +1122,29 @@ export function SiteAcquisitionPage() {
         detail: null as string | null,
       }
     }
-    const scenarioRow = scenarioComparisonRows.find(
-      (row) => row.key === activeScenario,
-    )
-    const label =
-      scenarioRow?.label ??
-      scenarioLookup.get(activeScenario as DevelopmentScenario)?.label ??
-      formatScenarioLabel(activeScenario)
-    const headline = scenarioRow?.headline ?? 'Scenario summary unavailable'
-    const detail =
-      scenarioRow && scenarioComparisonMetricKeys.length > 0
-        ? `${scenarioComparisonMetricKeys[0]
-            .split('_')
-            .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-            .join(' ')}: ${formatScenarioMetricValue(
-            scenarioComparisonMetricKeys[0],
-            scenarioRow.metrics[scenarioComparisonMetricKeys[0]],
-          )}`
-        : null
+
+    const headline =
+      row.quickHeadline ??
+      (row.conditionRating
+        ? `Condition ${row.conditionRating}${
+            row.conditionScore !== null ? ` · ${row.conditionScore}/100` : ''
+          }`
+        : 'Scenario summary unavailable')
+    const detailMetric = row.quickMetrics[0]
+    const detail = detailMetric
+      ? `${detailMetric.label}: ${detailMetric.value}`
+      : null
+
     return {
-      label,
+      label: row.label,
       headline,
       detail,
     }
   }, [
     activeScenario,
-    scenarioComparisonMetricKeys,
-    scenarioComparisonRows,
+    scenarioComparisonData,
     scenarioFocusOptions.length,
-    scenarioLookup,
     formatScenarioLabel,
-    formatScenarioMetricValue,
   ])
   const handleScenarioComparisonScroll = useCallback(() => {
     scenarioComparisonRef.current?.scrollIntoView({
@@ -1135,15 +1153,6 @@ export function SiteAcquisitionPage() {
     })
   }, [])
 
-  const formatPointOfInterest = useCallback((distanceM: number | null) => {
-    if (distanceM === null || distanceM === undefined || Number.isNaN(distanceM)) {
-      return '—'
-    }
-    if (distanceM >= 1000) {
-      return `${formatNumberMetric(distanceM / 1000, { maximumFractionDigits: 2 })} km`
-    }
-    return `${formatNumberMetric(distanceM, { maximumFractionDigits: 0 })} m`
-  }, [formatNumberMetric])
   const buildFeasibilitySignals = useCallback(
     (entry: QuickAnalysisEntry) => {
       const opportunities: string[] = []
@@ -1498,25 +1507,37 @@ export function SiteAcquisitionPage() {
       setQuickAnalysisHistory([])
       return
     }
+    if (scenarioComparisonData.length === 0) {
+      return
+    }
+
+    const comparisonSnapshot = scenarioComparisonData.map((row, index) => ({
+      ...row,
+      quickMetrics: row.quickMetrics.map((metric) => ({ ...metric })),
+      insights: row.insights.map((insight, insightIndex) => ({
+        ...insight,
+        id: insight.id || `snapshot-${index}-${insightIndex}`,
+      })),
+      primaryInsight: row.primaryInsight ? { ...row.primaryInsight } : null,
+    }))
+
     const snapshot: QuickAnalysisSnapshot = {
       propertyId: capturedProperty.propertyId,
       generatedAt: capturedProperty.quickAnalysis.generatedAt,
       scenarios: capturedProperty.quickAnalysis.scenarios,
+      comparison: comparisonSnapshot,
     }
 
-    setQuickAnalysisHistory((prev) => {
-      const filtered = prev.filter(
+    setQuickAnalysisHistory((previous) => {
+      const sameProperty = previous.filter(
         (entry) => entry.propertyId === snapshot.propertyId,
       )
-      if (filtered.length > 0 && filtered[0].generatedAt === snapshot.generatedAt) {
-        return filtered
-      }
-      const deduped = filtered.filter(
+      const withoutTimestamp = sameProperty.filter(
         (entry) => entry.generatedAt !== snapshot.generatedAt,
       )
-      return [snapshot, ...deduped].slice(0, QUICK_ANALYSIS_HISTORY_LIMIT)
+      return [snapshot, ...withoutTimestamp].slice(0, QUICK_ANALYSIS_HISTORY_LIMIT)
     })
-  }, [capturedProperty])
+  }, [capturedProperty, scenarioComparisonData])
   const feasibilitySignals = useMemo(() => {
     if (!quickAnalysisScenarios.length) {
       return []
@@ -1678,13 +1699,14 @@ export function SiteAcquisitionPage() {
           detail = `${entry.name} recorded as ${entry.latest.rating} · ${entry.latest.score}/100.`
         }
         return {
-          id: entry.name,
+          id: `trend-${slugify(entry.name)}`,
           severity,
           title: buildSystemInsightTitle(entry.name, severity, delta),
           detail,
+          specialist: systemSpecialistHint(entry.name),
         }
       })
-      .filter((value): value is SystemTrendInsight => value !== null)
+      .filter((value): value is ConditionInsightView => value !== null)
 
     insights.sort((a, b) => {
       const severityRank = insightSeverityOrder[a.severity] - insightSeverityOrder[b.severity]
@@ -1696,6 +1718,190 @@ export function SiteAcquisitionPage() {
 
     return insights.slice(0, 3)
   }, [systemComparisons])
+  const backendInsightViews = useMemo<ConditionInsightView[]>(() => {
+    if (!conditionAssessment?.insights) {
+      return []
+    }
+    return conditionAssessment.insights.map((insight, index) => ({
+      id: insight.id || `backend-${index}`,
+      severity: normaliseInsightSeverity(insight.severity),
+      title: insight.title,
+      detail: insight.detail,
+      specialist: insight.specialist ?? null,
+    }))
+  }, [conditionAssessment?.insights])
+  const combinedConditionInsights = useMemo<ConditionInsightView[]>(() => {
+    const merged = new Map<string, ConditionInsightView>()
+    backendInsightViews.forEach((insight, index) => {
+      const key = insight.id || `backend-${index}`
+      merged.set(key, { ...insight, id: key })
+    })
+    systemTrendInsights.forEach((insight) => {
+      merged.set(insight.id, insight)
+    })
+    return Array.from(merged.values())
+  }, [backendInsightViews, systemTrendInsights])
+  const backendInsightCount = backendInsightViews.length
+  const trendInsightCount = systemTrendInsights.length
+  const insightSubtitle =
+    backendInsightCount > 0 && trendInsightCount > 0
+      ? 'Heuristic insights combined with inspection deltas.'
+      : backendInsightCount > 0
+      ? 'Heuristic insights generated from property data and specialist playbooks.'
+      : 'Inspection deltas compared with previous assessments.'
+  const scenarioComparisonData = useMemo<ScenarioComparisonDatum[]>(() => {
+    const scenarioOrder = new Map(
+      DEFAULT_SCENARIO_ORDER.map((scenario, index) => [scenario, index]),
+    )
+    const keys = new Set<ScenarioComparisonKey>()
+    keys.add('all')
+    quickAnalysisScenarios.forEach((scenario) => {
+      if (typeof scenario.scenario === 'string') {
+        keys.add(scenario.scenario as DevelopmentScenario)
+      }
+    })
+    Object.keys(scenarioChecklistProgress).forEach((scenario) => {
+      keys.add(scenario as DevelopmentScenario)
+    })
+    scenarioAssessments.forEach((assessment) => {
+      if (assessment.scenario) {
+        keys.add(assessment.scenario)
+      }
+    })
+
+    const sorted = Array.from(keys).sort((a, b) => {
+      if (a === 'all') return -1
+      if (b === 'all') return 1
+      return (scenarioOrder.get(a) ?? 999) - (scenarioOrder.get(b) ?? 999)
+    })
+
+    return sorted.map((scenarioKey) => {
+      const isAll = scenarioKey === 'all'
+      const option = !isAll
+        ? scenarioLookup.get(scenarioKey as DevelopmentScenario)
+        : null
+      const label = isAll
+        ? 'All scenarios'
+        : option?.label ?? formatScenarioLabel(scenarioKey as DevelopmentScenario)
+      const icon = isAll ? '🌐' : option?.icon ?? '🏗️'
+
+      let quickHeadline: string | null = null
+      let quickMetrics: ScenarioComparisonMetric[] = []
+      if (isAll) {
+        const scenarioCount = Math.max(sorted.length - 1, 0)
+        quickHeadline = `Aggregate across ${scenarioCount} tracked scenarios.`
+        if (displaySummary) {
+          quickMetrics = [
+            {
+              label: 'Checklist',
+              value: `${displaySummary.completed}/${displaySummary.total}`,
+            },
+            {
+              label: 'Completion',
+              value: `${displaySummary.completionPercentage}%`,
+            },
+          ]
+        }
+      } else {
+        const quickEntry = quickAnalysisScenarios.find(
+          (entry) => entry.scenario === scenarioKey,
+        )
+        quickHeadline = quickEntry?.headline ?? null
+        quickMetrics = summariseScenarioMetrics(quickEntry?.metrics ?? {})
+      }
+
+      const checklistEntry = isAll
+        ? displaySummary
+        : scenarioChecklistProgress[scenarioKey as DevelopmentScenario]
+      const checklistCompleted =
+        typeof checklistEntry?.completed === 'number'
+          ? checklistEntry.completed
+          : null
+      const checklistTotal =
+        typeof checklistEntry?.total === 'number' ? checklistEntry.total : null
+      const checklistPercent =
+        checklistCompleted !== null &&
+        checklistTotal &&
+        checklistTotal > 0
+          ? Math.round((checklistCompleted / checklistTotal) * 100)
+          : null
+
+      let conditionEntry: ConditionAssessment | null = null
+      if (isAll) {
+        if (
+          conditionAssessment &&
+          (!conditionAssessment.scenario || conditionAssessment.scenario === 'all')
+        ) {
+          conditionEntry = conditionAssessment
+        }
+      } else {
+        const mapped = scenarioAssessmentsMap.get(
+          scenarioKey as DevelopmentScenario,
+        )
+        if (mapped) {
+          conditionEntry = mapped
+        } else if (conditionAssessment?.scenario === scenarioKey) {
+          conditionEntry = conditionAssessment
+        }
+      }
+
+      const insights = isAll
+        ? combinedConditionInsights
+        : convertAssessmentInsights(conditionEntry)
+      const sortedInsights = [...insights].sort((a, b) => {
+        const rankA = insightSeverityOrder[a.severity]
+        const rankB = insightSeverityOrder[b.severity]
+        if (rankA !== rankB) {
+          return rankA - rankB
+        }
+        return a.title.localeCompare(b.title)
+      })
+      const primaryInsight = sortedInsights[0] ?? null
+
+      const conditionRating = conditionEntry?.overallRating ?? null
+      const conditionScore =
+        typeof conditionEntry?.overallScore === 'number'
+          ? conditionEntry.overallScore
+          : typeof conditionEntry?.overallScore === 'string'
+          ? Number(conditionEntry.overallScore)
+          : null
+      const riskLevel = conditionEntry?.riskLevel ?? null
+      const recommendedAction = isAll
+        ? conditionAssessment?.recommendedActions?.[0] ?? null
+        : conditionEntry?.recommendedActions?.[0] ?? null
+
+      return {
+        key: scenarioKey,
+        label,
+        icon,
+        quickHeadline,
+        quickMetrics,
+        conditionRating,
+        conditionScore,
+        riskLevel,
+        checklistCompleted,
+        checklistTotal,
+        checklistPercent,
+        insights,
+        primaryInsight,
+        recommendedAction,
+      }
+    })
+  }, [
+    quickAnalysisScenarios,
+    scenarioChecklistProgress,
+    scenarioAssessmentsMap,
+    conditionAssessment,
+    combinedConditionInsights,
+    displaySummary,
+    scenarioLookup,
+    summariseScenarioMetrics,
+    convertAssessmentInsights,
+  ])
+  const scenarioComparisonTableRows = useMemo(
+    () => scenarioComparisonData.filter((row) => row.key !== 'all'),
+    [scenarioComparisonData],
+  )
   const recommendedActionDiff = useMemo(() => {
     if (!latestAssessmentEntry || !previousAssessmentEntry) {
       return { newActions: [], clearedActions: [] }
@@ -2282,6 +2488,258 @@ export function SiteAcquisitionPage() {
                 Capture one more inspection to unlock comparison view.
               </p>
             </div>
+          ) : scenarioComparisonVisible ? (
+              <div ref={scenarioComparisonRef}>
+                <details
+                  open
+                  style={{
+                    border: '1px solid #e5e5e7',
+                    borderRadius: '14px',
+                    background: 'white',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <summary
+                  style={{
+                    padding: '0.85rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    listStyle: 'none',
+                    outline: 'none',
+                  }}
+                >
+                  Detailed comparison table
+                </summary>
+                <div style={{ borderTop: '1px solid #e5e5e7', overflowX: 'auto' }}>
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      minWidth: '760px',
+                    }}
+                  >
+                    <thead style={{ background: '#ffffff' }}>
+                      <tr>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Scenario
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Quick headline
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Key metrics
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Condition
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Checklist
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Key insight
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Next action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scenarioComparisonTableRows.map((row) => (
+                        <tr key={`comparison-table-${row.key}`}>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              fontWeight: 600,
+                              borderBottom: '1px solid #f4f4f8',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.label}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '220px',
+                            }}
+                          >
+                            {row.quickHeadline ?? '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '220px',
+                            }}
+                          >
+                            {row.quickMetrics.length === 0 ? (
+                              '—'
+                            ) : (
+                              <ul
+                                style={{
+                                  margin: 0,
+                                  paddingLeft: '1.1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.2rem',
+                                }}
+                              >
+                                {row.quickMetrics.map((metric) => (
+                                  <li key={`${row.key}-${metric.label}`}>
+                                    {metric.label}: {metric.value}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.conditionRating ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                <strong>{row.conditionRating}</strong>
+                                <span>
+                                  {row.conditionScore !== null ? `${row.conditionScore}/100` : '—'}{' '}
+                                  {row.riskLevel ? `· ${row.riskLevel} risk` : ''}
+                                </span>
+                              </div>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.checklistCompleted !== null && row.checklistTotal !== null
+                              ? `${row.checklistCompleted}/${row.checklistTotal}` +
+                                (row.checklistPercent !== null ? ` (${row.checklistPercent}%)` : '')
+                              : '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '240px',
+                            }}
+                          >
+                            {row.primaryInsight ? (
+                              <>
+                                <strong>{row.primaryInsight.title}</strong>
+                                <div>{row.primaryInsight.detail}</div>
+                              </>
+                            ) : row.insights.length > 0 ? (
+                              <div>{row.insights[0].title}</div>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '200px',
+                            }}
+                          >
+                            {row.recommendedAction ?? '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+              </div>
           ) : (
             <>
               {comparisonSummary && (
@@ -3567,7 +4025,7 @@ export function SiteAcquisitionPage() {
                       quickAnalysisHistory.length === 0 ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  Quick analysis history
+                  Quick analysis history ({quickAnalysisHistory.length})
                 </button>
                 <button
                   type="button"
@@ -3669,309 +4127,6 @@ export function SiteAcquisitionPage() {
             })}
           </div>
 
-          {scenarioComparisonVisible && (
-            <section
-              ref={scenarioComparisonRef}
-              style={{
-                marginTop: '1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap: '1.25rem',
-                }}
-              >
-                {scenarioComparisonRows.map((row, index) => {
-                  const isActiveScenario =
-                    activeScenario !== 'all'
-                      ? row.key === activeScenario
-                      : index === 0
-                  const isCurrentFocus = activeScenario === row.key
-                  return (
-                    <div
-                      key={`scenario-card-${row.key}`}
-                      style={{
-                        border: `1px solid ${isActiveScenario ? '#1d4ed8' : '#e5e5e7'}`,
-                        borderRadius: '14px',
-                        padding: '1.25rem',
-                        background: isActiveScenario ? '#eff6ff' : 'white',
-                        boxShadow: isActiveScenario
-                          ? '0 10px 25px rgba(37, 99, 235, 0.08)'
-                          : '0 6px 18px rgba(15, 23, 42, 0.06)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.85rem',
-                        minHeight: '100%',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                        }}
-                      >
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                          <span
-                            style={{
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.08em',
-                              color: '#6b7280',
-                            }}
-                          >
-                            Scenario
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '1.05rem',
-                              fontWeight: 700,
-                              color: '#111827',
-                              letterSpacing: '-0.01em',
-                            }}
-                          >
-                            {row.label}
-                          </span>
-                        </div>
-                        {isActiveScenario ? (
-                          <span
-                            style={{
-                              borderRadius: '9999px',
-                              background: '#1d4ed8',
-                              color: 'white',
-                              padding: '0.25rem 0.75rem',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              letterSpacing: '0.05em',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            Focus
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setActiveScenario(row.key)}
-                            style={{
-                              border: '1px solid #1d1d1f',
-                              background: 'white',
-                              color: '#1d1d1f',
-                              borderRadius: '9999px',
-                              padding: '0.3rem 0.75rem',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Focus scenario
-                          </button>
-                        )}
-                      </div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '0.9rem',
-                          color: '#1f2937',
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {row.headline || 'No quick-analysis headline available.'}
-                      </p>
-                      <dl
-                        style={{
-                          margin: 0,
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                          gap: '0.75rem',
-                          fontSize: '0.85rem',
-                          color: '#374151',
-                        }}
-                      >
-                        {scenarioComparisonMetricKeys.map((metricKey) => (
-                          <div
-                            key={`${row.key}-${metricKey}-card`}
-                            style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.15rem',
-                            }}
-                          >
-                            <dt
-                              style={{
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.08em',
-                                color: '#6b7280',
-                              }}
-                            >
-                              {formatMetricLabel(metricKey)}
-                            </dt>
-                            <dd
-                              style={{
-                                margin: 0,
-                                fontSize: '0.92rem',
-                                fontWeight: 600,
-                                color: '#0f172a',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                              }}
-                            >
-                              {formatScenarioMetricValue(metricKey, row.metrics[metricKey])}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                      {!isCurrentFocus && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveScenario(row.key)}
-                          style={{
-                            alignSelf: 'flex-start',
-                            border: 'none',
-                            background: 'transparent',
-                            color: '#1d4ed8',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Set as focus
-                        </button>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-
-              <details
-                open
-                style={{
-                  border: '1px solid #e5e5e7',
-                  borderRadius: '14px',
-                  background: 'white',
-                  overflow: 'hidden',
-                }}
-              >
-                <summary
-                  style={{
-                    padding: '0.85rem 1rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    listStyle: 'none',
-                    outline: 'none',
-                  }}
-                >
-                  Detailed comparison table
-                </summary>
-                <div style={{ borderTop: '1px solid #e5e5e7', overflowX: 'auto' }}>
-                  <table
-                    style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      minWidth: '600px',
-                    }}
-                  >
-                    <thead style={{ background: '#ffffff' }}>
-                      <tr>
-                        <th
-                          style={{
-                            textAlign: 'left',
-                            padding: '0.85rem 1rem',
-                            fontSize: '0.75rem',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: '#6e6e73',
-                            borderBottom: '1px solid #ebebf0',
-                          }}
-                        >
-                          Scenario
-                        </th>
-                        <th
-                          style={{
-                            textAlign: 'left',
-                            padding: '0.85rem 1rem',
-                            fontSize: '0.75rem',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: '#6e6e73',
-                            borderBottom: '1px solid #ebebf0',
-                          }}
-                        >
-                          Headline insight
-                        </th>
-                        {scenarioComparisonMetricKeys.map((metricKey) => (
-                          <th
-                            key={`table-head-${metricKey}`}
-                            style={{
-                              textAlign: 'left',
-                              padding: '0.85rem 1rem',
-                              fontSize: '0.75rem',
-                              letterSpacing: '0.08em',
-                              textTransform: 'uppercase',
-                              color: '#6e6e73',
-                              borderBottom: '1px solid #ebebf0',
-                            }}
-                          >
-                            {formatMetricLabel(metricKey)}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {scenarioComparisonRows.map((row) => (
-                        <tr key={`comparison-table-${row.key}`}>
-                          <td
-                            style={{
-                              padding: '0.85rem 1rem',
-                              fontWeight: 600,
-                              borderBottom: '1px solid #f4f4f8',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {row.label}
-                          </td>
-                          <td
-                            style={{
-                              padding: '0.85rem 1rem',
-                              borderBottom: '1px solid #f4f4f8',
-                              color: '#3a3a3c',
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            {row.headline}
-                          </td>
-                          {scenarioComparisonMetricKeys.map((metricKey) => (
-                            <td
-                              key={`table-${row.key}-${metricKey}`}
-                              style={{
-                                padding: '0.85rem 1rem',
-                                borderBottom: '1px solid #f4f4f8',
-                                color: '#3a3a3c',
-                                fontSize: '0.9rem',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {formatScenarioMetricValue(metricKey, row.metrics[metricKey])}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </details>
-            </section>
-          )}
         </section>
       )}
 
@@ -4437,134 +4592,312 @@ export function SiteAcquisitionPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div
               style={{
-                display: 'flex',
-                gap: '0.75rem',
-                flexWrap: 'wrap',
+                display: 'grid',
+                gap: '1rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               }}
             >
-              {quickAnalysisScenarios.map((scenario) => {
-                const label =
-                  scenarioLookup.get(scenario.scenario)?.label ??
-                  formatCategoryName(scenario.scenario)
+              {scenarioComparisonData.map((row) => {
                 const isActive =
-                  activeScenario === 'all' || scenario.scenario === activeScenario
-                const scenarioKey = scenario.scenario
+                  row.key === 'all'
+                    ? activeScenario === 'all'
+                    : activeScenario === row.key
+                const progressLabel =
+                  row.checklistCompleted !== null && row.checklistTotal !== null
+                    ? `${row.checklistCompleted}/${row.checklistTotal}`
+                    : null
+                const progressPercent = row.checklistPercent ?? null
+                const focusable = row.key !== 'all'
+                const primaryVisuals = row.primaryInsight
+                  ? getSeverityVisuals(row.primaryInsight.severity)
+                  : null
+
                 return (
-                  <div
-                    key={scenario.scenario}
+                  <article
+                    key={row.key}
                     style={{
                       border: `2px solid ${isActive ? '#1d1d1f' : '#e5e5e7'}`,
-                      borderRadius: '12px',
-                      padding: '1.25rem',
-                      flex: '1 1 280px',
+                      borderRadius: '14px',
+                      padding: '1.35rem',
                       background: isActive ? '#ffffff' : '#f5f5f7',
-                      transition: 'border 0.2s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '1rem',
+                      transition: 'border 0.2s ease, background 0.2s ease',
                     }}
                   >
                     <div
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'baseline',
-                        marginBottom: '0.75rem',
+                        alignItems: 'flex-start',
+                        gap: '0.75rem',
+                        flexWrap: 'wrap',
                       }}
                     >
-                      <h3
-                        style={{
-                          margin: 0,
-                          fontSize: '1.0625rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {label}
-                      </h3>
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.6rem',
+                          gap: '0.65rem',
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: '0.8125rem',
-                            fontWeight: 600,
-                            color: '#6e6e73',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {scenario.headline}
-                        </span>
-                        {activeScenario !== scenarioKey && (
+                        <span style={{ fontSize: '1.5rem' }}>{row.icon}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: '#6b7280',
+                            }}
+                          >
+                            {row.key === 'all' ? 'Aggregate' : 'Scenario'}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '1.125rem',
+                              fontWeight: 600,
+                              letterSpacing: '-0.01em',
+                            }}
+                          >
+                            {row.label}
+                          </span>
+                        </div>
+                      </div>
+                      {focusable ? (
+                        isActive ? (
+                          <span
+                            style={{
+                              borderRadius: '9999px',
+                              background: '#1d4ed8',
+                              color: '#ffffff',
+                              padding: '0.25rem 0.75rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Focus
+                          </span>
+                        ) : (
                           <button
                             type="button"
-                            onClick={() =>
-                              setActiveScenario(
-                                scenarioKey as DevelopmentScenario | 'all',
-                              )
-                            }
+                            onClick={() => setActiveScenario(row.key)}
                             style={{
                               border: '1px solid #1d1d1f',
                               background: 'white',
                               color: '#1d1d1f',
                               borderRadius: '9999px',
-                              padding: '0.25rem 0.75rem',
-                              fontSize: '0.75rem',
+                              padding: '0.3rem 0.85rem',
+                              fontSize: '0.78rem',
                               fontWeight: 600,
                               cursor: 'pointer',
                             }}
                           >
-                            Focus
+                            Focus scenario
                           </button>
-                        )}
-                      </div>
+                        )
+                      ) : (
+                        <span
+                          style={{
+                            borderRadius: '9999px',
+                            background: '#e5e7eb',
+                            color: '#374151',
+                            padding: '0.25rem 0.75rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Summary
+                        </span>
+                      )}
                     </div>
-                    <dl
-                      style={{
-                        margin: 0,
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: '0.75rem',
-                        fontSize: '0.875rem',
-                        color: '#3a3a3c',
-                      }}
-                    >
-                      {Object.entries(scenario.metrics).map(([key, value]) => (
-                        <div key={key} style={{ display: 'flex', flexDirection: 'column' }}>
-                          <dt
-                            style={{
-                              fontWeight: 600,
-                              color: '#6e6e73',
-                              marginBottom: '0.15rem',
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            {key.replace(/_/g, ' ')}
-                          </dt>
-                          <dd style={{ margin: 0 }}>{value ?? '—'}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                    {scenario.notes.length > 0 && (
-                      <ul
+
+                    {row.quickHeadline && (
+                      <p
                         style={{
-                          margin: '1rem 0 0',
-                          paddingLeft: '1.1rem',
-                          color: '#3a3a3c',
-                          fontSize: '0.85rem',
-                          lineHeight: 1.4,
+                          margin: 0,
+                          fontSize: '0.92rem',
+                          color: '#374151',
+                          lineHeight: 1.45,
                         }}
                       >
-                        {scenario.notes.map((note) => (
-                          <li key={note}>{note}</li>
+                        {row.quickHeadline}
+                      </p>
+                    )}
+
+                    {row.quickMetrics.length > 0 && (
+                      <ul
+                        style={{
+                          margin: 0,
+                          padding: 0,
+                          listStyle: 'none',
+                          display: 'grid',
+                          gap: '0.45rem',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                        }}
+                      >
+                        {row.quickMetrics.map((metric) => (
+                          <li
+                            key={`${row.key}-${metric.label}`}
+                            style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '0.75rem',
+                                color: '#6b7280',
+                                letterSpacing: '0.06em',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {metric.label}
+                            </span>
+                            <strong style={{ fontSize: '0.95rem', color: '#111827' }}>
+                              {metric.value}
+                            </strong>
+                          </li>
                         ))}
                       </ul>
                     )}
-                  </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gap: '0.75rem',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: '#9ca3af',
+                          }}
+                        >
+                          Condition
+                        </span>
+                        <span style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
+                          {row.conditionRating ? row.conditionRating : '—'}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                          {row.conditionScore !== null
+                            ? `${row.conditionScore}/100`
+                            : '—'}{' '}
+                          {row.riskLevel ? `· ${row.riskLevel} risk` : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: '#9ca3af',
+                          }}
+                        >
+                          Checklist progress
+                        </span>
+                        {progressLabel ? (
+                          <>
+                            <div
+                              style={{
+                                height: '6px',
+                                borderRadius: '9999px',
+                                background: '#e5e7eb',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: `${progressPercent ?? 0}%`,
+                                  height: '100%',
+                                  background: '#1d4ed8',
+                                  transition: 'width 0.3s ease',
+                                }}
+                              />
+                            </div>
+                            <span style={{ fontSize: '0.85rem', color: '#334155' }}>
+                              {progressLabel}
+                              {progressPercent !== null ? ` (${progressPercent}%)` : ''}
+                            </span>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                            No checklist items yet.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {row.primaryInsight && primaryVisuals && (
+                      <div
+                        style={{
+                          border: `1px solid ${primaryVisuals.border}`,
+                          background: primaryVisuals.background,
+                          color: primaryVisuals.text,
+                          borderRadius: '12px',
+                          padding: '1rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '0.35rem',
+                              height: '0.35rem',
+                              borderRadius: '9999px',
+                              background: primaryVisuals.indicator,
+                            }}
+                          />
+                          {primaryVisuals.label}
+                        </span>
+                        <strong style={{ fontSize: '0.95rem' }}>{row.primaryInsight.title}</strong>
+                        <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
+                          {row.primaryInsight.detail}
+                        </p>
+                        {row.primaryInsight.specialist && (
+                          <span style={{ fontSize: '0.78rem', opacity: 0.85 }}>
+                            Specialist: <strong>{row.primaryInsight.specialist}</strong>
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {row.recommendedAction && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.85rem',
+                          color: '#334155',
+                        }}
+                      >
+                        <strong>Next action:</strong> {row.recommendedAction}
+                      </p>
+                    )}
+                  </article>
                 )
               })}
             </div>
+
 
             {feasibilitySignals.length > 0 && (
               <div
@@ -4997,7 +5330,7 @@ export function SiteAcquisitionPage() {
               </div>
             </div>
 
-            {systemTrendInsights.length > 0 && (
+            {combinedConditionInsights.length > 0 && (
               <div
                 style={{
                   border: '1px solid #e5e5e7',
@@ -5029,7 +5362,7 @@ export function SiteAcquisitionPage() {
                     Condition insights
                   </h3>
                   <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-                    Highlighting the latest system trends since the prior inspection.
+                    {insightSubtitle}
                   </span>
                 </div>
                 <div
@@ -5039,7 +5372,7 @@ export function SiteAcquisitionPage() {
                     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                   }}
                 >
-                  {systemTrendInsights.map((insight) => {
+                  {combinedConditionInsights.map((insight) => {
                     const visuals = getSeverityVisuals(insight.severity)
                     return (
                       <div
@@ -5088,6 +5421,17 @@ export function SiteAcquisitionPage() {
                         >
                           {insight.detail}
                         </p>
+                        {insight.specialist && (
+                          <span
+                            style={{
+                              fontSize: '0.78rem',
+                              color: visuals.text,
+                              opacity: 0.8,
+                            }}
+                          >
+                            Specialist: <strong>{insight.specialist}</strong>
+                          </span>
+                        )}
                       </div>
                     )
                   })}
@@ -6550,19 +6894,21 @@ function safeNumber(value: unknown): number | null {
   return null
 }
 
-type InsightSeverity = 'critical' | 'warning' | 'positive'
+type InsightSeverity = 'critical' | 'warning' | 'positive' | 'info'
 
-type SystemTrendInsight = {
+type ConditionInsightView = {
   id: string
   severity: InsightSeverity
   title: string
   detail: string
+  specialist?: string | null
 }
 
 const insightSeverityOrder: Record<InsightSeverity, number> = {
   critical: 0,
   warning: 1,
-  positive: 2,
+  info: 2,
+  positive: 3,
 }
 
 function classifySystemSeverity(
@@ -6648,6 +6994,37 @@ function formatDeltaValue(delta: number | null): string {
   return '0'
 }
 
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-')
+    || 'insight'
+}
+
+function systemSpecialistHint(name: string): string | null {
+  const lower = name.toLowerCase()
+  if (lower.includes('struct')) {
+    return 'Structural engineer'
+  }
+  if (lower.includes('mechanical') || lower.includes('electrical') || lower.includes('m&e')) {
+    return 'M&E engineer'
+  }
+  if (lower.includes('compliance') || lower.includes('maintenance') || lower.includes('envelope')) {
+    return 'Building surveyor'
+  }
+  return null
+}
+
+function normaliseInsightSeverity(value: string | undefined): InsightSeverity {
+  const severity = (value ?? 'warning').toLowerCase()
+  if (severity === 'critical' || severity === 'warning' || severity === 'positive' || severity === 'info') {
+    return severity as InsightSeverity
+  }
+  return 'warning'
+}
+
 function getSeverityVisuals(
   severity: InsightSeverity | 'neutral',
 ): { background: string; border: string; text: string; indicator: string; label: string } {
@@ -6667,6 +7044,14 @@ function getSeverityVisuals(
         text: '#92400e',
         indicator: '#f97316',
         label: 'Watchlist',
+      }
+    case 'info':
+      return {
+        background: '#eef2ff',
+        border: '#c7d2fe',
+        text: '#312e81',
+        indicator: '#6366f1',
+        label: 'Heads-up',
       }
     case 'positive':
       return {

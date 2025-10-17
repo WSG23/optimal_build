@@ -180,6 +180,16 @@ class ConditionSystemResponse(BaseModel):
     recommended_actions: List[str]
 
 
+class ConditionInsightResponse(BaseModel):
+    """Insight surfaced from condition assessment heuristics."""
+
+    id: str
+    severity: str
+    title: str
+    detail: str
+    specialist: Optional[str] = None
+
+
 class ConditionAssessmentResponse(BaseModel):
     """Developer-friendly property condition assessment."""
 
@@ -193,6 +203,7 @@ class ConditionAssessmentResponse(BaseModel):
     systems: List[ConditionSystemResponse]
     recommended_actions: List[str]
     recorded_at: Optional[str] = None
+    insights: List[ConditionInsightResponse] = Field(default_factory=list)
 
 
 class ConditionSystemRequest(BaseModel):
@@ -701,6 +712,16 @@ def _serialize_condition_assessment(
         systems=[_serialize_condition_system(system) for system in assessment.systems],
         recommended_actions=assessment.recommended_actions,
         recorded_at=recorded_at,
+        insights=[
+            ConditionInsightResponse(
+                id=insight.id,
+                severity=insight.severity,
+                title=insight.title,
+                detail=insight.detail,
+                specialist=insight.specialist,
+            )
+            for insight in assessment.insights
+        ],
     )
 
 

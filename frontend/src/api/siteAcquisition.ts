@@ -50,6 +50,14 @@ export interface ConditionSystem {
   recommendedActions: string[]
 }
 
+export interface ConditionInsight {
+  id: string
+  severity: 'critical' | 'warning' | 'positive' | 'info'
+  title: string
+  detail: string
+  specialist?: string | null
+}
+
 export interface ConditionAssessment {
   propertyId: string
   scenario?: DevelopmentScenario | null
@@ -61,6 +69,7 @@ export interface ConditionAssessment {
   systems: ConditionSystem[]
   recommendedActions: string[]
   recordedAt?: string | null
+  insights: ConditionInsight[]
 }
 
 export interface ConditionAssessmentUpsertRequest {
@@ -79,6 +88,71 @@ export type ChecklistTemplateDraft = AgentsChecklistTemplateDraft
 export type ChecklistTemplateUpdate = AgentsChecklistTemplateUpdate
 export type ChecklistTemplateImportResult =
   AgentsChecklistTemplateImportResult
+
+function mapConditionAssessmentPayload(
+  payload: Record<string, unknown>,
+  fallbackPropertyId: string,
+): ConditionAssessment {
+  const propertyId = String(payload.property_id ?? fallbackPropertyId)
+  const systems = Array.isArray(payload.systems)
+    ? payload.systems.map((system: Record<string, unknown>) => ({
+        name: String(system.name ?? ''),
+        rating: String(system.rating ?? ''),
+        score: Number(system.score ?? 0),
+        notes: String(system.notes ?? ''),
+        recommendedActions: Array.isArray(system.recommended_actions)
+          ? (system.recommended_actions as string[])
+          : [],
+      }))
+    : []
+
+  const insights = Array.isArray(payload.insights)
+    ? payload.insights
+        .map((entry: Record<string, unknown>, index: number): ConditionInsight => {
+          const rawSeverity = String(entry.severity ?? 'warning').toLowerCase()
+          const severity: ConditionInsight['severity'] = (
+            ['critical', 'warning', 'positive', 'info'].includes(rawSeverity)
+              ? rawSeverity
+              : 'warning'
+          ) as ConditionInsight['severity']
+          const specialistValue =
+            typeof entry.specialist === 'string' && entry.specialist.trim() !== ''
+              ? entry.specialist
+              : null
+          return {
+            id: String(entry.id ?? `insight-${index}`),
+            severity,
+            title: String(entry.title ?? 'Condition insight'),
+            detail: String(entry.detail ?? ''),
+            specialist: specialistValue,
+          }
+        })
+        .filter((insight) => insight.detail !== '')
+    : []
+
+  return {
+    propertyId,
+    scenario:
+      typeof payload.scenario === 'string'
+        ? (payload.scenario as DevelopmentScenario)
+        : null,
+    overallScore: Number(payload.overall_score ?? 0),
+    overallRating: String(payload.overall_rating ?? 'C'),
+    riskLevel: String(payload.risk_level ?? 'moderate'),
+    summary: String(payload.summary ?? ''),
+    scenarioContext:
+      typeof payload.scenario_context === 'string'
+        ? payload.scenario_context
+        : null,
+    systems,
+    recommendedActions: Array.isArray(payload.recommended_actions)
+      ? (payload.recommended_actions as string[])
+      : [],
+    recordedAt:
+      typeof payload.recorded_at === 'string' ? payload.recorded_at : null,
+    insights,
+  }
+}
 
 /**
  * Capture a property for site acquisition with enhanced developer features
@@ -158,34 +232,7 @@ export async function fetchConditionAssessment(
   }
 
   const payload = await response.json()
-  return {
-    propertyId: payload.property_id ?? propertyId,
-    scenario:
-      typeof payload.scenario === 'string'
-        ? (payload.scenario as DevelopmentScenario)
-        : null,
-    overallScore: Number(payload.overall_score ?? 0),
-    overallRating: payload.overall_rating ?? 'C',
-    riskLevel: payload.risk_level ?? 'moderate',
-    summary: payload.summary ?? '',
-    scenarioContext: payload.scenario_context ?? null,
-    systems: Array.isArray(payload.systems)
-      ? payload.systems.map((system: Record<string, unknown>) => ({
-          name: String(system.name ?? ''),
-          rating: String(system.rating ?? ''),
-          score: Number(system.score ?? 0),
-          notes: String(system.notes ?? ''),
-          recommendedActions: Array.isArray(system.recommended_actions)
-            ? (system.recommended_actions as string[])
-            : [],
-        }))
-      : [],
-    recommendedActions: Array.isArray(payload.recommended_actions)
-      ? (payload.recommended_actions as string[])
-      : [],
-    recordedAt:
-      typeof payload.recorded_at === 'string' ? payload.recorded_at : null,
-  }
+  return mapConditionAssessmentPayload(payload, propertyId)
 }
 
 export async function saveConditionAssessment(
@@ -209,34 +256,7 @@ export async function saveConditionAssessment(
   }
 
   const data = await response.json()
-  return {
-    propertyId: data.property_id ?? propertyId,
-    scenario:
-      typeof data.scenario === 'string'
-        ? (data.scenario as DevelopmentScenario)
-        : null,
-    overallScore: Number(data.overall_score ?? 0),
-    overallRating: data.overall_rating ?? 'C',
-    riskLevel: data.risk_level ?? 'moderate',
-    summary: data.summary ?? '',
-    scenarioContext: data.scenario_context ?? null,
-    systems: Array.isArray(data.systems)
-      ? data.systems.map((system: Record<string, unknown>) => ({
-          name: String(system.name ?? ''),
-          rating: String(system.rating ?? ''),
-          score: Number(system.score ?? 0),
-          notes: String(system.notes ?? ''),
-          recommendedActions: Array.isArray(system.recommended_actions)
-            ? (system.recommended_actions as string[])
-            : [],
-        }))
-      : [],
-    recommendedActions: Array.isArray(data.recommended_actions)
-      ? (data.recommended_actions as string[])
-      : [],
-    recordedAt:
-      typeof data.recorded_at === 'string' ? data.recorded_at : null,
-  }
+  return mapConditionAssessmentPayload(data, propertyId)
 }
 
 export async function fetchConditionAssessmentHistory(
@@ -268,34 +288,9 @@ export async function fetchConditionAssessmentHistory(
     return []
   }
 
-  return data.map((entry: Record<string, unknown>): ConditionAssessment => ({
-    propertyId: entry.property_id ?? propertyId,
-    scenario:
-      typeof entry.scenario === 'string'
-        ? (entry.scenario as DevelopmentScenario)
-        : null,
-    overallScore: Number(entry.overall_score ?? 0),
-    overallRating: entry.overall_rating ?? 'C',
-    riskLevel: entry.risk_level ?? 'moderate',
-    summary: entry.summary ?? '',
-    scenarioContext: entry.scenario_context ?? null,
-    systems: Array.isArray(entry.systems)
-      ? entry.systems.map((system: Record<string, unknown>) => ({
-          name: String(system.name ?? ''),
-          rating: String(system.rating ?? ''),
-          score: Number(system.score ?? 0),
-          notes: String(system.notes ?? ''),
-          recommendedActions: Array.isArray(system.recommended_actions)
-            ? (system.recommended_actions as string[])
-            : [],
-        }))
-      : [],
-    recommendedActions: Array.isArray(entry.recommended_actions)
-      ? (entry.recommended_actions as string[])
-      : [],
-    recordedAt:
-      typeof entry.recorded_at === 'string' ? entry.recorded_at : null,
-  }))
+  return data.map((entry: Record<string, unknown>) =>
+    mapConditionAssessmentPayload(entry, propertyId),
+  )
 }
 
 export async function fetchScenarioAssessments(
@@ -316,34 +311,9 @@ export async function fetchScenarioAssessments(
     return []
   }
 
-  return data.map((entry: Record<string, unknown>): ConditionAssessment => ({
-    propertyId: entry.property_id ?? propertyId,
-    scenario:
-      typeof entry.scenario === 'string'
-        ? (entry.scenario as DevelopmentScenario)
-        : null,
-    overallScore: Number(entry.overall_score ?? 0),
-    overallRating: entry.overall_rating ?? 'C',
-    riskLevel: entry.risk_level ?? 'moderate',
-    summary: entry.summary ?? '',
-    scenarioContext: entry.scenario_context ?? null,
-    systems: Array.isArray(entry.systems)
-      ? entry.systems.map((system: Record<string, unknown>) => ({
-          name: String(system.name ?? ''),
-          rating: String(system.rating ?? ''),
-          score: Number(system.score ?? 0),
-          notes: String(system.notes ?? ''),
-          recommendedActions: Array.isArray(system.recommended_actions)
-            ? (system.recommended_actions as string[])
-            : [],
-        }))
-      : [],
-    recommendedActions: Array.isArray(entry.recommended_actions)
-      ? (entry.recommended_actions as string[])
-      : [],
-    recordedAt:
-      typeof entry.recorded_at === 'string' ? entry.recorded_at : null,
-  }))
+  return data.map((entry: Record<string, unknown>) =>
+    mapConditionAssessmentPayload(entry, propertyId),
+  )
 }
 
 export interface ConditionReportChecklistSummary {

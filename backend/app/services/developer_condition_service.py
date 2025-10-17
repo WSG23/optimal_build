@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any, List, Optional
 from uuid import UUID
@@ -60,6 +60,26 @@ class ConditionSystem:
 
 
 @_dataclass(slots=True)
+class ConditionInsight:
+    """Derived insight highlighting key risks or opportunities."""
+
+    id: str
+    severity: str
+    title: str
+    detail: str
+    specialist: Optional[str] = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "severity": self.severity,
+            "title": self.title,
+            "detail": self.detail,
+            "specialist": self.specialist,
+        }
+
+
+@_dataclass(slots=True)
 class ConditionAssessment:
     """Aggregated condition assessment for a property."""
 
@@ -73,6 +93,7 @@ class ConditionAssessment:
     systems: List[ConditionSystem]
     recommended_actions: List[str]
     recorded_at: Optional[datetime] = None
+    insights: List[ConditionInsight] = field(default_factory=list)
 
 
 class DeveloperConditionService:
@@ -92,10 +113,15 @@ class DeveloperConditionService:
             property_id=property_id,
             scenario=scenario_key,
         )
-        if stored is not None:
-            return DeveloperConditionService._record_to_assessment(stored)
 
         property_record = await session.get(Property, property_id)
+
+        if stored is not None:
+            return DeveloperConditionService._record_to_assessment(
+                stored,
+                property_record=property_record,
+            )
+
         if property_record is None:
             raise ValueError("Property not found")
 
@@ -126,7 +152,7 @@ class DeveloperConditionService:
             property_record, overall_rating, risk_level, scenario_context
         )
 
-        return ConditionAssessment(
+        assessment = ConditionAssessment(
             property_id=property_id,
             scenario=scenario_key,
             overall_score=overall_score,
@@ -138,6 +164,13 @@ class DeveloperConditionService:
             recommended_actions=recommended_actions,
             recorded_at=None,
         )
+
+        assessment.insights = _generate_condition_insights(
+            property_record=property_record,
+            assessment=assessment,
+        )
+
+        return assessment
 
     @staticmethod
     async def record_assessment(
@@ -157,6 +190,11 @@ class DeveloperConditionService:
         """Store a developer-provided condition assessment and return it."""
 
         scenario_key = _normalise_scenario(scenario)
+        previous_record = await DeveloperConditionService._get_latest_assessment(
+            session=session,
+            property_id=property_id,
+            scenario=scenario_key,
+        )
         record = DeveloperConditionAssessmentRecord(
             property_id=property_id,
             scenario=scenario_key,
@@ -172,7 +210,20 @@ class DeveloperConditionService:
         session.add(record)
         await session.flush()
         await session.refresh(record)
-        return DeveloperConditionService._record_to_assessment(record)
+
+        property_record = await session.get(Property, property_id)
+        previous_assessment = None
+        if previous_record is not None and property_record is not None:
+            previous_assessment = DeveloperConditionService._record_to_assessment(
+                previous_record,
+                property_record=property_record,
+            )
+
+        return DeveloperConditionService._record_to_assessment(
+            record,
+            property_record=property_record,
+            previous=previous_assessment,
+        )
 
     @staticmethod
     async def get_assessment_history(
@@ -203,11 +254,19 @@ class DeveloperConditionService:
             query = query.limit(limit)
 
         result = await session.execute(query)
-        records = list(result.scalars().all())
-        return [
-            DeveloperConditionService._record_to_assessment(record)
-            for record in records
-        ]
+        records_raw = list(result.scalars().all())
+        property_record = await session.get(Property, property_id)
+        assessments: List[ConditionAssessment] = []
+        previous: Optional[ConditionAssessment] = None
+        for record in records_raw:
+            assessment = DeveloperConditionService._record_to_assessment(
+                record,
+                property_record=property_record,
+                previous=previous,
+            )
+            assessments.append(assessment)
+            previous = assessment
+        return assessments
 
     @staticmethod
     async def get_latest_assessments_by_scenario(
@@ -230,12 +289,18 @@ class DeveloperConditionService:
         result = await session.execute(query)
         records = []
         seen: set[Optional[str]] = set()
+        property_record = await session.get(Property, property_id)
         for record in result.scalars():
             scenario_key = record.scenario
             if scenario_key in seen:
                 continue
             seen.add(scenario_key)
-            records.append(DeveloperConditionService._record_to_assessment(record))
+            records.append(
+                DeveloperConditionService._record_to_assessment(
+                    record,
+                    property_record=property_record,
+                )
+            )
         return records
 
     @staticmethod
@@ -276,6 +341,8 @@ class DeveloperConditionService:
     @staticmethod
     def _record_to_assessment(
         record: DeveloperConditionAssessmentRecord,
+        property_record: Optional[Property] = None,
+        previous: Optional[ConditionAssessment] = None,
     ) -> ConditionAssessment:
         systems_payload = record.systems if isinstance(record.systems, list) else []
         systems = [
@@ -285,7 +352,7 @@ class DeveloperConditionService:
         ]
         actions = [str(item) for item in record.recommended_actions or []]
 
-        return ConditionAssessment(
+        assessment = ConditionAssessment(
             property_id=record.property_id,
             scenario=record.scenario,
             overall_score=record.overall_score,
@@ -297,6 +364,15 @@ class DeveloperConditionService:
             recommended_actions=actions,
             recorded_at=record.recorded_at,
         )
+
+        if property_record is not None:
+            assessment.insights = _generate_condition_insights(
+                property_record=property_record,
+                assessment=assessment,
+                previous=previous,
+            )
+
+        return assessment
 
 
 def _calculate_age_score(property_record: Property) -> tuple[int, str]:
@@ -503,6 +579,261 @@ def _build_action_plan(
     return actions
 
 
+def _system_specialist_hint(name: str) -> Optional[str]:
+    lower = name.lower()
+    if "struct" in lower:
+        return "Structural engineer"
+    if "mechanical" in lower or "electrical" in lower or "m&e" in lower:
+        return "M&E engineer"
+    if "compliance" in lower or "regulatory" in lower or "envelope" in lower:
+        return "Building surveyor"
+    return None
+
+
+def _estimate_property_age(property_record: Property) -> Optional[int]:
+    if property_record.year_built:
+        try:
+            return max(date.today().year - int(property_record.year_built), 0)
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            return None
+    return None
+
+
+def _years_until_lease_expiry(property_record: Property) -> Optional[int]:
+    if property_record.lease_expiry_date:
+        delta = property_record.lease_expiry_date - date.today()
+        return delta.days // 365
+    return None
+
+
+def _slugify_identifier(value: str) -> str:
+    slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in value)
+    slug = "-".join(part for part in slug.split("-") if part)
+    return slug or "insight"
+
+
+def _generate_condition_insights(
+    property_record: Property,
+    assessment: ConditionAssessment,
+    previous: Optional[ConditionAssessment] = None,
+) -> List[ConditionInsight]:
+    insights: List[ConditionInsight] = []
+    seen_ids: set[str] = set()
+
+    def _add(insight: ConditionInsight) -> None:
+        if insight.id in seen_ids:
+            return
+        insights.append(insight)
+        seen_ids.add(insight.id)
+
+    age_years = _estimate_property_age(property_record)
+    if age_years is not None:
+        if age_years >= 60:
+            _add(
+                ConditionInsight(
+                    id="age-critical",
+                    severity="critical",
+                    title="Legacy structure nearing end-of-life",
+                    detail=(
+                        f"Primary structure is approximately {age_years} years old. "
+                        "Plan intrusive testing and staged strengthening to reduce redevelopment risk."
+                    ),
+                    specialist="Structural engineer",
+                )
+            )
+        elif age_years >= 40:
+            _add(
+                ConditionInsight(
+                    id="age-watchlist",
+                    severity="warning",
+                    title="Ageing asset requires lifecycle planning",
+                    detail=(
+                        f"Structure is roughly {age_years} years old. Allow for higher contingency in structural refurbishment works."
+                    ),
+                    specialist="Structural engineer",
+                )
+            )
+        elif age_years <= 10:
+            _add(
+                ConditionInsight(
+                    id="age-positive",
+                    severity="positive",
+                    title="Recently built structure",
+                    detail="Core structure remains relatively new with limited immediate lifecycle exposure.",
+                )
+            )
+
+    if property_record.year_renovated:
+        try:
+            years_since = date.today().year - int(property_record.year_renovated)
+        except (TypeError, ValueError):  # pragma: no cover - defensive
+            years_since = None
+        if years_since is not None and years_since <= 5:
+            _add(
+                ConditionInsight(
+                    id="recent-renovation",
+                    severity="positive",
+                    title="Recent major renovation",
+                    detail=(
+                        "Significant refurbishment completed within the last five years "
+                        "— leverage existing warranties and contractors."
+                    ),
+                )
+            )
+
+    lease_years = _years_until_lease_expiry(property_record)
+    if lease_years is not None:
+        expiry_str = (
+            property_record.lease_expiry_date.isoformat()
+            if property_record.lease_expiry_date
+            else "lease expiry"
+        )
+        if lease_years <= 8:
+            _add(
+                ConditionInsight(
+                    id="lease-critical",
+                    severity="critical",
+                    title="Lease tail creates financing pressure",
+                    detail=(
+                        f"Lease expires around {expiry_str}, leaving roughly {lease_years} years. "
+                        "Engage legal counsel to map renewal or land replacement strategies."
+                    ),
+                    specialist="Conveyancing lawyer",
+                )
+            )
+        elif lease_years <= 15:
+            _add(
+                ConditionInsight(
+                    id="lease-watch",
+                    severity="warning",
+                    title="Lease term constrains redevelopment horizon",
+                    detail=(
+                        f"Lease expiry circa {expiry_str} (~{lease_years} years remaining). "
+                        "Begin renewal negotiations alongside feasibility planning."
+                    ),
+                    specialist="Conveyancing lawyer",
+                )
+            )
+
+    if property_record.is_conservation or property_record.conservation_status:
+        conservation_note = (
+            property_record.conservation_status or "Conservation controls apply"
+        )
+        _add(
+            ConditionInsight(
+                id="heritage-controls",
+                severity="info",
+                title="Conservation requirements impact works",
+                detail=(
+                    f"{conservation_note}. Coordinate with URA conservation team before design freeze."
+                ),
+                specialist="Heritage architect",
+            )
+        )
+
+    if assessment.overall_rating in {"D", "E"}:
+        _add(
+            ConditionInsight(
+                id="overall-rating",
+                severity="critical",
+                title="Condition rating below investment threshold",
+                detail=(
+                    f"Overall rating {assessment.overall_rating} indicates significant remediation before financing approval."
+                ),
+                specialist="Project QS",
+            )
+        )
+    elif assessment.risk_level in {"high", "critical"}:
+        _add(
+            ConditionInsight(
+                id="risk-level",
+                severity="warning",
+                title="Delivery risk flagged",
+                detail=(
+                    f"Risk level classified as {assessment.risk_level}. Align contingency and programme buffers."
+                ),
+            )
+        )
+
+    for system in assessment.systems:
+        rating = system.rating.upper()
+        severity: str
+        if rating == "E" or system.score <= 50:
+            severity = "critical"
+        elif rating in {"D"} or system.score <= 60:
+            severity = "warning"
+        else:
+            continue
+
+        action_hint = (
+            system.recommended_actions[0] if system.recommended_actions else None
+        )
+        detail = f"{system.name} rated {rating} ({system.score}/100)."
+        if system.notes:
+            detail = f"{detail} {system.notes.strip()}"
+        if action_hint:
+            detail = f"{detail} Recommended next step: {action_hint}."
+
+        _add(
+            ConditionInsight(
+                id=f"system-{_slugify_identifier(system.name)}",
+                severity=severity,
+                title=f"{system.name} requires specialist intervention",
+                detail=detail,
+                specialist=_system_specialist_hint(system.name),
+            )
+        )
+
+    if previous is not None:
+        delta = assessment.overall_score - previous.overall_score
+        if delta <= -8:
+            reference = (
+                previous.recorded_at.strftime("%d %b %Y")
+                if previous.recorded_at
+                else "previous inspection"
+            )
+            _add(
+                ConditionInsight(
+                    id="score-decline",
+                    severity="warning",
+                    title="Condition score deteriorated",
+                    detail=(
+                        f"Overall score dropped {abs(delta)} points since {reference} "
+                        f"({previous.overall_score} → {assessment.overall_score})."
+                    ),
+                )
+            )
+        elif delta >= 8:
+            reference = (
+                previous.recorded_at.strftime("%d %b %Y")
+                if previous.recorded_at
+                else "previous inspection"
+            )
+            _add(
+                ConditionInsight(
+                    id="score-improvement",
+                    severity="positive",
+                    title="Condition score improved",
+                    detail=(
+                        f"Overall score improved by {delta} points since {reference} "
+                        f"({previous.overall_score} → {assessment.overall_score})."
+                    ),
+                )
+            )
+
+    if not insights:
+        _add(
+            ConditionInsight(
+                id="baseline-overview",
+                severity="info",
+                title="Baseline assessment recorded",
+                detail="Condition profile captured. Use recommended actions to brief specialists for concept design freeze.",
+            )
+        )
+
+    return insights
+
+
 def _build_summary(
     property_record: Property,
     overall_rating: str,
@@ -534,6 +865,7 @@ def _normalise_scenario(value: Optional[str]) -> Optional[str]:
 
 __all__ = [
     "ConditionAssessment",
+    "ConditionInsight",
     "ConditionSystem",
     "DeveloperConditionService",
 ]

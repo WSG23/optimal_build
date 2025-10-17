@@ -70,6 +70,7 @@ async def test_generate_assessment_returns_structured_response():
     structure_system = assessment.systems[0]
     assert structure_system.recommended_actions
     assert assessment.recommended_actions
+    assert assessment.insights
 
 
 @pytest.mark.asyncio
@@ -127,6 +128,7 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
         )
         assert assessment.summary == "Inspection summary"
         assert assessment.recorded_at is not None
+        assert isinstance(assessment.insights, list)
 
         fallback = await DeveloperConditionService.generate_assessment(
             session=session,
@@ -134,6 +136,7 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
             scenario="raw_land",
         )
         assert fallback.summary == "Generic inspection"
+        assert isinstance(fallback.insights, list)
 
         history = await DeveloperConditionService.get_assessment_history(
             session=session,
