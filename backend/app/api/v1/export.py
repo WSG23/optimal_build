@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
@@ -20,7 +21,6 @@ from app.core.export import (
     ProjectGeometryMissing,
     generate_project_export,
 )
-from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/export", tags=["export"])
 logger = logging.getLogger(__name__)

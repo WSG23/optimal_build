@@ -9,6 +9,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -25,7 +26,6 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from app.utils.render import render_html_to_pdf
-from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 

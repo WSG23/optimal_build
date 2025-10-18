@@ -1,8 +1,8 @@
 """Pydantic schema validation for market reports."""
 
+from datetime import date, datetime
 import importlib
 import sys
-from datetime import date, datetime
 
 from tests.helpers import ensure_sqlite_uuid, install_property_stub
 

@@ -8,13 +8,13 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
+from backend._compat.datetime import utcnow
 from sqlalchemy import insert, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.market import AbsorptionTracking, MarketIndex
 from app.models.property import MarketTransaction, Property, PropertyType, RentalListing
-from backend._compat.datetime import utcnow
 
 logger = structlog.get_logger()
 

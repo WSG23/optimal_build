@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import date
 import importlib
 import sys
-from datetime import date
 from types import SimpleNamespace
 
 import pytest

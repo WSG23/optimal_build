@@ -5,24 +5,23 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
-from pydantic import BaseModel
-
 try:  # pragma: no cover - optional dependency
     import email_validator  # type: ignore  # noqa: F401
-
     from pydantic import EmailStr  # type: ignore
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
+
+from backend._compat.datetime import utcnow
 
 from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_current_user
 from app.schemas.user import UserSignupBase
 from app.utils.db import session_dependency
 from app.utils.security import hash_password, verify_password
-from backend._compat.datetime import utcnow
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"

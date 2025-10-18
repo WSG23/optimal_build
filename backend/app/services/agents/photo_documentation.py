@@ -5,10 +5,9 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+from backend._compat.datetime import utcnow
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend._compat.datetime import utcnow
 
 try:  # pragma: no cover - optional runtime dependency
     from PIL import Image

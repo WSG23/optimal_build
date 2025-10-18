@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import Any
 
 import structlog
+from sqlalchemy import Select, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefCostIndex, RefErgonomics, RefMaterialStandard
-from sqlalchemy import Select, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 SEED_ROOT = Path(__file__).parent / "seeds"
 ERGONOMICS_SEED = SEED_ROOT / "ergonomics_seed.json"

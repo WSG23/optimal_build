@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import importlib.util
-import sys
 from importlib import import_module
+import importlib.util
 from pathlib import Path
+import sys
 from uuid import uuid4
 
 import pytest
 
-import pytest_asyncio
 from app.models.users import User
 from httpx import AsyncClient
+import pytest_asyncio
 
 
 @pytest_asyncio.fixture

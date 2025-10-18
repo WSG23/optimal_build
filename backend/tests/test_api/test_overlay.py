@@ -8,11 +8,11 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from backend.jobs import job_queue
 from sqlalchemy import select
 
 from app.models.audit import AuditLog
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
-from backend.jobs import job_queue
 from httpx import AsyncClient
 
 PROJECT_ID = 4120

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from backend.app.services.finance import calculator
+import pytest
 
 
 def test_npv_handles_negative_cashflow_months() -> None:

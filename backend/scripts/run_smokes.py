@@ -17,9 +17,10 @@ from uuid import uuid4
 
 import httpx
 import structlog
-from app.core.database import AsyncSessionLocal
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import AsyncSessionLocal
 
 from ..flows import parse_segment, watch_fetch
 from .seed_entitlements_sg import (

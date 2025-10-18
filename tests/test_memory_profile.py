@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 import importlib
 import sys
-from datetime import datetime
 from types import SimpleNamespace
 from uuid import uuid4
 

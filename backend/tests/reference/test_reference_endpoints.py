@@ -1,12 +1,11 @@
 """Integration tests for seeded reference data endpoints."""
 
-import json
 from collections.abc import Iterable
+import json
 from typing import Any
 
-import pytest
-
 from backend.scripts import seed_nonreg
+import pytest
 
 
 async def _seed_reference_data(async_session_factory) -> None:

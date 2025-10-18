@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import logging
-import sys
 from importlib import metadata
+import logging
 from pathlib import Path
+import sys
 from types import ModuleType
 
 import pytest

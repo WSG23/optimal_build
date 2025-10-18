@@ -9,11 +9,11 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
-import pytest_asyncio
 from app.core.geometry import GeometrySerializer
 from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
 from app.models.overlay import OverlaySourceGeometry
 from httpx import AsyncClient
+import pytest_asyncio
 
 PROJECT_ID = 5821
 

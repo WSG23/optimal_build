@@ -5,6 +5,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+
 from app.models.developer_checklists import ChecklistStatus
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.developer_checklist_service import DeveloperChecklistService

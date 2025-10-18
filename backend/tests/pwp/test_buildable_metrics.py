@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import sys
 from importlib import import_module
+import sys
 from types import ModuleType
 
 import pytest
@@ -65,11 +65,12 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
     sys.modules.setdefault("structlog.processors", processors_module)
     sys.modules.setdefault("structlog.stdlib", stdlib_module)
 
-from app.utils import metrics
 from backend.tests.pwp.test_buildable_golden import (
     DEFAULT_REQUEST_DEFAULTS,
     DEFAULT_REQUEST_OVERRIDES,
 )
+
+from app.utils import metrics
 
 
 @pytest.mark.asyncio

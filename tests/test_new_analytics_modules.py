@@ -1,8 +1,8 @@
 """Analytics module smoke tests for schema utilities."""
 
+from datetime import date
 import importlib
 import sys
-from datetime import date
 
 from tests.helpers import ensure_sqlite_uuid, install_property_stub
 

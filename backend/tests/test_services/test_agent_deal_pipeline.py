@@ -6,13 +6,13 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-import pytest_asyncio
 from app.models.audit import AuditLog
 from app.models.business_performance import DealAssetType, DealType, PipelineStage
 from app.models.users import User
 from app.schemas.deals import DealWithTimelineSchema
 from app.services.deals import AgentDealService
 from app.services.deals.utils import audit_project_key
+import pytest_asyncio
 
 
 @pytest_asyncio.fixture(autouse=True)

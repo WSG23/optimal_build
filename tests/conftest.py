@@ -144,9 +144,9 @@ if _backend_flow_session_factory in (None, _missing_fixture):
     from collections.abc import AsyncGenerator
     from contextlib import asynccontextmanager
 
-    import app.utils.metrics as _metrics_module
     from app.core.database import get_session as _get_session
     from app.models.base import BaseModel as _FallbackBaseModel
+    import app.utils.metrics as _metrics_module
 
     try:
         from app.main import app as _fastapi_app

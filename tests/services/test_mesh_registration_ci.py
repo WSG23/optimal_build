@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import os
 
-import pytest
-
 from backend.app.services.storage import reset_storage_service
 from backend.jobs.generate_reports import generate_market_report_bundle
+import pytest
 
 
 @pytest.fixture(autouse=True)

@@ -11,10 +11,10 @@ pytest.importorskip("pytest_asyncio")
 
 from sqlalchemy import select
 
-import pytest_asyncio
 from app.core.config import settings
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from httpx import AsyncClient
+import pytest_asyncio
 from scripts.seed_screening import seed_screening_sample_data
 
 DEFAULT_REQUEST_DEFAULTS = {

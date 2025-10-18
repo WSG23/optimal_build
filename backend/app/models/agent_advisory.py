@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
-from uuid import UUID as UUIDType, uuid4
+from uuid import UUID as UUIDType
+from uuid import uuid4
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID

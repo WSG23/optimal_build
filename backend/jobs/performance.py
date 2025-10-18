@@ -6,9 +6,10 @@ from datetime import date
 from typing import Iterable
 from uuid import UUID
 
+from backend.jobs import job
+
 from app.core.database import AsyncSessionLocal
 from app.services.deals.performance import AgentPerformanceService
-from backend.jobs import job
 
 
 def _parse_ids(agent_ids: Iterable[str] | None) -> list[UUID] | None:

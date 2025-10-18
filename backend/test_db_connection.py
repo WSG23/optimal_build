@@ -3,9 +3,10 @@
 import asyncio
 
 import structlog
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
 from app.core.config import settings
 from app.models.rkp import RefRule, RefSource
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 logger = structlog.get_logger(__name__)
 

@@ -6,7 +6,6 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-import pytest_asyncio
 from app.models.audit import AuditLog
 from app.models.business_performance import (
     CommissionAdjustmentType,
@@ -17,6 +16,7 @@ from app.models.business_performance import (
 )
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
+import pytest_asyncio
 
 
 @pytest_asyncio.fixture(autouse=True)

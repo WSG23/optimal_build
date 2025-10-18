@@ -8,13 +8,14 @@ from __future__ import annotations
 import asyncio
 from uuid import uuid4
 
+from sqlalchemy import select
+
 from app.core.database import AsyncSessionLocal, engine
 from app.models.developer_checklists import (
     ChecklistCategory,
     ChecklistPriority,
     DeveloperChecklistTemplate,
 )
-from sqlalchemy import select
 
 # Template data for each scenario and category
 CHECKLIST_TEMPLATES = [

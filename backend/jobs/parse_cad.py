@@ -27,6 +27,8 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     ifcopenshell = None  # type: ignore[assignment]
 
+from backend.jobs import job
+
 from app.core import database as app_database
 from app.core.geometry import (
     GeometrySerializer,
@@ -37,7 +39,6 @@ from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
 from app.services.overlay_ingest import ingest_parsed_import_geometry
 from app.services.storage import get_storage_service
-from backend.jobs import job
 
 
 @compat_dataclass(slots=True)

@@ -15,6 +15,7 @@ try:  # pragma: no cover - geoalchemy may be optional in some environments
     from geoalchemy2.elements import WKTElement
 except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missing
     WKTElement = None  # type: ignore[assignment]
+from backend._compat.datetime import utcnow
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +26,6 @@ from app.services.developer_checklist_service import (
     DeveloperChecklistService,
 )
 from app.services.geocoding import Address, GeocodingService
-from backend._compat.datetime import utcnow
 
 logger = structlog.get_logger()
 
