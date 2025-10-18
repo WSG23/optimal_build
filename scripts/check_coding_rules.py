@@ -362,7 +362,9 @@ def check_formatting(repo_root: Path) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
-def check_code_quality(repo_root: Path) -> tuple[bool, list[str]]:
+def check_code_quality(
+    repo_root: Path, exceptions: dict[str, set[str]]
+) -> tuple[bool, list[str]]:
     """Check for code quality issues like unused variables (Rule 7)."""
     errors = []
 
@@ -375,14 +377,53 @@ def check_code_quality(repo_root: Path) -> tuple[bool, list[str]]:
     )
 
     if result.returncode != 0:
-        # Parse output to show key violations
+        # Parse output to filter exceptions
         output = result.stdout or result.stderr
-        errors.append(
-            "RULE VIOLATION: Code quality issues found (ruff)\n"
-            "  -> Rule 7: Fix unused variables, exception chaining, etc.\n"
-            "  -> See CODING_RULES.md section 7\n"
-            f"  -> Issues found:\n{output[:500]}"  # Limit output
-        )
+
+        # Split output by error blocks (separated by blank lines)
+        error_blocks = []
+        current_block = []
+
+        for line in output.split("\n"):
+            if line.strip():
+                current_block.append(line)
+            elif current_block:
+                error_blocks.append(current_block)
+                current_block = []
+
+        if current_block:
+            error_blocks.append(current_block)
+
+        # Filter out blocks from excepted files
+        excepted_files = exceptions.get("rule_7_code_quality", set())
+        filtered_blocks = []
+
+        for block in error_blocks:
+            # Check if any line in this block references an excepted file
+            is_excepted = False
+            block_text = "\n".join(block)
+
+            for excepted_path in excepted_files:
+                if excepted_path in block_text:
+                    is_excepted = True
+                    break
+
+            if not is_excepted:
+                filtered_blocks.append(block)
+
+        # Reconstruct filtered output
+        filtered_output = "\n\n".join(
+            ["\n".join(block) for block in filtered_blocks]
+        ).strip()
+
+        # Only report error if there are non-excepted violations
+        if filtered_output:
+            errors.append(
+                "RULE VIOLATION: Code quality issues found (ruff)\n"
+                "  -> Rule 7: Fix unused variables, exception chaining, etc.\n"
+                "  -> See CODING_RULES.md section 7\n"
+                f"  -> Issues found:\n{filtered_output[:500]}"  # Limit output
+            )
 
     return len(errors) == 0, errors
 
@@ -535,7 +576,7 @@ def main() -> int:
         ),
         (
             "Rule 7: Code Quality",
-            lambda: check_code_quality(repo_root),
+            lambda: check_code_quality(repo_root, exceptions),
         ),
         (
             "Rule 8: AI Planning References",

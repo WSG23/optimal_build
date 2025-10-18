@@ -33,3 +33,6 @@ exceptions:
   rule_7_code_quality:
     # isort and ruff disagree on backend._compat import ordering
     - backend/app/api/v1/advanced_intelligence.py
+    - backend/app/api/v1/agents.py
+    # Long URL in documentation string
+    - scripts/smoke_test_pdfs.py

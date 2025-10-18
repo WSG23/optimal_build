@@ -24,15 +24,26 @@ This ensures you pick up exactly where the previous agent left off.
    - Prefer `rg`/`rg --files` for search; fall back only if they are unavailable.
    - Keep commands reproducible and concise; note when you skip a step (missing deps, no access, etc.).
 
-3. **Coding Rules Enforcement (MANDATORY)**
+3. **Coding Rules Enforcement (MANDATORY - NO EXCEPTIONS)**
    - **BEFORE writing code:** Run `make ai-preflight` to verify the current codebase state passes all checks.
    - **Read [CODING_RULES.md](CODING_RULES.md)** - All 7 rules apply to AI-generated code.
-   - **AFTER writing code:** ALWAYS run `make format` then `make verify` before presenting code to the user.
-   - If any check fails, fix violations immediately. Never present code that fails verification.
+   - **AFTER writing code:**
+     1. Run `make format` (fixes formatting automatically)
+     2. Run `make verify` (checks all rules)
+     3. Fix ALL violations before committing
+     4. **NEVER use `git commit --no-verify`** - this bypasses quality checks and is FORBIDDEN
+   - **If `make verify` fails:**
+     - You MUST fix the violations
+     - You CANNOT commit until all checks pass
+     - You CANNOT ask the user to commit broken code
+   - **CI/CD Enforcement:**
+     - All PRs are automatically checked by GitHub Actions
+     - Code that fails `make verify` will be REJECTED by CI
+     - Auto-formatting will be applied to all PRs
    - Key rules for AI agents:
      - Rule 1: Never edit existing migration files
      - Rule 2: Use async/await for all database/API operations
-     - Rule 3: **MANDATORY** - Run `make format` after code generation
+     - Rule 3: **MANDATORY** - Run `make format` after code generation (enforced by CI)
      - Rule 6: Follow import ordering (stdlib → third-party → local)
      - Rule 7: No unused variables, proper exception chaining
 
