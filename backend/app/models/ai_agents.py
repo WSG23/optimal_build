@@ -1,25 +1,26 @@
 """AI Agent models for Singapore Property Development Platform."""
 
 import uuid
-from datetime import datetime
 from enum import Enum
 
+from backend._compat.datetime import utcnow
 from sqlalchemy import (
     JSON,
     Boolean,
     Column,
     DateTime,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
-from backend._compat.datetime import utcnow
 
 
 class AIAgentType(str, Enum):

@@ -1,7 +1,6 @@
 """Singapore Property model for Property Development Platform."""
 
 import uuid
-from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import (
@@ -11,12 +10,14 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
 
@@ -36,8 +37,9 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
             return "GEOMETRY"
 
 
-from app.models.base import UUID, BaseModel
 from backend._compat.datetime import utcnow
+
+from app.models.base import UUID, BaseModel
 
 
 class PropertyZoning(str, Enum):

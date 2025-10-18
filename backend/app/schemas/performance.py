@@ -6,11 +6,12 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict
+
 from app.models.business_performance import (
     AgentPerformanceSnapshot,
     PerformanceBenchmark,
 )
-from pydantic import BaseModel, ConfigDict, Field
 
 
 class SnapshotRequest(BaseModel):

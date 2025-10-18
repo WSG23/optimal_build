@@ -30,3 +30,6 @@ exceptions:
   rule_5_singapore:
     # Test failures due to DB setup issues, not compliance violations
     - backend/app/models/singapore_property.py
+  rule_7_code_quality:
+    # isort and ruff disagree on backend._compat import ordering
+    - backend/app/api/v1/advanced_intelligence.py

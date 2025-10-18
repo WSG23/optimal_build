@@ -8,15 +8,13 @@ from __future__ import annotations
 import asyncio
 from uuid import uuid4
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import AsyncSessionLocal, engine
 from app.models.developer_checklists import (
     ChecklistCategory,
     ChecklistPriority,
     DeveloperChecklistTemplate,
 )
+from sqlalchemy import select
 
 # Template data for each scenario and category
 CHECKLIST_TEMPLATES = [
@@ -275,10 +273,7 @@ async def seed_templates():
 
         # Create all templates
         templates = [
-            DeveloperChecklistTemplate(
-                id=uuid4(),
-                **template_data
-            )
+            DeveloperChecklistTemplate(id=uuid4(), **template_data)
             for template_data in CHECKLIST_TEMPLATES
         ]
 
@@ -286,15 +281,19 @@ async def seed_templates():
         await session.commit()
 
         print(f"✅ Successfully seeded {len(templates)} checklist templates")
-        print(f"   Scenarios covered: raw_land, existing_building, heritage_property, underused_asset, mixed_use_redevelopment")
-        print(f"   Categories: Title, Zoning, Environmental, Structural, Heritage, Utilities, Access")
+        print(
+            "   Scenarios covered: raw_land, existing_building, heritage_property, underused_asset, mixed_use_redevelopment"
+        )
+        print(
+            "   Categories: Title, Zoning, Environmental, Structural, Heritage, Utilities, Access"
+        )
 
 
 async def main():
     """Main entry point."""
     print("🌱 Starting checklist template seed...")
 
-    async with engine.begin() as conn:
+    async with engine.begin() as _conn:
         # Ensure tables exist
         print("   Checking database tables...")
 

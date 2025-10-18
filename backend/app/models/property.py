@@ -1,6 +1,5 @@
 """Property and building data models for Commercial Property Advisors agent."""
 
-from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import (
@@ -16,7 +15,8 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Enum as SQLEnum, Numeric as SQLDecimal
+from sqlalchemy.types import Enum as SQLEnum
+from sqlalchemy.types import Numeric as SQLDecimal
 
 try:
     from geoalchemy2 import Geometry
@@ -34,8 +34,9 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
             return "GEOMETRY"
 
 
-from app.models.base import UUID, BaseModel
 from backend._compat.datetime import utcnow
+
+from app.models.base import UUID, BaseModel
 
 
 class PropertyType(str, Enum):

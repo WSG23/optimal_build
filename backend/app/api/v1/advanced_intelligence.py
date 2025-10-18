@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
+from backend._compat.datetime import utcnow  # noqa: I001
 from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import require_viewer
-from backend._compat.datetime import utcnow
 
 router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligence"])
 

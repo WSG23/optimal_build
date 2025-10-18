@@ -5,8 +5,9 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-
+from app.models.developer_checklists import ChecklistStatus
 from app.models.property import Property, PropertyStatus, PropertyType
+from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.developer_condition_service import (
     ConditionSystem,
     DeveloperConditionService,
@@ -168,3 +169,86 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
         assert summary_by_scenario["existing_building"] == "Inspection summary"
         # Global fallback assessment is also included (scenario None)
         assert summary_by_scenario[None] == "Generic inspection"
+
+
+@pytest.mark.asyncio
+async def test_generate_assessment_includes_specialist_checklist_insight(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        await DeveloperChecklistService.ensure_templates_seeded(session)
+
+        property_record = _build_property()
+        session.add(property_record)
+        await session.flush()
+
+        await DeveloperChecklistService.auto_populate_checklist(
+            session=session,
+            property_id=property_record.id,
+            development_scenarios=["existing_building"],
+        )
+
+        checklist_items = await DeveloperChecklistService.get_property_checklist(
+            session=session,
+            property_id=property_record.id,
+        )
+        assert checklist_items
+
+        outstanding = next(
+            item
+            for item in checklist_items
+            if item.template is not None
+            and item.template.requires_professional
+            and item.development_scenario == "existing_building"
+        )
+        outstanding.status = ChecklistStatus.PENDING
+        outstanding.notes = "Awaiting structural engineer confirmation."
+
+        for item in checklist_items:
+            if item is outstanding:
+                continue
+            item.status = ChecklistStatus.COMPLETED
+
+        await session.flush()
+
+        systems = [
+            ConditionSystem(
+                name="Structural frame & envelope",
+                rating="C",
+                score=62,
+                notes="Manual inspection identified corrosion in key members.",
+                recommended_actions=[
+                    "Engage structural engineer for detailed assessment"
+                ],
+            )
+        ]
+
+        await DeveloperConditionService.record_assessment(
+            session=session,
+            property_id=property_record.id,
+            scenario="existing_building",
+            overall_rating="C",
+            overall_score=62,
+            risk_level="elevated",
+            summary="Manual structural inspection recorded.",
+            scenario_context="Focus remediation on structural bracing.",
+            systems=systems,
+            recommended_actions=["Engage structural engineer for detailed assessment"],
+        )
+        await session.commit()
+
+        assessment = await DeveloperConditionService.generate_assessment(
+            session=session,
+            property_id=property_record.id,
+            scenario="existing_building",
+        )
+
+        checklist_insight = next(
+            insight
+            for insight in assessment.insights
+            if insight.id == f"checklist-{outstanding.id}"
+        )
+
+        assert checklist_insight.specialist == outstanding.template.professional_type
+        assert checklist_insight.severity in {"critical", "warning"}
+        assert "Status:" in checklist_insight.detail

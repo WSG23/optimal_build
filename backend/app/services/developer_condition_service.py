@@ -11,8 +11,10 @@ from uuid import UUID
 from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.developer_checklists import ChecklistPriority, ChecklistStatus
 from app.models.developer_condition import DeveloperConditionAssessmentRecord
 from app.models.property import Property, PropertyType
+from app.services.developer_checklist_service import DeveloperChecklistService
 
 if sys.version_info >= (3, 10):
     _dataclass = dataclass
@@ -117,58 +119,71 @@ class DeveloperConditionService:
         property_record = await session.get(Property, property_id)
 
         if stored is not None:
-            return DeveloperConditionService._record_to_assessment(
+            assessment = DeveloperConditionService._record_to_assessment(
                 stored,
                 property_record=property_record,
             )
+        else:
+            if property_record is None:
+                raise ValueError("Property not found")
 
-        if property_record is None:
-            raise ValueError("Property not found")
+            age_score, age_band = _calculate_age_score(property_record)
+            structure_score = _calculate_structure_score(property_record)
+            systems_score = _calculate_systems_score(property_record)
 
-        age_score, age_band = _calculate_age_score(property_record)
-        structure_score = _calculate_structure_score(property_record)
-        systems_score = _calculate_systems_score(property_record)
+            overall_score = round((age_score + structure_score + systems_score) / 3)
+            overall_rating = _score_to_rating(overall_score)
+            risk_level = _determine_risk_level(overall_rating)
 
-        overall_score = round((age_score + structure_score + systems_score) / 3)
-        overall_rating = _score_to_rating(overall_score)
-        risk_level = _determine_risk_level(overall_rating)
+            scenario_context = (
+                _describe_scenario_context(property_record, scenario_key)
+                if scenario_key
+                else None
+            )
 
-        scenario_context = (
-            _describe_scenario_context(property_record, scenario_key)
-            if scenario_key
-            else None
+            systems = [
+                _build_structure_system(property_record, structure_score),
+                _build_services_system(property_record, systems_score),
+                _build_compliance_system(property_record, age_band),
+            ]
+            recommended_actions = _build_action_plan(
+                property_record, overall_rating, scenario_key
+            )
+
+            summary = _build_summary(
+                property_record, overall_rating, risk_level, scenario_context
+            )
+
+            assessment = ConditionAssessment(
+                property_id=property_id,
+                scenario=scenario_key,
+                overall_score=overall_score,
+                overall_rating=overall_rating,
+                risk_level=risk_level,
+                summary=summary,
+                scenario_context=scenario_context,
+                systems=systems,
+                recommended_actions=recommended_actions,
+                recorded_at=None,
+            )
+
+            assessment.insights = _generate_condition_insights(
+                property_record=property_record,
+                assessment=assessment,
+            )
+
+        specialist_insights = (
+            await DeveloperConditionService._build_specialist_checklist_insights(
+                session=session,
+                property_id=property_id,
+                scenario=scenario_key,
+            )
         )
-
-        systems = [
-            _build_structure_system(property_record, structure_score),
-            _build_services_system(property_record, systems_score),
-            _build_compliance_system(property_record, age_band),
-        ]
-        recommended_actions = _build_action_plan(
-            property_record, overall_rating, scenario_key
-        )
-
-        summary = _build_summary(
-            property_record, overall_rating, risk_level, scenario_context
-        )
-
-        assessment = ConditionAssessment(
-            property_id=property_id,
-            scenario=scenario_key,
-            overall_score=overall_score,
-            overall_rating=overall_rating,
-            risk_level=risk_level,
-            summary=summary,
-            scenario_context=scenario_context,
-            systems=systems,
-            recommended_actions=recommended_actions,
-            recorded_at=None,
-        )
-
-        assessment.insights = _generate_condition_insights(
-            property_record=property_record,
-            assessment=assessment,
-        )
+        if specialist_insights:
+            assessment.insights = DeveloperConditionService._merge_insights(
+                assessment.insights,
+                specialist_insights,
+            )
 
         return assessment
 
@@ -373,6 +388,155 @@ class DeveloperConditionService:
             )
 
         return assessment
+
+    @staticmethod
+    async def _build_specialist_checklist_insights(
+        session: AsyncSession,
+        property_id: UUID,
+        scenario: Optional[str],
+    ) -> List[ConditionInsight]:
+        try:
+            checklist_items = await DeveloperChecklistService.get_property_checklist(
+                session,
+                property_id,
+            )
+        except Exception:  # pragma: no cover - defensive fallback when table absent
+            return []
+
+        if not checklist_items:
+            return []
+
+        payloads = DeveloperChecklistService.format_property_checklist_items(
+            checklist_items
+        )
+        scenario_filter = scenario
+        insights: List[ConditionInsight] = []
+
+        for payload in payloads:
+            if not payload.get("requires_professional"):
+                continue
+
+            status_raw = str(payload.get("status") or ChecklistStatus.PENDING.value)
+            try:
+                status = ChecklistStatus(status_raw)
+            except ValueError:  # pragma: no cover - defensive
+                status = ChecklistStatus.PENDING
+
+            if status not in _OPEN_CHECKLIST_STATUSES:
+                continue
+
+            item_scenario_raw = payload.get("development_scenario")
+            item_scenario_key = _normalise_scenario(
+                str(item_scenario_raw) if item_scenario_raw is not None else None
+            )
+            if scenario_filter is not None and item_scenario_key not in {
+                scenario_filter,
+                None,
+            }:
+                continue
+
+            priority_raw = str(
+                payload.get("priority") or ChecklistPriority.MEDIUM.value
+            )
+            try:
+                priority = ChecklistPriority(priority_raw)
+            except ValueError:  # pragma: no cover - defensive
+                priority = ChecklistPriority.MEDIUM
+
+            severity = _severity_from_priority(priority)
+            if status == ChecklistStatus.IN_PROGRESS and severity == "critical":
+                severity = "warning"
+
+            detail_parts: List[str] = []
+            if (
+                item_scenario_key is not None
+                and scenario_filter is None
+                and isinstance(item_scenario_raw, str)
+                and item_scenario_raw
+            ):
+                detail_parts.append(
+                    f"Scenario: {_format_scenario_label(item_scenario_raw)}."
+                )
+
+            description = str(payload.get("item_description") or "").strip()
+            if description:
+                detail_parts.append(description)
+
+            detail_parts.append(f"Status: {_format_status_label(status)}.")
+
+            due_date = payload.get("due_date")
+            if due_date:
+                detail_parts.append(f"Due {due_date}.")
+
+            notes = payload.get("notes")
+            if notes:
+                notes_str = str(notes).strip()
+                if notes_str:
+                    detail_parts.append(f"Notes: {notes_str}")
+
+            detail = " ".join(detail_parts).strip()
+            if not detail:
+                detail = f"Status: {_format_status_label(status)}."
+
+            specialist = payload.get("professional_type")
+            insights.append(
+                ConditionInsight(
+                    id=f"checklist-{payload['id']}",
+                    severity=severity,
+                    title=str(
+                        payload.get("item_title") or "Specialist follow-up required"
+                    ),
+                    detail=detail,
+                    specialist=str(specialist) if specialist else None,
+                )
+            )
+
+        return insights
+
+    @staticmethod
+    def _merge_insights(
+        baseline: List[ConditionInsight],
+        additional: List[ConditionInsight],
+    ) -> List[ConditionInsight]:
+        if not additional:
+            return baseline
+
+        merged = list(baseline)
+        index_by_id = {insight.id: idx for idx, insight in enumerate(merged)}
+
+        for insight in additional:
+            existing_index = index_by_id.get(insight.id)
+            if existing_index is not None:
+                merged[existing_index] = insight
+            else:
+                index_by_id[insight.id] = len(merged)
+                merged.append(insight)
+
+        return merged
+
+
+_OPEN_CHECKLIST_STATUSES = {
+    ChecklistStatus.PENDING,
+    ChecklistStatus.IN_PROGRESS,
+}
+
+
+def _severity_from_priority(priority: ChecklistPriority) -> str:
+    if priority == ChecklistPriority.CRITICAL:
+        return "critical"
+    if priority == ChecklistPriority.HIGH:
+        return "warning"
+    if priority == ChecklistPriority.MEDIUM:
+        return "info"
+    return "info"
+
+
+def _format_status_label(status: ChecklistStatus) -> str:
+    return status.value.replace("_", " ").title()
+
+
+def _format_scenario_label(raw: str) -> str:
+    return raw.replace("_", " ").title()
 
 
 def _calculate_age_score(property_record: Property) -> tuple[int, str]:

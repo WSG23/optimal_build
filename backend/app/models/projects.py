@@ -1,9 +1,9 @@
 """Project model for Singapore Property Development Platform."""
 
 import uuid
-from datetime import datetime
 from enum import Enum
 
+from backend._compat.datetime import utcnow
 from sqlalchemy import (
     DECIMAL,
     JSON,
@@ -11,16 +11,17 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Integer,
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
-from backend._compat.datetime import utcnow
 
 
 class ProjectType(str, Enum):
