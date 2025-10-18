@@ -371,9 +371,9 @@
 - ✅ Property overview cards with zoning + site metrics (Oct 18 2025)
 - ✅ Due diligence checklist authoring + bulk import tooling (Oct 17 2025)
 - ✅ Specialist checklist insights merged into condition assessments; manual inspections now surface named specialist follow-ups in the UI
+- ✅ Multi-scenario comparison dashboard shows side-by-side scorecards and is included in exported condition reports (JSON + PDF)
 
 **What's Missing:**
-- ❌ Multi-scenario comparison dashboard (side-by-side scorecards, PDF parity)
 - ❌ Manual inspection capture (developers can override condition assessments with inspection data)
 
 **Acceptance Criteria:**
