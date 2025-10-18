@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-from importlib import import_module
 import importlib.util
-from pathlib import Path
 import sys
+from importlib import import_module
+from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, FastAPI
 import pytest
+import pytest_asyncio
+from fastapi import APIRouter, FastAPI
+from httpx import AsyncClient
 
 from app.models.business_performance import CommissionType, DealAssetType, DealType
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
 from app.services.deals.performance import AgentPerformanceService
-from httpx import AsyncClient
-import pytest_asyncio
 
 
 @pytest_asyncio.fixture

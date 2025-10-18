@@ -5,16 +5,19 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
-
 import pytest_asyncio
 
 if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1":
     pytest.skip("backend fixtures unavailable", allow_module_level=True)
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from backend.app.models.base import BaseModel
 from backend.app.models.rkp import RefClause, RefDocument, RefSource
@@ -22,9 +25,6 @@ from backend.flows import (
     parse_segment as parse_segment_flow,
     watch_fetch as watch_fetch_flow,
 )
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
 
 
 @pytest_asyncio.fixture

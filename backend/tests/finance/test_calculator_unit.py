@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import importlib.util
+import sys
 from collections.abc import Callable
 from functools import wraps
-import importlib.util
 from pathlib import Path
-import sys
 from types import ModuleType
 from typing import Any, cast
 

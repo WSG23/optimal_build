@@ -4,6 +4,7 @@ from importlib import import_module
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 
 from app.models.business_performance import (
     AgentDeal,
@@ -17,7 +18,6 @@ from app.models.business_performance import (
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
 from app.services.deals.performance import AgentPerformanceService
-import pytest_asyncio
 
 
 @pytest_asyncio.fixture(autouse=True)

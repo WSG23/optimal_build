@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from datetime import datetime, timedelta
-import json
 from pathlib import Path
 
-from backend._compat.datetime import UTC
 import pytest
+from backend._compat.datetime import UTC
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")

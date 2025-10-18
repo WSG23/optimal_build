@@ -4,6 +4,7 @@ from importlib import import_module
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 
 from app.models.audit import AuditLog
@@ -12,7 +13,6 @@ from app.models.users import User
 from app.schemas.deals import DealWithTimelineSchema
 from app.services.deals import AgentDealService
 from app.services.deals.utils import audit_project_key
-import pytest_asyncio
 
 
 @pytest_asyncio.fixture(autouse=True)

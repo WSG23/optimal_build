@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
-import uuid
 
 import pytest
 
@@ -12,13 +12,12 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from app.utils import metrics
 from backend.app.models.projects import Project, ProjectPhase, ProjectType
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
 from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
-
-from app.utils import metrics
 from httpx import AsyncClient
 
 REVIEWER_HEADERS = {"X-Role": "reviewer"}

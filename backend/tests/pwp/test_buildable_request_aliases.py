@@ -9,6 +9,9 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
+import pytest_asyncio  # noqa: F401
+from httpx import AsyncClient
+
 from app.core.config import settings
 from app.schemas.buildable import (
     BuildableCalculation,
@@ -16,8 +19,6 @@ from app.schemas.buildable import (
     BuildableMetrics,
     ZoneSource,
 )
-from httpx import AsyncClient
-import pytest_asyncio  # noqa: F401
 
 
 @pytest.mark.asyncio

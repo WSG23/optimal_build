@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 import json
+from io import BytesIO
 from pathlib import Path
 
-from backend.jobs.raster_vector import vectorize_floorplan
 import pytest
+from backend.jobs.raster_vector import vectorize_floorplan
 
 SAMPLE_PDF = (
     Path(__file__).resolve().parents[3] / "samples" / "pdf" / "floor_simple.pdf"

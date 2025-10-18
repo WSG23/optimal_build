@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 import csv
-from decimal import ROUND_HALF_UP, Decimal
 import io
 import uuid
+from collections.abc import Iterable
+from decimal import ROUND_HALF_UP, Decimal
 
 import pytest
 
@@ -28,7 +28,6 @@ from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
 from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
-
 from httpx import AsyncClient
 
 REVIEWER_HEADERS = {"X-Role": "reviewer"}

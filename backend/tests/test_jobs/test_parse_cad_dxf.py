@@ -4,12 +4,12 @@ import pytest
 
 pytest.importorskip("ezdxf")
 
+import ezdxf  # type: ignore  # noqa: E402
 from backend.jobs.parse_cad import (
     _parse_dxf_payload,
     _persist_result,
     _prepare_dxf_quicklook,
 )
-import ezdxf  # type: ignore  # noqa: E402
 
 from app.models.imports import ImportRecord
 

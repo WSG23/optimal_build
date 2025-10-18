@@ -1,11 +1,11 @@
 """Vector payload parsing tests for the CAD parser job."""
 
-from collections.abc import Mapping
 import json
+from collections.abc import Mapping
 
+import pytest
 from backend.app.services.storage import reset_storage_service
 from backend.jobs.parse_cad import parse_import_job
-import pytest
 from sqlalchemy import select
 
 from app.models.imports import ImportRecord

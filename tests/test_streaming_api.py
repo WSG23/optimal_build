@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
 import importlib
 import importlib.util
-from pathlib import Path
 import sys
+from datetime import date, datetime
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest

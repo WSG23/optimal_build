@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 import json
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -13,10 +13,10 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from backend.jobs import job_queue
+from httpx import AsyncClient
 
 from app.models.imports import ImportRecord
 from app.services.storage import get_storage_service
-from httpx import AsyncClient
 
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 GLOBAL_SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"

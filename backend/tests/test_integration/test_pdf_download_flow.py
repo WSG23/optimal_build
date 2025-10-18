@@ -5,12 +5,14 @@ Tests the complete user journey: generate PDF → get download URL → download 
 
 from __future__ import annotations
 
+import io
 from datetime import date
 from decimal import Decimal
-import io
 from uuid import UUID
 
 import pytest
+import pytest_asyncio
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import (
@@ -19,8 +21,6 @@ from app.models.property import (
     Property,
     PropertyType,
 )
-from httpx import AsyncClient
-import pytest_asyncio
 
 
 @pytest_asyncio.fixture
