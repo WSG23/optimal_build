@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import html
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Iterable, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,6 +22,7 @@ from app.services.developer_checklist_service import (
 )
 from app.services.developer_condition_service import (
     ConditionAssessment,
+    ConditionInsight,
     ConditionSystem,
     DeveloperConditionService,
 )
@@ -247,6 +248,27 @@ class ChecklistProgressResponse(BaseModel):
     completion_percentage: int = Field(alias="completionPercentage")
 
 
+class ScenarioComparisonEntryResponse(BaseModel):
+    """Aggregated comparison entry for scenario scorecards."""
+
+    model_config = {"populate_by_name": True}
+
+    scenario: Optional[str] = None
+    label: str
+    recorded_at: Optional[str] = Field(default=None, alias="recordedAt")
+    overall_score: Optional[int] = Field(default=None, alias="overallScore")
+    overall_rating: Optional[str] = Field(default=None, alias="overallRating")
+    risk_level: Optional[str] = Field(default=None, alias="riskLevel")
+    checklist_completed: Optional[int] = Field(default=None, alias="checklistCompleted")
+    checklist_total: Optional[int] = Field(default=None, alias="checklistTotal")
+    checklist_percent: Optional[int] = Field(default=None, alias="checklistPercent")
+    primary_insight: Optional[ConditionInsightResponse] = Field(
+        default=None, alias="primaryInsight"
+    )
+    insight_count: int = Field(default=0, alias="insightCount")
+    recommended_action: Optional[str] = Field(default=None, alias="recommendedAction")
+
+
 class ConditionReportResponse(BaseModel):
     """Structured condition assessment export."""
 
@@ -262,6 +284,9 @@ class ConditionReportResponse(BaseModel):
     history: List[ConditionAssessmentResponse]
     checklist_summary: Optional[ChecklistProgressResponse] = Field(
         default=None, alias="checklistSummary"
+    )
+    scenario_comparison: List[ScenarioComparisonEntryResponse] = Field(
+        default_factory=list, alias="scenarioComparison"
     )
 
 
@@ -616,7 +641,7 @@ async def get_condition_assessment_scenarios(
 )
 async def export_condition_report(
     property_id: UUID,
-    format: str = Query("json", pattern="^(json|pdf)$"),
+    report_format: str = Query("json", alias="format", pattern="^(json|pdf)$"),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
 ):
@@ -641,6 +666,18 @@ async def export_condition_report(
     checklist_summary_raw = await DeveloperChecklistService.get_checklist_summary(
         session, property_id
     )
+    try:
+        checklist_items = await DeveloperChecklistService.get_property_checklist(
+            session,
+            property_id,
+        )
+    except Exception:  # pragma: no cover - fallback if table bootstrap fails
+        checklist_items = []
+
+    scenario_comparison = _build_scenario_comparison_entries(
+        scenario_assessments=scenario_assessments,
+        checklist_items=checklist_items,
+    )
 
     report = ConditionReportResponse(
         property_id=str(property_id),
@@ -664,9 +701,10 @@ async def export_condition_report(
             if checklist_summary_raw
             else None
         ),
+        scenario_comparison=scenario_comparison,
     )
 
-    if format == "pdf":
+    if report_format == "pdf":
         html_body = _render_condition_report_html(report)
         pdf_data = render_html_to_pdf(html_body)
         if pdf_data is None:
@@ -694,6 +732,16 @@ def _serialize_condition_system(system: ConditionSystem) -> ConditionSystemRespo
     )
 
 
+def _serialize_condition_insight(insight: ConditionInsight) -> ConditionInsightResponse:
+    return ConditionInsightResponse(
+        id=insight.id,
+        severity=insight.severity,
+        title=insight.title,
+        detail=insight.detail,
+        specialist=insight.specialist,
+    )
+
+
 def _serialize_condition_assessment(
     assessment: ConditionAssessment,
 ) -> ConditionAssessmentResponse:
@@ -710,16 +758,122 @@ def _serialize_condition_assessment(
         recommended_actions=assessment.recommended_actions,
         recorded_at=recorded_at,
         insights=[
-            ConditionInsightResponse(
-                id=insight.id,
-                severity=insight.severity,
-                title=insight.title,
-                detail=insight.detail,
-                specialist=insight.specialist,
-            )
-            for insight in assessment.insights
+            _serialize_condition_insight(insight) for insight in assessment.insights
         ],
     )
+
+
+_SEVERITY_ORDER = {"critical": 0, "warning": 1, "info": 2, "positive": 3}
+
+
+def _build_scenario_comparison_entries(
+    *,
+    scenario_assessments: List[ConditionAssessment],
+    checklist_items: Iterable[Any],
+) -> List[ScenarioComparisonEntryResponse]:
+    progress_by_scenario = _summarise_checklist_progress(checklist_items)
+
+    entries: List[ScenarioComparisonEntryResponse] = []
+    for assessment in scenario_assessments:
+        scenario_key = assessment.scenario
+        label = _format_scenario_label(scenario_key)
+        progress_key = scenario_key or "all"
+        checklist_progress = progress_by_scenario.get(progress_key)
+
+        primary_insight = _select_primary_insight(assessment.insights)
+        entry = ScenarioComparisonEntryResponse(
+            scenario=scenario_key,
+            label=label,
+            recorded_at=(
+                assessment.recorded_at.isoformat() if assessment.recorded_at else None
+            ),
+            overall_score=assessment.overall_score,
+            overall_rating=assessment.overall_rating,
+            risk_level=assessment.risk_level,
+            checklist_completed=(
+                checklist_progress["completed"] if checklist_progress else None
+            ),
+            checklist_total=(
+                checklist_progress["total"] if checklist_progress else None
+            ),
+            checklist_percent=(
+                checklist_progress["percent"] if checklist_progress else None
+            ),
+            primary_insight=(
+                _serialize_condition_insight(primary_insight)
+                if primary_insight
+                else None
+            ),
+            insight_count=len(assessment.insights),
+            recommended_action=(
+                assessment.recommended_actions[0]
+                if assessment.recommended_actions
+                else None
+            ),
+        )
+        entries.append(entry)
+
+    return entries
+
+
+def _summarise_checklist_progress(
+    checklist_items: Iterable[Any],
+) -> dict[str, dict[str, int]]:
+    summary: dict[str, dict[str, int]] = {}
+
+    for item in checklist_items:
+        scenario_key = _normalise_scenario_param(item.development_scenario)
+        key = scenario_key or "all"
+        bucket = summary.setdefault(
+            key,
+            {
+                "total": 0,
+                "completed": 0,
+                "in_progress": 0,
+                "pending": 0,
+                "not_applicable": 0,
+                "percent": 0,
+            },
+        )
+        bucket["total"] += 1
+        status = item.status
+        if status == ChecklistStatus.COMPLETED:
+            bucket["completed"] += 1
+        elif status == ChecklistStatus.IN_PROGRESS:
+            bucket["in_progress"] += 1
+        elif status == ChecklistStatus.PENDING:
+            bucket["pending"] += 1
+        elif status == ChecklistStatus.NOT_APPLICABLE:
+            bucket["not_applicable"] += 1
+        else:
+            bucket["pending"] += 1
+
+    for bucket in summary.values():
+        denominator = bucket["total"] - bucket["not_applicable"]
+        if denominator > 0:
+            bucket["percent"] = int((bucket["completed"] / denominator) * 100)
+        else:
+            bucket["percent"] = 0
+
+    return summary
+
+
+def _select_primary_insight(
+    insights: List[ConditionInsight],
+) -> Optional[ConditionInsight]:
+    if not insights:
+        return None
+    ranked = sorted(
+        insights,
+        key=lambda item: (_SEVERITY_ORDER.get(item.severity, 99), insights.index(item)),
+    )
+    return ranked[0]
+
+
+def _format_scenario_label(scenario: Optional[str]) -> str:
+    if not scenario:
+        return "All scenarios"
+    return scenario.replace("_", " ").title()
 
 
 def _normalise_scenario_param(value: Optional[str]) -> Optional[str]:
@@ -801,6 +955,63 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
             """
         )
 
+    comparison_html = ""
+    if report.scenario_comparison:
+        comparison_rows = []
+        for entry in report.scenario_comparison:
+            progress = (
+                f"{entry.checklist_completed}/{entry.checklist_total}"
+                if entry.checklist_completed is not None
+                and entry.checklist_total is not None
+                else "—"
+            )
+            if entry.checklist_percent is not None and progress != "—":
+                progress = f"{progress} ({entry.checklist_percent}%)"
+
+            if entry.primary_insight:
+                insight_text = (
+                    f"<strong>{_escape(entry.primary_insight.title)}</strong><br/>"
+                    f"{_escape(entry.primary_insight.detail)}"
+                )
+            else:
+                insight_text = "—"
+
+            comparison_rows.append(
+                f"""
+                <tr>
+                  <td>{_escape(entry.label)}</td>
+                  <td>{_escape(entry.overall_rating or '–')}</td>
+                  <td>{entry.overall_score if entry.overall_score is not None else '–'}</td>
+                  <td>{_escape(entry.risk_level or '–')}</td>
+                  <td>{progress}</td>
+                  <td>{insight_text}</td>
+                  <td>{_escape(entry.recommended_action or '—')}</td>
+                </tr>
+                """
+            )
+
+        comparison_html = f"""
+        <section>
+          <h3>Scenario Comparison</h3>
+          <table style=\"width:100%; border-collapse: collapse;\">
+            <thead>
+              <tr>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Scenario</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Rating</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Score</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Risk</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Checklist</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Primary insight</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Next action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {''.join(comparison_rows)}
+            </tbody>
+          </table>
+        </section>
+        """
+
     checklist_html = ""
     if report.checklist_summary:
         summary = report.checklist_summary
@@ -833,6 +1044,8 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
         <p><strong>Property:</strong> {_escape(report.property_name)}<br/>
            <strong>Address:</strong> {_escape(report.address)}<br/>
            <strong>Generated:</strong> {_escape(report.generated_at)}</p>
+
+        {comparison_html}
 
         <h2>Scenario Assessments</h2>
         {''.join(scenario_rows)}
