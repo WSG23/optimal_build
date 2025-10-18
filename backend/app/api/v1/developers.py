@@ -267,6 +267,7 @@ class ScenarioComparisonEntryResponse(BaseModel):
     )
     insight_count: int = Field(default=0, alias="insightCount")
     recommended_action: Optional[str] = Field(default=None, alias="recommendedAction")
+    source: str
 
 
 class ConditionReportResponse(BaseModel):
@@ -810,6 +811,7 @@ def _build_scenario_comparison_entries(
                 if assessment.recommended_actions
                 else None
             ),
+            source="manual" if assessment.recorded_at else "heuristic",
         )
         entries.append(entry)
 
@@ -986,6 +988,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
                   <td>{progress}</td>
                   <td>{insight_text}</td>
                   <td>{_escape(entry.recommended_action or '—')}</td>
+                  <td>{_escape('Manual inspection' if entry.source == 'manual' else 'Automated baseline')}</td>
                 </tr>
                 """
             )
@@ -1003,6 +1006,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
                 <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Checklist</th>
                 <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Primary insight</th>
                 <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Next action</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Source</th>
               </tr>
             </thead>
             <tbody>

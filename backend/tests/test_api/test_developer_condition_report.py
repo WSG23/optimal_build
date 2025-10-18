@@ -49,6 +49,7 @@ async def test_condition_report_json(
     assert snapshot["scenario"] == "raw_land"
     assert snapshot["checklistCompleted"] == 1
     assert snapshot["checklistPercent"] == 50
+    assert snapshot["source"] == "manual"
 
 
 @pytest.mark.asyncio
