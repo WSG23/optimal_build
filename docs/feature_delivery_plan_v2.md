@@ -370,9 +370,9 @@
 - ✅ Scenario focus controls now surface per-scenario progress + quick actions (Oct 18 2025)
 - ✅ Property overview cards with zoning + site metrics (Oct 18 2025)
 - ✅ Due diligence checklist authoring + bulk import tooling (Oct 17 2025)
+- ✅ Specialist checklist insights merged into condition assessments; manual inspections now surface named specialist follow-ups in the UI
 
 **What's Missing:**
-- ❌ Property condition assessment insights beyond heuristics (tie-in to specialist assessments)
 - ❌ Multi-scenario comparison dashboard (side-by-side scorecards, PDF parity)
 - ❌ Manual inspection capture (developers can override condition assessments with inspection data)
 
