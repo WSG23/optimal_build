@@ -5,9 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
-
 from app.core.config import settings
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 _REQUEST_ALIAS_MAP: dict[str, str] = {
     "typFloorToFloorM": "typ_floor_to_floor_m",

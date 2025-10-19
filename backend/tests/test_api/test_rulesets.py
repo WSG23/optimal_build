@@ -6,10 +6,9 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
-from httpx import AsyncClient
-
 from app.core.models.geometry import Door, GeometryGraph, Level, Space
 from app.models.rulesets import RulePack
+from httpx import AsyncClient
 
 PACK_DEFINITION = {
     "metadata": {"jurisdiction": "SG", "version": 1},

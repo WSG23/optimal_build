@@ -5,7 +5,6 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
-from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -17,6 +16,7 @@ from app.services.developer_condition_service import (
     ConditionSystem,
     DeveloperConditionService,
 )
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio

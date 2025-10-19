@@ -6,9 +6,9 @@ import io
 from uuid import UUID
 
 import pytest
-import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import pytest_asyncio
 from app.models.property import (
     DevelopmentAnalysis,
     MarketTransaction,

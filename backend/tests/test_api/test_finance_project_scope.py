@@ -10,9 +10,8 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from httpx import AsyncClient
-
 from app.models.finance import FinProject
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio

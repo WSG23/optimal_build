@@ -29,7 +29,6 @@ from fastapi import (
     UploadFile,
     status,
 )
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +39,7 @@ from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
+from pydantic import BaseModel, Field
 
 
 class MetricOverridePayload(BaseModel):
