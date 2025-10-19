@@ -17,6 +17,7 @@ import {
   type ChecklistSummary,
   type ConditionAssessment,
   type ConditionAssessmentUpsertRequest,
+  type ConditionAttachment,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
 } from '../../../api/siteAcquisition'
@@ -407,6 +408,9 @@ type ConditionAssessmentDraft = {
   scenarioContext: string
   systems: AssessmentDraftSystem[]
   recommendedActionsText: string
+  inspectorName: string
+  recordedAtLocal: string
+  attachmentsText: string
 }
 
 type ScenarioComparisonKey = 'all' | DevelopmentScenario
@@ -431,6 +435,9 @@ type ScenarioComparisonDatum = {
   insights: ConditionInsightView[]
   primaryInsight: ConditionInsightView | null
   recommendedAction: string | null
+  recordedAt: string | null
+  inspectorName: string | null
+  source: 'manual' | 'heuristic'
 }
 
 type QuickAnalysisEntry =
@@ -464,6 +471,13 @@ function buildAssessmentDraft(
       : '',
   }))
 
+  const recordedAtLocal = formatDateTimeLocalInput(assessment?.recordedAt ?? null)
+  const attachmentsText = (assessment?.attachments ?? [])
+    .map((attachment) =>
+      attachment.url ? `${attachment.label} | ${attachment.url}` : attachment.label,
+    )
+    .join('\n')
+
   return {
     scenario: targetScenario,
     overallRating: assessment?.overallRating ?? 'B',
@@ -475,6 +489,9 @@ function buildAssessmentDraft(
     recommendedActionsText: assessment?.recommendedActions
       ? assessment.recommendedActions.join('\n')
       : '',
+    inspectorName: assessment?.inspectorName ?? '',
+    recordedAtLocal,
+    attachmentsText,
   }
 }
 
@@ -1794,6 +1811,14 @@ export function SiteAcquisitionPage() {
       const recommendedAction = isAll
         ? conditionAssessment?.recommendedActions?.[0] ?? null
         : conditionEntry?.recommendedActions?.[0] ?? null
+      const inspectorName =
+        conditionEntry?.inspectorName ??
+        (isAll ? conditionAssessment?.inspectorName ?? null : null)
+      const recordedAt =
+        conditionEntry?.recordedAt ??
+        (isAll ? conditionAssessment?.recordedAt ?? null : null)
+      const source: 'manual' | 'heuristic' =
+        conditionEntry && conditionEntry.recordedAt ? 'manual' : 'heuristic'
 
       return {
         key: scenarioKey,
@@ -1810,6 +1835,9 @@ export function SiteAcquisitionPage() {
         insights,
         primaryInsight,
         recommendedAction,
+        recordedAt,
+        inspectorName,
+        source,
       }
     })
   }, [
@@ -2109,6 +2137,10 @@ export function SiteAcquisitionPage() {
         ? 0
         : parsedOverallScore
 
+      const inspectorNameValue = assessmentDraft.inspectorName.trim()
+      const recordedAtIso = convertLocalToISO(assessmentDraft.recordedAtLocal)
+      const attachmentsPayload = parseAttachmentsText(assessmentDraft.attachmentsText)
+
       const payload: ConditionAssessmentUpsertRequest = {
         scenario: assessmentDraft.scenario,
         overallRating: assessmentDraft.overallRating,
@@ -2124,6 +2156,14 @@ export function SiteAcquisitionPage() {
           .split('\n')
           .map((line) => line.trim())
           .filter((line) => line.length > 0),
+        attachments: attachmentsPayload,
+      }
+
+      if (inspectorNameValue) {
+        payload.inspectorName = inspectorNameValue
+      }
+      if (recordedAtIso) {
+        payload.recordedAt = recordedAtIso
       }
 
       const saved = await saveConditionAssessment(
@@ -2439,9 +2479,22 @@ export function SiteAcquisitionPage() {
                       {formatScenarioLabel(entry.scenario)}
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
-                    {formatRecordedTimestamp(entry.recordedAt)}
-                  </span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.2rem',
+                      alignItems: 'flex-end',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+                      {formatRecordedTimestamp(entry.recordedAt)}
+                    </span>
+                    <span style={{ fontSize: '0.78rem', color: '#6e6e73' }}>
+                      Inspector:{' '}
+                      <strong>{entry.inspectorName?.trim() || 'Not recorded'}</strong>
+                    </span>
+                  </div>
                 </div>
                 <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
                   {entry.summary || 'No notes recorded.'}
@@ -2491,6 +2544,39 @@ export function SiteAcquisitionPage() {
                         +{remainingActions} more actions recorded in this inspection.
                       </p>
                     )}
+                  </div>
+                )}
+                {entry.attachments.length > 0 && (
+                  <div style={{ marginTop: '0.35rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#6e6e73',
+                        letterSpacing: '0.06em',
+                      }}
+                    >
+                      Attachments
+                    </span>
+                    <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1rem' }}>
+                      {entry.attachments.map((attachment, attachmentIndex) => (
+                        <li key={`${key}-attachment-${attachmentIndex}`} style={{ fontSize: '0.85rem' }}>
+                          {attachment.url ? (
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: '#0a84ff' }}
+                            >
+                              {attachment.label}
+                            </a>
+                          ) : (
+                            attachment.label
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
@@ -2543,7 +2629,7 @@ export function SiteAcquisitionPage() {
                     style={{
                       width: '100%',
                       borderCollapse: 'collapse',
-                      minWidth: '760px',
+                      minWidth: '960px',
                     }}
                   >
                     <thead style={{ background: '#ffffff' }}>
@@ -2638,6 +2724,32 @@ export function SiteAcquisitionPage() {
                           }}
                         >
                           Next action
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Inspector
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Source
                         </th>
                       </tr>
                     </thead>
@@ -2759,6 +2871,28 @@ export function SiteAcquisitionPage() {
                             }}
                           >
                             {row.recommendedAction ?? '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.inspectorName ?? '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.source === 'manual' ? 'Manual inspection' : 'Automated baseline'}
                           </td>
                         </tr>
                       ))}
@@ -6449,6 +6583,35 @@ export function SiteAcquisitionPage() {
                       ))}
                     </select>
                   </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Inspector name</span>
+                    <input
+                      type="text"
+                      value={assessmentDraft.inspectorName}
+                      onChange={(e) => handleAssessmentFieldChange('inspectorName', e.target.value)}
+                      placeholder="e.g. Jane Tan"
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Inspection date &amp; time</span>
+                    <input
+                      type="datetime-local"
+                      value={assessmentDraft.recordedAtLocal}
+                      onChange={(e) => handleAssessmentFieldChange('recordedAtLocal', e.target.value)}
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </label>
                 </div>
 
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -6478,16 +6641,34 @@ export function SiteAcquisitionPage() {
                       borderRadius: '8px',
                       border: '1px solid #d2d2d7',
                       padding: '0.75rem',
-                      fontSize: '0.9rem',
-                    }}
-                  />
-                </label>
+                    fontSize: '0.9rem',
+                  }}
+                />
+              </label>
 
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {assessmentDraft.systems.map((system, index) => (
-                    <div
-                      key={`${system.name}-${index}`}
-                      style={{
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                  Attachments (one per line as “Label | URL”)
+                </span>
+                <textarea
+                  value={assessmentDraft.attachmentsText}
+                  onChange={(e) => handleAssessmentFieldChange('attachmentsText', e.target.value)}
+                  rows={3}
+                  placeholder="Site photo | https://example.com/photo.jpg"
+                  style={{
+                    borderRadius: '8px',
+                    border: '1px solid #d2d2d7',
+                    padding: '0.75rem',
+                    fontSize: '0.9rem',
+                  }}
+                />
+              </label>
+
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {assessmentDraft.systems.map((system, index) => (
+                  <div
+                    key={`${system.name}-${index}`}
+                    style={{
                         border: '1px solid #e5e5e7',
                         borderRadius: '12px',
                         padding: '1rem',
@@ -6905,8 +7086,7 @@ export function SiteAcquisitionPage() {
               style={{
                 background: 'white',
                 borderRadius: '16px',
-                maxWidth: '900px',
-                width: '100%',
+                width: 'min(1200px, 95vw)',
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
@@ -6939,6 +7119,47 @@ export function SiteAcquisitionPage() {
     </div>
   )
 }
+
+function formatDateTimeLocalInput(isoValue: string | null | undefined): string {
+  if (!isoValue) {
+    return ''
+  }
+  const date = new Date(isoValue)
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+  const tzOffset = date.getTimezoneOffset()
+  const local = new Date(date.getTime() - tzOffset * 60000)
+  return local.toISOString().slice(0, 16)
+}
+
+function convertLocalToISO(localValue: string): string | null {
+  if (!localValue) {
+    return null
+  }
+  const date = new Date(localValue)
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+  return date.toISOString()
+}
+
+function parseAttachmentsText(value: string): ConditionAttachment[] {
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const [labelPart, urlPart] = line.split('|')
+      const label = (labelPart ?? '').trim()
+      const url = (urlPart ?? '').trim()
+      return {
+        label: label || url || 'Attachment',
+        url: url.length > 0 ? url : null,
+      }
+    })
+}
+
 function safeNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value

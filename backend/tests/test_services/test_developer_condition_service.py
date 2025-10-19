@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -102,12 +103,17 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
             scenario_context="Context note",
             systems=systems,
             recommended_actions=["Action 1", "Action 2"],
+            inspector_name="Inspector Jane",
+            recorded_at=datetime(2025, 10, 1, 9, 30, tzinfo=timezone.utc),
+            attachments=[{"label": "Site photo", "url": "https://example.test/photo"}],
         )
         await session.commit()
 
         assert stored.summary == "Inspection summary"
         assert stored.scenario == "existing_building"
         assert stored.recorded_at is not None
+        assert stored.inspector_name == "Inspector Jane"
+        assert stored.attachments and stored.attachments[0]["label"] == "Site photo"
 
         # create general record to serve as fallback for other scenarios
         await DeveloperConditionService.record_assessment(
@@ -132,6 +138,11 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
         assert assessment.summary == "Inspection summary"
         assert assessment.recorded_at is not None
         assert isinstance(assessment.insights, list)
+        assert assessment.inspector_name == "Inspector Jane"
+        assert (
+            assessment.attachments
+            and assessment.attachments[0]["url"] == "https://example.test/photo"
+        )
 
         fallback = await DeveloperConditionService.generate_assessment(
             session=session,
@@ -140,6 +151,8 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
         )
         assert fallback.summary == "Generic inspection"
         assert isinstance(fallback.insights, list)
+        assert fallback.inspector_name is None
+        assert fallback.attachments == []
 
         history = await DeveloperConditionService.get_assessment_history(
             session=session,

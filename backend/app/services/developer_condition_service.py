@@ -94,7 +94,10 @@ class ConditionAssessment:
     scenario_context: Optional[str]
     systems: List[ConditionSystem]
     recommended_actions: List[str]
+    inspector_name: Optional[str] = None
+    recorded_by: Optional[UUID] = None
     recorded_at: Optional[datetime] = None
+    attachments: List[dict[str, Any]] = field(default_factory=list)
     insights: List[ConditionInsight] = field(default_factory=list)
 
 
@@ -200,6 +203,9 @@ class DeveloperConditionService:
         scenario_context: Optional[str],
         systems: List[ConditionSystem],
         recommended_actions: List[str],
+        inspector_name: Optional[str] = None,
+        recorded_at: Optional[datetime] = None,
+        attachments: Optional[List[dict[str, Any]]] = None,
         recorded_by: Optional[UUID] = None,
     ) -> ConditionAssessment:
         """Store a developer-provided condition assessment and return it."""
@@ -210,6 +216,20 @@ class DeveloperConditionService:
             property_id=property_id,
             scenario=scenario_key,
         )
+        clean_attachments: List[dict[str, Any]] = []
+        for item in attachments or []:
+            if not isinstance(item, dict):
+                continue
+            label_raw = item.get("label")
+            url_raw = item.get("url")
+            label = str(label_raw).strip() if label_raw is not None else ""
+            url = None
+            if isinstance(url_raw, str):
+                url_candidate = url_raw.strip()
+                url = url_candidate or None
+            if not label and not url:
+                continue
+            clean_attachments.append({"label": label or (url or ""), "url": url})
         record = DeveloperConditionAssessmentRecord(
             property_id=property_id,
             scenario=scenario_key,
@@ -220,8 +240,12 @@ class DeveloperConditionService:
             scenario_context=scenario_context,
             systems=[system.to_dict() for system in systems],
             recommended_actions=list(recommended_actions),
+            inspector_name=inspector_name.strip() if inspector_name else None,
+            attachments=clean_attachments,
             recorded_by=recorded_by,
         )
+        if recorded_at is not None:
+            record.recorded_at = recorded_at
         session.add(record)
         await session.flush()
         await session.refresh(record)
@@ -366,6 +390,17 @@ class DeveloperConditionService:
             if isinstance(item, dict)
         ]
         actions = [str(item) for item in record.recommended_actions or []]
+        attachments_payload: List[dict[str, Any]] = []
+        if isinstance(record.attachments, list):
+            for raw in record.attachments:  # type: ignore[assignment]
+                if not isinstance(raw, dict):
+                    continue
+                label = str(raw.get("label", "")).strip()
+                url_raw = raw.get("url")
+                url = str(url_raw).strip() if isinstance(url_raw, str) else None
+                if not label and not url:
+                    continue
+                attachments_payload.append({"label": label or (url or ""), "url": url})
 
         assessment = ConditionAssessment(
             property_id=record.property_id,
@@ -377,7 +412,10 @@ class DeveloperConditionService:
             scenario_context=record.scenario_context,
             systems=systems,
             recommended_actions=actions,
+            inspector_name=record.inspector_name,
+            recorded_by=record.recorded_by,
             recorded_at=record.recorded_at,
+            attachments=attachments_payload,
         )
 
         if property_record is not None:

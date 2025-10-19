@@ -58,6 +58,11 @@ export interface ConditionInsight {
   specialist?: string | null
 }
 
+export interface ConditionAttachment {
+  label: string
+  url?: string | null
+}
+
 export interface ConditionAssessment {
   propertyId: string
   scenario?: DevelopmentScenario | null
@@ -68,7 +73,10 @@ export interface ConditionAssessment {
   scenarioContext?: string | null
   systems: ConditionSystem[]
   recommendedActions: string[]
+  inspectorName?: string | null
+  recordedBy?: string | null
   recordedAt?: string | null
+  attachments: ConditionAttachment[]
   insights: ConditionInsight[]
 }
 
@@ -81,6 +89,9 @@ export interface ConditionAssessmentUpsertRequest {
   scenarioContext?: string | null
   systems: ConditionSystem[]
   recommendedActions: string[]
+  inspectorName?: string | null
+  recordedAt?: string | null
+  attachments: ConditionAttachment[]
 }
 
 export type ChecklistTemplate = AgentsChecklistTemplate
@@ -130,26 +141,68 @@ function mapConditionAssessmentPayload(
         .filter((insight) => insight.detail !== '')
     : []
 
+  const attachments = Array.isArray(payload.attachments)
+    ? payload.attachments
+        .map((entry: Record<string, unknown>) => {
+          const label = String(entry.label ?? '').trim()
+          const urlValue =
+            typeof entry.url === 'string' && entry.url.trim().length > 0
+              ? entry.url.trim()
+              : null
+          if (!label && !urlValue) {
+            return null
+          }
+          return {
+            label: label || (urlValue ?? ''),
+            url: urlValue,
+          }
+        })
+        .filter((item): item is ConditionAttachment => item !== null)
+    : []
+
   return {
     propertyId,
     scenario:
       typeof payload.scenario === 'string'
         ? (payload.scenario as DevelopmentScenario)
-        : null,
-    overallScore: Number(payload.overall_score ?? 0),
-    overallRating: String(payload.overall_rating ?? 'C'),
-    riskLevel: String(payload.risk_level ?? 'moderate'),
+        : typeof payload.scenario === 'undefined' && typeof payload['scenario'] === 'string'
+        ? (payload['scenario'] as DevelopmentScenario)
+        : (payload.scenario as DevelopmentScenario | null | undefined) ?? null,
+    overallScore: Number(payload.overall_score ?? payload.overallScore ?? 0),
+    overallRating: String(payload.overall_rating ?? payload.overallRating ?? 'C'),
+    riskLevel: String(payload.risk_level ?? payload.riskLevel ?? 'moderate'),
     summary: String(payload.summary ?? ''),
     scenarioContext:
       typeof payload.scenario_context === 'string'
         ? payload.scenario_context
+        : typeof payload.scenarioContext === 'string'
+        ? payload.scenarioContext
         : null,
     systems,
     recommendedActions: Array.isArray(payload.recommended_actions)
       ? (payload.recommended_actions as string[])
+      : Array.isArray(payload.recommendedActions)
+      ? (payload.recommendedActions as string[])
       : [],
+    inspectorName:
+      typeof payload.inspector_name === 'string'
+        ? payload.inspector_name
+        : typeof payload.inspectorName === 'string'
+        ? payload.inspectorName
+        : null,
+    recordedBy:
+      typeof payload.recorded_by === 'string'
+        ? payload.recorded_by
+        : typeof payload.recordedBy === 'string'
+        ? payload.recordedBy
+        : null,
     recordedAt:
-      typeof payload.recorded_at === 'string' ? payload.recorded_at : null,
+      typeof payload.recorded_at === 'string'
+        ? payload.recorded_at
+        : typeof payload.recordedAt === 'string'
+        ? payload.recordedAt
+        : null,
+    attachments,
     insights,
   }
 }
@@ -325,6 +378,23 @@ export interface ConditionReportChecklistSummary {
   completionPercentage: number
 }
 
+export interface ConditionReportScenarioComparisonEntry {
+  scenario?: string | null
+  label: string
+  recordedAt?: string | null
+  overallScore?: number | null
+  overallRating?: string | null
+  riskLevel?: string | null
+  checklistCompleted?: number | null
+  checklistTotal?: number | null
+  checklistPercent?: number | null
+  primaryInsight?: ConditionInsight | null
+  insightCount: number
+  recommendedAction?: string | null
+  inspectorName?: string | null
+  source: 'manual' | 'heuristic'
+}
+
 export interface ConditionReport {
   propertyId: string
   propertyName?: string | null
@@ -333,6 +403,7 @@ export interface ConditionReport {
   scenarioAssessments: ConditionAssessment[]
   history: ConditionAssessment[]
   checklistSummary?: ConditionReportChecklistSummary | null
+  scenarioComparison: ConditionReportScenarioComparisonEntry[]
 }
 
 export async function exportConditionReport(
@@ -365,8 +436,98 @@ export async function exportConditionReport(
     return { blob, filename }
   }
 
-  const data: ConditionReport = await response.json()
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
+  const raw = await response.json()
+  const normalized: ConditionReport = {
+    propertyId: String(raw.propertyId ?? raw.property_id ?? propertyId),
+    propertyName: raw.propertyName ?? raw.property_name ?? null,
+    address: raw.address ?? null,
+    generatedAt: String(raw.generatedAt ?? raw.generated_at ?? new Date().toISOString()),
+    scenarioAssessments: Array.isArray(raw.scenarioAssessments)
+      ? raw.scenarioAssessments.map((entry: Record<string, unknown>) =>
+          mapConditionAssessmentPayload(entry, propertyId),
+        )
+      : [],
+    history: Array.isArray(raw.history)
+      ? raw.history.map((entry: Record<string, unknown>) =>
+          mapConditionAssessmentPayload(entry, propertyId),
+        )
+      : [],
+    checklistSummary: raw.checklistSummary ?? raw.checklist_summary ?? null,
+    scenarioComparison: Array.isArray(raw.scenarioComparison)
+      ? raw.scenarioComparison.map((entry: Record<string, unknown>) => ({
+          scenario: typeof entry.scenario === 'string' ? entry.scenario : null,
+          label: String(entry.label ?? (entry.scenario ?? 'Scenario')),
+          recordedAt:
+            typeof entry.recordedAt === 'string'
+              ? entry.recordedAt
+              : typeof entry.recorded_at === 'string'
+              ? entry.recorded_at
+              : null,
+          overallScore:
+            typeof entry.overallScore === 'number'
+              ? entry.overallScore
+              : typeof entry.overall_score === 'number'
+              ? entry.overall_score
+              : null,
+          overallRating:
+            typeof entry.overallRating === 'string'
+              ? entry.overallRating
+              : typeof entry.overall_rating === 'string'
+              ? entry.overall_rating
+              : null,
+          riskLevel:
+            typeof entry.riskLevel === 'string'
+              ? entry.riskLevel
+              : typeof entry.risk_level === 'string'
+              ? entry.risk_level
+              : null,
+          checklistCompleted:
+            typeof entry.checklistCompleted === 'number'
+              ? entry.checklistCompleted
+              : typeof entry.checklist_completed === 'number'
+              ? entry.checklist_completed
+              : null,
+          checklistTotal:
+            typeof entry.checklistTotal === 'number'
+              ? entry.checklistTotal
+              : typeof entry.checklist_total === 'number'
+              ? entry.checklist_total
+              : null,
+          checklistPercent:
+            typeof entry.checklistPercent === 'number'
+              ? entry.checklistPercent
+              : typeof entry.checklist_percent === 'number'
+              ? entry.checklist_percent
+              : null,
+          primaryInsight:
+            entry.primaryInsight
+              ? mapConditionAssessmentPayload(
+                  { insights: [entry.primaryInsight] },
+                  propertyId,
+                ).insights[0] ?? null
+              : null,
+          insightCount: Number(entry.insightCount ?? entry.insight_count ?? 0),
+          recommendedAction:
+            typeof entry.recommendedAction === 'string'
+              ? entry.recommendedAction
+              : typeof entry.recommended_action === 'string'
+              ? entry.recommended_action
+              : null,
+          inspectorName:
+            typeof entry.inspectorName === 'string'
+              ? entry.inspectorName
+              : typeof entry.inspector_name === 'string'
+              ? entry.inspector_name
+              : null,
+          source:
+            entry.source === 'manual' || entry.source === 'heuristic'
+              ? (entry.source as 'manual' | 'heuristic')
+              : 'heuristic',
+        }))
+      : [],
+  }
+
+  const blob = new Blob([JSON.stringify(normalized, null, 2)], {
     type: 'application/json',
   })
   return { blob, filename }

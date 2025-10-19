@@ -201,6 +201,9 @@ class ConditionAssessmentResponse(BaseModel):
     systems: List[ConditionSystemResponse]
     recommended_actions: List[str]
     recorded_at: Optional[str] = None
+    inspector_name: Optional[str] = Field(default=None, alias="inspectorName")
+    recorded_by: Optional[str] = Field(default=None, alias="recordedBy")
+    attachments: List[dict[str, Any]] = Field(default_factory=list)
     insights: List[ConditionInsightResponse] = Field(default_factory=list)
 
 
@@ -233,6 +236,9 @@ class ConditionAssessmentUpsertRequest(BaseModel):
     recommended_actions: List[str] = Field(
         default_factory=list, alias="recommendedActions"
     )
+    inspector_name: Optional[str] = Field(default=None, alias="inspectorName")
+    recorded_at: Optional[str] = Field(default=None, alias="recordedAt")
+    attachments: List[dict[str, Any]] = Field(default_factory=list)
 
 
 class ChecklistProgressResponse(BaseModel):
@@ -267,6 +273,7 @@ class ScenarioComparisonEntryResponse(BaseModel):
     )
     insight_count: int = Field(default=0, alias="insightCount")
     recommended_action: Optional[str] = Field(default=None, alias="recommendedAction")
+    inspector_name: Optional[str] = Field(default=None, alias="inspectorName")
     source: str
 
 
@@ -579,6 +586,24 @@ async def upsert_condition_assessment(
         for item in request.systems
     ]
 
+    recorded_at_override: Optional[datetime] = None
+    if request.recorded_at:
+        iso_value = request.recorded_at.strip()
+        if iso_value.endswith("Z"):
+            iso_value = iso_value[:-1] + "+00:00"
+        try:
+            recorded_at_override = datetime.fromisoformat(iso_value)
+        except ValueError as exc:  # pragma: no cover - validated client input
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid recordedAt timestamp. Use ISO 8601 format.",
+            ) from exc
+
+    attachments_payload = []
+    for attachment in request.attachments:
+        if isinstance(attachment, dict):
+            attachments_payload.append(dict(attachment))
+
     assessment = await DeveloperConditionService.record_assessment(
         session=session,
         property_id=property_id,
@@ -590,6 +615,9 @@ async def upsert_condition_assessment(
         scenario_context=request.scenario_context,
         systems=systems,
         recommended_actions=request.recommended_actions,
+        inspector_name=request.inspector_name,
+        recorded_at=recorded_at_override,
+        attachments=attachments_payload,
         recorded_by=recorded_by,
     )
     await session.commit()
@@ -758,6 +786,9 @@ def _serialize_condition_assessment(
         systems=[_serialize_condition_system(system) for system in assessment.systems],
         recommended_actions=assessment.recommended_actions,
         recorded_at=recorded_at,
+        inspector_name=assessment.inspector_name,
+        recorded_by=str(assessment.recorded_by) if assessment.recorded_by else None,
+        attachments=list(assessment.attachments or []),
         insights=[
             _serialize_condition_insight(insight) for insight in assessment.insights
         ],
@@ -811,6 +842,7 @@ def _build_scenario_comparison_entries(
                 if assessment.recommended_actions
                 else None
             ),
+            inspector_name=assessment.inspector_name,
             source="manual" if assessment.recorded_at else "heuristic",
         )
         entries.append(entry)
@@ -965,9 +997,9 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
                 f"{entry.checklist_completed}/{entry.checklist_total}"
                 if entry.checklist_completed is not None
                 and entry.checklist_total is not None
-                else "—"
+                else "N/A"
             )
-            if entry.checklist_percent is not None and progress != "—":
+            if entry.checklist_percent is not None and progress != "N/A":
                 progress = f"{progress} ({entry.checklist_percent}%)"
 
             if entry.primary_insight:
@@ -976,7 +1008,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
                     f"{_escape(entry.primary_insight.detail)}"
                 )
             else:
-                insight_text = "—"
+                insight_text = "N/A"
 
             comparison_rows.append(
                 f"""
@@ -987,7 +1019,8 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
                   <td>{_escape(entry.risk_level or '–')}</td>
                   <td>{progress}</td>
                   <td>{insight_text}</td>
-                  <td>{_escape(entry.recommended_action or '—')}</td>
+                  <td>{_escape(entry.recommended_action or 'None')}</td>
+                  <td>{_escape(entry.inspector_name or 'N/A')}</td>
                   <td>{_escape('Manual inspection' if entry.source == 'manual' else 'Automated baseline')}</td>
                 </tr>
                 """
@@ -1006,6 +1039,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
                 <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Checklist</th>
                 <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Primary insight</th>
                 <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Next action</th>
+                <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Inspector</th>
                 <th style=\"text-align:left; border-bottom:1px solid #d4d4d8; padding:0.5rem;\">Source</th>
               </tr>
             </thead>

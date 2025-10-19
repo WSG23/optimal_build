@@ -42,6 +42,8 @@ async def test_condition_report_json(
     assert payload["checklistSummary"]["pending"] == 1
     assert len(payload["scenarioAssessments"]) == 1
     assert payload["scenarioAssessments"][0]["scenario"] == "raw_land"
+    assert payload["scenarioAssessments"][0]["inspectorName"] == "Inspector Jane"
+    assert payload["scenarioAssessments"][0]["attachments"][0]["label"] == "Site photo"
     assert len(payload["history"]) == 2
     comparison = payload["scenarioComparison"]
     assert len(comparison) == 1
@@ -50,6 +52,7 @@ async def test_condition_report_json(
     assert snapshot["checklistCompleted"] == 1
     assert snapshot["checklistPercent"] == 50
     assert snapshot["source"] == "manual"
+    assert snapshot["inspectorName"] == "Inspector Jane"
 
 
 @pytest.mark.asyncio
@@ -177,6 +180,8 @@ def _stub_services(monkeypatch: pytest.MonkeyPatch, property_id: UUID) -> None:
         scenario_context="Suitable for phased development.",
         systems=systems,
         recommended_actions=["Complete soil investigation before schematic design"],
+        inspector_name="Inspector Jane",
+        attachments=[{"label": "Site photo", "url": "https://example.test/photo"}],
         recorded_at=datetime.utcnow(),
     )
 
@@ -190,6 +195,8 @@ def _stub_services(monkeypatch: pytest.MonkeyPatch, property_id: UUID) -> None:
         scenario_context=None,
         systems=systems,
         recommended_actions=["Coordinate with MEP consultant"],
+        inspector_name=None,
+        attachments=[],
         recorded_at=(datetime.utcnow() - timedelta(days=14)),
     )
 
