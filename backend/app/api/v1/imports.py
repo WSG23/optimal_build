@@ -476,7 +476,11 @@ async def _vectorize_payload_if_requested(
     infer_walls: bool,
     import_id: str,
     layer_metadata: list[dict[str, Any]],
-) -> tuple[dict[str, Any] | None, dict[str, Any] | None, list[dict[str, Any]] | None,]:
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any] | None,
+    list[dict[str, Any]] | None,
+]:
     """Return vectorization artefacts when requested and successful."""
 
     if not enable_raster_processing or not _is_vectorizable(filename, content_type):

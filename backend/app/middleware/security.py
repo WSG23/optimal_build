@@ -60,9 +60,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         headers.setdefault("X-XSS-Protection", "1; mode=block")
         if "Content-Security-Policy" not in headers:
-            headers[
-                "Content-Security-Policy"
-            ] = "default-src 'none'; frame-ancestors 'none'"
+            headers["Content-Security-Policy"] = (
+                "default-src 'none'; frame-ancestors 'none'"
+            )
 
         return response
 

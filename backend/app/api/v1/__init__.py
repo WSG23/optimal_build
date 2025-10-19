@@ -13,8 +13,7 @@ class _RouterModule(Protocol):
 class Router(Protocol):
     """Subset of FastAPI's router interface used within the aggregator."""
 
-    def include_router(self, router: "Router") -> None:
-        ...
+    def include_router(self, router: "Router") -> None: ...
 
 
 TAGS_METADATA: Final[list[dict[str, str]]] = [
