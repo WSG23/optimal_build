@@ -127,6 +127,9 @@ async def test_record_assessment_persists_and_overrides(async_session_factory):
             scenario_context="Applies to all scenarios",
             systems=systems,
             recommended_actions=["Generic action"],
+            recorded_at=datetime(
+                2025, 9, 15, 10, 0, tzinfo=timezone.utc
+            ),  # Earlier than the specific record
         )
         await session.commit()
 

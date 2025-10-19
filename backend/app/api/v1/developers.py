@@ -191,6 +191,8 @@ class ConditionInsightResponse(BaseModel):
 class ConditionAssessmentResponse(BaseModel):
     """Developer-friendly property condition assessment."""
 
+    model_config = {"populate_by_name": True}
+
     property_id: str
     scenario: Optional[str] = None
     overall_score: int
