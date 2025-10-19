@@ -10,11 +10,10 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
-from httpx import AsyncClient
-
 from app.core.geometry import GeometrySerializer
 from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
 from app.models.overlay import OverlaySourceGeometry
+from httpx import AsyncClient
 
 PROJECT_ID = 5821
 

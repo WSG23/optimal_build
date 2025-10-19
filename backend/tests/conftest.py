@@ -16,6 +16,7 @@ from typing import Any, Optional, Union, cast
 
 import pytest
 from backend._sqlalchemy_stub import ensure_sqlalchemy
+
 from httpx import AsyncClient
 
 

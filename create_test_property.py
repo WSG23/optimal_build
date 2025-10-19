@@ -3,8 +3,9 @@
 
 import asyncio
 import uuid
-from sqlalchemy.ext.asyncio import create_async_engine
+
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 
 async def create_demo_property():
@@ -21,7 +22,8 @@ async def create_demo_property():
         property_id = uuid.uuid4()
 
         await conn.execute(
-            text("""
+            text(
+                """
                 INSERT INTO properties (
                     id, name, address, postal_code, property_type, status,
                     location, district, subzone, planning_area,
@@ -38,7 +40,8 @@ async def create_demo_property():
                     :units_total, :year_built, :developer, :architect,
                     :tenure_type::tenure_type, :plot_ratio, :is_conservation, :data_source
                 )
-            """),
+            """
+            ),
             {
                 "id": property_id,
                 "name": "Marina Bay Executive Tower",
@@ -64,7 +67,7 @@ async def create_demo_property():
                 "plot_ratio": 5.625,
                 "is_conservation": False,
                 "data_source": "manual_demo",
-            }
+            },
         )
 
         print(f"✅ Created demo property:")

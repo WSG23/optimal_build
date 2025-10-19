@@ -9,7 +9,6 @@ import structlog
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,6 +31,7 @@ from app.services.developer_checklist_service import (
     DeveloperChecklistService,
 )
 from app.services.geocoding import Address, GeocodingService
+from pydantic import BaseModel, Field
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (

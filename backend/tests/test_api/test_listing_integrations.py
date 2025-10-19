@@ -3,13 +3,13 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 import pytest
-from httpx import AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.jwt_auth import create_tokens
 from app.models.property import Property
 from app.models.users import User
+from httpx import AsyncClient
 
 
 @pytest.mark.parametrize("provider", ["propertyguru", "edgeprop", "zoho_crm"])

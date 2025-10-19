@@ -8,7 +8,6 @@ from typing import Literal
 
 from backend._compat.datetime import UTC
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +15,7 @@ from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefRule, RefZoningLayer
 from app.services.normalize import NormalizedRule, RuleNormalizer
+from pydantic import BaseModel
 
 router = APIRouter()
 

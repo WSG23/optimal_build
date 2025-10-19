@@ -9,7 +9,6 @@ from typing import AsyncIterator
 
 import pytest
 import sqlalchemy as sa
-from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -17,13 +16,15 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from httpx import AsyncClient
+
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from app.core.database import get_session
 from app.models.base import BaseModel
-from app.models.overlay import OverlaySuggestion, OverlaySourceGeometry
+from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 
 # Lazy import to avoid loading the full app during test collection
 app = None

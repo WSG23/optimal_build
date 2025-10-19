@@ -26,9 +26,7 @@ from app.models.property import (
     PropertyType,
     TenureType,
 )
-from app.services.developer_checklist_service import (
-    DeveloperChecklistService,
-)
+from app.services.developer_checklist_service import DeveloperChecklistService
 
 logger = structlog.get_logger(__name__)
 

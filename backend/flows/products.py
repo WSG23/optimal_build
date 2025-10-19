@@ -7,9 +7,10 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-from prefect import flow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from prefect import flow
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

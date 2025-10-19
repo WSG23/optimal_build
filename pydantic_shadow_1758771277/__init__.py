@@ -4,21 +4,11 @@ from __future__ import annotations
 
 import inspect
 import json
-from collections.abc import Callable, Iterable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (Callable, Iterable, Mapping, MutableMapping,
+                             MutableSequence, Sequence)
 from datetime import date, datetime
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    get_args,
-    get_origin,
-    get_type_hints,
-)
+from typing import (Any, Dict, List, Optional, Tuple, Type, TypeVar, Union,
+                    get_args, get_origin, get_type_hints)
 
 T = TypeVar("T")
 

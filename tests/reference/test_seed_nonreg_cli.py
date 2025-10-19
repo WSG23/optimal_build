@@ -6,10 +6,9 @@ import asyncio
 import json
 from pathlib import Path
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
 from backend.app.models.base import BaseModel
 from backend.scripts import seed_nonreg
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
 def _load_fixture_count(path: Path) -> int:

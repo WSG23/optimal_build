@@ -7,9 +7,10 @@ import sys
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
-from prefect import flow, task
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from prefect import flow, task
 
 if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

@@ -30,11 +30,7 @@ except ModuleNotFoundError:  # pragma: no cover - available in production enviro
 from backend.jobs import job
 
 from app.core import database as app_database
-from app.core.geometry import (
-    GeometrySerializer,
-    GraphBuilder,
-    derive_setback_overrides,
-)
+from app.core.geometry import GeometrySerializer, GraphBuilder, derive_setback_overrides
 from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
 from app.services.overlay_ingest import ingest_parsed_import_geometry

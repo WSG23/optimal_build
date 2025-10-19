@@ -29,7 +29,6 @@ from fastapi import (
     UploadFile,
     status,
 )
-from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +39,7 @@ from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
+from pydantic import BaseModel, Field
 
 
 class MetricOverridePayload(BaseModel):
@@ -476,11 +476,7 @@ async def _vectorize_payload_if_requested(
     infer_walls: bool,
     import_id: str,
     layer_metadata: list[dict[str, Any]],
-) -> tuple[
-    dict[str, Any] | None,
-    dict[str, Any] | None,
-    list[dict[str, Any]] | None,
-]:
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, list[dict[str, Any]] | None,]:
     """Return vectorization artefacts when requested and successful."""
 
     if not enable_raster_processing or not _is_vectorizable(filename, content_type):

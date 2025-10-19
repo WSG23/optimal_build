@@ -336,28 +336,8 @@ def check_formatting(repo_root: Path) -> tuple[bool, list[str]]:
             f"  -> Files need formatting:\n{result.stderr or result.stdout}"
         )
 
-    # Run isort in check mode
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "isort",
-            "--check-only",
-            "--quiet",
-            "backend/",
-            "scripts/",
-        ],
-        capture_output=True,
-        text=True,
-        cwd=repo_root,
-    )
-
-    if result.returncode != 0:
-        errors.append(
-            "RULE VIOLATION: Import ordering needs fixing (isort)\n"
-            "  -> Rule 3: Run 'make format' before committing\n"
-            "  -> See CODING_RULES.md section 3"
-        )
+    # Note: Import ordering is checked by ruff (with the I rule), not isort
+    # This avoids conflicts between ruff and isort when they disagree on formatting
 
     return len(errors) == 0, errors
 

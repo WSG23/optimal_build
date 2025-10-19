@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from backend._compat.datetime import utcnow
 from pydantic import BaseModel, Field
 from sqlalchemy import (
     JSON,
@@ -21,6 +20,8 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from backend._compat.datetime import utcnow
 
 
 class RegstackBase(DeclarativeBase):

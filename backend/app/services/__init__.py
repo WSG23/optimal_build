@@ -1,11 +1,11 @@
 """Service layer exports."""
 
-from . import (  # noqa: F401
+from . import entitlements  # noqa: F401
+from . import (
     alerts,
     buildable,
     costs,
     deals,
-    entitlements,
     finance,
     ingestion,
     integrations,

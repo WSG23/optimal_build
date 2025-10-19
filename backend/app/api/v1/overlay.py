@@ -19,8 +19,6 @@ from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
 from app.models.overlay import OverlayDecision, OverlaySuggestion
 from app.schemas.overlay import (
     OverlayDecisionPayload,
-)
-from app.schemas.overlay import (
     OverlaySuggestion as OverlaySuggestionSchema,
 )
 

@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "backend"))
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
 async def create_demo_property():
@@ -24,9 +24,7 @@ async def create_demo_property():
 
     async with async_session() as session:
         # First check if properties table exists
-        result = await session.execute(
-            text("SELECT 1 FROM properties LIMIT 1")
-        )
+        result = await session.execute(text("SELECT 1 FROM properties LIMIT 1"))
 
         # Generate a new UUID
         result = await session.execute(text("SELECT gen_random_uuid()"))
@@ -34,7 +32,8 @@ async def create_demo_property():
 
         # Insert using the same pattern as the test fixture
         await session.execute(
-            text("""
+            text(
+                """
                 INSERT INTO properties (
                     id, name, address, postal_code, property_type, status,
                     location, district, subzone, planning_area,
@@ -68,8 +67,9 @@ async def create_demo_property():
                     false,
                     'manual_demo'
                 )
-            """),
-            {"id": property_id}
+            """
+            ),
+            {"id": property_id},
         )
         await session.commit()
 
@@ -81,7 +81,9 @@ async def create_demo_property():
         print(f"\n🌐 Test URL:")
         print(f"   http://localhost:4400/#/agents/advisory?propertyId={property_id}")
         print(f"\n🧪 Test API:")
-        print(f"   curl -H 'X-Role: admin' http://localhost:9400/api/v1/agents/commercial-property/properties/{property_id}/advisory")
+        print(
+            f"   curl -H 'X-Role: admin' http://localhost:9400/api/v1/agents/commercial-property/properties/{property_id}/advisory"
+        )
 
         return str(property_id)
 
