@@ -10,9 +10,10 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from httpx import AsyncClient
+
 from app.models.rkp import RefCostIndex
 from app.utils import metrics
-from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
