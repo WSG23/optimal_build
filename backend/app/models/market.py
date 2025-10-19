@@ -1,19 +1,18 @@
 """Market data models for yield benchmarking and absorption tracking."""
 
+import uuid
+
 from sqlalchemy import (
     JSON,
     Boolean,
     Column,
     Date,
     DateTime,
+    Enum as SQLEnum,
     Index,
     Integer,
     String,
     UniqueConstraint,
-    text,
-)
-from sqlalchemy import (
-    Enum as SQLEnum,
 )
 from sqlalchemy.types import Numeric as SQLDecimal
 
@@ -42,7 +41,7 @@ class YieldBenchmark(BaseModel):
 
     __tablename__ = "yield_benchmarks"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Benchmark Period
     benchmark_date = Column(Date, nullable=False)
@@ -114,7 +113,7 @@ class AbsorptionTracking(BaseModel):
 
     __tablename__ = "absorption_tracking"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Reference
     project_id = Column(UUID())  # Can reference properties or development_pipeline
@@ -170,7 +169,7 @@ class MarketCycle(BaseModel):
 
     __tablename__ = "market_cycles"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Period
     cycle_date = Column(Date, nullable=False)
@@ -216,7 +215,7 @@ class MarketIndex(BaseModel):
 
     __tablename__ = "market_indices"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Index Details
     index_date = Column(Date, nullable=False)
@@ -250,7 +249,7 @@ class CompetitiveSet(BaseModel):
 
     __tablename__ = "competitive_sets"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Set Definition
     set_name = Column(String(255), nullable=False)
@@ -290,7 +289,7 @@ class MarketAlert(BaseModel):
 
     __tablename__ = "market_alerts"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Alert Configuration
     alert_type = Column(
@@ -328,8 +327,6 @@ class MarketAlert(BaseModel):
 # Backwards compatibility exports for transactional models defined elsewhere.
 from app.models.property import (  # noqa: E402  pylint: disable=wrong-import-position
     MarketTransaction as _MarketTransaction,
-)
-from app.models.property import (
     RentalListing as _RentalListing,
 )
 

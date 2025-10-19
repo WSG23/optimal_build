@@ -1,5 +1,6 @@
 """Property and building data models for Commercial Property Advisors agent."""
 
+import uuid
 from enum import Enum
 
 from sqlalchemy import (
@@ -12,11 +13,9 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
-    text,
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Enum as SQLEnum
-from sqlalchemy.types import Numeric as SQLDecimal
+from sqlalchemy.types import Enum as SQLEnum, Numeric as SQLDecimal
 
 try:
     from geoalchemy2 import Geometry
@@ -84,7 +83,7 @@ class Property(BaseModel):
 
     __tablename__ = "properties"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Basic Information
     name = Column(String(255), nullable=False)
@@ -173,7 +172,7 @@ class MarketTransaction(BaseModel):
 
     __tablename__ = "market_transactions"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Property Reference
     property_id = Column(UUID(), ForeignKey("properties.id"), nullable=False)
@@ -217,7 +216,7 @@ class RentalListing(BaseModel):
 
     __tablename__ = "rental_listings"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Property Reference
     property_id = Column(UUID(), ForeignKey("properties.id"), nullable=False)
@@ -264,7 +263,7 @@ class DevelopmentPipeline(BaseModel):
 
     __tablename__ = "development_pipeline"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Project Information
     project_name = Column(String(255), nullable=False)
@@ -317,7 +316,7 @@ class PropertyPhoto(BaseModel):
 
     __tablename__ = "property_photos"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Property Reference
     property_id = Column(UUID(), ForeignKey("properties.id"), nullable=False)
@@ -358,7 +357,7 @@ class DevelopmentAnalysis(BaseModel):
 
     __tablename__ = "development_analyses"
 
-    id = Column(UUID(), primary_key=True, server_default=text("gen_random_uuid()"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
 
     # Property Reference
     property_id = Column(UUID(), ForeignKey("properties.id"), nullable=False)

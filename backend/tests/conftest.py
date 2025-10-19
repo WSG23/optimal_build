@@ -2,6 +2,27 @@
 
 from __future__ import annotations
 
+# IMPORTANT: Patch SQLite type compiler BEFORE any other imports
+# This ensures SQLite can handle PostgreSQL-specific types (UUID, JSONB)
+try:
+    from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
+
+    if not hasattr(SQLiteTypeCompiler, "visit_UUID"):
+
+        def _visit_UUID(self, _type, **_):  # pragma: no cover
+            return "CHAR(36)"
+
+        SQLiteTypeCompiler.visit_UUID = _visit_UUID
+
+    if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
+
+        def _visit_JSONB(self, _type, **_):  # pragma: no cover
+            return "TEXT"
+
+        SQLiteTypeCompiler.visit_JSONB = _visit_JSONB
+except ImportError:
+    pass  # SQLAlchemy not installed
+
 import asyncio
 import importlib.machinery
 import importlib.util
@@ -16,6 +37,7 @@ from typing import Any, Optional, Union, cast
 
 import pytest
 from backend._sqlalchemy_stub import ensure_sqlalchemy
+
 from httpx import AsyncClient
 
 
