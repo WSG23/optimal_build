@@ -1,5 +1,14 @@
 import asyncio
 from logging.config import fileConfig
+from pathlib import Path
+import sys
+
+# Ensure project root is on sys.path so "backend.*" imports work when running
+# migrations from the backend/ directory.
+BASE_DIR = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = BASE_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from alembic import context
 from app.core.config import settings

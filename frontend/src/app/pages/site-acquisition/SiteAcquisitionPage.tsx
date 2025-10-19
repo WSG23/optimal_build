@@ -908,7 +908,11 @@ export function SiteAcquisitionPage() {
     [activeScenario, scenarioLookup],
   )
 
-  const quickAnalysisScenarios = capturedProperty?.quickAnalysis.scenarios ?? []
+  const quickAnalysis = capturedProperty?.quickAnalysis ?? null
+  const quickAnalysisScenarios = useMemo(() => {
+    const scenarios = quickAnalysis?.scenarios ?? []
+    return Array.isArray(scenarios) ? scenarios : []
+  }, [quickAnalysis])
   const comparisonScenarios =
     activeScenario === 'all'
       ? quickAnalysisScenarios
@@ -1843,11 +1847,13 @@ export function SiteAcquisitionPage() {
   }, [
     quickAnalysisScenarios,
     scenarioChecklistProgress,
+    scenarioAssessments,
     scenarioAssessmentsMap,
     conditionAssessment,
     combinedConditionInsights,
     displaySummary,
     scenarioLookup,
+    formatScenarioLabel,
     summariseScenarioMetrics,
     convertAssessmentInsights,
   ])
@@ -2067,8 +2073,15 @@ export function SiteAcquisitionPage() {
       return
     }
 
-    if (!isEditingAssessment || assessmentEditorMode === 'edit') {
-      setAssessmentDraft(buildAssessmentDraft(conditionAssessment, activeScenario))
+    if (!isEditingAssessment) {
+      // When not editing, sync the draft with the current assessment
+      const baseDraft = buildAssessmentDraft(conditionAssessment, activeScenario)
+      // Use current timestamp since any save creates a new history entry
+      const nowLocal = formatDateTimeLocalInput(new Date().toISOString())
+      setAssessmentDraft({
+        ...baseDraft,
+        recordedAtLocal: nowLocal,
+      })
     }
   }, [
     capturedProperty,
@@ -2194,10 +2207,30 @@ export function SiteAcquisitionPage() {
   }
 
   function resetAssessmentDraft() {
+    const nowLocal = formatDateTimeLocalInput(new Date().toISOString())
+
     if (assessmentEditorMode === 'new') {
-      setAssessmentDraft(buildAssessmentDraft(null, activeScenario))
+      const baseDraft = buildAssessmentDraft(null, activeScenario)
+      setAssessmentDraft({
+        ...baseDraft,
+        inspectorName: '',
+        recordedAtLocal: nowLocal,
+        attachmentsText: '',
+      })
     } else {
-      setAssessmentDraft(buildAssessmentDraft(conditionAssessment, activeScenario))
+      // For 'edit' mode, get the source assessment to reset to
+      let sourceAssessment: ConditionAssessment | null = null
+      if (activeScenario === 'all' && latestAssessmentEntry) {
+        sourceAssessment = latestAssessmentEntry
+      } else {
+        sourceAssessment = conditionAssessment
+      }
+      const baseDraft = buildAssessmentDraft(sourceAssessment, activeScenario)
+      // Use current timestamp since saving creates a new history entry
+      setAssessmentDraft({
+        ...baseDraft,
+        recordedAtLocal: nowLocal,
+      })
     }
     setAssessmentSaveMessage(null)
   }
@@ -2207,10 +2240,32 @@ export function SiteAcquisitionPage() {
       return
     }
     const targetScenario = activeScenario === 'all' ? 'all' : activeScenario
+    const nowLocal = formatDateTimeLocalInput(new Date().toISOString())
+
     if (mode === 'new') {
-      setAssessmentDraft(buildAssessmentDraft(null, targetScenario))
+      const baseDraft = buildAssessmentDraft(null, targetScenario)
+      setAssessmentDraft({
+        ...baseDraft,
+        inspectorName: '',
+        recordedAtLocal: nowLocal,
+        attachmentsText: '',
+      })
     } else {
-      setAssessmentDraft(buildAssessmentDraft(conditionAssessment, activeScenario))
+      let sourceAssessment: ConditionAssessment | null = null
+      if (activeScenario === 'all' && latestAssessmentEntry) {
+        sourceAssessment = latestAssessmentEntry
+      } else {
+        sourceAssessment = conditionAssessment
+      }
+      const scenarioForDraft: DevelopmentScenario | 'all' =
+        (sourceAssessment?.scenario as DevelopmentScenario | null | undefined) ??
+        (activeScenario as DevelopmentScenario | 'all')
+      const baseDraft = buildAssessmentDraft(sourceAssessment, scenarioForDraft)
+      // When editing, use current timestamp since saving creates a new history entry
+      setAssessmentDraft({
+        ...baseDraft,
+        recordedAtLocal: nowLocal,
+      })
     }
     setAssessmentEditorMode(mode)
     setAssessmentSaveMessage(null)
@@ -2759,12 +2814,25 @@ export function SiteAcquisitionPage() {
                           <td
                             style={{
                               padding: '0.85rem 1rem',
-                              fontWeight: 600,
                               borderBottom: '1px solid #f4f4f8',
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {row.label}
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.2rem',
+                                alignItems: 'flex-start',
+                              }}
+                            >
+                              <span style={{ fontWeight: 600 }}>{row.label}</span>
+                              {row.recordedAt && (
+                                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                  {formatRecordedTimestamp(row.recordedAt)}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td
                             style={{
@@ -3060,6 +3128,77 @@ export function SiteAcquisitionPage() {
                       {latestAssessmentEntry.summary}
                     </p>
                   )}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.6rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                    }}
+                  >
+                    <span>
+                      Inspector:{' '}
+                      <strong>
+                        {latestAssessmentEntry.inspectorName?.trim() || 'Not recorded'}
+                      </strong>
+                    </span>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        borderRadius: '9999px',
+                        padding: '0.15rem 0.6rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        background: latestAssessmentEntry.recordedAt
+                          ? '#dcfce7'
+                          : 'rgba(37, 99, 235, 0.12)',
+                        color: latestAssessmentEntry.recordedAt ? '#166534' : '#1d4ed8',
+                      }}
+                    >
+                      {latestAssessmentEntry.recordedAt
+                        ? 'Manual inspection'
+                        : 'Automated baseline'}
+                    </span>
+                  </div>
+                  {latestAssessmentEntry.attachments.length > 0 && (
+                    <div>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          marginTop: '0.35rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          color: '#6e6e73',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        Attachments
+                      </span>
+                      <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.2rem' }}>
+                        {latestAssessmentEntry.attachments.map((attachment, index) => (
+                          <li key={`latest-attachment-${index}`} style={{ fontSize: '0.85rem' }}>
+                            {attachment.url ? (
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: '#0a84ff' }}
+                              >
+                                {attachment.label}
+                              </a>
+                            ) : (
+                              attachment.label
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
                 <div
                   style={{
@@ -3112,6 +3251,77 @@ export function SiteAcquisitionPage() {
                     >
                       {previousAssessmentEntry.summary}
                     </p>
+                  )}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.6rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                    }}
+                  >
+                    <span>
+                      Inspector:{' '}
+                      <strong>
+                        {previousAssessmentEntry.inspectorName?.trim() || 'Not recorded'}
+                      </strong>
+                    </span>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        borderRadius: '9999px',
+                        padding: '0.15rem 0.6rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        background: previousAssessmentEntry.recordedAt
+                          ? '#dcfce7'
+                          : 'rgba(37, 99, 235, 0.12)',
+                        color: previousAssessmentEntry.recordedAt ? '#166534' : '#1d4ed8',
+                      }}
+                    >
+                      {previousAssessmentEntry.recordedAt
+                        ? 'Manual inspection'
+                        : 'Automated baseline'}
+                    </span>
+                  </div>
+                  {previousAssessmentEntry.attachments.length > 0 && (
+                    <div>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          marginTop: '0.35rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          color: '#6e6e73',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        Attachments
+                      </span>
+                      <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.2rem' }}>
+                        {previousAssessmentEntry.attachments.map((attachment, index) => (
+                          <li key={`previous-attachment-${index}`} style={{ fontSize: '0.85rem' }}>
+                            {attachment.url ? (
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: '#0a84ff' }}
+                              >
+                                {attachment.label}
+                              </a>
+                            ) : (
+                              attachment.label
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </div>
               </div>
@@ -4879,6 +5089,42 @@ export function SiteAcquisitionPage() {
                       )}
                     </div>
 
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        fontSize: '0.78rem',
+                        color: '#64748b',
+                      }}
+                    >
+                      <span>
+                        Inspector:{' '}
+                        <strong>{row.inspectorName?.trim() || 'Not recorded'}</strong>
+                      </span>
+                      {row.recordedAt && (
+                        <span>Logged {formatRecordedTimestamp(row.recordedAt)}</span>
+                      )}
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          borderRadius: '9999px',
+                          padding: '0.15rem 0.6rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          background:
+                            row.source === 'manual' ? '#dcfce7' : 'rgba(37, 99, 235, 0.12)',
+                          color: row.source === 'manual' ? '#166534' : '#1d4ed8',
+                        }}
+                      >
+                        {row.source === 'manual' ? 'Manual inspection' : 'Automated baseline'}
+                      </span>
+                    </div>
+
                     {row.quickHeadline && (
                       <p
                         style={{
@@ -5445,17 +5691,57 @@ export function SiteAcquisitionPage() {
                     {conditionAssessment.scenarioContext}
                   </p>
                 )}
-                {conditionAssessment.recordedAt && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '0.8125rem',
-                      color: '#6e6e73',
-                    }}
-                  >
-                    Inspection recorded{' '}
-                    {new Date(conditionAssessment.recordedAt).toLocaleString()}
-                  </p>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                    fontSize: '0.8125rem',
+                    color: '#6e6e73',
+                  }}
+                >
+                  <span>
+                    Inspector:{' '}
+                    <strong>{conditionAssessment.inspectorName?.trim() || 'Not recorded'}</strong>
+                  </span>
+                  {conditionAssessment.recordedAt && (
+                    <span>Logged {formatRecordedTimestamp(conditionAssessment.recordedAt)}</span>
+                  )}
+                </div>
+                {conditionAssessment.attachments.length > 0 && (
+                  <div>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        marginTop: '0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#6e6e73',
+                        letterSpacing: '0.06em',
+                      }}
+                    >
+                      Attachments
+                    </span>
+                    <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.2rem' }}>
+                      {conditionAssessment.attachments.map((attachment, index) => (
+                        <li key={`current-attachment-${index}`} style={{ fontSize: '0.85rem' }}>
+                          {attachment.url ? (
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: '#0a84ff' }}
+                            >
+                              {attachment.label}
+                            </a>
+                          ) : (
+                            attachment.label
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
               <div
@@ -7128,9 +7414,12 @@ function formatDateTimeLocalInput(isoValue: string | null | undefined): string {
   if (Number.isNaN(date.getTime())) {
     return ''
   }
-  const tzOffset = date.getTimezoneOffset()
-  const local = new Date(date.getTime() - tzOffset * 60000)
-  return local.toISOString().slice(0, 16)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
 function convertLocalToISO(localValue: string): string | null {
