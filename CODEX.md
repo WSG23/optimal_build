@@ -5,11 +5,19 @@ Follow these guardrails when you implement features and changes.
 
 ## 🚀 MANDATORY: Read This First
 
-**Before starting any work, read [`docs/handoff_playbook.md`](docs/handoff_playbook.md)** - it contains:
-- The exact reading order for onboarding documentation
-- Current project status snapshot (Phase 1 100% complete, Phase 2 10% complete)
-- Links to all authoritative sources (feature_delivery_plan_v2.md, NEXT_STEPS, CODING_RULES, etc.)
-- Immediate actions to carry forward from previous session
+**Before starting any work:**
+
+1. **Read [`START_HERE.md`](START_HERE.md)** - Contains:
+   - Reading order for all documentation
+   - **COMPLETE inventory of all 20 instruction files** (if asked "list all docs", this is the answer)
+   - Project context and testing guidelines
+
+2. **Then read [`docs/handoff_playbook.md`](docs/handoff_playbook.md)** - Contains:
+   - Current project status snapshot (Phase 1 100% complete, Phase 2 10% complete)
+   - Links to all authoritative sources (feature_delivery_plan_v2.md, NEXT_STEPS, CODING_RULES, etc.)
+   - Immediate actions to carry forward from previous session
+
+**⚠️ IMPORTANT:** If asked to "list all instruction files" or "list all documentation", do NOT use grep/find. Instead, read the "Complete Documentation Inventory" section in START_HERE.md - it's the authoritative list.
 
 This ensures you pick up exactly where the previous agent left off.
 

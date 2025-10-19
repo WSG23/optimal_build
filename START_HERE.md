@@ -77,3 +77,44 @@ This ensures continuity between sessions and alignment with previous work.
 ---
 
 **Ready to start? Go read `docs/feature_delivery_plan_v2.md` first!** 📊
+
+---
+
+## 📚 Complete Documentation Inventory
+
+**⚠️ If asked "list all instruction/documentation files", this is the COMPLETE answer:**
+
+This section lists ALL 20 instruction and reference files in this repository. This prevents AI agents from using heuristics/grep to discover files (which leads to gaps).
+
+### 🎯 Core AI Agent Instructions (Must Read - Listed Above)
+1. ✅ **START_HERE.md** (this file) - Entry point and reading order
+2. ✅ **UI_STATUS.md** - Frontend UI status and warnings
+3. ✅ **FEATURES.md** - Complete feature specifications
+4. ✅ **docs/feature_delivery_plan_v2.md** - Project roadmap and current status
+5. ✅ **docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md** - Task decision guide
+6. ✅ **TESTING_KNOWN_ISSUES.md** - Known test harness issues (not bugs)
+7. ✅ **CLAUDE.md** - Claude-specific instructions and workflows
+8. ✅ **CODEX.md** - Codex-specific instructions and mandatory testing checklist
+
+### 📋 Additional Reference Files (Read When Relevant)
+9. **docs/handoff_playbook.md** - Session handoff guide and status snapshot
+10. **CODING_RULES.md** - 8 mandatory coding rules (enforced by CI)
+11. **CONTRIBUTING.md** - Git workflow, PR process, code review
+12. **TESTING_ADVISORY.md** - Testing best practices
+13. **TESTING_DOCUMENTATION_SUMMARY.md** - Testing strategy overview
+14. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
+15. **LIVE_TESTING_GUIDE.md** - Manual/UAT testing procedures
+16. **TEST_ALL_FEATURES.md** - Feature testing checklist
+17. **PROJECT_ROADMAP.md** - High-level project roadmap
+18. **frontend/README_AI_AGENTS.md** - ⚠️ Critical warnings about frontend test harnesses
+19. **docs/SOLO_FOUNDER_GUIDE.md** - Solo founder workflow with AI agents
+20. **docs/reviewer_sop.md** - Code review procedures
+
+### 📖 Supporting Documentation (Not Instructions)
+- **README.md** - General project overview
+- **API_ENDPOINTS.md** - API documentation
+- **docs/architecture.md** - System architecture
+- **docs/finance_api.md**, **docs/entitlements_api.md**, etc. - API references
+- Various feature-specific docs in `docs/`
+
+**Last Updated:** 2025-10-19 (Update this date when adding/removing instruction files)
