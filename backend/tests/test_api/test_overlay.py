@@ -9,11 +9,11 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from backend.jobs import job_queue
+from httpx import AsyncClient
 from sqlalchemy import select
 
 from app.models.audit import AuditLog
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
-from httpx import AsyncClient
 
 PROJECT_ID = 4120
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"

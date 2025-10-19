@@ -11,16 +11,16 @@ from decimal import Decimal
 from uuid import UUID
 
 import pytest
+import pytest_asyncio
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import pytest_asyncio
 from app.models.property import (
     DevelopmentAnalysis,
     MarketTransaction,
     Property,
     PropertyType,
 )
-from httpx import AsyncClient
 
 
 @pytest_asyncio.fixture

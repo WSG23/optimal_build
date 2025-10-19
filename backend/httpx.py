@@ -156,9 +156,9 @@ class _StubAsyncClient:
                 )
             parts.append(f"--{boundary}--\r\n".encode("utf-8"))
             body = b"".join(parts)
-            prepared_headers["content-type"] = (
-                f"multipart/form-data; boundary={boundary}"
-            )
+            prepared_headers[
+                "content-type"
+            ] = f"multipart/form-data; boundary={boundary}"
         elif data:
             body = urlencode(data).encode("utf-8")
             prepared_headers.setdefault(

@@ -23,6 +23,7 @@ endif
 PRE_COMMIT ?= $(VENV_ABS)/bin/pre-commit
 BLACK ?= $(VENV_ABS)/bin/black
 ISORT ?= $(VENV_ABS)/bin/isort
+RUFF ?= $(PY) -m ruff
 FLAKE8 ?= $(VENV_ABS)/bin/flake8
 MYPY ?= $(PY) -m mypy
 PYTEST ?= $(VENV_ABS)/bin/pytest
@@ -126,7 +127,7 @@ install: venv ## Install dependencies (alias)
 
 format: ## Format code (all Python files)
 	@$(BLACK) backend/app/ backend/tests/ tests/ || true
-	@$(ISORT) backend/app/ backend/tests/ tests/ || true
+	@$(RUFF) check backend/app/ backend/tests/ tests/ scripts/ --select I --fix || true
 
 format-check: ## Check formatting (all Python files)
 	@$(BLACK) --check backend/app/ backend/tests/ tests/ || true

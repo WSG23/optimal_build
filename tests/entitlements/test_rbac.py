@@ -8,10 +8,10 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from app.utils import metrics
+
 from backend.app.services.entitlements import EntitlementsService
 from backend.scripts.seed_entitlements_sg import seed_entitlements
-
-from app.utils import metrics
 from httpx import AsyncClient
 
 PROJECT_ID = 90301

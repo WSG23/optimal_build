@@ -2,12 +2,12 @@
 
 from typing import Any, Dict, Optional, Tuple
 
-import structlog
-
 import httpx
+import structlog
+from pydantic import BaseModel
+
 from app.core.config import settings
 from app.services.base import AsyncClientService
-from pydantic import BaseModel
 
 logger = structlog.get_logger()
 

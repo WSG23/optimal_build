@@ -6,8 +6,9 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 
 
 class PropertyComplianceSummary(BaseModel):

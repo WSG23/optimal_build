@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, field_validator
 
 try:  # pragma: no cover - optional email validation dependency
     import email_validator  # type: ignore  # noqa: F401
-
     from pydantic import EmailStr  # type: ignore
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore

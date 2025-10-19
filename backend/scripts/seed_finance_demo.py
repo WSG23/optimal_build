@@ -749,9 +749,9 @@ async def _seed_scenario(
         irr_raw = calculator.irr(cash_flows)
         irr_value = irr_raw.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
     except ValueError:
-        irr_metadata["warning"] = (
-            "IRR could not be computed because the cash flows lack a sign change"
-        )
+        irr_metadata[
+            "warning"
+        ] = "IRR could not be computed because the cash flows lack a sign change"
 
     dscr_entries: list[calculator.DscrEntry] = []
     dscr_metadata: dict[str, Any] = {}

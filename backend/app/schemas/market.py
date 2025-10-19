@@ -5,8 +5,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Dict, List
 
-from app.models.property import PropertyType
 from pydantic import BaseModel, ConfigDict
+
+from app.models.property import PropertyType
 
 
 class MarketPeriod(BaseModel):

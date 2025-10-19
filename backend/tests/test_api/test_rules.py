@@ -9,14 +9,14 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
+import pytest_asyncio
+from httpx import AsyncClient
 from sqlalchemy import select
 
-import pytest_asyncio
 from app.core.database import get_session
 from app.main import app
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from app.utils import metrics
-from httpx import AsyncClient
 from scripts.seed_screening import seed_screening_sample_data
 
 

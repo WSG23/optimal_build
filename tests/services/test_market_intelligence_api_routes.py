@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from app.models.property import PropertyType
 from app.utils import metrics
 
