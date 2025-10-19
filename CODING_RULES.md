@@ -73,28 +73,32 @@ def get_property(session: Session, property_id: str):  # Missing async
 
 ## 3. Testing Before Commits
 
-**Rule:** **ALWAYS** run `make format` then `make verify` before committing or opening a pull request. This is **MANDATORY** - no exceptions.
+**Rule:** Code formatting is **automatically handled by pre-commit hooks**. Run `make verify` before committing to ensure all checks pass.
 
 **Why:**
-- `make format` fixes all formatting issues (black, isort, ruff) and catches syntax errors
+- Pre-commit hooks automatically fix formatting issues (black, ruff, prettier)
 - `make verify` catches lint failures, unused variables, and test regressions
-- Running format first prevents pre-commit hook failures and failed commits
-- Skipping these steps wastes time with "commit fails → fix issues → re-commit" cycles
+- Automation prevents "commit fails → fix issues → re-commit" cycles
 
-**Mandatory Workflow:**
+**New Workflow (Simplified):**
 ```bash
-# STEP 1 (MANDATORY): Format code first
-make format
-
-# STEP 2 (MANDATORY): Verify everything passes
+# STEP 1 (MANDATORY): Verify everything passes
 make verify
 
-# STEP 3: Only commit after both pass
+# STEP 2: Commit (pre-commit hooks auto-format)
 git add .
 git commit -m "your message"
+
+# If hooks modified files, they're auto-staged - just commit again
 ```
 
-**⚠️ Warning:** If you skip `make format`, pre-commit hooks will modify your files automatically, causing the commit to fail. You'll then need to re-stage the auto-fixed files and commit again.
+**Manual formatting (optional):**
+```bash
+# To format ALL files before committing:
+pre-commit run --all-files
+```
+
+**Note:** `make format` is now deprecated - it just shows a help message explaining that formatting is automatic.
 
 **Tip:** See [CONTRIBUTING.md](CONTRIBUTING.md#testing-and-quality-checks) for the full testing and linting workflow.
 

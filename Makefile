@@ -125,9 +125,22 @@ $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
 
 install: venv ## Install dependencies (alias)
 
-format: ## Format code (all Python files)
-	@$(BLACK) backend/app/ backend/tests/ tests/ || true
-	@$(RUFF) check backend/app/ backend/tests/ tests/ scripts/ --select I --fix || true
+format: ## Format code (handled automatically by pre-commit hooks)
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ Code formatting is handled automatically by pre-commit hooks"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "📝 When you commit, pre-commit hooks will automatically:"
+	@echo "   • Run black (code formatting)"
+	@echo "   • Run ruff (import sorting + linting)"
+	@echo "   • Run prettier (frontend formatting)"
+	@echo ""
+	@echo "💡 To manually format ALL files in the repo:"
+	@echo "   pre-commit run --all-files"
+	@echo ""
+	@echo "🔍 To check if code is properly formatted:"
+	@echo "   make verify"
+	@echo ""
 
 format-check: ## Check formatting (all Python files)
 	@$(BLACK) --check backend/app/ backend/tests/ tests/ || true

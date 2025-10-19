@@ -6,12 +6,12 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 from uuid import UUID
 
+from prefect import flow
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 from app.utils.singapore_compliance import update_property_compliance
-from prefect import flow
 
 DEFAULT_BATCH_SIZE = 50
 

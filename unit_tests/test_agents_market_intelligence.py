@@ -2,8 +2,8 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-
 from app.models.property import PropertyType
+
 from backend.app.api.v1 import agents
 from backend.app.api.v1.agents import get_property_market_intelligence
 from fastapi import HTTPException

@@ -37,19 +37,23 @@ This ensures you pick up exactly where the previous agent left off.
 - **BEFORE writing code:** Run `make ai-preflight` to verify the current codebase state passes all checks
 - **Read [CODING_RULES.md](CODING_RULES.md)** - All 7 rules apply to AI-generated code
 - **AFTER writing code:**
-  1. Run `make format` (fixes formatting automatically)
-  2. Run `make verify` (checks all rules)
-  3. Fix ALL violations before committing
+  1. Run `make verify` (checks all rules)
+  2. Fix ALL violations before committing
+  3. Commit your changes (pre-commit hooks will auto-format)
   4. **NEVER use `git commit --no-verify`** - this bypasses quality checks and is FORBIDDEN
 - **If `make verify` fails:**
   - You MUST fix the violations
   - You CANNOT commit until all checks pass
   - You CANNOT ask the user to commit broken code
+- **Formatting is Automatic:**
+  - Pre-commit hooks automatically run black, ruff, and prettier on commit
+  - You don't need to run `make format` manually
+  - If you want to format before committing: `pre-commit run --all-files`
 
 Key rules for AI agents:
 - Rule 1: Never edit existing migration files
 - Rule 2: Use async/await for all database/API operations
-- Rule 3: **MANDATORY** - Run `make format` after code generation (enforced by CI)
+- Rule 3: Pre-commit hooks handle formatting automatically
 - Rule 6: Follow import ordering (stdlib → third-party → local)
 - Rule 7: No unused variables, proper exception chaining
 
