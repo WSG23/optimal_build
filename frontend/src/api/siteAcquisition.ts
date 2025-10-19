@@ -36,11 +36,53 @@ export interface SiteAcquisitionRequest {
   developmentScenarios: DevelopmentScenario[]
 }
 
-// Future: Will extend GpsCaptureSummary with developer-specific fields
-// dueDiligenceChecklist?: DueDiligenceItem[]
-// conditionAssessment?: PropertyCondition
-// scenarioComparison?: ScenarioComparison[]
-export type SiteAcquisitionResult = GpsCaptureSummary
+export interface DeveloperBuildEnvelope {
+  zoneCode: string | null
+  zoneDescription: string | null
+  siteAreaSqm: number | null
+  allowablePlotRatio: number | null
+  maxBuildableGfaSqm: number | null
+  currentGfaSqm: number | null
+  additionalPotentialGfaSqm: number | null
+  assumptions: string[]
+}
+
+export interface DeveloperVisualizationSummary {
+  status: string
+  previewAvailable: boolean
+  notes: string[]
+  conceptMeshUrl: string | null
+  cameraOrbitHint: Record<string, number> | null
+  previewSeed: number | null
+}
+
+export interface SiteAcquisitionResult extends GpsCaptureSummary {
+  buildEnvelope: DeveloperBuildEnvelope
+  visualization: DeveloperVisualizationSummary
+  optimizations: DeveloperAssetOptimization[]
+  financialSummary: DeveloperFinancialSummary
+}
+
+export interface DeveloperAssetOptimization {
+  assetType: string
+  allocationPct: number
+  allocatedGfaSqm: number | null
+  niaEfficiency: number | null
+  targetFloorHeightM: number | null
+  parkingRatioPer1000Sqm: number | null
+  estimatedRevenueSgd: number | null
+  estimatedCapexSgd: number | null
+  absorptionMonths: number | null
+  riskLevel: string | null
+  notes: string[]
+}
+
+export interface DeveloperFinancialSummary {
+  totalEstimatedRevenueSgd: number | null
+  totalEstimatedCapexSgd: number | null
+  dominantRiskProfile: string | null
+  notes: string[]
+}
 
 export interface ConditionSystem {
   name: string
@@ -207,6 +249,419 @@ function mapConditionAssessmentPayload(
   }
 }
 
+const DEVELOPER_GPS_ENDPOINT = '/api/v1/developers/properties/log-gps'
+
+interface RawDeveloperEnvelope {
+  zone_code?: unknown
+  zoneCode?: unknown
+  zone_description?: unknown
+  zoneDescription?: unknown
+  site_area_sqm?: unknown
+  siteAreaSqm?: unknown
+  allowable_plot_ratio?: unknown
+  allowablePlotRatio?: unknown
+  max_buildable_gfa_sqm?: unknown
+  maxBuildableGfaSqm?: unknown
+  current_gfa_sqm?: unknown
+  currentGfaSqm?: unknown
+  additional_potential_gfa_sqm?: unknown
+  additionalPotentialGfaSqm?: unknown
+  assumptions?: unknown
+}
+
+interface RawDeveloperVisualization {
+  status?: unknown
+  preview_available?: unknown
+  previewAvailable?: unknown
+  notes?: unknown
+}
+
+interface RawDeveloperGpsResponse {
+  property_id: string
+  address: Record<string, unknown>
+  coordinates: {
+    latitude: number
+    longitude: number
+  }
+  ura_zoning: Record<string, unknown> | null
+  existing_use: string
+  property_info: Record<string, unknown> | null
+  nearby_amenities: Record<string, unknown> | null
+  quick_analysis?: unknown
+  timestamp: string
+  build_envelope?: RawDeveloperEnvelope | null
+  visualization?: RawDeveloperVisualization | null
+  optimizations?: Array<Record<string, unknown>> | null
+}
+
+function coerceNumeric(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
+function coerceString(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim() !== '') {
+    return value
+  }
+  return null
+}
+
+function roundOptional(value: number | null): number | null {
+  if (value === null) {
+    return null
+  }
+  return Math.round(value * 100) / 100
+}
+
+function mapDeveloperEnvelope(
+  payload: RawDeveloperEnvelope | null | undefined,
+): DeveloperBuildEnvelope {
+  const zoneCode =
+    coerceString(payload?.zone_code) ?? coerceString(payload?.zoneCode)
+  const zoneDescription =
+    coerceString(payload?.zone_description) ??
+    coerceString(payload?.zoneDescription)
+  const siteArea =
+    coerceNumeric(payload?.site_area_sqm) ??
+    coerceNumeric(payload?.siteAreaSqm)
+  const plotRatio =
+    coerceNumeric(payload?.allowable_plot_ratio) ??
+    coerceNumeric(payload?.allowablePlotRatio)
+  const maxBuildable =
+    coerceNumeric(payload?.max_buildable_gfa_sqm) ??
+    coerceNumeric(payload?.maxBuildableGfaSqm)
+  const currentGfa =
+    coerceNumeric(payload?.current_gfa_sqm) ??
+    coerceNumeric(payload?.currentGfaSqm)
+  const additional =
+    coerceNumeric(payload?.additional_potential_gfa_sqm) ??
+    coerceNumeric(payload?.additionalPotentialGfaSqm)
+
+  const assumptions = Array.isArray(payload?.assumptions)
+    ? payload!.assumptions
+        .map((entry) => coerceString(entry) ?? '')
+        .filter((entry): entry is string => entry.length > 0)
+    : []
+
+  return {
+    zoneCode: zoneCode ?? null,
+    zoneDescription: zoneDescription ?? null,
+    siteAreaSqm: roundOptional(siteArea),
+    allowablePlotRatio: roundOptional(plotRatio),
+    maxBuildableGfaSqm: roundOptional(maxBuildable),
+    currentGfaSqm: roundOptional(currentGfa),
+    additionalPotentialGfaSqm: roundOptional(additional),
+    assumptions,
+  }
+}
+
+function mapDeveloperVisualization(
+  payload: RawDeveloperVisualization | null | undefined,
+): DeveloperVisualizationSummary {
+  const status = coerceString(payload?.status) ?? 'placeholder'
+  const preview =
+    typeof payload?.preview_available === 'boolean'
+      ? payload.preview_available
+      : typeof payload?.previewAvailable === 'boolean'
+      ? payload.previewAvailable
+      : false
+  const conceptMeshUrl =
+    coerceString(payload?.concept_mesh_url) ?? coerceString(payload?.conceptMeshUrl) ?? null
+  const cameraOrbitHint =
+    typeof payload?.camera_orbit_hint === 'object' && payload?.camera_orbit_hint
+      ? (payload?.camera_orbit_hint as Record<string, number>)
+      : typeof payload?.cameraOrbitHint === 'object' && payload?.cameraOrbitHint
+      ? (payload?.cameraOrbitHint as Record<string, number>)
+      : null
+  const previewSeed = coerceNumeric(payload?.preview_seed ?? payload?.previewSeed)
+  const notes = Array.isArray(payload?.notes)
+    ? payload.notes
+        .map((note) => coerceString(note) ?? '')
+        .filter((note): note is string => note.length > 0)
+    : []
+  if (!notes.length) {
+    notes.push(
+      'High-fidelity 3D previews will ship with Phase 2B visualisation work.',
+    )
+  }
+  return {
+    status,
+    previewAvailable: preview,
+    notes,
+    conceptMeshUrl,
+    cameraOrbitHint,
+    previewSeed: previewSeed ?? null,
+  }
+}
+
+function mapDeveloperOptimizations(
+  payload: Array<Record<string, unknown>> | null | undefined,
+): DeveloperAssetOptimization[] {
+  if (!Array.isArray(payload)) {
+    return []
+  }
+  return payload
+    .map((entry) => {
+      const assetType = coerceString(entry.asset_type) ?? coerceString(entry.assetType)
+      const allocation =
+        coerceNumeric(entry.allocation_pct) ?? coerceNumeric(entry.allocationPct)
+      const efficiency =
+        coerceNumeric(entry.nia_efficiency) ?? coerceNumeric(entry.niaEfficiency)
+      const allocated =
+        coerceNumeric(entry.allocated_gfa_sqm) ?? coerceNumeric(entry.allocatedGfaSqm)
+      const floorHeight =
+        coerceNumeric(entry.target_floor_height_m) ??
+        coerceNumeric(entry.targetFloorHeightM)
+      const parking =
+        coerceNumeric(entry.parking_ratio_per_1000sqm) ??
+        coerceNumeric(entry.parkingRatioPer1000Sqm)
+      const revenue =
+        coerceNumeric(entry.estimated_revenue_sgd) ??
+        coerceNumeric(entry.estimatedRevenueSgd)
+      const capex =
+        coerceNumeric(entry.estimated_capex_sgd) ??
+        coerceNumeric(entry.estimatedCapexSgd)
+      const absorption =
+        coerceNumeric(entry.absorption_months) ??
+        coerceNumeric(entry.absorptionMonths)
+      const riskLevel = coerceString(entry.risk_level) ?? coerceString(entry.riskLevel)
+      const notes = Array.isArray(entry.notes)
+        ? entry.notes
+            .map((note) => coerceString(note) ?? '')
+            .filter((note): note is string => note.length > 0)
+        : []
+      if (!assetType || allocation === null) {
+        return null
+      }
+      return {
+        assetType,
+        allocationPct: allocation,
+        niaEfficiency: efficiency,
+        allocatedGfaSqm: allocated,
+        targetFloorHeightM: floorHeight,
+        parkingRatioPer1000Sqm: parking,
+        estimatedRevenueSgd: revenue,
+        estimatedCapexSgd: capex,
+        absorptionMonths: absorption ? Math.round(absorption) : null,
+        riskLevel: riskLevel ?? null,
+        notes,
+      }
+    })
+    .filter((item): item is DeveloperAssetOptimization => item !== null)
+}
+
+function deriveEnvelopeFromSummary(
+  summary: GpsCaptureSummary,
+): DeveloperBuildEnvelope {
+  const zoneCode = summary.uraZoning.zoneCode ?? null
+  const zoneDescription = summary.uraZoning.zoneDescription ?? null
+  const plotRatio = coerceNumeric(summary.uraZoning.plotRatio)
+  const siteArea = coerceNumeric(summary.propertyInfo?.siteAreaSqm)
+  const currentGfa =
+    coerceNumeric(summary.propertyInfo?.gfaApproved ?? null) ??
+    coerceNumeric(
+      (summary.propertyInfo as Record<string, unknown> | null)?.grossFloorAreaSqm ??
+        null,
+    )
+
+  const maxBuildable =
+    siteArea !== null && plotRatio !== null ? siteArea * plotRatio : null
+  const additional =
+    maxBuildable !== null && currentGfa !== null
+      ? Math.max(maxBuildable - currentGfa, 0)
+      : null
+
+  const assumptions: string[] = []
+  if (plotRatio !== null && siteArea !== null) {
+    assumptions.push(
+      `Assumes plot ratio ${plotRatio} applied across ${siteArea.toLocaleString()} sqm site area.`,
+    )
+  }
+  if (zoneDescription) {
+    assumptions.push(
+      `Envelope derived from ${zoneDescription.toLowerCase()} zoning guidance.`,
+    )
+  }
+  if (!assumptions.length) {
+    assumptions.push(
+      'Plot ratio or site area unavailable; envelope estimated from captured metadata.',
+    )
+  }
+
+  return {
+    zoneCode,
+    zoneDescription,
+    siteAreaSqm: roundOptional(siteArea),
+    allowablePlotRatio: roundOptional(plotRatio),
+    maxBuildableGfaSqm: roundOptional(maxBuildable),
+    currentGfaSqm: roundOptional(currentGfa),
+    additionalPotentialGfaSqm: roundOptional(additional),
+    assumptions,
+  }
+}
+
+function deriveVisualizationFromSummary(
+  summary: GpsCaptureSummary,
+): DeveloperVisualizationSummary {
+  const scenarioCount = summary.quickAnalysis.scenarios.length
+  const notes: string[] = []
+  if (scenarioCount > 0) {
+    notes.push(
+      `${scenarioCount} scenario${scenarioCount === 1 ? '' : 's'} prepared for feasibility review.`,
+    )
+  }
+  notes.push(
+    'High-fidelity 3D previews will ship with Phase 2B visualisation work.',
+  )
+  return {
+    status: 'placeholder',
+    previewAvailable: false,
+    notes,
+    conceptMeshUrl: null,
+    cameraOrbitHint: null,
+    previewSeed: scenarioCount || null,
+  }
+}
+
+function deriveOptimizationsFallback(
+  landUse: string | null | undefined,
+): DeveloperAssetOptimization[] {
+  const key = (landUse ?? '').toLowerCase()
+  if (key.includes('residential')) {
+    return [
+      {
+        assetType: 'residential',
+        allocationPct: 70,
+        niaEfficiency: 0.78,
+        allocatedGfaSqm: null,
+        targetFloorHeightM: 3.3,
+        parkingRatioPer1000Sqm: 0.8,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        absorptionMonths: 14,
+        riskLevel: 'moderate',
+        notes: [],
+      },
+      {
+        assetType: 'serviced_apartments',
+        allocationPct: 20,
+        niaEfficiency: 0.72,
+        allocatedGfaSqm: null,
+        targetFloorHeightM: 3.1,
+        parkingRatioPer1000Sqm: 0.5,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        absorptionMonths: 12,
+        riskLevel: 'balanced',
+        notes: [],
+      },
+      {
+        assetType: 'amenities',
+        allocationPct: 10,
+        niaEfficiency: 0.5,
+        allocatedGfaSqm: null,
+        targetFloorHeightM: 4,
+        parkingRatioPer1000Sqm: 0.4,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        absorptionMonths: 6,
+        riskLevel: 'low',
+        notes: [],
+      },
+    ]
+  }
+  if (key.includes('industrial') || key.includes('logistics')) {
+    return [
+      {
+        assetType: 'high-spec logistics',
+        allocationPct: 50,
+        niaEfficiency: 0.75,
+        allocatedGfaSqm: null,
+        targetFloorHeightM: 10,
+        parkingRatioPer1000Sqm: 1.1,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        absorptionMonths: 16,
+        riskLevel: 'balanced',
+        notes: [],
+      },
+      {
+        assetType: 'production',
+        allocationPct: 30,
+        niaEfficiency: 0.7,
+        allocatedGfaSqm: null,
+        targetFloorHeightM: 8,
+        parkingRatioPer1000Sqm: 0.9,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        absorptionMonths: 18,
+        riskLevel: 'elevated',
+        notes: [],
+      },
+      {
+        assetType: 'support services',
+        allocationPct: 20,
+        niaEfficiency: 0.6,
+        allocatedGfaSqm: null,
+        targetFloorHeightM: 4.5,
+        parkingRatioPer1000Sqm: 0.6,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        absorptionMonths: 9,
+        riskLevel: 'moderate',
+        notes: [],
+      },
+    ]
+  }
+  return [
+    {
+      assetType: 'office',
+      allocationPct: 60,
+      niaEfficiency: 0.82,
+      allocatedGfaSqm: null,
+      targetFloorHeightM: 4.2,
+      parkingRatioPer1000Sqm: 1.2,
+      estimatedRevenueSgd: null,
+      estimatedCapexSgd: null,
+      absorptionMonths: 12,
+      riskLevel: 'moderate',
+      notes: [],
+    },
+    {
+      assetType: 'retail',
+      allocationPct: 25,
+      niaEfficiency: 0.68,
+      allocatedGfaSqm: null,
+      targetFloorHeightM: 5,
+      parkingRatioPer1000Sqm: 3.5,
+      estimatedRevenueSgd: null,
+      estimatedCapexSgd: null,
+      absorptionMonths: 10,
+      riskLevel: 'balanced',
+      notes: [],
+    },
+    {
+      assetType: 'amenities',
+      allocationPct: 15,
+      niaEfficiency: 0.55,
+      allocatedGfaSqm: null,
+      targetFloorHeightM: 4.5,
+      parkingRatioPer1000Sqm: 0.8,
+      estimatedRevenueSgd: null,
+      estimatedCapexSgd: null,
+      absorptionMonths: 6,
+      riskLevel: 'low',
+      notes: [],
+    },
+  ]
+}
+
 /**
  * Capture a property for site acquisition with enhanced developer features
  */
@@ -214,21 +669,80 @@ export async function capturePropertyForDevelopment(
   request: SiteAcquisitionRequest,
   signal?: AbortSignal,
 ): Promise<SiteAcquisitionResult> {
-  // For now, directly call the GPS logger
-  // In the future, this will call a developer-specific endpoint
-  const result = await logPropertyByGps(
+  let rawPayload: RawDeveloperGpsResponse | null = null
+
+  const summary = await logPropertyByGps(
     {
       latitude: request.latitude,
       longitude: request.longitude,
       developmentScenarios: request.developmentScenarios,
     },
-    undefined,
+    async (_baseUrl, payload, options = {}) => {
+      const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+          development_scenarios: payload.developmentScenarios,
+        }),
+        signal: options.signal,
+      })
+
+      if (!response.ok) {
+        const detail = await response.text()
+        throw new Error(
+          detail ||
+            `Request to ${DEVELOPER_GPS_ENDPOINT} failed with ${response.status}`,
+        )
+      }
+
+      rawPayload = (await response.json()) as RawDeveloperGpsResponse
+      return rawPayload
+    },
     signal,
   )
 
-  // Return the GPS capture result as-is for now
-  // Future enhancements will add developer-specific data
-  return result
+  const buildEnvelope = rawPayload
+    ? mapDeveloperEnvelope(rawPayload.build_envelope)
+    : deriveEnvelopeFromSummary(summary)
+
+  const visualization = rawPayload
+    ? mapDeveloperVisualization(rawPayload.visualization)
+    : deriveVisualizationFromSummary(summary)
+
+  const optimizations = rawPayload
+    ? mapDeveloperOptimizations(rawPayload.optimizations)
+    : deriveOptimizationsFallback(summary.existingUse ?? null)
+
+  const financialSummary = rawPayload?.financial_summary
+    ? {
+        totalEstimatedRevenueSgd:
+          coerceNumeric(rawPayload.financial_summary.total_estimated_revenue_sgd) ?? null,
+        totalEstimatedCapexSgd:
+          coerceNumeric(rawPayload.financial_summary.total_estimated_capex_sgd) ?? null,
+        dominantRiskProfile:
+          coerceString(rawPayload.financial_summary.dominant_risk_profile) ?? null,
+        notes: Array.isArray(rawPayload.financial_summary.notes)
+          ? (rawPayload.financial_summary.notes as unknown[])
+              .map((entry) => coerceString(entry) ?? '')
+              .filter((entry): entry is string => entry.length > 0)
+          : [],
+      }
+    : {
+        totalEstimatedRevenueSgd: null,
+        totalEstimatedCapexSgd: null,
+        dominantRiskProfile: null,
+        notes: [],
+      }
+
+  return {
+    ...summary,
+    buildEnvelope,
+    visualization,
+    optimizations,
+    financialSummary,
+  }
 }
 
 /**

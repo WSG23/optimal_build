@@ -7,7 +7,7 @@
 
 ## 📊 Current Progress Snapshot
 
-> **Last Updated:** 2025-10-17
+> **Last Updated:** 2025-10-20
 >
 > **⚠️ IMPORTANT:** This is the **SINGLE SOURCE OF TRUTH** for project status.
 > All other documents (NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md, etc.) reference this document.
@@ -35,6 +35,11 @@
 - Tests: Backend passing ✅, Manual UI testing complete ✅
 - Note: Real OAuth pending API credentials
 
+**Phase 2A: Universal GPS Site Acquisition** - Backend 100%, UI 100% ✅ COMPLETE (developer capture reuses shared `/api/v1/agents/.../log-gps`)
+- Site Acquisition workspace (`/app/site-acquisition`) supports GPS capture, scenario selection, and quick analysis for developers ✅
+- Due diligence checklist authoring, auto-population, and exports (JSON/PDF) validated ✅
+- Manual inspection capture with specialist insights and multi-scenario comparison dashboard live ✅
+
 **Infrastructure:**
 - CAD Processing Infrastructure - 95%
 - Finance & Feasibility Backend - 60%
@@ -47,12 +52,16 @@
 
 ### ⏸️ What's In Progress:
 
+**Phase 2C: Complete Financial Control & Modeling** - Backend 60% complete; enhanced financing UI, privacy controls, and scenario sensitivities pending
+
 **Other:**
 - Agent Validation (waiting for real user sessions)
 
 ### ❌ What's Not Started:
 
-**Phase 2+:** Developer Tools, Architect Tools, Engineer Tools, Platform Integration
+- Phase 2B: Asset-Specific Feasibility
+- Phases 2D-2I: Team coordination, regulatory navigation, construction delivery, revenue optimization, enhanced export
+- Phase 3+: Architect Tools, Engineer Tools, Platform Integration
 
 ---
 
@@ -348,12 +357,12 @@
 
 ---
 
-## 📋 PHASE 2: DEVELOPER FOUNDATION (10% Complete)
+## 📋 PHASE 2: DEVELOPER FOUNDATION (20% Complete)
 
 **Goal:** Complete all 9 Developer tools so developers can manage full project lifecycle
 
-### Phase 2A: Universal GPS Site Acquisition ⚠️ 20% STARTED
-**Status:** Backend exists, developer UI scaffolded (scenario selector + checklists live); condition-report export documented + covered by API tests (Oct 16, 2025); checklist + condition report flows re-validated locally (Oct 14-16, 2025) with PDF fallback confirmed and legacy route now reuses AppShell workspace switcher
+### Phase 2A: Universal GPS Site Acquisition ✅ COMPLETE
+**Status:** 100% - Developer Site Acquisition workspace live end-to-end; GPS capture currently reuses the shared agent `POST /api/v1/agents/commercial-property/properties/log-gps` endpoint while a developer-specific route is tracked as backlog
 
 **Requirements (from FEATURES.md lines 86-96):**
 - Mobile property capture (GPS-enabled)
@@ -375,7 +384,7 @@
 - ✅ Multi-scenario comparison dashboard shows side-by-side scorecards and is included in exported condition reports (JSON + PDF)
 
 **What's Missing:**
-- _None for Phase 2A — manual inspection capture shipped Oct 19 2025_
+- _Dedicated developer `POST /api/v1/developers/properties/log-gps` endpoint will be delivered as the first Phase 2B increment; manual inspection capture shipped Oct 19 2025_
 
 **Acceptance Criteria:**
 - Developer captures site with enhanced property details
@@ -393,8 +402,8 @@
 
 ---
 
-### Phase 2B: Asset-Specific Feasibility ❌ NOT STARTED
-**Status:** 0% - Core feature
+### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
+**Status:** 5% - Dedicated developer GPS capture endpoint landed; feasibility enrichment underway
 
 **Requirements (from FEATURES.md lines 98-108):**
 - Multi-use development optimizer
@@ -421,6 +430,24 @@
 - Visual 3D updates show massing options
 
 **Estimated Effort:** 8-10 weeks (complex domain logic, multiple asset types)
+
+**What Exists:**
+- ✅ `/api/v1/developers/properties/log-gps` endpoint delivers developer-specific capture results with zoning envelope + buildability heuristics
+- ✅ Frontend Site Acquisition client now calls the developer endpoint and surfaces build envelope + visualisation metadata for follow-on feasibility work
+- ✅ Feasibility assessment now ingests the build envelope, tuning GFA summaries and generating land-use-specific optimisation notes
+- ✅ Developer Feasibility wizard surfaces captured asset mix recommendations (persisted from Site Acquisition) for quick programme planning
+- ✅ Optimisation outputs flow into developer financial summaries and Finance API responses (revenue/capex rollups + risk heuristics) to prime Phase 2C modelling
+
+**What's Missing (Next Focus):**
+- ❌ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use)
+- ❌ Scenario-aware 3D preview generation and UI integration
+- ❌ Heritage constraint overlays feeding the optimization stack
+
+**Kickoff Deliverables (Planned):**
+- ✅ Stand up developer-specific GPS logging endpoint and API client so Site Acquisition no longer proxies through the agent route
+- ✅ Extend capture response with zoning envelope + max buildable metrics (baseline commercial template)
+- ❌ Wire captured context into the asset-specific feasibility engine and 3D preview shell (office/commercial first)
+- Update developer UI to surface the dedicated capture flow and enriched feasibility snapshots
 
 ---
 

@@ -212,6 +212,15 @@ class FinancingDrawdownScheduleSchema(BaseModel):
     final_debt_balance: Decimal
 
 
+class AssetFinancialSummarySchema(BaseModel):
+    """Aggregated financial summary derived from asset optimisation."""
+
+    total_estimated_revenue_sgd: Decimal | None = None
+    total_estimated_capex_sgd: Decimal | None = None
+    dominant_risk_profile: str | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
 class FinanceFeasibilityResponse(BaseModel):
     """Response payload returned by the finance feasibility endpoint."""
 
@@ -226,6 +235,7 @@ class FinanceFeasibilityResponse(BaseModel):
     dscr_timeline: list[DscrEntrySchema] = Field(default_factory=list)
     capital_stack: CapitalStackSummarySchema | None = None
     drawdown_schedule: FinancingDrawdownScheduleSchema | None = None
+    asset_mix_summary: AssetFinancialSummarySchema | None = None
 
 
 __all__ = [
@@ -239,6 +249,7 @@ __all__ = [
     "DrawdownPeriodInput",
     "DscrEntrySchema",
     "DscrInputs",
+    "AssetFinancialSummarySchema",
     "FinancingDrawdownEntrySchema",
     "FinancingDrawdownScheduleSchema",
     "FinanceFeasibilityRequest",

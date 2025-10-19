@@ -4,10 +4,21 @@ from __future__ import annotations
 
 from typing import Literal
 
+from app.schemas.finance import AssetFinancialSummarySchema
 from pydantic import BaseModel, Field
 
 FeasibilityRuleSeverity = Literal["critical", "important", "informational"]
 FeasibilityRuleStatus = Literal["pass", "fail", "warning"]
+
+
+class BuildEnvelopeSnapshot(BaseModel):
+    """Optional snapshot of zoning envelope inputs."""
+
+    site_area_sqm: float | None = Field(default=None, gt=0)
+    allowable_plot_ratio: float | None = Field(default=None, gt=0)
+    max_buildable_gfa_sqm: float | None = Field(default=None, gt=0)
+    current_gfa_sqm: float | None = Field(default=None, ge=0)
+    additional_potential_gfa_sqm: float | None = Field(default=None)
 
 
 class NewFeasibilityProjectInput(BaseModel):
@@ -19,6 +30,7 @@ class NewFeasibilityProjectInput(BaseModel):
     land_use: str = Field(..., min_length=1)
     target_gross_floor_area_sqm: float | None = Field(None, gt=0)
     building_height_meters: float | None = Field(None, gt=0)
+    build_envelope: BuildEnvelopeSnapshot | None = None
 
 
 class FeasibilityRule(BaseModel):
@@ -78,6 +90,22 @@ class BuildableAreaSummary(BaseModel):
     remarks: str | None = None
 
 
+class AssetOptimizationRecommendation(BaseModel):
+    """Asset-specific optimisation recommendation surfaced to clients."""
+
+    asset_type: str
+    allocation_pct: float
+    allocated_gfa_sqm: int | None = None
+    nia_efficiency: float | None = None
+    target_floor_height_m: float | None = None
+    parking_ratio_per_1000sqm: float | None = None
+    estimated_revenue_sgd: float | None = None
+    estimated_capex_sgd: float | None = None
+    absorption_months: int | None = None
+    risk_level: str | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
 class FeasibilityAssessmentResponse(BaseModel):
     """Response payload produced after evaluating the project."""
 
@@ -85,9 +113,12 @@ class FeasibilityAssessmentResponse(BaseModel):
     summary: BuildableAreaSummary
     rules: list[RuleAssessmentResult]
     recommendations: list[str]
+    asset_optimizations: list[AssetOptimizationRecommendation]
+    asset_mix_summary: AssetFinancialSummarySchema | None = None
 
 
 __all__ = [
+    "BuildEnvelopeSnapshot",
     "BuildableAreaSummary",
     "FeasibilityAssessmentRequest",
     "FeasibilityAssessmentResponse",
@@ -96,6 +127,8 @@ __all__ = [
     "FeasibilityRuleStatus",
     "FeasibilityRulesResponse",
     "FeasibilityRulesSummary",
+    "AssetOptimizationRecommendation",
+    "AssetFinancialSummarySchema",
     "NewFeasibilityProjectInput",
     "RuleAssessmentResult",
 ]

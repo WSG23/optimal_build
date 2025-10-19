@@ -4,17 +4,28 @@ from __future__ import annotations
 
 import html
 from datetime import datetime
-from typing import Any, Iterable, List, Optional
+from decimal import Decimal
+from typing import Any, Dict, Iterable, List, Optional
 from uuid import UUID
 
+import structlog
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.agents import CoordinatePair, QuickAnalysisEnvelope
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus, DeveloperChecklistTemplate
 from app.models.property import Property
+from app.services.agents.gps_property_logger import (
+    DevelopmentScenario as CaptureScenario,
+    GPSPropertyLogger,
+    PropertyLogResult,
+)
+from app.services.agents.ura_integration import URAIntegrationService
+from app.services.asset_mix import build_asset_mix
 from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
@@ -25,13 +36,364 @@ from app.services.developer_condition_service import (
     ConditionSystem,
     DeveloperConditionService,
 )
+from app.services.geocoding import Address, GeocodingService
 from app.utils.render import render_html_to_pdf
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/developers", tags=["developers"])
+logger = structlog.get_logger()
+
+_developer_geocoding = GeocodingService()
+_developer_ura = URAIntegrationService()
+developer_gps_logger = GPSPropertyLogger(_developer_geocoding, _developer_ura)
+
+
+class DeveloperGPSLogRequest(BaseModel):
+    """GPS capture request tailored for developers."""
+
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    development_scenarios: list[CaptureScenario] | None = Field(
+        None,
+        description=(
+            "Optional set of development scenarios to evaluate during capture. "
+            "Defaults to the core commercial scenarios if omitted."
+        ),
+    )
+
+
+class DeveloperBuildEnvelope(BaseModel):
+    """Summary of zoning envelope and buildability heuristics."""
+
+    zone_code: Optional[str] = None
+    zone_description: Optional[str] = None
+    site_area_sqm: Optional[float] = None
+    allowable_plot_ratio: Optional[float] = None
+    max_buildable_gfa_sqm: Optional[float] = None
+    current_gfa_sqm: Optional[float] = None
+    additional_potential_gfa_sqm: Optional[float] = None
+    assumptions: list[str] = Field(default_factory=list)
+
+
+class DeveloperVisualizationSummary(BaseModel):
+    """Lightweight signal about 3D preview availability."""
+
+    status: str
+    preview_available: bool
+    notes: list[str] = Field(default_factory=list)
+    concept_mesh_url: str | None = None
+    camera_orbit_hint: dict[str, float] | None = None
+    preview_seed: int | None = None
+
+
+class DeveloperAssetOptimization(BaseModel):
+    """Asset-specific allocation recommendation."""
+
+    asset_type: str
+    allocation_pct: float
+    nia_efficiency: float | None = None
+    allocated_gfa_sqm: float | None = None
+    target_floor_height_m: float | None = None
+    parking_ratio_per_1000sqm: float | None = None
+    estimated_revenue_sgd: float | None = None
+    estimated_capex_sgd: float | None = None
+    absorption_months: int | None = None
+    risk_level: str | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+class DeveloperGPSLogResponse(BaseModel):
+    """Response envelope for developer GPS capture."""
+
+    property_id: UUID
+    address: Address
+    coordinates: CoordinatePair
+    ura_zoning: Dict[str, Any]
+    existing_use: str
+    property_info: Optional[Dict[str, Any]]
+    nearby_amenities: Optional[Dict[str, Any]]
+    quick_analysis: QuickAnalysisEnvelope
+    build_envelope: DeveloperBuildEnvelope
+    visualization: DeveloperVisualizationSummary
+    optimizations: list[DeveloperAssetOptimization]
+    financial_summary: "DeveloperFinancialSummary"
+    timestamp: datetime
+
+
+class DeveloperFinancialSummary(BaseModel):
+    """Aggregated financial signals derived from asset optimisation."""
+
+    total_estimated_revenue_sgd: float | None = None
+    total_estimated_capex_sgd: float | None = None
+    dominant_risk_profile: str | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+DeveloperGPSLogResponse.model_rebuild()
+
+
+def _coerce_float(value: Any) -> Optional[float]:
+    """Attempt to coerce arbitrary values into floats."""
+
+    if value is None:
+        return None
+    if isinstance(value, float):
+        return value
+    if isinstance(value, (int, Decimal)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _round_optional(value: Optional[float]) -> Optional[float]:
+    return None if value is None else round(value, 2)
+
+
+def _derive_build_envelope(result: PropertyLogResult) -> DeveloperBuildEnvelope:
+    """Construct zoning/buildability summary from capture payload."""
+
+    ura_data = result.ura_zoning or {}
+    property_info = result.property_info or {}
+
+    zone_code = ura_data.get("zone_code") or ura_data.get("zoneCode")
+    zone_description = ura_data.get("zone_description") or ura_data.get(
+        "zoneDescription"
+    )
+    plot_ratio = _coerce_float(ura_data.get("plot_ratio") or ura_data.get("plotRatio"))
+
+    site_area = _coerce_float(
+        property_info.get("site_area_sqm") or property_info.get("siteAreaSqm")
+    )
+    current_gfa = _coerce_float(
+        property_info.get("gross_floor_area_sqm")
+        or property_info.get("grossFloorAreaSqm")
+        or property_info.get("gfa_approved")
+        or property_info.get("gfaApproved")
+    )
+
+    max_buildable: Optional[float]
+    if site_area is not None and plot_ratio is not None:
+        max_buildable = site_area * plot_ratio
+    else:
+        max_buildable = None
+
+    additional: Optional[float] = None
+    if max_buildable is not None and current_gfa is not None:
+        additional = max(max_buildable - current_gfa, 0.0)
+
+    assumptions: list[str] = []
+    if plot_ratio is not None and site_area is not None:
+        assumptions.append(
+            f"Assumes URA plot ratio {plot_ratio:g} applies uniformly across "
+            f"{site_area:,.0f} sqm site area."
+        )
+    if zone_description:
+        assumptions.append(
+            f"Envelope derived from {str(zone_description).lower()} zoning guidance."
+        )
+    if not assumptions:
+        assumptions.append(
+            "Plot ratio or site area unavailable; envelope estimated from captured metadata."
+        )
+
+    return DeveloperBuildEnvelope(
+        zone_code=str(zone_code) if zone_code else None,
+        zone_description=str(zone_description) if zone_description else None,
+        site_area_sqm=_round_optional(site_area),
+        allowable_plot_ratio=_round_optional(plot_ratio),
+        max_buildable_gfa_sqm=_round_optional(max_buildable),
+        current_gfa_sqm=_round_optional(current_gfa),
+        additional_potential_gfa_sqm=_round_optional(additional),
+        assumptions=assumptions,
+    )
+
+
+def _build_visualization_summary(
+    quick_analysis: dict[str, Any] | None,
+    property_id: UUID,
+) -> DeveloperVisualizationSummary:
+    """Return messaging about 3D preview readiness."""
+
+    scenario_count = 0
+    if quick_analysis and isinstance(quick_analysis.get("scenarios"), list):
+        scenario_count = len(quick_analysis["scenarios"])
+
+    notes: list[str] = []
+    if scenario_count:
+        plural = "s" if scenario_count != 1 else ""
+        notes.append(
+            f"{scenario_count} scenario{plural} prepared for feasibility review."
+        )
+    notes.append(
+        "High-fidelity 3D previews will ship with Phase 2B visualisation work."
+    )
+    notes.append("Download the concept mesh stub to brief the visualisation team.")
+
+    concept_mesh_url = f"/static/dev-previews/{property_id}.glb"
+    camera_orbit = {"theta": 48.0, "phi": 32.0, "radius": 1.6}
+
+    return DeveloperVisualizationSummary(
+        status="placeholder",
+        preview_available=False,
+        notes=notes,
+        concept_mesh_url=concept_mesh_url,
+        camera_orbit_hint=camera_orbit,
+        preview_seed=scenario_count or 1,
+    )
+
+
+def _build_asset_optimizations(
+    land_use: str,
+    envelope: DeveloperBuildEnvelope,
+) -> list[DeveloperAssetOptimization]:
+    total_gfa = envelope.max_buildable_gfa_sqm or envelope.current_gfa_sqm
+    if (
+        total_gfa is None
+        and envelope.current_gfa_sqm is not None
+        and envelope.additional_potential_gfa_sqm is not None
+    ):
+        total_gfa = envelope.current_gfa_sqm + max(
+            envelope.additional_potential_gfa_sqm, 0.0
+        )
+    total_gfa_value = float(total_gfa) if total_gfa is not None else None
+    heritage_flag = False
+    if envelope.zone_description and "heritage" in envelope.zone_description.lower():
+        heritage_flag = True
+    elif any("heritage" in assumption.lower() for assumption in envelope.assumptions):
+        heritage_flag = True
+    plans = build_asset_mix(
+        land_use,
+        achievable_gfa_sqm=total_gfa_value,
+        additional_gfa=envelope.additional_potential_gfa_sqm,
+        heritage=heritage_flag,
+    )
+    return [
+        DeveloperAssetOptimization(
+            asset_type=plan.asset_type,
+            allocation_pct=plan.allocation_pct,
+            nia_efficiency=plan.nia_efficiency,
+            allocated_gfa_sqm=plan.allocated_gfa_sqm,
+            target_floor_height_m=plan.target_floor_height_m,
+            parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
+            estimated_revenue_sgd=plan.estimated_revenue_sgd,
+            estimated_capex_sgd=plan.estimated_capex_sgd,
+            absorption_months=plan.absorption_months,
+            risk_level=plan.risk_level,
+            notes=list(plan.notes),
+        )
+        for plan in plans
+    ]
+
+
+def _summarise_financials(
+    optimizations: list[DeveloperAssetOptimization],
+) -> DeveloperFinancialSummary:
+    total_revenue = sum(
+        (opt.estimated_revenue_sgd or 0.0)
+        for opt in optimizations
+        if opt.estimated_revenue_sgd
+    )
+    total_capex = sum(
+        (opt.estimated_capex_sgd or 0.0)
+        for opt in optimizations
+        if opt.estimated_capex_sgd
+    )
+    risk_order = {"low": 1, "balanced": 2, "moderate": 3, "elevated": 4}
+    dominant = None
+    for opt in optimizations:
+        level = opt.risk_level
+        if level is None:
+            continue
+        if dominant is None or risk_order.get(level, 0) > risk_order.get(dominant, 0):
+            dominant = level
+
+    notes: list[str] = []
+    if dominant:
+        notes.append(f"Dominant risk profile driven by {dominant} allocations.")
+    if total_revenue:
+        notes.append(
+            "Total estimated revenue assumes NIA efficiency-weighted rent across the suggested mix."
+        )
+    if total_capex:
+        notes.append(
+            "Capex estimate aggregates fit-out assumptions for each programmed use."
+        )
+
+    return DeveloperFinancialSummary(
+        total_estimated_revenue_sgd=total_revenue or None,
+        total_estimated_capex_sgd=total_capex or None,
+        dominant_risk_profile=dominant,
+        notes=notes,
+    )
 
 
 # Request/Response Models
+@router.post(
+    "/properties/log-gps",
+    response_model=DeveloperGPSLogResponse,
+)
+async def developer_log_property_by_gps(
+    request: DeveloperGPSLogRequest,
+    session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
+) -> DeveloperGPSLogResponse:
+    """Log a property for developer workflows using GPS coordinates."""
+
+    user_uuid: Optional[UUID] = None
+    if token and token.user_id:
+        try:
+            user_uuid = UUID(token.user_id)
+        except ValueError:
+            logger.warning(
+                "developer_gps_invalid_user_id",
+                supplied_user_id=token.user_id,
+            )
+
+    result = await developer_gps_logger.log_property_from_gps(
+        latitude=request.latitude,
+        longitude=request.longitude,
+        session=session,
+        user_id=user_uuid,
+        scenarios=request.development_scenarios,
+    )
+
+    quick_analysis_payload = result.quick_analysis or {
+        "generated_at": utcnow().isoformat(),
+        "scenarios": [],
+    }
+    quick_analysis = QuickAnalysisEnvelope.model_validate(quick_analysis_payload)
+
+    build_envelope = _derive_build_envelope(result)
+    visualization = _build_visualization_summary(
+        result.quick_analysis, result.property_id
+    )
+    optimizations = _build_asset_optimizations(result.existing_use, build_envelope)
+    financial_summary = _summarise_financials(optimizations)
+
+    return DeveloperGPSLogResponse(
+        property_id=result.property_id,
+        address=result.address,
+        coordinates=CoordinatePair(
+            latitude=result.coordinates[0],
+            longitude=result.coordinates[1],
+        ),
+        ura_zoning=result.ura_zoning,
+        existing_use=result.existing_use,
+        property_info=result.property_info,
+        nearby_amenities=result.nearby_amenities,
+        quick_analysis=quick_analysis,
+        build_envelope=build_envelope,
+        visualization=visualization,
+        optimizations=optimizations,
+        financial_summary=financial_summary,
+        timestamp=result.timestamp,
+    )
+
+
 class ChecklistItemResponse(BaseModel):
     """Response model for a single checklist item."""
 

@@ -1161,6 +1161,33 @@ export function SiteAcquisitionPage() {
           if (!siteArea) {
             risks.push('Site area missing — gather survey or title data.')
           }
+          if (capturedProperty?.buildEnvelope) {
+            const { maxBuildableGfaSqm, additionalPotentialGfaSqm, allowablePlotRatio } =
+              capturedProperty.buildEnvelope
+            if (maxBuildableGfaSqm) {
+              opportunities.push(
+                `Zoning envelope supports ≈ ${formatNumberMetric(maxBuildableGfaSqm, {
+                  maximumFractionDigits: 0,
+                })} sqm of GFA.`,
+              )
+            }
+            if (additionalPotentialGfaSqm && additionalPotentialGfaSqm > 0) {
+              opportunities.push(
+                `Estimated uplift of ${formatNumberMetric(additionalPotentialGfaSqm, {
+                  maximumFractionDigits: 0,
+                })} sqm available under current controls.`,
+              )
+            } else if (additionalPotentialGfaSqm !== null && additionalPotentialGfaSqm !== undefined) {
+              risks.push('No additional GFA headroom — optimisation required before submission.')
+            }
+            if (!plotRatio && allowablePlotRatio) {
+              opportunities.push(
+                `Plot ratio cap ${formatNumberMetric(allowablePlotRatio, {
+                  maximumFractionDigits: 2,
+                })} still allows refinement.`,
+              )
+            }
+          }
           break
         }
         case 'existing_building': {
@@ -1231,9 +1258,19 @@ export function SiteAcquisitionPage() {
         }
       }
 
+      if (capturedProperty?.optimizations?.length) {
+        const lead = capturedProperty.optimizations[0]
+        const mixLabel = lead.assetType.replace(/_/g, ' ')
+        opportunities.push(
+          `${mixLabel.charAt(0).toUpperCase()}${mixLabel.slice(1)} holds ${formatNumberMetric(lead.allocationPct, {
+            maximumFractionDigits: 0,
+          })}% of the suggested programme, aligning with the current envelope.`,
+        )
+      }
+
       return { opportunities, risks }
     },
-    [formatNumberMetric],
+    [formatNumberMetric, capturedProperty],
   )
   const propertyInfoSummary = capturedProperty?.propertyInfo ?? null
   const zoningSummary = capturedProperty?.uraZoning ?? null
@@ -1249,6 +1286,10 @@ export function SiteAcquisitionPage() {
 
     const info = propertyInfoSummary
     const zoning = zoningSummary
+    const envelope = capturedProperty.buildEnvelope
+    const visualization = capturedProperty.visualization
+    const optimizations = capturedProperty.optimizations ?? []
+    const financialSummary = capturedProperty.financialSummary
 
     const formatArea = (value: number | null | undefined) => {
       if (value === null || value === undefined) {
@@ -1344,6 +1385,178 @@ export function SiteAcquisitionPage() {
             : '—',
         },
       ],
+    })
+
+    cards.push({
+      title: 'Build envelope',
+      subtitle: envelope.zoneDescription ?? envelope.zoneCode ?? 'Zoning envelope preview',
+      items: [
+        { label: 'Zone code', value: envelope.zoneCode ?? '—' },
+        {
+          label: 'Allowable plot ratio',
+          value: formatPlotRatio(envelope.allowablePlotRatio),
+        },
+        { label: 'Site area', value: formatArea(envelope.siteAreaSqm) },
+        {
+          label: 'Max buildable GFA',
+          value: formatArea(envelope.maxBuildableGfaSqm),
+        },
+        {
+          label: 'Current GFA',
+          value: formatArea(envelope.currentGfaSqm),
+        },
+        {
+          label: 'Additional potential',
+          value: formatArea(envelope.additionalPotentialGfaSqm),
+        },
+      ],
+      note: envelope.assumptions?.length ? envelope.assumptions[0] : null,
+    })
+
+    if (optimizations.length > 0) {
+      const formatAllocation = (plan: DeveloperAssetOptimization) => {
+        const segments: string[] = [
+          `${formatNumberMetric(plan.allocationPct, { maximumFractionDigits: 0 })}%`,
+        ]
+        if (plan.allocatedGfaSqm != null) {
+          segments.push(
+            `${formatNumberMetric(
+              plan.allocatedGfaSqm >= 1000
+                ? plan.allocatedGfaSqm / 1000
+                : plan.allocatedGfaSqm,
+              {
+                maximumFractionDigits: plan.allocatedGfaSqm >= 1000 ? 1 : 0,
+              },
+            )}${plan.allocatedGfaSqm >= 1000 ? 'k' : ''} sqm`,
+          )
+        }
+        if (plan.niaEfficiency != null) {
+          segments.push(
+            `NIA ${formatNumberMetric(plan.niaEfficiency * 100, {
+              maximumFractionDigits: plan.niaEfficiency * 100 >= 100 ? 0 : 1,
+            })}%`,
+          )
+        }
+        if (plan.targetFloorHeightM != null) {
+          segments.push(
+            `${formatNumberMetric(plan.targetFloorHeightM, {
+              maximumFractionDigits: 1,
+            })} m floor height`,
+          )
+        }
+        if (plan.parkingRatioPer1000Sqm != null) {
+          segments.push(
+            `${formatNumberMetric(plan.parkingRatioPer1000Sqm, {
+              maximumFractionDigits: 1,
+            })} lots / 1,000 sqm`,
+          )
+        }
+        if (plan.estimatedRevenueSgd != null && plan.estimatedRevenueSgd > 0) {
+          segments.push(
+            `Rev ≈ $${formatNumberMetric(plan.estimatedRevenueSgd / 1_000_000, {
+              maximumFractionDigits: 1,
+            })}M`,
+          )
+        }
+        if (plan.estimatedCapexSgd != null && plan.estimatedCapexSgd > 0) {
+          segments.push(
+            `CAPEX ≈ $${formatNumberMetric(plan.estimatedCapexSgd / 1_000_000, {
+              maximumFractionDigits: 1,
+            })}M`,
+          )
+        }
+        if (plan.riskLevel) {
+          const riskLabel = `${plan.riskLevel.charAt(0).toUpperCase()}${plan.riskLevel.slice(1)}`
+          segments.push(
+            `${riskLabel} risk${
+              plan.absorptionMonths ? ` · ~${formatNumberMetric(plan.absorptionMonths, { maximumFractionDigits: 0 })}m absorption` : ''
+            }`,
+          )
+        }
+        return segments.join(' • ')
+      }
+
+      cards.push({
+        title: 'Recommended asset mix',
+        subtitle: 'Initial allocation guidance',
+        items: optimizations.map((plan) => ({
+          label: plan.assetType,
+          value: formatAllocation(plan),
+        })),
+        note:
+          optimizations.find((plan) => plan.notes.length)?.notes[0] ??
+          'Adjust allocations as feasibility modelling matures.',
+      })
+    }
+
+    const financeNote =
+      financialSummary.notes.length > 0
+        ? financialSummary.notes[0]
+        : 'Sync with finance modelling to validate programme-level cash flows.'
+
+    cards.push({
+      title: 'Financial snapshot',
+      subtitle: 'Optimisation-derived rollup',
+      items: [
+        {
+          label: 'Total estimated revenue',
+          value:
+            financialSummary.totalEstimatedRevenueSgd != null
+              ? `$${formatNumberMetric(
+                  financialSummary.totalEstimatedRevenueSgd / 1_000_000,
+                  { maximumFractionDigits: 1 },
+                )}M`
+              : '—',
+        },
+        {
+          label: 'Total estimated capex',
+          value:
+            financialSummary.totalEstimatedCapexSgd != null
+              ? `$${formatNumberMetric(
+                  financialSummary.totalEstimatedCapexSgd / 1_000_000,
+                  { maximumFractionDigits: 1 },
+                )}M`
+              : '—',
+        },
+        {
+          label: 'Dominant risk',
+          value:
+            financialSummary.dominantRiskProfile
+              ? financialSummary.dominantRiskProfile.replace('_', ' ')
+              : '—',
+        },
+      ],
+      note: financeNote,
+    })
+
+    cards.push({
+      title: 'Visualization readiness',
+      subtitle: visualization.previewAvailable ? 'Preview ready' : 'Preview in progress',
+      items: [
+        {
+          label: 'Preview status',
+          value: visualization.previewAvailable ? 'High-fidelity preview ready' : 'Waiting on Phase 2B visuals',
+        },
+        {
+          label: 'Status flag',
+          value: visualization.status ? visualization.status.replace(/_/g, ' ') : 'Pending',
+        },
+        {
+          label: 'Concept mesh',
+          value: visualization.conceptMeshUrl ?? 'Stub not generated yet',
+        },
+        {
+          label: 'Camera orbit hint',
+          value: visualization.cameraOrbitHint
+            ? `${formatNumberMetric(visualization.cameraOrbitHint.theta ?? 0, {
+                maximumFractionDigits: 0,
+              })}° / ${formatNumberMetric(visualization.cameraOrbitHint.phi ?? 0, {
+                maximumFractionDigits: 0,
+              })}°`
+            : '—',
+        },
+      ],
+      note: visualization.notes.length ? visualization.notes[0] : null,
     })
 
     cards.push({
@@ -2285,6 +2498,9 @@ export function SiteAcquisitionPage() {
     )
   }
 
+  const buildAssetMixStorageKey = (propertyId: string) =>
+    `developer-asset-mix:${propertyId}`
+
   async function handleCapture(e: React.FormEvent) {
     e.preventDefault()
     const lat = parseFloat(latitude)
@@ -2311,6 +2527,21 @@ export function SiteAcquisitionPage() {
       })
 
       setCapturedProperty(result)
+      if (result.propertyId) {
+        try {
+          sessionStorage.setItem(
+            buildAssetMixStorageKey(result.propertyId),
+            JSON.stringify({
+              optimizations: result.optimizations,
+              buildEnvelope: result.buildEnvelope,
+              financialSummary: result.financialSummary,
+              visualization: result.visualization,
+            }),
+          )
+        } catch (storageError) {
+          console.warn('Unable to persist asset mix snapshot', storageError)
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to capture property')
     } finally {
