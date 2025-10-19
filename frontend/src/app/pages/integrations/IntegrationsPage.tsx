@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
-import type {
-  ListingIntegrationAccount,
-  PublishResult,
-} from '../../../api/listings'
+import type { ListingIntegrationAccount } from '../../../api/listings'
 import {
   connectMockAccount,
   disconnectMockAccount,

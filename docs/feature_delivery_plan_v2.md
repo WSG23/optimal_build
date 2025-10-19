@@ -371,10 +371,11 @@
 - ✅ Property overview cards with zoning + site metrics (Oct 18 2025)
 - ✅ Due diligence checklist authoring + bulk import tooling (Oct 17 2025)
 - ✅ Specialist checklist insights merged into condition assessments; manual inspections now surface named specialist follow-ups in the UI
+- ✅ Manual inspection capture: developers can log inspector name, timestamp, notes, and attachments with timeline + comparison surfacing (Oct 19 2025)
 - ✅ Multi-scenario comparison dashboard shows side-by-side scorecards and is included in exported condition reports (JSON + PDF)
 
 **What's Missing:**
-- ❌ Manual inspection capture (developers can override condition assessments with inspection data)
+- _None for Phase 2A — manual inspection capture shipped Oct 19 2025_
 
 **Acceptance Criteria:**
 - Developer captures site with enhanced property details

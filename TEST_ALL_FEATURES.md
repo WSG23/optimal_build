@@ -234,6 +234,38 @@ curl -s "http://localhost:9400/api/v1/analytics/intelligence/cross-correlation?w
 
 ---
 
+### 10. Developer Site Acquisition (`/app/site-acquisition`)
+**Test:** Navigate to the developer workflow via `/app/site-acquisition`
+
+**Features to Test:**
+- ✅ **Property Capture**
+  - Leave the default coordinates (1.3000 / 103.8500) or enter new ones
+  - Click **Capture property**
+  - Confirm overview cards, checklist summary, and scenario comparison render
+- ✅ **Manual Inspection Capture**
+  - Click **Log inspection**
+  - Enter inspector name, adjust inspection date & time, add summary/notes
+  - Add attachments using `Label | URL` format; multi-line entries allowed
+  - Save and verify success toast + latest inspection banner show inspector & timestamp
+  - Open **View timeline** → confirm history card lists inspector, attachments, and source `Manual inspection`
+- ✅ **Edit Latest**
+  - Click **Edit latest**, confirm form pre-fills latest metadata with current timestamp
+  - Update fields, save, and verify a new history entry is appended (previous entry remains intact)
+- ✅ **Scenario Comparison Metadata**
+  - Inspect the multi-scenario cards and detailed comparison table for inspector badges, “Logged …” timestamps, and manual/automated source pill
+  - Ensure scenarios without manual overrides continue to show “Automated baseline”
+- ✅ **Report Export**
+  - Use **Download JSON** and confirm the exported file includes `inspectorName`, `recordedAt`, and `attachments` within `history` and `scenarioComparison`
+
+**API Test:**
+```bash
+# Verify history endpoint includes inspector metadata & attachments
+curl -s "http://localhost:9400/api/v1/developers/properties/<PROPERTY_ID>/condition-assessment/history" \
+  -H "X-Role: admin" | python3 -m json.tool | jq '.[0] | {inspectorName, recordedAt, attachments}'
+```
+
+---
+
 ## 🔧 Backend API Endpoints
 
 ### Health Checks
