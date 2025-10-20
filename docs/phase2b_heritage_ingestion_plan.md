@@ -1,0 +1,193 @@
+# Phase 2B Heritage Overlay Ingestion Plan (v0.2)
+
+This document outlines the work required to replace the stub `heritage_overlays.json` file with a production ingestion pipeline that sources official heritage/conservation boundaries and makes them available to the optimizer and capture flows.
+
+---
+
+## Changelog
+
+**v0.2 (2025-10-22)** - Technical review polish
+- Added explicit NHB data source links (OneMap, data.gov.sg) with expected columns
+- Documented repository structure (`data/heritage/raw|processed|overrides/`)
+- Added Python dependencies list (shapely, pyproj, fiona, geopandas)
+- Clarified geometry simplification strategy (Douglas-Peucker, tolerance 0.00001)
+- Added `heritage_premium_pct` to output schema
+- Added STRtree spatial indexing for performance optimization
+- Added performance testing requirements (<10ms P95 benchmark)
+- Documented pytest-regressions fixtures location
+- Added rollback retention policy (90 days, last 2 versions)
+- Split Week 2 into 2a/2b to unblock parallel development
+- Added outstanding questions #4 (URA/NHB overlap handling) and #5 (override storage)
+
+**v0.1 (2025-10-20)** - Initial draft
+
+---
+
+## 1. Data Sources
+
+| Dataset | Owner | Format | Notes |
+|---------|-------|--------|-------|
+| URA Conservation Areas | Urban Redevelopment Authority | Shapefile / GeoJSON | Contains conservation boundaries with attributes such as `NAME`, `CATEGORY`, `PLANNING_AREA`. Public data endpoint: https://www.ura.gov.sg/maps/api (requires API key). |
+| National Heritage Board Sites | National Heritage Board | CSV / GeoJSON | Provides nationally significant structures (museums, monuments) with risk/designation levels. **Data sources:** [NHB OneMap Service](https://www.onemap.gov.sg) or [data.gov.sg](https://data.gov.sg) under "National Heritage". Expected columns: `NAME`, `CATEGORY`, `STATUS`, `GEOMETRY`. Format: GeoJSON with Point/Polygon geometries. |
+| Internal Overrides | Product/Heritage team | YAML/JSON | Manual adjustments or overrides (e.g. pilot areas, premium adjustments) to be merged on top of authoritative datasets. **Storage:** `data/heritage/overrides/manual_overrides.yaml` (repo) or S3 bucket `s3://optimal-build-data/heritage/overrides/` (production). |
+
+### Access Requirements
+1. Submit API access request to URA (owner: Product Ops).
+2. Confirm license terms for NHB dataset (owner: Legal).
+3. Decide on refresh cadence (initially weekly; align on SLA with stakeholders).
+
+---
+
+## 2. Pipeline Architecture
+
+```
+fetch_raw_data (CLI)
+  ├─ downloads URA conservation polygons → data/heritage/raw/ura_conservation.geojson
+  ├─ downloads NHB site list → data/heritage/raw/nhb_sites.geojson
+  └─ fetches override file from repo or S3 → data/heritage/raw/manual_overrides.yaml
+
+transform_boundaries
+  ├─ simplifies/validates polygons (using shapely)
+  ├─ computes bounding boxes & centroids
+  ├─ maps attributes → {name, risk, notes, effective_date, source}
+  └─ outputs normalized GeoJSON → data/heritage/processed/heritage_overlays.geojson
+
+load_into_db
+  ├─ writes polygons to overlay source tables via `overlay_ingest.py`
+  ├─ stores metadata snapshot (checksum, version)
+  └─ emits audit events
+
+publish_runtime_assets
+  ├─ generates legacy JSON fallback (`backend/app/data/heritage_overlays.json`) for on-device lookups
+  └─ uploads processed GeoJSON to S3 (if required for frontend)
+```
+
+**Repository structure:**
+```
+data/heritage/
+├── raw/                    # Raw downloads from URA/NHB APIs
+├── processed/              # Normalized GeoJSON outputs
+└── overrides/              # Manual override files (YAML/JSON)
+```
+
+### Components to Build
+- `scripts/heritage/fetch.py`: fetch raw datasets (requests + API key support).
+- `scripts/heritage/transform.py`: shapely-based transformer producing normalized structures.
+- `scripts/heritage/load.py`: uses SQLAlchemy + `overlay_ingest` to persist polygons.
+- `scripts/heritage/__main__.py`: CLI orchestrator (click/typer) supporting commands: `fetch`, `transform`, `load`, `publish`, and `pipeline` (end-to-end).
+- Prefect/cron job (future) to run weekly refresh; store latest run metadata in Import records.
+
+### Python Dependencies
+Add to `requirements.txt`:
+```
+shapely>=2.0.0          # Polygon operations, simplification
+pyproj>=3.6.0           # Coordinate transformations
+fiona>=1.9.0            # Shapefile I/O (if URA provides Shapefiles)
+geopandas>=0.14.0       # GeoJSON handling (optional, simplifies I/O)
+```
+
+---
+
+## 3. Normalized Output Schema
+
+```jsonc
+{
+  "name": "Telok Ayer Conservation",
+  "risk": "high",                 // values: high | medium | low | info
+  "source": "URA",
+  "boundary": {                     // GeoJSON Polygon or MultiPolygon
+    "type": "Polygon",
+    "coordinates": [ ... ]
+  },
+  "bbox": [min_lon, min_lat, max_lon, max_lat],
+  "centroid": [lon, lat],
+  "notes": [
+    "Facade retention mandatory",
+    "Consult URA Conservation Department prior to structural works"
+  ],
+  "effective_date": "2025-10-01",
+  "heritage_premium_pct": 5.0,      // Optional: premium uplift for optimizer (% basis)
+  "attributes": {
+    "ura_category": "Historic District",
+    "planning_area": "Outram"
+  }
+}
+```
+
+**Geometry handling:**
+- **Full geometry retention:** Store complete polygon coordinates for accurate point-in-polygon checks
+- **Simplification:** Apply Douglas-Peucker algorithm with tolerance `0.00001` (~1m at equator) to reduce vertex count while preserving shape
+- **Validation:** Ensure polygons are valid (no self-intersections) using `shapely.is_valid()` before storage
+
+Additional optional fields:
+- `manual_override`: boolean, indicates if entry comes from overrides file.
+- `nhb_id`: for NHB joined records.
+- `simplified_geometry`: Pre-computed simplified version for fast rendering (if needed).
+
+---
+
+## 4. Integration Points
+
+1. **Python service layer**
+   - Update `HeritageOverlayService` to load GeoJSON polygons (rather than bounding boxes) and perform point-in-polygon checks using shapely.
+   - **Performance optimization:** Use `shapely.STRtree` (R-tree spatial index) to avoid O(n) lookups per query. Build index on service startup from all polygons.
+   - Publish helper to return combined risk/notes for a coordinate; fallback to bounding box if polygon check fails (performance).
+
+2. **Developer GPS Capture (`gps_property_logger`)**
+   - Replace JSON lookup with service call to `HeritageOverlayService.lookup`. Include `risk`, `notes`, `overlay_name`, `source`, and `heritage_premium_pct` in the response.
+
+3. **Optimiser (`asset_mix.py`)**
+   - Accept new overlay metadata (name, risk, premium) to drive heritage adjustments.
+   - **Risk mapping alignment:** Use the same `high | medium | low | info` values defined in the optimizer spec (§3.8). Ensure risk classification logic is consistent across ingestion and optimizer.
+
+4. **Persistence / Analytics**
+   - Store overlay hits in project metadata for audits (`project_metadata.heritage_overlay`).
+   - Log the heritage overlay version used in each optimizer run (tie into §6 versioning).
+   - Optionally expose API endpoint `GET /heritage-overlays` for frontend shading (future).
+
+---
+
+## 5. Testing Strategy
+
+| Area | Tests |
+|------|-------|
+| Fetch | Mock URA/NHB endpoints; verify HTTP failures handled; ensure raw files persisted with checksum. |
+| Transform | Unit tests for polygon simplification, risk mapping, override merging. |
+| Load | Integration tests creating in-memory DB, ensuring `overlay_ingest` writes records and audit events. |
+| Service | Unit tests for point-in-polygon lookup (hit/miss, boundaries, risk overrides). |
+| Performance | Benchmark point-in-polygon lookup with STRtree (target: <10ms P95 for 100 overlays). Ensure no latency spikes when scaling to 500+ polygons. |
+| Regression | Snapshot tests comparing historical JSON vs. generated fallback using `pytest-regressions`. **Fixtures:** Store sample URA/NHB responses in `tests/fixtures/heritage/` for reproducible testing. |
+
+---
+
+## 6. Operational Considerations
+
+- **Versioning**: store output version (`YYYYMMDD`) in metadata and processed filenames (e.g., `heritage_overlays_20251022.geojson`). Optimizer should log which heritage version was used in each run (stored in project metadata).
+- **Refresh cadence**: weekly; manual rerun via CLI pipeline command for urgent updates.
+- **Alerting**: emit metrics (`heritage_ingestion.duration_ms`, `heritage_ingestion.records_loaded`, `heritage_ingestion.fetch_failures`, `heritage_ingestion.version_used`). Hook into existing monitoring.
+- **Rollback**: keep last 2 versions in S3 (`s3://optimal-build-data/heritage/archive/`). **Retention policy:** 90 days for archived versions. **Rollback process:** Manual via CLI `pipeline --version <YYYYMMDD>` to re-publish a previous snapshot if ingestion fails. **Owner:** Backend Lead + Ops.
+
+---
+
+## 7. Timeline & Owners
+
+| Week | Deliverable | Owner | Dependencies |
+|------|-------------|-------|--------------|
+| Week 1 | Data access approved, CLI scaffold created (`fetch`, `transform`, `load`) | Backend Lead | **Blocker:** URA API access approval (Product Ops) |
+| Week 2a | Point-in-polygon service with STRtree indexing (backend only) | Backend Lead | Week 1 CLI scaffold complete |
+| Week 2b | Optimiser integration updated (consuming heritage metadata from service) | Backend Lead | Week 2a service deployed |
+| Week 3 | Automated weekly job configured; QA sign-off (heritage + finance) | Ops / Data Engineering | Weeks 1-2 complete |
+
+*Note:* Weeks align with the broader Phase 2B schedule. Week 2 split into 2a (backend service) and 2b (optimizer) to unblock parallel development. API updates don't block ingestion.
+
+---
+
+## 8. Outstanding Questions
+
+1. Do we need to support multiple heritage risk tiers beyond high/medium/low? **[Owner: Heritage Team]**
+2. Should optimiser treat NHB monuments differently from URA conservation zones? **[Owner: Finance + Heritage]**
+3. Where should processed GeoJSON be stored for frontend consumption (S3 bucket, CDN, etc.)? **[Owner: Platform Ops]**
+4. **Do we need to merge URA + NHB overlays into combined polygons when they overlap?** For example, if an NHB monument sits within a URA conservation area, should we union the geometries or keep them as separate overlays with priority rules? **[Owner: Heritage Team]**
+5. **Where should heritage premium overrides be stored/uploaded?** Should manual overrides (e.g., pilot area premiums) be committed to the repo (`data/heritage/overrides/`), uploaded to S3, or managed via an admin UI? What's the update workflow? **[Owner: Product + Platform Ops]**
+
+Feedback welcome. Once agreed, we can start implementation following the priority list above.
