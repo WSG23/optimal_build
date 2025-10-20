@@ -95,11 +95,248 @@ class DeveloperAssetOptimization(BaseModel):
     allocated_gfa_sqm: float | None = None
     target_floor_height_m: float | None = None
     parking_ratio_per_1000sqm: float | None = None
+    rent_psm_month: float | None = None
+    stabilised_vacancy_pct: float | None = None
+    opex_pct_of_rent: float | None = None
     estimated_revenue_sgd: float | None = None
     estimated_capex_sgd: float | None = None
+    fitout_cost_psm: float | None = None
     absorption_months: int | None = None
     risk_level: str | None = None
+    heritage_premium_pct: float | None = None
     notes: list[str] = Field(default_factory=list)
+
+
+class DeveloperCapitalStructureScenario(BaseModel):
+    """Phase 2B capital structure target."""
+
+    scenario: str
+    equity_pct: float
+    debt_pct: float
+    preferred_equity_pct: float
+    target_ltv: float
+    target_ltc: float
+    target_dscr: float
+    comments: str | None = None
+
+
+class DeveloperDebtFacility(BaseModel):
+    """Phase 2B debt facility assumption."""
+
+    facility_type: str
+    amount_expression: str
+    interest_rate: str
+    tenor_years: float | None = None
+    amortisation: str | None = None
+    drawdown_schedule_notes: str | None = None
+    covenants_triggers: str | None = None
+
+
+class DeveloperEquityWaterfallTier(BaseModel):
+    """Promote tier definition."""
+
+    hurdle_irr_pct: float
+    promote_pct: float
+
+
+class DeveloperEquityWaterfall(BaseModel):
+    """Equity waterfall structure."""
+
+    tiers: list[DeveloperEquityWaterfallTier] = Field(default_factory=list)
+    preferred_return_pct: float | None = None
+    catch_up_notes: str | None = None
+
+
+class DeveloperCashFlowMilestone(BaseModel):
+    """Cash flow timeline milestone."""
+
+    item: str
+    start_month: int
+    duration_months: int
+    notes: str | None = None
+
+
+class DeveloperExitAssumptions(BaseModel):
+    """Exit, sale, and refinance markers."""
+
+    exit_cap_rates: dict[str, float] = Field(default_factory=dict)
+    sale_costs_pct: float
+    sale_costs_breakdown: str | None = None
+    refinance_terms: str | None = None
+
+
+class DeveloperSensitivityBand(BaseModel):
+    """Sensitivity band for key parameters."""
+
+    parameter: str
+    low: float
+    base: float
+    high: float
+    comments: str | None = None
+
+
+class DeveloperFinanceBlueprint(BaseModel):
+    """Phase 2B finance blueprint surfaced with capture response."""
+
+    capital_structure: list[DeveloperCapitalStructureScenario] = Field(
+        default_factory=list
+    )
+    debt_facilities: list[DeveloperDebtFacility] = Field(default_factory=list)
+    equity_waterfall: DeveloperEquityWaterfall | None = None
+    cash_flow_timeline: list[DeveloperCashFlowMilestone] = Field(default_factory=list)
+    exit_assumptions: DeveloperExitAssumptions | None = None
+    sensitivity_bands: list[DeveloperSensitivityBand] = Field(default_factory=list)
+
+
+PHASE2B_FINANCE_BLUEPRINT = DeveloperFinanceBlueprint(
+    capital_structure=[
+        DeveloperCapitalStructureScenario(
+            scenario="Base Case",
+            equity_pct=35.0,
+            debt_pct=60.0,
+            preferred_equity_pct=5.0,
+            target_ltv=60.0,
+            target_ltc=65.0,
+            target_dscr=1.35,
+            comments=(
+                "Core Singapore development structure assuming SORA + 250 bps blended cost of debt."
+            ),
+        ),
+        DeveloperCapitalStructureScenario(
+            scenario="Upside",
+            equity_pct=30.0,
+            debt_pct=65.0,
+            preferred_equity_pct=5.0,
+            target_ltv=58.0,
+            target_ltc=63.0,
+            target_dscr=1.40,
+            comments="Higher pre-leasing allows additional leverage with tighter DSCR covenants.",
+        ),
+        DeveloperCapitalStructureScenario(
+            scenario="Downside",
+            equity_pct=45.0,
+            debt_pct=50.0,
+            preferred_equity_pct=5.0,
+            target_ltv=55.0,
+            target_ltc=60.0,
+            target_dscr=1.25,
+            comments="De-risked case with additional sponsor equity and conservative leverage headroom.",
+        ),
+    ],
+    debt_facilities=[
+        DeveloperDebtFacility(
+            facility_type="Construction Loan",
+            amount_expression="0.60 x total_dev_cost",
+            interest_rate="4.8% (SORA 3M + 240 bps)",
+            tenor_years=4.0,
+            amortisation="Interest-only during build; convert to 20-yr schedule at PC",
+            drawdown_schedule_notes="15%/30%/30%/25% drawn by construction quarter.",
+            covenants_triggers="DSCR >= 1.20 post-income; quarterly cost-to-complete tests.",
+        ),
+        DeveloperDebtFacility(
+            facility_type="Bridge / Mezzanine",
+            amount_expression="0.10 x total_dev_cost",
+            interest_rate="8.5% fixed",
+            tenor_years=2.0,
+            amortisation="Bullet",
+            drawdown_schedule_notes="Tranche alongside equity for land completion and top-up costs.",
+            covenants_triggers="LTV hard cap 72%; cash sweep if DSCR falls below 1.15.",
+        ),
+        DeveloperDebtFacility(
+            facility_type="Permanent Debt",
+            amount_expression="0.55 x stabilised_value",
+            interest_rate="4.2% (SORA 3M + 180 bps)",
+            tenor_years=7.0,
+            amortisation="20-year amortisation with 30% balloon",
+            drawdown_schedule_notes="Funds post-PC once 70% stabilised occupancy achieved.",
+            covenants_triggers="DSCR >= 1.35; maintain LTV <= 60%; cash sweep above 1.45 DSCR.",
+        ),
+    ],
+    equity_waterfall=DeveloperEquityWaterfall(
+        tiers=[
+            DeveloperEquityWaterfallTier(hurdle_irr_pct=12.0, promote_pct=10.0),
+            DeveloperEquityWaterfallTier(hurdle_irr_pct=18.0, promote_pct=20.0),
+        ],
+        preferred_return_pct=9.0,
+        catch_up_notes=(
+            "50/50 catch-up after preferred return; clawback if project IRR falls below 12% on exit."
+        ),
+    ),
+    cash_flow_timeline=[
+        DeveloperCashFlowMilestone(
+            item="Land Acquisition",
+            start_month=0,
+            duration_months=3,
+            notes="Due diligence, option exercise, completion, and stamping.",
+        ),
+        DeveloperCashFlowMilestone(
+            item="Construction",
+            start_month=3,
+            duration_months=30,
+            notes="Includes enabling works plus six-month interior fit-out buffer.",
+        ),
+        DeveloperCashFlowMilestone(
+            item="Leasing / Sales",
+            start_month=24,
+            duration_months=18,
+            notes="Marketing and pre-commitments begin during final construction year.",
+        ),
+        DeveloperCashFlowMilestone(
+            item="Stabilisation",
+            start_month=42,
+            duration_months=12,
+            notes="Target >=90% leased with NOI run-rate established.",
+        ),
+        DeveloperCashFlowMilestone(
+            item="Exit / Refinance",
+            start_month=48,
+            duration_months=3,
+            notes="Refinance or partial asset sale once DSCR covenant achieved.",
+        ),
+    ],
+    exit_assumptions=DeveloperExitAssumptions(
+        exit_cap_rates={"base": 4.0, "upside": 3.6, "downside": 4.5},
+        sale_costs_pct=2.25,
+        sale_costs_breakdown="1.75% broker + 0.25% legal + 0.25% stamp/fees.",
+        refinance_terms="65% LTV senior loan at SORA + 170 bps, 5-year tenor, 25-year amortisation.",
+    ),
+    sensitivity_bands=[
+        DeveloperSensitivityBand(
+            parameter="Rent",
+            low=-8.0,
+            base=0.0,
+            high=6.0,
+            comments="URA quarterly ranges for CBD office and prime retail benchmarks.",
+        ),
+        DeveloperSensitivityBand(
+            parameter="Exit Cap Rate (delta bps)",
+            low=0.40,
+            base=0.0,
+            high=-0.30,
+            comments="Stress ± basis points around 4.0% base exit yield.",
+        ),
+        DeveloperSensitivityBand(
+            parameter="Construction Cost",
+            low=10.0,
+            base=0.0,
+            high=-5.0,
+            comments="2024 BCA tender price index volatility band.",
+        ),
+        DeveloperSensitivityBand(
+            parameter="Interest Rate (delta %)",
+            low=1.50,
+            base=0.0,
+            high=-0.75,
+            comments="SORA tightening/easing swing assumptions.",
+        ),
+    ],
+)
+
+
+def _phase2b_finance_blueprint() -> DeveloperFinanceBlueprint:
+    """Return a defensive copy of the Phase 2B finance blueprint."""
+
+    return PHASE2B_FINANCE_BLUEPRINT.model_copy(deep=True)
 
 
 class DeveloperGPSLogResponse(BaseModel):
@@ -127,6 +364,7 @@ class DeveloperFinancialSummary(BaseModel):
     total_estimated_capex_sgd: float | None = None
     dominant_risk_profile: str | None = None
     notes: list[str] = Field(default_factory=list)
+    finance_blueprint: DeveloperFinanceBlueprint | None = None
 
 
 DeveloperGPSLogResponse.model_rebuild()
@@ -279,10 +517,15 @@ def _build_asset_optimizations(
             allocated_gfa_sqm=plan.allocated_gfa_sqm,
             target_floor_height_m=plan.target_floor_height_m,
             parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
+            rent_psm_month=plan.rent_psm_month,
+            stabilised_vacancy_pct=plan.stabilised_vacancy_pct,
+            opex_pct_of_rent=plan.opex_pct_of_rent,
             estimated_revenue_sgd=plan.estimated_revenue_sgd,
             estimated_capex_sgd=plan.estimated_capex_sgd,
+            fitout_cost_psm=plan.fitout_cost_psm,
             absorption_months=plan.absorption_months,
             risk_level=plan.risk_level,
+            heritage_premium_pct=plan.heritage_premium_pct,
             notes=list(plan.notes),
         )
         for plan in plans
@@ -323,11 +566,17 @@ def _summarise_financials(
             "Capex estimate aggregates fit-out assumptions for each programmed use."
         )
 
+    finance_blueprint = _phase2b_finance_blueprint()
+    notes.append(
+        "Phase 2B finance blueprint attached with capital stack, debt facility, and sensitivity defaults."
+    )
+
     return DeveloperFinancialSummary(
         total_estimated_revenue_sgd=total_revenue or None,
         total_estimated_capex_sgd=total_capex or None,
         dominant_risk_profile=dominant,
         notes=notes,
+        finance_blueprint=finance_blueprint,
     )
 
 

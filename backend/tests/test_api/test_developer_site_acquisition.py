@@ -120,13 +120,22 @@ async def test_developer_log_property_returns_envelope(
     assert optimizations[0]["allocation_pct"] > 0
     assert optimizations[0]["allocated_gfa_sqm"] is not None
     assert optimizations[0]["target_floor_height_m"] is not None
+    assert optimizations[0]["rent_psm_month"] is not None
+    assert optimizations[0]["stabilised_vacancy_pct"] is not None
+    assert optimizations[0]["opex_pct_of_rent"] is not None
     assert optimizations[0]["estimated_revenue_sgd"] is not None
     assert optimizations[0]["absorption_months"] is not None
+    assert optimizations[0]["fitout_cost_psm"] is not None
 
     financial_summary = payload["financial_summary"]
     assert financial_summary["total_estimated_revenue_sgd"] is not None
     assert financial_summary["total_estimated_capex_sgd"] is not None
     assert financial_summary["dominant_risk_profile"] == "moderate"
+    blueprint = financial_summary.get("finance_blueprint")
+    assert blueprint, "Finance blueprint should be included"
+    assert blueprint[
+        "capital_structure"
+    ], "Capital structure scenarios should be populated"
 
     # Ensure the developer logger was invoked with development scenarios
     assert stub_logger.calls, "Expected capture service to be invoked"

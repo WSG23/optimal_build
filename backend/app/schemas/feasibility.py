@@ -99,10 +99,15 @@ class AssetOptimizationRecommendation(BaseModel):
     nia_efficiency: float | None = None
     target_floor_height_m: float | None = None
     parking_ratio_per_1000sqm: float | None = None
+    rent_psm_month: float | None = None
+    stabilised_vacancy_pct: float | None = None
+    opex_pct_of_rent: float | None = None
     estimated_revenue_sgd: float | None = None
     estimated_capex_sgd: float | None = None
+    fitout_cost_psm: float | None = None
     absorption_months: int | None = None
     risk_level: str | None = None
+    heritage_premium_pct: float | None = None
     notes: list[str] = Field(default_factory=list)
 
 

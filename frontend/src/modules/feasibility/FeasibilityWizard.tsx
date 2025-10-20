@@ -20,6 +20,10 @@ type StoredAssetOptimization = {
   niaEfficiency?: number | null
   targetFloorHeightM?: number | null
   parkingRatioPer1000Sqm?: number | null
+  rentPsmMonth?: number | null
+  stabilisedVacancyPct?: number | null
+  opexPctOfRent?: number | null
+  fitoutCostPsm?: number | null
   notes?: string[]
 }
 

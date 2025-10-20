@@ -403,7 +403,7 @@
 ---
 
 ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
-**Status:** 5% - Dedicated developer GPS capture endpoint landed; feasibility enrichment underway
+**Status:** 15% - Developer capture enriched with Phase 2B asset + finance baselines; optimisation wiring ongoing
 
 **Requirements (from FEATURES.md lines 98-108):**
 - Multi-use development optimizer
@@ -437,6 +437,8 @@
 - ✅ Feasibility assessment now ingests the build envelope, tuning GFA summaries and generating land-use-specific optimisation notes
 - ✅ Developer Feasibility wizard surfaces captured asset mix recommendations (persisted from Site Acquisition) for quick programme planning
 - ✅ Optimisation outputs flow into developer financial summaries and Finance API responses (revenue/capex rollups + risk heuristics) to prime Phase 2C modelling
+- ✅ Asset mix engine now references Phase 2B Singapore baselines (rent, vacancy, OPEX, heritage premiums) to calculate NOI and fit-out capex per asset type
+- ✅ Finance blueprint (capital stack targets, debt facilities, equity waterfall, sensitivity bands) returned with developer capture for direct Phase 2C ingestion
 
 **What's Missing (Next Focus):**
 - ❌ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use)
@@ -446,7 +448,7 @@
 **Kickoff Deliverables (Planned):**
 - ✅ Stand up developer-specific GPS logging endpoint and API client so Site Acquisition no longer proxies through the agent route
 - ✅ Extend capture response with zoning envelope + max buildable metrics (baseline commercial template)
-- ❌ Wire captured context into the asset-specific feasibility engine and 3D preview shell (office/commercial first)
+- ❌ Complete asset-specific optimisation models (beyond baseline heuristics) and link to 3D preview shell (office/commercial first)
 - Update developer UI to surface the dedicated capture flow and enriched feasibility snapshots
 
 ---

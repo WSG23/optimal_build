@@ -70,10 +70,15 @@ export interface DeveloperAssetOptimization {
   niaEfficiency: number | null
   targetFloorHeightM: number | null
   parkingRatioPer1000Sqm: number | null
+  rentPsmMonth: number | null
+  stabilisedVacancyPct: number | null
+  opexPctOfRent: number | null
   estimatedRevenueSgd: number | null
   estimatedCapexSgd: number | null
+  fitoutCostPsm: number | null
   absorptionMonths: number | null
   riskLevel: string | null
+  heritagePremiumPct: number | null
   notes: string[]
 }
 
@@ -82,6 +87,70 @@ export interface DeveloperFinancialSummary {
   totalEstimatedCapexSgd: number | null
   dominantRiskProfile: string | null
   notes: string[]
+  financeBlueprint: DeveloperFinanceBlueprint | null
+}
+
+export interface DeveloperCapitalStructureScenario {
+  scenario: string
+  equityPct: number
+  debtPct: number
+  preferredEquityPct: number
+  targetLtv: number
+  targetLtc: number
+  targetDscr: number
+  comments: string | null
+}
+
+export interface DeveloperDebtFacility {
+  facilityType: string
+  amountExpression: string
+  interestRate: string
+  tenorYears: number | null
+  amortisation: string | null
+  drawdownScheduleNotes: string | null
+  covenantsTriggers: string | null
+}
+
+export interface DeveloperEquityWaterfallTier {
+  hurdleIrrPct: number
+  promotePct: number
+}
+
+export interface DeveloperEquityWaterfall {
+  tiers: DeveloperEquityWaterfallTier[]
+  preferredReturnPct: number | null
+  catchUpNotes: string | null
+}
+
+export interface DeveloperCashFlowMilestone {
+  item: string
+  startMonth: number
+  durationMonths: number
+  notes: string | null
+}
+
+export interface DeveloperExitAssumptions {
+  exitCapRates: Record<string, number>
+  saleCostsPct: number
+  saleCostsBreakdown: string | null
+  refinanceTerms: string | null
+}
+
+export interface DeveloperSensitivityBand {
+  parameter: string
+  low: number
+  base: number
+  high: number
+  comments: string | null
+}
+
+export interface DeveloperFinanceBlueprint {
+  capitalStructure: DeveloperCapitalStructureScenario[]
+  debtFacilities: DeveloperDebtFacility[]
+  equityWaterfall: DeveloperEquityWaterfall | null
+  cashFlowTimeline: DeveloperCashFlowMilestone[]
+  exitAssumptions: DeveloperExitAssumptions | null
+  sensitivityBands: DeveloperSensitivityBand[]
 }
 
 export interface ConditionSystem {
@@ -421,16 +490,29 @@ function mapDeveloperOptimizations(
       const parking =
         coerceNumeric(entry.parking_ratio_per_1000sqm) ??
         coerceNumeric(entry.parkingRatioPer1000Sqm)
+      const rent =
+        coerceNumeric(entry.rent_psm_month) ?? coerceNumeric(entry.rentPsmMonth)
+      const vacancy =
+        coerceNumeric(entry.stabilised_vacancy_pct) ??
+        coerceNumeric(entry.stabilisedVacancyPct)
+      const opex =
+        coerceNumeric(entry.opex_pct_of_rent) ??
+        coerceNumeric(entry.opexPctOfRent)
       const revenue =
         coerceNumeric(entry.estimated_revenue_sgd) ??
         coerceNumeric(entry.estimatedRevenueSgd)
       const capex =
         coerceNumeric(entry.estimated_capex_sgd) ??
         coerceNumeric(entry.estimatedCapexSgd)
+      const fitout =
+        coerceNumeric(entry.fitout_cost_psm) ?? coerceNumeric(entry.fitoutCostPsm)
       const absorption =
         coerceNumeric(entry.absorption_months) ??
         coerceNumeric(entry.absorptionMonths)
       const riskLevel = coerceString(entry.risk_level) ?? coerceString(entry.riskLevel)
+      const heritagePremium =
+        coerceNumeric(entry.heritage_premium_pct) ??
+        coerceNumeric(entry.heritagePremiumPct)
       const notes = Array.isArray(entry.notes)
         ? entry.notes
             .map((note) => coerceString(note) ?? '')
@@ -446,14 +528,235 @@ function mapDeveloperOptimizations(
         allocatedGfaSqm: allocated,
         targetFloorHeightM: floorHeight,
         parkingRatioPer1000Sqm: parking,
+        rentPsmMonth: rent ?? null,
+        stabilisedVacancyPct: vacancy ?? null,
+        opexPctOfRent: opex ?? null,
         estimatedRevenueSgd: revenue,
         estimatedCapexSgd: capex,
+        fitoutCostPsm: fitout ?? null,
         absorptionMonths: absorption ? Math.round(absorption) : null,
         riskLevel: riskLevel ?? null,
+        heritagePremiumPct: heritagePremium ?? null,
         notes,
       }
     })
     .filter((item): item is DeveloperAssetOptimization => item !== null)
+}
+
+function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const source = payload as Record<string, unknown>
+
+  const capitalStructure = Array.isArray(source.capital_structure)
+    ? source.capital_structure
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            return null
+          }
+          const item = entry as Record<string, unknown>
+          const scenario = coerceString(item.scenario) ?? coerceString(item.scenarioName)
+          const equity =
+            coerceNumeric(item.equity_pct) ?? coerceNumeric(item.equityPct)
+          const debt = coerceNumeric(item.debt_pct) ?? coerceNumeric(item.debtPct)
+          const pref =
+            coerceNumeric(item.preferred_equity_pct) ??
+            coerceNumeric(item.preferredEquityPct)
+          const targetLtv =
+            coerceNumeric(item.target_ltv) ?? coerceNumeric(item.targetLtv)
+          const targetLtc =
+            coerceNumeric(item.target_ltc) ?? coerceNumeric(item.targetLtc)
+          const targetDscr =
+            coerceNumeric(item.target_dscr) ?? coerceNumeric(item.targetDscr)
+          if (
+            !scenario ||
+            equity === null ||
+            debt === null ||
+            pref === null ||
+            targetLtv === null ||
+            targetLtc === null ||
+            targetDscr === null
+          ) {
+            return null
+          }
+          return {
+            scenario,
+            equityPct: equity,
+            debtPct: debt,
+            preferredEquityPct: pref,
+            targetLtv,
+            targetLtc,
+            targetDscr,
+            comments: coerceString(item.comments) ?? null,
+          }
+        })
+        .filter((entry): entry is DeveloperCapitalStructureScenario => entry !== null)
+    : []
+
+  const debtFacilities = Array.isArray(source.debt_facilities)
+    ? source.debt_facilities
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            return null
+          }
+          const item = entry as Record<string, unknown>
+          const facilityType =
+            coerceString(item.facility_type) ?? coerceString(item.facilityType)
+          const amountExpression =
+            coerceString(item.amount_expression) ??
+            coerceString(item.amountExpression)
+          const interestRate =
+            coerceString(item.interest_rate) ?? coerceString(item.interestRate)
+          if (!facilityType || !amountExpression || !interestRate) {
+            return null
+          }
+          return {
+            facilityType,
+            amountExpression,
+            interestRate,
+            tenorYears:
+              coerceNumeric(item.tenor_years) ?? coerceNumeric(item.tenorYears),
+            amortisation: coerceString(item.amortisation) ?? null,
+            drawdownScheduleNotes:
+              coerceString(item.drawdown_schedule_notes) ??
+              coerceString(item.drawdownScheduleNotes) ??
+              null,
+            covenantsTriggers:
+              coerceString(item.covenants_triggers) ??
+              coerceString(item.covenantsTriggers) ??
+              null,
+          }
+        })
+        .filter((entry): entry is DeveloperDebtFacility => entry !== null)
+    : []
+
+  const rawWaterfall = source.equity_waterfall
+  let equityWaterfall: DeveloperEquityWaterfall | null = null
+  if (rawWaterfall && typeof rawWaterfall === 'object') {
+    const item = rawWaterfall as Record<string, unknown>
+    const tiers = Array.isArray(item.tiers)
+      ? item.tiers
+          .map((tier) => {
+            if (!tier || typeof tier !== 'object') {
+              return null
+            }
+            const tierItem = tier as Record<string, unknown>
+            const hurdle =
+              coerceNumeric(tierItem.hurdle_irr_pct) ??
+              coerceNumeric(tierItem.hurdleIrrPct)
+            const promote =
+              coerceNumeric(tierItem.promote_pct) ??
+              coerceNumeric(tierItem.promotePct)
+            if (hurdle === null || promote === null) {
+              return null
+            }
+            return { hurdleIrrPct: hurdle, promotePct: promote }
+          })
+          .filter((tier): tier is DeveloperEquityWaterfallTier => tier !== null)
+      : []
+    equityWaterfall = {
+      tiers,
+      preferredReturnPct:
+        coerceNumeric(item.preferred_return_pct) ??
+        coerceNumeric(item.preferredReturnPct),
+      catchUpNotes:
+        coerceString(item.catch_up_notes) ?? coerceString(item.catchUpNotes) ?? null,
+    }
+  }
+
+  const cashFlowTimeline = Array.isArray(source.cash_flow_timeline)
+    ? source.cash_flow_timeline
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            return null
+          }
+          const item = entry as Record<string, unknown>
+          const itemLabel = coerceString(item.item) ?? coerceString(item.name)
+          const start =
+            coerceNumeric(item.start_month) ?? coerceNumeric(item.startMonth)
+          const duration =
+            coerceNumeric(item.duration_months) ??
+            coerceNumeric(item.durationMonths)
+          if (!itemLabel || start === null || duration === null) {
+            return null
+          }
+          return {
+            item: itemLabel,
+            startMonth: Math.round(start),
+            durationMonths: Math.round(duration),
+            notes: coerceString(item.notes) ?? null,
+          }
+        })
+        .filter((entry): entry is DeveloperCashFlowMilestone => entry !== null)
+    : []
+
+  const exitSource = source.exit_assumptions
+  let exitAssumptions: DeveloperExitAssumptions | null = null
+  if (exitSource && typeof exitSource === 'object') {
+    const item = exitSource as Record<string, unknown>
+    const exitCapRates: Record<string, number> = {}
+    const rawRates = item.exit_cap_rates ?? item.exitCapRates
+    if (rawRates && typeof rawRates === 'object') {
+      Object.entries(rawRates as Record<string, unknown>).forEach(([key, value]) => {
+        const numeric = coerceNumeric(value)
+        if (numeric !== null) {
+          exitCapRates[key] = numeric
+        }
+      })
+    }
+    const saleCostsPct =
+      coerceNumeric(item.sale_costs_pct) ?? coerceNumeric(item.saleCostsPct)
+    if (saleCostsPct !== null) {
+      exitAssumptions = {
+        exitCapRates,
+        saleCostsPct,
+        saleCostsBreakdown:
+          coerceString(item.sale_costs_breakdown) ??
+          coerceString(item.saleCostsBreakdown) ??
+          null,
+        refinanceTerms:
+          coerceString(item.refinance_terms) ??
+          coerceString(item.refinanceTerms) ??
+          null,
+      }
+    }
+  }
+
+  const sensitivityBands = Array.isArray(source.sensitivity_bands)
+    ? source.sensitivity_bands
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            return null
+          }
+          const item = entry as Record<string, unknown>
+          const parameter = coerceString(item.parameter) ?? coerceString(item.name)
+          const low = coerceNumeric(item.low) ?? coerceNumeric(item.min)
+          const base = coerceNumeric(item.base) ?? coerceNumeric(item.mid)
+          const high = coerceNumeric(item.high) ?? coerceNumeric(item.max)
+          if (!parameter || low === null || base === null || high === null) {
+            return null
+          }
+          return {
+            parameter,
+            low,
+            base,
+            high,
+            comments: coerceString(item.comments) ?? null,
+          }
+        })
+        .filter((entry): entry is DeveloperSensitivityBand => entry !== null)
+    : []
+
+  return {
+    capitalStructure,
+    debtFacilities,
+    equityWaterfall,
+    cashFlowTimeline,
+    exitAssumptions,
+    sensitivityBands,
+  }
 }
 
 function deriveEnvelopeFromSummary(
@@ -728,12 +1031,17 @@ export async function capturePropertyForDevelopment(
               .map((entry) => coerceString(entry) ?? '')
               .filter((entry): entry is string => entry.length > 0)
           : [],
+        financeBlueprint: mapFinanceBlueprint(
+          rawPayload.financial_summary.finance_blueprint ??
+            (rawPayload.financial_summary as Record<string, unknown>).financeBlueprint,
+        ),
       }
     : {
         totalEstimatedRevenueSgd: null,
         totalEstimatedCapexSgd: null,
         dominantRiskProfile: null,
         notes: [],
+        financeBlueprint: null,
       }
 
   return {

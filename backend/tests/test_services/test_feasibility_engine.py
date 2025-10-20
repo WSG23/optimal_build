@@ -45,5 +45,9 @@ def test_feasibility_summary_uses_envelope_inputs() -> None:
     assert response.asset_optimizations[0].allocated_gfa_sqm is not None
     assert response.asset_optimizations[0].estimated_revenue_sgd is not None
     assert response.asset_optimizations[0].risk_level is not None
+    assert response.asset_optimizations[0].rent_psm_month is not None
+    assert response.asset_optimizations[0].stabilised_vacancy_pct is not None
+    assert response.asset_optimizations[0].opex_pct_of_rent is not None
+    assert response.asset_optimizations[0].fitout_cost_psm is not None
     assert response.asset_mix_summary is not None
     assert response.asset_mix_summary.total_estimated_revenue_sgd is not None

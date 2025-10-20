@@ -1494,38 +1494,66 @@ export function SiteAcquisitionPage() {
         ? financialSummary.notes[0]
         : 'Sync with finance modelling to validate programme-level cash flows.'
 
+    const financialItems: Array<{ label: string; value: string }> = [
+      {
+        label: 'Total estimated revenue',
+        value:
+          financialSummary.totalEstimatedRevenueSgd != null
+            ? `$${formatNumberMetric(
+                financialSummary.totalEstimatedRevenueSgd / 1_000_000,
+                { maximumFractionDigits: 1 },
+              )}M`
+            : '—',
+      },
+      {
+        label: 'Total estimated capex',
+        value:
+          financialSummary.totalEstimatedCapexSgd != null
+            ? `$${formatNumberMetric(
+                financialSummary.totalEstimatedCapexSgd / 1_000_000,
+                { maximumFractionDigits: 1 },
+              )}M`
+            : '—',
+      },
+      {
+        label: 'Dominant risk',
+        value:
+          financialSummary.dominantRiskProfile
+            ? financialSummary.dominantRiskProfile.replace('_', ' ')
+            : '—',
+      },
+    ]
+
+    const financeBlueprint = financialSummary.financeBlueprint
+    if (financeBlueprint?.capitalStructure.length) {
+      const baseScenario =
+        financeBlueprint.capitalStructure.find((entry) => entry.scenario === 'Base Case') ??
+        financeBlueprint.capitalStructure[0]
+      financialItems.push({
+        label: 'Capital stack (base)',
+        value: `${formatNumberMetric(baseScenario.debtPct, {
+          maximumFractionDigits: 0,
+        })}% debt / ${formatNumberMetric(baseScenario.equityPct, {
+          maximumFractionDigits: 0,
+        })}% equity`,
+      })
+    }
+    if (financeBlueprint?.debtFacilities.length) {
+      const constructionLoan = financeBlueprint.debtFacilities.find(
+        (facility) => facility.facilityType.toLowerCase().includes('construction'),
+      )
+      if (constructionLoan) {
+        financialItems.push({
+          label: 'Construction loan rate',
+          value: constructionLoan.interestRate,
+        })
+      }
+    }
+
     cards.push({
       title: 'Financial snapshot',
       subtitle: 'Optimisation-derived rollup',
-      items: [
-        {
-          label: 'Total estimated revenue',
-          value:
-            financialSummary.totalEstimatedRevenueSgd != null
-              ? `$${formatNumberMetric(
-                  financialSummary.totalEstimatedRevenueSgd / 1_000_000,
-                  { maximumFractionDigits: 1 },
-                )}M`
-              : '—',
-        },
-        {
-          label: 'Total estimated capex',
-          value:
-            financialSummary.totalEstimatedCapexSgd != null
-              ? `$${formatNumberMetric(
-                  financialSummary.totalEstimatedCapexSgd / 1_000_000,
-                  { maximumFractionDigits: 1 },
-                )}M`
-              : '—',
-        },
-        {
-          label: 'Dominant risk',
-          value:
-            financialSummary.dominantRiskProfile
-              ? financialSummary.dominantRiskProfile.replace('_', ' ')
-              : '—',
-        },
-      ],
+      items: financialItems,
       note: financeNote,
     })
 

@@ -237,10 +237,15 @@ def _generate_asset_mix(
             nia_efficiency=plan.nia_efficiency,
             target_floor_height_m=plan.target_floor_height_m,
             parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
+            rent_psm_month=plan.rent_psm_month,
+            stabilised_vacancy_pct=plan.stabilised_vacancy_pct,
+            opex_pct_of_rent=plan.opex_pct_of_rent,
             estimated_revenue_sgd=plan.estimated_revenue_sgd,
             estimated_capex_sgd=plan.estimated_capex_sgd,
+            fitout_cost_psm=plan.fitout_cost_psm,
             absorption_months=plan.absorption_months,
             risk_level=plan.risk_level,
+            heritage_premium_pct=plan.heritage_premium_pct,
             notes=list(plan.notes),
         )
         for plan in plans
