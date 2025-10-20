@@ -1,0 +1,32 @@
+{
+  "expansion": {
+    "primary": 6.0,
+    "primary_high": 9.0,
+    "secondary": 2.0,
+    "secondary_high": 3.0,
+    "tertiary": 1.0,
+    "tertiary_high": 2.0
+  },
+  "reposition": {
+    "primary": -5.0,
+    "secondary": -2.5,
+    "tertiary": -1.5
+  },
+  "vacancy": {
+    "high": 0.15,
+    "low": 0.05
+  },
+  "rent_soft_threshold_psm": 100.0,
+  "transit_min_mrt": 1.0,
+  "plot_ratio_headroom": {
+    "significant": 0.35,
+    "limited": 0.1
+  },
+  "absorption": {
+    "vacancy_high": 3,
+    "vacancy_low": -1,
+    "heritage_high": 6,
+    "heritage_medium": 3,
+    "expansion": 4
+  }
+}

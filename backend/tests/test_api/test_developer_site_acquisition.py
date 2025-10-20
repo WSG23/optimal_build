@@ -39,7 +39,25 @@ def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
                 "headline": "Raw land redevelopment opportunity",
                 "metrics": {"max_gfa": 18000, "nia_ratio": 0.82},
                 "notes": ["Favourable CBD absorption outlook."],
-            }
+            },
+            {
+                "scenario": "existing_building",
+                "headline": "Review existing asset performance",
+                "metrics": {"vacancy_rate": 0.18, "average_monthly_rent": 88},
+                "notes": ["Elevated vacancy suggests repositioning requirement."],
+            },
+            {
+                "scenario": "underused_asset",
+                "headline": "Underutilised asset context",
+                "metrics": {"nearby_mrt_count": 0},
+                "notes": ["Limited transit access — plan for shuttle."],
+            },
+            {
+                "scenario": "heritage_property",
+                "headline": "Heritage sensitivity",
+                "metrics": {"heritage_risk": "high"},
+                "notes": ["Facade conservation required."],
+            },
         ],
     }
     return PropertyLogResult(
@@ -55,6 +73,13 @@ def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
         property_info={
             "site_area_sqm": 4500,
             "gfa_approved": 12500,
+            "is_conservation": True,
+            "conservation_status": "National Monument",
+            "heritage_overlay": "Telok Ayer Conservation",
+            "heritage_constraints": [
+                "Telok Ayer conservation area – facade retention mandatory.",
+                "Consult URA Conservation Department prior to structural works.",
+            ],
         },
         nearby_amenities={
             "mrt_stations": [],
@@ -108,11 +133,16 @@ async def test_developer_log_property_returns_envelope(
     assert envelope["assumptions"], "Assumptions should not be empty"
 
     visualization = payload["visualization"]
-    assert visualization["status"] == "placeholder"
-    assert visualization["preview_available"] is False
-    assert any(
-        "3D previews" in note for note in visualization["notes"]
-    ), "Visualization notes should mention 3D preview roadmap"
+    assert visualization["status"] in {"ready", "placeholder"}
+    assert visualization["preview_available"] is True
+    assert visualization["concept_mesh_url"].endswith(".json")
+    assert visualization["massing_layers"], "Massing layers should be included"
+    assert visualization["color_legend"], "Colour legend should be populated"
+    assert visualization["massing_layers"], "Massing layers should be included"
+    assert visualization["color_legend"], "Colour legend should be populated"
+    assert visualization["massing_layers"][0][
+        "color"
+    ], "Top massing layer should include colour token"
 
     optimizations = payload["optimizations"]
     assert optimizations, "Expected asset optimisation recommendations"
@@ -126,16 +156,24 @@ async def test_developer_log_property_returns_envelope(
     assert optimizations[0]["estimated_revenue_sgd"] is not None
     assert optimizations[0]["absorption_months"] is not None
     assert optimizations[0]["fitout_cost_psm"] is not None
+    assert any(
+        "conservation" in note.lower() for opt in optimizations for note in opt["notes"]
+    )
 
     financial_summary = payload["financial_summary"]
     assert financial_summary["total_estimated_revenue_sgd"] is not None
     assert financial_summary["total_estimated_capex_sgd"] is not None
-    assert financial_summary["dominant_risk_profile"] == "moderate"
+    assert financial_summary["dominant_risk_profile"] == "elevated"
     blueprint = financial_summary.get("finance_blueprint")
     assert blueprint, "Finance blueprint should be included"
     assert blueprint[
         "capital_structure"
     ], "Capital structure scenarios should be populated"
+
+    property_info = payload["property_info"]
+    assert property_info["conservation_status"] == "National Monument"
+    assert property_info["is_conservation"] is True
+    assert property_info["heritage_overlay"] == "Telok Ayer Conservation"
 
     # Ensure the developer logger was invoked with development scenarios
     assert stub_logger.calls, "Expected capture service to be invoked"

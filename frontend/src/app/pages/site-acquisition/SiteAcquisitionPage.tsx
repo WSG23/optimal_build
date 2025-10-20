@@ -1557,33 +1557,63 @@ export function SiteAcquisitionPage() {
       note: financeNote,
     })
 
-    cards.push({
-      title: 'Visualization readiness',
-      subtitle: visualization.previewAvailable ? 'Preview ready' : 'Preview in progress',
-      items: [
-        {
-          label: 'Preview status',
-          value: visualization.previewAvailable ? 'High-fidelity preview ready' : 'Waiting on Phase 2B visuals',
-        },
-        {
-          label: 'Status flag',
-          value: visualization.status ? visualization.status.replace(/_/g, ' ') : 'Pending',
-        },
-        {
-          label: 'Concept mesh',
-          value: visualization.conceptMeshUrl ?? 'Stub not generated yet',
-        },
-        {
-          label: 'Camera orbit hint',
-          value: visualization.cameraOrbitHint
-            ? `${formatNumberMetric(visualization.cameraOrbitHint.theta ?? 0, {
+    const visualizationItems: Array<{ label: string; value: string }> = [
+      {
+        label: 'Preview status',
+        value: visualization.previewAvailable ? 'High-fidelity preview ready' : 'Waiting on Phase 2B visuals',
+      },
+      {
+        label: 'Status flag',
+        value: visualization.status ? visualization.status.replace(/_/g, ' ') : 'Pending',
+      },
+      {
+        label: 'Concept mesh',
+        value: visualization.conceptMeshUrl ?? 'Stub not generated yet',
+      },
+      {
+        label: 'Camera orbit hint',
+        value: visualization.cameraOrbitHint
+          ? `${formatNumberMetric(visualization.cameraOrbitHint.theta ?? 0, {
                 maximumFractionDigits: 0,
               })}° / ${formatNumberMetric(visualization.cameraOrbitHint.phi ?? 0, {
                 maximumFractionDigits: 0,
               })}°`
-            : '—',
-        },
-      ],
+          : '—',
+      },
+    ]
+
+    if (visualization.massingLayers.length > 0) {
+      const primaryLayer = visualization.massingLayers[0]
+      const layerLabel = primaryLayer.assetType
+        .replace(/[_-]/g, ' ')
+        .replace(/\b\w/g, (match) => match.toUpperCase())
+      const heightValue =
+        primaryLayer.estimatedHeightM != null
+          ? `${formatNumberMetric(primaryLayer.estimatedHeightM, {
+              maximumFractionDigits: 0,
+            })} m`
+          : '—'
+      visualizationItems.push({
+        label: 'Primary massing',
+        value: `${layerLabel} · ${heightValue}`,
+      })
+    }
+
+    if (visualization.colorLegend.length > 0) {
+      const legendPreview = visualization.colorLegend
+        .slice(0, 3)
+        .map((entry) => entry.label)
+        .join(', ')
+      visualizationItems.push({
+        label: 'Colour legend',
+        value: legendPreview || '—',
+      })
+    }
+
+    cards.push({
+      title: 'Visualization readiness',
+      subtitle: visualization.previewAvailable ? 'Preview ready' : 'Preview in progress',
+      items: visualizationItems,
       note: visualization.notes.length ? visualization.notes[0] : null,
     })
 

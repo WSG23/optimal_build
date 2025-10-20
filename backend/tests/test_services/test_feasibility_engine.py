@@ -5,6 +5,7 @@ from app.schemas.feasibility import (
     FeasibilityAssessmentRequest,
     NewFeasibilityProjectInput,
 )
+from app.services.asset_mix import build_asset_mix
 from app.services.feasibility import run_feasibility_assessment
 
 
@@ -51,3 +52,39 @@ def test_feasibility_summary_uses_envelope_inputs() -> None:
     assert response.asset_optimizations[0].fitout_cost_psm is not None
     assert response.asset_mix_summary is not None
     assert response.asset_mix_summary.total_estimated_revenue_sgd is not None
+
+
+def test_build_asset_mix_expansion_adjusts_allocations() -> None:
+    plans = build_asset_mix(
+        "commercial",
+        achievable_gfa_sqm=20000.0,
+        additional_gfa=6000.0,
+        existing_use="Commercial Tower",
+    )
+
+    office_plan = next(plan for plan in plans if plan.asset_type == "office")
+    amenities_plan = next(plan for plan in plans if plan.asset_type == "amenities")
+
+    assert office_plan.allocation_pct > 60.0
+    assert office_plan.risk_level == "elevated"
+    assert any("density" in note.lower() for note in office_plan.notes)
+    assert amenities_plan.allocation_pct < 15.0
+
+
+def test_build_asset_mix_vacancy_rebalances_mix() -> None:
+    plans = build_asset_mix(
+        "commercial",
+        achievable_gfa_sqm=15000.0,
+        additional_gfa=1000.0,
+        existing_use="commercial",
+        site_area_sqm=5000.0,
+        current_gfa_sqm=11000.0,
+        quick_metrics={"existing_vacancy_rate": 0.18},
+    )
+
+    office_plan = next(plan for plan in plans if plan.asset_type == "office")
+    amenities_plan = next(plan for plan in plans if plan.asset_type == "amenities")
+
+    assert office_plan.allocation_pct < 60.0
+    assert any("vacancy" in note.lower() for note in office_plan.notes)
+    assert amenities_plan.allocation_pct > 15.0

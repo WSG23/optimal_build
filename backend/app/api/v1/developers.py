@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 from uuid import UUID
 
 import structlog
@@ -26,6 +26,7 @@ from app.services.agents.gps_property_logger import (
 )
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.asset_mix import build_asset_mix
+from app.services.preview_generator import ensure_preview_asset
 from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
@@ -46,6 +47,241 @@ logger = structlog.get_logger()
 _developer_geocoding = GeocodingService()
 _developer_ura = URAIntegrationService()
 developer_gps_logger = GPSPropertyLogger(_developer_geocoding, _developer_ura)
+
+
+def _to_mapping(value: Any) -> Mapping[str, Any] | None:
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        return value
+    if hasattr(value, "model_dump"):
+        try:
+            return value.model_dump()
+        except Exception:  # pragma: no cover - defensive
+            return None
+    if hasattr(value, "dict"):
+        try:
+            return value.dict()
+        except Exception:  # pragma: no cover - defensive
+            return None
+    return None
+
+
+def _extract_heritage_context(
+    envelope: DeveloperBuildEnvelope,
+    property_info: dict[str, Any] | None,
+    quick_analysis: dict[str, Any] | None,
+) -> dict[str, Any]:
+    constraints: list[str] = []
+    notes: list[str] = []
+    risk: str | None = None
+    flag = False
+
+    if envelope.zone_description and "heritage" in envelope.zone_description.lower():
+        flag = True
+        constraints.append(f"Zoning guidance: {envelope.zone_description}")
+    for assumption in envelope.assumptions or []:
+        if "heritage" in assumption.lower():
+            flag = True
+            constraints.append(str(assumption))
+
+    property_mapping = _to_mapping(property_info)
+    if property_mapping:
+        for key in (
+            "heritage_constraints",
+            "conservation_requirements",
+            "heritage_notes",
+        ):
+            value = property_mapping.get(key)
+            if isinstance(value, Sequence):
+                for item in value:
+                    text = str(item).strip()
+                    if text:
+                        constraints.append(text)
+                        flag = True
+        for key in (
+            "heritage_status",
+            "conservation_status",
+            "ura_conservation_category",
+        ):
+            status = property_mapping.get(key)
+            if status:
+                flag = True
+                status_text = str(status).lower()
+                if any(
+                    token in status_text
+                    for token in ("national", "strict", "conserved")
+                ):
+                    risk = risk or "high"
+                else:
+                    risk = risk or "medium"
+
+        if property_mapping.get("is_conservation"):
+            flag = True
+            risk = risk or "high"
+            constraints.append("Property flagged as conservation asset.")
+
+    qa_mapping = _to_mapping(quick_analysis)
+    if qa_mapping:
+        scenarios = qa_mapping.get("scenarios")
+        if isinstance(scenarios, Sequence):
+            for entry in scenarios:
+                scenario = _to_mapping(entry)
+                if not scenario:
+                    continue
+                scenario_name = str(scenario.get("scenario", "")).lower()
+                if (
+                    "heritage" not in scenario_name
+                    and "conservation" not in scenario_name
+                ):
+                    continue
+                flag = True
+                metrics = _to_mapping(scenario.get("metrics"))
+                qa_risk = None
+                if metrics:
+                    qa_risk = metrics.get("heritage_risk") or metrics.get("risk_level")
+                if qa_risk:
+                    risk = str(qa_risk).lower()
+                scenario_notes = scenario.get("notes")
+                if isinstance(scenario_notes, Sequence):
+                    for note in scenario_notes:
+                        text = str(note).strip()
+                        if text:
+                            notes.append(text)
+                            constraints.append(text)
+
+    seen: set[str] = set()
+    deduped_constraints: list[str] = []
+    for item in constraints:
+        text = str(item).strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key not in seen:
+            seen.add(key)
+            deduped_constraints.append(text)
+
+    if risk:
+        risk = risk.lower()
+    flag = flag or bool(risk) or bool(deduped_constraints)
+
+    assumption_note = None
+    if flag:
+        if risk == "high":
+            assumption_note = "Heritage overlay detected (high sensitivity)."
+        elif risk == "medium":
+            assumption_note = (
+                "Heritage overlay detected (monitor compliance requirements)."
+            )
+        else:
+            assumption_note = "Heritage overlay detected; confirm authority guidance."
+
+    return {
+        "flag": flag,
+        "risk": risk,
+        "constraints": deduped_constraints,
+        "notes": notes,
+        "assumption": assumption_note,
+    }
+
+
+_ASSET_TYPE_COLORS: dict[str, str] = {
+    "office": "#1C7ED6",
+    "retail": "#F76707",
+    "hospitality": "#F59F00",
+    "amenities": "#12B886",
+    "serviced_apartments": "#845EF7",
+    "residential": "#5C7CFA",
+    "high-spec logistics": "#339AF0",
+    "high_spec_logistics": "#339AF0",
+    "production": "#FF922B",
+    "support services": "#20C997",
+    "support_services": "#20C997",
+}
+
+
+def _resolve_asset_color(asset_type: str) -> str:
+    key = asset_type.lower().replace("-", "_").replace(" ", "_")
+    if key in _ASSET_TYPE_COLORS:
+        return _ASSET_TYPE_COLORS[key]
+    if asset_type.lower() in _ASSET_TYPE_COLORS:
+        return _ASSET_TYPE_COLORS[asset_type.lower()]
+    return "#ADB5BD"
+
+
+def _format_asset_label(value: str) -> str:
+    cleaned = value.replace("_", " ").replace("-", " ").strip()
+    if not cleaned:
+        return value
+    return cleaned.title()
+
+
+def _collect_quick_metrics(
+    quick_analysis: dict[str, Any] | None,
+) -> dict[str, float | str]:
+    if not quick_analysis:
+        return {}
+    mapping = _to_mapping(quick_analysis)
+    if mapping is None:
+        return {}
+    scenarios = mapping.get("scenarios")
+    if not isinstance(scenarios, Sequence):
+        return {}
+
+    metrics: dict[str, float | str] = {}
+
+    def _coerce_float(value: object) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    for entry in scenarios:
+        scenario_map = _to_mapping(entry)
+        if scenario_map is None:
+            continue
+        scenario_name = str(scenario_map.get("scenario", "")).lower()
+        raw_metrics = _to_mapping(scenario_map.get("metrics"))
+        if raw_metrics is None:
+            continue
+        lower_metrics = {str(key).lower(): value for key, value in raw_metrics.items()}
+
+        if scenario_name == "heritage_property":
+            heritage_risk = lower_metrics.get("heritage_risk") or lower_metrics.get(
+                "risk_level"
+            )
+            if isinstance(heritage_risk, str):
+                metrics["heritage_risk"] = heritage_risk
+
+        if scenario_name == "existing_building":
+            vacancy = lower_metrics.get("vacancy_rate") or lower_metrics.get(
+                "vacancy_pct"
+            )
+            vacancy = vacancy or lower_metrics.get("vacancy_percent")
+            vacancy_value = _coerce_float(vacancy)
+            if vacancy_value is not None:
+                if vacancy_value > 1:
+                    vacancy_value /= 100.0
+                metrics["existing_vacancy_rate"] = vacancy_value
+
+            avg_rent = (
+                lower_metrics.get("average_monthly_rent")
+                or lower_metrics.get("average_rent_psm")
+                or lower_metrics.get("avg_rent_psm")
+            )
+            avg_rent_value = _coerce_float(avg_rent)
+            if avg_rent_value is not None:
+                metrics["existing_average_rent_psm"] = avg_rent_value
+
+        if scenario_name == "underused_asset":
+            mrt_count = lower_metrics.get("nearby_mrt_count")
+            mrt_value = _coerce_float(mrt_count)
+            if mrt_value is not None:
+                metrics["underused_mrt_count"] = mrt_value
+
+    return metrics
 
 
 class DeveloperGPSLogRequest(BaseModel):
@@ -75,6 +311,26 @@ class DeveloperBuildEnvelope(BaseModel):
     assumptions: list[str] = Field(default_factory=list)
 
 
+class DeveloperMassingLayer(BaseModel):
+    """Stubbed massing data for 3D preview integration."""
+
+    asset_type: str
+    allocation_pct: float
+    gfa_sqm: float | None = None
+    nia_sqm: float | None = None
+    estimated_height_m: float | None = None
+    color: str
+
+
+class DeveloperColorLegendEntry(BaseModel):
+    """Colour legend entry for the preview stub."""
+
+    asset_type: str
+    label: str
+    color: str
+    description: str | None = None
+
+
 class DeveloperVisualizationSummary(BaseModel):
     """Lightweight signal about 3D preview availability."""
 
@@ -84,6 +340,8 @@ class DeveloperVisualizationSummary(BaseModel):
     concept_mesh_url: str | None = None
     camera_orbit_hint: dict[str, float] | None = None
     preview_seed: int | None = None
+    massing_layers: list[DeveloperMassingLayer] = Field(default_factory=list)
+    color_legend: list[DeveloperColorLegendEntry] = Field(default_factory=list)
 
 
 class DeveloperAssetOptimization(BaseModel):
@@ -453,6 +711,8 @@ def _derive_build_envelope(result: PropertyLogResult) -> DeveloperBuildEnvelope:
 def _build_visualization_summary(
     quick_analysis: dict[str, Any] | None,
     property_id: UUID,
+    optimizations: list[DeveloperAssetOptimization],
+    envelope: DeveloperBuildEnvelope,
 ) -> DeveloperVisualizationSummary:
     """Return messaging about 3D preview readiness."""
 
@@ -471,23 +731,99 @@ def _build_visualization_summary(
     )
     notes.append("Download the concept mesh stub to brief the visualisation team.")
 
-    concept_mesh_url = f"/static/dev-previews/{property_id}.glb"
     camera_orbit = {"theta": 48.0, "phi": 32.0, "radius": 1.6}
 
+    massing_layers: list[DeveloperMassingLayer] = []
+    legend_entries: dict[str, DeveloperColorLegendEntry] = {}
+    site_area = envelope.site_area_sqm or 0.0
+
+    for opt in optimizations:
+        gfa = opt.allocated_gfa_sqm
+        nia = None
+        if gfa is not None and opt.nia_efficiency:
+            nia = gfa * opt.nia_efficiency
+        height = None
+        if site_area and site_area > 0 and gfa:
+            floor_height = opt.target_floor_height_m or 4.0
+            height = (gfa / site_area) * floor_height
+        color = _resolve_asset_color(opt.asset_type)
+        massing_layers.append(
+            DeveloperMassingLayer(
+                asset_type=opt.asset_type,
+                allocation_pct=opt.allocation_pct,
+                gfa_sqm=round(gfa, 2) if gfa is not None else None,
+                nia_sqm=round(nia, 2) if nia is not None else None,
+                estimated_height_m=round(height, 1) if height is not None else None,
+                color=color,
+            )
+        )
+        legend_entries.setdefault(
+            opt.asset_type,
+            DeveloperColorLegendEntry(
+                asset_type=opt.asset_type,
+                label=_format_asset_label(opt.asset_type),
+                color=color,
+                description=(
+                    f"Risk level: {opt.risk_level.title()}" if opt.risk_level else None
+                ),
+            ),
+        )
+
+    massing_layers.sort(key=lambda layer: layer.allocation_pct, reverse=True)
+    color_legend: list[DeveloperColorLegendEntry] = []
+    seen_assets: set[str] = set()
+    for layer in massing_layers:
+        entry = legend_entries.get(layer.asset_type)
+        if entry and entry.asset_type not in seen_assets:
+            color_legend.append(entry)
+            seen_assets.add(entry.asset_type)
+
+    preview_url = ensure_preview_asset(
+        property_id,
+        (
+            {
+                "asset_type": layer.asset_type,
+                "allocation_pct": layer.allocation_pct,
+                "gfa_sqm": layer.gfa_sqm,
+                "nia_sqm": layer.nia_sqm,
+                "estimated_height_m": layer.estimated_height_m,
+                "color": layer.color,
+            }
+            for layer in massing_layers
+        ),
+    )
+
+    if massing_layers:
+        primary = massing_layers[0]
+        label = _format_asset_label(primary.asset_type)
+        if primary.estimated_height_m:
+            summary_note = f"{label} stack drives the stub massing (~{primary.estimated_height_m:.0f} m)."
+        else:
+            summary_note = (
+                f"{label} stack drives {primary.allocation_pct:.0f}% of the programme."
+            )
+        if summary_note not in notes:
+            notes.append(summary_note)
+
     return DeveloperVisualizationSummary(
-        status="placeholder",
-        preview_available=False,
+        status="ready",
+        preview_available=True,
         notes=notes,
-        concept_mesh_url=concept_mesh_url,
+        concept_mesh_url=preview_url,
         camera_orbit_hint=camera_orbit,
         preview_seed=scenario_count or 1,
+        massing_layers=massing_layers,
+        color_legend=color_legend,
     )
 
 
 def _build_asset_optimizations(
     land_use: str,
     envelope: DeveloperBuildEnvelope,
-) -> list[DeveloperAssetOptimization]:
+    existing_use: str | None,
+    property_info: dict[str, Any] | None,
+    quick_analysis: dict[str, Any] | None,
+) -> tuple[list[DeveloperAssetOptimization], dict[str, Any]]:
     total_gfa = envelope.max_buildable_gfa_sqm or envelope.current_gfa_sqm
     if (
         total_gfa is None
@@ -498,18 +834,44 @@ def _build_asset_optimizations(
             envelope.additional_potential_gfa_sqm, 0.0
         )
     total_gfa_value = float(total_gfa) if total_gfa is not None else None
-    heritage_flag = False
-    if envelope.zone_description and "heritage" in envelope.zone_description.lower():
-        heritage_flag = True
-    elif any("heritage" in assumption.lower() for assumption in envelope.assumptions):
-        heritage_flag = True
+
+    heritage_context = _extract_heritage_context(
+        envelope, property_info, quick_analysis
+    )
+    heritage_flag = heritage_context["flag"]
+    heritage_risk = heritage_context["risk"]
+    quick_metrics = _collect_quick_metrics(quick_analysis)
+
+    assumption_note = heritage_context.get("assumption")
+    if assumption_note and assumption_note not in envelope.assumptions:
+        envelope.assumptions.append(assumption_note)
+
     plans = build_asset_mix(
         land_use,
         achievable_gfa_sqm=total_gfa_value,
         additional_gfa=envelope.additional_potential_gfa_sqm,
         heritage=heritage_flag,
+        heritage_risk=heritage_risk,
+        existing_use=existing_use,
+        site_area_sqm=envelope.site_area_sqm,
+        current_gfa_sqm=envelope.current_gfa_sqm,
+        quick_metrics=quick_metrics,
     )
-    return [
+    constraint_summary: str | None = None
+    constraints = heritage_context.get("constraints") or []
+    if constraints:
+        if len(constraints) > 2:
+            constraint_summary = (
+                "; ".join(constraints[:2]) + " + additional constraints"
+            )
+        else:
+            constraint_summary = "; ".join(constraints)
+    if constraint_summary:
+        for plan in plans:
+            if constraint_summary not in plan.notes:
+                plan.notes.append(constraint_summary)
+
+    optimizations = [
         DeveloperAssetOptimization(
             asset_type=plan.asset_type,
             allocation_pct=plan.allocation_pct,
@@ -530,6 +892,7 @@ def _build_asset_optimizations(
         )
         for plan in plans
     ]
+    return optimizations, heritage_context
 
 
 def _summarise_financials(
@@ -616,12 +979,59 @@ async def developer_log_property_by_gps(
     }
     quick_analysis = QuickAnalysisEnvelope.model_validate(quick_analysis_payload)
 
-    build_envelope = _derive_build_envelope(result)
-    visualization = _build_visualization_summary(
-        result.quick_analysis, result.property_id
+    property_metadata = await session.get(Property, result.property_id)
+    property_info_payload = _to_mapping(result.property_info)
+    property_info_dict: dict[str, Any] = (
+        dict(property_info_payload) if property_info_payload else {}
     )
-    optimizations = _build_asset_optimizations(result.existing_use, build_envelope)
+    if property_metadata is not None:
+        if property_metadata.is_conservation is not None:
+            property_info_dict.setdefault(
+                "is_conservation", property_metadata.is_conservation
+            )
+        if property_metadata.conservation_status:
+            property_info_dict.setdefault(
+                "conservation_status", property_metadata.conservation_status
+            )
+            property_info_dict.setdefault(
+                "heritage_status", property_metadata.conservation_status
+            )
+        if property_metadata.heritage_constraints:
+            property_info_dict.setdefault(
+                "heritage_constraints", property_metadata.heritage_constraints
+            )
+
+    property_info_for_mix: dict[str, Any] | None = (
+        property_info_dict if property_info_dict else None
+    )
+    quick_analysis_dict = quick_analysis.model_dump()
+
+    build_envelope = _derive_build_envelope(result)
+    optimizations, heritage_context = _build_asset_optimizations(
+        result.existing_use,
+        build_envelope,
+        result.existing_use,
+        property_info_for_mix,
+        quick_analysis_dict,
+    )
+    visualization = _build_visualization_summary(
+        quick_analysis_dict,
+        result.property_id,
+        optimizations,
+        build_envelope,
+    )
     financial_summary = _summarise_financials(optimizations)
+
+    heritage_constraints = heritage_context.get("constraints") or []
+    if heritage_constraints:
+        constraint_text = heritage_constraints[0]
+        if constraint_text not in financial_summary.notes:
+            financial_summary.notes.insert(0, constraint_text)
+    heritage_risk = heritage_context.get("risk")
+    if heritage_risk == "high":
+        financial_summary.dominant_risk_profile = "elevated"
+    elif heritage_risk == "medium" and not financial_summary.dominant_risk_profile:
+        financial_summary.dominant_risk_profile = "balanced"
 
     return DeveloperGPSLogResponse(
         property_id=result.property_id,
@@ -632,13 +1042,13 @@ async def developer_log_property_by_gps(
         ),
         ura_zoning=result.ura_zoning,
         existing_use=result.existing_use,
-        property_info=result.property_info,
         nearby_amenities=result.nearby_amenities,
         quick_analysis=quick_analysis,
         build_envelope=build_envelope,
         visualization=visualization,
         optimizations=optimizations,
         financial_summary=financial_summary,
+        property_info=property_info_dict or None,
         timestamp=result.timestamp,
     )
 

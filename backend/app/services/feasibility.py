@@ -223,6 +223,10 @@ def _generate_asset_mix(
         achievable_gfa_sqm=summary.estimated_achievable_gfa_sqm,
         additional_gfa=additional,
         heritage=heritage,
+        site_area_sqm=project.site_area_sqm,
+        current_gfa_sqm=(
+            envelope.current_gfa_sqm if envelope and envelope.current_gfa_sqm else None
+        ),
     )
     notes = format_asset_mix_summary(plans, summary.estimated_achievable_gfa_sqm)
     recommendations = [

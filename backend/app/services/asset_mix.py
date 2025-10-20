@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from dataclasses import dataclass, field, replace
+from importlib import resources
 from typing import Iterable
 
 
@@ -29,238 +31,498 @@ class AssetOptimizationPlan:
     heritage_premium_pct: float | None = None
 
 
-_ASSET_PROFILES: dict[str, list[AssetOptimizationPlan]] = {
-    "commercial": [
-        AssetOptimizationPlan(
-            asset_type="office",
-            allocation_pct=60.0,
-            stabilised_vacancy_pct=6.0,
-            opex_pct_of_rent=18.0,
-            nia_efficiency=0.82,
-            target_floor_height_m=4.2,
-            parking_ratio_per_1000sqm=0.8,
-            rent_psm_month=128.0,
-            fitout_cost_psm=1500.0,
-            absorption_months=12,
-            risk_level="moderate",
-            heritage_premium_pct=5.0,
-            notes=[
-                "Grade A office baseline aligns with Phase 2B template (CBD core rent ≈ $12 psf/month).",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="retail",
-            allocation_pct=25.0,
-            stabilised_vacancy_pct=4.0,
-            opex_pct_of_rent=22.0,
-            nia_efficiency=0.75,
-            target_floor_height_m=5.0,
-            parking_ratio_per_1000sqm=2.5,
-            rent_psm_month=360.0,
-            fitout_cost_psm=2200.0,
-            absorption_months=9,
-            risk_level="balanced",
-            heritage_premium_pct=8.0,
-            notes=[
-                "Prime retail podium benchmark (Orchard/Marina) with void allowances baked into efficiency.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="amenities",
-            allocation_pct=15.0,
-            stabilised_vacancy_pct=12.0,
-            opex_pct_of_rent=30.0,
-            nia_efficiency=0.85,
-            target_floor_height_m=4.5,
-            parking_ratio_per_1000sqm=1.2,
-            rent_psm_month=25.0,
-            fitout_cost_psm=900.0,
-            absorption_months=16,
-            risk_level="low",
-            heritage_premium_pct=10.0,
-            notes=[
-                "Community amenities baseline covering childcare, healthcare, and shared services.",
-            ],
-        ),
-    ],
-    "residential": [
-        AssetOptimizationPlan(
-            asset_type="residential",
-            allocation_pct=70.0,
-            stabilised_vacancy_pct=7.0,
-            opex_pct_of_rent=25.0,
-            nia_efficiency=0.78,
-            target_floor_height_m=3.2,
-            parking_ratio_per_1000sqm=1.0,
-            rent_psm_month=65.0,
-            fitout_cost_psm=1100.0,
-            absorption_months=18,
-            risk_level="moderate",
-            heritage_premium_pct=5.0,
-            notes=[
-                "CCR condominium launch benchmark with blended unit mix and 18-month absorption.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="serviced_apartments",
-            allocation_pct=20.0,
-            stabilised_vacancy_pct=10.0,
-            opex_pct_of_rent=35.0,
-            nia_efficiency=0.74,
-            target_floor_height_m=3.4,
-            parking_ratio_per_1000sqm=0.6,
-            rent_psm_month=110.0,
-            fitout_cost_psm=1400.0,
-            absorption_months=12,
-            risk_level="balanced",
-            heritage_premium_pct=7.0,
-            notes=[
-                "Serviced apartment stack assumes ADR ≈ $310 with 72% occupancy.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="amenities",
-            allocation_pct=10.0,
-            stabilised_vacancy_pct=12.0,
-            opex_pct_of_rent=30.0,
-            nia_efficiency=0.85,
-            target_floor_height_m=3.5,
-            parking_ratio_per_1000sqm=1.2,
-            rent_psm_month=25.0,
-            fitout_cost_psm=900.0,
-            absorption_months=16,
-            risk_level="low",
-            heritage_premium_pct=10.0,
-            notes=[
-                "Residential podium amenities include wellness, childcare, and co-working lounges.",
-            ],
-        ),
-    ],
-    "industrial": [
-        AssetOptimizationPlan(
-            asset_type="high-spec logistics",
-            allocation_pct=50.0,
-            stabilised_vacancy_pct=6.0,
-            opex_pct_of_rent=15.0,
-            nia_efficiency=0.88,
-            target_floor_height_m=12.0,
-            parking_ratio_per_1000sqm=1.3,
-            rent_psm_month=26.0,
-            fitout_cost_psm=850.0,
-            absorption_months=8,
-            risk_level="balanced",
-            notes=[
-                "High-spec logistics profile with 12m clear heights and ramp access for e-commerce operators.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="production",
-            allocation_pct=30.0,
-            stabilised_vacancy_pct=9.0,
-            opex_pct_of_rent=18.0,
-            nia_efficiency=0.86,
-            target_floor_height_m=8.0,
-            parking_ratio_per_1000sqm=1.8,
-            rent_psm_month=19.0,
-            fitout_cost_psm=950.0,
-            absorption_months=10,
-            risk_level="elevated",
-            notes=[
-                "Advanced manufacturing allowance with 12kN/m² loading and flexible M&E trunks.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="support services",
-            allocation_pct=20.0,
-            stabilised_vacancy_pct=12.0,
-            opex_pct_of_rent=30.0,
-            nia_efficiency=0.85,
-            target_floor_height_m=3.5,
-            parking_ratio_per_1000sqm=1.2,
-            rent_psm_month=25.0,
-            fitout_cost_psm=900.0,
-            absorption_months=16,
-            risk_level="moderate",
-            heritage_premium_pct=10.0,
-            notes=[
-                "On-site workforce support (canteen, offices, clinics) using community amenity baseline.",
-            ],
-        ),
-    ],
-    "mixed_use": [
-        AssetOptimizationPlan(
-            asset_type="retail",
-            allocation_pct=25.0,
-            stabilised_vacancy_pct=5.0,
-            opex_pct_of_rent=22.0,
-            nia_efficiency=0.72,
-            target_floor_height_m=4.8,
-            parking_ratio_per_1000sqm=2.0,
-            rent_psm_month=320.0,
-            fitout_cost_psm=2100.0,
-            absorption_months=12,
-            risk_level="balanced",
-            heritage_premium_pct=8.0,
-            notes=[
-                "Integrated development podium retail anchored by F&B and lifestyle clusters.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="office",
-            allocation_pct=40.0,
-            stabilised_vacancy_pct=6.0,
-            opex_pct_of_rent=19.0,
-            nia_efficiency=0.80,
-            target_floor_height_m=4.1,
-            parking_ratio_per_1000sqm=1.0,
-            rent_psm_month=118.0,
-            fitout_cost_psm=1400.0,
-            absorption_months=12,
-            risk_level="moderate",
-            heritage_premium_pct=6.0,
-            notes=[
-                "Fringe CBD office stack complementing podium activation and providing steady NOI.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="hospitality",
-            allocation_pct=20.0,
-            stabilised_vacancy_pct=28.0,
-            opex_pct_of_rent=43.0,
-            nia_efficiency=0.60,
-            target_floor_height_m=4.2,
-            parking_ratio_per_1000sqm=0.8,
-            rent_psm_month=190.0,
-            fitout_cost_psm=3600.0,
-            absorption_months=15,
-            risk_level="elevated",
-            heritage_premium_pct=15.0,
-            notes=[
-                "Hospitality stack assumes blended serviced hotel RevPAR with extended-stay offering.",
-            ],
-        ),
-        AssetOptimizationPlan(
-            asset_type="amenities",
-            allocation_pct=15.0,
-            stabilised_vacancy_pct=12.0,
-            opex_pct_of_rent=30.0,
-            nia_efficiency=0.85,
-            target_floor_height_m=3.5,
-            parking_ratio_per_1000sqm=1.2,
-            rent_psm_month=25.0,
-            fitout_cost_psm=900.0,
-            absorption_months=16,
-            risk_level="low",
-            heritage_premium_pct=10.0,
-            notes=[
-                "Sky terraces and shared facilities to differentiate the mixed-use stack.",
-            ],
-            heritage_notes=[
-                "Ensure façade conservation requirements are met across all uses."
-            ],
-        ),
-    ],
+_PROFILE_CONFIG = {
+    "commercial": {
+        "primary": "office",
+        "secondary": "retail",
+        "tertiary": None,
+        "amenities": "amenities",
+    },
+    "mixed_use": {
+        "primary": "office",
+        "secondary": "retail",
+        "tertiary": "hospitality",
+        "amenities": "amenities",
+    },
 }
+
+
+def _load_curve_config() -> dict[str, object]:
+    default: dict[str, object] = {
+        "expansion": {
+            "primary": 6.0,
+            "primary_high": 9.0,
+            "secondary": 2.0,
+            "secondary_high": 3.0,
+            "tertiary": 1.0,
+            "tertiary_high": 2.0,
+        },
+        "reposition": {"primary": -5.0, "secondary": -2.5, "tertiary": -1.5},
+        "vacancy": {"high": 0.15, "low": 0.05},
+        "rent_soft_threshold_psm": 100.0,
+        "transit_min_mrt": 1.0,
+        "plot_ratio_headroom": {"significant": 0.35, "limited": 0.1},
+        "absorption": {
+            "vacancy_high": 3,
+            "vacancy_low": -1,
+            "heritage_high": 6,
+            "heritage_medium": 3,
+            "expansion": 4,
+        },
+    }
+
+    try:
+        text = (
+            resources.files("app.data")
+            .joinpath("asset_mix_curves.json")
+            .read_text(encoding="utf-8")
+        )
+        data = json.loads(text)
+        default.update(data)
+    except FileNotFoundError:
+        pass
+    except OSError:
+        pass
+    except json.JSONDecodeError:
+        pass
+
+    return default
+
+
+_CURVE_CONFIG = _load_curve_config()
+
+
+def _maybe_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _maybe_int(value: object) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _load_asset_profiles() -> dict[str, list[AssetOptimizationPlan]]:
+    try:
+        profile_text = (
+            resources.files("app.data")
+            .joinpath("asset_mix_profiles.json")
+            .read_text(encoding="utf-8")
+        )
+    except FileNotFoundError as exc:  # pragma: no cover - defensive
+        raise RuntimeError("Missing asset mix configuration file") from exc
+    except OSError as exc:  # pragma: no cover - defensive
+        raise RuntimeError("Unable to load asset mix configuration") from exc
+
+    try:
+        raw_profiles: dict[str, list[dict[str, object]]] = json.loads(profile_text)
+    except json.JSONDecodeError as exc:  # pragma: no cover - defensive
+        raise RuntimeError("Invalid asset mix configuration JSON") from exc
+
+    profiles: dict[str, list[AssetOptimizationPlan]] = {}
+    for profile_key, entries in raw_profiles.items():
+        plans: list[AssetOptimizationPlan] = []
+        for entry in entries:
+            plan = AssetOptimizationPlan(
+                asset_type=str(entry["asset_type"]),
+                allocation_pct=float(entry["allocation_pct"]),
+                stabilised_vacancy_pct=_maybe_float(
+                    entry.get("stabilised_vacancy_pct")
+                ),
+                opex_pct_of_rent=_maybe_float(entry.get("opex_pct_of_rent")),
+                nia_efficiency=_maybe_float(entry.get("nia_efficiency")),
+                target_floor_height_m=_maybe_float(entry.get("target_floor_height_m")),
+                parking_ratio_per_1000sqm=_maybe_float(
+                    entry.get("parking_ratio_per_1000sqm")
+                ),
+                heritage_notes=list(entry.get("heritage_notes") or []),
+                notes=list(entry.get("notes") or []),
+                rent_psm_month=_maybe_float(entry.get("rent_psm_month")),
+                fitout_cost_psm=_maybe_float(entry.get("fitout_cost_psm")),
+                absorption_months=_maybe_int(entry.get("absorption_months")),
+                risk_level=(
+                    str(entry.get("risk_level")) if entry.get("risk_level") else None
+                ),
+                heritage_premium_pct=_maybe_float(entry.get("heritage_premium_pct")),
+            )
+            plans.append(plan)
+        profiles[profile_key] = plans
+    return profiles
+
+
+_ASSET_PROFILES = _load_asset_profiles()
+
+
+def _calc_additional_ratio(
+    achievable_gfa: float | None, additional_gfa: float | None
+) -> float | None:
+    if achievable_gfa is None or achievable_gfa <= 0 or additional_gfa is None:
+        return None
+    ratio = additional_gfa / achievable_gfa
+    if ratio > 1.5:
+        return 1.5
+    if ratio < -0.5:
+        return -0.5
+    return ratio
+
+
+def _intensity_state(additional_ratio: float | None) -> str:
+    if additional_ratio is None:
+        return "steady"
+    if additional_ratio >= 0.35:
+        return "expansion_high"
+    if additional_ratio >= 0.2:
+        return "expansion"
+    if additional_ratio <= 0.05:
+        return "reposition"
+    return "steady"
+
+
+def _update_allocation(
+    plan_lookup: dict[str, AssetOptimizationPlan], asset_type: str | None, delta: float
+) -> None:
+    if not asset_type or not delta:
+        return
+    plan = plan_lookup.get(asset_type)
+    if plan is None:
+        return
+    plan_lookup[asset_type] = replace(plan, allocation_pct=plan.allocation_pct + delta)
+
+
+def _append_plan_note(
+    plan_lookup: dict[str, AssetOptimizationPlan], asset_type: str | None, note: str
+) -> None:
+    if not asset_type or not note:
+        return
+    plan = plan_lookup.get(asset_type)
+    if plan is None:
+        return
+    notes = list(plan.notes)
+    if note not in notes:
+        notes.append(note)
+        plan_lookup[asset_type] = replace(plan, notes=notes)
+
+
+def _set_plan_risk(
+    plan_lookup: dict[str, AssetOptimizationPlan],
+    asset_type: str | None,
+    risk_level: str,
+    absorption_delta: int = 0,
+    note: str | None = None,
+) -> None:
+    if not asset_type:
+        return
+    plan = plan_lookup.get(asset_type)
+    if plan is None:
+        return
+    absorption_months = plan.absorption_months
+    if absorption_delta:
+        base = absorption_months if absorption_months is not None else 12
+        absorption_months = max(1, base + absorption_delta)
+    updated = replace(plan, risk_level=risk_level, absorption_months=absorption_months)
+    if note:
+        notes = list(updated.notes)
+        if note not in notes:
+            notes.append(note)
+            updated = replace(updated, notes=notes)
+    plan_lookup[asset_type] = updated
+
+
+def _apply_existing_use_bias(
+    plan_lookup: dict[str, AssetOptimizationPlan],
+    profile_key: str,
+    existing_use: str | None,
+) -> None:
+    if not existing_use:
+        return
+    use_lower = existing_use.lower()
+    config = _PROFILE_CONFIG.get(profile_key)
+    if not config:
+        return
+
+    if any(token in use_lower for token in ("retail", "mall", "shopping")):
+        _update_allocation(plan_lookup, config.get("secondary"), 3.0)
+        _update_allocation(plan_lookup, config.get("primary"), -3.0)
+        _append_plan_note(
+            plan_lookup,
+            config.get("secondary"),
+            "Existing tenancy mix leans retail-heavy; maintaining activation at podium.",
+        )
+    if any(token in use_lower for token in ("hotel", "hospitality")):
+        tertiary = config.get("tertiary") or config.get("secondary")
+        _update_allocation(plan_lookup, tertiary, 3.0)
+        _update_allocation(plan_lookup, config.get("primary"), -3.0)
+        _append_plan_note(
+            plan_lookup,
+            tertiary,
+            "Legacy hospitality operations retained as part of repositioning.",
+        )
+    if "office" in use_lower and profile_key == "mixed_use":
+        _update_allocation(plan_lookup, config.get("primary"), 2.0)
+        _update_allocation(plan_lookup, config.get("secondary"), -2.0)
+
+
+def _rebalance_plans(plans: list[AssetOptimizationPlan]) -> list[AssetOptimizationPlan]:
+    total = sum(plan.allocation_pct for plan in plans)
+    if total <= 0:
+        return plans
+    if abs(total - 100.0) <= 0.01:
+        return plans
+    scale = 100.0 / total
+    rebalanced: list[AssetOptimizationPlan] = []
+    for plan in plans:
+        rebalanced.append(
+            replace(
+                plan,
+                allocation_pct=round(plan.allocation_pct * scale, 1),
+            )
+        )
+    correction = 100.0 - sum(plan.allocation_pct for plan in rebalanced)
+    if rebalanced:
+        last = rebalanced[-1]
+        rebalanced[-1] = replace(
+            last, allocation_pct=round(last.allocation_pct + correction, 1)
+        )
+    return rebalanced
+
+
+def _apply_plot_ratio_context(
+    plan_lookup: dict[str, AssetOptimizationPlan],
+    profile_key: str,
+    *,
+    site_area_sqm: float | None,
+    current_gfa_sqm: float | None,
+    achievable_gfa_sqm: float | None,
+) -> None:
+    if not site_area_sqm or site_area_sqm <= 0 or current_gfa_sqm is None:
+        return
+    actual_ratio = current_gfa_sqm / site_area_sqm
+    target_gfa = (
+        achievable_gfa_sqm if achievable_gfa_sqm is not None else current_gfa_sqm
+    )
+    achievable_ratio = target_gfa / site_area_sqm
+    headroom = achievable_ratio - actual_ratio
+
+    config = _PROFILE_CONFIG.get(profile_key) or {}
+    primary = config.get("primary")
+    if primary:
+        thresholds = _CURVE_CONFIG.get("plot_ratio_headroom", {})
+        limited = float(thresholds.get("limited", 0.1))
+        significant = float(thresholds.get("significant", 0.35))
+        note = f"Existing plot ratio {actual_ratio:.2f}; headroom {headroom:.2f} to target envelope."
+        _append_plan_note(plan_lookup, primary, note)
+        if headroom < limited:
+            _set_plan_risk(
+                plan_lookup,
+                primary,
+                "balanced",
+                absorption_delta=_CURVE_CONFIG.get("absorption", {}).get(
+                    "vacancy_low", -1
+                ),
+                note="Limited plot ratio headroom — focus on efficiency gains.",
+            )
+        elif headroom > significant:
+            _append_plan_note(
+                plan_lookup,
+                primary,
+                "Significant plot ratio headroom supports vertical expansion.",
+            )
+
+
+def _apply_market_adjustments(
+    plan_lookup: dict[str, AssetOptimizationPlan],
+    profile_key: str,
+    quick_metrics: dict[str, float | str] | None,
+) -> None:
+    if not quick_metrics:
+        return
+    config = _PROFILE_CONFIG.get(profile_key) or {}
+    primary = config.get("primary")
+    amenities = config.get("amenities")
+    secondary = config.get("secondary")
+
+    vacancy_thresholds = _CURVE_CONFIG.get("vacancy", {})
+    vacancy_high = float(vacancy_thresholds.get("high", 0.15))
+    vacancy_low = float(vacancy_thresholds.get("low", 0.05))
+    vacancy_value = quick_metrics.get("existing_vacancy_rate")
+    if isinstance(vacancy_value, (int, float)):
+        vacancy = float(vacancy_value)
+        if vacancy > 1:
+            vacancy /= 100
+        if vacancy >= vacancy_high:
+            _update_allocation(plan_lookup, primary, -4.0)
+            _update_allocation(plan_lookup, amenities, 4.0)
+            _set_plan_risk(
+                plan_lookup,
+                primary,
+                "moderate",
+                absorption_delta=_CURVE_CONFIG.get("absorption", {}).get(
+                    "vacancy_high", 3
+                ),
+                note="Elevated vacancy in existing asset—prioritise amenity improvements.",
+            )
+            _append_plan_note(
+                plan_lookup,
+                amenities,
+                "Allocate additional floor area to amenities to lift utilisation.",
+            )
+        elif vacancy <= vacancy_low:
+            _append_plan_note(
+                plan_lookup,
+                primary,
+                "Strong occupancy tailwind — maintain prime positioning.",
+            )
+
+    avg_rent = quick_metrics.get("existing_average_rent_psm")
+    if isinstance(avg_rent, (int, float)):
+        rent_value = float(avg_rent)
+        rent_threshold = float(_CURVE_CONFIG.get("rent_soft_threshold_psm", 100.0))
+        if rent_value < rent_threshold and secondary:
+            _update_allocation(plan_lookup, primary, -2.0)
+            _update_allocation(plan_lookup, secondary, 2.0)
+            _append_plan_note(
+                plan_lookup,
+                secondary,
+                "Rebalance mix toward higher-yield components given soft existing rents.",
+            )
+
+    mrt_count = quick_metrics.get("underused_mrt_count")
+    min_mrt = float(_CURVE_CONFIG.get("transit_min_mrt", 1.0))
+    if isinstance(mrt_count, (int, float)) and mrt_count < min_mrt and amenities:
+        _append_plan_note(
+            plan_lookup,
+            amenities,
+            "Limited transit access — budget for last-mile solutions within amenity stack.",
+        )
+
+
+def _apply_intensity_adjustments(
+    plans: list[AssetOptimizationPlan],
+    profile_key: str,
+    achievable_gfa_sqm: float | None,
+    additional_gfa: float | None,
+    existing_use: str | None,
+    *,
+    site_area_sqm: float | None,
+    current_gfa_sqm: float | None,
+    quick_metrics: dict[str, float | str] | None,
+) -> list[AssetOptimizationPlan]:
+    config = _PROFILE_CONFIG.get(profile_key)
+    if not config:
+        return plans
+
+    ratio = _calc_additional_ratio(achievable_gfa_sqm, additional_gfa)
+    state = _intensity_state(ratio)
+
+    plan_lookup: dict[str, AssetOptimizationPlan] = {
+        plan.asset_type: plan for plan in plans
+    }
+    order = [plan.asset_type for plan in plans]
+
+    expansion_cfg = _CURVE_CONFIG.get("expansion", {})
+    reposition_cfg = _CURVE_CONFIG.get("reposition", {})
+
+    if state in {"expansion", "expansion_high"}:
+        primary_delta = (
+            expansion_cfg.get("primary", 6.0)
+            if state == "expansion"
+            else expansion_cfg.get("primary_high", 9.0)
+        )
+        secondary_delta = (
+            expansion_cfg.get("secondary", 2.0) if config.get("secondary") else 0.0
+        )
+        if state == "expansion_high" and config.get("secondary"):
+            secondary_delta = expansion_cfg.get("secondary_high", secondary_delta)
+        tertiary_delta = 0.0
+        if config.get("tertiary"):
+            tertiary_delta = expansion_cfg.get("tertiary", 1.0)
+            if state == "expansion_high":
+                tertiary_delta = expansion_cfg.get("tertiary_high", tertiary_delta)
+        amenities_delta = -(primary_delta + secondary_delta + tertiary_delta)
+
+        _update_allocation(plan_lookup, config.get("primary"), primary_delta)
+        _update_allocation(plan_lookup, config.get("secondary"), secondary_delta)
+        if tertiary_delta:
+            _update_allocation(plan_lookup, config.get("tertiary"), tertiary_delta)
+        _update_allocation(plan_lookup, config.get("amenities"), amenities_delta)
+
+        note = "Elevated density to absorb additional GFA uplift."
+        for asset in filter(
+            None,
+            [
+                config.get("primary"),
+                config.get("secondary"),
+                config.get("tertiary"),
+            ],
+        ):
+            _set_plan_risk(
+                plan_lookup,
+                asset,
+                "elevated",
+                _CURVE_CONFIG.get("absorption", {}).get("expansion", 4),
+                note,
+            )
+
+    elif state == "reposition":
+        primary_delta = reposition_cfg.get("primary", -5.0)
+        secondary_delta = (
+            reposition_cfg.get("secondary", -2.5) if config.get("secondary") else 0.0
+        )
+        tertiary_delta = (
+            reposition_cfg.get("tertiary", -1.5) if config.get("tertiary") else 0.0
+        )
+        amenities_delta = -(primary_delta + secondary_delta + tertiary_delta)
+
+        _update_allocation(plan_lookup, config.get("primary"), primary_delta)
+        _update_allocation(plan_lookup, config.get("secondary"), secondary_delta)
+        if tertiary_delta:
+            _update_allocation(plan_lookup, config.get("tertiary"), tertiary_delta)
+        _update_allocation(plan_lookup, config.get("amenities"), amenities_delta)
+
+        note = (
+            "Heritage and existing conditions favour adaptive reuse over densification."
+        )
+        for asset in filter(
+            None,
+            [
+                config.get("primary"),
+                config.get("secondary"),
+                config.get("tertiary"),
+            ],
+        ):
+            _set_plan_risk(
+                plan_lookup,
+                asset,
+                "balanced",
+                -2,
+                note,
+            )
+
+    _apply_existing_use_bias(plan_lookup, profile_key, existing_use)
+
+    for asset_type, plan in list(plan_lookup.items()):
+        if plan.allocation_pct < 0.0:
+            plan_lookup[asset_type] = replace(plan, allocation_pct=0.0)
+
+    _apply_market_adjustments(plan_lookup, profile_key, quick_metrics)
+    _apply_plot_ratio_context(
+        plan_lookup,
+        profile_key,
+        site_area_sqm=site_area_sqm,
+        current_gfa_sqm=current_gfa_sqm,
+        achievable_gfa_sqm=achievable_gfa_sqm,
+    )
+
+    plans = [plan_lookup[asset] for asset in order if asset in plan_lookup]
+    return _rebalance_plans(plans)
 
 
 def _normalise_land_use(value: str) -> str:
@@ -282,6 +544,11 @@ def build_asset_mix(
     achievable_gfa_sqm: float | None = None,
     additional_gfa: float | None = None,
     heritage: bool = False,
+    heritage_risk: str | None = None,
+    existing_use: str | None = None,
+    site_area_sqm: float | None = None,
+    current_gfa_sqm: float | None = None,
+    quick_metrics: dict[str, float | str] | None = None,
 ) -> list[AssetOptimizationPlan]:
     """Return the recommended asset allocation for the provided land use."""
 
@@ -316,6 +583,17 @@ def build_asset_mix(
             plans[-1].notes.append(
                 "No additional GFA headroom — focus on efficiency and refurbishment scope."
             )
+
+    plans = _apply_intensity_adjustments(
+        plans,
+        profile_key,
+        achievable_gfa_sqm,
+        additional_gfa,
+        existing_use,
+        site_area_sqm=site_area_sqm,
+        current_gfa_sqm=current_gfa_sqm,
+        quick_metrics=quick_metrics,
+    )
 
     total_allocation = sum(plan.allocation_pct for plan in plans)
     if total_allocation != 100.0 and total_allocation > 0:
@@ -409,6 +687,41 @@ def build_asset_mix(
                     estimated_capex_sgd=plan.estimated_capex_sgd,
                     heritage_premium_pct=plan.heritage_premium_pct,
                 )
+
+    if heritage_risk:
+        severity_map = {"high": "elevated", "medium": "moderate", "low": "balanced"}
+        risk_level = severity_map.get(heritage_risk.lower())
+        if risk_level:
+            note = (
+                "Heritage overlay requires specialist conservation strategy."
+                if heritage_risk.lower() == "high"
+                else "Heritage compliance buffers applied to programme mix."
+            )
+            for index, plan in enumerate(plans):
+                updated = replace(plan, risk_level=risk_level)
+                absorption_months = updated.absorption_months
+                if heritage_risk.lower() == "high":
+                    base_absorption = (
+                        absorption_months if absorption_months is not None else 12
+                    )
+                    heritage_adj = _CURVE_CONFIG.get("absorption", {}).get(
+                        "heritage_high", 6
+                    )
+                    absorption_months = max(1, base_absorption + heritage_adj)
+                elif heritage_risk.lower() == "medium":
+                    base_absorption = (
+                        absorption_months if absorption_months is not None else 12
+                    )
+                    heritage_adj = _CURVE_CONFIG.get("absorption", {}).get(
+                        "heritage_medium", 3
+                    )
+                    absorption_months = max(1, base_absorption + heritage_adj)
+                updated = replace(updated, absorption_months=absorption_months)
+                notes = list(updated.notes)
+                if note not in notes:
+                    notes.append(note)
+                    updated = replace(updated, notes=notes)
+                plans[index] = updated
 
     return plans
 

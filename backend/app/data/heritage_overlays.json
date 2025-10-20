@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Telok Ayer Conservation",
+    "risk": "high",
+    "bbox": {
+      "min_lat": 1.2780,
+      "max_lat": 1.2860,
+      "min_lon": 103.8160,
+      "max_lon": 103.8285
+    },
+    "notes": [
+      "Telok Ayer conservation area – facade retention mandatory.",
+      "Consult URA Conservation Department prior to structural works."
+    ]
+  },
+  {
+    "name": "Chinatown Buffer",
+    "risk": "medium",
+    "bbox": {
+      "min_lat": 1.2780,
+      "max_lat": 1.2890,
+      "min_lon": 103.8285,
+      "max_lon": 103.8565
+    },
+    "notes": [
+      "Buffer zone requires sympathetic rooflines and signage controls."
+    ]
+  }
+]

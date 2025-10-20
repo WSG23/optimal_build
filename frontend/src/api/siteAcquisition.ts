@@ -54,6 +54,24 @@ export interface DeveloperVisualizationSummary {
   conceptMeshUrl: string | null
   cameraOrbitHint: Record<string, number> | null
   previewSeed: number | null
+  massingLayers: DeveloperMassingLayer[]
+  colorLegend: DeveloperColorLegendEntry[]
+}
+
+export interface DeveloperMassingLayer {
+  assetType: string
+  allocationPct: number
+  gfaSqm: number | null
+  niaSqm: number | null
+  estimatedHeightM: number | null
+  color: string
+}
+
+export interface DeveloperColorLegendEntry {
+  assetType: string
+  label: string
+  color: string
+  description: string | null
 }
 
 export interface SiteAcquisitionResult extends GpsCaptureSummary {
@@ -342,7 +360,17 @@ interface RawDeveloperVisualization {
   status?: unknown
   preview_available?: unknown
   previewAvailable?: unknown
+  concept_mesh_url?: unknown
+  conceptMeshUrl?: unknown
+  camera_orbit_hint?: unknown
+  cameraOrbitHint?: unknown
+  preview_seed?: unknown
+  previewSeed?: unknown
   notes?: unknown
+  massing_layers?: unknown
+  massingLayers?: unknown
+  color_legend?: unknown
+  colorLegend?: unknown
 }
 
 interface RawDeveloperGpsResponse {
@@ -454,6 +482,79 @@ function mapDeveloperVisualization(
         .map((note) => coerceString(note) ?? '')
         .filter((note): note is string => note.length > 0)
     : []
+  const rawMassing = Array.isArray(payload?.massing_layers)
+    ? payload.massing_layers
+    : Array.isArray(payload?.massingLayers)
+    ? payload.massingLayers
+    : []
+  const massingLayers = Array.isArray(rawMassing)
+    ? rawMassing
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            return null
+          }
+          const item = entry as Record<string, unknown>
+          const assetType =
+            coerceString(item.asset_type) ?? coerceString(item.assetType)
+          const allocationPct =
+            coerceNumeric(item.allocation_pct) ?? coerceNumeric(item.allocationPct)
+          const gfaSqm =
+            coerceNumeric(item.gfa_sqm) ?? coerceNumeric(item.gfaSqm) ?? null
+          const niaSqm =
+            coerceNumeric(item.nia_sqm) ?? coerceNumeric(item.niaSqm) ?? null
+          const estimatedHeight =
+            coerceNumeric(item.estimated_height_m) ??
+            coerceNumeric(item.estimatedHeightM) ??
+            null
+          const color = coerceString(item.color) ?? '#ADB5BD'
+          if (!assetType || allocationPct === null) {
+            return null
+          }
+          return {
+            assetType,
+            allocationPct,
+            gfaSqm,
+            niaSqm,
+            estimatedHeightM: estimatedHeight,
+            color,
+          }
+        })
+        .filter((layer): layer is DeveloperMassingLayer => layer !== null)
+    : []
+
+  const rawLegend = Array.isArray(payload?.color_legend)
+    ? payload.color_legend
+    : Array.isArray(payload?.colorLegend)
+    ? payload.colorLegend
+    : []
+  const colorLegend = Array.isArray(rawLegend)
+    ? rawLegend
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            return null
+          }
+          const item = entry as Record<string, unknown>
+          const assetType =
+            coerceString(item.asset_type) ?? coerceString(item.assetType)
+          const label = coerceString(item.label)
+          const color = coerceString(item.color)
+          const description =
+            coerceString(item.description) ??
+            coerceString(item.legendDescription) ??
+            null
+          if (!assetType || !label || !color) {
+            return null
+          }
+          return {
+            assetType,
+            label,
+            color,
+            description,
+          }
+        })
+        .filter((entry): entry is DeveloperColorLegendEntry => entry !== null)
+    : []
+
   if (!notes.length) {
     notes.push(
       'High-fidelity 3D previews will ship with Phase 2B visualisation work.',
@@ -466,6 +567,8 @@ function mapDeveloperVisualization(
     conceptMeshUrl,
     cameraOrbitHint,
     previewSeed: previewSeed ?? null,
+    massingLayers,
+    colorLegend,
   }
 }
 
