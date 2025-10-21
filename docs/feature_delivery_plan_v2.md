@@ -391,8 +391,8 @@
 
 ---
 
-### Phase 2B: Asset-Specific Feasibility ❌ NOT STARTED
-**Status:** 0% - Core feature
+### Phase 2B: Asset-Specific Feasibility ⏸️ PAUSED - Heritage Data Blocker
+**Status:** 5% - Heritage ingestion blocked on network access
 
 **Requirements (from FEATURES.md lines 98-108):**
 - Multi-use development optimizer
@@ -410,6 +410,19 @@
 - Constraint engines (zoning, heritage, technical)
 - Optimization algorithms (use mix, efficiency)
 - 3D visualization updates
+
+**Current Progress (2025-10-21):**
+- ✅ Database schema for heritage sites exists
+- ⏸️ **BLOCKED:** NHB historic sites data download requires network access
+- ⏳ Pending: Transform and load heritage data into database
+- ⏳ Pending: Wire heritage overlay into optimizer/service logic
+- ⏳ Pending: Integrate heritage constraints into feasibility calculations
+
+**Outstanding: Heritage Data Ingestion**
+- **Issue:** Cannot download NHB historic sites GeoJSON from OneMap API due to network restrictions
+- **Workaround:** Once network access is available, place NHB GeoJSON at `data/heritage/raw/nhb_historic_sites.geojson` and run transform/load scripts
+- **Documentation:** See `docs/phase2b_heritage_ingestion_plan.md` for detailed ingestion plan and workaround steps
+- **Next Action:** Park heritage ingestion and proceed with other Phase 2B features (optimizer logic, space efficiency calculator, program modeling)
 
 **Acceptance Criteria:**
 - Developer inputs property parameters
