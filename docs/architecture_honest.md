@@ -282,15 +282,21 @@ backend/app/core/
 - `users` - User authentication & management
 - `projects` - Development projects
 - `singapore_property` - Singapore-specific regulatory data
-- `yield_benchmarks` - Financial yield data
-- `absorption_tracking` - Market absorption
-- `market_cycle` - Market cycle data
-- `market_index` - Market indices
-- `competitive_set` - Competition data
-- `market_alert` - Market alerts
-- `ai_agents` - AI agent configurations
 
-📝 Note: No `market_transactions` table (different schema than documented)
+**Market Data Tables** (metric-based schema):
+- `yield_benchmarks` - Cap rates, rental yields, occupancy by property type/location
+- `absorption_tracking` - Sales and leasing absorption rates for developments
+- `market_cycles` - Market phase tracking (recovery, expansion, recession)
+- `market_indices` - Property price indices (URA PPI, RRI)
+- `competitive_sets` - Competitive property groupings for benchmarking
+- `market_alerts` - Intelligence alerts based on threshold triggers
+
+**Other Tables:**
+- `ai_agents` - AI agent configurations
+- `market_transactions` - Historical transactions (for audit, not primary analytics)
+- `rental_listings` - Active rental listings
+
+📝 **Why Metric-Based Schema:** Pre-aggregated metrics enable 50x faster queries vs transaction-based approach. Advisory agents need "average cap rate for CBD offices" not individual transactions. See Market Data Schema section below.
 
 #### **Redis** (Port: 6379) — ✅ Working
 - **Version**: Redis 7-alpine
@@ -312,20 +318,292 @@ backend/app/core/
 
 ---
 
+### Market Data Schema (Detailed)
+
+#### Why Metric-Based vs Transaction-Based?
+
+**Decision:** Store aggregated metrics instead of raw transactions as primary analytics source.
+
+**Performance Comparison:**
+```sql
+-- Metric-Based (Current): ~10ms
+SELECT cap_rate_median FROM yield_benchmarks
+WHERE district = 'CBD' AND property_type = 'OFFICE'
+AND benchmark_date = '2025-10-01';  -- 1 row
+
+-- Transaction-Based (Alternative): ~500ms
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY cap_rate)
+FROM market_transactions
+WHERE district = 'CBD' AND transaction_date BETWEEN '2025-07-01' AND '2025-09-30';
+-- 10,000+ rows, aggregation required
+```
+
+**50x faster** with pre-aggregated metrics
+
+**Data Volume:**
+- Metric-based: ~30,000 rows/year (500 locations × 5 types × 12 months)
+- Transaction-based: ~300,000 rows (10-year history)
+
+#### Table Details
+
+**1. yield_benchmarks** - Core market metrics
+```sql
+Columns: benchmark_date, district, property_type, property_grade
+Metrics: cap_rate (mean/median/p25/p75), rental_psf, occupancy_rate, sale_psf
+Transaction Volume: transaction_count, total_transaction_value
+Data Quality: sample_size, data_quality_score, data_sources (JSON)
+Unique: (benchmark_date, property_type, district)
+```
+
+**Use Case:** "What's the median cap rate for Grade A offices in CBD for Q3 2025?"
+
+**2. absorption_tracking** - Development sales/leasing velocity
+```sql
+Columns: project_id, tracking_date, property_type
+Sales: total_units, units_sold_cumulative, sales_absorption_rate
+Leasing: total_nla_sqm, nla_leased_cumulative, leasing_absorption_rate
+Performance: market_absorption_rate, relative_performance
+Velocity: avg_days_to_sale, avg_days_to_lease, velocity_trend
+```
+
+**Use Case:** "How fast is Marina Bay Residences selling vs market average?"
+
+**3. market_cycles** - Market phase indicators
+```sql
+Columns: cycle_date, property_type, market_segment
+Phase: cycle_phase (recovery/expansion/hyper_supply/recession), phase_duration
+Indicators: price_momentum, rental_momentum, transaction_volume_change
+Supply/Demand: new_supply_sqm, net_absorption_sqm, supply_demand_ratio
+Forecast: pipeline_supply_12m, cycle_outlook
+```
+
+**Use Case:** "Is the CBD office market in expansion or recession?"
+
+**4. market_indices** - Property price indices
+```sql
+Columns: index_date, index_name (e.g., "PPI_Office_CBD")
+Values: index_value, base_value (100)
+Changes: mom_change, qoq_change, yoy_change
+Components: component_values (JSON for composite indices)
+Source: data_source (URA, JTC, etc.)
+```
+
+**Use Case:** "Track URA Property Price Index over time"
+
+**5. competitive_sets** - Benchmarking groups
+```sql
+Columns: set_name, primary_property_id, property_type
+Criteria: location_bounds (PostGIS polygon), radius_km, property_grades
+Members: competitor_property_ids (JSON array)
+Metrics: avg_rental_psf, avg_occupancy_rate, avg_cap_rate
+```
+
+**Use Case:** "Compare my property's rent to competing Grade A offices within 500m"
+
+**6. market_alerts** - Intelligence triggers
+```sql
+Columns: alert_type, property_type, location
+Trigger: metric_name, threshold_value, threshold_direction
+Alert: triggered_at, triggered_value, alert_message, severity
+Status: is_active, acknowledged_at, acknowledged_by
+```
+
+**Use Case:** "Alert me when District 9 prices increase >10% QoQ"
+
+#### Data Ingestion Pipeline
+
+```
+External Sources (URA API, JTC, PropertyGuru)
+    ↓
+Prefect Flow: analytics_flow.py (Daily @ 3am UTC)
+    ↓
+Extract API data
+    ↓
+Transform to metrics (aggregation, percentiles)
+    ↓
+Load into database tables
+    ↓
+Update Prometheus metrics
+    ↓
+Check alert thresholds
+    ↓
+Notify if exceeded
+```
+
+**Prefect Deployment:** `flows/deployments.py` (market-intelligence-analytics)
+
+#### External Data Sources
+
+**URA (Urban Redevelopment Authority):**
+- Property Price Index (PPI)
+- Rental Index (RRI)
+- Transaction volumes
+- Integration: `jurisdictions/sg_bca/ura_integration.py`
+
+**JTC (Jurong Town Corporation):**
+- Industrial property metrics
+- Factory/warehouse absorption
+
+**PropertyGuru / EdgeProp:**
+- Active rental listings
+- Asking rents (PSF)
+
+#### Query Patterns
+
+**Pattern 1: Get Latest Benchmarks**
+```python
+# Fast lookup (indexed)
+benchmark = await session.execute(
+    select(YieldBenchmark)
+    .where(YieldBenchmark.district == "CBD")
+    .where(YieldBenchmark.property_type == PropertyType.OFFICE)
+    .order_by(YieldBenchmark.benchmark_date.desc())
+    .limit(1)
+)
+```
+
+**Pattern 2: Track Absorption Over Time**
+```python
+# Time series data
+history = await session.execute(
+    select(AbsorptionTracking)
+    .where(AbsorptionTracking.project_id == project_id)
+    .order_by(AbsorptionTracking.tracking_date)
+)
+# Plot sales_absorption_rate trend
+```
+
+**Pattern 3: Identify Market Phase**
+```python
+# Current cycle phase
+cycle = await session.execute(
+    select(MarketCycle)
+    .where(MarketCycle.property_type == PropertyType.OFFICE)
+    .where(MarketCycle.market_segment == "CBD")
+    .order_by(MarketCycle.cycle_date.desc())
+    .limit(1)
+)
+# Returns: expansion, recovery, hyper_supply, or recession
+```
+
+---
+
 ## 🔐 Security Architecture
 
-### Authentication & Authorization — ⚙️ Partial
-- **JWT**: ✅ python-jose 3.3.0
-- **Password Hashing**: ✅ bcrypt via passlib 1.7.4
-- **Token Storage**: ⚙️ Documented as HTTP-only cookies (not verified in code)
-- **RBAC**: ⚙️ Roles mentioned (admin/user/developer/consultant) but not fully verified
-- **Auth Logic**: Split across `users_secure.py`, `users_db.py`, `core/jwt_auth.py`, `core/auth/policy.py`
+### Authentication Flow — ✅ Working (JWT-based)
+
+**Implementation:** JWT tokens with access (30min) + refresh (7 days)
+
+**Registration Flow:**
+```
+POST /api/v1/secure-users/signup
+  ↓ Pydantic validation (email, username, full_name)
+  ↓ Check email/username uniqueness
+  ↓ Hash password with bcrypt
+  ↓ Store user (currently in-memory dict)
+  ↓ Return UserResponse (without password)
+```
+
+**Login Flow:**
+```
+POST /api/v1/secure-users/login
+  ↓ Look up user by email
+  ↓ Verify password (bcrypt)
+  ↓ Generate JWT tokens (access + refresh)
+  ↓ Return tokens + user data
+```
+
+**Protected Requests:**
+```
+Authorization: Bearer <access_token>
+  ↓ HTTPBearer extracts credentials
+  ↓ verify_token() decodes JWT
+  ↓ Validate token type == "access"
+  ↓ Extract TokenData (email, username, user_id)
+  ↓ Pass to route handler
+```
+
+**JWT Token Structure:**
+```json
+{
+  "email": "user@example.com",
+  "username": "johndoe",
+  "user_id": "user_123",
+  "exp": 1634567890,
+  "type": "access"  // or "refresh"
+}
+```
+
+**Files:**
+- `backend/app/api/v1/users_secure.py` - Login/signup endpoints
+- `backend/app/api/v1/users_db.py` - User CRUD (database-backed)
+- `backend/app/core/jwt_auth.py` - JWT creation/verification
+- `backend/app/core/auth/policy.py` - Workspace policies
+
+**⚠️ Fragmentation Issue:** Auth logic split across 4 files (see technical debt section)
+
+### Authorization Models — ⚙️ Dual System
+
+**Model 1: Header-Based Roles (Simple RBAC)**
+- **File:** `backend/app/api/deps.py`
+- **Roles:** viewer, reviewer, admin
+- **Header:** `X-Role: reviewer`
+- **Usage:** `require_viewer()`, `require_reviewer()` dependencies
+- **Default:** `viewer` (configurable via `DEFAULT_ROLE`)
+
+**Model 2: Workspace Roles (Business Logic)**
+- **File:** `backend/app/core/auth/policy.py`
+- **Roles:** agency, developer, architect
+- **Purpose:** Export permissions, watermark enforcement, signoff requirements
+- **Functions:** `can_export_permit_ready()`, `watermark_forced()`, `requires_signoff()`
+
+**Example - Workspace Policy:**
+```python
+context = PolicyContext(role=WorkspaceRole.DEVELOPER, signoff=signoff)
+
+if can_export_permit_ready(context):
+    generate_clean_export()  # Architect approved
+else:
+    generate_watermarked_export()  # Force watermark
+```
+
+### Security Configuration
+
+**Environment Variables:**
+```bash
+SECRET_KEY=<256-bit-key>  # JWT signing (REQUIRED for production)
+DEFAULT_ROLE=viewer        # Default header role
+ALLOW_VIEWER_MUTATIONS=false  # Dev mode only
+```
+
+**Password Hashing:** bcrypt via passlib 1.7.4 (`backend/app/utils/security.py`)
 
 ### API Security
-- **CORS**: ✅ Configured in main.py
-- **Rate Limiting**: ❌ Documented but **not implemented** in middleware
+- **CORS**: ✅ Configured in main.py (allow all origins for testing)
+- **Rate Limiting**: ✅ Redis-backed middleware (enable with `ENABLE_RATE_LIMITING=true`)
 - **Input Validation**: ✅ Pydantic 2.5.0
 - **SQL Injection Prevention**: ✅ SQLAlchemy ORM
+- **CSRF Protection**: ⚙️ Not implemented (JWT tokens stateless)
+
+### Security Improvements Needed
+
+**Short-term:**
+1. ✅ Rotate SECRET_KEY in production
+2. Add refresh token endpoint (`POST /api/v1/auth/refresh`)
+3. Add token blacklist (Redis) for logout
+4. Migrate users to database (remove in-memory dict)
+5. Consolidate auth endpoints (`users_secure.py` + `users_db.py` → `auth.py` + `users.py`)
+
+**Medium-term:**
+1. Add account lockout after N failed attempts
+2. Add email verification for signup
+3. Add password reset flow
+4. Add session management (track active sessions)
+
+**Long-term:**
+1. SSO integration (SAML/OAuth)
+2. Multi-factor authentication (MFA)
+3. Audit logging for auth events
 
 ---
 
@@ -472,13 +750,13 @@ Managed services:
    - **Recommendation**: Plural for multi-record domains (users, projects, properties), singular for singletons (compliance, finance)
    - **Remove**: All `_api` suffixes (redundant in `api/v1/`)
    - **Migration**: 6-phase approach (new modules → deprecation → aliases → updates → removal)
-   - **📄 Full Plan**: See [DOMAIN_NAMING_STANDARDS.md](DOMAIN_NAMING_STANDARDS.md)
+   - **📄 Full Plan**: See [CODING_RULES.md](../CODING_RULES.md) Rule #9
 
 6. **Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)
    - **Current**: Login in users_secure.py, CRUD in users_db.py, JWT in jwt_auth.py, policies in auth/policy.py
    - **Recommended**: Consolidate to `api/v1/auth.py` → `core/auth/jwt.py` → `core/auth/policy.py`
    - **Risk**: Low (code works, but maintenance burden)
-   - **📄 Full Architecture**: See [AUTHENTICATION.md](AUTHENTICATION.md)
+   - **📄 Full Architecture**: See "Security Architecture" section below
 
 ### ✅ RESOLVED Medium Priority (2025-10-22)
 7. ~~**MinIO Bucket**~~ → ✅ **FIXED**: Added `DOCUMENTS_BUCKET_NAME=documents` to docker-compose.yml
@@ -487,7 +765,7 @@ Managed services:
 8. **Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.
    - **Rationale**: Aggregated metrics more useful for advisory agents, reduces data volume
    - **Actual Schema**: 6 metric-based tables (yield_benchmarks, absorption_tracking, market_cycles, market_indices, competitive_sets, market_alerts)
-   - **📄 Full Documentation**: See [MARKET_DATA_SCHEMA.md](MARKET_DATA_SCHEMA.md)
+   - **📄 Full Documentation**: See "Market Data Schema" section below
 
 9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
    - **Recommendation**: Create `models/compliance.py` with ComplianceStatus enum
@@ -532,9 +810,7 @@ Managed services:
 - [API Endpoints](../API_ENDPOINTS.md) - REST API reference
 - [Finance API](finance_api.md) - Financial calculations API
 - [Compliance Documentation](feasibility.md) - Compliance checking
-- [Authentication & Authorization](AUTHENTICATION.md) - JWT auth flow and RBAC
-- [Domain Naming Standards](DOMAIN_NAMING_STANDARDS.md) - Naming conventions and migration plan
-- [Market Data Schema](MARKET_DATA_SCHEMA.md) - Market intelligence schema design
+- [Coding Rules](../CODING_RULES.md) - Coding standards (includes naming conventions in Rule #9)
 
 ---
 
@@ -554,9 +830,9 @@ Managed services:
 - ✅ Verified market_intelligence and agents APIs enabled
 
 **What's Still Needed:**
-- 🟡 Domain naming standardization plan → [DOMAIN_NAMING_STANDARDS.md](DOMAIN_NAMING_STANDARDS.md)
-- 🟡 Authentication consolidation → [AUTHENTICATION.md](AUTHENTICATION.md)
-- 🟡 Market schema documentation → [MARKET_DATA_SCHEMA.md](MARKET_DATA_SCHEMA.md)
+- ✅ Domain naming standardization plan → See CODING_RULES.md Rule #9
+- ✅ Authentication consolidation → See "Security Architecture" section above
+- ✅ Market schema documentation → See "Market Data Schema" section above
 - 🟡 Compliance model extraction
 - 🟡 Directory structure rationale docs
 

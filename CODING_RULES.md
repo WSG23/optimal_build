@@ -359,6 +359,129 @@ def process_items(items: List[str] = []) -> List[str]:  # Dangerous!
 
 ---
 
+## 9. Domain Naming Conventions
+
+**Rule:** Follow consistent naming conventions for models, schemas, and API routers. Use plural names for multi-record domains, singular for singletons, and never use `_api` suffix for routers.
+
+**Why:** The codebase currently has inconsistent naming (21 plural vs 10 singular files, 2 files with `_api` suffix). This causes developer confusion and makes the codebase harder to navigate.
+
+**How to follow:**
+
+### Models: Plural vs Singular Decision Tree
+
+```
+Does this model represent multiple database records?
+├─ YES → Use PLURAL (users.py, projects.py, properties.py)
+└─ NO → Is it a singleton or config domain?
+    ├─ YES → Use SINGULAR (compliance.py, finance.py, audit.py)
+    └─ NO → Is it a utility module?
+        ├─ YES → Use SINGULAR (base.py, types.py)
+        └─ UNSURE → Default to PLURAL (safer choice)
+```
+
+### API Routers: Never Use `_api` Suffix
+
+```python
+# ✅ Correct - clean names in api/v1/
+backend/app/api/v1/projects.py
+backend/app/api/v1/users.py
+backend/app/api/v1/finance.py
+
+# ❌ Wrong - redundant _api suffix
+backend/app/api/v1/projects_api.py      # Already in api/ directory!
+backend/app/api/v1/singapore_property_api.py
+```
+
+**Rationale:** Files are already in `api/v1/` directory, so `_api` suffix is redundant.
+
+### Authentication Endpoints: Consolidate
+
+```python
+# ✅ Correct - consolidated endpoints
+api/v1/auth.py    # Login, signup, refresh tokens
+api/v1/users.py   # User profile, settings, CRUD
+
+# ❌ Wrong - fragmented endpoints
+api/v1/users_secure.py   # Login/signup
+api/v1/users_db.py       # User CRUD
+api/v1/test_users.py     # Test endpoint
+```
+
+### Examples
+
+**Example 1: Adding Transactions Feature**
+```python
+# ✅ Correct
+backend/app/models/transactions.py       # Plural (multiple records)
+backend/app/schemas/transaction.py       # Singular OK for Pydantic models
+backend/app/api/v1/transactions.py       # No _api suffix
+
+# ❌ Wrong
+backend/app/models/transaction.py        # Should be plural
+backend/app/api/v1/transactions_api.py   # Remove _api suffix
+```
+
+**Example 2: Adding Compliance Module**
+```python
+# ✅ Correct
+backend/app/models/compliance.py         # Singular (singleton config)
+backend/app/api/v1/compliance.py         # No _api suffix
+
+# ❌ Wrong
+backend/app/models/compliances.py        # Compliance is not a collection
+backend/app/api/v1/compliance_api.py     # Remove _api suffix
+```
+
+### Current Violations (Legacy Code)
+
+**Known violations that need migration:**
+- `property.py` → should be `properties.py`
+- `market.py` → OK (singleton per location)
+- `projects_api.py` → should be `projects.py`
+- `singapore_property_api.py` → should be `singapore_property.py`
+- `users_secure.py` + `users_db.py` → consolidate to `auth.py` + `users.py`
+
+**Migration Strategy:**
+1. ✅ **Follow standard for all new modules** (enforced in code review)
+2. Create aliases (old → new) for backward compatibility
+3. Deprecation warnings in old files
+4. Update internal references
+5. Remove old files in major version (v2.0.0)
+
+### Exceptions
+
+**Acceptable exceptions:**
+- Third-party conventions (e.g., `alembic/env.py`)
+- Acronyms (e.g., `rkp.py` - RKP is acronym, not plural/singular)
+- Python conventions (e.g., `types.py`, `__init__.py`)
+
+Document exceptions in code:
+```python
+# backend/app/models/rkp.py
+"""RKP (Real Estate Knowledge Platform) models.
+
+NAMING EXCEPTION: RKP is an acronym, not subject to plural/singular rules.
+See CODING_RULES.md Rule #9 for general standards.
+"""
+```
+
+### Enforcement
+
+**Code Review Checklist:**
+- [ ] Model name follows plural/singular standard
+- [ ] Router has no `_api` suffix
+- [ ] Auth endpoints in `auth.py` (not `users_secure.py`)
+- [ ] User management in `users.py` (not `users_db.py`)
+
+**Pre-commit Hook** (future):
+```python
+# Check for _api suffix in api/v1/
+if "_api.py" in file.name and "api/v1/" in str(file):
+    raise Error("Remove _api suffix from routers")
+```
+
+---
+
 ## Questions?
 
 If a rule is unclear or seems wrong for a specific case:
@@ -366,4 +489,4 @@ If a rule is unclear or seems wrong for a specific case:
 2. Propose a rule change by updating this document in a separate PR
 3. Document exceptions inline with `# Exception: <reason>` comments
 
-**Last updated:** 2025-10-13
+**Last updated:** 2025-10-22
