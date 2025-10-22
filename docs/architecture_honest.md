@@ -472,11 +472,13 @@ Managed services:
    - **Recommendation**: Plural for multi-record domains (users, projects, properties), singular for singletons (compliance, finance)
    - **Remove**: All `_api` suffixes (redundant in `api/v1/`)
    - **Migration**: 6-phase approach (new modules → deprecation → aliases → updates → removal)
+   - **📄 Full Plan**: See [DOMAIN_NAMING_STANDARDS.md](DOMAIN_NAMING_STANDARDS.md)
 
 6. **Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)
    - **Current**: Login in users_secure.py, CRUD in users_db.py, JWT in jwt_auth.py, policies in auth/policy.py
    - **Recommended**: Consolidate to `api/v1/auth.py` → `core/auth/jwt.py` → `core/auth/policy.py`
    - **Risk**: Low (code works, but maintenance burden)
+   - **📄 Full Architecture**: See [AUTHENTICATION.md](AUTHENTICATION.md)
 
 ### ✅ RESOLVED Medium Priority (2025-10-22)
 7. ~~**MinIO Bucket**~~ → ✅ **FIXED**: Added `DOCUMENTS_BUCKET_NAME=documents` to docker-compose.yml
@@ -484,7 +486,8 @@ Managed services:
 ### 🟡 OUTSTANDING Medium Priority
 8. **Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.
    - **Rationale**: Aggregated metrics more useful for advisory agents, reduces data volume
-   - **Action**: Document actual schema in `docs/MARKET_DATA_SCHEMA.md`
+   - **Actual Schema**: 6 metric-based tables (yield_benchmarks, absorption_tracking, market_cycles, market_indices, competitive_sets, market_alerts)
+   - **📄 Full Documentation**: See [MARKET_DATA_SCHEMA.md](MARKET_DATA_SCHEMA.md)
 
 9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
    - **Recommendation**: Create `models/compliance.py` with ComplianceStatus enum
@@ -529,6 +532,9 @@ Managed services:
 - [API Endpoints](../API_ENDPOINTS.md) - REST API reference
 - [Finance API](finance_api.md) - Financial calculations API
 - [Compliance Documentation](feasibility.md) - Compliance checking
+- [Authentication & Authorization](AUTHENTICATION.md) - JWT auth flow and RBAC
+- [Domain Naming Standards](DOMAIN_NAMING_STANDARDS.md) - Naming conventions and migration plan
+- [Market Data Schema](MARKET_DATA_SCHEMA.md) - Market intelligence schema design
 
 ---
 
@@ -548,9 +554,9 @@ Managed services:
 - ✅ Verified market_intelligence and agents APIs enabled
 
 **What's Still Needed:**
-- 🟡 Domain naming standardization plan
-- 🟡 Authentication consolidation
-- 🟡 Market schema documentation
+- 🟡 Domain naming standardization plan → [DOMAIN_NAMING_STANDARDS.md](DOMAIN_NAMING_STANDARDS.md)
+- 🟡 Authentication consolidation → [AUTHENTICATION.md](AUTHENTICATION.md)
+- 🟡 Market schema documentation → [MARKET_DATA_SCHEMA.md](MARKET_DATA_SCHEMA.md)
 - 🟡 Compliance model extraction
 - 🟡 Directory structure rationale docs
 
