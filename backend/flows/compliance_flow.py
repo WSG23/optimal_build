@@ -6,7 +6,8 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 from uuid import UUID
 
-from app.models.singapore_property import ComplianceStatus, SingaporeProperty
+from app.models.compliance import ComplianceStatus
+from app.models.singapore_property import SingaporeProperty
 from app.utils.singapore_compliance import update_property_compliance
 from prefect import flow
 from sqlalchemy import Select, select

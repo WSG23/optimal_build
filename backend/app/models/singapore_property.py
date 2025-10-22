@@ -37,6 +37,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
 
 
 from app.models.base import UUID, BaseModel
+from app.models.compliance import ComplianceStatus
 from backend._compat.datetime import utcnow
 
 
@@ -94,15 +95,6 @@ class FeasibilityStatus(str, Enum):
     APPROVED = "approved"  # Feasibility approved, ready for acquisition
     REJECTED = "rejected"  # Not feasible for development
     ON_HOLD = "on_hold"  # Analysis paused/waiting
-
-
-class ComplianceStatus(str, Enum):
-    """BCA/URA compliance check status."""
-
-    PENDING = "pending"  # Not yet checked
-    PASSED = "passed"  # Compliant with all requirements
-    WARNING = "warning"  # Minor issues, may need attention
-    FAILED = "failed"  # Major violations detected
 
 
 class SingaporeProperty(BaseModel):

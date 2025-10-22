@@ -9,7 +9,8 @@ from uuid import UUID
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.models.singapore_property import ComplianceStatus, SingaporeProperty
+from app.models.compliance import ComplianceStatus
+from app.models.singapore_property import SingaporeProperty
 from app.schemas.compliance import ComplianceCheckResponse
 from app.schemas.property import PropertyComplianceSummary, SingaporePropertySchema
 from app.utils.singapore_compliance import update_property_compliance

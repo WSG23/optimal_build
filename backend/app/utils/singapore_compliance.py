@@ -14,8 +14,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import _resolve_database_url
+from app.models.compliance import ComplianceStatus
 from app.models.rkp import RefRule
-from app.models.singapore_property import ComplianceStatus, SingaporeProperty
+from app.models.singapore_property import SingaporeProperty
 from backend._compat.datetime import utcnow
 
 _T = TypeVar("_T")
@@ -30,7 +31,7 @@ _T = TypeVar("_T")
 
 
 async def _run_with_temporary_async_session(
-    callback: Callable[[AsyncSession], Awaitable[_T]]
+    callback: Callable[[AsyncSession], Awaitable[_T]],
 ) -> _T:
     """Execute ``callback`` with an isolated async session for sync callers."""
 
