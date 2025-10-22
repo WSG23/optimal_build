@@ -4,8 +4,6 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-
-from backend._compat.datetime import utcnow
 from pydantic import BaseModel, field_validator
 
 try:  # pragma: no cover - optional dependency
@@ -15,9 +13,17 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
 
-from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_current_user
+from app.core.jwt_auth import (
+    TokenData,
+    TokenResponse,
+    create_access_token,
+    create_tokens,
+    get_current_user,
+    verify_token,
+)
 from app.schemas.user import UserSignupBase
 from app.utils.security import hash_password, verify_password
+from backend._compat.datetime import utcnow
 
 router = APIRouter(prefix="/secure-users", tags=["Secure Users"])
 
@@ -62,6 +68,19 @@ class LoginResponse(BaseModel):
     message: str
     user: UserResponse
     tokens: TokenResponse
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request to refresh access token."""
+
+    refresh_token: str
+
+
+class RefreshTokenResponse(BaseModel):
+    """Response with new access token."""
+
+    access_token: str
+    token_type: str = "bearer"
 
 
 @router.post("/signup", response_model=UserResponse)
@@ -118,6 +137,58 @@ def login(credentials: UserLogin):
     )
 
     return LoginResponse(message="Login successful", user=user_response, tokens=tokens)
+
+
+@router.post("/refresh", response_model=RefreshTokenResponse)
+def refresh_access_token(request: RefreshTokenRequest):
+    """Refresh access token using a valid refresh token.
+
+    This endpoint allows clients to obtain a new access token without
+    requiring the user to log in again, as long as their refresh token
+    is still valid.
+
+    Args:
+        request: Contains the refresh token
+
+    Returns:
+        RefreshTokenResponse with new access token
+
+    Raises:
+        HTTPException: 401 if refresh token is invalid or expired
+    """
+    try:
+        # Verify the refresh token
+        token_data = verify_token(request.refresh_token, token_type="refresh")
+
+        # Verify user still exists in database
+        if token_data.email not in users_db:
+            raise HTTPException(status_code=401, detail="User no longer exists")
+
+        user = users_db[token_data.email]
+
+        # Verify user is still active
+        if not user.get("is_active", True):
+            raise HTTPException(status_code=401, detail="User account is inactive")
+
+        # Create new access token with current user data
+        new_access_token = create_access_token(
+            {
+                "email": token_data.email,
+                "username": token_data.username,
+                "user_id": token_data.user_id,
+            }
+        )
+
+        return RefreshTokenResponse(access_token=new_access_token)
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (from verify_token or our checks)
+        raise
+    except Exception as e:
+        # Catch any other unexpected errors
+        raise HTTPException(
+            status_code=401, detail="Could not validate refresh token"
+        ) from e
 
 
 @router.get("/test")
