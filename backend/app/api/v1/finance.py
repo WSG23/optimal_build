@@ -17,23 +17,31 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import require_reviewer, require_viewer
+from app.api.deps import require_reviewer
 from app.core.database import get_session
 from app.models.finance import FinCapitalStack, FinProject, FinResult, FinScenario
 from app.models.rkp import RefCostIndex
 from app.schemas.finance import (
+    AssetFinancialSummarySchema,
     CapitalStackSliceSchema,
     CapitalStackSummarySchema,
     CostIndexProvenance,
     CostIndexSnapshot,
     DscrEntrySchema,
+    FinanceAssetBreakdownSchema,
     FinanceFeasibilityRequest,
     FinanceFeasibilityResponse,
     FinanceResultSchema,
     FinancingDrawdownEntrySchema,
     FinancingDrawdownScheduleSchema,
 )
-from app.services.finance import calculator
+from app.services.finance import (
+    AssetFinanceInput,
+    build_asset_financials,
+    calculator,
+    serialise_breakdown,
+    summarise_asset_financials,
+)
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
 
@@ -395,6 +403,36 @@ async def _summarise_persisted_scenario(
             ],
         }
 
+    asset_mix_summary_schema: AssetFinancialSummarySchema | None = None
+    asset_breakdown_schemas: list[FinanceAssetBreakdownSchema] = []
+    ordered_results = sorted(
+        scenario.results, key=lambda item: getattr(item, "id", 0) or 0
+    )
+    for stored in ordered_results:
+        metadata = stored.metadata if isinstance(stored.metadata, dict) else None
+        if stored.name != "asset_financials" or not metadata:
+            continue
+        summary_meta = metadata.get("summary")
+        if summary_meta:
+            try:
+                asset_mix_summary_schema = AssetFinancialSummarySchema.model_validate(
+                    summary_meta
+                )
+            except Exception:  # pragma: no cover - defensive for historical data
+                asset_mix_summary_schema = None
+        breakdown_meta = metadata.get("breakdowns")
+        if isinstance(breakdown_meta, list):
+            converted: list[FinanceAssetBreakdownSchema] = []
+            for entry in breakdown_meta:
+                if not isinstance(entry, dict):
+                    continue
+                try:
+                    converted.append(FinanceAssetBreakdownSchema.model_validate(entry))
+                except Exception:  # pragma: no cover - defensive
+                    continue
+            asset_breakdown_schemas = converted
+        break
+
     results: list[FinanceResultSchema] = [
         FinanceResultSchema(
             name="escalated_cost",
@@ -451,6 +489,25 @@ async def _summarise_persisted_scenario(
             )
         )
 
+    if asset_mix_summary_schema or asset_breakdown_schemas:
+        results.append(
+            FinanceResultSchema(
+                name="asset_financials",
+                value=None,
+                metadata={
+                    "summary": (
+                        asset_mix_summary_schema.model_dump(mode="json")
+                        if asset_mix_summary_schema
+                        else None
+                    ),
+                    "breakdowns": [
+                        breakdown.model_dump(mode="json")
+                        for breakdown in asset_breakdown_schemas
+                    ],
+                },
+            )
+        )
+
     drawdown_schema = None
     if drawdown_summary:
         drawdown_schema = _convert_drawdown_schedule(drawdown_summary)
@@ -471,6 +528,8 @@ async def _summarise_persisted_scenario(
             else None
         ),
         drawdown_schedule=drawdown_schema,
+        asset_mix_summary=asset_mix_summary_schema,
+        asset_breakdowns=asset_breakdown_schemas,
     )
 
 
@@ -753,6 +812,91 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
                             _stringify(entry.get("cumulative_debt")),
                             _stringify(entry.get("outstanding_debt")),
                             schedule_currency,
+                        ]
+                    )
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+
+        if result.name == "asset_financials" and metadata:
+            writer.writerow([])
+            chunk = _flush_buffer(buffer)
+            if chunk:
+                yield chunk
+            writer.writerow(["Asset Financial Summary"])
+            chunk = _flush_buffer(buffer)
+            if chunk:
+                yield chunk
+            summary_meta = metadata.get("summary")
+            if isinstance(summary_meta, dict):
+                summary_rows = (
+                    (
+                        "Total Estimated Revenue",
+                        summary_meta.get("total_estimated_revenue_sgd"),
+                        currency,
+                    ),
+                    (
+                        "Total Estimated Capex",
+                        summary_meta.get("total_estimated_capex_sgd"),
+                        currency,
+                    ),
+                    (
+                        "Dominant Risk Profile",
+                        summary_meta.get("dominant_risk_profile"),
+                        "",
+                    ),
+                )
+                for label, value, unit in summary_rows:
+                    if value is None:
+                        continue
+                    writer.writerow([label, _stringify(value), unit])
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+                notes = summary_meta.get("notes")
+                if isinstance(notes, list) and notes:
+                    writer.writerow(["Notes"])
+                    chunk = _flush_buffer(buffer)
+                    if chunk:
+                        yield chunk
+                    for note in notes:
+                        writer.writerow([_stringify(note)])
+                        chunk = _flush_buffer(buffer)
+                        if chunk:
+                            yield chunk
+
+            breakdowns_meta = metadata.get("breakdowns")
+            if isinstance(breakdowns_meta, list) and breakdowns_meta:
+                writer.writerow([])
+                chunk = _flush_buffer(buffer)
+                if chunk:
+                    yield chunk
+                writer.writerow(
+                    [
+                        "Asset Type",
+                        "Allocation %",
+                        "NOI (Annual)",
+                        "Capex",
+                        "Payback (years)",
+                        "Absorption (months)",
+                        "Risk Level",
+                    ]
+                )
+                chunk = _flush_buffer(buffer)
+                if chunk:
+                    yield chunk
+                for entry in breakdowns_meta:
+                    if not isinstance(entry, dict):
+                        continue
+                    writer.writerow(
+                        [
+                            entry.get("asset_type", ""),
+                            _stringify(entry.get("allocation_pct")),
+                            _stringify(entry.get("noi_annual_sgd")),
+                            _stringify(entry.get("estimated_capex_sgd")),
+                            _stringify(entry.get("payback_years")),
+                            _stringify(entry.get("absorption_months")),
+                            entry.get("risk_level", ""),
                         ]
                     )
                     chunk = _flush_buffer(buffer)
@@ -1088,6 +1232,42 @@ async def run_finance_feasibility(
                 }
             )
 
+        asset_breakdown_schemas: list[FinanceAssetBreakdownSchema] = []
+        asset_mix_summary_schema: AssetFinancialSummarySchema | None = None
+        asset_financial_metadata: dict[str, object] | None = None
+        if payload.scenario.asset_mix:
+            asset_inputs = [
+                AssetFinanceInput(
+                    asset_type=entry.asset_type,
+                    allocation_pct=entry.allocation_pct,
+                    nia_sqm=entry.nia_sqm,
+                    rent_psm_month=entry.rent_psm_month,
+                    stabilised_vacancy_pct=entry.stabilised_vacancy_pct,
+                    opex_pct_of_rent=entry.opex_pct_of_rent,
+                    estimated_revenue_sgd=entry.estimated_revenue_sgd,
+                    estimated_capex_sgd=entry.estimated_capex_sgd,
+                    absorption_months=entry.absorption_months,
+                    risk_level=entry.risk_level,
+                    heritage_premium_pct=entry.heritage_premium_pct,
+                    notes=tuple(entry.notes),
+                )
+                for entry in payload.scenario.asset_mix
+            ]
+            asset_breakdowns = build_asset_financials(asset_inputs)
+            asset_breakdown_schemas = serialise_breakdown(asset_breakdowns)
+            asset_mix_summary_schema = summarise_asset_financials(asset_breakdowns)
+            asset_financial_metadata = {
+                "summary": (
+                    asset_mix_summary_schema.model_dump(mode="json")
+                    if asset_mix_summary_schema is not None
+                    else None
+                ),
+                "breakdowns": [
+                    breakdown.model_dump(mode="json")
+                    for breakdown in asset_breakdown_schemas
+                ],
+            }
+
         results: list[FinResult] = [
             FinResult(
                 project_id=str(project_uuid),
@@ -1164,6 +1344,18 @@ async def run_finance_feasibility(
                 )
             )
 
+        if asset_financial_metadata is not None:
+            results.append(
+                FinResult(
+                    project_id=str(project_uuid),
+                    scenario=scenario,
+                    name="asset_financials",
+                    value=None,
+                    unit=None,
+                    metadata=_json_safe(asset_financial_metadata),
+                )
+            )
+
         session.add_all(results)
 
         await session.flush()
@@ -1196,6 +1388,8 @@ async def run_finance_feasibility(
             dscr_timeline=dscr_entries,
             capital_stack=capital_stack_summary_schema,
             drawdown_schedule=drawdown_schedule_schema,
+            asset_mix_summary=asset_mix_summary_schema,
+            asset_breakdowns=asset_breakdown_schemas,
         )
     finally:
         duration_ms = (perf_counter() - start_time) * 1000
@@ -1210,7 +1404,7 @@ async def list_finance_scenarios(
     project_id: str | int | UUID | None = Query(None),
     fin_project_id: int | None = Query(None),
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_viewer),
+    _: str = Depends(require_reviewer),
 ) -> list[FinanceFeasibilityResponse]:
     """Return previously persisted finance scenarios for the requested project."""
 
@@ -1265,7 +1459,7 @@ async def list_finance_scenarios(
 async def export_finance_scenario(
     scenario_id: int = Query(...),
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_viewer),
+    _: str = Depends(require_reviewer),
 ) -> StreamingResponse:
     """Stream a CSV export describing the requested finance scenario.
 
