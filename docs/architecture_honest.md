@@ -121,7 +121,8 @@ backend/app/core/
 ├── users.py              # User authentication & management
 ├── projects.py           # Development projects
 ├── property.py           # Property data
-├── singapore_property.py # Singapore-specific (includes ComplianceStatus enum)
+├── singapore_property.py # Singapore-specific property models
+├── compliance.py         # ✅ Compliance status enums (2025-10-22)
 ├── market.py             # Market data (YieldBenchmark, AbsorptionTracking, MarketCycle, etc.)
 ├── ai_agents.py          # AI agent configurations
 ├── audit.py              # Audit trails
@@ -134,7 +135,6 @@ backend/app/core/
 └── types.py              # Shared types
 
 📝 Note: No market_transactions table (has YieldBenchmark, etc. instead)
-📝 Note: No standalone compliance.py (embedded in singapore_property.py)
 ```
 
 **Schemas** (`backend/app/schemas/`)
@@ -851,9 +851,12 @@ optimal_build/
    - **Actual Schema**: 6 metric-based tables (yield_benchmarks, absorption_tracking, market_cycles, market_indices, competitive_sets, market_alerts)
    - **📄 Full Documentation**: See "Market Data Schema" section below
 
-9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
-   - **Recommendation**: Create `models/compliance.py` with ComplianceStatus enum
-   - **Blocker**: Requires new migration (Coding Rule #1: no editing existing migrations)
+### ✅ RESOLVED Medium Priority (2025-10-22)
+9. ~~**Compliance Model**~~ → ✅ **IMPLEMENTED** (2025-10-22): Created `models/compliance.py`
+   - Extracted ComplianceStatus enum from singapore_property.py
+   - Updated 5 files to import from new location (flows, schemas, services, utils)
+   - No database migration required (code-only refactoring)
+   - See commit 908ec5c for implementation details
 
 ### ✅ RESOLVED Low Priority (2025-10-22)
 10. ~~**Directory Naming**~~ → ✅ **DOCUMENTED**: `ui-admin/` naming rationale explained
