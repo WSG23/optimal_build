@@ -589,7 +589,7 @@ ALLOW_VIEWER_MUTATIONS=false  # Dev mode only
 
 **Short-term:**
 1. ✅ Rotate SECRET_KEY in production
-2. Add refresh token endpoint (`POST /api/v1/auth/refresh`)
+2. ✅ Add refresh token endpoint → **IMPLEMENTED** (2025-10-22): `POST /api/v1/secure-users/refresh`
 3. Add token blacklist (Redis) for logout
 4. Migrate users to database (remove in-memory dict)
 5. Consolidate auth endpoints (`users_secure.py` + `users_db.py` → `auth.py` + `users.py`)
