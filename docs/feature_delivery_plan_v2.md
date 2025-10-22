@@ -7,15 +7,20 @@
 
 ## 📊 Current Progress Snapshot
 
-> **Last Updated:** 2025-10-20
+> **Last Updated:** 2025-10-22
 >
 > **⚠️ IMPORTANT:** This is the **SINGLE SOURCE OF TRUTH** for project status.
 > All other documents (NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md, etc.) reference this document.
-> When you complete work, update THIS file only.
+>
+> **🔄 UPDATE INSTRUCTIONS (AI Agents & Developers):**
+> When completing a phase, you MUST update BOTH:
+> 1. **This summary section** (lines 20-65) - Move phase from "Not Started" to "Complete"
+> 2. **Detailed phase section** (scroll down ~400 lines) - Check off ✅ deliverables
+> 3. **"Last Updated" date** above
 >
 > **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for guidance on choosing your next task.
 
-**Overall Completion: 100% of Phase 1 (Agent Foundation) ✅ COMPLETE**
+**Overall Completion: Phase 1 (100%) + Phase 2A (100%) + Phase 2B (100%) ✅**
 
 ### ✅ What's Complete:
 
@@ -35,20 +40,27 @@
 - Tests: Backend passing ✅, Manual UI testing complete ✅
 - Note: Real OAuth pending API credentials
 
-**Phase 2A: Universal GPS Site Acquisition** - Backend 100%, UI 100% ✅ COMPLETE (developer capture reuses shared `/api/v1/agents/.../log-gps`)
+**Phase 1D: Business Performance Management** - Backend 100%, UI 100% ✅ COMPLETE
+- Backend: Deal Pipeline API ✅, ROI Analytics ✅, Performance Snapshots ✅, Benchmarks ✅
+- UI: Business Performance page with Pipeline Kanban, Analytics, and ROI panels ✅
+- Tests: Backend passing ✅, Manual UI testing complete ✅
+
+**Phase 2A: Universal GPS Site Acquisition** - Backend 100%, UI 100% ✅ COMPLETE
 - Site Acquisition workspace (`/app/site-acquisition`) supports GPS capture, scenario selection, and quick analysis for developers ✅
 - Due diligence checklist authoring, auto-population, and exports (JSON/PDF) validated ✅
 - Manual inspection capture with specialist insights and multi-scenario comparison dashboard live ✅
+
+**Phase 2B: Asset-Specific Feasibility** - Backend 100%, UI 100% ✅ COMPLETE (2025-10-22)
+- Asset mix optimizer with curve-driven scoring, heritage premiums, constraint validation ✅
+- Heritage overlay services (NHB, URA conservation data ingestion and detection) ✅
+- Preview job pipeline (database model, queuing, worker, polling) ✅
+- Site Acquisition UI displays optimizations, financial summaries, heritage context ✅
+- See detailed deliverables in Phase 2B section below
 
 **Infrastructure:**
 - CAD Processing Infrastructure - 95%
 - Finance & Feasibility Backend - 60%
 - Token encryption system - 100%
-
-**Phase 1D: Business Performance Management** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: Deal Pipeline API ✅, ROI Analytics ✅, Performance Snapshots ✅, Benchmarks ✅
-- UI: Business Performance page with Pipeline Kanban, Analytics, and ROI panels ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
 
 ### ⏸️ What's In Progress:
 
@@ -59,7 +71,6 @@
 
 ### ❌ What's Not Started:
 
-- Phase 2B: Asset-Specific Feasibility
 - Phases 2D-2I: Team coordination, regulatory navigation, construction delivery, revenue optimization, enhanced export
 - Phase 3+: Architect Tools, Engineer Tools, Platform Integration
 
