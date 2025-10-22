@@ -13,7 +13,7 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
 
-from app.core.jwt_auth import (
+from app.core.auth.jwt import (
     TokenData,
     TokenResponse,
     create_access_token,

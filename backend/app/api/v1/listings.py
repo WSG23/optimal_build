@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, get_request_role
 from app.core.database import get_session
-from app.core.jwt_auth import TokenData, get_optional_user
+from app.core.auth.jwt import TokenData, get_optional_user
 from app.models.listing_integration import ListingIntegrationAccount, ListingProvider
 from app.services.integrations.accounts import ListingIntegrationAccountService
 from app.services.integrations.edgeprop import EdgePropClient

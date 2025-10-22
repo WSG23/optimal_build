@@ -19,7 +19,7 @@ async def deals_client(async_session_factory):
 
     from app.api.deps import require_reviewer, require_viewer
     from app.core.database import get_session
-    from app.core.jwt_auth import get_optional_user
+    from app.core.auth.jwt import get_optional_user
 
     if not hasattr(APIRouter, "patch"):
 

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.database import get_session
-from app.core.jwt_auth import TokenData, get_optional_user
+from app.core.auth.jwt import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
 from app.services.agents.advisory import AgentAdvisoryService
 from app.services.agents.development_potential_scanner import (

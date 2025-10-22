@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.core.jwt_auth import TokenData, get_optional_user
+from app.core.auth.jwt import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus
 from app.models.property import Property
 from app.services.developer_checklist_service import DeveloperChecklistService

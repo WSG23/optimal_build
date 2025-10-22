@@ -13,8 +13,7 @@ class _RouterModule(Protocol):
 class Router(Protocol):
     """Subset of FastAPI's router interface used within the aggregator."""
 
-    def include_router(self, router: "Router") -> None:
-        ...
+    def include_router(self, router: "Router") -> None: ...
 
 
 TAGS_METADATA: Final[list[dict[str, str]]] = [
@@ -80,9 +79,13 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "feasibility",
     "finance",
     "entitlements",
+    # Authentication & User Management (Consolidated 2025-10-22)
+    "auth",  # Authentication endpoints (login, signup, refresh)
+    "users",  # User management (CRUD operations)
+    # Legacy auth endpoints (deprecated, kept for backward compatibility)
     "test_users",  # Simple user API for learning
-    "users_secure",  # Secure user API with validation
-    "users_db",  # Database-backed user API
+    "users_secure",  # DEPRECATED: Use /auth instead
+    "users_db",  # DEPRECATED: Use /auth and /users instead
     "projects_api",  # Projects CRUD API
     "singapore_property_api",  # Singapore property with BCA/URA compliance
     "market_intelligence",  # Market intelligence analytics API

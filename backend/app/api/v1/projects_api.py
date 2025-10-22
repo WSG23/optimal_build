@@ -9,7 +9,7 @@ from sqlalchemy import Boolean, Column, DateTime, Float, String, Text, create_en
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.jwt_auth import TokenData, get_current_user
+from app.core.auth.jwt import TokenData, get_current_user
 from app.utils.db import session_dependency
 from backend._compat.datetime import utcnow
 from pydantic import BaseModel, Field

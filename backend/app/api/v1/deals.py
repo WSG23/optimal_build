@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, require_reviewer, require_viewer
 from app.core.database import get_session
-from app.core.jwt_auth import TokenData, get_optional_user
+from app.core.auth.jwt import TokenData, get_optional_user
 from app.models.business_performance import CommissionStatus, DealStatus, PipelineStage
 from app.schemas.deals import (
     CommissionAdjustmentCreate,

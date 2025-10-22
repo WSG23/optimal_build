@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.jwt_auth import create_tokens
+from app.core.auth.jwt import create_tokens
 from app.models.property import Property
 from app.models.users import User
 from httpx import AsyncClient

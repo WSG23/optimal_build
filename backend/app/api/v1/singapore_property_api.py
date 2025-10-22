@@ -16,7 +16,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
-from app.core.jwt_auth import TokenData, get_current_user
+from app.core.auth.jwt import TokenData, get_current_user
 from app.models.singapore_property import (
     AcquisitionStatus,
     ComplianceStatus,
