@@ -679,6 +679,90 @@ Managed services:
 
 ---
 
+## 📁 Directory Structure Rationale
+
+### Frontend Applications
+
+**Why `ui-admin/` instead of `admin/`?**
+
+**Decision:** Use `ui-admin/` prefix to clearly distinguish it as a separate UI application.
+
+**Rationale:**
+1. **Namespace Clarity**: In a monorepo with multiple frontends, `ui-` prefix prevents confusion:
+   - `frontend/` = Main user application (building compliance, feasibility)
+   - `ui-admin/` = Administrative application (document review, rule management)
+   - Future: `ui-mobile/`, `ui-public/` as separate applications
+
+2. **Build Tool Separation**: Each UI has independent:
+   - `package.json` dependencies (MUI vs TailwindCSS)
+   - `vite.config.ts` build configurations
+   - `tsconfig.json` TypeScript settings
+
+3. **Port Assignments**: Clear mapping in docker-compose.yml:
+   - `:4400` → `frontend/` (main UI)
+   - `:4401` → `ui-admin/` (admin UI)
+
+**Alternative Considered:** `admin/` - Rejected because it's ambiguous (backend admin module? CLI admin tools?)
+
+### Script Organization
+
+**Why `/scripts/ingest.py` instead of `/backend/scripts/ingest.py`?**
+
+**Decision:** Top-level `/scripts/` for cross-cutting operational scripts.
+
+**Rationale:**
+1. **Multi-Jurisdiction Support**: `ingest.py` handles multiple jurisdictions:
+   ```bash
+   python -m scripts.ingest --jurisdiction sg_bca --since 2025-01-01
+   python -m scripts.ingest --jurisdiction my_jpbd --since 2025-01-01
+   ```
+   Not backend-specific - could ingest to different storage backends.
+
+2. **Separation of Concerns**:
+   - `/backend/scripts/` = Backend-specific utilities (seed data, smoke tests)
+     - `seed_entitlements_sg.py`
+     - `seed_finance_demo.py`
+     - `run_smokes.py`
+   - `/scripts/` = Infrastructure/operational scripts (ingestion, migrations, deployment)
+     - `ingest.py` (data ingestion)
+
+3. **Environment Independence**: Top-level scripts can run outside backend virtualenv:
+   ```bash
+   # Can use different Python environment
+   python scripts/ingest.py --store postgresql://remote-db/...
+   ```
+
+**Alternative Considered:** `/backend/scripts/ingest.py` - Rejected because ingestion is infrastructure-level (like migrations), not application-level.
+
+### Directory Tree (Simplified)
+
+```
+optimal_build/
+├── frontend/                 # Main UI (React + MUI)
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
+├── ui-admin/                 # Admin UI (React + Tailwind)
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/
+│   ├── app/                  # FastAPI application
+│   ├── flows/                # Prefect workflows
+│   ├── jobs/                 # Background jobs
+│   ├── migrations/           # Alembic migrations
+│   └── scripts/              # Backend utilities (seed, smoke tests)
+├── scripts/                  # Infrastructure scripts (top-level)
+│   └── ingest.py             # Cross-jurisdiction ingestion
+├── jurisdictions/            # Jurisdiction-specific logic
+│   └── sg_bca/
+└── docs/                     # Documentation
+```
+
+**Key Principle:** Directory naming reflects **scope and responsibility**, not just brevity.
+
+---
+
 ## 🛠️ Tech Stack (Verified Versions)
 
 ### Backend
@@ -772,16 +856,15 @@ Managed services:
    - **Blocker**: Requires new migration (Coding Rule #1: no editing existing migrations)
 
 ### ✅ RESOLVED Low Priority (2025-10-22)
+10. ~~**Directory Naming**~~ → ✅ **DOCUMENTED**: `ui-admin/` naming rationale explained
+    - See "Directory Structure Rationale" section above for full explanation
+    - **Rationale**: `ui-` prefix clarifies it's a separate UI application
+
+11. ~~**Script Location**~~ → ✅ **DOCUMENTED**: `/scripts/ingest.py` placement rationale explained
+    - See "Directory Structure Rationale" section above for full explanation
+    - **Rationale**: Top-level scripts for infrastructure-level operations (multi-jurisdiction ingestion)
+
 12. ~~**Undocumented Features**~~ → ✅ **FIXED**: All 12 AI agents now documented (see lines 184-197 above)
-
-### 🟡 OUTSTANDING Low Priority
-10. **Directory Naming**: `ui-admin/` vs documented `admin/`
-    - **Rationale**: Clearly distinguishes from `frontend/` (main user UI)
-    - **Action**: Document in `docs/DIRECTORY_STRUCTURE.md`
-
-11. **Script Location**: `ingest.py` in top-level `/scripts/` not `backend/scripts/`
-    - **Rationale**: Cross-cutting script for multiple jurisdictions, not backend-specific
-    - **Status**: Intentional design choice
 
 ---
 
@@ -833,7 +916,7 @@ Managed services:
 - ✅ Domain naming standardization plan → See CODING_RULES.md Rule #9
 - ✅ Authentication consolidation → See "Security Architecture" section above
 - ✅ Market schema documentation → See "Market Data Schema" section above
-- 🟡 Compliance model extraction
-- 🟡 Directory structure rationale docs
+- ✅ Directory structure rationale → See "Directory Structure Rationale" section above
+- 🟡 Compliance model extraction (requires new migration)
 
 **For Details:** See "Known Issues & Technical Debt" section above
