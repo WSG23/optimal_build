@@ -66,8 +66,10 @@ ui-admin/src/
 **API Endpoints** (`backend/app/api/v1/`)
 ```
 ✅ Working routers:
-├── users_secure.py       # Authentication & authorization
-├── users_db.py           # User CRUD operations
+├── auth.py               # ✅ Authentication (login, signup, refresh) - 2025-10-22
+├── users.py              # ✅ User management (CRUD operations) - 2025-10-22
+├── users_secure.py       # DEPRECATED: Use auth.py instead
+├── users_db.py           # DEPRECATED: Use auth.py + users.py instead
 ├── projects_api.py       # Project management
 ├── singapore_property_api.py  # Singapore property data
 ├── finance.py            # Financial calculations
@@ -92,7 +94,7 @@ ui-admin/src/
 ├── listings.py            # Listing integrations
 └── developers.py          # Developer workspace
 
-📝 Note: No standalone auth.py, properties.py, or analytics.py as documented
+📝 Note: auth.py and users.py consolidate authentication/user management (2025-10-22)
 ```
 
 **Core** (`backend/app/core/`)
@@ -100,9 +102,10 @@ ui-admin/src/
 backend/app/core/
 ├── config.py           # ✅ Settings management
 ├── database.py         # ✅ DB connection pool
-├── jwt_auth.py         # ✅ JWT authentication
-├── auth/               # ✅ Auth policies
-│   └── policy.py
+├── jwt_auth.py         # DEPRECATED: Use auth/jwt.py instead
+├── auth/               # ✅ Authentication & authorization
+│   ├── jwt.py          # ✅ JWT token utilities (2025-10-22)
+│   └── policy.py       # ✅ Authorization policies
 ├── metrics/            # ✅ ROI metrics
 │   └── roi.py
 ├── audit/              # ✅ Audit utilities
@@ -829,18 +832,20 @@ optimal_build/
    - Enable with `ENABLE_RATE_LIMITING=true`
    - Returns 429 with Retry-After header when exceeded
 
+6. ~~**Auth Split**~~ → ✅ **CONSOLIDATED** (2025-10-22):
+   - Created `api/v1/auth.py` (signup, login, refresh, /me)
+   - Created `api/v1/users.py` (user CRUD operations)
+   - Moved `core/jwt_auth.py` → `core/auth/jwt.py`
+   - Updated 10 files with new import paths
+   - Legacy endpoints (users_secure, users_db) marked deprecated for backward compatibility
+   - See commit 48278f2 for full implementation
+
 ### 🟡 OUTSTANDING High Priority
 5. **Inconsistent Naming**: Mix of plural/singular models, `_api` suffixes, no clear convention
    - **Recommendation**: Plural for multi-record domains (users, projects, properties), singular for singletons (compliance, finance)
    - **Remove**: All `_api` suffixes (redundant in `api/v1/`)
    - **Migration**: 6-phase approach (new modules → deprecation → aliases → updates → removal)
    - **📄 Full Plan**: See [CODING_RULES.md](../CODING_RULES.md) Rule #9
-
-6. **Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)
-   - **Current**: Login in users_secure.py, CRUD in users_db.py, JWT in jwt_auth.py, policies in auth/policy.py
-   - **Recommended**: Consolidate to `api/v1/auth.py` → `core/auth/jwt.py` → `core/auth/policy.py`
-   - **Risk**: Low (code works, but maintenance burden)
-   - **📄 Full Architecture**: See "Security Architecture" section below
 
 ### ✅ RESOLVED Medium Priority (2025-10-22)
 7. ~~**MinIO Bucket**~~ → ✅ **FIXED**: Added `DOCUMENTS_BUCKET_NAME=documents` to docker-compose.yml
