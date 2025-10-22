@@ -8,6 +8,9 @@ import {
   fetchConditionAssessment,
   fetchConditionAssessmentHistory,
   fetchScenarioAssessments,
+  fetchPreviewJob,
+  refreshPreviewJob,
+  listPreviewJobs,
   exportConditionReport,
   saveConditionAssessment,
   updateChecklistItem,
@@ -20,6 +23,7 @@ import {
   type ConditionAttachment,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
+  type DeveloperPreviewJob,
 } from '../../../api/siteAcquisition'
 
 const SCENARIO_OPTIONS: Array<{
@@ -586,6 +590,8 @@ export function SiteAcquisitionPage() {
   const [isCapturing, setIsCapturing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [capturedProperty, setCapturedProperty] = useState<SiteAcquisitionResult | null>(null)
+  const [previewJob, setPreviewJob] = useState<DeveloperPreviewJob | null>(null)
+  const [isRefreshingPreview, setIsRefreshingPreview] = useState(false)
 
   // Checklist state
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([])
@@ -631,6 +637,78 @@ export function SiteAcquisitionPage() {
   const [isExportingReport, setIsExportingReport] = useState(false)
   const [reportExportMessage, setReportExportMessage] = useState<string | null>(null)
   const propertyId = capturedProperty?.propertyId ?? null
+
+  useEffect(() => {
+    if (!capturedProperty?.previewJobs?.length) {
+      setPreviewJob(null)
+      return
+    }
+    setPreviewJob(capturedProperty.previewJobs[0])
+  }, [capturedProperty?.previewJobs])
+
+  useEffect(() => {
+    if (!capturedProperty?.propertyId || capturedProperty.previewJobs?.length) {
+      return
+    }
+    let cancelled = false
+    listPreviewJobs(capturedProperty.propertyId).then((jobs) => {
+      if (!cancelled && jobs.length) {
+        setPreviewJob(jobs[0])
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [capturedProperty?.propertyId, capturedProperty?.previewJobs])
+
+  useEffect(() => {
+    const activeStatuses = new Set(['queued', 'processing'])
+    if (!previewJob || !activeStatuses.has(previewJob.status.toLowerCase())) {
+      return
+    }
+    const controller = new AbortController()
+    let cancelled = false
+    let timer: number | undefined
+
+    const poll = async () => {
+      try {
+        const latest = await fetchPreviewJob(previewJob.id, controller.signal)
+        if (!latest || cancelled) {
+          return
+        }
+        setPreviewJob(latest)
+        if (activeStatuses.has(latest.status.toLowerCase())) {
+          timer = window.setTimeout(poll, 5000)
+        }
+      } catch {
+        if (!cancelled) {
+          timer = window.setTimeout(poll, 5000)
+        }
+      }
+    }
+
+    timer = window.setTimeout(poll, 4000)
+
+    return () => {
+      cancelled = true
+      controller.abort()
+      if (timer !== undefined) {
+        window.clearTimeout(timer)
+      }
+    }
+  }, [previewJob?.id, previewJob?.status])
+
+  const handleRefreshPreview = useCallback(async () => {
+    if (!previewJob) {
+      return
+    }
+    setIsRefreshingPreview(true)
+    const refreshed = await refreshPreviewJob(previewJob.id)
+    if (refreshed) {
+      setPreviewJob(refreshed)
+    }
+    setIsRefreshingPreview(false)
+  }, [previewJob])
   const [isHistoryModalOpen, setHistoryModalOpen] = useState(false)
   const [quickAnalysisHistory, setQuickAnalysisHistory] = useState<
     QuickAnalysisSnapshot[]
@@ -1287,9 +1365,21 @@ export function SiteAcquisitionPage() {
     const info = propertyInfoSummary
     const zoning = zoningSummary
     const envelope = capturedProperty.buildEnvelope
-    const visualization = capturedProperty.visualization
+    const visualization = capturedProperty.visualization ?? {
+      status: 'placeholder',
+      previewAvailable: false,
+      notes: [],
+      conceptMeshUrl: null,
+      thumbnailUrl: null,
+      cameraOrbitHint: null,
+      previewSeed: null,
+      previewJobId: null,
+      massingLayers: [],
+      colorLegend: [],
+    }
     const optimizations = capturedProperty.optimizations ?? []
     const financialSummary = capturedProperty.financialSummary
+    const heritageContext = capturedProperty.heritageContext
 
     const formatArea = (value: number | null | undefined) => {
       if (value === null || value === undefined) {
@@ -1412,6 +1502,104 @@ export function SiteAcquisitionPage() {
       ],
       note: envelope.assumptions?.length ? envelope.assumptions[0] : null,
     })
+
+    if (heritageContext) {
+      const riskLabel = heritageContext.risk
+        ? heritageContext.risk.toUpperCase()
+        : 'UNKNOWN'
+      const overlay = heritageContext.overlay
+
+      const heritageItems: Array<{ label: string; value: string }> = [
+        {
+          label: 'Risk level',
+          value: riskLabel,
+        },
+      ]
+
+      if (overlay?.name) {
+        heritageItems.push({ label: 'Overlay name', value: overlay.name })
+      }
+      if (overlay?.source) {
+        heritageItems.push({ label: 'Source', value: overlay.source })
+      }
+      if (overlay?.heritagePremiumPct != null) {
+        heritageItems.push({
+          label: 'Premium (optimiser)',
+          value: `${formatNumberMetric(overlay.heritagePremiumPct, {
+            maximumFractionDigits: overlay.heritagePremiumPct >= 100 ? 0 : 1,
+          })}%`,
+        })
+      }
+      if (heritageContext.constraints.length) {
+        heritageItems.push({
+          label: 'Key constraints',
+          value: heritageContext.constraints.slice(0, 2).join(' • '),
+        })
+      }
+
+      cards.push({
+        title: 'Heritage context',
+        subtitle: overlay?.name ?? 'Heritage assessment',
+        items: heritageItems,
+        tags: heritageContext.flag ? [riskLabel] : undefined,
+        note: heritageContext.assumption ?? heritageContext.notes[0] ?? null,
+      })
+    }
+
+    if (previewJob) {
+      const statusLabel = previewJob.status.toUpperCase()
+      const statusLower = previewJob.status.toLowerCase()
+      const previewItems: Array<{ label: string; value: string }> = [
+        { label: 'Status', value: statusLabel },
+        { label: 'Scenario', value: previewJob.scenario },
+        {
+          label: 'Requested',
+          value: previewJob.requestedAt ? formatTimestamp(previewJob.requestedAt) : '—',
+        },
+      ]
+      if (previewJob.startedAt) {
+        previewItems.push({
+          label: 'Started',
+          value: formatTimestamp(previewJob.startedAt),
+        })
+      }
+      if (previewJob.finishedAt) {
+        previewItems.push({
+          label: 'Finished',
+          value: formatTimestamp(previewJob.finishedAt),
+        })
+      }
+      if (previewJob.previewUrl) {
+        previewItems.push({ label: 'Preview URL', value: previewJob.previewUrl })
+      }
+      if (previewJob.thumbnailUrl) {
+        previewItems.push({ label: 'Thumbnail', value: previewJob.thumbnailUrl })
+      }
+      if (previewJob.message) {
+        previewItems.push({ label: 'Notes', value: previewJob.message })
+      }
+
+      let previewNote: string | null = previewJob.message ?? null
+      if (!previewNote) {
+        if (statusLower === 'ready') {
+          previewNote = 'Concept mesh ready for review.'
+        } else if (statusLower === 'failed') {
+          previewNote = 'Preview generation failed — try refreshing.'
+        } else if (statusLower === 'expired') {
+          previewNote = 'Preview expired — refresh to regenerate assets.'
+        } else {
+          previewNote = 'Preview job processing — status updates every few seconds.'
+        }
+      }
+
+      cards.push({
+        title: 'Preview generation',
+        subtitle: `Job ${previewJob.id.slice(0, 8)}…`,
+        items: previewItems,
+        tags: [statusLabel],
+        note: previewNote,
+      })
+    }
 
     if (optimizations.length > 0) {
       const formatAllocation = (plan: DeveloperAssetOptimization) => {
@@ -1557,65 +1745,67 @@ export function SiteAcquisitionPage() {
       note: financeNote,
     })
 
-    const visualizationItems: Array<{ label: string; value: string }> = [
-      {
-        label: 'Preview status',
-        value: visualization.previewAvailable ? 'High-fidelity preview ready' : 'Waiting on Phase 2B visuals',
-      },
-      {
-        label: 'Status flag',
-        value: visualization.status ? visualization.status.replace(/_/g, ' ') : 'Pending',
-      },
-      {
-        label: 'Concept mesh',
-        value: visualization.conceptMeshUrl ?? 'Stub not generated yet',
-      },
-      {
-        label: 'Camera orbit hint',
-        value: visualization.cameraOrbitHint
-          ? `${formatNumberMetric(visualization.cameraOrbitHint.theta ?? 0, {
-                maximumFractionDigits: 0,
-              })}° / ${formatNumberMetric(visualization.cameraOrbitHint.phi ?? 0, {
-                maximumFractionDigits: 0,
-              })}°`
-          : '—',
-      },
-    ]
+    if (visualization) {
+      const visualizationItems: Array<{ label: string; value: string }> = [
+        {
+          label: 'Preview status',
+          value: visualization.previewAvailable ? 'High-fidelity preview ready' : 'Waiting on Phase 2B visuals',
+        },
+        {
+          label: 'Status flag',
+          value: visualization.status ? visualization.status.replace(/_/g, ' ') : 'Pending',
+        },
+        {
+          label: 'Concept mesh',
+          value: visualization.conceptMeshUrl ?? 'Stub not generated yet',
+        },
+        {
+          label: 'Camera orbit hint',
+          value: visualization.cameraOrbitHint
+            ? `${formatNumberMetric(visualization.cameraOrbitHint.theta ?? 0, {
+                  maximumFractionDigits: 0,
+                })}° / ${formatNumberMetric(visualization.cameraOrbitHint.phi ?? 0, {
+                  maximumFractionDigits: 0,
+                })}°`
+            : '—',
+        },
+      ]
 
-    if (visualization.massingLayers.length > 0) {
-      const primaryLayer = visualization.massingLayers[0]
-      const layerLabel = primaryLayer.assetType
-        .replace(/[_-]/g, ' ')
-        .replace(/\b\w/g, (match) => match.toUpperCase())
-      const heightValue =
-        primaryLayer.estimatedHeightM != null
-          ? `${formatNumberMetric(primaryLayer.estimatedHeightM, {
-              maximumFractionDigits: 0,
-            })} m`
-          : '—'
-      visualizationItems.push({
-        label: 'Primary massing',
-        value: `${layerLabel} · ${heightValue}`,
+      if (visualization.massingLayers?.length > 0) {
+        const primaryLayer = visualization.massingLayers[0]
+        const layerLabel = primaryLayer.assetType
+          .replace(/[_-]/g, ' ')
+          .replace(/\b\w/g, (match) => match.toUpperCase())
+        const heightValue =
+          primaryLayer.estimatedHeightM != null
+            ? `${formatNumberMetric(primaryLayer.estimatedHeightM, {
+                maximumFractionDigits: 0,
+              })} m`
+            : '—'
+        visualizationItems.push({
+          label: 'Primary massing',
+          value: `${layerLabel} · ${heightValue}`,
+        })
+      }
+
+      if (visualization.colorLegend?.length > 0) {
+        const legendPreview = visualization.colorLegend
+          .slice(0, 3)
+          .map((entry) => entry.label)
+          .join(', ')
+        visualizationItems.push({
+          label: 'Colour legend',
+          value: legendPreview || '—',
+        })
+      }
+
+      cards.push({
+        title: 'Visualization readiness',
+        subtitle: visualization.previewAvailable ? 'Preview ready' : 'Preview in progress',
+        items: visualizationItems,
+        note: visualization.notes?.length ? visualization.notes[0] : null,
       })
     }
-
-    if (visualization.colorLegend.length > 0) {
-      const legendPreview = visualization.colorLegend
-        .slice(0, 3)
-        .map((entry) => entry.label)
-        .join(', ')
-      visualizationItems.push({
-        label: 'Colour legend',
-        value: legendPreview || '—',
-      })
-    }
-
-    cards.push({
-      title: 'Visualization readiness',
-      subtitle: visualization.previewAvailable ? 'Preview ready' : 'Preview in progress',
-      items: visualizationItems,
-      note: visualization.notes.length ? visualization.notes[0] : null,
-    })
 
     cards.push({
       title: 'Site metrics',
@@ -1710,10 +1900,12 @@ export function SiteAcquisitionPage() {
     capturedProperty,
     formatCurrency,
     formatNumberMetric,
+    formatTimestamp,
     propertyInfoSummary,
     zoningSummary,
     nearestBusStop,
     nearestMrtStation,
+    previewJob,
   ])
 
   useEffect(() => {
@@ -2585,6 +2777,7 @@ export function SiteAcquisitionPage() {
       })
 
       setCapturedProperty(result)
+      setPreviewJob(result.previewJobs?.[0] ?? null)
       if (result.propertyId) {
         try {
           sessionStorage.setItem(
@@ -4570,6 +4763,39 @@ export function SiteAcquisitionPage() {
               </article>
             ))}
           </div>
+          {previewJob && (
+            <div
+              style={{
+                marginTop: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleRefreshPreview}
+                disabled={isRefreshingPreview}
+                style={{
+                  padding: '0.5rem 0.85rem',
+                  borderRadius: '9999px',
+                  border: '1px solid',
+                  borderColor: isRefreshingPreview ? '#cbd5f5' : '#6366f1',
+                  background: isRefreshingPreview ? '#eef2ff' : '#4f46e5',
+                  color: '#fff',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: isRefreshingPreview ? 'wait' : 'pointer',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                {isRefreshingPreview ? 'Refreshing preview…' : 'Refresh preview render'}
+              </button>
+              <span style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+                Status updates automatically while processing.
+              </span>
+            </div>
+          )}
         </section>
       )}
 
@@ -5898,13 +6124,15 @@ export function SiteAcquisitionPage() {
               padding: '2.5rem 2rem',
               textAlign: 'center',
               color: '#6e6e73',
-              background: '#fff7ed',
+              background: capturedProperty?.propertyId === 'offline-property' ? '#f5f5f7' : '#fff7ed',
               borderRadius: '12px',
-              border: '1px solid #fed7aa',
+              border: capturedProperty?.propertyId === 'offline-property' ? 'none' : '1px solid #fed7aa',
             }}
           >
             <p style={{ margin: 0 }}>
-              Unable to load condition assessment. Please retry after refreshing the capture.
+              {capturedProperty?.propertyId === 'offline-property'
+                ? 'Condition assessment not available in offline mode. Capture a real property to access inspection data.'
+                : 'Unable to load condition assessment. Please retry after refreshing the capture.'}
             </p>
           </div>
         ) : (

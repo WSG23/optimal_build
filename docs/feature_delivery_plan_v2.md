@@ -441,16 +441,19 @@
 - ✅ Finance blueprint (capital stack targets, debt facilities, equity waterfall, sensitivity bands) returned with developer capture for direct Phase 2C ingestion
 - ✅ Visualization stub exposes per-asset massing layers and colour legend so frontend can wire Phase 2B preview scaffolding
 - ✅ Asset mix reacts to quick analysis metrics (vacancy, rent softness, transit gaps) and property headroom to rebalance allocations and risk notes dynamically
+- ✅ Asset optimiser upgraded to curve-driven scoring with constraint logs, confidence scores, and scenario variants (Oct 22 2025)
+- ✅ Preview job pipeline enqueues background renders and exposes polling/refresh endpoints (Oct 22 2025)
+- ✅ NHB Historic Sites, National Monuments, and Heritage Trails merged with URA overlays; developer API returns rich `heritage_context` for optimiser + finance flows (Oct 22 2025)
 
 **What's Missing (Next Focus):**
-- ❌ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use)
-- ❌ Scenario-aware 3D preview generation and UI integration
-- ❌ Heritage constraint overlays feeding the optimization stack
+- ✅ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use) with scoring engine, constraint logging, and scenario variants
+- ❌ Scenario-aware 3D preview generation and UI integration ([Phase 2B Visualisation Delivery Plan](phase2b_visualisation_stub.md))
+- 🟡 Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
 
 **Kickoff Deliverables (Planned):**
 - ✅ Stand up developer-specific GPS logging endpoint and API client so Site Acquisition no longer proxies through the agent route
 - ✅ Extend capture response with zoning envelope + max buildable metrics (baseline commercial template)
-- ❌ Complete asset-specific optimisation models (beyond baseline heuristics) and link to 3D preview shell (office/commercial first)
+- ✅ Complete asset-specific optimisation models (beyond baseline heuristics) and link to 3D preview shell (office/commercial first)
 - Update developer UI to surface the dedicated capture flow and enriched feasibility snapshots
 
 ---

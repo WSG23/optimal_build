@@ -52,15 +52,18 @@ def test_feasibility_summary_uses_envelope_inputs() -> None:
     assert response.asset_optimizations[0].fitout_cost_psm is not None
     assert response.asset_mix_summary is not None
     assert response.asset_mix_summary.total_estimated_revenue_sgd is not None
+    assert isinstance(response.constraint_log, list)
+    assert response.optimizer_confidence is not None
 
 
 def test_build_asset_mix_expansion_adjusts_allocations() -> None:
-    plans = build_asset_mix(
+    outcome = build_asset_mix(
         "commercial",
         achievable_gfa_sqm=20000.0,
         additional_gfa=6000.0,
         existing_use="Commercial Tower",
     )
+    plans = outcome.plans
 
     office_plan = next(plan for plan in plans if plan.asset_type == "office")
     amenities_plan = next(plan for plan in plans if plan.asset_type == "amenities")
@@ -69,10 +72,12 @@ def test_build_asset_mix_expansion_adjusts_allocations() -> None:
     assert office_plan.risk_level == "elevated"
     assert any("density" in note.lower() for note in office_plan.notes)
     assert amenities_plan.allocation_pct < 15.0
+    assert outcome.confidence is not None
+    assert outcome.scenarios
 
 
 def test_build_asset_mix_vacancy_rebalances_mix() -> None:
-    plans = build_asset_mix(
+    outcome = build_asset_mix(
         "commercial",
         achievable_gfa_sqm=15000.0,
         additional_gfa=1000.0,
@@ -81,6 +86,7 @@ def test_build_asset_mix_vacancy_rebalances_mix() -> None:
         current_gfa_sqm=11000.0,
         quick_metrics={"existing_vacancy_rate": 0.18},
     )
+    plans = outcome.plans
 
     office_plan = next(plan for plan in plans if plan.asset_type == "office")
     amenities_plan = next(plan for plan in plans if plan.asset_type == "amenities")
@@ -88,3 +94,26 @@ def test_build_asset_mix_vacancy_rebalances_mix() -> None:
     assert office_plan.allocation_pct < 60.0
     assert any("vacancy" in note.lower() for note in office_plan.notes)
     assert amenities_plan.allocation_pct > 15.0
+    assert isinstance(outcome.constraint_log, tuple)
+
+
+def test_build_asset_mix_user_constraints_logged() -> None:
+    outcome = build_asset_mix(
+        "commercial",
+        achievable_gfa_sqm=12000.0,
+        quick_metrics={
+            "user_constraints": {"min": {"retail": 40.0}},
+            "existing_vacancy_rate": 0.1,
+        },
+    )
+    retail_plan = next(plan for plan in outcome.plans if plan.asset_type == "retail")
+    assert retail_plan.allocation_pct >= 39.0
+    assert retail_plan.constraint_violations
+    assert any(
+        violation.constraint_type == "user_min_allocation"
+        for violation in retail_plan.constraint_violations
+    )
+    assert any(
+        violation.constraint_type == "user_min_allocation"
+        for violation in outcome.constraint_log
+    )

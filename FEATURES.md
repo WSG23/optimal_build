@@ -1,7 +1,7 @@
 # COMPLETE COMPREHENSIVE COMMERCIAL DEVELOPMENT PLATFORM
 Singapore Projects | Global Users | All Property Types | All Development Scenarios
 
-> **Working roadmap:** day-to-day feature delivery status is tracked in `docs/feature_delivery_plan.md`. Check that document to see the latest milestone, open threads, and where development left off.
+> **Working roadmap:** day-to-day feature delivery status is tracked in `docs/feature_delivery_plan_v2.md`. Check that document to see the latest milestone, open threads, and where development left off.
 
 ## 🌍 GEOGRAPHIC & USER SCOPE
 

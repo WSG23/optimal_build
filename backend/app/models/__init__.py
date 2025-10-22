@@ -38,6 +38,7 @@ else:
         finance,
         imports,
         overlay,
+        preview,
         property as property_model,
         rkp,
         rulesets,
@@ -55,6 +56,7 @@ else:
         "finance": finance,
         "imports": imports,
         "overlay": overlay,
+        "preview": preview,
         "property": property_model,
         "listing_integration": listing_integration,
         "projects": projects,  # Added: development projects model

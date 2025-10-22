@@ -52,8 +52,10 @@ export interface DeveloperVisualizationSummary {
   previewAvailable: boolean
   notes: string[]
   conceptMeshUrl: string | null
+  thumbnailUrl: string | null
   cameraOrbitHint: Record<string, number> | null
   previewSeed: number | null
+  previewJobId: string | null
   massingLayers: DeveloperMassingLayer[]
   colorLegend: DeveloperColorLegendEntry[]
 }
@@ -79,6 +81,8 @@ export interface SiteAcquisitionResult extends GpsCaptureSummary {
   visualization: DeveloperVisualizationSummary
   optimizations: DeveloperAssetOptimization[]
   financialSummary: DeveloperFinancialSummary
+  heritageContext: DeveloperHeritageContext | null
+  previewJobs: DeveloperPreviewJob[]
 }
 
 export interface DeveloperAssetOptimization {
@@ -106,6 +110,19 @@ export interface DeveloperFinancialSummary {
   dominantRiskProfile: string | null
   notes: string[]
   financeBlueprint: DeveloperFinanceBlueprint | null
+}
+
+export interface DeveloperHeritageContext {
+  flag: boolean
+  risk: string | null
+  notes: string[]
+  constraints: string[]
+  assumption: string | null
+  overlay: {
+    name: string | null
+    source: string | null
+    heritagePremiumPct: number | null
+  } | null
 }
 
 export interface DeveloperCapitalStructureScenario {
@@ -336,6 +353,19 @@ function mapConditionAssessmentPayload(
   }
 }
 
+export interface DeveloperPreviewJob {
+  id: string
+  propertyId: string
+  scenario: string
+  status: string
+  previewUrl: string | null
+  thumbnailUrl: string | null
+  requestedAt: string
+  startedAt: string | null
+  finishedAt: string | null
+  message: string | null
+}
+
 const DEVELOPER_GPS_ENDPOINT = '/api/v1/developers/properties/log-gps'
 
 interface RawDeveloperEnvelope {
@@ -389,6 +419,7 @@ interface RawDeveloperGpsResponse {
   build_envelope?: RawDeveloperEnvelope | null
   visualization?: RawDeveloperVisualization | null
   optimizations?: Array<Record<string, unknown>> | null
+  heritage_context?: unknown
 }
 
 function coerceNumeric(value: unknown): number | null {
@@ -407,6 +438,20 @@ function coerceString(value: unknown): string | null {
     return value
   }
   return null
+}
+
+function boolish(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'number') {
+    return value !== 0
+  }
+  if (typeof value === 'string') {
+    const normalised = value.trim().toLowerCase()
+    return ['true', 't', 'yes', 'y', '1'].includes(normalised)
+  }
+  return false
 }
 
 function roundOptional(value: number | null): number | null {
@@ -470,6 +515,8 @@ function mapDeveloperVisualization(
       : false
   const conceptMeshUrl =
     coerceString(payload?.concept_mesh_url) ?? coerceString(payload?.conceptMeshUrl) ?? null
+  const thumbnailUrl =
+    coerceString(payload?.thumbnail_url) ?? coerceString(payload?.thumbnailUrl) ?? null
   const cameraOrbitHint =
     typeof payload?.camera_orbit_hint === 'object' && payload?.camera_orbit_hint
       ? (payload?.camera_orbit_hint as Record<string, number>)
@@ -477,6 +524,8 @@ function mapDeveloperVisualization(
       ? (payload?.cameraOrbitHint as Record<string, number>)
       : null
   const previewSeed = coerceNumeric(payload?.preview_seed ?? payload?.previewSeed)
+  const previewJobId =
+    coerceString(payload?.preview_job_id) ?? coerceString(payload?.previewJobId) ?? null
   const notes = Array.isArray(payload?.notes)
     ? payload.notes
         .map((note) => coerceString(note) ?? '')
@@ -565,8 +614,10 @@ function mapDeveloperVisualization(
     previewAvailable: preview,
     notes,
     conceptMeshUrl,
+    thumbnailUrl,
     cameraOrbitHint,
     previewSeed: previewSeed ?? null,
+    previewJobId,
     massingLayers,
     colorLegend,
   }
@@ -644,6 +695,83 @@ function mapDeveloperOptimizations(
       }
     })
     .filter((item): item is DeveloperAssetOptimization => item !== null)
+}
+
+function mapHeritageContext(payload: unknown): DeveloperHeritageContext | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const source = payload as Record<string, unknown>
+  const risk = coerceString(source.risk) ?? null
+  const notes = Array.isArray(source.notes)
+    ? source.notes
+        .map((entry) => coerceString(entry) ?? '')
+        .filter((entry): entry is string => entry.length > 0)
+    : []
+  const constraints = Array.isArray(source.constraints)
+    ? source.constraints
+        .map((entry) => coerceString(entry) ?? '')
+        .filter((entry): entry is string => entry.length > 0)
+    : []
+
+  let overlay: DeveloperHeritageContext['overlay'] = null
+  const overlayRaw = source.overlay
+  if (overlayRaw && typeof overlayRaw === 'object') {
+    const raw = overlayRaw as Record<string, unknown>
+    overlay = {
+      name: coerceString(raw.name) ?? coerceString(raw.overlayName) ?? null,
+      source: coerceString(raw.source) ?? null,
+      heritagePremiumPct:
+        coerceNumeric(raw.heritage_premium_pct) ?? coerceNumeric(raw.heritagePremiumPct) ?? null,
+    }
+  }
+
+  const flagValue = source.flag
+  const flag = typeof flagValue === 'boolean' ? flagValue : boolish(flagValue)
+
+  return {
+    flag,
+    risk,
+    notes,
+    constraints,
+    assumption: coerceString(source.assumption) ?? null,
+    overlay,
+  }
+}
+
+function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
+  if (!Array.isArray(payload)) {
+    return []
+  }
+
+  return payload
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null
+      }
+      const item = entry as Record<string, unknown>
+      const id = coerceString(item.id) ?? coerceString(item.preview_job_id)
+      const propertyId = coerceString(item.property_id) ?? coerceString(item.propertyId)
+      const scenario = coerceString(item.scenario)
+      const status = coerceString(item.status)
+      if (!id || !propertyId || !scenario || !status) {
+        return null
+      }
+      return {
+        id,
+        propertyId,
+        scenario,
+        status,
+        previewUrl: coerceString(item.preview_url) ?? coerceString(item.previewUrl) ?? null,
+        thumbnailUrl: coerceString(item.thumbnail_url) ?? coerceString(item.thumbnailUrl) ?? null,
+        requestedAt: coerceString(item.requested_at) ?? coerceString(item.requestedAt) ?? '',
+        startedAt: coerceString(item.started_at) ?? coerceString(item.startedAt) ?? null,
+        finishedAt: coerceString(item.finished_at) ?? coerceString(item.finishedAt) ?? null,
+        message: coerceString(item.message) ?? null,
+      }
+    })
+    .filter((entry): entry is DeveloperPreviewJob => entry !== null)
 }
 
 function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null {
@@ -1147,12 +1275,25 @@ export async function capturePropertyForDevelopment(
         financeBlueprint: null,
       }
 
+  const heritageContext = rawPayload
+    ? mapHeritageContext(
+        rawPayload.heritage_context ??
+          (rawPayload as Record<string, unknown>).heritageContext,
+      )
+    : null
+
+  const previewJobs = rawPayload?.preview_jobs
+    ? mapPreviewJobs(rawPayload.preview_jobs)
+    : []
+
   return {
     ...summary,
     buildEnvelope,
     visualization,
     optimizations,
     financialSummary,
+    heritageContext,
+    previewJobs,
   }
 }
 
@@ -1186,6 +1327,47 @@ export async function updateChecklistItem(
   return updateChecklistItemFromAgents(checklistId, updates)
 }
 
+export async function fetchPreviewJob(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<DeveloperPreviewJob | null> {
+  const response = await fetch(buildUrl(`api/v1/developers/preview-jobs/${jobId}`), {
+    method: 'GET',
+    signal,
+  })
+  if (!response.ok) {
+    return null
+  }
+  const payload = await response.json()
+  const [job] = mapPreviewJobs([payload])
+  return job ?? null
+}
+
+export async function refreshPreviewJob(jobId: string): Promise<DeveloperPreviewJob | null> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/preview-jobs/${jobId}/refresh`),
+    { method: 'POST' },
+  )
+  if (!response.ok) {
+    return null
+  }
+  const payload = await response.json()
+  const [job] = mapPreviewJobs([payload])
+  return job ?? null
+}
+
+export async function listPreviewJobs(propertyId: string): Promise<DeveloperPreviewJob[]> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/properties/${propertyId}/preview-jobs`),
+    { method: 'GET' },
+  )
+  if (!response.ok) {
+    return []
+  }
+  const payload = await response.json()
+  return mapPreviewJobs(payload)
+}
+
 /**
  * Fetch developer condition assessment for the property.
  */
@@ -1193,6 +1375,11 @@ export async function fetchConditionAssessment(
   propertyId: string,
   scenario?: DevelopmentScenario | 'all',
 ): Promise<ConditionAssessment | null> {
+  // Offline property has no backend data - return null gracefully
+  if (propertyId === 'offline-property') {
+    return null
+  }
+
   const params = new URLSearchParams()
   if (scenario && scenario !== 'all') {
     params.append('scenario', scenario)

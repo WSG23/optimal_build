@@ -7,6 +7,9 @@ import pytest
 from backend._compat.datetime import utcnow
 
 from app.api.v1 import developers as developers_api
+from sqlalchemy import select
+
+from app.models.preview import PreviewJob
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address
 from httpx import AsyncClient
@@ -90,6 +93,16 @@ def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
         },
         quick_analysis=quick_analysis,
         timestamp=utcnow(),
+        heritage_overlay={
+            "name": "Telok Ayer Conservation",
+            "risk": "high",
+            "notes": [
+                "Telok Ayer conservation area – facade retention mandatory.",
+                "Consult URA Conservation Department prior to structural works.",
+            ],
+            "heritage_premium_pct": 5.0,
+            "source": "URA",
+        },
     )
 
 
@@ -97,6 +110,7 @@ def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
 async def test_developer_log_property_returns_envelope(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
 ) -> None:
     property_id = uuid4()
     stub_payload = _build_stub_payload(property_id)
@@ -136,6 +150,7 @@ async def test_developer_log_property_returns_envelope(
     assert visualization["status"] in {"ready", "placeholder"}
     assert visualization["preview_available"] is True
     assert visualization["concept_mesh_url"].endswith(".json")
+    assert visualization["preview_job_id"]
     assert visualization["massing_layers"], "Massing layers should be included"
     assert visualization["color_legend"], "Colour legend should be populated"
     assert visualization["massing_layers"], "Massing layers should be included"
@@ -170,6 +185,17 @@ async def test_developer_log_property_returns_envelope(
         "capital_structure"
     ], "Capital structure scenarios should be populated"
 
+    heritage_context = payload["heritage_context"]
+    assert heritage_context["risk"] == "high"
+    assert heritage_context["overlay"]["name"] == "Telok Ayer Conservation"
+    assert any(
+        "conservation area" in note.lower() for note in heritage_context["notes"]
+    )
+
+    preview_jobs = payload["preview_jobs"]
+    assert preview_jobs and preview_jobs[0]["status"] in {"ready", "processing"}
+    preview_job_id = preview_jobs[0]["id"]
+
     property_info = payload["property_info"]
     assert property_info["conservation_status"] == "National Monument"
     assert property_info["is_conservation"] is True
@@ -181,3 +207,29 @@ async def test_developer_log_property_returns_envelope(
         "raw_land",
         "existing_building",
     ]
+
+    async with async_session_factory() as session:
+        jobs = (await session.execute(select(PreviewJob))).scalars().all()
+        assert jobs
+        assert jobs[0].preview_url
+
+    jobs_response = await app_client.get(
+        f"/api/v1/developers/properties/{property_id}/preview-jobs"
+    )
+    assert jobs_response.status_code == 200
+    jobs_payload = jobs_response.json()
+    assert jobs_payload and jobs_payload[0]["id"] == preview_job_id
+
+    job_response = await app_client.get(
+        f"/api/v1/developers/preview-jobs/{preview_job_id}"
+    )
+    assert job_response.status_code == 200
+    job_payload = job_response.json()
+    assert job_payload["status"] in {"ready", "processing"}
+
+    refresh_response = await app_client.post(
+        f"/api/v1/developers/preview-jobs/{preview_job_id}/refresh"
+    )
+    assert refresh_response.status_code == 200
+    refreshed_payload = refresh_response.json()
+    assert refreshed_payload["status"] in {"ready", "processing"}

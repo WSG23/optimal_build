@@ -103,7 +103,7 @@ This section lists ALL 20 instruction and reference files in this repository. Th
 12. **TESTING_ADVISORY.md** - Testing best practices
 13. **TESTING_DOCUMENTATION_SUMMARY.md** - Testing strategy overview
 14. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
-15. **LIVE_TESTING_GUIDE.md** - Manual/UAT testing procedures
+15. **docs/validation/live_testing_guide.md** - Manual/UAT testing procedures
 16. **TEST_ALL_FEATURES.md** - Feature testing checklist
 17. **PROJECT_ROADMAP.md** - High-level project roadmap
 18. **frontend/README_AI_AGENTS.md** - ⚠️ Critical warnings about frontend test harnesses

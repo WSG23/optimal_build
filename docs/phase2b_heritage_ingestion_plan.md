@@ -1,10 +1,27 @@
-# Phase 2B Heritage Overlay Ingestion Plan (v0.2)
+# Phase 2B Heritage Overlay Ingestion Plan (v0.5)
 
 This document outlines the work required to replace the stub `heritage_overlays.json` file with a production ingestion pipeline that sources official heritage/conservation boundaries and makes them available to the optimizer and capture flows.
 
 ---
 
 ## Changelog
+
+**v0.5 (2025-10-22)** - Full NHB coverage (sites, monuments, trails)
+- Added NHB National Monuments (`data/heritage/raw/MonumentsGEOJSON.geojson`) and Heritage Trails (`data/heritage/raw/HeritageTrailsKML.geojson`) to the ingest pipeline; the published bundle now includes 194 features across URA + three NHB sources.
+- CLI `transform`/`load` commands re-run after manual KML→GeoJSON conversion to merge trails.
+- Docs/UI updated so developer capture surfaces heritage overlay source/risk/premium information.
+
+**v0.4 (2025-10-22)** - URA + NHB overlays available in optimiser pipeline
+- NHB Historic Sites GeoJSON downloaded (`data/heritage/raw/nhb_historic_sites.geojson`) and merged with URA polygons – 102 features now ship in `backend/app/data/heritage_overlays.geojson`.
+- CLI transform now handles GeoJSON datasets (Historic Sites) alongside the URA shapefile, converting SVY21 coordinates to WGS84.
+- Developer API surfaces `heritage_context` with overlay metadata so capture/optimiser flows consume risk, notes, and premium information.
+
+**v0.3 (2025-10-22)** - CLI scaffolding + data.gov.sg workflow
+- Added heritage ingestion CLI (`python -m scripts.heritage`) with `fetch`, `transform`, `load`, and `pipeline` commands.
+- Documented data.gov.sg poll-download flow as the canonical source for URA + NHB datasets (no separate URA Maps key required).
+- Stored raw URA conservation shapefile under `data/heritage/raw/ura_conservation/` and normalised output in `data/heritage/processed/`.
+- Load step now copies processed GeoJSON into `backend/app/data/heritage_overlays.geojson` with metadata snapshot.
+- Added regression test for shapefile resolution helper to protect CLI assumptions.
 
 **v0.2 (2025-10-22)** - Technical review polish
 - Added explicit NHB data source links (OneMap, data.gov.sg) with expected columns
@@ -27,14 +44,17 @@ This document outlines the work required to replace the stub `heritage_overlays.
 
 | Dataset | Owner | Format | Notes |
 |---------|-------|--------|-------|
-| URA Conservation Areas | Urban Redevelopment Authority | Shapefile / GeoJSON | Contains conservation boundaries with attributes such as `NAME`, `CATEGORY`, `PLANNING_AREA`. Public data endpoint: https://www.ura.gov.sg/maps/api (requires API key). |
-| National Heritage Board Sites | National Heritage Board | CSV / GeoJSON | Provides nationally significant structures (museums, monuments) with risk/designation levels. **Data sources:** [NHB OneMap Service](https://www.onemap.gov.sg) or [data.gov.sg](https://data.gov.sg) under "National Heritage". Expected columns: `NAME`, `CATEGORY`, `STATUS`, `GEOMETRY`. Format: GeoJSON with Point/Polygon geometries. |
+| URA Conservation Areas | Urban Redevelopment Authority | Shapefile / GeoJSON | Published on [data.gov.sg](https://data.gov.sg/datasets/d_f105660dd749c0aafa1a858f435603f2/view). Latest download stored at `data/heritage/raw/ura_conservation/ura_conservation.zip`. |
+| National Heritage Board Sites | National Heritage Board | CSV / GeoJSON | Historic Sites GeoJSON downloaded via data.gov.sg/OneMap (`data/heritage/raw/nhb_historic_sites.geojson`). |
+| National Heritage Board Monuments | National Heritage Board | GeoJSON | National Monuments GeoJSON downloaded via data.gov.sg/OneMap (`data/heritage/raw/MonumentsGEOJSON.geojson`). |
+| National Heritage Board Heritage Trails | National Heritage Board | GeoJSON (converted from KML) | KML downloaded from data.gov.sg and converted to GeoJSON (`data/heritage/raw/HeritageTrailsKML.geojson`). |
 | Internal Overrides | Product/Heritage team | YAML/JSON | Manual adjustments or overrides (e.g. pilot areas, premium adjustments) to be merged on top of authoritative datasets. **Storage:** `data/heritage/overrides/manual_overrides.yaml` (repo) or S3 bucket `s3://optimal-build-data/heritage/overrides/` (production). |
 
 ### Access Requirements
-1. Submit API access request to URA (owner: Product Ops).
-2. Confirm license terms for NHB dataset (owner: Legal).
-3. Decide on refresh cadence (initially weekly; align on SLA with stakeholders).
+1. Download URA + NHB datasets from data.gov.sg (manual or via CLI) — no credentials required for initial development.
+2. Optional: register for data.gov.sg API key (waitlist open, rate limits enforced from Nov 2025) for higher throughput.
+3. For address geocoding, sign up for a free OneMap account (token refresh every 3 days) — not required for static overlay ingestion.
+4. Decide on refresh cadence (initially weekly; align on SLA with stakeholders).
 
 ---
 
@@ -42,8 +62,10 @@ This document outlines the work required to replace the stub `heritage_overlays.
 
 ```
 fetch_raw_data (CLI)
-  ├─ downloads URA conservation polygons → data/heritage/raw/ura_conservation.geojson
-  ├─ downloads NHB site list → data/heritage/raw/nhb_sites.geojson
+  ├─ downloads URA conservation polygons → data/heritage/raw/ura_conservation.zip
+  ├─ downloads NHB site list → data/heritage/raw/nhb_historic_sites.geojson
+  ├─ downloads NHB monuments → data/heritage/raw/MonumentsGEOJSON.geojson
+  └─ downloads/ingests NHB trails (manual KML conversion) → data/heritage/raw/HeritageTrailsKML.geojson
   └─ fetches override file from repo or S3 → data/heritage/raw/manual_overrides.yaml
 
 transform_boundaries
@@ -58,7 +80,8 @@ load_into_db
   └─ emits audit events
 
 publish_runtime_assets
-  ├─ generates legacy JSON fallback (`backend/app/data/heritage_overlays.json`) for on-device lookups
+  ├─ copies processed GeoJSON into backend/app/data/heritage_overlays.geojson
+  ├─ writes publish metadata (`data/heritage/processed/metadata.json`)
   └─ uploads processed GeoJSON to S3 (if required for frontend)
 ```
 
@@ -70,12 +93,12 @@ data/heritage/
 └── overrides/              # Manual override files (YAML/JSON)
 ```
 
-### Components to Build
-- `scripts/heritage/fetch.py`: fetch raw datasets (requests + API key support).
-- `scripts/heritage/transform.py`: shapely-based transformer producing normalized structures.
-- `scripts/heritage/load.py`: uses SQLAlchemy + `overlay_ingest` to persist polygons.
-- `scripts/heritage/__main__.py`: CLI orchestrator (click/typer) supporting commands: `fetch`, `transform`, `load`, `publish`, and `pipeline` (end-to-end).
-- Prefect/cron job (future) to run weekly refresh; store latest run metadata in Import records.
+### Components Delivered / To Build
+- ✅ `scripts/heritage/fetch.py`: poll-download helper for data.gov.sg datasets (requests-based).
+- ✅ `scripts/heritage/transform.py`: shapely-based transformer (handles URA shapefiles + NHB GeoJSON, converts SVY21 → WGS84, computes bbox/centroid, risk metadata).
+- ✅ `scripts/heritage/load.py`: copies processed GeoJSON into `backend/app/data/` and records publish metadata.
+- ✅ `scripts/heritage/__main__.py`: argparse-based CLI (`fetch`, `transform`, `load`, `pipeline`).
+- ⏳ Prefect/cron job (future) to run weekly refresh; store latest run metadata in Import records.
 
 ### Python Dependencies
 Add to `requirements.txt`:

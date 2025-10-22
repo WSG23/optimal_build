@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field, replace
 from importlib import resources
-from typing import Iterable
+from typing import Iterable, Mapping, Sequence
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +29,42 @@ class AssetOptimizationPlan:
     estimated_revenue_sgd: float | None = None
     estimated_capex_sgd: float | None = None
     heritage_premium_pct: float | None = None
+    nia_sqm: float | None = None
+    estimated_height_m: float | None = None
+    total_parking_bays_required: float | None = None
+    revenue_basis: str | None = None
+    constraint_violations: tuple["ConstraintViolation", ...] = ()
+    confidence_score: float | None = None
+    alternative_scenarios: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintViolation:
+    """Records when a constraint had to be relaxed or enforced."""
+
+    constraint_type: str
+    severity: str
+    message: str
+    asset_type: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AssetOptimizationScenario:
+    """Alternative optimisation state for sensitivity analysis."""
+
+    name: str
+    plans: tuple[AssetOptimizationPlan, ...]
+    description: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AssetOptimizationOutcome:
+    """Container returned by the optimiser with metadata."""
+
+    plans: tuple[AssetOptimizationPlan, ...]
+    constraint_log: tuple[ConstraintViolation, ...] = ()
+    scenarios: tuple[AssetOptimizationScenario, ...] = ()
+    confidence: float | None = None
 
 
 _PROFILE_CONFIG = {
@@ -69,6 +105,57 @@ def _load_curve_config() -> dict[str, object]:
             "heritage_medium": 3,
             "expansion": 4,
         },
+        "scoring": {
+            "weights": {
+                "noi": 0.55,
+                "risk": 0.2,
+                "market": 0.15,
+                "heritage": 0.1,
+            },
+            "adjustment_pct": 8.0,
+            "risk_penalties": {
+                "low": 0.05,
+                "balanced": 0.1,
+                "moderate": 0.25,
+                "elevated": 0.4,
+                "high": 0.6,
+                "severe": 0.75,
+            },
+            "heritage_uplift": {
+                "none": 0.0,
+                "low": -0.05,
+                "medium": -0.1,
+                "high": -0.2,
+            },
+            "market_vacancy_thresholds": {"balanced": 0.12, "soft": 0.18},
+            "market_rent_uplift_psm": 20.0,
+        },
+        "confidence": {
+            "baseline": 0.75,
+            "score_bonus": 0.2,
+            "violation_penalty": 0.15,
+        },
+        "heritage_max_allocation": {
+            "high": {
+                "office": 55.0,
+                "retail": 45.0,
+                "hospitality": 35.0,
+                "residential": 65.0,
+                "industrial": 60.0,
+            },
+            "medium": {
+                "office": 60.0,
+                "retail": 50.0,
+                "hospitality": 45.0,
+                "residential": 70.0,
+                "industrial": 65.0,
+            },
+        },
+        "scenario_adjustments": {
+            "expansion_high": 8.0,
+            "expansion": 4.0,
+            "reposition": -6.0,
+        },
     }
 
     try:
@@ -108,6 +195,154 @@ def _maybe_int(value: object) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _per_sqm_noi(plan: AssetOptimizationPlan) -> float:
+    rent = plan.rent_psm_month or 0.0
+    vacancy = (plan.stabilised_vacancy_pct or 0.0) / 100.0
+    opex = (plan.opex_pct_of_rent or 0.0) / 100.0
+    efficiency = plan.nia_efficiency or 1.0
+    gross = rent * 12.0 * efficiency
+    noi = gross * max(0.0, 1.0 - vacancy) * max(0.0, 1.0 - opex)
+    return max(noi, 0.0)
+
+
+def _normalise(values: Sequence[float]) -> list[float]:
+    if not values:
+        return []
+    minimum = min(values)
+    maximum = max(values)
+    if abs(maximum - minimum) < 1e-6:
+        return [0.5 for _ in values]
+    span = maximum - minimum
+    return [(value - minimum) / span for value in values]
+
+
+def _calculate_market_factor(
+    plan: AssetOptimizationPlan,
+    metrics: Mapping[str, float | str] | None,
+    scoring_cfg: Mapping[str, object],
+) -> float:
+    if not metrics:
+        return 0.0
+    factor = 0.0
+    thresholds = scoring_cfg.get("market_vacancy_thresholds", {})
+    vacancy = metrics.get("existing_vacancy_rate")
+    if isinstance(vacancy, (int, float)):
+        soft = float(thresholds.get("soft", 0.18))
+        balanced = float(thresholds.get("balanced", 0.12))
+        if vacancy >= soft:
+            factor -= 0.5
+        elif vacancy >= balanced:
+            factor -= 0.2
+        else:
+            factor += 0.2
+    avg_rent = metrics.get("existing_average_rent_psm")
+    if isinstance(avg_rent, (int, float)) and plan.rent_psm_month:
+        rent_gap = plan.rent_psm_month - float(avg_rent)
+        uplift = float(scoring_cfg.get("market_rent_uplift_psm", 20.0))
+        if rent_gap >= uplift:
+            factor += 0.3
+        elif rent_gap <= -uplift:
+            factor -= 0.3
+    mrt_count = metrics.get("underused_mrt_count")
+    if isinstance(mrt_count, (int, float)):
+        min_mrt = float(_CURVE_CONFIG.get("transit_min_mrt", 1.0))
+        if mrt_count < min_mrt:
+            # Penalise transit-light projects unless they are amenities/community.
+            if plan.asset_type != "amenities":
+                factor -= 0.2
+    return factor
+
+
+def _calculate_heritage_factor(
+    plan: AssetOptimizationPlan,
+    heritage_enabled: bool,
+    heritage_risk: str | None,
+    scoring_cfg: Mapping[str, object],
+) -> float:
+    if not heritage_enabled:
+        return 0.0
+    uplift_map = scoring_cfg.get("heritage_uplift", {})
+    risk = (heritage_risk or "low").lower()
+    factor = float(uplift_map.get(risk, uplift_map.get("low", 0.0)))
+    # Penalise high heritage premiums as they increase cost.
+    premium = plan.heritage_premium_pct or 0.0
+    factor -= min(premium / 100.0, 0.25)
+    # Amenities typically align well with conservation.
+    if plan.asset_type == "amenities":
+        factor += 0.1
+    return factor
+
+
+def _apply_scoring_adjustments(
+    plans: list[AssetOptimizationPlan],
+    *,
+    quick_metrics: Mapping[str, float | str] | None,
+    heritage: bool,
+    heritage_risk: str | None,
+) -> tuple[list[AssetOptimizationPlan], dict[str, float], dict[str, float]]:
+    scoring_cfg = _CURVE_CONFIG.get("scoring", {})
+    weights = scoring_cfg.get("weights", {})
+    adjustment_pct = float(scoring_cfg.get("adjustment_pct", 8.0))
+    risk_penalties = scoring_cfg.get("risk_penalties", {})
+
+    noi_values = [_per_sqm_noi(plan) for plan in plans]
+    noi_scores = _normalise(noi_values)
+
+    updated: list[AssetOptimizationPlan] = []
+    raw_scores: dict[str, float] = {}
+    normalized_scores: dict[str, float] = {}
+
+    min_score = None
+    max_score = None
+    for idx, plan in enumerate(plans):
+        noi_component = noi_scores[idx] if idx < len(noi_scores) else 0.5
+        risk_level = (plan.risk_level or "balanced").lower()
+        risk_penalty = float(
+            risk_penalties.get(risk_level, risk_penalties.get("balanced", 0.1))
+        )
+        market_factor = _calculate_market_factor(plan, quick_metrics, scoring_cfg)
+        heritage_factor = _calculate_heritage_factor(
+            plan, heritage, heritage_risk, scoring_cfg
+        )
+        score = (
+            weights.get("noi", 0.0) * noi_component
+            - weights.get("risk", 0.0) * risk_penalty
+            + weights.get("market", 0.0) * market_factor
+            + weights.get("heritage", 0.0) * heritage_factor
+        )
+        raw_scores[plan.asset_type] = score
+        if min_score is None or score < min_score:
+            min_score = score
+        if max_score is None or score > max_score:
+            max_score = score
+
+    score_span = (
+        (max_score - min_score)
+        if max_score is not None and min_score is not None
+        else 0.0
+    )
+    for plan in plans:
+        score = raw_scores[plan.asset_type]
+        if score_span and score_span > 1e-6:
+            normalised = (score - float(min_score)) / score_span
+        else:
+            normalised = 0.5
+        normalized_scores[plan.asset_type] = normalised
+        delta = (normalised - 0.5) * adjustment_pct
+        if abs(delta) < 1e-3:
+            updated.append(plan)
+            continue
+        note_delta = f"Score-adjusted allocation {'+' if delta >= 0 else ''}{delta:.1f}pp based on NOI, risk, and market signals."
+        notes = list(plan.notes)
+        if note_delta not in notes:
+            notes.append(note_delta)
+        updated.append(
+            replace(plan, allocation_pct=plan.allocation_pct + delta, notes=notes)
+        )
+
+    return updated, raw_scores, normalized_scores
 
 
 def _load_asset_profiles() -> dict[str, list[AssetOptimizationPlan]]:
@@ -525,6 +760,276 @@ def _apply_intensity_adjustments(
     return _rebalance_plans(plans)
 
 
+def _log_violation(
+    plan_constraints: dict[str, list[ConstraintViolation]],
+    constraint_log: list[ConstraintViolation],
+    entry: ConstraintViolation,
+) -> None:
+    constraint_log.append(entry)
+    if entry.asset_type:
+        entries = plan_constraints.setdefault(entry.asset_type, [])
+        entries.append(entry)
+
+
+def _enforce_user_constraints(
+    plans: list[AssetOptimizationPlan],
+    *,
+    user_constraints: Mapping[str, Mapping[str, float]] | None,
+    plan_constraints: dict[str, list[ConstraintViolation]],
+    constraint_log: list[ConstraintViolation],
+) -> list[AssetOptimizationPlan]:
+    if not user_constraints:
+        return plans
+
+    min_constraints = {
+        key.lower(): float(value)
+        for key, value in (user_constraints.get("min") or {}).items()
+    }
+    max_constraints = {
+        key.lower(): float(value)
+        for key, value in (user_constraints.get("max") or {}).items()
+    }
+
+    updated = list(plans)
+    changed = True
+    iterations = 0
+    while changed and iterations < 3:
+        iterations += 1
+        changed = False
+        for idx, plan in enumerate(updated):
+            key = plan.asset_type.lower()
+            min_target = min_constraints.get(key)
+            if min_target is not None and plan.allocation_pct < min_target - 0.01:
+                violation = ConstraintViolation(
+                    constraint_type="user_min_allocation",
+                    severity="warning",
+                    message=(
+                        f"Requested minimum {min_target:.1f}% for {plan.asset_type}; achieved "
+                        f"{min_target:.1f}% after redistribution."
+                    ),
+                    asset_type=plan.asset_type,
+                )
+                _log_violation(plan_constraints, constraint_log, violation)
+                updated[idx] = replace(plan, allocation_pct=min_target)
+                changed = True
+        if changed:
+            updated = _rebalance_plans(updated)
+        for idx, plan in enumerate(updated):
+            key = plan.asset_type.lower()
+            max_target = max_constraints.get(key)
+            if max_target is not None and plan.allocation_pct > max_target + 0.01:
+                violation = ConstraintViolation(
+                    constraint_type="user_max_allocation",
+                    severity="warning",
+                    message=(
+                        f"Requested maximum {max_target:.1f}% for {plan.asset_type}; capped allocation."
+                    ),
+                    asset_type=plan.asset_type,
+                )
+                _log_violation(plan_constraints, constraint_log, violation)
+                updated[idx] = replace(plan, allocation_pct=max_target)
+                changed = True
+        if changed:
+            updated = _rebalance_plans(updated)
+
+    # Final pass to flag unresolved constraint gaps.
+    for plan in updated:
+        key = plan.asset_type.lower()
+        min_target = min_constraints.get(key)
+        if min_target is not None and plan.allocation_pct < min_target - 0.5:
+            violation = ConstraintViolation(
+                constraint_type="user_min_allocation",
+                severity="error",
+                message=(
+                    f"Unable to meet minimum {min_target:.1f}% for {plan.asset_type}; achieved "
+                    f"{plan.allocation_pct:.1f}% due to other constraints."
+                ),
+                asset_type=plan.asset_type,
+            )
+            _log_violation(plan_constraints, constraint_log, violation)
+        max_target = max_constraints.get(key)
+        if max_target is not None and plan.allocation_pct > max_target + 0.5:
+            violation = ConstraintViolation(
+                constraint_type="user_max_allocation",
+                severity="error",
+                message=(
+                    f"Unable to respect maximum {max_target:.1f}% for {plan.asset_type}; achieved "
+                    f"{plan.allocation_pct:.1f}% due to other constraints."
+                ),
+                asset_type=plan.asset_type,
+            )
+            _log_violation(plan_constraints, constraint_log, violation)
+
+    return updated
+
+
+def _apply_heritage_caps(
+    plans: list[AssetOptimizationPlan],
+    *,
+    heritage_risk: str | None,
+    plan_constraints: dict[str, list[ConstraintViolation]],
+    constraint_log: list[ConstraintViolation],
+) -> list[AssetOptimizationPlan]:
+    if not heritage_risk:
+        return plans
+    cap_config = _CURVE_CONFIG.get("heritage_max_allocation", {})
+    caps = cap_config.get(heritage_risk.lower())
+    if not caps:
+        return plans
+
+    updated = list(plans)
+    changed = False
+    for idx, plan in enumerate(plans):
+        cap = caps.get(plan.asset_type.lower()) or caps.get(plan.asset_type)
+        if cap is None:
+            continue
+        if plan.allocation_pct > cap + 0.01:
+            violation = ConstraintViolation(
+                constraint_type="heritage",
+                severity="warning",
+                message=(
+                    f"Heritage context limits {plan.asset_type} allocation to {cap:.1f}% "
+                    f"(requested {plan.allocation_pct:.1f}%)."
+                ),
+                asset_type=plan.asset_type,
+            )
+            _log_violation(plan_constraints, constraint_log, violation)
+            updated[idx] = replace(plan, allocation_pct=cap)
+            changed = True
+
+    if changed:
+        updated = _rebalance_plans(updated)
+
+    return updated
+
+
+def _derive_scenario_tags(state: str) -> list[str]:
+    if state == "expansion_high":
+        return ["expansion_high", "expansion"]
+    if state == "expansion":
+        return ["expansion", "reposition"]
+    if state == "reposition":
+        return ["reposition", "steady"]
+    return ["expansion", "reposition"]
+
+
+def _finalise_plans(
+    plans: Sequence[AssetOptimizationPlan],
+    *,
+    achievable_gfa_sqm: float | None,
+    site_area_sqm: float | None,
+    heritage: bool,
+    plan_constraints: Mapping[str, Sequence[ConstraintViolation]],
+    plan_confidences: Mapping[str, float],
+    scenario_state: str,
+) -> list[AssetOptimizationPlan]:
+    finalised: list[AssetOptimizationPlan] = []
+    alternative_tags = _derive_scenario_tags(scenario_state)
+    for plan in plans:
+        allocated = None
+        nia = None
+        revenue = None
+        capex = None
+        parking = None
+        estimated_height = None
+        if achievable_gfa_sqm is not None:
+            allocated = max(achievable_gfa_sqm * (plan.allocation_pct / 100.0), 0.0)
+            if plan.nia_efficiency:
+                nia = allocated * plan.nia_efficiency
+        if allocated is not None and plan.fitout_cost_psm:
+            heritage_multiplier = 1.0
+            if heritage and plan.heritage_premium_pct:
+                heritage_multiplier += plan.heritage_premium_pct / 100.0
+            capex = allocated * plan.fitout_cost_psm * heritage_multiplier
+        if allocated is not None and plan.rent_psm_month and plan.nia_efficiency:
+            efficiency = plan.nia_efficiency or 0.0
+            vacancy = (plan.stabilised_vacancy_pct or 0.0) / 100.0
+            opex = (plan.opex_pct_of_rent or 0.0) / 100.0
+            effective_area = allocated * efficiency
+            gross_revenue = plan.rent_psm_month * 12.0 * effective_area
+            revenue = gross_revenue * max(0.0, 1.0 - vacancy) * max(0.0, 1.0 - opex)
+        if allocated is not None and plan.parking_ratio_per_1000sqm:
+            parking = (allocated / 1000.0) * plan.parking_ratio_per_1000sqm
+        if site_area_sqm and site_area_sqm > 0 and allocated is not None:
+            floor_height = plan.target_floor_height_m or 4.0
+            estimated_height = (allocated / site_area_sqm) * floor_height
+
+        constraint_entries = tuple(plan_constraints.get(plan.asset_type, ()))
+        confidence = plan_confidences.get(plan.asset_type)
+        finalised.append(
+            replace(
+                plan,
+                allocation_pct=round(plan.allocation_pct, 2),
+                allocated_gfa_sqm=(
+                    round(allocated, 2) if allocated is not None else None
+                ),
+                nia_sqm=round(nia, 2) if nia is not None else None,
+                estimated_revenue_sgd=(
+                    round(revenue, 2) if revenue is not None else None
+                ),
+                estimated_capex_sgd=round(capex, 2) if capex is not None else None,
+                total_parking_bays_required=(
+                    round(parking, 2) if parking is not None else None
+                ),
+                estimated_height_m=(
+                    round(estimated_height, 1) if estimated_height is not None else None
+                ),
+                revenue_basis=(
+                    "annual_noi" if revenue is not None else plan.revenue_basis
+                ),
+                constraint_violations=constraint_entries,
+                confidence_score=confidence,
+                alternative_scenarios=tuple(alternative_tags),
+            )
+        )
+    return finalised
+
+
+def _build_scenario_variants(
+    plans: Sequence[AssetOptimizationPlan],
+    *,
+    profile_key: str,
+    achievable_gfa_sqm: float | None,
+    site_area_sqm: float | None,
+    heritage: bool,
+) -> tuple[AssetOptimizationScenario, ...]:
+    config = _PROFILE_CONFIG.get(profile_key) or {}
+    primary = config.get("primary")
+    if not primary:
+        return ()
+    adjustments = _CURVE_CONFIG.get("scenario_adjustments", {})
+    variants: list[AssetOptimizationScenario] = []
+    for name, delta in adjustments.items():
+        adjusted: list[AssetOptimizationPlan] = []
+        for plan in plans:
+            if plan.asset_type == primary:
+                adjusted.append(
+                    replace(plan, allocation_pct=max(plan.allocation_pct + delta, 0.0))
+                )
+            else:
+                adjusted.append(plan)
+        adjusted = _rebalance_plans(adjusted)
+        finalised = _finalise_plans(
+            adjusted,
+            achievable_gfa_sqm=achievable_gfa_sqm,
+            site_area_sqm=site_area_sqm,
+            heritage=heritage,
+            plan_constraints={},
+            plan_confidences={
+                plan.asset_type: plan.confidence_score or 0.6 for plan in adjusted
+            },
+            scenario_state=name,
+        )
+        variants.append(
+            AssetOptimizationScenario(
+                name=name,
+                plans=tuple(finalised),
+                description=f"Sensitivity variant applying {delta:+.1f}pp to {primary}.",
+            )
+        )
+    return tuple(variants)
+
+
 def _normalise_land_use(value: str) -> str:
     lowered = value.lower()
     if any(keyword in lowered for keyword in ("residential", "apartment", "condo")):
@@ -549,30 +1054,31 @@ def build_asset_mix(
     site_area_sqm: float | None = None,
     current_gfa_sqm: float | None = None,
     quick_metrics: dict[str, float | str] | None = None,
-) -> list[AssetOptimizationPlan]:
+) -> AssetOptimizationOutcome:
     """Return the recommended asset allocation for the provided land use."""
 
     profile_key = _normalise_land_use(land_use)
     base_profile = _ASSET_PROFILES.get(profile_key) or _ASSET_PROFILES["mixed_use"]
     plans: list[AssetOptimizationPlan] = []
     for plan in base_profile:
-        cloned = AssetOptimizationPlan(
-            asset_type=plan.asset_type,
-            allocation_pct=plan.allocation_pct,
-            stabilised_vacancy_pct=plan.stabilised_vacancy_pct,
-            opex_pct_of_rent=plan.opex_pct_of_rent,
-            nia_efficiency=plan.nia_efficiency,
-            target_floor_height_m=plan.target_floor_height_m,
-            parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
-            heritage_notes=list(plan.heritage_notes),
-            notes=list(plan.notes),
-            rent_psm_month=plan.rent_psm_month,
-            fitout_cost_psm=plan.fitout_cost_psm,
-            absorption_months=plan.absorption_months,
-            risk_level=plan.risk_level,
-            heritage_premium_pct=plan.heritage_premium_pct,
+        plans.append(
+            AssetOptimizationPlan(
+                asset_type=plan.asset_type,
+                allocation_pct=plan.allocation_pct,
+                stabilised_vacancy_pct=plan.stabilised_vacancy_pct,
+                opex_pct_of_rent=plan.opex_pct_of_rent,
+                nia_efficiency=plan.nia_efficiency,
+                target_floor_height_m=plan.target_floor_height_m,
+                parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
+                heritage_notes=list(plan.heritage_notes),
+                notes=list(plan.notes),
+                rent_psm_month=plan.rent_psm_month,
+                fitout_cost_psm=plan.fitout_cost_psm,
+                absorption_months=plan.absorption_months,
+                risk_level=plan.risk_level,
+                heritage_premium_pct=plan.heritage_premium_pct,
+            )
         )
-        plans.append(cloned)
 
     if additional_gfa is not None:
         if additional_gfa > 0:
@@ -595,100 +1101,39 @@ def build_asset_mix(
         quick_metrics=quick_metrics,
     )
 
-    total_allocation = sum(plan.allocation_pct for plan in plans)
-    if total_allocation != 100.0 and total_allocation > 0:
-        scale = 100.0 / total_allocation
-        for index, plan in enumerate(plans):
-            plans[index] = AssetOptimizationPlan(
-                asset_type=plan.asset_type,
-                allocation_pct=round(plan.allocation_pct * scale, 1),
-                stabilised_vacancy_pct=plan.stabilised_vacancy_pct,
-                opex_pct_of_rent=plan.opex_pct_of_rent,
-                nia_efficiency=plan.nia_efficiency,
-                target_floor_height_m=plan.target_floor_height_m,
-                parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
-                heritage_notes=list(plan.heritage_notes),
-                notes=list(plan.notes),
-                rent_psm_month=plan.rent_psm_month,
-                fitout_cost_psm=plan.fitout_cost_psm,
-                absorption_months=plan.absorption_months,
-                risk_level=plan.risk_level,
-                heritage_premium_pct=plan.heritage_premium_pct,
-            )
+    intensity_state = _intensity_state(
+        _calc_additional_ratio(achievable_gfa_sqm, additional_gfa)
+    )
 
-    if achievable_gfa_sqm is not None:
-        for index, plan in enumerate(plans):
-            allocated = achievable_gfa_sqm * (plan.allocation_pct / 100.0)
-            estimated_revenue = None
-            estimated_capex = None
-            if (
-                allocated is not None
-                and plan.rent_psm_month
-                and plan.rent_psm_month > 0
-                and plan.nia_efficiency
-            ):
-                effective_area = allocated * plan.nia_efficiency
-                gross_revenue = plan.rent_psm_month * 12 * effective_area
-                vacancy_multiplier = 1.0 - (plan.stabilised_vacancy_pct or 0.0) / 100.0
-                opex_multiplier = 1.0 - (plan.opex_pct_of_rent or 0.0) / 100.0
-                estimated_revenue = (
-                    gross_revenue
-                    * max(vacancy_multiplier, 0.0)
-                    * max(opex_multiplier, 0.0)
-                )
-            if allocated is not None and plan.fitout_cost_psm:
-                heritage_multiplier = 1.0
-                if heritage and plan.heritage_premium_pct:
-                    heritage_multiplier += plan.heritage_premium_pct / 100.0
-                estimated_capex = plan.fitout_cost_psm * heritage_multiplier * allocated
-            plans[index] = AssetOptimizationPlan(
-                asset_type=plan.asset_type,
-                allocation_pct=plan.allocation_pct,
-                stabilised_vacancy_pct=plan.stabilised_vacancy_pct,
-                opex_pct_of_rent=plan.opex_pct_of_rent,
-                nia_efficiency=plan.nia_efficiency,
-                target_floor_height_m=plan.target_floor_height_m,
-                parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
-                heritage_notes=list(plan.heritage_notes),
-                notes=list(plan.notes),
-                allocated_gfa_sqm=allocated,
-                rent_psm_month=plan.rent_psm_month,
-                fitout_cost_psm=plan.fitout_cost_psm,
-                absorption_months=plan.absorption_months,
-                risk_level=plan.risk_level,
-                estimated_revenue_sgd=estimated_revenue,
-                estimated_capex_sgd=estimated_capex,
-                heritage_premium_pct=plan.heritage_premium_pct,
-            )
-    if heritage:
-        for index, plan in enumerate(plans):
-            if plan.heritage_notes:
-                augmented_notes = list(plan.notes) + plan.heritage_notes
-                if plan.heritage_premium_pct:
-                    augmented_notes.append(
-                        f"Heritage premium applied (+{plan.heritage_premium_pct:.0f}% fit-out uplift)."
-                    )
-                plans[index] = AssetOptimizationPlan(
-                    asset_type=plan.asset_type,
-                    allocation_pct=plan.allocation_pct,
-                    stabilised_vacancy_pct=plan.stabilised_vacancy_pct,
-                    opex_pct_of_rent=plan.opex_pct_of_rent,
-                    nia_efficiency=plan.nia_efficiency,
-                    target_floor_height_m=plan.target_floor_height_m,
-                    parking_ratio_per_1000sqm=plan.parking_ratio_per_1000sqm,
-                    heritage_notes=list(plan.heritage_notes),
-                    notes=augmented_notes,
-                    allocated_gfa_sqm=plan.allocated_gfa_sqm,
-                    rent_psm_month=plan.rent_psm_month,
-                    fitout_cost_psm=plan.fitout_cost_psm,
-                    absorption_months=plan.absorption_months,
-                    risk_level=plan.risk_level,
-                    estimated_revenue_sgd=plan.estimated_revenue_sgd,
-                    estimated_capex_sgd=plan.estimated_capex_sgd,
-                    heritage_premium_pct=plan.heritage_premium_pct,
-                )
+    plans, _, normalised_scores = _apply_scoring_adjustments(
+        plans,
+        quick_metrics=quick_metrics,
+        heritage=heritage,
+        heritage_risk=heritage_risk,
+    )
+    plans = _rebalance_plans(plans)
 
-    if heritage_risk:
+    constraint_log: list[ConstraintViolation] = []
+    plan_constraints: dict[str, list[ConstraintViolation]] = {}
+
+    user_constraints = quick_metrics.get("user_constraints") if quick_metrics else None
+    if user_constraints is not None and not isinstance(user_constraints, Mapping):
+        user_constraints = None
+    plans = _enforce_user_constraints(
+        plans,
+        user_constraints=user_constraints,
+        plan_constraints=plan_constraints,
+        constraint_log=constraint_log,
+    )
+    plans = _apply_heritage_caps(
+        plans,
+        heritage_risk=heritage_risk,
+        plan_constraints=plan_constraints,
+        constraint_log=constraint_log,
+    )
+    plans = _rebalance_plans(plans)
+
+    if heritage and heritage_risk:
         severity_map = {"high": "elevated", "medium": "moderate", "low": "balanced"}
         risk_level = severity_map.get(heritage_risk.lower())
         if risk_level:
@@ -723,7 +1168,50 @@ def build_asset_mix(
                     updated = replace(updated, notes=notes)
                 plans[index] = updated
 
-    return plans
+    confidence_cfg = _CURVE_CONFIG.get("confidence", {})
+    baseline_conf = float(confidence_cfg.get("baseline", 0.75))
+    bonus = float(confidence_cfg.get("score_bonus", 0.2))
+    violation_penalty = float(confidence_cfg.get("violation_penalty", 0.15))
+
+    plan_confidences: dict[str, float] = {}
+    for plan in plans:
+        normalised = normalised_scores.get(plan.asset_type, 0.5)
+        confidence = baseline_conf + bonus * ((normalised - 0.5) * 2.0)
+        for violation in plan_constraints.get(plan.asset_type, []):
+            penalty = violation_penalty * (
+                0.5 if violation.severity == "warning" else 1.0
+            )
+            confidence -= penalty
+        plan_confidences[plan.asset_type] = max(0.0, min(1.0, confidence))
+
+    final_plans = _finalise_plans(
+        plans,
+        achievable_gfa_sqm=achievable_gfa_sqm,
+        site_area_sqm=site_area_sqm,
+        heritage=heritage,
+        plan_constraints=plan_constraints,
+        plan_confidences=plan_confidences,
+        scenario_state=intensity_state,
+    )
+
+    scenario_variants = _build_scenario_variants(
+        final_plans,
+        profile_key=profile_key,
+        achievable_gfa_sqm=achievable_gfa_sqm,
+        site_area_sqm=site_area_sqm,
+        heritage=heritage,
+    )
+
+    overall_confidence = None
+    if plan_confidences:
+        overall_confidence = sum(plan_confidences.values()) / len(plan_confidences)
+
+    return AssetOptimizationOutcome(
+        plans=tuple(final_plans),
+        constraint_log=tuple(constraint_log),
+        scenarios=scenario_variants,
+        confidence=overall_confidence,
+    )
 
 
 def _format_asset_label(value: str) -> str:
@@ -788,4 +1276,11 @@ def format_asset_mix_summary(
     return recommendations
 
 
-__all__ = ["AssetOptimizationPlan", "build_asset_mix", "format_asset_mix_summary"]
+__all__ = [
+    "AssetOptimizationPlan",
+    "AssetOptimizationOutcome",
+    "AssetOptimizationScenario",
+    "ConstraintViolation",
+    "build_asset_mix",
+    "format_asset_mix_summary",
+]

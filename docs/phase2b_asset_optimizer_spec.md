@@ -6,6 +6,12 @@ This revision incorporates critical fixes and enhancements from technical review
 
 ## Changelog
 
+**v0.4 (2025-10-22)** - Option A implementation landed (Codex)
+- Documented deployed curve-driven scoring engine with confidence + constraint logging.
+- Added API output updates (constraint violations, confidence score, alternative scenarios).
+- Marked heritage/user constraint integration as live for developer + feasibility APIs.
+- NHB datasets merged with URA overlays; optimiser accesses `heritage_context` (source, premium, risk) surfaced via developer API.
+
 **v0.3 (2025-10-22)** - Critical fixes pre-stakeholder review
 - Fixed revenue calculation example (109M → 10.0M annual NOI with supporting math)
 - Moved heritage risk classification to algorithm section (§3.8)
@@ -193,7 +199,7 @@ This revision incorporates critical fixes and enhancements from technical review
 
 | Component | Changes |
 |-----------|---------|
-| `asset_mix.py` | Replace heuristics with curve-driven allocation; produce scenario variants and constraint logs; accept user overrides. **Add unit tests for scoring, normalization, constraint handling.** |
+| `asset_mix.py` | ✅ Curve-driven allocation with scenario variants, constraint logs, and user override support (codex, Oct 22 2025). |
 | `feasibility.py` & `developers.py` | Pass enhanced inputs (market metrics, zoning, user constraints) and consume richer outputs; emit constraint/log info; update API schemas. **Add integration tests for full pipeline.** |
 | `heritage_overlay.py` | Implement production ingestion with risk classification mapping (§3.8). **Add tests for risk classification logic.** |
 | `preview_generator.py` | Already emits JSON massing; extend later when real renders available. |
@@ -245,8 +251,8 @@ Meeting these criteria allows Option A to ship while Option B (linear programmin
 
 3. **Implementation backlog** (with testing gates)
    1. Land zoning + heritage ingestion pipeline + **unit tests**
-   2. `asset_mix.py` v2 (curve-driven engine, scenario variants, constraint logging) + **integration tests**
-   3. API/schema/test updates (feasibility + developer endpoints) + **E2E tests**
+   2. ✅ `asset_mix.py` v2 (curve-driven engine, scenario variants, constraint logging) + integration tests (Oct 22 2025)
+   3. ✅ API/schema/test updates (feasibility + developer endpoints) + service tests (Oct 22 2025)
    4. **[Before merge]** Execute QA plan with all fixtures (expansion, reposition, heritage-high, low vacancy, forced allocation, infeasible scenario)
    5. Finance blueprint sensitivity integration (optional)
 

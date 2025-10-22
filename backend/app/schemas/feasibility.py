@@ -90,6 +90,15 @@ class BuildableAreaSummary(BaseModel):
     remarks: str | None = None
 
 
+class AssetConstraintViolation(BaseModel):
+    """Details a constraint relaxation or enforcement during optimisation."""
+
+    constraint_type: str
+    severity: str
+    message: str
+    asset_type: str | None = None
+
+
 class AssetOptimizationRecommendation(BaseModel):
     """Asset-specific optimisation recommendation surfaced to clients."""
 
@@ -109,6 +118,13 @@ class AssetOptimizationRecommendation(BaseModel):
     risk_level: str | None = None
     heritage_premium_pct: float | None = None
     notes: list[str] = Field(default_factory=list)
+    nia_sqm: float | None = None
+    estimated_height_m: float | None = None
+    total_parking_bays_required: float | None = None
+    revenue_basis: str | None = None
+    constraint_violations: list[AssetConstraintViolation] = Field(default_factory=list)
+    confidence_score: float | None = None
+    alternative_scenarios: list[str] = Field(default_factory=list)
 
 
 class FeasibilityAssessmentResponse(BaseModel):
@@ -120,6 +136,8 @@ class FeasibilityAssessmentResponse(BaseModel):
     recommendations: list[str]
     asset_optimizations: list[AssetOptimizationRecommendation]
     asset_mix_summary: AssetFinancialSummarySchema | None = None
+    constraint_log: list[AssetConstraintViolation] = Field(default_factory=list)
+    optimizer_confidence: float | None = None
 
 
 __all__ = [
@@ -133,6 +151,7 @@ __all__ = [
     "FeasibilityRulesResponse",
     "FeasibilityRulesSummary",
     "AssetOptimizationRecommendation",
+    "AssetConstraintViolation",
     "AssetFinancialSummarySchema",
     "NewFeasibilityProjectInput",
     "RuleAssessmentResult",

@@ -67,6 +67,7 @@ class PropertyLogResult:
         nearby_amenities: Optional[Dict[str, Any]] = None,
         quick_analysis: Optional[Dict[str, Any]] = None,
         timestamp: datetime = None,
+        heritage_overlay: Optional[Dict[str, Any]] = None,
     ):
         self.property_id = property_id
         self.address = address
@@ -77,6 +78,7 @@ class PropertyLogResult:
         self.nearby_amenities = nearby_amenities
         self.quick_analysis = quick_analysis
         self.timestamp = timestamp or utcnow()
+        self.heritage_overlay = heritage_overlay
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
@@ -93,6 +95,7 @@ class PropertyLogResult:
             "nearby_amenities": self.nearby_amenities,
             "quick_analysis": self.quick_analysis,
             "timestamp": self.timestamp.isoformat(),
+            "heritage_overlay": self.heritage_overlay,
         }
 
 
@@ -225,6 +228,12 @@ class GPSPropertyLogger:
                 property_info_payload.setdefault(
                     "heritage_risk", heritage_overlay.get("risk")
                 )
+                premium = heritage_overlay.get("heritage_premium_pct")
+                if premium is not None:
+                    property_info_payload.setdefault("heritage_premium_pct", premium)
+                source = heritage_overlay.get("source")
+                if source:
+                    property_info_payload.setdefault("heritage_overlay_source", source)
 
             scenario_slugs = [
                 (
@@ -261,6 +270,7 @@ class GPSPropertyLogger:
                 nearby_amenities=nearby_amenities,
                 quick_analysis=quick_analysis,
                 timestamp=utcnow(),
+                heritage_overlay=heritage_overlay,
             )
 
         except Exception as e:

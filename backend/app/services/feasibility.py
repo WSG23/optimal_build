@@ -8,6 +8,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from fastapi import HTTPException
 
 from app.schemas.feasibility import (
+    AssetConstraintViolation,
     AssetOptimizationRecommendation,
     BuildableAreaSummary,
     FeasibilityAssessmentRequest,
@@ -20,7 +21,11 @@ from app.schemas.feasibility import (
     RuleAssessmentResult,
 )
 from app.schemas.finance import AssetFinancialSummarySchema
-from app.services.asset_mix import build_asset_mix, format_asset_mix_summary
+from app.services.asset_mix import (
+    AssetOptimizationOutcome,
+    build_asset_mix,
+    format_asset_mix_summary,
+)
 
 _BASE_RULES: Sequence[dict[str, object]] = (
     {
@@ -202,7 +207,11 @@ def _calculate_summary(
 
 def _generate_asset_mix(
     project: NewFeasibilityProjectInput, summary: BuildableAreaSummary
-) -> tuple[list[AssetOptimizationRecommendation], list[str]]:
+) -> tuple[
+    list[AssetOptimizationRecommendation],
+    list[str],
+    AssetOptimizationOutcome,
+]:
     envelope = getattr(project, "build_envelope", None)
     additional = envelope.additional_potential_gfa_sqm if envelope else None
     heritage = False
@@ -218,17 +227,20 @@ def _generate_asset_mix(
             ):
                 heritage = True
 
-    plans = build_asset_mix(
+    outcome = build_asset_mix(
         project.land_use,
         achievable_gfa_sqm=summary.estimated_achievable_gfa_sqm,
         additional_gfa=additional,
         heritage=heritage,
+        heritage_risk=getattr(envelope, "heritage_risk", None) if envelope else None,
         site_area_sqm=project.site_area_sqm,
         current_gfa_sqm=(
             envelope.current_gfa_sqm if envelope and envelope.current_gfa_sqm else None
         ),
     )
-    notes = format_asset_mix_summary(plans, summary.estimated_achievable_gfa_sqm)
+    notes = format_asset_mix_summary(
+        outcome.plans, summary.estimated_achievable_gfa_sqm
+    )
     recommendations = [
         AssetOptimizationRecommendation(
             asset_type=plan.asset_type,
@@ -251,10 +263,25 @@ def _generate_asset_mix(
             risk_level=plan.risk_level,
             heritage_premium_pct=plan.heritage_premium_pct,
             notes=list(plan.notes),
+            nia_sqm=plan.nia_sqm,
+            estimated_height_m=plan.estimated_height_m,
+            total_parking_bays_required=plan.total_parking_bays_required,
+            revenue_basis=plan.revenue_basis,
+            constraint_violations=[
+                AssetConstraintViolation(
+                    constraint_type=violation.constraint_type,
+                    severity=violation.severity,
+                    message=violation.message,
+                    asset_type=violation.asset_type,
+                )
+                for violation in plan.constraint_violations
+            ],
+            confidence_score=plan.confidence_score,
+            alternative_scenarios=list(plan.alternative_scenarios),
         )
-        for plan in plans
+        for plan in outcome.plans
     ]
-    return recommendations, notes
+    return recommendations, notes, outcome
 
 
 def _summarise_asset_financials(
@@ -389,9 +416,24 @@ def run_feasibility_assessment(
             "Investigate design options to improve fire access compliance buffers."
         )
 
-    asset_mix, mix_notes = _generate_asset_mix(payload.project, summary)
+    asset_mix, mix_notes, mix_outcome = _generate_asset_mix(payload.project, summary)
     asset_financials = _summarise_asset_financials(asset_mix)
     recommendations.extend(mix_notes)
+
+    constraint_log = [
+        AssetConstraintViolation(
+            constraint_type=violation.constraint_type,
+            severity=violation.severity,
+            message=violation.message,
+            asset_type=violation.asset_type,
+        )
+        for violation in mix_outcome.constraint_log
+    ]
+    optimizer_confidence = mix_outcome.confidence
+    if optimizer_confidence is not None:
+        recommendations.append(
+            f"Asset optimiser confidence score: {optimizer_confidence:.2f} (higher indicates more stable mix)."
+        )
 
     return FeasibilityAssessmentResponse(
         project_id=_project_identifier(payload.project),
@@ -400,6 +442,8 @@ def run_feasibility_assessment(
         recommendations=recommendations,
         asset_optimizations=asset_mix,
         asset_mix_summary=asset_financials,
+        constraint_log=constraint_log,
+        optimizer_confidence=optimizer_confidence,
     )
 
 

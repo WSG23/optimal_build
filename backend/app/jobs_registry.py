@@ -5,6 +5,7 @@ from __future__ import annotations
 from backend.jobs import job_queue
 from backend.jobs.generate_reports import generate_market_report_bundle
 from backend.jobs.performance import generate_snapshots_job, seed_benchmarks_job
+from backend.jobs.preview_generate import generate_preview_job  # noqa: F401
 
 
 def enlist_default_jobs() -> None:
