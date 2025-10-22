@@ -16,6 +16,8 @@ from app.api.deps import require_viewer
 from app.api.v1 import TAGS_METADATA, api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
+from app.middleware.metrics import MetricsMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
 from app.models.rkp import RefRule
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
@@ -53,6 +55,16 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],
 )
+
+# Add Prometheus metrics middleware for automatic request tracking
+app.add_middleware(MetricsMiddleware)
+
+# Add Redis-backed rate limiting middleware
+# Defaults to 60 requests per minute per client IP
+# Set ENABLE_RATE_LIMITING=true in environment to enable
+if getattr(settings, "ENABLE_RATE_LIMITING", False):
+    rate_limit = getattr(settings, "RATE_LIMIT_PER_MINUTE", 60)
+    app.add_middleware(RateLimitMiddleware, requests_per_minute=rate_limit)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -98,9 +110,17 @@ async def health_check(session: AsyncSession = Depends(get_session)) -> dict[str
         }
 
 
+@app.get("/metrics")
+async def prometheus_metrics() -> Response:
+    """Expose Prometheus metrics at standard /metrics endpoint."""
+
+    metrics_output = metrics.render_latest_metrics()
+    return Response(content=metrics_output, media_type="text/plain; version=0.0.4")
+
+
 @app.get("/health/metrics")
 async def health_metrics() -> Response:
-    """Expose Prometheus metrics."""
+    """Expose Prometheus metrics (legacy endpoint)."""
 
     metrics_output = metrics.render_latest_metrics()
     return Response(content=metrics_output, media_type="text/plain; version=0.0.4")

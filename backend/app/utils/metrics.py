@@ -31,6 +31,8 @@ _GENERATE_LATEST: GenerateLatest = cast(GenerateLatest, generate_latest)
 
 REGISTRY: CollectorRegistry
 REQUEST_COUNTER: Counter
+HTTP_REQUEST_DURATION_SECONDS: Histogram
+HTTP_REQUEST_ERRORS_TOTAL: Counter
 INGESTION_RUN_COUNTER: Counter
 INGESTED_RECORD_COUNTER: Counter
 ALERT_COUNTER: Counter
@@ -55,6 +57,8 @@ def _initialize_metrics() -> None:
 
     global REGISTRY
     global REQUEST_COUNTER
+    global HTTP_REQUEST_DURATION_SECONDS
+    global HTTP_REQUEST_ERRORS_TOTAL
     global INGESTION_RUN_COUNTER
     global INGESTED_RECORD_COUNTER
     global ALERT_COUNTER
@@ -79,6 +83,20 @@ def _initialize_metrics() -> None:
         "api_requests_total",
         "Total API requests processed by endpoint.",
         labelnames=("endpoint",),
+        registry=REGISTRY,
+    )
+
+    HTTP_REQUEST_DURATION_SECONDS = Histogram(
+        "http_request_duration_seconds",
+        "HTTP request latency in seconds.",
+        labelnames=("method", "path", "status_code"),
+        registry=REGISTRY,
+    )
+
+    HTTP_REQUEST_ERRORS_TOTAL = Counter(
+        "http_request_errors_total",
+        "Total HTTP request errors by method and path.",
+        labelnames=("method", "path", "error_type"),
         registry=REGISTRY,
     )
 

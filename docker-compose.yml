@@ -16,6 +16,7 @@ x-backend-environment: &backend-environment
   S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
   IMPORTS_BUCKET_NAME: ${IMPORTS_BUCKET_NAME:-cad-imports}
   EXPORTS_BUCKET_NAME: ${EXPORTS_BUCKET_NAME:-cad-exports}
+  DOCUMENTS_BUCKET_NAME: ${DOCUMENTS_BUCKET_NAME:-documents}
 
 services:
   postgres:

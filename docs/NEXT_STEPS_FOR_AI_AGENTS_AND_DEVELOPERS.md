@@ -35,13 +35,15 @@ Look for:
 
 ### Step 2: Check for Known Issues (5 min)
 → Read [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md)
+→ Read [architecture_honest.md](architecture_honest.md) section "🔴 Known Issues & Technical Debt"
 
 This prevents you from:
 - ❌ Investigating known test harness issues
 - ❌ Trying to fix documented limitations
 - ❌ Wasting time on non-problems
+- ❌ Implementing already-fixed features
 
-**⚠️ IMPORTANT:** When you fix a known issue or discover a new test limitation, you MUST update this file. See step 7b below for the workflow.
+**⚠️ IMPORTANT:** When you fix a known issue or discover a new test limitation, you MUST update these files. See step 7b below for the workflow.
 
 ### Step 3: Understand the Codebase (5 min)
 → Read [FEATURES.md](../FEATURES.md) (just scan headers)

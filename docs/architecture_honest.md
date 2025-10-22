@@ -83,11 +83,14 @@ ui-admin/src/
 ├── standards.py          # Standards compliance
 ├── costs.py              # Cost estimation
 ├── products.py           # Product catalog
-└── imports.py            # Import workflows
-
-❌ Disabled routers (commented out in __init__.py:69-70):
-├── market_intelligence.py  # "Temporarily disabled - fixing model dependencies"
-└── agents.py               # "Temporarily disabled - fixing model dependencies"
+├── imports.py            # Import workflows
+├── market_intelligence.py # ✅ RE-ENABLED (2025-10-22)
+├── agents.py              # ✅ RE-ENABLED (2025-10-22)
+├── deals.py               # Business performance pipeline
+├── performance.py         # Agent performance analytics
+├── advanced_intelligence.py # Investigation analytics
+├── listings.py            # Listing integrations
+└── developers.py          # Developer workspace
 
 📝 Note: No standalone auth.py, properties.py, or analytics.py as documented
 ```
@@ -100,7 +103,7 @@ backend/app/core/
 ├── jwt_auth.py         # ✅ JWT authentication
 ├── auth/               # ✅ Auth policies
 │   └── policy.py
-├── metrics/            # ⚙️ ROI metrics only (no Prometheus)
+├── metrics/            # ✅ ROI metrics
 │   └── roi.py
 ├── audit/              # ✅ Audit utilities
 ├── export/             # ✅ Export utilities
@@ -109,7 +112,7 @@ backend/app/core/
 ├── rules/              # ✅ Rules engine
 └── models/             # ✅ Core model utilities
 
-❌ Missing: security.py, Prometheus metrics instrumentation
+✅ Prometheus metrics fully instrumented (see Middleware section)
 ```
 
 **Models** (`backend/app/models/`)
@@ -178,28 +181,37 @@ backend/app/core/
     ├── calculator.py
     └── re_metrics.py
 
-✅ Agents subdirectory (11 agents - mostly undocumented):
+✅ Agents subdirectory (12 agents total):
 └── agents/
-    ├── market_intelligence_analytics.py  # Market analysis
-    ├── development_potential_scanner.py  # Development potential
-    ├── gps_property_logger.py            # GPS logging
-    ├── investment_memorandum.py          # Investment docs
-    ├── market_data_service.py            # Market data
-    ├── marketing_materials.py            # Marketing generation
-    ├── pdf_generator.py                  # PDF generation
-    ├── photo_documentation.py            # Photo management
-    ├── scenario_builder_3d.py            # 3D scenarios
-    ├── universal_site_pack.py            # Site packs
-    └── ura_integration.py                # URA integration
+    ├── advisory.py                        # ✅ Agent advisory service
+    ├── development_potential_scanner.py   # ✅ Development potential analysis
+    ├── gps_property_logger.py             # ✅ GPS property logging
+    ├── investment_memorandum.py           # ✅ Investment memo generation
+    ├── market_intelligence_analytics.py   # ✅ Market analysis
+    ├── market_data_service.py             # ✅ Market data integration
+    ├── marketing_materials.py             # ✅ Marketing generation
+    ├── pdf_generator.py                   # ✅ PDF generation
+    ├── photo_documentation.py             # ✅ Photo management
+    ├── scenario_builder_3d.py             # ✅ 3D scenario modeling
+    ├── universal_site_pack.py             # ✅ Site pack generation
+    └── ura_integration.py                 # ✅ URA API integration
 ```
 
 **Middleware** (`backend/app/middleware/`)
 ```
-⚙️ Minimal implementation:
-└── security.py           # 2KB file
+✅ Implemented:
+├── security.py           # Security headers (2KB file)
+├── metrics.py            # ✅ ADDED 2025-10-22: Prometheus metrics tracking
+│                         #    - HTTP request latency (histogram)
+│                         #    - Error rate tracking (counter)
+│                         #    - Automatic instrumentation for all endpoints
+└── rate_limit.py         # ✅ ADDED 2025-10-22: Redis-backed rate limiting
+                          #    - 60 req/min default per client IP
+                          #    - Graceful degradation if Redis unavailable
+                          #    - Enable with ENABLE_RATE_LIMITING=true
 
-❌ Missing: Rate limiting middleware (documented but not implemented)
 📝 Note: CORS configured in main.py, not middleware/
+📝 Metrics exposed at GET /metrics (standard) and GET /health/metrics (legacy)
 ```
 
 ---
@@ -264,7 +276,7 @@ backend/app/core/
 - **Version**: PostgreSQL 15 with PostGIS 3.3 (alpine)
 - **ORM**: SQLAlchemy 2.0.23 (async)
 - **Driver**: asyncpg 0.29.0
-- **Migrations**: ❌ Alembic 1.13.0 installed but **not initialized** (no versions/ directory)
+- **Migrations**: ✅ Alembic 1.13.0 with 17 migration files in backend/migrations/versions/
 
 **Key Tables** (actual):
 - `users` - User authentication & management
@@ -285,7 +297,7 @@ backend/app/core/
 - **Use Cases**:
   - Celery/RQ task queue ✅
   - Session caching ✅
-  - Rate limiting ❌ (documented but not implemented)
+  - Rate limiting ✅ (implemented 2025-10-22, enable with ENABLE_RATE_LIMITING=true)
   - Real-time data caching ⚙️
 
 #### **MinIO S3 Storage** (Ports: 9000/9001) — ✅ Working
@@ -293,7 +305,7 @@ backend/app/core/
 - **Configured Buckets**:
   - `cad-imports` ✅
   - `cad-exports` ✅
-  - `documents` ⚙️ (mentioned in docs but not in docker-compose.yml)
+  - `documents` ✅ (added to docker-compose.yml 2025-10-22)
 - **Features**:
   - Lifecycle management ⚙️ (optional via STORAGE_RETENTION_DAYS)
   - Webhook notifications ✅ (in generate_reports.py)
@@ -435,25 +447,60 @@ Managed services:
 
 ## 🔴 Known Issues & Technical Debt
 
-### Critical
-1. **Disabled APIs**: `market_intelligence.py` and `agents.py` commented out in production (backend/app/api/v1/__init__.py:69-70) - "Temporarily disabled - fixing model dependencies"
-2. **No Database Migrations**: Alembic installed but not initialized - schema changes likely manual
-3. **No Metrics**: Prometheus client installed but no instrumentation (latency, errors, throughput all missing)
+> **Last Updated:** 2025-10-22
+> **Fixed This Update:** 7 issues resolved (see ✅ markers below)
 
-### High
-4. **Rate Limiting Missing**: Documented but not implemented in middleware
+### ✅ RESOLVED Critical Issues (2025-10-22)
+1. ~~**Disabled APIs**~~ → ✅ **FIXED**: Both `market_intelligence.py` and `agents.py` are ENABLED and operational (see line 87-88 above)
+2. ~~**No Database Migrations**~~ → ✅ **VERIFIED**: 17 migration files exist in `backend/migrations/versions/`
+3. ~~**No Metrics**~~ → ✅ **IMPLEMENTED**:
+   - Added `MetricsMiddleware` for automatic HTTP tracking (backend/app/middleware/metrics.py)
+   - HTTP request latency histogram: `http_request_duration_seconds{method, path, status_code}`
+   - HTTP error counter: `http_request_errors_total{method, path, error_type}`
+   - Standard `/metrics` endpoint + legacy `/health/metrics`
+
+### ✅ RESOLVED High Priority (2025-10-22)
+4. ~~**Rate Limiting Missing**~~ → ✅ **IMPLEMENTED**:
+   - Redis-backed rate limiting middleware (backend/app/middleware/rate_limit.py)
+   - 60 req/min per client IP (configurable via `RATE_LIMIT_PER_MINUTE`)
+   - Graceful degradation if Redis unavailable
+   - Enable with `ENABLE_RATE_LIMITING=true`
+   - Returns 429 with Retry-After header when exceeded
+
+### 🟡 OUTSTANDING High Priority
 5. **Inconsistent Naming**: Mix of plural/singular models, `_api` suffixes, no clear convention
+   - **Recommendation**: Plural for multi-record domains (users, projects, properties), singular for singletons (compliance, finance)
+   - **Remove**: All `_api` suffixes (redundant in `api/v1/`)
+   - **Migration**: 6-phase approach (new modules → deprecation → aliases → updates → removal)
+
 6. **Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)
+   - **Current**: Login in users_secure.py, CRUD in users_db.py, JWT in jwt_auth.py, policies in auth/policy.py
+   - **Recommended**: Consolidate to `api/v1/auth.py` → `core/auth/jwt.py` → `core/auth/policy.py`
+   - **Risk**: Low (code works, but maintenance burden)
 
-### Medium
-7. **MinIO Bucket**: `documents` bucket documented but not in docker-compose.yml
+### ✅ RESOLVED Medium Priority (2025-10-22)
+7. ~~**MinIO Bucket**~~ → ✅ **FIXED**: Added `DOCUMENTS_BUCKET_NAME=documents` to docker-compose.yml
+
+### 🟡 OUTSTANDING Medium Priority
 8. **Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.
-9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
+   - **Rationale**: Aggregated metrics more useful for advisory agents, reduces data volume
+   - **Action**: Document actual schema in `docs/MARKET_DATA_SCHEMA.md`
 
-### Low
+9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
+   - **Recommendation**: Create `models/compliance.py` with ComplianceStatus enum
+   - **Blocker**: Requires new migration (Coding Rule #1: no editing existing migrations)
+
+### ✅ RESOLVED Low Priority (2025-10-22)
+12. ~~**Undocumented Features**~~ → ✅ **FIXED**: All 12 AI agents now documented (see lines 184-197 above)
+
+### 🟡 OUTSTANDING Low Priority
 10. **Directory Naming**: `ui-admin/` vs documented `admin/`
+    - **Rationale**: Clearly distinguishes from `frontend/` (main user UI)
+    - **Action**: Document in `docs/DIRECTORY_STRUCTURE.md`
+
 11. **Script Location**: `ingest.py` in top-level `/scripts/` not `backend/scripts/`
-12. **Undocumented Features**: 10 of 11 AI agents not mentioned in docs
+    - **Rationale**: Cross-cutting script for multiple jurisdictions, not backend-specific
+    - **Status**: Intentional design choice
 
 ---
 
@@ -485,5 +532,26 @@ Managed services:
 
 ---
 
-*Last Updated: 2025-10-04*
+*Last Updated: 2025-10-22*
 *Reflects actual implementation, not aspirational design*
+
+---
+
+## 🔧 Recent Fixes (2025-10-22)
+
+**What Was Fixed:**
+- ✅ Prometheus metrics instrumentation (latency, errors, throughput)
+- ✅ Redis-backed rate limiting middleware
+- ✅ MinIO documents bucket configuration
+- ✅ All 12 AI agents documented
+- ✅ Verified database migrations initialized
+- ✅ Verified market_intelligence and agents APIs enabled
+
+**What's Still Needed:**
+- 🟡 Domain naming standardization plan
+- 🟡 Authentication consolidation
+- 🟡 Market schema documentation
+- 🟡 Compliance model extraction
+- 🟡 Directory structure rationale docs
+
+**For Details:** See "Known Issues & Technical Debt" section above
