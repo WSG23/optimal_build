@@ -59,12 +59,12 @@
 
 **Infrastructure:**
 - CAD Processing Infrastructure - 95%
-- Finance & Feasibility Backend - 60%
+- Finance & Feasibility Backend - 75%
 - Token encryption system - 100%
 
 ### ⏸️ What's In Progress:
 
-**Phase 2C: Complete Financial Control & Modeling** - Backend 60% complete; enhanced financing UI, privacy controls, and scenario sensitivities pending
+**Phase 2C: Complete Financial Control & Modeling** - Backend 80% complete; construction loan interest + asset finance UI shipped, sensitivity tooling pending
 
 **Other:**
 - Agent Validation (waiting for real user sessions)
@@ -469,8 +469,8 @@
 
 ---
 
-### Phase 2C: Complete Financial Control & Modeling ⚠️ 60% BACKEND COMPLETE
-**Status:** Backend models exist, UI needs expansion
+### Phase 2C: Complete Financial Control & Modeling ⚠️ 80% BACKEND / 40% UI COMPLETE
+**Status:** Asset finance engine wired to developer capture, finance API gated by role, and construction loan interest now modelled with multi-facility carry + reviewer UI. Synchronous sensitivity loads are capped via `FINANCE_SENSITIVITY_MAX_SYNC_BANDS`; remaining work covers async batching, caching, and tranche editing (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
 
 **Requirements (from FEATURES.md lines 110-132):**
 - Universal development economics
@@ -487,14 +487,16 @@
 - ✅ NPV/IRR backend calculations
 - ✅ Capital stack visualization (basic)
 - ✅ Drawdown schedule tracking
+- ✅ Asset-level finance breakdowns exposed via `/finance/feasibility` and surfaced in the developer finance UI
+- ✅ Finance scenario access restricted to reviewer/admin roles; Site Acquisition returns finance-ready asset mix payloads
+- ✅ Construction loan interest carry calculated (capitalised vs expensed) with UI summary/table
+- ✅ Sensitivity engine returns rent / construction cost / interest variants; finance workspace now includes toggles + CSV/JSON export controls
 - ⚠️ Finance dashboard (partial)
 
 **What's Missing:**
-- ❌ Asset-specific financial models (only generic exists)
-- ❌ Enhanced financing UI (equity/debt breakdowns)
-- ❌ Construction loan detailed modeling
-- ❌ Scenario sensitivity analysis UI
-- ❌ Privacy controls (developer-only data)
+- 🟡 Enhanced financing UI (equity/debt tranche details & sensitivity explorer)
+- ✅ Construction loan detailed modelling (fees, multiple facilities, facility editor)
+- ❌ Scenario sensitivity analysis UI / batch runners
 
 **Acceptance Criteria:**
 - Developer creates private financial models
@@ -689,7 +691,232 @@
 - ✅ Documentation complete
 - ✅ Private beta successful
 
+**⚠️ IMPORTANT: Before Phase 2D, complete Jurisdiction Expansion Window 1 (see below)**
+
 **Then:** Move to Phase 3 (Architects)
+
+---
+
+## 🌍 JURISDICTION EXPANSION WINDOWS
+
+### Overview: Multi-Jurisdiction Strategy
+
+**Philosophy:** Expand to new jurisdictions at natural breakpoints (after Phase 2C, after Phase 6) to:
+- Validate plugin architecture with real markets
+- Build future phases jurisdiction-agnostic from the start
+- Enable early market validation across multiple geographies
+- Prevent Singapore-only assumptions from hardening
+
+**Key Decision:** Add jurisdictions BEFORE building Phase 2D-6, not after Phase 6.
+
+**Why:** If we build all 6 phases for Singapore only, then add jurisdictions in 2027, we face:
+- 6-12 months of refactoring Phase 3-6 code
+- Singapore assumptions baked into architect/engineer tools
+- Missed revenue opportunities (18 months delay)
+
+**Solution:** Add 4 new jurisdictions after Phase 2C (when we have MVP: Agent + Developer GPS/Feasibility/Finance), then build Phase 2D-6 for ALL 5 jurisdictions simultaneously.
+
+---
+
+### Expansion Window 1: After Phase 2C (Dec 2025 - Jan 2026)
+
+**Status:** ❌ NOT STARTED (Blocked: Waiting for Phase 2C completion)
+
+**Goal:** Add 4 new jurisdictions BEFORE building Phase 2D-6, ensuring all subsequent phases are built multi-jurisdiction from the start.
+
+**Strategic Rationale:**
+- Phase 1-2C represents a complete MVP (80% of user value)
+- Early market validation across 5 jurisdictions (SG, HK, NZ, Seattle, Toronto)
+- Prevents Singapore-only assumptions in Phase 3-6
+- Revenue acceleration (18 months earlier than waiting for Phase 6)
+- Geographic risk diversification
+
+---
+
+#### Target Jurisdictions (Sequential Addition)
+
+**Selection Criteria:**
+- ✅ Free/low-cost government APIs (no manual scraping)
+- ✅ English-speaking markets (no translation needed)
+- ✅ High-quality open data infrastructure
+- ✅ Minimal manual data compilation
+
+**Selected Jurisdictions:**
+
+**1. 🇭🇰 Hong Kong** (Week 1-2 after Phase 2C)
+- **APIs:** DATA.GOV.HK (Land Registry, Buildings Dept, Planning Dept)
+- **Cost:** HK$0/month (free government APIs)
+- **Similarity to SG:** 95% (Commonwealth system, similar building regulations, plot ratio concepts)
+- **Effort:** 2-3 weeks (first jurisdiction - establishes refactoring pattern)
+- **Market:** Similar user base to Singapore (international developers, high-density commercial)
+- **Data Quality:** World-class (comparable to Singapore's OneMap/URA)
+
+**2. 🇳🇿 New Zealand** (Week 3)
+- **APIs:** LINZ Data Service (national coverage, property boundaries, planning zones)
+- **Cost:** NZ$0/month (all government data free)
+- **Similarity to SG:** High (Commonwealth system, British-style planning)
+- **Effort:** 1 week (pattern from HK exists)
+- **Market:** Wealthy, early adopters of proptech, English-speaking
+- **Data Quality:** Excellent (LINZ is world-class, single national system)
+
+**3. 🇺🇸 Washington State (Seattle)** (Week 4)
+- **APIs:** Seattle Open Data, WA GeoData Portal, King County Assessor
+- **Cost:** $0/month (free civic tech APIs)
+- **Similarity to SG:** Moderate (different system but well-documented)
+- **Effort:** 1 week
+- **Market:** Tech-savvy developers, active construction (Amazon/Microsoft expansion)
+- **Data Quality:** Excellent (Seattle civic tech community is mature)
+
+**4. 🇨🇦 Ontario (Toronto)** (Week 5)
+- **APIs:** Toronto Open Data, Ontario GeoHub, BC Assessment
+- **Cost:** CA$0/month (free)
+- **Similarity to SG:** Moderate (Commonwealth influence, provincial building code)
+- **Effort:** 1 week
+- **Market:** Similar to US, international developer base, strong B2B SaaS adoption
+- **Data Quality:** Very good (Toronto's open data portal is mature)
+
+**Total Timeline:** 5-6 weeks (Dec 2025 - Jan 2026)
+
+---
+
+#### Deliverables Per Jurisdiction
+
+**For detailed step-by-step instructions, see:** [docs/jurisdiction_expansion_playbook.md](jurisdiction_expansion_playbook.md)
+
+**Codex Tasks:**
+- [ ] Create `jurisdictions/{code}/` plugin structure
+- [ ] Implement `fetch.py` (government API integration)
+- [ ] Implement `parse.py` (convert to CanonicalReg format)
+- [ ] Refactor services for jurisdiction-awareness (FIRST jurisdiction only):
+  - `backend/app/services/geocoding.py` - Add `jurisdiction` parameter
+  - `backend/app/services/finance/asset_models.py` - Extract market data by jurisdiction
+  - `backend/app/utils/compliance.py` - Generalize from Singapore-only
+- [ ] Seed RefRule database with jurisdiction zoning rules (5-10 zones minimum)
+- [ ] Add market data (rent PSF, OPEX, vacancy rates) - from PM prep
+- [ ] Add heritage overlay data (if available)
+- [ ] Create tests in `backend/tests/test_jurisdictions/test_{code}.py`
+
+**Claude Tasks:**
+- [ ] Run test suite for new jurisdiction
+- [ ] Fix test failures (common: missing jurisdiction parameter, hardcoded SG assumptions)
+- [ ] Validate RefRule queries work for jurisdiction
+- [ ] Run integration tests (GPS → Feasibility → Finance)
+- [ ] Run Singapore regression test (ensure SG still works)
+
+**PM Tasks:**
+- [ ] Provide API credentials and market data (see playbook Section 3)
+- [ ] Manual testing: GPS capture works in jurisdiction
+- [ ] Manual testing: Feasibility analysis calculates correctly
+- [ ] Manual testing: Finance modeling shows correct currency
+- [ ] Regression test: Singapore still works
+- [ ] Approval: Mark jurisdiction complete in this document
+
+---
+
+#### Jurisdiction Addition Sequence
+
+**Sequential rollout (one at a time, NOT all 4 simultaneously):**
+
+**Week 1-2: Hong Kong**
+- PM gathers HK data (API keys, market data, zoning rules)
+- Codex builds HK plugin + refactors services for jurisdiction-awareness
+- Claude tests and fixes bugs
+- PM validates HK works end-to-end
+- ✅ Mark HK complete
+
+**Week 3: New Zealand**
+- PM gathers NZ data
+- Codex builds NZ plugin (applies HK pattern - faster!)
+- Claude tests
+- PM validates
+- ✅ Mark NZ complete
+
+**Week 4: Washington State**
+- PM gathers Seattle data
+- Codex builds Seattle plugin
+- Claude tests
+- PM validates
+- ✅ Mark Seattle complete
+
+**Week 5: Ontario**
+- PM gathers Toronto data
+- Codex builds Toronto plugin
+- Claude tests
+- PM validates
+- ✅ Mark Toronto complete
+
+**Week 6: Integration & Stabilization**
+- Run `make verify` across all 5 jurisdictions
+- Fix any cross-jurisdiction bugs
+- Update documentation
+- Deploy to staging
+
+---
+
+#### Completion Gate: Expansion Window 1
+
+**All 5 jurisdictions must have:**
+- ✅ Phase 1 (Agent tools: GPS, Advisory, Integrations, Performance) working
+- ✅ Phase 2A (Developer GPS Site Acquisition) working
+- ✅ Phase 2B (Developer Feasibility Analysis) working
+- ✅ Phase 2C (Developer Finance Modeling) working
+- ✅ `make verify` passing (all tests green)
+- ✅ Manual testing complete (PM validated)
+- ✅ No blocking bugs
+
+**Then:**
+- 🛑 **STOP adding new jurisdictions** (defer next batch to Expansion Window 2)
+- ✅ **Proceed to Phase 2D-2I for ALL 5 jurisdictions simultaneously**
+- ✅ **Build Phase 3-6 for ALL 5 jurisdictions** (not Singapore-only!)
+
+**Update this section when complete:**
+
+**Expansion Window 1 Progress:**
+- 🇸🇬 Singapore: ✅ COMPLETE (Baseline)
+- 🇭🇰 Hong Kong: ❌ NOT STARTED (Target: Dec 2025)
+- 🇳🇿 New Zealand: ❌ NOT STARTED (Target: Jan 2026)
+- 🇺🇸 Washington State: ❌ NOT STARTED (Target: Jan 2026)
+- 🇨🇦 Ontario: ❌ NOT STARTED (Target: Feb 2026)
+
+---
+
+### Expansion Window 2: After Phase 6 (2027+)
+
+**Status:** ❌ NOT STARTED (Blocked: Waiting for Phase 6 completion)
+
+**Goal:** Add next batch of jurisdictions to fully mature platform
+
+**By this point:**
+- ✅ All 6 phases working across 5 jurisdictions (SG, HK, NZ, Seattle, Toronto)
+- ✅ Jurisdiction plugin pattern is mature (1 week per new jurisdiction)
+- ✅ Revenue from existing markets funds expansion
+- ✅ Cross-sell opportunities validated (developers with multi-market projects)
+
+**Candidate Jurisdictions:**
+- 🇬🇧 **UK (England & Wales)** - 333 local authorities, but national APIs (Land Registry, Planning Portal)
+- 🇦🇺 **Australia (NSW/Sydney, VIC/Melbourne)** - State-level APIs, strong proptech market
+- 🇮🇪 **Ireland (Dublin)** - EU market entry, good government APIs
+- 🇨🇦 **British Columbia (Vancouver)** - Expand Canadian coverage
+- 🇺🇸 **California (Bay Area/LA)** - Largest US commercial market
+- 🇺🇸 **Massachusetts (Boston)** - East Coast US entry
+
+**Timeline:** TBD (depends on Phase 6 completion date, likely mid-2027)
+
+**Effort per jurisdiction:** ~1 week (pattern mature, just add data)
+
+**Strategy:** Add 1-2 jurisdictions per quarter based on customer demand
+
+---
+
+### Rejected Jurisdictions (Poor API Infrastructure)
+
+**NOT recommended for expansion:**
+- ❌ **Dubai/Abu Dhabi** - No centralized APIs, manual scraping required, expensive data licenses
+- ❌ **Manila/Philippines** - Fragmented local government units (LGUs), poor digital infrastructure
+- ❌ **Most Southeast Asia** - Manual data compilation needed (Malaysia slightly better than most)
+- ❌ **India** - Fragmented state systems, poor API quality
+
+**Selection Rule:** Only expand to jurisdictions with free/low-cost government APIs. Manual scraping is NOT scalable for a solo founder.
 
 ---
 

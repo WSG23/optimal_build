@@ -4,7 +4,7 @@
 >
 > **For current project status:** See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — start with the "📊 Current Progress Snapshot" section
 >
-> **Last Updated:** 2025-10-11
+> **Last Updated:** 2025-10-23
 
 ---
 
@@ -698,6 +698,157 @@ Phase 3+: Later phases (depend on Phase 2)
 
 ---
 
+## 🌍 JURISDICTION EXPANSION WINDOW 1: After Phase 2C (BLOCKING)
+
+### ⚠️ CRITICAL: Do NOT Start Phase 2D Until This Is Complete
+
+**When Phase 2C shows ✅ COMPLETE in feature_delivery_plan_v2.md:**
+
+🛑 **STOP** - Do NOT immediately start Phase 2D.
+
+**Instead:** Begin **Expansion Window 1** to add 4 new jurisdictions:
+1. 🇭🇰 **Hong Kong** (Week 1-2)
+2. 🇳🇿 **New Zealand** (Week 3)
+3. 🇺🇸 **Washington State (Seattle)** (Week 4)
+4. 🇨🇦 **Toronto (Ontario)** (Week 5)
+
+**Why this timing matters:**
+- Adding jurisdictions AFTER Phase 6 requires 6-12 months refactoring
+- Singapore-only assumptions will harden in Phase 3-6 (Architect/Engineer tools)
+- This prevents 18 months of missed revenue and late market entry
+- Phase 2D-6 features will be built multi-jurisdiction from start
+
+---
+
+### Expansion Workflow for Each Jurisdiction
+
+**For detailed step-by-step instructions, see:** [`jurisdiction_expansion_playbook.md`](jurisdiction_expansion_playbook.md)
+
+#### Quick Workflow Summary:
+
+**1. PM Preparation (BEFORE Codex starts coding):**
+- ✅ Secure API access (government planning/zoning APIs)
+- ✅ Collect sample regulations (5-10 sample zoning rules)
+- ✅ Gather market data (build costs, land prices, ROI benchmarks)
+- ✅ Identify heritage data sources (conservation areas, protected buildings)
+- ✅ Prepare validation data (known sites to test compliance)
+
+**2. Codex Implementation (6-10 days per jurisdiction):**
+- ✅ Create jurisdiction structure: `jurisdictions/{code}/`
+- ✅ Implement `fetch.py` (API integration)
+- ✅ Implement `parse.py` (transform to CanonicalReg)
+- ✅ Refactor services to accept jurisdiction parameter
+- ✅ Seed RefRule database with zoning rules
+- ✅ Add heritage data (conservation areas)
+- ✅ Update tests (compliance, buildable, geocoding)
+- ✅ Document configuration (README.md, ENV vars)
+
+**3. Claude Testing & Validation (2-3 days):**
+- ✅ Run backend tests (pytest)
+- ✅ Fix test failures
+- ✅ Integration test (GPS → Feasibility → Finance for new jurisdiction)
+- ✅ Regression test (ensure Singapore still works)
+- ✅ Validation test (test with known sites in new jurisdiction)
+
+**4. PM Manual Validation:**
+- ✅ Test GPS capture for new jurisdiction
+- ✅ Verify compliance checks (zoning rules)
+- ✅ Check buildable calculations (FAR, coverage, height)
+- ✅ Validate finance modeling (market data)
+- ✅ Test heritage overlay (conservation areas)
+
+---
+
+### Sequential Rollout Schedule
+
+**🇭🇰 Week 1-2: Hong Kong (First - Establishes Pattern)**
+- Most similar to Singapore (95% similarity)
+- APIs: DATA.GOV.HK (Land Registry, Buildings Dept, Planning Dept)
+- Cost: HK$0/month (free government APIs)
+- Effort: 10-14 days (includes refactoring)
+- **Goal:** Refactor services to be jurisdiction-agnostic, establish plugin pattern
+
+**🇳🇿 Week 3: New Zealand (Second - Validates Pattern)**
+- Apply patterns learned from Hong Kong
+- APIs: LINZ Data Service, Auckland Council API
+- Cost: NZ$0/month (free government APIs)
+- Effort: 6-8 days (faster - pattern established)
+
+**🇺🇸 Week 4: Washington State (Third - Different Structure)**
+- Tests plugin flexibility (different zoning structure than SG/HK)
+- APIs: King County Parcel Viewer, Seattle Open Data
+- Cost: $0/month (free government APIs)
+- Effort: 6-8 days
+
+**🇨🇦 Week 5: Toronto (Fourth - Final Validation)**
+- Confirms multi-jurisdiction architecture is robust
+- APIs: Toronto Open Data, Ontario Land Registry Connect
+- Cost: CA$0/month (free government APIs)
+- Effort: 6-8 days
+
+**Total Expansion Window 1 Duration:** 5-6 weeks (not 5 months)
+
+---
+
+### Completion Gate (Before Starting Phase 2D)
+
+**All 5 jurisdictions (SG + 4 new) must pass:**
+
+✅ **Technical Validation:**
+- [ ] All backend tests passing (pytest)
+- [ ] All frontend tests passing (or documented exceptions)
+- [ ] Integration tests pass (GPS → Feasibility → Finance)
+- [ ] Regression tests pass (Singapore functionality unchanged)
+
+✅ **PM Validation:**
+- [ ] GPS capture works in all 5 jurisdictions
+- [ ] Compliance checks correct for all 5 jurisdictions
+- [ ] Buildable calculations accurate for all 5 jurisdictions
+- [ ] Finance modeling uses correct market data for each jurisdiction
+- [ ] Heritage overlays load correctly for each jurisdiction
+
+✅ **Documentation:**
+- [ ] Each jurisdiction has README.md with ENV vars
+- [ ] Each jurisdiction has map_overrides.yaml
+- [ ] feature_delivery_plan_v2.md updated with expansion status
+- [ ] TESTING_KNOWN_ISSUES.md updated if new issues found
+
+**Once all checks pass:** Proceed to Phase 2D with multi-jurisdiction support in place.
+
+---
+
+### What If Expansion Window 1 Is Skipped?
+
+**If you see Phase 2D in progress WITHOUT Expansion Window 1 complete:**
+
+🚨 **ALERT THE USER IMMEDIATELY:**
+
+> "⚠️ WARNING: Phase 2D has started but Expansion Window 1 (4 new jurisdictions) is not complete.
+>
+> According to feature_delivery_plan_v2.md, all 4 jurisdictions (Hong Kong, New Zealand, Seattle, Toronto) should be added BEFORE Phase 2D starts.
+>
+> **Risk:** Phase 2D-6 code will be built with Singapore-only assumptions, requiring 6-12 months refactoring later.
+>
+> **Recommendation:** Pause Phase 2D and complete Expansion Window 1 first (5-6 weeks).
+>
+> See docs/feature_delivery_plan_v2.md section 'JURISDICTION EXPANSION WINDOWS' for full rationale."
+
+**Don't proceed with Phase 2D** until user explicitly confirms to skip expansion or complete it.
+
+---
+
+### Where to Find Detailed Instructions
+
+**For PM:** [`docs/jurisdiction_expansion_playbook.md`](jurisdiction_expansion_playbook.md) — Complete guide with checklists
+
+**For Codex:** [`docs/jurisdiction_expansion_playbook.md`](jurisdiction_expansion_playbook.md) → Section 4 "Codex Workflow"
+
+**For Claude:** [`docs/jurisdiction_expansion_playbook.md`](jurisdiction_expansion_playbook.md) → Section 5 "Claude Workflow"
+
+**For Strategy/Rationale:** [`docs/feature_delivery_plan_v2.md`](feature_delivery_plan_v2.md) → Section "JURISDICTION EXPANSION WINDOWS"
+
+---
+
 ## 🤝 When to Ask the User
 
 ### ASK when:
@@ -744,6 +895,8 @@ Phase 3+: Later phases (depend on Phase 2)
 |----------|--------|
 | **"What's the current status?"** | [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — see "📊 Current Progress Snapshot" |
 | **"What should I build next?"** | Use decision tree above |
+| **"Phase 2C is done - what's next?"** | 🛑 STOP - Do Expansion Window 1 (add 4 jurisdictions) BEFORE Phase 2D |
+| **"How do I add a jurisdiction?"** | [jurisdiction_expansion_playbook.md](jurisdiction_expansion_playbook.md) |
 | **"Are there known test issues?"** | [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) |
 | **"What are the requirements?"** | [FEATURES.md](../FEATURES.md) + phase section in delivery plan |
 | **"How should I write code?"** | [CODING_RULES.md](../CODING_RULES.md) |
