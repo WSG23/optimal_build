@@ -39,12 +39,6 @@
 - Note: Real OAuth pending API credentials (future work, not blocking)
 - [Jump to details ↓](#phase-1c-listing-integrations-mocks)
 
-**[Phase 1D: Business Performance Management](#phase-1d-business-performance-management)** ✅ COMPLETE
-- **Backend:** 100% | **UI:** 100%
-- **Status source:** Detailed section confirms "✅ COMPLETE"
-- Deal Pipeline API, ROI Analytics, Performance Snapshots, Benchmarks
-- [Jump to details ↓](#phase-1d-business-performance-management)
-
 **[Phase 2A: Universal GPS Site Acquisition](#phase-2a-universal-gps-site-acquisition)** ✅ COMPLETE
 - **Backend:** 100% | **UI:** 100%
 - **Status source:** Detailed section confirms "✅ COMPLETE"
@@ -54,6 +48,13 @@
 ---
 
 ### ⏸️ In Progress Phases
+
+**[Phase 1D: Business Performance Management](#phase-1d-business-performance-management)** ⚠️ IN PROGRESS
+- **Backend:** 100% | **UI:** 20%
+- **Status source:** [Line 268](#phase-1d-business-performance-management) says "⚠️ IN PROGRESS - 60%"
+- **Completed:** Deal Pipeline API ✅, Commission ledger ✅, ROI Analytics backend ✅, Performance Snapshots ✅
+- **Missing:** Pipeline Kanban UI, Deal insights panel, Analytics panel, ROI panel, Manual UI testing (0/8 checks done)
+- [Jump to details ↓](#phase-1d-business-performance-management)
 
 **[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ⚠️ IN PROGRESS
 - **Backend:** 100% | **UI:** 85%
