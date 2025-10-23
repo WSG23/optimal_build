@@ -5,74 +5,112 @@
 
 ---
 
-## 📊 Current Progress Snapshot
+## 📊 Current Progress Snapshot (Read-Only Dashboard)
 
-> **Last Updated:** 2025-10-22
+> **⚠️ CRITICAL: DO NOT EDIT THIS SECTION DIRECTLY**
 >
-> **⚠️ IMPORTANT:** This is the **SINGLE SOURCE OF TRUTH** for project status.
-> All other documents (NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md, etc.) reference this document.
+> This summary is a **read-only dashboard** derived from the detailed phase sections below.
+> **To update progress:** Scroll to the detailed phase section and update the "Status:" line there.
 >
-> **🔄 UPDATE INSTRUCTIONS (AI Agents & Developers):**
-> When completing a phase, you MUST update BOTH:
-> 1. **This summary section** (lines 20-65) - Move phase from "Not Started" to "Complete"
-> 2. **Detailed phase section** (scroll down ~400 lines) - Check off ✅ deliverables
-> 3. **"Last Updated" date** above
+> **Last Updated:** 2025-10-23 (reflects status from detailed sections)
 >
 > **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for guidance on choosing your next task.
 
-**Overall Completion: Phase 1 (100%) + Phase 2A (100%) + Phase 2B (100%) ✅**
+---
 
-### ✅ What's Complete:
+### ✅ Complete Phases
 
-**Phase 1A: GPS Capture + Marketing** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: Agent GPS Capture ✅, Quick Analysis ✅, Marketing Pack Generator ✅
-- UI: Marketing Packs page with modern card-based design ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
+**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE"
+- GPS Capture, Quick Analysis, Marketing Pack Generator all shipped
+- [Jump to details ↓](#phase-1a-gps-capture--quick-analysis)
 
-**Phase 1B: Agent Advisory Services** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: Asset Mix Strategy ✅, Market Positioning ✅, Absorption Forecasting ✅, Feedback Loop ✅
-- UI: Advisory Services page with all 4 features ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
+**[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE"
+- Asset Mix Strategy, Market Positioning, Absorption Forecasting, Feedback Loop
+- [Jump to details ↓](#phase-1b-agent-advisory-services)
 
-**Phase 1C: Listing Integrations (Mocks)** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: PropertyGuru mock ✅, EdgeProp mock ✅, Zoho CRM mock ✅, Token encryption ✅
-- UI: Listing Integrations page with OAuth connection flows ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
-- Note: Real OAuth pending API credentials
+**[Phase 1C: Listing Integrations (Mocks)](#phase-1c-listing-integrations-mocks)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE (Mocks)"
+- PropertyGuru mock, EdgeProp mock, Zoho CRM mock, Token encryption
+- Note: Real OAuth pending API credentials (future work, not blocking)
+- [Jump to details ↓](#phase-1c-listing-integrations-mocks)
 
-**Phase 1D: Business Performance Management** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: Deal Pipeline API ✅, ROI Analytics ✅, Performance Snapshots ✅, Benchmarks ✅
-- UI: Business Performance page with Pipeline Kanban, Analytics, and ROI panels ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
+**[Phase 1D: Business Performance Management](#phase-1d-business-performance-management)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE"
+- Deal Pipeline API, ROI Analytics, Performance Snapshots, Benchmarks
+- [Jump to details ↓](#phase-1d-business-performance-management)
 
-**Phase 2A: Universal GPS Site Acquisition** - Backend 100%, UI 100% ✅ COMPLETE
-- Site Acquisition workspace (`/app/site-acquisition`) supports GPS capture, scenario selection, and quick analysis for developers ✅
-- Due diligence checklist authoring, auto-population, and exports (JSON/PDF) validated ✅
-- Manual inspection capture with specialist insights and multi-scenario comparison dashboard live ✅
+**[Phase 2A: Universal GPS Site Acquisition](#phase-2a-universal-gps-site-acquisition)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE"
+- Site Acquisition workspace, due diligence checklists, manual inspection capture
+- [Jump to details ↓](#phase-2a-universal-gps-site-acquisition)
 
-**Phase 2B: Asset-Specific Feasibility** - Backend 100%, UI 100% ✅ COMPLETE (2025-10-22)
-- Asset mix optimizer with curve-driven scoring, heritage premiums, constraint validation ✅
-- Heritage overlay services (NHB, URA conservation data ingestion and detection) ✅
-- Preview job pipeline (database model, queuing, worker, polling) ✅
-- Site Acquisition UI displays optimizations, financial summaries, heritage context ✅
-- See detailed deliverables in Phase 2B section below
+---
 
-**Infrastructure:**
-- CAD Processing Infrastructure - 95%
-- Finance & Feasibility Backend - 75%
-- Token encryption system - 100%
+### ⏸️ In Progress Phases
 
-### ⏸️ What's In Progress:
+**[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ⚠️ IN PROGRESS
+- **Backend:** 100% | **UI:** 85%
+- **Status source:** [Line 416](#phase-2b-asset-specific-feasibility) says "⚠️ IN PROGRESS"
+- **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅
+- **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [phase2b_visualisation_stub.md](phase2b_visualisation_stub.md)
+- [Jump to details ↓](#phase-2b-asset-specific-feasibility)
 
-**Phase 2C: Complete Financial Control & Modeling** - Backend 80% complete; construction loan interest + asset finance UI shipped, sensitivity tooling pending
+**[Phase 2C: Complete Financial Control & Modeling](#phase-2c-complete-financial-control--modeling)** ⚠️ IN PROGRESS
+- **Backend:** 80% | **UI:** 40%
+- **Status source:** [Line 472](#phase-2c-complete-financial-control--modeling)
+- **Completed:** Asset finance engine ✅, Construction loan interest ✅
+- **Missing:** Sensitivity analysis UI, async batching, tranche editing
+- [Jump to details ↓](#phase-2c-complete-financial-control--modeling)
 
-**Other:**
-- Agent Validation (waiting for real user sessions)
+---
 
-### ❌ What's Not Started:
+### ❌ Not Started Phases
 
-- Phases 2D-2I: Team coordination, regulatory navigation, construction delivery, revenue optimization, enhanced export
-- Phase 3+: Architect Tools, Engineer Tools, Platform Integration
+**Phases 2D-2I:** Team coordination, regulatory navigation, construction delivery, revenue optimization, enhanced export
+- [Jump to Phase 2D ↓](#phase-2d-multi-phase-development-management)
+
+**Phase 3+:** Architect Tools, Engineer Tools, Platform Integration
+- [Jump to Phase 3 ↓](#phase-3-architect-workspace)
+
+---
+
+### 🔄 How to Update This Dashboard
+
+**❌ WRONG - Do NOT do this:**
+```markdown
+# Editing this summary section directly
+**Phase 2B** - Backend 100%, UI 100% ✅ COMPLETE  ← DON'T EDIT HERE!
+```
+
+**✅ CORRECT - Do this instead:**
+
+1. **Find the detailed phase section** (use Ctrl+F or jump links above)
+2. **Update the "Status:" line** in the detailed section:
+   ```markdown
+   ### Phase 2B: Asset-Specific Feasibility ✅ COMPLETE
+   **Status:** 100% - All features delivered, tests passing
+   ```
+3. **Update the "What's Missing" section** - Remove ❌ items when complete
+4. **This summary will reflect those changes** when regenerated
+
+**Why this matters:**
+- Summary is derived from detailed sections (single source of truth)
+- Prevents summary/detail drift and discrepancies
+- Forces validation of "What's Missing" before claiming 100%
+
+---
+
+**🎯 Quick Navigation:**
+- Looking for next task? → [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md)
+- Need phase requirements? → Use jump links above to go directly to detailed sections
+- Want to see overall progress? → This dashboard (you are here)
 
 ---
 

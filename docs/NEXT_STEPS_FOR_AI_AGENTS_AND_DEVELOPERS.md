@@ -4,7 +4,7 @@
 >
 > **For current project status:** See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — start with the "📊 Current Progress Snapshot" section
 >
-> **Last Updated:** 2025-10-23
+> **Last Updated:** 2025-10-23 (added read-only dashboard policy)
 
 ---
 
@@ -228,66 +228,87 @@ When you finish implementing a feature/milestone, you MUST update the status doc
 - Outdated status creates confusion and duplicate work
 - This document will be referenced for 6-12 months during pre-launch development
 
+---
+
+### ⚠️ CRITICAL CHANGE (2025-10-23): Summary Section is Now Read-Only
+
+**The "📊 Current Progress Snapshot" section is now a READ-ONLY DASHBOARD.**
+
+**❌ DO NOT edit the summary section (lines 8-110) directly**
+**✅ ONLY edit the detailed phase sections below**
+
+The summary automatically reflects the detailed sections. Editing the summary directly will cause discrepancies.
+
+---
+
 **Required updates:**
 
-✅ **Step 1: Update "📊 Current Progress Snapshot" section (lines 7-59)**
+✅ **Step 1: Find and update the DETAILED phase section (NOT the summary)**
 
-Find your phase and update the percentage + remaining items.
+Use Ctrl+F to find your phase's detailed section (e.g., "### Phase 2B: Asset-Specific Feasibility")
 
-**For Backend Work:**
+**Update the Status line:**
 ```diff
-Example for Phase 1D after completing ROI Analytics backend:
+Example for Phase 2B after completing heritage overlay:
 
-- **Phase 1D: Business Performance Management** - Backend 45%, UI 30%
-+ **Phase 1D: Business Performance Management** - Backend 60%, UI 30%
-- Backend: Deal Pipeline API ✅, Remaining: ROI Analytics, Commission Protection
-+ Backend: Deal Pipeline API ✅, ROI Analytics ✅, Remaining: Commission Protection
+- ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
+- **Status:** 80% - Heritage overlay backend in progress
++ ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
++ **Status:** 90% - Heritage overlay backend complete, 3D preview UI remaining
 ```
 
-**For UI/UX Work:**
+**Update the "What Exists" section:**
 ```diff
-Example for Phase 1D after completing Pipeline Kanban UI:
+**What Exists:**
+- ✅ Asset mix optimizer with scoring engine
+- ✅ Preview job infrastructure (DB, queueing, polling)
++ ✅ Heritage overlay service (detection + data ingestion)
++ ✅ Heritage context displayed in Site Acquisition UI
+```
 
-- **Phase 1D: Business Performance Management** - Backend 60%, UI 30%
-+ **Phase 1D: Business Performance Management** - Backend 60%, UI 50%
-- UI: Production shell ✅, Remaining: Pipeline Kanban, Analytics panels
-+ UI: Production shell ✅, Pipeline Kanban ✅, Remaining: Analytics panels
+**Update the "What's Missing" section:**
+```diff
+**What's Missing (Next Focus):**
+- - ❌ Heritage overlay backend integration
+- ❌ 3D preview UI renderer (GLB generation + viewer)
++ - ✅ Heritage overlay backend integration (MOVED TO "What Exists")
++ - ❌ 3D preview UI renderer (GLB generation + viewer) - 4 weeks remaining
 ```
 
 **How to calculate percentage:**
-- Count total milestones in phase (e.g., 3 milestones: Deal Pipeline, ROI Analytics, Commission Protection)
-- Divide completed by total (e.g., 2/3 = 66%, round to 60-65%)
-- **Track Backend and UI separately** - they progress independently
+- Count total milestones in "Requirements" section
+- Count completed items in "What Exists"
+- Divide completed by total (e.g., 9/10 = 90%)
+- **Track Backend and UI separately** when relevant
 
-✅ **Step 2: Update detailed phase section (find "Phase X:" heading)**
+---
 
-**For Backend Work:**
-Add to "Delivered (Milestone MX)" section:
+✅ **Step 2: Check if phase is 100% complete (VALIDATION GATE)**
+
+**Before changing status to "✅ COMPLETE", verify ALL of these:**
+
+- [ ] "What's Missing" section has NO ❌ items (all moved to "What Exists")
+- [ ] ALL acceptance criteria from "Requirements" are met
+- [ ] Backend tests passing (pytest)
+- [ ] Frontend tests passing (or documented exceptions in TESTING_KNOWN_ISSUES.md)
+- [ ] Manual UI testing complete (PM validated)
+- [ ] Phase-specific documentation updated (if applicable)
+
+**If ALL checks pass:**
 ```diff
-+ **Delivered (Milestone M4 - ROI Analytics):**
-+ - ✅ ROI metrics aggregation in performance snapshots
-+ - ✅ compute_project_roi() integration from app.core.metrics
-+ - ✅ Snapshot context derivation (pipeline metadata)
-+ - ✅ Tests: test_agent_performance.py passing (4/4)
+- ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
+- **Status:** 90% - 3D preview UI remaining
++ ### Phase 2B: Asset-Specific Feasibility ✅ COMPLETE (2025-10-23)
++ **Status:** 100% - All features delivered, tests passing
+
+**What's Missing (Next Focus):**
+- - ❌ 3D preview UI renderer
++ (This section should now be empty or removed - all items moved to "What Exists")
 ```
 
-**For UI/UX Work:**
-Add to "UI/UX Status" section (comes after Test Status, before Requirements):
-```diff
-+ **UI/UX Status (Production Customer-Facing Interface):**
-+
-+ **Delivered:**
-+ - ✅ Pipeline Kanban board component
-+ - ✅ Deal detail drawer with timeline/commissions
-+
-+ **In Progress (YYYY-MM-DD):**
-+ - 🔄 Analytics panel
-+ - 🔄 ROI panel
-+
-+ **UI Files:**
-+ - frontend/src/app/pages/business-performance/PipelineBoard.tsx
-+ - frontend/src/app/pages/business-performance/DealDrawer.tsx
-```
+**If ANY check fails:** Phase is NOT 100% complete, keep as "⚠️ IN PROGRESS"
+
+---
 
 ✅ **Step 3: Stage the documentation with your code changes**
 ```bash
@@ -297,18 +318,19 @@ git add docs/feature_delivery_plan_v2.md
 
 ✅ **Step 4: Mention documentation update in commit message**
 ```bash
-git commit -m "Add Phase 1D ROI Analytics
+git commit -m "feat: complete heritage overlay backend for Phase 2B
 
 Backend changes:
-- ROI metrics aggregation in performance snapshots
-- compute_project_roi() integration
-- Snapshot context derivation
+- Heritage overlay service (detection + data ingestion)
+- Heritage context API integration
+- Site Acquisition UI displays heritage data
 
-Tests: 4/4 passing
+Tests: pytest passing (12/12)
 
 Updated docs/feature_delivery_plan_v2.md:
-- Phase 1D progress: 45% → 60%
-- Added ROI Analytics to delivered milestones
+- Phase 2B detailed section: 80% → 90%
+- Moved heritage overlay to 'What Exists'
+- Updated 'What's Missing' to show remaining 3D preview work
 ```
 
 **When to update:**
@@ -317,10 +339,42 @@ Updated docs/feature_delivery_plan_v2.md:
 - ✅ Every time you complete a milestone/feature
 - ✅ Even for partial progress (e.g., backend done, frontend pending)
 
+---
+
+### 🚫 Common Mistakes to Avoid
+
+**❌ MISTAKE #1: Editing the summary section**
+```markdown
+## 📊 Current Progress Snapshot
+**Phase 2B** - Backend 100%, UI 100% ✅ COMPLETE  ← DO NOT EDIT HERE!
+```
+**Why it's wrong:** Summary is read-only, derived from detailed sections
+
+**❌ MISTAKE #2: Marking phase 100% while "What's Missing" has ❌ items**
+```markdown
+### Phase 2B: ✅ COMPLETE
+**What's Missing:**
+- ❌ 3D preview UI  ← CONTRADICTS "COMPLETE" STATUS!
+```
+**Why it's wrong:** Can't be complete if work is still missing
+
+**❌ MISTAKE #3: Not updating "What's Missing" when completing work**
+```markdown
+**What Exists:**
+- ✅ Heritage overlay backend  ← ADDED THIS
+
+**What's Missing:**
+- ❌ Heritage overlay backend  ← FORGOT TO REMOVE!
+```
+**Why it's wrong:** Same item can't be both complete and missing
+
+---
+
 **What if you're not sure what to write?**
-- Look at completed phases (1A, 1B, 1C) for examples
+- Look at completed phases (1A, 1B, 1C) in detailed sections for examples
 - Match the formatting and structure
-- Ask user: "I completed X. Should I update feature_delivery_plan_v2.md to show X% progress?"
+- Check the "What's Missing" section to see what's left
+- Ask user: "I completed X. Should I update Phase Y detailed section to show X% progress?"
 
 ---
 
