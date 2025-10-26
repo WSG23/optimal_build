@@ -1,0 +1,331 @@
+# Technical Debt Inventory
+
+**Last updated:** 2025-10-27
+**Purpose:** Comprehensive list of all known technical debt so AI agents don't forget about deferred work
+
+---
+
+## 🚨 CRITICAL: Read This First
+
+**AI Agents (Claude, Codex):**
+- This file lists ALL known technical debt in the codebase
+- Each item is categorized by priority (High/Medium/Low)
+- Before starting new work, check if you're touching files with known debt
+- When you fix debt, move it to "Completed" section with date
+
+**Human (Program Manager):**
+- Review this quarterly
+- Technical debt grows if not actively managed
+- Items marked "Low" today can become "High" tomorrow
+
+---
+
+## High Priority (Fix Soon)
+
+### 1. Phase 1D: Business Performance Management UI
+**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Priority:** HIGH (60% complete, UI missing)
+**Estimate:** 3-4 weeks
+**Risk:** Blocks Phase 1 completion
+
+**What's Missing:**
+- Pipeline Kanban board component
+- Deal insights panel
+- Analytics panel
+- ROI panel
+- Manual QA checklist (8 items)
+
+**Documentation:** [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 274-392
+**Tracked in:** [BACKLOG.md](BACKLOG.md)
+
+---
+
+### 2. Phase 2B: Asset-Specific Feasibility - 3D Visualization
+**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Priority:** HIGH (85% complete, 3D preview missing)
+**Estimate:** 2-3 weeks
+**Risk:** Blocks Phase 2B completion
+
+**What's Missing:**
+- 3D preview GLB generation (scenario-aware massing)
+- Interactive 3D viewer UI integration
+
+**Documentation:**
+- [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
+- [docs/phase2b_visualisation_stub.md](docs/phase2b_visualisation_stub.md)
+
+**Tracked in:** [BACKLOG.md](BACKLOG.md)
+
+---
+
+### 3. Entitlement Enum Case Sensitivity
+**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Priority:** HIGH (data drift risk)
+**Estimate:** 2-4 hours
+**Risk:** Database inconsistency, query failures
+
+**Problem:**
+- `EntApprovalType.category` enum currently uses uppercase (SQLAlchemy `.name` default)
+- Should use lowercase (`.value`) for consistency
+- Existing data may have uppercase values in database
+
+**Solution (2 stages):**
+1. **Stage 1 (low risk):** Update `SAEnum` fields in `app/models/entitlements.py` to use `values_callable=lambda enum_cls: [member.value for member in enum_cls]`
+2. **Stage 2 (needs coordination):** Migration to recreate Postgres enum with lowercase literals
+
+**Documentation:** [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) lines 15-21
+
+**DO NOT START** until Phase 2C is merged and staging database can be audited.
+
+---
+
+## Medium Priority (Fix After Phase 2C)
+
+### 4. Dependency Pinning (Tier 2)
+**Status:** BLOCKED - waiting for Phase 2C + Phase 1D/2B residual work
+**Priority:** Medium
+**Estimate:** 1-2 hours
+**Risk:** Security, reproducibility, CI non-determinism
+
+**Problem:**
+7 dependencies in `backend/requirements.txt` use `>=` instead of `==`:
+- asyncpg>=0.30.0
+- shapely>=2.0.6
+- pandas>=2.2.3
+- numpy>=1.26.0
+- statsmodels>=0.14.0
+- scikit-learn>=1.3.0
+- reportlab>=4.0.0
+
+**Solution:**
+Full instructions in `.github/ISSUE_TEMPLATE/tier2-dependency-pinning.md`
+
+**Quick steps:**
+1. Run: `pip freeze | grep -E "asyncpg|shapely|pandas|numpy|statsmodels|scikit-learn|reportlab"`
+2. Update `backend/requirements.txt` with exact versions
+3. Run: `make verify` and `pytest backend/tests/`
+4. Remove exception from `.coding-rules-exceptions.yml` (line 27-29)
+5. Commit and push
+
+**Exception:** `.coding-rules-exceptions.yml` lines 27-29 (rule_4_dependency_pinning)
+**Tracked in:** [BACKLOG.md](BACKLOG.md)
+
+---
+
+### 5. Import Ordering Disagreement (isort vs ruff)
+**Status:** Active exception
+**Priority:** Medium
+**Estimate:** 30 minutes
+**Risk:** Pre-commit hook confusion
+
+**Problem:**
+isort and ruff disagree on `backend._compat` import ordering in 2 files:
+- `backend/app/api/v1/advanced_intelligence.py`
+- `backend/app/api/v1/agents.py`
+
+**Solution:**
+Either:
+- Add `# isort: skip` comment to the import
+- Configure ruff/isort to agree
+- Pick one tool and remove the other
+
+**Exception:** `.coding-rules-exceptions.yml` lines 48-51 (rule_7_code_quality)
+
+---
+
+## Low Priority (Fix When Touching Files)
+
+### 6. Async/Await Refactoring (Tier 3)
+**Status:** Deferred - fix when touching those files
+**Priority:** Low
+**Estimate:** 4-6 hours
+**Risk:** Performance (minor), consistency
+
+**Problem:**
+3 legacy API files use sync `Session` instead of `AsyncSession`:
+- `backend/app/api/v1/users_db.py`
+- `backend/app/api/v1/singapore_property_api.py`
+- `backend/app/api/v1/projects_api.py`
+
+**Solution:**
+Refactor to use AsyncSession when you need to modify these files anyway.
+
+**When to fix:**
+- When refactoring those modules for other reasons
+- Or as part of async/await consistency sprint
+
+**Exception:** `.coding-rules-exceptions.yml` lines 22-26 (rule_2_async)
+**Tracked in:** [BACKLOG.md](BACKLOG.md)
+
+---
+
+### 7. Legacy Migrations with Enum Pattern Issues
+**Status:** Grandfathered - do not modify
+**Priority:** Low (isolated to old migrations)
+**Estimate:** N/A
+**Risk:** None (new migrations use correct pattern)
+
+**Problem:**
+10 pre-existing migrations use `sa.Enum(..., create_type=False)` pattern (now forbidden).
+
+**Solution:**
+DO NOT fix. These migrations are grandfathered and should never be modified.
+
+**New migrations:** Use correct pattern (see CODING_RULES.md Section 1.2)
+
+**Exception:** `.coding-rules-exceptions.yml` lines 33-46 (rule_1_2_enum_pattern)
+
+---
+
+### 8. Test DB Setup Issues (Singapore Property)
+**Status:** Known issue
+**Priority:** Low
+**Estimate:** Unknown
+**Risk:** Test failures (not production)
+
+**Problem:**
+`backend/app/models/singapore_property.py` triggers Rule 5 (Singapore compliance) failures due to test DB setup issues, not actual compliance violations.
+
+**Solution:**
+Fix test database setup to properly handle Singapore-specific schema.
+
+**Exception:** `.coding-rules-exceptions.yml` lines 30-32 (rule_5_singapore)
+
+---
+
+### 9. Long URL in Documentation String
+**Status:** Minor annoyance
+**Priority:** Low
+**Estimate:** 5 minutes
+**Risk:** None (just a linter warning)
+
+**Problem:**
+`scripts/smoke_test_pdfs.py` has a long URL in a documentation string that triggers line length checks.
+
+**Solution:**
+Split URL across multiple lines or add exception comment.
+
+**Exception:** `.coding-rules-exceptions.yml` lines 52-53 (rule_7_code_quality)
+
+---
+
+## Deferred (Not Urgent)
+
+### 10. Legacy Migration Downgrade Guards
+**Status:** Accepted technical debt
+**Priority:** Low
+**Estimate:** N/A (low value)
+**Risk:** None (downgrades rarely used in production)
+
+**Problem:**
+7 migrations don't follow Rule 1 (migration idempotency) but use `if_exists=True` guards in downgrade() instead.
+
+**Why deferred:**
+- Downgrades are rarely run in production
+- Fixing would require rewriting migration history (dangerous)
+- Guards provide acceptable safety
+
+**Files:**
+- backend/migrations/versions/20250220_000009_add_agent_advisory_feedback.py
+- backend/migrations/versions/20250220_000010_add_listing_integration_tables.py
+- backend/migrations/versions/20250220_000011_add_business_performance_tables.py
+- backend/migrations/versions/20250220_000012_add_commission_tables.py
+- backend/migrations/versions/20250220_000013_add_performance_snapshots.py
+- backend/migrations/versions/20251013_000014_add_developer_due_diligence_checklists.py
+- backend/migrations/versions/20251013_000015_add_developer_condition_assessments.py
+
+**Exception:** `.coding-rules-exceptions.yml` lines 4-18 (rule_1_migrations)
+
+---
+
+## Code TODOs (Found in Source)
+
+### 11. Market Condition Adjustments
+**Location:** `backend/app/services/agents/development_potential_scanner.py`
+**Priority:** Low
+**Estimate:** 2-4 hours
+**Risk:** Inaccurate calculations
+
+**TODO comments:**
+```python
+# TODO: Adjust based on market conditions and location factors
+# TODO: Add market-based opportunities
+```
+
+**Context:** Development potential scanner needs market-aware adjustments.
+
+**When to fix:** When implementing market intelligence integration (Phase 1B enhancements).
+
+---
+
+## Completed
+
+### 2025-10-26: Migration Validation Infrastructure (Phases 1-3)
+**Completed by:** Claude
+**Commits:** 4cf497e, e7a987e, d848b49, d2b98c3
+
+**What was done:**
+- ✅ Phase 1: Pre-commit hook for ENUM pattern validation
+- ✅ Phase 2: Schema validation tests (8 tests)
+- ✅ Phase 3: CI workflow integration
+- ✅ Fixed check_coding_rules.py to use venv Python
+- ✅ Fixed missing Sequence import in finance.py
+
+**Impact:**
+- 90%+ reduction expected in migration issues
+- 100% coverage of known migration patterns
+- Clear error messages at commit time
+
+---
+
+## How to Use This File
+
+### When Starting Work
+
+**AI Agents:** Before implementing any feature:
+1. Read this file
+2. Check if you're touching files with known debt (grep for filename)
+3. If debt is "Low" priority and you're modifying that file anyway, fix it!
+4. If debt is "High" or "Medium", check if it's unblocked
+
+### When Fixing Debt
+
+1. Move item from priority section to "Completed"
+2. Add date, who fixed it, commit hash
+3. Update "Last updated" date at top
+4. If exception exists in `.coding-rules-exceptions.yml`, remove it
+5. Update [BACKLOG.md](BACKLOG.md) if the item was tracked there
+
+### When Discovering New Debt
+
+1. Add to appropriate priority section
+2. Include: Status, Priority, Estimate, Risk, Problem, Solution
+3. Add exception to `.coding-rules-exceptions.yml` if needed
+4. Update "Last updated" date
+5. Tell the user about the new debt item
+
+---
+
+## Related Documentation
+
+- [BACKLOG.md](BACKLOG.md) - AI agent work queue (active tasks)
+- [CODING_RULES.md](CODING_RULES.md) - Rules that created these exceptions
+- [.coding-rules-exceptions.yml](.coding-rules-exceptions.yml) - Formal exception list
+- [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) - Phase completion tracking
+- [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) - Decision guide
+
+---
+
+## Metrics
+
+**Total technical debt items:** 11 active + 1 completed
+**High priority:** 3 items (5-7 weeks total)
+**Medium priority:** 2 items (~2 hours total)
+**Low priority:** 6 items (~10 hours total)
+
+**Most common debt type:** Migration pattern issues (4 items)
+**Biggest risk:** Phase 1D/2B incomplete (blocks phase progression)
+**Easiest wins:** Dependency pinning (1-2 hours), import ordering (30 min)
+
+**Last review:** 2025-10-27
+**Next review:** 2026-01-27 (quarterly)

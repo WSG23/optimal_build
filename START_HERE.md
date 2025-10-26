@@ -5,9 +5,10 @@
 1. **UI_STATUS.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
 2. **FEATURES.md** - What we're building (full feature specification)
 3. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
-4. **docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md** - How to choose your next task (decision tree)
-5. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
-6. **CLAUDE.md** - Coding guidelines and mandatory workflows
+4. **TECHNICAL_DEBT.md** - ⚠️ **IMPORTANT** - All known technical debt (prevents forgotten work)
+5. **docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md** - How to choose your next task (decision tree)
+6. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
+7. **CLAUDE.md** - Coding guidelines and mandatory workflows
 
 ---
 
@@ -97,18 +98,20 @@ This section lists ALL 20 instruction and reference files in this repository. Th
 8. ✅ **CODEX.md** - Codex-specific instructions and mandatory testing checklist
 
 ### 📋 Additional Reference Files (Read When Relevant)
-9. **docs/handoff_playbook.md** - Session handoff guide and status snapshot
-10. **CODING_RULES.md** - 8 mandatory coding rules (enforced by CI)
-11. **CONTRIBUTING.md** - Git workflow, PR process, code review
-12. **TESTING_ADVISORY.md** - Testing best practices
-13. **TESTING_DOCUMENTATION_SUMMARY.md** - Testing strategy overview
-14. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
-15. **docs/validation/live_testing_guide.md** - Manual/UAT testing procedures
-16. **TEST_ALL_FEATURES.md** - Feature testing checklist
-17. **PROJECT_ROADMAP.md** - High-level project roadmap
-18. **frontend/README_AI_AGENTS.md** - ⚠️ Critical warnings about frontend test harnesses
-19. **docs/SOLO_FOUNDER_GUIDE.md** - Solo founder workflow with AI agents
-20. **docs/reviewer_sop.md** - Code review procedures
+9. **BACKLOG.md** - AI agent work queue (active tasks only)
+10. **TECHNICAL_DEBT.md** - Complete technical debt inventory (all known deferred work)
+11. **docs/handoff_playbook.md** - Session handoff guide and status snapshot
+12. **CODING_RULES.md** - 8 mandatory coding rules (enforced by CI)
+13. **CONTRIBUTING.md** - Git workflow, PR process, code review
+14. **TESTING_ADVISORY.md** - Testing best practices
+15. **TESTING_DOCUMENTATION_SUMMARY.md** - Testing strategy overview
+16. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
+17. **docs/validation/live_testing_guide.md** - Manual/UAT testing procedures
+18. **TEST_ALL_FEATURES.md** - Feature testing checklist
+19. **PROJECT_ROADMAP.md** - High-level project roadmap
+20. **frontend/README_AI_AGENTS.md** - ⚠️ Critical warnings about frontend test harnesses
+21. **docs/SOLO_FOUNDER_GUIDE.md** - Solo founder workflow with AI agents
+22. **docs/reviewer_sop.md** - Code review procedures
 
 ### 📖 Supporting Documentation (Not Instructions)
 - **README.md** - General project overview
