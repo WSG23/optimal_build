@@ -1,6 +1,6 @@
 # Technical Debt Backlog
 
-**Last updated:** 2025-10-26
+**Last updated:** 2025-10-27
 **Maintained by:** Human (you) with help from Claude/Codex
 
 ---
@@ -28,8 +28,68 @@
 
 ## Blocked (Waiting)
 
-### Tier 2: Dependency Pinning
+### Phase 1D: Business Performance Management UI
 **Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Priority:** HIGH (60% complete, UI missing)
+**Estimate:** 3-4 weeks
+**Risk:** Blocks Phase 1 completion
+
+**What's Done:**
+- ✅ Backend 100% complete (deal pipeline, commission ledger, ROI analytics)
+- ✅ Production shell + navigation configured
+- ✅ Page scaffold created
+
+**What's Missing (UI Implementation):**
+- ❌ Pipeline Kanban board component (columns per stage, drag-drop)
+- ❌ Deal insights panel (timeline, audit metadata)
+- ❌ Analytics panel (KPI cards, trend charts, benchmarks)
+- ❌ ROI panel (project-level ROI tracking)
+- ❌ Manual QA checklist (8 items in feature_delivery_plan_v2.md lines 351-363)
+
+**Documentation:**
+- Requirements: [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 274-392
+- UI specs: Lines 315-343 (primary persona: Agent Team Leads)
+- API endpoints: Lines 330 (deals, timeline, commissions, performance)
+
+**After Phase 2C completes:**
+1. Read Phase 1D UI Design Specifications (lines 328-335)
+2. Build 4 UI components (Kanban, Insights, Analytics, ROI panels)
+3. Run manual QA checklist (lines 351-363)
+4. Mark Phase 1D ✅ COMPLETE
+
+---
+
+### Phase 2B: Asset-Specific Feasibility - 3D Visualization
+**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Priority:** HIGH (85% complete, 3D preview missing)
+**Estimate:** 2-3 weeks
+**Risk:** Blocks Phase 2B completion
+
+**What's Done:**
+- ✅ Asset optimizer (curve-driven scoring, constraint logging)
+- ✅ Heritage overlay backend (NHB Historic Sites, National Monuments)
+- ✅ Preview job pipeline (background renders, polling endpoints)
+- ✅ Visualization stub (per-asset massing layers, color legend)
+
+**What's Missing:**
+- ❌ 3D preview GLB generation (scenario-aware massing)
+- ❌ Interactive 3D viewer UI integration (frontend)
+- 🟡 Automate NHB dataset refresh (optional - can defer)
+
+**Documentation:**
+- Requirements: [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
+- Detailed plan: [docs/phase2b_visualisation_stub.md](docs/phase2b_visualisation_stub.md)
+
+**After Phase 2C completes:**
+1. Read phase2b_visualisation_stub.md for implementation details
+2. Implement GLB generation with scenario variants
+3. Wire frontend 3D viewer component
+4. Mark Phase 2B ✅ COMPLETE
+
+---
+
+### Tier 2: Dependency Pinning
+**Status:** BLOCKED - waiting for Phase 2C Finance to complete AND Phase 1D/2B residual work
 **Priority:** Medium
 **Estimate:** 1-2 hours
 **Risk:** Security, reproducibility
