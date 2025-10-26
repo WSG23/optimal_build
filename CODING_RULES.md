@@ -86,6 +86,20 @@ def upgrade() -> None:
 - Foreign keys to non-existent tables: Remove them and add TODO comments for later
 - UUID columns: Use `postgresql.UUID(as_uuid=True)` not `String(36)`
 
+**Enforcement:**
+This rule is enforced by:
+- Pre-commit hook: `check-migration-enums` (runs on every commit)
+- Script: `scripts/check_migration_enums.py` (can run manually)
+- CI: Will be added in Phase 3 of migration validation infrastructure
+
+To check manually:
+```bash
+python3 scripts/check_migration_enums.py
+```
+
+**Exceptions:**
+Pre-existing migrations that use the forbidden pattern are listed in `.coding-rules-exceptions.yml` under `rule_1_2_enum_pattern`. These are grandfathered in but should NOT be edited. All NEW migrations must follow the correct pattern.
+
 ### 1.3 ENUM Value Naming Convention
 
 **Rule:** PostgreSQL ENUM values must EXACTLY match the Python enum string values. Use consistent casing between database and code.

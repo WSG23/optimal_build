@@ -7,6 +7,13 @@ repos:
       language: system
       pass_filenames: false
 
+    - id: check-migration-enums
+      name: Check migration ENUM patterns
+      entry: python3 scripts/check_migration_enums.py
+      language: system
+      pass_filenames: false
+      files: ^(backend/)?migrations/versions/.*\.py$
+
     - id: pdf-smoke-test
       name: PDF generation smoke test
       entry: python3 scripts/smoke_test_pdfs.py

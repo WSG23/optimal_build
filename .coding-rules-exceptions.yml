@@ -30,6 +30,21 @@ exceptions:
   rule_5_singapore:
     # Test failures due to DB setup issues, not compliance violations
     - backend/app/models/singapore_property.py
+  rule_1_2_enum_pattern:
+    # Pre-existing migrations with sa.Enum(..., create_type=False) pattern
+    # These were created before CODING_RULES.md Section 1.2 was enforced
+    # Do NOT add new migrations here - fix the pattern instead!
+    - backend/migrations/versions/0773c87952ef_add_singapore_properties_table_with_mvp_.py
+    - backend/migrations/versions/20240816_000004_add_entitlements_tables.py
+    - backend/migrations/versions/20241228_000006_add_commercial_property_agent_tables.py
+    - backend/migrations/versions/20250220_000010_add_listing_integration_tables.py
+    - backend/migrations/versions/20250220_000011_add_business_performance_tables.py
+    - backend/migrations/versions/20250220_000012_add_commission_tables.py
+    - backend/migrations/versions/20251013_000014_add_developer_due_diligence_checklists.py
+    - backend/migrations/versions/20251022_000017_add_preview_jobs.py
+    - backend/migrations/versions/20251026_000019_add_projects_table_columns.py
+    - backend/migrations/versions/4c8849dec050_add_asset_type_to_agent_deals_manual.py
+
   rule_7_code_quality:
     # isort and ruff disagree on backend._compat import ordering
     - backend/app/api/v1/advanced_intelligence.py
