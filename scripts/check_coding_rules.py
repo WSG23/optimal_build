@@ -31,6 +31,23 @@ def get_repo_root() -> Path:
     return Path.cwd()
 
 
+def get_venv_python() -> str:
+    """Find the venv Python interpreter.
+
+    Returns the path to the venv Python if it exists, otherwise falls back
+    to sys.executable. This ensures we use the venv with all dependencies
+    installed, rather than system Python.
+    """
+    repo_root = get_repo_root()
+    venv_python = repo_root / ".venv" / "bin" / "python"
+
+    if venv_python.exists():
+        return str(venv_python)
+
+    # Fallback to current Python (might be system Python)
+    return sys.executable
+
+
 try:  # Optional dependency – fail gracefully when unavailable
     import yaml  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
@@ -292,8 +309,9 @@ def check_singapore_compliance(
         if any(prefix in exc_path for exc_path in exceptions.get(rule_key, set())):
             return True, []
 
+    python_exe = get_venv_python()
     cmd = [
-        sys.executable,
+        python_exe,
         "-m",
         "pytest",
         "backend/tests/test_api/test_feasibility.py",
@@ -320,9 +338,10 @@ def check_formatting(repo_root: Path) -> tuple[bool, list[str]]:
     """Check if code needs formatting (Rule 3)."""
     errors = []
 
-    # Run black in check mode
+    # Run black in check mode (use venv Python to ensure black is available)
+    python_exe = get_venv_python()
     result = subprocess.run(
-        [sys.executable, "-m", "black", "--check", "--quiet", "backend/", "scripts/"],
+        [python_exe, "-m", "black", "--check", "--quiet", "backend/", "scripts/"],
         capture_output=True,
         text=True,
         cwd=repo_root,
@@ -348,9 +367,10 @@ def check_code_quality(
     """Check for code quality issues like unused variables (Rule 7)."""
     errors = []
 
-    # Run ruff in check mode (only for Python files we can control)
+    # Run ruff in check mode (use venv Python to ensure ruff is available)
+    python_exe = get_venv_python()
     result = subprocess.run(
-        [sys.executable, "-m", "ruff", "check", "backend/", "scripts/"],
+        [python_exe, "-m", "ruff", "check", "backend/", "scripts/"],
         capture_output=True,
         text=True,
         cwd=repo_root,
