@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import csv
 import json
 import os
 import subprocess
@@ -12,12 +13,11 @@ import time
 from collections.abc import Iterable, Iterator, MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Mapping, Sequence
 from uuid import uuid4
 
 import httpx
 import structlog
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
@@ -75,6 +75,17 @@ def _write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _write_csv(
+    path: Path, headers: Sequence[str], rows: Sequence[Sequence[Any]]
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(list(headers))
+        for row in rows:
+            writer.writerow(["" if value is None else str(value) for value in row])
+
+
 def _augment_pythonpath(env: MutableMapping[str, str], backend_dir: Path) -> None:
     current = env.get("PYTHONPATH")
     parts = [part for part in (current.split(os.pathsep) if current else []) if part]
@@ -114,12 +125,9 @@ async def _run_seeders_async() -> tuple[dict[str, dict[str, int]], FinanceDemoSu
     await ensure_finance_schema()
 
     async def _seed_finance(session):
+        # seed_finance_demo creates the Project if it doesn't exist (lines 1015-1026)
+        # No need to insert stub - it would violate NOT NULL constraints on project_name/project_code
         project_uuid = uuid4()
-        await session.execute(
-            text("INSERT INTO projects (id) VALUES (:id) ON CONFLICT (id) DO NOTHING"),
-            {"id": project_uuid},
-        )
-
         return await seed_finance_demo(
             session,
             project_id=project_uuid,
@@ -307,10 +315,32 @@ def run_buildable_smoke(client: httpx.Client, artifacts_dir: Path) -> dict[str, 
     return data
 
 
+def capture_finance_asset_mix(client: httpx.Client) -> list[dict[str, Any]]:
+    _log("Capturing developer property for finance asset mix inputs")
+    capture_payload = {
+        "latitude": 1.285,
+        "longitude": 103.853,
+    }
+    response = _retry_request(
+        client,
+        "POST",
+        "/api/v1/developers/properties/log-gps",
+        json=capture_payload,
+    )
+    data = response.json()
+    summary = data.get("financial_summary") or {}
+    asset_mix_inputs = summary.get("asset_mix_finance_inputs")
+    if not asset_mix_inputs:
+        LOGGER.warning("smokes.capture_finance_asset_mix.missing_inputs")
+        return []
+    return asset_mix_inputs
+
+
 def run_finance_smoke(
     client: httpx.Client,
     artifacts_dir: Path,
     finance_summary: seed_finance_demo.FinanceDemoSummary,
+    asset_mix_inputs: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     _log("Executing finance feasibility smoke request")
     payload = {
@@ -361,6 +391,31 @@ def run_finance_smoke(
             },
         },
     }
+    if asset_mix_inputs:
+        payload["scenario"]["asset_mix"] = list(asset_mix_inputs)
+    payload["scenario"]["construction_loan"] = {
+        "interest_rate": "0.043",
+        "periods_per_year": 12,
+        "capitalise_interest": True,
+        "facilities": [
+            {
+                "name": "Senior Loan",
+                "amount": "1750000",
+                "interest_rate": "0.041",
+                "periods_per_year": 12,
+                "capitalise_interest": True,
+                "upfront_fee_pct": "1.0",
+            },
+            {
+                "name": "Mezz Loan",
+                "amount": "450000",
+                "interest_rate": "0.082",
+                "periods_per_year": 12,
+                "capitalise_interest": False,
+                "exit_fee_pct": "2.0",
+            },
+        ],
+    }
     response = _retry_request(
         client, "POST", "/api/v1/finance/feasibility", json=payload
     )
@@ -379,6 +434,52 @@ def run_finance_smoke(
     )
     export_path = artifacts_dir / "finance_export.csv"
     export_path.write_text(export_response.text, encoding="utf-8")
+
+    sensitivity_results = data.get("sensitivity_results") or []
+    if isinstance(sensitivity_results, Sequence) and sensitivity_results:
+        headers = [
+            "parameter",
+            "scenario",
+            "delta_label",
+            "npv",
+            "irr",
+            "escalated_cost",
+            "total_interest",
+            "notes",
+        ]
+        rows: list[list[Any]] = []
+        for entry in sensitivity_results:
+            if not isinstance(entry, Mapping):
+                continue
+            notes_value = entry.get("notes")
+            if isinstance(notes_value, Sequence) and not isinstance(
+                notes_value, (str, bytes)
+            ):
+                notes_text = "; ".join(str(item) for item in notes_value if item)
+            else:
+                notes_text = "" if notes_value in (None, "", []) else str(notes_value)
+            rows.append(
+                [
+                    entry.get("parameter"),
+                    entry.get("scenario"),
+                    entry.get("delta_label", entry.get("deltaLabel")),
+                    entry.get("npv"),
+                    entry.get("irr"),
+                    entry.get("escalated_cost"),
+                    entry.get("total_interest"),
+                    notes_text,
+                ]
+            )
+        if rows:
+            _write_csv(artifacts_dir / "finance_sensitivity.csv", headers, rows)
+
+    sensitivity_jobs = data.get("sensitivity_jobs")
+    if isinstance(sensitivity_jobs, Sequence) and sensitivity_jobs:
+        _write_json(
+            artifacts_dir / "finance_sensitivity_jobs.json",
+            list(sensitivity_jobs),
+        )
+
     return data
 
 
@@ -422,7 +523,10 @@ def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
     with running_backend(backend_dir, BACKEND_HOST, BACKEND_PORT) as base_url:
         with httpx.Client(base_url=base_url, timeout=30.0) as client:
             buildable = run_buildable_smoke(client, artifacts_dir)
-            finance = run_finance_smoke(client, artifacts_dir, finance_summary)
+            finance_asset_mix = capture_finance_asset_mix(client)
+            finance = run_finance_smoke(
+                client, artifacts_dir, finance_summary, finance_asset_mix
+            )
             entitlements = run_entitlements_smoke(client, artifacts_dir)
             openapi = fetch_openapi_schema(client, artifacts_dir)
 

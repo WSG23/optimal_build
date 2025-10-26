@@ -137,11 +137,17 @@ async def seed_entitlements(
     approval_records = {}
     for payload in APPROVAL_TYPES:
         authority = authority_records[payload["authority_slug"]]
+        # Use .value to get the string value for ENUM column compatibility
+        category_value = (
+            payload["category"].value
+            if hasattr(payload["category"], "value")
+            else payload["category"]
+        )
         approval = await service.upsert_approval_type(
             authority=authority,
             code=payload["code"],
             name=payload["name"],
-            category=payload["category"],
+            category=category_value,
             description=payload.get("description"),
             processing_time_days=payload.get("processing_time_days"),
         )

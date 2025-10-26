@@ -178,8 +178,10 @@ class Project(BaseModel):
     csc_date = Column(Date)  # Certificate of Statutory Completion date
 
     # Metadata
-    created_at = Column(DateTime, default=utcnow, nullable=False)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
     created_by = Column(String(100))
 
     # Relationships

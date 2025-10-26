@@ -13,6 +13,8 @@ rule violations.
 
 ## 1. Database Migrations
 
+### 1.1 Never Edit Existing Migrations
+
 **Rule:** Never edit existing Alembic migration files. Always create a new migration for schema changes.
 
 **Why:** Editing existing migrations breaks version history and can corrupt databases that have already applied those migrations.
@@ -30,6 +32,136 @@ cd backend && alembic revision -m "add compliance_score column"
 
 # ❌ Wrong - editing existing migration
 # Don't open and modify backend/migrations/versions/20240919_000005_enable_postgis_geometry.py
+```
+
+### 1.2 PostgreSQL ENUM Types in Migrations
+
+**Rule:** Do NOT use `sa.Enum()` objects with `create_type=False` in migrations. Use plain `sa.String()` for ENUM columns instead.
+
+**Why:** SQLAlchemy's `sa.Enum()` tries to autocreate the ENUM type even when `create_type=False`, causing "type already exists" errors. This pattern caused 9 migration failures in Oct 2025 (see git history for 20250220_000009-000017).
+
+**How to follow:**
+- Use `sa.String()` for columns that will store ENUM values
+- PostgreSQL will still validate against the ENUM type if you manually create it
+- If you need the ENUM type for validation, create it separately with raw SQL
+- Do NOT define `SOME_ENUM = sa.Enum(..., create_type=False)` variables
+
+**Examples:**
+```python
+# ❌ WRONG - causes "duplicate type" errors
+DEAL_STATUS_ENUM = sa.Enum(
+    "open", "closed_won", "closed_lost",
+    name="deal_status",
+    create_type=False,  # ← This doesn't actually prevent autocreation!
+)
+
+def upgrade() -> None:
+    # Manual creation
+    op.execute("CREATE TYPE deal_status AS ENUM ('open', 'closed_won', 'closed_lost')")
+
+    op.create_table(
+        "deals",
+        sa.Column("status", DEAL_STATUS_ENUM, nullable=False),  # ← Tries to create type again!
+    )
+
+# ✅ CORRECT - use String type
+def upgrade() -> None:
+    # Optional: Create ENUM type if you want DB-level validation
+    op.execute(
+        "CREATE TYPE deal_status AS ENUM ('open', 'closed_won', 'closed_lost')"
+    )
+
+    op.create_table(
+        "deals",
+        sa.Column("status", sa.String(), nullable=False),  # ← Simple string type
+    )
+
+    # Optional: Convert to ENUM type after table creation
+    op.execute(
+        "ALTER TABLE deals ALTER COLUMN status TYPE deal_status USING status::deal_status"
+    )
+```
+
+**Related issues:**
+- Foreign keys to non-existent tables: Remove them and add TODO comments for later
+- UUID columns: Use `postgresql.UUID(as_uuid=True)` not `String(36)`
+
+### 1.3 ENUM Value Naming Convention
+
+**Rule:** PostgreSQL ENUM values must EXACTLY match the Python enum string values. Use consistent casing between database and code.
+
+**Why:** PostgreSQL ENUM values are case-sensitive. If the Python model uses `ProjectType.NEW_DEVELOPMENT` with value `"NEW_DEVELOPMENT"`, the SQL ENUM must contain `'NEW_DEVELOPMENT'`, not `'new_development'`. Mismatches cause runtime errors like `invalid input value for enum`.
+
+**How to follow:**
+- Check the Python enum definition to see what string VALUES it uses (not the member names)
+- Create the PostgreSQL ENUM with the exact same values
+- For Python enums with uppercase values, use uppercase in SQL
+- For Python enums with lowercase values, use lowercase in SQL
+- When seeding data, use `enum_value.value` to get the string value
+
+**Examples:**
+
+```python
+# Python model - check the VALUES
+class ProjectType(str, Enum):
+    NEW_DEVELOPMENT = "NEW_DEVELOPMENT"  # ← VALUE is uppercase
+    REDEVELOPMENT = "REDEVELOPMENT"
+
+class EntApprovalCategory(str, Enum):
+    PLANNING = "planning"  # ← VALUE is lowercase
+    BUILDING = "building"
+```
+
+```python
+# ✅ CORRECT - migration matches Python enum VALUES
+def upgrade() -> None:
+    # ProjectType uses uppercase VALUES
+    op.execute("""
+        CREATE TYPE projecttype AS ENUM (
+            'NEW_DEVELOPMENT',  -- matches ProjectType.NEW_DEVELOPMENT.value
+            'REDEVELOPMENT'     -- matches ProjectType.REDEVELOPMENT.value
+        )
+    """)
+
+    # EntApprovalCategory uses lowercase VALUES
+    op.execute("""
+        CREATE TYPE ent_approval_category AS ENUM (
+            'planning',  -- matches EntApprovalCategory.PLANNING.value
+            'building'   -- matches EntApprovalCategory.BUILDING.value
+        )
+    """)
+
+# ❌ WRONG - case mismatch with Python enum
+def upgrade() -> None:
+    op.execute("""
+        CREATE TYPE projecttype AS ENUM (
+            'new_development',  -- ❌ Python has "NEW_DEVELOPMENT"
+            'redevelopment'     -- ❌ Python has "REDEVELOPMENT"
+        )
+    """)
+```
+
+```python
+# When seeding data
+# ✅ CORRECT - use .value to get the string
+approval_type = EntApprovalType(
+    category=EntApprovalCategory.PLANNING.value  # Gets "planning" string
+)
+
+# ❌ WRONG - passing enum object can send the member name instead of value
+approval_type = EntApprovalType(
+    category=EntApprovalCategory.PLANNING  # Might send "PLANNING" instead of "planning"
+)
+```
+
+**Verification:**
+```bash
+# Check what value the Python enum actually uses
+python3 -c "from app.models.projects import ProjectType; print(ProjectType.NEW_DEVELOPMENT.value)"
+# Output: NEW_DEVELOPMENT  ← Use this in SQL
+
+# Check database ENUM values
+psql -c "SELECT enumlabel FROM pg_enum WHERE enumtypid = 'projecttype'::regtype;"
 ```
 
 ---
