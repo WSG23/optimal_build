@@ -182,22 +182,22 @@ Refactor to use AsyncSession. Already documented in exceptions.
 - 100% coverage of known migration patterns
 - Clear error messages at commit time
 
-**Documentation created:**
-- docs/ai-agent-guides/MIGRATION_ISSUES_ROOT_CAUSE_ANALYSIS.md
-- docs/ai-agent-guides/MIGRATION_HOOK_CONFLICT_ANALYSIS.md
-- docs/ai-agent-guides/PHASE1_IMPLEMENTATION_SUMMARY.md
-- docs/ai-agent-guides/PHASE2_PHASE3_IMPLEMENTATION_SUMMARY.md
+**Documentation:**
+- ✅ CODING_RULES.md Section 1.2 (ENUM pattern rules)
+- ✅ scripts/check_migration_enums.py (pre-commit hook)
+- ✅ .coding-rules-exceptions.yml (grandfathered migrations)
+- ✅ .github/workflows/migration-validation.yaml (CI workflow)
 
 ---
 
 ## Notes
 
 **For future AI agents:**
-- Before creating migrations, read PHASE1_IMPLEMENTATION_SUMMARY.md
-- Before committing, pre-commit hooks will run automatically
+- Before creating migrations, read CODING_RULES.md Section 1.2
+- Pre-commit hooks run automatically on commit
 - If hooks fail, read the error message - it shows the correct pattern
-- Phase 2 tests will catch schema drift during `make verify`
-- Phase 3 CI will validate everything before merge
+- Schema validation tests catch drift during `make verify`
+- CI validates everything before merge
 
 **For human:**
 - Migration validation is complete and production-ready
