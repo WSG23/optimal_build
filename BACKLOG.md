@@ -71,10 +71,20 @@
 - ✅ Preview job pipeline (background renders, polling endpoints)
 - ✅ Visualization stub (per-asset massing layers, color legend)
 
-**What's Missing:**
-- ❌ 3D preview GLB generation (scenario-aware massing)
-- ❌ Interactive 3D viewer UI integration (frontend)
-- 🟡 Automate NHB dataset refresh (optional - can defer)
+**What's Missing (Backend - 40% of remaining work):**
+- ❌ Renderer service (Blender/Three.js for GLB generation)
+- ❌ Asset storage & versioning (S3/local with versions)
+- ❌ Geometry builder enhancements (floor plates, podiums, setbacks)
+- ❌ Prefect flow orchestration (`developer_preview_flow`)
+
+**What's Missing (Frontend UI - 60% of remaining work):**
+- ❌ Preview status polling hook (GET every 5s with backoff)
+- ❌ "Rendering" banner during generation
+- ❌ GLB viewer integration + JSON stub fallback
+- ❌ Retry CTA on failed renders
+- ❌ Status chip on scenario tabs
+- ❌ Thumbnail loading placeholders
+- ❌ WebGL 2 detection with graceful fallback
 
 **Documentation:**
 - Requirements: [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508

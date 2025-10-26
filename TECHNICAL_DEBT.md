@@ -43,16 +43,42 @@
 ### 2. Phase 2B: Asset-Specific Feasibility - 3D Visualization
 **Status:** BLOCKED - waiting for Phase 2C Finance to complete
 **Priority:** HIGH (85% complete, 3D preview missing)
-**Estimate:** 2-3 weeks
+**Estimate:** 2-3 weeks (40% backend, 60% frontend UI)
 **Risk:** Blocks Phase 2B completion
 
-**What's Missing:**
-- 3D preview GLB generation (scenario-aware massing)
-- Interactive 3D viewer UI integration
+**What's Done:**
+- ✅ Asset optimizer (curve-driven scoring, constraint logging)
+- ✅ Heritage overlay backend (NHB Historic Sites, National Monuments)
+- ✅ Preview job pipeline (background renders, polling endpoints)
+- ✅ Visualization stub (per-asset massing layers, color legend)
+- ✅ Preview job model (`preview_jobs` table) and migration
+- ✅ API endpoints for job status and polling
+
+**What's Missing (Backend - ~1 week):**
+- ❌ Renderer service (Blender/Three.js node script for GLB generation)
+- ❌ Asset storage & versioning (S3 or local with version management)
+- ❌ Geometry builder enhancements (floor plates, podiums, setbacks)
+- ❌ Prefect flow orchestration (`developer_preview_flow`)
+
+**What's Missing (Frontend UI - ~1.5 weeks):**
+- ❌ Preview status polling hook (GET every 5s with exponential backoff)
+- ❌ "Rendering" banner during preview generation
+- ❌ GLB viewer integration with fallback to JSON stub
+- ❌ Retry CTA on failed renders
+- ❌ Status chip on scenario tabs showing preview readiness
+- ❌ Thumbnail loading placeholders
+- ❌ WebGL 2 detection with graceful fallback
+
+**What's Missing (Observability - ~0.5 weeks):**
+- ❌ Metrics (jobs_created, jobs_succeeded, jobs_failed, duration_ms)
+- ❌ Structured logging (job_id, property_id, scenario, status)
+- ❌ Alerts (failure rate >10%, median duration >5min)
 
 **Documentation:**
 - [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
-- [docs/phase2b_visualisation_stub.md](docs/phase2b_visualisation_stub.md)
+- [docs/phase2b_visualisation_stub.md](docs/phase2b_visualisation_stub.md) - **Full 4-week implementation plan**
+- Frontend integration: phase2b_visualisation_stub.md Section 5 (lines 136-148)
+- Timeline: Section 7 (Week 1: API, Week 2: Renderer, Week 3: Frontend+QA, Week 4: Buffer)
 
 **Tracked in:** [BACKLOG.md](BACKLOG.md)
 
