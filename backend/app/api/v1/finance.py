@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from time import perf_counter
 from typing import Any
@@ -17,14 +17,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import require_reviewer
+from app.api.deps import RequestIdentity, require_reviewer
 from app.core.database import get_session
 from app.models.finance import FinCapitalStack, FinProject, FinResult, FinScenario
+from app.models.projects import Project
 from app.models.rkp import RefCostIndex
 from app.schemas.finance import (
     AssetFinancialSummarySchema,
     CapitalStackSliceSchema,
     CapitalStackSummarySchema,
+    ConstructionLoanInput,
+    ConstructionLoanInterestSchema,
     CostIndexProvenance,
     CostIndexSnapshot,
     DscrEntrySchema,
@@ -68,6 +71,154 @@ def _normalise_project_id(project_id: str | int | UUID) -> UUID:
         ) from e
 
 
+async def _ensure_project_owner(
+    session: AsyncSession,
+    project_uuid: UUID,
+    identity: RequestIdentity,
+) -> None:
+    """Verify that the caller owns the referenced project (admin bypass)."""
+
+    if identity.role == "admin":
+        return
+
+    stmt = select(Project.owner_id, Project.owner_email).where(
+        Project.id == project_uuid
+    )
+    result = await session.execute(stmt)
+    row = result.first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    owner_id, owner_email = row
+    if owner_id is None and owner_email is None:
+        # Legacy demo data has no ownership metadata; fall back to role guard only.
+        return
+
+    matches = False
+    if identity.user_id and owner_id is not None:
+        matches |= str(owner_id) == identity.user_id
+    if identity.email and owner_email:
+        matches |= owner_email.lower() == identity.email.lower()
+
+    if not matches:
+        raise HTTPException(
+            status_code=403,
+            detail="Finance data restricted to project owner",
+        )
+
+
+def _project_uuid_from_scenario(scenario: FinScenario) -> UUID:
+    try:
+        return _normalise_project_id(scenario.project_id)
+    except Exception as exc:  # pragma: no cover - defensive guard
+        raise HTTPException(
+            status_code=500,
+            detail="Scenario project association is invalid",
+        ) from exc
+
+
+def _build_construction_interest_schedule(
+    schedule: calculator.FinancingDrawdownSchedule,
+    *,
+    currency: str,
+    base_interest_rate: Decimal | None,
+    base_periods_per_year: int | None,
+    capitalise_interest: bool,
+    facilities: Sequence[Mapping[str, Any]] | None = None,
+) -> tuple[ConstructionLoanInterestSchema, dict[str, Any]]:
+    rate = base_interest_rate or Decimal("0.04")
+    periods = max(1, base_periods_per_year or 12)
+    period_rate = rate / Decimal(periods)
+
+    opening_balance = Decimal("0")
+    entry_payloads: list[dict[str, str]] = []
+    total_interest = Decimal("0")
+    for entry in schedule.entries:
+        closing_balance = _decimal_from_value(entry.outstanding_debt)
+        average_balance = (opening_balance + closing_balance) / Decimal("2")
+        interest_accrued = _quantize_currency(average_balance * period_rate) or Decimal(
+            "0"
+        )
+        total_interest += interest_accrued
+        entry_payloads.append(
+            {
+                "period": str(entry.period),
+                "opening_balance": str(
+                    _quantize_currency(opening_balance) or opening_balance
+                ),
+                "closing_balance": str(
+                    _quantize_currency(closing_balance) or closing_balance
+                ),
+                "average_balance": str(
+                    _quantize_currency(average_balance) or average_balance
+                ),
+                "interest_accrued": str(interest_accrued),
+            }
+        )
+        opening_balance = closing_balance
+
+    facility_payloads: list[dict[str, str | bool | None]] = []
+    upfront_total = Decimal("0")
+    exit_total = Decimal("0")
+    facility_interest_total = Decimal("0")
+    for facility in facilities or []:
+        amount = _decimal_from_value(facility.get("amount", "0"))
+        if amount is None:
+            amount = Decimal("0")
+        raw_rate = facility.get("interest_rate")
+        facility_rate = _decimal_from_value(raw_rate) if raw_rate is not None else rate
+        facility_interest = _quantize_currency(amount * facility_rate) or Decimal("0")
+        facility_interest_total += facility_interest
+        upfront_pct_raw = facility.get("upfront_fee_pct")
+        upfront_pct = (
+            _decimal_from_value(upfront_pct_raw)
+            if upfront_pct_raw is not None
+            else None
+        )
+        upfront_fee = None
+        if upfront_pct is not None:
+            upfront_fee = _quantize_currency(amount * (upfront_pct / Decimal("100")))
+            if upfront_fee is not None:
+                upfront_total += upfront_fee
+        exit_pct_raw = facility.get("exit_fee_pct")
+        exit_pct = (
+            _decimal_from_value(exit_pct_raw) if exit_pct_raw is not None else None
+        )
+        exit_fee = None
+        if exit_pct is not None:
+            exit_fee = _quantize_currency(amount * (exit_pct / Decimal("100")))
+            if exit_fee is not None:
+                exit_total += exit_fee
+        facility_payloads.append(
+            {
+                "name": facility.get("name", "Facility"),
+                "amount": str(_quantize_currency(amount) or amount),
+                "interest_rate": str(facility_rate),
+                "periods_per_year": facility.get("periods_per_year"),
+                "capitalised": bool(facility.get("capitalise_interest", True)),
+                "total_interest": str(facility_interest),
+                "upfront_fee": str(upfront_fee) if upfront_fee is not None else None,
+                "exit_fee": str(exit_fee) if exit_fee is not None else None,
+            }
+        )
+
+    total_interest = facility_interest_total or total_interest
+
+    schema_payload = {
+        "currency": currency,
+        "interest_rate": str(rate),
+        "periods_per_year": periods,
+        "capitalised": capitalise_interest,
+        "total_interest": str(_quantize_currency(total_interest) or total_interest),
+        "upfront_fee_total": str(_quantize_currency(upfront_total) or upfront_total),
+        "exit_fee_total": str(_quantize_currency(exit_total) or exit_total),
+        "facilities": facility_payloads,
+        "entries": entry_payloads,
+    }
+    schema = ConstructionLoanInterestSchema.model_validate(schema_payload)
+    return schema, schema_payload
+
+
 def _decimal_from_value(value: object) -> Decimal:
     """Safely convert arbitrary numeric inputs into :class:`Decimal`."""
 
@@ -80,6 +231,12 @@ def _json_safe(value: Any) -> Any:
     """Convert nested data into JSON-serialisable Python primitives."""
 
     return json.loads(json.dumps(value, default=str))
+
+
+def _quantize_currency(value: Decimal | None) -> Decimal | None:
+    if value is None:
+        return None
+    return value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def _build_cost_index_snapshot(index: RefCostIndex | None) -> CostIndexSnapshot | None:
@@ -161,6 +318,15 @@ async def _summarise_persisted_scenario(
     session: AsyncSession,
 ) -> FinanceFeasibilityResponse:
     assumptions: dict[str, Any] = dict(scenario.assumptions or {})
+    construction_loan_config: ConstructionLoanInput | None = None
+    raw_construction = assumptions.get("construction_loan")
+    if isinstance(raw_construction, Mapping):
+        try:
+            construction_loan_config = ConstructionLoanInput.model_validate(
+                raw_construction
+            )
+        except Exception:  # pragma: no cover - defensive for legacy records
+            construction_loan_config = None
     fin_project = scenario.fin_project
     if fin_project is None:
         raise HTTPException(
@@ -405,33 +571,49 @@ async def _summarise_persisted_scenario(
 
     asset_mix_summary_schema: AssetFinancialSummarySchema | None = None
     asset_breakdown_schemas: list[FinanceAssetBreakdownSchema] = []
+    construction_interest_schema: ConstructionLoanInterestSchema | None = None
+    construction_interest_metadata: dict[str, Any] | None = None
+    construction_interest_value: Decimal | None = None
     ordered_results = sorted(
         scenario.results, key=lambda item: getattr(item, "id", 0) or 0
     )
+    asset_processed = False
     for stored in ordered_results:
         metadata = stored.metadata if isinstance(stored.metadata, dict) else None
-        if stored.name != "asset_financials" or not metadata:
-            continue
-        summary_meta = metadata.get("summary")
-        if summary_meta:
-            try:
-                asset_mix_summary_schema = AssetFinancialSummarySchema.model_validate(
-                    summary_meta
-                )
-            except Exception:  # pragma: no cover - defensive for historical data
-                asset_mix_summary_schema = None
-        breakdown_meta = metadata.get("breakdowns")
-        if isinstance(breakdown_meta, list):
-            converted: list[FinanceAssetBreakdownSchema] = []
-            for entry in breakdown_meta:
-                if not isinstance(entry, dict):
-                    continue
+        if stored.name == "asset_financials" and metadata and not asset_processed:
+            summary_meta = metadata.get("summary")
+            if summary_meta:
                 try:
-                    converted.append(FinanceAssetBreakdownSchema.model_validate(entry))
-                except Exception:  # pragma: no cover - defensive
-                    continue
-            asset_breakdown_schemas = converted
-        break
+                    asset_mix_summary_schema = (
+                        AssetFinancialSummarySchema.model_validate(summary_meta)
+                    )
+                except Exception:  # pragma: no cover - defensive for historical data
+                    asset_mix_summary_schema = None
+            breakdown_meta = metadata.get("breakdowns")
+            if isinstance(breakdown_meta, list):
+                converted: list[FinanceAssetBreakdownSchema] = []
+                for entry in breakdown_meta:
+                    if not isinstance(entry, dict):
+                        continue
+                    try:
+                        converted.append(
+                            FinanceAssetBreakdownSchema.model_validate(entry)
+                        )
+                    except Exception:  # pragma: no cover - defensive
+                        continue
+                asset_breakdown_schemas = converted
+            asset_processed = True
+            continue
+
+        if stored.name == "construction_loan_interest" and metadata:
+            try:
+                construction_interest_schema = (
+                    ConstructionLoanInterestSchema.model_validate(metadata)
+                )
+                construction_interest_metadata = metadata
+                construction_interest_value = stored.value
+            except Exception:  # pragma: no cover - defensive for historical data
+                construction_interest_schema = None
 
     results: list[FinanceResultSchema] = [
         FinanceResultSchema(
@@ -508,6 +690,16 @@ async def _summarise_persisted_scenario(
             )
         )
 
+    if construction_interest_schema and construction_interest_metadata:
+        results.append(
+            FinanceResultSchema(
+                name="construction_loan_interest",
+                value=construction_interest_value,
+                unit=fin_project.currency,
+                metadata=construction_interest_metadata,
+            )
+        )
+
     drawdown_schema = None
     if drawdown_summary:
         drawdown_schema = _convert_drawdown_schedule(drawdown_summary)
@@ -530,6 +722,8 @@ async def _summarise_persisted_scenario(
         drawdown_schedule=drawdown_schema,
         asset_mix_summary=asset_mix_summary_schema,
         asset_breakdowns=asset_breakdown_schemas,
+        construction_loan_interest=construction_interest_schema,
+        construction_loan=construction_loan_config,
     )
 
 
@@ -945,7 +1139,7 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
 async def run_finance_feasibility(
     payload: FinanceFeasibilityRequest,
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_reviewer),
 ) -> FinanceFeasibilityResponse:
     """Execute the full finance pipeline for the submitted scenario.
 
@@ -961,6 +1155,7 @@ async def run_finance_feasibility(
     start_time = perf_counter()
     response: FinanceFeasibilityResponse | None = None
     project_uuid = _normalise_project_id(payload.project_id)
+    await _ensure_project_owner(session, project_uuid, identity)
     try:
         log_event(
             logger,
@@ -1198,6 +1393,7 @@ async def run_finance_feasibility(
 
         drawdown_schedule_schema: FinancingDrawdownScheduleSchema | None = None
         drawdown_result_metadata: dict[str, object] | None = None
+        schedule_summary: calculator.FinancingDrawdownSchedule | None = None
         if payload.scenario.drawdown_schedule:
             schedule_inputs = [
                 item.model_dump(mode="json")
@@ -1267,6 +1463,30 @@ async def run_finance_feasibility(
                     for breakdown in asset_breakdown_schemas
                 ],
             }
+
+        construction_interest_schema: ConstructionLoanInterestSchema | None = None
+        construction_interest_metadata: dict[str, Any] | None = None
+        loan_config = payload.scenario.construction_loan
+        if loan_config and schedule_summary is not None:
+            facility_payloads = (
+                [
+                    facility.model_dump(mode="json")
+                    for facility in loan_config.facilities
+                ]
+                if loan_config.facilities
+                else None
+            )
+            (
+                construction_interest_schema,
+                construction_interest_metadata,
+            ) = _build_construction_interest_schedule(
+                schedule_summary,
+                currency=payload.scenario.currency,
+                base_interest_rate=loan_config.interest_rate,
+                base_periods_per_year=loan_config.periods_per_year,
+                capitalise_interest=loan_config.capitalise_interest,
+                facilities=facility_payloads,
+            )
 
         results: list[FinResult] = [
             FinResult(
@@ -1355,6 +1575,24 @@ async def run_finance_feasibility(
                     metadata=_json_safe(asset_financial_metadata),
                 )
             )
+        if (
+            construction_interest_schema is not None
+            and construction_interest_metadata is not None
+        ):
+            results.append(
+                FinResult(
+                    project_id=str(project_uuid),
+                    scenario=scenario,
+                    name="construction_loan_interest",
+                    value=_decimal_from_value(
+                        construction_interest_schema.total_interest
+                        if construction_interest_schema.total_interest is not None
+                        else "0"
+                    ),
+                    unit=payload.scenario.currency,
+                    metadata=_json_safe(construction_interest_metadata),
+                )
+            )
 
         session.add_all(results)
 
@@ -1390,6 +1628,8 @@ async def run_finance_feasibility(
             drawdown_schedule=drawdown_schedule_schema,
             asset_mix_summary=asset_mix_summary_schema,
             asset_breakdowns=asset_breakdown_schemas,
+            construction_loan_interest=construction_interest_schema,
+            construction_loan=loan_config,
         )
     finally:
         duration_ms = (perf_counter() - start_time) * 1000
@@ -1404,7 +1644,7 @@ async def list_finance_scenarios(
     project_id: str | int | UUID | None = Query(None),
     fin_project_id: int | None = Query(None),
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_reviewer),
 ) -> list[FinanceFeasibilityResponse]:
     """Return previously persisted finance scenarios for the requested project."""
 
@@ -1419,11 +1659,19 @@ async def list_finance_scenarios(
         .options(
             selectinload(FinScenario.fin_project),
             selectinload(FinScenario.capital_stack),
+            selectinload(FinScenario.results),
         )
         .order_by(FinScenario.id)
     )
+    checked_projects: set[UUID] = set()
 
     if fin_project_id is not None:
+        fin_project = await session.get(FinProject, fin_project_id)
+        if fin_project is None:
+            raise HTTPException(status_code=404, detail="Finance project not found")
+        fin_project_uuid = _normalise_project_id(fin_project.project_id)
+        await _ensure_project_owner(session, fin_project_uuid, identity)
+        checked_projects.add(fin_project_uuid)
         stmt = stmt.where(FinScenario.fin_project_id == fin_project_id)
 
     if project_id is not None:
@@ -1443,6 +1691,8 @@ async def list_finance_scenarios(
                 status_code=422, detail="project_id must be a valid UUID"
             ) from exc
 
+        await _ensure_project_owner(session, normalised, identity)
+        checked_projects.add(normalised)
         stmt = stmt.where(FinScenario.project_id == str(normalised))
 
     result = await session.execute(stmt)
@@ -1450,6 +1700,10 @@ async def list_finance_scenarios(
 
     summaries: list[FinanceFeasibilityResponse] = []
     for scenario in scenarios:
+        project_uuid = _project_uuid_from_scenario(scenario)
+        if project_uuid not in checked_projects:
+            await _ensure_project_owner(session, project_uuid, identity)
+            checked_projects.add(project_uuid)
         summaries.append(await _summarise_persisted_scenario(scenario, session=session))
 
     return summaries
@@ -1459,7 +1713,7 @@ async def list_finance_scenarios(
 async def export_finance_scenario(
     scenario_id: int = Query(...),
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_reviewer),
 ) -> StreamingResponse:
     """Stream a CSV export describing the requested finance scenario.
 
@@ -1491,6 +1745,9 @@ async def export_finance_scenario(
         scenario = result.scalar_one_or_none()
         if scenario is None:
             raise HTTPException(status_code=404, detail="Finance scenario not found")
+        await _ensure_project_owner(
+            session, _project_uuid_from_scenario(scenario), identity
+        )
 
         assumptions = scenario.assumptions or {}
         currency = assumptions.get("currency") or getattr(
