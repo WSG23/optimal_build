@@ -235,6 +235,65 @@ Split URL across multiple lines or add exception comment.
 
 ---
 
+## Infrastructure Work (Phase 6 - After Phase 2D-5)
+
+### 12. Performance Optimization (Phase 6D)
+**Status:** Deferred - Phase 6 work
+**Priority:** Low (20% complete, wait for Phase 6)
+**Estimate:** 4-6 weeks
+**Risk:** User experience, scalability
+
+**What Exists:**
+- ✅ Database indexes
+- ✅ API pagination
+- ⚠️ Basic caching
+
+**What's Missing:**
+- ❌ CDN for static assets
+- ❌ Lazy loading for large datasets
+- ❌ Query optimization
+- ❌ Frontend bundle optimization
+- ❌ Real-time performance monitoring
+
+**Acceptance Criteria:**
+- Page load < 2 seconds
+- API responses < 500ms
+- Large datasets paginated
+- Real-time monitoring in place
+
+**Documentation:** [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 1557-1578
+
+---
+
+### 13. Security Hardening (Phase 6E)
+**Status:** Deferred - Phase 6 work
+**Priority:** Low (50% complete, wait for Phase 6)
+**Estimate:** 8-12 weeks
+**Risk:** Security vulnerabilities, compliance
+
+**What Exists:**
+- ✅ JWT authentication
+- ✅ Role-based access control
+- ✅ HTTPS enforced
+- ⚠️ Basic input validation
+
+**What's Missing:**
+- ❌ Penetration testing
+- ❌ Security audit by third party
+- ❌ Rate limiting
+- ❌ Advanced threat detection
+- ❌ Compliance certifications (ISO, SOC2)
+
+**Acceptance Criteria:**
+- Third-party security audit passed
+- Rate limiting on all APIs
+- Threat detection active
+- Compliance certifications obtained
+
+**Documentation:** [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 1582-1604
+
+---
+
 ## Deferred (Not Urgent)
 
 ### 10. Legacy Migration Downgrade Guards
@@ -344,10 +403,11 @@ Split URL across multiple lines or add exception comment.
 
 ## Metrics
 
-**Total technical debt items:** 11 active + 1 completed
+**Total technical debt items:** 13 active + 1 completed
 **High priority:** 3 items (5-7 weeks total)
 **Medium priority:** 2 items (~2 hours total)
 **Low priority:** 6 items (~10 hours total)
+**Infrastructure (Phase 6):** 2 items (12-18 weeks total - deferred until Phase 6)
 
 **Most common debt type:** Migration pattern issues (4 items)
 **Biggest risk:** Phase 1D/2B incomplete (blocks phase progression)
