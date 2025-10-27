@@ -545,6 +545,53 @@ def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
                 f"{len(unchecked_items)} unchecked [ ] checklist items"
             )
 
+        # CRITICAL: Verify "Files Delivered:" section lists real files
+        # This prevents AI agents from checking boxes without writing code
+        if "Files Delivered:" in phase_content or "UI Files:" in phase_content:
+            # Extract file paths from markdown code blocks (e.g., `backend/app/api/v1/deals.py`)
+            file_paths = re.findall(r"`([^`]+\.(py|tsx|ts|js|jsx))`", phase_content)
+
+            missing_files = []
+            for file_path_match in file_paths:
+                file_path = file_path_match[0]  # Extract just the path (not extension)
+                full_path = repo_root / file_path.strip()
+
+                # Check if file exists
+                if not full_path.exists():
+                    missing_files.append(file_path)
+
+            if missing_files:
+                incomplete_markers.append(
+                    f"{len(missing_files)} files listed in 'Files Delivered' but missing: "
+                    f"{', '.join(missing_files[:3])}"  # Show first 3
+                    + (
+                        f" (and {len(missing_files) - 3} more)"
+                        if len(missing_files) > 3
+                        else ""
+                    )
+                )
+
+        # CRITICAL: Verify "Test Status:" shows passing tests
+        # This prevents AI agents from marking complete without running tests
+        if "Test Status:" in phase_content:
+            test_status_start = phase_content.find("Test Status:")
+            test_status_section = phase_content[
+                test_status_start : test_status_start + 500
+            ]
+
+            # Check for failure indicators
+            if (
+                "⚠️" in test_status_section
+                and "skipped" not in test_status_section.lower()
+            ):
+                incomplete_markers.append(
+                    "Test Status shows ⚠️ warnings (not all tests passing)"
+                )
+            if "❌" in test_status_section:
+                incomplete_markers.append("Test Status shows ❌ failures")
+            if "FAIL" in test_status_section.upper():
+                incomplete_markers.append("Test Status shows test failures")
+
         if incomplete_markers:
             errors.append(
                 f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' but has:\n"

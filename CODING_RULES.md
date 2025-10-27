@@ -1065,10 +1065,33 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 **Next Steps:** User to decide whether to complete Phase 1D UI or defer to backlog
 ```
 
-**Enforcement:**
-- `scripts/check_coding_rules.py` Rule 12 check runs automatically
-- Blocks commits if phase marked "✅ COMPLETE" with incomplete items
-- Returns error: "Phase X marked COMPLETE but has N unchecked [ ] checklist items"
+**Enforcement (Automated):**
+
+`scripts/check_coding_rules.py` Rule 12 verifies:
+
+1. **Checklist items:** No unchecked `[ ]` items remain
+2. **Progress markers:** No `🔄` or `❌` markers remain
+3. **Files exist:** All files listed in "Files Delivered:" section actually exist on disk
+4. **Tests pass:** "Test Status:" section shows ✅ passing tests (no ❌ or ⚠️ failures)
+
+**Why file verification matters:**
+- Solo founders cannot review code quality
+- AI agents could check boxes without writing code
+- File verification ensures code was actually written
+- Test verification ensures code actually works
+
+**Example violations caught:**
+```
+RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but has:
+  -> 4 unchecked [ ] checklist items
+  -> 3 files listed in 'Files Delivered' but missing:
+     frontend/src/app/pages/business-performance/PipelineKanban.tsx,
+     frontend/src/app/pages/business-performance/DealInsights.tsx,
+     frontend/src/app/pages/business-performance/Analytics.tsx
+  -> Test Status shows ⚠️ warnings (not all tests passing)
+```
+
+Blocks commits until violations are fixed.
 
 ---
 
