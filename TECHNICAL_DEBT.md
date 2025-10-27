@@ -86,7 +86,7 @@
 
 ### 3. Pre-Phase 2D Infrastructure Audit (47 Startup Failures Prevention)
 **Status:** BLOCKED - waiting for Phase 2C Finance to complete
-**Priority:** CRITICAL (must complete before Phase 2D)
+**Priority:** CRITICAL (must do IMMEDIATELY after Phase 2C, before 1D/2B/jurisdictions)
 **Estimate:** 2 weeks (10 working days)
 **Risk:** Becoming one of 47 failed startups - codebase becomes unmaintainable
 

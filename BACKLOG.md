@@ -29,8 +29,8 @@
 ## Blocked (Waiting)
 
 ### Pre-Phase 2D Infrastructure Audit (CRITICAL - 47 Startup Failures Prevention)
-**Status:** BLOCKED - waiting for Phase 2C + Phase 1D/2B completion
-**Priority:** CRITICAL (must do before Phase 2D)
+**Status:** BLOCKED - waiting for Phase 2C completion ONLY
+**Priority:** CRITICAL (must do IMMEDIATELY after Phase 2C, before everything else)
 **Estimate:** 2 weeks
 **Risk:** Codebase becomes unmaintainable (Month 25 death pattern)
 
@@ -47,10 +47,12 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 
 **Full checklist:** [PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md](PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md)
 
-**After Phase 2C + 1D/2B residual work:**
+**Immediately after Phase 2C (before 1D/2B/jurisdictions):**
 1. Run 2-week infrastructure audit sprint
 2. Fix all critical issues (database, testing, security, infrastructure)
-3. THEN start Phase 2D
+3. THEN continue with Phase 1D/2B residual work
+4. THEN jurisdiction expansion
+5. THEN Phase 2D
 
 **Article:** https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802
 

@@ -1,9 +1,28 @@
 # Pre-Phase 2D Infrastructure Audit & Quality Sprint
 
-**Created:** 2025-10-27 (Recreated from lost document)
+**Created:** 2025-10-27
 **Source:** [47 Startups Failed - Inc.com Article](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
-**Duration:** 2 weeks (between Phase 2C completion and Phase 2D start)
+**Duration:** 2 weeks
+**Timing:** IMMEDIATELY after Phase 2C completion, BEFORE Phase 1D/2B residual work, BEFORE jurisdiction expansion, BEFORE Phase 2D
 **Purpose:** Prevent becoming one of the 47 failed startups by addressing systemic code quality issues
+
+---
+
+## ⚠️ CRITICAL: When to Run This Audit
+
+**CORRECT Priority Order:**
+1. ✅ Complete Phase 2C Finance work
+2. 🚨 **Run this 2-week infrastructure audit** ← YOU ARE HERE
+3. ✅ Complete Phase 1D UI residual work
+4. ✅ Complete Phase 2B 3D visualization residual work
+5. ✅ Jurisdiction Expansion Window 1 (HK, NZ, Seattle, Toronto)
+6. ✅ Start Phase 2D
+
+**Why immediately after Phase 2C?**
+- We're at Month 12-15 of development (critical window)
+- Phase 2C completes core developer features (feasibility + finance)
+- Before building Phase 1D/2B/2D, we MUST fix the foundation
+- Article shows failures happen at Month 25 if ignored now
 
 ---
 
@@ -139,8 +158,16 @@ grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE" backend/app --include="*.py"
 **Required Actions:**
 - [ ] **Dependency Audit:**
   - [ ] Update all packages with security vulnerabilities
-  - [ ] Pin all dependencies (fix Tier 2 from TECHNICAL_DEBT.md)
+  - [ ] Pin all dependencies (fix **Tier 2** from TECHNICAL_DEBT.md - 7 unpinned packages)
   - [ ] Set up Dependabot/Renovate for automated updates
+
+**Note on Tier 2/3:**
+- **Tier 2 (Medium Priority):** Dependency pinning (7 packages using `>=` instead of `==`)
+  - Part of this security audit (Week 2)
+  - See TECHNICAL_DEBT.md item #5
+- **Tier 3 (Low Priority):** Async/await refactoring (3 legacy API files)
+  - NOT part of this audit (fix when touching those files)
+  - See TECHNICAL_DEBT.md item #6
 - [ ] **Code Security:**
   - [ ] No SQL injection vulnerabilities (use parameterized queries)
   - [ ] All user inputs sanitized
