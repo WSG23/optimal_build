@@ -35,7 +35,7 @@ This ensures you pick up exactly where the previous agent left off.
 ## 2. Coding Rules Enforcement (MANDATORY - NO EXCEPTIONS)
 
 - **BEFORE writing code:** Run `make ai-preflight` to verify the current codebase state passes all checks
-- **Read [CODING_RULES.md](CODING_RULES.md)** - All 7 rules apply to AI-generated code
+- **Read [CODING_RULES.md](CODING_RULES.md)** - All 11 rules apply to AI-generated code
 - **AFTER writing code:**
   1. Run `make verify` (checks all rules)
   2. Fix ALL violations before committing
@@ -56,6 +56,10 @@ Key rules for AI agents:
 - Rule 3: Pre-commit hooks handle formatting automatically
 - Rule 6: Follow import ordering (stdlib → third-party → local)
 - Rule 7: No unused variables, proper exception chaining
+- **Rule 8: MANDATORY testing instructions** - After completing ANY feature, provide backend tests, frontend tests, AND UI manual test steps to the user
+- Rule 9: Index all foreign keys and frequently queried columns
+- Rule 10: All new features MUST have automated tests (>80% coverage for critical paths)
+- Rule 11: Security practices (authentication, input validation, no SQL injection)
 
 ---
 
@@ -112,12 +116,42 @@ NODE_ENV=test node --test --import tsx --import ./scripts/test-bootstrap.mjs \
   frontend/src/app/pages/__tests__/[YourPage].test.tsx
 ```
 
+### UI Manual Testing Instructions (MANDATORY for UI changes)
+
+**When you modify ANY UI component, page, or user-facing feature, you MUST provide manual testing steps to the user:**
+
+```markdown
+Manual UI testing steps:
+1. Start the dev server: make dev
+2. Navigate to: http://localhost:4400/#/[route]
+3. Test action: [specific interaction, e.g., "Click 'Add Scenario' button"]
+4. Verify: [expected outcome, e.g., "Modal opens with empty form"]
+5. Test edge case: [e.g., "Submit form with empty name field"]
+6. Verify: [expected validation, e.g., "Error message 'Name is required' appears"]
+```
+
+**Example:**
+```markdown
+Manual UI testing steps for finance scenario privacy:
+1. Start dev server: make dev
+2. Navigate to: http://localhost:4400/#/finance/scenarios
+3. Create new scenario with name "Test Private Scenario"
+4. Toggle "Make Private" checkbox ON
+5. Click "Save" button
+6. Verify: Scenario appears in list with lock icon 🔒
+7. Logout and login as different user (user2@example.com)
+8. Navigate to: http://localhost:4400/#/finance/scenarios
+9. Verify: "Test Private Scenario" does NOT appear in list (privacy working)
+```
+
+**Why this matters:** Automated tests don't catch UI/UX issues, accessibility problems, or visual regressions. The user needs specific steps to verify your UI changes work correctly.
+
 ### Example Test Report Format
 
 After running tests, ALWAYS report results like this:
 
 ```
-Tests: Backend ✅, Frontend ✅
+Tests: Backend ✅, Frontend ✅, UI Manual ⚠️ (user to verify)
 
 Backend tests:
 $ pytest backend/tests/test_api/test_developer_condition_report.py -v
@@ -132,6 +166,15 @@ $ npm --prefix frontend run lint
 
 $ npm --prefix frontend run type-check
 ✅ No type errors
+
+UI Manual testing steps (for user to verify):
+1. Start dev server: make dev
+2. Navigate to http://localhost:4400/#/site-acquisition
+3. Click "Add Condition Report" button
+4. Fill in "Inspector Name" field with "John Doe"
+5. Verify: Inspector name appears in report summary
+6. Save report and reload page
+7. Verify: Inspector name persists after reload
 ```
 
 ### When Tests Fail
