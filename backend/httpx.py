@@ -285,6 +285,34 @@ class _StubAsyncClient:
     ) -> Response:
         return await self.request("DELETE", url, headers=headers, json=json)
 
+    async def patch(
+        self,
+        url: str,
+        *,
+        headers: dict[str, str] | None = None,
+        json: Any = None,
+        data: dict[str, Any] | None = None,
+    ) -> Response:
+        return await self.request("PATCH", url, headers=headers, json=json, data=data)
+
+    async def stream(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+    ) -> "_SimpleStreamContext":
+        response = await self.request(
+            method,
+            url,
+            headers=headers,
+            params=params,
+            json=json,
+        )
+        return _SimpleStreamContext(response)
+
 
 class _AsyncResponse:
     """Wrapper adding awaitable helpers to synchronous test responses."""
@@ -423,6 +451,20 @@ class AsyncClient:
 
         return await self._stub_client.delete(url, **kwargs)
 
+    async def patch(self, url: str, **kwargs: Any):
+        if self._mode == "testclient":
+            kwargs = self._apply_headers(kwargs)
+            loop = asyncio.get_running_loop()
+            response = await loop.run_in_executor(
+                None, partial(self._test_client.patch, url, **kwargs)
+            )
+            return _AsyncResponse(response)
+
+        return await self._stub_client.patch(url, **kwargs)
+
+    def stream(self, method: str, url: str, **kwargs: Any):
+        return _AsyncClientStream(self, method, url, kwargs)
+
 
 def _normalise_url(url: str) -> tuple[str, str]:
     parsed = urlsplit(url)
@@ -471,6 +513,69 @@ class ASGITransport:
 
     def __init__(self, *, app: Any) -> None:
         self.app = app
+
+
+class _AsyncClientStream:
+    """Async context manager that delegates streaming to the underlying client."""
+
+    def __init__(
+        self,
+        client: AsyncClient,
+        method: str,
+        url: str,
+        kwargs: dict[str, Any],
+    ) -> None:
+        self._client = client
+        self._method = method
+        self._url = url
+        self._kwargs = kwargs
+        self._inner_ctx: _SimpleStreamContext | None = None
+
+    async def __aenter__(self) -> _SimpleStreamContext:
+        client = self._client
+        if client._mode == "testclient":
+            kwargs = client._apply_headers(self._kwargs)
+            loop = asyncio.get_running_loop()
+            response = await loop.run_in_executor(
+                None, partial(client._test_client.request, self._method, self._url, **kwargs)  # type: ignore[attr-defined]
+            )
+            self._inner_ctx = _SimpleStreamContext(_AsyncResponse(response))
+            return self._inner_ctx
+
+        stub_ctx = await client._stub_client.stream(  # type: ignore[attr-defined]
+            self._method,
+            self._url,
+            **self._kwargs,
+        )
+        self._inner_ctx = stub_ctx
+        return await stub_ctx.__aenter__()
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        if not self._inner_ctx:
+            return None
+        await self._inner_ctx.__aexit__(exc_type, exc, tb)
+
+
+class _SimpleStreamContext:
+    """Minimal async stream context for SSE/unit tests."""
+
+    def __init__(self, response: _AsyncResponse | Response) -> None:
+        self._response = response
+
+    async def __aenter__(self) -> "_SimpleStreamContext":
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        return None
+
+    def aiter_bytes(self):
+        async def iterator():
+            yield await self._response.aread()
+
+        return iterator()
+
+    async def aread(self) -> bytes:
+        return await self._response.aread()
 
 
 __all__ = ["AsyncClient", "ASGITransport", "Response"]

@@ -460,6 +460,7 @@ async def test_finance_jobs_completed_when_no_async_entries(
 async def test_finance_sensitivity_job_execution(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
+    async_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     from backend.jobs.finance_sensitivity import process_finance_sensitivity_job
 
@@ -483,6 +484,24 @@ async def test_finance_sensitivity_job_execution(
 
     monkeypatch.setattr(job_queue._backend, "name", "celery", raising=False)
     monkeypatch.setattr(job_queue, "enqueue", fake_enqueue, raising=False)
+
+    session_manager = async_session_factory()
+    shared_session = await session_manager.__aenter__()
+
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def fake_job_session():  # pragma: no cover - simple test shim
+        try:
+            yield shared_session
+        finally:
+            pass
+
+    monkeypatch.setattr(
+        "backend.jobs.finance_sensitivity._job_session",
+        fake_job_session,
+        raising=False,
+    )
 
     payload = {
         "project_id": 501,
@@ -524,53 +543,57 @@ async def test_finance_sensitivity_job_execution(
         },
     }
 
-    response = await app_client.post(
-        "/api/v1/finance/feasibility",
-        json=payload,
-        headers={"X-Role": "reviewer"},
-    )
-    assert response.status_code == 200
-    scenario_id = response.json()["scenario_id"]
-    assert captured["scenario_id"] == scenario_id
+    try:
+        response = await app_client.post(
+            "/api/v1/finance/feasibility",
+            json=payload,
+            headers={"X-Role": "reviewer"},
+        )
+        assert response.status_code == 200
+        scenario_id = response.json()["scenario_id"]
+        assert captured["scenario_id"] == scenario_id
 
-    # Add task_id to context so the job can find and remove the correct async_jobs entry
-    job_context = dict(captured["context"])
-    job_context["task_id"] = "test-task-456"
+        job_context = dict(captured["context"])
+        job_context["task_id"] = "test-task-456"
 
-    job_result = await process_finance_sensitivity_job(
-        captured["scenario_id"],
-        bands=captured["bands"],
-        context=job_context,
-    )
-    assert job_result["status"] == "completed"
+        job_result = await process_finance_sensitivity_job(
+            captured["scenario_id"],
+            bands=captured["bands"],
+            context=job_context,
+        )
+        assert job_result["status"] == "completed"
 
-    jobs_response = await app_client.get(
-        f"/api/v1/finance/jobs?scenario_id={scenario_id}",
-        headers={"X-Role": "reviewer"},
-    )
-    assert jobs_response.status_code == 200
-    jobs = jobs_response.json()
-    assert jobs == [
-        {
-            "scenario_id": scenario_id,
-            "task_id": None,
-            "status": "completed",
-            "backend": None,
-            "queued_at": None,
-        }
-    ]
+        jobs_response = await app_client.get(
+            f"/api/v1/finance/jobs?scenario_id={scenario_id}",
+            headers={"X-Role": "reviewer"},
+        )
+        assert jobs_response.status_code == 200
+        jobs = jobs_response.json()
+        assert jobs == [
+            {
+                "scenario_id": scenario_id,
+                "task_id": None,
+                "status": "completed",
+                "backend": None,
+                "queued_at": None,
+            }
+        ]
 
-    scenario_response = await app_client.get(
-        f"/api/v1/finance/scenarios?fin_project_id={response.json()['fin_project_id']}",
-        headers={"X-Role": "reviewer"},
-    )
-    assert scenario_response.status_code == 200
-    latest = scenario_response.json()[-1]
-    assert any(
-        entry.get("parameter") != "__async__" for entry in latest["sensitivity_results"]
-    )
-
-    monkeypatch.setattr(settings, "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", original_limit)
+        scenario_response = await app_client.get(
+            f"/api/v1/finance/scenarios?fin_project_id={response.json()['fin_project_id']}",
+            headers={"X-Role": "reviewer"},
+        )
+        assert scenario_response.status_code == 200
+        latest = scenario_response.json()[-1]
+        assert any(
+            entry.get("parameter") != "__async__"
+            for entry in latest["sensitivity_results"]
+        )
+    finally:
+        await session_manager.__aexit__(None, None, None)
+        monkeypatch.setattr(
+            settings, "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", original_limit
+        )
 
 
 @pytest.mark.asyncio
