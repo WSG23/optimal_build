@@ -696,7 +696,7 @@ export function SiteAcquisitionPage() {
         window.clearTimeout(timer)
       }
     }
-  }, [previewJob?.id, previewJob?.status])
+  }, [previewJob, previewJob?.id, previewJob?.status])
 
   const handleRefreshPreview = useCallback(async () => {
     if (!previewJob) {
