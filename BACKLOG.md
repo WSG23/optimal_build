@@ -28,6 +28,34 @@
 
 ## Blocked (Waiting)
 
+### Pre-Phase 2D Infrastructure Audit (CRITICAL - 47 Startup Failures Prevention)
+**Status:** BLOCKED - waiting for Phase 2C + Phase 1D/2B completion
+**Priority:** CRITICAL (must do before Phase 2D)
+**Estimate:** 2 weeks
+**Risk:** Codebase becomes unmaintainable (Month 25 death pattern)
+
+**Why This Exists:**
+Inc.com article analyzed 47 failed startups. 89% had no database indexing, 91% had no automated tests, 68% had security vulnerabilities, 76% overpaid for servers.
+
+Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things → Month 19-24 hiring just to maintain → Month 25 startup dies.
+
+**We're at Month 12-15. This is the critical window.**
+
+**What to Do (2-week sprint):**
+1. **Week 1:** Database indexing + automated testing setup
+2. **Week 2:** Security audit + infrastructure optimization
+
+**Full checklist:** [PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md](PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md)
+
+**After Phase 2C + 1D/2B residual work:**
+1. Run 2-week infrastructure audit sprint
+2. Fix all critical issues (database, testing, security, infrastructure)
+3. THEN start Phase 2D
+
+**Article:** https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802
+
+---
+
 ### Phase 1D: Business Performance Management UI
 **Status:** BLOCKED - waiting for Phase 2C Finance to complete
 **Priority:** HIGH (60% complete, UI missing)

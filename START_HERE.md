@@ -5,10 +5,11 @@
 1. **UI_STATUS.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
 2. **FEATURES.md** - What we're building (full feature specification)
 3. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
-4. **TECHNICAL_DEBT.md** - ⚠️ **IMPORTANT** - All known technical debt (prevents forgotten work)
-5. **docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md** - How to choose your next task (decision tree)
-6. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
-7. **CLAUDE.md** - Coding guidelines and mandatory workflows
+4. **PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
+5. **TECHNICAL_DEBT.md** - ⚠️ **IMPORTANT** - All known technical debt (prevents forgotten work)
+6. **docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md** - How to choose your next task (decision tree)
+7. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
+8. **CLAUDE.md** - Coding guidelines and mandatory workflows
 
 ---
 
