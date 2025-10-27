@@ -57,6 +57,19 @@ def _load_fractional_float(name: str, default: float) -> float:
     return default
 
 
+def _load_positive_int(name: str, default: int) -> int:
+    """Return a positive integer configuration value."""
+
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        candidate = int(raw_value)
+    except (TypeError, ValueError):
+        return default
+    return candidate if candidate > 0 else default
+
+
 def _load_allowed_origins() -> list[str]:
     """Retrieve allowed CORS origins from the environment."""
 
@@ -240,6 +253,9 @@ class Settings:
         self.ALLOW_VIEWER_MUTATIONS = _load_bool("ALLOW_VIEWER_MUTATIONS", False)
 
         self.LISTING_TOKEN_SECRET = self._load_listing_token_secret()
+        self.FINANCE_SENSITIVITY_MAX_SYNC_BANDS = _load_positive_int(
+            "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3
+        )
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")
