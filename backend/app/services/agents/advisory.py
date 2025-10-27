@@ -99,8 +99,8 @@ class AgentAdvisoryService:
         await self._ensure_property_exists(session, property_id)
 
         feedback = AgentAdvisoryFeedback(
-            id=str(uuid4()),
-            property_id=str(property_id),
+            id=uuid4(),
+            property_id=property_id,
             submitted_by=submitted_by,
             channel=channel,
             sentiment=sentiment,
@@ -143,7 +143,7 @@ class AgentAdvisoryService:
     ) -> list[dict[str, Any]]:
         result = await session.execute(
             select(AgentAdvisoryFeedback)
-            .where(AgentAdvisoryFeedback.property_id == str(property_id))
+            .where(AgentAdvisoryFeedback.property_id == property_id)
             .order_by(AgentAdvisoryFeedback.created_at.desc())
         )
         return [self._map_feedback(row[0]) for row in result.all()]
