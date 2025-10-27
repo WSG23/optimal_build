@@ -297,7 +297,7 @@ async def test_update_finance_construction_loan(
     tranche_b = next(
         item for item in loan_config["facilities"] if item["name"] == "Tranche B"
     )
-    assert tranche_b["exit_fee_pct"] == "2.0"
+    assert tranche_b["exit_fee_pct"] == "2.00"
 
 
 @pytest.mark.asyncio
@@ -533,10 +533,14 @@ async def test_finance_sensitivity_job_execution(
     scenario_id = response.json()["scenario_id"]
     assert captured["scenario_id"] == scenario_id
 
+    # Add task_id to context so the job can find and remove the correct async_jobs entry
+    job_context = dict(captured["context"])
+    job_context["task_id"] = "test-task-456"
+
     job_result = await process_finance_sensitivity_job(
         captured["scenario_id"],
         bands=captured["bands"],
-        context=captured["context"],
+        context=job_context,
     )
     assert job_result["status"] == "completed"
 

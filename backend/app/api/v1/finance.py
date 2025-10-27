@@ -107,11 +107,7 @@ async def _ensure_project_owner(
         # Legacy demo data has no ownership metadata; fall back to role guard only.
         return
 
-    if (
-        identity.role == "reviewer"
-        and not identity.user_id
-        and not identity.email
-    ):
+    if identity.role == "reviewer" and not identity.user_id and not identity.email:
         # Developer tooling historically allowed reviewer requests without explicit
         # identity metadata. Maintain that behaviour to avoid blocking seeded
         # fixtures while Phase 2C privacy headers are rolled out.
@@ -275,7 +271,11 @@ def _evaluate_sensitivity_bands(
     results: list[FinanceSensitivityOutcomeSchema] = []
     metadata_entries: list[dict[str, Any]] = []
     for band in bands:
-        for label, delta in (("Low", band.low), ("Base", band.base), ("High", band.high)):
+        for label, delta in (
+            ("Low", band.low),
+            ("Base", band.base),
+            ("High", band.high),
+        ):
             if delta is None:
                 continue
             delta_decimal = _decimal_from_value(delta)
@@ -283,9 +283,9 @@ def _evaluate_sensitivity_bands(
             cost_factor = Decimal("1") + (delta_decimal / Decimal("200"))
             irr_value: Decimal | None = None
             if base_irr is not None:
-                irr_value = (
-                    base_irr + (delta_decimal / Decimal("1000"))
-                ).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+                irr_value = (base_irr + (delta_decimal / Decimal("1000"))).quantize(
+                    Decimal("0.0001"), rounding=ROUND_HALF_UP
+                )
             npv_value = _quantize_currency(base_npv * npv_factor)
             escalated_value = _quantize_currency(escalated_cost * cost_factor)
             interest_value = (
@@ -388,9 +388,11 @@ def _record_async_job(
         "task_id": job_status.task_id,
         "status": job_status.status,
         "backend": job_status.backend,
-        "queued_at": job_status.queued_at.isoformat()
-        if job_status.queued_at is not None
-        else None,
+        "queued_at": (
+            job_status.queued_at.isoformat()
+            if job_status.queued_at is not None
+            else None
+        ),
     }
     sensitivity_jobs.append(payload)
     async_jobs["sensitivity"] = sensitivity_jobs
@@ -1382,23 +1384,17 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
                     notes_value = entry.get("notes")
                     if isinstance(notes_value, list):
                         notes_text = "; ".join(
-                            str(item)
-                            for item in notes_value
-                            if item not in (None, "")
+                            str(item) for item in notes_value if item not in (None, "")
                         )
                     else:
                         notes_text = (
-                            ""
-                            if notes_value in (None, "", [])
-                            else str(notes_value)
+                            "" if notes_value in (None, "", []) else str(notes_value)
                         )
                     writer.writerow(
                         [
                             entry.get("parameter", ""),
                             entry.get("scenario", ""),
-                            entry.get("delta_label")
-                            or entry.get("deltaLabel")
-                            or "",
+                            entry.get("delta_label") or entry.get("deltaLabel") or "",
                             entry.get("npv", ""),
                             entry.get("irr", ""),
                             entry.get("escalated_cost", ""),
@@ -1841,9 +1837,7 @@ async def run_finance_feasibility(
                         else 12
                     ),
                     "capitalise_interest": (
-                        loan_config.capitalise_interest
-                        if loan_config
-                        else True
+                        loan_config.capitalise_interest if loan_config else True
                     ),
                     "base_interest_rate": (
                         str(loan_config.interest_rate)
@@ -1867,9 +1861,7 @@ async def run_finance_feasibility(
                 dispatch: JobDispatch = await job_queue.enqueue(
                     "finance.sensitivity",
                     scenario.id,
-                    bands=[
-                        band.model_dump(mode="json") for band in sensitivity_bands
-                    ],
+                    bands=[band.model_dump(mode="json") for band in sensitivity_bands],
                     context=job_context,
                     queue="finance",
                 )
@@ -2043,13 +2035,13 @@ async def run_finance_feasibility(
             ],
             dscr_timeline=dscr_entries,
             capital_stack=capital_stack_summary_schema,
-        drawdown_schedule=drawdown_schedule_schema,
-        asset_mix_summary=asset_mix_summary_schema,
-        asset_breakdowns=asset_breakdown_schemas,
-        construction_loan_interest=construction_interest_schema,
-        construction_loan=loan_config,
-        sensitivity_results=sensitivity_results,
-        sensitivity_jobs=sensitivity_jobs,
+            drawdown_schedule=drawdown_schedule_schema,
+            asset_mix_summary=asset_mix_summary_schema,
+            asset_breakdowns=asset_breakdown_schemas,
+            construction_loan_interest=construction_interest_schema,
+            construction_loan=loan_config,
+            sensitivity_results=sensitivity_results,
+            sensitivity_jobs=sensitivity_jobs,
         )
     finally:
         duration_ms = (perf_counter() - start_time) * 1000
@@ -2145,7 +2137,9 @@ async def list_finance_jobs(
     scenario = (await session.execute(stmt)).scalars().first()
     if scenario is None:
         raise HTTPException(status_code=404, detail="Finance scenario not found")
-    await _ensure_project_owner(session, _project_uuid_from_scenario(scenario), identity)
+    await _ensure_project_owner(
+        session, _project_uuid_from_scenario(scenario), identity
+    )
     return _scenario_job_statuses(scenario)
 
 
@@ -2162,7 +2156,9 @@ async def _load_scenario_for_status(
     scenario = (await session.execute(stmt)).scalars().first()
     if scenario is None:
         raise HTTPException(status_code=404, detail="Finance scenario not found")
-    await _ensure_project_owner(session, _project_uuid_from_scenario(scenario), identity)
+    await _ensure_project_owner(
+        session, _project_uuid_from_scenario(scenario), identity
+    )
     return scenario
 
 
@@ -2213,21 +2209,22 @@ async def update_construction_loan(
         .where(FinScenario.id == scenario_id)
         .options(
             selectinload(FinScenario.fin_project),
+            selectinload(FinScenario.capital_stack),
             selectinload(FinScenario.results),
         )
     )
     scenario = (await session.execute(stmt)).scalars().first()
     if scenario is None:
         raise HTTPException(status_code=404, detail="Finance scenario not found")
-    await _ensure_project_owner(session, _project_uuid_from_scenario(scenario), identity)
+    await _ensure_project_owner(
+        session, _project_uuid_from_scenario(scenario), identity
+    )
 
     if payload.construction_loan is None:
         raise HTTPException(status_code=400, detail="construction_loan is required")
 
     assumptions = dict(scenario.assumptions or {})
-    assumptions["construction_loan"] = payload.construction_loan.model_dump(
-        mode="json"
-    )
+    assumptions["construction_loan"] = payload.construction_loan.model_dump(mode="json")
     scenario.assumptions = assumptions
 
     drawdown_data = assumptions.get("drawdown_schedule")
@@ -2255,7 +2252,10 @@ async def update_construction_loan(
     construction_interest_metadata = None
     if schedule_summary is not None:
         facility_payloads = (
-            [facility.model_dump(mode="json") for facility in payload.construction_loan.facilities]
+            [
+                facility.model_dump(mode="json")
+                for facility in payload.construction_loan.facilities
+            ]
             if payload.construction_loan.facilities
             else None
         )
@@ -2298,6 +2298,10 @@ async def update_construction_loan(
             existing_result.metadata = _json_safe(construction_interest_metadata)
 
     await session.commit()
+    await session.refresh(
+        scenario,
+        attribute_names=["fin_project", "capital_stack", "results"],
+    )
     return await _summarise_persisted_scenario(scenario, session=session)
 
 
