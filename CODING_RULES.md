@@ -965,6 +965,113 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 
 ---
 
+## 12. Phase Completion Gates (MANDATORY)
+
+**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) if the phase section contains unchecked `- [ ]` checklist items, `🔄 In Progress` markers, or `❌` incomplete items.
+
+**Why:** Phase 1D and Phase 2B were left 60% and 85% incomplete because AI agents marked backend work as "done" and moved to Phase 2C without completing frontend UI components. This creates abandoned features and technical debt.
+
+**How to follow:**
+
+### Before marking ANY phase "✅ COMPLETE":
+
+1. **Check the phase section in feature_delivery_plan_v2.md:**
+   - Search for `- [ ]` (unchecked items) → Must be ZERO
+   - Search for `🔄` (In Progress markers) → Must be ZERO
+   - Search for `❌` (incomplete items) → Must be ZERO
+
+2. **Verify UI manual testing complete:**
+   - User must have run all UI manual test steps (see Rule 8)
+   - User must have confirmed: "✅ All manual tests passing"
+
+3. **Ask user for explicit approval:**
+   ```markdown
+   Phase X checklist is complete:
+   - ✅ All [ ] items checked
+   - ✅ No 🔄 In Progress markers
+   - ✅ No ❌ incomplete items
+   - ✅ UI manual testing passed
+
+   May I mark Phase X as "✅ COMPLETE" in feature_delivery_plan_v2.md?
+   ```
+
+4. **Only after user approval:**
+   - Change phase header from "⚠️ IN PROGRESS" → "✅ COMPLETE"
+   - Update status percentage to 100%
+
+### If phase has ANY incomplete work:
+
+1. **Keep status as "⚠️ IN PROGRESS"**
+2. **Document incomplete items clearly:**
+   - Use `🔄` for work in progress
+   - Use `❌` for blocked or deferred work
+   - Add unchecked `- [ ]` items to checklist
+
+3. **Add incomplete work to [BACKLOG.md](BACKLOG.md):**
+   - List each incomplete item with estimate
+   - Mark as "BLOCKED - waiting for Phase X completion"
+
+4. **Ask user for decision:**
+   ```markdown
+   Phase X is 85% complete. Remaining work:
+   - 🔄 4 UI components (estimated 1 week)
+   - ❌ 3D visualization (blocked on GLB generation)
+
+   Options:
+   1. Complete Phase X now (1 week delay to Phase Y)
+   2. Defer UI work to backlog and start Phase Y
+   3. Complete critical items only, defer rest
+
+   What would you like to do?
+   ```
+
+### Examples:
+
+**❌ WRONG - Marking incomplete phase as COMPLETE:**
+```markdown
+### Phase 1D: Business Performance Management ✅ COMPLETE
+**Status:** Backend 100%, Frontend 60%
+
+**UI Implementation Checklist:**
+- [ ] Pipeline Kanban board component
+- [ ] Deal insights panel
+- [ ] Analytics panel
+- [ ] ROI panel
+```
+*Problem: Marked COMPLETE but has 4 unchecked [ ] items*
+
+**✅ CORRECT - Keeping incomplete phase as IN PROGRESS:**
+```markdown
+### Phase 1D: Business Performance Management ⚠️ 80% COMPLETE
+**Status:** Backend 100%, Frontend 60% (4 UI components remaining)
+
+**Completed:**
+- ✅ Deal pipeline backend API
+- ✅ Commission ledger backend
+- ✅ Business Performance page scaffold
+
+**In Progress (see BACKLOG.md):**
+- 🔄 Pipeline Kanban board component (1-2 days)
+- 🔄 Deal insights panel (1-2 days)
+- 🔄 Analytics panel (1-2 days)
+- 🔄 ROI panel (1-2 days)
+
+**UI Implementation Checklist:**
+- [ ] Pipeline Kanban board component
+- [ ] Deal insights panel
+- [ ] Analytics panel
+- [ ] ROI panel
+
+**Next Steps:** User to decide whether to complete Phase 1D UI or defer to backlog
+```
+
+**Enforcement:**
+- `scripts/check_coding_rules.py` Rule 12 check runs automatically
+- Blocks commits if phase marked "✅ COMPLETE" with incomplete items
+- Returns error: "Phase X marked COMPLETE but has N unchecked [ ] checklist items"
+
+---
+
 ## Questions?
 
 If a rule is unclear or seems wrong for a specific case:

@@ -501,6 +501,62 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
+def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
+    """Ensure phases marked COMPLETE have no incomplete checklist items (Rule 12)."""
+
+    errors: list[str] = []
+    plan_file = repo_root / "docs" / "feature_delivery_plan_v2.md"
+
+    if not plan_file.exists():
+        return True, []  # No plan file, skip check
+
+    try:
+        content = plan_file.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"RULE VIOLATION: Unable to read {plan_file}\n  -> {exc}")
+        return False, errors
+
+    # Find all phase sections marked COMPLETE
+    import re
+
+    phase_pattern = r"### (Phase \S+):.*✅ COMPLETE"
+    for match in re.finditer(phase_pattern, content, re.IGNORECASE):
+        phase_name = match.group(1)
+        phase_start = match.end()
+
+        # Find the end of this phase section (next ### or end of file)
+        next_section = re.search(r"\n###", content[phase_start:])
+        phase_end = phase_start + next_section.start() if next_section else len(content)
+
+        phase_content = content[phase_start:phase_end]
+
+        # Check for incomplete markers
+        incomplete_markers = []
+
+        if "🔄" in phase_content:
+            incomplete_markers.append("'🔄 In Progress' items")
+        if "❌" in phase_content:
+            incomplete_markers.append("'❌' incomplete items")
+
+        # Check for unchecked checklist items
+        unchecked_items = re.findall(r"- \[ \]", phase_content)
+        if unchecked_items:
+            incomplete_markers.append(
+                f"{len(unchecked_items)} unchecked [ ] checklist items"
+            )
+
+        if incomplete_markers:
+            errors.append(
+                f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' but has:\n"
+                f"  -> {', '.join(incomplete_markers)}\n"
+                "  -> Rule 12: Do not mark phases complete with incomplete checklist items.\n"
+                "  -> Either complete the items or change status to '⚠️ IN PROGRESS'.\n"
+                "  -> See CODING_RULES.md section 12 (Phase Completion Gates)"
+            )
+
+    return len(errors) == 0, errors
+
+
 def check_contributing_guidelines(repo_root: Path) -> tuple[bool, list[str]]:
     """Validate key expectations documented in CONTRIBUTING.md."""
 
@@ -604,6 +660,10 @@ def main() -> int:
         (
             "Rule 8: AI Planning References",
             lambda: check_ai_guidance_references(repo_root),
+        ),
+        (
+            "Rule 12: Phase Completion Gates",
+            lambda: check_phase_completion_gates(repo_root),
         ),
     ]
 
