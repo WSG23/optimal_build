@@ -58,6 +58,10 @@ This ensures you pick up exactly where the previous agent left off.
      - Rule 3: Pre-commit hooks handle formatting automatically
      - Rule 6: Follow import ordering (stdlib → third-party → local)
      - Rule 7: No unused variables, proper exception chaining
+     - Rule 8: **MANDATORY testing instructions** after completing ANY feature (backend tests, frontend tests, UI manual steps)
+     - Rule 9: Index all foreign keys and frequently queried columns
+     - Rule 10: All new features MUST have automated tests (>80% coverage for critical paths)
+     - Rule 11: Security practices (authentication, input validation, no SQL injection)
 
 4. **Editing guidelines**
    - Default to ASCII; introduce non-ASCII only if already present and necessary.

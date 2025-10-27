@@ -443,6 +443,17 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
         "README.md",
     ]
 
+    # NEW: Required content sections (Rule 8.1)
+    required_content_sections = [
+        (
+            "MANDATORY TESTING CHECKLIST",
+            "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md",
+        ),
+        ("Backend tests:", "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"),
+        ("Frontend tests", "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"),
+        ("Manual UI testing:", "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"),
+    ]
+
     def _read(path: Path) -> str:
         try:
             return path.read_text(encoding="utf-8")
@@ -459,20 +470,32 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
     if not guidance_content or not plan_content:
         return len(errors) == 0, errors
 
+    # Check for file references
     for ref in required_refs:
         if ref not in guidance_content:
             errors.append(
                 "RULE VIOLATION: docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md "
                 f"must reference '{ref}'.\n"
-                "  -> Rule 8: AI plans must cite the canonical testing guides.\n"
-                "  -> See CODING_RULES.md section 8."
+                "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
+                "  -> See CODING_RULES.md section 8.2"
             )
         if ref not in plan_content:
             errors.append(
                 "RULE VIOLATION: docs/feature_delivery_plan_v2.md must reference "
                 f"'{ref}' within relevant phase guidance.\n"
-                "  -> Rule 8: AI plans must cite the canonical testing guides.\n"
-                "  -> See CODING_RULES.md section 8."
+                "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
+                "  -> See CODING_RULES.md section 8.2"
+            )
+
+    # NEW: Check for required content sections (Rule 8.1)
+    for section, doc_path in required_content_sections:
+        content = guidance_content if "NEXT_STEPS" in doc_path else plan_content
+        if section not in content:
+            errors.append(
+                f"RULE VIOLATION: {doc_path} must contain '{section}' section.\n"
+                "  -> Rule 8.1: MANDATORY Testing Checklist must be present.\n"
+                "  -> AI agents MUST provide backend, frontend, and UI manual test instructions.\n"
+                "  -> See CODING_RULES.md section 8.1"
             )
 
     return len(errors) == 0, errors

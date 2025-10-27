@@ -489,9 +489,103 @@ def process_items(items: List[str] = []) -> List[str]:  # Dangerous!
 
 ---
 
-## 8. AI Agent Planning References
+## 8. AI Agent Testing Instructions (MANDATORY)
 
-**Rule:** Plans, "next steps," and wrap-up instructions produced by AI agents must cite the canonical testing guides so humans can run the right checks.
+**Rule:** When AI agents complete ANY feature, they MUST provide test instructions to the user. This includes backend tests, frontend tests, and UI manual test steps.
+
+**Why:** Phase gates depend on manual walkthroughs and targeted smoke suites. Referencing the official docs keeps every agent in sync with the approved testing scope. Without explicit test instructions, features go untested and regressions accumulate.
+
+**How to follow:**
+
+### 8.1 MANDATORY Testing Checklist After Feature Completion
+
+When you complete ANY feature implementation, you MUST:
+
+**a) Provide backend test commands:**
+```markdown
+Backend tests:
+.venv/bin/pytest backend/tests/test_api/test_[feature].py -v
+.venv/bin/pytest backend/tests/test_services/test_[feature].py -v
+```
+
+**b) Provide frontend test commands (if applicable):**
+```markdown
+Frontend tests:
+npm test -- src/modules/[feature]/__tests__
+npm run lint
+```
+
+**c) Provide UI manual test steps:**
+```markdown
+UI Manual Testing:
+1. Navigate to [URL or component]
+2. Click [button/action]
+3. Verify [expected outcome]
+4. Test edge cases: [list specific scenarios]
+```
+
+### 8.2 Required Documentation References
+
+Before proposing work, AI agents must read:
+- [`docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) (MANDATORY TESTING CHECKLIST section)
+- Your phase section in [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md)
+- [`TESTING_KNOWN_ISSUES.md`](TESTING_KNOWN_ISSUES.md) (check for known test failures before reporting)
+- [`UI_STATUS.md`](UI_STATUS.md) (understand UI implementation status)
+- [`TESTING_DOCUMENTATION_SUMMARY.md`](TESTING_DOCUMENTATION_SUMMARY.md) (find smoke/regression suites)
+- [`README.md`](README.md) (`make dev` notes for log monitoring)
+
+Mirror those references (or the exact commands they prescribe) in your response.
+
+If expectations change, update the docs first so the automation stays accurate.
+
+### 8.3 Examples
+
+**✅ CORRECT - Complete test instructions:**
+```markdown
+I've completed the finance scenario privacy feature. Please test:
+
+Backend tests:
+.venv/bin/pytest backend/tests/test_api/test_finance.py::test_scenario_privacy -v
+.venv/bin/pytest backend/tests/test_models/test_finance_scenario.py -v
+
+Frontend tests:
+npm test -- src/modules/finance/__tests__/FinanceScenarioTable.test.tsx
+
+UI Manual Testing:
+1. Navigate to /finance/scenarios
+2. Create a new scenario
+3. Toggle "Make Private" checkbox
+4. Save and verify scenario shows lock icon
+5. Logout and login as different user
+6. Verify private scenario is NOT visible
+```
+
+**❌ WRONG - No test instructions:**
+```markdown
+I've completed the finance scenario privacy feature. The implementation is done.
+```
+
+**❌ WRONG - Generic test instructions:**
+```markdown
+Run the tests to verify the feature works.
+```
+
+### 8.4 Automatic Enforcement
+
+- `scripts/check_coding_rules.py` verifies the guidance docs contain the mandatory references. Do not remove them without adding a replacement rule.
+- During reviews, reject any "next steps" that omit the required test instructions.
+- **FUTURE:** Commit message hook will enforce that feature commits include test commands in the message body.
+
+### 8.5 Compliance Check
+
+When completing a feature, ask yourself:
+- [ ] Did I provide backend pytest commands?
+- [ ] Did I provide frontend test commands (if applicable)?
+- [ ] Did I provide specific UI manual test steps?
+- [ ] Did I reference TESTING_KNOWN_ISSUES.md to avoid duplicate reports?
+- [ ] Did I check UI_STATUS.md to understand current implementation state?
+
+**If you answered NO to any of these, your work is incomplete.**
 
 ---
 
@@ -868,22 +962,6 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 - Penetration testing ($3K-10K)
 - Compliance certifications ($15K-50K+)
 - WAF, DDoS protection, bug bounty programs
-
----
-
-**Why:** Phase gates depend on manual walkthroughs and targeted smoke suites. Referencing the official docs keeps every agent in sync with the approved testing scope.
-
-**How to follow:**
-- Before proposing work, open:
-  - `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`
-  - Your phase section in `docs/feature_delivery_plan_v2.md`
-  - `TESTING_KNOWN_ISSUES.md`, `UI_STATUS.md`, `TESTING_DOCUMENTATION_SUMMARY.md`, and the `README` (`make dev` notes for log monitoring)
-- Mirror those references (or the exact commands they prescribe) in your response.
-- If expectations change, update the docs first so the automation stays accurate.
-
-**Automatic Enforcement:**
-- `scripts/check_coding_rules.py` verifies the guidance docs contain the mandatory references. Do not remove them without adding a replacement rule.
-- During reviews, reject any “next steps” that omit the required citations.
 
 ---
 
