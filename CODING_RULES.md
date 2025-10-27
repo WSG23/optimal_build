@@ -491,7 +491,385 @@ def process_items(items: List[str] = []) -> List[str]:  # Dangerous!
 
 ## 8. AI Agent Planning References
 
-**Rule:** Plans, “next steps,” and wrap-up instructions produced by AI agents must cite the canonical testing guides so humans can run the right checks.
+**Rule:** Plans, "next steps," and wrap-up instructions produced by AI agents must cite the canonical testing guides so humans can run the right checks.
+
+---
+
+## 9. Database Performance & Indexing
+
+**Rule:** All foreign keys MUST have indexes. Frequently queried columns SHOULD have indexes. Never deploy tables >1000 rows without appropriate indexes.
+
+**Why:** 89% of failed startups (per Inc.com audit) had no database indexing, causing significant performance degradation. Queries without indexes cause full table scans (O(n) instead of O(log n)).
+
+**How to follow:**
+- **ALWAYS index foreign key columns** (user_id, project_id, property_id, etc.)
+- **Index columns used in WHERE clauses** frequently
+- **Index columns used in JOIN conditions**
+- **Index columns used in ORDER BY** if the query is frequent
+- **Add indexes in the same migration** that creates the table
+
+**Examples:**
+```python
+# ✅ CORRECT - Create table with indexes
+def upgrade() -> None:
+    op.create_table(
+        'finance_scenarios',
+        sa.Column('id', sa.Integer(), primary_key=True),
+        sa.Column('project_id', sa.Integer(), nullable=False),  # Foreign key
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+        sa.Column('status', sa.String(), nullable=False),
+    )
+
+    # Index foreign keys
+    op.create_index('ix_finance_scenarios_project_id', 'finance_scenarios', ['project_id'])
+
+    # Index frequently queried columns
+    op.create_index('ix_finance_scenarios_created_at', 'finance_scenarios', ['created_at'])
+    op.create_index('ix_finance_scenarios_status', 'finance_scenarios', ['status'])
+
+    # Composite index for common query pattern
+    op.create_index(
+        'ix_finance_scenarios_project_status',
+        'finance_scenarios',
+        ['project_id', 'status']
+    )
+
+# ❌ WRONG - No indexes on foreign keys or query columns
+def upgrade() -> None:
+    op.create_table(
+        'finance_scenarios',
+        sa.Column('id', sa.Integer(), primary_key=True),
+        sa.Column('project_id', sa.Integer(), nullable=False),  # No index!
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),  # No index!
+        sa.Column('status', sa.String(), nullable=False),  # No index!
+    )
+```
+
+**When to add indexes:**
+- **New tables:** Add indexes in the same migration that creates the table
+- **Existing tables:** Add indexes in a separate migration if queries are slow (>500ms)
+- **After adding columns:** If the new column will be queried frequently, add an index
+
+**Performance targets:**
+- All queries <500ms in local testing
+- No full table scans on tables >1000 rows
+- Foreign key queries return in <100ms
+
+**Check if indexes exist:**
+```sql
+-- List all indexes on a table
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'finance_scenarios';
+
+-- Find tables missing indexes on foreign keys
+SELECT schemaname, tablename
+FROM pg_stat_user_tables
+WHERE seq_scan > idx_scan
+AND seq_scan > 100;
+```
+
+**Enforcement:**
+- Manual review during code review
+- Query performance testing before Phase transitions
+- Pre-Phase 2D audit will add missing indexes to existing tables
+
+---
+
+## 10. Testing Requirements
+
+**Rule:** All new features MUST have automated tests. Backend coverage >80% for critical paths. Frontend critical paths must have unit tests.
+
+**Why:** 91% of failed startups (per Inc.com audit) had no automated testing, making feature additions unpredictable and causing regressions.
+
+**How to follow:**
+
+### Backend Testing (MANDATORY)
+- **API endpoints:** Integration tests for all new endpoints
+- **Service layer:** Unit tests for all business logic functions
+- **Database models:** CRUD tests for new models
+- **Critical calculations:** 100% coverage for finance, compliance, ROI calculations
+
+**Backend test structure:**
+```python
+# backend/tests/test_api/test_finance.py
+async def test_create_finance_scenario_success(client, test_user):
+    """Test creating a finance scenario returns 201 and correct data."""
+    response = await client.post(
+        "/api/v1/finance/scenarios",
+        json={"project_id": 1, "name": "Test Scenario"},
+        headers={"Authorization": f"Bearer {test_user.token}"}
+    )
+    assert response.status_code == 201
+    assert response.json()["name"] == "Test Scenario"
+
+async def test_create_finance_scenario_unauthorized(client):
+    """Test creating scenario without auth returns 401."""
+    response = await client.post(
+        "/api/v1/finance/scenarios",
+        json={"project_id": 1, "name": "Test"}
+    )
+    assert response.status_code == 401
+```
+
+### Frontend Testing (RECOMMENDED)
+- **Critical user flows:** E2E tests for login, data submission, calculations
+- **Components:** Unit tests for complex components with business logic
+- **API clients:** Integration tests for API communication layer
+
+**Frontend test structure:**
+```typescript
+// frontend/src/modules/finance/components/__tests__/FinanceScenarioTable.test.tsx
+import { render, screen } from '@testing-library/react';
+import { FinanceScenarioTable } from '../FinanceScenarioTable';
+
+test('renders scenario table with data', () => {
+  const scenarios = [{ id: 1, name: 'Test', npv: 1000000 }];
+  render(<FinanceScenarioTable scenarios={scenarios} />);
+
+  expect(screen.getByText('Test')).toBeInTheDocument();
+  expect(screen.getByText('$1,000,000')).toBeInTheDocument();
+});
+```
+
+### CI/CD Integration (MANDATORY)
+- **Pre-commit:** Tests run automatically before commit
+- **PR checks:** All tests must pass before merge
+- **No bypassing:** Never use `--no-verify` to skip tests
+
+**Running tests:**
+```bash
+# Backend tests
+pytest backend/tests/ -v
+
+# Frontend tests
+npm test
+
+# All tests
+make test
+```
+
+**Coverage requirements:**
+- Backend critical paths: >80%
+- Backend overall: >70%
+- Frontend critical paths: Covered
+- Frontend overall: Best effort (JSDOM timing issues documented in TESTING_KNOWN_ISSUES.md)
+
+**Enforcement:**
+- CI blocks merges without passing tests
+- Pre-commit hooks run tests automatically
+- Phase gate checks verify test coverage before phase completion
+
+**Exceptions:**
+- Frontend tests have known JSDOM timing issues (see TESTING_KNOWN_ISSUES.md)
+- Test harness UI (non-production) may have lower coverage
+- Document test gaps in commit messages if test is deferred
+
+---
+
+## 11. Security Practices
+
+**Rule:** Follow security best practices for authentication, input validation, secrets management, and API security. Never commit secrets.
+
+**Why:** 68% of failed startups (per Inc.com audit) had security vulnerabilities leading to breaches and compliance failures.
+
+**How to follow:**
+
+### Authentication & Authorization (MANDATORY)
+```python
+# ✅ CORRECT - All endpoints require authentication
+from app.api.deps import get_current_user, require_developer_role
+
+@router.post("/finance/scenarios")
+async def create_scenario(
+    data: FinanceScenarioCreate,
+    current_user: User = Depends(get_current_user),  # Required auth
+    db: AsyncSession = Depends(get_db)
+):
+    # Verify user owns the project
+    if not await user_owns_project(db, current_user.id, data.project_id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    return await create_finance_scenario(db, data)
+
+# ❌ WRONG - No authentication required
+@router.post("/finance/scenarios")
+async def create_scenario(
+    data: FinanceScenarioCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    # Anyone can create scenarios!
+    return await create_finance_scenario(db, data)
+```
+
+### Input Validation (MANDATORY)
+```python
+# ✅ CORRECT - Pydantic validates all inputs
+from pydantic import BaseModel, Field, validator
+
+class FinanceScenarioCreate(BaseModel):
+    project_id: int = Field(..., gt=0)  # Must be positive
+    name: str = Field(..., min_length=1, max_length=200)  # Length limits
+    budget: float = Field(..., gt=0, le=1e9)  # Reasonable range
+
+    @validator('name')
+    def name_must_not_contain_html(cls, v):
+        if '<' in v or '>' in v:
+            raise ValueError('HTML tags not allowed')
+        return v
+
+# ❌ WRONG - No input validation
+@router.post("/finance/scenarios")
+async def create_scenario(project_id: int, name: str, budget: float):
+    # Could inject SQL, XSS, or cause overflow!
+    return await db.execute(f"INSERT INTO scenarios VALUES ({project_id}, '{name}', {budget})")
+```
+
+### SQL Injection Prevention (MANDATORY)
+```python
+# ✅ CORRECT - Use SQLAlchemy ORM or parameterized queries
+from sqlalchemy import select
+
+async def get_scenarios(db: AsyncSession, project_id: int):
+    stmt = select(FinanceScenario).where(FinanceScenario.project_id == project_id)
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+# ❌ WRONG - SQL injection vulnerability
+async def get_scenarios(db: AsyncSession, project_id: int):
+    query = f"SELECT * FROM finance_scenarios WHERE project_id = {project_id}"
+    # Attacker can inject: project_id = "1 OR 1=1"
+    result = await db.execute(query)
+    return result.fetchall()
+```
+
+### Secrets Management (MANDATORY)
+```python
+# ✅ CORRECT - Secrets in environment variables
+import os
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    database_url: str
+    jwt_secret: str
+    api_key: str
+
+    class Config:
+        env_file = ".env"  # Never commit .env to git!
+
+# ❌ WRONG - Hardcoded secrets
+DATABASE_URL = "postgresql://user:password123@localhost/db"  # Never do this!
+JWT_SECRET = "super-secret-key"  # Never do this!
+API_KEY = "abc123xyz"  # Never do this!
+```
+
+### Rate Limiting (MANDATORY for production)
+```python
+# ✅ CORRECT - Rate limiting on all endpoints
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
+@router.post("/finance/scenarios")
+@limiter.limit("10/minute")  # Max 10 requests per minute
+async def create_scenario(...):
+    pass
+
+# For expensive operations, stricter limits
+@router.post("/finance/sensitivity-analysis")
+@limiter.limit("2/minute")  # Max 2 requests per minute
+async def run_sensitivity(...):
+    pass
+```
+
+### Security Headers (MANDATORY for production)
+```python
+# ✅ CORRECT - Add security headers
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://yourdomain.com"],  # Specific origins only
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+```
+
+### Password Hashing (MANDATORY)
+```python
+# ✅ CORRECT - Use bcrypt or argon2
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+# ❌ WRONG - Plain text or weak hashing
+def hash_password(password: str) -> str:
+    return password  # Never store plain text!
+    # or
+    return hashlib.md5(password.encode()).hexdigest()  # MD5 is broken!
+```
+
+### Security Checklist for New Features:
+- [ ] All endpoints require authentication
+- [ ] User authorization checked (owns resource)
+- [ ] All inputs validated with Pydantic
+- [ ] No SQL injection vulnerabilities (use ORM)
+- [ ] No XSS vulnerabilities (escape output)
+- [ ] Secrets in environment variables (not code)
+- [ ] Rate limiting configured
+- [ ] Security headers added
+- [ ] Passwords hashed (bcrypt/argon2)
+- [ ] HTTPS enforced (production)
+
+**Checking for vulnerabilities:**
+```bash
+# Check Python dependencies
+safety check
+pip list --outdated
+
+# Check Node dependencies
+npm audit
+npm audit fix
+
+# Check for exposed secrets
+git log -p | grep -i "password\|secret\|key\|token"
+
+# Check for SQL injection patterns
+grep -r 'f".*SELECT\|f".*INSERT\|f".*UPDATE' backend/app --include="*.py"
+```
+
+**Enforcement:**
+- Manual code review checks security practices
+- Automated scans: `npm audit`, `safety check`, `bandit`
+- Pre-Phase 2D audit will verify security practices across codebase
+- CI will block high/critical vulnerabilities (future Phase 3)
+
+**Deferred Security Work (Requires Money):**
+See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
+- Third-party security audits ($5K-15K)
+- Penetration testing ($3K-10K)
+- Compliance certifications ($15K-50K+)
+- WAF, DDoS protection, bug bounty programs
+
+---
 
 **Why:** Phase gates depend on manual walkthroughs and targeted smoke suites. Referencing the official docs keeps every agent in sync with the approved testing scope.
 
@@ -516,4 +894,4 @@ If a rule is unclear or seems wrong for a specific case:
 2. Propose a rule change by updating this document in a separate PR
 3. Document exceptions inline with `# Exception: <reason>` comments
 
-**Last updated:** 2025-10-13
+**Last updated:** 2025-10-27

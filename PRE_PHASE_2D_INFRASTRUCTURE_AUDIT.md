@@ -4,8 +4,23 @@
 **Source:** [47 Startups Failed - Inc.com Article](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
 **Duration:** 2 weeks (AI agents can do autonomously)
 **Timing:** IMMEDIATELY after Phase 2C completion, BEFORE Phase 1D/2B residual work, BEFORE jurisdiction expansion, BEFORE Phase 2D
-**Purpose:** Prevent becoming one of the 47 failed startups by addressing systemic code quality issues
+**Purpose:** ONE-TIME BACKLOG WORK to apply CODING_RULES.md Rules 9-11 to existing codebase
 **Context:** Solo founder building with AI agents only - no human engineers, no budget for external services
+
+---
+
+## 🎯 What This Document Is
+
+**This is a ONE-TIME BACKLOG ITEM to fix existing code.**
+
+The rules themselves (database indexing, testing, security) are now **permanent coding rules** in [CODING_RULES.md](CODING_RULES.md):
+- **Rule 9:** Database Performance & Indexing
+- **Rule 10:** Testing Requirements
+- **Rule 11:** Security Practices
+
+**All NEW code** must follow these rules from now on.
+
+**This audit** applies these rules to the **EXISTING codebase** (retroactively fixing technical debt).
 
 ---
 
@@ -14,20 +29,20 @@
 **This audit is split into two categories:**
 
 ### ✅ AI Agent Autonomous (Do Now - 2 weeks)
-Work that Claude/Codex can do without human help or money:
-- Database indexing
-- Automated testing setup
-- Code security audit
-- Basic infrastructure optimization
+Apply CODING_RULES.md Rules 9-11 to existing code:
+- Add missing database indexes (Rule 9)
+- Add missing tests to reach >80% coverage (Rule 10)
+- Fix security issues in existing code (Rule 11)
+- Pin dependencies (Tier 2 technical debt)
 
 ### 📋 Deferred to "Transition Phase" (Document for Later)
 Work requiring money or human expertise (defer until funding/hiring):
 - Third-party security audits ($5K-15K)
 - Penetration testing ($3K-10K)
 - Compliance certifications (ISO, SOC2) ($15K-50K)
-- CDN setup (costs money)
-- Production monitoring services (costs money)
-- Load testing infrastructure (costs money)
+- CDN setup, production monitoring, load testing infrastructure
+
+**All deferred work documented in:** [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md)
 
 ---
 
