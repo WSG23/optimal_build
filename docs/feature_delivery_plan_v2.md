@@ -497,8 +497,8 @@
 
 **What's Missing (Next Focus):**
 - ✅ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use) with scoring engine, constraint logging, and scenario variants
-- ❌ Scenario-aware 3D preview generation and UI integration ([Phase 2B Visualisation Delivery Plan](phase2b_visualisation_stub.md))
-- 🟡 Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
+- ⏭️ Scenario-aware 3D preview generation and UI integration (deferred - see [Phase 2B Visualisation Delivery Plan](phase2b_visualisation_stub.md))
+- ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
 
 **Kickoff Deliverables (Planned):**
 - ✅ Stand up developer-specific GPS logging endpoint and API client so Site Acquisition no longer proxies through the agent route
