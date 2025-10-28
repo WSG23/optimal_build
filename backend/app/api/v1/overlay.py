@@ -6,7 +6,7 @@ from datetime import datetime
 
 from backend._compat.datetime import UTC
 from backend.jobs import job_queue
-from backend.jobs.overlay_run import run_overlay_job
+from backend.jobs.overlay_run import run_overlay_for_project, run_overlay_job
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,10 +42,9 @@ async def run_overlay(
             except (TypeError, ValueError):
                 pass
         return payload
-    payload: dict[str, object] = {
-        "status": dispatch.status,
-        "project_id": project_id,
-    }
+
+    fallback = await run_overlay_for_project(session, project_id=project_id)
+    payload: dict[str, object] = {"status": "completed", **fallback.as_dict()}
     if dispatch.task_id:
         payload["job_id"] = dispatch.task_id
     return payload

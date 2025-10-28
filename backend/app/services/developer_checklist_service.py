@@ -462,6 +462,7 @@ class DeveloperChecklistService:
         template = DeveloperChecklistTemplate(**definition)  # type: ignore[arg-type]
         session.add(template)
         await session.flush()
+        await session.refresh(template)
         return template
 
     @staticmethod
@@ -513,6 +514,7 @@ class DeveloperChecklistService:
             )
 
         await session.flush()
+        await session.refresh(template)
         return template
 
     @staticmethod

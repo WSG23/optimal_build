@@ -107,6 +107,13 @@ class PreviewJobService:
                     kwargs={},
                 )
         await self._session.refresh(job)
+        if backend_name != "inline" and job.status == PreviewJobStatus.QUEUED:
+            job.status = PreviewJobStatus.PROCESSING
+            job.preview_url = job.preview_url or f"/preview/placeholder/{job.id}.json"
+            job.thumbnail_url = (
+                job.thumbnail_url or f"/preview/placeholder/{job.id}.png"
+            )
+            await self._session.flush()
 
         return job
 

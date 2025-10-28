@@ -18,6 +18,18 @@
 
 ---
 
+### ✅ Phase Gate Checklist (Pre-Phase 2D Readiness)
+
+> Update these checkboxes only after the corresponding work is fully complete and documented.
+> `scripts/check_phase_gate.py` enforces these gates for any Phase 2D commits.
+
+- [ ] Phase 2D Gate: Pre-Phase 2D Infrastructure Audit & Quality Sprint complete (`PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md`)
+- [ ] Phase 2D Gate: Phase 1D Business Performance UI backlog delivered & QA signed off (see lines 274‑392)
+- [ ] Phase 2D Gate: Phase 2B visualisation residual work delivered (see lines 455‑508)
+- [ ] Phase 2D Gate: Expansion Window 1 (HK, NZ, Seattle, Toronto) complete (`docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`)
+
+---
+
 ### ✅ Complete Phases
 
 **[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ✅ COMPLETE

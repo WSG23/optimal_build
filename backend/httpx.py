@@ -3,12 +3,58 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import json
+import sys
 from collections.abc import Iterable, MutableMapping
 from functools import partial
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit
 from uuid import uuid4
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_BACKEND_DIR = Path(__file__).resolve().parent
+
+
+def _load_real_httpx() -> Any | None:
+    """Try to import the real httpx distribution when available."""
+
+    original_sys_path = sys.path[:]
+    module: Any | None = None
+    existing = sys.modules.get("httpx")
+    removed_existing = False
+    try:
+        if existing is not None:
+            sys.modules.pop("httpx")
+            removed_existing = True
+        filtered: list[str] = []
+        for entry in original_sys_path:
+            if entry in {"", "."}:
+                continue
+            try:
+                resolved = Path(entry).resolve()
+            except OSError:  # pragma: no cover - guard against malformed entries
+                filtered.append(entry)
+                continue
+            inside_repo = (
+                resolved in {_REPO_ROOT, _BACKEND_DIR} or _REPO_ROOT in resolved.parents
+            )
+            if inside_repo and not any(
+                part in {"site-packages", "dist-packages"} for part in resolved.parts
+            ):
+                continue
+            filtered.append(entry)
+        sys.path = filtered
+        module = importlib.import_module("httpx")
+    except ImportError:
+        module = None
+    finally:
+        sys.path = original_sys_path
+        if module is None and removed_existing and "httpx" not in sys.modules:
+            sys.modules["httpx"] = existing
+    return module
+
 
 _TEST_CLIENT: Any | None = None
 _TEST_CLIENT_UNAVAILABLE = False
@@ -26,9 +72,6 @@ def _get_test_client() -> Any:
     try:  # pragma: no cover - optional dependency for offline test runs
         from fastapi.testclient import TestClient
     except Exception:  # pragma: no cover - handled lazily and across httpx versions
-        import sys
-        from pathlib import Path
-
         repo_root = Path(__file__).resolve().parents[1]
         if str(repo_root) not in sys.path:
             sys.path.append(str(repo_root))
@@ -578,4 +621,46 @@ class _SimpleStreamContext:
         return await self._response.aread()
 
 
-__all__ = ["AsyncClient", "ASGITransport", "Response"]
+class BaseTransport:
+    """Placeholder matching httpx.BaseTransport interface."""
+
+    pass
+
+
+class AsyncBaseTransport:
+    """Placeholder matching httpx.AsyncBaseTransport interface."""
+
+    pass
+
+
+class Request:
+    """Minimal request object for compatibility with starlette.TestClient."""
+
+    def __init__(
+        self,
+        method: str,
+        url: str,
+        headers: dict[str, str] | None = None,
+        content: bytes | None = None,
+    ):
+        self.method = method
+        self.url = url
+        self.headers = headers or {}
+        self.content = content or b""
+
+
+__all__ = [
+    "AsyncClient",
+    "ASGITransport",
+    "Response",
+    "BaseTransport",
+    "AsyncBaseTransport",
+    "Request",
+]
+
+if "Client" not in globals():
+    _REAL_HTTPX = _load_real_httpx()
+    if _REAL_HTTPX is not None and hasattr(_REAL_HTTPX, "Client"):
+        sys.modules[__name__] = _REAL_HTTPX
+        globals().update(_REAL_HTTPX.__dict__)
+        __all__ = getattr(_REAL_HTTPX, "__all__", __all__)

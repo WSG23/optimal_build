@@ -17,17 +17,111 @@ from pydantic import (
 )
 
 
+FINANCE_FEASIBILITY_REQUEST_EXAMPLE = {
+    "project_id": 0,
+    "project_name": "string",
+    "fin_project_id": 0,
+    "scenario": {
+        "name": "string",
+        "description": "string",
+        "currency": "SGD",
+        "is_primary": False,
+        "cost_escalation": {
+            "amount": "0",
+            "base_period": "string",
+            "jurisdiction": "SG",
+            "provider": "string",
+            "series_name": "string",
+        },
+        "cash_flow": {
+            "discount_rate": "0",
+            "cash_flows": ["0"],
+        },
+        "dscr": {
+            "net_operating_incomes": ["0"],
+            "debt_services": ["0"],
+            "period_labels": ["string"],
+        },
+        "capital_stack": [],
+        "drawdown_schedule": [],
+    },
+}
+
+
+FINANCE_FEASIBILITY_RESPONSE_EXAMPLE = {
+    "project_id": 0,
+    "fin_project_id": 0,
+    "scenario_id": 0,
+    "scenario_name": "string",
+    "currency": "string",
+    "escalated_cost": "0",
+    "cost_index": {
+        "series_name": "string",
+        "jurisdiction": "string",
+        "provider": "string",
+        "base_period": "string",
+        "latest_period": "string",
+        "scalar": "0",
+        "base_index": {
+            "period": "string",
+            "value": "0",
+            "unit": "string",
+            "source": "string",
+            "provider": "string",
+            "methodology": "string",
+        },
+        "latest_index": {
+            "period": "string",
+            "value": "0",
+            "unit": "string",
+            "source": "string",
+            "provider": "string",
+            "methodology": "string",
+        },
+    },
+    "results": [
+        {
+            "name": None,
+            "value": None,
+            "unit": None,
+            "metadata": {},
+        }
+    ],
+    "dscr_timeline": [],
+    "capital_stack": {
+        "currency": "string",
+        "total": "0",
+        "equity_total": "0",
+        "debt_total": "0",
+        "other_total": "0",
+        "slices": [],
+    },
+    "drawdown_schedule": {
+        "currency": "string",
+        "entries": [],
+        "total_equity": "0",
+        "total_debt": "0",
+        "peak_debt_balance": "0",
+        "final_debt_balance": "0",
+    },
+}
+
+
 def _format_rate(value: Decimal | None, *, places: int = 4) -> str | None:
     if value is None:
         return None
-    quantized = value.quantize(Decimal(f"0.{'0' * (places - 1)}1"), rounding=ROUND_HALF_UP)
+    quantized = value.quantize(
+        Decimal(f"0.{'0' * (places - 1)}1"), rounding=ROUND_HALF_UP
+    )
     return f"{quantized:.{places}f}"
 
 
 def _format_percentage(value: Decimal | None, *, places: int = 2) -> str | None:
     if value is None:
         return None
-    quantized = value.quantize(Decimal(f"0.{'0' * (places - 1)}1"), rounding=ROUND_HALF_UP)
+    quantized = value.quantize(
+        Decimal(f"0.{'0' * (places - 1)}1"), rounding=ROUND_HALF_UP
+    )
     return f"{quantized:.{places}f}"
 
 
@@ -203,6 +297,10 @@ class FinanceScenarioInput(BaseModel):
 
 class FinanceFeasibilityRequest(BaseModel):
     """Payload accepted by the finance feasibility endpoint."""
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": FINANCE_FEASIBILITY_REQUEST_EXAMPLE}
+    )
 
     project_id: str | int | UUID
     project_name: str | None = None
@@ -389,6 +487,11 @@ class FinanceJobStatusSchema(BaseModel):
 class FinanceFeasibilityResponse(BaseModel):
     """Response payload returned by the finance feasibility endpoint."""
 
+    model_config = ConfigDict(
+        json_schema_extra={"example": FINANCE_FEASIBILITY_RESPONSE_EXAMPLE},
+        from_attributes=True,
+    )
+
     scenario_id: int
     project_id: str
     fin_project_id: int
@@ -411,6 +514,8 @@ class FinanceFeasibilityResponse(BaseModel):
 
 
 __all__ = [
+    "FINANCE_FEASIBILITY_REQUEST_EXAMPLE",
+    "FINANCE_FEASIBILITY_RESPONSE_EXAMPLE",
     "AssetFinancialSummarySchema",
     "CapitalStackSliceInput",
     "CapitalStackSliceSchema",

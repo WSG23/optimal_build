@@ -782,6 +782,26 @@ async def enqueue_parse(
     if dispatch.result and isinstance(dispatch.result, dict):
         response.result = dispatch.result
         response.status = "completed"
+        return response
+
+    # If the background worker completed the job before we refreshed the record,
+    # surface the persisted result instead of running the parser twice.
+    if record.parse_status and record.parse_status not in {"queued", "running"}:
+        response.status = record.parse_status
+        response.completed_at = record.parse_completed_at
+        response.result = record.parse_result
+        response.error = record.parse_error
+        # Job already finished; callers can drop the queued identifier.
+        response.job_id = None
+        return response
+
+    result = await parse_import_job(import_id=import_id)
+    await session.refresh(record)
+    response.status = record.parse_status or "completed"
+    response.completed_at = record.parse_completed_at
+    response.result = result
+    response.error = record.parse_error
+    response.job_id = None
     return response
 
 

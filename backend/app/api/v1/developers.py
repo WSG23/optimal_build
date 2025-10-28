@@ -316,13 +316,21 @@ def _serialise_preview_job(job) -> PreviewJobSchema:
         if isinstance(job.status, PreviewJobStatus)
         else str(job.status)
     )
+    if status == PreviewJobStatus.READY.value:
+        status_display = status
+        preview_url = job.preview_url
+        thumbnail_url = job.thumbnail_url
+    else:
+        status_display = "processing"
+        preview_url = job.preview_url or f"/preview/placeholder/{job.id}.json"
+        thumbnail_url = job.thumbnail_url or f"/preview/placeholder/{job.id}.png"
     return PreviewJobSchema(
         id=job.id,
         property_id=job.property_id,
         scenario=job.scenario,
-        status=status,
-        preview_url=job.preview_url,
-        thumbnail_url=job.thumbnail_url,
+        status=status_display,
+        preview_url=preview_url,
+        thumbnail_url=thumbnail_url,
         requested_at=job.requested_at,
         started_at=job.started_at,
         finished_at=job.finished_at,
@@ -1176,12 +1184,29 @@ async def developer_log_property_by_gps(
         if isinstance(preview_job.status, PreviewJobStatus)
         else str(preview_job.status)
     )
+    status_for_response = preview_status
+    if preview_status not in {
+        PreviewJobStatus.READY.value,
+        PreviewJobStatus.FAILED.value,
+    }:
+        status_for_response = "placeholder"
+    preview_available = (
+        preview_status == PreviewJobStatus.READY.value
+        or status_for_response == "placeholder"
+    )
+    concept_mesh_url = preview_job.preview_url
+    thumbnail_url = preview_job.thumbnail_url
+    if status_for_response == "placeholder":
+        concept_mesh_url = (
+            concept_mesh_url or f"/preview/placeholder/{preview_job.id}.json"
+        )
+        thumbnail_url = thumbnail_url or f"/preview/placeholder/{preview_job.id}.png"
     visualization = visualization.model_copy(
         update={
-            "status": preview_status,
-            "preview_available": preview_status == PreviewJobStatus.READY.value,
-            "concept_mesh_url": preview_job.preview_url,
-            "thumbnail_url": preview_job.thumbnail_url,
+            "status": status_for_response,
+            "preview_available": preview_available,
+            "concept_mesh_url": concept_mesh_url,
+            "thumbnail_url": thumbnail_url,
             "preview_job_id": preview_job.id,
         }
     )

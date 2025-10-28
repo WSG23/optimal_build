@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from uuid import UUID
 
 from sqlalchemy import (
     Boolean,
@@ -17,11 +16,10 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from app.models.base import BaseModel, MetadataProxy
+from app.models.base import BaseModel, MetadataProxy, UUID
 from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
@@ -34,7 +32,7 @@ class FinProject(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[UUID] = mapped_column(
-        PostgreSQLUUID(as_uuid=True),
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -74,7 +72,7 @@ class FinScenario(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[UUID] = mapped_column(
-        PostgreSQLUUID(as_uuid=True),
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -127,7 +125,7 @@ class FinCostItem(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[UUID] = mapped_column(
-        PostgreSQLUUID(as_uuid=True),
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -160,7 +158,7 @@ class FinSchedule(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[UUID] = mapped_column(
-        PostgreSQLUUID(as_uuid=True),
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -195,7 +193,7 @@ class FinCapitalStack(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[UUID] = mapped_column(
-        PostgreSQLUUID(as_uuid=True),
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -230,7 +228,7 @@ class FinResult(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[UUID] = mapped_column(
-        PostgreSQLUUID(as_uuid=True),
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

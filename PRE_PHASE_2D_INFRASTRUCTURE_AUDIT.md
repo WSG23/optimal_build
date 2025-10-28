@@ -9,6 +9,49 @@
 
 ---
 
+## 🤖 ARCHIVAL INSTRUCTIONS (For AI Agents)
+
+**WHEN TO ARCHIVE THIS DOCUMENT:**
+
+This is a **ONE-TIME CHECKLIST** that should be archived after all work is complete.
+
+**✅ Archive this file when:**
+1. All checkboxes in "Week 1: Database Indexing Audit" are [x] checked
+2. All checkboxes in "Week 1: Automated Testing Infrastructure" are [x] checked
+3. All checkboxes in "Week 2: Security Audit" are [x] checked
+4. All checkboxes in "Week 2: Infrastructure Optimization" are [x] checked
+5. Phase 2D Gate Checklist in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) shows [x] for "Pre-Phase 2D Infrastructure Audit"
+
+**📁 HOW TO ARCHIVE:**
+```bash
+# Create archive folder if it doesn't exist
+mkdir -p docs/archive
+
+# Move this file with completion date
+git mv PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md \
+       docs/archive/PRE_PHASE_2D_INFRASTRUCTURE_AUDIT_COMPLETED_$(date +%Y-%m-%d).md
+
+# Update TECHNICAL_DEBT.md - mark item #3 as "Completed" with date
+# Update feature_delivery_plan_v2.md - add completion date to Phase 2D gate
+
+# Commit
+git add -A
+git commit -m "chore: archive completed Pre-Phase 2D Infrastructure Audit"
+```
+
+**⚠️ DO NOT ARCHIVE IF:**
+- Any checkbox is still [ ] unchecked
+- Any "Success Criteria" section shows incomplete work
+- Phase 2D work has NOT started yet (keep as active checklist)
+
+**WHY ARCHIVE:**
+- Once complete, this becomes historical record only
+- Reduces active documentation clutter
+- Preserves audit trail (file shows what was done and when)
+- Future AI agents don't waste time reading completed checklists
+
+---
+
 ## 🎯 What This Document Is
 
 **This is a ONE-TIME BACKLOG ITEM to fix existing code.**
@@ -173,6 +216,11 @@ cat .github/workflows/*.yaml | grep pytest
 - ✅ CI runs all tests automatically
 - ✅ No deploy possible without passing tests
 - ✅ Test suite runs in <5 minutes
+
+**Progress (2025-10-22):**
+- ✅ Rewired the repository httpx shims (`httpx/__init__.py`, `backend/httpx.py`) to hand off to the real `httpx` package when it is installed; FastAPI’s `TestClient` now imports cleanly without the previous `AttributeError`.
+- ⚠️ Baseline run `./.venv/bin/python -m pytest backend/tests --cov=backend/app --cov-report=term-missing --maxfail=1` currently stops at `backend/tests/pwp/test_buildable_request_aliases.py::test_buildable_request_accepts_camel_case` (stubbed defaults force 4.0 m vs. requested 5.6 m). Coverage at this checkpoint is **33.54 %**, leaving a 46.46 pp gap to the 80 % target.
+- ⚠️ Allowing the suite to continue surfaces additional failures that the audit must triage: `backend/tests/reference/test_reference_endpoints.py::test_ergonomics_endpoint_returns_seeded_metrics`, `backend/tests/reference/test_reference_endpoints.py::test_products_endpoint_handles_seeded_database`, `backend/tests/test_api/test_audit.py::test_audit_chain_and_diffs`, `backend/tests/test_api/test_developer_checklist_templates.py::test_create_update_delete_template`, `backend/tests/test_api/test_developer_site_acquisition.py::test_developer_log_property_returns_envelope`, `backend/tests/test_api/test_feasibility.py::test_submit_feasibility_assessment`, `backend/tests/test_api/test_finance_project_scope.py::test_finance_feasibility_rejects_foreign_fin_project`, `backend/tests/test_api/test_imports.py::test_upload_import_persists_metadata`, `backend/tests/test_api/test_openapi_generation.py::test_openapi_includes_expected_paths`.
 
 ---
 

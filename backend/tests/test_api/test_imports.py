@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -12,7 +13,7 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from backend.jobs import job_queue
+from backend.jobs import JobDispatch, job_queue
 
 from app.models.imports import ImportRecord
 from app.services.storage import get_storage_service
@@ -163,6 +164,62 @@ async def test_parse_endpoints_return_summary(
     assert poll_response.status_code == 200
     poll_payload = poll_response.json()
     assert poll_payload == parse_payload
+
+
+@pytest.mark.asyncio
+async def test_parse_uses_existing_result_when_worker_already_completed(
+    app_client: AsyncClient,
+    async_session_factory,
+    monkeypatch,
+) -> None:
+    """If a worker finishes before the poll, reuse the stored result."""
+
+    sample_path = SAMPLES_DIR / "sample_floorplan.json"
+    with sample_path.open("rb") as handle:
+        upload_response = await app_client.post(
+            "/api/v1/import",
+            files={"file": (sample_path.name, handle, "application/json")},
+        )
+
+    assert upload_response.status_code == 201
+    import_payload = upload_response.json()
+
+    async def fake_enqueue(job_func, *args, **kwargs):
+        async with async_session_factory() as session:
+            record = await session.get(ImportRecord, import_payload["import_id"])
+            assert record is not None
+            record.parse_status = "completed"
+            record.parse_completed_at = datetime.now()
+            record.parse_result = {
+                "floors": 3,
+                "units": 5,
+                "metadata": {"source": "json"},
+            }
+            await session.commit()
+        return JobDispatch(
+            backend="celery",
+            job_name="backend.jobs.parse_cad.parse_import_job",
+            queue="high",
+            status="queued",
+            task_id="celery-123",
+            result=None,
+        )
+
+    async def explode_inline(import_id: str) -> None:
+        raise AssertionError("parse_import_job should not run when worker finished")
+
+    monkeypatch.setattr(job_queue, "enqueue", fake_enqueue)
+    monkeypatch.setattr(job_queue._backend, "name", "celery")
+    monkeypatch.setattr("backend.app.api.v1.imports.parse_import_job", explode_inline)
+
+    parse_response = await app_client.post(
+        f"/api/v1/parse/{import_payload['import_id']}"
+    )
+    assert parse_response.status_code == 200
+    parse_payload = parse_response.json()
+    assert parse_payload["status"] == "completed"
+    assert parse_payload["result"]["floors"] == 3
+    assert parse_payload["job_id"] is None
 
 
 @pytest.mark.asyncio

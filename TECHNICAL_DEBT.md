@@ -5,6 +5,30 @@
 
 ---
 
+## 🤖 ARCHIVAL INSTRUCTIONS (For AI Agents)
+
+**⚠️ DO NOT ARCHIVE THIS FILE**
+
+This is a **LIVING DOCUMENT** that tracks ongoing technical debt across all project phases.
+
+**Why Keep This File:**
+- Technical debt is never "done" - new debt accumulates as features are added
+- Future AI agents need this for Tier 2 (dependency pinning) and Tier 3 (async refactoring)
+- Phase 6 infrastructure work (performance, security) references this file
+- Acts as single source of truth for all deferred work
+
+**When Items Are Completed:**
+- Move from priority section to "Completed" section (bottom of file)
+- Add completion date, who fixed it, commit hash
+- Update "Last updated" date at top
+- Keep file in root directory (do NOT move to docs/archive/)
+
+**Related Files That MAY Be Archived:**
+- [PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md](PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md) - Archive after completion
+- Phase-specific checklists in docs/ - Archive after phase complete
+
+---
+
 ## 🚨 CRITICAL: Read This First
 
 **AI Agents (Claude, Codex):**

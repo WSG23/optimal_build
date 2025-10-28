@@ -627,6 +627,27 @@ def _evaluate_geometry(
         for overlay in rule_suggestions:
             suggestions[overlay["code"]] = overlay
 
+    if not suggestions:
+        fallback_targets = _string_list(site_level_id)
+        suggestions["baseline_review"] = {
+            "code": "baseline_review",
+            "type": "review",
+            "title": "Manual overlay review",
+            "rationale": "Baseline overlay check scheduled because no automated triggers fired.",
+            "severity": "low",
+            "score": 0.2,
+            "target_ids": fallback_targets,
+            "props": {
+                "trigger": "baseline_review",
+                "notes": "No automated overlay triggers fired.",
+            },
+            "rule_refs": ["overlay.baseline.review"],
+            "engine_payload": {
+                "triggers": [],
+                "nodes": fallback_targets,
+            },
+        }
+
     ordered_codes = sorted(suggestions.keys())
     return [suggestions[code] for code in ordered_codes]
 

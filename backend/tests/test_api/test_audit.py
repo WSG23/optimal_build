@@ -28,7 +28,7 @@ async def seeded_project(async_session_factory):
                 id="level-01",
                 name="Ground Floor",
                 elevation=0.0,
-                metadata={"site_area_sqm": 1024, "heritage_zone": False},
+                metadata={"site_area_sqm": 15000, "heritage_zone": True},
             )
         ],
         spaces=[
@@ -36,7 +36,7 @@ async def seeded_project(async_session_factory):
                 id="tower-a",
                 name="Tower A",
                 level_id="level-01",
-                metadata={"height_m": 45},
+                metadata={"height_m": 52},
             )
         ],
         relationships=[

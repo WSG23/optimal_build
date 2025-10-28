@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import Depends, FastAPI
+from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from sqlalchemy import func, select, text
@@ -17,6 +18,14 @@ from app.api.v1 import TAGS_METADATA, api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
 from app.models.rkp import RefRule
+from app.schemas.buildable import (
+    BUILDABLE_REQUEST_EXAMPLE,
+    BUILDABLE_RESPONSE_EXAMPLE,
+)
+from app.schemas.finance import (
+    FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
+    FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
+)
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
 
@@ -55,6 +64,68 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+def custom_openapi() -> dict[str, Any]:
+    """Generate OpenAPI schema while injecting request/response examples."""
+
+    if app.openapi_schema:
+        schema = app.openapi_schema
+    else:
+        schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            routes=app.routes,
+            tags=TAGS_METADATA,
+        )
+
+    buildable_post = (
+        schema.get("paths", {}).get("/api/v1/screen/buildable", {}).get("post", {})
+    )
+
+    request_content = (
+        buildable_post.get("requestBody", {})
+        .get("content", {})
+        .get("application/json", {})
+    )
+    if isinstance(request_content, dict):
+        request_content["example"] = BUILDABLE_REQUEST_EXAMPLE
+
+    response_content = (
+        buildable_post.get("responses", {})
+        .get("200", {})
+        .get("content", {})
+        .get("application/json", {})
+    )
+    if isinstance(response_content, dict):
+        response_content["example"] = BUILDABLE_RESPONSE_EXAMPLE
+
+    finance_post = (
+        schema.get("paths", {}).get("/api/v1/finance/feasibility", {}).get("post", {})
+    )
+    finance_request = (
+        finance_post.get("requestBody", {})
+        .get("content", {})
+        .get("application/json", {})
+    )
+    if isinstance(finance_request, dict):
+        finance_request["example"] = FINANCE_FEASIBILITY_REQUEST_EXAMPLE
+
+    finance_response = (
+        finance_post.get("responses", {})
+        .get("200", {})
+        .get("content", {})
+        .get("application/json", {})
+    )
+    if isinstance(finance_response, dict):
+        finance_response["example"] = FINANCE_FEASIBILITY_RESPONSE_EXAMPLE
+
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = custom_openapi
+app.openapi_schema = None
 
 
 @app.get("/")

@@ -21,6 +21,12 @@ repos:
       pass_filenames: false
       files: ^backend/app/(services/agents|api/v1/agents).*\.(py)$
 
+    - id: phase-gate
+      name: Phase 2D gate enforcement
+      entry: python3 scripts/check_phase_gate.py
+      language: system
+      pass_filenames: false
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0
   hooks:

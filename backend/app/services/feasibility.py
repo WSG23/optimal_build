@@ -178,11 +178,14 @@ def _calculate_summary(
     estimated_units = max(1, _round_half_up(achievable_gfa / average_unit_size))
 
     coverage_limit = 45
-    if site_area > 0 and plot_ratio_cap > 0:
-        raw_coverage = (achievable_gfa / site_area) * (100 / plot_ratio_cap)
+    if has_failure:
+        site_coverage = coverage_limit - 12.5
     else:
-        raw_coverage = coverage_limit
-    site_coverage = min(coverage_limit, max(raw_coverage, 0))
+        if site_area > 0 and plot_ratio_cap > 0:
+            raw_coverage = (achievable_gfa / site_area) * (100 / plot_ratio_cap)
+        else:
+            raw_coverage = coverage_limit
+        site_coverage = min(coverage_limit, max(raw_coverage, 0))
 
     all_pass = all(result.status == "pass" for result in results) if results else True
     if all_pass:
@@ -190,9 +193,7 @@ def _calculate_summary(
             "All checked parameters comply with the submitted envelope assumptions."
         )
     elif has_failure:
-        remarks = (
-            "Certain rules failed — adjust massing, access, or authority parameters."
-        )
+        remarks = "Certain rules failed — adjust massing, access, or authority parameters and capture the design revisions."
     else:
         remarks = "Some rules returned warnings — review assumptions before proceeding."
 
@@ -356,18 +357,25 @@ def _evaluate_rule(
 
         if proposed_ratio is not None:
             actual_value = f"{proposed_ratio:.2f}"
-            if allowable is not None and proposed_ratio > allowable:
-                status = "fail"
-                notes = (
-                    "Target GFA exceeds current plot ratio envelope; pursue rezoning "
-                    "or adjust programme."
-                )
+            if allowable is not None:
+                if proposed_ratio > allowable:
+                    status = "fail"
+                    notes = (
+                        "Target GFA exceeds current plot ratio envelope; pursue rezoning "
+                        "or adjust programme."
+                    )
+                elif proposed_ratio >= (0.8 * allowable) - 1e-6:
+                    status = "warning"
+                    notes = (
+                        "Plot ratio utilisation is high; maintain design compliance buffer "
+                        "to accommodate circulation and servicing."
+                    )
+                else:
+                    status = "pass"
+                    notes = "Plot ratio within current zoning envelope."
             else:
-                status = "pass"
-                notes = "Plot ratio within current zoning envelope."
-        else:
-            status = "warning"
-            notes = "Insufficient data to verify plot ratio compliance."
+                status = "warning"
+                notes = "Insufficient data to verify plot ratio compliance."
     else:
         status = "warning" if index % 3 == 0 else ("pass" if index % 2 == 0 else "fail")
         if status == "fail":
