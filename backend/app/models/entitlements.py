@@ -26,6 +26,16 @@ from app.models.types import FlexibleJSONB
 JSONType = FlexibleJSONB
 
 
+def _enum(sa_enum: type[Enum], *, name: str) -> SAEnum:
+    """Serialise enums using their `.value` string representation."""
+
+    return SAEnum(
+        sa_enum,
+        name=name,
+        values_callable=lambda enum_cls: [member.value for member in enum_cls],
+    )
+
+
 class EntApprovalCategory(str, Enum):
     """Categories describing the type of approval required."""
 
@@ -151,7 +161,7 @@ class EntApprovalType(BaseModel):
     code: Mapped[str] = mapped_column(String(60), nullable=False)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     category: Mapped[EntApprovalCategory] = mapped_column(
-        SAEnum(EntApprovalCategory, name="ent_approval_category"), nullable=False
+        _enum(EntApprovalCategory, name="ent_approval_category"), nullable=False
     )
     description: Mapped[Optional[str]] = mapped_column(Text)
     requirements: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
@@ -193,7 +203,7 @@ class EntRoadmapItem(BaseModel):
     )
     sequence_order: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[EntRoadmapStatus] = mapped_column(
-        SAEnum(EntRoadmapStatus, name="ent_roadmap_status"), nullable=False
+        _enum(EntRoadmapStatus, name="ent_roadmap_status"), nullable=False
     )
     status_changed_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True)

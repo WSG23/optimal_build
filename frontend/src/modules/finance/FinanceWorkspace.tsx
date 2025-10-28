@@ -14,9 +14,11 @@ import { FinanceJobTimeline } from './components/FinanceJobTimeline'
 import { FinanceLoanInterest } from './components/FinanceLoanInterest'
 import { FinanceScenarioTable } from './components/FinanceScenarioTable'
 import { FinanceSensitivityTable } from './components/FinanceSensitivityTable'
+import { FinanceScenarioCreator } from './components/FinanceScenarioCreator'
 import { useFinanceScenarios } from './hooks/useFinanceScenarios'
 
-const FINANCE_PROJECT_ID = 401
+const FINANCE_PROJECT_ID = '825c99d2-5167-4546-994c-6fab0f832c78'
+const FINANCE_PROJECT_NAME = 'Finance Demo Development'
 const POLL_INTERVAL_MS = 5000
 const IN_PROGRESS_STATUSES = new Set([
   'queued',
@@ -76,14 +78,45 @@ const DEFAULT_SENSITIVITY_HEADERS = [
 
 export function FinanceWorkspace() {
   const { t } = useTranslation()
-  const { scenarios, loading, error, refresh } = useFinanceScenarios({
+  const { scenarios, loading, error, refresh, addScenario } = useFinanceScenarios({
     projectId: FINANCE_PROJECT_ID,
   })
   const [savingLoan, setSavingLoan] = useState(false)
   const [loanError, setLoanError] = useState<string | null>(null)
+  const [scenarioMessage, setScenarioMessage] = useState<string | null>(null)
+  const [scenarioError, setScenarioError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!scenarioMessage) {
+      return undefined
+    }
+    const timer = window.setTimeout(() => {
+      setScenarioMessage(null)
+    }, 5000)
+    return () => window.clearTimeout(timer)
+  }, [scenarioMessage])
+
+  useEffect(() => {
+    if (!scenarioError) {
+      return undefined
+    }
+    const timer = window.setTimeout(() => {
+      setScenarioError(null)
+    }, 7000)
+    return () => window.clearTimeout(timer)
+  }, [scenarioError])
   const [selectedParameters, setSelectedParameters] = useState<string[]>([])
   const pollRef = useRef<number | null>(null)
-  const primaryScenario = scenarios[0] ?? null
+  const primaryScenario = useMemo(() => {
+    if (scenarios.length === 0) {
+      return null
+    }
+    const primary = scenarios.find((scenario) => scenario.isPrimary)
+    if (primary) {
+      return primary
+    }
+    return [...scenarios].sort((a, b) => b.scenarioId - a.scenarioId)[0]
+  }, [scenarios])
   const showEmptyState = !loading && !error && scenarios.length === 0
 
   useEffect(() => {
@@ -283,6 +316,36 @@ export function FinanceWorkspace() {
         {loading && (
           <p className="finance-workspace__status">{t('common.loading')}</p>
         )}
+        {scenarioError && (
+          <p className="finance-workspace__error" role="alert">
+            {scenarioError}
+          </p>
+        )}
+        {scenarioMessage && (
+          <p className="finance-workspace__status" role="status">
+            {scenarioMessage}
+          </p>
+        )}
+        <FinanceScenarioCreator
+          projectId={FINANCE_PROJECT_ID}
+          projectName={FINANCE_PROJECT_NAME}
+          onCreated={(summary) => {
+            setScenarioMessage(
+              t('finance.scenarioCreator.success', {
+                name: summary.scenarioName,
+              }),
+            )
+            setScenarioError(null)
+            addScenario(summary)
+          }}
+          onError={(message) => {
+            setScenarioError(message)
+            setScenarioMessage(null)
+          }}
+          onRefresh={() => {
+            refresh()
+          }}
+        />
         {showEmptyState && (
           <p className="finance-workspace__empty">{t('finance.table.empty')}</p>
         )}

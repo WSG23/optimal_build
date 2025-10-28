@@ -1,3 +1,5 @@
+import { applyIdentityHeaders } from './identity'
+
 const metaEnv =
   typeof import.meta !== 'undefined' && import.meta
     ? (import.meta as ImportMeta).env
@@ -15,22 +17,6 @@ function normaliseBaseUrl(value: string | undefined | null): string {
   }
   const trimmed = value.trim()
   return trimmed === '' ? '/' : trimmed
-}
-
-function resolveDefaultRole(): string | null {
-  const candidates = [
-    metaEnv?.VITE_API_ROLE,
-    typeof window !== 'undefined'
-      ? window.localStorage.getItem('app:api-role') ?? undefined
-      : undefined,
-    'admin',
-  ] as Array<string | undefined>
-
-  const candidate = candidates.find(
-    (value) => typeof value === 'string' && value.trim().length > 0,
-  )
-
-  return candidate ? candidate.trim() : null
 }
 
 function buildUrl(path: string, base: string): string {
@@ -86,6 +72,29 @@ export interface DrawdownPeriodInput {
   debtDraw?: string
 }
 
+export interface FinanceAssetMixInput {
+  assetType: string
+  allocationPct?: string | null
+  niaSqm?: string | null
+  rentPsmMonth?: string | null
+  stabilisedVacancyPct?: string | null
+  opexPctOfRent?: string | null
+  estimatedRevenueSgd?: string | null
+  estimatedCapexSgd?: string | null
+  absorptionMonths?: string | null
+  riskLevel?: string | null
+  heritagePremiumPct?: string | null
+  notes?: string[]
+}
+
+export interface SensitivityBandInput {
+  parameter: string
+  low?: string | null
+  base?: string | null
+  high?: string | null
+  notes?: string[]
+}
+
 export interface FinanceScenarioInput {
   name: string
   description?: string
@@ -96,10 +105,13 @@ export interface FinanceScenarioInput {
   dscr?: DscrInputs
   capitalStack?: CapitalStackSliceInput[]
   drawdownSchedule?: DrawdownPeriodInput[]
+  assetMix?: FinanceAssetMixInput[]
+  constructionLoan?: ConstructionLoanInput | null
+  sensitivityBands?: SensitivityBandInput[]
 }
 
 export interface FinanceFeasibilityRequest {
-  projectId: number
+  projectId: number | string
   projectName?: string
   finProjectId?: number
   scenario: FinanceScenarioInput
@@ -165,6 +177,102 @@ export interface CapitalStackSummary {
   slices: CapitalStackSlice[]
 }
 
+export interface AssetFinancialSummary {
+  totalEstimatedRevenueSgd: string | null
+  totalEstimatedCapexSgd: string | null
+  dominantRiskProfile: string | null
+  notes: string[]
+}
+
+export interface FinanceAssetBreakdown {
+  assetType: string
+  allocationPct: string | null
+  niaSqm: string | null
+  rentPsmMonth: string | null
+  grossRentAnnualSgd: string | null
+  vacancyLossSgd: string | null
+  effectiveGrossIncomeSgd: string | null
+  operatingExpensesSgd: string | null
+  noiAnnualSgd: string | null
+  estimatedCapexSgd: string | null
+  paybackYears: string | null
+  absorptionMonths: string | null
+  riskLevel: string | null
+  heritagePremiumPct: string | null
+  notes: string[]
+}
+
+export interface ConstructionLoanFacilityInput {
+  name: string
+  amount?: string | null
+  interestRate?: string | null
+  periodsPerYear?: number | null
+  capitaliseInterest?: boolean | null
+  upfrontFeePct?: string | null
+  exitFeePct?: string | null
+  reserveMonths?: number | null
+  amortisationMonths?: number | null
+  metadata?: Record<string, unknown> | null
+}
+
+export interface ConstructionLoanInput {
+  interestRate?: string | null
+  periodsPerYear?: number | null
+  capitaliseInterest?: boolean | null
+  facilities?: ConstructionLoanFacilityInput[] | null
+}
+
+export interface ConstructionLoanInterestFacility {
+  name: string
+  amount: string | null
+  interestRate: string | null
+  periodsPerYear: number | null
+  capitalised: boolean
+  totalInterest: string | null
+  upfrontFee: string | null
+  exitFee: string | null
+}
+
+export interface ConstructionLoanInterestEntry {
+  period: string
+  openingBalance: string
+  closingBalance: string
+  averageBalance: string
+  interestAccrued: string
+}
+
+export interface ConstructionLoanInterest {
+  currency: string
+  interestRate: string | null
+  periodsPerYear: number | null
+  capitalised: boolean
+  totalInterest: string | null
+  upfrontFeeTotal: string | null
+  exitFeeTotal: string | null
+  facilities: ConstructionLoanInterestFacility[]
+  entries: ConstructionLoanInterestEntry[]
+}
+
+export interface FinanceSensitivityOutcome {
+  parameter: string
+  scenario: string
+  deltaLabel: string | null
+  deltaValue: string | null
+  npv: string | null
+  irr: string | null
+  escalatedCost: string | null
+  totalInterest: string | null
+  notes: string[]
+}
+
+export interface FinanceJobStatus {
+  scenarioId: number
+  taskId: string | null
+  status: string
+  backend: string | null
+  queuedAt: string | null
+}
+
 export interface DrawdownEntry {
   period: string
   equityDraw: string
@@ -186,8 +294,8 @@ export interface DrawdownSchedule {
 
 export interface FinanceScenarioSummary {
   scenarioId: number
-  projectId: number
-  finProjectId: number
+  projectId: number | string
+  finProjectId: number | null
   scenarioName: string
   currency: string
   escalatedCost: string
@@ -196,6 +304,14 @@ export interface FinanceScenarioSummary {
   dscrTimeline: DscrEntry[]
   capitalStack: CapitalStackSummary | null
   drawdownSchedule: DrawdownSchedule | null
+  assetMixSummary: AssetFinancialSummary | null
+  assetBreakdowns: FinanceAssetBreakdown[]
+  constructionLoanInterest: ConstructionLoanInterest | null
+  constructionLoan: ConstructionLoanInput | null
+  sensitivityResults: FinanceSensitivityOutcome[]
+  sensitivityJobs: FinanceJobStatus[]
+  isPrimary?: boolean
+  isPrivate?: boolean
 }
 
 interface FinanceFeasibilityRequestPayload {
@@ -318,6 +434,99 @@ interface DrawdownSchedulePayload {
   final_debt_balance: string
 }
 
+interface AssetFinancialSummaryPayload {
+  total_estimated_revenue_sgd?: string | null
+  total_estimated_capex_sgd?: string | null
+  dominant_risk_profile?: string | null
+  notes?: string[]
+}
+
+interface FinanceAssetBreakdownPayload {
+  asset_type: string
+  allocation_pct?: string | null
+  nia_sqm?: string | null
+  rent_psm_month?: string | null
+  gross_rent_annual_sgd?: string | null
+  vacancy_loss_sgd?: string | null
+  effective_gross_income_sgd?: string | null
+  operating_expenses_sgd?: string | null
+  noi_annual_sgd?: string | null
+  estimated_capex_sgd?: string | null
+  payback_years?: string | null
+  absorption_months?: string | null
+  risk_level?: string | null
+  heritage_premium_pct?: string | null
+  notes?: string[]
+}
+
+interface ConstructionLoanFacilityInputPayload {
+  name: string
+  amount?: string | null
+  interest_rate?: string | null
+  periods_per_year?: number | null
+  capitalise_interest?: boolean | null
+  upfront_fee_pct?: string | null
+  exit_fee_pct?: string | null
+}
+
+interface ConstructionLoanInputPayload {
+  interest_rate?: string | null
+  periods_per_year?: number | null
+  capitalise_interest?: boolean | null
+  facilities?: ConstructionLoanFacilityInputPayload[] | null
+}
+
+interface ConstructionLoanFacilityPayload {
+  name: string
+  amount?: string | null
+  interest_rate?: string | null
+  periods_per_year?: number | null
+  capitalised?: boolean | null
+  total_interest?: string | null
+  upfront_fee?: string | null
+  exit_fee?: string | null
+}
+
+interface ConstructionLoanInterestEntryPayload {
+  period: string
+  opening_balance: string
+  closing_balance: string
+  average_balance: string
+  interest_accrued: string
+}
+
+interface ConstructionLoanInterestPayload {
+  currency: string
+  interest_rate?: string | null
+  periods_per_year?: number | null
+  capitalised?: boolean | null
+  total_interest?: string | null
+  upfront_fee_total?: string | null
+  exit_fee_total?: string | null
+  facilities?: ConstructionLoanFacilityPayload[] | null
+  entries?: ConstructionLoanInterestEntryPayload[] | null
+}
+
+interface FinanceSensitivityOutcomePayload {
+  parameter: string
+  scenario: string
+  delta_label?: string | null
+  delta_value?: string | null
+  npv?: string | null
+  irr?: string | null
+  escalated_cost?: string | null
+  total_interest?: string | null
+  notes?: string[]
+}
+
+interface FinanceJobStatusPayload {
+  scenario_id: number
+  task_id?: string | null
+  status: string
+  backend?: string | null
+  queued_at?: string | null
+}
+
 interface FinanceFeasibilityResponsePayload {
   scenario_id: number
   project_id: number
@@ -330,6 +539,93 @@ interface FinanceFeasibilityResponsePayload {
   dscr_timeline: DscrEntryPayload[]
   capital_stack?: CapitalStackSummaryPayload | null
   drawdown_schedule?: DrawdownSchedulePayload | null
+  asset_mix_summary?: AssetFinancialSummaryPayload | null
+  asset_breakdowns?: FinanceAssetBreakdownPayload[] | null
+  construction_loan_interest?: ConstructionLoanInterestPayload | null
+  construction_loan?: ConstructionLoanInputPayload | null
+  sensitivity_results?: FinanceSensitivityOutcomePayload[] | null
+  sensitivity_jobs?: FinanceJobStatusPayload[] | null
+  is_primary?: boolean | null
+  is_private?: boolean | null
+}
+
+interface ConstructionLoanUpdateRequestPayload {
+  construction_loan: ConstructionLoanInputPayload
+}
+
+function toOptionalString(value: unknown): string | undefined {
+  if (value == null) {
+    return undefined
+  }
+  const stringValue = typeof value === 'string' ? value : String(value)
+  const trimmed = stringValue.trim()
+  return trimmed === '' ? undefined : trimmed
+}
+
+function toAssetMixPayload(
+  entry: FinanceAssetMixInput,
+): Record<string, unknown> {
+  return {
+    asset_type: entry.assetType,
+    allocation_pct: toOptionalString(entry.allocationPct),
+    nia_sqm: toOptionalString(entry.niaSqm),
+    rent_psm_month: toOptionalString(entry.rentPsmMonth),
+    stabilised_vacancy_pct: toOptionalString(entry.stabilisedVacancyPct),
+    opex_pct_of_rent: toOptionalString(entry.opexPctOfRent),
+    estimated_revenue_sgd: toOptionalString(entry.estimatedRevenueSgd),
+    estimated_capex_sgd: toOptionalString(entry.estimatedCapexSgd),
+    absorption_months: toOptionalString(entry.absorptionMonths),
+    risk_level: entry.riskLevel ?? undefined,
+    heritage_premium_pct: toOptionalString(entry.heritagePremiumPct),
+    notes: entry.notes?.length ? [...entry.notes] : undefined,
+  }
+}
+
+function toSensitivityBandPayload(
+  band: SensitivityBandInput,
+): Record<string, unknown> {
+  return {
+    parameter: band.parameter,
+    low: toOptionalString(band.low),
+    base: toOptionalString(band.base),
+    high: toOptionalString(band.high),
+    notes: band.notes?.length ? [...band.notes] : undefined,
+  }
+}
+
+function toConstructionLoanPayload(
+  input: ConstructionLoanInput | null | undefined,
+): ConstructionLoanInputPayload | undefined {
+  if (!input) {
+    return undefined
+  }
+
+  const facilities = input.facilities?.map((facility) => ({
+    name: facility.name,
+    amount: toOptionalString(facility.amount),
+    interest_rate: toOptionalString(facility.interestRate),
+    periods_per_year:
+      typeof facility.periodsPerYear === 'number'
+        ? facility.periodsPerYear
+        : undefined,
+    capitalise_interest:
+      typeof facility.capitaliseInterest === 'boolean'
+        ? facility.capitaliseInterest
+        : undefined,
+    upfront_fee_pct: toOptionalString(facility.upfrontFeePct),
+    exit_fee_pct: toOptionalString(facility.exitFeePct),
+  }))
+
+  return {
+    interest_rate: toOptionalString(input.interestRate),
+    periods_per_year:
+      typeof input.periodsPerYear === 'number' ? input.periodsPerYear : undefined,
+    capitalise_interest:
+      typeof input.capitaliseInterest === 'boolean'
+        ? input.capitaliseInterest
+        : undefined,
+    facilities: facilities?.length ? facilities : undefined,
+  }
 }
 
 function toPayload(
@@ -382,6 +678,13 @@ function toPayload(
             equity_draw: entry.equityDraw ?? undefined,
             debt_draw: entry.debtDraw ?? undefined,
           }))
+        : undefined,
+      asset_mix: scenario.assetMix?.length
+        ? scenario.assetMix.map(toAssetMixPayload)
+        : undefined,
+      construction_loan: toConstructionLoanPayload(scenario.constructionLoan),
+      sensitivity_bands: scenario.sensitivityBands?.length
+        ? scenario.sensitivityBands.map(toSensitivityBandPayload)
         : undefined,
     },
   }
@@ -505,6 +808,147 @@ function mapDscrEntry(payload: DscrEntryPayload): DscrEntry {
   }
 }
 
+function mapAssetSummary(
+  payload: AssetFinancialSummaryPayload | null | undefined,
+): AssetFinancialSummary | null {
+  if (!payload) {
+    return null
+  }
+  return {
+    totalEstimatedRevenueSgd: payload.total_estimated_revenue_sgd ?? null,
+    totalEstimatedCapexSgd: payload.total_estimated_capex_sgd ?? null,
+    dominantRiskProfile: payload.dominant_risk_profile ?? null,
+    notes: Array.isArray(payload.notes) ? [...payload.notes] : [],
+  }
+}
+
+function mapAssetBreakdown(
+  payload: FinanceAssetBreakdownPayload,
+): FinanceAssetBreakdown {
+  return {
+    assetType: payload.asset_type,
+    allocationPct: payload.allocation_pct ?? null,
+    niaSqm: payload.nia_sqm ?? null,
+    rentPsmMonth: payload.rent_psm_month ?? null,
+    grossRentAnnualSgd: payload.gross_rent_annual_sgd ?? null,
+    vacancyLossSgd: payload.vacancy_loss_sgd ?? null,
+    effectiveGrossIncomeSgd: payload.effective_gross_income_sgd ?? null,
+    operatingExpensesSgd: payload.operating_expenses_sgd ?? null,
+    noiAnnualSgd: payload.noi_annual_sgd ?? null,
+    estimatedCapexSgd: payload.estimated_capex_sgd ?? null,
+    paybackYears: payload.payback_years ?? null,
+    absorptionMonths: payload.absorption_months ?? null,
+    riskLevel: payload.risk_level ?? null,
+    heritagePremiumPct: payload.heritage_premium_pct ?? null,
+    notes: Array.isArray(payload.notes) ? [...payload.notes] : [],
+  }
+}
+
+function mapConstructionLoanConfig(
+  payload: ConstructionLoanInputPayload | null | undefined,
+): ConstructionLoanInput | null {
+  if (!payload) {
+    return null
+  }
+  const facilities = Array.isArray(payload.facilities)
+    ? payload.facilities.map((facility) => ({
+        name: facility.name,
+        amount: facility.amount ?? null,
+        interestRate: facility.interest_rate ?? null,
+        periodsPerYear: facility.periods_per_year ?? null,
+        capitaliseInterest:
+          facility.capitalise_interest ?? facility.capitalised ?? true,
+        upfrontFeePct: facility.upfront_fee_pct ?? null,
+        exitFeePct: facility.exit_fee_pct ?? null,
+        reserveMonths: null,
+        amortisationMonths: null,
+        metadata: null,
+      }))
+    : null
+
+  return {
+    interestRate: payload.interest_rate ?? null,
+    periodsPerYear: payload.periods_per_year ?? null,
+    capitaliseInterest:
+      payload.capitalise_interest ?? true,
+    facilities,
+  }
+}
+
+function mapConstructionLoanFacility(
+  payload: ConstructionLoanFacilityPayload,
+): ConstructionLoanInterestFacility {
+  return {
+    name: payload.name,
+    amount: payload.amount ?? null,
+    interestRate: payload.interest_rate ?? null,
+    periodsPerYear: payload.periods_per_year ?? null,
+    capitalised: Boolean(
+      payload.capitalised ?? payload.capitalise_interest ?? true,
+    ),
+    totalInterest: payload.total_interest ?? null,
+    upfrontFee: payload.upfront_fee ?? null,
+    exitFee: payload.exit_fee ?? null,
+  }
+}
+
+function mapConstructionLoanInterest(
+  payload: ConstructionLoanInterestPayload | null | undefined,
+): ConstructionLoanInterest | null {
+  if (!payload) {
+    return null
+  }
+  const facilities = Array.isArray(payload.facilities)
+    ? payload.facilities.map(mapConstructionLoanFacility)
+    : []
+  const entries = Array.isArray(payload.entries)
+    ? payload.entries.map((entry) => ({
+        period: entry.period,
+        openingBalance: entry.opening_balance,
+        closingBalance: entry.closing_balance,
+        averageBalance: entry.average_balance,
+        interestAccrued: entry.interest_accrued,
+      }))
+    : []
+  return {
+    currency: payload.currency,
+    interestRate: payload.interest_rate ?? null,
+    periodsPerYear: payload.periods_per_year ?? null,
+    capitalised: Boolean(payload.capitalised ?? true),
+    totalInterest: payload.total_interest ?? null,
+    upfrontFeeTotal: payload.upfront_fee_total ?? null,
+    exitFeeTotal: payload.exit_fee_total ?? null,
+    facilities,
+    entries,
+  }
+}
+
+function mapSensitivityOutcome(
+  payload: FinanceSensitivityOutcomePayload,
+): FinanceSensitivityOutcome {
+  return {
+    parameter: payload.parameter,
+    scenario: payload.scenario,
+    deltaLabel: payload.delta_label ?? null,
+    deltaValue: payload.delta_value ?? payload.delta_label ?? null,
+    npv: payload.npv ?? null,
+    irr: payload.irr ?? null,
+    escalatedCost: payload.escalated_cost ?? null,
+    totalInterest: payload.total_interest ?? null,
+    notes: Array.isArray(payload.notes) ? [...payload.notes] : [],
+  }
+}
+
+function mapJobStatus(payload: FinanceJobStatusPayload): FinanceJobStatus {
+  return {
+    scenarioId: payload.scenario_id,
+    taskId: payload.task_id ?? null,
+    status: payload.status,
+    backend: payload.backend ?? null,
+    queuedAt: payload.queued_at ?? null,
+  }
+}
+
 function mapResponse(
   payload: FinanceFeasibilityResponsePayload,
 ): FinanceScenarioSummary {
@@ -512,11 +956,46 @@ function mapResponse(
   const dscrTimelineSource = Array.isArray(payload.dscr_timeline)
     ? payload.dscr_timeline
     : []
+  const assetBreakdownSource = Array.isArray(payload.asset_breakdowns)
+    ? payload.asset_breakdowns
+    : []
+  const sensitivitySource = Array.isArray(payload.sensitivity_results)
+    ? payload.sensitivity_results
+    : []
+  const jobSource = Array.isArray(payload.sensitivity_jobs)
+    ? payload.sensitivity_jobs
+    : []
+
+  const rawProjectId = payload.project_id
+  const numericProjectId = Number(rawProjectId)
+  const projectId =
+    typeof rawProjectId === 'number'
+      ? rawProjectId
+      : Number.isFinite(numericProjectId)
+        ? numericProjectId
+        : rawProjectId
+
+  const rawFinProjectId = payload.fin_project_id
+  const finProjectId =
+    typeof rawFinProjectId === 'number'
+      ? rawFinProjectId
+      : Number.isFinite(Number(rawFinProjectId))
+        ? Number(rawFinProjectId)
+        : null
+
+  const assetMixSummary = mapAssetSummary(payload.asset_mix_summary)
+  const assetBreakdowns = assetBreakdownSource.map(mapAssetBreakdown)
+  const constructionLoanInterest = mapConstructionLoanInterest(
+    payload.construction_loan_interest,
+  )
+  const constructionLoan = mapConstructionLoanConfig(payload.construction_loan)
+  const sensitivityResults = sensitivitySource.map(mapSensitivityOutcome)
+  const sensitivityJobs = jobSource.map(mapJobStatus)
 
   return {
     scenarioId: payload.scenario_id,
-    projectId: payload.project_id,
-    finProjectId: payload.fin_project_id,
+    projectId,
+    finProjectId,
     scenarioName: payload.scenario_name,
     currency: payload.currency,
     escalatedCost: payload.escalated_cost,
@@ -525,6 +1004,14 @@ function mapResponse(
     dscrTimeline: dscrTimelineSource.map(mapDscrEntry),
     capitalStack: mapCapitalStack(payload.capital_stack ?? null),
     drawdownSchedule: mapDrawdown(payload.drawdown_schedule ?? null),
+    assetMixSummary,
+    assetBreakdowns,
+    constructionLoanInterest,
+    constructionLoan,
+    sensitivityResults,
+    sensitivityJobs,
+    isPrimary: payload.is_primary ?? undefined,
+    isPrivate: payload.is_private ?? undefined,
   }
 }
 
@@ -691,6 +1178,14 @@ const FINANCE_FALLBACK_SUMMARY: FinanceScenarioSummary = {
     peakDebtBalance: '14910000.00',
     finalDebtBalance: '14910000.00',
   },
+  assetMixSummary: null,
+  assetBreakdowns: [],
+  constructionLoanInterest: null,
+  constructionLoan: null,
+  sensitivityResults: [],
+  sensitivityJobs: [],
+  isPrimary: true,
+  isPrivate: false,
 }
 
 function cloneFinanceSummary(
@@ -729,6 +1224,42 @@ function cloneFinanceSummary(
           })),
         }
       : null,
+    assetMixSummary: summary.assetMixSummary
+      ? {
+          ...summary.assetMixSummary,
+          notes: [...summary.assetMixSummary.notes],
+        }
+      : null,
+    assetBreakdowns: summary.assetBreakdowns.map((entry) => ({
+      ...entry,
+      notes: [...entry.notes],
+    })),
+    constructionLoanInterest: summary.constructionLoanInterest
+      ? {
+          ...summary.constructionLoanInterest,
+          facilities: summary.constructionLoanInterest.facilities.map(
+            (facility) => ({ ...facility }),
+          ),
+          entries: summary.constructionLoanInterest.entries.map((entry) => ({
+            ...entry,
+          })),
+        }
+      : null,
+    constructionLoan: summary.constructionLoan
+      ? {
+          ...summary.constructionLoan,
+          facilities: summary.constructionLoan.facilities
+            ? summary.constructionLoan.facilities.map((facility) => ({
+                ...facility,
+              }))
+            : null,
+        }
+      : null,
+    sensitivityResults: summary.sensitivityResults.map((entry) => ({
+      ...entry,
+      notes: [...entry.notes],
+    })),
+    sensitivityJobs: summary.sensitivityJobs.map((job) => ({ ...job })),
   }
 }
 
@@ -736,14 +1267,12 @@ function createFinanceFallbackSummary(
   request: FinanceFeasibilityRequest,
 ): FinanceScenarioSummary {
   const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
-  fallback.projectId =
-    typeof request.projectId === 'number'
-      ? request.projectId
-      : fallback.projectId
-  fallback.finProjectId =
-    typeof request.finProjectId === 'number'
-      ? request.finProjectId
-      : fallback.finProjectId
+  if (request.projectId !== undefined && request.projectId !== null) {
+    fallback.projectId = request.projectId as typeof fallback.projectId
+  }
+  if (typeof request.finProjectId === 'number') {
+    fallback.finProjectId = request.finProjectId
+  }
   fallback.scenarioName =
     request.scenario.name?.trim() || fallback.scenarioName
   const currency = request.scenario.currency?.trim() || fallback.currency
@@ -805,14 +1334,9 @@ export async function runFinanceFeasibility(
   request: FinanceFeasibilityRequest,
   options: FinanceFeasibilityOptions = {},
 ): Promise<FinanceScenarioSummary> {
-  const headers: Record<string, string> = {
+  const headers = applyIdentityHeaders({
     'Content-Type': 'application/json',
-  }
-
-  const defaultRole = resolveDefaultRole()
-  if (defaultRole) {
-    headers['X-Role'] = defaultRole
-  }
+  })
 
   try {
     const response = await fetch(
@@ -858,7 +1382,7 @@ export function findResult(
 }
 
 export interface FinanceScenarioListParams {
-  projectId?: number
+  projectId?: number | string
   finProjectId?: number
 }
 
@@ -866,18 +1390,15 @@ export async function listFinanceScenarios(
   params: FinanceScenarioListParams = {},
   options: FinanceFeasibilityOptions = {},
 ): Promise<FinanceScenarioSummary[]> {
-  const headers: Record<string, string> = {
+  const headers = applyIdentityHeaders({
     'Content-Type': 'application/json',
-  }
-
-  const defaultRole = resolveDefaultRole()
-  if (defaultRole) {
-    headers['X-Role'] = defaultRole
-  }
+  })
 
   const query = new URLSearchParams()
   if (typeof params.projectId === 'number') {
     query.set('project_id', params.projectId.toString())
+  } else if (typeof params.projectId === 'string' && params.projectId.trim()) {
+    query.set('project_id', params.projectId.trim())
   }
   if (typeof params.finProjectId === 'number') {
     query.set('fin_project_id', params.finProjectId.toString())
@@ -919,9 +1440,7 @@ export async function listFinanceScenarios(
       )
       const fallbackRequest: FinanceFeasibilityRequest = {
         projectId:
-          typeof params.projectId === 'number'
-            ? params.projectId
-            : FINANCE_FALLBACK_SUMMARY.projectId,
+          params.projectId ?? FINANCE_FALLBACK_SUMMARY.projectId,
         finProjectId:
           typeof params.finProjectId === 'number'
             ? params.finProjectId
@@ -950,4 +1469,51 @@ export async function listFinanceScenarios(
     }
     throw error
   }
+}
+
+export async function updateConstructionLoan(
+  scenarioId: number,
+  input: ConstructionLoanInput,
+  options: FinanceFeasibilityOptions = {},
+): Promise<FinanceScenarioSummary> {
+  if (scenarioId == null || Number.isNaN(Number(scenarioId))) {
+    throw new Error('scenarioId is required to update the construction loan')
+  }
+
+  const headers = applyIdentityHeaders({
+    'Content-Type': 'application/json',
+  })
+
+  const loanPayload = toConstructionLoanPayload(input)
+  if (!loanPayload) {
+    throw new Error('constructionLoan configuration is required')
+  }
+
+  const body: ConstructionLoanUpdateRequestPayload = {
+    construction_loan: loanPayload,
+  }
+
+  const response = await fetch(
+    buildUrl(
+      `api/v1/finance/scenarios/${scenarioId}/construction-loan`,
+      apiBaseUrl,
+    ),
+    {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+      signal: options.signal,
+    },
+  )
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message ||
+        `Construction loan update failed with status ${response.status}`,
+    )
+  }
+
+  const payload = (await response.json()) as FinanceFeasibilityResponsePayload
+  return mapResponse(payload)
 }

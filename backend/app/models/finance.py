@@ -80,6 +80,9 @@ class FinScenario(BaseModel):
     is_primary: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, index=True
     )
+    is_private: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )

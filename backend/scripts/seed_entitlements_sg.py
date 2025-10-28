@@ -55,7 +55,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "ura",
         "code": "outline_planning_permission",
         "name": "Outline Planning Permission",
-        "category": EntApprovalCategory.PLANNING,
+        "category": EntApprovalCategory.PLANNING.value,
         "description": "High-level planning consent establishing allowable development parameters.",
         "processing_time_days": 35,
     },
@@ -63,7 +63,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "ura",
         "code": "written_permission",
         "name": "Written Permission",
-        "category": EntApprovalCategory.PLANNING,
+        "category": EntApprovalCategory.PLANNING.value,
         "description": "Detailed planning permission for construction and change of use.",
         "processing_time_days": 42,
     },
@@ -71,7 +71,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "bca",
         "code": "building_plan_approval",
         "name": "Building Plan Approval",
-        "category": EntApprovalCategory.BUILDING,
+        "category": EntApprovalCategory.BUILDING.value,
         "description": "Approval for structural, architectural, and M&E plans prior to construction.",
         "processing_time_days": 28,
     },
@@ -79,7 +79,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "lta",
         "code": "traffic_impact_assessment",
         "name": "Traffic Impact Assessment Clearance",
-        "category": EntApprovalCategory.TRANSPORT,
+        "category": EntApprovalCategory.TRANSPORT.value,
         "description": "Assessment of transport impacts and mitigation requirements.",
         "processing_time_days": 30,
     },
@@ -87,7 +87,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "nea",
         "code": "environmental_impact_assessment",
         "name": "Environmental Impact Assessment",
-        "category": EntApprovalCategory.ENVIRONMENTAL,
+        "category": EntApprovalCategory.ENVIRONMENTAL.value,
         "description": "Review of environmental impacts and mitigation strategies for sensitive sites.",
         "processing_time_days": 45,
     },
@@ -137,17 +137,11 @@ async def seed_entitlements(
     approval_records = {}
     for payload in APPROVAL_TYPES:
         authority = authority_records[payload["authority_slug"]]
-        # Use .value to get the string value for ENUM column compatibility
-        category_value = (
-            payload["category"].value
-            if hasattr(payload["category"], "value")
-            else payload["category"]
-        )
         approval = await service.upsert_approval_type(
             authority=authority,
             code=payload["code"],
             name=payload["name"],
-            category=category_value,
+            category=payload["category"],
             description=payload.get("description"),
             processing_time_days=payload.get("processing_time_days"),
         )

@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import { describe, expect, it } from 'vitest'
 
 import {
   runFinanceFeasibility,
@@ -99,7 +98,7 @@ describe('finance API mapping', () => {
     })) as typeof globalThis.fetch
 
     const request: FinanceFeasibilityRequest = {
-      projectId: 401,
+      projectId: '401',
       scenario: {
         name: 'QA Scenario',
         currency: 'SGD',
@@ -119,11 +118,11 @@ describe('finance API mapping', () => {
 
     try {
       const summary = await runFinanceFeasibility(request)
-      assert.equal(summary.capitalStack?.currency, 'SGD')
-      assert.equal(summary.capitalStack?.slices.length, 2)
-      assert.equal(summary.capitalStack?.slices[0]?.category, 'equity')
-      assert.equal(summary.drawdownSchedule?.entries.length, 2)
-      assert.equal(summary.drawdownSchedule?.entries[1]?.outstandingDebt, '300.00')
+      expect(summary.capitalStack?.currency).toBe('SGD')
+      expect(summary.capitalStack?.slices.length).toBe(2)
+      expect(summary.capitalStack?.slices[0]?.category).toBe('equity')
+      expect(summary.drawdownSchedule?.entries.length).toBe(2)
+      expect(summary.drawdownSchedule?.entries[1]?.outstandingDebt).toBe('300.00')
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -133,7 +132,7 @@ describe('finance API mapping', () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async (input) => {
       const url = typeof input === 'string' ? input : input.toString()
-      assert.ok(url.includes('/api/v1/finance/scenarios?project_id=401'))
+      expect(url.includes('/api/v1/finance/scenarios?project_id=401')).toBe(true)
       return {
         ok: true,
         status: 200,
@@ -167,10 +166,10 @@ describe('finance API mapping', () => {
     }) as typeof globalThis.fetch
 
     try {
-      const summaries = await listFinanceScenarios({ projectId: 401 })
-      assert.equal(summaries.length, 1)
-      assert.equal(summaries[0]?.scenarioId, 26)
-      assert.equal(summaries[0]?.projectId, 401)
+      const summaries = await listFinanceScenarios({ projectId: '401' })
+      expect(summaries.length).toBe(1)
+      expect(summaries[0]?.scenarioId).toBe(26)
+      expect(summaries[0]?.projectId).toBe(401)
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -183,7 +182,7 @@ describe('finance API mapping', () => {
     }) as typeof globalThis.fetch
 
     const request: FinanceFeasibilityRequest = {
-      projectId: 510,
+      projectId: '510',
       scenario: {
         name: 'Offline Mixed-Use Scenario',
         currency: 'USD',
@@ -202,11 +201,11 @@ describe('finance API mapping', () => {
 
     try {
       const summary = await runFinanceFeasibility(request)
-      assert.equal(summary.projectId, 510)
-      assert.equal(summary.scenarioName, 'Offline Mixed-Use Scenario')
-      assert.equal(summary.currency, 'USD')
-      assert.ok(summary.results.length > 0)
-      assert.ok(summary.capitalStack)
+      expect(summary.projectId).toBe('510')
+      expect(summary.scenarioName).toBe('Offline Mixed-Use Scenario')
+      expect(summary.currency).toBe('USD')
+      expect(summary.results.length).toBeGreaterThan(0)
+      expect(summary.capitalStack).not.toBeNull()
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -220,9 +219,9 @@ describe('finance API mapping', () => {
 
     try {
       const scenarios = await listFinanceScenarios({ projectId: 777 })
-      assert.equal(scenarios.length, 1)
-      assert.equal(scenarios[0]?.projectId, 777)
-      assert.ok(scenarios[0]?.capitalStack)
+      expect(scenarios.length).toBe(1)
+      expect(scenarios[0]?.projectId).toBe(777)
+      expect(scenarios[0]?.capitalStack).not.toBeNull()
     } finally {
       globalThis.fetch = originalFetch
     }

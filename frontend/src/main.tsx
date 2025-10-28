@@ -110,6 +110,16 @@ const developerFeasibilityElement = (
   </AppShell>
 )
 
+const financialControlElement = (
+  <AppShell
+    activeItem="financialControl"
+    title="Financial control"
+    description="Development economics and financing architecture."
+  >
+    <FinanceWorkspace />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -148,6 +158,14 @@ const router = createBrowserRouter([
     element: developerFeasibilityElement,
   },
   {
+    path: '/app/financial-control',
+    element: financialControlElement,
+  },
+  {
+    path: '/developers/finance',
+    element: financialControlElement,
+  },
+  {
     path: '/legacy/home',
     element: <HomeOverview />,
   },
@@ -169,7 +187,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/legacy/finance',
-    element: <FinanceWorkspace />,
+    element: financialControlElement,
   },
   {
     path: '/legacy/agents/site-capture',

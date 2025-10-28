@@ -27,6 +27,7 @@ from app.models.finance import (
 from app.models.projects import Project, ProjectPhase, ProjectType
 from app.models.rkp import RefCostIndex
 from app.services.finance import calculator
+from backend._compat import compat_zip
 
 logger = structlog.get_logger(__name__)
 
@@ -1074,7 +1075,7 @@ async def seed_finance_demo(
             **(fin_project.metadata or {}),
             "scenarios": {
                 str(definition.get("key", result.scenario.id)): result.scenario.id
-                for definition, result in zip(
+                for definition, result in compat_zip(
                     SCENARIO_DEFINITIONS, scenario_results, strict=False
                 )
             },
