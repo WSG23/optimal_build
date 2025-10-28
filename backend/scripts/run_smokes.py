@@ -20,9 +20,9 @@ import httpx
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import AsyncSessionLocal
-
-from ..flows import parse_segment, watch_fetch
+from app.core.config import settings
+from app.core.database import AsyncSessionLocal, engine
+from flows import parse_segment, watch_fetch
 from .seed_entitlements_sg import (
     EntitlementsSeedSummary,
 )
@@ -164,35 +164,39 @@ async def _run_seeders_async() -> tuple[dict[str, dict[str, int]], FinanceDemoSu
     return summaries, finance_summary
 
 
-def run_seeders() -> tuple[dict[str, dict[str, int]], FinanceDemoSummary]:
-    return asyncio.run(_run_seeders_async())
-
-
-def run_reference_ingestion(storage_path: Path, artifacts_dir: Path) -> dict[str, Any]:
+async def _run_reference_ingestion_async(
+    storage_path: Path, artifacts_dir: Path
+) -> dict[str, Any]:
+    """Run reference ingestion flows within the same async context."""
     storage_path.mkdir(parents=True, exist_ok=True)
 
     _log("Running offline watch_fetch flow")
-    watch_summary = watch_fetch.main(
-        [
-            "--once",
-            "--offline",
-            "--storage-path",
-            str(storage_path),
-            "--summary-path",
-            str(artifacts_dir / "watch_fetch_summary.json"),
-        ]
-    )
+    from app.services.reference_storage import ReferenceStorage
+
+    storage = ReferenceStorage(base_path=storage_path)
+    fetcher = watch_fetch.OfflineReferenceFetcher()
+
+    # Call _run_flow directly instead of main() to avoid nested asyncio.run()
+    watch_summary = await watch_fetch._run_flow(storage=storage, fetcher=fetcher)  # type: ignore[arg-type]
+
+    summary_path = artifacts_dir / "watch_fetch_summary.json"
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(watch_summary, indent=2, sort_keys=True))
 
     _log("Running parse_segment flow")
-    parse_summary = parse_segment.main(
-        [
-            "--once",
-            "--storage-path",
-            str(storage_path),
-            "--summary-path",
-            str(artifacts_dir / "parse_segment_summary.json"),
-        ]
-    )
+    parse_storage = ReferenceStorage(base_path=storage_path)
+    # Call _run_once and _collect_counts directly instead of main() to avoid nested asyncio.run()
+    processed = await parse_segment._run_once(storage=parse_storage, parser=None)
+    document_count, clause_count = await parse_segment._collect_counts()
+
+    parse_summary = {
+        "processed_documents": processed,
+        "document_count": document_count,
+        "clause_count": clause_count,
+    }
+
+    parse_summary_path = artifacts_dir / "parse_segment_summary.json"
+    parse_summary_path.write_text(json.dumps(parse_summary, indent=2, sort_keys=True))
 
     return {
         "watch_fetch": watch_summary,
@@ -336,6 +340,48 @@ def capture_finance_asset_mix(client: httpx.Client) -> list[dict[str, Any]]:
     return asset_mix_inputs
 
 
+def _poll_finance_status(
+    client: httpx.Client,
+    scenario_id: int,
+    artifacts_dir: Path,
+    *,
+    interval: float = 2.0,
+    timeout: float = 60.0,
+) -> dict[str, Any]:
+    _log(f"Polling finance scenario status for scenario_id={scenario_id}")
+    snapshots: list[dict[str, Any]] = []
+    deadline = time.perf_counter() + max(timeout, 5.0)
+    status_path = artifacts_dir / "finance_sensitivity_status_history.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+
+    while True:
+        response = _retry_request(
+            client,
+            "GET",
+            f"/api/v1/finance/scenarios/{scenario_id}/status",
+        )
+        payload = response.json()
+        snapshots.append(payload)
+        status_path.write_text(
+            json.dumps(snapshots, indent=2, sort_keys=True), encoding="utf-8"
+        )
+        pending_jobs = payload.get("pending_jobs") or []
+        if not pending_jobs:
+            break
+        if time.perf_counter() >= deadline:
+            raise SmokeError(
+                "Finance sensitivity jobs did not complete within the allotted timeout"
+            )
+        time.sleep(interval)
+
+    terminal_snapshot = snapshots[-1]
+    _write_json(
+        artifacts_dir / "finance_sensitivity_status.json",
+        terminal_snapshot,
+    )
+    return terminal_snapshot
+
+
 def run_finance_smoke(
     client: httpx.Client,
     artifacts_dir: Path,
@@ -343,6 +389,37 @@ def run_finance_smoke(
     asset_mix_inputs: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     _log("Executing finance feasibility smoke request")
+    max_sync_bands = max(1, getattr(settings, "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3))
+    sensitivity_templates = [
+        {
+            "parameter": "Rent sensitivity band",
+            "low": "-6",
+            "base": "0",
+            "high": "4",
+        },
+        {
+            "parameter": "Construction cost sensitivity band",
+            "low": "12",
+            "base": "0",
+            "high": "-5",
+        },
+        {
+            "parameter": "Interest rate sensitivity (delta %)",
+            "low": "1.00",
+            "base": "0",
+            "high": "-0.50",
+        },
+    ]
+    total_bands = max(len(sensitivity_templates), max_sync_bands + 2)
+    sensitivity_bands: list[dict[str, str]] = []
+    while len(sensitivity_bands) < total_bands:
+        template = sensitivity_templates[
+            len(sensitivity_bands) % len(sensitivity_templates)
+        ]
+        band = dict(template)
+        band["parameter"] = f"{template['parameter']} #{len(sensitivity_bands) + 1}"
+        sensitivity_bands.append(band)
+
     payload = {
         "project_id": finance_summary.project_id,
         "project_name": seed_finance_demo.DEMO_PROJECT_NAME,
@@ -389,6 +466,7 @@ def run_finance_smoke(
                 ],
                 "period_labels": ["M1", "M2", "M3", "M4", "M5", "M6"],
             },
+            "sensitivity_bands": sensitivity_bands,
         },
     }
     if asset_mix_inputs:
@@ -434,6 +512,10 @@ def run_finance_smoke(
     )
     export_path = artifacts_dir / "finance_export.csv"
     export_path.write_text(export_response.text, encoding="utf-8")
+
+    scenario_id = data.get("scenario_id")
+    if scenario_id:
+        _poll_finance_status(client, scenario_id, artifacts_dir)
 
     sensitivity_results = data.get("sensitivity_results") or []
     if isinstance(sensitivity_results, Sequence) and sensitivity_results:
@@ -508,18 +590,28 @@ def fetch_openapi_schema(client: httpx.Client, artifacts_dir: Path) -> dict[str,
     return payload
 
 
-def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
+async def _orchestrate_smokes_async(artifacts_dir: Path) -> dict[str, Any]:
+    """Run all async smoke operations in a single event loop."""
     backend_dir = Path(__file__).resolve().parents[1]
     artifacts_dir.mkdir(parents=True, exist_ok=True)
 
+    # Migrations are sync, run first
     run_alembic_upgrades(backend_dir)
-    seed_summaries, finance_summary = run_seeders()
+
+    # Run seeders (already async)
+    seed_summaries, finance_summary = await _run_seeders_async()
     _write_json(artifacts_dir / "seed_summary.json", seed_summaries)
 
-    ingestion = run_reference_ingestion(
+    # Run reference ingestion (now async)
+    ingestion = await _run_reference_ingestion_async(
         artifacts_dir / "reference_storage", artifacts_dir
     )
 
+    # Dispose the async engine to prevent "attached to different loop" errors
+    # when the backend server starts with its own event loop
+    await engine.dispose()
+
+    # Backend server and HTTP tests are sync
     with running_backend(backend_dir, BACKEND_HOST, BACKEND_PORT) as base_url:
         with httpx.Client(base_url=base_url, timeout=30.0) as client:
             buildable = run_buildable_smoke(client, artifacts_dir)
@@ -540,6 +632,11 @@ def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
     }
     _write_json(artifacts_dir / "smokes_summary.json", summary)
     return summary
+
+
+def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
+    """Orchestrate smoke tests with consolidated async event loop."""
+    return asyncio.run(_orchestrate_smokes_async(artifacts_dir))
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
