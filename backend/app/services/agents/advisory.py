@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Iterable
 from uuid import UUID, uuid4
@@ -12,9 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_advisory import AgentAdvisoryFeedback
 from app.models.property import Property, PropertyType
+from backend._compat import compat_dataclass
 
 
-@dataclass(slots=True)
+@compat_dataclass(slots=True)
 class AdvisorySummary:
     """Structured advisory results returned to the API layer."""
 

@@ -53,7 +53,7 @@ class PreviewJob(BaseModel):
     thumbnail_url = Column(String(500))
     payload_checksum = Column(String(128))
     message = Column(String(500))
-    metadata_json = Column(JSON, nullable=False, default=dict)
+    metadata_json = Column("metadata", JSON, nullable=False, default=dict)
 
     metadata = MetadataProxy()
 

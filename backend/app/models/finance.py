@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy import (
     Boolean,
@@ -16,6 +17,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -31,8 +33,11 @@ class FinProject(BaseModel):
     __tablename__ = "fin_projects"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     currency: Mapped[str] = mapped_column(
@@ -68,8 +73,11 @@ class FinScenario(BaseModel):
     __tablename__ = "fin_scenarios"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     fin_project_id: Mapped[int] = mapped_column(
         ForeignKey("fin_projects.id", ondelete="CASCADE"), nullable=False, index=True
@@ -118,8 +126,11 @@ class FinCostItem(BaseModel):
     __tablename__ = "fin_cost_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
@@ -148,8 +159,11 @@ class FinSchedule(BaseModel):
     __tablename__ = "fin_schedules"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
@@ -180,8 +194,11 @@ class FinCapitalStack(BaseModel):
     __tablename__ = "fin_capital_stacks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
@@ -212,8 +229,11 @@ class FinResult(BaseModel):
     __tablename__ = "fin_results"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True

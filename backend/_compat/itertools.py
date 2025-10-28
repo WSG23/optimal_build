@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from itertools import zip_longest
 from typing import Iterable, Iterator, Tuple, TypeVar
 
@@ -14,15 +13,7 @@ __all__ = ["compat_zip"]
 def compat_zip(
     *iterables: Iterable[_T], strict: bool = False
 ) -> Iterator[Tuple[_T, ...]]:
-    """Mirror :func:`zip` with the ``strict`` keyword across Python versions.
-
-    Python 3.10 introduced the ``strict`` parameter. For older interpreters we
-    emulate the behaviour, raising ``ValueError`` when lengths differ and
-    otherwise yielding tuples exactly as the built-in would.
-    """
-
-    if sys.version_info >= (3, 10):
-        return zip(*iterables, strict=strict)
+    """Mirror :func:`zip` with an optional ``strict`` parameter."""
 
     if not strict:
         return zip(*iterables, strict=False)

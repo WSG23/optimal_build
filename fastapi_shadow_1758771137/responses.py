@@ -34,4 +34,23 @@ class FileResponse(Response):
         )
 
 
-__all__ = ["Response", "StreamingResponse", "FileResponse"]
+class JSONResponse(Response):
+    """JSON response wrapper matching FastAPI's interface."""
+
+    def __init__(
+        self,
+        content: Any,
+        *,
+        status_code: int = 200,
+        headers: dict[str, Any] | None = None,
+        media_type: str | None = "application/json",
+    ) -> None:
+        super().__init__(
+            content,
+            status_code=status_code,
+            headers=headers,
+            media_type=media_type or "application/json",
+        )
+
+
+__all__ = ["Response", "StreamingResponse", "FileResponse", "JSONResponse"]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import html
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 from uuid import UUID
 
@@ -38,6 +38,7 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from app.services.geocoding import Address, GeocodingService
+from app.schemas.finance import FinanceAssetMixInput
 from app.utils.render import render_html_to_pdf
 from pydantic import BaseModel, Field
 
@@ -707,6 +708,7 @@ class DeveloperFinancialSummary(BaseModel):
     finance_blueprint: DeveloperFinanceBlueprint | None = None
     constraint_log: list[DeveloperConstraintViolation] = Field(default_factory=list)
     optimizer_confidence: float | None = None
+    asset_mix_finance_inputs: list[dict[str, Any]] = Field(default_factory=list)
 
 
 DeveloperGPSLogResponse.model_rebuild()
@@ -987,6 +989,38 @@ def _build_asset_optimizations(
     return optimizations, heritage_context, outcome
 
 
+def _decimal_or_none(value: Any) -> Decimal | None:
+    if value is None:
+        return None
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return None
+
+
+def _build_finance_asset_mix_inputs(
+    optimizations: Sequence[DeveloperAssetOptimization],
+) -> list[dict[str, Any]]:
+    finance_inputs: list[dict[str, Any]] = []
+    for opt in optimizations:
+        finance_input = FinanceAssetMixInput(
+            asset_type=opt.asset_type,
+            allocation_pct=_decimal_or_none(opt.allocation_pct),
+            nia_sqm=_decimal_or_none(opt.nia_sqm),
+            rent_psm_month=_decimal_or_none(opt.rent_psm_month),
+            stabilised_vacancy_pct=_decimal_or_none(opt.stabilised_vacancy_pct),
+            opex_pct_of_rent=_decimal_or_none(opt.opex_pct_of_rent),
+            estimated_revenue_sgd=_decimal_or_none(opt.estimated_revenue_sgd),
+            estimated_capex_sgd=_decimal_or_none(opt.estimated_capex_sgd),
+            absorption_months=_decimal_or_none(opt.absorption_months),
+            risk_level=opt.risk_level,
+            heritage_premium_pct=_decimal_or_none(opt.heritage_premium_pct),
+            notes=list(opt.notes),
+        )
+        finance_inputs.append(finance_input.model_dump(mode="json"))
+    return finance_inputs
+
+
 def _summarise_financials(
     optimizations: list[DeveloperAssetOptimization],
     *,
@@ -1036,6 +1070,7 @@ def _summarise_financials(
         notes=notes,
         finance_blueprint=finance_blueprint,
     )
+    summary.asset_mix_finance_inputs = _build_finance_asset_mix_inputs(optimizations)
     if constraint_log:
         summary.constraint_log = list(constraint_log)
     if optimizer_confidence is not None:

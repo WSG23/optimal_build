@@ -208,6 +208,8 @@ def _select_backend() -> _BaseBackend:
     """Choose a backend based on configuration and installed libraries."""
 
     preferred = os.getenv("JOB_QUEUE_BACKEND", "").strip().lower()
+    if preferred == "inline":
+        return _InlineBackend()
     if preferred == "celery" and Celery is not None:
         return _CeleryBackend()
     if preferred == "rq" and Queue is not None and Redis is not None:

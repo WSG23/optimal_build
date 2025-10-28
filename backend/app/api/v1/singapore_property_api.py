@@ -6,6 +6,8 @@ property feasibility analysis and space optimization.
 MVP: Uses synchronous database for simplicity.
 """
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from decimal import Decimal

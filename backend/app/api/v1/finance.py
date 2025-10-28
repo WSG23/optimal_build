@@ -54,6 +54,7 @@ from app.services.finance import (
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
 from backend.jobs import JobDispatch, job_queue
+import backend.jobs.finance_sensitivity  # noqa: F401
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)
@@ -1495,7 +1496,7 @@ async def run_finance_feasibility(
 
         if fin_project is None:
             fin_project = FinProject(
-                project_id=str(project_uuid),
+                project_id=project_uuid,
                 name=payload.project_name or payload.scenario.name,
                 currency=payload.scenario.currency,
                 discount_rate=payload.scenario.cash_flow.discount_rate,
@@ -1508,7 +1509,7 @@ async def run_finance_feasibility(
             fin_project.discount_rate = payload.scenario.cash_flow.discount_rate
 
         scenario = FinScenario(
-            project_id=str(project_uuid),
+            project_id=project_uuid,
             fin_project_id=fin_project.id,
             name=payload.scenario.name,
             description=payload.scenario.description,
@@ -1629,7 +1630,7 @@ async def run_finance_feasibility(
                 component_metadata = _json_safe(dict(component.metadata))
                 capital_stack_rows.append(
                     FinCapitalStack(
-                        project_id=str(project_uuid),
+                        project_id=project_uuid,
                         scenario=scenario,
                         name=component.name,
                         source_type=component.source_type,
@@ -1889,7 +1890,7 @@ async def run_finance_feasibility(
 
         results: list[FinResult] = [
             FinResult(
-                project_id=str(project_uuid),
+                project_id=project_uuid,
                 scenario=scenario,
                 name="escalated_cost",
                 value=escalated_cost,
@@ -1901,7 +1902,7 @@ async def run_finance_feasibility(
                 },
             ),
             FinResult(
-                project_id=str(project_uuid),
+                project_id=project_uuid,
                 scenario=scenario,
                 name="npv",
                 value=npv_rounded,
@@ -1912,7 +1913,7 @@ async def run_finance_feasibility(
                 },
             ),
             FinResult(
-                project_id=str(project_uuid),
+                project_id=project_uuid,
                 scenario=scenario,
                 name="irr",
                 value=irr_value,
@@ -1924,7 +1925,7 @@ async def run_finance_feasibility(
         if dscr_entries:
             results.append(
                 FinResult(
-                    project_id=str(project_uuid),
+                    project_id=project_uuid,
                     scenario=scenario,
                     name="dscr_timeline",
                     value=None,
@@ -1939,7 +1940,7 @@ async def run_finance_feasibility(
         ):
             results.append(
                 FinResult(
-                    project_id=str(project_uuid),
+                    project_id=project_uuid,
                     scenario=scenario,
                     name="capital_stack",
                     value=capital_stack_summary_schema.total,
@@ -1954,7 +1955,7 @@ async def run_finance_feasibility(
         ):
             results.append(
                 FinResult(
-                    project_id=str(project_uuid),
+                    project_id=project_uuid,
                     scenario=scenario,
                     name="drawdown_schedule",
                     value=None,
@@ -1966,7 +1967,7 @@ async def run_finance_feasibility(
         if asset_financial_metadata is not None:
             results.append(
                 FinResult(
-                    project_id=str(project_uuid),
+                    project_id=project_uuid,
                     scenario=scenario,
                     name="asset_financials",
                     value=None,
@@ -1977,7 +1978,7 @@ async def run_finance_feasibility(
         if sensitivity_metadata is not None:
             results.append(
                 FinResult(
-                    project_id=str(project_uuid),
+                    project_id=project_uuid,
                     scenario=scenario,
                     name="sensitivity_analysis",
                     value=None,
@@ -1991,7 +1992,7 @@ async def run_finance_feasibility(
         ):
             results.append(
                 FinResult(
-                    project_id=str(project_uuid),
+                    project_id=project_uuid,
                     scenario=scenario,
                     name="construction_loan_interest",
                     value=_decimal_from_value(

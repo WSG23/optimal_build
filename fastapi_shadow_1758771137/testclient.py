@@ -116,6 +116,16 @@ class TestClient:
     ) -> _SyncResponse:
         return self.request("PUT", url, headers=headers, json=json, data=data)
 
+    def patch(
+        self,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        json: Any = None,
+        data: Mapping[str, Any] | None = None,
+    ) -> _SyncResponse:
+        return self.request("PATCH", url, headers=headers, json=json, data=data)
+
     def delete(
         self,
         url: str,

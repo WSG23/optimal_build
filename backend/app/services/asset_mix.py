@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, replace
+from dataclasses import field, replace
 from importlib import resources
 from typing import Iterable, Mapping, Sequence
 
+from backend._compat import compat_dataclass
 
-@dataclass(frozen=True, slots=True)
+
+@compat_dataclass(frozen=True, slots=True)
 class AssetOptimizationPlan:
     """Represents an allocation recommendation for a specific asset type."""
 
@@ -38,7 +40,7 @@ class AssetOptimizationPlan:
     alternative_scenarios: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True, slots=True)
+@compat_dataclass(frozen=True, slots=True)
 class ConstraintViolation:
     """Records when a constraint had to be relaxed or enforced."""
 
@@ -48,7 +50,7 @@ class ConstraintViolation:
     asset_type: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@compat_dataclass(frozen=True, slots=True)
 class AssetOptimizationScenario:
     """Alternative optimisation state for sensitivity analysis."""
 
@@ -57,7 +59,7 @@ class AssetOptimizationScenario:
     description: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@compat_dataclass(frozen=True, slots=True)
 class AssetOptimizationOutcome:
     """Container returned by the optimiser with metadata."""
 

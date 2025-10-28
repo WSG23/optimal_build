@@ -7,8 +7,18 @@ from dataclasses import dataclass
 from importlib import resources
 from typing import Any, Iterable, Optional
 
-from shapely.geometry import Point, shape
-from shapely.strtree import STRtree
+try:  # pragma: no cover - shapely is optional in lightweight environments
+    from shapely.geometry import Point, shape  # type: ignore
+    from shapely.strtree import STRtree  # type: ignore
+
+    _SHAPELY_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover - fall back when shapely missing
+    Point = Any  # type: ignore
+    STRtree = None  # type: ignore
+    _SHAPELY_AVAILABLE = False
+
+    def shape(_geometry: Any) -> None:
+        return None
 
 
 def _resource_text(path: str) -> Optional[str]:
@@ -46,7 +56,7 @@ class HeritageOverlay:
     attributes: dict[str, Any] | None = None
 
     def contains(self, point: Point) -> bool:
-        if self.geometry is None:
+        if not _SHAPELY_AVAILABLE or self.geometry is None:
             return False
         try:
             # touches() handles points that lie on the polygon boundary
@@ -80,6 +90,9 @@ class HeritageOverlayService:
     # Loaders
     # ------------------------------------------------------------------
     def _load_geojson_overlays(self) -> Iterable[HeritageOverlay]:
+        if not _SHAPELY_AVAILABLE:
+            return []
+
         text = _resource_text("heritage_overlays.geojson")
         if not text:
             return []
@@ -125,6 +138,9 @@ class HeritageOverlayService:
         return overlays
 
     def _load_legacy_overlays(self) -> Iterable[HeritageOverlay]:
+        if not _SHAPELY_AVAILABLE:
+            return []
+
         text = _resource_text("heritage_overlays.json")
         if not text:
             return []
@@ -177,7 +193,7 @@ class HeritageOverlayService:
     # Public API
     # ------------------------------------------------------------------
     def lookup(self, latitude: float, longitude: float) -> Optional[dict[str, Any]]:
-        if not self._overlays:
+        if not _SHAPELY_AVAILABLE or not self._overlays:
             return None
 
         point = Point(longitude, latitude)

@@ -13,6 +13,8 @@ from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from math import isinf
 
+from backend._compat import compat_zip
+
 
 @dataclass
 class _ValueHolder:
@@ -74,7 +76,9 @@ class _MetricBase:
         if label_args:
             labels = {
                 name: value
-                for name, value in zip(self._labelnames, label_args, strict=False)
+                for name, value in compat_zip(
+                    self._labelnames, label_args, strict=False
+                )
             } | labels
         key = self._label_key(labels)
         if key not in self._metrics:
@@ -84,7 +88,8 @@ class _MetricBase:
     def _iter_samples(self) -> Iterator[tuple[dict[str, str], _Sample]]:
         for key, sample in self._metrics.items():
             label_map = {
-                name: value for name, value in zip(self._labelnames, key, strict=False)
+                name: value
+                for name, value in compat_zip(self._labelnames, key, strict=False)
             }
             yield label_map, sample
 
@@ -130,7 +135,7 @@ class _HistogramSample(_Sample):
         return self._value.get()
 
     def bucket_counts(self) -> list[tuple[float, float]]:
-        return list(zip(self._bounds, self._bucket_counts, strict=False))
+        return list(compat_zip(self._bounds, self._bucket_counts, strict=False))
 
     def observations(self) -> list[float]:
         return list(self._observations)

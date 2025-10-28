@@ -1,0 +1,26 @@
+{
+  "document_count": 4,
+  "inserted": 3,
+  "inserted_unique": 3,
+  "results": [
+    {
+      "document_id": 97,
+      "source_id": 141,
+      "storage_path": "ref-documents/source-141/20251028T072735Z-ae5019e287b5.html",
+      "uri": "ref-documents/source-141/20251028T072735Z-ae5019e287b5.html"
+    },
+    {
+      "document_id": 98,
+      "source_id": 142,
+      "storage_path": "ref-documents/source-142/20251028T072735Z-30873b8e152f.pdf",
+      "uri": "ref-documents/source-142/20251028T072735Z-30873b8e152f.pdf"
+    },
+    {
+      "document_id": 100,
+      "source_id": 144,
+      "storage_path": "ref-documents/source-144/20251028T072735Z-85c770385c89.pdf",
+      "uri": "ref-documents/source-144/20251028T072735Z-85c770385c89.pdf"
+    }
+  ],
+  "source_count": 4
+}

@@ -95,8 +95,8 @@
 1. **Find the detailed phase section** (use Ctrl+F or jump links above)
 2. **Update the "Status:" line** in the detailed section:
    ```markdown
-   ### Phase 2B: Asset-Specific Feasibility ✅ COMPLETE
-   **Status:** 100% - All features delivered, tests passing
+   ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
+   **Status:** 80% - Most features delivered, final items in progress
    ```
 3. **Update the "What's Missing" section** - Remove ❌ items when complete
 4. **This summary will reflect those changes** when regenerated
