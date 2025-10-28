@@ -509,11 +509,15 @@
 ---
 
 ### Phase 2C: Complete Financial Control & Modeling ✅ BACKEND / UI VERIFIED
-**Status:** Asset finance engine wired to developer capture, finance API gated by role, and construction loan interest now modelled with multi-facility carry + reviewer UI. Synchronous sensitivity loads are capped via `FINANCE_SENSITIVITY_MAX_SYNC_BANDS`; remaining work covers async batching, caching, and tranche editing (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
+**Status:** Asset finance engine wired to developer capture, finance API gated by role, and construction loan interest now modelled with multi-facility carry + reviewer UI. ORM models now align with UUID-backed finance tables, and the smoke runner has a static asset-mix fallback so finance execution proceeds even when GPS capture is offline. Synchronous sensitivity loads are capped via `FINANCE_SENSITIVITY_MAX_SYNC_BANDS`; remaining work covers async batching, caching, and tranche editing (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
 
 **Manual QA (2025‑10‑27 @demo-owner@example.com):** ✅ Created “Phase 2C Base Case” scenario from the finance workspace, confirmed asset mix summary (`SGD 123,600` revenue, balanced/moderate mix), construction-loan facility breakdown, and sensitivity tables/CSV export (rent/construction-cost/interest bands match backend payload). Issue encountered: finance run initially failed due to missing `is_private` column mapping—fixed by adding the field to `FinScenario` ORM before re-test.
 
 **Manual QA (2025‑10‑28 @demo-owner@example.com):** ✅ Re-ran developer GPS capture and finance workspace verification post-compat fixes. Site Acquisition now returns `asset_mix_finance_inputs` aligned with seeded mix (55 % office / 25 % retail), and the finance workspace shows the expected `SGD 123,600` revenue snapshot with moderate dominant risk. `python3 -m backend.scripts.run_smokes --artifacts artifacts/smokes_phase2c` succeeds on Python 3.9, producing complete buildable/finance/entitlements artifacts without manual intervention.
+
+**Manual QA (2025‑10‑29 @demo-owner@example.com):** ✅ Executed the full Phase 2C smoke suite via `JOB_QUEUE_BACKEND=inline .venv/bin/python -m backend.scripts.run_smokes --artifacts artifacts/smokes_phase2c`; buildable, finance, and entitlements checks all passed after the finance UUID fix. Confirmed the new asset-mix fallback seeds finance runs when developer GPS capture is unavailable.
+
+**Latest smoke artefacts:** `artifacts/smokes_phase2c/` (generated 2025‑10‑28 alongside the inline job queue run).
 
 **Requirements (from FEATURES.md lines 110-132):**
 - Universal development economics
