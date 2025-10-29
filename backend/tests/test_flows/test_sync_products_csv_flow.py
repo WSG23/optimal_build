@@ -6,6 +6,9 @@ import datetime as dt
 from pathlib import Path
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import Column, DateTime, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase

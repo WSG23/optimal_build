@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.developer_condition_service import (

@@ -5,6 +5,9 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.developer_condition_service import (
     ConditionSystem,

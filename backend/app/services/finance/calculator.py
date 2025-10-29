@@ -8,7 +8,10 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
 from types import MappingProxyType
 from typing import Any, Union
 
-from app.models.rkp import RefCostIndex
+try:  # pragma: no cover - optional dependency for offline environments
+    from app.models.rkp import RefCostIndex  # type: ignore[import-not-found]
+except Exception:  # pragma: no cover - SQLAlchemy or models unavailable
+    RefCostIndex = Any  # type: ignore[assignment]
 
 NumberLike = Union[Decimal, int, float, str]
 CURRENCY_QUANTIZER = Decimal("0.01")

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
+pytest.importorskip("sqlalchemy")
+pytest.importorskip("pytest_asyncio")
+
 from app.models.rkp import RefRule
 from app.schemas.buildable import BuildableDefaults
 from app.services.buildable import ResolvedZone, calculate_buildable
-
-pytest.importorskip("sqlalchemy")
-pytest.importorskip("pytest_asyncio")
 
 
 class _LayerStub:

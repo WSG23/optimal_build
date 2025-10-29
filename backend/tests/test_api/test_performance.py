@@ -7,6 +7,9 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from fastapi import APIRouter, FastAPI
 
 import pytest_asyncio
