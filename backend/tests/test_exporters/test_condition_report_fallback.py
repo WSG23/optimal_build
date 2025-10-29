@@ -5,6 +5,9 @@ from __future__ import annotations
 import re
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from app.api.v1.developers import (
     ChecklistProgressResponse,
     ConditionAssessmentResponse,

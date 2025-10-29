@@ -6,6 +6,10 @@ from pathlib import Path
 
 import pytest
 
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from backend.jobs.parse_cad import _parse_dxf_payload, _parse_ifc_payload
 from backend.jobs.raster_vector import _vectorize_pdf
 

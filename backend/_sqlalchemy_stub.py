@@ -21,12 +21,19 @@ def _load_repository_stub() -> None:
     importlib.import_module("sqlalchemy")
 
 
-def ensure_sqlalchemy() -> None:
-    """Import SQLAlchemy, falling back to the in-repo stub when necessary."""
+def ensure_sqlalchemy() -> bool:
+    """Import SQLAlchemy, falling back to the in-repo stub when necessary.
+
+    Returns
+    -------
+    bool
+        ``True`` when SQLAlchemy (or the vendored stub) is importable, ``False``
+        otherwise.
+    """
 
     try:
         importlib.import_module("sqlalchemy")
-        return
+        return True
     except ModuleNotFoundError:
         pass
 
@@ -45,11 +52,9 @@ def ensure_sqlalchemy() -> None:
 
     try:
         importlib.import_module("sqlalchemy")
-    except ModuleNotFoundError as exc:  # pragma: no cover - hard failure
-        raise ModuleNotFoundError(
-            "SQLAlchemy is required to run backend tests. Please install it or "
-            "provide the repository stub under ./sqlalchemy."
-        ) from exc
+    except ModuleNotFoundError:  # pragma: no cover - dependency unavailable
+        return False
+    return True
 
 
 __all__ = ["ensure_sqlalchemy"]

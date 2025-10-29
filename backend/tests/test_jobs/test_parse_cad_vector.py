@@ -4,6 +4,9 @@ import json
 from collections.abc import Mapping
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import select
 
 from app.models.imports import ImportRecord

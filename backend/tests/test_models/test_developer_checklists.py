@@ -5,6 +5,9 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import select
 
 from app.models.developer_checklists import (

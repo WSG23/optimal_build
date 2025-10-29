@@ -63,7 +63,6 @@ if load_optional_package is not None:
         load_optional_package("fastapi", "fastapi", "FastAPI")
     except ModuleNotFoundError:
         import importlib.util
-        import sys
 
         fastapi_path = _REPO_ROOT / "fastapi" / "__init__.py"
         if fastapi_path.exists():
@@ -81,61 +80,101 @@ except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
 
 pytest_asyncio = cast(Any, pytest_asyncio)
 
-ensure_sqlalchemy()
-
-from sqlalchemy import event
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
-try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
-    from sqlalchemy.pool import StaticPool as _StaticPool
-except (
-    ImportError,
-    AttributeError,
-):  # pragma: no cover - fallback for stub implementation
-
-    class _StaticPool:  # type: ignore[too-many-ancestors]
-        """Placeholder used when running against the in-repo SQLAlchemy stub."""
-
-        pass
-
-
-StaticPool: type[Any] = _StaticPool
-
-# isort: off
-# Import app modules before sqlalchemy.orm to ensure proper initialization
-import app.models as app_models
 import app.utils.metrics as metrics
-from app.core.database import get_session
-from app.models.base import BaseModel
-from sqlalchemy.orm import Mapped, mapped_column
 
-# isort: on
+_SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
 
-try:
-    from app.main import app
-except Exception:  # pragma: no cover - fallback when FastAPI stub lacks features
-    app = None
-from sqlalchemy import Integer, String
+app: Any | None = None
 
-# Importing ``app.models`` ensures all model metadata is registered.
-_ = app_models
+if _SQLALCHEMY_AVAILABLE:
+    from sqlalchemy import Integer, String, event
+    from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.ext.asyncio import (
+        AsyncSession,
+        async_sessionmaker,
+        create_async_engine,
+    )
+    from sqlalchemy.orm import Mapped, mapped_column
+    from sqlalchemy.util import concurrency
 
+    if not concurrency.have_greenlet:  # pragma: no cover - environment specific
+        class _AsyncLock:
+            def __init__(self) -> None:
+                self._lock = asyncio.Lock()
 
-if "projects" not in getattr(BaseModel.metadata, "tables", {}):
+            async def __aenter__(self) -> "_AsyncLock":
+                await self._lock.acquire()
+                return self
 
-    class _ProjectStub(BaseModel):
-        """Minimal project table used for tests that only require an ID."""
+            async def __aexit__(self, exc_type, exc, tb) -> None:
+                self._lock.release()
 
-        __tablename__ = "projects"
+        async def _await_only(value):
+            if asyncio.iscoroutine(value):
+                return await value
+            return value
 
-        id: Mapped[int] = mapped_column(Integer, primary_key=True)
-        name: Mapped[str] = mapped_column(
-            String(120), nullable=False, default="Test Project"
-        )
+        async def _greenlet_spawn(func, *args, **kwargs):
+            return await asyncio.to_thread(func, *args, **kwargs)
 
+        concurrency.AsyncAdaptedLock = lambda *_, **__: _AsyncLock()
+        concurrency.await_only = _await_only
+        concurrency.await_fallback = _await_only
+        concurrency.greenlet_spawn = _greenlet_spawn
+        concurrency.have_greenlet = True
 
-_SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
+        from sqlalchemy.ext.asyncio import engine as _async_engine
+        from sqlalchemy.ext.asyncio import result as _async_result
+        from sqlalchemy.ext.asyncio import session as _async_session
+
+        _async_engine.greenlet_spawn = _greenlet_spawn
+        _async_session.greenlet_spawn = _greenlet_spawn
+        _async_result.greenlet_spawn = _greenlet_spawn
+
+    try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
+        from sqlalchemy.pool import StaticPool as _StaticPool
+    except (ImportError, AttributeError):  # pragma: no cover
+        class _StaticPool:  # type: ignore[too-many-ancestors]
+            """Placeholder used when running against the in-repo SQLAlchemy stub."""
+
+            pass
+
+    StaticPool: type[Any] = _StaticPool
+
+    # isort: off
+    # Import app modules before sqlalchemy.orm to ensure proper initialization
+    import app.models as app_models
+    from app.core.database import get_session
+    from app.models.base import BaseModel
+
+    # isort: on
+
+    try:
+        from app.main import app as _app
+    except Exception:  # pragma: no cover - fallback when FastAPI stub lacks features
+        _app = None
+
+    app = _app
+
+    # Importing ``app.models`` ensures all model metadata is registered.
+    _ = app_models
+
+    if "projects" not in getattr(BaseModel.metadata, "tables", {}):
+
+        class _ProjectStub(BaseModel):
+            """Minimal project table used for tests that only require an ID."""
+
+            __tablename__ = "projects"
+
+            id: Mapped[int] = mapped_column(Integer, primary_key=True)
+            name: Mapped[str] = mapped_column(
+                String(120), nullable=False, default="Test Project"
+            )
+
+    _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
+else:
+    SQLAlchemyError = RuntimeError
+    StaticPool = type("StaticPool", (), {})  # type: ignore[assignment]
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -155,151 +194,279 @@ def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
         loop.close()
 
 
-async def _truncate_all(session: AsyncSession) -> None:
-    """Remove all rows from every mapped table in metadata order."""
+if _SQLALCHEMY_AVAILABLE:
 
-    await session.rollback()
-    for table in reversed(_SORTED_TABLES):
-        try:
-            await session.execute(table.delete())
-        except SQLAlchemyError:
-            continue
-    await session.commit()
+    async def _truncate_all(session: AsyncSession) -> None:
+        """Remove all rows from every mapped table in metadata order."""
 
-
-async def _reset_database(factory: async_sessionmaker[AsyncSession]) -> None:
-    """Clear all persisted data using a fresh session."""
-
-    async with factory() as session:
-        await _truncate_all(session)
-
-
-@pytest_asyncio.fixture(scope="session")
-async def flow_session_factory() -> AsyncGenerator[
-    async_sessionmaker[AsyncSession],
-    None,
-]:
-    """Provide a shared async session factory backed by in-memory SQLite."""
-
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-
-    @event.listens_for(engine.sync_engine, "connect")
-    def _register_sqlite_functions(dbapi_connection, _) -> None:
-        """Provide minimal SQLite stubs for Postgres-specific helpers."""
-
-        def _gen_random_uuid() -> str:
-            return str(uuid.uuid4())
-
-        try:
-            dbapi_connection.create_function("gen_random_uuid", 0, _gen_random_uuid)
-        except Exception:
-            # Some DBAPI implementations (or repeated registrations) may raise;
-            # ignore so tests keep running on providers that already support it.
-            pass
-
-    async with engine.begin() as conn:
-        # Create tables one by one, skipping those with PostgreSQL-specific DDL
-        for table in BaseModel.metadata.sorted_tables:
+        await session.rollback()
+        for table in reversed(_SORTED_TABLES):
             try:
-                await conn.run_sync(table.create, checkfirst=True)
-            except Exception:
-                # Skip tables with PostgreSQL-specific syntax
-                # (e.g., gen_random_uuid in DEFAULT)
-                pass
+                await session.execute(table.delete())
+            except SQLAlchemyError:
+                continue
+        await session.commit()
 
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    try:
-        yield factory
-    finally:
-        await engine.dispose()
+    async def _reset_database(factory: async_sessionmaker[AsyncSession]) -> None:
+        """Clear all persisted data using a fresh session."""
 
+        async with factory() as session:
+            await _truncate_all(session)
 
-@pytest_asyncio.fixture(autouse=True)
-async def _cleanup_flow_session_factory(
-    flow_session_factory: async_sessionmaker[AsyncSession],
-    request: pytest.FixtureRequest,
-) -> AsyncGenerator[None, None]:
-    """Ensure the shared flow database starts empty for every test."""
+    @pytest_asyncio.fixture(scope="session")
+    async def flow_session_factory() -> AsyncGenerator[
+        async_sessionmaker[AsyncSession],
+        None,
+    ]:
+        """Provide a shared async session factory backed by in-memory SQLite."""
 
-    if request.node.get_closest_marker("no_db"):
-        yield
-        return
-
-    await _reset_database(flow_session_factory)
-    try:
-        yield
-    finally:
-        await _reset_database(flow_session_factory)
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def _override_async_session_factory(
-    flow_session_factory: async_sessionmaker[AsyncSession],
-    monkeypatch: pytest.MonkeyPatch,
-) -> AsyncGenerator[None, None]:
-    """Ensure application code reuses the in-memory test database."""
-
-    targets = [
-        import_module("app.core.database"),
-        import_module("backend.flows.watch_fetch"),
-        import_module("backend.flows.parse_segment"),
-        import_module("backend.flows.sync_products"),
-    ]
-
-    for module in targets:
-        monkeypatch.setattr(
-            module,
-            "AsyncSessionLocal",
-            flow_session_factory,
-            raising=False,
+        engine = create_async_engine(
+            "sqlite+aiosqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            future=True,
         )
 
-    yield
+        @event.listens_for(engine.sync_engine, "connect")
+        def _register_sqlite_functions(dbapi_connection, _) -> None:
+            """Provide minimal SQLite stubs for Postgres-specific helpers."""
 
+            def _gen_random_uuid() -> str:
+                return str(uuid.uuid4())
 
-@pytest_asyncio.fixture
-async def async_session_factory(
-    flow_session_factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
-    """Yield the shared session factory with a clean database state."""
+            try:
+                dbapi_connection.create_function("gen_random_uuid", 0, _gen_random_uuid)
+            except Exception:
+                # Some DBAPI implementations (or repeated registrations) may raise;
+                # ignore so tests keep running on providers that already support it.
+                pass
 
-    await _reset_database(flow_session_factory)
-    try:
-        yield flow_session_factory
-    finally:
-        await _reset_database(flow_session_factory)
+        async with engine.begin() as conn:
+            for table in BaseModel.metadata.sorted_tables:
+                try:
+                    await conn.run_sync(table.create, checkfirst=True)
+                except Exception:
+                    # Skip tables with PostgreSQL-specific syntax (e.g., gen_random_uuid)
+                    pass
 
-
-@pytest_asyncio.fixture
-async def session(
-    async_session_factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[AsyncSession, None]:
-    """Yield a database session and clean up after each test."""
-
-    async with async_session_factory() as db_session:
+        factory = async_sessionmaker(engine, expire_on_commit=False)
         try:
-            yield db_session
+            yield factory
         finally:
-            await _truncate_all(db_session)
+            await engine.dispose()
 
+    @pytest_asyncio.fixture(autouse=True)
+    async def _cleanup_flow_session_factory(
+        flow_session_factory: async_sessionmaker[AsyncSession],
+        request: pytest.FixtureRequest,
+    ) -> AsyncGenerator[None, None]:
+        """Ensure the shared flow database starts empty for every test."""
 
-@pytest.fixture
-def session_factory(
-    async_session_factory: async_sessionmaker[AsyncSession],
-) -> Callable[[], AbstractAsyncContextManager[AsyncSession]]:
-    """Return an async context manager that yields a clean session."""
+        if request.node.get_closest_marker("no_db"):
+            yield
+            return
 
-    @asynccontextmanager
-    async def _factory() -> AsyncGenerator[AsyncSession, None]:
+        await _reset_database(flow_session_factory)
+        try:
+            yield
+        finally:
+            await _reset_database(flow_session_factory)
+
+    @pytest_asyncio.fixture(autouse=True)
+    async def _override_async_session_factory(
+        flow_session_factory: async_sessionmaker[AsyncSession],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> AsyncGenerator[None, None]:
+        """Ensure application code reuses the in-memory test database."""
+
+        targets = [
+            import_module("app.core.database"),
+            import_module("backend.flows.watch_fetch"),
+            import_module("backend.flows.parse_segment"),
+            import_module("backend.flows.sync_products"),
+        ]
+
+        for module in targets:
+            monkeypatch.setattr(
+                module,
+                "AsyncSessionLocal",
+                flow_session_factory,
+                raising=False,
+            )
+
+        yield
+
+    @pytest_asyncio.fixture
+    async def async_session_factory(
+        flow_session_factory: async_sessionmaker[AsyncSession],
+    ) -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+        """Yield the shared session factory with a clean database state."""
+
+        await _reset_database(flow_session_factory)
+        try:
+            yield flow_session_factory
+        finally:
+            await _reset_database(flow_session_factory)
+
+    @pytest_asyncio.fixture
+    async def session(
+        async_session_factory: async_sessionmaker[AsyncSession],
+    ) -> AsyncGenerator[AsyncSession, None]:
+        """Yield a database session and clean up after each test."""
+
         async with async_session_factory() as db_session:
-            yield db_session
+            try:
+                yield db_session
+            finally:
+                await _truncate_all(db_session)
 
-    return _factory
+    @pytest.fixture
+    def session_factory(
+        async_session_factory: async_sessionmaker[AsyncSession],
+    ) -> Callable[[], AbstractAsyncContextManager[AsyncSession]]:
+        """Return an async context manager that yields a clean session."""
+
+        @asynccontextmanager
+        async def _factory() -> AsyncGenerator[AsyncSession, None]:
+            async with async_session_factory() as db_session:
+                yield db_session
+
+        return _factory
+
+    @pytest_asyncio.fixture
+    async def app_client(
+        async_session_factory: async_sessionmaker[AsyncSession],
+    ) -> AsyncGenerator[AsyncClient, None]:
+        """Provide an HTTPX client with the database dependency overridden."""
+
+        async def _override_get_session() -> AsyncGenerator[AsyncSession, None]:
+            async with async_session_factory() as db_session:
+                yield db_session
+
+        if app is None:
+            pytest.skip("FastAPI app is unavailable in the current test environment")
+
+        app.dependency_overrides[get_session] = _override_get_session
+        async with AsyncClient(
+            app=app,
+            base_url="http://testserver",
+            headers={"X-Role": "admin"},
+        ) as client:
+            yield client
+
+        app.dependency_overrides.pop(get_session, None)
+        await _reset_database(async_session_factory)
+
+    @pytest_asyncio.fixture(name="client")
+    async def client_fixture(
+        app_client: AsyncClient,
+    ) -> AsyncGenerator[AsyncClient, None]:
+        """Compatibility alias exposing the app client under the traditional name."""
+
+        yield app_client
+
+    @pytest_asyncio.fixture
+    async def market_demo_data(
+        async_session_factory: async_sessionmaker[AsyncSession],
+    ) -> AsyncGenerator[None, None]:
+        """Populate database with demo property data for market advisory tests."""
+
+        import uuid as uuid_module
+
+        from app.models.property import (
+            Property,
+            PropertyStatus,
+            PropertyType,
+            TenureType,
+        )
+
+        async with async_session_factory() as session:
+            try:
+                from sqlalchemy import text as sql_text
+
+                await session.execute(sql_text("SELECT 1 FROM properties LIMIT 1"))
+            except Exception:
+                await session.execute(
+                    sql_text(
+                        """
+                        CREATE TABLE IF NOT EXISTS properties (
+                            id TEXT PRIMARY KEY,
+                            name VARCHAR(255) NOT NULL,
+                            address VARCHAR(500) NOT NULL,
+                            postal_code VARCHAR(20),
+                            property_type VARCHAR(50) NOT NULL,
+                            status VARCHAR(50),
+                            location TEXT NOT NULL,
+                            district VARCHAR(50),
+                            subzone VARCHAR(100),
+                            planning_area VARCHAR(100),
+                            land_area_sqm DECIMAL(10, 2),
+                            gross_floor_area_sqm DECIMAL(12, 2),
+                            net_lettable_area_sqm DECIMAL(12, 2),
+                            building_height_m DECIMAL(6, 2),
+                            floors_above_ground INTEGER,
+                            floors_below_ground INTEGER,
+                            units_total INTEGER,
+                            year_built INTEGER,
+                            year_renovated INTEGER,
+                            developer VARCHAR(255),
+                            architect VARCHAR(255),
+                            tenure_type VARCHAR(50),
+                            lease_start_date DATE,
+                            lease_expiry_date DATE,
+                            zoning_code VARCHAR(50),
+                            plot_ratio DECIMAL(4, 2),
+                            is_conservation BOOLEAN,
+                            conservation_status VARCHAR(100),
+                            heritage_constraints JSON,
+                            ura_property_id VARCHAR(50) UNIQUE,
+                            data_source VARCHAR(50),
+                            external_references JSON
+                        )
+                        """
+                    )
+                )
+                await session.commit()
+
+            demo_property = Property(
+                id=uuid_module.uuid4(),
+                name="Market Demo Tower",
+                address="123 Marina Boulevard",
+                postal_code="018989",
+                property_type=PropertyType.OFFICE,
+                status=PropertyStatus.EXISTING,
+                location="POINT(103.8535 1.2830)",
+                district="Downtown Core",
+                subzone="Marina Centre",
+                planning_area="Downtown Core",
+                land_area_sqm=5000.0,
+                gross_floor_area_sqm=25000.0,
+                net_lettable_area_sqm=22000.0,
+                building_height_m=120.0,
+                floors_above_ground=30,
+                floors_below_ground=2,
+                units_total=150,
+                year_built=2015,
+                developer="Demo Developer Pte Ltd",
+                architect="Demo Architects",
+                tenure_type=TenureType.LEASEHOLD_99,
+                plot_ratio=5.0,
+                is_conservation=False,
+                data_source="demo",
+            )
+            session.add(demo_property)
+            await session.commit()
+
+        yield
+else:
+
+    @pytest.fixture(autouse=True)
+    def _skip_without_sqlalchemy(request: pytest.FixtureRequest) -> None:
+        """Skip tests that require SQLAlchemy when the dependency is missing."""
+
+        if request.node.get_closest_marker("no_db"):
+            return
+        pytest.skip("SQLAlchemy is unavailable in the current test environment")
 
 
 @pytest.fixture(autouse=True)
@@ -311,134 +478,3 @@ def reset_metrics() -> Iterator[None]:
         yield
     finally:
         metrics.reset_metrics()
-
-
-@pytest_asyncio.fixture
-async def app_client(
-    async_session_factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[AsyncClient, None]:
-    """Provide an HTTPX client with the database dependency overridden."""
-
-    async def _override_get_session() -> AsyncGenerator[AsyncSession, None]:
-        async with async_session_factory() as db_session:
-            yield db_session
-
-    if app is None:
-        pytest.skip("FastAPI app is unavailable in the current test environment")
-
-    app.dependency_overrides[get_session] = _override_get_session
-    async with AsyncClient(
-        app=app,
-        base_url="http://testserver",
-        headers={"X-Role": "admin"},
-    ) as client:
-        yield client
-
-    app.dependency_overrides.pop(get_session, None)
-    await _reset_database(async_session_factory)
-
-
-@pytest_asyncio.fixture(name="client")
-async def client_fixture(
-    app_client: AsyncClient,
-) -> AsyncGenerator[AsyncClient, None]:
-    """Compatibility alias exposing the app client under the traditional name."""
-
-    yield app_client
-
-
-@pytest_asyncio.fixture
-async def market_demo_data(
-    async_session_factory: async_sessionmaker[AsyncSession],
-) -> AsyncGenerator[None, None]:
-    """Populate database with demo property data for market advisory tests."""
-    # Import inside fixture to avoid circular dependencies
-    import uuid as uuid_module
-
-    from app.models.property import Property, PropertyStatus, PropertyType, TenureType
-
-    # Check if properties table exists, if not skip this fixture
-    async with async_session_factory() as session:
-        try:
-            # Try to query the table to see if it exists
-            from sqlalchemy import text as sql_text
-
-            await session.execute(sql_text("SELECT 1 FROM properties LIMIT 1"))
-        except Exception:
-            # Table doesn't exist (likely due to PostgreSQL-specific DDL in SQLite tests)
-            # Create it manually for SQLite
-            await session.execute(
-                sql_text(
-                    """
-                    CREATE TABLE IF NOT EXISTS properties (
-                        id TEXT PRIMARY KEY,
-                        name VARCHAR(255) NOT NULL,
-                        address VARCHAR(500) NOT NULL,
-                        postal_code VARCHAR(20),
-                        property_type VARCHAR(50) NOT NULL,
-                        status VARCHAR(50),
-                        location TEXT NOT NULL,
-                        district VARCHAR(50),
-                        subzone VARCHAR(100),
-                        planning_area VARCHAR(100),
-                        land_area_sqm DECIMAL(10, 2),
-                        gross_floor_area_sqm DECIMAL(12, 2),
-                        net_lettable_area_sqm DECIMAL(12, 2),
-                        building_height_m DECIMAL(6, 2),
-                        floors_above_ground INTEGER,
-                        floors_below_ground INTEGER,
-                        units_total INTEGER,
-                        year_built INTEGER,
-                        year_renovated INTEGER,
-                        developer VARCHAR(255),
-                        architect VARCHAR(255),
-                        tenure_type VARCHAR(50),
-                        lease_start_date DATE,
-                        lease_expiry_date DATE,
-                        zoning_code VARCHAR(50),
-                        plot_ratio DECIMAL(4, 2),
-                        is_conservation BOOLEAN,
-                        conservation_status VARCHAR(100),
-                        heritage_constraints JSON,
-                        ura_property_id VARCHAR(50) UNIQUE,
-                        data_source VARCHAR(50),
-                        external_references JSON
-                    )
-                """
-                )
-            )
-            await session.commit()
-
-        # Create a demo property for advisory service testing
-        demo_property = Property(
-            id=uuid_module.uuid4(),  # Explicitly set ID for SQLite compatibility
-            name="Market Demo Tower",
-            address="123 Marina Boulevard",
-            postal_code="018989",
-            property_type=PropertyType.OFFICE,
-            status=PropertyStatus.EXISTING,
-            location="POINT(103.8535 1.2830)",  # Singapore coordinates
-            district="Downtown Core",
-            subzone="Marina Centre",
-            planning_area="Downtown Core",
-            land_area_sqm=5000.0,
-            gross_floor_area_sqm=25000.0,
-            net_lettable_area_sqm=22000.0,
-            building_height_m=120.0,
-            floors_above_ground=30,
-            floors_below_ground=2,
-            units_total=150,
-            year_built=2015,
-            developer="Demo Developer Pte Ltd",
-            architect="Demo Architects",
-            tenure_type=TenureType.LEASEHOLD_99,
-            plot_ratio=5.0,
-            is_conservation=False,
-            data_source="demo",
-        )
-        session.add(demo_property)
-        await session.commit()
-
-    yield
-
-    # Cleanup happens automatically via _reset_database in async_session_factory

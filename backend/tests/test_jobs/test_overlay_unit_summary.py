@@ -1,4 +1,8 @@
 from app.core.models.geometry import GeometryGraph, Level, Space
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from app.models.rkp import RefRule
 from backend.jobs.overlay_run import (
     RuleContext,

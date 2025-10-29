@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import json
 from collections.abc import Callable, Iterable, Mapping, MutableMapping, MutableSequence, Sequence
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import (
     Any,
@@ -25,6 +26,13 @@ T = TypeVar("T")
 
 class HttpUrl(str):
     """Simplified representation of :class:`pydantic.HttpUrl`."""
+
+
+class ConfigDict(dict):
+    """Minimal stand-in for :class:`pydantic.ConfigDict`."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(kwargs)
 
 
 def _build_constrained_number(
@@ -295,10 +303,16 @@ class BaseModelMeta(type):
                     continue
                 model_config[key] = getattr(config, key)
 
+        explicit_config = namespace.get("model_config")
+        if isinstance(explicit_config, Mapping):
+            model_config.update(dict(explicit_config))
+        elif isinstance(explicit_config, ConfigDict):
+            model_config.update(dict(explicit_config))
+
         namespace["model_fields"] = fields
         namespace["__field_validators__"] = field_validators
         namespace["__model_validators__"] = model_validators
-        namespace["model_config"] = model_config
+        namespace["model_config"] = dict(model_config)
 
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
@@ -444,6 +458,7 @@ __all__ = [
     "confloat",
     "conint",
     "HttpUrl",
+    "ConfigDict",
     "Field",
     "ValidationError",
     "field_validator",
