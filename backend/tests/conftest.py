@@ -381,6 +381,15 @@ async def session(
             await _truncate_all(db_session)
 
 
+@pytest_asyncio.fixture
+async def db_session(
+    session: AsyncSession,
+) -> AsyncGenerator[AsyncSession, None]:
+    """Alias for ``session`` to support legacy test fixtures."""
+
+    yield session
+
+
 @pytest.fixture
 def session_factory(
     async_session_factory: async_sessionmaker[AsyncSession],
@@ -533,6 +542,138 @@ async def market_demo_data(
             data_source="demo",
         )
         session.add(demo_property)
+        await session.commit()
+
+    yield
+
+    # Cleanup happens automatically via _reset_database in async_session_factory
+
+
+@pytest_asyncio.fixture
+async def singapore_rules(
+    async_session_factory: async_sessionmaker[AsyncSession],
+) -> AsyncGenerator[None, None]:
+    """Populate database with Singapore zoning rules for overlay tests."""
+    from app.models.rkp import RefRule, RefSource
+
+    async with async_session_factory() as session:
+        # Create RefSource for URA Master Plan 2019
+        ura_source = RefSource(
+            jurisdiction="SG",
+            authority="URA",
+            topic="zoning",
+            doc_title="Master Plan 2019 - Written Statement",
+            landing_url="https://www.ura.gov.sg/Corporate/Planning/Master-Plan",
+            fetch_kind="html",
+            is_active=True,
+        )
+        session.add(ura_source)
+        await session.flush()
+
+        # Create RefSource for BCA Code on Accessibility
+        bca_source = RefSource(
+            jurisdiction="SG",
+            authority="BCA",
+            topic="building",
+            doc_title="Code on Accessibility in the Built Environment 2019",
+            landing_url="https://www1.bca.gov.sg/",
+            fetch_kind="pdf",
+            is_active=True,
+        )
+        session.add(bca_source)
+        await session.flush()
+
+        # Singapore URA Zoning Rules - critical for overlay engine
+        singapore_rules = [
+            # Residential Zoning
+            {
+                "jurisdiction": "SG",
+                "authority": "URA",
+                "topic": "zoning",
+                "parameter_key": "zoning.max_far",
+                "operator": "<=",
+                "value": "2.8",
+                "unit": "ratio",
+                "applicability": {"zone_code": "SG:residential"},
+                "source_id": ura_source.id,
+                "review_status": "approved",
+                "is_published": True,
+            },
+            {
+                "jurisdiction": "SG",
+                "authority": "URA",
+                "topic": "zoning",
+                "parameter_key": "zoning.max_building_height_m",
+                "operator": "<=",
+                "value": "36",
+                "unit": "m",
+                "applicability": {"zone_code": "SG:residential"},
+                "source_id": ura_source.id,
+                "review_status": "approved",
+                "is_published": True,
+            },
+            {
+                "jurisdiction": "SG",
+                "authority": "URA",
+                "topic": "zoning",
+                "parameter_key": "zoning.setback.front_min_m",
+                "operator": ">=",
+                "value": "7.5",
+                "unit": "m",
+                "applicability": {"zone_code": "SG:residential"},
+                "source_id": ura_source.id,
+                "review_status": "approved",
+                "is_published": True,
+            },
+            # Commercial Zoning
+            {
+                "jurisdiction": "SG",
+                "authority": "URA",
+                "topic": "zoning",
+                "parameter_key": "zoning.max_far",
+                "operator": "<=",
+                "value": "10.0",
+                "unit": "ratio",
+                "applicability": {"zone_code": "SG:commercial"},
+                "source_id": ura_source.id,
+                "review_status": "approved",
+                "is_published": True,
+            },
+            {
+                "jurisdiction": "SG",
+                "authority": "URA",
+                "topic": "zoning",
+                "parameter_key": "zoning.max_building_height_m",
+                "operator": "<=",
+                "value": "280",
+                "unit": "m",
+                "applicability": {"zone_code": "SG:commercial"},
+                "source_id": ura_source.id,
+                "review_status": "approved",
+                "is_published": True,
+            },
+            # BCA Site Coverage Rules
+            # Note: Using 0.5% limit for test purposes to trigger violation with small test geometry
+            {
+                "jurisdiction": "SG",
+                "authority": "BCA",
+                "topic": "building",
+                "parameter_key": "zoning.site_coverage.max_percent",
+                "operator": "<=",
+                "value": "0.5",
+                "unit": "%",
+                "applicability": {"zone_code": "SG:residential"},
+                "source_id": bca_source.id,
+                "review_status": "approved",
+                "is_published": True,
+            },
+        ]
+
+        # Insert all rules
+        for rule_data in singapore_rules:
+            rule = RefRule(**rule_data)
+            session.add(rule)
+
         await session.commit()
 
     yield

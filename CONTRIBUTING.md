@@ -8,7 +8,7 @@ checks before opening a pull request.
 
 **All contributors (human and AI agents) MUST read these documents FIRST:**
 
-1. **[FEATURES.md](FEATURES.md)** - Complete product vision and requirements
+1. **[docs/planning/features.md](docs/planning/features.md)** - Complete product vision and requirements
    - Defines all roles: Agents, Developers, Architects, Engineers
    - Specifies every feature requirement
    - **THIS IS THE SOURCE OF TRUTH**
@@ -19,7 +19,7 @@ checks before opening a pull request.
    - Includes acceptance criteria and estimates
    - **ALWAYS CHECK THIS BEFORE STARTING NEW WORK**
 
-3. **[docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md)** - Current priorities
+3. **[docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md)** - Current priorities
    - Updated regularly with what to build next
    - Shows completed vs. in-progress vs. not-started features
    - **CHECK THIS TO KNOW WHAT TO WORK ON**
@@ -39,9 +39,9 @@ checks before opening a pull request.
 ### ✅ Onboarding Checklist:
 
 Before writing any code, confirm you've:
-- [ ] Read FEATURES.md completely
+- [ ] Read `docs/planning/features.md` completely
 - [ ] Reviewed feature_delivery_plan_v2.md for current phase
-- [ ] Checked NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md for priorities
+- [ ] Checked `docs/ai-agents/next_steps.md` for priorities
 - [ ] Read CODING_RULES.md for technical standards
 - [ ] Understand which phase you're working in
 - [ ] Know the acceptance criteria for your task
@@ -449,4 +449,4 @@ If PDF shows blank in browser:
 
 - [docs/PDF_TESTING_CHECKLIST.md](docs/PDF_TESTING_CHECKLIST.md) - Complete testing checklist
 - [CODING_RULES.md](CODING_RULES.md) - General coding standards
-- [docs/TESTING_KNOWN_ISSUES.md](docs/TESTING_KNOWN_ISSUES.md) - Known test limitations
+- [docs/development/testing/known-issues.md](docs/development/testing/known-issues.md) - Known test limitations

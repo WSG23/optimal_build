@@ -48,8 +48,9 @@ class TestEntitlementEnums:
         assert approval.category == EntApprovalCategory.PLANNING
 
         stored_value = await session.execute(
-            sa.text("SELECT category::text FROM ent_approval_types WHERE id = :id"),
-            {"id": approval.id},
+            sa.select(sa.cast(EntApprovalType.category, sa.String)).where(
+                EntApprovalType.id == approval.id
+            )
         )
         assert stored_value.scalar_one() == "planning"
 
@@ -66,7 +67,8 @@ class TestEntitlementEnums:
         assert roadmap_item.status == EntRoadmapStatus.IN_PROGRESS
 
         stored_value = await session.execute(
-            sa.text("SELECT status::text FROM ent_roadmap_items WHERE id = :id"),
-            {"id": roadmap_item.id},
+            sa.select(sa.cast(EntRoadmapItem.status, sa.String)).where(
+                EntRoadmapItem.id == roadmap_item.id
+            )
         )
         assert stored_value.scalar_one() == "in_progress"

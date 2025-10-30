@@ -146,7 +146,7 @@
 
 **Option A (Preferred):**
 ```markdown
-## TESTING_KNOWN_ISSUES.md
+## docs/development/testing/known-issues.md
 
 ### Frontend Test Harness
 - CadUploadPage crashes on network error
@@ -174,7 +174,7 @@ catch (err) {
 
 Before touching frontend code, verify:
 
-- [ ] Did I read UI_STATUS.md?
+- [ ] Did I read `docs/planning/ui-status.md`?
 - [ ] Do I understand this is test UI, not production?
 - [ ] Am I about to polish test UI? (If yes, STOP)
 - [ ] Is this blocking backend work? (If no, defer)

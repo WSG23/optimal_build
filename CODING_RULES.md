@@ -529,8 +529,8 @@ UI Manual Testing:
 Before proposing work, AI agents must read:
 - [`docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) (MANDATORY TESTING CHECKLIST section)
 - Your phase section in [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md)
-- [`TESTING_KNOWN_ISSUES.md`](TESTING_KNOWN_ISSUES.md) (check for known test failures before reporting)
-- [`UI_STATUS.md`](UI_STATUS.md) (understand UI implementation status)
+- [`docs/development/testing/known-issues.md`](docs/development/testing/known-issues.md) (check for known test failures before reporting)
+- [`ui-status.md`](docs/planning/ui-status.md) (understand UI implementation status)
 - [`TESTING_DOCUMENTATION_SUMMARY.md`](TESTING_DOCUMENTATION_SUMMARY.md) (find smoke/regression suites)
 - [`README.md`](README.md) (`make dev` notes for log monitoring)
 
@@ -582,8 +582,8 @@ When completing a feature, ask yourself:
 - [ ] Did I provide backend pytest commands?
 - [ ] Did I provide frontend test commands (if applicable)?
 - [ ] Did I provide specific UI manual test steps?
-- [ ] Did I reference TESTING_KNOWN_ISSUES.md to avoid duplicate reports?
-- [ ] Did I check UI_STATUS.md to understand current implementation state?
+- [ ] Did I reference `docs/development/testing/known-issues.md` to avoid duplicate reports?
+- [ ] Did I check `docs/planning/ui-status.md` to understand current implementation state?
 
 **If you answered NO to any of these, your work is incomplete.**
 
@@ -747,7 +747,7 @@ make test
 - Backend critical paths: >80%
 - Backend overall: >70%
 - Frontend critical paths: Covered
-- Frontend overall: Best effort (JSDOM timing issues documented in TESTING_KNOWN_ISSUES.md)
+- Frontend overall: Best effort (JSDOM timing issues documented in `docs/development/testing/known-issues.md`)
 
 **Enforcement:**
 - CI blocks merges without passing tests
@@ -755,7 +755,7 @@ make test
 - Phase gate checks verify test coverage before phase completion
 
 **Exceptions:**
-- Frontend tests have known JSDOM timing issues (see TESTING_KNOWN_ISSUES.md)
+- Frontend tests have known JSDOM timing issues (see `docs/development/testing/known-issues.md`)
 - Test harness UI (non-production) may have lower coverage
 - Document test gaps in commit messages if test is deferred
 

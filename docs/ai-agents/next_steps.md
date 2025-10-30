@@ -13,7 +13,7 @@
 **New to this project? Follow these steps:**
 
 ### Step 0: Understand Frontend UI Status (3 min) 🚨 CRITICAL
-→ Read [UI_STATUS.md](../UI_STATUS.md) FIRST
+→ Read [ui-status.md](../planning/ui-status.md) FIRST
 
 **This prevents massive waste of time:**
 - ❌ Polishing test UI that will be replaced
@@ -34,7 +34,7 @@ Look for:
 - ❌ What's not started
 
 ### Step 2: Check for Known Issues (5 min)
-→ Read [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md)
+→ Read [Testing Known Issues](../development/testing/known-issues.md)
 
 This prevents you from:
 - ❌ Investigating known test harness issues
@@ -44,7 +44,7 @@ This prevents you from:
 **⚠️ IMPORTANT:** When you fix a known issue or discover a new test limitation, you MUST update this file. See step 7b below for the workflow.
 
 ### Step 3: Understand the Codebase (5 min)
-→ Read [FEATURES.md](../FEATURES.md) (just scan headers)
+→ Read [features.md](../planning/features.md) (just scan headers)
 → Read [CODING_RULES.md](../CODING_RULES.md) (reference while coding)
 
 ### Step 4: Choose Your Task (5 min)
@@ -107,9 +107,9 @@ This prevents you from:
 - Find your phase section
 - Note: Requirements, Acceptance Criteria, Estimated Effort
 
-**2. Check FEATURES.md for details**
+**2. Check features for details**
 - The plan will reference section headers (e.g., "Phase 1D: Business Performance Management")
-- Read those sections in [FEATURES.md](../FEATURES.md)
+- Read those sections in [features.md](../planning/features.md)
 - This is the detailed specification
 
 **3. Verify dependencies**
@@ -119,9 +119,9 @@ This prevents you from:
 
 **4. Review mandatory testing guides**
 - Locate the phase-specific testing notes in:
-  - [`TESTING_KNOWN_ISSUES.md`](../TESTING_KNOWN_ISSUES.md) – search for the phase name (e.g., "Phase 2A") to see manual flows that must be re-run
-  - [`UI_STATUS.md`](../UI_STATUS.md) – confirm which UI surfaces require verification
-  - [`TESTING_DOCUMENTATION_SUMMARY.md`](../TESTING_DOCUMENTATION_SUMMARY.md) – find the "minimum coverage" smoke or regression suites
+  - [`Testing Known Issues`](../development/testing/known-issues.md) – search for the phase name (e.g., "Phase 2A") to see manual flows that must be re-run
+  - [`ui-status.md`](../planning/ui-status.md) – confirm which UI surfaces require verification
+  - [`Testing Documentation Summary`](../development/testing/summary.md) – find the "minimum coverage" smoke or regression suites
   - [`README.md`](../README.md) – the `make dev` section explains how to monitor `.devstack/backend.log` while testing
 - Keep those checklists open so your "Next steps" always match the documented expectations
 
@@ -951,7 +951,7 @@ Phase 3+: Later phases (depend on Phase 2)
 | **"What should I build next?"** | Use decision tree above |
 | **"Phase 2C is done - what's next?"** | 🛑 STOP - Do Expansion Window 1 (add 4 jurisdictions) BEFORE Phase 2D |
 | **"How do I add a jurisdiction?"** | [jurisdiction_expansion_playbook.md](jurisdiction_expansion_playbook.md) |
-| **"Are there known test issues?"** | [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) |
+| **"Are there known test issues?"** | [Testing Known Issues](../development/testing/known-issues.md) |
 | **"What are the requirements?"** | [FEATURES.md](../FEATURES.md) + phase section in delivery plan |
 | **"How should I write code?"** | [CODING_RULES.md](../CODING_RULES.md) |
 | **"How do I update docs?"** | See "Update Workflow" above |

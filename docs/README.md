@@ -14,7 +14,7 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 
 ### Core Planning Documents:
 - [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) - Complete roadmap and current status
-- [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) - What to build next
+- [ai-agents/next_steps.md](ai-agents/next_steps.md) - What to build next
 - [handoff_playbook.md](handoff_playbook.md) - Session handoff guide
 
 ### Feature-Specific Guides:
@@ -23,9 +23,9 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 - [demos/agents_capture_demo.md](demos/agents_capture_demo.md) - Demo script
 
 ### Testing & Quality:
-- [../TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) - **Known test harness issues** (critical for AI agents)
-- [../TESTING_DOCUMENTATION_SUMMARY.md](../TESTING_DOCUMENTATION_SUMMARY.md) - Overview of testing workflows
-- [../TESTING_ADVISORY.md](../TESTING_ADVISORY.md) - Phase 1B testing guide
+- [development/testing/known-issues.md](development/testing/known-issues.md) - **Known test harness issues** (critical for AI agents)
+- [development/testing/summary.md](development/testing/summary.md) - Overview of testing workflows
+- [development/testing/advisory.md](development/testing/advisory.md) - Phase 1B testing guide
 
 ### Validation & User Research:
 - [validation/live_testing_guide.md](validation/live_testing_guide.md) - Manual UAT testing procedures (Finance & Intelligence pages)
@@ -49,10 +49,10 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 ## 🎯 Quick Decision Tree
 
 **Question:** "What should I build next?"
-→ Check [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md)
+→ Check [ai-agents/next_steps.md](ai-agents/next_steps.md)
 
 **Question:** "Is this feature in scope?"
-→ Check [FEATURES.md](../FEATURES.md)
+→ Check [planning/features.md](planning/features.md)
 
 **Question:** "What phase are we in?"
 → Check [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
@@ -64,10 +64,10 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 → Check feature-specific guides in `agents/` or `frontend/`
 
 **Question:** "Test is failing - is this a known issue?"
-→ Check [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md)
+→ Check [development/testing/known-issues.md](development/testing/known-issues.md)
 
 **Question:** "I fixed a test issue - how do I update docs?"
-→ Check [TESTING_DOCUMENTATION_SUMMARY.md](../TESTING_DOCUMENTATION_SUMMARY.md)
+→ Check [development/testing/summary.md](development/testing/summary.md)
 
 ---
 
@@ -97,7 +97,7 @@ See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for the latest st
 
 ## 🤝 Getting Help
 
-**For strategic questions:** Review FEATURES.md and feature_delivery_plan_v2.md
+**For strategic questions:** Review `planning/features.md` and `feature_delivery_plan_v2.md`
 **For technical questions:** Check CODING_RULES.md and existing code
 **For priority questions:** Check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 **For user questions:** Check feature-specific guides

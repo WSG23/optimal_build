@@ -338,6 +338,31 @@ python -m pytest backend/tests/test_services/test_agent_deal_pipeline.py backend
 
 ---
 
+### PDF Rendering Dependencies Absent in Sandbox
+
+**Documented by:** Codex on 2025-10-28
+**Affects:** `backend/tests/test_services/test_universal_site_pack.py`, `backend/tests/test_integration/test_pdf_download_flow.py`
+
+**Symptom:**
+PDF-related tests crash with `ImportError` from WeasyPrint because the native Cairo/Pango/GDK libraries required by the renderer are not present in the sandbox.
+
+**Root Cause:**
+The sandbox environment does not ship the system-level dependencies that WeasyPrint needs (cairo, pango, gdk-pixbuf, libffi). Installing them requires Homebrew/apt access, which is blocked in this workspace.
+
+**Impact:**
+- ✅ Application functionality works in environments where the dependencies are installed (Docker compose, developer laptops).
+- ❌ Automated PDF tests cannot run inside the sandbox; the import fails before any assertions execute.
+
+**Workaround:**
+- Skip the affected tests with `@pytest.mark.skip(reason="PDF rendering dependencies (WeasyPrint/Cairo) are unavailable in the audit sandbox")`.
+- When PDF behaviour needs verification, run the suite locally after installing the system packages (`brew install cairo pango gdk-pixbuf libffi`) or rely on manual QA exports.
+
+**Next Steps:**
+- When the sandbox grows native PDF support, remove the skip markers and move this entry to the Resolved section.
+- Consider adding a lightweight mock renderer so the logic can be exercised even without the native stack.
+
+---
+
 ### Example of AI Agent Resolution Workflow
 
 Here's how it would work when an AI agent fixes an issue:

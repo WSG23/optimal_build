@@ -4,7 +4,7 @@ This file explains the testing documentation system for both humans and AI agent
 
 ## Key Documents
 
-### 1. [TESTING_KNOWN_ISSUES.md](TESTING_KNOWN_ISSUES.md)
+### 1. [Testing Known Issues](known-issues.md)
 Tracks test harness issues that are **not bugs** in the application code.
 
 **Purpose:**
@@ -31,12 +31,12 @@ Tracks test harness issues that are **not bugs** in the application code.
 #### AI Agent discovers issue:
 1. 🤖 AI explains issue and proposes documenting it
 2. 👤 **Human decides**: "Document it" / "No, fix it" / "Document until Phase X"
-3. 🤖 AI adds to TESTING_KNOWN_ISSUES.md
+3. 🤖 AI adds to `known-issues.md`
 4. 🤖 AI adds code comments pointing to documentation
 5. 📝 AI notes "Documented by [name] on [date]"
 
 #### Human discovers issue:
-1. Add to TESTING_KNOWN_ISSUES.md "Active Issues" section
+1. Add to `known-issues.md` "Active Issues" section
 2. Add code comments in affected files
 3. Note discovery date
 4. OR ask AI agent to document it for you
@@ -57,7 +57,7 @@ Tracks test harness issues that are **not bugs** in the application code.
 
 #### Human fixes issue:
 1. Fix the issue, verify tests pass
-2. Follow maintenance checklist in TESTING_KNOWN_ISSUES.md
+2. Follow maintenance checklist in `known-issues.md`
 3. OR ask AI agent to update documentation for you
 
 ---
@@ -91,7 +91,7 @@ AI: *changes working code*
 **With documentation:**
 ```
 User: "Run tests"
-AI: "Tests failing. Checking TESTING_KNOWN_ISSUES.md..."
+AI: "Tests failing. Checking known-issues.md..."
 AI: "This is documented as known test harness timing issue.
      HTML dump shows page renders correctly. Feature works.
      Backend tests pass. Status: ✅ Feature complete, ⚠️ Test harness issue."
@@ -113,4 +113,4 @@ As of 2025-10-11:
    - Status: Fixed in Phase 1C
    - Solution: Use SQLite-compatible syntax in tests
 
-See [TESTING_KNOWN_ISSUES.md](TESTING_KNOWN_ISSUES.md) for full details.
+See [known-issues.md](known-issues.md) for full details.

@@ -205,24 +205,17 @@ class InvestmentMemorandumGenerator(PDFGenerator):
 
         # Estimate rental income based on market
         monthly_rental_psf = 12.0  # Market rate
-        annual_rental_income = float(
-            (
-                property_obj.net_lettable_area_sqm
-                or property_obj.gross_floor_area_sqm
-                or 0
-            )
-            * 10.764
-            * monthly_rental_psf
-            * 12
+        area_sqm = float(
+            property_obj.net_lettable_area_sqm or property_obj.gross_floor_area_sqm or 0
         )
+        annual_rental_income = area_sqm * 10.764 * monthly_rental_psf * 12
 
         # Operating expenses (30% of gross income)
         operating_expenses = annual_rental_income * 0.30
 
         # Property value estimation
-        estimated_value = (
-            float(property_obj.gross_floor_area_sqm or 0) * 10.764 * 3000
-        )  # PSF
+        gfa_sqm = float(property_obj.gross_floor_area_sqm or 0)
+        estimated_value = gfa_sqm * 10.764 * 3000  # PSF
 
         # Calculate metrics
         metrics = calculate_comprehensive_metrics(
@@ -234,13 +227,12 @@ class InvestmentMemorandumGenerator(PDFGenerator):
         )
 
         # Valuation approaches
+        property_size_sqf = gfa_sqm * 10.764
         valuation = value_property_multiple_approaches(
             noi=metrics.noi,
             market_cap_rate=Decimal("0.045"),  # 4.5% market cap rate
             comparable_psf=Decimal("3000"),
-            property_size_sqf=Decimal(
-                str((property_obj.gross_floor_area_sqm or 0) * 10.764)
-            ),
+            property_size_sqf=Decimal(str(property_size_sqf)),
         )
 
         return {

@@ -42,7 +42,7 @@
 
 ### Before ANY Frontend Work
 
-**Read [UI_STATUS.md](../UI_STATUS.md) at repository root.**
+**Read [ui-status.md](../docs/planning/ui-status.md) at repository root.**
 
 That document explains in detail why polishing test UI wastes time.
 

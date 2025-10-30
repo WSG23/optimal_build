@@ -135,7 +135,7 @@ Metadata updated in DB → Frontend polls status → Player streams rendered ass
 
 ## 5. Frontend Integration Plan
 
-- Keep test-harness scope minimal per [`UI_STATUS.md`](../UI_STATUS.md); changes exist only to verify backend functionality.
+- Keep test-harness scope minimal per [`ui-status.md`](planning/ui-status.md); changes exist only to verify backend functionality.
 - Site Acquisition and Feasibility UI subscribes to preview status:
   - On capture completion, call `POST` endpoint; show “rendering” banner.
   - Poll `GET` every 5 s (with exponential backoff) until status `ready` or `failed`.

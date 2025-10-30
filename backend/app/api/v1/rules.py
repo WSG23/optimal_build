@@ -15,9 +15,11 @@ from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefRule, RefZoningLayer
 from app.services.normalize import NormalizedRule, RuleNormalizer
+from app.utils.logging import get_logger
 from pydantic import BaseModel
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 def _extract_zone_code(rule: RefRule) -> str | None:
@@ -139,26 +141,56 @@ async def list_rules(
     for condition in filter_conditions:
         fallback_stmt = fallback_stmt.where(condition)
 
+    base_stmt = stmt
+    rules: list[RefRule]
+
     if review_status:
         if isinstance(review_status, str):
-            raw_statuses = review_status.split(",")
+            raw_statuses = [review_status]
         else:
-            raw_statuses = review_status
-        statuses = [
-            status.strip() for status in raw_statuses if status and status.strip()
-        ]
-        if len(statuses) == 1:
-            stmt = stmt.where(RefRule.review_status == statuses[0])
-        elif statuses:
-            stmt = stmt.where(RefRule.review_status.in_(statuses))
+            raw_statuses = list(review_status)
+        statuses: list[str] = []
+        for raw_status in raw_statuses:
+            for token in raw_status.split(","):
+                token = token.strip()
+                if token:
+                    statuses.append(token)
+        if statuses:
+            seen_ids: set[int] = set()
+            collected: list[RefRule] = []
+            for status in statuses:
+                subset_stmt = base_stmt.where(RefRule.review_status == status)
+                result = await session.execute(subset_stmt)
+                subset_rules = result.scalars().all()
+                logger.debug(
+                    "rules_filter_subset",
+                    review_status=status,
+                    subset_count=len(subset_rules),
+                )
+                for rule in subset_rules:
+                    if rule.id not in seen_ids:
+                        seen_ids.add(rule.id)
+                        collected.append(rule)
+            rules = collected
+            logger.debug(
+                "rules_filter_combined",
+                requested_statuses=statuses,
+                total=len(rules),
+            )
+        else:
+            result = await session.execute(
+                base_stmt.where(RefRule.review_status == "approved")
+            )
+            rules = result.scalars().all()
     else:
-        stmt = stmt.where(RefRule.review_status == "approved")
-
-    result = await session.execute(stmt)
-    rules = result.scalars().all()
-    if not rules and review_status is None and not filter_conditions:
-        result = await session.execute(fallback_stmt)
+        filtered_stmt = base_stmt.where(RefRule.review_status == "approved")
+        result = await session.execute(filtered_stmt)
         rules = result.scalars().all()
+        if not rules and not filter_conditions:
+            fallback_filtered = fallback_stmt.where(RefRule.review_status == "approved")
+            result = await session.execute(fallback_filtered)
+            rules = result.scalars().all()
+
     zone_codes = [_extract_zone_code(rule) for rule in rules]
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
     normalizer = RuleNormalizer()

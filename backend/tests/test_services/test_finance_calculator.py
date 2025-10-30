@@ -95,3 +95,151 @@ def test_escalate_amount_uses_latest_index() -> None:
 def test_irr_requires_sign_change(cash_flows):
     with pytest.raises(ValueError):
         calculator.irr(cash_flows)
+
+
+def test_capital_stack_summary_rounds_shares_and_ratios():
+    slices = [
+        {
+            "name": "Equity Seed",
+            "source_type": "Equity Investment",
+            "amount": Decimal("1"),
+            "metadata": {"note": "locked"},
+        },
+        {
+            "name": "Senior Loan",
+            "source_type": "Senior Loan",
+            "amount": Decimal("1"),
+            "rate": Decimal("0.05"),
+        },
+        {
+            "name": "Grant",
+            "source_type": "Grant Funding",
+            "amount": Decimal("1"),
+            "metadata": ["ignored"],
+        },
+    ]
+
+    summary = calculator.capital_stack_summary(
+        slices,
+        currency="USD",
+        total_development_cost=Decimal("2.50"),
+    )
+
+    assert summary.currency == "USD"
+    assert summary.total == Decimal("3.00")
+    assert summary.equity_total == Decimal("1.00")
+    assert summary.debt_total == Decimal("1.00")
+    assert summary.other_total == Decimal("1.00")
+    assert summary.equity_ratio == Decimal("0.3333")
+    assert summary.debt_ratio == Decimal("0.3333")
+    assert summary.other_ratio == Decimal("0.3333")
+    assert summary.loan_to_cost == Decimal("0.8000")
+    assert summary.weighted_average_debt_rate == Decimal("0.0500")
+
+    # Final slice absorbs rounding delta so the shares sum to exactly one.
+    assert summary.slices[-1].share == Decimal("0.3334")
+    # Metadata payloads are converted to immutable mappings.
+    assert dict(summary.slices[0].metadata) == {"note": "locked"}
+    assert dict(summary.slices[-1].metadata) == {}
+
+
+def test_capital_stack_summary_handles_zero_totals():
+    summary = calculator.capital_stack_summary(
+        [{"name": "Placeholder", "source_type": "", "amount": Decimal("0")}],
+        total_development_cost=Decimal("0"),
+    )
+
+    assert summary.total == Decimal("0.00")
+    assert summary.slices[0].share == Decimal("0.0000")
+    assert summary.equity_ratio is None
+    assert summary.debt_ratio is None
+    assert summary.other_ratio is None
+    assert summary.loan_to_cost is None
+    assert summary.weighted_average_debt_rate is None
+
+
+def test_drawdown_schedule_accumulates_balances():
+    entries = [
+        {"period": "M1", "equity_draw": Decimal("100.005"), "debt_draw": Decimal("0")},
+        {
+            "period": "M2",
+            "equity_draw": Decimal("50.00"),
+            "debt_draw": Decimal("75.499"),
+        },
+        {"period": "M3", "equity_draw": Decimal("0"), "debt_draw": Decimal("-20.10")},
+    ]
+
+    schedule = calculator.drawdown_schedule(entries, currency="EUR")
+
+    assert schedule.currency == "EUR"
+    assert schedule.total_equity == Decimal("150.01")
+    assert schedule.total_debt == Decimal("55.40")
+    assert schedule.peak_debt_balance == Decimal("75.50")
+    assert schedule.final_debt_balance == Decimal("55.40")
+
+    first, second, third = schedule.entries
+    assert first.total_draw == Decimal("100.01")
+    assert second.cumulative_debt == Decimal("75.50")
+    assert third.outstanding_debt == Decimal("55.40")
+
+
+def test_escalate_amount_returns_base_when_index_missing():
+    indices = [
+        RefCostIndex(
+            jurisdiction="SG",
+            series_name="steel",
+            category="material",
+            period="2024-Q2",
+            value=Decimal("150"),
+            unit="SGD/t",
+            provider="internal",
+            source="seed",
+        )
+    ]
+
+    result = calculator.escalate_amount(
+        Decimal("200"),
+        base_period="2023-Q4",
+        indices=indices,
+        series_name="steel",
+        jurisdiction="SG",
+        provider="internal",
+    )
+
+    assert result == Decimal("200.00")
+
+
+def test_escalate_amount_handles_zero_base_index():
+    indices = [
+        RefCostIndex(
+            jurisdiction="SG",
+            series_name="glass",
+            category="material",
+            period="2023-Q4",
+            value=Decimal("0"),
+            unit="SGD/m2",
+            provider="internal",
+            source="seed",
+        ),
+        RefCostIndex(
+            jurisdiction="SG",
+            series_name="glass",
+            category="material",
+            period="2024-Q1",
+            value=Decimal("120"),
+            unit="SGD/m2",
+            provider="internal",
+            source="seed",
+        ),
+    ]
+
+    escalated = calculator.escalate_amount(
+        Decimal("80"),
+        base_period="2023-Q4",
+        indices=indices,
+        series_name="glass",
+        jurisdiction="SG",
+        provider="internal",
+    )
+
+    assert escalated == Decimal("80.00")

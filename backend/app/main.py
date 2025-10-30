@@ -6,10 +6,14 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import Depends, FastAPI
-from fastapi.openapi.utils import get_openapi
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse, Response
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +26,7 @@ from app.schemas.buildable import (
     BUILDABLE_REQUEST_EXAMPLE,
     BUILDABLE_RESPONSE_EXAMPLE,
 )
+from app.middleware.security import SecurityHeadersMiddleware
 from app.schemas.finance import (
     FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
     FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
@@ -54,14 +59,37 @@ app = FastAPI(
     openapi_tags=TAGS_METADATA,
 )
 
-# app.add_middleware(SecurityHeadersMiddleware)  # Temporarily disabled for development
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for testing
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+limiter = Limiter(key_func=get_remote_address, default_limits=[settings.API_RATE_LIMIT])
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    """Return a standard response when clients exceed the configured rate limit."""
+
+    log_event(
+        logger,
+        "rate_limit_exceeded",
+        client_host=request.client.host if request.client else "unknown",
+        path=request.url.path,
+    )
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Request rate limit exceeded. Please retry later.",
+        },
+    )
+
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

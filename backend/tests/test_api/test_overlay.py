@@ -23,6 +23,7 @@ SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 async def test_overlay_run_and_decisions(
     app_client: AsyncClient,
     async_session_factory,
+    singapore_rules,
     monkeypatch,
 ) -> None:
     sample_path = SAMPLES_DIR / "sample_floorplan.json"

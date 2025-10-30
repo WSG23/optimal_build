@@ -22,7 +22,18 @@
 
 ## Active (Do Next)
 
-**Nothing - finish Phase 2C Finance work first**
+### Documentation Consolidation – Link Remediation (Phase 1)
+**Status:** In progress (paused 2025-10-29)
+**Priority:** Medium (resume once coverage audit breaks are done)
+**Summary:** File relocation complete; `scripts/verify_docs.py` now reports 81 broken references.
+
+**Next steps:**
+- Update legacy links in docs to new paths (`docs/development/testing/known-issues.md`, `docs/planning/ui-status.md`, etc.)
+- Resolve references to files that no longer exist (e.g., `parse.py`, `overlay_ingest.py`)
+- Re-run `.venv/bin/python scripts/verify_docs.py` until the report is clean
+- Continue consolidation plan with docs/README index + CI hook once links are fixed
+
+**Context:** Started during coverage audit; paused to avoid conflicting with Codex Cloud’s test work.
 
 ---
 

@@ -1,6 +1,6 @@
 # Technical Debt Inventory
 
-**Last updated:** 2025-10-27
+**Last updated:** 2025-10-29
 **Purpose:** Comprehensive list of all known technical debt so AI agents don't forget about deferred work
 
 ---
@@ -147,7 +147,7 @@ Inc.com article analyzed 47 failed startups. Common pattern:
   - Set up monitoring/alerts
   - Load test for 10x traffic
 
-**Documentation:** [PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md](PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md) - Complete checklist
+**Documentation:** [docs/audits/pre-phase-2d-audit.md](../audits/pre-phase-2d-audit.md) - Complete checklist
 
 **Article Source:** [47 Startups Failed - Inc.com](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
 
@@ -209,6 +209,24 @@ Full instructions in `.github/ISSUE_TEMPLATE/tier2-dependency-pinning.md`
 
 **Exception:** `.coding-rules-exceptions.yml` lines 27-29 (rule_4_dependency_pinning)
 **Tracked in:** [BACKLOG.md](BACKLOG.md)
+
+---
+
+### Documentation Consolidation – Link Remediation (Phase 1)
+**Status:** In progress (paused 2025-10-29)
+**Priority:** Medium
+**Estimate:** 1-2 hours once resumed
+**Risk:** Broken documentation guidance; AI agents following outdated instructions
+
+**Background:** Root Markdown files relocated into `docs/` hierarchy; `scripts/verify_docs.py` now reports 81 broken references (legacy paths like `TESTING_KNOWN_ISSUES.md`, `UI_STATUS.md`, etc.).
+
+**Next Steps:**
+- Update doc references to new locations (e.g., `docs/development/testing/known-issues.md`, `docs/planning/ui-status.md`).
+- Resolve references to removed files by linking to current equivalents or rewriting guidance.
+- Re-run `.venv/bin/python scripts/verify_docs.py` until no broken references remain.
+- Resume consolidation plan (docs/README index, CI hook) after link cleanup.
+
+**Tracking:** Also logged in [docs/planning/backlog.md](backlog.md) (Active section) and detailed in [docs/documentation_consolidation_strategy.md](../documentation_consolidation_strategy.md).
 
 ---
 

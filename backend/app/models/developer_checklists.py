@@ -113,6 +113,8 @@ class DeveloperPropertyChecklist(Base):
     item_title = Column(String(255), nullable=False)
     item_description = Column(Text, nullable=True)
     priority = Column(Enum(ChecklistPriority), nullable=False)
+    requires_professional = Column(Boolean, nullable=False, default=False)
+    professional_type = Column(String(100), nullable=True)
     status = Column(
         Enum(ChecklistStatus),
         nullable=False,
@@ -166,6 +168,8 @@ class DeveloperPropertyChecklist(Base):
             "item_description": self.item_description,
             "priority": self.priority.value,
             "status": self.status.value,
+            "requires_professional": self.requires_professional,
+            "professional_type": self.professional_type,
             "assigned_to": str(self.assigned_to) if self.assigned_to else None,
             "due_date": self.due_date.isoformat() if self.due_date else None,
             "completed_date": (

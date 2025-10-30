@@ -16,6 +16,8 @@ exceptions:
     - backend/migrations/versions/20250220_000013_add_performance_snapshots.py
     - backend/migrations/versions/20251013_000014_add_developer_due_diligence_checklists.py
     - backend/migrations/versions/20251013_000015_add_developer_condition_assessments.py
+    # Foreign key indexes - uses inspector.get_indexes() guard in downgrade
+    - backend/migrations/versions/20251028_000020_add_foreign_key_indexes.py
     # Regstack migrations - different schema
     - db/versions/20250216000000_init_regstack.py
     - db/versions/20250217000100_add_provenance_checksum.py

@@ -423,11 +423,13 @@ async def test_ruleset_serialisation_includes_overlays(async_session_factory, cl
         session.add_all([layer, rule])
         await session.commit()
 
-    response = await client.get("/api/v1/rules")
+    response = await client.get("/api/v1/rules?review_status=needs_review")
     assert response.status_code == 200
     payload = response.json()
     items = payload.get("items", [])
-    assert items, "Expected at least one rule to be returned"
+    assert (
+        items
+    ), "Expected at least one rule to be returned (filtered by review_status=needs_review)"
     overlays = items[0].get("overlays")
     hints = items[0].get("advisory_hints")
     assert "heritage_conservation" in overlays

@@ -31,7 +31,7 @@ mkdir -p docs/archive
 git mv PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md \
        docs/archive/PRE_PHASE_2D_INFRASTRUCTURE_AUDIT_COMPLETED_$(date +%Y-%m-%d).md
 
-# Update TECHNICAL_DEBT.md - mark item #3 as "Completed" with date
+# Update docs/planning/technical-debt.md - mark item #3 as "Completed" with date
 # Update feature_delivery_plan_v2.md - add completion date to Phase 2D gate
 
 # Commit
@@ -85,7 +85,7 @@ Work requiring money or human expertise (defer until funding/hiring):
 - Compliance certifications (ISO, SOC2) ($15K-50K)
 - CDN setup, production monitoring, load testing infrastructure
 
-**All deferred work documented in:** [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md)
+**All deferred work documented in:** [transition-checklist.md](../planning/transition-checklist.md)
 
 ---
 
@@ -219,8 +219,21 @@ cat .github/workflows/*.yaml | grep pytest
 
 **Progress (2025-10-22):**
 - ✅ Rewired the repository httpx shims (`httpx/__init__.py`, `backend/httpx.py`) to hand off to the real `httpx` package when it is installed; FastAPI’s `TestClient` now imports cleanly without the previous `AttributeError`.
-- ⚠️ Baseline run `./.venv/bin/python -m pytest backend/tests --cov=backend/app --cov-report=term-missing --maxfail=1` currently stops at `backend/tests/pwp/test_buildable_request_aliases.py::test_buildable_request_accepts_camel_case` (stubbed defaults force 4.0 m vs. requested 5.6 m). Coverage at this checkpoint is **33.54 %**, leaving a 46.46 pp gap to the 80 % target.
+- ⚠️ Baseline run `./.venv/bin/python -m pytest backend/tests --cov=backend/app --cov-report=term-missing --maxfail=1` currently stops at `backend/tests/pwp/test_buildable_request_accepts_camel_case`. Coverage at this checkpoint is **33.54 %**, leaving a 46.46 pp gap to the 80 % target.
 - ⚠️ Allowing the suite to continue surfaces additional failures that the audit must triage: `backend/tests/reference/test_reference_endpoints.py::test_ergonomics_endpoint_returns_seeded_metrics`, `backend/tests/reference/test_reference_endpoints.py::test_products_endpoint_handles_seeded_database`, `backend/tests/test_api/test_audit.py::test_audit_chain_and_diffs`, `backend/tests/test_api/test_developer_checklist_templates.py::test_create_update_delete_template`, `backend/tests/test_api/test_developer_site_acquisition.py::test_developer_log_property_returns_envelope`, `backend/tests/test_api/test_feasibility.py::test_submit_feasibility_assessment`, `backend/tests/test_api/test_finance_project_scope.py::test_finance_feasibility_rejects_foreign_fin_project`, `backend/tests/test_api/test_imports.py::test_upload_import_persists_metadata`, `backend/tests/test_api/test_openapi_generation.py::test_openapi_includes_expected_paths`.
+
+**Progress (2025-10-28):**
+- ✅ Rules API now accepts comma-separated `review_status` filters; `test_rules_endpoint_supports_review_status_filter` passes with combined statuses.
+- ✅ Entitlement enum tests use portable `sa.cast` expressions (no more `::text`); both assertions pass under SQLite.
+- ✅ Developer checklist model tests now run via the new `db_session` fixture alias and the models expose `requires_professional` / `professional_type` columns.
+- ✅ Agent performance + AEC workflow suites pass after refreshing fixtures and golden manifests; full run now reports **213 passed, 23 skipped, 0 failed**.
+- ⚠️ PDF integration/service suites are skipped in the sandbox (`backend/tests/test_services/test_universal_site_pack.py`, `backend/tests/test_integration/test_pdf_download_flow.py`) because the WeasyPrint/Cairo stack is unavailable; documented in `development/testing/known-issues.md`.
+- ⚠️ Full audit run `JOB_QUEUE_BACKEND=inline .venv/bin.python -m pytest backend/tests --cov=backend/app --cov-report=term-missing` now completes with **68.53 %** coverage (up +35.0 pp from baseline). Coverage still <80 %; remaining hotspots include the utility helpers (`backend/app/utils/logging.py`, `backend/app/utils/db.py`, `backend/app/utils/metrics.py`) and the feasibility/overlay services.
+- ✅ Catalogued foreign-key columns missing supporting indexes and staged Alembic revision `20251028_000020_add_foreign_key_indexes.py`; indexes will deploy with the next migration run.
+- ✅ Eliminated the production fallback for `SECRET_KEY`; the API now refuses to boot unless `SECRET_KEY` is present (pytest keeps the high-volume test default).
+- ✅ Added a slowapi-backed per-IP limiter (configured via `API_RATE_LIMIT`, default 10 requests/min; 1000/min under pytest). The limiter is registered globally in `app.main` with a 429 JSON response and verified with the full backend test suite above.
+- ✅ Confirmed the tightened CORS middleware now honours `settings.ALLOWED_ORIGINS` derived from `BACKEND_ALLOWED_ORIGINS`; defaults cover local dev hosts only (no `"*"` wildcard remains).
+- ✅ Added regression coverage for the Prometheus metrics helpers (`backend/tests/test_utils/test_metrics.py`), the geocoding service fallbacks (`backend/tests/services/test_geocoding_service.py`), the heritage overlay loaders (`backend/tests/services/test_heritage_overlay_service.py`), the Singapore compliance GFA + URA/BCA checks (`backend/tests/test_utils/test_singapore_compliance.py`), the finance calculator façade (`backend/tests/services/test_finance_calculator.py`), the storage service local fallback (`backend/tests/services/test_storage_service.py`), the reference source + HTTP client retry logic (`backend/tests/test_services/test_reference_sources.py`), the preview job queue/refresh paths (`backend/tests/test_services/test_preview_jobs.py`), and the reference document storage helper (`backend/tests/services/test_reference_storage.py`).
 
 ---
 
@@ -243,7 +256,7 @@ grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE" backend/app --include="*.py"
 ```
 
 **AI Agents Can Fix:**
-- [x] **Dependency Audit (Tier 2 - from TECHNICAL_DEBT.md):**
+- [x] **Dependency Audit (Tier 2 - from docs/planning/technical-debt.md):**
   - [ ] Update all packages with known security vulnerabilities
   - [ ] Pin all 7 dependencies (asyncpg, shapely, pandas, numpy, statsmodels, scikit-learn, reportlab)
   - [ ] Set up GitHub Dependabot (free, automated)
@@ -275,7 +288,7 @@ grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE" backend/app --include="*.py"
 - ❌ DDoS protection service (Cloudflare Pro $20-200/month) - defer until traffic justifies
 - ❌ WAF (Web Application Firewall) ($50-500/month) - defer until production traffic
 
-**Note:** Document deferred security items in **TRANSITION_PHASE_CHECKLIST.md** (to be created)
+**Note:** Document deferred security items in **transition-checklist.md** (to be created)
 
 ---
 
@@ -343,9 +356,9 @@ free -h
    - [ ] Document connection pool limits
 3. **Would infrastructure cost $50K/month at 10K users?**
    - [ ] Calculate cost per user based on current local usage
-   - [ ] Document in TRANSITION_PHASE_CHECKLIST.md for future planning
+   - [ ] Document in `transition-checklist.md` for future planning
 
-**Note:** Document deferred infrastructure items in **TRANSITION_PHASE_CHECKLIST.md** (to be created)
+**Note:** Document deferred infrastructure items in **transition-checklist.md** (to be created)
 
 ---
 
@@ -380,7 +393,7 @@ free -h
 - Run load tests
 - Document findings
 - Create runbook for future audits
-- Update TECHNICAL_DEBT.md with any deferred items
+- Update `docs/planning/technical-debt.md` with any deferred items
 
 ---
 
@@ -416,20 +429,20 @@ free -h
 
 **Documentation:**
 - ✅ Audit findings documented in this file
-- ✅ TECHNICAL_DEBT.md updated (Tier 2 marked complete)
-- ✅ Deferred items documented in [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md)
+- ✅ `docs/planning/technical-debt.md` updated (Tier 2 marked complete)
+- ✅ Deferred items documented in [transition-checklist.md](../planning/transition-checklist.md)
 - ✅ Commit all changes to git
 
 ### 📋 Deferred to Transition Phase (Documented, Not Blocking)
 
 **Security (Requires Money):**
-- 📋 Third-party security audit ($5K-15K) → See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md)
+- 📋 Third-party security audit ($5K-15K) → See [transition-checklist.md](../planning/transition-checklist.md)
 - 📋 Penetration testing ($3K-10K)
 - 📋 Compliance certifications ($15K-50K+)
 - 📋 Bug bounty program ($2K-10K/year)
 
 **Infrastructure (Requires Money):**
-- 📋 CDN setup ($20-200/month) → See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md)
+- 📋 CDN setup ($20-200/month) → See [transition-checklist.md](../planning/transition-checklist.md)
 - 📋 Production monitoring ($15-100/month)
 - 📋 Load testing infrastructure ($50-300/month)
 - 📋 Auto-scaling ($200-1000/month)
@@ -478,7 +491,7 @@ free -h
 ## 📚 References
 
 - **Article:** [47 Startups Failed - Inc.com](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
-- **Related:** [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) - Ongoing debt tracking
+- **Related:** [docs/planning/technical-debt.md](../planning/technical-debt.md) - Ongoing debt tracking
 - **Related:** [CODING_RULES.md](CODING_RULES.md) - Quality standards
 - **Related:** [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) - Phase progression
 
@@ -491,7 +504,7 @@ free -h
 1. **STOP** - Do NOT start Phase 2D immediately
 2. **Run this 2-week audit sprint** (this document)
 3. **Fix all critical issues** (database, testing, security, infrastructure)
-4. **Update TECHNICAL_DEBT.md** with any deferred items
+4. **Update `docs/planning/technical-debt.md`** with any deferred items
 5. **THEN** proceed to Phase 2D with solid foundation
 
 **This 2-week investment prevents 18 months of technical debt hell.**

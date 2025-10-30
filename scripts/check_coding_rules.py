@@ -433,25 +433,22 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
 
     errors: list[str] = []
 
-    guidance_file = repo_root / "docs" / "NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"
+    guidance_file = repo_root / "docs" / "ai-agents" / "next_steps.md"
     plan_file = repo_root / "docs" / "feature_delivery_plan_v2.md"
 
     required_refs = [
-        "TESTING_KNOWN_ISSUES.md",
-        "UI_STATUS.md",
-        "TESTING_DOCUMENTATION_SUMMARY.md",
+        "development/testing/known-issues.md",
+        "planning/ui-status.md",
+        "development/testing/summary.md",
         "README.md",
     ]
 
     # NEW: Required content sections (Rule 8.1)
     required_content_sections = [
-        (
-            "MANDATORY TESTING CHECKLIST",
-            "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md",
-        ),
-        ("Backend tests:", "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"),
-        ("Frontend tests", "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"),
-        ("Manual UI testing:", "docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"),
+        ("MANDATORY TESTING CHECKLIST", "docs/ai-agents/next_steps.md"),
+        ("Backend tests:", "docs/ai-agents/next_steps.md"),
+        ("Frontend tests", "docs/ai-agents/next_steps.md"),
+        ("Manual UI testing:", "docs/ai-agents/next_steps.md"),
     ]
 
     def _read(path: Path) -> str:
