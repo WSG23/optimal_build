@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import importlib.util
+import sys
+import types
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Tuple
-import importlib.util
-import sys
-import types
 
 import pytest
 
@@ -43,8 +43,10 @@ _sqlalchemy.__all__ = ["select"]
 _ext_pkg = types.ModuleType("sqlalchemy.ext")
 _asyncio_pkg = types.ModuleType("sqlalchemy.ext.asyncio")
 
+
 class AsyncSession:  # pragma: no cover - compatibility shim
     pass
+
 
 _asyncio_pkg.AsyncSession = AsyncSession
 _ext_pkg.asyncio = _asyncio_pkg

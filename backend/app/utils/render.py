@@ -34,7 +34,7 @@ except (
 else:
     _HTML_FACTORY = cast(HTMLFactory, _weasyprint_module.HTML)
 
-_PDF_HEADER = b"%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"
+_PDF_HEADER = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
 
 
 def _escape_pdf_text(value: str) -> str:

@@ -477,7 +477,7 @@ class GPSPropertyLogger:
 
     @staticmethod
     def _nearest_plan_completion(
-        development_plans: List[Dict[str, Any]]
+        development_plans: List[Dict[str, Any]],
     ) -> Optional[str]:
         nearest_ribbon: Optional[str] = None
         shortest_distance = float("inf")

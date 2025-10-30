@@ -8,11 +8,11 @@ import pytest
 
 pytestmark = pytest.mark.no_db
 
-from fastapi import HTTPException
-
 import importlib.util
 import sys
 from pathlib import Path
+
+from fastapi import HTTPException
 
 _ROOT = Path(__file__).resolve().parents[3]
 
@@ -56,7 +56,9 @@ def _build_project(**overrides: object) -> NewFeasibilityProjectInput:
         "site_address": overrides.pop("site_address", "123 Example Street"),
         "site_area_sqm": overrides.pop("site_area_sqm", 2400.0),
         "land_use": overrides.pop("land_use", "mixed_use_precinct"),
-        "target_gross_floor_area_sqm": overrides.pop("target_gross_floor_area_sqm", 3600.0),
+        "target_gross_floor_area_sqm": overrides.pop(
+            "target_gross_floor_area_sqm", 3600.0
+        ),
         "building_height_meters": overrides.pop("building_height_meters", 45.0),
     }
     return NewFeasibilityProjectInput(**base_payload)
@@ -78,7 +80,9 @@ def test_run_feasibility_assessment_rejects_unknown_rules() -> None:
     """Submitting an unknown rule identifier should raise a 400 error."""
 
     project = _build_project(name="Compliant Site")
-    request = FeasibilityAssessmentRequest(project=project, selected_rule_ids=["unknown-rule"])
+    request = FeasibilityAssessmentRequest(
+        project=project, selected_rule_ids=["unknown-rule"]
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         run_feasibility_assessment(request)

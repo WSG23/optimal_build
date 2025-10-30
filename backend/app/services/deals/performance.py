@@ -465,7 +465,7 @@ def _normalise_roi_snapshot(payload: Mapping[str, object]) -> dict[str, object] 
 
 
 def _summarise_roi_snapshots(
-    snapshots: Sequence[Mapping[str, object]]
+    snapshots: Sequence[Mapping[str, object]],
 ) -> dict[str, object]:
     if not snapshots:
         return {}

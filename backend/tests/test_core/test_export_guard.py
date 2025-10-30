@@ -1,5 +1,6 @@
-from app.core.auth import PolicyContext, SignoffSnapshot, WorkspaceRole
 import pytest
+
+from app.core.auth import PolicyContext, SignoffSnapshot, WorkspaceRole
 
 pytest.importorskip("sqlalchemy")
 

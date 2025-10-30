@@ -219,9 +219,9 @@ class AgentCommissionService:
             "commission_type": record.commission_type.value,
             "status": record.status.value,
             "agent_id": str(record.agent_id),
-            "amount": float(record.commission_amount)
-            if record.commission_amount
-            else None,
+            "amount": (
+                float(record.commission_amount) if record.commission_amount else None
+            ),
             "basis_amount": float(record.basis_amount) if record.basis_amount else None,
             "actor_id": str(actor_id) if actor_id else None,
         }

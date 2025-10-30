@@ -98,6 +98,7 @@ if _SQLALCHEMY_AVAILABLE:
     from sqlalchemy.util import concurrency
 
     if not concurrency.have_greenlet:  # pragma: no cover - environment specific
+
         class _AsyncLock:
             def __init__(self) -> None:
                 self._lock = asyncio.Lock()
@@ -123,9 +124,11 @@ if _SQLALCHEMY_AVAILABLE:
         concurrency.greenlet_spawn = _greenlet_spawn
         concurrency.have_greenlet = True
 
-        from sqlalchemy.ext.asyncio import engine as _async_engine
-        from sqlalchemy.ext.asyncio import result as _async_result
-        from sqlalchemy.ext.asyncio import session as _async_session
+        from sqlalchemy.ext.asyncio import (
+            engine as _async_engine,
+            result as _async_result,
+            session as _async_session,
+        )
 
         _async_engine.greenlet_spawn = _greenlet_spawn
         _async_session.greenlet_spawn = _greenlet_spawn
@@ -134,6 +137,7 @@ if _SQLALCHEMY_AVAILABLE:
     try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
         from sqlalchemy.pool import StaticPool as _StaticPool
     except (ImportError, AttributeError):  # pragma: no cover
+
         class _StaticPool:  # type: ignore[too-many-ancestors]
             """Placeholder used when running against the in-repo SQLAlchemy stub."""
 
@@ -458,6 +462,7 @@ if _SQLALCHEMY_AVAILABLE:
             await session.commit()
 
         yield
+
 else:
 
     @pytest.fixture(autouse=True)

@@ -258,16 +258,20 @@ async def create_commission(
         agent_id=payload.agent_id,
         commission_type=payload.commission_type,
         status=payload.status,
-        basis_amount=float(payload.basis_amount)
-        if payload.basis_amount is not None
-        else None,
+        basis_amount=(
+            float(payload.basis_amount) if payload.basis_amount is not None else None
+        ),
         basis_currency=payload.basis_currency,
-        commission_rate=float(payload.commission_rate)
-        if payload.commission_rate is not None
-        else None,
-        commission_amount=float(payload.commission_amount)
-        if payload.commission_amount is not None
-        else None,
+        commission_rate=(
+            float(payload.commission_rate)
+            if payload.commission_rate is not None
+            else None
+        ),
+        commission_amount=(
+            float(payload.commission_amount)
+            if payload.commission_amount is not None
+            else None
+        ),
         introduced_at=payload.introduced_at,
         metadata=payload.metadata,
         actor_id=actor,

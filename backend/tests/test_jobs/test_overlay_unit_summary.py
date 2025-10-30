@@ -1,5 +1,6 @@
-from app.core.models.geometry import GeometryGraph, Level, Space
 import pytest
+
+from app.core.models.geometry import GeometryGraph, Level, Space
 
 pytest.importorskip("sqlalchemy")
 

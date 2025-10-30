@@ -30,7 +30,7 @@ _T = TypeVar("_T")
 
 
 async def _run_with_temporary_async_session(
-    callback: Callable[[AsyncSession], Awaitable[_T]]
+    callback: Callable[[AsyncSession], Awaitable[_T]],
 ) -> _T:
     """Execute ``callback`` with an isolated async session for sync callers."""
 
