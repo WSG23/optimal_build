@@ -149,7 +149,7 @@ class TestAssetFinanceBreakdown:
         assert breakdown.asset_type == "residential"
         assert breakdown.allocation_pct == Decimal("0.50")
         assert breakdown.nia_sqm == Decimal("1000")
-        assert breakdown.capex_sgd == Decimal("2000000")
+        assert breakdown.estimated_capex_sgd == Decimal("2000000")
         assert breakdown.annual_revenue_sgd == Decimal("600000")
 
     def test_full_breakdown(self) -> None:
@@ -237,7 +237,7 @@ class TestBuildAssetFinancials:
         assert breakdown.asset_type == "residential"
         assert breakdown.allocation_pct == Decimal("0.50")
         assert breakdown.nia_sqm == Decimal("1000.00")
-        assert breakdown.capex_sgd == Decimal("2000000.00")
+        assert breakdown.estimated_capex_sgd == Decimal("2000000.00")
         # Annual revenue = 1000 * 50 * 12 = 600,000
         assert breakdown.annual_revenue_sgd == Decimal("600000.00")
         # Vacancy loss = 600000 * 0.05 = 30,000
@@ -337,7 +337,7 @@ class TestSerialiseBreakdown:
         assert schema.asset_type == "residential"
         assert schema.allocation_pct == "0.50"
         assert schema.nia_sqm == "1000.00"
-        assert schema.capex_sgd == "2000000.00"
+        assert schema.estimated_capex_sgd == "2000000.00"
         assert schema.annual_revenue_sgd == "600000.00"
 
     def test_serialise_full_breakdown(self) -> None:

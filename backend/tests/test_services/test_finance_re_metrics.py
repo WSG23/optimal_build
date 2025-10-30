@@ -111,7 +111,7 @@ class TestCalculateCashOnCashReturn:
     def test_basic_cash_on_cash(self) -> None:
         """Test basic cash-on-cash return."""
         result = calculate_cash_on_cash_return(
-            annual_pre_tax_cash_flow=20000, total_cash_invested=200000
+            annual_cash_flow=20000, initial_cash_investment=200000
         )
         # 20000 / 200000 = 0.10 = 10%
         assert result == Decimal("0.10")
@@ -119,21 +119,21 @@ class TestCalculateCashOnCashReturn:
     def test_cash_on_cash_different_values(self) -> None:
         """Test cash-on-cash with different values."""
         result = calculate_cash_on_cash_return(
-            annual_pre_tax_cash_flow=15000, total_cash_invested=150000
+            annual_cash_flow=15000, initial_cash_investment=150000
         )
         assert result == Decimal("0.10")  # 10%
 
     def test_cash_on_cash_zero_investment(self) -> None:
         """Test cash-on-cash with zero investment returns None."""
         result = calculate_cash_on_cash_return(
-            annual_pre_tax_cash_flow=20000, total_cash_invested=0
+            annual_cash_flow=20000, initial_cash_investment=0
         )
         assert result is None
 
     def test_cash_on_cash_negative_cash_flow(self) -> None:
         """Test cash-on-cash with negative cash flow."""
         result = calculate_cash_on_cash_return(
-            annual_pre_tax_cash_flow=-5000, total_cash_invested=100000
+            annual_cash_flow=-5000, initial_cash_investment=100000
         )
         assert result == Decimal("-0.05")  # -5%
 
@@ -144,20 +144,20 @@ class TestCalculateGrossRentMultiplier:
     def test_basic_grm(self) -> None:
         """Test basic GRM calculation."""
         result = calculate_gross_rent_multiplier(
-            property_price=500000, gross_annual_income=50000
+            property_value=500000, annual_gross_income=50000
         )
         # 500000 / 50000 = 10
         assert result == Decimal("10.00")
 
     def test_grm_zero_income(self) -> None:
         """Test GRM with zero income returns None."""
-        result = calculate_gross_rent_multiplier(property_price=500000, gross_annual_income=0)
+        result = calculate_gross_rent_multiplier(property_value=500000, annual_gross_income=0)
         assert result is None
 
     def test_grm_different_values(self) -> None:
         """Test GRM with different values."""
         result = calculate_gross_rent_multiplier(
-            property_price=1000000, gross_annual_income=80000
+            property_value=1000000, annual_gross_income=80000
         )
         assert result == Decimal("12.50")
 
@@ -247,18 +247,18 @@ class TestCalculateVacancyLoss:
 
     def test_basic_vacancy_loss(self) -> None:
         """Test basic vacancy loss calculation."""
-        result = calculate_vacancy_loss(gross_rental_income=100000, vacancy_rate=0.05)
+        result = calculate_vacancy_loss(potential_gross_income=100000, vacancy_rate=0.05)
         # 100000 * 0.05 = 5000
         assert result == Decimal("5000.00")
 
     def test_vacancy_loss_zero_rate(self) -> None:
         """Test vacancy loss with zero rate."""
-        result = calculate_vacancy_loss(gross_rental_income=100000, vacancy_rate=0)
+        result = calculate_vacancy_loss(potential_gross_income=100000, vacancy_rate=0)
         assert result == Decimal("0.00")
 
     def test_vacancy_loss_different_values(self) -> None:
         """Test vacancy loss with different values."""
-        result = calculate_vacancy_loss(gross_rental_income=80000, vacancy_rate=0.10)
+        result = calculate_vacancy_loss(potential_gross_income=80000, vacancy_rate=0.10)
         assert result == Decimal("8000.00")  # 10%
 
 
@@ -268,7 +268,7 @@ class TestCalculateOperatingExpenseRatio:
     def test_basic_oer(self) -> None:
         """Test basic OER calculation."""
         result = calculate_operating_expense_ratio(
-            operating_expenses=30000, gross_operating_income=100000
+            operating_expenses=30000, effective_gross_income=100000
         )
         # 30000 / 100000 = 0.30 = 30%
         assert result == Decimal("0.30")
@@ -276,14 +276,14 @@ class TestCalculateOperatingExpenseRatio:
     def test_oer_zero_income(self) -> None:
         """Test OER with zero income returns None."""
         result = calculate_operating_expense_ratio(
-            operating_expenses=30000, gross_operating_income=0
+            operating_expenses=30000, effective_gross_income=0
         )
         assert result is None
 
     def test_oer_different_values(self) -> None:
         """Test OER with different values."""
         result = calculate_operating_expense_ratio(
-            operating_expenses=40000, gross_operating_income=80000
+            operating_expenses=40000, effective_gross_income=80000
         )
         assert result == Decimal("0.50")  # 50%
 
@@ -367,12 +367,15 @@ class TestCalculateComprehensiveMetrics:
     def test_comprehensive_metrics_minimal(self) -> None:
         """Test comprehensive metrics with minimal inputs."""
         metrics = calculate_comprehensive_metrics(
-            gross_rental_income=100000, operating_expenses=30000, property_value=1000000
+            gross_rental_income=100000,
+            operating_expenses=30000,
+            property_value=1000000,
+            vacancy_rate=0,
         )
         assert metrics.noi == Decimal("70000.00")
         assert metrics.cap_rate == Decimal("0.07")
-        assert metrics.rental_yield == Decimal("0.10")
-        assert metrics.operating_expense_ratio == Decimal("0.30")
+        assert metrics.rental_yield == Decimal("0.07")  # NOI / property_value
+        assert metrics.operating_expense_ratio == Decimal("0.30")  # 30000/100000
 
     def test_comprehensive_metrics_with_financing(self) -> None:
         """Test comprehensive metrics with financing."""
@@ -382,6 +385,7 @@ class TestCalculateComprehensiveMetrics:
             property_value=1000000,
             loan_amount=700000,
             annual_debt_service=50000,
+            vacancy_rate=0,
         )
         assert metrics.noi == Decimal("70000.00")
         assert metrics.ltv_ratio == Decimal("0.70")
@@ -394,7 +398,7 @@ class TestValuePropertyMultipleApproaches:
 
     def test_value_property_income_approach(self) -> None:
         """Test property valuation with income approach."""
-        valuation = value_property_multiple_approaches(noi=70000, cap_rate=0.07)
+        valuation = value_property_multiple_approaches(noi=70000, market_cap_rate=0.07)
         assert valuation.income_approach_value == Decimal("1000000.00")
         assert valuation.comparable_sales_value is None
         assert valuation.replacement_cost_value is None
@@ -403,12 +407,14 @@ class TestValuePropertyMultipleApproaches:
         """Test property valuation with all approaches."""
         valuation = value_property_multiple_approaches(
             noi=70000,
-            cap_rate=0.07,
-            comparable_sales_price=950000,
-            replacement_cost=1100000,
+            market_cap_rate=0.07,
+            comparable_psf=950,
+            property_size_sqf=1000,
+            replacement_cost_psf=1000,
+            land_value=100000,
         )
         assert valuation.income_approach_value == Decimal("1000000.00")
         assert valuation.comparable_sales_value == Decimal("950000.00")
-        assert valuation.replacement_cost_value == Decimal("1100000.00")
+        assert valuation.replacement_cost_value == Decimal("900000.00")  # 1000*1000*0.8 + 100000
         # Recommended value should be weighted average or similar
         assert valuation.recommended_value > Decimal("0")
