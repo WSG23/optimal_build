@@ -14,7 +14,7 @@
 >
 > **Last Updated:** 2025-10-23 (reflects status from detailed sections)
 >
-> **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for guidance on choosing your next task.
+> **🤖 AI AGENTS:** Read [ai-agents/next_steps.md](ai-agents/next_steps.md) for guidance on choosing your next task.
 
 ---
 
@@ -121,7 +121,7 @@
 ---
 
 **🎯 Quick Navigation:**
-- Looking for next task? → [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md)
+- Looking for next task? → [ai-agents/next_steps.md](ai-agents/next_steps.md)
 - Need phase requirements? → Use jump links above to go directly to detailed sections
 - Want to see overall progress? → This dashboard (you are here)
 
@@ -456,8 +456,8 @@
 
 **Testing references:**
 - [`Testing Known Issues`](development/testing/known-issues.md) — "Phase 2A" section lists mandatory manual walkthroughs (capture, checklist, assessment, PDF export)
+- [`Testing Summary`](development/testing/summary.md) — comprehensive testing expectations for all features
 - [`ui-status.md`](planning/ui-status.md) — details the developer workspace components that must render after changes
-- [`TESTING_DOCUMENTATION_SUMMARY.md`](../TESTING_DOCUMENTATION_SUMMARY.md) — outlines the smoke/coverage expectations for developer exports
 - [`README.md`](../README.md) — see the `make dev` guidance for monitoring `.devstack/backend.log` during verification
 
 **Estimated Effort:** 2-3 weeks (mostly frontend, reuse Agent backend)

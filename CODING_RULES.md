@@ -527,11 +527,11 @@ UI Manual Testing:
 ### 8.2 Required Documentation References
 
 Before proposing work, AI agents must read:
-- [`docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) (MANDATORY TESTING CHECKLIST section)
+- [`docs/ai-agents/next_steps.md`](docs/ai-agents/next_steps.md) (MANDATORY TESTING CHECKLIST section)
 - Your phase section in [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md)
 - [`docs/development/testing/known-issues.md`](docs/development/testing/known-issues.md) (check for known test failures before reporting)
-- [`ui-status.md`](docs/planning/ui-status.md) (understand UI implementation status)
-- [`TESTING_DOCUMENTATION_SUMMARY.md`](TESTING_DOCUMENTATION_SUMMARY.md) (find smoke/regression suites)
+- [`docs/planning/ui-status.md`](docs/planning/ui-status.md) (understand UI implementation status)
+- [`docs/development/testing/summary.md`](docs/development/testing/summary.md) (find smoke/regression suites)
 - [`README.md`](README.md) (`make dev` notes for log monitoring)
 
 Mirror those references (or the exact commands they prescribe) in your response.

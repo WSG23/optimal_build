@@ -471,7 +471,7 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
     for ref in required_refs:
         if ref not in guidance_content:
             errors.append(
-                "RULE VIOLATION: docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md "
+                "RULE VIOLATION: docs/ai-agents/next_steps.md "
                 f"must reference '{ref}'.\n"
                 "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
                 "  -> See CODING_RULES.md section 8.2"
@@ -486,7 +486,7 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
 
     # NEW: Check for required content sections (Rule 8.1)
     for section, doc_path in required_content_sections:
-        content = guidance_content if "NEXT_STEPS" in doc_path else plan_content
+        content = guidance_content if "next_steps" in doc_path else plan_content
         if section not in content:
             errors.append(
                 f"RULE VIOLATION: {doc_path} must contain '{section}' section.\n"
