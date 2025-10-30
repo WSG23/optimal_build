@@ -75,3 +75,48 @@ def test_session_dependency_yields_and_closes_session() -> None:
         next(generator)
 
     assert session.closed
+
+
+def test_session_dependency_closes_on_exception() -> None:
+    """The dependency should close the session even when an exception occurs."""
+
+    dependency = session_dependency(_session_factory)
+    generator: Generator[DummySession, None, None] = dependency()
+
+    session = next(generator)
+    assert not session.closed
+
+    # Simulate exception during request handling
+    try:
+        raise ValueError("Simulated error")
+    except ValueError:
+        pass
+
+    # Close the generator (simulating FastAPI cleanup)
+    with pytest.raises(StopIteration):
+        next(generator)
+
+    assert session.closed
+
+
+def test_session_dependency_multiple_calls_create_new_sessions() -> None:
+    """Each call to the dependency should create a new session."""
+
+    dependency = session_dependency(_session_factory)
+
+    # First call
+    gen1 = dependency()
+    session1 = next(gen1)
+
+    # Second call
+    gen2 = dependency()
+    session2 = next(gen2)
+
+    # Should be different instances
+    assert session1 is not session2
+
+    # Clean up
+    with pytest.raises(StopIteration):
+        next(gen1)
+    with pytest.raises(StopIteration):
+        next(gen2)
