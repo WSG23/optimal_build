@@ -17,6 +17,7 @@ pytest.importorskip("sqlalchemy")
 
 from app.schemas.compliance import ComplianceCheckResponse
 from app.schemas.property import PropertyComplianceSummary
+
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 

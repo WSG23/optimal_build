@@ -2,12 +2,14 @@
 
 **New to this project? Read these files IN ORDER:**
 
-1. **UI_STATUS.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
-2. **FEATURES.md** - What we're building (full feature specification)
+1. **docs/planning/ui-status.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
+2. **docs/planning/features.md** - What we're building (full feature specification)
 3. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
-4. **docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md** - How to choose your next task (decision tree)
-5. **TESTING_KNOWN_ISSUES.md** - Known test issues (read BEFORE testing to avoid wasting time)
-6. **CLAUDE.md** - Coding guidelines and mandatory workflows
+4. **docs/audits/pre-phase-2d-audit.md** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
+5. **docs/planning/technical-debt.md** - ⚠️ **IMPORTANT** - All known technical debt (prevents forgotten work)
+6. **docs/ai-agents/next_steps.md** - How to choose your next task (decision tree)
+7. **docs/development/testing/known-issues.md** - Known test issues (read BEFORE testing to avoid wasting time)
+8. **docs/ai-agents/claude.md** - Coding guidelines and mandatory workflows
 
 ---
 
@@ -23,7 +25,7 @@ This is the **SINGLE SOURCE OF TRUTH** for project status. All AI agents referen
 3. ✅ Stage docs with code: `git add docs/feature_delivery_plan_v2.md`
 4. ✅ Include in same commit as your code changes
 
-**See Step 7c in [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for detailed instructions.**
+**See Step 7c in [docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md) for detailed instructions.**
 
 ---
 
@@ -62,4 +64,61 @@ See `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` section "MANDATORY TESTING
 
 ---
 
+## 🔄 Session Handoff
+
+**Returning to work or starting a new session?**
+
+Read [`docs/handoff_playbook.md`](docs/handoff_playbook.md) for:
+- Quick project status snapshot (updated 2025-10-17)
+- Immediate actions to carry forward
+- Phase 2 build targets and priorities
+- Workflow guardrails and quality gates
+
+This ensures continuity between sessions and alignment with previous work.
+
+---
+
 **Ready to start? Go read `docs/feature_delivery_plan_v2.md` first!** 📊
+
+---
+
+## 📚 Complete Documentation Inventory
+
+**⚠️ If asked "list all instruction/documentation files", this is the COMPLETE answer:**
+
+This section lists ALL 20 instruction and reference files in this repository. This prevents AI agents from using heuristics/grep to discover files (which leads to gaps).
+
+### 🎯 Core AI Agent Instructions (Must Read - Listed Above)
+1. ✅ **START_HERE.md** (this file) - Entry point and reading order
+2. ✅ **docs/planning/ui-status.md** - Frontend UI status and warnings
+3. ✅ **docs/planning/features.md** - Complete feature specifications
+4. ✅ **docs/feature_delivery_plan_v2.md** - Project roadmap and current status
+5. ✅ **docs/ai-agents/next_steps.md** - Task decision guide
+6. ✅ **docs/development/testing/known-issues.md** - Known test harness issues (not bugs)
+7. ✅ **docs/ai-agents/claude.md** - Claude-specific instructions and workflows
+8. ✅ **docs/ai-agents/codex.md** - Codex-specific instructions and mandatory testing checklist
+
+### 📋 Additional Reference Files (Read When Relevant)
+9. **docs/planning/backlog.md** - AI agent work queue (active tasks only)
+10. **docs/planning/technical-debt.md** - Complete technical debt inventory (all known deferred work)
+11. **docs/handoff_playbook.md** - Session handoff guide and status snapshot
+12. **CODING_RULES.md** - 8 mandatory coding rules (enforced by CI)
+13. **CONTRIBUTING.md** - Git workflow, PR process, code review
+14. **docs/development/testing/advisory.md** - Testing best practices
+15. **docs/development/testing/summary.md** - Testing strategy overview
+16. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
+17. **docs/validation/live_testing_guide.md** - Manual/UAT testing procedures
+18. **docs/development/testing/overview.md** - Feature testing checklist
+19. **docs/planning/roadmap.md** - High-level project roadmap
+20. **frontend/README_AI_AGENTS.md** - ⚠️ Critical warnings about frontend test harnesses
+21. **docs/SOLO_FOUNDER_GUIDE.md** - Solo founder workflow with AI agents
+22. **docs/reviewer_sop.md** - Code review procedures
+
+### 📖 Supporting Documentation (Not Instructions)
+- **README.md** - General project overview
+- **API_ENDPOINTS.md** - API documentation
+- **docs/architecture.md** - System architecture
+- **docs/finance_api.md**, **docs/entitlements_api.md**, etc. - API references
+- Various feature-specific docs in `docs/`
+
+**Last Updated:** 2025-10-19 (Update this date when adding/removing instruction files)

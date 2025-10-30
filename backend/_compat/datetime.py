@@ -9,6 +9,7 @@ try:  # Python 3.11+
 except ImportError:  # pragma: no cover - fallback for older interpreters
     UTC = timezone.utc  # type: ignore[assignment]
 
+
 def utcnow() -> datetime:
     """Return a timezone-aware UTC timestamp."""
 

@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules ai-preflight status hooks
+.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -23,6 +23,7 @@ endif
 PRE_COMMIT ?= $(VENV_ABS)/bin/pre-commit
 BLACK ?= $(VENV_ABS)/bin/black
 ISORT ?= $(VENV_ABS)/bin/isort
+RUFF ?= $(PY) -m ruff
 FLAKE8 ?= $(VENV_ABS)/bin/flake8
 MYPY ?= $(PY) -m mypy
 PYTEST ?= $(VENV_ABS)/bin/pytest
@@ -124,9 +125,22 @@ $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
 
 install: venv ## Install dependencies (alias)
 
-format: ## Format code (all Python files)
-	@$(BLACK) backend/app/ backend/tests/ tests/ || true
-	@$(ISORT) backend/app/ backend/tests/ tests/ || true
+format: ## Format code (handled automatically by pre-commit hooks)
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ Code formatting is handled automatically by pre-commit hooks"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "📝 When you commit, pre-commit hooks will automatically:"
+	@echo "   • Run black (code formatting)"
+	@echo "   • Run ruff (import sorting + linting)"
+	@echo "   • Run prettier (frontend formatting)"
+	@echo ""
+	@echo "💡 To manually format ALL files in the repo:"
+	@echo "   pre-commit run --all-files"
+	@echo ""
+	@echo "🔍 To check if code is properly formatted:"
+	@echo "   make verify"
+	@echo ""
 
 format-check: ## Check formatting (all Python files)
 	@$(BLACK) --check backend/app/ backend/tests/ tests/ || true
@@ -166,11 +180,38 @@ test: ## Run tests (unit tests only - fast)
 test-all: ## Run all tests including integration tests
 	$(PYTEST) -q
 
-verify: ## Run formatting checks, linting, coding rules, and tests
+verify: ## Run formatting checks, linting, coding rules, delivery plan validation, and tests
 	$(MAKE) format-check
 	$(MAKE) lint
 	$(MAKE) check-coding-rules
+	$(MAKE) validate-delivery-plan
 	$(MAKE) test
+
+validate-delivery-plan: ## Validate feature_delivery_plan_v2.md for consistency
+	@echo "Validating feature delivery plan..."
+	@$(PY) scripts/validate_delivery_plan.py
+
+check-tool-versions: ## Verify formatter/linter versions match requirements.txt
+	@echo "Checking tool version consistency..."
+	@BLACK_VENV=$$($(BLACK) --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); \
+	BLACK_REQ=$$(grep "black==" backend/requirements.txt 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); \
+	if [ -z "$$BLACK_VENV" ]; then \
+		echo "⚠️  WARNING: Black not found in venv. Run 'make venv' to install."; \
+		exit 1; \
+	fi; \
+	if [ -z "$$BLACK_REQ" ]; then \
+		echo "⚠️  WARNING: Black version not found in requirements.txt"; \
+		exit 1; \
+	fi; \
+	if [ "$$BLACK_VENV" != "$$BLACK_REQ" ]; then \
+		echo "❌ ERROR: Black version mismatch!"; \
+		echo "   venv has:         $$BLACK_VENV"; \
+		echo "   requirements.txt: $$BLACK_REQ"; \
+		echo ""; \
+		echo "Fix: Run 'pip install -r backend/requirements.txt' or 'make venv'"; \
+		exit 1; \
+	fi; \
+	echo "✓ Black version matches ($$BLACK_VENV)"
 
 check-coding-rules: ## Verify compliance with CODING_RULES.md
 	@echo "Checking coding rules compliance..."
@@ -180,6 +221,9 @@ ai-preflight: ## Pre-flight check for AI agents before code generation
 	@echo "=========================================="
 	@echo "AI AGENT PRE-FLIGHT CHECKS"
 	@echo "=========================================="
+	@echo ""
+	@echo "Checking tool versions..."
+	@$(MAKE) check-tool-versions
 	@echo ""
 	@echo "Running coding rules verification..."
 	@$(MAKE) check-coding-rules

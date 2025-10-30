@@ -1,0 +1,86 @@
+{
+  "expansion": {
+    "primary": 6.0,
+    "primary_high": 9.0,
+    "secondary": 2.0,
+    "secondary_high": 3.0,
+    "tertiary": 1.0,
+    "tertiary_high": 2.0
+  },
+  "reposition": {
+    "primary": -5.0,
+    "secondary": -2.5,
+    "tertiary": -1.5
+  },
+  "vacancy": {
+    "high": 0.15,
+    "low": 0.05
+  },
+  "rent_soft_threshold_psm": 100.0,
+  "transit_min_mrt": 1.0,
+  "plot_ratio_headroom": {
+    "significant": 0.35,
+    "limited": 0.1
+  },
+  "absorption": {
+    "vacancy_high": 3,
+    "vacancy_low": -1,
+    "heritage_high": 6,
+    "heritage_medium": 3,
+    "expansion": 4
+  },
+  "scoring": {
+    "weights": {
+      "noi": 0.55,
+      "risk": 0.2,
+      "market": 0.15,
+      "heritage": 0.1
+    },
+    "adjustment_pct": 8.0,
+    "risk_penalties": {
+      "low": 0.05,
+      "balanced": 0.1,
+      "moderate": 0.25,
+      "elevated": 0.4,
+      "high": 0.6,
+      "severe": 0.75
+    },
+    "heritage_uplift": {
+      "none": 0.0,
+      "low": -0.05,
+      "medium": -0.1,
+      "high": -0.2
+    },
+    "market_vacancy_thresholds": {
+      "balanced": 0.12,
+      "soft": 0.18
+    },
+    "market_rent_uplift_psm": 20.0
+  },
+  "confidence": {
+    "baseline": 0.75,
+    "score_bonus": 0.2,
+    "violation_penalty": 0.15
+  },
+  "heritage_max_allocation": {
+    "high": {
+      "office": 55.0,
+      "retail": 45.0,
+      "hospitality": 35.0,
+      "residential": 65.0,
+      "industrial": 60.0
+    },
+    "medium": {
+      "office": 60.0,
+      "retail": 50.0,
+      "hospitality": 45.0,
+      "residential": 70.0,
+      "industrial": 65.0
+    }
+  },
+  "scenario_adjustments": {
+    "expansion_high": 8.0,
+    "expansion": 4.0,
+    "reposition": -6.0
+  }
+}

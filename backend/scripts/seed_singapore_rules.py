@@ -10,23 +10,33 @@ Usage:
 
 import asyncio
 
+from sqlalchemy import select
+
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefRule, RefSource
-from sqlalchemy import select
 
 
 async def seed_singapore_rules():
-    """Populate Singapore URA and BCA rules into RefRule table."""
+    """Populate Singapore URA and BCA rules into RefRule table.
+
+    This function is idempotent - it only adds rules that don't already exist.
+    It checks for specific zoning rules rather than just any SG rules, allowing
+    parking rules and other rule types to coexist.
+    """
 
     async with AsyncSessionLocal() as session:
-        # Check if Singapore rules already exist
+        # Check if Singapore zoning rules already exist (core requirement)
         result = await session.execute(
-            select(RefRule).where(RefRule.jurisdiction == "SG").limit(1)
+            select(RefRule)
+            .where(RefRule.jurisdiction == "SG")
+            .where(RefRule.parameter_key == "zoning.max_building_height_m")
+            .where(RefRule.applicability.contains({"zone_code": "SG:residential"}))
+            .limit(1)
         )
-        existing = result.scalar_one_or_none()
+        existing_zoning = result.scalar_one_or_none()
 
-        if existing:
-            print("Singapore rules already exist in database. Skipping seed.")
+        if existing_zoning:
+            print("Singapore zoning rules already exist in database. Skipping seed.")
             return
 
         print("Seeding Singapore URA and BCA rules...")

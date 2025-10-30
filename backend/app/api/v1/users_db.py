@@ -18,11 +18,12 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
 
+from backend._compat.datetime import utcnow
+
 from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_current_user
 from app.schemas.user import UserSignupBase
 from app.utils.db import session_dependency
 from app.utils.security import hash_password, verify_password
-from backend._compat.datetime import utcnow
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"

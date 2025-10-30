@@ -15,13 +15,18 @@ try:  # pragma: no cover - geoalchemy may be optional in some environments
     from geoalchemy2.elements import WKTElement
 except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missing
     WKTElement = None  # type: ignore[assignment]
+from backend._compat.datetime import utcnow
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.ura_integration import URAIntegrationService
+from app.services.heritage_overlay import HeritageOverlayService
+from app.services.developer_checklist_service import (
+    DEFAULT_TEMPLATE_DEFINITIONS,
+    DeveloperChecklistService,
+)
 from app.services.geocoding import Address, GeocodingService
-from backend._compat.datetime import utcnow
 
 logger = structlog.get_logger()
 
@@ -62,6 +67,7 @@ class PropertyLogResult:
         nearby_amenities: Optional[Dict[str, Any]] = None,
         quick_analysis: Optional[Dict[str, Any]] = None,
         timestamp: datetime = None,
+        heritage_overlay: Optional[Dict[str, Any]] = None,
     ):
         self.property_id = property_id
         self.address = address
@@ -72,6 +78,7 @@ class PropertyLogResult:
         self.nearby_amenities = nearby_amenities
         self.quick_analysis = quick_analysis
         self.timestamp = timestamp or utcnow()
+        self.heritage_overlay = heritage_overlay
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
@@ -88,6 +95,7 @@ class PropertyLogResult:
             "nearby_amenities": self.nearby_amenities,
             "quick_analysis": self.quick_analysis,
             "timestamp": self.timestamp.isoformat(),
+            "heritage_overlay": self.heritage_overlay,
         }
 
 
@@ -99,6 +107,7 @@ class GPSPropertyLogger:
     ):
         self.geocoding = geocoding_service
         self.ura = ura_service
+        self.heritage_service = HeritageOverlayService()
 
     async def log_property_from_gps(
         self,
@@ -155,6 +164,8 @@ class GPSPropertyLogger:
                 latitude, longitude, radius_m=1000
             )
 
+            heritage_overlay = self.heritage_service.lookup(latitude, longitude)
+
             # Step 5: Create or update property record
             if property_record:
                 property_id = property_record.id
@@ -194,7 +205,59 @@ class GPSPropertyLogger:
                 development_plans=development_plans,
                 transactions=transactions,
                 rentals=rentals,
+                heritage_overlay=heritage_overlay,
             )
+
+            if property_info is None:
+                property_info_payload: Dict[str, Any] = {}
+            elif hasattr(property_info, "model_dump"):
+                property_info_payload = property_info.model_dump()
+            elif isinstance(property_info, dict):
+                property_info_payload = dict(property_info)
+            else:
+                property_info_payload = {}
+            if heritage_overlay:
+                overlay_notes = heritage_overlay.get("notes") or []
+                if overlay_notes:
+                    property_info_payload.setdefault(
+                        "heritage_constraints", overlay_notes
+                    )
+                property_info_payload.setdefault(
+                    "heritage_overlay", heritage_overlay.get("name")
+                )
+                property_info_payload.setdefault(
+                    "heritage_risk", heritage_overlay.get("risk")
+                )
+                premium = heritage_overlay.get("heritage_premium_pct")
+                if premium is not None:
+                    property_info_payload.setdefault("heritage_premium_pct", premium)
+                source = heritage_overlay.get("source")
+                if source:
+                    property_info_payload.setdefault("heritage_overlay_source", source)
+
+            scenario_slugs = [
+                (
+                    scenario.value
+                    if isinstance(scenario, DevelopmentScenario)
+                    else str(scenario)
+                )
+                for scenario in (scenarios or DevelopmentScenario.default_set())
+            ]
+            if not scenario_slugs:
+                scenario_slugs = sorted(
+                    {
+                        str(definition["development_scenario"])
+                        for definition in DEFAULT_TEMPLATE_DEFINITIONS
+                    }
+                )
+
+            await DeveloperChecklistService.ensure_templates_seeded(session)
+            await DeveloperChecklistService.auto_populate_checklist(
+                session=session,
+                property_id=property_id,
+                development_scenarios=scenario_slugs,
+            )
+            await session.commit()
 
             # Return comprehensive result
             return PropertyLogResult(
@@ -203,9 +266,11 @@ class GPSPropertyLogger:
                 coordinates=(latitude, longitude),
                 ura_zoning=ura_zoning.model_dump() if ura_zoning else {},
                 existing_use=existing_use or "Unknown",
-                property_info=property_info.model_dump() if property_info else None,
+                property_info=property_info_payload or None,
                 nearby_amenities=nearby_amenities,
                 quick_analysis=quick_analysis,
+                timestamp=utcnow(),
+                heritage_overlay=heritage_overlay,
             )
 
         except Exception as e:
@@ -400,6 +465,7 @@ class GPSPropertyLogger:
         development_plans: List[Dict[str, Any]],
         transactions: List[Dict[str, Any]],
         rentals: List[Dict[str, Any]],
+        heritage_overlay: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Generate a lightweight, scenario-based analysis for GPS captures."""
 
@@ -424,6 +490,7 @@ class GPSPropertyLogger:
                         existing_use,
                         ura_zoning,
                         development_plans,
+                        heritage_overlay,
                     )
                 )
             elif scenario == DevelopmentScenario.UNDERUSED_ASSET:
@@ -606,6 +673,7 @@ class GPSPropertyLogger:
         existing_use: Optional[str],
         ura_zoning: Optional[Any],
         development_plans: List[Dict[str, Any]],
+        heritage_overlay: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         completion_year = (
             int(property_info.completion_year)
@@ -615,7 +683,16 @@ class GPSPropertyLogger:
         heritage_risk = "medium"
         notes: List[str] = []
 
-        if completion_year and completion_year < 1970:
+        if heritage_overlay:
+            overlay_risk = str(heritage_overlay.get("risk", "medium")).lower()
+            if overlay_risk in {"high", "medium", "low"}:
+                heritage_risk = overlay_risk
+            overlay_notes = heritage_overlay.get("notes") or []
+            for note in overlay_notes:
+                if note:
+                    notes.append(str(note))
+
+        if completion_year and completion_year < 1970 and heritage_risk != "high":
             notes.append("Asset predates 1970 — likely conservation review required")
             heritage_risk = "high"
         elif "conservation" in (existing_use or "").lower():

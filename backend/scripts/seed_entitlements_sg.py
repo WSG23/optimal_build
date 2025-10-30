@@ -7,16 +7,14 @@ import asyncio
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 import structlog
+from sqlalchemy.ext.asyncio import AsyncSession
+
+import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from app.core.database import AsyncSessionLocal, engine
-from app.models import (  # noqa: F401  pylint: disable=unused-import
-    entitlements as ent_models,
-)
 from app.models.base import BaseModel
 from app.models.entitlements import EntApprovalCategory, EntRoadmapStatus
 from app.services.entitlements import EntitlementsService
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
 
@@ -57,7 +55,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "ura",
         "code": "outline_planning_permission",
         "name": "Outline Planning Permission",
-        "category": EntApprovalCategory.PLANNING,
+        "category": EntApprovalCategory.PLANNING.value,
         "description": "High-level planning consent establishing allowable development parameters.",
         "processing_time_days": 35,
     },
@@ -65,7 +63,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "ura",
         "code": "written_permission",
         "name": "Written Permission",
-        "category": EntApprovalCategory.PLANNING,
+        "category": EntApprovalCategory.PLANNING.value,
         "description": "Detailed planning permission for construction and change of use.",
         "processing_time_days": 42,
     },
@@ -73,7 +71,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "bca",
         "code": "building_plan_approval",
         "name": "Building Plan Approval",
-        "category": EntApprovalCategory.BUILDING,
+        "category": EntApprovalCategory.BUILDING.value,
         "description": "Approval for structural, architectural, and M&E plans prior to construction.",
         "processing_time_days": 28,
     },
@@ -81,7 +79,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "lta",
         "code": "traffic_impact_assessment",
         "name": "Traffic Impact Assessment Clearance",
-        "category": EntApprovalCategory.TRANSPORT,
+        "category": EntApprovalCategory.TRANSPORT.value,
         "description": "Assessment of transport impacts and mitigation requirements.",
         "processing_time_days": 30,
     },
@@ -89,7 +87,7 @@ APPROVAL_TYPES: Iterable[dict[str, object]] = (
         "authority_slug": "nea",
         "code": "environmental_impact_assessment",
         "name": "Environmental Impact Assessment",
-        "category": EntApprovalCategory.ENVIRONMENTAL,
+        "category": EntApprovalCategory.ENVIRONMENTAL.value,
         "description": "Review of environmental impacts and mitigation strategies for sensitive sites.",
         "processing_time_days": 45,
     },

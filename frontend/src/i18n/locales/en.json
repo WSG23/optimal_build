@@ -301,6 +301,170 @@
         "peakDebt": "Peak debt balance"
       },
       "moreEntries": "{{count}} more periods"
+    },
+    "assets": {
+      "title": "Asset mix snapshot",
+      "empty": "No asset mix data has been captured yet.",
+      "totals": {
+        "revenue": "Estimated annual revenue",
+        "capex": "Estimated CAPEX",
+        "risk": "Dominant risk profile"
+      },
+      "table": {
+        "caption": "Asset allocations and financial outputs",
+        "headers": {
+          "asset": "Asset",
+          "allocation": "Allocation",
+          "noi": "NOI (annual)",
+          "capex": "Capex",
+          "payback": "Payback (years)",
+          "absorption": "Absorption (months)",
+          "risk": "Risk profile"
+        }
+      }
+    },
+    "loanInterest": {
+      "title": "Construction loan interest",
+      "totals": {
+        "interest": "Total accrued interest",
+        "rate": "Base interest rate",
+        "periods": "Periods per year",
+        "capitalised": "Capitalised interest",
+        "capitalisedYes": "Capitalised",
+        "capitalisedNo": "Expensed",
+        "upfront": "Upfront fees",
+        "exit": "Exit fees"
+      },
+      "facilities": {
+        "title": "Facility breakdown",
+        "caption": "Interest profile by facility",
+        "headers": {
+          "name": "Facility",
+          "amount": "Amount",
+          "rate": "Rate",
+          "periods": "Periods",
+          "capitalised": "Capitalised",
+          "interest": "Interest",
+          "upfront": "Upfront",
+          "exit": "Exit"
+        }
+      },
+      "table": {
+        "caption": "Periodic interest accrual",
+        "headers": {
+          "period": "Period",
+          "opening": "Opening balance",
+          "closing": "Closing balance",
+          "average": "Average balance",
+          "interest": "Interest accrued"
+        }
+      }
+    },
+    "scenarioCreator": {
+      "title": "Create finance scenario",
+      "description": "Enter asset mix assumptions to generate a fresh Phase 2C feasibility run.",
+      "fields": {
+        "name": "Scenario name",
+        "projectId": "Project ID",
+        "allocation": "Allocation %"
+      },
+      "placeholders": {
+        "name": "Phase 2C Base Case"
+      },
+      "assets": {
+        "caption": "Asset mix inputs",
+        "headers": {
+          "assetType": "Asset type",
+          "nia": "NIA (sqm)",
+          "rent": "Rent / sqm / month",
+          "vacancy": "Vacancy %",
+          "opex": "Opex % of rent",
+          "revenue": "Estimated revenue",
+          "capex": "Estimated capex",
+          "absorption": "Absorption (months)",
+          "risk": "Risk",
+          "notes": "Notes"
+        }
+      },
+      "actions": {
+        "remove": "Remove",
+        "addAsset": "Add asset",
+        "reset": "Reset",
+        "submit": "Run feasibility",
+        "saving": "Running…"
+      },
+      "allocationTotal": "Total allocation: {{value}}%",
+      "success": "Scenario \"{{name}}\" queued successfully.",
+      "errors": {
+        "nameRequired": "Enter a scenario name.",
+        "assetRequired": "Add at least one asset before running feasibility.",
+        "generic": "Unable to run finance feasibility."
+      }
+    },
+    "facilityEditor": {
+      "title": "Construction loan facilities",
+      "description": "Adjust tranche terms to refresh the construction interest schedule.",
+      "base": {
+        "rate": "Base rate",
+        "periods": "Periods per year",
+        "capitalised": "Capitalise interest"
+      },
+      "table": {
+        "caption": "Facility parameters",
+        "headers": {
+          "name": "Facility name",
+          "amount": "Amount",
+          "rate": "Rate",
+          "periods": "Periods",
+          "capitalised": "Capitalised",
+          "upfront": "Upfront fee (%)",
+          "exit": "Exit fee (%)"
+        }
+      },
+      "empty": "Add at least one facility to model interest.",
+      "actions": {
+        "add": "Add facility",
+        "remove": "Remove",
+        "reset": "Reset changes",
+        "save": "Save facilities",
+        "saving": "Saving…"
+      }
+    },
+    "sensitivity": {
+      "title": "Sensitivity analysis",
+      "controls": {
+        "parameters": "Parameters",
+        "selectAll": "Select all"
+      },
+      "actions": {
+        "downloadCsv": "Download CSV",
+        "downloadJson": "Download JSON"
+      },
+      "empty": "No sensitivity outcomes are available yet.",
+      "pendingNotice": "{{count}} sensitivity jobs in progress…",
+      "table": {
+        "caption": "Sensitivity outcomes for {{parameter}}",
+        "headers": {
+          "delta": "Delta",
+          "npv": "Net present value",
+          "irr": "IRR",
+          "escalatedCost": "Escalated cost",
+          "totalInterest": "Total interest"
+        }
+      }
+    },
+    "jobs": {
+      "title": "Sensitivity job timeline",
+      "empty": "No sensitivity jobs have been queued yet.",
+      "backend": "Backend: {{backend}}",
+      "task": "Task {{id}}",
+      "status": {
+        "queued": "Queued",
+        "started": "Started",
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "failed": "Failed"
+      }
     }
   },
   "agentsCapture": {

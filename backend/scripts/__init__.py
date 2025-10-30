@@ -15,7 +15,10 @@ _IMPORTS = {
     "SeedSummary": (".seed_screening", "SeedSummary"),
     "seed_screening_sample_data": (".seed_screening", "seed_screening_sample_data"),
     "NonRegSeedSummary": (".seed_nonreg", "NonRegSeedSummary"),
-    "seed_nonregulated_reference_data": (".seed_nonreg", "seed_nonregulated_reference_data"),
+    "seed_nonregulated_reference_data": (
+        ".seed_nonreg",
+        "seed_nonregulated_reference_data",
+    ),
     "FinanceDemoSummary": (".seed_finance_demo", "FinanceDemoSummary"),
     "seed_finance_demo": (".seed_finance_demo", "seed_finance_demo"),
     "ensure_finance_demo_schema": (".seed_finance_demo", "ensure_schema"),

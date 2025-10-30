@@ -20,6 +20,9 @@ passlib[bcrypt]==1.7.4
 # HTTP clients
 httpx==0.25.2
 
+# Rate limiting
+slowapi==0.1.8
+
 # Data processing
 pydantic==2.5.0
 python-dateutil==2.8.2

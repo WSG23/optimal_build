@@ -10,7 +10,7 @@ from app.models.business_performance import (
     AgentPerformanceSnapshot,
     PerformanceBenchmark,
 )
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class SnapshotRequest(BaseModel):

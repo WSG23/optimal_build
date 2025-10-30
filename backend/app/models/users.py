@@ -1,14 +1,13 @@
 """User model for Singapore Property Development Platform."""
 
 import uuid
-from datetime import datetime
 from enum import Enum
 
+from backend._compat.datetime import utcnow
 from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, String
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
-from backend._compat.datetime import utcnow
 
 
 class UserRole(str, Enum):

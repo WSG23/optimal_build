@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 
+import { ensureIdentityHeaders } from './identity'
+
 export interface DetectedFloorSummary {
   name: string
   unitIds: string[]
@@ -264,7 +266,6 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export class ApiClient {
   private readonly baseUrl: string
-  private readonly defaultRole: string | null
 
   constructor(baseUrl: string = '/') {
     const envBaseUrl = import.meta.env.VITE_API_BASE_URL
@@ -286,20 +287,6 @@ export class ApiClient {
         return trimmed.length > 0 && trimmed !== '/'
       }) ?? 'http://localhost:9400'
 
-    const storedRole =
-      typeof window !== 'undefined'
-        ? window.localStorage.getItem('app:api-role') ?? undefined
-        : undefined
-    const roleCandidates = [
-      import.meta.env.VITE_API_ROLE,
-      storedRole,
-      'admin',
-    ] as Array<string | undefined>
-
-    this.defaultRole =
-      roleCandidates.find(
-        (value) => typeof value === 'string' && value.trim().length > 0,
-      ) ?? null
   }
 
   private buildUrl(path: string) {
@@ -324,9 +311,7 @@ export class ApiClient {
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     const headers = new Headers(init?.headers)
-    if (this.defaultRole && !headers.has('X-Role')) {
-      headers.set('X-Role', this.defaultRole)
-    }
+    ensureIdentityHeaders(headers)
 
     const requestInit: RequestInit = {
       ...init,
@@ -464,7 +449,7 @@ export class ApiClient {
     }
 
     const headers = new Headers()
-    headers.set('X-Role', this.defaultRole ?? 'admin')
+    ensureIdentityHeaders(headers)
 
     const payload = await this.request<ImportResultResponse>('api/v1/import', {
       method: 'POST',
@@ -725,9 +710,7 @@ export class ApiClient {
     }
 
     const headers = new Headers({ 'Content-Type': 'application/json' })
-    if (this.defaultRole) {
-      headers.set('X-Role', this.defaultRole)
-    }
+    ensureIdentityHeaders(headers)
 
     const response = await fetch(this.buildUrl(`api/v1/export/${projectId}`), {
       method: 'POST',

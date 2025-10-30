@@ -2,7 +2,7 @@
 
 import json
 import os
-import secrets
+import sys
 from collections.abc import Iterable
 from urllib.parse import urlparse, urlunparse
 
@@ -12,6 +12,8 @@ _DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:4400",
 )
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
+_DEFAULT_RATE_LIMIT = "10/minute"
+_TEST_RATE_LIMIT = "1000/minute"
 
 
 def _load_bool(name: str, default: bool) -> bool:
@@ -55,6 +57,19 @@ def _load_fractional_float(name: str, default: float) -> float:
     if 0 < candidate <= 1:
         return candidate
     return default
+
+
+def _load_positive_int(name: str, default: int) -> int:
+    """Return a positive integer configuration value."""
+
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        candidate = int(raw_value)
+    except (TypeError, ValueError):
+        return default
+    return candidate if candidate > 0 else default
 
 
 def _load_allowed_origins() -> list[str]:
@@ -170,7 +185,15 @@ class Settings:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
         self.VERSION = os.getenv("PROJECT_VERSION", "1.0.0")
         self.API_V1_STR = "/api/v1"
-        self.SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
+        secret = os.getenv("SECRET_KEY")
+        if not secret:
+            if "pytest" in sys.modules:
+                secret = "test-secret-key"
+            else:
+                raise RuntimeError(
+                    "SECRET_KEY environment variable is required; set it before starting the application."
+                )
+        self.SECRET_KEY = secret
         self.ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
         self.POSTGRES_SERVER = os.getenv("POSTGRES_SERVER", "localhost")
@@ -225,6 +248,11 @@ class Settings:
         self.ALLOWED_HOSTS = _load_allowed_hosts()
         self.ALLOWED_ORIGINS = _load_allowed_origins()
 
+        default_rate_limit = (
+            _TEST_RATE_LIMIT if "pytest" in sys.modules else _DEFAULT_RATE_LIMIT
+        )
+        self.API_RATE_LIMIT = os.getenv("API_RATE_LIMIT", default_rate_limit)
+
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
         self.DEFAULT_ROLE = os.getenv("DEFAULT_ROLE", "viewer")
@@ -240,6 +268,9 @@ class Settings:
         self.ALLOW_VIEWER_MUTATIONS = _load_bool("ALLOW_VIEWER_MUTATIONS", False)
 
         self.LISTING_TOKEN_SECRET = self._load_listing_token_secret()
+        self.FINANCE_SENSITIVITY_MAX_SYNC_BANDS = _load_positive_int(
+            "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3
+        )
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")

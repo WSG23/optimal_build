@@ -22,6 +22,7 @@ import { MarketingPage } from './app/pages/marketing/MarketingPage'
 import { AdvisoryPage } from './app/pages/advisory/AdvisoryPage'
 import { IntegrationsPage } from './app/pages/integrations/IntegrationsPage'
 import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitionPage'
+import { ChecklistTemplateManager } from './app/pages/site-acquisition/ChecklistTemplateManager'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -89,6 +90,16 @@ const siteAcquisitionElement = (
   </AppShell>
 )
 
+const checklistTemplateManagerElement = (
+  <AppShell
+    activeItem="siteAcquisition"
+    title="Checklist templates"
+    description="Author and import scenario-specific due diligence checklists."
+  >
+    <ChecklistTemplateManager />
+  </AppShell>
+)
+
 const developerFeasibilityElement = (
   <AppShell
     activeItem="assetFeasibility"
@@ -96,6 +107,16 @@ const developerFeasibilityElement = (
     description="Run feasibility checks, document pack generation, and advisory workflows."
   >
     <FeasibilityWizard withLayout={false} />
+  </AppShell>
+)
+
+const financialControlElement = (
+  <AppShell
+    activeItem="financialControl"
+    title="Financial control"
+    description="Development economics and financing architecture."
+  >
+    <FinanceWorkspace />
   </AppShell>
 )
 
@@ -129,8 +150,20 @@ const router = createBrowserRouter([
     element: siteAcquisitionElement,
   },
   {
+    path: '/app/site-acquisition/checklist-templates',
+    element: checklistTemplateManagerElement,
+  },
+  {
     path: '/app/asset-feasibility',
     element: developerFeasibilityElement,
+  },
+  {
+    path: '/app/financial-control',
+    element: financialControlElement,
+  },
+  {
+    path: '/developers/finance',
+    element: financialControlElement,
   },
   {
     path: '/legacy/home',
@@ -154,7 +187,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/legacy/finance',
-    element: <FinanceWorkspace />,
+    element: financialControlElement,
   },
   {
     path: '/legacy/agents/site-capture',

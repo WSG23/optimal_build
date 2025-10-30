@@ -22,6 +22,21 @@ router = APIRouter(prefix="/feasibility", tags=["feasibility"])
 
 
 def _normalise_project_payload(data: dict[str, Any]) -> dict[str, Any]:
+    def _normalise_envelope(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not isinstance(payload, dict):
+            return None
+        envelope_mapping = {
+            "siteAreaSqm": "site_area_sqm",
+            "allowablePlotRatio": "allowable_plot_ratio",
+            "maxBuildableGfaSqm": "max_buildable_gfa_sqm",
+            "currentGfaSqm": "current_gfa_sqm",
+            "additionalPotentialGfaSqm": "additional_potential_gfa_sqm",
+        }
+        normalised_envelope = {
+            envelope_mapping.get(key, key): value for key, value in payload.items()
+        }
+        return normalised_envelope
+
     mapping = {
         "siteAddress": "site_address",
         "siteAreaSqm": "site_area_sqm",
@@ -30,6 +45,10 @@ def _normalise_project_payload(data: dict[str, Any]) -> dict[str, Any]:
         "buildingHeightMeters": "building_height_meters",
     }
     normalised = {mapping.get(key, key): value for key, value in data.items()}
+    if "buildEnvelope" in data:
+        normalised["build_envelope"] = _normalise_envelope(data.get("buildEnvelope"))
+    elif "build_envelope" in data:
+        normalised["build_envelope"] = _normalise_envelope(data.get("build_envelope"))
     return normalised
 
 

@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import Boolean, Column, DateTime, Float, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,7 +12,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.jwt_auth import TokenData, get_current_user
 from app.utils.db import session_dependency
-from backend._compat.datetime import utcnow
 from pydantic import BaseModel, Field
 
 # Database setup

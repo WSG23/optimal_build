@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import unicodedata
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -128,8 +129,20 @@ async def export_project(
             )
     watermark = artifact.manifest.get("watermark")
     if watermark:
-        response.headers["X-Export-Watermark"] = str(watermark)
+        response.headers["X-Export-Watermark"] = _normalise_header_value(str(watermark))
     return response
 
 
 __all__ = ["router"]
+
+
+def _normalise_header_value(value: str) -> str:
+    """Return an ASCII-safe header value."""
+
+    try:
+        value.encode("latin-1")
+        return value
+    except UnicodeEncodeError:
+        normalised = unicodedata.normalize("NFKD", value)
+        ascii_value = normalised.encode("ascii", "ignore").decode("ascii")
+        return ascii_value or value.encode("latin-1", "ignore").decode("latin-1")

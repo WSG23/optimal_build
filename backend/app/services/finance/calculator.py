@@ -8,10 +8,8 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
 from types import MappingProxyType
 from typing import Any, Union
 
-try:  # pragma: no cover - optional dependency for offline environments
-    from app.models.rkp import RefCostIndex  # type: ignore[import-not-found]
-except Exception:  # pragma: no cover - SQLAlchemy or models unavailable
-    RefCostIndex = Any  # type: ignore[assignment]
+from app.models.rkp import RefCostIndex
+from backend._compat import compat_zip
 
 NumberLike = Union[Decimal, int, float, str]
 CURRENCY_QUANTIZER = Decimal("0.01")
@@ -298,7 +296,7 @@ def dscr_timeline(
     entries: list[DscrEntry] = []
     with localcontext() as ctx:
         ctx.prec = precision
-        for idx, (noi, debt) in enumerate(zip(incomes, services, strict=False)):
+        for idx, (noi, debt) in enumerate(compat_zip(incomes, services, strict=False)):
             period = period_labels[idx] if period_labels else idx
             quantized_noi = _quantize_currency(noi)
             quantized_debt = _quantize_currency(debt)

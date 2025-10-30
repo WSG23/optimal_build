@@ -84,7 +84,6 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     path: '/app/financial-control',
     description: 'Development economics and financing architecture.',
     workspace: 'developer',
-    comingSoon: true,
   },
   {
     key: 'phaseManagement',

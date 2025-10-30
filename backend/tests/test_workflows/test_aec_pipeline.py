@@ -8,13 +8,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
-
 from backend._compat.datetime import UTC
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from backend.jobs.overlay_run import run_overlay_for_project
 from sqlalchemy import select
 
 from app.api.v1.imports import _build_parse_summary
@@ -32,7 +32,6 @@ from app.models.audit import AuditLog
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 from app.models.rkp import RefRule, RefZoningLayer
-from backend.jobs.overlay_run import run_overlay_for_project
 
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "samples" / "sample_floorplan.json"
 GOLDEN_MANIFEST_PATH = (
@@ -424,11 +423,13 @@ async def test_ruleset_serialisation_includes_overlays(async_session_factory, cl
         session.add_all([layer, rule])
         await session.commit()
 
-    response = await client.get("/api/v1/rules")
+    response = await client.get("/api/v1/rules?review_status=needs_review")
     assert response.status_code == 200
     payload = response.json()
     items = payload.get("items", [])
-    assert items, "Expected at least one rule to be returned"
+    assert (
+        items
+    ), "Expected at least one rule to be returned (filtered by review_status=needs_review)"
     overlays = items[0].get("overlays")
     hints = items[0].get("advisory_hints")
     assert "heritage_conservation" in overlays

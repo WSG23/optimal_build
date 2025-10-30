@@ -2,43 +2,100 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import Any, Literal
 
 from app.core.config import settings
-from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
-_REQUEST_ALIAS_MAP: dict[str, str] = {
-    "typFloorToFloorM": "typ_floor_to_floor_m",
-    "efficiencyRatio": "efficiency_ratio",
-    "defaults": "defaults",
+_BUILDABLE_DEFAULTS_EXAMPLE = {
+    "plot_ratio": 3.5,
+    "site_area_m2": 1000.0,
+    "site_coverage": 0.45,
+    "floor_height_m": 4.0,
+    "efficiency_factor": 0.82,
 }
 
-_DEFAULTS_ALIAS_MAP: dict[str, str] = {
-    "plotRatio": "plot_ratio",
-    "siteAreaM2": "site_area_m2",
-    "siteCoverage": "site_coverage",
-    "floorHeightM": "floor_height_m",
-    "efficiencyFactor": "efficiency_factor",
+
+_BUILDABLE_REQUEST_EXAMPLE = {
+    "address": "string",
+    "geometry": {"string": None},
+    "project_type": "string",
+    "defaults": _BUILDABLE_DEFAULTS_EXAMPLE,
+    "typ_floor_to_floor_m": 4.0,
+    "efficiency_ratio": 0.82,
 }
 
 
-def _apply_aliases(data: dict[str, Any], aliases: Mapping[str, str]) -> None:
-    """Populate canonical field names from known aliases."""
+_BUILDABLE_RESPONSE_EXAMPLE = {
+    "input_kind": "address",
+    "zone_code": "string",
+    "overlays": ["string"],
+    "advisory_hints": ["string"],
+    "metrics": {
+        "gfa_cap_m2": 0,
+        "floors_max": 0,
+        "footprint_m2": 0,
+        "nsa_est_m2": 0,
+    },
+    "zone_source": {
+        "kind": "parcel",
+        "layer_name": "string",
+        "jurisdiction": "string",
+        "parcel_ref": "string",
+        "parcel_source": "string",
+        "note": "string",
+    },
+    "rules": [
+        {
+            "id": 0,
+            "authority": "string",
+            "parameter_key": "string",
+            "operator": "string",
+            "value": "string",
+            "unit": "string",
+            "provenance": {
+                "rule_id": 0,
+                "clause_ref": "string",
+                "document_id": 0,
+                "pages": [0],
+                "seed_tag": "string",
+            },
+        }
+    ],
+}
 
-    for alias, field_name in aliases.items():
-        if alias in data and field_name not in data:
-            data[field_name] = data.pop(alias)
+BUILDABLE_REQUEST_EXAMPLE = _BUILDABLE_REQUEST_EXAMPLE
+BUILDABLE_RESPONSE_EXAMPLE = _BUILDABLE_RESPONSE_EXAMPLE
 
 
 class BuildableDefaults(BaseModel):
     """Default assumptions for buildable calculations."""
 
-    plot_ratio: float = Field(default=3.5, gt=0)
-    site_area_m2: float = Field(default=1000.0, gt=0)
-    site_coverage: float = Field(default=0.45, gt=0)
-    floor_height_m: float = Field(default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M, gt=0)
-    efficiency_factor: float = Field(default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={"example": _BUILDABLE_DEFAULTS_EXAMPLE},
+    )
+
+    plot_ratio: float = Field(default=3.5, gt=0, alias="plotRatio")
+    site_area_m2: float = Field(default=1000.0, gt=0, alias="siteAreaM2")
+    site_coverage: float = Field(default=0.45, gt=0, alias="siteCoverage")
+    floor_height_m: float = Field(
+        default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M,
+        gt=0,
+        alias="floorHeightM",
+    )
+    efficiency_factor: float = Field(
+        default=settings.BUILDABLE_EFFICIENCY_RATIO,
+        gt=0,
+        alias="efficiencyFactor",
+    )
 
     @field_validator("site_coverage")
     @classmethod
@@ -60,33 +117,27 @@ class BuildableDefaults(BaseModel):
 class BuildableRequest(BaseModel):
     """Request payload for buildable screening."""
 
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={"example": _BUILDABLE_REQUEST_EXAMPLE},
+    )
+
     address: str | None = None
     geometry: dict[str, Any] | None = None
     project_type: str | None = None
-    defaults: BuildableDefaults = Field(default_factory=BuildableDefaults)
+    defaults: BuildableDefaults = Field(
+        default_factory=BuildableDefaults, alias="defaults"
+    )
     typ_floor_to_floor_m: float | None = Field(
-        default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M, gt=0
+        default=settings.BUILDABLE_TYP_FLOOR_TO_FLOOR_M,
+        gt=0,
+        alias="typFloorToFloorM",
     )
     efficiency_ratio: float | None = Field(
-        default=settings.BUILDABLE_EFFICIENCY_RATIO, gt=0
+        default=settings.BUILDABLE_EFFICIENCY_RATIO,
+        gt=0,
+        alias="efficiencyRatio",
     )
-
-    @classmethod
-    def model_validate(cls, obj: Any, *args: Any, **kwargs: Any) -> BuildableRequest:
-        """Normalise known camelCase keys before delegating to Pydantic."""
-
-        if isinstance(obj, Mapping):
-            data = dict(obj)
-            _apply_aliases(data, _REQUEST_ALIAS_MAP)
-            defaults_value = data.get("defaults")
-            if isinstance(defaults_value, Mapping):
-                normalised_defaults = dict(defaults_value)
-                _apply_aliases(normalised_defaults, _DEFAULTS_ALIAS_MAP)
-                data["defaults"] = normalised_defaults
-
-            obj = data
-
-        return super().model_validate(obj, *args, **kwargs)
 
     @field_validator("geometry")
     @classmethod
@@ -199,6 +250,10 @@ class BuildableCalculation(BaseModel):
 class BuildableResponse(BaseModel):
     """Response payload returned by the buildable screening endpoint."""
 
+    model_config = ConfigDict(
+        json_schema_extra={"example": _BUILDABLE_RESPONSE_EXAMPLE}
+    )
+
     input_kind: Literal["address", "geometry"]
     zone_code: str | None = None
     overlays: list[str]
@@ -209,6 +264,8 @@ class BuildableResponse(BaseModel):
 
 
 __all__ = [
+    "BUILDABLE_REQUEST_EXAMPLE",
+    "BUILDABLE_RESPONSE_EXAMPLE",
     "BuildableCalculation",
     "BuildableDefaults",
     "BuildableMetrics",

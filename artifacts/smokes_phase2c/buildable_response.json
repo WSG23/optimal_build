@@ -1,0 +1,27 @@
+{
+  "advisory_hints": [
+    "Heritage impact assessment required before fa\u00e7ade alterations.",
+    "Respect daylight plane controls along the street frontage."
+  ],
+  "input_kind": "address",
+  "metrics": {
+    "floors_max": 8,
+    "footprint_m2": 563,
+    "gfa_cap_m2": 4375,
+    "nsa_est_m2": 3500
+  },
+  "overlays": [
+    "heritage",
+    "daylight"
+  ],
+  "rules": [],
+  "zone_code": "R2",
+  "zone_source": {
+    "jurisdiction": "SG",
+    "kind": "parcel",
+    "layer_name": "MasterPlan",
+    "note": null,
+    "parcel_ref": "MK01-01234",
+    "parcel_source": "sample_loader"
+  }
+}

@@ -5,54 +5,125 @@
 
 ---
 
-## 📊 Current Progress Snapshot
+## 📊 Current Progress Snapshot (Read-Only Dashboard)
 
-> **Last Updated:** 2025-10-13
+> **⚠️ CRITICAL: DO NOT EDIT THIS SECTION DIRECTLY**
 >
-> **⚠️ IMPORTANT:** This is the **SINGLE SOURCE OF TRUTH** for project status.
-> All other documents (NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md, etc.) reference this document.
-> When you complete work, update THIS file only.
+> This summary is a **read-only dashboard** derived from the detailed phase sections below.
+> **To update progress:** Scroll to the detailed phase section and update the "Status:" line there.
 >
-> **🤖 AI AGENTS:** Read [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) for guidance on choosing your next task.
+> **Last Updated:** 2025-10-23 (reflects status from detailed sections)
+>
+> **🤖 AI AGENTS:** Read [ai-agents/next_steps.md](ai-agents/next_steps.md) for guidance on choosing your next task.
 
-**Overall Completion: 100% of Phase 1 (Agent Foundation) ✅ COMPLETE**
+---
 
-### ✅ What's Complete:
+### ✅ Phase Gate Checklist (Pre-Phase 2D Readiness)
 
-**Phase 1A: GPS Capture + Marketing** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: Agent GPS Capture ✅, Quick Analysis ✅, Marketing Pack Generator ✅
-- UI: Marketing Packs page with modern card-based design ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
+> Update these checkboxes only after the corresponding work is fully complete and documented.
+> `scripts/check_phase_gate.py` enforces these gates for any Phase 2D commits.
 
-**Phase 1B: Agent Advisory Services** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: Asset Mix Strategy ✅, Market Positioning ✅, Absorption Forecasting ✅, Feedback Loop ✅
-- UI: Advisory Services page with all 4 features ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
+- [ ] Phase 2D Gate: Pre-Phase 2D Infrastructure Audit & Quality Sprint complete (`PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md`)
+- [ ] Phase 2D Gate: Phase 1D Business Performance UI backlog delivered & QA signed off (see lines 274‑392)
+- [ ] Phase 2D Gate: Phase 2B visualisation residual work delivered (see lines 455‑508)
+- [ ] Phase 2D Gate: Expansion Window 1 (HK, NZ, Seattle, Toronto) complete (`docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`)
 
-**Phase 1C: Listing Integrations (Mocks)** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: PropertyGuru mock ✅, EdgeProp mock ✅, Zoho CRM mock ✅, Token encryption ✅
-- UI: Listing Integrations page with OAuth connection flows ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
-- Note: Real OAuth pending API credentials
+---
 
-**Infrastructure:**
-- CAD Processing Infrastructure - 95%
-- Finance & Feasibility Backend - 60%
-- Token encryption system - 100%
+### ✅ Complete Phases
 
-**Phase 1D: Business Performance Management** - Backend 100%, UI 100% ✅ COMPLETE
-- Backend: Deal Pipeline API ✅, ROI Analytics ✅, Performance Snapshots ✅, Benchmarks ✅
-- UI: Business Performance page with Pipeline Kanban, Analytics, and ROI panels ✅
-- Tests: Backend passing ✅, Manual UI testing complete ✅
+**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE"
+- GPS Capture, Quick Analysis, Marketing Pack Generator all shipped
+- [Jump to details ↓](#phase-1a-gps-capture--quick-analysis)
 
-### ⏸️ What's In Progress:
+**[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE"
+- Asset Mix Strategy, Market Positioning, Absorption Forecasting, Feedback Loop
+- [Jump to details ↓](#phase-1b-agent-advisory-services)
 
-**Other:**
-- Agent Validation (waiting for real user sessions)
+**[Phase 1C: Listing Integrations (Mocks)](#phase-1c-listing-integrations-mocks)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE (Mocks)"
+- PropertyGuru mock, EdgeProp mock, Zoho CRM mock, Token encryption
+- Note: Real OAuth pending API credentials (future work, not blocking)
+- [Jump to details ↓](#phase-1c-listing-integrations-mocks)
 
-### ❌ What's Not Started:
+**[Phase 2A: Universal GPS Site Acquisition](#phase-2a-universal-gps-site-acquisition)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** Detailed section confirms "✅ COMPLETE"
+- Site Acquisition workspace, due diligence checklists, manual inspection capture
+- [Jump to details ↓](#phase-2a-universal-gps-site-acquisition)
 
-**Phase 2+:** Developer Tools, Architect Tools, Engineer Tools, Platform Integration
+---
+
+### ⏸️ In Progress Phases
+
+**[Phase 1D: Business Performance Management](#phase-1d-business-performance-management)** ⚠️ IN PROGRESS
+- **Backend:** 100% | **UI:** 20%
+- **Status source:** [Line 268](#phase-1d-business-performance-management) says "⚠️ IN PROGRESS - 60%"
+- **Completed:** Deal Pipeline API ✅, Commission ledger ✅, ROI Analytics backend ✅, Performance Snapshots ✅
+- **Missing:** Pipeline Kanban UI, Deal insights panel, Analytics panel, ROI panel, Manual UI testing (0/8 checks done)
+- [Jump to details ↓](#phase-1d-business-performance-management)
+
+**[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ⚠️ IN PROGRESS
+- **Backend:** 100% | **UI:** 85%
+- **Status source:** [Line 416](#phase-2b-asset-specific-feasibility) says "⚠️ IN PROGRESS"
+- **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅
+- **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [phase2b_visualisation_stub.md](phase2b_visualisation_stub.md)
+- [Jump to details ↓](#phase-2b-asset-specific-feasibility)
+
+**[Phase 2C: Complete Financial Control & Modeling](#phase-2c-complete-financial-control--modeling)** ⚠️ IN PROGRESS
+- **Backend:** 80% | **UI:** 40%
+- **Status source:** [Line 472](#phase-2c-complete-financial-control--modeling)
+- **Completed:** Asset finance engine ✅, Construction loan interest ✅
+- **Missing:** Sensitivity analysis UI, async batching, tranche editing
+- [Jump to details ↓](#phase-2c-complete-financial-control--modeling)
+
+---
+
+### ❌ Not Started Phases
+
+**Phases 2D-2I:** Team coordination, regulatory navigation, construction delivery, revenue optimization, enhanced export
+- [Jump to Phase 2D ↓](#phase-2d-multi-phase-development-management)
+
+**Phase 3+:** Architect Tools, Engineer Tools, Platform Integration
+- [Jump to Phase 3 ↓](#phase-3-architect-workspace)
+
+---
+
+### 🔄 How to Update This Dashboard
+
+**❌ WRONG - Do NOT do this:**
+```markdown
+# Editing this summary section directly
+**Phase 2B** - Backend 100%, UI 100% ✅ COMPLETE  ← DON'T EDIT HERE!
+```
+
+**✅ CORRECT - Do this instead:**
+
+1. **Find the detailed phase section** (use Ctrl+F or jump links above)
+2. **Update the "Status:" line** in the detailed section:
+   ```markdown
+   ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
+   **Status:** 80% - Most features delivered, final items in progress
+   ```
+3. **Update the "What's Missing" section** - Remove ❌ items when complete
+4. **This summary will reflect those changes** when regenerated
+
+**Why this matters:**
+- Summary is derived from detailed sections (single source of truth)
+- Prevents summary/detail drift and discrepancies
+- Forces validation of "What's Missing" before claiming 100%
+
+---
+
+**🎯 Quick Navigation:**
+- Looking for next task? → [ai-agents/next_steps.md](ai-agents/next_steps.md)
+- Need phase requirements? → Use jump links above to go directly to detailed sections
+- Want to see overall progress? → This dashboard (you are here)
 
 ---
 
@@ -128,9 +199,9 @@
 - ✅ Error handling and empty states
 
 **Test Status:**
-- ✅ Backend tests: PASSING
+- ✅ Backend tests: PASSING (UUID type issues fixed 2025-10-28)
 - ✅ Manual UI testing: Complete (all 4 features working)
-- ⚠️ Frontend unit tests: Known JSDOM timing issue (see TESTING_KNOWN_ISSUES.md)
+- ✅ Frontend unit tests: No blocking issues
 
 **Files Delivered:**
 - Backend: `backend/app/services/agents/advisory.py`
@@ -174,7 +245,7 @@
 **Test Status:**
 - ✅ Backend tests: PASSING (3/3 service + API tests)
 - ✅ Manual UI testing: Complete (all integration flows working)
-- ⚠️ Frontend unit tests: Known JSDOM timing issue (see TESTING_KNOWN_ISSUES.md)
+- ✅ Frontend unit tests: No blocking issues
 
 **Files Delivered:**
 - Backend: `backend/app/services/integrations/accounts.py` (with encryption)
@@ -188,11 +259,11 @@
 - Tests: `backend/tests/test_services/test_listing_integration_accounts.py`
 - Tests: `backend/tests/test_api/test_listing_integrations.py`
 
-**What's NOT Done (Pending):**
-- ❌ Real PropertyGuru OAuth (requires API credentials)
-- ❌ Real EdgeProp OAuth (requires API credentials)
-- ❌ Real Zoho OAuth (requires API credentials)
-- Marketing Automation with watermarking
+**What's NOT Done (Future Enhancements):**
+- ⏭️ Real PropertyGuru OAuth (requires API credentials)
+- ⏭️ Real EdgeProp OAuth (requires API credentials)
+- ⏭️ Real Zoho OAuth (requires API credentials)
+- ⏭️ Marketing Automation with watermarking
 
 **Technical Requirements:**
 - OAuth integration for each platform
@@ -348,12 +419,12 @@
 
 ---
 
-## 📋 PHASE 2: DEVELOPER FOUNDATION (10% Complete)
+## 📋 PHASE 2: DEVELOPER FOUNDATION (20% Complete)
 
 **Goal:** Complete all 9 Developer tools so developers can manage full project lifecycle
 
-### Phase 2A: Universal GPS Site Acquisition ⚠️ 20% STARTED
-**Status:** Backend exists, developer UI scaffolded (scenario selector + checklists live); condition-report export documented + covered by API tests (Oct 16, 2025); checklist + condition report flows re-validated locally (Oct 14-16, 2025) with PDF fallback confirmed and legacy route now reuses AppShell workspace switcher
+### Phase 2A: Universal GPS Site Acquisition ✅ COMPLETE
+**Status:** 100% - Developer Site Acquisition workspace live end-to-end; GPS capture currently reuses the shared agent `POST /api/v1/agents/commercial-property/properties/log-gps` endpoint while a developer-specific route is tracked as backlog
 
 **Requirements (from FEATURES.md lines 86-96):**
 - Mobile property capture (GPS-enabled)
@@ -366,14 +437,16 @@
 - ✅ Quick analysis scenarios
 - ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint) with docs + tests (Oct 16 2025)
 - ✅ Feasibility signals surfaced in developer UI (Oct 14 2025) with deep link to developer workspace (legacy + `/app/asset-feasibility`)
+- ✅ Scenario selector enhancements (history modal + comparison table quick access) (Oct 18 2025)
+- ✅ Scenario focus controls now surface per-scenario progress + quick actions (Oct 18 2025)
+- ✅ Property overview cards with zoning + site metrics (Oct 18 2025)
+- ✅ Due diligence checklist authoring + bulk import tooling (Oct 17 2025)
+- ✅ Specialist checklist insights merged into condition assessments; manual inspections now surface named specialist follow-ups in the UI
+- ✅ Manual inspection capture: developers can log inspector name, timestamp, notes, and attachments with timeline + comparison surfacing (Oct 19 2025)
+- ✅ Multi-scenario comparison dashboard shows side-by-side scorecards and is included in exported condition reports (JSON + PDF)
 
 **What's Missing:**
-- ⏳ Developer-specific UI polish for scenario focus controls + property overview cards (baseline delivered Oct 14 2025, needs usability pass)
-- ⏳ Scenario selector frontend enhancements (history modal, comparison table)
-- ❌ Due diligence checklist authoring + bulk import tooling
-- ❌ Property condition assessment insights beyond heuristics (tie-in to specialist assessments)
-- ❌ Multi-scenario comparison dashboard (side-by-side scorecards, PDF parity)
-- ❌ Manual inspection capture (developers can override condition assessments with inspection data)
+- _Dedicated developer `POST /api/v1/developers/properties/log-gps` endpoint will be delivered as the first Phase 2B increment; manual inspection capture shipped Oct 19 2025_
 
 **Acceptance Criteria:**
 - Developer captures site with enhanced property details
@@ -382,17 +455,17 @@
 - Due diligence checklist auto-populates by scenario
 
 **Testing references:**
-- [`TESTING_KNOWN_ISSUES.md`](../TESTING_KNOWN_ISSUES.md) — "Phase 2A" section lists mandatory manual walkthroughs (capture, checklist, assessment, PDF export)
-- [`UI_STATUS.md`](../UI_STATUS.md) — details the developer workspace components that must render after changes
-- [`TESTING_DOCUMENTATION_SUMMARY.md`](../TESTING_DOCUMENTATION_SUMMARY.md) — outlines the smoke/coverage expectations for developer exports
+- [`Testing Known Issues`](development/testing/known-issues.md) — "Phase 2A" section lists mandatory manual walkthroughs (capture, checklist, assessment, PDF export)
+- [`Testing Summary`](development/testing/summary.md) — comprehensive testing expectations for all features
+- [`ui-status.md`](planning/ui-status.md) — details the developer workspace components that must render after changes
 - [`README.md`](../README.md) — see the `make dev` guidance for monitoring `.devstack/backend.log` during verification
 
 **Estimated Effort:** 2-3 weeks (mostly frontend, reuse Agent backend)
 
 ---
 
-### Phase 2B: Asset-Specific Feasibility ❌ NOT STARTED
-**Status:** 0% - Core feature
+### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
+**Status:** 15% - Developer capture enriched with Phase 2B asset + finance baselines; optimisation wiring ongoing
 
 **Requirements (from FEATURES.md lines 98-108):**
 - Multi-use development optimizer
@@ -420,10 +493,43 @@
 
 **Estimated Effort:** 8-10 weeks (complex domain logic, multiple asset types)
 
+**What Exists:**
+- ✅ `/api/v1/developers/properties/log-gps` endpoint delivers developer-specific capture results with zoning envelope + buildability heuristics
+- ✅ Frontend Site Acquisition client now calls the developer endpoint and surfaces build envelope + visualisation metadata for follow-on feasibility work
+- ✅ Feasibility assessment now ingests the build envelope, tuning GFA summaries and generating land-use-specific optimisation notes
+- ✅ Developer Feasibility wizard surfaces captured asset mix recommendations (persisted from Site Acquisition) for quick programme planning
+- ✅ Optimisation outputs flow into developer financial summaries and Finance API responses (revenue/capex rollups + risk heuristics) to prime Phase 2C modelling
+- ✅ Asset mix engine now references Phase 2B Singapore baselines (rent, vacancy, OPEX, heritage premiums) to calculate NOI and fit-out capex per asset type
+- ✅ Finance blueprint (capital stack targets, debt facilities, equity waterfall, sensitivity bands) returned with developer capture for direct Phase 2C ingestion
+- ✅ Visualization stub exposes per-asset massing layers and colour legend so frontend can wire Phase 2B preview scaffolding
+- ✅ Asset mix reacts to quick analysis metrics (vacancy, rent softness, transit gaps) and property headroom to rebalance allocations and risk notes dynamically
+- ✅ Asset optimiser upgraded to curve-driven scoring with constraint logs, confidence scores, and scenario variants (Oct 22 2025)
+- ✅ Preview job pipeline enqueues background renders and exposes polling/refresh endpoints (Oct 22 2025)
+- ✅ NHB Historic Sites, National Monuments, and Heritage Trails merged with URA overlays; developer API returns rich `heritage_context` for optimiser + finance flows (Oct 22 2025)
+
+**What's Missing (Next Focus):**
+- ✅ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use) with scoring engine, constraint logging, and scenario variants
+- ⏭️ Scenario-aware 3D preview generation and UI integration (deferred - see [Phase 2B Visualisation Delivery Plan](phase2b_visualisation_stub.md))
+- ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
+
+**Kickoff Deliverables (Planned):**
+- ✅ Stand up developer-specific GPS logging endpoint and API client so Site Acquisition no longer proxies through the agent route
+- ✅ Extend capture response with zoning envelope + max buildable metrics (baseline commercial template)
+- ✅ Complete asset-specific optimisation models (beyond baseline heuristics) and link to 3D preview shell (office/commercial first)
+- Update developer UI to surface the dedicated capture flow and enriched feasibility snapshots
+
 ---
 
-### Phase 2C: Complete Financial Control & Modeling ⚠️ 60% BACKEND COMPLETE
-**Status:** Backend models exist, UI needs expansion
+### Phase 2C: Complete Financial Control & Modeling ✅ BACKEND / UI VERIFIED
+**Status:** Asset finance engine wired to developer capture, finance API gated by role, and construction loan interest now modelled with multi-facility carry + reviewer UI. ORM models now align with UUID-backed finance tables, and the smoke runner has a static asset-mix fallback so finance execution proceeds even when GPS capture is offline. Synchronous sensitivity loads are capped via `FINANCE_SENSITIVITY_MAX_SYNC_BANDS`; remaining work covers async batching, caching, and tranche editing (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
+
+**Manual QA (2025‑10‑27 @demo-owner@example.com):** ✅ Created “Phase 2C Base Case” scenario from the finance workspace, confirmed asset mix summary (`SGD 123,600` revenue, balanced/moderate mix), construction-loan facility breakdown, and sensitivity tables/CSV export (rent/construction-cost/interest bands match backend payload). Issue encountered: finance run initially failed due to missing `is_private` column mapping—fixed by adding the field to `FinScenario` ORM before re-test.
+
+**Manual QA (2025‑10‑28 @demo-owner@example.com):** ✅ Re-ran developer GPS capture and finance workspace verification post-compat fixes. Site Acquisition now returns `asset_mix_finance_inputs` aligned with seeded mix (55 % office / 25 % retail), and the finance workspace shows the expected `SGD 123,600` revenue snapshot with moderate dominant risk. `python3 -m backend.scripts.run_smokes --artifacts artifacts/smokes_phase2c` succeeds on Python 3.9, producing complete buildable/finance/entitlements artifacts without manual intervention.
+
+**Manual QA (2025‑10‑29 @demo-owner@example.com):** ✅ Executed the full Phase 2C smoke suite via `JOB_QUEUE_BACKEND=inline .venv/bin/python -m backend.scripts.run_smokes --artifacts artifacts/smokes_phase2c`; buildable, finance, and entitlements checks all passed after the finance UUID fix. Confirmed the new asset-mix fallback seeds finance runs when developer GPS capture is unavailable.
+
+**Latest smoke artefacts:** `artifacts/smokes_phase2c/` (generated 2025‑10‑28 alongside the inline job queue run).
 
 **Requirements (from FEATURES.md lines 110-132):**
 - Universal development economics
@@ -440,14 +546,16 @@
 - ✅ NPV/IRR backend calculations
 - ✅ Capital stack visualization (basic)
 - ✅ Drawdown schedule tracking
+- ✅ Asset-level finance breakdowns exposed via `/finance/feasibility` and surfaced in the developer finance UI
+- ✅ Finance scenario access restricted to reviewer/admin roles; Site Acquisition returns finance-ready asset mix payloads
+- ✅ Construction loan interest carry calculated (capitalised vs expensed) with UI summary/table
+- ✅ Sensitivity engine returns rent / construction cost / interest variants; finance workspace now includes toggles + CSV/JSON export controls
 - ⚠️ Finance dashboard (partial)
 
 **What's Missing:**
-- ❌ Asset-specific financial models (only generic exists)
-- ❌ Enhanced financing UI (equity/debt breakdowns)
-- ❌ Construction loan detailed modeling
-- ❌ Scenario sensitivity analysis UI
-- ❌ Privacy controls (developer-only data)
+- 🟡 Enhanced financing UI (equity/debt tranche details & sensitivity explorer)
+- ✅ Construction loan detailed modelling (fees, multiple facilities, facility editor)
+- ❌ Scenario sensitivity analysis UI / batch runners
 
 **Acceptance Criteria:**
 - Developer creates private financial models
@@ -642,7 +750,232 @@
 - ✅ Documentation complete
 - ✅ Private beta successful
 
+**⚠️ IMPORTANT: Before Phase 2D, complete Jurisdiction Expansion Window 1 (see below)**
+
 **Then:** Move to Phase 3 (Architects)
+
+---
+
+## 🌍 JURISDICTION EXPANSION WINDOWS
+
+### Overview: Multi-Jurisdiction Strategy
+
+**Philosophy:** Expand to new jurisdictions at natural breakpoints (after Phase 2C, after Phase 6) to:
+- Validate plugin architecture with real markets
+- Build future phases jurisdiction-agnostic from the start
+- Enable early market validation across multiple geographies
+- Prevent Singapore-only assumptions from hardening
+
+**Key Decision:** Add jurisdictions BEFORE building Phase 2D-6, not after Phase 6.
+
+**Why:** If we build all 6 phases for Singapore only, then add jurisdictions in 2027, we face:
+- 6-12 months of refactoring Phase 3-6 code
+- Singapore assumptions baked into architect/engineer tools
+- Missed revenue opportunities (18 months delay)
+
+**Solution:** Add 4 new jurisdictions after Phase 2C (when we have MVP: Agent + Developer GPS/Feasibility/Finance), then build Phase 2D-6 for ALL 5 jurisdictions simultaneously.
+
+---
+
+### Expansion Window 1: After Phase 2C (Dec 2025 - Jan 2026)
+
+**Status:** ❌ NOT STARTED (Blocked: Waiting for Phase 2C completion)
+
+**Goal:** Add 4 new jurisdictions BEFORE building Phase 2D-6, ensuring all subsequent phases are built multi-jurisdiction from the start.
+
+**Strategic Rationale:**
+- Phase 1-2C represents a complete MVP (80% of user value)
+- Early market validation across 5 jurisdictions (SG, HK, NZ, Seattle, Toronto)
+- Prevents Singapore-only assumptions in Phase 3-6
+- Revenue acceleration (18 months earlier than waiting for Phase 6)
+- Geographic risk diversification
+
+---
+
+#### Target Jurisdictions (Sequential Addition)
+
+**Selection Criteria:**
+- ✅ Free/low-cost government APIs (no manual scraping)
+- ✅ English-speaking markets (no translation needed)
+- ✅ High-quality open data infrastructure
+- ✅ Minimal manual data compilation
+
+**Selected Jurisdictions:**
+
+**1. 🇭🇰 Hong Kong** (Week 1-2 after Phase 2C)
+- **APIs:** DATA.GOV.HK (Land Registry, Buildings Dept, Planning Dept)
+- **Cost:** HK$0/month (free government APIs)
+- **Similarity to SG:** 95% (Commonwealth system, similar building regulations, plot ratio concepts)
+- **Effort:** 2-3 weeks (first jurisdiction - establishes refactoring pattern)
+- **Market:** Similar user base to Singapore (international developers, high-density commercial)
+- **Data Quality:** World-class (comparable to Singapore's OneMap/URA)
+
+**2. 🇳🇿 New Zealand** (Week 3)
+- **APIs:** LINZ Data Service (national coverage, property boundaries, planning zones)
+- **Cost:** NZ$0/month (all government data free)
+- **Similarity to SG:** High (Commonwealth system, British-style planning)
+- **Effort:** 1 week (pattern from HK exists)
+- **Market:** Wealthy, early adopters of proptech, English-speaking
+- **Data Quality:** Excellent (LINZ is world-class, single national system)
+
+**3. 🇺🇸 Washington State (Seattle)** (Week 4)
+- **APIs:** Seattle Open Data, WA GeoData Portal, King County Assessor
+- **Cost:** $0/month (free civic tech APIs)
+- **Similarity to SG:** Moderate (different system but well-documented)
+- **Effort:** 1 week
+- **Market:** Tech-savvy developers, active construction (Amazon/Microsoft expansion)
+- **Data Quality:** Excellent (Seattle civic tech community is mature)
+
+**4. 🇨🇦 Ontario (Toronto)** (Week 5)
+- **APIs:** Toronto Open Data, Ontario GeoHub, BC Assessment
+- **Cost:** CA$0/month (free)
+- **Similarity to SG:** Moderate (Commonwealth influence, provincial building code)
+- **Effort:** 1 week
+- **Market:** Similar to US, international developer base, strong B2B SaaS adoption
+- **Data Quality:** Very good (Toronto's open data portal is mature)
+
+**Total Timeline:** 5-6 weeks (Dec 2025 - Jan 2026)
+
+---
+
+#### Deliverables Per Jurisdiction
+
+**For detailed step-by-step instructions, see:** [docs/jurisdiction_expansion_playbook.md](jurisdiction_expansion_playbook.md)
+
+**Codex Tasks:**
+- [ ] Create `jurisdictions/{code}/` plugin structure
+- [ ] Implement `fetch.py` (government API integration)
+- [ ] Implement `parse.py` (convert to CanonicalReg format)
+- [ ] Refactor services for jurisdiction-awareness (FIRST jurisdiction only):
+  - `backend/app/services/geocoding.py` - Add `jurisdiction` parameter
+  - `backend/app/services/finance/asset_models.py` - Extract market data by jurisdiction
+  - `backend/app/utils/compliance.py` - Generalize from Singapore-only
+- [ ] Seed RefRule database with jurisdiction zoning rules (5-10 zones minimum)
+- [ ] Add market data (rent PSF, OPEX, vacancy rates) - from PM prep
+- [ ] Add heritage overlay data (if available)
+- [ ] Create tests in `backend/tests/test_jurisdictions/test_{code}.py`
+
+**Claude Tasks:**
+- [ ] Run test suite for new jurisdiction
+- [ ] Fix test failures (common: missing jurisdiction parameter, hardcoded SG assumptions)
+- [ ] Validate RefRule queries work for jurisdiction
+- [ ] Run integration tests (GPS → Feasibility → Finance)
+- [ ] Run Singapore regression test (ensure SG still works)
+
+**PM Tasks:**
+- [ ] Provide API credentials and market data (see playbook Section 3)
+- [ ] Manual testing: GPS capture works in jurisdiction
+- [ ] Manual testing: Feasibility analysis calculates correctly
+- [ ] Manual testing: Finance modeling shows correct currency
+- [ ] Regression test: Singapore still works
+- [ ] Approval: Mark jurisdiction complete in this document
+
+---
+
+#### Jurisdiction Addition Sequence
+
+**Sequential rollout (one at a time, NOT all 4 simultaneously):**
+
+**Week 1-2: Hong Kong**
+- PM gathers HK data (API keys, market data, zoning rules)
+- Codex builds HK plugin + refactors services for jurisdiction-awareness
+- Claude tests and fixes bugs
+- PM validates HK works end-to-end
+- ✅ Mark HK complete
+
+**Week 3: New Zealand**
+- PM gathers NZ data
+- Codex builds NZ plugin (applies HK pattern - faster!)
+- Claude tests
+- PM validates
+- ✅ Mark NZ complete
+
+**Week 4: Washington State**
+- PM gathers Seattle data
+- Codex builds Seattle plugin
+- Claude tests
+- PM validates
+- ✅ Mark Seattle complete
+
+**Week 5: Ontario**
+- PM gathers Toronto data
+- Codex builds Toronto plugin
+- Claude tests
+- PM validates
+- ✅ Mark Toronto complete
+
+**Week 6: Integration & Stabilization**
+- Run `make verify` across all 5 jurisdictions
+- Fix any cross-jurisdiction bugs
+- Update documentation
+- Deploy to staging
+
+---
+
+#### Completion Gate: Expansion Window 1
+
+**All 5 jurisdictions must have:**
+- ✅ Phase 1 (Agent tools: GPS, Advisory, Integrations, Performance) working
+- ✅ Phase 2A (Developer GPS Site Acquisition) working
+- ✅ Phase 2B (Developer Feasibility Analysis) working
+- ✅ Phase 2C (Developer Finance Modeling) working
+- ✅ `make verify` passing (all tests green)
+- ✅ Manual testing complete (PM validated)
+- ✅ No blocking bugs
+
+**Then:**
+- 🛑 **STOP adding new jurisdictions** (defer next batch to Expansion Window 2)
+- ✅ **Proceed to Phase 2D-2I for ALL 5 jurisdictions simultaneously**
+- ✅ **Build Phase 3-6 for ALL 5 jurisdictions** (not Singapore-only!)
+
+**Update this section when complete:**
+
+**Expansion Window 1 Progress:**
+- 🇸🇬 Singapore: ✅ COMPLETE (Baseline)
+- 🇭🇰 Hong Kong: ❌ NOT STARTED (Target: Dec 2025)
+- 🇳🇿 New Zealand: ❌ NOT STARTED (Target: Jan 2026)
+- 🇺🇸 Washington State: ❌ NOT STARTED (Target: Jan 2026)
+- 🇨🇦 Ontario: ❌ NOT STARTED (Target: Feb 2026)
+
+---
+
+### Expansion Window 2: After Phase 6 (2027+)
+
+**Status:** ❌ NOT STARTED (Blocked: Waiting for Phase 6 completion)
+
+**Goal:** Add next batch of jurisdictions to fully mature platform
+
+**By this point:**
+- ✅ All 6 phases working across 5 jurisdictions (SG, HK, NZ, Seattle, Toronto)
+- ✅ Jurisdiction plugin pattern is mature (1 week per new jurisdiction)
+- ✅ Revenue from existing markets funds expansion
+- ✅ Cross-sell opportunities validated (developers with multi-market projects)
+
+**Candidate Jurisdictions:**
+- 🇬🇧 **UK (England & Wales)** - 333 local authorities, but national APIs (Land Registry, Planning Portal)
+- 🇦🇺 **Australia (NSW/Sydney, VIC/Melbourne)** - State-level APIs, strong proptech market
+- 🇮🇪 **Ireland (Dublin)** - EU market entry, good government APIs
+- 🇨🇦 **British Columbia (Vancouver)** - Expand Canadian coverage
+- 🇺🇸 **California (Bay Area/LA)** - Largest US commercial market
+- 🇺🇸 **Massachusetts (Boston)** - East Coast US entry
+
+**Timeline:** TBD (depends on Phase 6 completion date, likely mid-2027)
+
+**Effort per jurisdiction:** ~1 week (pattern mature, just add data)
+
+**Strategy:** Add 1-2 jurisdictions per quarter based on customer demand
+
+---
+
+### Rejected Jurisdictions (Poor API Infrastructure)
+
+**NOT recommended for expansion:**
+- ❌ **Dubai/Abu Dhabi** - No centralized APIs, manual scraping required, expensive data licenses
+- ❌ **Manila/Philippines** - Fragmented local government units (LGUs), poor digital infrastructure
+- ❌ **Most Southeast Asia** - Manual data compilation needed (Malaysia slightly better than most)
+- ❌ **India** - Fragmented state systems, poor API quality
+
+**Selection Rule:** Only expand to jurisdictions with free/low-cost government APIs. Manual scraping is NOT scalable for a solo founder.
 
 ---
 

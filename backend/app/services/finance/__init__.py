@@ -1,5 +1,11 @@
 """Finance related service helpers."""
 
+from .asset_models import (
+    AssetFinanceInput,
+    build_asset_financials,
+    serialise_breakdown,
+    summarise_asset_financials,
+)
 from .calculator import dscr_timeline, escalate_amount, irr, npv, price_sensitivity_grid
 from .re_metrics import (
     PropertyValuation,
@@ -19,6 +25,11 @@ from .re_metrics import (
 )
 
 __all__ = [
+    # Asset modelling (Phase 2C)
+    "AssetFinanceInput",
+    "build_asset_financials",
+    "serialise_breakdown",
+    "summarise_asset_financials",
     # Original calculator functions
     "dscr_timeline",
     "escalate_amount",

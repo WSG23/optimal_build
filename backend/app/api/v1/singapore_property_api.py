@@ -6,11 +6,14 @@ property feasibility analysis and space optimization.
 MVP: Uses synchronous database for simplicity.
 """
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -31,7 +34,6 @@ from app.utils.singapore_compliance import (
     run_full_compliance_check_sync,
     update_property_compliance_sync,
 )
-from backend._compat.datetime import utcnow
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])

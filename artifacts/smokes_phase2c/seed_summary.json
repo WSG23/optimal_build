@@ -1,0 +1,27 @@
+{
+  "entitlements": {
+    "approval_types": 5,
+    "authorities": 4,
+    "project_id": 90301,
+    "roadmap_items": 5
+  },
+  "finance": {
+    "cost_items": 9,
+    "fin_project_id": 39,
+    "project_id": "1388ca00-6608-43e4-be18-b4e0bddf3011",
+    "results": 18,
+    "scenarios": 3,
+    "schedule_rows": 18
+  },
+  "non_reg": {
+    "cost_indices": 1,
+    "ergonomics": 4,
+    "standards": 2
+  },
+  "screening": {
+    "geocode_cache": 3,
+    "parcels": 3,
+    "sources": 4,
+    "zoning_layers": 3
+  }
+}

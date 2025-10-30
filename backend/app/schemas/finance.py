@@ -2,11 +2,127 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
+from datetime import datetime
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
+
+
+FINANCE_FEASIBILITY_REQUEST_EXAMPLE = {
+    "project_id": 0,
+    "project_name": "string",
+    "fin_project_id": 0,
+    "scenario": {
+        "name": "string",
+        "description": "string",
+        "currency": "SGD",
+        "is_primary": False,
+        "cost_escalation": {
+            "amount": "0",
+            "base_period": "string",
+            "jurisdiction": "SG",
+            "provider": "string",
+            "series_name": "string",
+        },
+        "cash_flow": {
+            "discount_rate": "0",
+            "cash_flows": ["0"],
+        },
+        "dscr": {
+            "net_operating_incomes": ["0"],
+            "debt_services": ["0"],
+            "period_labels": ["string"],
+        },
+        "capital_stack": [],
+        "drawdown_schedule": [],
+    },
+}
+
+
+FINANCE_FEASIBILITY_RESPONSE_EXAMPLE = {
+    "project_id": 0,
+    "fin_project_id": 0,
+    "scenario_id": 0,
+    "scenario_name": "string",
+    "currency": "string",
+    "escalated_cost": "0",
+    "cost_index": {
+        "series_name": "string",
+        "jurisdiction": "string",
+        "provider": "string",
+        "base_period": "string",
+        "latest_period": "string",
+        "scalar": "0",
+        "base_index": {
+            "period": "string",
+            "value": "0",
+            "unit": "string",
+            "source": "string",
+            "provider": "string",
+            "methodology": "string",
+        },
+        "latest_index": {
+            "period": "string",
+            "value": "0",
+            "unit": "string",
+            "source": "string",
+            "provider": "string",
+            "methodology": "string",
+        },
+    },
+    "results": [
+        {
+            "name": None,
+            "value": None,
+            "unit": None,
+            "metadata": {},
+        }
+    ],
+    "dscr_timeline": [],
+    "capital_stack": {
+        "currency": "string",
+        "total": "0",
+        "equity_total": "0",
+        "debt_total": "0",
+        "other_total": "0",
+        "slices": [],
+    },
+    "drawdown_schedule": {
+        "currency": "string",
+        "entries": [],
+        "total_equity": "0",
+        "total_debt": "0",
+        "peak_debt_balance": "0",
+        "final_debt_balance": "0",
+    },
+}
+
+
+def _format_rate(value: Decimal | None, *, places: int = 4) -> str | None:
+    if value is None:
+        return None
+    quantized = value.quantize(
+        Decimal(f"0.{'0' * (places - 1)}1"), rounding=ROUND_HALF_UP
+    )
+    return f"{quantized:.{places}f}"
+
+
+def _format_percentage(value: Decimal | None, *, places: int = 2) -> str | None:
+    if value is None:
+        return None
+    quantized = value.quantize(
+        Decimal(f"0.{'0' * (places - 1)}1"), rounding=ROUND_HALF_UP
+    )
+    return f"{quantized:.{places}f}"
 
 
 class CostIndexSnapshot(BaseModel):
@@ -102,6 +218,66 @@ class DscrInputs(BaseModel):
         return instance
 
 
+class FinanceAssetMixInput(BaseModel):
+    """Asset mix entry used to drive asset-level finance modelling."""
+
+    asset_type: str
+    allocation_pct: Decimal | None = None
+    nia_sqm: Decimal | None = None
+    rent_psm_month: Decimal | None = None
+    stabilised_vacancy_pct: Decimal | None = None
+    opex_pct_of_rent: Decimal | None = None
+    estimated_revenue_sgd: Decimal | None = None
+    estimated_capex_sgd: Decimal | None = None
+    absorption_months: Decimal | None = None
+    risk_level: str | None = None
+    heritage_premium_pct: Decimal | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+class ConstructionLoanFacilityInput(BaseModel):
+    """Facility configuration for construction loan modelling."""
+
+    name: str
+    amount: Decimal = Field(..., ge=Decimal("0"))
+    interest_rate: Decimal | None = None
+    periods_per_year: int | None = Field(default=None, ge=1)
+    capitalise_interest: bool | None = None
+    upfront_fee_pct: Decimal | None = Field(default=None, ge=Decimal("0"))
+    exit_fee_pct: Decimal | None = Field(default=None, ge=Decimal("0"))
+
+    @field_serializer("interest_rate", when_used="json")
+    def _serialise_interest_rate(self, value: Decimal | None) -> str | None:
+        return _format_rate(value)
+
+    @field_serializer("upfront_fee_pct", "exit_fee_pct", when_used="json")
+    def _serialise_percentages(self, value: Decimal | None, info) -> str | None:
+        return _format_percentage(value)
+
+
+class ConstructionLoanInput(BaseModel):
+    """Base construction loan configuration submitted by the frontend."""
+
+    interest_rate: Decimal | None = None
+    periods_per_year: int | None = Field(default=None, ge=1)
+    capitalise_interest: bool = True
+    facilities: list[ConstructionLoanFacilityInput] | None = None
+
+    @field_serializer("interest_rate", when_used="json")
+    def _serialise_interest_rate(self, value: Decimal | None) -> str | None:
+        return _format_rate(value)
+
+
+class SensitivityBandInput(BaseModel):
+    """Input describing a single sensitivity parameter."""
+
+    parameter: str
+    low: Decimal | None = None
+    base: Decimal | None = None
+    high: Decimal | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
 class FinanceScenarioInput(BaseModel):
     """Scenario level configuration submitted by the frontend."""
 
@@ -114,10 +290,17 @@ class FinanceScenarioInput(BaseModel):
     dscr: DscrInputs | None = None
     capital_stack: list[CapitalStackSliceInput] | None = None
     drawdown_schedule: list[DrawdownPeriodInput] | None = None
+    asset_mix: list[FinanceAssetMixInput] | None = None
+    construction_loan: ConstructionLoanInput | None = None
+    sensitivity_bands: list[SensitivityBandInput] | None = None
 
 
 class FinanceFeasibilityRequest(BaseModel):
     """Payload accepted by the finance feasibility endpoint."""
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": FINANCE_FEASIBILITY_REQUEST_EXAMPLE}
+    )
 
     project_id: str | int | UUID
     project_name: str | None = None
@@ -212,8 +395,102 @@ class FinancingDrawdownScheduleSchema(BaseModel):
     final_debt_balance: Decimal
 
 
+class AssetFinancialSummarySchema(BaseModel):
+    """Aggregated financial summary derived from asset optimisation."""
+
+    total_estimated_revenue_sgd: Decimal | None = None
+    total_estimated_capex_sgd: Decimal | None = None
+    dominant_risk_profile: str | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+class FinanceAssetBreakdownSchema(BaseModel):
+    """Individual asset breakdown for Phase 2C asset-specific modelling."""
+
+    asset_type: str
+    allocation_pct: Decimal | None = None
+    nia_sqm: Decimal | None = None
+    rent_psm_month: Decimal | None = None
+    gross_rent_annual_sgd: Decimal | None = None
+    vacancy_loss_sgd: Decimal | None = None
+    effective_gross_income_sgd: Decimal | None = None
+    operating_expenses_sgd: Decimal | None = None
+    noi_annual_sgd: Decimal | None = None
+    estimated_capex_sgd: Decimal | None = None
+    payback_years: Decimal | None = None
+    absorption_months: Decimal | None = None
+    risk_level: str | None = None
+    heritage_premium_pct: Decimal | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+class ConstructionLoanFacilitySchema(BaseModel):
+    """Facility-level construction loan metadata returned by the API."""
+
+    name: str
+    amount: Decimal | None = None
+    interest_rate: Decimal | None = None
+    periods_per_year: int | None = None
+    capitalised: bool = True
+    total_interest: Decimal | None = None
+    upfront_fee: Decimal | None = None
+    exit_fee: Decimal | None = None
+
+
+class ConstructionLoanInterestEntrySchema(BaseModel):
+    """Per-period construction loan interest accrual."""
+
+    period: str
+    opening_balance: Decimal
+    closing_balance: Decimal
+    average_balance: Decimal
+    interest_accrued: Decimal
+
+
+class ConstructionLoanInterestSchema(BaseModel):
+    """Construction loan interest summary for Phase 2C."""
+
+    currency: str
+    interest_rate: Decimal | None = None
+    periods_per_year: int | None = None
+    capitalised: bool = True
+    total_interest: Decimal | None = None
+    upfront_fee_total: Decimal | None = None
+    exit_fee_total: Decimal | None = None
+    facilities: list[ConstructionLoanFacilitySchema] = Field(default_factory=list)
+    entries: list[ConstructionLoanInterestEntrySchema] = Field(default_factory=list)
+
+
+class FinanceSensitivityOutcomeSchema(BaseModel):
+    """Result row emitted for each sensitivity permutation."""
+
+    parameter: str
+    scenario: str
+    delta_label: str | None = None
+    npv: Decimal | None = None
+    irr: Decimal | None = None
+    escalated_cost: Decimal | None = None
+    total_interest: Decimal | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+class FinanceJobStatusSchema(BaseModel):
+    """Status row describing queued sensitivity jobs."""
+
+    scenario_id: int
+    task_id: str | None = None
+    status: str
+    backend: str | None = None
+    queued_at: datetime | None = None
+
+
 class FinanceFeasibilityResponse(BaseModel):
     """Response payload returned by the finance feasibility endpoint."""
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": FINANCE_FEASIBILITY_RESPONSE_EXAMPLE},
+        from_attributes=True,
+    )
 
     scenario_id: int
     project_id: str
@@ -226,23 +503,44 @@ class FinanceFeasibilityResponse(BaseModel):
     dscr_timeline: list[DscrEntrySchema] = Field(default_factory=list)
     capital_stack: CapitalStackSummarySchema | None = None
     drawdown_schedule: FinancingDrawdownScheduleSchema | None = None
+    asset_mix_summary: AssetFinancialSummarySchema | None = None
+    asset_breakdowns: list[FinanceAssetBreakdownSchema] = Field(default_factory=list)
+    construction_loan_interest: ConstructionLoanInterestSchema | None = None
+    construction_loan: ConstructionLoanInput | None = None
+    sensitivity_results: list[FinanceSensitivityOutcomeSchema] = Field(
+        default_factory=list
+    )
+    sensitivity_jobs: list[FinanceJobStatusSchema] = Field(default_factory=list)
 
 
 __all__ = [
+    "FINANCE_FEASIBILITY_REQUEST_EXAMPLE",
+    "FINANCE_FEASIBILITY_RESPONSE_EXAMPLE",
+    "AssetFinancialSummarySchema",
     "CapitalStackSliceInput",
     "CapitalStackSliceSchema",
     "CapitalStackSummarySchema",
     "CashflowInputs",
+    "ConstructionLoanFacilityInput",
+    "ConstructionLoanInput",
+    "ConstructionLoanFacilitySchema",
+    "ConstructionLoanInterestEntrySchema",
+    "ConstructionLoanInterestSchema",
     "CostEscalationInput",
     "CostIndexProvenance",
     "CostIndexSnapshot",
     "DrawdownPeriodInput",
     "DscrEntrySchema",
     "DscrInputs",
-    "FinancingDrawdownEntrySchema",
-    "FinancingDrawdownScheduleSchema",
+    "FinanceAssetBreakdownSchema",
+    "FinanceAssetMixInput",
     "FinanceFeasibilityRequest",
     "FinanceFeasibilityResponse",
     "FinanceResultSchema",
+    "FinanceSensitivityOutcomeSchema",
+    "FinanceJobStatusSchema",
     "FinanceScenarioInput",
+    "SensitivityBandInput",
+    "FinancingDrawdownEntrySchema",
+    "FinancingDrawdownScheduleSchema",
 ]

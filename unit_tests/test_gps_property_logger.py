@@ -88,16 +88,67 @@ class StubURAService:
         ]
 
 
+class FakeDialect:
+    """Fake dialect for testing."""
+
+    name = "postgresql"
+
+
+class FakeConnection:
+    """Fake connection for testing."""
+
+    def __init__(self) -> None:
+        self.dialect = FakeDialect()
+
+    async def execute(self, *args: Any, **kwargs: Any) -> None:
+        """No-op execute for testing."""
+        pass
+
+
+class FakeResult:
+    """Fake result object for execute() calls."""
+
+    def scalars(self) -> "FakeScalars":
+        return FakeScalars()
+
+
+class FakeScalars:
+    """Fake scalars object."""
+
+    def all(self) -> list[Any]:
+        return []
+
+
 class FakeSession:
     def __init__(self) -> None:
         self.committed = False
         self.rolled_back = False
+        self._connection = FakeConnection()
 
     async def commit(self) -> None:
         self.committed = True
 
     async def rollback(self) -> None:
         self.rolled_back = True
+
+    async def connection(self) -> FakeConnection:
+        return self._connection
+
+    async def execute(self, *args: Any, **kwargs: Any) -> FakeResult:
+        """No-op execute that returns empty results."""
+        return FakeResult()
+
+    def add(self, obj: Any) -> None:
+        """No-op add for testing."""
+        pass
+
+    async def delete(self, obj: Any) -> None:
+        """No-op delete for testing."""
+        pass
+
+    async def flush(self) -> None:
+        """No-op flush for testing."""
+        pass
 
 
 class LoggerUnderTest(GPSPropertyLogger):
@@ -139,6 +190,7 @@ async def test_gps_logging_generates_quick_analysis() -> None:
         DevelopmentScenario.EXISTING_BUILDING.value,
         DevelopmentScenario.HERITAGE_PROPERTY.value,
         DevelopmentScenario.UNDERUSED_ASSET.value,
+        DevelopmentScenario.MIXED_USE_REDEVELOPMENT.value,
     }
 
     raw_land = next(

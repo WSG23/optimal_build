@@ -5,9 +5,8 @@ This script runs when PDF-related files are modified to ensure
 developers perform manual testing before committing.
 """
 
-import sys
 import subprocess
-from pathlib import Path
+import sys
 
 
 def get_staged_files():
@@ -63,12 +62,16 @@ def main():
     print("\n" + "=" * 70)
     print("Quick Test Commands:")
     print("=" * 70)
-    print("""
+    print(
+        """
 # 1. Start backend (if not running)
 make dev
 
 # 2. Generate test PDF
-curl -X POST "http://localhost:9400/api/v1/agents/commercial-property/properties/d47174ee-bb6f-4f3f-8baa-141d7c5d9051/generate-pack/universal" \\
+PROPERTY_ID="d47174ee-bb6f-4f3f-8baa-141d7c5d9051"
+curl -X POST \\
+  "http://localhost:9400/api/v1/agents/commercial-property/properties/\\
+${PROPERTY_ID}/generate-pack/universal" \\
   -H "Content-Type: application/json"
 
 # 3. Copy to /tmp for easy access
@@ -77,7 +80,8 @@ cp .storage/uploads/reports/d47174ee-bb6f-4f3f-8baa-141d7c5d9051/*.pdf /tmp/test
 # 4. Open in browsers
 open -a Safari /tmp/test.pdf
 open -a "Google Chrome" /tmp/test.pdf
-    """)
+    """
+    )
 
     print("\n" + "=" * 70)
     print("Have you completed manual PDF testing?")

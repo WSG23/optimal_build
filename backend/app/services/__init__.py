@@ -1,9 +1,24 @@
 """Service layer exports."""
 
-from __future__ import annotations
-
-import importlib
-from types import ModuleType
+from . import entitlements  # noqa: F401
+from . import (
+    alerts,
+    buildable,
+    costs,
+    deals,
+    finance,
+    ingestion,
+    integrations,
+    normalize,
+    overlay_ingest,
+    products,
+    pwp,
+    reference_parsers,
+    reference_sources,
+    reference_storage,
+    standards,
+    storage,
+)
 
 __all__ = [
     "alerts",
@@ -24,13 +39,3 @@ __all__ = [
     "standards",
     "storage",
 ]
-
-
-def __getattr__(name: str) -> ModuleType:
-    if name in __all__:
-        return importlib.import_module(f"{__name__}.{name}")
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-def __dir__() -> list[str]:
-    return sorted(__all__ + [*globals().keys()])

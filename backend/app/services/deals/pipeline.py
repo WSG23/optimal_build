@@ -6,6 +6,7 @@ from datetime import date, datetime
 from typing import Iterable, Optional
 from uuid import UUID
 
+from backend._compat.datetime import UTC
 from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -22,7 +23,6 @@ from app.models.business_performance import (
     DealType,
     PipelineStage,
 )
-from backend._compat.datetime import UTC
 
 from .utils import audit_project_key
 

@@ -1,0 +1,600 @@
+{
+  "buildable": {
+    "advisory_hints": [
+      "Heritage impact assessment required before fa\u00e7ade alterations.",
+      "Respect daylight plane controls along the street frontage."
+    ],
+    "input_kind": "address",
+    "metrics": {
+      "floors_max": 8,
+      "footprint_m2": 563,
+      "gfa_cap_m2": 4375,
+      "nsa_est_m2": 3500
+    },
+    "overlays": [
+      "heritage",
+      "daylight"
+    ],
+    "rules": [],
+    "zone_code": "R2",
+    "zone_source": {
+      "jurisdiction": "SG",
+      "kind": "parcel",
+      "layer_name": "MasterPlan",
+      "note": null,
+      "parcel_ref": "MK01-01234",
+      "parcel_source": "sample_loader"
+    }
+  },
+  "entitlements": {
+    "items": [
+      {
+        "actual_decision_date": null,
+        "actual_submission_date": null,
+        "approval_type_id": 1,
+        "created_at": "2025-10-28T07:27:34.634680Z",
+        "id": 131,
+        "metadata": {
+          "jurisdiction": "SG"
+        },
+        "notes": null,
+        "project_id": 90301,
+        "sequence_order": 1,
+        "status": "planned",
+        "status_changed_at": null,
+        "target_decision_date": null,
+        "target_submission_date": null,
+        "updated_at": "2025-10-28T07:27:34.634680Z"
+      },
+      {
+        "actual_decision_date": null,
+        "actual_submission_date": null,
+        "approval_type_id": 2,
+        "created_at": "2025-10-28T07:27:34.634680Z",
+        "id": 132,
+        "metadata": {
+          "jurisdiction": "SG"
+        },
+        "notes": null,
+        "project_id": 90301,
+        "sequence_order": 2,
+        "status": "planned",
+        "status_changed_at": null,
+        "target_decision_date": null,
+        "target_submission_date": null,
+        "updated_at": "2025-10-28T07:27:34.634680Z"
+      },
+      {
+        "actual_decision_date": null,
+        "actual_submission_date": null,
+        "approval_type_id": 5,
+        "created_at": "2025-10-28T07:27:34.634680Z",
+        "id": 133,
+        "metadata": {
+          "jurisdiction": "SG"
+        },
+        "notes": null,
+        "project_id": 90301,
+        "sequence_order": 3,
+        "status": "planned",
+        "status_changed_at": null,
+        "target_decision_date": null,
+        "target_submission_date": null,
+        "updated_at": "2025-10-28T07:27:34.634680Z"
+      },
+      {
+        "actual_decision_date": null,
+        "actual_submission_date": null,
+        "approval_type_id": 4,
+        "created_at": "2025-10-28T07:27:34.634680Z",
+        "id": 134,
+        "metadata": {
+          "jurisdiction": "SG"
+        },
+        "notes": null,
+        "project_id": 90301,
+        "sequence_order": 4,
+        "status": "planned",
+        "status_changed_at": null,
+        "target_decision_date": null,
+        "target_submission_date": null,
+        "updated_at": "2025-10-28T07:27:34.634680Z"
+      },
+      {
+        "actual_decision_date": null,
+        "actual_submission_date": null,
+        "approval_type_id": 3,
+        "created_at": "2025-10-28T07:27:34.634680Z",
+        "id": 135,
+        "metadata": {
+          "jurisdiction": "SG"
+        },
+        "notes": null,
+        "project_id": 90301,
+        "sequence_order": 5,
+        "status": "planned",
+        "status_changed_at": null,
+        "target_decision_date": null,
+        "target_submission_date": null,
+        "updated_at": "2025-10-28T07:27:34.634680Z"
+      }
+    ],
+    "limit": 5,
+    "offset": 0,
+    "total": 5
+  },
+  "finance": {
+    "asset_breakdowns": [
+      {
+        "absorption_months": "12.0",
+        "allocation_pct": "54.4000",
+        "asset_type": "office",
+        "effective_gross_income_sgd": "9016954.06",
+        "estimated_capex_sgd": "11995200.00",
+        "gross_rent_annual_sgd": "9592504.32",
+        "heritage_premium_pct": "5.0000",
+        "nia_sqm": "6245.12",
+        "noi_annual_sgd": "7393902.33",
+        "notes": [
+          "Grade A office baseline aligns with Phase 2B template (CBD core rent \u2248 $12 psf/month).",
+          "Heritage and existing conditions favour adaptive reuse over densification.",
+          "Existing plot ratio 5.00; headroom -2.20 to target envelope.",
+          "Limited plot ratio headroom \u2014 focus on efficiency gains.",
+          "Score-adjusted allocation -1.3pp based on NOI, risk, and market signals.",
+          "Heritage compliance buffers applied to programme mix.",
+          "Minimum unit size applies; 2 planned projects nearby may influence heritage dialogue"
+        ],
+        "operating_expenses_sgd": "1623051.73",
+        "payback_years": "1.62",
+        "rent_psm_month": "128.00",
+        "risk_level": "moderate",
+        "vacancy_loss_sgd": "575550.26"
+      },
+      {
+        "absorption_months": "10.0",
+        "allocation_pct": "26.8000",
+        "asset_type": "retail",
+        "effective_gross_income_sgd": "11670220.80",
+        "estimated_capex_sgd": "8914752.00",
+        "gross_rent_annual_sgd": "12156480.00",
+        "heritage_premium_pct": "8.0000",
+        "nia_sqm": "2814.00",
+        "noi_annual_sgd": "9102772.22",
+        "notes": [
+          "Prime retail podium benchmark (Orchard/Marina) with void allowances baked into efficiency.",
+          "Heritage and existing conditions favour adaptive reuse over densification.",
+          "Score-adjusted allocation +4.0pp based on NOI, risk, and market signals.",
+          "Heritage compliance buffers applied to programme mix.",
+          "Minimum unit size applies; 2 planned projects nearby may influence heritage dialogue"
+        ],
+        "operating_expenses_sgd": "2567448.58",
+        "payback_years": "0.98",
+        "rent_psm_month": "360.00",
+        "risk_level": "moderate",
+        "vacancy_loss_sgd": "486259.20"
+      },
+      {
+        "absorption_months": "19.0",
+        "allocation_pct": "18.8000",
+        "asset_type": "amenities",
+        "effective_gross_income_sgd": "590620.80",
+        "estimated_capex_sgd": "2605680.00",
+        "gross_rent_annual_sgd": "671160.00",
+        "heritage_premium_pct": "10.0000",
+        "nia_sqm": "2237.20",
+        "noi_annual_sgd": "413434.56",
+        "notes": [
+          "Community amenities baseline covering childcare, healthcare, and shared services.",
+          "No additional GFA headroom \u2014 focus on efficiency and refurbishment scope.",
+          "Score-adjusted allocation -4.0pp based on NOI, risk, and market signals.",
+          "Heritage compliance buffers applied to programme mix.",
+          "Minimum unit size applies; 2 planned projects nearby may influence heritage dialogue"
+        ],
+        "operating_expenses_sgd": "177186.24",
+        "payback_years": "6.30",
+        "rent_psm_month": "25.00",
+        "risk_level": "moderate",
+        "vacancy_loss_sgd": "80539.20"
+      }
+    ],
+    "asset_mix_summary": {
+      "dominant_risk_profile": "moderate",
+      "notes": [
+        "Dominant risk profile: moderate.",
+        "Revenue aggregates annual NOI across asset allocations.",
+        "Capex includes programme-specific fit-out costs."
+      ],
+      "total_estimated_capex_sgd": "23515632.00",
+      "total_estimated_revenue_sgd": "16910109.11"
+    },
+    "capital_stack": null,
+    "construction_loan": {
+      "capitalise_interest": true,
+      "facilities": [
+        {
+          "amount": "1750000",
+          "capitalise_interest": true,
+          "exit_fee_pct": null,
+          "interest_rate": "0.0410",
+          "name": "Senior Loan",
+          "periods_per_year": 12,
+          "upfront_fee_pct": "1.00"
+        },
+        {
+          "amount": "450000",
+          "capitalise_interest": false,
+          "exit_fee_pct": "2.00",
+          "interest_rate": "0.0820",
+          "name": "Mezz Loan",
+          "periods_per_year": 12,
+          "upfront_fee_pct": null
+        }
+      ],
+      "interest_rate": "0.0430",
+      "periods_per_year": 12
+    },
+    "construction_loan_interest": null,
+    "cost_index": {
+      "base_index": null,
+      "base_period": "2024-Q1",
+      "jurisdiction": "SG",
+      "latest_index": {
+        "methodology": "seed",
+        "period": "2025-09-01",
+        "provider": "Public",
+        "source": "seed",
+        "unit": "index",
+        "value": "112.3000"
+      },
+      "latest_period": "2025-09-01",
+      "provider": "Public",
+      "scalar": null,
+      "series_name": "construction_all_in"
+    },
+    "currency": "SGD",
+    "drawdown_schedule": null,
+    "dscr_timeline": [
+      {
+        "currency": "SGD",
+        "debt_service": "0.00",
+        "dscr": null,
+        "noi": "0.00",
+        "period": "M1"
+      },
+      {
+        "currency": "SGD",
+        "debt_service": "0.00",
+        "dscr": null,
+        "noi": "0.00",
+        "period": "M2"
+      },
+      {
+        "currency": "SGD",
+        "debt_service": "3200000.00",
+        "dscr": "1.1875",
+        "noi": "3800000.00",
+        "period": "M3"
+      },
+      {
+        "currency": "SGD",
+        "debt_service": "3300000.00",
+        "dscr": "1.6970",
+        "noi": "5600000.00",
+        "period": "M4"
+      },
+      {
+        "currency": "SGD",
+        "debt_service": "3400000.00",
+        "dscr": "2.1176",
+        "noi": "7200000.00",
+        "period": "M5"
+      },
+      {
+        "currency": "SGD",
+        "debt_service": "3400000.00",
+        "dscr": "2.2941",
+        "noi": "7800000.00",
+        "period": "M6"
+      }
+    ],
+    "escalated_cost": "38950000.00",
+    "fin_project_id": 39,
+    "project_id": "1388ca00-6608-43e4-be18-b4e0bddf3011",
+    "results": [
+      {
+        "metadata": {
+          "base_amount": "38950000",
+          "base_period": "2024-Q1",
+          "cost_index": {
+            "base_index": null,
+            "base_period": "2024-Q1",
+            "jurisdiction": "SG",
+            "latest_index": {
+              "methodology": "seed",
+              "period": "2025-09-01",
+              "provider": "Public",
+              "source": "seed",
+              "unit": "index",
+              "value": "112.3000"
+            },
+            "latest_period": "2025-09-01",
+            "provider": "Public",
+            "scalar": null,
+            "series_name": "construction_all_in"
+          }
+        },
+        "name": "escalated_cost",
+        "unit": "SGD",
+        "value": "38950000.00"
+      },
+      {
+        "metadata": {
+          "cash_flows": [
+            "-2500000",
+            "-4100000",
+            "-4650000",
+            "-200000",
+            "4250000",
+            "10200000"
+          ],
+          "discount_rate": "0.08"
+        },
+        "name": "npv",
+        "unit": "SGD",
+        "value": "-375862.77"
+      },
+      {
+        "metadata": {
+          "cash_flows": [
+            "-2500000",
+            "-4100000",
+            "-4650000",
+            "-200000",
+            "4250000",
+            "10200000"
+          ],
+          "discount_rate": "0.08"
+        },
+        "name": "irr",
+        "unit": "ratio",
+        "value": "0.0688"
+      },
+      {
+        "metadata": {
+          "entries": [
+            {
+              "currency": "SGD",
+              "debt_service": "0.00",
+              "dscr": null,
+              "noi": "0.00",
+              "period": "M1"
+            },
+            {
+              "currency": "SGD",
+              "debt_service": "0.00",
+              "dscr": null,
+              "noi": "0.00",
+              "period": "M2"
+            },
+            {
+              "currency": "SGD",
+              "debt_service": "3200000.00",
+              "dscr": "1.1875",
+              "noi": "3800000.00",
+              "period": "M3"
+            },
+            {
+              "currency": "SGD",
+              "debt_service": "3300000.00",
+              "dscr": "1.6970",
+              "noi": "5600000.00",
+              "period": "M4"
+            },
+            {
+              "currency": "SGD",
+              "debt_service": "3400000.00",
+              "dscr": "2.1176",
+              "noi": "7200000.00",
+              "period": "M5"
+            },
+            {
+              "currency": "SGD",
+              "debt_service": "3400000.00",
+              "dscr": "2.2941",
+              "noi": "7800000.00",
+              "period": "M6"
+            }
+          ]
+        },
+        "name": "dscr_timeline",
+        "unit": null,
+        "value": null
+      },
+      {
+        "metadata": {
+          "breakdowns": [
+            {
+              "absorption_months": "12.0",
+              "allocation_pct": "54.4000",
+              "asset_type": "office",
+              "effective_gross_income_sgd": "9016954.06",
+              "estimated_capex_sgd": "11995200.00",
+              "gross_rent_annual_sgd": "9592504.32",
+              "heritage_premium_pct": "5.0000",
+              "nia_sqm": "6245.12",
+              "noi_annual_sgd": "7393902.33",
+              "notes": [
+                "Grade A office baseline aligns with Phase 2B template (CBD core rent \u2248 $12 psf/month).",
+                "Heritage and existing conditions favour adaptive reuse over densification.",
+                "Existing plot ratio 5.00; headroom -2.20 to target envelope.",
+                "Limited plot ratio headroom \u2014 focus on efficiency gains.",
+                "Score-adjusted allocation -1.3pp based on NOI, risk, and market signals.",
+                "Heritage compliance buffers applied to programme mix.",
+                "Minimum unit size applies; 2 planned projects nearby may influence heritage dialogue"
+              ],
+              "operating_expenses_sgd": "1623051.73",
+              "payback_years": "1.62",
+              "rent_psm_month": "128.00",
+              "risk_level": "moderate",
+              "vacancy_loss_sgd": "575550.26"
+            },
+            {
+              "absorption_months": "10.0",
+              "allocation_pct": "26.8000",
+              "asset_type": "retail",
+              "effective_gross_income_sgd": "11670220.80",
+              "estimated_capex_sgd": "8914752.00",
+              "gross_rent_annual_sgd": "12156480.00",
+              "heritage_premium_pct": "8.0000",
+              "nia_sqm": "2814.00",
+              "noi_annual_sgd": "9102772.22",
+              "notes": [
+                "Prime retail podium benchmark (Orchard/Marina) with void allowances baked into efficiency.",
+                "Heritage and existing conditions favour adaptive reuse over densification.",
+                "Score-adjusted allocation +4.0pp based on NOI, risk, and market signals.",
+                "Heritage compliance buffers applied to programme mix.",
+                "Minimum unit size applies; 2 planned projects nearby may influence heritage dialogue"
+              ],
+              "operating_expenses_sgd": "2567448.58",
+              "payback_years": "0.98",
+              "rent_psm_month": "360.00",
+              "risk_level": "moderate",
+              "vacancy_loss_sgd": "486259.20"
+            },
+            {
+              "absorption_months": "19.0",
+              "allocation_pct": "18.8000",
+              "asset_type": "amenities",
+              "effective_gross_income_sgd": "590620.80",
+              "estimated_capex_sgd": "2605680.00",
+              "gross_rent_annual_sgd": "671160.00",
+              "heritage_premium_pct": "10.0000",
+              "nia_sqm": "2237.20",
+              "noi_annual_sgd": "413434.56",
+              "notes": [
+                "Community amenities baseline covering childcare, healthcare, and shared services.",
+                "No additional GFA headroom \u2014 focus on efficiency and refurbishment scope.",
+                "Score-adjusted allocation -4.0pp based on NOI, risk, and market signals.",
+                "Heritage compliance buffers applied to programme mix.",
+                "Minimum unit size applies; 2 planned projects nearby may influence heritage dialogue"
+              ],
+              "operating_expenses_sgd": "177186.24",
+              "payback_years": "6.30",
+              "rent_psm_month": "25.00",
+              "risk_level": "moderate",
+              "vacancy_loss_sgd": "80539.20"
+            }
+          ],
+          "summary": {
+            "dominant_risk_profile": "moderate",
+            "notes": [
+              "Dominant risk profile: moderate.",
+              "Revenue aggregates annual NOI across asset allocations.",
+              "Capex includes programme-specific fit-out costs."
+            ],
+            "total_estimated_capex_sgd": "23515632.00",
+            "total_estimated_revenue_sgd": "16910109.11"
+          }
+        },
+        "name": "asset_financials",
+        "unit": null,
+        "value": null
+      },
+      {
+        "metadata": {
+          "bands": [
+            {
+              "parameter": "__async__",
+              "queue": "finance",
+              "status": "completed",
+              "task_id": null
+            }
+          ]
+        },
+        "name": "sensitivity_analysis",
+        "unit": null,
+        "value": null
+      }
+    ],
+    "scenario_id": 455,
+    "scenario_name": "Scenario A \u2013 Base Case",
+    "sensitivity_jobs": [
+      {
+        "backend": "inline",
+        "queued_at": "2025-10-28T07:27:51.715345Z",
+        "scenario_id": 455,
+        "status": "completed",
+        "task_id": null
+      }
+    ],
+    "sensitivity_results": []
+  },
+  "ingestion": {
+    "parse_segment": {
+      "clause_count": 7,
+      "document_count": 4,
+      "processed_documents": [
+        97,
+        98,
+        99,
+        100
+      ]
+    },
+    "watch_fetch": {
+      "document_count": 4,
+      "inserted": 3,
+      "inserted_unique": 3,
+      "results": [
+        {
+          "document_id": 97,
+          "source_id": 141,
+          "storage_path": "ref-documents/source-141/20251028T072735Z-ae5019e287b5.html",
+          "uri": "ref-documents/source-141/20251028T072735Z-ae5019e287b5.html"
+        },
+        {
+          "document_id": 98,
+          "source_id": 142,
+          "storage_path": "ref-documents/source-142/20251028T072735Z-30873b8e152f.pdf",
+          "uri": "ref-documents/source-142/20251028T072735Z-30873b8e152f.pdf"
+        },
+        {
+          "document_id": 100,
+          "source_id": 144,
+          "storage_path": "ref-documents/source-144/20251028T072735Z-85c770385c89.pdf",
+          "uri": "ref-documents/source-144/20251028T072735Z-85c770385c89.pdf"
+        }
+      ],
+      "source_count": 4
+    }
+  },
+  "openapi": {
+    "version": "1.0.0"
+  },
+  "seeders": {
+    "entitlements": {
+      "approval_types": 5,
+      "authorities": 4,
+      "project_id": 90301,
+      "roadmap_items": 5
+    },
+    "finance": {
+      "cost_items": 9,
+      "fin_project_id": 39,
+      "project_id": "1388ca00-6608-43e4-be18-b4e0bddf3011",
+      "results": 18,
+      "scenarios": 3,
+      "schedule_rows": 18
+    },
+    "non_reg": {
+      "cost_indices": 1,
+      "ergonomics": 4,
+      "standards": 2
+    },
+    "screening": {
+      "geocode_cache": 3,
+      "parcels": 3,
+      "sources": 4,
+      "zoning_layers": 3
+    }
+  }
+}

@@ -6,31 +6,18 @@ import asyncio
 import inspect
 import json
 import re
-from collections.abc import (
-    Awaitable,
-    Callable,
-    Iterable,
-    Mapping,
-    Mapping as MappingABC,
-    Sequence as SequenceABC,
-)
-from datetime import date, datetime
+from collections.abc import Awaitable, Callable, Iterable
+from collections.abc import Mapping
+from collections.abc import Mapping as MappingABC
+from collections.abc import Sequence as SequenceABC
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from functools import cache, lru_cache
-from typing import (
-    Any,
-    Dict,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-    get_args,
-    get_origin,
-    get_type_hints,
-)
 from types import SimpleNamespace
+from typing import (Any, Dict, Literal, Optional, Tuple, Union, get_args,
+                    get_origin, get_type_hints)
 
 from pydantic import BaseModel
 
@@ -919,6 +906,13 @@ async def _build_arguments(
             )
             continue
 
+        if (
+            name == "request"
+            and (annotation is Request or annotation is inspect._empty)
+        ):
+            arguments[name] = Request(headers=dict(headers))
+            continue
+
         if json_body is not None and not body_consumed:
             if name == "payload" or (
                 inspect.isclass(annotation) and hasattr(annotation, "model_validate")
@@ -1022,7 +1016,13 @@ def _type_hints_for(endpoint: Callable[..., Any]) -> dict[str, Any]:
 
 def _resolve_annotation(endpoint: Callable[..., Any], name: str, default: Any) -> Any:
     hints = _type_hints_for(endpoint)
-    return hints.get(name, default)
+    if name in hints:
+        return hints[name]
+    if isinstance(default, str):
+        module = inspect.getmodule(endpoint)
+        if module is not None and hasattr(module, default):
+            return getattr(module, default)
+    return default
 
 
 def _coerce_type(value: Any, annotation: Any) -> Any:

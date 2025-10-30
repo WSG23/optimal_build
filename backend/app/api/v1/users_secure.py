@@ -1,11 +1,10 @@
 """Secure user API with validation and password hashing."""
 
-from datetime import datetime
 from typing import Dict, Optional
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException
 
-from backend._compat.datetime import utcnow
 from pydantic import BaseModel, field_validator
 
 try:  # pragma: no cover - optional dependency

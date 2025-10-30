@@ -19,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from app.models.base import BaseModel, MetadataProxy
+from app.models.base import BaseModel, MetadataProxy, UUID
 from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
@@ -31,8 +31,11 @@ class FinProject(BaseModel):
     __tablename__ = "fin_projects"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     currency: Mapped[str] = mapped_column(
@@ -68,8 +71,11 @@ class FinScenario(BaseModel):
     __tablename__ = "fin_scenarios"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     fin_project_id: Mapped[int] = mapped_column(
         ForeignKey("fin_projects.id", ondelete="CASCADE"), nullable=False, index=True
@@ -78,6 +84,9 @@ class FinScenario(BaseModel):
     description: Mapped[Optional[str]] = mapped_column(Text)
     assumptions: Mapped[dict] = mapped_column(JSONType, default=dict, nullable=False)
     is_primary: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, index=True
+    )
+    is_private: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, index=True
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -115,8 +124,11 @@ class FinCostItem(BaseModel):
     __tablename__ = "fin_cost_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
@@ -145,8 +157,11 @@ class FinSchedule(BaseModel):
     __tablename__ = "fin_schedules"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
@@ -177,8 +192,11 @@ class FinCapitalStack(BaseModel):
     __tablename__ = "fin_capital_stacks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
@@ -209,8 +227,11 @@ class FinResult(BaseModel):
     __tablename__ = "fin_results"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[UUID] = mapped_column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     scenario_id: Mapped[int] = mapped_column(
         ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True

@@ -12,7 +12,7 @@ from itertools import chain
 from typing import Any
 from xml.etree import ElementTree as ET
 
-from backend._compat import compat_dataclass
+from backend._compat import compat_dataclass, compat_zip
 
 try:  # pragma: no cover - optional dependency
     import fitz  # type: ignore  # PyMuPDF
@@ -246,7 +246,7 @@ def detect_baseline_walls(
     for path in paths:
         if len(path.points) < 2:
             continue
-        for start, end in zip(path.points, path.points[1:], strict=False):
+        for start, end in compat_zip(path.points, path.points[1:], strict=False):
             dx = end[0] - start[0]
             dy = end[1] - start[1]
             length = math.hypot(dx, dy)

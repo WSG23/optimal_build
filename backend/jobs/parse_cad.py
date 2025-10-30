@@ -27,17 +27,14 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     ifcopenshell = None  # type: ignore[assignment]
 
+from backend.jobs import job
+
 from app.core import database as app_database
-from app.core.geometry import (
-    GeometrySerializer,
-    GraphBuilder,
-    derive_setback_overrides,
-)
+from app.core.geometry import GeometrySerializer, GraphBuilder, derive_setback_overrides
 from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
 from app.services.overlay_ingest import ingest_parsed_import_geometry
 from app.services.storage import get_storage_service
-from backend.jobs import job
 
 
 @compat_dataclass(slots=True)
@@ -110,11 +107,9 @@ def _resolve_local_path(storage_path: str) -> Path:
         return path
     if parsed.scheme == "s3":
         # For s3://bucket/path, netloc is bucket, path is /path
-        bucket = parsed.netloc
+        # bucket = parsed.netloc  # Future: may need bucket for S3 operations
         key = parsed.path.lstrip("/")
-        # Combine bucket and key for local path
-        if bucket:
-            return storage_service.local_base_path / bucket / key
+        # Store payloads beneath the local base path; ignore bucket component.
         return storage_service.local_base_path / key
     # Fall back to treating the value as a relative path beneath the storage root
     return storage_service.local_base_path / storage_path

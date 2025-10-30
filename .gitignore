@@ -321,3 +321,6 @@ frontend/.tmp-e2e-*/
 !.playwright-browsers/
 !.playwright-browsers/**
 !.playwright-browsers.tar.gz
+
+# Generated preview assets
+backend/static/dev-previews/

@@ -6,14 +6,14 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from math import ceil
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.audit import AuditLog
 from app.models.overlay import OverlaySuggestion
-from backend._compat import compat_dataclass
-from backend._compat.datetime import UTC
 
 # Baseline timing assumptions (in seconds) used when estimating automation ROI.
 # These constants are shared with the instrumentation hooks that populate the

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from '../../../router'
 import {
   capturePropertyForDevelopment,
@@ -7,15 +8,22 @@ import {
   fetchConditionAssessment,
   fetchConditionAssessmentHistory,
   fetchScenarioAssessments,
+  fetchPreviewJob,
+  refreshPreviewJob,
+  listPreviewJobs,
   exportConditionReport,
   saveConditionAssessment,
   updateChecklistItem,
+  OFFLINE_PROPERTY_ID,
+  DEFAULT_SCENARIO_ORDER,
   type ChecklistItem,
   type ChecklistSummary,
   type ConditionAssessment,
   type ConditionAssessmentUpsertRequest,
+  type ConditionAttachment,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
+  type DeveloperPreviewJob,
 } from '../../../api/siteAcquisition'
 
 const SCENARIO_OPTIONS: Array<{
@@ -65,6 +73,328 @@ const DEFAULT_CONDITION_SYSTEMS = [
 ]
 const HISTORY_FETCH_LIMIT = 10
 
+type QuickAnalysisSnapshot = {
+  propertyId: string
+  generatedAt: string
+  scenarios: SiteAcquisitionResult['quickAnalysis']['scenarios']
+  comparison: ScenarioComparisonDatum[]
+}
+
+const QUICK_ANALYSIS_HISTORY_LIMIT = 5
+
+const OFFLINE_CHECKLIST_TEMPLATES: Array<{
+  developmentScenario: DevelopmentScenario
+  category: ChecklistItem['category']
+  itemTitle: string
+  itemDescription?: string
+  priority: ChecklistItem['priority']
+  requiresProfessional: boolean
+  professionalType?: string | null
+  typicalDurationDays?: number | null
+  displayOrder: number
+}> = [
+  {
+    developmentScenario: 'raw_land',
+    category: 'title_verification',
+    itemTitle: 'Confirm land ownership and title status',
+    itemDescription:
+      'Retrieve SLA title extracts and confirm that there are no caveats or encumbrances on the parcel.',
+    priority: 'critical',
+    requiresProfessional: true,
+    professionalType: 'Conveyancing lawyer',
+    typicalDurationDays: 5,
+    displayOrder: 10,
+  },
+  {
+    developmentScenario: 'raw_land',
+    category: 'zoning_compliance',
+    itemTitle: 'Validate URA master plan parameters',
+    itemDescription:
+      'Cross-check zoning, plot ratio, and allowable uses against intended development outcomes.',
+    priority: 'critical',
+    requiresProfessional: false,
+    typicalDurationDays: 4,
+    displayOrder: 20,
+  },
+  {
+    developmentScenario: 'raw_land',
+    category: 'environmental_assessment',
+    itemTitle: 'Screen for environmental and soil constraints',
+    itemDescription:
+      'Review PUB drainage, flood susceptibility, soil conditions, and adjacent environmental protections.',
+    priority: 'high',
+    requiresProfessional: true,
+    professionalType: 'Geotechnical engineer',
+    typicalDurationDays: 7,
+    displayOrder: 30,
+  },
+  {
+    developmentScenario: 'raw_land',
+    category: 'access_rights',
+    itemTitle: 'Confirm legal site access and right-of-way',
+    itemDescription:
+      'Validate ingress/egress arrangements with LTA and adjacent land owners for temporary works.',
+    priority: 'medium',
+    requiresProfessional: true,
+    professionalType: 'Traffic consultant',
+    typicalDurationDays: 6,
+    displayOrder: 40,
+  },
+  {
+    developmentScenario: 'existing_building',
+    category: 'structural_survey',
+    itemTitle: 'Commission structural integrity assessment',
+    itemDescription:
+      'Carry out intrusive and non-intrusive inspections to determine retrofitting effort.',
+    priority: 'critical',
+    requiresProfessional: true,
+    professionalType: 'Structural engineer',
+    typicalDurationDays: 14,
+    displayOrder: 10,
+  },
+  {
+    developmentScenario: 'existing_building',
+    category: 'utility_capacity',
+    itemTitle: 'Benchmark utility upgrade requirements',
+    itemDescription:
+      'Review existing electrical, water, and gas supply against target load profiles.',
+    priority: 'high',
+    requiresProfessional: true,
+    professionalType: 'M&E engineer',
+    typicalDurationDays: 5,
+    displayOrder: 20,
+  },
+  {
+    developmentScenario: 'existing_building',
+    category: 'zoning_compliance',
+    itemTitle: 'Validate change-of-use requirements',
+    itemDescription:
+      'Confirm URA and BCA approvals required for intended repositioning program.',
+    priority: 'high',
+    requiresProfessional: false,
+    typicalDurationDays: 3,
+    displayOrder: 30,
+  },
+  {
+    developmentScenario: 'existing_building',
+    category: 'environmental_assessment',
+    itemTitle: 'Assess asbestos and hazardous material presence',
+    itemDescription:
+      'Undertake sampling programme before any strip-out or demolition work proceeds.',
+    priority: 'medium',
+    requiresProfessional: true,
+    professionalType: 'Environmental consultant',
+    typicalDurationDays: 10,
+    displayOrder: 40,
+  },
+  {
+    developmentScenario: 'heritage_property',
+    category: 'heritage_constraints',
+    itemTitle: 'Confirm conservation requirements with URA',
+    itemDescription:
+      'Document façade retention, material preservation, and permissible alteration scope.',
+    priority: 'critical',
+    requiresProfessional: true,
+    professionalType: 'Heritage architect',
+    typicalDurationDays: 7,
+    displayOrder: 10,
+  },
+  {
+    developmentScenario: 'heritage_property',
+    category: 'structural_survey',
+    itemTitle: 'Heritage structural reinforcement study',
+    itemDescription:
+      'Evaluate load paths and necessary strengthening to achieve code compliance without damaging heritage elements.',
+    priority: 'high',
+    requiresProfessional: true,
+    professionalType: 'Structural engineer',
+    typicalDurationDays: 12,
+    displayOrder: 20,
+  },
+  {
+    developmentScenario: 'heritage_property',
+    category: 'zoning_compliance',
+    itemTitle: 'Assess conservation overlay with planning parameters',
+    itemDescription:
+      'Check whether conservation overlays restrict development intensity or allowable uses.',
+    priority: 'high',
+    requiresProfessional: false,
+    typicalDurationDays: 5,
+    displayOrder: 30,
+  },
+  {
+    developmentScenario: 'heritage_property',
+    category: 'access_rights',
+    itemTitle: 'Coordinate logistics with surrounding stakeholders',
+    itemDescription:
+      'Identify staging areas, hoarding approvals, and historic streetscape protection measures.',
+    priority: 'medium',
+    requiresProfessional: false,
+    typicalDurationDays: 4,
+    displayOrder: 40,
+  },
+  {
+    developmentScenario: 'underused_asset',
+    category: 'utility_capacity',
+    itemTitle: 'Determine retrofit M&E upgrade scope',
+    itemDescription:
+      'Right-size mechanical plant, vertical transportation, and ICT backbone for the new programme.',
+    priority: 'high',
+    requiresProfessional: true,
+    professionalType: 'Building services engineer',
+    typicalDurationDays: 8,
+    displayOrder: 10,
+  },
+  {
+    developmentScenario: 'underused_asset',
+    category: 'environmental_assessment',
+    itemTitle: 'Perform indoor environmental quality audit',
+    itemDescription:
+      'Quantify remediation required for mould, humidity, and ventilation gaps from prolonged underuse.',
+    priority: 'medium',
+    requiresProfessional: true,
+    professionalType: 'Environmental specialist',
+    typicalDurationDays: 6,
+    displayOrder: 20,
+  },
+  {
+    developmentScenario: 'underused_asset',
+    category: 'access_rights',
+    itemTitle: 'Validate access control and fire egress updates',
+    itemDescription:
+      'Ensure adaptive reuse complies with SCDF requirements and workplace safety codes.',
+    priority: 'high',
+    requiresProfessional: true,
+    professionalType: 'Fire engineer',
+    typicalDurationDays: 5,
+    displayOrder: 30,
+  },
+  {
+    developmentScenario: 'mixed_use_redevelopment',
+    category: 'zoning_compliance',
+    itemTitle: 'Confirm mixed-use allowable combination',
+    itemDescription:
+      'Reconcile residential, commercial, and retail programme with masterplan mix and strata limitations.',
+    priority: 'critical',
+    requiresProfessional: false,
+    typicalDurationDays: 6,
+    displayOrder: 10,
+  },
+  {
+    developmentScenario: 'mixed_use_redevelopment',
+    category: 'utility_capacity',
+    itemTitle: 'Integrate district cooling and energy sharing options',
+    itemDescription:
+      'Assess utility providers\' capacity and incentives for precinct-scale systems.',
+    priority: 'high',
+    requiresProfessional: true,
+    professionalType: 'Energy consultant',
+    typicalDurationDays: 9,
+    displayOrder: 20,
+  },
+  {
+    developmentScenario: 'mixed_use_redevelopment',
+    category: 'structural_survey',
+    itemTitle: 'Phase-by-phase structural staging plan',
+    itemDescription:
+      'Evaluate demolition, retention, and staging needed to keep operations running during redevelopment.',
+    priority: 'high',
+    requiresProfessional: true,
+    professionalType: 'Structural engineer',
+    typicalDurationDays: 15,
+    displayOrder: 30,
+  },
+  {
+    developmentScenario: 'mixed_use_redevelopment',
+    category: 'heritage_constraints',
+    itemTitle: 'Coordinate heritage façade integration',
+    itemDescription:
+      'Identify conserved elements that must be retained and methods to blend with new podium.',
+    priority: 'medium',
+    requiresProfessional: true,
+    professionalType: 'Conservation architect',
+    typicalDurationDays: 10,
+    displayOrder: 40,
+  },
+]
+
+const SCENARIO_METRIC_PRIORITY: readonly string[] = [
+  'plot_ratio',
+  'potential_gfa_sqm',
+  'gfa_uplift_sqm',
+  'occupancy_pct',
+  'annual_noi',
+  'valuation_cap_rate',
+  'potential_rent_uplift_pct',
+  'target_lease_term_years',
+  'estimated_capex',
+  'conservation_status',
+]
+
+const SCENARIO_METRIC_LABELS: Record<string, string> = {
+  plot_ratio: 'Plot ratio',
+  potential_gfa_sqm: 'Potential GFA (sqm)',
+  gfa_uplift_sqm: 'GFA uplift (sqm)',
+  occupancy_pct: 'Occupancy',
+  annual_noi: 'Annual NOI',
+  valuation_cap_rate: 'Cap rate',
+  potential_rent_uplift_pct: 'Rent uplift',
+  target_lease_term_years: 'Lease term (yrs)',
+  estimated_capex: 'Estimated CAPEX',
+  conservation_status: 'Conservation status',
+}
+
+function buildOfflineChecklistItems(
+  propertyId: string,
+  scenarios: DevelopmentScenario[] | null,
+): ChecklistItem[] {
+  const scenarioSet = new Set<DevelopmentScenario>(scenarios ?? [])
+  if (scenarioSet.size === 0) {
+    DEFAULT_SCENARIO_ORDER.forEach((scenario) => scenarioSet.add(scenario))
+  }
+
+  const scenarioRank = new Map(
+    DEFAULT_SCENARIO_ORDER.map((scenario, index) => [scenario, index]),
+  )
+
+  const selectedTemplates = OFFLINE_CHECKLIST_TEMPLATES.filter((template) =>
+    scenarioSet.has(template.developmentScenario),
+  )
+
+  selectedTemplates.sort((a, b) => {
+    const scenarioDiff =
+      (scenarioRank.get(a.developmentScenario) ?? Number.MAX_SAFE_INTEGER) -
+      (scenarioRank.get(b.developmentScenario) ?? Number.MAX_SAFE_INTEGER)
+    if (scenarioDiff !== 0) {
+      return scenarioDiff
+    }
+    const aOrder = a.displayOrder ?? 0
+    const bOrder = b.displayOrder ?? 0
+    return aOrder - bOrder
+  })
+
+  return selectedTemplates.map((template, index) => ({
+    id: `${template.developmentScenario}-${index}-${propertyId}`,
+    propertyId,
+    developmentScenario: template.developmentScenario,
+    category: template.category,
+    itemTitle: template.itemTitle,
+    itemDescription: template.itemDescription,
+    status: 'pending',
+    priority: template.priority,
+    assignedTo: null,
+    dueDate: null,
+    completedAt: null,
+    notes: null,
+    requiresProfessional: template.requiresProfessional,
+    professionalType: template.professionalType ?? null,
+    typicalDurationDays: template.typicalDurationDays ?? null,
+    displayOrder: template.displayOrder,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }))
+}
+
 type AssessmentDraftSystem = {
   name: string
   rating: string
@@ -82,6 +412,36 @@ type ConditionAssessmentDraft = {
   scenarioContext: string
   systems: AssessmentDraftSystem[]
   recommendedActionsText: string
+  inspectorName: string
+  recordedAtLocal: string
+  attachmentsText: string
+}
+
+type ScenarioComparisonKey = 'all' | DevelopmentScenario
+
+type ScenarioComparisonMetric = {
+  label: string
+  value: string
+}
+
+type ScenarioComparisonDatum = {
+  key: ScenarioComparisonKey
+  label: string
+  icon: string
+  quickHeadline: string | null
+  quickMetrics: ScenarioComparisonMetric[]
+  conditionRating: string | null
+  conditionScore: number | null
+  riskLevel: string | null
+  checklistCompleted: number | null
+  checklistTotal: number | null
+  checklistPercent: number | null
+  insights: ConditionInsightView[]
+  primaryInsight: ConditionInsightView | null
+  recommendedAction: string | null
+  recordedAt: string | null
+  inspectorName: string | null
+  source: 'manual' | 'heuristic'
 }
 
 type QuickAnalysisEntry =
@@ -115,6 +475,13 @@ function buildAssessmentDraft(
       : '',
   }))
 
+  const recordedAtLocal = formatDateTimeLocalInput(assessment?.recordedAt ?? null)
+  const attachmentsText = (assessment?.attachments ?? [])
+    .map((attachment) =>
+      attachment.url ? `${attachment.label} | ${attachment.url}` : attachment.label,
+    )
+    .join('\n')
+
   return {
     scenario: targetScenario,
     overallRating: assessment?.overallRating ?? 'B',
@@ -126,6 +493,9 @@ function buildAssessmentDraft(
     recommendedActionsText: assessment?.recommendedActions
       ? assessment.recommendedActions.join('\n')
       : '',
+    inspectorName: assessment?.inspectorName ?? '',
+    recordedAtLocal,
+    attachmentsText,
   }
 }
 
@@ -220,6 +590,8 @@ export function SiteAcquisitionPage() {
   const [isCapturing, setIsCapturing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [capturedProperty, setCapturedProperty] = useState<SiteAcquisitionResult | null>(null)
+  const [previewJob, setPreviewJob] = useState<DeveloperPreviewJob | null>(null)
+  const [isRefreshingPreview, setIsRefreshingPreview] = useState(false)
 
   // Checklist state
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([])
@@ -234,6 +606,7 @@ export function SiteAcquisitionPage() {
     useState<ConditionAssessment | null>(null)
   const [isLoadingCondition, setIsLoadingCondition] = useState(false)
   const [isEditingAssessment, setIsEditingAssessment] = useState(false)
+  const [assessmentEditorMode, setAssessmentEditorMode] = useState<'new' | 'edit'>('edit')
   const [assessmentDraft, setAssessmentDraft] = useState<ConditionAssessmentDraft>(() =>
     buildAssessmentDraft(null, 'all'),
   )
@@ -264,6 +637,88 @@ export function SiteAcquisitionPage() {
   const [isExportingReport, setIsExportingReport] = useState(false)
   const [reportExportMessage, setReportExportMessage] = useState<string | null>(null)
   const propertyId = capturedProperty?.propertyId ?? null
+
+  useEffect(() => {
+    if (!capturedProperty?.previewJobs?.length) {
+      setPreviewJob(null)
+      return
+    }
+    setPreviewJob(capturedProperty.previewJobs[0])
+  }, [capturedProperty?.previewJobs])
+
+  useEffect(() => {
+    if (!capturedProperty?.propertyId || capturedProperty.previewJobs?.length) {
+      return
+    }
+    let cancelled = false
+    listPreviewJobs(capturedProperty.propertyId).then((jobs) => {
+      if (!cancelled && jobs.length) {
+        setPreviewJob(jobs[0])
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [capturedProperty?.propertyId, capturedProperty?.previewJobs])
+
+  useEffect(() => {
+    const activeStatuses = new Set(['queued', 'processing'])
+    if (!previewJob || !activeStatuses.has(previewJob.status.toLowerCase())) {
+      return
+    }
+    const controller = new AbortController()
+    let cancelled = false
+    let timer: number | undefined
+
+    const poll = async () => {
+      try {
+        const latest = await fetchPreviewJob(previewJob.id, controller.signal)
+        if (!latest || cancelled) {
+          return
+        }
+        setPreviewJob(latest)
+        if (activeStatuses.has(latest.status.toLowerCase())) {
+          timer = window.setTimeout(poll, 5000)
+        }
+      } catch {
+        if (!cancelled) {
+          timer = window.setTimeout(poll, 5000)
+        }
+      }
+    }
+
+    timer = window.setTimeout(poll, 4000)
+
+    return () => {
+      cancelled = true
+      controller.abort()
+      if (timer !== undefined) {
+        window.clearTimeout(timer)
+      }
+    }
+  }, [previewJob, previewJob?.id, previewJob?.status])
+
+  const handleRefreshPreview = useCallback(async () => {
+    if (!previewJob) {
+      return
+    }
+    setIsRefreshingPreview(true)
+    const refreshed = await refreshPreviewJob(previewJob.id)
+    if (refreshed) {
+      setPreviewJob(refreshed)
+    }
+    setIsRefreshingPreview(false)
+  }, [previewJob])
+  const [isHistoryModalOpen, setHistoryModalOpen] = useState(false)
+  const [quickAnalysisHistory, setQuickAnalysisHistory] = useState<
+    QuickAnalysisSnapshot[]
+  >([])
+  const [isQuickAnalysisHistoryOpen, setQuickAnalysisHistoryOpen] = useState(false)
+  useEffect(() => {
+    if (quickAnalysisHistory.length === 0 && isQuickAnalysisHistoryOpen) {
+      setQuickAnalysisHistoryOpen(false)
+    }
+  }, [quickAnalysisHistory.length, isQuickAnalysisHistoryOpen])
 
   const scenarioLookup = useMemo(
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
@@ -361,6 +816,32 @@ export function SiteAcquisitionPage() {
     setHistoryViewMode('timeline')
   }, [propertyId])
 
+  useEffect(() => {
+    if (!isHistoryModalOpen && !isEditingAssessment) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        if (isEditingAssessment) {
+          setIsEditingAssessment(false)
+        } else if (isHistoryModalOpen) {
+          setHistoryModalOpen(false)
+        }
+      }
+    }
+
+    const originalOverflow = document.body.style.overflow
+    window.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = originalOverflow
+    }
+  }, [isHistoryModalOpen, isEditingAssessment])
+
   // Load checklist when property is captured
   useEffect(() => {
     async function loadChecklist() {
@@ -376,6 +857,34 @@ export function SiteAcquisitionPage() {
 
       setIsLoadingChecklist(true)
       try {
+        if (capturedProperty.propertyId === OFFLINE_PROPERTY_ID) {
+          const offlineItems = buildOfflineChecklistItems(
+            capturedProperty.propertyId,
+            capturedProperty.quickAnalysis.scenarios.map(
+              (scenario) => scenario.scenario,
+            ),
+          )
+          const sortedOffline = [...offlineItems].sort((a, b) => {
+            const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
+            const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
+            if (orderA !== orderB) {
+              return orderA - orderB
+            }
+            return a.itemTitle.localeCompare(b.itemTitle)
+          })
+          setChecklistItems(sortedOffline)
+          const offlineScenarios = Array.from(
+            new Set(sortedOffline.map((item) => item.developmentScenario)),
+          )
+          setAvailableChecklistScenarios(offlineScenarios)
+          setActiveScenario(offlineScenarios.length === 1 ? offlineScenarios[0] : 'all')
+          setChecklistSummary(
+            computeChecklistSummary(sortedOffline, capturedProperty.propertyId),
+          )
+          setSelectedCategory(null)
+          return
+        }
+
         const [items, summary] = await Promise.all([
           fetchPropertyChecklist(capturedProperty.propertyId),
           fetchChecklistSummary(capturedProperty.propertyId),
@@ -389,6 +898,37 @@ export function SiteAcquisitionPage() {
           return a.itemTitle.localeCompare(b.itemTitle)
         })
         setChecklistItems(sortedItems)
+        if (sortedItems.length === 0) {
+          const fallbackItems = buildOfflineChecklistItems(
+            capturedProperty.propertyId,
+            capturedProperty.quickAnalysis.scenarios.map(
+              (scenario) => scenario.scenario,
+            ),
+          )
+          if (fallbackItems.length > 0) {
+            const sortedFallback = [...fallbackItems].sort((a, b) => {
+              const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
+              const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
+              if (orderA !== orderB) {
+                return orderA - orderB
+              }
+              return a.itemTitle.localeCompare(b.itemTitle)
+            })
+            setChecklistItems(sortedFallback)
+            setChecklistSummary(
+              computeChecklistSummary(sortedFallback, capturedProperty.propertyId),
+            )
+            const fallbackScenarios = Array.from(
+              new Set(sortedFallback.map((item) => item.developmentScenario)),
+            )
+            setAvailableChecklistScenarios(fallbackScenarios)
+            setActiveScenario(
+              fallbackScenarios.length === 1 ? fallbackScenarios[0] : 'all',
+            )
+            setSelectedCategory(null)
+            return
+          }
+        }
         setChecklistSummary(summary)
         const scenarioSet = new Set<DevelopmentScenario>()
         sortedItems.forEach((item) => {
@@ -446,7 +986,11 @@ export function SiteAcquisitionPage() {
     [activeScenario, scenarioLookup],
   )
 
-  const quickAnalysisScenarios = capturedProperty?.quickAnalysis.scenarios ?? []
+  const quickAnalysis = capturedProperty?.quickAnalysis ?? null
+  const quickAnalysisScenarios = useMemo(() => {
+    const scenarios = quickAnalysis?.scenarios ?? []
+    return Array.isArray(scenarios) ? scenarios : []
+  }, [quickAnalysis])
   const comparisonScenarios =
     activeScenario === 'all'
       ? quickAnalysisScenarios
@@ -482,6 +1026,54 @@ export function SiteAcquisitionPage() {
       >,
     [scenarioFilterOptions],
   )
+  const scenarioChecklistProgress = useMemo(() => {
+    const progress: Record<string, { total: number; completed: number }> = {}
+    checklistItems.forEach((item) => {
+      const key = item.developmentScenario
+      if (!progress[key]) {
+        progress[key] = { total: 0, completed: 0 }
+      }
+      progress[key].total += 1
+      if (item.status === 'completed') {
+        progress[key].completed += 1
+      }
+    })
+    return progress
+  }, [checklistItems])
+  const convertAssessmentInsights = useCallback(
+    (assessment: ConditionAssessment | null | undefined): ConditionInsightView[] => {
+      if (!assessment?.insights) {
+        return []
+      }
+      return assessment.insights.map((insight, index) => ({
+        id: insight.id || `assessment-insight-${index}`,
+        severity: normaliseInsightSeverity(insight.severity),
+        title: insight.title,
+        detail: insight.detail,
+        specialist: insight.specialist ?? null,
+      }))
+    },
+    [],
+  )
+  const scenarioAssessmentsMap = useMemo(() => {
+    const map = new Map<DevelopmentScenario, ConditionAssessment>()
+    scenarioAssessments.forEach((assessment) => {
+      if (assessment.scenario) {
+        map.set(assessment.scenario, assessment)
+      }
+    })
+    if (
+      conditionAssessment &&
+      conditionAssessment.scenario &&
+      conditionAssessment.scenario !== 'all'
+    ) {
+      map.set(
+        conditionAssessment.scenario as DevelopmentScenario,
+        conditionAssessment,
+      )
+    }
+    return map
+  }, [scenarioAssessments, conditionAssessment])
   const formatScenarioLabel = useCallback(
     (scenario: ConditionAssessment['scenario']) => {
       if (!scenario || (typeof scenario === 'string' && scenario === 'all')) {
@@ -495,6 +1087,8 @@ export function SiteAcquisitionPage() {
     },
     [scenarioLookup],
   )
+  const scenarioComparisonRef = useRef<HTMLDivElement | null>(null)
+  const comparisonSnapshotSignatureRef = useRef<string | null>(null)
   const formatNumberMetric = useCallback(
     (value: number | null | undefined, options?: Intl.NumberFormatOptions) => {
       if (value === null || value === undefined || Number.isNaN(value)) {
@@ -521,15 +1115,104 @@ export function SiteAcquisitionPage() {
     },
     [],
   )
-  const formatPointOfInterest = useCallback((distanceM: number | null) => {
-    if (distanceM === null || distanceM === undefined || Number.isNaN(distanceM)) {
-      return '—'
+  const formatMetricLabel = useCallback((key: string) => {
+    if (SCENARIO_METRIC_LABELS[key]) {
+      return SCENARIO_METRIC_LABELS[key]
     }
-    if (distanceM >= 1000) {
-      return `${formatNumberMetric(distanceM / 1000, { maximumFractionDigits: 2 })} km`
+    return key
+      .split('_')
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ')
+  }, [])
+  const formatScenarioMetricValue = useCallback(
+    (key: string, value: unknown) => {
+      if (value === null || value === undefined || value === '') {
+        return '—'
+      }
+      const numeric = safeNumber(value)
+      if (numeric !== null) {
+        if (key.includes('_pct') || key.endsWith('_rate')) {
+          return `${formatNumberMetric(numeric * 100, { maximumFractionDigits: 1 })}%`
+        }
+        if (key.includes('_sqm')) {
+          return `${formatNumberMetric(numeric, { maximumFractionDigits: 0 })} sqm`
+        }
+        if (
+          key === 'annual_noi' ||
+          key === 'estimated_capex' ||
+          key === 'average_psf_price' ||
+          key === 'average_monthly_rent'
+        ) {
+          return formatCurrency(numeric)
+        }
+        if (key.includes('_count')) {
+          return formatNumberMetric(numeric, { maximumFractionDigits: 0 })
+        }
+        if (key === 'target_lease_term_years') {
+          return `${formatNumberMetric(numeric, { maximumFractionDigits: 1 })} yrs`
+        }
+        return formatNumberMetric(numeric, { maximumFractionDigits: 2 })
+      }
+      const text = String(value)
+      return text.charAt(0).toUpperCase() + text.slice(1)
+    },
+    [formatCurrency, formatNumberMetric],
+  )
+  const summariseScenarioMetrics = useCallback(
+    (metrics: Record<string, unknown> | null | undefined) => {
+      if (!metrics) {
+        return []
+      }
+      const selected: string[] = []
+      for (const key of SCENARIO_METRIC_PRIORITY) {
+        const value = metrics[key]
+        if (value !== null && value !== undefined && value !== '') {
+          selected.push(key)
+        }
+        if (selected.length >= 3) {
+          break
+        }
+      }
+      if (selected.length < 3) {
+        for (const key of Object.keys(metrics)) {
+          if (selected.length >= 3) {
+            break
+          }
+          if (
+            metrics[key] !== null &&
+            metrics[key] !== undefined &&
+            metrics[key] !== '' &&
+            !selected.includes(key)
+          ) {
+            selected.push(key)
+          }
+        }
+      }
+      return selected.map((key) => ({
+        key,
+        label: formatMetricLabel(key),
+        value: metrics[key],
+      }))
+    },
+    [formatMetricLabel],
+  )
+  const formatTimestamp = useCallback((value: string) => {
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) {
+      return value
     }
-    return `${formatNumberMetric(distanceM, { maximumFractionDigits: 0 })} m`
-  }, [formatNumberMetric])
+    return new Intl.DateTimeFormat('en-SG', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(parsed)
+  }, [])
+  const handleScenarioComparisonScroll = useCallback(() => {
+    scenarioComparisonRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }, [])
+
   const buildFeasibilitySignals = useCallback(
     (entry: QuickAnalysisEntry) => {
       const opportunities: string[] = []
@@ -555,6 +1238,33 @@ export function SiteAcquisitionPage() {
           }
           if (!siteArea) {
             risks.push('Site area missing — gather survey or title data.')
+          }
+          if (capturedProperty?.buildEnvelope) {
+            const { maxBuildableGfaSqm, additionalPotentialGfaSqm, allowablePlotRatio } =
+              capturedProperty.buildEnvelope
+            if (maxBuildableGfaSqm) {
+              opportunities.push(
+                `Zoning envelope supports ≈ ${formatNumberMetric(maxBuildableGfaSqm, {
+                  maximumFractionDigits: 0,
+                })} sqm of GFA.`,
+              )
+            }
+            if (additionalPotentialGfaSqm && additionalPotentialGfaSqm > 0) {
+              opportunities.push(
+                `Estimated uplift of ${formatNumberMetric(additionalPotentialGfaSqm, {
+                  maximumFractionDigits: 0,
+                })} sqm available under current controls.`,
+              )
+            } else if (additionalPotentialGfaSqm !== null && additionalPotentialGfaSqm !== undefined) {
+              risks.push('No additional GFA headroom — optimisation required before submission.')
+            }
+            if (!plotRatio && allowablePlotRatio) {
+              opportunities.push(
+                `Plot ratio cap ${formatNumberMetric(allowablePlotRatio, {
+                  maximumFractionDigits: 2,
+                })} still allows refinement.`,
+              )
+            }
           }
           break
         }
@@ -626,9 +1336,19 @@ export function SiteAcquisitionPage() {
         }
       }
 
+      if (capturedProperty?.optimizations?.length) {
+        const lead = capturedProperty.optimizations[0]
+        const mixLabel = lead.assetType.replace(/_/g, ' ')
+        opportunities.push(
+          `${mixLabel.charAt(0).toUpperCase()}${mixLabel.slice(1)} holds ${formatNumberMetric(lead.allocationPct, {
+            maximumFractionDigits: 0,
+          })}% of the suggested programme, aligning with the current envelope.`,
+        )
+      }
+
       return { opportunities, risks }
     },
-    [formatNumberMetric],
+    [formatNumberMetric, capturedProperty],
   )
   const propertyInfoSummary = capturedProperty?.propertyInfo ?? null
   const zoningSummary = capturedProperty?.uraZoning ?? null
@@ -636,6 +1356,557 @@ export function SiteAcquisitionPage() {
     capturedProperty?.nearbyAmenities?.mrtStations?.[0] ?? null
   const nearestBusStop =
     capturedProperty?.nearbyAmenities?.busStops?.[0] ?? null
+
+  const propertyOverviewCards = useMemo(() => {
+    if (!capturedProperty) {
+      return []
+    }
+
+    const info = propertyInfoSummary
+    const zoning = zoningSummary
+    const envelope = capturedProperty.buildEnvelope
+    const visualization = capturedProperty.visualization ?? {
+      status: 'placeholder',
+      previewAvailable: false,
+      notes: [],
+      conceptMeshUrl: null,
+      thumbnailUrl: null,
+      cameraOrbitHint: null,
+      previewSeed: null,
+      previewJobId: null,
+      massingLayers: [],
+      colorLegend: [],
+    }
+    const optimizations = capturedProperty.optimizations ?? []
+    const financialSummary = capturedProperty.financialSummary
+    const heritageContext = capturedProperty.heritageContext
+
+    const formatArea = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      const precision = value >= 1000 ? 0 : 2
+      return `${formatNumberMetric(value, { maximumFractionDigits: precision })} sqm`
+    }
+
+    const formatHeight = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      return `${formatNumberMetric(value, { maximumFractionDigits: 1 })} m`
+    }
+
+    const formatPlotRatio = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      return formatNumberMetric(value, { maximumFractionDigits: 2 })
+    }
+
+    const formatSiteCoverage = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      let percent = value
+      if (percent <= 1) {
+        percent = percent * 100
+      }
+      return `${formatNumberMetric(percent, {
+        maximumFractionDigits: percent >= 100 ? 0 : 1,
+      })}%`
+    }
+
+    const formatDistance = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      if (value >= 1000) {
+        return `${formatNumberMetric(value / 1000, {
+          maximumFractionDigits: 1,
+        })} km`
+      }
+      return `${formatNumberMetric(value, { maximumFractionDigits: 0 })} m`
+    }
+
+    const formatDate = (value: string | null | undefined) => {
+      if (!value) {
+        return '—'
+      }
+      const parsed = new Date(value)
+      if (Number.isNaN(parsed.getTime())) {
+        return value
+      }
+      return new Intl.DateTimeFormat('en-SG', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(parsed)
+    }
+
+    const cards: Array<{
+      title: string
+      subtitle?: string | null
+      items: Array<{ label: string; value: string }>
+      tags?: string[]
+      note?: string | null
+    }> = []
+
+    cards.push({
+      title: 'Location & tenure',
+      items: [
+        {
+          label: 'Address',
+          value: capturedProperty.address.fullAddress || '—',
+        },
+        {
+          label: 'District',
+          value: capturedProperty.address.district || '—',
+        },
+        {
+          label: 'Tenure',
+          value: info?.tenure ?? '—',
+        },
+        {
+          label: 'Completion year',
+          value: info?.completionYear
+            ? formatNumberMetric(info.completionYear, {
+                maximumFractionDigits: 0,
+              })
+            : '—',
+        },
+      ],
+    })
+
+    cards.push({
+      title: 'Build envelope',
+      subtitle: envelope.zoneDescription ?? envelope.zoneCode ?? 'Zoning envelope preview',
+      items: [
+        { label: 'Zone code', value: envelope.zoneCode ?? '—' },
+        {
+          label: 'Allowable plot ratio',
+          value: formatPlotRatio(envelope.allowablePlotRatio),
+        },
+        { label: 'Site area', value: formatArea(envelope.siteAreaSqm) },
+        {
+          label: 'Max buildable GFA',
+          value: formatArea(envelope.maxBuildableGfaSqm),
+        },
+        {
+          label: 'Current GFA',
+          value: formatArea(envelope.currentGfaSqm),
+        },
+        {
+          label: 'Additional potential',
+          value: formatArea(envelope.additionalPotentialGfaSqm),
+        },
+      ],
+      note: envelope.assumptions?.length ? envelope.assumptions[0] : null,
+    })
+
+    if (heritageContext) {
+      const riskLabel = heritageContext.risk
+        ? heritageContext.risk.toUpperCase()
+        : 'UNKNOWN'
+      const overlay = heritageContext.overlay
+
+      const heritageItems: Array<{ label: string; value: string }> = [
+        {
+          label: 'Risk level',
+          value: riskLabel,
+        },
+      ]
+
+      if (overlay?.name) {
+        heritageItems.push({ label: 'Overlay name', value: overlay.name })
+      }
+      if (overlay?.source) {
+        heritageItems.push({ label: 'Source', value: overlay.source })
+      }
+      if (overlay?.heritagePremiumPct != null) {
+        heritageItems.push({
+          label: 'Premium (optimiser)',
+          value: `${formatNumberMetric(overlay.heritagePremiumPct, {
+            maximumFractionDigits: overlay.heritagePremiumPct >= 100 ? 0 : 1,
+          })}%`,
+        })
+      }
+      if (heritageContext.constraints.length) {
+        heritageItems.push({
+          label: 'Key constraints',
+          value: heritageContext.constraints.slice(0, 2).join(' • '),
+        })
+      }
+
+      cards.push({
+        title: 'Heritage context',
+        subtitle: overlay?.name ?? 'Heritage assessment',
+        items: heritageItems,
+        tags: heritageContext.flag ? [riskLabel] : undefined,
+        note: heritageContext.assumption ?? heritageContext.notes[0] ?? null,
+      })
+    }
+
+    if (previewJob) {
+      const statusLabel = previewJob.status.toUpperCase()
+      const statusLower = previewJob.status.toLowerCase()
+      const previewItems: Array<{ label: string; value: string }> = [
+        { label: 'Status', value: statusLabel },
+        { label: 'Scenario', value: previewJob.scenario },
+        {
+          label: 'Requested',
+          value: previewJob.requestedAt ? formatTimestamp(previewJob.requestedAt) : '—',
+        },
+      ]
+      if (previewJob.startedAt) {
+        previewItems.push({
+          label: 'Started',
+          value: formatTimestamp(previewJob.startedAt),
+        })
+      }
+      if (previewJob.finishedAt) {
+        previewItems.push({
+          label: 'Finished',
+          value: formatTimestamp(previewJob.finishedAt),
+        })
+      }
+      if (previewJob.previewUrl) {
+        previewItems.push({ label: 'Preview URL', value: previewJob.previewUrl })
+      }
+      if (previewJob.thumbnailUrl) {
+        previewItems.push({ label: 'Thumbnail', value: previewJob.thumbnailUrl })
+      }
+      if (previewJob.message) {
+        previewItems.push({ label: 'Notes', value: previewJob.message })
+      }
+
+      let previewNote: string | null = previewJob.message ?? null
+      if (!previewNote) {
+        if (statusLower === 'ready') {
+          previewNote = 'Concept mesh ready for review.'
+        } else if (statusLower === 'failed') {
+          previewNote = 'Preview generation failed — try refreshing.'
+        } else if (statusLower === 'expired') {
+          previewNote = 'Preview expired — refresh to regenerate assets.'
+        } else {
+          previewNote = 'Preview job processing — status updates every few seconds.'
+        }
+      }
+
+      cards.push({
+        title: 'Preview generation',
+        subtitle: `Job ${previewJob.id.slice(0, 8)}…`,
+        items: previewItems,
+        tags: [statusLabel],
+        note: previewNote,
+      })
+    }
+
+    if (optimizations.length > 0) {
+      const formatAllocation = (plan: DeveloperAssetOptimization) => {
+        const segments: string[] = [
+          `${formatNumberMetric(plan.allocationPct, { maximumFractionDigits: 0 })}%`,
+        ]
+        if (plan.allocatedGfaSqm != null) {
+          segments.push(
+            `${formatNumberMetric(
+              plan.allocatedGfaSqm >= 1000
+                ? plan.allocatedGfaSqm / 1000
+                : plan.allocatedGfaSqm,
+              {
+                maximumFractionDigits: plan.allocatedGfaSqm >= 1000 ? 1 : 0,
+              },
+            )}${plan.allocatedGfaSqm >= 1000 ? 'k' : ''} sqm`,
+          )
+        }
+        if (plan.niaEfficiency != null) {
+          segments.push(
+            `NIA ${formatNumberMetric(plan.niaEfficiency * 100, {
+              maximumFractionDigits: plan.niaEfficiency * 100 >= 100 ? 0 : 1,
+            })}%`,
+          )
+        }
+        if (plan.targetFloorHeightM != null) {
+          segments.push(
+            `${formatNumberMetric(plan.targetFloorHeightM, {
+              maximumFractionDigits: 1,
+            })} m floor height`,
+          )
+        }
+        if (plan.parkingRatioPer1000Sqm != null) {
+          segments.push(
+            `${formatNumberMetric(plan.parkingRatioPer1000Sqm, {
+              maximumFractionDigits: 1,
+            })} lots / 1,000 sqm`,
+          )
+        }
+        if (plan.estimatedRevenueSgd != null && plan.estimatedRevenueSgd > 0) {
+          segments.push(
+            `Rev ≈ $${formatNumberMetric(plan.estimatedRevenueSgd / 1_000_000, {
+              maximumFractionDigits: 1,
+            })}M`,
+          )
+        }
+        if (plan.estimatedCapexSgd != null && plan.estimatedCapexSgd > 0) {
+          segments.push(
+            `CAPEX ≈ $${formatNumberMetric(plan.estimatedCapexSgd / 1_000_000, {
+              maximumFractionDigits: 1,
+            })}M`,
+          )
+        }
+        if (plan.riskLevel) {
+          const riskLabel = `${plan.riskLevel.charAt(0).toUpperCase()}${plan.riskLevel.slice(1)}`
+          segments.push(
+            `${riskLabel} risk${
+              plan.absorptionMonths ? ` · ~${formatNumberMetric(plan.absorptionMonths, { maximumFractionDigits: 0 })}m absorption` : ''
+            }`,
+          )
+        }
+        return segments.join(' • ')
+      }
+
+      cards.push({
+        title: 'Recommended asset mix',
+        subtitle: 'Initial allocation guidance',
+        items: optimizations.map((plan) => ({
+          label: plan.assetType,
+          value: formatAllocation(plan),
+        })),
+        note:
+          optimizations.find((plan) => plan.notes.length)?.notes[0] ??
+          'Adjust allocations as feasibility modelling matures.',
+      })
+    }
+
+    const financeNote =
+      financialSummary.notes.length > 0
+        ? financialSummary.notes[0]
+        : 'Sync with finance modelling to validate programme-level cash flows.'
+
+    const financialItems: Array<{ label: string; value: string }> = [
+      {
+        label: 'Total estimated revenue',
+        value:
+          financialSummary.totalEstimatedRevenueSgd != null
+            ? `$${formatNumberMetric(
+                financialSummary.totalEstimatedRevenueSgd / 1_000_000,
+                { maximumFractionDigits: 1 },
+              )}M`
+            : '—',
+      },
+      {
+        label: 'Total estimated capex',
+        value:
+          financialSummary.totalEstimatedCapexSgd != null
+            ? `$${formatNumberMetric(
+                financialSummary.totalEstimatedCapexSgd / 1_000_000,
+                { maximumFractionDigits: 1 },
+              )}M`
+            : '—',
+      },
+      {
+        label: 'Dominant risk',
+        value:
+          financialSummary.dominantRiskProfile
+            ? financialSummary.dominantRiskProfile.replace('_', ' ')
+            : '—',
+      },
+    ]
+
+    const financeBlueprint = financialSummary.financeBlueprint
+    if (financeBlueprint?.capitalStructure.length) {
+      const baseScenario =
+        financeBlueprint.capitalStructure.find((entry) => entry.scenario === 'Base Case') ??
+        financeBlueprint.capitalStructure[0]
+      financialItems.push({
+        label: 'Capital stack (base)',
+        value: `${formatNumberMetric(baseScenario.debtPct, {
+          maximumFractionDigits: 0,
+        })}% debt / ${formatNumberMetric(baseScenario.equityPct, {
+          maximumFractionDigits: 0,
+        })}% equity`,
+      })
+    }
+    if (financeBlueprint?.debtFacilities.length) {
+      const constructionLoan = financeBlueprint.debtFacilities.find(
+        (facility) => facility.facilityType.toLowerCase().includes('construction'),
+      )
+      if (constructionLoan) {
+        financialItems.push({
+          label: 'Construction loan rate',
+          value: constructionLoan.interestRate,
+        })
+      }
+    }
+
+    cards.push({
+      title: 'Financial snapshot',
+      subtitle: 'Optimisation-derived rollup',
+      items: financialItems,
+      note: financeNote,
+    })
+
+    if (visualization) {
+      const visualizationItems: Array<{ label: string; value: string }> = [
+        {
+          label: 'Preview status',
+          value: visualization.previewAvailable ? 'High-fidelity preview ready' : 'Waiting on Phase 2B visuals',
+        },
+        {
+          label: 'Status flag',
+          value: visualization.status ? visualization.status.replace(/_/g, ' ') : 'Pending',
+        },
+        {
+          label: 'Concept mesh',
+          value: visualization.conceptMeshUrl ?? 'Stub not generated yet',
+        },
+        {
+          label: 'Camera orbit hint',
+          value: visualization.cameraOrbitHint
+            ? `${formatNumberMetric(visualization.cameraOrbitHint.theta ?? 0, {
+                  maximumFractionDigits: 0,
+                })}° / ${formatNumberMetric(visualization.cameraOrbitHint.phi ?? 0, {
+                  maximumFractionDigits: 0,
+                })}°`
+            : '—',
+        },
+      ]
+
+      if (visualization.massingLayers?.length > 0) {
+        const primaryLayer = visualization.massingLayers[0]
+        const layerLabel = primaryLayer.assetType
+          .replace(/[_-]/g, ' ')
+          .replace(/\b\w/g, (match) => match.toUpperCase())
+        const heightValue =
+          primaryLayer.estimatedHeightM != null
+            ? `${formatNumberMetric(primaryLayer.estimatedHeightM, {
+                maximumFractionDigits: 0,
+              })} m`
+            : '—'
+        visualizationItems.push({
+          label: 'Primary massing',
+          value: `${layerLabel} · ${heightValue}`,
+        })
+      }
+
+      if (visualization.colorLegend?.length > 0) {
+        const legendPreview = visualization.colorLegend
+          .slice(0, 3)
+          .map((entry) => entry.label)
+          .join(', ')
+        visualizationItems.push({
+          label: 'Colour legend',
+          value: legendPreview || '—',
+        })
+      }
+
+      cards.push({
+        title: 'Visualization readiness',
+        subtitle: visualization.previewAvailable ? 'Preview ready' : 'Preview in progress',
+        items: visualizationItems,
+        note: visualization.notes?.length ? visualization.notes[0] : null,
+      })
+    }
+
+    cards.push({
+      title: 'Site metrics',
+      items: [
+        { label: 'Site area', value: formatArea(info?.siteAreaSqm) },
+        { label: 'Approved GFA', value: formatArea(info?.gfaApproved) },
+        { label: 'Building height', value: formatHeight(info?.buildingHeight) },
+        {
+          label: 'Plot ratio',
+          value: formatPlotRatio(zoning?.plotRatio),
+        },
+      ],
+    })
+
+    cards.push({
+      title: 'Zoning & planning',
+      subtitle:
+        zoning?.zoneDescription ??
+        zoning?.zoneCode ??
+        'Zoning details unavailable',
+      items: [
+        {
+          label: 'Building height limit',
+          value: formatHeight(zoning?.buildingHeightLimit),
+        },
+        {
+          label: 'Site coverage',
+          value:
+            zoning?.siteCoverage !== null && zoning?.siteCoverage !== undefined
+              ? formatSiteCoverage(zoning.siteCoverage)
+              : '—',
+        },
+        {
+          label: 'Special conditions',
+          value: zoning?.specialConditions ?? '—',
+        },
+      ],
+      tags: zoning?.useGroups ?? [],
+    })
+
+    cards.push({
+      title: 'Market & connectivity',
+      items: [
+        {
+          label: 'Existing use',
+          value:
+            capturedProperty.existingUse && capturedProperty.existingUse.trim()
+              ? capturedProperty.existingUse
+              : '—',
+        },
+        {
+          label: 'Last transaction',
+          value:
+            info?.lastTransactionDate || info?.lastTransactionPrice
+              ? [
+                  formatDate(info?.lastTransactionDate),
+                  info?.lastTransactionPrice
+                    ? formatCurrency(info.lastTransactionPrice)
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              : '—',
+        },
+        {
+          label: 'Nearest MRT',
+          value: nearestMrtStation
+            ? `${nearestMrtStation.name} (${formatDistance(
+                nearestMrtStation.distanceM,
+              )})`
+            : '—',
+        },
+        {
+          label: 'Nearest bus stop',
+          value: nearestBusStop
+            ? `${nearestBusStop.name} (${formatDistance(
+                nearestBusStop.distanceM,
+              )})`
+            : '—',
+        },
+      ],
+      note: `Lat ${formatNumberMetric(
+        capturedProperty.coordinates.latitude,
+        { maximumFractionDigits: 6 },
+      )}, Lon ${formatNumberMetric(capturedProperty.coordinates.longitude, {
+        maximumFractionDigits: 6,
+      })}`,
+    })
+
+    return cards
+  }, [
+    capturedProperty,
+    formatCurrency,
+    formatNumberMetric,
+    formatTimestamp,
+    propertyInfoSummary,
+    zoningSummary,
+    nearestBusStop,
+    nearestMrtStation,
+    previewJob,
+  ])
 
   useEffect(() => {
     if (scenarioOverrideEntries.length === 0) {
@@ -697,7 +1968,12 @@ export function SiteAcquisitionPage() {
         risks: signals.risks,
       }
     })
-  }, [quickAnalysisScenarios, scenarioLookup, buildFeasibilitySignals])
+  }, [
+    quickAnalysisScenarios,
+    scenarioLookup,
+    buildFeasibilitySignals,
+    formatScenarioLabel,
+  ])
 
   const describeRatingChange = useCallback(
     (current: string, reference: string) => {
@@ -795,6 +2071,361 @@ export function SiteAcquisitionPage() {
       }
     })
   }, [latestAssessmentEntry, previousAssessmentEntry])
+  const systemComparisonMap = useMemo(
+    () => new Map(systemComparisons.map((entry) => [entry.name, entry])),
+    [systemComparisons],
+  )
+  const systemTrendInsights = useMemo(() => {
+    if (systemComparisons.length === 0) {
+      return []
+    }
+    const insights = systemComparisons
+      .map((entry) => {
+        if (!entry.latest) {
+          return null
+        }
+        const delta =
+          typeof entry.scoreDelta === 'number' && Number.isFinite(entry.scoreDelta)
+            ? entry.scoreDelta
+            : null
+        const severity = classifySystemSeverity(entry.latest.rating, delta)
+        if (severity === 'neutral') {
+          return null
+        }
+        const previousRating = entry.previous?.rating ?? null
+        const previousScore =
+          typeof entry.previous?.score === 'number' ? entry.previous.score : null
+        let detail: string
+        if (delta !== null && delta !== 0 && previousRating && previousScore !== null) {
+          const deltaLabel = formatScoreDelta(delta)
+          detail = `${entry.name} ${deltaLabel} vs last inspection (${previousRating} · ${previousScore}/100 → ${entry.latest.rating} · ${entry.latest.score}/100).`
+        } else if (delta !== null && delta !== 0) {
+          const deltaLabel = formatScoreDelta(delta)
+          detail = `${entry.name} ${deltaLabel}; now ${entry.latest.rating} · ${entry.latest.score}/100.`
+        } else if (previousRating) {
+          detail = `${entry.name} holds at ${entry.latest.rating} · ${entry.latest.score}/100 (was ${previousRating}).`
+        } else {
+          detail = `${entry.name} recorded as ${entry.latest.rating} · ${entry.latest.score}/100.`
+        }
+        return {
+          id: `trend-${slugify(entry.name)}`,
+          severity,
+          title: buildSystemInsightTitle(entry.name, severity, delta),
+          detail,
+          specialist: systemSpecialistHint(entry.name),
+        }
+      })
+      .filter((value): value is ConditionInsightView => value !== null)
+
+    insights.sort((a, b) => {
+      const severityRank = insightSeverityOrder[a.severity] - insightSeverityOrder[b.severity]
+      if (severityRank !== 0) {
+        return severityRank
+      }
+      return a.title.localeCompare(b.title)
+    })
+
+    return insights.slice(0, 3)
+  }, [systemComparisons])
+  const backendInsightViews = useMemo<ConditionInsightView[]>(() => {
+    if (!conditionAssessment?.insights) {
+      return []
+    }
+    return conditionAssessment.insights.map((insight, index) => ({
+      id: insight.id || `backend-${index}`,
+      severity: normaliseInsightSeverity(insight.severity),
+      title: insight.title,
+      detail: insight.detail,
+      specialist: insight.specialist ?? null,
+    }))
+  }, [conditionAssessment?.insights])
+  const combinedConditionInsights = useMemo<ConditionInsightView[]>(() => {
+    const merged = new Map<string, ConditionInsightView>()
+    backendInsightViews.forEach((insight, index) => {
+      const key = insight.id || `backend-${index}`
+      merged.set(key, { ...insight, id: key })
+    })
+    systemTrendInsights.forEach((insight) => {
+      merged.set(insight.id, insight)
+    })
+    return Array.from(merged.values())
+  }, [backendInsightViews, systemTrendInsights])
+  const backendInsightCount = backendInsightViews.length
+  const trendInsightCount = systemTrendInsights.length
+  const insightSubtitle =
+    backendInsightCount > 0 && trendInsightCount > 0
+      ? 'Heuristic insights combined with inspection deltas.'
+      : backendInsightCount > 0
+      ? 'Heuristic insights generated from property data and specialist playbooks.'
+      : 'Inspection deltas compared with previous assessments.'
+  const scenarioComparisonData = useMemo<ScenarioComparisonDatum[]>(() => {
+    const scenarioOrder = new Map(
+      DEFAULT_SCENARIO_ORDER.map((scenario, index) => [scenario, index]),
+    )
+    const keys = new Set<ScenarioComparisonKey>()
+    keys.add('all')
+    quickAnalysisScenarios.forEach((scenario) => {
+      if (typeof scenario.scenario === 'string') {
+        keys.add(scenario.scenario as DevelopmentScenario)
+      }
+    })
+    Object.keys(scenarioChecklistProgress).forEach((scenario) => {
+      keys.add(scenario as DevelopmentScenario)
+    })
+    scenarioAssessments.forEach((assessment) => {
+      if (assessment.scenario) {
+        keys.add(assessment.scenario)
+      }
+    })
+
+    const sorted = Array.from(keys).sort((a, b) => {
+      if (a === 'all') return -1
+      if (b === 'all') return 1
+      return (scenarioOrder.get(a) ?? 999) - (scenarioOrder.get(b) ?? 999)
+    })
+
+    return sorted.map((scenarioKey) => {
+      const isAll = scenarioKey === 'all'
+      const option = !isAll
+        ? scenarioLookup.get(scenarioKey as DevelopmentScenario)
+        : null
+      const label = isAll
+        ? 'All scenarios'
+        : option?.label ?? formatScenarioLabel(scenarioKey as DevelopmentScenario)
+      const icon = isAll ? '🌐' : option?.icon ?? '🏗️'
+
+      let quickHeadline: string | null = null
+      let quickMetrics: ScenarioComparisonMetric[] = []
+      if (isAll) {
+        const scenarioCount = Math.max(sorted.length - 1, 0)
+        quickHeadline = `Aggregate across ${scenarioCount} tracked scenarios.`
+        if (displaySummary) {
+          quickMetrics = [
+            {
+              label: 'Checklist',
+              value: `${displaySummary.completed}/${displaySummary.total}`,
+            },
+            {
+              label: 'Completion',
+              value: `${displaySummary.completionPercentage}%`,
+            },
+          ]
+        }
+      } else {
+        const quickEntry = quickAnalysisScenarios.find(
+          (entry) => entry.scenario === scenarioKey,
+        )
+        quickHeadline = quickEntry?.headline ?? null
+        quickMetrics = summariseScenarioMetrics(quickEntry?.metrics ?? {})
+      }
+
+      const checklistEntry = isAll
+        ? displaySummary
+        : scenarioChecklistProgress[scenarioKey as DevelopmentScenario]
+      const checklistCompleted =
+        typeof checklistEntry?.completed === 'number'
+          ? checklistEntry.completed
+          : null
+      const checklistTotal =
+        typeof checklistEntry?.total === 'number' ? checklistEntry.total : null
+      const checklistPercent =
+        checklistCompleted !== null &&
+        checklistTotal &&
+        checklistTotal > 0
+          ? Math.round((checklistCompleted / checklistTotal) * 100)
+          : null
+
+      let conditionEntry: ConditionAssessment | null = null
+      if (isAll) {
+        if (
+          conditionAssessment &&
+          (!conditionAssessment.scenario || conditionAssessment.scenario === 'all')
+        ) {
+          conditionEntry = conditionAssessment
+        }
+      } else {
+        const mapped = scenarioAssessmentsMap.get(
+          scenarioKey as DevelopmentScenario,
+        )
+        if (mapped) {
+          conditionEntry = mapped
+        } else if (conditionAssessment?.scenario === scenarioKey) {
+          conditionEntry = conditionAssessment
+        }
+      }
+
+      const insights = isAll
+        ? combinedConditionInsights
+        : convertAssessmentInsights(conditionEntry)
+      const sortedInsights = [...insights].sort((a, b) => {
+        const rankA = insightSeverityOrder[a.severity]
+        const rankB = insightSeverityOrder[b.severity]
+        if (rankA !== rankB) {
+          return rankA - rankB
+        }
+        return a.title.localeCompare(b.title)
+      })
+      const primaryInsight = sortedInsights[0] ?? null
+
+      const conditionRating = conditionEntry?.overallRating ?? null
+      const conditionScore =
+        typeof conditionEntry?.overallScore === 'number'
+          ? conditionEntry.overallScore
+          : typeof conditionEntry?.overallScore === 'string'
+          ? Number(conditionEntry.overallScore)
+          : null
+      const riskLevel = conditionEntry?.riskLevel ?? null
+      const recommendedAction = isAll
+        ? conditionAssessment?.recommendedActions?.[0] ?? null
+        : conditionEntry?.recommendedActions?.[0] ?? null
+      const inspectorName =
+        conditionEntry?.inspectorName ??
+        (isAll ? conditionAssessment?.inspectorName ?? null : null)
+      const recordedAt =
+        conditionEntry?.recordedAt ??
+        (isAll ? conditionAssessment?.recordedAt ?? null : null)
+      const source: 'manual' | 'heuristic' =
+        conditionEntry && conditionEntry.recordedAt ? 'manual' : 'heuristic'
+
+      return {
+        key: scenarioKey,
+        label,
+        icon,
+        quickHeadline,
+        quickMetrics,
+        conditionRating,
+        conditionScore,
+        riskLevel,
+        checklistCompleted,
+        checklistTotal,
+        checklistPercent,
+        insights,
+        primaryInsight,
+        recommendedAction,
+        recordedAt,
+        inspectorName,
+        source,
+      }
+    })
+  }, [
+    quickAnalysisScenarios,
+    scenarioChecklistProgress,
+    scenarioAssessments,
+    scenarioAssessmentsMap,
+    conditionAssessment,
+    combinedConditionInsights,
+    displaySummary,
+    scenarioLookup,
+    formatScenarioLabel,
+    summariseScenarioMetrics,
+    convertAssessmentInsights,
+  ])
+  const scenarioComparisonTableRows = useMemo(
+    () => scenarioComparisonData.filter((row) => row.key !== 'all'),
+    [scenarioComparisonData],
+  )
+  const scenarioComparisonVisible = scenarioComparisonTableRows.length > 0
+  useEffect(() => {
+    if (!capturedProperty || !capturedProperty.quickAnalysis) {
+      if (comparisonSnapshotSignatureRef.current !== null) {
+        comparisonSnapshotSignatureRef.current = null
+        setQuickAnalysisHistory([])
+      }
+      return
+    }
+    if (scenarioComparisonData.length === 0) {
+      return
+    }
+
+    const comparisonSnapshot = scenarioComparisonData.map((row, index) => ({
+      ...row,
+      quickMetrics: row.quickMetrics.map((metric) => ({ ...metric })),
+      insights: row.insights.map((insight, insightIndex) => ({
+        ...insight,
+        id: insight.id || `snapshot-${index}-${insightIndex}`,
+      })),
+      primaryInsight: row.primaryInsight ? { ...row.primaryInsight } : null,
+    }))
+
+    const signatureParts = [
+      capturedProperty.propertyId,
+      capturedProperty.quickAnalysis.generatedAt,
+      ...comparisonSnapshot.map((row) =>
+        [
+          row.key,
+          row.conditionRating ?? '',
+          row.conditionScore ?? '',
+          row.riskLevel ?? '',
+          row.quickMetrics.map((metric) => `${metric.label}:${metric.value ?? ''}`).join(
+            ',',
+          ),
+          row.primaryInsight?.id ?? '',
+          row.recommendedAction ?? '',
+        ].join('#'),
+      ),
+    ]
+    const signature = signatureParts.join('|')
+    if (comparisonSnapshotSignatureRef.current === signature) {
+      return
+    }
+    comparisonSnapshotSignatureRef.current = signature
+
+    const snapshot: QuickAnalysisSnapshot = {
+      propertyId: capturedProperty.propertyId,
+      generatedAt: capturedProperty.quickAnalysis.generatedAt,
+      scenarios: capturedProperty.quickAnalysis.scenarios,
+      comparison: comparisonSnapshot,
+    }
+
+    setQuickAnalysisHistory((previous) => {
+      const sameProperty = previous.filter(
+        (entry) => entry.propertyId === snapshot.propertyId,
+      )
+      const withoutTimestamp = sameProperty.filter(
+        (entry) => entry.generatedAt !== snapshot.generatedAt,
+      )
+      return [snapshot, ...withoutTimestamp].slice(0, QUICK_ANALYSIS_HISTORY_LIMIT)
+    })
+  }, [capturedProperty, scenarioComparisonData])
+  const activeScenarioSummary = useMemo(() => {
+    const targetKey: ScenarioComparisonKey =
+      activeScenario === 'all' ? 'all' : (activeScenario as DevelopmentScenario)
+    const row = scenarioComparisonData.find((entry) => entry.key === targetKey)
+    if (!row) {
+      const scenarioCount = Math.max(scenarioFocusOptions.length - 1, 0)
+      return {
+        label: targetKey === 'all' ? 'All scenarios' : formatScenarioLabel(targetKey),
+        headline:
+          scenarioCount > 0
+            ? `${scenarioCount} tracked scenarios`
+            : 'No scenarios selected yet',
+        detail: null as string | null,
+      }
+    }
+
+    const headline =
+      row.quickHeadline ??
+      (row.conditionRating
+        ? `Condition ${row.conditionRating}${
+            row.conditionScore !== null ? ` · ${row.conditionScore}/100` : ''
+          }`
+        : 'Scenario summary unavailable')
+    const detailMetric = row.quickMetrics[0]
+    const detail = detailMetric
+      ? `${detailMetric.label}: ${detailMetric.value}`
+      : null
+
+    return {
+      label: row.label,
+      headline,
+      detail,
+    }
+  }, [
+    activeScenario,
+    scenarioComparisonData,
+    scenarioFocusOptions.length,
+    formatScenarioLabel,
+  ])
   const recommendedActionDiff = useMemo(() => {
     if (!latestAssessmentEntry || !previousAssessmentEntry) {
       return { newActions: [], clearedActions: [] }
@@ -900,11 +2531,28 @@ export function SiteAcquisitionPage() {
   useEffect(() => {
     if (!capturedProperty) {
       setAssessmentDraft(buildAssessmentDraft(null, 'all'))
+      setAssessmentEditorMode('edit')
       setIsEditingAssessment(false)
       return
     }
-    setAssessmentDraft(buildAssessmentDraft(conditionAssessment, activeScenario))
-  }, [capturedProperty, conditionAssessment, activeScenario])
+
+    if (!isEditingAssessment) {
+      // When not editing, sync the draft with the current assessment
+      const baseDraft = buildAssessmentDraft(conditionAssessment, activeScenario)
+      // Use current timestamp since any save creates a new history entry
+      const nowLocal = formatDateTimeLocalInput(new Date().toISOString())
+      setAssessmentDraft({
+        ...baseDraft,
+        recordedAtLocal: nowLocal,
+      })
+    }
+  }, [
+    capturedProperty,
+    conditionAssessment,
+    activeScenario,
+    isEditingAssessment,
+    assessmentEditorMode,
+  ])
 
   function handleAssessmentFieldChange(
     field: keyof ConditionAssessmentDraft,
@@ -965,6 +2613,10 @@ export function SiteAcquisitionPage() {
         ? 0
         : parsedOverallScore
 
+      const inspectorNameValue = assessmentDraft.inspectorName.trim()
+      const recordedAtIso = convertLocalToISO(assessmentDraft.recordedAtLocal)
+      const attachmentsPayload = parseAttachmentsText(assessmentDraft.attachmentsText)
+
       const payload: ConditionAssessmentUpsertRequest = {
         scenario: assessmentDraft.scenario,
         overallRating: assessmentDraft.overallRating,
@@ -980,6 +2632,14 @@ export function SiteAcquisitionPage() {
           .split('\n')
           .map((line) => line.trim())
           .filter((line) => line.length > 0),
+        attachments: attachmentsPayload,
+      }
+
+      if (inspectorNameValue) {
+        payload.inspectorName = inspectorNameValue
+      }
+      if (recordedAtIso) {
+        payload.recordedAt = recordedAtIso
       }
 
       const saved = await saveConditionAssessment(
@@ -997,7 +2657,7 @@ export function SiteAcquisitionPage() {
         await loadAssessmentHistory({ silent: true })
         await loadScenarioAssessments({ silent: true })
         setAssessmentSaveMessage('Inspection saved successfully.')
-        setIsEditingAssessment(false)
+        closeAssessmentEditor()
       } else {
         setAssessmentSaveMessage('Unable to save inspection data. Please try again.')
       }
@@ -1010,8 +2670,74 @@ export function SiteAcquisitionPage() {
   }
 
   function resetAssessmentDraft() {
-    setAssessmentDraft(buildAssessmentDraft(conditionAssessment, activeScenario))
+    const nowLocal = formatDateTimeLocalInput(new Date().toISOString())
+
+    if (assessmentEditorMode === 'new') {
+      const baseDraft = buildAssessmentDraft(null, activeScenario)
+      setAssessmentDraft({
+        ...baseDraft,
+        inspectorName: '',
+        recordedAtLocal: nowLocal,
+        attachmentsText: '',
+      })
+    } else {
+      // For 'edit' mode, get the source assessment to reset to
+      let sourceAssessment: ConditionAssessment | null = null
+      if (activeScenario === 'all' && latestAssessmentEntry) {
+        sourceAssessment = latestAssessmentEntry
+      } else {
+        sourceAssessment = conditionAssessment
+      }
+      const baseDraft = buildAssessmentDraft(sourceAssessment, activeScenario)
+      // Use current timestamp since saving creates a new history entry
+      setAssessmentDraft({
+        ...baseDraft,
+        recordedAtLocal: nowLocal,
+      })
+    }
     setAssessmentSaveMessage(null)
+  }
+
+  function openAssessmentEditor(mode: 'new' | 'edit') {
+    if (!capturedProperty) {
+      return
+    }
+    const targetScenario = activeScenario === 'all' ? 'all' : activeScenario
+    const nowLocal = formatDateTimeLocalInput(new Date().toISOString())
+
+    if (mode === 'new') {
+      const baseDraft = buildAssessmentDraft(null, targetScenario)
+      setAssessmentDraft({
+        ...baseDraft,
+        inspectorName: '',
+        recordedAtLocal: nowLocal,
+        attachmentsText: '',
+      })
+    } else {
+      let sourceAssessment: ConditionAssessment | null = null
+      if (activeScenario === 'all' && latestAssessmentEntry) {
+        sourceAssessment = latestAssessmentEntry
+      } else {
+        sourceAssessment = conditionAssessment
+      }
+      const scenarioForDraft: DevelopmentScenario | 'all' =
+        (sourceAssessment?.scenario as DevelopmentScenario | null | undefined) ??
+        (activeScenario as DevelopmentScenario | 'all')
+      const baseDraft = buildAssessmentDraft(sourceAssessment, scenarioForDraft)
+      // When editing, use current timestamp since saving creates a new history entry
+      setAssessmentDraft({
+        ...baseDraft,
+        recordedAtLocal: nowLocal,
+      })
+    }
+    setAssessmentEditorMode(mode)
+    setAssessmentSaveMessage(null)
+    setIsEditingAssessment(true)
+  }
+
+  function closeAssessmentEditor() {
+    setIsEditingAssessment(false)
+    setAssessmentEditorMode('edit')
   }
 
   function toggleScenario(scenario: DevelopmentScenario) {
@@ -1021,6 +2747,9 @@ export function SiteAcquisitionPage() {
         : [...prev, scenario]
     )
   }
+
+  const buildAssetMixStorageKey = (propertyId: string) =>
+    `developer-asset-mix:${propertyId}`
 
   async function handleCapture(e: React.FormEvent) {
     e.preventDefault()
@@ -1048,6 +2777,22 @@ export function SiteAcquisitionPage() {
       })
 
       setCapturedProperty(result)
+      setPreviewJob(result.previewJobs?.[0] ?? null)
+      if (result.propertyId) {
+        try {
+          sessionStorage.setItem(
+            buildAssetMixStorageKey(result.propertyId),
+            JSON.stringify({
+              optimizations: result.optimizations,
+              buildEnvelope: result.buildEnvelope,
+              financialSummary: result.financialSummary,
+              visualization: result.visualization,
+            }),
+          )
+        } catch (storageError) {
+          console.warn('Unable to persist asset mix snapshot', storageError)
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to capture property')
     } finally {
@@ -1109,6 +2854,1451 @@ export function SiteAcquisitionPage() {
       setIsExportingReport(false)
     }
   }
+
+  const InspectionHistoryContent = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '1rem',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: '1.0625rem',
+              fontWeight: 600,
+            }}
+          >
+            Inspection History
+          </h3>
+          <p
+            style={{
+              margin: '0.3rem 0 0',
+              fontSize: '0.875rem',
+              color: '#6e6e73',
+              maxWidth: '480px',
+            }}
+          >
+            Review the developer inspection timeline or compare the two most recent
+            assessments side-by-side.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setHistoryViewMode('timeline')}
+            style={{
+              border: '1px solid #1d1d1f',
+              background: historyViewMode === 'timeline' ? '#1d1d1f' : 'white',
+              color: historyViewMode === 'timeline' ? 'white' : '#1d1d1f',
+              borderRadius: '9999px',
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Timeline
+          </button>
+          <button
+            type="button"
+            onClick={() => setHistoryViewMode('compare')}
+            style={{
+              border: '1px solid #1d1d1f',
+              background: historyViewMode === 'compare' ? '#1d1d1f' : 'white',
+              color: historyViewMode === 'compare' ? 'white' : '#1d1d1f',
+              borderRadius: '9999px',
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Compare
+          </button>
+        </div>
+      </div>
+      {assessmentHistoryError ? (
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.85rem',
+            color: '#c53030',
+          }}
+        >
+          {assessmentHistoryError}
+        </p>
+      ) : isLoadingAssessmentHistory ? (
+        <div
+          style={{
+            padding: '1.5rem',
+            textAlign: 'center',
+            color: '#6e6e73',
+            background: '#f5f5f7',
+            borderRadius: '10px',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Loading inspection history...</p>
+        </div>
+      ) : assessmentHistory.length === 0 ? (
+        <div
+          style={{
+            padding: '1.5rem',
+            textAlign: 'center',
+            color: '#6e6e73',
+            background: '#f5f5f7',
+            borderRadius: '10px',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            No developer inspections recorded yet.
+          </p>
+          <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem' }}>
+            Save an inspection above to start the audit trail.
+          </p>
+        </div>
+      ) : historyViewMode === 'timeline' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          {assessmentHistory.map((entry, index) => {
+            const key = `${entry.recordedAt ?? 'draft'}-${index}`
+            const matchesScenario =
+              activeScenario === 'all' ||
+              !entry.scenario ||
+              entry.scenario === activeScenario
+            const recommendedPreview = entry.recommendedActions.slice(0, 2)
+            const remainingActions =
+              entry.recommendedActions.length - recommendedPreview.length
+            return (
+              <div
+                key={key}
+                style={{
+                  border: '1px solid #e5e5e7',
+                  borderLeft: `4px solid ${
+                    index === 0 ? '#0a84ff' : matchesScenario ? '#34c759' : '#d2d2d7'
+                  }`,
+                  borderRadius: '10px',
+                  padding: '1rem 1.25rem',
+                  background: index === 0 ? '#f0f9ff' : '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: '#6e6e73',
+                      }}
+                    >
+                      {index === 0 ? 'Most recent inspection' : `Inspection ${index + 1}`}
+                    </span>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>
+                      {formatScenarioLabel(entry.scenario)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.2rem',
+                      alignItems: 'flex-end',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+                      {formatRecordedTimestamp(entry.recordedAt)}
+                    </span>
+                    <span style={{ fontSize: '0.78rem', color: '#6e6e73' }}>
+                      Inspector:{' '}
+                      <strong>{entry.inspectorName?.trim() || 'Not recorded'}</strong>
+                    </span>
+                  </div>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+                  {entry.summary || 'No notes recorded.'}
+                </p>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.4rem',
+                    fontSize: '0.8rem',
+                    color: '#6e6e73',
+                  }}
+                >
+                  <span>
+                    Rating: <strong>{entry.overallRating}</strong>
+                  </span>
+                  <span>
+                    Score: <strong>{entry.overallScore}/100</strong>
+                  </span>
+                  <span>
+                    Risk level:{' '}
+                    <strong style={{ textTransform: 'capitalize' }}>{entry.riskLevel}</strong>
+                  </span>
+                </div>
+                {recommendedPreview.length > 0 && (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#6e6e73',
+                        letterSpacing: '0.06em',
+                      }}
+                    >
+                      Recommended actions
+                    </span>
+                    <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1rem' }}>
+                      {recommendedPreview.map((action, actionIndex) => (
+                        <li key={`${key}-action-${actionIndex}`} style={{ fontSize: '0.85rem' }}>
+                          {action}
+                        </li>
+                      ))}
+                    </ul>
+                    {remainingActions > 0 && (
+                      <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: '#6e6e73' }}>
+                        +{remainingActions} more actions recorded in this inspection.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {entry.attachments.length > 0 && (
+                  <div style={{ marginTop: '0.35rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#6e6e73',
+                        letterSpacing: '0.06em',
+                      }}
+                    >
+                      Attachments
+                    </span>
+                    <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1rem' }}>
+                      {entry.attachments.map((attachment, attachmentIndex) => (
+                        <li key={`${key}-attachment-${attachmentIndex}`} style={{ fontSize: '0.85rem' }}>
+                          {attachment.url ? (
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: '#0a84ff' }}
+                            >
+                              {attachment.label}
+                            </a>
+                          ) : (
+                            attachment.label
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ) : historyViewMode === 'compare' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {assessmentHistory.length < 2 ||
+          !latestAssessmentEntry ||
+          !previousAssessmentEntry ? (
+            <div
+              style={{
+                padding: '1.5rem',
+                textAlign: 'center',
+                color: '#6e6e73',
+                background: '#f5f5f7',
+                borderRadius: '10px',
+              }}
+            >
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                Capture one more inspection to unlock comparison view.
+              </p>
+            </div>
+          ) : scenarioComparisonVisible ? (
+              <div ref={scenarioComparisonRef}>
+                <details
+                  open
+                  style={{
+                    border: '1px solid #e5e5e7',
+                    borderRadius: '14px',
+                    background: 'white',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <summary
+                  style={{
+                    padding: '0.85rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    listStyle: 'none',
+                    outline: 'none',
+                  }}
+                >
+                  Detailed comparison table
+                </summary>
+                <div style={{ borderTop: '1px solid #e5e5e7', overflowX: 'auto' }}>
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      minWidth: '960px',
+                    }}
+                  >
+                    <thead style={{ background: '#ffffff' }}>
+                      <tr>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Scenario
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Quick headline
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Key metrics
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Condition
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Checklist
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Key insight
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Next action
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Inspector
+                        </th>
+                        <th
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.85rem 1rem',
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#6e6e73',
+                            borderBottom: '1px solid #ebebf0',
+                          }}
+                        >
+                          Source
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scenarioComparisonTableRows.map((row) => (
+                        <tr key={`comparison-table-${row.key}`}>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.2rem',
+                                alignItems: 'flex-start',
+                              }}
+                            >
+                              <span style={{ fontWeight: 600 }}>{row.label}</span>
+                              {row.recordedAt && (
+                                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                  {formatRecordedTimestamp(row.recordedAt)}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '220px',
+                            }}
+                          >
+                            {row.quickHeadline ?? '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '220px',
+                            }}
+                          >
+                            {row.quickMetrics.length === 0 ? (
+                              '—'
+                            ) : (
+                              <ul
+                                style={{
+                                  margin: 0,
+                                  paddingLeft: '1.1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.2rem',
+                                }}
+                              >
+                                {row.quickMetrics.map((metric) => (
+                                  <li key={`${row.key}-${metric.label}`}>
+                                    {metric.label}: {metric.value}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.conditionRating ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                <strong>{row.conditionRating}</strong>
+                                <span>
+                                  {row.conditionScore !== null ? `${row.conditionScore}/100` : '—'}{' '}
+                                  {row.riskLevel ? `· ${row.riskLevel} risk` : ''}
+                                </span>
+                              </div>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.checklistCompleted !== null && row.checklistTotal !== null
+                              ? `${row.checklistCompleted}/${row.checklistTotal}` +
+                                (row.checklistPercent !== null ? ` (${row.checklistPercent}%)` : '')
+                              : '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '240px',
+                            }}
+                          >
+                            {row.primaryInsight ? (
+                              <>
+                                <strong>{row.primaryInsight.title}</strong>
+                                <div>{row.primaryInsight.detail}</div>
+                              </>
+                            ) : row.insights.length > 0 ? (
+                              <div>{row.insights[0].title}</div>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              maxWidth: '200px',
+                            }}
+                          >
+                            {row.recommendedAction ?? '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.inspectorName ?? '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '0.85rem 1rem',
+                              borderBottom: '1px solid #f4f4f8',
+                              color: '#3a3a3c',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {row.source === 'manual' ? 'Manual inspection' : 'Automated baseline'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+              </div>
+          ) : (
+            <>
+              {comparisonSummary && (
+                <div
+                  style={{
+                    border: '1px solid #e5e5e7',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    background: '#f0f9ff',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: '#0a84ff',
+                      }}
+                    >
+                      Overall score
+                    </span>
+                    <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
+                      {formatRecordedTimestamp(latestAssessmentEntry.recordedAt)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <span style={{ fontSize: '2rem', fontWeight: 700 }}>
+                      {latestAssessmentEntry.overallScore}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: '#1d1d1f' }}>/100</span>
+                    <span
+                      style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color:
+                          comparisonSummary.scoreDelta > 0
+                            ? '#15803d'
+                            : comparisonSummary.scoreDelta < 0
+                            ? '#c53030'
+                            : '#6e6e73',
+                      }}
+                    >
+                      {comparisonSummary.scoreDelta > 0 ? '+' : ''}
+                      {comparisonSummary.scoreDelta}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+                    {comparisonSummary.scoreDelta === 0
+                      ? 'Overall score held steady vs previous inspection.'
+                      : comparisonSummary.scoreDelta > 0
+                      ? `Improved by ${comparisonSummary.scoreDelta} points from ${previousAssessmentEntry.overallScore}.`
+                      : `Declined by ${Math.abs(
+                          comparisonSummary.scoreDelta,
+                        )} points from ${previousAssessmentEntry.overallScore}.`}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+                    {comparisonSummary.ratingChanged
+                      ? `Rating ${
+                          comparisonSummary.ratingTrend === 'improved'
+                            ? 'improved'
+                            : comparisonSummary.ratingTrend === 'declined'
+                            ? 'declined'
+                            : 'changed'
+                        } from ${previousAssessmentEntry.overallRating} to ${latestAssessmentEntry.overallRating}.`
+                      : 'Rating unchanged from previous inspection.'}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+                    {comparisonSummary.riskChanged
+                      ? `Risk level ${
+                          comparisonSummary.riskTrend === 'improved'
+                            ? 'eased'
+                            : comparisonSummary.riskTrend === 'declined'
+                            ? 'intensified'
+                            : 'changed'
+                        } from ${previousAssessmentEntry.riskLevel} to ${latestAssessmentEntry.riskLevel}.`
+                      : 'Risk level unchanged.'}
+                  </p>
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: 'grid',
+                  gap: '1rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                }}
+              >
+                <div
+                  style={{
+                    border: '1px solid #e5e5e7',
+                    borderRadius: '10px',
+                    padding: '1.25rem',
+                    display: 'grid',
+                    gap: '0.6rem',
+                    background: '#f0f9ff',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: '#0a84ff',
+                      }}
+                    >
+                      Current inspection
+                    </span>
+                    <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
+                      {formatRecordedTimestamp(latestAssessmentEntry.recordedAt)}
+                    </span>
+                  </div>
+                  <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+                    {formatScenarioLabel(latestAssessmentEntry.scenario ?? null)}
+                  </strong>
+                  <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
+                    Rating {latestAssessmentEntry.overallRating} · {latestAssessmentEntry.overallScore}
+                    /100 · {latestAssessmentEntry.riskLevel} risk
+                  </span>
+                  {latestAssessmentEntry.summary && (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.875rem',
+                        color: '#3a3a3c',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {latestAssessmentEntry.summary}
+                    </p>
+                  )}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.6rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                    }}
+                  >
+                    <span>
+                      Inspector:{' '}
+                      <strong>
+                        {latestAssessmentEntry.inspectorName?.trim() || 'Not recorded'}
+                      </strong>
+                    </span>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        borderRadius: '9999px',
+                        padding: '0.15rem 0.6rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        background: latestAssessmentEntry.recordedAt
+                          ? '#dcfce7'
+                          : 'rgba(37, 99, 235, 0.12)',
+                        color: latestAssessmentEntry.recordedAt ? '#166534' : '#1d4ed8',
+                      }}
+                    >
+                      {latestAssessmentEntry.recordedAt
+                        ? 'Manual inspection'
+                        : 'Automated baseline'}
+                    </span>
+                  </div>
+                  {latestAssessmentEntry.attachments.length > 0 && (
+                    <div>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          marginTop: '0.35rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          color: '#6e6e73',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        Attachments
+                      </span>
+                      <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.2rem' }}>
+                        {latestAssessmentEntry.attachments.map((attachment, index) => (
+                          <li key={`latest-attachment-${index}`} style={{ fontSize: '0.85rem' }}>
+                            {attachment.url ? (
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: '#0a84ff' }}
+                              >
+                                {attachment.label}
+                              </a>
+                            ) : (
+                              attachment.label
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <div
+                  style={{
+                    border: '1px solid #e5e5e7',
+                    borderRadius: '10px',
+                    padding: '1.25rem',
+                    display: 'grid',
+                    gap: '0.6rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: '0.5rem',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: '#6e6e73',
+                      }}
+                    >
+                      Previous inspection
+                    </span>
+                    <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
+                      {formatRecordedTimestamp(previousAssessmentEntry.recordedAt)}
+                    </span>
+                  </div>
+                  <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+                    {formatScenarioLabel(previousAssessmentEntry.scenario ?? null)}
+                  </strong>
+                  <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
+                    Rating {previousAssessmentEntry.overallRating} · {previousAssessmentEntry.overallScore}
+                    /100 · {previousAssessmentEntry.riskLevel} risk
+                  </span>
+                  {previousAssessmentEntry.summary && (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.875rem',
+                        color: '#3a3a3c',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {previousAssessmentEntry.summary}
+                    </p>
+                  )}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.6rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                    }}
+                  >
+                    <span>
+                      Inspector:{' '}
+                      <strong>
+                        {previousAssessmentEntry.inspectorName?.trim() || 'Not recorded'}
+                      </strong>
+                    </span>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        borderRadius: '9999px',
+                        padding: '0.15rem 0.6rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        background: previousAssessmentEntry.recordedAt
+                          ? '#dcfce7'
+                          : 'rgba(37, 99, 235, 0.12)',
+                        color: previousAssessmentEntry.recordedAt ? '#166534' : '#1d4ed8',
+                      }}
+                    >
+                      {previousAssessmentEntry.recordedAt
+                        ? 'Manual inspection'
+                        : 'Automated baseline'}
+                    </span>
+                  </div>
+                  {previousAssessmentEntry.attachments.length > 0 && (
+                    <div>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          marginTop: '0.35rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          color: '#6e6e73',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        Attachments
+                      </span>
+                      <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.2rem' }}>
+                        {previousAssessmentEntry.attachments.map((attachment, index) => (
+                          <li key={`previous-attachment-${index}`} style={{ fontSize: '0.85rem' }}>
+                            {attachment.url ? (
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: '#0a84ff' }}
+                              >
+                                {attachment.label}
+                              </a>
+                            ) : (
+                              attachment.label
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  border: '1px solid #e5e5e7',
+                  borderRadius: '10px',
+                  padding: '1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                }}
+              >
+                <h4
+                  style={{
+                    margin: 0,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  System comparison
+                </h4>
+                <div
+                  style={{
+                    display: 'grid',
+                    rowGap: '0.6rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: '#6e6e73',
+                    }}
+                  >
+                    <span>System</span>
+                    <span>Current</span>
+                    <span>Previous</span>
+                    <span>Delta Score</span>
+                  </div>
+                  {systemComparisons.map((entry) => {
+                    const scoreDeltaValue =
+                      typeof entry.scoreDelta === 'number' ? entry.scoreDelta : null
+                    return (
+                      <div
+                        key={entry.name}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns:
+                            'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
+                          gap: '0.4rem',
+                          alignItems: 'center',
+                          fontSize: '0.85rem',
+                          color: '#3a3a3c',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>{entry.name}</span>
+                        <span>
+                          {entry.latest
+                            ? `${entry.latest.rating} · ${entry.latest.score}/100`
+                            : '—'}
+                        </span>
+                        <span>
+                          {entry.previous
+                            ? `${entry.previous.rating} · ${entry.previous.score}/100`
+                            : '—'}
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            color:
+                              !scoreDeltaValue || scoreDeltaValue === 0
+                                ? '#6e6e73'
+                                : scoreDeltaValue > 0
+                                ? '#15803d'
+                                : '#c53030',
+                          }}
+                        >
+                          {scoreDeltaValue !== null && scoreDeltaValue > 0 ? '+' : ''}
+                          {scoreDeltaValue ?? '—'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  border: '1px solid #e5e5e7',
+                  borderRadius: '10px',
+                  padding: '1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                }}
+              >
+                <h4
+                  style={{
+                    margin: 0,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Recommended actions
+                </h4>
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: '0.75rem',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  }}
+                >
+                  <div>
+                    <strong
+                      style={{
+                        fontSize: '0.85rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        color: '#15803d',
+                      }}
+                    >
+                      New this cycle
+                    </strong>
+                    {recommendedActionDiff.newActions.length > 0 ? (
+                      <ul
+                        style={{
+                          margin: '0.4rem 0 0',
+                          paddingLeft: '1.1rem',
+                          fontSize: '0.85rem',
+                          color: '#3a3a3c',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {recommendedActionDiff.newActions.map((action) => (
+                          <li key={action}>{action}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p
+                        style={{
+                          margin: '0.35rem 0 0',
+                          fontSize: '0.825rem',
+                          color: '#6e6e73',
+                        }}
+                      >
+                        No new actions added.
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <strong
+                      style={{
+                        fontSize: '0.85rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        color: '#c53030',
+                      }}
+                    >
+                      Completed / removed
+                    </strong>
+                    {recommendedActionDiff.clearedActions.length > 0 ? (
+                      <ul
+                        style={{
+                          margin: '0.4rem 0 0',
+                          paddingLeft: '1.1rem',
+                          fontSize: '0.85rem',
+                          color: '#3a3a3c',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {recommendedActionDiff.clearedActions.map((action) => (
+                          <li key={action}>{action}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p
+                        style={{
+                          margin: '0.35rem 0 0',
+                          fontSize: '0.825rem',
+                          color: '#6e6e73',
+                        }}
+                      >
+                        No actions closed out.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <div
+          style={{
+            border: '1px solid #e5e5e7',
+            borderRadius: '12px',
+            overflow: 'hidden',
+          }}
+        >
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: '0.875rem',
+              color: '#1d1d1f',
+            }}
+          >
+            <thead>
+              <tr style={{ background: '#f5f5f7' }}>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #e5e5e7',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Scenario
+                </th>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #e5e5e7',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Recorded
+                </th>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #e5e5e7',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Rating
+                </th>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #e5e5e7',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Score
+                </th>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #e5e5e7',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Risk
+                </th>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.75rem 1rem',
+                    borderBottom: '1px solid #e5e5e7',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Summary
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {assessmentHistory.map((entry, index) => (
+                <tr
+                  key={`${entry.recordedAt ?? 'draft'}-${index}`}
+                  style={{
+                    background:
+                      index === 0 ? 'rgba(10, 132, 255, 0.08)' : index === 1 ? '#ffffff' : '#fafafb',
+                  }}
+                >
+                  <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0f0f4' }}>
+                    {formatScenarioLabel(entry.scenario)}
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0f0f4' }}>
+                    {formatRecordedTimestamp(entry.recordedAt)}
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0f0f4' }}>
+                    {entry.overallRating}
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0f0f4' }}>
+                    {entry.overallScore}/100
+                  </td>
+                  <td
+                    style={{
+                      padding: '0.75rem 1rem',
+                      borderBottom: '1px solid #f0f0f4',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {entry.riskLevel}
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0f0f4' }}>
+                    {entry.summary || '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+
+  const InlineInspectionHistorySummary = () => (
+    <div
+      style={{
+        border: '1px solid #e5e5e7',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: '1.0625rem',
+              fontWeight: 600,
+            }}
+          >
+            Inspection History
+          </h3>
+          <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#6e6e73' }}>
+            Track developer inspections saved for this property.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setHistoryModalOpen(true)}
+          style={{
+            borderRadius: '9999px',
+            border: '1px solid #1d1d1f',
+            background: '#1d1d1f',
+            color: 'white',
+            padding: '0.45rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          View timeline
+        </button>
+        <button
+          type="button"
+          onClick={() => openAssessmentEditor('new')}
+          disabled={!capturedProperty}
+          style={{
+            borderRadius: '9999px',
+            border: '1px solid #1d1d1f',
+            background: 'white',
+            color: '#1d1d1f',
+            padding: '0.45rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            cursor: capturedProperty ? 'pointer' : 'not-allowed',
+            opacity: capturedProperty ? 1 : 0.6,
+          }}
+        >
+          Log inspection
+        </button>
+      </div>
+      {assessmentHistoryError ? (
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.85rem',
+            color: '#c53030',
+          }}
+        >
+          {assessmentHistoryError}
+        </p>
+      ) : isLoadingAssessmentHistory ? (
+        <p style={{ margin: 0, fontSize: '0.9rem', color: '#6e6e73' }}>
+          Loading inspection history...
+        </p>
+      ) : latestAssessmentEntry ? (
+        <div
+          style={{
+            border: '1px solid #e5e5e7',
+            borderRadius: '10px',
+            padding: '1rem 1.1rem',
+            background: '#f5f5f7',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.4rem',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#6e6e73',
+            }}
+          >
+            Most recent inspection
+          </span>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>
+                {formatScenarioLabel(latestAssessmentEntry.scenario)}
+              </span>
+              <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+                {formatRecordedTimestamp(latestAssessmentEntry.recordedAt)}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                Rating: <strong>{latestAssessmentEntry.overallRating}</strong>
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                Score: <strong>{latestAssessmentEntry.overallScore}/100</strong>
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                Risk:{' '}
+                <strong style={{ textTransform: 'capitalize' }}>
+                  {latestAssessmentEntry.riskLevel}
+                </strong>
+              </span>
+            </div>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: '#3a3a3c' }}>
+            {latestAssessmentEntry.summary || 'No summary recorded.'}
+          </p>
+          {previousAssessmentEntry && (
+            <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: '#6e6e73' }}>
+              Last change:{' '}
+              <strong>
+                {formatScenarioLabel(previousAssessmentEntry.scenario)} —{' '}
+                {formatRecordedTimestamp(previousAssessmentEntry.recordedAt)}
+              </strong>
+            </p>
+          )}
+        </div>
+      ) : (
+        <p style={{ margin: 0, fontSize: '0.9rem', color: '#6e6e73' }}>
+          No developer inspections recorded yet. Save an inspection to begin the audit trail.
+        </p>
+      )}
+    </div>
+  )
 
   return (
     <div
@@ -1451,208 +4641,161 @@ export function SiteAcquisitionPage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             }}
           >
-            <div
-              style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '14px',
-                padding: '1.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-              }}
-            >
-              <span
+            {propertyOverviewCards.map((card, index) => (
+              <article
+                key={`${card.title}-${index}`}
                 style={{
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#6e6e73',
-                }}
-              >
-                Address & Current Use
-              </span>
-              <strong style={{ fontSize: '1rem', lineHeight: 1.4 }}>
-                {capturedProperty.address.fullAddress || '—'}
-              </strong>
-              <span style={{ color: '#3a3a3c', fontSize: '0.9rem' }}>
-                {capturedProperty.existingUse || 'Existing use unavailable'}
-              </span>
-              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                Captured {new Date(capturedProperty.timestamp).toLocaleString('en-SG')}
-              </span>
-            </div>
-
-            <div
-              style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '14px',
-                padding: '1.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.4rem',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#6e6e73',
-                }}
-              >
-                URA Zoning
-              </span>
-              <strong style={{ fontSize: '1rem' }}>
-                {zoningSummary?.zoneCode ?? '—'}
-              </strong>
-              <span style={{ color: '#3a3a3c', fontSize: '0.9rem' }}>
-                {zoningSummary?.zoneDescription ?? 'Zone description unavailable'}
-              </span>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.75rem',
-                  flexWrap: 'wrap',
-                  marginTop: '0.5rem',
-                  fontSize: '0.85rem',
-                  color: '#3a3a3c',
-                }}
-              >
-                <span>
-                  Plot ratio:{' '}
-                  <strong>{formatNumberMetric(zoningSummary?.plotRatio, { maximumFractionDigits: 2 })}</strong>
-                </span>
-                {zoningSummary?.buildingHeightLimit !== null &&
-                  zoningSummary?.buildingHeightLimit !== undefined && (
-                    <span>
-                      Height limit:{' '}
-                      <strong>
-                        {formatNumberMetric(zoningSummary.buildingHeightLimit, {
-                          maximumFractionDigits: 0,
-                        })}{' '}
-                        m
-                      </strong>
-                    </span>
-                  )}
-              </div>
-            </div>
-
-            <div
-              style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '14px',
-                padding: '1.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.4rem',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#6e6e73',
-                }}
-              >
-                Property Stats
-              </span>
-              <div
-                style={{
-                  display: 'grid',
-                  gap: '0.4rem',
-                  fontSize: '0.9rem',
-                  color: '#3a3a3c',
-                }}
-              >
-                <span>
-                  Tenure:{' '}
-                  <strong>{propertyInfoSummary?.tenure ?? '—'}</strong>
-                </span>
-                <span>
-                  Site area:{' '}
-                  <strong>
-                    {propertyInfoSummary?.siteAreaSqm
-                      ? `${formatNumberMetric(propertyInfoSummary.siteAreaSqm, {
-                          maximumFractionDigits: 0,
-                        })} sqm`
-                      : '—'}
-                  </strong>
-                </span>
-                <span>
-                  GFA approved:{' '}
-                  <strong>
-                    {propertyInfoSummary?.gfaApproved
-                      ? `${formatNumberMetric(propertyInfoSummary.gfaApproved, {
-                          maximumFractionDigits: 0,
-                        })} sqm`
-                      : '—'}
-                  </strong>
-                </span>
-                <span>
-                  Last transaction:{' '}
-                  <strong>
-                    {propertyInfoSummary?.lastTransactionDate
-                      ? new Date(
-                          propertyInfoSummary.lastTransactionDate,
-                        ).toLocaleDateString('en-SG')
-                      : '—'}
-                  </strong>
-                </span>
-                <span>
-                  Price:{' '}
-                  <strong>
-                    {formatCurrency(propertyInfoSummary?.lastTransactionPrice)}
-                  </strong>
-                </span>
-              </div>
-            </div>
-
-            {(nearestMrtStation || nearestBusStop) && (
-              <div
-                style={{
-                  border: '1px solid #e5e5e7',
-                  borderRadius: '14px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '16px',
                   padding: '1.25rem',
+                  background: '#f9fafb',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.5rem',
+                  gap: '0.9rem',
+                  minHeight: '100%',
                 }}
               >
-                <span
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: '#6e6e73',
-                  }}
-                >
-                  Nearby Connections
-                </span>
-                <div style={{ display: 'grid', gap: '0.4rem', fontSize: '0.9rem' }}>
-                  {nearestMrtStation && (
-                    <span>
-                      🚇 {nearestMrtStation.name}{' '}
-                      <strong>{formatPointOfInterest(nearestMrtStation.distanceM)}</strong>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      color: '#6b7280',
+                    }}
+                  >
+                    {card.title}
+                  </span>
+                  {card.subtitle && (
+                    <span
+                      style={{
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        color: '#111827',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {card.subtitle}
                     </span>
-                  )}
-                  {nearestBusStop && (
-                    <span>
-                      🚌 {nearestBusStop.name}{' '}
-                      <strong>{formatPointOfInterest(nearestBusStop.distanceM)}</strong>
-                    </span>
-                  )}
-                  {!nearestMrtStation && !nearestBusStop && (
-                    <span>Transport data unavailable.</span>
                   )}
                 </div>
-              </div>
-            )}
+                <dl
+                  style={{
+                    margin: 0,
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                    gap: '0.75rem',
+                  }}
+                >
+                  {card.items.map((item) => (
+                    <div
+                      key={`${card.title}-${item.label}`}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.2rem',
+                      }}
+                    >
+                      <dt
+                        style={{
+                          margin: 0,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          color: '#9ca3af',
+                        }}
+                      >
+                        {item.label}
+                      </dt>
+                      <dd
+                        style={{
+                          margin: 0,
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          color: '#1f2937',
+                        }}
+                      >
+                        {item.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                {card.tags && card.tags.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    {card.tags.map((tag) => (
+                      <span
+                        key={`${card.title}-${tag}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '9999px',
+                          background: '#e0e7ff',
+                          color: '#3730a3',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {card.note && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.75rem',
+                      color: '#6b7280',
+                    }}
+                  >
+                    {card.note}
+                  </p>
+                )}
+              </article>
+            ))}
           </div>
+          {previewJob && (
+            <div
+              style={{
+                marginTop: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleRefreshPreview}
+                disabled={isRefreshingPreview}
+                style={{
+                  padding: '0.5rem 0.85rem',
+                  borderRadius: '9999px',
+                  border: '1px solid',
+                  borderColor: isRefreshingPreview ? '#cbd5f5' : '#6366f1',
+                  background: isRefreshingPreview ? '#eef2ff' : '#4f46e5',
+                  color: '#fff',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: isRefreshingPreview ? 'wait' : 'pointer',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                {isRefreshingPreview ? 'Refreshing preview…' : 'Refresh preview render'}
+              </button>
+              <span style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+                Status updates automatically while processing.
+              </span>
+            </div>
+          )}
         </section>
       )}
 
@@ -1693,16 +4836,101 @@ export function SiteAcquisitionPage() {
                 selected development path.
               </span>
             </div>
-            <span
+            <div
               style={{
-                fontSize: '0.85rem',
-                color: '#3a3a3c',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
               }}
             >
-              Active: {activeScenario === 'all'
-                ? 'All scenarios'
-                : formatScenarioLabel(activeScenario)}
-            </span>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.2rem',
+                  minWidth: '180px',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: '#0f172a',
+                  }}
+                >
+                  {activeScenarioSummary.label}
+                </span>
+                <span style={{ fontSize: '0.82rem', color: '#475569' }}>
+                  {activeScenarioSummary.headline}
+                </span>
+                {activeScenarioSummary.detail && (
+                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    {activeScenarioSummary.detail}
+                  </span>
+                )}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.65rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleScenarioComparisonScroll}
+                  disabled={!scenarioComparisonVisible}
+                  style={{
+                    borderRadius: '9999px',
+                    border: '1px solid #1d1d1f',
+                    background: scenarioComparisonVisible ? '#1d1d1f' : '#f5f5f7',
+                    color: scenarioComparisonVisible ? 'white' : '#a1a1aa',
+                    padding: '0.45rem 0.95rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: scenarioComparisonVisible ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Compare scenarios
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickAnalysisHistoryOpen(true)}
+                  disabled={quickAnalysisHistory.length === 0}
+                  style={{
+                    borderRadius: '9999px',
+                    border: '1px solid #d2d2d7',
+                    background:
+                      quickAnalysisHistory.length === 0 ? '#f5f5f7' : 'white',
+                    color:
+                      quickAnalysisHistory.length === 0 ? '#a1a1aa' : '#1d1d1f',
+                    padding: '0.45rem 0.95rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor:
+                      quickAnalysisHistory.length === 0 ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Quick analysis history ({quickAnalysisHistory.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryModalOpen(true)}
+                  style={{
+                    borderRadius: '9999px',
+                    border: '1px solid #d2d2d7',
+                    background: 'white',
+                    color: '#1d1d1f',
+                    padding: '0.45rem 0.95rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Inspection history
+                </button>
+              </div>
+            </div>
           </div>
           <div
             style={{
@@ -1720,12 +4948,24 @@ export function SiteAcquisitionPage() {
                   : option?.label ?? formatScenarioLabel(scenarioKey)
               const icon = scenarioKey === 'all' ? '🌐' : option?.icon ?? '🏗️'
               const isActive = activeScenario === scenarioKey
+              const progressStats =
+                scenarioKey === 'all'
+                  ? displaySummary
+                  : scenarioChecklistProgress[scenarioKey]
+              const progressLabel = progressStats
+                ? `${progressStats.completed}/${progressStats.total || 0}`
+                : null
+              const progressPercent =
+                progressStats && progressStats.total > 0
+                  ? Math.round((progressStats.completed / progressStats.total) * 100)
+                  : null
 
               return (
                 <button
                   key={scenarioKey}
                   type="button"
                   onClick={() => setActiveScenario(scenarioKey)}
+                  aria-pressed={isActive}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1743,10 +4983,36 @@ export function SiteAcquisitionPage() {
                 >
                   <span style={{ fontSize: '1.2rem' }}>{icon}</span>
                   <span>{label}</span>
+                  {progressLabel && (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '2.5rem',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '9999px',
+                        background: isActive ? '#1d4ed8' : '#e5e7eb',
+                        color: isActive ? 'white' : '#1f2937',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}
+                      title={
+                        progressPercent !== null
+                          ? `${progressStats?.completed ?? 0} of ${
+                              progressStats?.total ?? 0
+                            } items completed (${progressPercent}%)`
+                          : undefined
+                      }
+                    >
+                      {progressLabel}
+                    </span>
+                  )}
                 </button>
               )
             })}
           </div>
+
         </section>
       )}
 
@@ -1803,10 +5069,35 @@ export function SiteAcquisitionPage() {
                 }}
               >
                 {activeScenarioDetails.description}
-              </p>
-            )}
-          </div>
+            </p>
+          )}
         </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}
+        >
+          <Link
+            to="/app/site-acquisition/checklist-templates"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              background: '#eff3ff',
+              borderRadius: '999px',
+              padding: '0.4rem 0.9rem',
+              fontWeight: 600,
+              color: '#1d4ed8',
+              textDecoration: 'none',
+              border: '1px solid #c7dafc',
+            }}
+          >
+            Manage templates
+          </Link>
+        </div>
+      </div>
 
         {availableChecklistScenarios.length > 0 && (
           <div
@@ -2187,134 +5478,348 @@ export function SiteAcquisitionPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div
               style={{
-                display: 'flex',
-                gap: '0.75rem',
-                flexWrap: 'wrap',
+                display: 'grid',
+                gap: '1rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               }}
             >
-              {quickAnalysisScenarios.map((scenario) => {
-                const label =
-                  scenarioLookup.get(scenario.scenario)?.label ??
-                  formatCategoryName(scenario.scenario)
+              {scenarioComparisonData.map((row) => {
                 const isActive =
-                  activeScenario === 'all' || scenario.scenario === activeScenario
-                const scenarioKey = scenario.scenario
+                  row.key === 'all'
+                    ? activeScenario === 'all'
+                    : activeScenario === row.key
+                const progressLabel =
+                  row.checklistCompleted !== null && row.checklistTotal !== null
+                    ? `${row.checklistCompleted}/${row.checklistTotal}`
+                    : null
+                const progressPercent = row.checklistPercent ?? null
+                const focusable = row.key !== 'all'
+                const primaryVisuals = row.primaryInsight
+                  ? getSeverityVisuals(row.primaryInsight.severity)
+                  : null
+
                 return (
-                  <div
-                    key={scenario.scenario}
+                  <article
+                    key={row.key}
                     style={{
                       border: `2px solid ${isActive ? '#1d1d1f' : '#e5e5e7'}`,
-                      borderRadius: '12px',
-                      padding: '1.25rem',
-                      flex: '1 1 280px',
+                      borderRadius: '14px',
+                      padding: '1.35rem',
                       background: isActive ? '#ffffff' : '#f5f5f7',
-                      transition: 'border 0.2s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '1rem',
+                      transition: 'border 0.2s ease, background 0.2s ease',
                     }}
                   >
                     <div
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'baseline',
-                        marginBottom: '0.75rem',
+                        alignItems: 'flex-start',
+                        gap: '0.75rem',
+                        flexWrap: 'wrap',
                       }}
                     >
-                      <h3
-                        style={{
-                          margin: 0,
-                          fontSize: '1.0625rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {label}
-                      </h3>
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.6rem',
+                          gap: '0.65rem',
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: '0.8125rem',
-                            fontWeight: 600,
-                            color: '#6e6e73',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {scenario.headline}
-                        </span>
-                        {activeScenario !== scenarioKey && (
+                        <span style={{ fontSize: '1.5rem' }}>{row.icon}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: '#6b7280',
+                            }}
+                          >
+                            {row.key === 'all' ? 'Aggregate' : 'Scenario'}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '1.125rem',
+                              fontWeight: 600,
+                              letterSpacing: '-0.01em',
+                            }}
+                          >
+                            {row.label}
+                          </span>
+                        </div>
+                      </div>
+                      {focusable ? (
+                        isActive ? (
+                          <span
+                            style={{
+                              borderRadius: '9999px',
+                              background: '#1d4ed8',
+                              color: '#ffffff',
+                              padding: '0.25rem 0.75rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Focus
+                          </span>
+                        ) : (
                           <button
                             type="button"
-                            onClick={() =>
-                              setActiveScenario(
-                                scenarioKey as DevelopmentScenario | 'all',
-                              )
-                            }
+                            onClick={() => setActiveScenario(row.key)}
                             style={{
                               border: '1px solid #1d1d1f',
                               background: 'white',
                               color: '#1d1d1f',
                               borderRadius: '9999px',
-                              padding: '0.25rem 0.75rem',
-                              fontSize: '0.75rem',
+                              padding: '0.3rem 0.85rem',
+                              fontSize: '0.78rem',
                               fontWeight: 600,
                               cursor: 'pointer',
                             }}
                           >
-                            Focus
+                            Focus scenario
                           </button>
-                        )}
-                      </div>
+                        )
+                      ) : (
+                        <span
+                          style={{
+                            borderRadius: '9999px',
+                            background: '#e5e7eb',
+                            color: '#374151',
+                            padding: '0.25rem 0.75rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Summary
+                        </span>
+                      )}
                     </div>
-                    <dl
+
+                    <div
                       style={{
-                        margin: 0,
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: '0.75rem',
-                        fontSize: '0.875rem',
-                        color: '#3a3a3c',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        fontSize: '0.78rem',
+                        color: '#64748b',
                       }}
                     >
-                      {Object.entries(scenario.metrics).map(([key, value]) => (
-                        <div key={key} style={{ display: 'flex', flexDirection: 'column' }}>
-                          <dt
-                            style={{
-                              fontWeight: 600,
-                              color: '#6e6e73',
-                              marginBottom: '0.15rem',
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            {key.replace(/_/g, ' ')}
-                          </dt>
-                          <dd style={{ margin: 0 }}>{value ?? '—'}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                    {scenario.notes.length > 0 && (
-                      <ul
+                      <span>
+                        Inspector:{' '}
+                        <strong>{row.inspectorName?.trim() || 'Not recorded'}</strong>
+                      </span>
+                      {row.recordedAt && (
+                        <span>Logged {formatRecordedTimestamp(row.recordedAt)}</span>
+                      )}
+                      <span
                         style={{
-                          margin: '1rem 0 0',
-                          paddingLeft: '1.1rem',
-                          color: '#3a3a3c',
-                          fontSize: '0.85rem',
-                          lineHeight: 1.4,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          borderRadius: '9999px',
+                          padding: '0.15rem 0.6rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          background:
+                            row.source === 'manual' ? '#dcfce7' : 'rgba(37, 99, 235, 0.12)',
+                          color: row.source === 'manual' ? '#166534' : '#1d4ed8',
                         }}
                       >
-                        {scenario.notes.map((note) => (
-                          <li key={note}>{note}</li>
+                        {row.source === 'manual' ? 'Manual inspection' : 'Automated baseline'}
+                      </span>
+                    </div>
+
+                    {row.quickHeadline && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.92rem',
+                          color: '#374151',
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        {row.quickHeadline}
+                      </p>
+                    )}
+
+                    {row.quickMetrics.length > 0 && (
+                      <ul
+                        style={{
+                          margin: 0,
+                          padding: 0,
+                          listStyle: 'none',
+                          display: 'grid',
+                          gap: '0.45rem',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                        }}
+                      >
+                        {row.quickMetrics.map((metric) => (
+                          <li
+                            key={`${row.key}-${metric.label}`}
+                            style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '0.75rem',
+                                color: '#6b7280',
+                                letterSpacing: '0.06em',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {metric.label}
+                            </span>
+                            <strong style={{ fontSize: '0.95rem', color: '#111827' }}>
+                              {metric.value}
+                            </strong>
+                          </li>
                         ))}
                       </ul>
                     )}
-                  </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gap: '0.75rem',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: '#9ca3af',
+                          }}
+                        >
+                          Condition
+                        </span>
+                        <span style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
+                          {row.conditionRating ? row.conditionRating : '—'}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                          {row.conditionScore !== null
+                            ? `${row.conditionScore}/100`
+                            : '—'}{' '}
+                          {row.riskLevel ? `· ${row.riskLevel} risk` : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: '#9ca3af',
+                          }}
+                        >
+                          Checklist progress
+                        </span>
+                        {progressLabel ? (
+                          <>
+                            <div
+                              style={{
+                                height: '6px',
+                                borderRadius: '9999px',
+                                background: '#e5e7eb',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: `${progressPercent ?? 0}%`,
+                                  height: '100%',
+                                  background: '#1d4ed8',
+                                  transition: 'width 0.3s ease',
+                                }}
+                              />
+                            </div>
+                            <span style={{ fontSize: '0.85rem', color: '#334155' }}>
+                              {progressLabel}
+                              {progressPercent !== null ? ` (${progressPercent}%)` : ''}
+                            </span>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                            No checklist items yet.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {row.primaryInsight && primaryVisuals && (
+                      <div
+                        style={{
+                          border: `1px solid ${primaryVisuals.border}`,
+                          background: primaryVisuals.background,
+                          color: primaryVisuals.text,
+                          borderRadius: '12px',
+                          padding: '1rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '0.35rem',
+                              height: '0.35rem',
+                              borderRadius: '9999px',
+                              background: primaryVisuals.indicator,
+                            }}
+                          />
+                          {primaryVisuals.label}
+                        </span>
+                        <strong style={{ fontSize: '0.95rem' }}>{row.primaryInsight.title}</strong>
+                        <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
+                          {row.primaryInsight.detail}
+                        </p>
+                        {row.primaryInsight.specialist && (
+                          <span style={{ fontSize: '0.78rem', opacity: 0.85 }}>
+                            Specialist: <strong>{row.primaryInsight.specialist}</strong>
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {row.recommendedAction && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.85rem',
+                          color: '#334155',
+                        }}
+                      >
+                        <strong>Next action:</strong> {row.recommendedAction}
+                      </p>
+                    )}
+                  </article>
                 )
               })}
             </div>
+
 
             {feasibilitySignals.length > 0 && (
               <div
@@ -2619,13 +6124,15 @@ export function SiteAcquisitionPage() {
               padding: '2.5rem 2rem',
               textAlign: 'center',
               color: '#6e6e73',
-              background: '#fff7ed',
+              background: capturedProperty?.propertyId === 'offline-property' ? '#f5f5f7' : '#fff7ed',
               borderRadius: '12px',
-              border: '1px solid #fed7aa',
+              border: capturedProperty?.propertyId === 'offline-property' ? 'none' : '1px solid #fed7aa',
             }}
           >
             <p style={{ margin: 0 }}>
-              Unable to load condition assessment. Please retry after refreshing the capture.
+              {capturedProperty?.propertyId === 'offline-property'
+                ? 'Condition assessment not available in offline mode. Capture a real property to access inspection data.'
+                : 'Unable to load condition assessment. Please retry after refreshing the capture.'}
             </p>
           </div>
         ) : (
@@ -2701,17 +6208,57 @@ export function SiteAcquisitionPage() {
                     {conditionAssessment.scenarioContext}
                   </p>
                 )}
-                {conditionAssessment.recordedAt && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '0.8125rem',
-                      color: '#6e6e73',
-                    }}
-                  >
-                    Inspection recorded{' '}
-                    {new Date(conditionAssessment.recordedAt).toLocaleString()}
-                  </p>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                    fontSize: '0.8125rem',
+                    color: '#6e6e73',
+                  }}
+                >
+                  <span>
+                    Inspector:{' '}
+                    <strong>{conditionAssessment.inspectorName?.trim() || 'Not recorded'}</strong>
+                  </span>
+                  {conditionAssessment.recordedAt && (
+                    <span>Logged {formatRecordedTimestamp(conditionAssessment.recordedAt)}</span>
+                  )}
+                </div>
+                {conditionAssessment.attachments.length > 0 && (
+                  <div>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        marginTop: '0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#6e6e73',
+                        letterSpacing: '0.06em',
+                      }}
+                    >
+                      Attachments
+                    </span>
+                    <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.2rem' }}>
+                      {conditionAssessment.attachments.map((attachment, index) => (
+                        <li key={`current-attachment-${index}`} style={{ fontSize: '0.85rem' }}>
+                          {attachment.url ? (
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: '#0a84ff' }}
+                            >
+                              {attachment.label}
+                            </a>
+                          ) : (
+                            attachment.label
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
               <div
@@ -2747,6 +6294,144 @@ export function SiteAcquisitionPage() {
               </div>
             </div>
 
+            {combinedConditionInsights.length > 0 && (
+              <div
+                style={{
+                  border: '1px solid #e5e5e7',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  background: '#f8fafc',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: '1.125rem',
+                      fontWeight: 600,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    Condition insights
+                  </h3>
+                  <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                    {insightSubtitle}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: '1rem',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                  }}
+                >
+                  {combinedConditionInsights.map((insight) => {
+                    const visuals = getSeverityVisuals(insight.severity)
+                    const isChecklistInsight = insight.id.startsWith('checklist-')
+                    const chipStyle: CSSProperties = {
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.3rem 0.6rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      background: 'rgba(15, 23, 42, 0.08)',
+                      color: '#0f172a',
+                      border: '1px solid rgba(15, 23, 42, 0.12)',
+                    }
+                    return (
+                      <div
+                        key={insight.id}
+                        style={{
+                          border: `1px solid ${visuals.border}`,
+                          background: visuals.background,
+                          color: visuals.text,
+                          borderRadius: '12px',
+                          padding: '1.2rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.65rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '0.35rem',
+                              height: '0.35rem',
+                              borderRadius: '9999px',
+                              background: visuals.indicator,
+                            }}
+                          />
+                          {visuals.label}
+                        </span>
+                        <strong style={{ fontSize: '0.95rem', lineHeight: 1.4 }}>
+                          {insight.title}
+                        </strong>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.85rem',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {insight.detail}
+                        </p>
+                        {(insight.specialist || isChecklistInsight) && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '0.5rem',
+                            }}
+                          >
+                            {isChecklistInsight && (
+                              <span
+                                style={{
+                                  ...chipStyle,
+                                  background: 'rgba(29, 78, 216, 0.08)',
+                                  color: '#1d4ed8',
+                                  border: '1px solid rgba(29, 78, 216, 0.15)',
+                                }}
+                              >
+                                Checklist follow-up
+                              </span>
+                            )}
+                            {insight.specialist && (
+                              <span style={chipStyle}>
+                                Specialist · <strong>{insight.specialist}</strong>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             <div
               style={{
                 display: 'grid',
@@ -2754,69 +6439,145 @@ export function SiteAcquisitionPage() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               }}
             >
-              {conditionAssessment.systems.map((system) => (
-                <div
-                  key={system.name}
-                  style={{
-                    border: '1px solid #e5e5e7',
-                    borderRadius: '12px',
-                    padding: '1.25rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                  }}
-                >
+              {conditionAssessment.systems.map((system) => {
+                const comparison = systemComparisonMap.get(system.name)
+                const delta =
+                  comparison && typeof comparison.scoreDelta === 'number'
+                    ? comparison.scoreDelta
+                    : null
+                const previousRating = comparison?.previous?.rating ?? null
+                const previousScore =
+                  typeof comparison?.previous?.score === 'number'
+                    ? comparison?.previous?.score
+                    : null
+                const systemSeverity = classifySystemSeverity(system.rating, delta)
+                const badgeVisuals = getSeverityVisuals(systemSeverity)
+                const deltaVisuals = getDeltaVisuals(delta)
+
+                return (
                   <div
+                    key={system.name}
                     style={{
+                      border: '1px solid #e5e5e7',
+                      borderRadius: '12px',
+                      padding: '1.25rem',
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
                     }}
                   >
-                    <h3
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        flexWrap: 'wrap',
+                        gap: '0.6rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.35rem',
+                        }}
+                      >
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: '1.0625rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {system.name}
+                        </h3>
+                        {previousRating && previousScore !== null && (
+                          <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                            Previous {previousRating} · {previousScore}/100
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: '0.45rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.3rem 0.65rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            border: `1px solid ${badgeVisuals.border}`,
+                            background: badgeVisuals.background,
+                            color: badgeVisuals.text,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '0.35rem',
+                              height: '0.35rem',
+                              borderRadius: '9999px',
+                              background: badgeVisuals.indicator,
+                            }}
+                          />
+                          {system.rating} · {system.score}/100
+                        </span>
+                        {delta !== null && (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              padding: '0.25rem 0.55rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: deltaVisuals.background,
+                              color: deltaVisuals.text,
+                              border: `1px solid ${deltaVisuals.border}`,
+                            }}
+                          >
+                            {delta > 0 ? '▲' : delta < 0 ? '▼' : '■'}{' '}
+                            {formatDeltaValue(delta)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p
                       style={{
                         margin: 0,
-                        fontSize: '1.0625rem',
-                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        color: '#3a3a3c',
+                        lineHeight: 1.5,
                       }}
                     >
-                      {system.name}
-                    </h3>
-                    <span
+                      {system.notes}
+                    </p>
+                    <ul
                       style={{
+                        margin: 0,
+                        paddingLeft: '1.1rem',
                         fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: '#6e6e73',
+                        color: '#3a3a3c',
+                        lineHeight: 1.4,
                       }}
                     >
-                      Rating {system.rating} · {system.score}/100
-                    </span>
+                      {system.recommendedActions.map((action) => (
+                        <li key={action}>{action}</li>
+                      ))}
+                    </ul>
                   </div>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '0.9rem',
-                      color: '#3a3a3c',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {system.notes}
-                  </p>
-                  <ul
-                    style={{
-                      margin: 0,
-                      paddingLeft: '1.1rem',
-                      fontSize: '0.875rem',
-                      color: '#3a3a3c',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {system.recommendedActions.map((action) => (
-                      <li key={action}>{action}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div
@@ -2838,661 +6599,118 @@ export function SiteAcquisitionPage() {
                   gap: '0.75rem',
                 }}
               >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: '1.0625rem',
-                    fontWeight: 600,
-                  }}
+                <div
+                  style={{ maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}
                 >
-                  Inspection History
-                </h3>
-                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => setHistoryViewMode('timeline')}
+                  <h3
                     style={{
-                      border: '1px solid #1d1d1f',
-                      background: historyViewMode === 'timeline' ? '#1d1d1f' : 'white',
-                      color: historyViewMode === 'timeline' ? 'white' : '#1d1d1f',
-                      borderRadius: '9999px',
-                      padding: '0.4rem 0.9rem',
-                      fontSize: '0.8125rem',
+                      margin: 0,
+                      fontSize: '1.0625rem',
                       fontWeight: 600,
-                      cursor: 'pointer',
                     }}
                   >
-                    Timeline
-                  </button>
+                    Manual inspection capture
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563', lineHeight: 1.5 }}>
+                    Log a fresh site visit or update the latest inspection without waiting for automated sync.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    onClick={() => setHistoryViewMode('compare')}
+                    onClick={() => openAssessmentEditor('new')}
+                    disabled={!capturedProperty}
                     style={{
                       border: '1px solid #1d1d1f',
-                      background: historyViewMode === 'compare' ? '#1d1d1f' : 'white',
-                      color: historyViewMode === 'compare' ? 'white' : '#1d1d1f',
+                      background: capturedProperty ? '#1d1d1f' : '#f5f5f7',
+                      color: capturedProperty ? 'white' : '#1d1d1f88',
                       borderRadius: '9999px',
-                      padding: '0.4rem 0.9rem',
+                      padding: '0.45rem 1.1rem',
                       fontSize: '0.8125rem',
                       fontWeight: 600,
-                      cursor: 'pointer',
+                      cursor: capturedProperty ? 'pointer' : 'not-allowed',
                     }}
                   >
-                    Compare
+                    Log inspection
                   </button>
+                  {conditionAssessment && (
+                    <button
+                      type="button"
+                      onClick={() => openAssessmentEditor('edit')}
+                      disabled={!capturedProperty}
+                      style={{
+                        border: '1px solid #1d1d1f',
+                        background: 'white',
+                        color: '#1d1d1f',
+                        borderRadius: '9999px',
+                        padding: '0.45rem 1.1rem',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        cursor: capturedProperty ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      Edit latest
+                    </button>
+                  )}
                 </div>
               </div>
-              {assessmentHistoryError ? (
+              {assessmentSaveMessage && (
                 <p
                   style={{
                     margin: 0,
                     fontSize: '0.85rem',
-                    color: '#c53030',
+                    color: assessmentSaveMessage.includes('success')
+                      ? '#15803d'
+                      : '#c53030',
                   }}
                 >
-                  {assessmentHistoryError}
+                  {assessmentSaveMessage}
                 </p>
-              ) : isLoadingAssessmentHistory ? (
+              )}
+              {capturedProperty ? (
                 <div
                   style={{
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    color: '#6e6e73',
-                    background: '#f5f5f7',
-                    borderRadius: '10px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.6rem',
+                    fontSize: '0.85rem',
+                    color: '#4b5563',
                   }}
                 >
-                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                    Loading inspection history...
-                  </p>
-                </div>
-              ) : assessmentHistory.length === 0 ? (
-                <div
-                  style={{
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    color: '#6e6e73',
-                    background: '#f5f5f7',
-                    borderRadius: '10px',
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                    No developer inspections recorded yet.
-                  </p>
-                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem' }}>
-                    Save an inspection above to start the audit trail.
-                  </p>
-                </div>
-              ) : historyViewMode === 'timeline' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                  {assessmentHistory.map((entry, index) => {
-                    const key = `${entry.recordedAt ?? 'draft'}-${index}`
-                    const matchesScenario =
-                      activeScenario === 'all' ||
-                      !entry.scenario ||
-                      entry.scenario === activeScenario
-                    const recommendedPreview = entry.recommendedActions.slice(0, 2)
-                    const remainingActions =
-                      entry.recommendedActions.length - recommendedPreview.length
-                    return (
-                      <div
-                        key={key}
-                        style={{
-                          border: '1px solid #e5e5e7',
-                          borderLeft: `4px solid ${
-                            index === 0 ? '#0a84ff' : matchesScenario ? '#34c759' : '#d2d2d7'
-                          }`,
-                          borderRadius: '10px',
-                          padding: '1rem 1.25rem',
-                          background: index === 0 ? '#f0f9ff' : '#ffffff',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.5rem',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            flexWrap: 'wrap',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          <div
-                            style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}
-                          >
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                letterSpacing: '0.08em',
-                                textTransform: 'uppercase',
-                                color: '#6e6e73',
-                              }}
-                            >
-                              {index === 0 ? 'Most recent inspection' : `Inspection ${index + 1}`}
-                            </span>
-                            <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>
-                              {formatScenarioLabel(entry.scenario)}
-                            </span>
-                          </div>
-                          <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
-                            {formatRecordedTimestamp(entry.recordedAt)}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '0.75rem',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                            Rating {entry.overallRating}
-                          </span>
-                          <span style={{ fontSize: '0.875rem', color: '#3a3a3c' }}>
-                            {entry.overallScore}/100
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '0.8rem',
-                              color: '#6e6e73',
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            {entry.riskLevel} risk
-                          </span>
-                        </div>
-                        {entry.summary && (
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: '0.9rem',
-                              color: '#3a3a3c',
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            {entry.summary}
-                          </p>
-                        )}
-                        {entry.scenarioContext && (
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: '0.8125rem',
-                              color: '#0071e3',
-                            }}
-                          >
-                            {entry.scenarioContext}
-                          </p>
-                        )}
-                        {recommendedPreview.length > 0 && (
-                          <ul
-                            style={{
-                              margin: '0.25rem 0 0',
-                              paddingLeft: '1.1rem',
-                              fontSize: '0.85rem',
-                              color: '#3a3a3c',
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {recommendedPreview.map((action) => (
-                              <li key={action}>{action}</li>
-                            ))}
-                            {remainingActions > 0 && (
-                              <li
-                                key="more"
-                                style={{
-                                  listStyle: 'none',
-                                  marginLeft: '-1.1rem',
-                                  color: '#6e6e73',
-                                }}
-                              >
-                                +{remainingActions} more action
-                                {remainingActions > 1 ? 's' : ''}
-                              </li>
-                            )}
-                          </ul>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : previousAssessmentEntry ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {comparisonSummary &&
-                    latestAssessmentEntry &&
-                    previousAssessmentEntry && (
-                      <div
-                        style={{
-                          border: '1px solid #e5e5e7',
-                          borderRadius: '10px',
-                          padding: '1.1rem 1.25rem',
-                          background: '#f5f5f7',
-                          display: 'grid',
-                          gap: '0.5rem',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '0.75rem',
-                            alignItems: 'baseline',
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: '0.8125rem',
-                              fontWeight: 600,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.08em',
-                              color: '#6e6e73',
-                            }}
-                          >
-                            Overall score
-                          </span>
-                          <span style={{ fontSize: '1.125rem', fontWeight: 600 }}>
-                            {latestAssessmentEntry.overallScore}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '0.875rem',
-                              fontWeight: 600,
-                              color:
-                                comparisonSummary.scoreDelta > 0
-                                  ? '#15803d'
-                                  : comparisonSummary.scoreDelta < 0
-                                  ? '#c53030'
-                                  : '#6e6e73',
-                            }}
-                          >
-                            {comparisonSummary.scoreDelta > 0 ? '+' : ''}
-                            {comparisonSummary.scoreDelta}
-                          </span>
-                        </div>
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.875rem',
-                            color: '#3a3a3c',
-                          }}
-                        >
-                          {comparisonSummary.scoreDelta === 0
-                            ? 'Overall score held steady vs previous inspection.'
-                            : comparisonSummary.scoreDelta > 0
-                            ? `Improved by ${comparisonSummary.scoreDelta} points from ${previousAssessmentEntry.overallScore}.`
-                            : `Declined by ${Math.abs(
-                                comparisonSummary.scoreDelta,
-                              )} points from ${previousAssessmentEntry.overallScore}.`}
-                        </p>
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.875rem',
-                            color: '#3a3a3c',
-                          }}
-                        >
-                          {comparisonSummary.ratingChanged
-                            ? `Rating ${
-                                comparisonSummary.ratingTrend === 'improved'
-                                  ? 'improved'
-                                  : comparisonSummary.ratingTrend === 'declined'
-                                  ? 'declined'
-                                  : 'changed'
-                              } from ${previousAssessmentEntry.overallRating} to ${latestAssessmentEntry.overallRating}.`
-                            : 'Rating unchanged from previous inspection.'}
-                        </p>
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.875rem',
-                            color: '#3a3a3c',
-                          }}
-                        >
-                          {comparisonSummary.riskChanged
-                            ? `Risk level ${
-                                comparisonSummary.riskTrend === 'improved'
-                                  ? 'eased'
-                                  : comparisonSummary.riskTrend === 'declined'
-                                  ? 'intensified'
-                                  : 'changed'
-                              } from ${previousAssessmentEntry.riskLevel} to ${latestAssessmentEntry.riskLevel}.`
-                            : 'Risk level unchanged.'}
-                        </p>
-                      </div>
-                    )}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gap: '1rem',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                    }}
-                  >
-                    <div
-                      style={{
-                        border: '1px solid #e5e5e7',
-                        borderRadius: '10px',
-                        padding: '1.25rem',
-                        display: 'grid',
-                        gap: '0.6rem',
-                        background: '#f0f9ff',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: '0.5rem',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                            color: '#0a84ff',
-                          }}
-                        >
-                          Current inspection
-                        </span>
-                        <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
-                          {formatRecordedTimestamp(latestAssessmentEntry?.recordedAt)}
-                        </span>
-                      </div>
-                      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
-                        {formatScenarioLabel(latestAssessmentEntry?.scenario ?? null)}
-                      </strong>
-                      <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
-                        Rating {latestAssessmentEntry?.overallRating} ·{' '}
-                        {latestAssessmentEntry?.overallScore}/100 ·{' '}
-                        {latestAssessmentEntry?.riskLevel} risk
+                  {latestAssessmentEntry ? (
+                    <>
+                      <span>
+                        Last recorded:{' '}
+                        <strong>{formatRecordedTimestamp(latestAssessmentEntry.recordedAt)}</strong>
                       </span>
-                      {latestAssessmentEntry?.summary && (
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.875rem',
-                            color: '#3a3a3c',
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {latestAssessmentEntry.summary}
-                        </p>
-                      )}
-                    </div>
-                    <div
-                      style={{
-                        border: '1px solid #e5e5e7',
-                        borderRadius: '10px',
-                        padding: '1.25rem',
-                        display: 'grid',
-                        gap: '0.6rem',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: '0.5rem',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                            color: '#6e6e73',
-                          }}
-                        >
-                          Previous inspection
-                        </span>
-                        <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
-                          {formatRecordedTimestamp(previousAssessmentEntry?.recordedAt)}
-                        </span>
-                      </div>
-                      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
-                        {formatScenarioLabel(previousAssessmentEntry?.scenario ?? null)}
-                      </strong>
-                      <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
-                        Rating {previousAssessmentEntry?.overallRating} ·{' '}
-                        {previousAssessmentEntry?.overallScore}/100 ·{' '}
-                        {previousAssessmentEntry?.riskLevel} risk
+                      <span>•</span>
+                      <span>
+                        Scenario:{' '}
+                        <strong>{formatScenarioLabel(latestAssessmentEntry.scenario)}</strong>
                       </span>
-                      {previousAssessmentEntry?.summary && (
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.875rem',
-                            color: '#3a3a3c',
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {previousAssessmentEntry.summary}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      border: '1px solid #e5e5e7',
-                      borderRadius: '10px',
-                      padding: '1.25rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.75rem',
-                    }}
-                  >
-                    <h4
-                      style={{
-                        margin: 0,
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      System comparison
-                    </h4>
-                    <div
-                      style={{
-                        display: 'grid',
-                        rowGap: '0.6rem',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns:
-                            'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.08em',
-                          color: '#6e6e73',
-                        }}
-                      >
-                        <span>System</span>
-                        <span>Current</span>
-                        <span>Previous</span>
-                        <span>Delta Score</span>
-                      </div>
-                      {systemComparisons.map((entry) => {
-                        const scoreDeltaValue =
-                          typeof entry.scoreDelta === 'number' ? entry.scoreDelta : null
-                        return (
-                          <div
-                            key={entry.name}
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns:
-                                'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
-                              alignItems: 'center',
-                              background: '#f8f9fa',
-                              borderRadius: '8px',
-                              padding: '0.6rem 0.75rem',
-                              fontSize: '0.85rem',
-                              color: '#3a3a3c',
-                            }}
-                          >
-                            <span style={{ fontWeight: 600 }}>{entry.name}</span>
-                            <span>
-                              {entry.latest
-                                ? `${entry.latest.rating} · ${entry.latest.score}`
-                                : '—'}
-                            </span>
-                            <span>
-                              {entry.previous
-                                ? `${entry.previous.rating} · ${entry.previous.score}`
-                                : '—'}
-                            </span>
-                            <span
-                              style={{
-                                fontWeight: 600,
-                                color:
-                                  scoreDeltaValue === null
-                                    ? '#6e6e73'
-                                    : scoreDeltaValue > 0
-                                    ? '#15803d'
-                                    : scoreDeltaValue < 0
-                                    ? '#c53030'
-                                    : '#6e6e73',
-                              }}
-                            >
-                              {scoreDeltaValue === null
-                                ? '—'
-                                : `${scoreDeltaValue > 0 ? '+' : ''}${scoreDeltaValue}`}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      border: '1px solid #e5e5e7',
-                      borderRadius: '10px',
-                      padding: '1.25rem',
-                      display: 'grid',
-                      gap: '0.75rem',
-                      background: '#f9f9fb',
-                    }}
-                  >
-                    <h4
-                      style={{
-                        margin: 0,
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Recommended actions
-                    </h4>
-                    <div
-                      style={{
-                        display: 'grid',
-                        gap: '0.75rem',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                      }}
-                    >
-                      <div>
-                        <strong
-                          style={{
-                            fontSize: '0.85rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            color: '#15803d',
-                          }}
-                        >
-                          New this cycle
+                      <span>•</span>
+                      <span>
+                        Rating:{' '}
+                        <strong>
+                          {latestAssessmentEntry.overallRating} · {latestAssessmentEntry.overallScore}/100
                         </strong>
-                        {recommendedActionDiff.newActions.length > 0 ? (
-                          <ul
-                            style={{
-                              margin: '0.4rem 0 0',
-                              paddingLeft: '1.1rem',
-                              fontSize: '0.85rem',
-                              color: '#3a3a3c',
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {recommendedActionDiff.newActions.map((action) => (
-                              <li key={action}>{action}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p
-                            style={{
-                              margin: '0.35rem 0 0',
-                              fontSize: '0.825rem',
-                              color: '#6e6e73',
-                            }}
-                          >
-                            No new actions added.
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <strong
-                          style={{
-                            fontSize: '0.85rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            color: '#c53030',
-                          }}
-                        >
-                          Completed / removed
-                        </strong>
-                        {recommendedActionDiff.clearedActions.length > 0 ? (
-                          <ul
-                            style={{
-                              margin: '0.4rem 0 0',
-                              paddingLeft: '1.1rem',
-                              fontSize: '0.85rem',
-                              color: '#3a3a3c',
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {recommendedActionDiff.clearedActions.map((action) => (
-                              <li key={action}>{action}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p
-                            style={{
-                              margin: '0.35rem 0 0',
-                              fontSize: '0.825rem',
-                              color: '#6e6e73',
-                            }}
-                          >
-                            No actions closed out.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                      </span>
+                    </>
+                  ) : (
+                    <span>
+                      No manual inspections logged yet - use "Log inspection" to create one.
+                    </span>
+                  )}
                 </div>
               ) : (
-                <div
-                  style={{
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    color: '#6e6e73',
-                    background: '#f5f5f7',
-                    borderRadius: '10px',
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                    Capture one more inspection to unlock comparison view.
-                  </p>
-                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>
+                  Capture a property to enable manual inspection logging.
+                </p>
               )}
             </div>
+
+            <InlineInspectionHistorySummary />
+
 
             <div
               style={{
@@ -3938,235 +7156,360 @@ export function SiteAcquisitionPage() {
               )}
             </div>
 
+          </div>
+        )}
+      </section>
+
+      {isEditingAssessment &&
+        createPortal(
+          <div
+            role="presentation"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                closeAssessmentEditor()
+              }
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem',
+              zIndex: 1000,
+            }}
+          >
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Manual inspection editor"
+              onClick={(event) => event.stopPropagation()}
               style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
+                background: 'white',
+                borderRadius: '16px',
+                maxWidth: '900px',
+                width: '100%',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+                padding: '2rem',
+                position: 'relative',
               }}
             >
+              <button
+                type="button"
+                onClick={closeAssessmentEditor}
+                aria-label="Close inspection editor"
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#6e6e73',
+                }}
+              >
+                ×
+              </button>
+
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   flexWrap: 'wrap',
-                  gap: '0.75rem',
+                  gap: '1rem',
+                  marginBottom: '1.5rem',
                 }}
               >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: '1.0625rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  Record Inspection Assessment
-                </h3>
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditingAssessment((prev) => !prev)
-                      setAssessmentSaveMessage(null)
-                    }}
+                <div style={{ maxWidth: '540px', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <h2
                     style={{
-                      border: '1px solid #1d1d1f',
-                      background: isEditingAssessment ? '#1d1d1f' : 'white',
-                      color: isEditingAssessment ? 'white' : '#1d1d1f',
-                      borderRadius: '9999px',
-                      padding: '0.4rem 0.95rem',
-                      fontSize: '0.8125rem',
+                      margin: 0,
+                      fontSize: '1.5rem',
                       fontWeight: 600,
-                      cursor: 'pointer',
+                      letterSpacing: '-0.01em',
                     }}
                   >
-                    {isEditingAssessment ? 'Close editor' : 'Open editor'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetAssessmentDraft}
-                    disabled={isSavingAssessment}
-                    style={{
-                      border: '1px solid #d2d2d7',
-                      background: 'white',
-                      color: '#1d1d1f',
-                      borderRadius: '9999px',
-                      padding: '0.4rem 0.95rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    Reset
-                  </button>
+                    {assessmentEditorMode === 'new' ? 'Log manual inspection' : 'Edit latest inspection'}
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '0.95rem', color: '#4b5563', lineHeight: 1.6 }}>
+                    {assessmentEditorMode === 'new'
+                      ? 'Capture a manual inspection entry for the active scenario. All fields are required unless noted.'
+                      : 'Update the most recent inspection. Saving will append a new entry to the inspection history.'}
+                  </p>
+                  {scenarioFocusOptions.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '0.55rem',
+                      }}
+                    >
+                      {scenarioFocusOptions.map((option) => {
+                        const isActive = activeScenario === option
+                        const label =
+                          option === 'all'
+                            ? 'All scenarios'
+                            : scenarioLookup.get(option)?.label ?? formatScenarioLabel(option)
+                        return (
+                          <button
+                            key={`editor-filter-${option}`}
+                            type="button"
+                            onClick={() => setActiveScenario(option)}
+                            style={{
+                              borderRadius: '9999px',
+                              border: `1px solid ${isActive ? '#1d4ed8' : '#d2d2d7'}`,
+                              background: isActive ? '#dbeafe' : 'white',
+                              color: isActive ? '#1d4ed8' : '#1d1d1f',
+                              padding: '0.3rem 0.9rem',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-              {assessmentSaveMessage && (
-                <p
+                <button
+                  type="button"
+                  onClick={resetAssessmentDraft}
+                  disabled={isSavingAssessment}
                   style={{
-                    margin: 0,
-                    fontSize: '0.85rem',
-                    color: assessmentSaveMessage.includes('success')
-                      ? '#15803d'
-                      : '#c53030',
+                    border: '1px solid #d2d2d7',
+                    background: 'white',
+                    color: '#1d1d1f',
+                    borderRadius: '9999px',
+                    padding: '0.45rem 1rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {assessmentSaveMessage}
-                </p>
-              )}
-              {isEditingAssessment && (
-                <form
-                  onSubmit={handleAssessmentSubmit}
-                  style={{ display: 'grid', gap: '1.25rem' }}
+                  Reset draft
+                </button>
+              </div>
+
+              <form onSubmit={handleAssessmentSubmit} style={{ display: 'grid', gap: '1.25rem' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: '1rem',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  }}
                 >
-                  <div
-                    style={{
-                      display: 'grid',
-                      gap: '1rem',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    }}
-                  >
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario</span>
-                      <select
-                        value={assessmentDraft.scenario}
-                        onChange={(e) =>
-                          handleAssessmentFieldChange(
-                            'scenario',
-                            e.target.value as DevelopmentScenario | 'all',
-                          )
-                        }
-                        style={{
-                          borderRadius: '8px',
-                          border: '1px solid #d2d2d7',
-                          padding: '0.55rem 0.75rem',
-                          fontSize: '0.9rem',
-                        }}
-                      >
-                        <option value="all">All scenarios</option>
-                        {SCENARIO_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall rating</span>
-                      <select
-                        value={assessmentDraft.overallRating}
-                        onChange={(e) => handleAssessmentFieldChange('overallRating', e.target.value)}
-                        style={{
-                          borderRadius: '8px',
-                          border: '1px solid #d2d2d7',
-                          padding: '0.55rem 0.75rem',
-                          fontSize: '0.9rem',
-                        }}
-                      >
-                        {CONDITION_RATINGS.map((rating) => (
-                          <option key={rating} value={rating}>
-                            {rating}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall score</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={assessmentDraft.overallScore}
-                        onChange={(e) => handleAssessmentFieldChange('overallScore', e.target.value)}
-                        style={{
-                          borderRadius: '8px',
-                          border: '1px solid #d2d2d7',
-                          padding: '0.55rem 0.75rem',
-                          fontSize: '0.9rem',
-                        }}
-                      />
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Risk level</span>
-                      <select
-                        value={assessmentDraft.riskLevel}
-                        onChange={(e) => handleAssessmentFieldChange('riskLevel', e.target.value)}
-                        style={{
-                          borderRadius: '8px',
-                          border: '1px solid #d2d2d7',
-                          padding: '0.55rem 0.75rem',
-                          fontSize: '0.9rem',
-                        }}
-                      >
-                        {CONDITION_RISK_LEVELS.map((risk) => (
-                          <option key={risk} value={risk}>
-                            {risk.charAt(0).toUpperCase() + risk.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-
                   <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Summary</span>
-                    <textarea
-                      value={assessmentDraft.summary}
-                      onChange={(e) => handleAssessmentFieldChange('summary', e.target.value)}
-                      rows={3}
-                      style={{
-                        borderRadius: '8px',
-                        border: '1px solid #d2d2d7',
-                        padding: '0.75rem',
-                        fontSize: '0.9rem',
-                      }}
-                    />
-                  </label>
-
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario context</span>
-                    <textarea
-                      value={assessmentDraft.scenarioContext}
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario</span>
+                    <select
+                      value={assessmentDraft.scenario}
                       onChange={(e) =>
-                        handleAssessmentFieldChange('scenarioContext', e.target.value)
+                        handleAssessmentFieldChange(
+                          'scenario',
+                          e.target.value as DevelopmentScenario | 'all',
+                        )
                       }
-                      rows={2}
                       style={{
                         borderRadius: '8px',
                         border: '1px solid #d2d2d7',
-                        padding: '0.75rem',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      <option value="all">All scenarios</option>
+                      {SCENARIO_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall rating</span>
+                    <select
+                      value={assessmentDraft.overallRating}
+                      onChange={(e) =>
+                        handleAssessmentFieldChange('overallRating', e.target.value)
+                      }
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {CONDITION_RATINGS.map((rating) => (
+                        <option key={rating} value={rating}>
+                          {rating}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall score</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={assessmentDraft.overallScore}
+                      onChange={(e) => handleAssessmentFieldChange('overallScore', e.target.value)}
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.55rem 0.75rem',
                         fontSize: '0.9rem',
                       }}
                     />
                   </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Risk level</span>
+                    <select
+                      value={assessmentDraft.riskLevel}
+                      onChange={(e) => handleAssessmentFieldChange('riskLevel', e.target.value)}
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {CONDITION_RISK_LEVELS.map((risk) => (
+                        <option key={risk} value={risk}>
+                          {risk.charAt(0).toUpperCase() + risk.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Inspector name</span>
+                    <input
+                      type="text"
+                      value={assessmentDraft.inspectorName}
+                      onChange={(e) => handleAssessmentFieldChange('inspectorName', e.target.value)}
+                      placeholder="e.g. Jane Tan"
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Inspection date &amp; time</span>
+                    <input
+                      type="datetime-local"
+                      value={assessmentDraft.recordedAtLocal}
+                      onChange={(e) => handleAssessmentFieldChange('recordedAtLocal', e.target.value)}
+                      style={{
+                        borderRadius: '8px',
+                        border: '1px solid #d2d2d7',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </label>
+                </div>
 
-                  <div style={{ display: 'grid', gap: '1rem' }}>
-                    {assessmentDraft.systems.map((system, index) => (
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Summary</span>
+                  <textarea
+                    value={assessmentDraft.summary}
+                    onChange={(e) => handleAssessmentFieldChange('summary', e.target.value)}
+                    rows={3}
+                    style={{
+                      borderRadius: '8px',
+                      border: '1px solid #d2d2d7',
+                      padding: '0.75rem',
+                      fontSize: '0.9rem',
+                    }}
+                  />
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario context</span>
+                  <textarea
+                    value={assessmentDraft.scenarioContext}
+                    onChange={(e) =>
+                      handleAssessmentFieldChange('scenarioContext', e.target.value)
+                    }
+                    rows={2}
+                    style={{
+                      borderRadius: '8px',
+                      border: '1px solid #d2d2d7',
+                      padding: '0.75rem',
+                    fontSize: '0.9rem',
+                  }}
+                />
+              </label>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                  Attachments (one per line as “Label | URL”)
+                </span>
+                <textarea
+                  value={assessmentDraft.attachmentsText}
+                  onChange={(e) => handleAssessmentFieldChange('attachmentsText', e.target.value)}
+                  rows={3}
+                  placeholder="Site photo | https://example.com/photo.jpg"
+                  style={{
+                    borderRadius: '8px',
+                    border: '1px solid #d2d2d7',
+                    padding: '0.75rem',
+                    fontSize: '0.9rem',
+                  }}
+                />
+              </label>
+
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {assessmentDraft.systems.map((system, index) => (
+                  <div
+                    key={`${system.name}-${index}`}
+                    style={{
+                        border: '1px solid #e5e5e7',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        display: 'grid',
+                        gap: '0.75rem',
+                      }}
+                    >
                       <div
-                        key={`${system.name}-${index}`}
                         style={{
-                          border: '1px solid #e5e5e7',
-                          borderRadius: '12px',
-                          padding: '1rem',
-                          display: 'grid',
-                          gap: '0.75rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: '0.5rem',
                         }}
                       >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          <strong>{system.name}</strong>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <select
+                        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>System</span>
+                          <input
+                            type="text"
+                            value={system.name}
+                            onChange={(e) =>
+                              handleAssessmentSystemChange(index, 'name', e.target.value)
+                            }
+                            style={{
+                              borderRadius: '8px',
+                              border: '1px solid #d2d2d7',
+                              padding: '0.55rem 0.75rem',
+                              fontSize: '0.9rem',
+                              minWidth: '12rem',
+                            }}
+                          />
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Rating</span>
+                            <input
+                              type="text"
                               value={system.rating}
                               onChange={(e) =>
                                 handleAssessmentSystemChange(index, 'rating', e.target.value)
@@ -4174,16 +7517,14 @@ export function SiteAcquisitionPage() {
                               style={{
                                 borderRadius: '8px',
                                 border: '1px solid #d2d2d7',
-                                padding: '0.45rem 0.65rem',
-                                fontSize: '0.85rem',
+                                padding: '0.55rem 0.75rem',
+                                fontSize: '0.9rem',
+                                width: '6rem',
                               }}
-                            >
-                              {CONDITION_RATINGS.map((rating) => (
-                                <option key={rating} value={rating}>
-                                  {rating}
-                                </option>
-                              ))}
-                            </select>
+                            />
+                          </label>
+                          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Score</span>
                             <input
                               type="number"
                               min={0}
@@ -4195,123 +7536,436 @@ export function SiteAcquisitionPage() {
                               style={{
                                 borderRadius: '8px',
                                 border: '1px solid #d2d2d7',
-                                padding: '0.45rem 0.65rem',
-                                width: '80px',
-                                fontSize: '0.85rem',
+                                padding: '0.55rem 0.75rem',
+                                fontSize: '0.9rem',
+                                width: '6rem',
                               }}
                             />
-                          </div>
+                          </label>
                         </div>
+                      </div>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Notes</span>
                         <textarea
                           value={system.notes}
                           onChange={(e) =>
                             handleAssessmentSystemChange(index, 'notes', e.target.value)
                           }
                           rows={2}
-                          placeholder="Key findings"
                           style={{
                             borderRadius: '8px',
                             border: '1px solid #d2d2d7',
-                            padding: '0.65rem',
-                            fontSize: '0.85rem',
+                            padding: '0.7rem',
+                            fontSize: '0.9rem',
                           }}
                         />
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                          Recommended actions (one per line)
+                        </span>
                         <textarea
                           value={system.recommendedActions}
                           onChange={(e) =>
-                            handleAssessmentSystemChange(
-                              index,
-                              'recommendedActions',
-                              e.target.value,
-                            )
+                            handleAssessmentSystemChange(index, 'recommendedActions', e.target.value)
                           }
                           rows={2}
-                          placeholder="Recommended actions (one per line)"
                           style={{
                             borderRadius: '8px',
                             border: '1px solid #d2d2d7',
-                            padding: '0.65rem',
-                            fontSize: '0.85rem',
+                            padding: '0.7rem',
+                            fontSize: '0.9rem',
                           }}
                         />
-                      </div>
-                    ))}
-                  </div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
 
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
-                      Global recommended actions
-                    </span>
-                    <textarea
-                      value={assessmentDraft.recommendedActionsText}
-                      onChange={(e) =>
-                        handleAssessmentFieldChange('recommendedActionsText', e.target.value)
-                      }
-                      rows={2}
-                      placeholder="List actions (one per line)"
-                      style={{
-                        borderRadius: '8px',
-                        border: '1px solid #d2d2d7',
-                        padding: '0.75rem',
-                        fontSize: '0.9rem',
-                      }}
-                    />
-                  </label>
-
-                  <div
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                    Additional recommended actions
+                  </span>
+                  <textarea
+                    value={assessmentDraft.recommendedActionsText}
+                    onChange={(e) =>
+                      handleAssessmentFieldChange('recommendedActionsText', e.target.value)
+                    }
+                    rows={3}
                     style={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      gap: '0.75rem',
-                      flexWrap: 'wrap',
+                      borderRadius: '8px',
+                      border: '1px solid #d2d2d7',
+                      padding: '0.75rem',
+                      fontSize: '0.9rem',
+                    }}
+                  />
+                </label>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={closeAssessmentEditor}
+                    disabled={isSavingAssessment}
+                    style={{
+                      border: '1px solid #d2d2d7',
+                      background: 'white',
+                      color: '#1d1d1f',
+                      borderRadius: '9999px',
+                      padding: '0.55rem 1.25rem',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditingAssessment(false)
-                        setAssessmentSaveMessage(null)
-                      }}
-                      disabled={isSavingAssessment}
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingAssessment}
+                    style={{
+                      border: 'none',
+                      background: '#1d1d1f',
+                      color: 'white',
+                      borderRadius: '9999px',
+                      padding: '0.55rem 1.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {isSavingAssessment ? 'Saving…' : 'Save inspection'}
+                  </button>
+                </div>
+      </form>
+    </div>
+  </div>,
+  document.body,
+)}
+
+      {isQuickAnalysisHistoryOpen &&
+        createPortal(
+          <div
+            role="presentation"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                setQuickAnalysisHistoryOpen(false)
+              }
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem',
+              zIndex: 1000,
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Quick analysis history"
+              onClick={(event) => event.stopPropagation()}
+              style={{
+                background: 'white',
+                borderRadius: '16px',
+                maxWidth: '900px',
+                width: '100%',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+                padding: '2rem',
+                position: 'relative',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setQuickAnalysisHistoryOpen(false)}
+                aria-label="Close quick analysis history"
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#6e6e73',
+                }}
+              >
+                ×
+              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: '1.4rem',
+                      fontWeight: 600,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    Quick analysis history
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
+                    Review the last {quickAnalysisHistory.length} generated snapshots of
+                    multi-scenario feasibility metrics.
+                  </p>
+                </div>
+                {quickAnalysisHistory.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#6b7280' }}>
+                    Capture a property to build the quick analysis history timeline.
+                  </p>
+                ) : (
+                  quickAnalysisHistory.map((snapshot) => (
+                    <article
+                      key={`${snapshot.propertyId}-${snapshot.generatedAt}`}
                       style={{
-                        border: '1px solid #d2d2d7',
-                        background: 'white',
-                        color: '#1d1d1f',
-                        borderRadius: '9999px',
-                        padding: '0.55rem 1.25rem',
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '14px',
+                        padding: '1.5rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                        background: '#f9fafb',
                       }}
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSavingAssessment}
-                      style={{
-                        border: 'none',
-                        background: '#1d1d1f',
-                        color: 'white',
-                        borderRadius: '9999px',
-                        padding: '0.55rem 1.5rem',
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        cursor: isSavingAssessment ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      {isSavingAssessment ? 'Saving…' : 'Save inspection'}
-                    </button>
-                  </div>
-                </form>
-              )}
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          flexWrap: 'wrap',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: '1.05rem',
+                            fontWeight: 600,
+                            letterSpacing: '-0.01em',
+                          }}
+                        >
+                          Generated {formatTimestamp(snapshot.generatedAt)}
+                        </h3>
+                        <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                          Property ID: {snapshot.propertyId}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gap: '1rem',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                        }}
+                      >
+                        {snapshot.scenarios.map((scenario) => {
+                          const scenarioKey =
+                            typeof scenario.scenario === 'string'
+                              ? (scenario.scenario as DevelopmentScenario)
+                              : 'raw_land'
+                          const label =
+                            scenarioLookup.get(scenarioKey)?.label ??
+                            formatScenarioLabel(scenarioKey)
+                          const metrics = summariseScenarioMetrics(
+                            scenario.metrics ?? {},
+                          )
+                          return (
+                            <section
+                              key={`${snapshot.generatedAt}-${scenarioKey}`}
+                              style={{
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                background: 'white',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.6rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <span
+                                  style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}
+                                >
+                                  Scenario
+                                </span>
+                                <span
+                                  style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}
+                                >
+                                  {label}
+                                </span>
+                              </div>
+                              {scenario.headline && (
+                                <p style={{ margin: 0, fontSize: '0.85rem', color: '#374151' }}>
+                                  {scenario.headline}
+                                </p>
+                              )}
+                              {metrics.length > 0 ? (
+                                <ul
+                                  style={{
+                                    margin: 0,
+                                    padding: 0,
+                                    listStyle: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.35rem',
+                                  }}
+                                >
+                                  {metrics.map((metric) => (
+                                    <li key={`${scenarioKey}-${metric.key}`}>
+                                      <span
+                                        style={{
+                                          display: 'block',
+                                          fontSize: '0.75rem',
+                                          letterSpacing: '0.06em',
+                                          textTransform: 'uppercase',
+                                          color: '#9ca3af',
+                                        }}
+                                      >
+                                        {metric.label}
+                                      </span>
+                                      <span
+                                        style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1f2937' }}
+                                      >
+                                        {formatScenarioMetricValue(metric.key, metric.value)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
+                                  No quantitative metrics captured for this scenario run.
+                                </p>
+                              )}
+                            </section>
+                          )
+                        })}
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
-      </section>
+
+      {isHistoryModalOpen &&
+        createPortal(
+          <div
+            role="presentation"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                setHistoryModalOpen(false)
+              }
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem',
+              zIndex: 1000,
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Inspection history"
+              onClick={(event) => event.stopPropagation()}
+              style={{
+                background: 'white',
+                borderRadius: '16px',
+                width: 'min(1200px, 95vw)',
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+                padding: '2rem',
+                position: 'relative',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setHistoryModalOpen(false)}
+                aria-label="Close inspection history"
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#6e6e73',
+                }}
+              >
+                ×
+              </button>
+              <InspectionHistoryContent />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
+
+function formatDateTimeLocalInput(isoValue: string | null | undefined): string {
+  if (!isoValue) {
+    return ''
+  }
+  const date = new Date(isoValue)
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+function convertLocalToISO(localValue: string): string | null {
+  if (!localValue) {
+    return null
+  }
+  const date = new Date(localValue)
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+  return date.toISOString()
+}
+
+function parseAttachmentsText(value: string): ConditionAttachment[] {
+  return value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const [labelPart, urlPart] = line.split('|')
+      const label = (labelPart ?? '').trim()
+      const url = (urlPart ?? '').trim()
+      return {
+        label: label || url || 'Attachment',
+        url: url.length > 0 ? url : null,
+      }
+    })
+}
+
 function safeNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value
@@ -4321,4 +7975,206 @@ function safeNumber(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null
   }
   return null
+}
+
+type InsightSeverity = 'critical' | 'warning' | 'positive' | 'info'
+
+type ConditionInsightView = {
+  id: string
+  severity: InsightSeverity
+  title: string
+  detail: string
+  specialist?: string | null
+}
+
+const insightSeverityOrder: Record<InsightSeverity, number> = {
+  critical: 0,
+  warning: 1,
+  info: 2,
+  positive: 3,
+}
+
+function classifySystemSeverity(
+  latestRating: string | null | undefined,
+  delta: number | null,
+): InsightSeverity | 'neutral' {
+  if (!latestRating || typeof latestRating !== 'string') {
+    return 'neutral'
+  }
+  const normalized = latestRating.toUpperCase()
+  const negativeRating = normalized === 'D' || normalized === 'E'
+  const warningRating = normalized === 'C'
+
+  if (negativeRating) {
+    return 'critical'
+  }
+  if (typeof delta === 'number') {
+    if (delta <= -10) {
+      return 'critical'
+    }
+    if (delta <= -5) {
+      return 'warning'
+    }
+    if (delta >= 8) {
+      return 'positive'
+    }
+  }
+  if (warningRating) {
+    return 'warning'
+  }
+  if (typeof delta === 'number' && delta >= 4) {
+    return 'positive'
+  }
+  return 'neutral'
+}
+
+function buildSystemInsightTitle(
+  name: string,
+  severity: InsightSeverity,
+  delta: number | null,
+): string {
+  if (severity === 'critical') {
+    if (typeof delta === 'number' && delta < 0) {
+      return `${name} dropped ${Math.abs(delta)} points`
+    }
+    return `${name} requires attention`
+  }
+  if (severity === 'warning') {
+    if (typeof delta === 'number' && delta < 0) {
+      return `${name} trending down`
+    }
+    return `${name} rated watch`
+  }
+  if (severity === 'positive') {
+    if (typeof delta === 'number' && delta > 0) {
+      return `${name} improved ${delta} points`
+    }
+    return `${name} improving`
+  }
+  return name
+}
+
+function formatScoreDelta(delta: number): string {
+  if (delta === 0) {
+    return 'held steady'
+  }
+  if (delta > 0) {
+    return `improved by ${delta} points`
+  }
+  return `dropped ${Math.abs(delta)} points`
+}
+
+function formatDeltaValue(delta: number | null): string {
+  if (delta === null) {
+    return '0'
+  }
+  if (delta > 0) {
+    return `+${delta}`
+  }
+  if (delta < 0) {
+    return `${delta}`
+  }
+  return '0'
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-')
+    || 'insight'
+}
+
+function systemSpecialistHint(name: string): string | null {
+  const lower = name.toLowerCase()
+  if (lower.includes('struct')) {
+    return 'Structural engineer'
+  }
+  if (lower.includes('mechanical') || lower.includes('electrical') || lower.includes('m&e')) {
+    return 'M&E engineer'
+  }
+  if (lower.includes('compliance') || lower.includes('maintenance') || lower.includes('envelope')) {
+    return 'Building surveyor'
+  }
+  return null
+}
+
+function normaliseInsightSeverity(value: string | undefined): InsightSeverity {
+  const severity = (value ?? 'warning').toLowerCase()
+  if (severity === 'critical' || severity === 'warning' || severity === 'positive' || severity === 'info') {
+    return severity as InsightSeverity
+  }
+  return 'warning'
+}
+
+function getSeverityVisuals(
+  severity: InsightSeverity | 'neutral',
+): { background: string; border: string; text: string; indicator: string; label: string } {
+  switch (severity) {
+    case 'critical':
+      return {
+        background: '#fef2f2',
+        border: '#fecaca',
+        text: '#991b1b',
+        indicator: '#dc2626',
+        label: 'Critical risk',
+      }
+    case 'warning':
+      return {
+        background: '#fef3c7',
+        border: '#fde68a',
+        text: '#92400e',
+        indicator: '#f97316',
+        label: 'Watchlist',
+      }
+    case 'info':
+      return {
+        background: '#eef2ff',
+        border: '#c7d2fe',
+        text: '#312e81',
+        indicator: '#6366f1',
+        label: 'Heads-up',
+      }
+    case 'positive':
+      return {
+        background: '#dcfce7',
+        border: '#bbf7d0',
+        text: '#166534',
+        indicator: '#22c55e',
+        label: 'Improving',
+      }
+    default:
+      return {
+        background: '#f5f5f7',
+        border: '#e5e5e7',
+        text: '#3a3a3c',
+        indicator: '#6e6e73',
+        label: 'Stable',
+      }
+  }
+}
+
+function getDeltaVisuals(
+  delta: number | null,
+): { background: string; border: string; text: string } {
+  if (delta === null || delta === 0) {
+    return {
+      background: '#f5f5f7',
+      border: '#e5e5e7',
+      text: '#3a3a3c',
+    }
+  }
+  if (delta > 0) {
+    return {
+      background: '#dcfce7',
+      border: '#bbf7d0',
+      text: '#166534',
+    }
+  }
+  return {
+    background: '#fee2e2',
+    border: '#fecaca',
+    text: '#b91c1c',
+  }
 }

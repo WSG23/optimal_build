@@ -7,12 +7,25 @@ repos:
       language: system
       pass_filenames: false
 
+    - id: check-migration-enums
+      name: Check migration ENUM patterns
+      entry: python3 scripts/check_migration_enums.py
+      language: system
+      pass_filenames: false
+      files: ^(backend/)?migrations/versions/.*\.py$
+
     - id: pdf-smoke-test
       name: PDF generation smoke test
       entry: python3 scripts/smoke_test_pdfs.py
       language: system
       pass_filenames: false
       files: ^backend/app/(services/agents|api/v1/agents).*\.(py)$
+
+    - id: phase-gate
+      name: Phase 2D gate enforcement
+      entry: python3 scripts/check_phase_gate.py
+      language: system
+      pass_filenames: false
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0

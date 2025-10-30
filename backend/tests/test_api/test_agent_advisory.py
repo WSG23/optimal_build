@@ -28,7 +28,8 @@ async def test_advisory_summary_returns_sections(
 
     assert response.status_code == 200, response.text
     payload = response.json()
-    assert payload["asset_mix"]["property_id"] == property_id
+    # Compare UUID string from JSON response with UUID object
+    assert payload["asset_mix"]["property_id"] == str(property_id)
     assert payload["market_positioning"]["target_segments"]
     assert payload["absorption_forecast"]["expected_months_to_stabilize"] >= 6
 
@@ -53,7 +54,8 @@ async def test_submit_and_list_feedback(
 
     assert post_response.status_code == 201, post_response.text
     recorded = post_response.json()
-    assert recorded["property_id"] == property_id
+    # Compare UUID string from JSON response with UUID object
+    assert recorded["property_id"] == str(property_id)
     assert recorded["sentiment"] == "positive"
 
     list_response = await app_client.get(
@@ -64,9 +66,13 @@ async def test_submit_and_list_feedback(
     assert any(item["id"] == recorded["id"] for item in items)
 
 
-async def _fetch_demo_property_id(session: AsyncSession) -> str:
+async def _fetch_demo_property_id(session: AsyncSession) -> UUID:
+    """Fetch demo property ID and return as UUID object (not string)."""
     result = await session.execute(
         select(Property.id).where(Property.name == "Market Demo Tower")
     )
     property_id = result.scalar_one()
-    return str(property_id if isinstance(property_id, UUID) else property_id)
+    # Ensure we return a UUID object, not a string
+    if isinstance(property_id, str):
+        return UUID(property_id)
+    return property_id

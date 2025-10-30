@@ -1,0 +1,97 @@
+{
+  "items": [
+    {
+      "actual_decision_date": null,
+      "actual_submission_date": null,
+      "approval_type_id": 1,
+      "created_at": "2025-10-28T07:27:34.634680Z",
+      "id": 131,
+      "metadata": {
+        "jurisdiction": "SG"
+      },
+      "notes": null,
+      "project_id": 90301,
+      "sequence_order": 1,
+      "status": "planned",
+      "status_changed_at": null,
+      "target_decision_date": null,
+      "target_submission_date": null,
+      "updated_at": "2025-10-28T07:27:34.634680Z"
+    },
+    {
+      "actual_decision_date": null,
+      "actual_submission_date": null,
+      "approval_type_id": 2,
+      "created_at": "2025-10-28T07:27:34.634680Z",
+      "id": 132,
+      "metadata": {
+        "jurisdiction": "SG"
+      },
+      "notes": null,
+      "project_id": 90301,
+      "sequence_order": 2,
+      "status": "planned",
+      "status_changed_at": null,
+      "target_decision_date": null,
+      "target_submission_date": null,
+      "updated_at": "2025-10-28T07:27:34.634680Z"
+    },
+    {
+      "actual_decision_date": null,
+      "actual_submission_date": null,
+      "approval_type_id": 5,
+      "created_at": "2025-10-28T07:27:34.634680Z",
+      "id": 133,
+      "metadata": {
+        "jurisdiction": "SG"
+      },
+      "notes": null,
+      "project_id": 90301,
+      "sequence_order": 3,
+      "status": "planned",
+      "status_changed_at": null,
+      "target_decision_date": null,
+      "target_submission_date": null,
+      "updated_at": "2025-10-28T07:27:34.634680Z"
+    },
+    {
+      "actual_decision_date": null,
+      "actual_submission_date": null,
+      "approval_type_id": 4,
+      "created_at": "2025-10-28T07:27:34.634680Z",
+      "id": 134,
+      "metadata": {
+        "jurisdiction": "SG"
+      },
+      "notes": null,
+      "project_id": 90301,
+      "sequence_order": 4,
+      "status": "planned",
+      "status_changed_at": null,
+      "target_decision_date": null,
+      "target_submission_date": null,
+      "updated_at": "2025-10-28T07:27:34.634680Z"
+    },
+    {
+      "actual_decision_date": null,
+      "actual_submission_date": null,
+      "approval_type_id": 3,
+      "created_at": "2025-10-28T07:27:34.634680Z",
+      "id": 135,
+      "metadata": {
+        "jurisdiction": "SG"
+      },
+      "notes": null,
+      "project_id": 90301,
+      "sequence_order": 5,
+      "status": "planned",
+      "status_changed_at": null,
+      "target_decision_date": null,
+      "target_submission_date": null,
+      "updated_at": "2025-10-28T07:27:34.634680Z"
+    }
+  ],
+  "limit": 5,
+  "offset": 0,
+  "total": 5
+}

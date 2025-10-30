@@ -31,6 +31,23 @@ def get_repo_root() -> Path:
     return Path.cwd()
 
 
+def get_venv_python() -> str:
+    """Find the venv Python interpreter.
+
+    Returns the path to the venv Python if it exists, otherwise falls back
+    to sys.executable. This ensures we use the venv with all dependencies
+    installed, rather than system Python.
+    """
+    repo_root = get_repo_root()
+    venv_python = repo_root / ".venv" / "bin" / "python"
+
+    if venv_python.exists():
+        return str(venv_python)
+
+    # Fallback to current Python (might be system Python)
+    return sys.executable
+
+
 try:  # Optional dependency – fail gracefully when unavailable
     import yaml  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
@@ -292,8 +309,9 @@ def check_singapore_compliance(
         if any(prefix in exc_path for exc_path in exceptions.get(rule_key, set())):
             return True, []
 
+    python_exe = get_venv_python()
     cmd = [
-        sys.executable,
+        python_exe,
         "-m",
         "pytest",
         "backend/tests/test_api/test_feasibility.py",
@@ -320,9 +338,10 @@ def check_formatting(repo_root: Path) -> tuple[bool, list[str]]:
     """Check if code needs formatting (Rule 3)."""
     errors = []
 
-    # Run black in check mode
+    # Run black in check mode (use venv Python to ensure black is available)
+    python_exe = get_venv_python()
     result = subprocess.run(
-        [sys.executable, "-m", "black", "--check", "--quiet", "backend/", "scripts/"],
+        [python_exe, "-m", "black", "--check", "--quiet", "backend/", "scripts/"],
         capture_output=True,
         text=True,
         cwd=repo_root,
@@ -336,53 +355,75 @@ def check_formatting(repo_root: Path) -> tuple[bool, list[str]]:
             f"  -> Files need formatting:\n{result.stderr or result.stdout}"
         )
 
-    # Run isort in check mode
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "isort",
-            "--check-only",
-            "--quiet",
-            "backend/",
-            "scripts/",
-        ],
-        capture_output=True,
-        text=True,
-        cwd=repo_root,
-    )
-
-    if result.returncode != 0:
-        errors.append(
-            "RULE VIOLATION: Import ordering needs fixing (isort)\n"
-            "  -> Rule 3: Run 'make format' before committing\n"
-            "  -> See CODING_RULES.md section 3"
-        )
+    # Note: Import ordering is checked by ruff (with the I rule), not isort
+    # This avoids conflicts between ruff and isort when they disagree on formatting
 
     return len(errors) == 0, errors
 
 
-def check_code_quality(repo_root: Path) -> tuple[bool, list[str]]:
+def check_code_quality(
+    repo_root: Path, exceptions: dict[str, set[str]]
+) -> tuple[bool, list[str]]:
     """Check for code quality issues like unused variables (Rule 7)."""
     errors = []
 
-    # Run ruff in check mode (only for Python files we can control)
+    # Run ruff in check mode (use venv Python to ensure ruff is available)
+    python_exe = get_venv_python()
     result = subprocess.run(
-        [sys.executable, "-m", "ruff", "check", "backend/", "scripts/"],
+        [python_exe, "-m", "ruff", "check", "backend/", "scripts/"],
         capture_output=True,
         text=True,
         cwd=repo_root,
     )
 
     if result.returncode != 0:
-        # Parse output to show key violations
+        # Parse output to filter exceptions
         output = result.stdout or result.stderr
-        errors.append(
-            "RULE VIOLATION: Code quality issues found (ruff)\n"
-            "  -> Rule 7: Fix unused variables, exception chaining, etc.\n"
-            "  -> See CODING_RULES.md section 7\n"
-            f"  -> Issues found:\n{output[:500]}"  # Limit output
-        )
+
+        # Split output by error blocks (separated by blank lines)
+        error_blocks = []
+        current_block = []
+
+        for line in output.split("\n"):
+            if line.strip():
+                current_block.append(line)
+            elif current_block:
+                error_blocks.append(current_block)
+                current_block = []
+
+        if current_block:
+            error_blocks.append(current_block)
+
+        # Filter out blocks from excepted files
+        excepted_files = exceptions.get("rule_7_code_quality", set())
+        filtered_blocks = []
+
+        for block in error_blocks:
+            # Check if any line in this block references an excepted file
+            is_excepted = False
+            block_text = "\n".join(block)
+
+            for excepted_path in excepted_files:
+                if excepted_path in block_text:
+                    is_excepted = True
+                    break
+
+            if not is_excepted:
+                filtered_blocks.append(block)
+
+        # Reconstruct filtered output
+        filtered_output = "\n\n".join(
+            ["\n".join(block) for block in filtered_blocks]
+        ).strip()
+
+        # Only report error if there are non-excepted violations
+        if filtered_output:
+            errors.append(
+                "RULE VIOLATION: Code quality issues found (ruff)\n"
+                "  -> Rule 7: Fix unused variables, exception chaining, etc.\n"
+                "  -> See CODING_RULES.md section 7\n"
+                f"  -> Issues found:\n{filtered_output[:500]}"  # Limit output
+            )
 
     return len(errors) == 0, errors
 
@@ -392,14 +433,22 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
 
     errors: list[str] = []
 
-    guidance_file = repo_root / "docs" / "NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md"
+    guidance_file = repo_root / "docs" / "ai-agents" / "next_steps.md"
     plan_file = repo_root / "docs" / "feature_delivery_plan_v2.md"
 
     required_refs = [
-        "TESTING_KNOWN_ISSUES.md",
-        "UI_STATUS.md",
-        "TESTING_DOCUMENTATION_SUMMARY.md",
+        "development/testing/known-issues.md",
+        "planning/ui-status.md",
+        "development/testing/summary.md",
         "README.md",
+    ]
+
+    # NEW: Required content sections (Rule 8.1)
+    required_content_sections = [
+        ("MANDATORY TESTING CHECKLIST", "docs/ai-agents/next_steps.md"),
+        ("Backend tests:", "docs/ai-agents/next_steps.md"),
+        ("Frontend tests", "docs/ai-agents/next_steps.md"),
+        ("Manual UI testing:", "docs/ai-agents/next_steps.md"),
     ]
 
     def _read(path: Path) -> str:
@@ -418,20 +467,135 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
     if not guidance_content or not plan_content:
         return len(errors) == 0, errors
 
+    # Check for file references
     for ref in required_refs:
         if ref not in guidance_content:
             errors.append(
-                "RULE VIOLATION: docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md "
+                "RULE VIOLATION: docs/ai-agents/next_steps.md "
                 f"must reference '{ref}'.\n"
-                "  -> Rule 8: AI plans must cite the canonical testing guides.\n"
-                "  -> See CODING_RULES.md section 8."
+                "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
+                "  -> See CODING_RULES.md section 8.2"
             )
         if ref not in plan_content:
             errors.append(
                 "RULE VIOLATION: docs/feature_delivery_plan_v2.md must reference "
                 f"'{ref}' within relevant phase guidance.\n"
-                "  -> Rule 8: AI plans must cite the canonical testing guides.\n"
-                "  -> See CODING_RULES.md section 8."
+                "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
+                "  -> See CODING_RULES.md section 8.2"
+            )
+
+    # NEW: Check for required content sections (Rule 8.1)
+    for section, doc_path in required_content_sections:
+        content = guidance_content if "next_steps" in doc_path else plan_content
+        if section not in content:
+            errors.append(
+                f"RULE VIOLATION: {doc_path} must contain '{section}' section.\n"
+                "  -> Rule 8.1: MANDATORY Testing Checklist must be present.\n"
+                "  -> AI agents MUST provide backend, frontend, and UI manual test instructions.\n"
+                "  -> See CODING_RULES.md section 8.1"
+            )
+
+    return len(errors) == 0, errors
+
+
+def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
+    """Ensure phases marked COMPLETE have no incomplete checklist items (Rule 12)."""
+
+    errors: list[str] = []
+    plan_file = repo_root / "docs" / "feature_delivery_plan_v2.md"
+
+    if not plan_file.exists():
+        return True, []  # No plan file, skip check
+
+    try:
+        content = plan_file.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"RULE VIOLATION: Unable to read {plan_file}\n  -> {exc}")
+        return False, errors
+
+    # Find all phase sections marked COMPLETE
+    import re
+
+    phase_pattern = r"### (Phase \S+):.*✅ COMPLETE"
+    for match in re.finditer(phase_pattern, content, re.IGNORECASE):
+        phase_name = match.group(1)
+        phase_start = match.end()
+
+        # Find the end of this phase section (next ### or end of file)
+        next_section = re.search(r"\n###", content[phase_start:])
+        phase_end = phase_start + next_section.start() if next_section else len(content)
+
+        phase_content = content[phase_start:phase_end]
+
+        # Check for incomplete markers
+        incomplete_markers = []
+
+        if "🔄" in phase_content:
+            incomplete_markers.append("'🔄 In Progress' items")
+        if "❌" in phase_content:
+            incomplete_markers.append("'❌' incomplete items")
+
+        # Check for unchecked checklist items
+        unchecked_items = re.findall(r"- \[ \]", phase_content)
+        if unchecked_items:
+            incomplete_markers.append(
+                f"{len(unchecked_items)} unchecked [ ] checklist items"
+            )
+
+        # CRITICAL: Verify "Files Delivered:" section lists real files
+        # This prevents AI agents from checking boxes without writing code
+        if "Files Delivered:" in phase_content or "UI Files:" in phase_content:
+            # Extract file paths from markdown code blocks (e.g., `backend/app/api/v1/deals.py`)
+            file_paths = re.findall(r"`([^`]+\.(py|tsx|ts|js|jsx))`", phase_content)
+
+            missing_files = []
+            for file_path_match in file_paths:
+                file_path = file_path_match[0]  # Extract just the path (not extension)
+                full_path = repo_root / file_path.strip()
+
+                # Check if file exists
+                if not full_path.exists():
+                    missing_files.append(file_path)
+
+            if missing_files:
+                incomplete_markers.append(
+                    f"{len(missing_files)} files listed in 'Files Delivered' but missing: "
+                    f"{', '.join(missing_files[:3])}"  # Show first 3
+                    + (
+                        f" (and {len(missing_files) - 3} more)"
+                        if len(missing_files) > 3
+                        else ""
+                    )
+                )
+
+        # CRITICAL: Verify "Test Status:" shows passing tests
+        # This prevents AI agents from marking complete without running tests
+        if "Test Status:" in phase_content:
+            test_status_start = phase_content.find("Test Status:")
+            test_status_section = phase_content[
+                test_status_start : test_status_start + 500
+            ]
+
+            # Check for failure indicators
+            if (
+                "⚠️" in test_status_section
+                and "skipped" not in test_status_section.lower()
+            ):
+                incomplete_markers.append(
+                    "Test Status shows ⚠️ warnings (not all tests passing)"
+                )
+            if "❌" in test_status_section:
+                incomplete_markers.append("Test Status shows ❌ failures")
+            if "FAIL" in test_status_section.upper():
+                incomplete_markers.append("Test Status shows test failures")
+
+        if incomplete_markers:
+            errors.append(
+                f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' but has:\n"
+                f"  -> {', '.join(incomplete_markers)}\n"
+                "  -> Rule 12: Do not mark phases complete with incomplete checklist items.\n"
+                "  -> Either complete the items or change status to '⚠️ IN PROGRESS'.\n"
+                "  -> See CODING_RULES.md section 12 (Phase Completion Gates)"
             )
 
     return len(errors) == 0, errors
@@ -535,11 +699,15 @@ def main() -> int:
         ),
         (
             "Rule 7: Code Quality",
-            lambda: check_code_quality(repo_root),
+            lambda: check_code_quality(repo_root, exceptions),
         ),
         (
             "Rule 8: AI Planning References",
             lambda: check_ai_guidance_references(repo_root),
+        ),
+        (
+            "Rule 12: Phase Completion Gates",
+            lambda: check_phase_completion_gates(repo_root),
         ),
     ]
 

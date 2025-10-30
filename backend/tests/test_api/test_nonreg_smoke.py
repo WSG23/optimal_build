@@ -15,8 +15,9 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from app.models.rkp import RefProduct
 from backend.scripts import seed_nonreg
+
+from app.models.rkp import RefProduct
 
 
 @pytest.mark.asyncio

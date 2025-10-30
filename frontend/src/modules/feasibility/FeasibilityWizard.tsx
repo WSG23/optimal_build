@@ -13,6 +13,22 @@ import {
 import { useTranslation } from '../../i18n'
 import { useRouterLocation } from '../../router'
 
+type StoredAssetOptimization = {
+  assetType: string
+  allocationPct: number
+  allocatedGfaSqm?: number | null
+  niaEfficiency?: number | null
+  targetFloorHeightM?: number | null
+  parkingRatioPer1000Sqm?: number | null
+  rentPsmMonth?: number | null
+  stabilisedVacancyPct?: number | null
+  opexPctOfRent?: number | null
+  fitoutCostPsm?: number | null
+  notes?: string[]
+}
+
+const ASSET_MIX_STORAGE_PREFIX = 'developer-asset-mix:'
+
 const DEFAULT_ASSUMPTIONS = {
   typFloorToFloorM: 3.4,
   efficiencyRatio: 0.8,
@@ -144,6 +160,13 @@ export function FeasibilityWizard({
   )
   const [packLoading, setPackLoading] = useState(false)
   const [packError, setPackError] = useState<string | null>(null)
+const [capturedAssetMix, setCapturedAssetMix] = useState<StoredAssetOptimization[]>([])
+const [capturedFinancialSummary, setCapturedFinancialSummary] = useState<{
+  totalEstimatedRevenueSgd: number | null
+  totalEstimatedCapexSgd: number | null
+  dominantRiskProfile: string | null
+  notes: string[]
+} | null>(null)
 
   const copyStatusColor = useMemo<string>(() => {
     if (copyState === 'copied') {
@@ -183,26 +206,81 @@ export function FeasibilityWizard({
     }
   }, [routerSearch])
 
-  useEffect(() => {
-    setPackPropertyId((current) =>
-      current === propertyIdFromQuery ? current : propertyIdFromQuery,
-    )
-    setPackSummary(null)
-    setPackError(null)
-    setPackLoading(false)
-  }, [propertyIdFromQuery])
+useEffect(() => {
+  setPackPropertyId((current) =>
+    current === propertyIdFromQuery ? current : propertyIdFromQuery,
+  )
+  setPackSummary(null)
+  setPackError(null)
+  setPackLoading(false)
+
+  if (propertyIdFromQuery) {
+    try {
+      const raw = sessionStorage.getItem(
+        `${ASSET_MIX_STORAGE_PREFIX}${propertyIdFromQuery}`,
+      )
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          optimizations?: StoredAssetOptimization[]
+          financialSummary?: {
+            totalEstimatedRevenueSgd: number | null
+            totalEstimatedCapexSgd: number | null
+            dominantRiskProfile: string | null
+            notes?: string[]
+          }
+        }
+        if (Array.isArray(parsed.optimizations)) {
+          setCapturedAssetMix(parsed.optimizations)
+        } else {
+          setCapturedAssetMix([])
+        }
+        if (parsed.financialSummary) {
+          setCapturedFinancialSummary({
+            totalEstimatedRevenueSgd:
+              parsed.financialSummary.totalEstimatedRevenueSgd ?? null,
+            totalEstimatedCapexSgd:
+              parsed.financialSummary.totalEstimatedCapexSgd ?? null,
+            dominantRiskProfile:
+              parsed.financialSummary.dominantRiskProfile ?? null,
+            notes: parsed.financialSummary.notes ?? [],
+          })
+        } else {
+          setCapturedFinancialSummary(null)
+        }
+      } else {
+        setCapturedAssetMix([])
+        setCapturedFinancialSummary(null)
+      }
+    } catch (error) {
+      console.warn('Unable to load stored asset mix', error)
+      setCapturedAssetMix([])
+      setCapturedFinancialSummary(null)
+    }
+  } else {
+    setCapturedAssetMix([])
+    setCapturedFinancialSummary(null)
+  }
+}, [propertyIdFromQuery])
 
   const selectedPackOption = useMemo(() => {
     return PACK_OPTIONS.find((option) => option.value === packType) ?? PACK_OPTIONS[0]
   }, [packType])
 
-  const numberFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(i18n.language, {
-        maximumFractionDigits: 0,
-      }),
-    [i18n.language],
-  )
+const numberFormatter = useMemo(
+  () =>
+    new Intl.NumberFormat(i18n.language, {
+      maximumFractionDigits: 0,
+    }),
+  [i18n.language],
+)
+
+const oneDecimalFormatter = useMemo(
+  () =>
+    new Intl.NumberFormat(i18n.language, {
+      maximumFractionDigits: 1,
+    }),
+  [i18n.language],
+)
 
   const decimalFormatter = useMemo(
     () =>
@@ -523,10 +601,10 @@ export function FeasibilityWizard({
     return null
   }
 
-  const metricsView = useMemo(() => {
-    if (!result) {
-      return null
-    }
+const metricsView = useMemo(() => {
+  if (!result) {
+    return null
+  }
     const metrics = [
       {
         key: 'gfaCapM2',
@@ -564,6 +642,98 @@ export function FeasibilityWizard({
       </dl>
     )
   }, [numberFormatter, result, t])
+
+  const assetMixView = useMemo(() => {
+    if (!capturedAssetMix.length) {
+      return null
+    }
+
+    const formatRow = (plan: StoredAssetOptimization) => {
+      const parts: string[] = [`${numberFormatter.format(plan.allocationPct)}%`]
+      if (plan.allocatedGfaSqm != null) {
+        parts.push(`${numberFormatter.format(Math.round(plan.allocatedGfaSqm))} sqm`)
+      }
+      if (plan.niaEfficiency != null) {
+        parts.push(`${oneDecimalFormatter.format(plan.niaEfficiency * 100)}% NIA`)
+      }
+      if (plan.targetFloorHeightM != null) {
+        parts.push(`${oneDecimalFormatter.format(plan.targetFloorHeightM)} m floors`)
+      }
+      if (plan.parkingRatioPer1000Sqm != null) {
+        parts.push(
+          `${oneDecimalFormatter.format(plan.parkingRatioPer1000Sqm)} lots / 1000 sqm`,
+        )
+      }
+      if (plan.estimatedRevenueSgd != null && plan.estimatedRevenueSgd > 0) {
+        parts.push(
+          `Rev ≈ $${oneDecimalFormatter.format(plan.estimatedRevenueSgd / 1_000_000)}M`,
+        )
+      }
+      if (plan.estimatedCapexSgd != null && plan.estimatedCapexSgd > 0) {
+        parts.push(
+          `CAPEX ≈ $${oneDecimalFormatter.format(plan.estimatedCapexSgd / 1_000_000)}M`,
+        )
+      }
+      if (plan.riskLevel) {
+        const risk = `${plan.riskLevel.charAt(0).toUpperCase()}${plan.riskLevel.slice(1)}`
+        parts.push(
+          `${risk} risk${
+            plan.absorptionMonths ? ` · ~${numberFormatter.format(plan.absorptionMonths)}m absorption` : ''
+          }`,
+        )
+      }
+      return parts.join(' • ')
+    }
+
+    return (
+      <section className="feasibility-asset-mix" data-testid="asset-mix">
+        <h3>Captured asset mix</h3>
+        <dl>
+          {capturedAssetMix.map((plan) => (
+            <div key={plan.assetType} className="feasibility-asset-mix__item">
+              <dt>{plan.assetType}</dt>
+              <dd>{formatRow(plan)}</dd>
+              {plan.notes && plan.notes.length > 0 && (
+                <p className="feasibility-asset-mix__note">{plan.notes[0]}</p>
+              )}
+            </div>
+          ))}
+        </dl>
+        {capturedFinancialSummary ? (
+          <div className="feasibility-asset-mix__summary">
+            <h4>Financial snapshot</h4>
+            <ul>
+              <li>
+                Total revenue:{' '}
+                {capturedFinancialSummary.totalEstimatedRevenueSgd != null
+                  ? `$${oneDecimalFormatter.format(
+                      capturedFinancialSummary.totalEstimatedRevenueSgd / 1_000_000,
+                    )}M`
+                  : '—'}
+              </li>
+              <li>
+                Total capex:{' '}
+                {capturedFinancialSummary.totalEstimatedCapexSgd != null
+                  ? `$${oneDecimalFormatter.format(
+                      capturedFinancialSummary.totalEstimatedCapexSgd / 1_000_000,
+                    )}M`
+                  : '—'}
+              </li>
+              <li>
+                Dominant risk:{' '}
+                {capturedFinancialSummary.dominantRiskProfile ?? '—'}
+              </li>
+            </ul>
+            {capturedFinancialSummary.notes.length > 0 && (
+              <p className="feasibility-asset-mix__note">
+                {capturedFinancialSummary.notes[0]}
+              </p>
+            )}
+          </div>
+        ) : null}
+      </section>
+    )
+  }, [capturedAssetMix, capturedFinancialSummary, numberFormatter, oneDecimalFormatter])
 
   const advisoryView = useMemo(() => {
     const hints = result?.advisoryHints ?? []
@@ -865,6 +1035,7 @@ export function FeasibilityWizard({
                   </header>
 
                   {metricsView}
+                  {assetMixView}
 
                   {advisoryView}
 

@@ -1,0 +1,271 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.83879,
+          1.366283
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.847462,
+          1.371508
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.848666,
+          1.365103
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.844452,
+          1.374408
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.844258,
+          1.363591
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.831594,
+          1.367844
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.852327,
+          1.362073
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.842002,
+          1.38107
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.855239,
+          1.370002
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.8500522,
+          1.369776673
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.840907,
+          1.374532
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.848708,
+          1.385586
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.82655,
+          1.372024
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.846208,
+          1.371209
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.868753,
+          1.384903
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.830347,
+          1.373291
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.86597,
+          1.36405
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.84209,
+          1.380638
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Heritage Trail",
+        "description": "The name \"Ang Mo Kio\" has no definitive origin. Some say it comes from the Hokkien term for tomatoes, while others believe it was named after a red-haired Caucasian or a bridge. Whatever the case may be, Ang Mo Kio is now a well-known HDB heartland in Singapore, with its own unique character and home to iconic parks, hidden hawker gems, and the vintage dragon playground.\n\nBefore its transformation into a housing town, Ang Mo Kio was once a plantation and farming land. Like many other rural parts in Singapore, it was first settled by gambier and pepper farmers in the early 1800s before these plantations gave way to rubber estates in the late 19th century. By the early 20th century, there were reports of vegetable farms and fruit orchards, as well as various villages established by Chinese pioneers.\n\nIn those days, residents would refer to this area as Kow Tiow Kio (\u201cnine bridges\u201d in Hokkien) rather than Ang Mo Kio, as one would have to cross nine bridges across tributary streams of the Kallang River to get from present-day Lorong Chuan to Upper Thomson Road. Former villagers recall Kow Tiow Kio as a picturesque area with undulating hillocks, meandering streams, farms, and ponds filled with water hyacinths and lotus.\n\nAs the seventh new town built by HDB, Ang Mo Kio\u2019s transformation took place later than areas such as Toa Payoh and Queenstown. Kampong memories remain strong even today among former villagers, many of whom were resettled in the new town in the late 1970s and early 1980s. The village temples, which have since established themselves in new buildings in Ang Mo Kio\u2019s neighbourhoods, continue to serve as meeting points for Kow Tiow Kio\u2019s former kampong communities.\n\nAt the same time, Ang Mo Kio has grown a distinct identity of its own over the past decades as a new town. It is HDB\u2019s first town to be built in metric dimensions, home to Singapore\u2019s one and only public housing block with circular apartments, and where the concept of town councils was piloted. Long-time residents reminisce fondly of the former Oriental Emporium and Ang Mo Kio\u2019s cinemas in the 1980s while exciting new developments such as AMK Hub enables the town to evolve and remain relevant for younger generations of Singaporeans.\n\nDiscover these memories and more on this self-guided trail of Ang Mo Kio, which brings you on a journey to learn about stories of old and visit icons of the new town!"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.829346,
+          1.378912
+        ]
+      }
+    }
+  ]
+}

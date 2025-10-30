@@ -8,11 +8,11 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from backend.jobs import job_queue
 from sqlalchemy import select
 
 from app.models.audit import AuditLog
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
-from backend.jobs import job_queue
 from httpx import AsyncClient
 
 PROJECT_ID = 4120
@@ -23,6 +23,7 @@ SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
 async def test_overlay_run_and_decisions(
     app_client: AsyncClient,
     async_session_factory,
+    singapore_rules,
     monkeypatch,
 ) -> None:
     sample_path = SAMPLES_DIR / "sample_floorplan.json"

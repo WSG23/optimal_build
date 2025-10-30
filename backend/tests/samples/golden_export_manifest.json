@@ -203,6 +203,90 @@
           "height_m": 52.5,
           "threshold_m": 45
         }
+      },
+      {
+        "layer": "A-OVER-PENDING",
+        "code": "unit_area_summary",
+        "title": "Unit area coverage",
+        "type": "summary",
+        "status": "pending",
+        "severity": "low",
+        "style": {},
+        "nodes": [],
+        "target_ids": [
+          "L01"
+        ],
+        "rule_refs": [
+          "occupancy.area.summary"
+        ],
+        "props": {
+          "total_unit_area_sqm": 134.8,
+          "unit_count": 3,
+          "residential_units": 0
+        }
+      },
+      {
+        "layer": "A-OVER-PENDING",
+        "code": "unit_space_L01-U01",
+        "title": "01-01",
+        "type": "assessment",
+        "status": "pending",
+        "severity": "low",
+        "style": {},
+        "nodes": [],
+        "target_ids": [
+          "L01-U01"
+        ],
+        "rule_refs": [
+          "occupancy.unit.summary"
+        ],
+        "props": {
+          "space_id": "L01-U01",
+          "level_id": "L01",
+          "area_sqm": 45.0
+        }
+      },
+      {
+        "layer": "A-OVER-PENDING",
+        "code": "unit_space_L01-U02",
+        "title": "01-02",
+        "type": "assessment",
+        "status": "pending",
+        "severity": "low",
+        "style": {},
+        "nodes": [],
+        "target_ids": [
+          "L01-U02"
+        ],
+        "rule_refs": [
+          "occupancy.unit.summary"
+        ],
+        "props": {
+          "space_id": "L01-U02",
+          "level_id": "L01",
+          "area_sqm": 42.5
+        }
+      },
+      {
+        "layer": "A-OVER-PENDING",
+        "code": "unit_space_L02-U01",
+        "title": "02-01",
+        "type": "assessment",
+        "status": "pending",
+        "severity": "low",
+        "style": {},
+        "nodes": [],
+        "target_ids": [
+          "L02-U01"
+        ],
+        "rule_refs": [
+          "occupancy.unit.summary"
+        ],
+        "props": {
+          "space_id": "L02-U01",
+          "level_id": "L02",
+          "area_sqm": 47.3
+        }
       }
     ]
   },

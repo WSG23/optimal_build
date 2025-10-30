@@ -10,6 +10,14 @@ from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
+from backend._compat.datetime import UTC
+from backend.jobs import job_queue
+from backend.jobs.parse_cad import (
+    detect_dxf_metadata,
+    detect_ifc_metadata,
+    parse_import_job,
+)
+from backend.jobs.raster_vector import vectorize_floorplan
 from fastapi import (
     APIRouter,
     Depends,
@@ -31,14 +39,6 @@ from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
-from backend._compat.datetime import UTC
-from backend.jobs import job_queue
-from backend.jobs.parse_cad import (
-    detect_dxf_metadata,
-    detect_ifc_metadata,
-    parse_import_job,
-)
-from backend.jobs.raster_vector import vectorize_floorplan
 from pydantic import BaseModel, Field
 
 
@@ -476,7 +476,11 @@ async def _vectorize_payload_if_requested(
     infer_walls: bool,
     import_id: str,
     layer_metadata: list[dict[str, Any]],
-) -> tuple[dict[str, Any] | None, dict[str, Any] | None, list[dict[str, Any]] | None,]:
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any] | None,
+    list[dict[str, Any]] | None,
+]:
     """Return vectorization artefacts when requested and successful."""
 
     if not enable_raster_processing or not _is_vectorizable(filename, content_type):
@@ -778,6 +782,26 @@ async def enqueue_parse(
     if dispatch.result and isinstance(dispatch.result, dict):
         response.result = dispatch.result
         response.status = "completed"
+        return response
+
+    # If the background worker completed the job before we refreshed the record,
+    # surface the persisted result instead of running the parser twice.
+    if record.parse_status and record.parse_status not in {"queued", "running"}:
+        response.status = record.parse_status
+        response.completed_at = record.parse_completed_at
+        response.result = record.parse_result
+        response.error = record.parse_error
+        # Job already finished; callers can drop the queued identifier.
+        response.job_id = None
+        return response
+
+    result = await parse_import_job(import_id=import_id)
+    await session.refresh(record)
+    response.status = record.parse_status or "completed"
+    response.completed_at = record.parse_completed_at
+    response.result = result
+    response.error = record.parse_error
+    response.job_id = None
     return response
 
 

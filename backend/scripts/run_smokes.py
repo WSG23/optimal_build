@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import csv
 import json
 import os
 import subprocess
@@ -12,16 +13,16 @@ import time
 from collections.abc import Iterable, Iterator, MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Mapping, Sequence
 from uuid import uuid4
 
 import httpx
 import structlog
-from app.core.database import AsyncSessionLocal
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..flows import parse_segment, watch_fetch
+from app.core.config import settings
+from app.core.database import AsyncSessionLocal, engine
+from flows import parse_segment, watch_fetch
 from .seed_entitlements_sg import (
     EntitlementsSeedSummary,
 )
@@ -60,6 +61,37 @@ ENTITLEMENTS_PROJECT_ID = 90301
 
 LOGGER = structlog.get_logger(__name__)
 
+DEFAULT_ASSET_MIX_INPUTS: list[dict[str, Any]] = [
+    {
+        "asset_type": "office",
+        "allocation_pct": "55",
+        "nia_sqm": "1000",
+        "rent_psm_month": "10",
+        "stabilised_vacancy_pct": "5",
+        "opex_pct_of_rent": "20",
+        "estimated_revenue_sgd": "91200",
+        "estimated_capex_sgd": "500000",
+        "absorption_months": "6",
+        "risk_level": "balanced",
+        "heritage_premium_pct": None,
+        "notes": ["Office baseline with healthy demand."],
+    },
+    {
+        "asset_type": "retail",
+        "allocation_pct": "25",
+        "nia_sqm": "500",
+        "rent_psm_month": "8",
+        "stabilised_vacancy_pct": "10",
+        "opex_pct_of_rent": "25",
+        "estimated_revenue_sgd": "32400",
+        "estimated_capex_sgd": "150000",
+        "absorption_months": "9",
+        "risk_level": "moderate",
+        "heritage_premium_pct": None,
+        "notes": ["Retail uplift assumes curated tenant mix."],
+    },
+]
+
 
 class SmokeError(RuntimeError):
     """Raised when a smoke step fails to produce the expected artefacts."""
@@ -72,6 +104,17 @@ def _log(message: str) -> None:
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _write_csv(
+    path: Path, headers: Sequence[str], rows: Sequence[Sequence[Any]]
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(list(headers))
+        for row in rows:
+            writer.writerow(["" if value is None else str(value) for value in row])
 
 
 def _augment_pythonpath(env: MutableMapping[str, str], backend_dir: Path) -> None:
@@ -113,12 +156,9 @@ async def _run_seeders_async() -> tuple[dict[str, dict[str, int]], FinanceDemoSu
     await ensure_finance_schema()
 
     async def _seed_finance(session):
+        # seed_finance_demo creates the Project if it doesn't exist (lines 1015-1026)
+        # No need to insert stub - it would violate NOT NULL constraints on project_name/project_code
         project_uuid = uuid4()
-        await session.execute(
-            text("INSERT INTO projects (id) VALUES (:id) ON CONFLICT (id) DO NOTHING"),
-            {"id": project_uuid},
-        )
-
         return await seed_finance_demo(
             session,
             project_id=project_uuid,
@@ -155,35 +195,39 @@ async def _run_seeders_async() -> tuple[dict[str, dict[str, int]], FinanceDemoSu
     return summaries, finance_summary
 
 
-def run_seeders() -> tuple[dict[str, dict[str, int]], FinanceDemoSummary]:
-    return asyncio.run(_run_seeders_async())
-
-
-def run_reference_ingestion(storage_path: Path, artifacts_dir: Path) -> dict[str, Any]:
+async def _run_reference_ingestion_async(
+    storage_path: Path, artifacts_dir: Path
+) -> dict[str, Any]:
+    """Run reference ingestion flows within the same async context."""
     storage_path.mkdir(parents=True, exist_ok=True)
 
     _log("Running offline watch_fetch flow")
-    watch_summary = watch_fetch.main(
-        [
-            "--once",
-            "--offline",
-            "--storage-path",
-            str(storage_path),
-            "--summary-path",
-            str(artifacts_dir / "watch_fetch_summary.json"),
-        ]
-    )
+    from app.services.reference_storage import ReferenceStorage
+
+    storage = ReferenceStorage(base_path=storage_path)
+    fetcher = watch_fetch.OfflineReferenceFetcher()
+
+    # Call _run_flow directly instead of main() to avoid nested asyncio.run()
+    watch_summary = await watch_fetch._run_flow(storage=storage, fetcher=fetcher)  # type: ignore[arg-type]
+
+    summary_path = artifacts_dir / "watch_fetch_summary.json"
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(watch_summary, indent=2, sort_keys=True))
 
     _log("Running parse_segment flow")
-    parse_summary = parse_segment.main(
-        [
-            "--once",
-            "--storage-path",
-            str(storage_path),
-            "--summary-path",
-            str(artifacts_dir / "parse_segment_summary.json"),
-        ]
-    )
+    parse_storage = ReferenceStorage(base_path=storage_path)
+    # Call _run_once and _collect_counts directly instead of main() to avoid nested asyncio.run()
+    processed = await parse_segment._run_once(storage=parse_storage, parser=None)
+    document_count, clause_count = await parse_segment._collect_counts()
+
+    parse_summary = {
+        "processed_documents": processed,
+        "document_count": document_count,
+        "clause_count": clause_count,
+    }
+
+    parse_summary_path = artifacts_dir / "parse_segment_summary.json"
+    parse_summary_path.write_text(json.dumps(parse_summary, indent=2, sort_keys=True))
 
     return {
         "watch_fetch": watch_summary,
@@ -199,7 +243,7 @@ def running_backend(backend_dir: Path, host: str, port: int) -> Iterator[str]:
     command = [
         sys.executable,
         "-m",
-        "backend.uvicorn",
+        "backend.uvicorn_stub",
         "app.main:app",
         "--host",
         host,
@@ -306,20 +350,133 @@ def run_buildable_smoke(client: httpx.Client, artifacts_dir: Path) -> dict[str, 
     return data
 
 
+def capture_finance_asset_mix(client: httpx.Client) -> list[dict[str, Any]]:
+    _log("Capturing developer property for finance asset mix inputs")
+    capture_payload = {
+        "latitude": 1.285,
+        "longitude": 103.853,
+    }
+    try:
+        response = _retry_request(
+            client,
+            "POST",
+            "/api/v1/developers/properties/log-gps",
+            json=capture_payload,
+            headers={"X-Role": "reviewer"},
+        )
+    except SmokeError as exc:
+        LOGGER.warning(
+            "smokes.capture_finance_asset_mix.failed",
+            error=str(exc),
+            latitude=capture_payload["latitude"],
+            longitude=capture_payload["longitude"],
+        )
+        LOGGER.info("smokes.capture_finance_asset_mix.using_default_static_inputs")
+        return list(DEFAULT_ASSET_MIX_INPUTS)
+    data = response.json()
+    summary = data.get("financial_summary") or {}
+    asset_mix_inputs = summary.get("asset_mix_finance_inputs")
+    if not asset_mix_inputs:
+        LOGGER.warning("smokes.capture_finance_asset_mix.missing_inputs")
+        LOGGER.info("smokes.capture_finance_asset_mix.using_default_static_inputs")
+        return list(DEFAULT_ASSET_MIX_INPUTS)
+    return asset_mix_inputs
+
+
+def _poll_finance_status(
+    client: httpx.Client,
+    scenario_id: int,
+    artifacts_dir: Path,
+    *,
+    interval: float = 2.0,
+    timeout: float = 60.0,
+    headers: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    _log(f"Polling finance scenario status for scenario_id={scenario_id}")
+    snapshots: list[dict[str, Any]] = []
+    deadline = time.perf_counter() + max(timeout, 5.0)
+    status_path = artifacts_dir / "finance_sensitivity_status_history.json"
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+
+    while True:
+        response = _retry_request(
+            client,
+            "GET",
+            f"/api/v1/finance/scenarios/{scenario_id}/status",
+            headers=headers or {},
+        )
+        payload = response.json()
+        snapshots.append(payload)
+        status_path.write_text(
+            json.dumps(snapshots, indent=2, sort_keys=True), encoding="utf-8"
+        )
+        pending_jobs = payload.get("pending_jobs") or []
+        if not pending_jobs:
+            break
+        if time.perf_counter() >= deadline:
+            raise SmokeError(
+                "Finance sensitivity jobs did not complete within the allotted timeout"
+            )
+        time.sleep(interval)
+
+    terminal_snapshot = snapshots[-1]
+    _write_json(
+        artifacts_dir / "finance_sensitivity_status.json",
+        terminal_snapshot,
+    )
+    return terminal_snapshot
+
+
 def run_finance_smoke(
     client: httpx.Client,
     artifacts_dir: Path,
     finance_summary: seed_finance_demo.FinanceDemoSummary,
+    asset_mix_inputs: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     _log("Executing finance feasibility smoke request")
+    auth_headers = {
+        "X-Role": "reviewer",
+        "X-User-Email": "demo-owner@example.com",
+    }
+    max_sync_bands = max(1, getattr(settings, "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3))
+    sensitivity_templates = [
+        {
+            "parameter": "Rent sensitivity band",
+            "low": "-6",
+            "base": "0",
+            "high": "4",
+        },
+        {
+            "parameter": "Construction cost sensitivity band",
+            "low": "12",
+            "base": "0",
+            "high": "-5",
+        },
+        {
+            "parameter": "Interest rate sensitivity (delta %)",
+            "low": "1.00",
+            "base": "0",
+            "high": "-0.50",
+        },
+    ]
+    total_bands = max(len(sensitivity_templates), max_sync_bands + 2)
+    sensitivity_bands: list[dict[str, str]] = []
+    while len(sensitivity_bands) < total_bands:
+        template = sensitivity_templates[
+            len(sensitivity_bands) % len(sensitivity_templates)
+        ]
+        band = dict(template)
+        band["parameter"] = f"{template['parameter']} #{len(sensitivity_bands) + 1}"
+        sensitivity_bands.append(band)
+
     payload = {
         "project_id": finance_summary.project_id,
-        "project_name": seed_finance_demo.DEMO_PROJECT_NAME,
+        "project_name": DEMO_PROJECT_NAME,
         "fin_project_id": finance_summary.fin_project_id,
         "scenario": {
             "name": "Scenario A – Base Case",
             "description": "Baseline absorption with phased sales releases.",
-            "currency": seed_finance_demo.DEMO_CURRENCY,
+            "currency": DEMO_CURRENCY,
             "is_primary": True,
             "cost_escalation": {
                 "amount": "38950000",
@@ -358,10 +515,40 @@ def run_finance_smoke(
                 ],
                 "period_labels": ["M1", "M2", "M3", "M4", "M5", "M6"],
             },
+            "sensitivity_bands": sensitivity_bands,
         },
     }
+    if asset_mix_inputs:
+        payload["scenario"]["asset_mix"] = list(asset_mix_inputs)
+    payload["scenario"]["construction_loan"] = {
+        "interest_rate": "0.043",
+        "periods_per_year": 12,
+        "capitalise_interest": True,
+        "facilities": [
+            {
+                "name": "Senior Loan",
+                "amount": "1750000",
+                "interest_rate": "0.041",
+                "periods_per_year": 12,
+                "capitalise_interest": True,
+                "upfront_fee_pct": "1.0",
+            },
+            {
+                "name": "Mezz Loan",
+                "amount": "450000",
+                "interest_rate": "0.082",
+                "periods_per_year": 12,
+                "capitalise_interest": False,
+                "exit_fee_pct": "2.0",
+            },
+        ],
+    }
     response = _retry_request(
-        client, "POST", "/api/v1/finance/feasibility", json=payload
+        client,
+        "POST",
+        "/api/v1/finance/feasibility",
+        json=payload,
+        headers=auth_headers,
     )
     data = response.json()
 
@@ -375,9 +562,65 @@ def run_finance_smoke(
         "GET",
         "/api/v1/finance/export",
         params={"scenario_id": data["scenario_id"]},
+        headers=auth_headers,
     )
     export_path = artifacts_dir / "finance_export.csv"
     export_path.write_text(export_response.text, encoding="utf-8")
+
+    scenario_id = data.get("scenario_id")
+    if scenario_id:
+        _poll_finance_status(
+            client,
+            scenario_id,
+            artifacts_dir,
+            headers=auth_headers,
+        )
+
+    sensitivity_results = data.get("sensitivity_results") or []
+    if isinstance(sensitivity_results, Sequence) and sensitivity_results:
+        headers = [
+            "parameter",
+            "scenario",
+            "delta_label",
+            "npv",
+            "irr",
+            "escalated_cost",
+            "total_interest",
+            "notes",
+        ]
+        rows: list[list[Any]] = []
+        for entry in sensitivity_results:
+            if not isinstance(entry, Mapping):
+                continue
+            notes_value = entry.get("notes")
+            if isinstance(notes_value, Sequence) and not isinstance(
+                notes_value, (str, bytes)
+            ):
+                notes_text = "; ".join(str(item) for item in notes_value if item)
+            else:
+                notes_text = "" if notes_value in (None, "", []) else str(notes_value)
+            rows.append(
+                [
+                    entry.get("parameter"),
+                    entry.get("scenario"),
+                    entry.get("delta_label", entry.get("deltaLabel")),
+                    entry.get("npv"),
+                    entry.get("irr"),
+                    entry.get("escalated_cost"),
+                    entry.get("total_interest"),
+                    notes_text,
+                ]
+            )
+        if rows:
+            _write_csv(artifacts_dir / "finance_sensitivity.csv", headers, rows)
+
+    sensitivity_jobs = data.get("sensitivity_jobs")
+    if isinstance(sensitivity_jobs, Sequence) and sensitivity_jobs:
+        _write_json(
+            artifacts_dir / "finance_sensitivity_jobs.json",
+            list(sensitivity_jobs),
+        )
+
     return data
 
 
@@ -406,22 +649,35 @@ def fetch_openapi_schema(client: httpx.Client, artifacts_dir: Path) -> dict[str,
     return payload
 
 
-def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
+async def _orchestrate_smokes_async(artifacts_dir: Path) -> dict[str, Any]:
+    """Run all async smoke operations in a single event loop."""
     backend_dir = Path(__file__).resolve().parents[1]
     artifacts_dir.mkdir(parents=True, exist_ok=True)
 
+    # Migrations are sync, run first
     run_alembic_upgrades(backend_dir)
-    seed_summaries, finance_summary = run_seeders()
+
+    # Run seeders (already async)
+    seed_summaries, finance_summary = await _run_seeders_async()
     _write_json(artifacts_dir / "seed_summary.json", seed_summaries)
 
-    ingestion = run_reference_ingestion(
+    # Run reference ingestion (now async)
+    ingestion = await _run_reference_ingestion_async(
         artifacts_dir / "reference_storage", artifacts_dir
     )
 
+    # Dispose the async engine to prevent "attached to different loop" errors
+    # when the backend server starts with its own event loop
+    await engine.dispose()
+
+    # Backend server and HTTP tests are sync
     with running_backend(backend_dir, BACKEND_HOST, BACKEND_PORT) as base_url:
         with httpx.Client(base_url=base_url, timeout=30.0) as client:
             buildable = run_buildable_smoke(client, artifacts_dir)
-            finance = run_finance_smoke(client, artifacts_dir, finance_summary)
+            finance_asset_mix = capture_finance_asset_mix(client)
+            finance = run_finance_smoke(
+                client, artifacts_dir, finance_summary, finance_asset_mix
+            )
             entitlements = run_entitlements_smoke(client, artifacts_dir)
             openapi = fetch_openapi_schema(client, artifacts_dir)
 
@@ -435,6 +691,11 @@ def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
     }
     _write_json(artifacts_dir / "smokes_summary.json", summary)
     return summary
+
+
+def orchestrate_smokes(artifacts_dir: Path) -> dict[str, Any]:
+    """Orchestrate smoke tests with consolidated async event loop."""
+    return asyncio.run(_orchestrate_smokes_async(artifacts_dir))
 
 
 def build_argument_parser() -> argparse.ArgumentParser:

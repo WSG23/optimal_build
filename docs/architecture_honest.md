@@ -1,6 +1,6 @@
 # Optimal Build - Actual System Architecture
 
-> **Documentation Philosophy**: This document reflects the **actual implementation** as of 2025-10-04, including working features, broken/disabled code, and technical debt. For the aspirational/product vision, see [architecture.md](architecture.md).
+> **Documentation Philosophy**: This document reflects the **actual implementation** as of 2025-10-19, including working features, broken/disabled code, and technical debt. For the aspirational/product vision, see [architecture.md](architecture.md).
 
 **Status legend** — ✅ Working · ❌ Broken/Disabled · ⚙️ Partial · 🔄 Planned
 
@@ -85,9 +85,12 @@ ui-admin/src/
 ├── products.py           # Product catalog
 └── imports.py            # Import workflows
 
-❌ Disabled routers (commented out in __init__.py:69-70):
-├── market_intelligence.py  # "Temporarily disabled - fixing model dependencies"
-└── agents.py               # "Temporarily disabled - fixing model dependencies"
+✅ Additional working routers:
+├── deals.py                # Business performance pipeline endpoints
+├── performance.py          # Agent performance analytics endpoints
+├── advanced_intelligence.py # Investigation analytics stubs
+├── listings.py             # Listing management endpoints
+└── developers.py           # Developer workspace endpoints (site acquisition, checklists)
 
 📝 Note: No standalone auth.py, properties.py, or analytics.py as documented
 ```
@@ -264,7 +267,7 @@ backend/app/core/
 - **Version**: PostgreSQL 15 with PostGIS 3.3 (alpine)
 - **ORM**: SQLAlchemy 2.0.23 (async)
 - **Driver**: asyncpg 0.29.0
-- **Migrations**: ❌ Alembic 1.13.0 installed but **not initialized** (no versions/ directory)
+- **Migrations**: ✅ Alembic 1.13.0 **fully initialized** with 19+ migration files in versions/
 
 **Key Tables** (actual):
 - `users` - User authentication & management
@@ -436,8 +439,8 @@ Managed services:
 ## 🔴 Known Issues & Technical Debt
 
 ### Critical
-1. **Disabled APIs**: `market_intelligence.py` and `agents.py` commented out in production (backend/app/api/v1/__init__.py:69-70) - "Temporarily disabled - fixing model dependencies"
-2. **No Database Migrations**: Alembic installed but not initialized - schema changes likely manual
+1. ~~**Disabled APIs**: `market_intelligence.py` and `agents.py` commented out~~ **✅ RESOLVED** - Both routers are now active and registered (as of 2025-10-19)
+2. ~~**No Database Migrations**: Alembic installed but not initialized~~ **✅ RESOLVED** - Alembic fully initialized with 19+ migration files (as of 2025-10-19)
 3. **No Metrics**: Prometheus client installed but no instrumentation (latency, errors, throughput all missing)
 
 ### High
@@ -485,5 +488,19 @@ Managed services:
 
 ---
 
-*Last Updated: 2025-10-04*
+## 🔄 Recent Updates (2025-10-19)
+
+**Resolved Issues:**
+- ✅ **API Routers Restored**: `market_intelligence.py` and `agents.py` are now active and fully functional
+- ✅ **Database Migrations Initialized**: Alembic fully operational with 19+ migration files tracking schema evolution
+- ✅ **Additional Routers Added**: Phase 1 completion brought 5+ new working routers (deals, performance, listings, developers, advanced_intelligence)
+
+**Remaining Critical Issues:**
+- ❌ Prometheus metrics instrumentation still missing
+- ⚠️ Rate limiting middleware not yet implemented
+
+---
+
+*Last Updated: 2025-10-19*
 *Reflects actual implementation, not aspirational design*
+*Previous update: 2025-10-04*

@@ -13,6 +13,8 @@ rule violations.
 
 ## 1. Database Migrations
 
+### 1.1 Never Edit Existing Migrations
+
 **Rule:** Never edit existing Alembic migration files. Always create a new migration for schema changes.
 
 **Why:** Editing existing migrations breaks version history and can corrupt databases that have already applied those migrations.
@@ -30,6 +32,150 @@ cd backend && alembic revision -m "add compliance_score column"
 
 # ❌ Wrong - editing existing migration
 # Don't open and modify backend/migrations/versions/20240919_000005_enable_postgis_geometry.py
+```
+
+### 1.2 PostgreSQL ENUM Types in Migrations
+
+**Rule:** Do NOT use `sa.Enum()` objects with `create_type=False` in migrations. Use plain `sa.String()` for ENUM columns instead.
+
+**Why:** SQLAlchemy's `sa.Enum()` tries to autocreate the ENUM type even when `create_type=False`, causing "type already exists" errors. This pattern caused 9 migration failures in Oct 2025 (see git history for 20250220_000009-000017).
+
+**How to follow:**
+- Use `sa.String()` for columns that will store ENUM values
+- PostgreSQL will still validate against the ENUM type if you manually create it
+- If you need the ENUM type for validation, create it separately with raw SQL
+- Do NOT define `SOME_ENUM = sa.Enum(..., create_type=False)` variables
+
+**Examples:**
+```python
+# ❌ WRONG - causes "duplicate type" errors
+DEAL_STATUS_ENUM = sa.Enum(
+    "open", "closed_won", "closed_lost",
+    name="deal_status",
+    create_type=False,  # ← This doesn't actually prevent autocreation!
+)
+
+def upgrade() -> None:
+    # Manual creation
+    op.execute("CREATE TYPE deal_status AS ENUM ('open', 'closed_won', 'closed_lost')")
+
+    op.create_table(
+        "deals",
+        sa.Column("status", DEAL_STATUS_ENUM, nullable=False),  # ← Tries to create type again!
+    )
+
+# ✅ CORRECT - use String type
+def upgrade() -> None:
+    # Optional: Create ENUM type if you want DB-level validation
+    op.execute(
+        "CREATE TYPE deal_status AS ENUM ('open', 'closed_won', 'closed_lost')"
+    )
+
+    op.create_table(
+        "deals",
+        sa.Column("status", sa.String(), nullable=False),  # ← Simple string type
+    )
+
+    # Optional: Convert to ENUM type after table creation
+    op.execute(
+        "ALTER TABLE deals ALTER COLUMN status TYPE deal_status USING status::deal_status"
+    )
+```
+
+**Related issues:**
+- Foreign keys to non-existent tables: Remove them and add TODO comments for later
+- UUID columns: Use `postgresql.UUID(as_uuid=True)` not `String(36)`
+
+**Enforcement:**
+This rule is enforced by:
+- Pre-commit hook: `check-migration-enums` (runs on every commit)
+- Script: `scripts/check_migration_enums.py` (can run manually)
+- CI: Will be added in Phase 3 of migration validation infrastructure
+
+To check manually:
+```bash
+python3 scripts/check_migration_enums.py
+```
+
+**Exceptions:**
+Pre-existing migrations that use the forbidden pattern are listed in `.coding-rules-exceptions.yml` under `rule_1_2_enum_pattern`. These are grandfathered in but should NOT be edited. All NEW migrations must follow the correct pattern.
+
+### 1.3 ENUM Value Naming Convention
+
+**Rule:** PostgreSQL ENUM values must EXACTLY match the Python enum string values. Use consistent casing between database and code.
+
+**Why:** PostgreSQL ENUM values are case-sensitive. If the Python model uses `ProjectType.NEW_DEVELOPMENT` with value `"NEW_DEVELOPMENT"`, the SQL ENUM must contain `'NEW_DEVELOPMENT'`, not `'new_development'`. Mismatches cause runtime errors like `invalid input value for enum`.
+
+**How to follow:**
+- Check the Python enum definition to see what string VALUES it uses (not the member names)
+- Create the PostgreSQL ENUM with the exact same values
+- For Python enums with uppercase values, use uppercase in SQL
+- For Python enums with lowercase values, use lowercase in SQL
+- When seeding data, use `enum_value.value` to get the string value
+
+**Examples:**
+
+```python
+# Python model - check the VALUES
+class ProjectType(str, Enum):
+    NEW_DEVELOPMENT = "NEW_DEVELOPMENT"  # ← VALUE is uppercase
+    REDEVELOPMENT = "REDEVELOPMENT"
+
+class EntApprovalCategory(str, Enum):
+    PLANNING = "planning"  # ← VALUE is lowercase
+    BUILDING = "building"
+```
+
+```python
+# ✅ CORRECT - migration matches Python enum VALUES
+def upgrade() -> None:
+    # ProjectType uses uppercase VALUES
+    op.execute("""
+        CREATE TYPE projecttype AS ENUM (
+            'NEW_DEVELOPMENT',  -- matches ProjectType.NEW_DEVELOPMENT.value
+            'REDEVELOPMENT'     -- matches ProjectType.REDEVELOPMENT.value
+        )
+    """)
+
+    # EntApprovalCategory uses lowercase VALUES
+    op.execute("""
+        CREATE TYPE ent_approval_category AS ENUM (
+            'planning',  -- matches EntApprovalCategory.PLANNING.value
+            'building'   -- matches EntApprovalCategory.BUILDING.value
+        )
+    """)
+
+# ❌ WRONG - case mismatch with Python enum
+def upgrade() -> None:
+    op.execute("""
+        CREATE TYPE projecttype AS ENUM (
+            'new_development',  -- ❌ Python has "NEW_DEVELOPMENT"
+            'redevelopment'     -- ❌ Python has "REDEVELOPMENT"
+        )
+    """)
+```
+
+```python
+# When seeding data
+# ✅ CORRECT - use .value to get the string
+approval_type = EntApprovalType(
+    category=EntApprovalCategory.PLANNING.value  # Gets "planning" string
+)
+
+# ❌ WRONG - passing enum object can send the member name instead of value
+approval_type = EntApprovalType(
+    category=EntApprovalCategory.PLANNING  # Might send "PLANNING" instead of "planning"
+)
+```
+
+**Verification:**
+```bash
+# Check what value the Python enum actually uses
+python3 -c "from app.models.projects import ProjectType; print(ProjectType.NEW_DEVELOPMENT.value)"
+# Output: NEW_DEVELOPMENT  ← Use this in SQL
+
+# Check database ENUM values
+psql -c "SELECT enumlabel FROM pg_enum WHERE enumtypid = 'projecttype'::regtype;"
 ```
 
 ---
@@ -73,28 +219,32 @@ def get_property(session: Session, property_id: str):  # Missing async
 
 ## 3. Testing Before Commits
 
-**Rule:** **ALWAYS** run `make format` then `make verify` before committing or opening a pull request. This is **MANDATORY** - no exceptions.
+**Rule:** Code formatting is **automatically handled by pre-commit hooks**. Run `make verify` before committing to ensure all checks pass.
 
 **Why:**
-- `make format` fixes all formatting issues (black, isort, ruff) and catches syntax errors
+- Pre-commit hooks automatically fix formatting issues (black, ruff, prettier)
 - `make verify` catches lint failures, unused variables, and test regressions
-- Running format first prevents pre-commit hook failures and failed commits
-- Skipping these steps wastes time with "commit fails → fix issues → re-commit" cycles
+- Automation prevents "commit fails → fix issues → re-commit" cycles
 
-**Mandatory Workflow:**
+**New Workflow (Simplified):**
 ```bash
-# STEP 1 (MANDATORY): Format code first
-make format
-
-# STEP 2 (MANDATORY): Verify everything passes
+# STEP 1 (MANDATORY): Verify everything passes
 make verify
 
-# STEP 3: Only commit after both pass
+# STEP 2: Commit (pre-commit hooks auto-format)
 git add .
 git commit -m "your message"
+
+# If hooks modified files, they're auto-staged - just commit again
 ```
 
-**⚠️ Warning:** If you skip `make format`, pre-commit hooks will modify your files automatically, causing the commit to fail. You'll then need to re-stage the auto-fixed files and commit again.
+**Manual formatting (optional):**
+```bash
+# To format ALL files before committing:
+pre-commit run --all-files
+```
+
+**Note:** `make format` is now deprecated - it just shows a help message explaining that formatting is automatic.
 
 **Tip:** See [CONTRIBUTING.md](CONTRIBUTING.md#testing-and-quality-checks) for the full testing and linting workflow.
 
@@ -339,23 +489,609 @@ def process_items(items: List[str] = []) -> List[str]:  # Dangerous!
 
 ---
 
-## 8. AI Agent Planning References
+## 8. AI Agent Testing Instructions (MANDATORY)
 
-**Rule:** Plans, “next steps,” and wrap-up instructions produced by AI agents must cite the canonical testing guides so humans can run the right checks.
+**Rule:** When AI agents complete ANY feature, they MUST provide test instructions to the user. This includes backend tests, frontend tests, and UI manual test steps.
 
-**Why:** Phase gates depend on manual walkthroughs and targeted smoke suites. Referencing the official docs keeps every agent in sync with the approved testing scope.
+**Why:** Phase gates depend on manual walkthroughs and targeted smoke suites. Referencing the official docs keeps every agent in sync with the approved testing scope. Without explicit test instructions, features go untested and regressions accumulate.
 
 **How to follow:**
-- Before proposing work, open:
-  - `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`
-  - Your phase section in `docs/feature_delivery_plan_v2.md`
-  - `TESTING_KNOWN_ISSUES.md`, `UI_STATUS.md`, `TESTING_DOCUMENTATION_SUMMARY.md`, and the `README` (`make dev` notes for log monitoring)
-- Mirror those references (or the exact commands they prescribe) in your response.
-- If expectations change, update the docs first so the automation stays accurate.
 
-**Automatic Enforcement:**
+### 8.1 MANDATORY Testing Checklist After Feature Completion
+
+When you complete ANY feature implementation, you MUST:
+
+**a) Provide backend test commands:**
+```markdown
+Backend tests:
+.venv/bin/pytest backend/tests/test_api/test_[feature].py -v
+.venv/bin/pytest backend/tests/test_services/test_[feature].py -v
+```
+
+**b) Provide frontend test commands (if applicable):**
+```markdown
+Frontend tests:
+npm test -- src/modules/[feature]/__tests__
+npm run lint
+```
+
+**c) Provide UI manual test steps:**
+```markdown
+UI Manual Testing:
+1. Navigate to [URL or component]
+2. Click [button/action]
+3. Verify [expected outcome]
+4. Test edge cases: [list specific scenarios]
+```
+
+### 8.2 Required Documentation References
+
+Before proposing work, AI agents must read:
+- [`docs/ai-agents/next_steps.md`](docs/ai-agents/next_steps.md) (MANDATORY TESTING CHECKLIST section)
+- Your phase section in [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md)
+- [`docs/development/testing/known-issues.md`](docs/development/testing/known-issues.md) (check for known test failures before reporting)
+- [`docs/planning/ui-status.md`](docs/planning/ui-status.md) (understand UI implementation status)
+- [`docs/development/testing/summary.md`](docs/development/testing/summary.md) (find smoke/regression suites)
+- [`README.md`](README.md) (`make dev` notes for log monitoring)
+
+Mirror those references (or the exact commands they prescribe) in your response.
+
+If expectations change, update the docs first so the automation stays accurate.
+
+### 8.3 Examples
+
+**✅ CORRECT - Complete test instructions:**
+```markdown
+I've completed the finance scenario privacy feature. Please test:
+
+Backend tests:
+.venv/bin/pytest backend/tests/test_api/test_finance.py::test_scenario_privacy -v
+.venv/bin/pytest backend/tests/test_models/test_finance_scenario.py -v
+
+Frontend tests:
+npm test -- src/modules/finance/__tests__/FinanceScenarioTable.test.tsx
+
+UI Manual Testing:
+1. Navigate to /finance/scenarios
+2. Create a new scenario
+3. Toggle "Make Private" checkbox
+4. Save and verify scenario shows lock icon
+5. Logout and login as different user
+6. Verify private scenario is NOT visible
+```
+
+**❌ WRONG - No test instructions:**
+```markdown
+I've completed the finance scenario privacy feature. The implementation is done.
+```
+
+**❌ WRONG - Generic test instructions:**
+```markdown
+Run the tests to verify the feature works.
+```
+
+### 8.4 Automatic Enforcement
+
 - `scripts/check_coding_rules.py` verifies the guidance docs contain the mandatory references. Do not remove them without adding a replacement rule.
-- During reviews, reject any “next steps” that omit the required citations.
+- During reviews, reject any "next steps" that omit the required test instructions.
+- **FUTURE:** Commit message hook will enforce that feature commits include test commands in the message body.
+
+### 8.5 Compliance Check
+
+When completing a feature, ask yourself:
+- [ ] Did I provide backend pytest commands?
+- [ ] Did I provide frontend test commands (if applicable)?
+- [ ] Did I provide specific UI manual test steps?
+- [ ] Did I reference `docs/development/testing/known-issues.md` to avoid duplicate reports?
+- [ ] Did I check `docs/planning/ui-status.md` to understand current implementation state?
+
+**If you answered NO to any of these, your work is incomplete.**
+
+---
+
+## 9. Database Performance & Indexing
+
+**Rule:** All foreign keys MUST have indexes. Frequently queried columns SHOULD have indexes. Never deploy tables >1000 rows without appropriate indexes.
+
+**Why:** 89% of failed startups (per Inc.com audit) had no database indexing, causing significant performance degradation. Queries without indexes cause full table scans (O(n) instead of O(log n)).
+
+**How to follow:**
+- **ALWAYS index foreign key columns** (user_id, project_id, property_id, etc.)
+- **Index columns used in WHERE clauses** frequently
+- **Index columns used in JOIN conditions**
+- **Index columns used in ORDER BY** if the query is frequent
+- **Add indexes in the same migration** that creates the table
+
+**Examples:**
+```python
+# ✅ CORRECT - Create table with indexes
+def upgrade() -> None:
+    op.create_table(
+        'finance_scenarios',
+        sa.Column('id', sa.Integer(), primary_key=True),
+        sa.Column('project_id', sa.Integer(), nullable=False),  # Foreign key
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+        sa.Column('status', sa.String(), nullable=False),
+    )
+
+    # Index foreign keys
+    op.create_index('ix_finance_scenarios_project_id', 'finance_scenarios', ['project_id'])
+
+    # Index frequently queried columns
+    op.create_index('ix_finance_scenarios_created_at', 'finance_scenarios', ['created_at'])
+    op.create_index('ix_finance_scenarios_status', 'finance_scenarios', ['status'])
+
+    # Composite index for common query pattern
+    op.create_index(
+        'ix_finance_scenarios_project_status',
+        'finance_scenarios',
+        ['project_id', 'status']
+    )
+
+# ❌ WRONG - No indexes on foreign keys or query columns
+def upgrade() -> None:
+    op.create_table(
+        'finance_scenarios',
+        sa.Column('id', sa.Integer(), primary_key=True),
+        sa.Column('project_id', sa.Integer(), nullable=False),  # No index!
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),  # No index!
+        sa.Column('status', sa.String(), nullable=False),  # No index!
+    )
+```
+
+**When to add indexes:**
+- **New tables:** Add indexes in the same migration that creates the table
+- **Existing tables:** Add indexes in a separate migration if queries are slow (>500ms)
+- **After adding columns:** If the new column will be queried frequently, add an index
+
+**Performance targets:**
+- All queries <500ms in local testing
+- No full table scans on tables >1000 rows
+- Foreign key queries return in <100ms
+
+**Check if indexes exist:**
+```sql
+-- List all indexes on a table
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'finance_scenarios';
+
+-- Find tables missing indexes on foreign keys
+SELECT schemaname, tablename
+FROM pg_stat_user_tables
+WHERE seq_scan > idx_scan
+AND seq_scan > 100;
+```
+
+**Enforcement:**
+- Manual review during code review
+- Query performance testing before Phase transitions
+- Pre-Phase 2D audit will add missing indexes to existing tables
+
+---
+
+## 10. Testing Requirements
+
+**Rule:** All new features MUST have automated tests. Backend coverage >80% for critical paths. Frontend critical paths must have unit tests.
+
+**Why:** 91% of failed startups (per Inc.com audit) had no automated testing, making feature additions unpredictable and causing regressions.
+
+**How to follow:**
+
+### Backend Testing (MANDATORY)
+- **API endpoints:** Integration tests for all new endpoints
+- **Service layer:** Unit tests for all business logic functions
+- **Database models:** CRUD tests for new models
+- **Critical calculations:** 100% coverage for finance, compliance, ROI calculations
+
+**Backend test structure:**
+```python
+# backend/tests/test_api/test_finance.py
+async def test_create_finance_scenario_success(client, test_user):
+    """Test creating a finance scenario returns 201 and correct data."""
+    response = await client.post(
+        "/api/v1/finance/scenarios",
+        json={"project_id": 1, "name": "Test Scenario"},
+        headers={"Authorization": f"Bearer {test_user.token}"}
+    )
+    assert response.status_code == 201
+    assert response.json()["name"] == "Test Scenario"
+
+async def test_create_finance_scenario_unauthorized(client):
+    """Test creating scenario without auth returns 401."""
+    response = await client.post(
+        "/api/v1/finance/scenarios",
+        json={"project_id": 1, "name": "Test"}
+    )
+    assert response.status_code == 401
+```
+
+### Frontend Testing (RECOMMENDED)
+- **Critical user flows:** E2E tests for login, data submission, calculations
+- **Components:** Unit tests for complex components with business logic
+- **API clients:** Integration tests for API communication layer
+
+**Frontend test structure:**
+```typescript
+// frontend/src/modules/finance/components/__tests__/FinanceScenarioTable.test.tsx
+import { render, screen } from '@testing-library/react';
+import { FinanceScenarioTable } from '../FinanceScenarioTable';
+
+test('renders scenario table with data', () => {
+  const scenarios = [{ id: 1, name: 'Test', npv: 1000000 }];
+  render(<FinanceScenarioTable scenarios={scenarios} />);
+
+  expect(screen.getByText('Test')).toBeInTheDocument();
+  expect(screen.getByText('$1,000,000')).toBeInTheDocument();
+});
+```
+
+### CI/CD Integration (MANDATORY)
+- **Pre-commit:** Tests run automatically before commit
+- **PR checks:** All tests must pass before merge
+- **No bypassing:** Never use `--no-verify` to skip tests
+
+**Running tests:**
+```bash
+# Backend tests
+pytest backend/tests/ -v
+
+# Frontend tests
+npm test
+
+# All tests
+make test
+```
+
+**Coverage requirements:**
+- Backend critical paths: >80%
+- Backend overall: >70%
+- Frontend critical paths: Covered
+- Frontend overall: Best effort (JSDOM timing issues documented in `docs/development/testing/known-issues.md`)
+
+**Enforcement:**
+- CI blocks merges without passing tests
+- Pre-commit hooks run tests automatically
+- Phase gate checks verify test coverage before phase completion
+
+**Exceptions:**
+- Frontend tests have known JSDOM timing issues (see `docs/development/testing/known-issues.md`)
+- Test harness UI (non-production) may have lower coverage
+- Document test gaps in commit messages if test is deferred
+
+---
+
+## 11. Security Practices
+
+**Rule:** Follow security best practices for authentication, input validation, secrets management, and API security. Never commit secrets.
+
+**Why:** 68% of failed startups (per Inc.com audit) had security vulnerabilities leading to breaches and compliance failures.
+
+**How to follow:**
+
+### Authentication & Authorization (MANDATORY)
+```python
+# ✅ CORRECT - All endpoints require authentication
+from app.api.deps import get_current_user, require_developer_role
+
+@router.post("/finance/scenarios")
+async def create_scenario(
+    data: FinanceScenarioCreate,
+    current_user: User = Depends(get_current_user),  # Required auth
+    db: AsyncSession = Depends(get_db)
+):
+    # Verify user owns the project
+    if not await user_owns_project(db, current_user.id, data.project_id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    return await create_finance_scenario(db, data)
+
+# ❌ WRONG - No authentication required
+@router.post("/finance/scenarios")
+async def create_scenario(
+    data: FinanceScenarioCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    # Anyone can create scenarios!
+    return await create_finance_scenario(db, data)
+```
+
+### Input Validation (MANDATORY)
+```python
+# ✅ CORRECT - Pydantic validates all inputs
+from pydantic import BaseModel, Field, validator
+
+class FinanceScenarioCreate(BaseModel):
+    project_id: int = Field(..., gt=0)  # Must be positive
+    name: str = Field(..., min_length=1, max_length=200)  # Length limits
+    budget: float = Field(..., gt=0, le=1e9)  # Reasonable range
+
+    @validator('name')
+    def name_must_not_contain_html(cls, v):
+        if '<' in v or '>' in v:
+            raise ValueError('HTML tags not allowed')
+        return v
+
+# ❌ WRONG - No input validation
+@router.post("/finance/scenarios")
+async def create_scenario(project_id: int, name: str, budget: float):
+    # Could inject SQL, XSS, or cause overflow!
+    return await db.execute(f"INSERT INTO scenarios VALUES ({project_id}, '{name}', {budget})")
+```
+
+### SQL Injection Prevention (MANDATORY)
+```python
+# ✅ CORRECT - Use SQLAlchemy ORM or parameterized queries
+from sqlalchemy import select
+
+async def get_scenarios(db: AsyncSession, project_id: int):
+    stmt = select(FinanceScenario).where(FinanceScenario.project_id == project_id)
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+# ❌ WRONG - SQL injection vulnerability
+async def get_scenarios(db: AsyncSession, project_id: int):
+    query = f"SELECT * FROM finance_scenarios WHERE project_id = {project_id}"
+    # Attacker can inject: project_id = "1 OR 1=1"
+    result = await db.execute(query)
+    return result.fetchall()
+```
+
+### Secrets Management (MANDATORY)
+```python
+# ✅ CORRECT - Secrets in environment variables
+import os
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    database_url: str
+    jwt_secret: str
+    api_key: str
+
+    class Config:
+        env_file = ".env"  # Never commit .env to git!
+
+# ❌ WRONG - Hardcoded secrets
+DATABASE_URL = "postgresql://user:password123@localhost/db"  # Never do this!
+JWT_SECRET = "super-secret-key"  # Never do this!
+API_KEY = "abc123xyz"  # Never do this!
+```
+
+### Rate Limiting (MANDATORY for production)
+```python
+# ✅ CORRECT - Rate limiting on all endpoints
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
+@router.post("/finance/scenarios")
+@limiter.limit("10/minute")  # Max 10 requests per minute
+async def create_scenario(...):
+    pass
+
+# For expensive operations, stricter limits
+@router.post("/finance/sensitivity-analysis")
+@limiter.limit("2/minute")  # Max 2 requests per minute
+async def run_sensitivity(...):
+    pass
+```
+
+### Security Headers (MANDATORY for production)
+```python
+# ✅ CORRECT - Add security headers
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://yourdomain.com"],  # Specific origins only
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+```
+
+### Password Hashing (MANDATORY)
+```python
+# ✅ CORRECT - Use bcrypt or argon2
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+# ❌ WRONG - Plain text or weak hashing
+def hash_password(password: str) -> str:
+    return password  # Never store plain text!
+    # or
+    return hashlib.md5(password.encode()).hexdigest()  # MD5 is broken!
+```
+
+### Security Checklist for New Features:
+- [ ] All endpoints require authentication
+- [ ] User authorization checked (owns resource)
+- [ ] All inputs validated with Pydantic
+- [ ] No SQL injection vulnerabilities (use ORM)
+- [ ] No XSS vulnerabilities (escape output)
+- [ ] Secrets in environment variables (not code)
+- [ ] Rate limiting configured
+- [ ] Security headers added
+- [ ] Passwords hashed (bcrypt/argon2)
+- [ ] HTTPS enforced (production)
+
+**Checking for vulnerabilities:**
+```bash
+# Check Python dependencies
+safety check
+pip list --outdated
+
+# Check Node dependencies
+npm audit
+npm audit fix
+
+# Check for exposed secrets
+git log -p | grep -i "password\|secret\|key\|token"
+
+# Check for SQL injection patterns
+grep -r 'f".*SELECT\|f".*INSERT\|f".*UPDATE' backend/app --include="*.py"
+```
+
+**Enforcement:**
+- Manual code review checks security practices
+- Automated scans: `npm audit`, `safety check`, `bandit`
+- Pre-Phase 2D audit will verify security practices across codebase
+- CI will block high/critical vulnerabilities (future Phase 3)
+
+**Deferred Security Work (Requires Money):**
+See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
+- Third-party security audits ($5K-15K)
+- Penetration testing ($3K-10K)
+- Compliance certifications ($15K-50K+)
+- WAF, DDoS protection, bug bounty programs
+
+---
+
+## 12. Phase Completion Gates (MANDATORY)
+
+**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) if the phase section contains unchecked `- [ ]` checklist items, `🔄 In Progress` markers, or `❌` incomplete items.
+
+**Why:** Phase 1D and Phase 2B were left 60% and 85% incomplete because AI agents marked backend work as "done" and moved to Phase 2C without completing frontend UI components. This creates abandoned features and technical debt.
+
+**How to follow:**
+
+### Before marking ANY phase "✅ COMPLETE":
+
+1. **Check the phase section in feature_delivery_plan_v2.md:**
+   - Search for `- [ ]` (unchecked items) → Must be ZERO
+   - Search for `🔄` (In Progress markers) → Must be ZERO
+   - Search for `❌` (incomplete items) → Must be ZERO
+
+2. **Verify UI manual testing complete:**
+   - User must have run all UI manual test steps (see Rule 8)
+   - User must have confirmed: "✅ All manual tests passing"
+
+3. **Ask user for explicit approval:**
+   ```markdown
+   Phase X checklist is complete:
+   - ✅ All [ ] items checked
+   - ✅ No 🔄 In Progress markers
+   - ✅ No ❌ incomplete items
+   - ✅ UI manual testing passed
+
+   May I mark Phase X as "✅ COMPLETE" in feature_delivery_plan_v2.md?
+   ```
+
+4. **Only after user approval:**
+   - Change phase header from "⚠️ IN PROGRESS" → "✅ COMPLETE"
+   - Update status percentage to 100%
+
+### If phase has ANY incomplete work:
+
+1. **Keep status as "⚠️ IN PROGRESS"**
+2. **Document incomplete items clearly:**
+   - Use `🔄` for work in progress
+   - Use `❌` for blocked or deferred work
+   - Add unchecked `- [ ]` items to checklist
+
+3. **Add incomplete work to [BACKLOG.md](BACKLOG.md):**
+   - List each incomplete item with estimate
+   - Mark as "BLOCKED - waiting for Phase X completion"
+
+4. **Ask user for decision:**
+   ```markdown
+   Phase X is 85% complete. Remaining work:
+   - 🔄 4 UI components (estimated 1 week)
+   - ❌ 3D visualization (blocked on GLB generation)
+
+   Options:
+   1. Complete Phase X now (1 week delay to Phase Y)
+   2. Defer UI work to backlog and start Phase Y
+   3. Complete critical items only, defer rest
+
+   What would you like to do?
+   ```
+
+### Examples:
+
+**❌ WRONG - Marking incomplete phase as COMPLETE:**
+```markdown
+### Phase 1D: Business Performance Management ✅ COMPLETE
+**Status:** Backend 100%, Frontend 60%
+
+**UI Implementation Checklist:**
+- [ ] Pipeline Kanban board component
+- [ ] Deal insights panel
+- [ ] Analytics panel
+- [ ] ROI panel
+```
+*Problem: Marked COMPLETE but has 4 unchecked [ ] items*
+
+**✅ CORRECT - Keeping incomplete phase as IN PROGRESS:**
+```markdown
+### Phase 1D: Business Performance Management ⚠️ 80% COMPLETE
+**Status:** Backend 100%, Frontend 60% (4 UI components remaining)
+
+**Completed:**
+- ✅ Deal pipeline backend API
+- ✅ Commission ledger backend
+- ✅ Business Performance page scaffold
+
+**In Progress (see BACKLOG.md):**
+- 🔄 Pipeline Kanban board component (1-2 days)
+- 🔄 Deal insights panel (1-2 days)
+- 🔄 Analytics panel (1-2 days)
+- 🔄 ROI panel (1-2 days)
+
+**UI Implementation Checklist:**
+- [ ] Pipeline Kanban board component
+- [ ] Deal insights panel
+- [ ] Analytics panel
+- [ ] ROI panel
+
+**Next Steps:** User to decide whether to complete Phase 1D UI or defer to backlog
+```
+
+**Enforcement (Automated):**
+
+`scripts/check_coding_rules.py` Rule 12 verifies:
+
+1. **Checklist items:** No unchecked `[ ]` items remain
+2. **Progress markers:** No `🔄` or `❌` markers remain
+3. **Files exist:** All files listed in "Files Delivered:" section actually exist on disk
+4. **Tests pass:** "Test Status:" section shows ✅ passing tests (no ❌ or ⚠️ failures)
+
+**Why file verification matters:**
+- Solo founders cannot review code quality
+- AI agents could check boxes without writing code
+- File verification ensures code was actually written
+- Test verification ensures code actually works
+
+**Example violations caught:**
+```
+RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but has:
+  -> 4 unchecked [ ] checklist items
+  -> 3 files listed in 'Files Delivered' but missing:
+     frontend/src/app/pages/business-performance/PipelineKanban.tsx,
+     frontend/src/app/pages/business-performance/DealInsights.tsx,
+     frontend/src/app/pages/business-performance/Analytics.tsx
+  -> Test Status shows ⚠️ warnings (not all tests passing)
+```
+
+Blocks commits until violations are fixed.
 
 ---
 
@@ -366,4 +1102,4 @@ If a rule is unclear or seems wrong for a specific case:
 2. Propose a rule change by updating this document in a separate PR
 3. Document exceptions inline with `# Exception: <reason>` comments
 
-**Last updated:** 2025-10-13
+**Last updated:** 2025-10-27

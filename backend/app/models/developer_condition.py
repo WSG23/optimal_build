@@ -30,11 +30,13 @@ class DeveloperConditionAssessmentRecord(Base):
     recommended_actions = Column(
         JSON, nullable=False, server_default="[]", default=list
     )
+    inspector_name = Column(String(120), nullable=True)
     recorded_by = Column(
         UUID(),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+    attachments = Column(JSON, nullable=False, server_default="[]", default=list)
     recorded_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

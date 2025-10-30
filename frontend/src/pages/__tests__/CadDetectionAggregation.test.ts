@@ -7,7 +7,7 @@ import {
   countSeverityBuckets,
   calculateSeverityPercentages,
   filterLatestUnitSpaceSuggestions,
-} from '../CadDetectionPage'
+} from '../cadDetectionHelpers'
 
 let nextId = 1000
 

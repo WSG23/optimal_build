@@ -15,6 +15,11 @@ exclude = """
 profile = "black"
 line_length = 88
 combine_as_imports = true
+known_first_party = ["app", "flows", "jobs", "scripts"]
+known_third_party = ["backend"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+# Skip migration files - they follow Alembic conventions
+extend_skip_glob = ["*/migrations/versions/*.py"]
 
 [tool.ruff]
 line-length = 100
@@ -34,10 +39,15 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]
+select = ["E", "F", "W"]
 extend-select = ["B"]
 ignore = ["E203", "E402", "E501"]  # handled by black
 extend-ignore = ["B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "flows", "jobs", "scripts"]
+known-third-party = ["backend"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.mypy]
 python_version = "3.11"

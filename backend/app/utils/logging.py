@@ -16,8 +16,7 @@ class _MetadataModule(Protocol):
 
     PackageNotFoundError: type[Exception]
 
-    def version(self, distribution: str) -> str:
-        ...
+    def version(self, distribution: str) -> str: ...
 
 
 importlib_metadata: _MetadataModule | None

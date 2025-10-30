@@ -1,0 +1,82 @@
+name: Code Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  quality-check:
+    name: Code Quality Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run formatting check (Black)
+        run: make format-check
+        continue-on-error: false
+
+      - name: Run linting (Ruff, Flake8, ESLint)
+        run: make lint
+        continue-on-error: false
+
+      - name: Run coding rules verification
+        run: make check-coding-rules
+        continue-on-error: false
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          python -m pytest tests/ -v --tb=short
+        continue-on-error: false
+
+      - name: Quality gate summary
+        if: failure()
+        run: |
+          echo "❌ CODE QUALITY GATE FAILED"
+          echo ""
+          echo "Your PR has code quality violations."
+          echo ""
+          echo "To fix locally:"
+          echo "  1. Run: make format"
+          echo "  2. Run: make verify"
+          echo "  3. Fix any remaining violations"
+          echo "  4. Commit and push again"
+          echo ""
+          echo "See CODING_RULES.md for details."
+          exit 1
+
+      - name: Success message
+        if: success()
+        run: |
+          echo "✅ All code quality checks passed!"
+          echo "This PR meets the quality standards."

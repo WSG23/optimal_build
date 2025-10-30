@@ -57,6 +57,15 @@ def ensure_sqlite_uuid(monkeypatch) -> None:
 
         monkeypatch.setattr(SQLiteTypeCompiler, "visit_UUID", visit_UUID, raising=False)
 
+    if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
+
+        def visit_JSONB(self, _type, **_):  # pragma: no cover
+            return "TEXT"
+
+        monkeypatch.setattr(
+            SQLiteTypeCompiler, "visit_JSONB", visit_JSONB, raising=False
+        )
+
 
 __all__ = [
     "install_property_stub",

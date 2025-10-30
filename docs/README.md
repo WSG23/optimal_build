@@ -1,54 +1,21 @@
 # Project Documentation
 
-## 🚨 START HERE - Critical Documents
+## 🚨 New to This Project?
 
-**If you're new to this project (human or AI), read these IN ORDER:**
+**👉 Read [../START_HERE.md](../START_HERE.md) for the authoritative reading order.**
 
-### 1. [../FEATURES.md](../FEATURES.md) - WHAT we're building
-**Read first!** This is the complete product vision.
-- All 4 user roles (Agents, Developers, Architects, Engineers)
-- All 29+ major features across roles
-- Singapore-specific requirements
-- Professional boundaries and compliance
-
-**Status:** ✅ Complete and frozen (do not modify without approval)
+That file provides the exact sequence for AI agents and developers to onboard efficiently.
 
 ---
 
-### 2. [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) - HOW we're building it
-**Read second!** This maps FEATURES.md into executable phases.
-- 6 phases covering 100% of FEATURES.md
-- Dependencies and priorities clear
-- Acceptance criteria for each feature
-- Timeline estimates (1.5-2.3 years)
+## 📋 Documentation Index
 
-**Status:** ✅ Current roadmap (update as features complete)
+This is a comprehensive index of all documentation in the `docs/` directory.
 
----
-
-### 3. [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) - WHAT to build next
-**Read before starting work!** This tells you current priorities.
-- Updated regularly with latest status
-- Shows what's complete, in-progress, not-started
-- Clear "you are here" indicator
-- Specific next tasks with acceptance criteria
-
-**Status:** 🔄 Updated frequently (check before each task)
-
----
-
-### 4. [../CODING_RULES.md](../CODING_RULES.md) - HOW to write code
-**Reference while coding!** Technical standards and patterns.
-- Migrations and database rules
-- Async/await patterns
-- Singapore compliance requirements
-- Code organization standards
-
-**Status:** ✅ Active rules (follow strictly)
-
----
-
-## 📋 Other Documentation
+### Core Planning Documents:
+- [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) - Complete roadmap and current status
+- [ai-agents/next_steps.md](ai-agents/next_steps.md) - What to build next
+- [handoff_playbook.md](handoff_playbook.md) - Session handoff guide
 
 ### Feature-Specific Guides:
 - [agents/marketing_pack_quickstart.md](agents/marketing_pack_quickstart.md) - Agent user guide
@@ -56,11 +23,12 @@
 - [demos/agents_capture_demo.md](demos/agents_capture_demo.md) - Demo script
 
 ### Testing & Quality:
-- [../TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md) - **Known test harness issues** (critical for AI agents)
-- [../TESTING_DOCUMENTATION_SUMMARY.md](../TESTING_DOCUMENTATION_SUMMARY.md) - Overview of testing workflows
-- [../TESTING_ADVISORY.md](../TESTING_ADVISORY.md) - Phase 1B testing guide
+- [development/testing/known-issues.md](development/testing/known-issues.md) - **Known test harness issues** (critical for AI agents)
+- [development/testing/summary.md](development/testing/summary.md) - Overview of testing workflows
+- [development/testing/advisory.md](development/testing/advisory.md) - Phase 1B testing guide
 
 ### Validation & User Research:
+- [validation/live_testing_guide.md](validation/live_testing_guide.md) - Manual UAT testing procedures (Finance & Intelligence pages)
 - [validation/live_walkthrough_plan.md](validation/live_walkthrough_plan.md) - User validation tracking
 - [validation/outreach_drafts.md](validation/outreach_drafts.md) - User outreach templates
 
@@ -74,17 +42,17 @@
 - [sample_fixtures.md](sample_fixtures.md) - Test fixtures
 
 ### Original Plans (Superseded):
-- [feature_delivery_plan.md](feature_delivery_plan.md) - Original Phase 1 plan (now part of v2)
+- [feature_delivery_plan_v1_deprecated.md](archive/feature_delivery_plan_v1_deprecated.md) - Original Phase 1 plan (now part of v2)
 
 ---
 
 ## 🎯 Quick Decision Tree
 
 **Question:** "What should I build next?"
-→ Check [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md)
+→ Check [ai-agents/next_steps.md](ai-agents/next_steps.md)
 
 **Question:** "Is this feature in scope?"
-→ Check [FEATURES.md](../FEATURES.md)
+→ Check [planning/features.md](planning/features.md)
 
 **Question:** "What phase are we in?"
 → Check [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
@@ -96,10 +64,10 @@
 → Check feature-specific guides in `agents/` or `frontend/`
 
 **Question:** "Test is failing - is this a known issue?"
-→ Check [TESTING_KNOWN_ISSUES.md](../TESTING_KNOWN_ISSUES.md)
+→ Check [development/testing/known-issues.md](development/testing/known-issues.md)
 
 **Question:** "I fixed a test issue - how do I update docs?"
-→ Check [TESTING_DOCUMENTATION_SUMMARY.md](../TESTING_DOCUMENTATION_SUMMARY.md)
+→ Check [development/testing/summary.md](development/testing/summary.md)
 
 ---
 
@@ -123,30 +91,13 @@
 
 ## 📊 Current Project Status
 
-**Overall Progress:** ~45% of total platform
-
-**Completed:**
-- ✅ Phase 1A: Agent GPS Capture (100%)
-- ✅ Phase 1B: Market Intelligence (100%)
-- ✅ Phase 1C: Marketing Packs (100%)
-- ✅ CAD Processing Infrastructure (95%)
-
-**In Progress:**
-- ⏸️ Phase 1A Validation (waiting for real agents)
-- ⚠️ Phase 2A: Developer GPS (5%)
-
-**Next Up:**
-- 🎯 Phase 1B: Development Advisory Services ← **START HERE**
-- 🎯 Phase 1C: Market Integration (parallel)
-
-**Not Started:**
-- Phase 1D, 2B-2I, 3, 4, 5, 6 (see delivery plan)
+See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for the latest status snapshot.
 
 ---
 
 ## 🤝 Getting Help
 
-**For strategic questions:** Review FEATURES.md and feature_delivery_plan_v2.md
+**For strategic questions:** Review `planning/features.md` and `feature_delivery_plan_v2.md`
 **For technical questions:** Check CODING_RULES.md and existing code
 **For priority questions:** Check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 **For user questions:** Check feature-specific guides

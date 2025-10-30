@@ -34,7 +34,7 @@ class Server:
         self.config = config
         self._app: Any = None
         self._server: asyncio.AbstractServer | None = None
-        self._shutdown = asyncio.Event()
+        self._shutdown: asyncio.Event | None = None
         self._supports_handle_request = False
         self._lifespan_queue: asyncio.Queue[dict[str, str]] | None = None
         self._lifespan_task: asyncio.Task[Any] | None = None
@@ -68,6 +68,7 @@ class Server:
                 self._handle_connection, host=self.config.host, port=self.config.port
             )
             loop = asyncio.get_running_loop()
+            self._shutdown = asyncio.Event()
             for sig in (signal.SIGINT, signal.SIGTERM):
                 try:
                     loop.add_signal_handler(sig, self._shutdown.set)

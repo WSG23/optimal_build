@@ -6,11 +6,14 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any
 
+from backend._compat import compat_dataclass
+from backend._compat.datetime import UTC
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.entitlements import (
+    EntApprovalCategory,
     EntApprovalType,
     EntAuthority,
     EntEngagement,
@@ -19,8 +22,6 @@ from app.models.entitlements import (
     EntRoadmapItem,
     EntStudy,
 )
-from backend._compat import compat_dataclass
-from backend._compat.datetime import UTC
 
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
@@ -122,6 +123,13 @@ class EntitlementsService:
         is_mandatory: bool | None = None,
         metadata: dict | None = None,
     ) -> EntApprovalType:
+        if isinstance(category, EntApprovalCategory):
+            category_value = category.value
+        elif isinstance(category, str):
+            category_value = category.lower()
+        else:
+            raise ValueError("category must be EntApprovalCategory or string")
+
         approval_type = await self.get_approval_type(
             authority_id=authority.id, code=code
         )
@@ -130,7 +138,7 @@ class EntitlementsService:
                 authority_id=authority.id,
                 code=code,
                 name=name,
-                category=category,
+                category=category_value,
                 description=description,
                 requirements=requirements or {},
                 processing_time_days=processing_time_days,
@@ -141,7 +149,7 @@ class EntitlementsService:
         else:
             approval_type.authority_id = authority.id
             approval_type.name = name
-            approval_type.category = category
+            approval_type.category = category_value
             approval_type.description = description
             approval_type.processing_time_days = processing_time_days
             if requirements is not None:

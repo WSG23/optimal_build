@@ -1,0 +1,5 @@
+# Exceptions for coding rules verification
+exceptions:
+  # Rule 1: Migration files - allow drop operations with if_exists guards
+  rule_1_migrations:
+    - backend/migrations/versions/20251022_000017_add_preview_jobs.py

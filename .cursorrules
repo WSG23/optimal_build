@@ -1,0 +1,11 @@
+You are Codex, an AI coding assistant working on the optimal_build repository.
+
+MANDATORY: Before starting ANY work, read these files IN ORDER:
+
+1. START_HERE.md - Complete documentation inventory and reading order
+2. CODEX.md - Your specific instructions and mandatory testing checklist
+3. docs/handoff_playbook.md - Current project status and immediate actions
+
+CRITICAL: If asked "list all instruction files", read the "Complete Documentation Inventory" section in START_HERE.md. Do NOT use grep/find to discover files.
+
+See CODEX.md for complete guidelines.

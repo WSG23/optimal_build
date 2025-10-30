@@ -6,7 +6,7 @@ import {
 } from '../../../api/finance'
 
 export interface UseFinanceScenariosOptions {
-  projectId?: number
+  projectId?: number | string
   finProjectId?: number
 }
 
@@ -15,6 +15,7 @@ export interface UseFinanceScenariosResult {
   loading: boolean
   error: string | null
   refresh: () => void
+  addScenario: (scenario: FinanceScenarioSummary) => void
 }
 
 export function useFinanceScenarios(
@@ -72,10 +73,23 @@ export function useFinanceScenarios(
     void fetchScenarios()
   }, [fetchScenarios])
 
+  const addScenario = useCallback(
+    (scenario: FinanceScenarioSummary) => {
+      setScenarios((prev) => {
+        const filtered = prev.filter(
+          (entry) => entry.scenarioId !== scenario.scenarioId,
+        )
+        return [scenario, ...filtered]
+      })
+    },
+    [],
+  )
+
   return {
     scenarios,
     loading,
     error,
     refresh,
+    addScenario,
   }
 }

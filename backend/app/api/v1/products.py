@@ -15,14 +15,14 @@ from app.models.rkp import RefProduct
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-@router.get("/")
+@router.get("")
 async def list_products(
     brand: str | None = Query(default=None),
     category: str | None = Query(default=None),
     width_mm_min: int | None = Query(default=None),
     width_mm_max: int | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_viewer),
+    viewer: str = Depends(require_viewer),
 ) -> list[dict[str, Any]]:
     stmt = select(RefProduct)
     if brand:
@@ -49,6 +49,25 @@ async def list_products(
         items.append(product.as_dict())
 
     return items
+
+
+@router.get("/", include_in_schema=False)
+async def list_products_with_slash(
+    brand: str | None = Query(default=None),
+    category: str | None = Query(default=None),
+    width_mm_min: int | None = Query(default=None),
+    width_mm_max: int | None = Query(default=None),
+    session: AsyncSession = Depends(get_session),
+    viewer: str = Depends(require_viewer),
+) -> list[dict[str, Any]]:
+    return await list_products(
+        brand=brand,
+        category=category,
+        width_mm_min=width_mm_min,
+        width_mm_max=width_mm_max,
+        session=session,
+        viewer=viewer,
+    )
 
 
 __all__ = ["router"]

@@ -89,3 +89,14 @@ extend-ignore = ["B008"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+known-first-party = ["app", "flows", "jobs", "scripts", "core"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+combine_as_imports = true
+known_first_party = ["app", "flows", "jobs", "scripts", "core"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+# Skip migration files - they follow Alembic conventions
+extend_skip_glob = ["*/migrations/versions/*.py"]
