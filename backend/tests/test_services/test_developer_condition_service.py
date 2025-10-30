@@ -6,6 +6,9 @@ from datetime import date, datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.developer_checklists import (

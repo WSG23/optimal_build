@@ -1,11 +1,83 @@
-"""Unit tests for the finance calculator helpers."""
+"""Unit tests for the lightweight finance calculator utilities."""
 
+from __future__ import annotations
+
+import importlib.util
+import sys
+import types
+from dataclasses import dataclass
 from decimal import Decimal
+from pathlib import Path
+from typing import Iterable
 
 import pytest
 
-from app.models.rkp import RefCostIndex
-from app.services.finance import calculator
+_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _load_module(name: str, relative_path: str):
+    module_path = _ROOT / relative_path
+    spec = importlib.util.spec_from_file_location(name, module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load module {name} from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    return module
+
+
+@dataclass
+class RefCostIndex:
+    jurisdiction: str
+    series_name: str
+    category: str
+    period: str
+    value: Decimal
+    unit: str
+    provider: str
+    source: str
+
+    @classmethod
+    def latest(
+        cls,
+        indices: Iterable["RefCostIndex"],
+        *,
+        jurisdiction: str | None = None,
+        provider: str | None = None,
+        series_name: str | None = None,
+    ) -> "RefCostIndex" | None:
+        filtered: list[RefCostIndex] = []
+        for index in indices:
+            if jurisdiction and index.jurisdiction != jurisdiction:
+                continue
+            if provider and index.provider != provider:
+                continue
+            if series_name and index.series_name != series_name:
+                continue
+            filtered.append(index)
+        if not filtered:
+            return None
+        return filtered[-1]
+
+
+_models_pkg = types.ModuleType("app.models")
+_models_pkg.__path__ = []  # type: ignore[attr-defined]
+sys.modules.setdefault("app.models", _models_pkg)
+_rkp_module = types.ModuleType("app.models.rkp")
+_rkp_module.RefCostIndex = RefCostIndex
+sys.modules["app.models.rkp"] = _rkp_module
+
+_services_pkg = types.ModuleType("app.services")
+_services_pkg.__path__ = []  # type: ignore[attr-defined]
+sys.modules.setdefault("app.services", _services_pkg)
+
+calculator = _load_module(
+    "finance_calculator_stub", "backend/app/services/finance/calculator.py"
+)
+
+sys.modules.pop("app.models", None)
+sys.modules.pop("app.models.rkp", None)
+sys.modules.pop("app.services", None)
 
 
 def test_npv_basic_case() -> None:
@@ -47,7 +119,6 @@ def test_price_sensitivity_grid_returns_quantized_values() -> None:
         Decimal("100.00"),
         Decimal("110.00"),
     )
-    # Centre cell corresponds to no change in price or volume.
     assert grid.grid[1][1] == Decimal("1000.00")
 
 

@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("sqlalchemy")
+
 from app.core.export import (
     ExportFormat,
     ExportOptions,

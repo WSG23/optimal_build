@@ -11,6 +11,9 @@ from decimal import Decimal
 from uuid import UUID
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import pytest_asyncio

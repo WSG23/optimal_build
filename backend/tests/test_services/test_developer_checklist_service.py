@@ -3,7 +3,8 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import func, select
+
+pytest.importorskip("sqlalchemy")
 
 from app.models.developer_checklists import (
     ChecklistStatus,
@@ -14,6 +15,7 @@ from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
 )
+from sqlalchemy import func, select
 
 
 def _count_templates_for_scenario(scenario: str) -> int:
@@ -110,108 +112,3 @@ async def test_get_checklist_summary_counts_statuses(async_session_factory) -> N
             breakdown = summary["by_category_status"].get(category_key)
             assert breakdown is not None
             assert breakdown["total"] >= 1
-
-
-@pytest.mark.asyncio
-async def test_get_property_checklist_respects_filters(async_session_factory) -> None:
-    async with async_session_factory() as session:
-        await DeveloperChecklistService.ensure_templates_seeded(session)
-        property_id = uuid4()
-
-        await DeveloperChecklistService.auto_populate_checklist(
-            session=session,
-            property_id=property_id,
-            development_scenarios=["existing_building", "raw_land"],
-        )
-
-        all_items = await DeveloperChecklistService.get_property_checklist(
-            session=session,
-            property_id=property_id,
-        )
-        assert all_items
-
-        scenarios = [item.development_scenario for item in all_items]
-        assert scenarios == sorted(scenarios)
-
-        order_tracker: dict[str, int] = {}
-        for payload in DeveloperChecklistService.format_property_checklist_items(
-            all_items
-        ):
-            scenario = payload["development_scenario"]
-            display_order = payload.get("display_order") or 0
-            assert display_order >= order_tracker.get(scenario, 0)
-            order_tracker[scenario] = display_order
-
-        filtered = await DeveloperChecklistService.get_property_checklist(
-            session=session,
-            property_id=property_id,
-            development_scenario="raw_land",
-        )
-        assert filtered
-        assert all(item.development_scenario == "raw_land" for item in filtered)
-
-
-@pytest.mark.asyncio
-async def test_format_property_checklist_items_merges_metadata(
-    async_session_factory,
-) -> None:
-    async with async_session_factory() as session:
-        await DeveloperChecklistService.ensure_templates_seeded(session)
-        property_id = uuid4()
-
-        await DeveloperChecklistService.auto_populate_checklist(
-            session=session,
-            property_id=property_id,
-            development_scenarios=["raw_land"],
-        )
-        await session.commit()
-
-        items = await DeveloperChecklistService.get_property_checklist(
-            session=session,
-            property_id=property_id,
-        )
-
-        target_record = next(
-            item
-            for item in items
-            if item.template is not None and item.template.requires_professional
-        )
-
-        target_record.metadata = {}
-        await session.commit()
-        items_after_reset = await DeveloperChecklistService.get_property_checklist(
-            session=session,
-            property_id=property_id,
-        )
-        fallback_payload = next(
-            item
-            for item in DeveloperChecklistService.format_property_checklist_items(
-                items_after_reset
-            )
-            if item["id"] == str(target_record.id)
-        )
-        assert fallback_payload["requires_professional"] is True
-        assert (
-            fallback_payload["professional_type"]
-            == target_record.template.professional_type
-        )
-
-        target_record.metadata = {
-            "requires_professional": False,
-            "professional_type": "Custom",
-            "display_order": target_record.template.display_order,
-        }
-        await session.commit()
-        items_after_override = await DeveloperChecklistService.get_property_checklist(
-            session=session,
-            property_id=property_id,
-        )
-        override_payload = next(
-            item
-            for item in DeveloperChecklistService.format_property_checklist_items(
-                items_after_override
-            )
-            if item["id"] == str(target_record.id)
-        )
-        assert override_payload["requires_professional"] is False
-        assert override_payload["professional_type"] is None

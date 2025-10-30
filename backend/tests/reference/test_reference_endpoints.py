@@ -5,6 +5,9 @@ from collections.abc import Iterable
 from typing import Any
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from backend.scripts import seed_nonreg
 
 

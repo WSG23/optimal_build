@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from app.core.auth import PolicyContext, SignoffSnapshot, WorkspaceRole
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from app.core.export.guard import ExportDecision, ExportRequest, evaluate_export
 
 

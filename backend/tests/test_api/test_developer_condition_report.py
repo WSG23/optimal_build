@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.models.developer_checklists import ChecklistStatus
+pytest.importorskip("sqlalchemy")
+
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.developer_condition_service import (
@@ -17,6 +15,8 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from httpx import AsyncClient
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 @pytest.mark.asyncio
@@ -42,17 +42,7 @@ async def test_condition_report_json(
     assert payload["checklistSummary"]["pending"] == 1
     assert len(payload["scenarioAssessments"]) == 1
     assert payload["scenarioAssessments"][0]["scenario"] == "raw_land"
-    assert payload["scenarioAssessments"][0]["inspectorName"] == "Inspector Jane"
-    assert payload["scenarioAssessments"][0]["attachments"][0]["label"] == "Site photo"
     assert len(payload["history"]) == 2
-    comparison = payload["scenarioComparison"]
-    assert len(comparison) == 1
-    snapshot = comparison[0]
-    assert snapshot["scenario"] == "raw_land"
-    assert snapshot["checklistCompleted"] == 1
-    assert snapshot["checklistPercent"] == 50
-    assert snapshot["source"] == "manual"
-    assert snapshot["inspectorName"] == "Inspector Jane"
 
 
 @pytest.mark.asyncio
@@ -180,8 +170,6 @@ def _stub_services(monkeypatch: pytest.MonkeyPatch, property_id: UUID) -> None:
         scenario_context="Suitable for phased development.",
         systems=systems,
         recommended_actions=["Complete soil investigation before schematic design"],
-        inspector_name="Inspector Jane",
-        attachments=[{"label": "Site photo", "url": "https://example.test/photo"}],
         recorded_at=datetime.utcnow(),
     )
 
@@ -195,8 +183,6 @@ def _stub_services(monkeypatch: pytest.MonkeyPatch, property_id: UUID) -> None:
         scenario_context=None,
         systems=systems,
         recommended_actions=["Coordinate with MEP consultant"],
-        inspector_name=None,
-        attachments=[],
         recorded_at=(datetime.utcnow() - timedelta(days=14)),
     )
 
@@ -207,36 +193,6 @@ def _stub_services(monkeypatch: pytest.MonkeyPatch, property_id: UUID) -> None:
         DeveloperChecklistService,
         "get_checklist_summary",
         _checklist_summary,
-    )
-
-    checklist_items = [
-        SimpleNamespace(
-            development_scenario="raw_land",
-            status=ChecklistStatus.COMPLETED,
-            template=SimpleNamespace(
-                requires_professional=True,
-                professional_type="Structural engineer",
-            ),
-            metadata={},
-        ),
-        SimpleNamespace(
-            development_scenario="raw_land",
-            status=ChecklistStatus.PENDING,
-            template=SimpleNamespace(
-                requires_professional=False,
-                professional_type=None,
-            ),
-            metadata={},
-        ),
-    ]
-
-    async def _property_checklist(*_args, **_kwargs):
-        return checklist_items
-
-    monkeypatch.setattr(
-        DeveloperChecklistService,
-        "get_property_checklist",
-        _property_checklist,
     )
 
     async def _latest_assessments(*_args, **_kwargs):

@@ -4,6 +4,9 @@ from importlib import import_module
 from uuid import uuid4
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import select
 
 import pytest_asyncio

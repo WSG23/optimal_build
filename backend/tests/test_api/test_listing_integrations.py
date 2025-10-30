@@ -3,6 +3,9 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 

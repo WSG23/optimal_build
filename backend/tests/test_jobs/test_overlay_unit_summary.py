@@ -1,11 +1,14 @@
+from app.core.models.geometry import GeometryGraph, Level, Space
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
+from app.models.rkp import RefRule
 from backend.jobs.overlay_run import (
     RuleContext,
     _build_rule_metrics,
     _evaluate_geometry,
 )
-
-from app.core.models.geometry import GeometryGraph, Level, Space
-from app.models.rkp import RefRule
 
 
 def test_evaluate_geometry_emits_unit_overlays():
