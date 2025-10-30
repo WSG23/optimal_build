@@ -157,4 +157,122 @@ class TestClient:
         return parts
 
 
-__all__ = ["TestClient"]
+class AsyncTestClient:
+    """Async facade over :class:`fastapi.FastAPI.handle_request`."""
+
+    def __init__(self, app, base_url: str = "http://testserver", **kwargs: Any) -> None:
+        self.app = app
+        self.base_url = base_url
+        self.headers = dict(kwargs.get("headers", {}))
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    async def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+        json: Any = None,
+        data: Mapping[str, Any] | None = None,
+        files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
+    ) -> _SyncResponse:
+        path, query = TestClient._split_url(url)
+        query_params = dict(params or {})
+        if query and not query_params:
+            query_params.update(
+                {
+                    key: value[0] if len(value) == 1 else value
+                    for key, value in TestClient._parse_query(query).items()
+                }
+            )
+        prepared_files = {}
+        if files:
+            for key, (filename, payload, content_type) in files.items():
+                data_bytes = payload.read() if hasattr(payload, "read") else payload
+                prepared_files[key] = (
+                    filename,
+                    (
+                        data_bytes
+                        if isinstance(data_bytes, (bytes, bytearray))
+                        else str(data_bytes).encode("utf-8")
+                    ),
+                    content_type or "application/octet-stream",
+                )
+
+        prepared_headers: dict[str, str] = dict(self.headers)
+        if json is not None:
+            prepared_headers["content-type"] = "application/json"
+        if headers:
+            for key, value in headers.items():
+                prepared_headers[key.lower()] = str(value)
+
+        status_code, headers_dict, payload = await self.app.handle_request(
+            method=method,
+            path=path,
+            query_params=query_params,
+            json_body=json,
+            form_data=dict(data or {}),
+            files=prepared_files,
+            headers=prepared_headers,
+        )
+        return _SyncResponse(status_code=status_code, content=payload, headers=headers_dict)
+
+    async def get(
+        self,
+        url: str,
+        *,
+        params: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> _SyncResponse:
+        return await self.request("GET", url, params=params, headers=headers)
+
+    async def post(
+        self,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        json: Any = None,
+        data: Mapping[str, Any] | None = None,
+        files: MutableMapping[str, tuple[str, Any, str | None]] | None = None,
+    ) -> _SyncResponse:
+        return await self.request(
+            "POST", url, headers=headers, json=json, data=data, files=files
+        )
+
+    async def put(
+        self,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        json: Any = None,
+        data: Mapping[str, Any] | None = None,
+    ) -> _SyncResponse:
+        return await self.request("PUT", url, headers=headers, json=json, data=data)
+
+    async def patch(
+        self,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        json: Any = None,
+        data: Mapping[str, Any] | None = None,
+    ) -> _SyncResponse:
+        return await self.request("PATCH", url, headers=headers, json=json, data=data)
+
+    async def delete(
+        self,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        json: Any = None,
+    ) -> _SyncResponse:
+        return await self.request("DELETE", url, headers=headers, json=json)
+
+
+__all__ = ["TestClient", "AsyncTestClient"]
