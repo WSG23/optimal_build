@@ -165,3 +165,150 @@ def test_log_event_serialises_complex_payload(caplog: pytest.LogCaptureFixture) 
     nested = payload["nested"]
     assert sorted(nested["set_values"]) == ["1.25"]
     assert nested["SampleColour.RED"] == {"inner": "3.75"}
+
+
+def test_serialise_for_logging_handles_json_serializable_objects() -> None:
+    """Test that already JSON-serializable objects pass through."""
+    from app.utils.logging import _serialise_for_logging
+
+    # Simple JSON-serializable values
+    assert _serialise_for_logging("string") == "string"
+    assert _serialise_for_logging(123) == 123
+    assert _serialise_for_logging(123.45) == 123.45
+    assert _serialise_for_logging(True) is True
+    assert _serialise_for_logging(None) is None
+
+
+def test_serialise_for_logging_converts_uuid() -> None:
+    """Test UUID conversion to string."""
+    from app.utils.logging import _serialise_for_logging
+
+    test_uuid = uuid4()
+    result = _serialise_for_logging(test_uuid)
+
+    assert isinstance(result, str)
+    assert result == str(test_uuid)
+
+
+def test_serialise_for_logging_converts_decimal() -> None:
+    """Test Decimal conversion to string."""
+    from app.utils.logging import _serialise_for_logging
+
+    decimal_value = Decimal("99.99")
+    result = _serialise_for_logging(decimal_value)
+
+    assert result == "99.99"
+
+
+def test_serialise_for_logging_converts_date() -> None:
+    """Test date conversion to ISO format."""
+    from app.utils.logging import _serialise_for_logging
+
+    test_date = date(2024, 6, 15)
+    result = _serialise_for_logging(test_date)
+
+    assert result == "2024-06-15"
+
+
+def test_serialise_for_logging_converts_datetime() -> None:
+    """Test datetime conversion to ISO format."""
+    from app.utils.logging import _serialise_for_logging
+
+    test_datetime = datetime(2024, 6, 15, 14, 30, 45)
+    result = _serialise_for_logging(test_datetime)
+
+    assert result.startswith("2024-06-15T14:30:45")
+
+
+def test_serialise_for_logging_converts_enum() -> None:
+    """Test Enum conversion to value."""
+    from app.utils.logging import _serialise_for_logging
+
+    class Status(Enum):
+        ACTIVE = "active"
+        INACTIVE = "inactive"
+
+    result = _serialise_for_logging(Status.ACTIVE)
+
+    assert result == "active"
+
+
+def test_serialise_for_logging_handles_nested_dict() -> None:
+    """Test recursive serialization of nested dictionaries."""
+    from app.utils.logging import _serialise_for_logging
+
+    nested_dict = {
+        "outer": {
+            "inner": uuid4(),
+            "deeper": {"value": Decimal("10.5")},
+        }
+    }
+    result = _serialise_for_logging(nested_dict)
+
+    assert isinstance(result, dict)
+    assert isinstance(result["outer"], dict)
+    assert isinstance(result["outer"]["inner"], str)
+    assert result["outer"]["deeper"]["value"] == "10.5"
+
+
+def test_serialise_for_logging_handles_list() -> None:
+    """Test serialization of lists."""
+    from app.utils.logging import _serialise_for_logging
+
+    test_list = [uuid4(), Decimal("5.5"), date(2024, 1, 1)]
+    result = _serialise_for_logging(test_list)
+
+    assert isinstance(result, list)
+    assert len(result) == 3
+    assert isinstance(result[0], str)
+    assert result[1] == "5.5"
+    assert result[2] == "2024-01-01"
+
+
+def test_serialise_for_logging_handles_tuple() -> None:
+    """Test serialization of tuples."""
+    from app.utils.logging import _serialise_for_logging
+
+    test_tuple = (Decimal("1.1"), Decimal("2.2"))
+    result = _serialise_for_logging(test_tuple)
+
+    assert isinstance(result, list)  # Tuples become lists
+    assert result == ["1.1", "2.2"]
+
+
+def test_serialise_for_logging_handles_set() -> None:
+    """Test serialization of sets."""
+    from app.utils.logging import _serialise_for_logging
+
+    test_set = {Decimal("3.3"), Decimal("4.4")}
+    result = _serialise_for_logging(test_set)
+
+    assert isinstance(result, list)  # Sets become lists
+    assert sorted(result) == ["3.3", "4.4"]
+
+
+def test_serialise_for_logging_converts_non_json_serializable_to_string() -> None:
+    """Test that non-JSON-serializable objects are converted to string."""
+    from app.utils.logging import _serialise_for_logging
+
+    class CustomObject:
+        def __repr__(self) -> str:
+            return "<CustomObject>"
+
+    custom_obj = CustomObject()
+    result = _serialise_for_logging(custom_obj)
+
+    assert result == "<CustomObject>"
+
+
+def test_serialise_for_logging_handles_dict_with_non_string_keys() -> None:
+    """Test that dict keys are converted to strings."""
+    from app.utils.logging import _serialise_for_logging
+
+    test_dict = {1: "one", 2: "two", date(2024, 1, 1): "date_key"}
+    result = _serialise_for_logging(test_dict)
+
+    assert isinstance(result, dict)
+    assert "1" in result
+    assert "2" in result
+    assert "2024-01-01" in result or str(date(2024, 1, 1)) in result
