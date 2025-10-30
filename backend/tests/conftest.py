@@ -16,7 +16,12 @@ from typing import Any, cast
 import pytest
 
 from backend._sqlalchemy_stub import ensure_sqlalchemy
-from httpx import AsyncClient
+
+# Import AsyncClient from httpx, but we'll wrap it for FastAPI testing
+try:
+    from httpx import AsyncClient as _RealAsyncClient
+except ImportError:
+    _RealAsyncClient = None  # type: ignore[assignment]
 
 
 def _find_repo_root(current: Path) -> Path:
@@ -60,7 +65,12 @@ except ModuleNotFoundError:
 
 if load_optional_package is not None:
     try:
-        load_optional_package("fastapi", "fastapi", "FastAPI")
+        # Try loading the shadow stub first
+        shadow_dirs = [d for d in _REPO_ROOT.iterdir() if d.is_dir() and d.name.startswith("fastapi_shadow_")]
+        if shadow_dirs:
+            load_optional_package("fastapi", shadow_dirs[0].name, "FastAPI")
+        else:
+            load_optional_package("fastapi", "fastapi", "FastAPI")
     except ModuleNotFoundError:
         import importlib.util
 
@@ -83,6 +93,16 @@ pytest_asyncio = cast(Any, pytest_asyncio)
 import app.utils.metrics as metrics
 
 _SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
+
+# Import AsyncTestClient from FastAPI stub for testing
+try:
+    from fastapi.testclient import AsyncTestClient
+    AsyncClient = AsyncTestClient  # type: ignore[misc,assignment]
+except ImportError:
+    if _RealAsyncClient is not None:
+        AsyncClient = _RealAsyncClient  # type: ignore[misc,assignment]
+    else:
+        AsyncClient = None  # type: ignore[assignment]
 
 app: Any | None = None
 

@@ -78,6 +78,22 @@ class Header:
         self.default = default
 
 
+class Body:
+    """Marker used for request body parameters."""
+
+    def __init__(
+        self,
+        default: Any = None,
+        *,
+        embed: bool = False,
+        media_type: str = "application/json",
+        **kwargs: Any,
+    ) -> None:
+        self.default = default
+        self.embed = embed
+        self.media_type = media_type
+
+
 class Form:
     def __init__(self, default: Any = None) -> None:
         self.default = default
@@ -592,6 +608,7 @@ class FastAPI:
         self.openapi_tags: list[dict[str, Any]] = list(extra.get("openapi_tags", []))
         self._openapi_schema: dict[str, Any] | None = None
         self.openapi_url = openapi_url
+        self.state = SimpleNamespace()  # Application state for storing arbitrary data
 
         if self.openapi_url:
             openapi_path = (
@@ -611,6 +628,15 @@ class FastAPI:
         self, middleware_cls: Any, **options: Any
     ) -> None:  # pragma: no cover - middleware ignored
         self._middleware.append((middleware_cls, options))
+
+    def exception_handler(self, exc_class: type[Exception]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Register an exception handler for a specific exception type.
+
+        This is a stub implementation that returns a no-op decorator.
+        """
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            return func
+        return decorator
 
     def include_router(self, router: APIRouter, *, prefix: str = "") -> None:
         prefix = prefix.rstrip("/")
@@ -1108,10 +1134,12 @@ async def _serialise_response(
 
 __all__ = [
     "APIRouter",
+    "Body",
     "Depends",
     "FastAPI",
     "File",
     "Form",
+    "Header",
     "HTTPException",
     "JSONResponse",
     "Path",
