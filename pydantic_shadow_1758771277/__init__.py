@@ -427,6 +427,11 @@ def _dump_value(value: Any, mode: str) -> Any:
     return value
 
 
+def computed_field(func: Callable[..., Any]) -> property:
+    """Decorator marking a property as a computed field."""
+    return property(func)
+
+
 def field_validator(
     *fields: str, mode: str = "after"
 ) -> Callable[[Callable[..., Any]], classmethod]:
@@ -435,6 +440,24 @@ def field_validator(
     def decorator(func: Callable[..., Any]) -> classmethod:
         underlying = func.__func__ if isinstance(func, classmethod) else func
         underlying.__pydantic_field_validator__ = {"fields": fields, "mode": mode}
+        return classmethod(underlying)
+
+    return decorator
+
+
+def field_serializer(
+    *fields: str, mode: str = "wrap", return_type: Any = None, when_used: str = "always"
+) -> Callable[[Callable[..., Any]], classmethod]:
+    """Decorator registering a field serializer."""
+
+    def decorator(func: Callable[..., Any]) -> classmethod:
+        underlying = func.__func__ if isinstance(func, classmethod) else func
+        underlying.__pydantic_field_serializer__ = {
+            "fields": fields,
+            "mode": mode,
+            "return_type": return_type,
+            "when_used": when_used,
+        }
         return classmethod(underlying)
 
     return decorator
@@ -453,14 +476,62 @@ def model_validator(
     return decorator
 
 
+def create_model(
+    __model_name: str,
+    *,
+    __config__: ConfigDict | None = None,
+    __base__: type[BaseModel] | tuple[type[BaseModel], ...] | None = None,
+    __module__: str = __name__,
+    __validators__: dict[str, Any] | None = None,
+    **field_definitions: Any,
+) -> type[BaseModel]:
+    """Create a new Pydantic model dynamically.
+
+    This is a minimal stub implementation that supports basic field definitions.
+    """
+    # Build namespace with fields
+    namespace: dict[str, Any] = {
+        "__module__": __module__,
+        "__annotations__": {},
+    }
+
+    # Add field definitions
+    for field_name, field_type in field_definitions.items():
+        if isinstance(field_type, tuple):
+            # (type, default_value) or (type, Field(...))
+            field_type_hint, field_default = field_type
+            namespace["__annotations__"][field_name] = field_type_hint
+            if not isinstance(field_default, FieldInfo):
+                namespace[field_name] = field_default
+        else:
+            # Just the type
+            namespace["__annotations__"][field_name] = field_type
+
+    # Determine base classes
+    if __base__ is None:
+        bases = (BaseModel,)
+    elif isinstance(__base__, tuple):
+        bases = __base__
+    else:
+        bases = (__base__,)
+
+    # Create the model class
+    model_class = type(__model_name, bases, namespace)
+
+    return model_class
+
+
 __all__ = [
     "BaseModel",
+    "computed_field",
     "confloat",
     "conint",
+    "create_model",
     "HttpUrl",
     "ConfigDict",
     "Field",
     "ValidationError",
+    "field_serializer",
     "field_validator",
     "model_validator",
 ]
