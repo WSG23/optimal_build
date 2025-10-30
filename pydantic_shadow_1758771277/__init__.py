@@ -395,6 +395,15 @@ class BaseModel(metaclass=BaseModelMeta):
             raise AttributeError(f"Unknown attribute '{key}'")
 
     @classmethod
+    def model_rebuild(cls, **kwargs: Any) -> None:
+        """Rebuild the model schema.
+
+        This is a stub implementation that does nothing. In real Pydantic v2,
+        this would rebuild the model schema when ForwardRef annotations change.
+        """
+        pass
+
+    @classmethod
     def model_validate(
         cls: type[T],
         obj: Any,

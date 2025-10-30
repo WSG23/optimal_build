@@ -2,11 +2,44 @@
 
 from __future__ import annotations
 
+import asyncio
+import os
+import sys
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_BACKEND_ROOT = _PROJECT_ROOT / "backend"
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+if str(_BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_ROOT))
+
+# Ensure SQLAlchemy is loaded BEFORE attempting any imports
+try:
+    from backend._sqlalchemy_stub import ensure_sqlalchemy
+    _SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
+    if not _SQLALCHEMY_AVAILABLE:
+        # Try importing directly if ensure_sqlalchemy didn't find it
+        import importlib
+        try:
+            importlib.import_module("sqlalchemy")
+            _SQLALCHEMY_AVAILABLE = True
+        except Exception:
+            pass
+except (ModuleNotFoundError, ImportError):
+    _SQLALCHEMY_AVAILABLE = False
+
 # IMPORTANT: Patch SQLite type compiler BEFORE any other imports
 # This ensures SQLite can handle PostgreSQL-specific types (UUID, JSONB)
-try:
-    from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
+if _SQLALCHEMY_AVAILABLE:
+    try:
+        from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
+    except ImportError:
+        SQLiteTypeCompiler = None
+else:
+    SQLiteTypeCompiler = None
 
+if SQLiteTypeCompiler is not None:
     if not hasattr(SQLiteTypeCompiler, "visit_UUID"):
 
         def _visit_UUID(self, _type, **_):  # pragma: no cover
@@ -20,12 +53,7 @@ try:
             return "TEXT"
 
         SQLiteTypeCompiler.visit_JSONB = _visit_JSONB
-except ImportError:
-    pass  # SQLAlchemy not installed
 
-import asyncio
-import os
-import sys
 from types import ModuleType, SimpleNamespace
 
 # Jose stubs
@@ -52,13 +80,23 @@ else:
 
 import importlib
 from importlib import import_module
-from pathlib import Path
 
 import pytest
 
-try:
-    from sqlalchemy.dialects.postgresql import UUID as PGUUID  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover
+if _SQLALCHEMY_AVAILABLE:
+    try:
+        from sqlalchemy.dialects.postgresql import UUID as PGUUID  # type: ignore
+    except (ModuleNotFoundError, ImportError):  # pragma: no cover
+        pg_module = ModuleType("sqlalchemy.dialects.postgresql")
+
+        class _UUID:
+            def __init__(self, *_, **__):
+                pass
+
+        pg_module.UUID = _UUID
+        sys.modules.setdefault("sqlalchemy.dialects.postgresql", pg_module)
+        PGUUID = _UUID
+else:
     pg_module = ModuleType("sqlalchemy.dialects.postgresql")
 
     class _UUID:
@@ -84,27 +122,6 @@ if _geo_sqlite is not None:
             return None
 
     _geo_sqlite.select_dialect = lambda name: _NoopDialect()
-
-
-try:
-    from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler
-except ModuleNotFoundError:
-    SQLiteTypeCompiler = None  # type: ignore
-
-if SQLiteTypeCompiler is not None and not hasattr(SQLiteTypeCompiler, "visit_UUID"):
-
-    def _visit_uuid(self, _type, **_):  # pragma: no cover - sqlite fallback
-        return "CHAR(36)"
-
-    SQLiteTypeCompiler.visit_UUID = _visit_uuid  # type: ignore[attr-defined]
-
-
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_BACKEND_ROOT = _PROJECT_ROOT / "backend"
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
-if str(_BACKEND_ROOT) not in sys.path:
-    sys.path.insert(0, str(_BACKEND_ROOT))
 
 try:  # pragma: no cover - optional dependency for async fixtures
     import pytest_asyncio
@@ -160,10 +177,15 @@ _backend_flow_session_factory = getattr(
     backend_conftest, "flow_session_factory", _missing_fixture
 )
 
+# Only define our own fixtures if backend fixtures are not available
 if _backend_flow_session_factory in (None, _missing_fixture):
     pytest_plugins = []
     from collections.abc import AsyncGenerator
     from contextlib import asynccontextmanager
+
+    # Only skip if we're supposed to use local fixtures AND SQLAlchemy is not available
+    if not _SQLALCHEMY_AVAILABLE and os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1":
+        pytest.skip("SQLAlchemy is required for test fixtures", allow_module_level=True)
 
     import app.utils.metrics as _metrics_module
     from app.core.database import get_session as _get_session
