@@ -43,8 +43,10 @@ _sqlalchemy.__all__ = ["select"]
 _ext_pkg = types.ModuleType("sqlalchemy.ext")
 _asyncio_pkg = types.ModuleType("sqlalchemy.ext.asyncio")
 
+
 class AsyncSession:  # pragma: no cover - compatibility shim
     pass
+
 
 _asyncio_pkg.AsyncSession = AsyncSession
 _ext_pkg.asyncio = _asyncio_pkg
