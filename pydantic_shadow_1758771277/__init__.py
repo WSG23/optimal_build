@@ -111,29 +111,23 @@ class ValidationError(ValueError):
     """Raised when model validation fails."""
 
 
-class PydanticSchemaGenerationError(Exception):
+class PydanticSchemaGenerationError(TypeError):
     """Raised when Pydantic schema generation fails."""
 
 
 class TypeAdapter:
     """Minimal stub for pydantic.TypeAdapter."""
 
-    def __init__(self, type_: type[T], **kwargs: Any) -> None:
+    def __init__(self, type_: type[T]) -> None:
         self.type_ = type_
-        self.config = kwargs
 
-    def validate_python(self, data: Any, **kwargs: Any) -> T:
+    def validate_python(self, data: Any) -> T:
         """Validate Python data against the type."""
-        return _convert_value(data, self.type_)
-
-    def dump_python(self, instance: T, **kwargs: Any) -> Any:
-        """Dump instance to Python dict."""
-        return _dump_value(instance, "python")
-
-    def dump_json(self, instance: T, **kwargs: Any) -> bytes:
-        """Dump instance to JSON bytes."""
-        import json
-        return json.dumps(_dump_value(instance, "json")).encode()
+        if isinstance(data, self.type_):
+            return data
+        if hasattr(self.type_, "model_validate"):
+            return self.type_.model_validate(data)
+        return self.type_(data)
 
 
 def _is_optional(annotation: Any) -> bool:
@@ -393,15 +387,6 @@ class BaseModel(metaclass=BaseModelMeta):
             object.__setattr__(self, key, value)
         else:
             raise AttributeError(f"Unknown attribute '{key}'")
-
-    @classmethod
-    def model_rebuild(cls, **kwargs: Any) -> None:
-        """Rebuild the model schema.
-
-        This is a stub implementation that does nothing. In real Pydantic v2,
-        this would rebuild the model schema when ForwardRef annotations change.
-        """
-        pass
 
     @classmethod
     def model_validate(
