@@ -44,6 +44,19 @@ def _load_positive_float(name: str, default: float) -> float:
     return candidate if candidate > 0 else default
 
 
+def _load_non_negative_float(name: str, default: float) -> float:
+    """Return a non-negative floating point value from the environment."""
+
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        candidate = float(raw_value)
+    except (TypeError, ValueError):
+        return default
+    return candidate if candidate >= 0 else default
+
+
 def _load_fractional_float(name: str, default: float) -> float:
     """Return a fractional floating point value between 0 and 1."""
 
@@ -180,6 +193,7 @@ class Settings:
     BUILDABLE_USE_POSTGIS: bool
     ALLOW_VIEWER_MUTATIONS: bool
     LISTING_TOKEN_SECRET: str
+    SLOW_QUERY_THRESHOLD_SECONDS: float
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -270,6 +284,12 @@ class Settings:
         self.LISTING_TOKEN_SECRET = self._load_listing_token_secret()
         self.FINANCE_SENSITIVITY_MAX_SYNC_BANDS = _load_positive_int(
             "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3
+        )
+
+        default_threshold = 0.0 if "pytest" in sys.modules else 0.5
+        self.SLOW_QUERY_THRESHOLD_SECONDS = _load_non_negative_float(
+            "SLOW_QUERY_THRESHOLD_SECONDS",
+            default_threshold,
         )
 
     def _load_listing_token_secret(self) -> str:

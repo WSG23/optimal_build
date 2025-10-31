@@ -235,6 +235,20 @@ cat .github/workflows/*.yaml | grep pytest
 - ✅ Confirmed the tightened CORS middleware now honours `settings.ALLOWED_ORIGINS` derived from `BACKEND_ALLOWED_ORIGINS`; defaults cover local dev hosts only (no `"*"` wildcard remains).
 - ✅ Added regression coverage for the Prometheus metrics helpers (`backend/tests/test_utils/test_metrics.py`), the geocoding service fallbacks (`backend/tests/services/test_geocoding_service.py`), the heritage overlay loaders (`backend/tests/services/test_heritage_overlay_service.py`), the Singapore compliance GFA + URA/BCA checks (`backend/tests/test_utils/test_singapore_compliance.py`), the finance calculator façade (`backend/tests/services/test_finance_calculator.py`), the storage service local fallback (`backend/tests/services/test_storage_service.py`), the reference source + HTTP client retry logic (`backend/tests/test_services/test_reference_sources.py`), the preview job queue/refresh paths (`backend/tests/test_services/test_preview_jobs.py`), and the reference document storage helper (`backend/tests/services/test_reference_storage.py`).
 
+**Progress (2025-10-31):**
+- ✅ Generated codebase architecture artefacts (`docs/architecture/dependency-tree.txt`, `docs/architecture/import_graph.dot/svg/png`) via free tooling (`pipdeptree`, `pydeps`, `networkx`).
+- ✅ Added `docs/architecture/codebase_overview.md` capturing package ownership, 10×/100× scaling risks, and quick regeneration commands.
+- ✅ Instrumented the async engine with slow-query logging controlled by `SLOW_QUERY_THRESHOLD_SECONDS` (default 500 ms, disabled in pytest), addressing the monitoring item in Week 2.
+- ✅ Seeded synthetic data and captured benchmark timings for catalogue/index queries (`.venv/bin/python -m scripts.run_db_benchmarks --catalog-rows 2000 --indices-per-series 16 --markdown`); baseline metrics recorded below.
+
+| Benchmark | Iterations | Mean (ms) | P95 (ms) | Max (ms) | Result size |
+|-----------|------------|-----------|----------|----------|-------------|
+| list_catalog_all | 5 | 72.64 | 151.35 | 172.67 | 2000 |
+| list_catalog_structural | 5 | 3.04 | 3.79 | 3.79 | 250 |
+| latest_cost_index | 5 | 0.05 | 0.13 | 0.15 | 1 |
+
+- ⚠️ `pre-commit run --all-files` still blocked by legacy lint failures (`backend/tests/test_services/test_developer_condition_service.py`) and TypeScript ESLint config; tracked in audit follow-ups.
+
 ---
 
 ### Week 2: Security & Infrastructure Optimization
@@ -364,12 +378,11 @@ free -h
 
 ## 🎯 Implementation Plan
 
-### Day 1-2: Database Indexing
-- Run query analysis
-- Identify missing indexes
-- Create migration for indexes
-- Test query performance improvements
-- Document slow queries and solutions
+### Day 1-2: Codebase Architecture Audit
+- Generate dependency/import graphs (`pipdeptree`, `pydeps`)
+- Catalogue module ownership + circular-import hotspots
+- Update `docs/architecture/codebase_overview.md`
+- Record 10×/100× scaling risks + owners
 
 ### Day 3-4: Automated Testing Setup
 - Audit current test coverage
@@ -383,17 +396,17 @@ free -h
 - Fix security issues
 - Set up automated security checks
 
-### Day 7-8: Infrastructure Optimization
-- Measure resource utilization
-- Identify optimization opportunities
-- Right-size infrastructure
-- Set up monitoring/alerts
+### Day 7-8: Database & Query Performance
+- Benchmark critical queries; capture timings
+- Ensure FK/composite indexes exist (ship Alembic migration)
+- Review slow-query logs (`SLOW_QUERY_THRESHOLD_SECONDS`)
+- Ticket remaining heavy queries
 
-### Day 9-10: Load Testing & Documentation
-- Run load tests
-- Document findings
-- Create runbook for future audits
-- Update `docs/planning/technical-debt.md` with any deferred items
+### Day 9-10: Infrastructure Optimization & Runbooks
+- Measure resource utilisation / right-size configs
+- Configure logging/alerting scripts
+- Run lightweight load test + document findings
+- Update `docs/planning/technical-debt.md` and deferred list
 
 ---
 

@@ -298,8 +298,13 @@ if _SQLALCHEMY_AVAILABLE:
     async def _override_async_session_factory(
         flow_session_factory: async_sessionmaker[AsyncSession],
         monkeypatch: pytest.MonkeyPatch,
+        request: pytest.FixtureRequest,
     ) -> AsyncGenerator[None, None]:
         """Ensure application code reuses the in-memory test database."""
+
+        if request.node.get_closest_marker("no_db"):
+            yield
+            return
 
         targets = [
             import_module("app.core.database"),

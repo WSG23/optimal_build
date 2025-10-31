@@ -11,12 +11,12 @@
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "strict": true,
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "baseUrl": "./src",
     "paths": {
       "@ob/tokens": ["../core/design-tokens/index.ts"]
     }
   },
-  "include": ["src", "../core/design-tokens"],
+  "include": ["src", "../core/design-tokens", "vite.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

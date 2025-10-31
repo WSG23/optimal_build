@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import time
 from collections.abc import AsyncGenerator
 from importlib.util import find_spec
 from pathlib import Path
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -37,6 +40,32 @@ engine: AsyncEngine = create_async_engine(
     echo=True,
     future=True,
 )
+
+logger = logging.getLogger("app.database")
+_SLOW_QUERY_THRESHOLD = settings.SLOW_QUERY_THRESHOLD_SECONDS
+
+if _SLOW_QUERY_THRESHOLD > 0:
+
+    @event.listens_for(engine.sync_engine, "before_cursor_execute")
+    def _before_cursor_execute(
+        conn, cursor, statement, parameters, context, executemany
+    ) -> None:
+        context._query_start_time = time.perf_counter()
+
+    @event.listens_for(engine.sync_engine, "after_cursor_execute")
+    def _after_cursor_execute(
+        conn, cursor, statement, parameters, context, executemany
+    ) -> None:
+        start_time = getattr(context, "_query_start_time", None)
+        if start_time is None:
+            return
+        elapsed = time.perf_counter() - start_time
+        if elapsed >= _SLOW_QUERY_THRESHOLD:
+            truncated = statement if len(statement) <= 500 else statement[:500] + "..."
+            logger.warning(
+                "Slow query detected (%.2f ms): %s", elapsed * 1000, truncated
+            )
+
 
 # Create session factory
 AsyncSessionLocal = async_sessionmaker[AsyncSession](
