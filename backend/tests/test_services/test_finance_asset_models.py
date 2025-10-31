@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
 
 from app.services.finance.asset_models import (
     AREA_QUANT,

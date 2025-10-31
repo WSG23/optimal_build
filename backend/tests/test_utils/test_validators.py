@@ -72,7 +72,9 @@ def test_validate_singapore_address_comprehensive() -> None:
         "  50 Beach Road Singapore 189763  ",  # With spaces
     ]
     for addr in valid_addresses:
-        assert validators.validate_singapore_address(addr) is True, f"Expected {addr} to be valid"
+        assert (
+            validators.validate_singapore_address(addr) is True
+        ), f"Expected {addr} to be valid"
 
     # Invalid addresses
     invalid_addresses = [
@@ -85,7 +87,9 @@ def test_validate_singapore_address_comprehensive() -> None:
         "123 Example Road 1234567",  # 7-digit postal
     ]
     for addr in invalid_addresses:
-        assert validators.validate_singapore_address(addr) is False, f"Expected {addr} to be invalid"
+        assert (
+            validators.validate_singapore_address(addr) is False
+        ), f"Expected {addr} to be invalid"
 
 
 def test_validate_postal_code_edge_cases() -> None:

@@ -91,4 +91,3 @@ function formatPercent(value: number | null) {
   if (value === null || Number.isNaN(value)) return '—'
   return `${(value * 100).toFixed(1)}%`
 }
-

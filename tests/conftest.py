@@ -17,16 +17,18 @@ if str(_BACKEND_ROOT) not in sys.path:
 # Ensure SQLAlchemy is loaded BEFORE attempting any imports
 try:
     from backend._sqlalchemy_stub import ensure_sqlalchemy
+
     _SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
     if not _SQLALCHEMY_AVAILABLE:
         # Try importing directly if ensure_sqlalchemy didn't find it
         import importlib
+
         try:
             importlib.import_module("sqlalchemy")
             _SQLALCHEMY_AVAILABLE = True
         except Exception:
             pass
-except (ModuleNotFoundError, ImportError):
+except ImportError:
     _SQLALCHEMY_AVAILABLE = False
 
 # IMPORTANT: Patch SQLite type compiler BEFORE any other imports
@@ -86,7 +88,7 @@ import pytest
 if _SQLALCHEMY_AVAILABLE:
     try:
         from sqlalchemy.dialects.postgresql import UUID as PGUUID  # type: ignore
-    except (ModuleNotFoundError, ImportError):  # pragma: no cover
+    except ImportError:  # pragma: no cover
         pg_module = ModuleType("sqlalchemy.dialects.postgresql")
 
         class _UUID:
@@ -184,7 +186,10 @@ if _backend_flow_session_factory in (None, _missing_fixture):
     from contextlib import asynccontextmanager
 
     # Only skip if we're supposed to use local fixtures AND SQLAlchemy is not available
-    if not _SQLALCHEMY_AVAILABLE and os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1":
+    if (
+        not _SQLALCHEMY_AVAILABLE
+        and os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") != "1"
+    ):
         pytest.skip("SQLAlchemy is required for test fixtures", allow_module_level=True)
 
     import app.utils.metrics as _metrics_module

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
 
 from app.services.finance.re_metrics import (
     PropertyValuation,
@@ -151,7 +150,9 @@ class TestCalculateGrossRentMultiplier:
 
     def test_grm_zero_income(self) -> None:
         """Test GRM with zero income returns None."""
-        result = calculate_gross_rent_multiplier(property_value=500000, annual_gross_income=0)
+        result = calculate_gross_rent_multiplier(
+            property_value=500000, annual_gross_income=0
+        )
         assert result is None
 
     def test_grm_different_values(self) -> None:
@@ -227,7 +228,9 @@ class TestCalculateRentalYield:
 
     def test_basic_rental_yield(self) -> None:
         """Test basic rental yield calculation."""
-        result = calculate_rental_yield(annual_rental_income=50000, property_value=1000000)
+        result = calculate_rental_yield(
+            annual_rental_income=50000, property_value=1000000
+        )
         # 50000 / 1000000 = 0.05 = 5%
         assert result == Decimal("0.05")
 
@@ -238,7 +241,9 @@ class TestCalculateRentalYield:
 
     def test_rental_yield_different_values(self) -> None:
         """Test rental yield with different values."""
-        result = calculate_rental_yield(annual_rental_income=60000, property_value=800000)
+        result = calculate_rental_yield(
+            annual_rental_income=60000, property_value=800000
+        )
         assert result == Decimal("0.075")  # 7.5%
 
 
@@ -247,7 +252,9 @@ class TestCalculateVacancyLoss:
 
     def test_basic_vacancy_loss(self) -> None:
         """Test basic vacancy loss calculation."""
-        result = calculate_vacancy_loss(potential_gross_income=100000, vacancy_rate=0.05)
+        result = calculate_vacancy_loss(
+            potential_gross_income=100000, vacancy_rate=0.05
+        )
         # 100000 * 0.05 = 5000
         assert result == Decimal("5000.00")
 
@@ -415,6 +422,8 @@ class TestValuePropertyMultipleApproaches:
         )
         assert valuation.income_approach_value == Decimal("1000000.00")
         assert valuation.comparable_sales_value == Decimal("950000.00")
-        assert valuation.replacement_cost_value == Decimal("900000.00")  # 1000*1000*0.8 + 100000
+        assert valuation.replacement_cost_value == Decimal(
+            "900000.00"
+        )  # 1000*1000*0.8 + 100000
         # Recommended value should be weighted average or similar
         assert valuation.recommended_value > Decimal("0")

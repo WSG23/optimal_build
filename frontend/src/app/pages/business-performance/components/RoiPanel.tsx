@@ -106,4 +106,3 @@ function formatPercent(value: number | null, absolute = false) {
   const normalized = absolute ? value : value * 100
   return `${normalized.toFixed(1)}%`
 }
-

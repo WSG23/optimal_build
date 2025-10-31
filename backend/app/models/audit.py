@@ -19,6 +19,7 @@ class AuditLog(BaseModel):
     """Recorded metrics emitted by automation workflows."""
 
     __tablename__ = "audit_logs"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     project_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)

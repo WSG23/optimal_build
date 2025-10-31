@@ -66,7 +66,11 @@ except ModuleNotFoundError:
 if load_optional_package is not None:
     try:
         # Try loading the shadow stub first
-        shadow_dirs = [d for d in _REPO_ROOT.iterdir() if d.is_dir() and d.name.startswith("fastapi_shadow_")]
+        shadow_dirs = [
+            d
+            for d in _REPO_ROOT.iterdir()
+            if d.is_dir() and d.name.startswith("fastapi_shadow_")
+        ]
         if shadow_dirs:
             load_optional_package("fastapi", shadow_dirs[0].name, "FastAPI")
         else:
@@ -97,6 +101,7 @@ _SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
 # Import AsyncTestClient from FastAPI stub for testing
 try:
     from fastapi.testclient import AsyncTestClient
+
     AsyncClient = AsyncTestClient  # type: ignore[misc,assignment]
 except ImportError:
     if _RealAsyncClient is not None:

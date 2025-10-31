@@ -430,6 +430,11 @@ class BaseModel(metaclass=BaseModelMeta):
         fields = ", ".join(f"{key}={value!r}" for key, value in self.__dict__.items())
         return f"{self.__class__.__name__}({fields})"
 
+    @classmethod
+    def model_rebuild(cls) -> None:
+        """Stub for pydantic's model_rebuild - used to rebuild model schema after forward references."""
+        pass  # No-op in stub implementation
+
 
 def _dump_value(value: Any, mode: str) -> Any:
     if isinstance(value, BaseModel):

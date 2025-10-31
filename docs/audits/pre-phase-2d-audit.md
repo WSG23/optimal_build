@@ -238,7 +238,7 @@ cat .github/workflows/*.yaml | grep pytest
 **Progress (2025-10-31):**
 - ✅ Generated codebase architecture artefacts (`docs/architecture/dependency-tree.txt`, `docs/architecture/import_graph.dot/svg/png`) via free tooling (`pipdeptree`, `pydeps`, `networkx`).
 - ✅ Added `docs/architecture/codebase_overview.md` capturing package ownership, 10×/100× scaling risks, and quick regeneration commands.
-- ✅ Instrumented the async engine with slow-query logging controlled by `SLOW_QUERY_THRESHOLD_SECONDS` (default 500 ms, disabled in pytest), addressing the monitoring item in Week 2.
+- ✅ Instrumented the async engine with slow-query logging controlled by `SLOW_QUERY_THRESHOLD_SECONDS` (default 150 ms, disabled in pytest), addressing the monitoring item in Week 2.
 - ✅ Seeded synthetic data and captured benchmark timings for catalogue/index queries (`.venv/bin/python -m scripts.run_db_benchmarks --catalog-rows 2000 --indices-per-series 16 --markdown`); baseline metrics recorded below.
 
 | Benchmark | Iterations | Mean (ms) | P95 (ms) | Max (ms) | Result size |
@@ -247,6 +247,9 @@ cat .github/workflows/*.yaml | grep pytest
 | list_catalog_structural | 5 | 3.04 | 3.79 | 3.79 | 250 |
 | latest_cost_index | 5 | 0.05 | 0.13 | 0.15 | 1 |
 
+- ✅ Security sweep update: `git log -p | grep -i "password|secret|token"` (no leaked credentials detected) and `rg "SELECT" backend/app --type py` (only static metadata queries in `main.py` and declarative SQLAlchemy usage found).
+- ✅ Slow-query instrumentation: lowered default threshold to 150 ms and tailed `.devstack/backend.log` (no warnings yet under light load; rerun finance/preview flows after next backend start to capture live samples).
+- ⚠️ `pip list --outdated` attempted for the dependency audit but failed (no outbound network in sandbox); logged for follow-up once connectivity is available.
 - ⚠️ `pre-commit run --all-files` still blocked by legacy lint failures (`backend/tests/test_services/test_developer_condition_service.py`) and TypeScript ESLint config; tracked in audit follow-ups.
 
 ---

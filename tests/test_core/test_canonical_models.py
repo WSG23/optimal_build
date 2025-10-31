@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
-
-import pytest
-
 from core.canonical_models import (
     JurisdictionORM,
     ProvenanceORM,
     RegMappingORM,
-    RegulationORM,
     RegstackBase,
+    RegulationORM,
 )
 
 
@@ -97,7 +93,9 @@ def test_regulation_orm_constraints() -> None:
 
     # Should have unique constraint on jurisdiction_code + external_id
     unique_constraints = [
-        arg for arg in table_args if hasattr(arg, "name") and "uq_reg_external" in arg.name
+        arg
+        for arg in table_args
+        if hasattr(arg, "name") and "uq_reg_external" in arg.name
     ]
     assert len(unique_constraints) > 0
 
@@ -108,7 +106,9 @@ def test_regulation_orm_indexes() -> None:
     assert table_args is not None
 
     # Should have index on global_tags
-    indexes = [arg for arg in table_args if hasattr(arg, "name") and "global_tags" in arg.name]
+    indexes = [
+        arg for arg in table_args if hasattr(arg, "name") and "global_tags" in arg.name
+    ]
     assert len(indexes) > 0
 
 
@@ -118,7 +118,9 @@ def test_reg_mapping_orm_indexes() -> None:
     assert table_args is not None
 
     # Should have index on payload
-    indexes = [arg for arg in table_args if hasattr(arg, "name") and "payload" in arg.name]
+    indexes = [
+        arg for arg in table_args if hasattr(arg, "name") and "payload" in arg.name
+    ]
     assert len(indexes) > 0
 
 

@@ -286,7 +286,7 @@ class Settings:
             "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3
         )
 
-        default_threshold = 0.0 if "pytest" in sys.modules else 0.5
+        default_threshold = 0.0 if "pytest" in sys.modules else 0.15
         self.SLOW_QUERY_THRESHOLD_SECONDS = _load_non_negative_float(
             "SLOW_QUERY_THRESHOLD_SECONDS",
             default_threshold,
