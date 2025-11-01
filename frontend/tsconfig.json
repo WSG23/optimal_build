@@ -18,6 +18,7 @@
     "types": ["vite/client"],
     "baseUrl": "./src",
     "paths": {
+      "@/*": ["./*"],
       "@ob/tokens": ["../core/design-tokens/index.ts"]
     }
   },
