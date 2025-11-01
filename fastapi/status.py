@@ -1,0 +1,13 @@
+"""HTTP status codes for the FastAPI stub."""
+
+HTTP_200_OK = 200
+HTTP_201_CREATED = 201
+HTTP_400_BAD_REQUEST = 400
+HTTP_404_NOT_FOUND = 404
+
+__all__ = [
+    "HTTP_200_OK",
+    "HTTP_201_CREATED",
+    "HTTP_400_BAD_REQUEST",
+    "HTTP_404_NOT_FOUND",
+]

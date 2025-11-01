@@ -1,4 +1,4 @@
-"""Bridge module exposing the project-level Starlette stub."""
+"""Bridge module exposing the project-level FastAPI stub."""
 
 from __future__ import annotations
 

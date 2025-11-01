@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import importlib.machinery
+import inspect
+import importlib.util
 import sys
 import uuid
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from functools import wraps
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
@@ -76,8 +78,6 @@ if load_optional_package is not None:
         else:
             load_optional_package("fastapi", "fastapi", "FastAPI")
     except ModuleNotFoundError:
-        import importlib.util
-
         fastapi_path = _REPO_ROOT / "fastapi" / "__init__.py"
         if fastapi_path.exists():
             spec = importlib.util.spec_from_file_location("fastapi", fastapi_path)
@@ -102,12 +102,11 @@ _SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
 def _ensure_sqlalchemy_dialects() -> None:
     """Ensure SQLAlchemy has its dialect registry loaded."""
 
-    import importlib
     import sqlalchemy
 
     module = getattr(sqlalchemy, "dialects", None)
     if module is None:
-        module = importlib.import_module("sqlalchemy.dialects")
+        module = import_module("sqlalchemy.dialects")
         sqlalchemy.dialects = module
 
 
@@ -171,6 +170,113 @@ if _SQLALCHEMY_AVAILABLE:
         _async_session.greenlet_spawn = _greenlet_spawn
         _async_result.greenlet_spawn = _greenlet_spawn
 
+_pytest_asyncio_stub = ModuleType("pytest_asyncio")
+
+
+def _run(coro: Any) -> Any:
+    """Execute a coroutine to completion using ``asyncio.run``."""
+
+    return asyncio.run(coro)
+
+
+def _wrap_fixture(
+    func: Callable[..., Any], *, args: tuple[Any, ...], kwargs: dict[str, Any]
+):
+    decorator = pytest.fixture(*args, **kwargs)
+
+    if inspect.isasyncgenfunction(func):
+
+        @wraps(func)
+        def _wrapper(*f_args: Any, **f_kwargs: Any):
+            agen = func(*f_args, **f_kwargs)
+            try:
+                try:
+                    value = _run(agen.__anext__())
+                except StopAsyncIteration as exc:  # pragma: no cover - defensive
+                    raise RuntimeError(
+                        "Async generator fixture did not yield a value"
+                    ) from exc
+                yield value
+            finally:
+                try:
+                    _run(agen.aclose())
+                except RuntimeError:  # pragma: no cover - defensive
+                    pass
+
+        _wrapper.__signature__ = inspect.signature(func)  # type: ignore[attr-defined]
+        return decorator(_wrapper)
+
+    if inspect.iscoroutinefunction(func):
+
+        @wraps(func)
+        def _wrapper(*f_args: Any, **f_kwargs: Any) -> Any:
+            return _run(func(*f_args, **f_kwargs))
+
+        _wrapper.__signature__ = inspect.signature(func)  # type: ignore[attr-defined]
+        return decorator(_wrapper)
+
+    return decorator(func)
+
+
+def fixture(*f_args: Any, **f_kwargs: Any):
+    if f_args and callable(f_args[0]) and len(f_args) == 1 and not f_kwargs:
+        return _wrap_fixture(f_args[0], args=(), kwargs={})
+
+    def decorator(func: Callable[..., Any]):
+        return _wrap_fixture(func, args=f_args, kwargs=f_kwargs)
+
+    return decorator
+
+
+_pytest_asyncio_stub.fixture = fixture  # type: ignore[attr-defined]
+_pytest_asyncio_stub.__all__ = ["fixture"]
+sys.modules.setdefault("pytest_asyncio", _pytest_asyncio_stub)
+pytest_asyncio = _pytest_asyncio_stub  # type: ignore[assignment]
+
+
+def pytest_addoption(parser):  # pragma: no cover - exercised indirectly
+    parser.addini(
+        "asyncio_mode",
+        "Compatibility option consumed by the lightweight pytest-asyncio stub.",
+        default="auto",
+    )
+
+
+def pytest_configure(
+    config: pytest.Config,
+) -> None:  # pragma: no cover - exercised indirectly
+    """Register custom markers for pytest."""
+    config.addinivalue_line(
+        "markers",
+        "asyncio: execute the coroutine test function using the local pytest-asyncio stub.",
+    )
+    config.addinivalue_line(
+        "markers", "no_db: skip database setup/teardown for lightweight tests"
+    )
+
+
+@pytest.hookimpl(tryfirst=True)  # pragma: no cover - exercised indirectly
+def pytest_pyfunc_call(pyfuncitem):
+    test_func = pyfuncitem.obj
+    if inspect.iscoroutinefunction(test_func):
+        if pyfuncitem.get_closest_marker("asyncio") is None:
+            return False
+        arg_names = getattr(pyfuncitem._fixtureinfo, "argnames", ())
+        call_kwargs = {name: pyfuncitem.funcargs[name] for name in arg_names}
+        _run(test_func(**call_kwargs))
+        return True
+    return None
+
+
+try:  # pragma: no cover - optional dependency for API tests
+    from httpx import AsyncClient
+except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
+
+    class AsyncClient:  # type: ignore[no-redef]
+        """Fallback stub used when httpx is not installed."""
+
+        pass
+
     try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
         from sqlalchemy.pool import StaticPool as _StaticPool
     except (ImportError, AttributeError):  # pragma: no cover
@@ -214,14 +320,8 @@ if _SQLALCHEMY_AVAILABLE:
 
     _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
 else:
-    SQLAlchemyError = RuntimeError
+    SQLAlchemyError = RuntimeError  # noqa: F811  # fallback when SQLAlchemy unavailable
     StaticPool = type("StaticPool", (), {})  # type: ignore[assignment]
-
-
-def pytest_configure(config: pytest.Config) -> None:
-    config.addinivalue_line(
-        "markers", "no_db: skip database setup/teardown for lightweight tests"
-    )
 
 
 @pytest.fixture(scope="session")
