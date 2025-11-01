@@ -1,46 +1,73 @@
-"""Minimal SQLAlchemy compatibility layer for analytics unit tests."""
+"""Lightweight SQLAlchemy compatibility layer for tests.
+
+This stub implements the subset of the SQLAlchemy API exercised by the test
+suite so that imports succeed without requiring the real dependency.  The goal
+is not to provide full ORM behaviour—just enough structure for query builders,
+metadata declarations, and async helpers that the tests interact with.
+"""
 
 from __future__ import annotations
 
-from decimal import Decimal as _Decimal
 from types import ModuleType
 from typing import Any, Callable, Iterable, Sequence
 import sys
-import types
 
 __all__ = [
+    "AsyncEngine",
+    "AsyncSession",
     "Boolean",
     "CHAR",
+    "CheckConstraint",
     "Column",
+    "DECIMAL",
+    "Date",
     "DateTime",
+    "Decimal",
+    "Enum",
+    "Engine",
     "Float",
     "ForeignKey",
-    "Integer",
-    "Enum",
-    "Date",
-    "Numeric",
-    "String",
-    "Text",
-    "cast",
-    "literal",
-    "select",
-    "Select",
-    "and_",
-    "or_",
-    "func",
-    "create_engine",
-    "event",
-    "insert",
-    "update",
-    "delete",
-    "UniqueConstraint",
     "Index",
-    "CheckConstraint",
-    "DECIMAL",
-    "Decimal",
+    "Integer",
+    "MetaData",
+    "Select",
+    "Session",
+    "String",
+    "Table",
+    "Text",
+    "TypeDecorator",
+    "UniqueConstraint",
+    "UserDefinedType",
+    "and_",
+    "asc",
+    "async_sessionmaker",
+    "cast",
+    "create_async_engine",
+    "create_engine",
+    "declarative_base",
+    "delete",
+    "desc",
+    "engine_from_config",
+    "event",
+    "func",
+    "inspect",
+    "insert",
+    "joinedload",
+    "literal",
+    "literal_column",
+    "make_url",
+    "mapped_column",
+    "or_",
+    "registry",
+    "relationship",
+    "select",
+    "selectinload",
+    "sessionmaker",
+    "text",
+    "update",
 ]
 
-Decimal = _Decimal
+Decimal = float
 
 
 class _SQLType:
@@ -67,10 +94,6 @@ class Boolean(_SQLType):
     pass
 
 
-def DECIMAL(*_: Any, **__: Any) -> _SQLType:
-    return _SQLType(float)
-
-
 class Text(_SQLType):
     pass
 
@@ -95,6 +118,10 @@ def Numeric(*_: Any, **__: Any) -> _SQLType:
     return _SQLType(float)
 
 
+def DECIMAL(*_: Any, **__: Any) -> _SQLType:
+    return _SQLType(float)
+
+
 class Column:
     def __init__(
         self,
@@ -111,6 +138,42 @@ class Column:
         self.nullable = nullable
         self.unique = unique
         self.extras = extras
+
+
+class _MetaData:
+    def __init__(self) -> None:
+        self.tables: dict[str, Table] = {}
+
+    def create_all(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - stub
+        return None
+
+    def drop_all(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - stub
+        return None
+
+    @property
+    def sorted_tables(self) -> list[Table]:
+        return [self.tables[key] for key in sorted(self.tables.keys())]
+
+
+class Table:
+    def __init__(
+        self,
+        name: str,
+        metadata: _MetaData,
+        *columns: Column,
+        **options: Any,
+    ) -> None:
+        self.name = name
+        self.metadata = metadata
+        self.columns = columns
+        self.options = options
+        metadata.tables[name] = self
+
+    def __repr__(self) -> str:  # pragma: no cover - debug helper
+        return f"Table({self.name!r})"
+
+
+MetaData = _MetaData
 
 
 def UniqueConstraint(*columns: str, **_: Any) -> tuple[str, ...]:
@@ -130,11 +193,15 @@ class ForeignKey:
         self.target = target
 
 
-def literal(value: Any, type_: _SQLType | None = None) -> Any:
+def literal(value: Any, type_: _SQLType | None = None) -> Any:  # noqa: ARG001
     return value
 
 
-def cast(value: Any, type_: _SQLType | None = None) -> Any:
+def literal_column(name: str) -> str:
+    return name
+
+
+def cast(value: Any, type_: _SQLType | None = None) -> Any:  # noqa: ARG001
     return value
 
 
@@ -146,38 +213,46 @@ def or_(*conditions: Any) -> tuple[str, tuple[Any, ...]]:
     return ("or", conditions)
 
 
+def asc(column: Any) -> tuple[str, Any]:
+    return ("asc", column)
+
+
+def desc(column: Any) -> tuple[str, Any]:
+    return ("desc", column)
+
+
 class Select:
     def __init__(self, entities: Sequence[Any]) -> None:
         self.entities = tuple(entities)
 
-    def where(self, *args: Any, **kwargs: Any) -> "Select":
+    def where(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def join(self, *args: Any, **kwargs: Any) -> "Select":
+    def join(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def outerjoin(self, *args: Any, **kwargs: Any) -> "Select":
+    def outerjoin(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def order_by(self, *args: Any, **kwargs: Any) -> "Select":
+    def order_by(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def group_by(self, *args: Any, **kwargs: Any) -> "Select":
+    def group_by(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def having(self, *args: Any, **kwargs: Any) -> "Select":
+    def having(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def options(self, *args: Any, **kwargs: Any) -> "Select":
+    def options(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def limit(self, *args: Any, **kwargs: Any) -> "Select":
+    def limit(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def offset(self, *args: Any, **kwargs: Any) -> "Select":
+    def offset(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def distinct(self, *args: Any, **kwargs: Any) -> "Select":
+    def distinct(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
 
@@ -198,27 +273,23 @@ def delete(entity: Any) -> Select:
 
 
 class _FuncProxy:
-    def __getattr__(self, name: str) -> "_FuncCall":
-        return _FuncCall(name)
+    def __getattr__(self, name: str) -> Callable[..., tuple[str, tuple[Any, ...], dict[str, Any]]]:
+        def _call(*args: Any, **kwargs: Any) -> tuple[str, tuple[Any, ...], dict[str, Any]]:
+            return (name, args, kwargs)
 
-
-class _FuncCall:
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    def __call__(self, *args: Any, **kwargs: Any) -> tuple[str, tuple[Any, ...], dict[str, Any]]:
-        return (self.name, args, kwargs)
+        return _call
 
 
 func = _FuncProxy()
 
 
 class _EventAPI:
-    def listen(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - no-op hook
-        return None
+    def listen(self, target: Any, identifier: str, fn: Callable[..., Any]) -> None:  # noqa: ARG002
+        setattr(target, identifier, fn)
 
-    def listens_for(self, target: Any, identifier: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def listens_for(self, target: Any, identifier: str, **__: Any):
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+            self.listen(target, identifier, fn)
             return fn
 
         return decorator
@@ -234,16 +305,52 @@ class Engine:
     def dispose(self) -> None:  # pragma: no cover - compatibility hook
         return None
 
+    def connect(self):
+        class _Connection:
+            def __enter__(self_inner) -> _Connection:
+                return self_inner
 
-def create_engine(url: str, **kwargs: Any) -> Engine:
+            def __exit__(self_inner, exc_type, exc, tb) -> None:  # noqa: ANN001
+                return None
+
+            def begin(self_inner):
+                class _Txn:
+                    def __enter__(self_txn) -> _Txn:  # pragma: no cover - debug helper
+                        return self_txn
+
+                    def __exit__(self_txn, exc_type, exc, tb) -> None:  # noqa: ANN001
+                        return None
+
+                return _Txn()
+
+        return _Connection()
+
+
+def create_engine(url: str, **kwargs: Any) -> Engine:  # noqa: ARG001
     return Engine(url, **kwargs)
 
 
-# ---------------------------------------------------------------------------
-# Submodules: sqlalchemy.ext.asyncio
-# ---------------------------------------------------------------------------
-ext_module = ModuleType("sqlalchemy.ext")
-asyncio_module = ModuleType("sqlalchemy.ext.asyncio")
+def engine_from_config(config: dict[str, Any], prefix: str = "sqlalchemy.", **kwargs: Any) -> Engine:
+    url = config.get(f"{prefix}url", "sqlite://")
+    return create_engine(url, **kwargs)
+
+
+class _Inspector:
+    def __init__(self, engine: Engine) -> None:
+        self.engine = engine
+
+    def has_table(self, name: str) -> bool:  # pragma: no cover - diagnostic helper
+        return name in getattr(getattr(self.engine, "metadata", None), "tables", {})
+
+    def get_table_names(self) -> list[str]:  # pragma: no cover - diagnostic helper
+        metadata = getattr(self.engine, "metadata", None)
+        if metadata and hasattr(metadata, "tables"):
+            return list(metadata.tables.keys())
+        return []
+
+
+def inspect(engine: Engine) -> _Inspector:
+    return _Inspector(engine)
 
 
 class _Result:
@@ -253,7 +360,7 @@ class _Result:
     def scalar_one_or_none(self) -> Any:
         return self._value
 
-    def scalars(self) -> "_Result":
+    def scalars(self) -> _Result:
         return self
 
     def all(self) -> list[Any]:
@@ -287,20 +394,20 @@ class _AsyncSessionContext:
     async def __aenter__(self) -> AsyncSession:
         return AsyncSession()
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:
+    async def __aexit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
         return None
 
 
 class _AsyncSessionmaker:
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401, ANN001
         self.args = args
         self.kwargs = kwargs
 
-    def __call__(self, *args: Any, **kwargs: Any) -> _AsyncSessionContext:
+    def __call__(self, *args: Any, **kwargs: Any) -> _AsyncSessionContext:  # noqa: ANN001
         return _AsyncSessionContext()
 
     @classmethod
-    def __class_getitem__(cls, item: Any) -> "_AsyncSessionmaker":  # pragma: no cover - typing helper
+    def __class_getitem__(cls, item: Any) -> _AsyncSessionmaker:  # noqa: ANN001, pragma: no cover - typing helper
         return cls
 
 
@@ -321,10 +428,10 @@ class _AsyncEngine:
 
     def begin(self):
         class _TxnContext:
-            async def __aenter__(self_inner):
+            async def __aenter__(self_inner):  # noqa: ANN001
                 return self_inner
 
-            async def __aexit__(self_inner, exc_type, exc, tb) -> None:
+            async def __aexit__(self_inner, exc_type, exc, tb) -> None:  # noqa: ANN001
                 return None
 
             async def run_sync(self_inner, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -333,7 +440,7 @@ class _AsyncEngine:
         return _TxnContext()
 
 
-def create_async_engine(url: str, **kwargs: Any) -> _AsyncEngine:
+def create_async_engine(url: str, **kwargs: Any) -> _AsyncEngine:  # noqa: ARG001
     return _AsyncEngine(url, **kwargs)
 
 
@@ -341,22 +448,20 @@ class AsyncEngine(_AsyncEngine):
     pass
 
 
+ext_module = ModuleType("sqlalchemy.ext")
+asyncio_module = ModuleType("sqlalchemy.ext.asyncio")
 asyncio_module.AsyncSession = AsyncSession  # type: ignore[attr-defined]
 asyncio_module.async_sessionmaker = async_sessionmaker  # type: ignore[attr-defined]
 asyncio_module.create_async_engine = create_async_engine  # type: ignore[attr-defined]
 asyncio_module.AsyncEngine = AsyncEngine  # type: ignore[attr-defined]
+ext_module.asyncio = asyncio_module  # type: ignore[attr-defined]
 
 sys.modules["sqlalchemy.ext"] = ext_module
 sys.modules["sqlalchemy.ext.asyncio"] = asyncio_module
 
-# ---------------------------------------------------------------------------
-# Submodules: sqlalchemy.orm
-# ---------------------------------------------------------------------------
-orm_module = ModuleType("sqlalchemy.orm")
-
 
 class Session:
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
         pass
 
     def add(self, obj: Any) -> None:
@@ -369,8 +474,8 @@ class Session:
         return None
 
 
-def sessionmaker(*_: Any, **__: Any):
-    def factory(*args: Any, **kwargs: Any) -> Session:
+def sessionmaker(*_: Any, **__: Any):  # noqa: ANN001
+    def factory(*args: Any, **kwargs: Any) -> Session:  # noqa: ANN001
         return Session(*args, **kwargs)
 
     return factory
@@ -388,39 +493,24 @@ def joinedload(*_: Any, **__: Any) -> str:
     return "joinedload"
 
 
-class _MetaData:
-    def __init__(self) -> None:
-        self.tables: dict[str, Any] = {}
-
-    def create_all(self, *args: Any, **kwargs: Any) -> None:
-        return None
-
-    def drop_all(self, *args: Any, **kwargs: Any) -> None:
-        return None
-
-    @property
-    def sorted_tables(self) -> list[Any]:
-        return list(self.tables.values())
-
-
 class DeclarativeBase:
-    metadata = _MetaData()
+    metadata = MetaData()
 
 
 class Mapped:
     pass
 
 
-def mapped_column(*args: Any, **kwargs: Any) -> Column:
-    type_ = kwargs.get("type_")
-    return Column(type_, **{k: v for k, v in kwargs.items() if k in {"primary_key", "default", "nullable", "unique"}})
+def mapped_column(*args: Any, **kwargs: Any) -> Column:  # noqa: ARG002
+    return Column(*args, **kwargs)
 
 
-def registry() -> ModuleType:
+def registry(*_: Any, **__: Any):
     reg = ModuleType("sqlalchemy.orm.registry")
     return reg
 
 
+orm_module = ModuleType("sqlalchemy.orm")
 orm_module.Session = Session  # type: ignore[attr-defined]
 orm_module.sessionmaker = sessionmaker  # type: ignore[attr-defined]
 orm_module.relationship = relationship  # type: ignore[attr-defined]
@@ -433,26 +523,55 @@ orm_module.registry = registry  # type: ignore[attr-defined]
 
 sys.modules["sqlalchemy.orm"] = orm_module
 
-# ---------------------------------------------------------------------------
-# Submodules: sqlalchemy.ext.declarative
-# ---------------------------------------------------------------------------
-declarative_module = ModuleType("sqlalchemy.ext.declarative")
-
 
 def declarative_base() -> type:
     class Base:
-        metadata = _MetaData()
+        metadata = MetaData()
 
     return Base
 
 
+declarative_module = ModuleType("sqlalchemy.ext.declarative")
 declarative_module.declarative_base = declarative_base  # type: ignore[attr-defined]
 
 sys.modules["sqlalchemy.ext.declarative"] = declarative_module
 
-# ---------------------------------------------------------------------------
-# Submodules: sqlalchemy.dialects.postgresql
-# ---------------------------------------------------------------------------
+
+class JSON(_SQLType):
+    pass
+
+
+class TypeDecorator:
+    impl = _SQLType()
+
+    def process_bind_param(self, value: Any, dialect: Any) -> Any:  # pragma: no cover - stub
+        return value
+
+    def process_result_value(self, value: Any, dialect: Any) -> Any:  # pragma: no cover - stub
+        return value
+
+
+class UserDefinedType:
+    pass
+
+
+types_module = ModuleType("sqlalchemy.types")
+types_module.JSON = JSON  # type: ignore[attr-defined]
+types_module.TypeDecorator = TypeDecorator  # type: ignore[attr-defined]
+types_module.UserDefinedType = UserDefinedType  # type: ignore[attr-defined]
+types_module.Enum = Enum  # type: ignore[attr-defined]
+types_module.Numeric = Numeric  # type: ignore[attr-defined]
+
+sys.modules["sqlalchemy.types"] = types_module
+
+
+JSON = types_module.JSON
+TypeDecorator = types_module.TypeDecorator
+UserDefinedType = types_module.UserDefinedType
+Enum = types_module.Enum
+Numeric = types_module.Numeric
+
+
 postgresql_module = ModuleType("sqlalchemy.dialects.postgresql")
 
 
@@ -464,58 +583,27 @@ class UUID(_SQLType):
     pass
 
 
-def insert(table: Any) -> Select:
-    return Select((table,))
-
-
 postgresql_module.JSONB = JSONB  # type: ignore[attr-defined]
 postgresql_module.UUID = UUID  # type: ignore[attr-defined]
 postgresql_module.insert = insert  # type: ignore[attr-defined]
 
 sys.modules["sqlalchemy.dialects.postgresql"] = postgresql_module
 
-# ---------------------------------------------------------------------------
-# Submodules: sqlalchemy.types
-# ---------------------------------------------------------------------------
-types_module = ModuleType("sqlalchemy.types")
+
+sqlite_module = ModuleType("sqlalchemy.dialects.sqlite")
+sqlite_base_module = ModuleType("sqlalchemy.dialects.sqlite.base")
 
 
-class JSON(_SQLType):
+class SQLiteTypeCompiler:
     pass
 
 
-class TypeDecorator:
-    impl = _SQLType()
+sqlite_base_module.SQLiteTypeCompiler = SQLiteTypeCompiler  # type: ignore[attr-defined]
 
-    def process_bind_param(self, value: Any, dialect: Any) -> Any:  # pragma: no cover - compatibility stub
-        return value
-
-    def process_result_value(self, value: Any, dialect: Any) -> Any:  # pragma: no cover - compatibility stub
-        return value
+sys.modules["sqlalchemy.dialects.sqlite"] = sqlite_module
+sys.modules["sqlalchemy.dialects.sqlite.base"] = sqlite_base_module
 
 
-class UserDefinedType:
-    pass
-
-
-types_module.JSON = JSON  # type: ignore[attr-defined]
-types_module.TypeDecorator = TypeDecorator  # type: ignore[attr-defined]
-types_module.UserDefinedType = UserDefinedType  # type: ignore[attr-defined]
-types_module.Enum = Enum  # type: ignore[attr-defined]
-types_module.Numeric = Numeric  # type: ignore[attr-defined]
-
-sys.modules["sqlalchemy.types"] = types_module
-
-# Expose selected types at the package root for compatibility with imports
-JSON = types_module.JSON
-TypeDecorator = types_module.TypeDecorator
-UserDefinedType = types_module.UserDefinedType
-Enum = types_module.Enum
-Numeric = types_module.Numeric
-
-# ---------------------------------------------------------------------------
-# Submodules: sqlalchemy.sql
-# ---------------------------------------------------------------------------
 sql_module = ModuleType("sqlalchemy.sql")
 
 
@@ -528,9 +616,7 @@ sql_module.text = text  # type: ignore[attr-defined]
 
 sys.modules["sqlalchemy.sql"] = sql_module
 
-# ---------------------------------------------------------------------------
-# Submodules: sqlalchemy.exc
-# ---------------------------------------------------------------------------
+
 exc_module = ModuleType("sqlalchemy.exc")
 
 
@@ -546,3 +632,44 @@ exc_module.SQLAlchemyError = SQLAlchemyError  # type: ignore[attr-defined]
 exc_module.IntegrityError = IntegrityError  # type: ignore[attr-defined]
 
 sys.modules["sqlalchemy.exc"] = exc_module
+
+
+engine_module = ModuleType("sqlalchemy.engine")
+
+
+class URL:
+    def __init__(self, raw: str) -> None:
+        self.raw = raw
+
+    def __str__(self) -> str:  # pragma: no cover - debug helper
+        return self.raw
+
+
+def make_url(url: str) -> URL:
+    return URL(url)
+
+
+engine_module.Engine = Engine  # type: ignore[attr-defined]
+engine_module.URL = URL  # type: ignore[attr-defined]
+engine_module.make_url = make_url  # type: ignore[attr-defined]
+
+sys.modules["sqlalchemy.engine"] = engine_module
+
+
+pool_module = ModuleType("sqlalchemy.pool")
+
+
+class NullPool:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.args = args
+        self.kwargs = kwargs
+
+
+class StaticPool(NullPool):
+    pass
+
+
+pool_module.NullPool = NullPool  # type: ignore[attr-defined]
+pool_module.StaticPool = StaticPool  # type: ignore[attr-defined]
+
+sys.modules["sqlalchemy.pool"] = pool_module
