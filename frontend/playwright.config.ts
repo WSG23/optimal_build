@@ -56,6 +56,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
+      // Serve the built frontend with the CI-specific preview command in automation.
       command: frontendCommand,
       cwd: path.resolve(rootDir, 'frontend'),
       env: {

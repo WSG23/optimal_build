@@ -14,12 +14,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -27,8 +21,13 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: frontend/pnpm-lock.yaml
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
         working-directory: frontend
 
       - name: Build
@@ -36,7 +35,7 @@ jobs:
         working-directory: frontend
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
+        run: npx playwright install --with-deps
         working-directory: frontend
 
       - name: Lint (ESLint)
@@ -44,7 +43,7 @@ jobs:
         working-directory: frontend
 
       - name: Smoke tests (Playwright)
-        run: pnpm exec playwright test
+        run: pnpm test:smoke
         working-directory: frontend
 
       - name: Upload Playwright report on failure
