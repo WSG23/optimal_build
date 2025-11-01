@@ -9,17 +9,9 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 
 ## 🚀 Active (Do Now - Priority Order)
 
-### 1. Infrastructure Audit - Option 10: Fix pre-commit hook failures
-- **Status:** IN PROGRESS
-- **Assigned:** Available
-- **Estimate:** 2 hours
-- **Description:** Resolve intermittent failures in the phase-gate and lint hooks triggered by database schema migrations.
-- **Acceptance Criteria:** Hooks pass on clean checkout, documentation updated with remediation steps.
-- **Files:** `scripts/check_phase_gate.py`, `.pre-commit-config.yaml`, related CI configs.
-
-### 2. Infrastructure Audit - Option 11: Backend test coverage 68% → 80%
-- **Status:** READY
-- **Assigned:** Available
+### 1. Infrastructure Audit - Option 11: Backend test coverage 68% → 80%
+- **Status:** IN PROGRESS (Codex Local)
+- **Assigned:** Codex Local
 - **Estimate:** 8 hours
 - **Description:** Expand unit and integration coverage for audit-critical services (ingestion pipelines, finance adapters).
 - **Acceptance Criteria:** Coverage report ≥ 80% on critical paths, flaky tests resolved, audit checklist updated.
@@ -50,8 +42,13 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 
 ### 2025-11-02: Phase 1D Business Performance UI shipped
 - **Completed by:** AI Agents crew
-- **Commits:** (this PR – Business Performance UI delivery)
+- **Commits:** 46780e7, 7c97757
 - **Highlights:** Pipeline Kanban drag-and-drop, deal insights timeline, analytics & ROI panels, manual QA checklist ✅
+
+### 2025-11-02: Infrastructure Audit - Option 10: Pre-commit hook fixes
+- **Completed by:** Claude
+- **Commits:** 3766d08
+- **Impact:** Resolved lint failures in conftest.py, all critical pre-commit hooks now pass cleanly
 
 ---
 
