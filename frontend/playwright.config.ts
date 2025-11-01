@@ -1,5 +1,4 @@
 import { defineConfig } from '@playwright/test'
-import { defineBddConfig } from 'playwright-bdd'
 import path from 'node:path'
 
 const rootDir = path.resolve(__dirname, '..')
@@ -29,16 +28,6 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
   },
-  projects: [
-    {
-      name: 'e2e',
-      testDir: path.resolve(__dirname, 'tests/e2e'),
-    },
-    {
-      name: 'bdd',
-      testDir: path.resolve(__dirname, 'tests/bdd/.generated'),
-    },
-  ],
   webServer: [
     {
       command:
@@ -70,10 +59,4 @@ export default defineConfig({
       timeout: 120_000,
     },
   ],
-})
-
-export const bdd = defineBddConfig({
-  features: ['features/**/*.feature'],
-  steps: ['tests/bdd/steps/**/*.ts'],
-  outputDir: 'tests/bdd/.generated',
 })
