@@ -1,6 +1,6 @@
 import Panel from '@/components/layout/Panel';
 import { PanelBody } from '@/components/layout/PanelBody';
-import type { TicketsByStatus } from './IncidentAlertsPanel';
+import type { TicketsByStatus } from './types';
 
 export interface LeftSidebarProps {
   facilityLabel: string;
