@@ -2,7 +2,7 @@
 
 ## AI Agent Onboarding *(Mandatory)*
 - Start with `START_HERE.md` for the exact reading order.
-- Read both `docs/feature_delivery_plan_v2.md` and `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` **before** planning, writing a to‑do list, or touching code.
+- Read both `docs/ROADMAP.MD` and `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` **before** planning, writing a to‑do list, or touching code, then grab your next task from `docs/WORK_QUEUE.MD`.
 - Skim `docs/planning/ui-status.md` whenever frontend work is in scope.
 - Keep `docs/development/testing/known-issues.md` handy while implementing and validating changes.
 

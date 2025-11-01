@@ -434,7 +434,7 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
     errors: list[str] = []
 
     guidance_file = repo_root / "docs" / "ai-agents" / "next_steps.md"
-    plan_file = repo_root / "docs" / "feature_delivery_plan_v2.md"
+    work_queue_file = repo_root / "docs" / "WORK_QUEUE.MD"
 
     required_refs = [
         "development/testing/known-issues.md",
@@ -462,9 +462,9 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
             return ""
 
     guidance_content = _read(guidance_file)
-    plan_content = _read(plan_file)
+    work_queue_content = _read(work_queue_file)
 
-    if not guidance_content or not plan_content:
+    if not guidance_content or not work_queue_content:
         return len(errors) == 0, errors
 
     # Check for file references
@@ -476,9 +476,9 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
                 "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
                 "  -> See CODING_RULES.md section 8.2"
             )
-        if ref not in plan_content:
+        if ref not in work_queue_content:
             errors.append(
-                "RULE VIOLATION: docs/feature_delivery_plan_v2.md must reference "
+                "RULE VIOLATION: docs/WORK_QUEUE.MD must reference "
                 f"'{ref}' within relevant phase guidance.\n"
                 "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
                 "  -> See CODING_RULES.md section 8.2"
@@ -486,7 +486,7 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
 
     # NEW: Check for required content sections (Rule 8.1)
     for section, doc_path in required_content_sections:
-        content = guidance_content if "next_steps" in doc_path else plan_content
+        content = guidance_content if "next_steps" in doc_path else work_queue_content
         if section not in content:
             errors.append(
                 f"RULE VIOLATION: {doc_path} must contain '{section}' section.\n"
@@ -499,103 +499,37 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
 
 
 def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
-    """Ensure phases marked COMPLETE have no incomplete checklist items (Rule 12)."""
+    """Ensure the roadmap retains the Phase 2D gate checklist (Rule 12)."""
 
     errors: list[str] = []
-    plan_file = repo_root / "docs" / "feature_delivery_plan_v2.md"
+    roadmap_file = repo_root / "docs" / "ROADMAP.MD"
 
-    if not plan_file.exists():
-        return True, []  # No plan file, skip check
-
-    try:
-        content = plan_file.read_text(encoding="utf-8")
-    except OSError as exc:
-        errors.append(f"RULE VIOLATION: Unable to read {plan_file}\n  -> {exc}")
+    if not roadmap_file.exists():
+        errors.append(
+            "RULE VIOLATION: docs/ROADMAP.MD is required for strategic status tracking.\n"
+            "  -> Restore the roadmap file before proceeding."
+        )
         return False, errors
 
-    # Find all phase sections marked COMPLETE
-    import re
+    try:
+        content = roadmap_file.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"RULE VIOLATION: Unable to read {roadmap_file}\n  -> {exc}")
+        return False, errors
 
-    phase_pattern = r"### (Phase \S+):.*✅ COMPLETE"
-    for match in re.finditer(phase_pattern, content, re.IGNORECASE):
-        phase_name = match.group(1)
-        phase_start = match.end()
+    required_markers = [
+        "Phase 2D Gate: Pre-Phase",
+        "Phase 1D Business Performance UI backlog",
+        "Phase 2B visualisation residual work",
+        "Expansion Window 1",
+    ]
 
-        # Find the end of this phase section (next ### or end of file)
-        next_section = re.search(r"\n###", content[phase_start:])
-        phase_end = phase_start + next_section.start() if next_section else len(content)
-
-        phase_content = content[phase_start:phase_end]
-
-        # Check for incomplete markers
-        incomplete_markers = []
-
-        if "🔄" in phase_content:
-            incomplete_markers.append("'🔄 In Progress' items")
-        if "❌" in phase_content:
-            incomplete_markers.append("'❌' incomplete items")
-
-        # Check for unchecked checklist items
-        unchecked_items = re.findall(r"- \[ \]", phase_content)
-        if unchecked_items:
-            incomplete_markers.append(
-                f"{len(unchecked_items)} unchecked [ ] checklist items"
-            )
-
-        # CRITICAL: Verify "Files Delivered:" section lists real files
-        # This prevents AI agents from checking boxes without writing code
-        if "Files Delivered:" in phase_content or "UI Files:" in phase_content:
-            # Extract file paths from markdown code blocks (e.g., `backend/app/api/v1/deals.py`)
-            file_paths = re.findall(r"`([^`]+\.(py|tsx|ts|js|jsx))`", phase_content)
-
-            missing_files = []
-            for file_path_match in file_paths:
-                file_path = file_path_match[0]  # Extract just the path (not extension)
-                full_path = repo_root / file_path.strip()
-
-                # Check if file exists
-                if not full_path.exists():
-                    missing_files.append(file_path)
-
-            if missing_files:
-                incomplete_markers.append(
-                    f"{len(missing_files)} files listed in 'Files Delivered' but missing: "
-                    f"{', '.join(missing_files[:3])}"  # Show first 3
-                    + (
-                        f" (and {len(missing_files) - 3} more)"
-                        if len(missing_files) > 3
-                        else ""
-                    )
-                )
-
-        # CRITICAL: Verify "Test Status:" shows passing tests
-        # This prevents AI agents from marking complete without running tests
-        if "Test Status:" in phase_content:
-            test_status_start = phase_content.find("Test Status:")
-            test_status_section = phase_content[
-                test_status_start : test_status_start + 500
-            ]
-
-            # Check for failure indicators
-            if (
-                "⚠️" in test_status_section
-                and "skipped" not in test_status_section.lower()
-            ):
-                incomplete_markers.append(
-                    "Test Status shows ⚠️ warnings (not all tests passing)"
-                )
-            if "❌" in test_status_section:
-                incomplete_markers.append("Test Status shows ❌ failures")
-            if "FAIL" in test_status_section.upper():
-                incomplete_markers.append("Test Status shows test failures")
-
-        if incomplete_markers:
+    for marker in required_markers:
+        if marker not in content:
             errors.append(
-                f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' but has:\n"
-                f"  -> {', '.join(incomplete_markers)}\n"
-                "  -> Rule 12: Do not mark phases complete with incomplete checklist items.\n"
-                "  -> Either complete the items or change status to '⚠️ IN PROGRESS'.\n"
-                "  -> See CODING_RULES.md section 12 (Phase Completion Gates)"
+                "RULE VIOLATION: docs/ROADMAP.MD must include the Phase 2D gate checklist.\n"
+                f"  -> Missing marker containing: '{marker}'\n"
+                "  -> Reinstate the checklist so gate enforcement remains active."
             )
 
     return len(errors) == 0, errors

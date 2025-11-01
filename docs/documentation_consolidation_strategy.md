@@ -1,5 +1,7 @@
 # Documentation Consolidation Strategy
 
+> **Update (Nov 2025):** The active roadmap now lives in [`docs/ROADMAP.MD`](ROADMAP.MD) and the task queue in [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD). Historical instructions below reference the pre-migration file layout.
+
 **Status**: Recommendation
 **Created**: 2025-10-29
 **Verification Results (2025-10-29)**: Phase 1 relocation complete; current `scripts/verify_docs.py` run reports **81 broken references** pending link updates.

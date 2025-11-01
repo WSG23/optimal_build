@@ -1,3 +1,7 @@
+# ARCHIVED: Archived Work Queue Backlog
+
+> **Status:** Archived November 2025. Active task management now lives in [`docs/WORK_QUEUE.MD`](../WORK_QUEUE.MD).
+
 # Technical Debt Backlog
 
 **Last updated:** 2025-10-27

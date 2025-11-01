@@ -13,7 +13,8 @@ That file provides the exact sequence for AI agents and developers to onboard ef
 This is a comprehensive index of all documentation in the `docs/` directory.
 
 ### Core Planning Documents:
-- [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) - Complete roadmap and current status
+- [ROADMAP.MD](ROADMAP.MD) - Complete roadmap and current status
+- [WORK_QUEUE.MD](WORK_QUEUE.MD) - Tactical task list and technical debt actions
 - [ai-agents/next_steps.md](ai-agents/next_steps.md) - What to build next
 - [handoff_playbook.md](handoff_playbook.md) - Session handoff guide
 
@@ -49,13 +50,13 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 ## 🎯 Quick Decision Tree
 
 **Question:** "What should I build next?"
-→ Check [ai-agents/next_steps.md](ai-agents/next_steps.md)
+→ Check [WORK_QUEUE.MD](WORK_QUEUE.MD) for Active/Ready tasks, then confirm context in [ai-agents/next_steps.md](ai-agents/next_steps.md)
 
 **Question:** "Is this feature in scope?"
 → Check [planning/features.md](planning/features.md)
 
 **Question:** "What phase are we in?"
-→ Check [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
+→ Check [ROADMAP.MD](ROADMAP.MD)
 
 **Question:** "How do I write this code?"
 → Check [CODING_RULES.md](../CODING_RULES.md)
@@ -82,24 +83,24 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 
 ### ✅ DO:
 - Always check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md before starting
-- Follow the phase order in feature_delivery_plan_v2.md
+- Follow the phase order in ROADMAP.MD
 - Get validation feedback between phases
-- Update progress in the delivery plan as you go
+- Update progress in ROADMAP.MD and WORK_QUEUE.MD as you go
 - Ask questions if requirements are unclear
 
 ---
 
 ## 📊 Current Project Status
 
-See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for the latest status snapshot.
+See [ROADMAP.MD](ROADMAP.MD) for the latest status snapshot and [WORK_QUEUE.MD](WORK_QUEUE.MD) for current execution priorities.
 
 ---
 
 ## 🤝 Getting Help
 
-**For strategic questions:** Review `planning/features.md` and `feature_delivery_plan_v2.md`
+**For strategic questions:** Review `planning/features.md` and `ROADMAP.MD`
 **For technical questions:** Check CODING_RULES.md and existing code
-**For priority questions:** Check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
+**For priority questions:** Check WORK_QUEUE.MD and NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 **For user questions:** Check feature-specific guides
 
 **Still unclear?** Ask the project owner before proceeding.
@@ -109,10 +110,11 @@ See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for the latest st
 ## 🔄 Keeping Documentation Current
 
 **After completing a feature:**
-1. Update status in `feature_delivery_plan_v2.md` (❌ → ✅)
-2. Update `NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` with new priorities
-3. Add user guide if customer-facing feature
-4. Update this README if major milestone reached
+1. Update `WORK_QUEUE.MD` (move item, add commits, document follow-ups)
+2. Update status in `ROADMAP.MD` (❌ → ✅)
+3. Update `NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` with new priorities
+4. Add user guide if customer-facing feature
+5. Update this README if major milestone reached
 
 **After validation session:**
 1. Document feedback in `validation/` directory

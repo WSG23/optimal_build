@@ -1,3 +1,7 @@
+# ARCHIVED: Feature Delivery Plan v2
+
+> **Status:** Archived November 2025. Strategic roadmap now lives in [`docs/ROADMAP.MD`](../ROADMAP.MD) and tactical execution in [`docs/WORK_QUEUE.MD`](../WORK_QUEUE.MD). Update those files instead of this archive.
+
 # Complete Platform Delivery Roadmap
 ## Comprehensive Implementation Plan for All FEATURES.md Components (Backend + UI)
 

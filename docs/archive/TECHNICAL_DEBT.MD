@@ -1,3 +1,7 @@
+# ARCHIVED: Archived Technical Debt Register
+
+> **Status:** Archived November 2025. Active task management now lives in [`docs/WORK_QUEUE.MD`](../WORK_QUEUE.MD).
+
 # Technical Debt Inventory
 
 **Last updated:** 2025-10-29

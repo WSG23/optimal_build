@@ -180,15 +180,15 @@ test: ## Run tests (unit tests only - fast)
 test-all: ## Run all tests including integration tests
 	$(PYTEST) -q
 
-verify: ## Run formatting checks, linting, coding rules, delivery plan validation, and tests
+verify: ## Run formatting checks, linting, coding rules, roadmap/work queue validation, and tests
 	$(MAKE) format-check
 	$(MAKE) lint
 	$(MAKE) check-coding-rules
 	$(MAKE) validate-delivery-plan
 	$(MAKE) test
 
-validate-delivery-plan: ## Validate feature_delivery_plan_v2.md for consistency
-	@echo "Validating feature delivery plan..."
+validate-delivery-plan: ## Validate ROADMAP.MD and WORK_QUEUE.MD for required sections
+	@echo "Validating strategic roadmap and work queue..."
 	@$(PY) scripts/validate_delivery_plan.py
 
 check-tool-versions: ## Verify formatter/linter versions match requirements.txt

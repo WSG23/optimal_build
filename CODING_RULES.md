@@ -528,7 +528,7 @@ UI Manual Testing:
 
 Before proposing work, AI agents must read:
 - [`docs/ai-agents/next_steps.md`](docs/ai-agents/next_steps.md) (MANDATORY TESTING CHECKLIST section)
-- Your phase section in [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md)
+- Review the phase summary in [`docs/ROADMAP.MD`](docs/ROADMAP.MD) and the corresponding item in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD)
 - [`docs/development/testing/known-issues.md`](docs/development/testing/known-issues.md) (check for known test failures before reporting)
 - [`docs/planning/ui-status.md`](docs/planning/ui-status.md) (understand UI implementation status)
 - [`docs/development/testing/summary.md`](docs/development/testing/summary.md) (find smoke/regression suites)
@@ -967,7 +967,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 
 ## 12. Phase Completion Gates (MANDATORY)
 
-**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) if the phase section contains unchecked `- [ ]` checklist items, `🔄 In Progress` markers, or `❌` incomplete items.
+**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [ROADMAP.MD](docs/ROADMAP.MD) while related tasks remain in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD) or the Phase 2D gate checklist has unchecked items.
 
 **Why:** Phase 1D and Phase 2B were left 60% and 85% incomplete because AI agents marked backend work as "done" and moved to Phase 2C without completing frontend UI components. This creates abandoned features and technical debt.
 
@@ -975,27 +975,29 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 
 ### Before marking ANY phase "✅ COMPLETE":
 
-1. **Check the phase section in feature_delivery_plan_v2.md:**
-   - Search for `- [ ]` (unchecked items) → Must be ZERO
-   - Search for `🔄` (In Progress markers) → Must be ZERO
-   - Search for `❌` (incomplete items) → Must be ZERO
+1. **Confirm WORK_QUEUE.MD has no open work for the phase:**
+   - Search Active/Ready sections for the phase label → Must be absent
+   - Ensure deferred work is logged under "Ready" or "Blocked" with next steps (not left implicit)
 
-2. **Verify UI manual testing complete:**
+2. **Review the Phase 2D gate checklist in ROADMAP.MD:**
+   - All relevant checkboxes must be `[x]`
+   - If the phase is a prerequisite for the gate, confirm the checkbox is updated concurrently
+
+3. **Verify UI manual testing complete:**
    - User must have run all UI manual test steps (see Rule 8)
    - User must have confirmed: "✅ All manual tests passing"
 
-3. **Ask user for explicit approval:**
+4. **Ask user for explicit approval:**
    ```markdown
    Phase X checklist is complete:
-   - ✅ All [ ] items checked
-   - ✅ No 🔄 In Progress markers
-   - ✅ No ❌ incomplete items
+   - ✅ No open tasks for this phase in WORK_QUEUE.MD
+   - ✅ Relevant Phase 2D gate checkbox updated
    - ✅ UI manual testing passed
 
-   May I mark Phase X as "✅ COMPLETE" in feature_delivery_plan_v2.md?
+   May I mark Phase X as "✅ COMPLETE" in ROADMAP.MD?
    ```
 
-4. **Only after user approval:**
+5. **Only after user approval:**
    - Change phase header from "⚠️ IN PROGRESS" → "✅ COMPLETE"
    - Update status percentage to 100%
 
@@ -1007,7 +1009,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
    - Use `❌` for blocked or deferred work
    - Add unchecked `- [ ]` items to checklist
 
-3. **Add incomplete work to [BACKLOG.md](BACKLOG.md):**
+3. **Add incomplete work to [WORK_QUEUE.MD](WORK_QUEUE.MD):**
    - List each incomplete item with estimate
    - Mark as "BLOCKED - waiting for Phase X completion"
 
@@ -1050,7 +1052,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 - ✅ Commission ledger backend
 - ✅ Business Performance page scaffold
 
-**In Progress (see BACKLOG.md):**
+**In Progress (see WORK_QUEUE.MD):**
 - 🔄 Pipeline Kanban board component (1-2 days)
 - 🔄 Deal insights panel (1-2 days)
 - 🔄 Analytics panel (1-2 days)
