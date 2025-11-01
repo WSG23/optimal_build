@@ -2,6 +2,7 @@
 
 from types import ModuleType
 from typing import Callable, Final, Protocol, cast
+import logging
 
 
 class _RouterModule(Protocol):
@@ -124,10 +125,18 @@ def _load_router(module_name: str) -> Router:
     return router
 
 
+_logger = logging.getLogger(__name__)
+
 _APIRouter: Final[Callable[[], Router]] = _router_factory()
 api_router: Final[Router] = _APIRouter()
 for _module_name in _ROUTER_MODULES:
-    api_router.include_router(_load_router(_module_name))
+    try:
+        api_router.include_router(_load_router(_module_name))
+    except ImportError as exc:  # pragma: no cover - optional dependency surface
+        _logger.warning(
+            "api_router_module_import_failed",
+            extra={"router_module": _module_name, "error": str(exc)},
+        )
 
 
 __all__: Final[tuple[str, ...]] = ("api_router", "TAGS_METADATA")

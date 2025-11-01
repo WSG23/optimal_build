@@ -23,10 +23,28 @@ logger = get_logger(__name__)
 
 _market_data_service = MarketDataService()
 _metrics_collector = MetricsCollector()
-_market_analytics = MarketIntelligenceAnalytics(
-    _market_data_service,
-    metrics_collector=_metrics_collector,
-)
+_market_analytics: MarketIntelligenceAnalytics | None = None
+_market_analytics_error: str | None = None
+
+
+def _get_market_analytics() -> MarketIntelligenceAnalytics:
+    """Return a lazily constructed market analytics service."""
+
+    global _market_analytics, _market_analytics_error
+    if _market_analytics is None:
+        try:
+            _market_analytics = MarketIntelligenceAnalytics(
+                _market_data_service,
+                metrics_collector=_metrics_collector,
+            )
+            _market_analytics_error = None
+        except ImportError as exc:  # pragma: no cover - optional dependency path
+            _market_analytics_error = str(exc)
+
+    if _market_analytics is None:
+        detail = _market_analytics_error or "market analytics dependencies unavailable"
+        raise HTTPException(status_code=503, detail=detail)
+    return _market_analytics
 
 
 @router.get("/report", response_model=MarketReportResponse)
@@ -44,7 +62,8 @@ async def generate_market_report(
     """Return a comprehensive market intelligence report for the requested segment."""
 
     try:
-        report = await _market_analytics.generate_market_report(
+        analytics = _get_market_analytics()
+        report = await analytics.generate_market_report(
             property_type=property_type,
             location=location,
             period_months=period_months,

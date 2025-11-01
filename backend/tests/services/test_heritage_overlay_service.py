@@ -6,7 +6,11 @@ import json
 import math
 
 import pytest
-from shapely.geometry import Point
+
+try:
+    from shapely.geometry import Point
+except ModuleNotFoundError:  # pragma: no cover - optional dependency guard
+    pytest.skip("shapely not installed", allow_module_level=True)
 
 from app.services.heritage_overlay import HeritageOverlayService, _SHAPELY_AVAILABLE
 
