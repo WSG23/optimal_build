@@ -5,12 +5,23 @@ import {
   useState,
 } from 'react'
 import {
+  Alert,
+  Box,
+  CircularProgress,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material'
+import {
   DEAL_STAGE_ORDER,
   fetchDealCommissions,
   fetchDealTimeline,
   fetchDeals,
+  changeDealStage,
   type DealCommission,
   type DealSummary,
+  type DealTimelineEvent,
 } from '../../../api/deals'
 import {
   fetchBenchmarks,
@@ -28,6 +39,7 @@ import type {
   BenchmarkEntry,
   DealSnapshot,
   PipelineColumn,
+  PipelineStageKey,
   RoiSummary,
   StageEvent,
   CommissionEntry,
@@ -49,6 +61,7 @@ export function BusinessPerformancePage() {
   const [columns, setColumns] = useState<PipelineColumn[]>([])
   const [pipelineLoading, setPipelineLoading] = useState(true)
   const [pipelineError, setPipelineError] = useState<string | null>(null)
+  const [stageUpdateError, setStageUpdateError] = useState<string | null>(null)
 
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
   const [selectedDeal, setSelectedDeal] = useState<DealSnapshot | null>(null)
@@ -63,6 +76,7 @@ export function BusinessPerformancePage() {
   const [roiSummary, setRoiSummary] = useState<RoiSummary>(EMPTY_ROI_SUMMARY)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [movingDealId, setMovingDealId] = useState<string | null>(null)
 
   const lastSnapshot = useMemo(
     () => new Date().toLocaleDateString(undefined, { dateStyle: 'medium' }),
@@ -179,19 +193,7 @@ export function BusinessPerformancePage() {
           fetchDealTimeline(dealSummary.id, controller.signal),
           fetchDealCommissions(dealSummary.id, controller.signal),
         ])
-        setTimeline(
-          timelineData.map((event) => ({
-            id: event.id,
-            toStage: event.toStage,
-            fromStage: event.fromStage,
-            recordedAt: formatDateTime(event.recordedAt),
-            durationSeconds: event.durationSeconds,
-            changedBy: event.changedBy,
-            note: event.note,
-            auditHash: event.auditLog?.hash ?? null,
-            auditSignature: event.auditLog?.signature ?? null,
-          })),
-        )
+        setTimeline(convertTimeline(timelineData))
         const mappedCommissions = commissionData.map(mapCommissionEntry)
         setCommissions(mappedCommissions)
         if (mappedCommissions.some((entry) => entry.status === 'disputed')) {
@@ -279,82 +281,149 @@ export function BusinessPerformancePage() {
     setSelectedDealId(dealId)
   }, [])
 
-  return (
-    <div className="bp-page">
-      <section className="bp-page__summary">
-        <div className="bp-summary-card">
-          <header>
-            <span className="bp-summary-card__label">Last snapshot</span>
-            <span className="bp-summary-card__value">{lastSnapshot}</span>
-          </header>
-          <p className="bp-summary-card__meta">
-            Snapshot jobs run nightly. Manual refresh will be available shortly.
-          </p>
-        </div>
-        <div className="bp-summary-card">
-          <header>
-            <span className="bp-summary-card__label">Open pipeline value</span>
-            <span className="bp-summary-card__value">
-              {formatCurrency(totalPipeline(columns))}
-            </span>
-          </header>
-          <p className="bp-summary-card__meta">
-            Weighted pipeline:{' '}
-            <strong>{formatCurrency(totalWeightedPipeline(columns))}</strong>
-          </p>
-        </div>
-        <div className="bp-summary-card">
-          <header>
-            <span className="bp-summary-card__label">ROI projects tracked</span>
-            <span className="bp-summary-card__value">
-              {roiSummary.projectCount}
-            </span>
-          </header>
-          <p className="bp-summary-card__meta">
-            Automation ROI derives from overlay workflows and audit metrics.
-          </p>
-        </div>
-      </section>
+  const handleStageChange = useCallback(
+    async (dealId: string, toStage: PipelineStageKey) => {
+      const previousDeals = deals
+      const optimisticDeals = deals.map((deal) =>
+        deal.id === dealId ? { ...deal, pipelineStage: toStage } : deal,
+      )
+      setStageUpdateError(null)
+      setMovingDealId(dealId)
+      setDeals(optimisticDeals)
+      setColumns(buildColumns(optimisticDeals))
 
-      {pipelineError && (
-        <div className="bp-error">
-          <p>{pipelineError}</p>
-        </div>
-      )}
-      <div className="bp-page__layout">
-        <section className="bp-page__pipeline">
-          {pipelineLoading && (
-            <p className="bp-loading">Loading pipeline…</p>
-          )}
-          <PipelineBoard
-            columns={columns}
-            selectedDealId={selectedDealId}
-            onSelectDeal={handleSelectDeal}
-          />
-        </section>
-        <aside className="bp-page__sidebar">
-          <DealInsightsPanel
-            deal={selectedDeal}
-            timeline={timeline}
-            commissions={commissions}
-          />
-          <AnalyticsPanel
-            metrics={metrics}
-            trend={trend}
-            benchmarks={benchmarks}
-          />
-          <RoiPanel summary={roiSummary} />
-          {(dealLoading || analyticsLoading) && (
-            <p className="bp-loading">Loading insights…</p>
-          )}
-          {(dealError || analyticsError) && (
-            <div className="bp-error">
-              <p>{dealError ?? analyticsError}</p>
-            </div>
-          )}
-        </aside>
-      </div>
-    </div>
+      try {
+        const response = await changeDealStage(dealId, { toStage })
+        const { timeline: updatedTimeline, ...rest } = response
+        const nextDeals = optimisticDeals.map((deal) =>
+          deal.id === dealId
+            ? {
+                ...deal,
+                ...rest,
+              }
+            : deal,
+        )
+        setDeals(nextDeals)
+        setColumns(buildColumns(nextDeals))
+        if (selectedDealId === dealId) {
+          setSelectedDeal((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  stage: rest.pipelineStage,
+                  expectedCloseDate: rest.expectedCloseDate,
+                }
+              : prev,
+          )
+          setTimeline(convertTimeline(updatedTimeline))
+        }
+      } catch (error) {
+        console.error('Failed to change stage', error)
+        setDeals(previousDeals)
+        setColumns(buildColumns(previousDeals))
+        setStageUpdateError('Unable to update deal stage. Reverted to previous state.')
+      } finally {
+        setMovingDealId(null)
+      }
+    },
+    [buildColumns, deals, selectedDealId],
+  )
+
+  return (
+    <Box className="bp-page">
+      <Grid container spacing={2} className="bp-page__summary">
+        <Grid item xs={12} md={4}>
+          <Paper className="bp-summary-card" elevation={1}>
+            <Typography variant="overline" className="bp-summary-card__label">
+              Last snapshot
+            </Typography>
+            <Typography variant="h5" className="bp-summary-card__value">
+              {lastSnapshot}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
+              Snapshot jobs run nightly. Manual refresh will be available shortly.
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper className="bp-summary-card" elevation={1}>
+            <Typography variant="overline" className="bp-summary-card__label">
+              Open pipeline value
+            </Typography>
+            <Typography variant="h5" className="bp-summary-card__value">
+              {formatCurrency(totalPipeline(columns))}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
+              Weighted pipeline{' '}
+              <strong>{formatCurrency(totalWeightedPipeline(columns))}</strong>
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper className="bp-summary-card" elevation={1}>
+            <Typography variant="overline" className="bp-summary-card__label">
+              ROI projects tracked
+            </Typography>
+            <Typography variant="h5" className="bp-summary-card__value">
+              {roiSummary.projectCount}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
+              Automation ROI derives from overlay workflows and audit metrics.
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      <Stack spacing={2} className="bp-page__alerts">
+        {pipelineError && <Alert severity="error">{pipelineError}</Alert>}
+        {stageUpdateError && <Alert severity="warning">{stageUpdateError}</Alert>}
+      </Stack>
+
+      <Grid container spacing={3} className="bp-page__layout">
+        <Grid item xs={12} lg={8} className="bp-page__pipeline">
+          <Paper elevation={0} className="bp-pipeline-wrapper">
+            {pipelineLoading ? (
+              <Stack alignItems="center" py={4} spacing={1}>
+                <CircularProgress size={28} />
+                <Typography variant="body2" color="text.secondary">
+                  Loading pipeline…
+                </Typography>
+              </Stack>
+            ) : (
+              <PipelineBoard
+                columns={columns}
+                selectedDealId={selectedDealId}
+                onSelectDeal={handleSelectDeal}
+                onStageChange={handleStageChange}
+                movingDealId={movingDealId}
+              />
+            )}
+          </Paper>
+        </Grid>
+        <Grid item xs={12} lg={4} className="bp-page__sidebar">
+          <Stack spacing={2}>
+            <DealInsightsPanel
+              deal={selectedDeal}
+              timeline={timeline}
+              commissions={commissions}
+            />
+            <AnalyticsPanel metrics={metrics} trend={trend} benchmarks={benchmarks} />
+            <RoiPanel summary={roiSummary} />
+            {(dealLoading || analyticsLoading) && (
+              <Stack alignItems="center" spacing={1} py={2}>
+                <CircularProgress size={24} />
+                <Typography variant="body2" color="text.secondary">
+                  Loading insights…
+                </Typography>
+              </Stack>
+            )}
+            {(dealError || analyticsError) && (
+              <Alert severity="error">{dealError ?? analyticsError}</Alert>
+            )}
+          </Stack>
+        </Grid>
+      </Grid>
+    </Box>
   )
 }
 
@@ -369,6 +438,20 @@ function mapCommissionEntry(entry: DealCommission): CommissionEntry {
     confirmedAt: entry.confirmedAt,
     disputedAt: entry.disputedAt,
   }
+}
+
+function convertTimeline(timelineData: DealTimelineEvent[]): StageEvent[] {
+  return timelineData.map((event) => ({
+    id: event.id,
+    toStage: event.toStage,
+    fromStage: event.fromStage,
+    recordedAt: formatDateTime(event.recordedAt),
+    durationSeconds: event.durationSeconds,
+    changedBy: event.changedBy,
+    note: event.note,
+    auditHash: event.auditLog?.hash ?? null,
+    auditSignature: event.auditLog?.signature ?? null,
+  }))
 }
 
 function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {

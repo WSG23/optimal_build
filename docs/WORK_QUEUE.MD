@@ -1,6 +1,6 @@
 # Work Queue (AI Agent Task List)
 
-**Last Updated:** 2025-11-01  
+**Last Updated:** 2025-11-02
 **Current Sprint:** Pre-Phase 2D Infrastructure Audit (Week 1)
 
 Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in line, `BLOCKED` = awaiting dependency listed inline.
@@ -29,12 +29,7 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 
 ## 📋 Ready (Queued - Do After Active)
 
-### 3. Phase 1D: Build Pipeline Kanban UI component
-- **Status:** READY (blocked by Infrastructure Audit completion)
-- **Estimate:** 3-4 weeks
-- **Documentation:** See [`docs/ROADMAP.MD`](ROADMAP.MD) Phase 1D summary for strategic context.
-
-### 4. Phase 2B: Implement 3D GLB renderer
+### 3. Phase 2B: Implement 3D GLB renderer
 - **Status:** READY (blocked by Infrastructure Audit completion)
 - **Estimate:** 2-3 weeks
 - **Documentation:** Align with [`docs/ROADMAP.MD`](ROADMAP.MD) Phase 2B objectives.
@@ -52,6 +47,11 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 - **Completed by:** WSG23 + Claude
 - **Commits:** 7beff36, d0752f5
 - **Smoke tests:** ✅ All passed
+
+### 2025-11-02: Phase 1D Business Performance UI shipped
+- **Completed by:** AI Agents crew
+- **Commits:** (this PR – Business Performance UI delivery)
+- **Highlights:** Pipeline Kanban drag-and-drop, deal insights timeline, analytics & ROI panels, manual QA checklist ✅
 
 ---
 

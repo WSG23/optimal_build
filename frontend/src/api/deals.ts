@@ -152,6 +152,56 @@ export async function fetchDeals(signal?: AbortSignal): Promise<DealSummary[]> {
   return payload.map(mapDeal)
 }
 
+export interface DealWithTimeline extends DealSummary {
+  timeline: DealTimelineEvent[]
+}
+
+export interface DealStageChangePayload {
+  toStage: DealStage
+  note?: string | null
+  metadata?: Record<string, unknown> | null
+  occurredAt?: string | null
+}
+
+function mapDealWithTimeline(payload: Record<string, unknown>): DealWithTimeline {
+  const deal = mapDeal(payload)
+  const timelinePayload = Array.isArray(payload.timeline)
+    ? (payload.timeline as Record<string, unknown>[])
+    : []
+
+  return {
+    ...deal,
+    timeline: timelinePayload.map(mapTimelineEvent),
+  }
+}
+
+export async function changeDealStage(
+  dealId: string,
+  payload: DealStageChangePayload,
+  signal?: AbortSignal,
+): Promise<DealWithTimeline> {
+  const body: Record<string, unknown> = {
+    to_stage: payload.toStage,
+  }
+  if (payload.note) body.note = payload.note
+  if (payload.metadata) body.metadata = payload.metadata
+  if (payload.occurredAt) body.occurred_at = payload.occurredAt
+
+  const response = await fetch(buildUrl(`/api/v1/deals/${dealId}/stage`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to update deal stage')
+  }
+
+  const payloadJson = (await response.json()) as Record<string, unknown>
+  return mapDealWithTimeline(payloadJson)
+}
+
 function mapAuditSummary(payload: unknown): AuditLogSummary | null {
   if (!payload || typeof payload !== 'object') {
     return null

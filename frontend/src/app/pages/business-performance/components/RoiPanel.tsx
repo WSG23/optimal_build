@@ -1,3 +1,17 @@
+import {
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import type { RoiSummary } from '../types'
 
 interface RoiPanelProps {
@@ -6,79 +20,93 @@ interface RoiPanelProps {
 
 export function RoiPanel({ summary }: RoiPanelProps) {
   return (
-    <section className="bp-roi">
-      <header className="bp-roi__header">
-        <h3>Automation ROI</h3>
-        <p>
+    <Paper elevation={0} className="bp-roi">
+      <Box className="bp-roi__header">
+        <Typography variant="h6">Automation ROI</Typography>
+        <Typography variant="body2" color="text.secondary">
           Metrics derive from overlay workflows (automation score, hours saved,
-          payback period). Integrates with ROI analytics service.
-        </p>
-      </header>
-      <div className="bp-roi__grid">
-        <RoiStat label="Projects tracked" value={summary.projectCount} />
-        <RoiStat
-          label="Hours saved"
-          value={
-            summary.totalReviewHoursSaved !== null
-              ? `${summary.totalReviewHoursSaved?.toFixed(2)}h`
-              : '—'
-          }
-        />
-        <RoiStat
-          label="Avg automation"
-          value={formatPercent(summary.averageAutomationScore)}
-        />
-        <RoiStat
-          label="Avg acceptance"
-          value={formatPercent(summary.averageAcceptanceRate)}
-        />
-        <RoiStat
-          label="Avg savings"
-          value={formatPercent(summary.averageSavingsPercent, true)}
-        />
-        <RoiStat
-          label="Best payback"
-          value={
-            summary.bestPaybackWeeks !== null
-              ? `${summary.bestPaybackWeeks} weeks`
-              : '—'
-          }
-        />
-      </div>
-      <div className="bp-roi__projects">
-        <h4>Project breakdown</h4>
+          payback period) and connect directly to the ROI analytics service.
+        </Typography>
+      </Box>
+
+      <Grid container spacing={2} className="bp-roi__grid">
+        <Grid item xs={6} sm={4}>
+          <RoiStat label="Projects tracked" value={summary.projectCount} />
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <RoiStat
+            label="Hours saved"
+            value={
+              summary.totalReviewHoursSaved !== null
+                ? `${summary.totalReviewHoursSaved.toFixed(1)}h`
+                : '—'
+            }
+          />
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <RoiStat label="Avg automation" value={formatPercent(summary.averageAutomationScore)} />
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <RoiStat label="Avg acceptance" value={formatPercent(summary.averageAcceptanceRate)} />
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <RoiStat
+            label="Avg savings"
+            value={formatPercent(summary.averageSavingsPercent, true)}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <RoiStat
+            label="Best payback"
+            value={summary.bestPaybackWeeks !== null ? `${summary.bestPaybackWeeks} weeks` : '—'}
+          />
+        </Grid>
+      </Grid>
+
+      <Box className="bp-roi__projects">
+        <Typography variant="subtitle1" gutterBottom>
+          Project breakdown
+        </Typography>
         {summary.projects.length === 0 ? (
-          <p>No ROI records yet. Metrics populate after overlay runs complete.</p>
+          <Typography variant="body2" color="text.secondary">
+            No ROI records yet. Metrics populate after overlay runs complete.
+          </Typography>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Project</th>
-                <th>Hours saved</th>
-                <th>Automation</th>
-                <th>Acceptance</th>
-                <th>Payback</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.projects.map((project) => (
-                <tr key={project.projectId}>
-                  <td>#{project.projectId}</td>
-                  <td>{formatNumber(project.hoursSaved, 'h')}</td>
-                  <td>{formatPercent(project.automationScore)}</td>
-                  <td>{formatPercent(project.acceptanceRate)}</td>
-                  <td>
-                    {project.paybackWeeks
-                      ? `${project.paybackWeeks}w`
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Project</TableCell>
+                  <TableCell align="right">Hours saved</TableCell>
+                  <TableCell align="right">Automation</TableCell>
+                  <TableCell align="right">Acceptance</TableCell>
+                  <TableCell align="right">Payback</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {summary.projects.map((project) => (
+                  <TableRow key={project.projectId} hover>
+                    <TableCell>#{project.projectId}</TableCell>
+                    <TableCell align="right">
+                      {formatNumber(project.hoursSaved, 'h')}
+                    </TableCell>
+                    <TableCell align="right">
+                      {formatPercent(project.automationScore)}
+                    </TableCell>
+                    <TableCell align="right">
+                      {formatPercent(project.acceptanceRate)}
+                    </TableCell>
+                    <TableCell align="right">
+                      {project.paybackWeeks ? `${project.paybackWeeks}w` : '—'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
-      </div>
-    </section>
+      </Box>
+    </Paper>
   )
 }
 
@@ -89,16 +117,20 @@ interface RoiStatProps {
 
 function RoiStat({ label, value }: RoiStatProps) {
   return (
-    <div className="bp-roi__stat">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
+    <Card variant="outlined" className="bp-roi__stat">
+      <CardContent>
+        <Typography variant="overline" color="text.secondary">
+          {label}
+        </Typography>
+        <Typography variant="h6">{value}</Typography>
+      </CardContent>
+    </Card>
   )
 }
 
 function formatNumber(value: number | null, suffix: string = '') {
   if (value === null || Number.isNaN(value)) return '—'
-  return `${value.toFixed(2)}${suffix}`
+  return `${value.toFixed(1)}${suffix}`
 }
 
 function formatPercent(value: number | null, absolute = false) {
