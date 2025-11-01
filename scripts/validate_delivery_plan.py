@@ -82,7 +82,9 @@ def main() -> int:
             print(f"{idx}. {error}\n")
         return 1
 
-    print("✅ Documentation validation passed! ROADMAP.MD and WORK_QUEUE.MD look healthy.")
+    print(
+        "✅ Documentation validation passed! ROADMAP.MD and WORK_QUEUE.MD look healthy."
+    )
     return 0
 
 

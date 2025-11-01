@@ -38,7 +38,9 @@ def _create_app() -> TestClient:
     app = FastAPI()
 
     class _DummyLogger:
-        def info(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - structlog API
+        def info(
+            self, *args: Any, **kwargs: Any
+        ) -> None:  # pragma: no cover - structlog API
             pass
 
     app.add_middleware(ApiErrorLoggingMiddleware, logger=_DummyLogger())

@@ -63,4 +63,3 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 4. After completing work, move the item to the Completed section with the completion date and relevant commit IDs.
 5. Update [`docs/ROADMAP.MD`](ROADMAP.MD) only when phase status changes (e.g., READY → COMPLETE).
 6. For infrastructure audit tasks, update `docs/audits/PRE-PHASE-2D-AUDIT.MD` checklists in parallel.
-

@@ -36,9 +36,7 @@ async def _run_load_test(args: argparse.Namespace) -> None:
 
     async with httpx.AsyncClient() as client:
         tasks = [
-            asyncio.create_task(
-                _worker(client, semaphore, args.url, latencies, errors)
-            )
+            asyncio.create_task(_worker(client, semaphore, args.url, latencies, errors))
             for _ in range(args.requests)
         ]
         await asyncio.gather(*tasks)

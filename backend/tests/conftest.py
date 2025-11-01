@@ -134,6 +134,24 @@ if _SQLALCHEMY_AVAILABLE:
     )
     from sqlalchemy.orm import Mapped, mapped_column
     from sqlalchemy.util import concurrency
+    from sqlalchemy.pool import StaticPool
+
+    # isort: off
+    import app.models as app_models
+    from app.core.database import get_session
+    from app.models.base import BaseModel
+
+    # isort: on
+
+    try:
+        from app.main import app as _app
+    except Exception:  # pragma: no cover - FastAPI app may fail during stub loading
+        _app = None
+
+    app = _app
+
+    # Importing app.models ensures metadata is registered on BaseModel.
+    _ = app_models
 
     if not concurrency.have_greenlet:  # pragma: no cover - environment specific
 
@@ -169,6 +187,24 @@ if _SQLALCHEMY_AVAILABLE:
         _async_engine.greenlet_spawn = _greenlet_spawn
         _async_session.greenlet_spawn = _greenlet_spawn
         _async_result.greenlet_spawn = _greenlet_spawn
+
+    if "projects" not in getattr(BaseModel.metadata, "tables", {}):
+
+        class _ProjectStub(BaseModel):
+            """Minimal project table used for tests that only require an ID."""
+
+            __tablename__ = "projects"
+
+            id: Mapped[int] = mapped_column(Integer, primary_key=True)
+            name: Mapped[str] = mapped_column(
+                String(120), nullable=False, default="Test Project"
+            )
+
+    _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
+else:
+    SQLAlchemyError = RuntimeError  # noqa: F811  # fallback when SQLAlchemy unavailable
+    StaticPool = type("StaticPool", (), {})  # type: ignore[assignment]
+    _SORTED_TABLES: tuple[Any, ...] = ()
 
 _pytest_asyncio_stub = ModuleType("pytest_asyncio")
 
@@ -276,52 +312,6 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
         """Fallback stub used when httpx is not installed."""
 
         pass
-
-    try:  # pragma: no cover - StaticPool only exists in real SQLAlchemy
-        from sqlalchemy.pool import StaticPool as _StaticPool
-    except (ImportError, AttributeError):  # pragma: no cover
-
-        class _StaticPool:  # type: ignore[too-many-ancestors]
-            """Placeholder used when running against the in-repo SQLAlchemy stub."""
-
-            pass
-
-    StaticPool: type[Any] = _StaticPool
-
-    # isort: off
-    # Import app modules before sqlalchemy.orm to ensure proper initialization
-    import app.models as app_models
-    from app.core.database import get_session
-    from app.models.base import BaseModel
-
-    # isort: on
-
-    try:
-        from app.main import app as _app
-    except Exception:  # pragma: no cover - fallback when FastAPI stub lacks features
-        _app = None
-
-    app = _app
-
-    # Importing ``app.models`` ensures all model metadata is registered.
-    _ = app_models
-
-    if "projects" not in getattr(BaseModel.metadata, "tables", {}):
-
-        class _ProjectStub(BaseModel):
-            """Minimal project table used for tests that only require an ID."""
-
-            __tablename__ = "projects"
-
-            id: Mapped[int] = mapped_column(Integer, primary_key=True)
-            name: Mapped[str] = mapped_column(
-                String(120), nullable=False, default="Test Project"
-            )
-
-    _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
-else:
-    SQLAlchemyError = RuntimeError  # noqa: F811  # fallback when SQLAlchemy unavailable
-    StaticPool = type("StaticPool", (), {})  # type: ignore[assignment]
 
 
 @pytest.fixture(scope="session")

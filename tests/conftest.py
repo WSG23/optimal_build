@@ -200,13 +200,12 @@ if _backend_flow_session_factory in (None, _missing_fixture):
         from app.main import app as _fastapi_app
     except Exception:  # pragma: no cover - FastAPI app unavailable
         _fastapi_app = None
+    from httpx import AsyncClient as _AsyncClient
     from sqlalchemy.ext.asyncio import (
         AsyncSession,
         async_sessionmaker,
         create_async_engine,
     )
-
-    from httpx import AsyncClient as _AsyncClient
 
     try:
         from sqlalchemy.pool import StaticPool as _StaticPool
