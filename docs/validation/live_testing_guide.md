@@ -1,6 +1,6 @@
 # ✅ Live Testing Guide - Finance & Intelligence Pages
 
-> Need the broader feature plan or next development step? See `docs/feature_delivery_plan_v2.md` for the current roadmap and where implementation last paused.
+> Need the broader feature plan or next development step? See `docs/ROADMAP.MD` for strategic context and `docs/WORK_QUEUE.MD` for the current execution order.
 
 ## 🎯 You should now have http://localhost:4400/#/finance open
 

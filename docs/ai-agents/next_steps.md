@@ -2,7 +2,8 @@
 
 > **⚠️ IMPORTANT:** This is a **DECISION GUIDE**, not a status tracker.
 >
-> **For current project status:** See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — start with the "📊 Current Progress Snapshot" section
+> **For strategic status:** See [ROADMAP.MD](ROADMAP.MD) — start with the "📊 Current Progress Snapshot" section
+> **For actionable tasks:** Check [WORK_QUEUE.MD](../WORK_QUEUE.MD) before coding
 >
 > **Last Updated:** 2025-10-23 (added read-only dashboard policy)
 
@@ -26,7 +27,7 @@
 **Before touching ANY frontend file, read UI_STATUS.md.**
 
 ### Step 1: Check Current Status (5 min)
-→ Read [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md), beginning with the "📊 Current Progress Snapshot" section
+→ Read [ROADMAP.MD](ROADMAP.MD), beginning with the "📊 Current Progress Snapshot" section
 
 Look for:
 - ✅ What's complete
@@ -48,7 +49,7 @@ This prevents you from:
 → Read [CODING_RULES.md](../CODING_RULES.md) (reference while coding)
 
 ### Step 4: Choose Your Task (5 min)
-→ Use the decision tree below
+→ Review [WORK_QUEUE.MD](../WORK_QUEUE.MD) and follow the decision tree below
 
 ### Step 5: After Implementation - ALWAYS Suggest Tests ⚠️
 → When you complete ANY feature, you MUST provide test commands to the user
@@ -62,7 +63,7 @@ This prevents you from:
 
 ### Question 1: Is there a ❌ NOT STARTED task in current phase?
 
-**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — use the current phase callout in "📊 Current Progress Snapshot"
+**Check:** [ROADMAP.MD](ROADMAP.MD) — confirm phase priority, then cross-check [WORK_QUEUE.MD](../WORK_QUEUE.MD) Active items
 
 **If YES:** Build that task (skip to "How to Start")
 
@@ -85,7 +86,7 @@ This prevents you from:
 
 ### Question 3: What's the next unblocked phase?
 
-**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — review the "Phase 1D: Business Performance Management" section and the phases that follow
+**Check:** [ROADMAP.MD](ROADMAP.MD) for phase sequencing, then ensure the task appears in [WORK_QUEUE.MD](../WORK_QUEUE.MD)
 
 **Look for:**
 - Phase marked ❌ NOT STARTED
@@ -103,7 +104,8 @@ This prevents you from:
 ### Before Writing Code:
 
 **1. Read the phase requirements**
-- Location: [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
+- Strategic context: [ROADMAP.MD](ROADMAP.MD)
+- Execution details: [WORK_QUEUE.MD](../WORK_QUEUE.MD)
 - Find your phase section
 - Note: Requirements, Acceptance Criteria, Estimated Effort
 
@@ -215,122 +217,55 @@ When you encounter test issues, you MUST check and update TESTING_KNOWN_ISSUES.m
 
 ---
 
-**7c. Update feature_delivery_plan_v2.md BEFORE asking user to commit** ⚠️ BLOCKING STEP
+**7c. Update WORK_QUEUE.MD and ROADMAP.MD BEFORE asking user to commit** ⚠️ BLOCKING STEP
 
 🛑 **STOP: Do not proceed to commit until you complete this step.**
 
-When you finish implementing a feature/milestone, you MUST update the status document **in the same commit** as your code changes.
+When you finish implementing a feature/milestone, you MUST update both documents **in the same commit** as your code changes.
 
 **Why this is mandatory:**
-- `feature_delivery_plan_v2.md` is the **SINGLE SOURCE OF TRUTH** for project status
-- Other AI agents in new chat windows rely on it to know what's done
-- User relies on it to track progress across sessions
-- Outdated status creates confusion and duplicate work
-- This document will be referenced for 6-12 months during pre-launch development
-
----
-
-### ⚠️ CRITICAL CHANGE (2025-10-23): Summary Section is Now Read-Only
-
-**The "📊 Current Progress Snapshot" section is now a READ-ONLY DASHBOARD.**
-
-**❌ DO NOT edit the summary section (lines 8-110) directly**
-**✅ ONLY edit the detailed phase sections below**
-
-The summary automatically reflects the detailed sections. Editing the summary directly will cause discrepancies.
+- `WORK_QUEUE.MD` is the **single source of truth** for active tasks and technical debt follow-ups
+- `ROADMAP.MD` communicates strategic status to stakeholders and future agents
+- Outdated docs create duplicate work, conflicting priorities, and failed gate checks
 
 ---
 
 **Required updates:**
 
-✅ **Step 1: Find and update the DETAILED phase section (NOT the summary)**
+✅ **Step 1: Update WORK_QUEUE.MD (execution log)**
+- Move items between **Active → Completed** or **Ready → Active** as work progresses
+- Add completion date, commit hashes, and impact summary for finished items
+- Record new blockers or follow-up actions under the appropriate section
 
-Use Ctrl+F to find your phase's detailed section (e.g., "### Phase 2B: Asset-Specific Feasibility")
-
-**Update the Status line:**
-```diff
-Example for Phase 2B after completing heritage overlay:
-
-- ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
-- **Status:** 80% - Heritage overlay backend in progress
-+ ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
-+ **Status:** 90% - Heritage overlay backend complete, 3D preview UI remaining
-```
-
-**Update the "What Exists" section:**
-```diff
-**What Exists:**
-- ✅ Asset mix optimizer with scoring engine
-- ✅ Preview job infrastructure (DB, queueing, polling)
-+ ✅ Heritage overlay service (detection + data ingestion)
-+ ✅ Heritage context displayed in Site Acquisition UI
-```
-
-**Update the "What's Missing" section:**
-```diff
-**What's Missing (Next Focus):**
-- - ❌ Heritage overlay backend integration
-- ❌ 3D preview UI renderer (GLB generation + viewer)
-+ - ✅ Heritage overlay backend integration (MOVED TO "What Exists")
-+ - ❌ 3D preview UI renderer (GLB generation + viewer) - 4 weeks remaining
-```
-
-**How to calculate percentage:**
-- Count total milestones in "Requirements" section
-- Count completed items in "What Exists"
-- Divide completed by total (e.g., 9/10 = 90%)
-- **Track Backend and UI separately** when relevant
-
----
-
-✅ **Step 2: Check if phase is 100% complete (VALIDATION GATE)**
-
-**Before changing status to "✅ COMPLETE", verify ALL of these:**
-
-- [ ] "What's Missing" section has NO ❌ items (all moved to "What Exists")
-- [ ] ALL acceptance criteria from "Requirements" are met
-- [ ] Backend tests passing (pytest)
-- [ ] Frontend tests passing (or documented exceptions in TESTING_KNOWN_ISSUES.md)
-- [ ] Manual UI testing complete (PM validated)
-- [ ] Phase-specific documentation updated (if applicable)
-
-**If ALL checks pass:**
-```diff
-- ### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
-- **Status:** 90% - 3D preview UI remaining
-+ ### Phase 2B: Asset-Specific Feasibility ✅ COMPLETE (2025-10-23)
-+ **Status:** 100% - All features delivered, tests passing
-
-**What's Missing (Next Focus):**
-- - ❌ 3D preview UI renderer
-+ (This section should now be empty or removed - all items moved to "What Exists")
-```
-
-**If ANY check fails:** Phase is NOT 100% complete, keep as "⚠️ IN PROGRESS"
-
----
+✅ **Step 2: Update ROADMAP.MD (strategic snapshot)**
+- Adjust the phase status table if progress or completion changed
+- Update the relevant phase summary bullets with what shipped and remaining risks
+- Tick Phase 2D gate checkboxes when prerequisites are satisfied (e.g., audit complete)
+- Mention dependencies, regressions, or testing insights in plain language
 
 ✅ **Step 3: Stage the documentation with your code changes**
 ```bash
-git add docs/feature_delivery_plan_v2.md
-# This goes in the SAME commit as your feature code
+git add docs/WORK_QUEUE.MD docs/ROADMAP.MD
+# These go in the SAME commit as your feature code
 ```
 
 ✅ **Step 4: Mention documentation update in commit message**
 ```bash
-git commit -m "feat: complete heritage overlay backend for Phase 2B
+git commit -m "feat: close audit hook action for Phase 2D gate"
 
 Backend changes:
-- Heritage overlay service (detection + data ingestion)
-- Heritage context API integration
-- Site Acquisition UI displays heritage data
+- Stabilise phase gate script for schema migrations
+- Add regression tests for hook execution
 
 Tests: pytest passing (12/12)
 
-Updated docs/feature_delivery_plan_v2.md:
-- Phase 2B detailed section: 80% → 90%
-- Moved heritage overlay to 'What Exists'
-- Updated 'What's Missing' to show remaining 3D preview work
+Updated docs/WORK_QUEUE.MD:
+- Moved "Infrastructure Audit - Option 10" to Completed with commit hashes
+- Logged new follow-up task for hook telemetry
+
+Updated docs/ROADMAP.MD:
+- Phase 1D summary: noted audit blocker resolved
+- Phase 2D gate checkbox: Pre-Phase 2D Infrastructure Audit marked [x]
 ```
 
 **When to update:**
@@ -343,38 +278,35 @@ Updated docs/feature_delivery_plan_v2.md:
 
 ### 🚫 Common Mistakes to Avoid
 
-**❌ MISTAKE #1: Editing the summary section**
+**❌ MISTAKE #1: Leaving tasks in Active after completion**
 ```markdown
-## 📊 Current Progress Snapshot
-**Phase 2B** - Backend 100%, UI 100% ✅ COMPLETE  ← DO NOT EDIT HERE!
-```
-**Why it's wrong:** Summary is read-only, derived from detailed sections
+## 🚀 Active (Do Now - Priority Order)
+1. Infrastructure Audit - Option 10: Fix pre-commit hook failures  ← STILL LISTED HERE
 
-**❌ MISTAKE #2: Marking phase 100% while "What's Missing" has ❌ items**
+## ✅ Completed
+(nothing logged)
+```
+**Fix:** Move the task to Completed with date + commits.
+
+**❌ MISTAKE #2: Forgetting to update Phase 2D gate checklist**
 ```markdown
-### Phase 2B: ✅ COMPLETE
-**What's Missing:**
-- ❌ 3D preview UI  ← CONTRADICTS "COMPLETE" STATUS!
+- [ ] Phase 2D Gate: Pre-Phase 2D Infrastructure Audit & Quality Sprint complete
 ```
-**Why it's wrong:** Can't be complete if work is still missing
+**Fix:** Change to `[x]` when the prerequisite work is finished.
 
-**❌ MISTAKE #3: Not updating "What's Missing" when completing work**
+**❌ MISTAKE #3: Marking a phase complete while WORK_QUEUE.MD still has open items**
 ```markdown
-**What Exists:**
-- ✅ Heritage overlay backend  ← ADDED THIS
+| Phase | Status |
+| Phase 1D | ✅ COMPLETE |
 
-**What's Missing:**
-- ❌ Heritage overlay backend  ← FORGOT TO REMOVE!
+## 🚀 Active
+1. Phase 1D: Build Pipeline Kanban UI component
 ```
-**Why it's wrong:** Same item can't be both complete and missing
+**Fix:** Clear the task or move it to Completed before flipping the phase status.
 
 ---
 
-**What if you're not sure what to write?**
-- Look at completed phases (1A, 1B, 1C) in detailed sections for examples
-- Match the formatting and structure
-- Check the "What's Missing" section to see what's left
-- Ask user: "I completed X. Should I update Phase Y detailed section to show X% progress?"
+### 🚫 Common Mistakes to Avoid
 
 ---
 
@@ -492,7 +424,7 @@ Provide this to the user:
 ---
 
 **Document the current status so the next builder isn’t guessing:**
-- After sharing the script, update [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for that phase with the manual-testing status (**Pending**, **In Progress**, or **Complete**) and list any blockers.
+- After sharing the script, update [ROADMAP.MD](ROADMAP.MD) for that phase with the manual-testing status (**Pending**, **In Progress**, or **Complete**) and list any blockers.
 - Capture the active environment context (for example, “Backend reset running”, “Using fallback propertyId”, “Waiting on Claude seed script”). When the situation changes, update the note.
 - If manual tests are blocked, call it out in the plan doc and in your handoff message so the next agent knows exactly what remains.
 
@@ -618,11 +550,11 @@ Backend/Frontend changes:
 Tests: [Backend X/X passing, Frontend status]
 Files: [Key files created/modified]
 
-Updated feature_delivery_plan_v2.md:
+Updated ROADMAP.MD:
 - Phase X progress: Y% → Z%
 - Added [Feature Name] to delivered milestones
 
-See feature_delivery_plan_v2.md for full details."
+See ROADMAP.MD for full details."
 ```
 
 ---
@@ -642,7 +574,7 @@ Phase 1D: ❌ NOT STARTED ← Do this next
 
 **RIGHT:**
 ```markdown
-For current status, see the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md
+For current status, see the "📊 Current Progress Snapshot" section in ROADMAP.MD
 ```
 
 ---
@@ -659,7 +591,7 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 
 ### ❌ Don't Start Phase 2 Before Phase 1 Done
 
-**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — look at the "Phase 1 Completion Gate" checklist
+**Check:** [ROADMAP.MD](ROADMAP.MD) — look at the "Phase 1 Completion Gate" checklist
 
 **Phase 1 Completion Gate:**
 - All 6 Agent tools implemented
@@ -675,7 +607,7 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 ### Scenario 1: "I'm starting fresh on this project"
 
 **Do this:**
-1. Read the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md (5 min)
+1. Read the "📊 Current Progress Snapshot" section in ROADMAP.MD (5 min)
 2. Read TESTING_KNOWN_ISSUES.md (5 min)
 3. Find first ❌ NOT STARTED task without blockers
 4. Read that phase's requirements
@@ -688,7 +620,7 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 ### Scenario 2: "Previous AI agent just finished Phase X"
 
 **Do this:**
-1. Verify Phase X shows ✅ COMPLETE in feature_delivery_plan_v2.md
+1. Verify Phase X shows ✅ COMPLETE in ROADMAP.MD
 2. Look for next ❌ NOT STARTED phase
 3. Check for blockers
 4. If blocked, find next unblocked phase
@@ -723,7 +655,7 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 ### Scenario 5: "User says 'continue where we left off'"
 
 **Do this:**
-1. Read the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md
+1. Read the "📊 Current Progress Snapshot" section in ROADMAP.MD
 2. Find the most recent ✅ COMPLETE phase
 3. Look for next ❌ NOT STARTED
 4. That's where you left off
@@ -756,7 +688,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 ### ⚠️ CRITICAL: Do NOT Start Phase 2D Until This Is Complete
 
-**When Phase 2C shows ✅ COMPLETE in feature_delivery_plan_v2.md:**
+**When Phase 2C shows ✅ COMPLETE in ROADMAP.MD:**
 
 🛑 **STOP** - Do NOT immediately start Phase 2D.
 
@@ -864,7 +796,7 @@ Phase 3+: Later phases (depend on Phase 2)
 ✅ **Documentation:**
 - [ ] Each jurisdiction has README.md with ENV vars
 - [ ] Each jurisdiction has map_overrides.yaml
-- [ ] feature_delivery_plan_v2.md updated with expansion status
+- [ ] ROADMAP.MD updated with expansion status
 - [ ] TESTING_KNOWN_ISSUES.md updated if new issues found
 
 **Once all checks pass:** Proceed to Phase 2D with multi-jurisdiction support in place.
@@ -879,13 +811,13 @@ Phase 3+: Later phases (depend on Phase 2)
 
 > "⚠️ WARNING: Phase 2D has started but Expansion Window 1 (4 new jurisdictions) is not complete.
 >
-> According to feature_delivery_plan_v2.md, all 4 jurisdictions (Hong Kong, New Zealand, Seattle, Toronto) should be added BEFORE Phase 2D starts.
+> According to ROADMAP.MD, all 4 jurisdictions (Hong Kong, New Zealand, Seattle, Toronto) should be added BEFORE Phase 2D starts.
 >
 > **Risk:** Phase 2D-6 code will be built with Singapore-only assumptions, requiring 6-12 months refactoring later.
 >
 > **Recommendation:** Pause Phase 2D and complete Expansion Window 1 first (5-6 weeks).
 >
-> See docs/feature_delivery_plan_v2.md section 'JURISDICTION EXPANSION WINDOWS' for full rationale."
+> See docs/ROADMAP.MD section 'JURISDICTION EXPANSION WINDOWS' for full rationale."
 
 **Don't proceed with Phase 2D** until user explicitly confirms to skip expansion or complete it.
 
@@ -899,7 +831,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 **For Claude:** [`docs/jurisdiction_expansion_playbook.md`](jurisdiction_expansion_playbook.md) → Section 5 "Claude Workflow"
 
-**For Strategy/Rationale:** [`docs/feature_delivery_plan_v2.md`](feature_delivery_plan_v2.md) → Section "JURISDICTION EXPANSION WINDOWS"
+**For Strategy/Rationale:** [`docs/ROADMAP.MD`](ROADMAP.MD) → Section "JURISDICTION EXPANSION WINDOWS"
 
 ---
 
@@ -913,7 +845,7 @@ Phase 3+: Later phases (depend on Phase 2)
 - ✅ Validation results change priorities
 
 ### DON'T ASK when:
-- ❌ Status is clear in feature_delivery_plan_v2.md
+- ❌ Status is clear in ROADMAP.MD
 - ❌ Test failure is in TESTING_KNOWN_ISSUES.md
 - ❌ Coding pattern exists in codebase
 - ❌ Answer is in FEATURES.md or CODING_RULES.md
@@ -926,7 +858,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 ### When You Complete a Phase:
 
-**1. Update feature_delivery_plan_v2.md (Required)**
+**1. Update ROADMAP.MD (Required)**
 - Change ❌ NOT STARTED → ✅ COMPLETE
 - Add completion date
 - Add test status
@@ -934,7 +866,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 **2. Do NOT Update This File**
 - This file is a guide, not a status tracker
-- Status lives in feature_delivery_plan_v2.md only
+- Status lives in ROADMAP.MD only
 
 **3. Update TESTING_KNOWN_ISSUES.md (If Applicable)**
 - Add new issues to "Active Issues"
@@ -947,7 +879,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 | Question | Answer |
 |----------|--------|
-| **"What's the current status?"** | [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — see "📊 Current Progress Snapshot" |
+| **"What's the current status?"** | [ROADMAP.MD](ROADMAP.MD) — see "📊 Current Progress Snapshot" |
 | **"What should I build next?"** | Use decision tree above |
 | **"Phase 2C is done - what's next?"** | 🛑 STOP - Do Expansion Window 1 (add 4 jurisdictions) BEFORE Phase 2D |
 | **"How do I add a jurisdiction?"** | [jurisdiction_expansion_playbook.md](jurisdiction_expansion_playbook.md) |
@@ -966,7 +898,7 @@ Before saying "I'm done with Phase X":
 - [ ] ✅ Backend tests written and passing
 - [ ] ✅ Frontend tests written (even if timing issues exist)
 - [ ] ✅ Code follows CODING_RULES.md
-- [ ] ✅ feature_delivery_plan_v2.md updated (status → ✅ COMPLETE)
+- [ ] ✅ ROADMAP.MD updated (status → ✅ COMPLETE)
 - [ ] ✅ Commit message describes what was delivered
 - [ ] ✅ Known issues documented (if any)
 
@@ -974,6 +906,6 @@ Before saying "I'm done with Phase X":
 
 ## 🚀 Ready to Start?
 
-**Go to:** the "📊 Current Progress Snapshot" section in [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
+**Go to:** the "📊 Current Progress Snapshot" section in [ROADMAP.MD](ROADMAP.MD)
 
 Find your next task and start building! 💪

@@ -96,7 +96,7 @@ Good: "Build the Asset Mix Strategy tool from FEATURES.md lines 51-52. Input: pr
 
 **2. Provide Context Every Time:**
 - Always reference FEATURES.md line numbers
-- Point to feature_delivery_plan_v2.md phase/section
+- Point to ROADMAP.MD phase/section and the corresponding entry in WORK_QUEUE.MD
 - Link to existing similar code
 - Explain dependencies
 
@@ -128,7 +128,7 @@ Good:
 ### Pitfall #1: Scope Creep
 **Problem:** "While building X, I'll also add Y..."
 **Solution:**
-- Stick to feature_delivery_plan_v2.md order
+- Stick to ROADMAP.MD order
 - Write new ideas in a "Future Features" doc
 - Only build what's in FEATURES.md for v1.0
 
@@ -177,7 +177,7 @@ Good:
 
 **Monday:**
 - Review last week's progress
-- Check feature_delivery_plan_v2.md for current phase
+- Check ROADMAP.MD for current phase
 - Plan this week's features (2-3 small features max)
 - Update NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md if needed
 
@@ -297,7 +297,7 @@ As a solo founder, celebrating wins is critical for motivation:
 ```
 "Codex, read these documents:
 - FEATURES.md
-- docs/feature_delivery_plan_v2.md
+- docs/ROADMAP.MD
 - docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 
 Confirm you understand we're in Phase [X] building [feature name].
@@ -481,7 +481,7 @@ Building this solo will teach you:
 ### Strategies to Combat:
 
 **1. Track Progress Visually:**
-- Update feature_delivery_plan_v2.md regularly
+- Update ROADMAP.MD regularly
 - Keep a "wins" log
 - Take screenshots of milestones
 - Count commits/features completed

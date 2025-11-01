@@ -13,18 +13,23 @@ checks before opening a pull request.
    - Specifies every feature requirement
    - **THIS IS THE SOURCE OF TRUTH**
 
-2. **[docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md)** - Comprehensive delivery roadmap
+2. **[docs/ROADMAP.MD](docs/ROADMAP.MD)** - Comprehensive delivery roadmap
    - Maps 100% of FEATURES.md into 6 phases
    - Shows dependencies and priorities
    - Includes acceptance criteria and estimates
    - **ALWAYS CHECK THIS BEFORE STARTING NEW WORK**
 
-3. **[docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md)** - Current priorities
+3. **[docs/WORK_QUEUE.MD](docs/WORK_QUEUE.MD)** - Tactical task list & technical debt tracker
+   - Ordered Active/Ready queues for AI agents
+   - Completed log with commits for the last 30 days
+   - **UPDATE THIS AFTER EVERY TASK**
+
+4. **[docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md)** - Current priorities
    - Updated regularly with what to build next
    - Shows completed vs. in-progress vs. not-started features
    - **CHECK THIS TO KNOW WHAT TO WORK ON**
 
-4. **[CODING_RULES.md](CODING_RULES.md)** - Technical standards
+5. **[CODING_RULES.md](CODING_RULES.md)** - Technical standards
    - Migrations, async patterns, compliance checks
    - Singapore-specific requirements
    - **FOLLOW THESE RULES IN ALL CODE**
@@ -40,7 +45,8 @@ checks before opening a pull request.
 
 Before writing any code, confirm you've:
 - [ ] Read `docs/planning/features.md` completely
-- [ ] Reviewed feature_delivery_plan_v2.md for current phase
+- [ ] Reviewed ROADMAP.MD for strategic status
+- [ ] Checked `docs/WORK_QUEUE.MD` for active tasks
 - [ ] Checked `docs/ai-agents/next_steps.md` for priorities
 - [ ] Read CODING_RULES.md for technical standards
 - [ ] Understand which phase you're working in

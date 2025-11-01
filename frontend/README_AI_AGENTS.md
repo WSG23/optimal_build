@@ -67,4 +67,4 @@ All files in this directory are temporary test harnesses:
 
 **Backend work has business value. Test UI polish does not.**
 
-Focus on Phase 1D backend work (see [docs/feature_delivery_plan_v2.md](../docs/feature_delivery_plan_v2.md)).
+Focus on Phase 1D backend work (see [docs/ROADMAP.MD](../docs/ROADMAP.MD) and task priority in [docs/WORK_QUEUE.MD](../docs/WORK_QUEUE.MD)).

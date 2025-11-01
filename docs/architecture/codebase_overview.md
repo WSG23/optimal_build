@@ -51,6 +51,6 @@ No circular imports were detected by the run. If new circular references appear,
 
 1. Render `docs/architecture/import_graph.dot` to SVG/PNG once Graphviz is available in CI (ticket for Platform Ops).
 2. Expand owners table once Phase 2D team assignments are finalised.
-3. Record any new circular dependencies or architectural smells in `docs/planning/technical-debt.md`.
+3. Record any new circular dependencies or architectural smells in `docs/WORK_QUEUE.MD` (Ready/Blocked section).
 
 Keep this document updated whenever we add new top-level packages or shift responsibilities.

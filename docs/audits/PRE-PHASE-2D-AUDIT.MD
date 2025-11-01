@@ -20,7 +20,7 @@ This is a **ONE-TIME CHECKLIST** that should be archived after all work is compl
 2. All checkboxes in "Week 1: Automated Testing Infrastructure" are [x] checked
 3. All checkboxes in "Week 2: Security Audit" are [x] checked
 4. All checkboxes in "Week 2: Infrastructure Optimization" are [x] checked
-5. Phase 2D Gate Checklist in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) shows [x] for "Pre-Phase 2D Infrastructure Audit"
+5. Phase 2D Gate Checklist in [ROADMAP.MD](docs/ROADMAP.MD) shows [x] for "Pre-Phase 2D Infrastructure Audit"
 
 **📁 HOW TO ARCHIVE:**
 ```bash
@@ -31,8 +31,8 @@ mkdir -p docs/archive
 git mv PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md \
        docs/archive/PRE_PHASE_2D_INFRASTRUCTURE_AUDIT_COMPLETED_$(date +%Y-%m-%d).md
 
-# Update docs/planning/technical-debt.md - mark item #3 as "Completed" with date
-# Update feature_delivery_plan_v2.md - add completion date to Phase 2D gate
+# Update docs/WORK_QUEUE.MD - mark item #3 as "Completed" with date
+# Update ROADMAP.MD - add completion date to Phase 2D gate
 
 # Commit
 git add -A
@@ -307,7 +307,7 @@ grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE" backend/app --include="*.py"
 ```
 
 **AI Agents Can Fix:**
-- [x] **Dependency Audit (Tier 2 - from docs/planning/technical-debt.md):**
+- [x] **Dependency Audit (Tier 2 - reference docs/archive/TECHNICAL_DEBT.MD for history):**
   - [ ] Update all packages with known security vulnerabilities
   - [ ] Pin all 7 dependencies (asyncpg, shapely, pandas, numpy, statsmodels, scikit-learn, reportlab)
   - [ ] Set up GitHub Dependabot (free, automated)
@@ -443,7 +443,7 @@ free -h
 - Measure resource utilisation / right-size configs
 - Configure logging/alerting scripts
 - Run lightweight load test + document findings
-- Update `docs/planning/technical-debt.md` and deferred list
+- Update `docs/WORK_QUEUE.MD` and deferred list
 
 ---
 
@@ -479,7 +479,7 @@ free -h
 
 **Documentation:**
 - ✅ Audit findings documented in this file
-- ✅ `docs/planning/technical-debt.md` updated (Tier 2 marked complete)
+- ✅ `docs/WORK_QUEUE.MD` updated (Tier 2 marked complete)
 - ✅ Deferred items documented in [transition-checklist.md](../planning/transition-checklist.md)
 - ✅ Commit all changes to git
 
@@ -541,9 +541,9 @@ free -h
 ## 📚 References
 
 - **Article:** [47 Startups Failed - Inc.com](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
-- **Related:** [docs/planning/technical-debt.md](../planning/technical-debt.md) - Ongoing debt tracking
+- **Related:** [docs/WORK_QUEUE.MD](../WORK_QUEUE.MD) - Ongoing debt tracking (archived context: [`docs/archive/TECHNICAL_DEBT.MD`](../archive/TECHNICAL_DEBT.MD))
 - **Related:** [CODING_RULES.md](CODING_RULES.md) - Quality standards
-- **Related:** [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) - Phase progression
+- **Related:** [docs/ROADMAP.MD](docs/ROADMAP.MD) - Phase progression
 
 ---
 
@@ -554,7 +554,7 @@ free -h
 1. **STOP** - Do NOT start Phase 2D immediately
 2. **Run this 2-week audit sprint** (this document)
 3. **Fix all critical issues** (database, testing, security, infrastructure)
-4. **Update `docs/planning/technical-debt.md`** with any deferred items
+4. **Update `docs/WORK_QUEUE.MD`** with any deferred items
 5. **THEN** proceed to Phase 2D with solid foundation
 
 **This 2-week investment prevents 18 months of technical debt hell.**

@@ -97,7 +97,7 @@ Authentication/authorization:
 2. **Stage transitions & timeline (M2):** Stage event endpoints, audit logging, timeline API, Kanban drag/drop.
 3. **Commission ledger (M3):** Commission models/services APIs, audit integration, dispute handling UI.
 4. **Analytics & benchmarks (M4):** Snapshot job, performance API, dashboard charts, benchmark ingestion script + sample dataset.
-   5. **Polish & docs (M5):** Update `feature_delivery_plan_v2.md`, add docs (`docs/agents/business_performance.md`), expand `TESTING_DOCUMENTATION_SUMMARY.md`.
+   5. **Polish & docs (M5):** Update `ROADMAP.MD` and `WORK_QUEUE.MD`, add docs (`docs/agents/business_performance.md`), expand `TESTING_DOCUMENTATION_SUMMARY.md`.
 
 ### Milestone M4 design details
 
