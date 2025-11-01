@@ -147,7 +147,7 @@ Inc.com article analyzed 47 failed startups. Common pattern:
   - Set up monitoring/alerts
   - Load test for 10x traffic
 
-**Documentation:** [docs/audits/pre-phase-2d-audit.md](../audits/pre-phase-2d-audit.md) - Complete checklist
+**Documentation:** [docs/audits/PRE-PHASE-2D-AUDIT.MD](../audits/PRE-PHASE-2D-AUDIT.MD) - Complete checklist
 
 **Article Source:** [47 Startups Failed - Inc.com](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
 

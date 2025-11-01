@@ -5,7 +5,7 @@
 1. **docs/planning/ui-status.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
 2. **docs/planning/features.md** - What we're building (full feature specification)
 3. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
-4. **docs/audits/pre-phase-2d-audit.md** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
+4. **docs/audits/PRE-PHASE-2D-AUDIT.MD** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
 5. **docs/planning/technical-debt.md** - ⚠️ **IMPORTANT** - All known technical debt (prevents forgotten work)
 6. **docs/ai-agents/next_steps.md** - How to choose your next task (decision tree)
 7. **docs/development/testing/known-issues.md** - Known test issues (read BEFORE testing to avoid wasting time)
