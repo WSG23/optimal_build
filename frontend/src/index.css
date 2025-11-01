@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 :root {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
@@ -14,12 +20,18 @@
 
 body {
     margin: 0;
-    padding: 0;
+    padding: 2rem 0;
     min-height: 100vh;
+    background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+    display: flex;
+    justify-content: center;
 }
 
 #root {
+    width: 100%;
+    max-width: 1440px;
     margin: 0 auto;
+    padding: 0 2rem;
     text-align: left;
 }
 
@@ -54,6 +66,9 @@ h3 {
     grid-template-columns: 280px 1fr;
     min-height: 100vh;
     background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
 }
 
 .app-layout__nav {
@@ -101,7 +116,7 @@ h3 {
 }
 
 .app-layout__main {
-    padding: 2.5rem 3rem;
+    padding: 2.5rem 3.5rem;
     display: flex;
     flex-direction: column;
     gap: 2rem;
@@ -114,7 +129,7 @@ h3 {
     gap: 2rem;
     background: #ffffff;
     border-radius: 1.5rem;
-    padding: 1.75rem 2rem;
+    padding: 1.75rem 2.5rem;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
@@ -2831,6 +2846,11 @@ h3 {
     grid-template-columns: 280px 1fr;
     min-height: 100vh;
     background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+    position: relative;
+    isolation: isolate;
 }
 
 .app-shell__sidebar {
@@ -2846,7 +2866,7 @@ h3 {
 .app-shell__main {
     display: flex;
     flex-direction: column;
-    padding: 2.5rem 3rem;
+    padding: 2.5rem 3.5rem;
     gap: 2rem;
 }
 
@@ -2880,7 +2900,7 @@ h3 {
 .app-shell__content {
     background: rgba(255, 255, 255, 0.92);
     border-radius: 1.5rem;
-    padding: 2rem;
+    padding: 2rem 2.5rem;
     box-shadow:
         0 8px 24px rgba(15, 23, 42, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.6);
