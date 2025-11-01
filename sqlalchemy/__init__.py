@@ -12,6 +12,9 @@ from types import ModuleType
 from typing import Any, Callable, Iterable, Sequence
 import sys
 
+_DATABASE: dict[type, list[Any]] = {}
+_PK_COUNTER: dict[type, int] = {}
+
 __all__ = [
     "AsyncEngine",
     "AsyncSession",
@@ -122,6 +125,30 @@ def DECIMAL(*_: Any, **__: Any) -> _SQLType:
     return _SQLType(float)
 
 
+class _ColumnExpression:
+    def __init__(self, column: "Column", owner: type | None) -> None:
+        self.column = column
+        self.owner = owner
+
+    def _comparison(self, operator: str, value: Any) -> tuple[str, str, Any]:
+        return (operator, self.column.name, value)
+
+    def __eq__(self, other: Any) -> tuple[str, str, Any]:  # type: ignore[override]
+        return self._comparison("eq", other)
+
+    def __ne__(self, other: Any) -> tuple[str, str, Any]:  # type: ignore[override]
+        return self._comparison("ne", other)
+
+    def in_(self, values: Iterable[Any]) -> tuple[str, str, tuple[Any, ...]]:
+        return ("in", self.column.name, tuple(values))
+
+    def is_(self, value: Any) -> tuple[str, str, Any]:
+        return self._comparison("is", value)
+
+    def isnot(self, value: Any) -> tuple[str, str, Any]:
+        return self._comparison("isnot", value)
+
+
 class Column:
     def __init__(
         self,
@@ -159,11 +186,36 @@ class Column:
         self.extras = extras
         self.table: "Table | None" = None
         self.key: str | None = None
+        self._owner: type | None = None
+        self.model: type | None = None
+
+    def __set_name__(self, owner: type, name: str) -> None:  # pragma: no cover - descriptor protocol
+        self._owner = owner
+        if self.name is None:
+            self.name = name
+        self.key = name
+
+    def __get__(self, instance: Any, owner: type | None = None) -> Any:
+        if instance is None:
+            return _ColumnExpression(self, owner)
+        return instance.__dict__.get(self.name, self._default_value())
+
+    def __set__(self, instance: Any, value: Any) -> None:
+        instance.__dict__[self.name] = value
 
     def with_name(self, name: str) -> "Column":
         self.name = name
         self.key = name
         return self
+
+    def _default_value(self) -> Any:
+        default = self.default
+        if callable(default):  # pragma: no cover - rarely exercised in tests
+            try:
+                return default()
+            except TypeError:
+                return default
+        return default
 
 
 class _MetaData:
@@ -191,6 +243,7 @@ class Table:
     ) -> None:
         self.name = name
         self.metadata = metadata
+        self.model: type | None = options.pop("model", None)
         bound_columns: list[Column] = []
         for index, column in enumerate(columns):
             if not isinstance(column, Column):
@@ -257,6 +310,36 @@ def or_(*conditions: Any) -> tuple[str, tuple[Any, ...]]:
     return ("or", conditions)
 
 
+def _evaluate_condition(record: Any, condition: Any) -> bool:
+    if isinstance(condition, tuple):
+        operator = condition[0]
+        if operator in {"eq", "ne", "is", "isnot", "in"}:
+            column_name = condition[1]
+            value = condition[2]
+            current = getattr(record, column_name, None)
+            if operator == "eq":
+                return current == value
+            if operator == "ne":
+                return current != value
+            if operator == "is":
+                return current is value or current == value
+            if operator == "isnot":
+                return not (current is value or current == value)
+            if operator == "in":
+                return current in value
+        if operator == "and":
+            return all(_evaluate_condition(record, item) for item in condition[1])
+        if operator == "or":
+            return any(_evaluate_condition(record, item) for item in condition[1])
+    return True
+
+
+def _apply_filters(records: list[Any], filters: list[Any]) -> list[Any]:
+    if not filters:
+        return list(records)
+    return [record for record in records if all(_evaluate_condition(record, cond) for cond in filters)]
+
+
 def asc(column: Any) -> tuple[str, Any]:
     return ("asc", column)
 
@@ -268,8 +351,14 @@ def desc(column: Any) -> tuple[str, Any]:
 class Select:
     def __init__(self, entities: Sequence[Any]) -> None:
         self.entities = tuple(entities)
+        self._where: list[Any] = []
+        self._limit: int | None = None
+        self._offset: int | None = None
 
-    def where(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
+    def where(self, *conditions: Any, **_: Any) -> Select:
+        for condition in conditions:
+            if condition is not None:
+                self._where.append(condition)
         return self
 
     def join(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
@@ -290,10 +379,12 @@ class Select:
     def options(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
-    def limit(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
+    def limit(self, value: int | None) -> Select:
+        self._limit = value
         return self
 
-    def offset(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
+    def offset(self, value: int | None) -> Select:
+        self._offset = value
         return self
 
     def distinct(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
@@ -398,62 +489,121 @@ def inspect(engine: Engine) -> _Inspector:
 
 
 class _Result:
-    def __init__(self, value: Any = None) -> None:
-        self._value = value
+    def __init__(self, values: Iterable[Any] | None = None) -> None:
+        self._values = list(values or [])
+
+    def __iter__(self):  # pragma: no cover - iteration helper
+        return iter(self._values)
 
     def scalar_one_or_none(self) -> Any:
-        return self._value
+        return self._values[0] if self._values else None
 
     def scalar_one(self) -> Any:
-        if self._value is None:
+        if not self._values:
             raise LookupError("No result")
-        return self._value
+        return self._values[0]
 
     def scalars(self) -> _Result:
         return self
 
     def all(self) -> list[Any]:
-        return []
+        return list(self._values)
 
     def first(self) -> Any:
-        return self._value
+        return self._values[0] if self._values else None
 
 
 class AsyncSession:
-    def __init__(self) -> None:
-        self._objects: list[Any] = []
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401, ANN001, ARG002
+        self._pending: list[Any] = []
 
-    async def execute(self, *_: Any, **__: Any) -> _Result:
+    async def execute(self, statement: Any, *args: Any, **kwargs: Any) -> _Result:  # noqa: ARG002
+        await self.flush()
+
+        if isinstance(statement, Select):
+            results: list[Any] = []
+            for entity in statement.entities:
+                if isinstance(entity, type):
+                    records = list(_DATABASE.get(entity, []))
+                    filtered = _apply_filters(records, statement._where)
+                    if statement._offset:
+                        filtered = filtered[statement._offset :]
+                    if statement._limit is not None:
+                        filtered = filtered[: statement._limit]
+                    results.extend(filtered)
+            return _Result(results)
+
+        if isinstance(statement, tuple) and len(statement) == 2:
+            op, target = statement
+            if isinstance(target, Table) and op == "delete":
+                model = getattr(target, "model", None)
+                if model is not None:
+                    _DATABASE[model] = []
+                    _PK_COUNTER.pop(model, None)
+            return _Result()
+
         return _Result()
 
-    async def scalar(self, *_: Any, **__: Any) -> Any:
-        return None
+    async def scalar(self, statement: Any, *args: Any, **kwargs: Any) -> Any:  # noqa: ARG002
+        result = await self.execute(statement, *args, **kwargs)
+        return result.scalar_one_or_none()
 
     def add(self, obj: Any) -> None:
-        self._objects.append(obj)
+        if obj not in self._pending:
+            self._pending.append(obj)
 
     def add_all(self, objs: Iterable[Any]) -> None:
-        self._objects.extend(objs)
+        for obj in objs:
+            self.add(obj)
 
     async def commit(self) -> None:
-        return None
+        await self.flush()
 
-    async def rollback(self) -> None:
-        return None
+    async def rollback(self) -> None:  # pragma: no cover - compatibility hook
+        self._pending.clear()
 
     async def flush(self) -> None:
-        return None
+        if not self._pending:
+            return
+        pending = list(self._pending)
+        self._pending.clear()
+        for obj in pending:
+            model = obj.__class__
+            store = _DATABASE.setdefault(model, [])
+            table = getattr(model, "__table__", None)
+            pk_column = None
+            if table is not None:
+                for column in getattr(table, "columns", []):
+                    if getattr(column, "primary_key", False):
+                        pk_column = column
+                        break
+            if pk_column is not None:
+                attr = pk_column.name
+                if getattr(obj, attr, None) is None:
+                    next_id = _PK_COUNTER.get(model, 0) + 1
+                    _PK_COUNTER[model] = next_id
+                    setattr(obj, attr, next_id)
+            if obj not in store:
+                store.append(obj)
 
-    async def close(self) -> None:
-        return None
+    async def close(self) -> None:  # pragma: no cover - compatibility hook
+        await self.flush()
 
 
 class _AsyncSessionContext:
+    def __init__(self, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
+        self._args = args
+        self._kwargs = kwargs
+        self._session: AsyncSession | None = None
+
     async def __aenter__(self) -> AsyncSession:
-        return AsyncSession()
+        self._session = AsyncSession(*self._args, **self._kwargs)
+        return self._session
 
     async def __aexit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
-        return None
+        if self._session is not None:
+            await self._session.close()
+        self._session = None
 
 
 class _AsyncSessionmaker:
@@ -462,7 +612,14 @@ class _AsyncSessionmaker:
         self.kwargs = kwargs
 
     def __call__(self, *args: Any, **kwargs: Any) -> _AsyncSessionContext:  # noqa: ANN001
-        return _AsyncSessionContext()
+        if args or kwargs:
+            combined_kwargs = dict(self.kwargs)
+            combined_kwargs.update(kwargs)
+            combined_args = tuple(self.args) + tuple(args)
+        else:
+            combined_args = tuple(self.args)
+            combined_kwargs = dict(self.kwargs)
+        return _AsyncSessionContext(combined_args, combined_kwargs)
 
     @classmethod
     def __class_getitem__(cls, item: Any) -> _AsyncSessionmaker:  # noqa: ANN001, pragma: no cover - typing helper
@@ -581,7 +738,9 @@ class _DeclarativeMeta(type):
             columns.append(column)
 
         if columns:
-            cls.__table__ = Table(tablename, metadata, *columns)
+            cls.__table__ = Table(tablename, metadata, *columns, model=cls)
+            for column in columns:
+                column.model = cls
             if "__init__" not in attrs:
                 def __init__(self, **kwargs: Any) -> None:
                     for key, value in kwargs.items():
