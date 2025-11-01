@@ -238,6 +238,7 @@ class EntRoadmapItem(BaseModel):
             "sequence_order",
             unique=True,
         ),
+        Index("idx_ent_roadmap_project_status", "project_id", "status"),
         CheckConstraint(
             "sequence_order >= 1", name="chk_ent_roadmap_sequence_positive"
         ),
@@ -277,6 +278,10 @@ class EntStudy(BaseModel):
     )
     metadata = MetadataProxy()
 
+    __table_args__ = (
+        Index("idx_ent_engagements_project_status", "project_id", "status"),
+    )
+
 
 class EntEngagement(BaseModel):
     """Stakeholder engagement records tied to a project."""
@@ -310,6 +315,10 @@ class EntEngagement(BaseModel):
         nullable=False,
     )
     metadata = MetadataProxy()
+
+    __table_args__ = (
+        Index("idx_ent_legal_instruments_project_status", "project_id", "status"),
+    )
 
 
 class EntLegalInstrument(BaseModel):

@@ -34,7 +34,9 @@ class PreviewJob(BaseModel):
     __tablename__ = "preview_jobs"
 
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    property_id = Column(UUID(), ForeignKey("properties.id"), nullable=False)
+    property_id = Column(
+        UUID(), ForeignKey("properties.id"), nullable=False, index=True
+    )
     scenario = Column(String(80), nullable=False, default="base")
     status = Column(
         SQLEnum(
@@ -59,7 +61,11 @@ class PreviewJob(BaseModel):
 
     property = relationship("Property", backref="preview_jobs")
 
-    __table_args__ = (Index("ix_preview_jobs_property", "property_id"),)
+    __table_args__ = (
+        Index("ix_preview_jobs_property", "property_id"),
+        Index("ix_preview_jobs_property_status", "property_id", "status"),
+        Index("ix_preview_jobs_status_requested", "status", "requested_at"),
+    )
 
 
 __all__ = ["PreviewJob", "PreviewJobStatus"]

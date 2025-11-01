@@ -209,7 +209,9 @@ class AgentDeal(BaseModel):
     )
 
     __table_args__ = (
+        Index("ix_agent_deals_agent_status", "agent_id", "status"),
         Index("ix_agent_deals_agent_stage", "agent_id", "pipeline_stage"),
+        Index("ix_agent_deals_project_status", "project_id", "status"),
         Index("ix_agent_deals_status_created", "status", "created_at"),
     )
 
