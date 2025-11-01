@@ -1,34 +1,17 @@
-x-backend-environment: &backend-environment
-  POSTGRES_SERVER: ${POSTGRES_SERVER:-postgres}
-  POSTGRES_DB: ${POSTGRES_DB:-building_compliance}
-  POSTGRES_USER: ${POSTGRES_USER:-postgres}
-  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
-  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
-  RQ_REDIS_URL: ${RQ_REDIS_URL:-redis://redis:6379/2}
-  ODA_LICENSE_KEY: ${ODA_LICENSE_KEY:-}
-  OVERLAY_QUEUE_LOW: ${OVERLAY_QUEUE_LOW:-overlay:low}
-  OVERLAY_QUEUE_DEFAULT: ${OVERLAY_QUEUE_DEFAULT:-overlay:default}
-  OVERLAY_QUEUE_HIGH: ${OVERLAY_QUEUE_HIGH:-overlay:high}
-  S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
-  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
-  S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
-  IMPORTS_BUCKET_NAME: ${IMPORTS_BUCKET_NAME:-cad-imports}
-  EXPORTS_BUCKET_NAME: ${EXPORTS_BUCKET_NAME:-cad-exports}
-
 services:
   postgres:
     image: postgis/postgis:15-3.3-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: building_compliance
+      BUILDABLE_USE_POSTGIS: ${BUILDABLE_USE_POSTGIS:-1}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db-simple.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -37,6 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -49,6 +33,7 @@ services:
 
   minio:
     image: minio/minio:latest
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin

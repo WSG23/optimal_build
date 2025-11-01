@@ -3,7 +3,7 @@
 import pytest
 from fastapi import Request, Response
 
-from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.security import SecurityHeadersConfig, SecurityHeadersMiddleware
 
 
 @pytest.mark.asyncio
@@ -15,7 +15,8 @@ async def test_dispatch_adds_security_headers():
         return Response(content="test", media_type="text/plain")
 
     # Create middleware instance (we don't need a real app for unit testing)
-    middleware = SecurityHeadersMiddleware(app=None)  # type: ignore
+    config = SecurityHeadersConfig(environment="production")
+    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
 
     # Create a mock request
     request = Request(scope={"type": "http", "method": "GET", "path": "/"})
@@ -25,28 +26,41 @@ async def test_dispatch_adds_security_headers():
 
     # Verify all security headers are present
     assert "Strict-Transport-Security" in response.headers
+    assert response.headers["Strict-Transport-Security"] == config.production_hsts
+
+    assert response.headers["X-Content-Type-Options"] == config.x_content_type_options
+    assert response.headers["X-Frame-Options"] == config.x_frame_options
+    assert response.headers["Referrer-Policy"] == config.referrer_policy
+    assert response.headers["X-XSS-Protection"] == config.x_xss_protection
+    assert response.headers["Content-Security-Policy"] == config.content_security_policy
+    assert response.headers["Permissions-Policy"] == config.permissions_policy
     assert (
-        response.headers["Strict-Transport-Security"]
-        == "max-age=63072000; includeSubDomains"
+        response.headers["Cross-Origin-Opener-Policy"]
+        == config.cross_origin_opener_policy
+    )
+    assert (
+        response.headers["Cross-Origin-Resource-Policy"]
+        == config.cross_origin_resource_policy
     )
 
-    assert "X-Content-Type-Options" in response.headers
-    assert response.headers["X-Content-Type-Options"] == "nosniff"
 
-    assert "X-Frame-Options" in response.headers
-    assert response.headers["X-Frame-Options"] == "DENY"
+@pytest.mark.asyncio
+async def test_dispatch_adds_development_hsts():
+    """Non-production environments should emit the development HSTS directive."""
 
-    assert "Referrer-Policy" in response.headers
-    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    async def mock_call_next(request: Request) -> Response:
+        return Response(content="test", media_type="text/plain")
 
-    assert "X-XSS-Protection" in response.headers
-    assert response.headers["X-XSS-Protection"] == "1; mode=block"
+    config = SecurityHeadersConfig(environment="development")
+    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
 
-    assert "Content-Security-Policy" in response.headers
-    assert (
-        response.headers["Content-Security-Policy"]
-        == "default-src 'none'; frame-ancestors 'none'"
-    )
+    request = Request(scope={"type": "http", "method": "GET", "path": "/"})
+    response = await middleware.dispatch(request, mock_call_next)
+
+    if config.development_hsts is None:
+        assert "Strict-Transport-Security" not in response.headers
+    else:
+        assert response.headers["Strict-Transport-Security"] == config.development_hsts
 
 
 @pytest.mark.asyncio
@@ -60,7 +74,8 @@ async def test_dispatch_preserves_existing_headers():
         response.headers["Custom-Header"] = "custom-value"
         return response
 
-    middleware = SecurityHeadersMiddleware(app=None)  # type: ignore
+    config = SecurityHeadersConfig(environment="production")
+    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
     request = Request(scope={"type": "http", "method": "GET", "path": "/"})
 
     response = await middleware.dispatch(request, mock_call_next)
@@ -72,8 +87,8 @@ async def test_dispatch_preserves_existing_headers():
     assert response.headers["Custom-Header"] == "custom-value"
 
     # Other security headers should still be added
-    assert response.headers["X-Content-Type-Options"] == "nosniff"
-    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["X-Content-Type-Options"] == config.x_content_type_options
+    assert response.headers["X-Frame-Options"] == config.x_frame_options
 
 
 @pytest.mark.asyncio
@@ -85,7 +100,8 @@ async def test_dispatch_preserves_existing_csp():
         response.headers["Content-Security-Policy"] = "default-src 'self'"
         return response
 
-    middleware = SecurityHeadersMiddleware(app=None)  # type: ignore
+    config = SecurityHeadersConfig(environment="production")
+    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
     request = Request(scope={"type": "http", "method": "GET", "path": "/"})
 
     response = await middleware.dispatch(request, mock_call_next)
@@ -94,11 +110,8 @@ async def test_dispatch_preserves_existing_csp():
     assert response.headers["Content-Security-Policy"] == "default-src 'self'"
 
     # Other security headers should still be added
-    assert (
-        response.headers["Strict-Transport-Security"]
-        == "max-age=63072000; includeSubDomains"
-    )
-    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["Strict-Transport-Security"] == config.production_hsts
+    assert response.headers["X-Content-Type-Options"] == config.x_content_type_options
 
 
 @pytest.mark.asyncio
@@ -112,7 +125,8 @@ async def test_dispatch_uses_setdefault():
         response.headers["Referrer-Policy"] = "no-referrer"
         return response
 
-    middleware = SecurityHeadersMiddleware(app=None)  # type: ignore
+    config = SecurityHeadersConfig(environment="production")
+    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
     request = Request(scope={"type": "http", "method": "GET", "path": "/"})
 
     response = await middleware.dispatch(request, mock_call_next)

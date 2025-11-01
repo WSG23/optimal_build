@@ -62,8 +62,14 @@ if _SLOW_QUERY_THRESHOLD > 0:
         elapsed = time.perf_counter() - start_time
         if elapsed >= _SLOW_QUERY_THRESHOLD:
             truncated = statement if len(statement) <= 500 else statement[:500] + "..."
+            params_repr = repr(parameters)
+            if len(params_repr) > 500:
+                params_repr = params_repr[:500] + "..."
             logger.warning(
-                "Slow query detected (%.2f ms): %s", elapsed * 1000, truncated
+                "Slow query detected (%.2f ms): %s | params=%s",
+                elapsed * 1000,
+                truncated,
+                params_repr,
             )
 
 

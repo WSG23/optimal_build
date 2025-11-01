@@ -26,7 +26,7 @@ This document outlines the work required to replace the stub `heritage_overlays.
 **v0.2 (2025-10-22)** - Technical review polish
 - Added explicit NHB data source links (OneMap, data.gov.sg) with expected columns
 - Documented repository structure (`data/heritage/raw|processed|overrides/`)
-- Added Python dependencies list (shapely, pyproj, fiona, geopandas)
+- Documented optional geospatial helpers (shapely core dependency; pyproj/fiona/geopandas install on demand)
 - Clarified geometry simplification strategy (Douglas-Peucker, tolerance 0.00001)
 - Added `heritage_premium_pct` to output schema
 - Added STRtree spatial indexing for performance optimization
@@ -101,12 +101,12 @@ data/heritage/
 - ⏳ Prefect/cron job (future) to run weekly refresh; store latest run metadata in Import records.
 
 ### Python Dependencies
-Add to `requirements.txt`:
+Add to your virtual environment when running the CLI locally:
 ```
 shapely>=2.0.0          # Polygon operations, simplification
-pyproj>=3.6.0           # Coordinate transformations
-fiona>=1.9.0            # Shapefile I/O (if URA provides Shapefiles)
-geopandas>=0.14.0       # GeoJSON handling (optional, simplifies I/O)
+pyproj>=3.6.0           # Coordinate transformations (optional)
+fiona>=1.9.0            # Shapefile I/O (optional, only for shapefile inputs)
+geopandas>=0.14.0       # GeoJSON handling (optional convenience layer)
 ```
 
 ---

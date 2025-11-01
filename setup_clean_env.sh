@@ -14,8 +14,8 @@ echo "📦 Installing dev dependencies..."
 
 # 3. Reset Postgres (WARNING: This wipes all data!)
 echo "🗄️  Resetting Postgres database..."
-docker compose down -v
-docker compose up -d postgres redis minio
+docker compose down -v --remove-orphans
+docker compose up -d --remove-orphans postgres redis minio
 
 # Wait for Postgres to be ready
 echo "⏳ Waiting for Postgres to start..."

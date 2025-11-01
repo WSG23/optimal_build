@@ -88,3 +88,13 @@ class async_sessionmaker:  # type: ignore[misc]
 
 AsyncEngine = _BaseAsyncEngine
 create_async_engine = _create_async_engine
+
+
+class _AsyncioNamespace:
+    def __init__(self) -> None:
+        self.greenlet_spawn = None
+
+
+engine = _AsyncioNamespace()
+result = _AsyncioNamespace()
+session = _AsyncioNamespace()
