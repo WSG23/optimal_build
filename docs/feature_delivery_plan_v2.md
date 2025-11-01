@@ -57,6 +57,13 @@
 - Site Acquisition workspace, due diligence checklists, manual inspection capture
 - [Jump to details ↓](#phase-2a-universal-gps-site-acquisition)
 
+**[Phase 2C: Complete Financial Control & Modeling](#phase-2c-complete-financial-control--modeling)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** [Line 523](#phase-2c-complete-financial-control--modeling) says "✅ BACKEND / UI VERIFIED"
+- **Completed:** Asset finance engine ✅, Construction loan interest ✅, Finance workspace ✅, Smoke tests verified ✅
+- Smoke artifacts: `artifacts/smokes_phase2c/` (2025-10-28)
+- [Jump to details ↓](#phase-2c-complete-financial-control--modeling)
+
 ---
 
 ### ⏸️ In Progress Phases
@@ -74,13 +81,6 @@
 - **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅
 - **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [phase2b_visualisation_stub.md](phase2b_visualisation_stub.md)
 - [Jump to details ↓](#phase-2b-asset-specific-feasibility)
-
-**[Phase 2C: Complete Financial Control & Modeling](#phase-2c-complete-financial-control--modeling)** ⚠️ IN PROGRESS
-- **Backend:** 80% | **UI:** 40%
-- **Status source:** [Line 472](#phase-2c-complete-financial-control--modeling)
-- **Completed:** Asset finance engine ✅, Construction loan interest ✅
-- **Missing:** Sensitivity analysis UI, async batching, tranche editing
-- [Jump to details ↓](#phase-2c-complete-financial-control--modeling)
 
 ---
 

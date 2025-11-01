@@ -40,8 +40,8 @@
 ## Blocked (Waiting)
 
 ### Pre-Phase 2D Infrastructure Audit (CRITICAL - 47 Startup Failures Prevention)
-**Status:** BLOCKED - waiting for Phase 2C completion ONLY
-**Priority:** CRITICAL (must do IMMEDIATELY after Phase 2C, before everything else)
+**Status:** IN PROGRESS (Phase 2C complete 2025-10-28)
+**Priority:** CRITICAL (must do IMMEDIATELY, before 1D/2B/jurisdictions)
 **Estimate:** 2 weeks
 **Risk:** Codebase becomes unmaintainable (Month 25 death pattern)
 
@@ -58,19 +58,20 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 
 **Full checklist:** [PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md](PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md)
 
-**Immediately after Phase 2C (before 1D/2B/jurisdictions):**
-1. Run 2-week infrastructure audit sprint
-2. Fix all critical issues (database, testing, security, infrastructure)
-3. THEN continue with Phase 1D/2B residual work
-4. THEN jurisdiction expansion
-5. THEN Phase 2D
+**Current sequence (Phase 2C complete 2025-10-28):**
+1. ✅ Phase 2C Finance complete (smoke tests verified)
+2. → **IN PROGRESS:** 2-week infrastructure audit sprint
+3. Fix all critical issues (database, testing, security, infrastructure)
+4. THEN continue with Phase 1D/2B residual work
+5. THEN jurisdiction expansion
+6. THEN Phase 2D
 
 **Article:** https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802
 
 ---
 
 ### Phase 1D: Business Performance Management UI
-**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Status:** READY - waiting for Infrastructure Audit to complete
 **Priority:** HIGH (60% complete, UI missing)
 **Estimate:** 3-4 weeks
 **Risk:** Blocks Phase 1 completion
@@ -92,7 +93,7 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 - UI specs: Lines 315-343 (primary persona: Agent Team Leads)
 - API endpoints: Lines 330 (deals, timeline, commissions, performance)
 
-**After Phase 2C completes:**
+**After Infrastructure Audit completes:**
 1. Read Phase 1D UI Design Specifications (lines 328-335)
 2. Build 4 UI components (Kanban, Insights, Analytics, ROI panels)
 3. Run manual QA checklist (lines 351-363)
@@ -101,7 +102,7 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 ---
 
 ### Phase 2B: Asset-Specific Feasibility - 3D Visualization
-**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Status:** READY - waiting for Infrastructure Audit to complete
 **Priority:** HIGH (85% complete, 3D preview missing)
 **Estimate:** 2-3 weeks
 **Risk:** Blocks Phase 2B completion
@@ -131,7 +132,7 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 - Requirements: [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
 - Detailed plan: [docs/phase2b_visualisation_stub.md](docs/phase2b_visualisation_stub.md)
 
-**After Phase 2C completes:**
+**After Infrastructure Audit completes:**
 1. Read phase2b_visualisation_stub.md for implementation details
 2. Implement GLB generation with scenario variants
 3. Wire frontend 3D viewer component
@@ -140,7 +141,7 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 ---
 
 ### Tier 2: Dependency Pinning
-**Status:** BLOCKED - waiting for Phase 2C Finance to complete AND Phase 1D/2B residual work
+**Status:** READY - waiting for Infrastructure Audit AND Phase 1D/2B residual work
 **Priority:** Medium
 **Estimate:** 1-2 hours
 **Risk:** Security, reproducibility

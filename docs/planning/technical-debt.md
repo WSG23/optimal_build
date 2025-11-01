@@ -47,7 +47,7 @@ This is a **LIVING DOCUMENT** that tracks ongoing technical debt across all proj
 ## High Priority (Fix Soon)
 
 ### 1. Phase 1D: Business Performance Management UI
-**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Status:** READY - waiting for Infrastructure Audit to complete
 **Priority:** HIGH (60% complete, UI missing)
 **Estimate:** 3-4 weeks
 **Risk:** Blocks Phase 1 completion
@@ -65,7 +65,7 @@ This is a **LIVING DOCUMENT** that tracks ongoing technical debt across all proj
 ---
 
 ### 2. Phase 2B: Asset-Specific Feasibility - 3D Visualization
-**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Status:** READY - waiting for Infrastructure Audit to complete
 **Priority:** HIGH (85% complete, 3D preview missing)
 **Estimate:** 2-3 weeks (40% backend, 60% frontend UI)
 **Risk:** Blocks Phase 2B completion
@@ -109,8 +109,8 @@ This is a **LIVING DOCUMENT** that tracks ongoing technical debt across all proj
 ---
 
 ### 3. Pre-Phase 2D Infrastructure Audit (47 Startup Failures Prevention)
-**Status:** BLOCKED - waiting for Phase 2C Finance to complete
-**Priority:** CRITICAL (must do IMMEDIATELY after Phase 2C, before 1D/2B/jurisdictions)
+**Status:** IN PROGRESS (Phase 2C complete 2025-10-28)
+**Priority:** CRITICAL (must do IMMEDIATELY, before 1D/2B/jurisdictions)
 **Estimate:** 2 weeks (10 working days)
 **Risk:** Becoming one of 47 failed startups - codebase becomes unmaintainable
 
@@ -159,7 +159,7 @@ Inc.com article analyzed 47 failed startups. Common pattern:
 ---
 
 ### 4. Entitlement Enum Case Sensitivity
-**Status:** BLOCKED - waiting for Phase 2C Finance to complete
+**Status:** READY - waiting for Infrastructure Audit to complete
 **Priority:** HIGH (data drift risk)
 **Estimate:** 2-4 hours
 **Risk:** Database inconsistency, query failures
@@ -175,14 +175,14 @@ Inc.com article analyzed 47 failed startups. Common pattern:
 
 **Documentation:** [NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) lines 15-21
 
-**DO NOT START** until Phase 2C is merged and staging database can be audited.
+**Note:** Phase 2C complete (2025-10-28), can start after Infrastructure Audit finishes.
 
 ---
 
-## Medium Priority (Fix After Phase 2C)
+## Medium Priority (Fix After Infrastructure Audit)
 
-### 4. Dependency Pinning (Tier 2)
-**Status:** BLOCKED - waiting for Phase 2C + Phase 1D/2B residual work
+### 5. Dependency Pinning (Tier 2)
+**Status:** READY - waiting for Infrastructure Audit + Phase 1D/2B residual work
 **Priority:** Medium
 **Estimate:** 1-2 hours
 **Risk:** Security, reproducibility, CI non-determinism
