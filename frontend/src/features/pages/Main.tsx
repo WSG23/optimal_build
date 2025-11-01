@@ -15,7 +15,6 @@ import { IncidentDetectionBreakdown } from '@/shared/components/app/security/Inc
 import IncidentAlertsPanel from '@/shared/components/app/security/IncidentAlertsPanel';
 import IncidentResponsePanel from '@/shared/components/app/security/IncidentResponsePanel';
 import type { Ticket, TicketsByStatus } from '@/shared/components/app/security/types';
-import { TID } from '@/testing/testids';
 
 const initialTickets: Ticket[] = [
   {
@@ -126,7 +125,7 @@ export default function Main() {
   };
 
   return (
-    <div className="bg-neutral-950 text-white" data-testid={TID.page.main}>
+    <div className="bg-neutral-950 text-white">
       <ViewportFrame className="flex h-full flex-col gap-6">
         <header className="mb-4 grid grid-cols-12 items-center gap-6">
           <div className="col-span-3 flex items-center gap-3">
@@ -163,18 +162,16 @@ export default function Main() {
           </div>
 
           <section className="min-h-0" style={{ gridColumn: '2', gridRow: '1' }}>
-            <div className="h-full" data-testid={TID.control.mapCanvas}>
-              <Panel title="Floorplan Activity" className="h-full">
-                <PanelBody className="h-full p-0">
-                  <IncidentMapView
-                    tickets={tickets}
-                    selectedTicket={selectedTicket}
-                    onLocationClick={handleLocationClick}
-                    selectedLocation={selectedLocation}
-                  />
-                </PanelBody>
-              </Panel>
-            </div>
+            <Panel title="Floorplan Activity" className="h-full">
+              <PanelBody className="h-full p-0">
+                <IncidentMapView
+                  tickets={tickets}
+                  selectedTicket={selectedTicket}
+                  onLocationClick={handleLocationClick}
+                  selectedLocation={selectedLocation}
+                />
+              </PanelBody>
+            </Panel>
           </section>
 
           <section className="min-h-0" style={{ gridColumn: '3', gridRow: '1' }}>

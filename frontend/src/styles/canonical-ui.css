@@ -1,7 +1,0 @@
-@layer base, components, utilities;
-:root { color-scheme: dark; }
-/* Minimal, test-friendly helpers that don't alter tokens */
-.page-grid { display: grid; gap: 1.5rem; min-height: 0; }
-.vis-panel { min-height: 0; }
-.kpi-strip { display: grid; grid-auto-flow: column; gap: .75rem; align-items: center; }
-.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }

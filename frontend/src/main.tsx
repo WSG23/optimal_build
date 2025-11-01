@@ -12,21 +12,6 @@ import { FinanceWorkspace } from './modules/finance'
 import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligence'
 import '@ob/tokens.css'
 import './index.css'
-import './styles/canonical-ui.css'
-import MainPage from './features/pages/Main'
-import MissionControlPage from './features/pages/MissionControl'
-import FacilitySensorsPage from './features/pages/FacilitySensors'
-import MappingUploadPage from './features/pages/MappingUpload'
-import DataUploadPage from './features/pages/DataUpload'
-import WeakSignalFeed from './features/pages/WeakSignalFeed'
-import TicketingPage from './features/pages/Ticketing'
-import SecurityDashboardPage from './features/pages/SecurityDashboard'
-import DPIADashboard from './features/pages/DPIADashboard'
-import DSARComplianceDashboard from './features/pages/DSARComplianceDashboard'
-import ROPADashboard from './features/pages/ROPADashboard'
-import CrossBorderTransferDashboard from './features/pages/CrossBorderTransferDashboard'
-import ComplianceViolationsPage from './features/pages/ComplianceViolations'
-import SettingsPage from './features/pages/Settings'
 import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
 import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
 import AgentPerformancePage from './pages/AgentPerformancePage'
@@ -223,62 +208,6 @@ const router = createBrowserRouter([
   {
     path: '/legacy/visualizations/intelligence',
     element: <AdvancedIntelligencePage />,
-  },
-  {
-    path: '/main',
-    element: <MainPage />,
-  },
-  {
-    path: '/mission',
-    element: <MissionControlPage />,
-  },
-  {
-    path: '/mapping',
-    element: <FacilitySensorsPage />,
-  },
-  {
-    path: '/mapping/upload',
-    element: <MappingUploadPage />,
-  },
-  {
-    path: '/data/upload',
-    element: <DataUploadPage />,
-  },
-  {
-    path: '/feed',
-    element: <WeakSignalFeed />,
-  },
-  {
-    path: '/tickets',
-    element: <TicketingPage />,
-  },
-  {
-    path: '/security',
-    element: <SecurityDashboardPage />,
-  },
-  {
-    path: '/settings',
-    element: <SettingsPage />,
-  },
-  {
-    path: '/compliance/dpia',
-    element: <DPIADashboard />,
-  },
-  {
-    path: '/compliance/dsar',
-    element: <DSARComplianceDashboard />,
-  },
-  {
-    path: '/compliance/ropa',
-    element: <ROPADashboard />,
-  },
-  {
-    path: '/compliance/cbt',
-    element: <CrossBorderTransferDashboard />,
-  },
-  {
-    path: '/compliance/violations',
-    element: <ComplianceViolationsPage />,
   },
 ])
 
