@@ -164,6 +164,7 @@ class Property(BaseModel):
         Index("idx_property_location", "location"),
         Index("idx_property_type_status", "property_type", "status"),
         Index("idx_property_district", "district"),
+        Index("idx_property_planning_area", "planning_area"),
     )
 
 
