@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, Response
+from starlette.middleware.gzip import GZipMiddleware
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -26,6 +27,7 @@ from app.schemas.buildable import (
     BUILDABLE_REQUEST_EXAMPLE,
     BUILDABLE_RESPONSE_EXAMPLE,
 )
+from app.middleware.observability import ApiErrorLoggingMiddleware
 from app.middleware.security import SecurityHeadersMiddleware
 from app.schemas.finance import (
     FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
@@ -60,6 +62,7 @@ app = FastAPI(
 )
 
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -67,6 +70,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+app.add_middleware(ApiErrorLoggingMiddleware, logger=logger)
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[settings.API_RATE_LIMIT])
 app.state.limiter = limiter

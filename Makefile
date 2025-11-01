@@ -459,3 +459,6 @@ sync-products:
 env-check: ## Quick sanity: ensure imports & tests compile
 	@cd backend && $(PY) -m compileall -q tests
 	@$(PY) scripts/env_check.py
+
+docker-clean: ## Remove stopped containers and unused Docker artifacts
+	@scripts/docker_cleanup.sh
