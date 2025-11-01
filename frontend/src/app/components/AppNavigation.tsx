@@ -23,7 +23,10 @@ export function AppNavigation({
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace>(initialWorkspace)
 
   // Show items for selected workspace only
-  const navItems = selectedWorkspace === 'agent' ? AGENT_NAV_ITEMS : DEVELOPER_NAV_ITEMS
+  const navItems = (selectedWorkspace === 'agent'
+    ? AGENT_NAV_ITEMS
+    : DEVELOPER_NAV_ITEMS
+  ).filter((item) => !item.comingSoon)
 
   const handleClick = (path: string, disabled: boolean | undefined) => {
     if (disabled) {
