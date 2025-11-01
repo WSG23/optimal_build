@@ -2,6 +2,7 @@
 import type { AnchorHTMLAttributes, MouseEventHandler, ReactNode } from 'react'
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -134,7 +135,9 @@ export function RouterProvider({ router }: RouterProviderProps) {
 
   return (
     <RouterContext.Provider value={contextValue}>
-      {activeElement}
+      <Suspense fallback={<div className="p-6 text-white">Loading…</div>}>
+        {activeElement}
+      </Suspense>
     </RouterContext.Provider>
   )
 }
