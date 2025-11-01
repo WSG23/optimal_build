@@ -75,7 +75,7 @@ optimal_build/
 │   │   └── ui-status.md               # ← Move from /UI_STATUS.md
 │   │
 │   ├── audits/                        # NEW: Audit/compliance reports
-│   │   ├── pre-phase-2d-audit.md      # ← Move from /PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md
+│   │   ├── PRE-PHASE-2D-AUDIT.MD      # ← Move from /PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md
 │   │   └── smoke-test-fix-report.md   # ← Move from /SMOKE_TEST_FIX_REPORT.md
 │   │
 │   ├── phases/                        # Phase delivery plans
@@ -164,7 +164,7 @@ git mv TRANSITION_PHASE_CHECKLIST.md docs/planning/transition-checklist.md
 git mv UI_STATUS.md docs/planning/ui-status.md
 
 # Move audit reports
-git mv PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md docs/audits/pre-phase-2d-audit.md
+git mv PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md docs/audits/PRE-PHASE-2D-AUDIT.MD
 git mv SMOKE_TEST_FIX_REPORT.md docs/audits/smoke-test-fix-report.md
 
 # Move architecture docs
@@ -224,7 +224,7 @@ Update [START_HERE.md](../START_HERE.md) to reflect new structure:
 - [docs/planning/roadmap.md](docs/planning/roadmap.md) - Product roadmap
 - [docs/planning/features.md](docs/planning/features.md) - Feature inventory
 - [docs/planning/technical-debt.md](docs/planning/technical-debt.md) - Tech debt tracking
-- [docs/audits/pre-phase-2d-audit.md](docs/audits/pre-phase-2d-audit.md) - Infrastructure audit (80% coverage requirement)
+- [docs/audits/PRE-PHASE-2D-AUDIT.MD](docs/audits/PRE-PHASE-2D-AUDIT.MD) - Infrastructure audit (80% coverage requirement)
 ```
 
 **Estimated effort**: 30 minutes

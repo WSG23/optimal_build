@@ -158,6 +158,23 @@ psql -d optimal_db -c "SELECT * FROM pg_stat_user_tables WHERE seq_scan > idx_sc
 - [ ] Audit all database tables for missing indexes
 - [ ] Add indexes on foreign keys (CRITICAL)
 - [ ] Add indexes on frequently queried columns (property_id, user_id, scenario_id)
+
+##### Week 1 Benchmark Capture (2025-02-17)
+- [ ] Export latest migrations to target database (`alembic upgrade head`)
+- [ ] Record baseline row counts for `properties`, `preview_jobs`, `agent_deals`, `ent_roadmap_items`, `ent_engagements`, and `ent_legal_instruments`
+- [ ] Capture EXPLAIN ANALYZE output for the five critical query shapes listed below
+- [ ] Compare timings with post-index results to validate improvements
+
+> **Environment note (2025-02-17):** Commands in Steps 0-3 could not be executed because the Postgres instance defined by `postgresql://USER:PASS@HOST:5432/optimal_build` is not accessible from the current container. Re-run the benchmarking checklist once valid credentials and network access are available to capture real execution plans.
+
+###### Benchmark Artifacts (Pending Re-run)
+| Query | Parameters | Planning Time | Execution Time | Notes |
+|-------|------------|---------------|----------------|-------|
+| `preview_jobs` latest status by property | `property_id = 00000000-0000-0000-0000-000000000000` | _not captured_ | _not captured_ | Awaiting database connectivity |
+| `agent_deals` active pipeline by agent | `agent_id = 00000000-0000-0000-0000-000000000000`, `status IN ('open','in_negotiation')` | _not captured_ | _not captured_ | Awaiting database connectivity |
+| `ent_roadmap_items` ordering | `project_id = 5812` | _not captured_ | _not captured_ | Awaiting database connectivity |
+| `ent_engagements` recent updates | `project_id = 5812` | _not captured_ | _not captured_ | Awaiting database connectivity |
+| `ent_legal_instruments` by effective date | `project_id = 5812` | _not captured_ | _not captured_ | Awaiting database connectivity |
 - [ ] Add composite indexes for common query patterns
 - [ ] Add indexes on timestamp columns used in WHERE clauses
 - [ ] Test query performance before/after (must see 10x+ improvement)
