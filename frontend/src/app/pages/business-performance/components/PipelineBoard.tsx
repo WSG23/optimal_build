@@ -1,3 +1,15 @@
+import { useMemo, useState } from 'react'
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
+import {
+  Box,
+  ButtonBase,
+  Chip,
+  LinearProgress,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import type {
   PipelineColumn,
   PipelineDealCard,
@@ -21,19 +33,48 @@ interface PipelineBoardProps {
   columns: PipelineColumn[]
   selectedDealId?: string | null
   onSelectDeal?: (dealId: string) => void
+  onStageChange?: (dealId: string, toStage: PipelineStageKey) => void
+  movingDealId?: string | null
 }
 
 export function PipelineBoard({
   columns,
   selectedDealId,
   onSelectDeal,
+  onStageChange,
+  movingDealId,
 }: PipelineBoardProps) {
+  const [draggedDeal, setDraggedDeal] = useState<{
+    id: string
+    stage: PipelineStageKey
+  } | null>(null)
+  const [activeDropStage, setActiveDropStage] = useState<PipelineStageKey | null>(
+    null,
+  )
+
+  const stageOrder = useMemo(
+    () => columns.map((column) => column.key),
+    [columns],
+  )
+
+  const handleDrop = (stage: PipelineStageKey) => {
+    if (!draggedDeal) return
+    if (stage === draggedDeal.stage) {
+      setDraggedDeal(null)
+      setActiveDropStage(null)
+      return
+    }
+    onStageChange?.(draggedDeal.id, stage)
+    setDraggedDeal(null)
+    setActiveDropStage(null)
+  }
+
   const handleSelect = (deal: PipelineDealCard) => {
     if (!onSelectDeal) return
     onSelectDeal(deal.id)
   }
 
-  const renderDeal = (deal: PipelineDealCard) => {
+  const renderDeal = (deal: PipelineDealCard, stageKey: PipelineStageKey) => {
     const isSelected = selectedDealId === deal.id
     const cardClass = [
       'bp-pipeline__deal',
@@ -43,73 +84,146 @@ export function PipelineBoard({
       .filter(Boolean)
       .join(' ')
 
+    const stageIndex = stageOrder.indexOf(stageKey)
+    const progress = stageIndex >= 0 ? ((stageIndex + 1) / stageOrder.length) * 100 : 0
+    const isMoving = movingDealId === deal.id
+
     return (
       <li key={deal.id}>
-        <button
-          type="button"
+        <ButtonBase
           className={cardClass}
           onClick={() => handleSelect(deal)}
+          draggable
+          onDragStart={() => setDraggedDeal({ id: deal.id, stage: stageKey })}
+          onDragEnd={() => {
+            setDraggedDeal(null)
+            setActiveDropStage(null)
+          }}
+          aria-grabbed={draggedDeal?.id === deal.id}
+          focusRipple
         >
-          <span className="bp-pipeline__deal-title">{deal.title}</span>
-          <span className="bp-pipeline__deal-meta">
-            {deal.assetType} • {deal.dealType}
-          </span>
-          {deal.estimatedValue !== null && (
-            <span className="bp-pipeline__deal-value">
-              {deal.currency}{' '}
-              {deal.estimatedValue.toLocaleString(undefined, {
-                maximumFractionDigits: 0,
-              })}
-            </span>
-          )}
-          {deal.confidence !== null && (
-            <span className="bp-pipeline__deal-confidence">
-              Confidence: {(deal.confidence * 100).toFixed(0)}%
-            </span>
-          )}
-          {deal.latestActivity && (
-            <span className="bp-pipeline__deal-activity">
-              Updated: {deal.latestActivity}
-            </span>
-          )}
-          {deal.hasDispute && (
-            <span className="bp-pipeline__deal-badge">Dispute</span>
-          )}
-        </button>
+          <Paper elevation={isSelected ? 6 : 1} className="bp-pipeline__deal-surface">
+            <Stack direction="row" spacing={1} alignItems="center">
+              <DragIndicatorIcon fontSize="small" className="bp-pipeline__deal-handle" />
+              <Typography variant="subtitle1" className="bp-pipeline__deal-title">
+                {deal.title}
+              </Typography>
+            </Stack>
+            <Typography variant="body2" color="text.secondary" className="bp-pipeline__deal-meta">
+              {deal.assetType} • {deal.dealType}
+            </Typography>
+            {deal.estimatedValue !== null && (
+              <Typography variant="h6" className="bp-pipeline__deal-value">
+                {deal.currency}{' '}
+                {deal.estimatedValue.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
+              </Typography>
+            )}
+            <Stack direction="row" spacing={1} className="bp-pipeline__deal-tags">
+              {deal.confidence !== null && (
+                <Chip
+                  size="small"
+                  color="primary"
+                  label={`Confidence ${(deal.confidence * 100).toFixed(0)}%`}
+                />
+              )}
+              {deal.latestActivity && (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={`Updated ${deal.latestActivity}`}
+                />
+              )}
+              {deal.hasDispute && <Chip size="small" color="error" label="Dispute" />}
+            </Stack>
+            <Tooltip title={`Progress ${(progress || 0).toFixed(0)}%`} placement="top">
+              <LinearProgress
+                variant={progress ? 'determinate' : 'indeterminate'}
+                value={progress || undefined}
+                className="bp-pipeline__progress"
+              />
+            </Tooltip>
+            {isMoving && (
+              <Typography variant="caption" className="bp-pipeline__deal-moving">
+                Updating stage…
+              </Typography>
+            )}
+          </Paper>
+        </ButtonBase>
       </li>
     )
   }
 
   const renderColumn = (column: PipelineColumn) => {
     const stageLabel = STAGE_LABELS[column.key] ?? column.label
+    const columnIndex = stageOrder.indexOf(column.key)
+    const stageProgress =
+      columnIndex >= 0 ? ((columnIndex + 1) / stageOrder.length) * 100 : 0
+    const isDropTarget = activeDropStage === column.key
+
     return (
-      <article key={column.key} className="bp-pipeline__column">
-        <header className="bp-pipeline__column-header">
+      <Paper
+        key={column.key}
+        component="article"
+        className={`bp-pipeline__column ${
+          isDropTarget ? 'bp-pipeline__column--dropping' : ''
+        }`}
+        elevation={isDropTarget ? 8 : 2}
+        onDragOver={(event) => {
+          if (!draggedDeal) return
+          event.preventDefault()
+          setActiveDropStage(column.key)
+        }}
+        onDragLeave={() => {
+          if (activeDropStage === column.key) {
+            setActiveDropStage(null)
+          }
+        }}
+        onDrop={(event) => {
+          event.preventDefault()
+          handleDrop(column.key)
+        }}
+      >
+        <Box className="bp-pipeline__column-header">
           <div>
-            <h3>{stageLabel}</h3>
-            <p>{column.totalCount} deals</p>
+            <Typography variant="h6">{stageLabel}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {column.totalCount} deals
+            </Typography>
           </div>
           <div className="bp-pipeline__column-metrics">
             {column.totalValue !== null && (
-              <span>
-                Total:{' '}
+              <Typography variant="body2">
+                Total{' '}
                 {column.totalValue.toLocaleString(undefined, {
                   maximumFractionDigits: 0,
                 })}
-              </span>
+              </Typography>
             )}
             {column.weightedValue !== null && (
-              <span>
-                Weighted:{' '}
+              <Typography variant="body2">
+                Weighted{' '}
                 {column.weightedValue.toLocaleString(undefined, {
                   maximumFractionDigits: 0,
                 })}
-              </span>
+              </Typography>
             )}
           </div>
-        </header>
-        <ul className="bp-pipeline__deal-list">{column.deals.map(renderDeal)}</ul>
-      </article>
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={stageProgress}
+          className="bp-pipeline__column-progress"
+        />
+        <ul className="bp-pipeline__deal-list">
+          {column.deals.length === 0 ? (
+            <li className="bp-pipeline__empty">Drag a deal here to start.</li>
+          ) : (
+            column.deals.map((deal) => renderDeal(deal, column.key))
+          )}
+        </ul>
+      </Paper>
     )
   }
 

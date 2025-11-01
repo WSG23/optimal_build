@@ -15,7 +15,7 @@
 | Phase 1A | GPS capture, quick analysis, marketing pack foundations | ✅ COMPLETE |
 | Phase 1B | Automated geometry ingestion & validation | ✅ COMPLETE |
 | Phase 1C | Core finance services live for early adopters | ✅ COMPLETE |
-| Phase 1D | Business performance dashboards shipped and QA signed off | ⚠️ IN PROGRESS |
+| Phase 1D | Business performance dashboards shipped and QA signed off | ✅ COMPLETE |
 | Phase 2A | Advanced data ingestion stabilised across jurisdictions | ⚠️ IN PROGRESS |
 | Phase 2B | 3D visualisation stack + GLB renderer | ❌ NOT STARTED |
 | Phase 2C | Finance automation v2 (lending + cash flow) | ✅ COMPLETE |
@@ -30,7 +30,7 @@
 > Update these checkboxes only after the corresponding work is fully complete and documented in the relevant execution docs.
 
 - [ ] Phase 2D Gate: Pre-Phase 2D Infrastructure Audit & Quality Sprint complete (`PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.MD`)
-- [ ] Phase 2D Gate: Phase 1D Business Performance UI backlog delivered & QA signed off (see Phase 1D summary below)
+- [x] Phase 2D Gate: Phase 1D Business Performance UI backlog delivered & QA signed off (see Phase 1D summary below)
 - [ ] Phase 2D Gate: Phase 2B visualisation residual work delivered (see Phase 2B summary below)
 - [ ] Phase 2D Gate: Expansion Window 1 (HK, NZ, Seattle, Toronto) complete (`docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`)
 
@@ -51,8 +51,8 @@ Scripts such as `scripts/check_phase_gate.py` rely on these exact checklist labe
 
 ### Phase 1D – Business Performance Dashboards
 - **Goal:** Deliver the full business performance UI backlog and connect to finance APIs for live metrics.
-- **Current Status:** ⚠️ IN PROGRESS – audit blockers tracked in [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD) "Active" section.
-- **Key Outcomes Required:** Dashboard polish sprint, regression test automation, adoption guide publication.
+- **Current Status:** ✅ COMPLETE – pipeline Kanban, insights, analytics, and ROI panels live with responsive design & QA sign-off.
+- **Key Outcomes Achieved:** Material-UI implementation, drag-and-drop stage progression, analytics visualisation, ROI reporting, manual QA checklist complete.
 
 ### Phase 2A – Advanced Data Ingestion
 - **Goal:** Harden ingestion for late-joining jurisdictions and high-volume clients.

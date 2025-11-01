@@ -1,3 +1,30 @@
+import HistoryIcon from '@mui/icons-material/History'
+import TimelineIcon from '@mui/icons-material/Timeline'
+import {
+  Alert,
+  Box,
+  Chip,
+  Divider,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import {
+  Timeline,
+  TimelineConnector,
+  TimelineContent,
+  TimelineDot,
+  TimelineItem,
+  TimelineOppositeContent,
+  TimelineSeparator,
+} from '@mui/lab'
 import type { CommissionEntry, DealSnapshot, StageEvent } from '../types'
 
 interface DealInsightsPanelProps {
@@ -13,95 +40,143 @@ export function DealInsightsPanel({
 }: DealInsightsPanelProps) {
   if (!deal) {
     return (
-      <div className="bp-deal-panel bp-deal-panel--empty">
-        <h2>Select a deal to inspect</h2>
-        <p>
+      <Paper elevation={0} className="bp-deal-panel bp-deal-panel--empty">
+        <Typography variant="h6" gutterBottom>
+          Select a deal to inspect
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
           Choose any card in the pipeline to review stage history, commission
           records, and audit metadata.
-        </p>
-      </div>
+        </Typography>
+      </Paper>
     )
   }
 
   return (
-    <div className="bp-deal-panel">
-      <header className="bp-deal-panel__header">
-        <h2>{deal.title ?? deal.id}</h2>
-        <div className="bp-deal-panel__meta">
-          <span>Assigned to: {deal.agentName}</span>
-          {deal.leadSource && <span>Source: {deal.leadSource}</span>}
-          {deal.expectedCloseDate && (
-            <span>Expected close: {deal.expectedCloseDate}</span>
-          )}
-        </div>
-      </header>
+    <Paper elevation={0} className="bp-deal-panel">
+      <Box className="bp-deal-panel__header">
+        <Box>
+          <Typography variant="h6">{deal.title ?? deal.id}</Typography>
+          <Stack direction="row" spacing={1} className="bp-deal-panel__meta">
+            <Chip size="small" label={`Assigned to ${deal.agentName}`} />
+            {deal.leadSource && <Chip size="small" label={`Source ${deal.leadSource}`} />}
+            {deal.expectedCloseDate && (
+              <Chip size="small" label={`Expected close ${deal.expectedCloseDate}`} />
+            )}
+          </Stack>
+        </Box>
+      </Box>
 
-      <section className="bp-deal-panel__section">
-        <h3>Stage timeline</h3>
-        <ol className="bp-deal-panel__timeline">
-          {timeline.length === 0 && (
-            <li className="bp-deal-panel__timeline-empty">
-              No stage events yet.
-            </li>
-          )}
-          {timeline.map((event) => (
-            <li key={event.id}>
-              <div className="bp-deal-panel__timeline-stage">
-                <span>{event.toStage.replace('_', ' ')}</span>
-                <time>{event.recordedAt}</time>
-              </div>
-              <div className="bp-deal-panel__timeline-body">
-                {event.durationSeconds !== null &&
-                  event.durationSeconds !== undefined && (
-                    <span>
-                      Duration{' '}
-                      {Math.round(event.durationSeconds / 3600).toFixed(0)}h
-                    </span>
+      <Divider sx={{ my: 2 }} />
+
+      <Box className="bp-deal-panel__section">
+        <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+          <TimelineIcon fontSize="small" color="primary" />
+          <Typography variant="subtitle1">Stage timeline</Typography>
+        </Stack>
+        {timeline.length === 0 ? (
+          <Alert severity="info" icon={<HistoryIcon fontSize="small" />}>
+            No stage events yet.
+          </Alert>
+        ) : (
+          <Timeline position="right" className="bp-deal-panel__timeline">
+            {timeline.map((event, index) => (
+              <TimelineItem key={event.id}>
+                <TimelineOppositeContent color="text.secondary">
+                  <Typography variant="caption">{event.recordedAt}</Typography>
+                </TimelineOppositeContent>
+                <TimelineSeparator>
+                  <TimelineDot color={index === timeline.length - 1 ? 'primary' : 'inherit'} />
+                  {index < timeline.length - 1 && <TimelineConnector />}
+                </TimelineSeparator>
+                <TimelineContent>
+                  <Typography variant="body1" className="bp-deal-panel__timeline-stage">
+                    {event.toStage.replace('_', ' ')}
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    flexWrap="wrap"
+                    className="bp-deal-panel__timeline-body"
+                  >
+                    {event.durationSeconds !== null &&
+                      event.durationSeconds !== undefined && (
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${Math.round(event.durationSeconds / 3600).toFixed(0)}h duration`}
+                        />
+                      )}
+                    {event.changedBy && (
+                      <Chip size="small" variant="outlined" label={`By ${event.changedBy}`} />
+                    )}
+                  </Stack>
+                  {event.note && (
+                    <Typography variant="body2" className="bp-deal-panel__timeline-note">
+                      {event.note}
+                    </Typography>
                   )}
-                {event.changedBy && <span>By {event.changedBy}</span>}
-                {event.note && <p>{event.note}</p>}
-                {(event.auditHash || event.auditSignature) && (
-                  <p className="bp-deal-panel__timeline-audit">
-                    Audit hash: {event.auditHash ?? '—'} <br />
-                    Signature: {event.auditSignature ?? '—'}
-                  </p>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
+                  {(event.auditHash || event.auditSignature) && (
+                    <Tooltip
+                      title={
+                        <span>
+                          Hash: {event.auditHash ?? '—'}
+                          <br /> Signature: {event.auditSignature ?? '—'}
+                        </span>
+                      }
+                    >
+                      <Chip size="small" color="secondary" label="Audit metadata" />
+                    </Tooltip>
+                  )}
+                </TimelineContent>
+              </TimelineItem>
+            ))}
+          </Timeline>
+        )}
+      </Box>
 
-      <section className="bp-deal-panel__section">
-        <h3>Commission ledger</h3>
-        <div className="bp-commission-table">
-          <div className="bp-commission-table__header">
-            <span>Type</span>
-            <span>Status</span>
-            <span>Amount</span>
-            <span>Updated</span>
-          </div>
-          {commissions.length === 0 && (
-            <div className="bp-commission-table__empty">
-              No commission records yet.
-            </div>
-          )}
-          {commissions.map((commission) => (
-            <div className="bp-commission-table__row" key={commission.id}>
-              <span>{commission.type}</span>
-              <span className={`bp-status bp-status--${commission.status}`}>
-                {commission.status}
-              </span>
-              <span>
-                {commission.amount !== null
-                  ? `${commission.currency} ${commission.amount.toLocaleString()}`
-                  : '—'}
-              </span>
-              <span>{commission.confirmedAt ?? commission.disputedAt ?? '—'}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
+      <Divider sx={{ my: 2 }} />
+
+      <Box className="bp-deal-panel__section">
+        <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+          <HistoryIcon fontSize="small" color="primary" />
+          <Typography variant="subtitle1">Commission ledger</Typography>
+        </Stack>
+        {commissions.length === 0 ? (
+          <Alert severity="info">No commission records yet.</Alert>
+        ) : (
+          <TableContainer component={Paper} variant="outlined" className="bp-commission-table">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Amount</TableCell>
+                  <TableCell align="right">Updated</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {commissions.map((commission) => (
+                  <TableRow key={commission.id} hover>
+                    <TableCell>{commission.type}</TableCell>
+                    <TableCell>
+                      <Chip size="small" className={`bp-status bp-status--${commission.status}`} label={commission.status} />
+                    </TableCell>
+                    <TableCell align="right">
+                      {commission.amount !== null
+                        ? `${commission.currency} ${commission.amount.toLocaleString()}`
+                        : '—'}
+                    </TableCell>
+                    <TableCell align="right">
+                      {commission.confirmedAt ?? commission.disputedAt ?? '—'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
+    </Paper>
   )
 }
