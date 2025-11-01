@@ -125,6 +125,7 @@ def DECIMAL(*_: Any, **__: Any) -> _SQLType:
 class Column:
     def __init__(
         self,
+        *args: Any,
         type_: _SQLType | None = None,
         primary_key: bool = False,
         default: Any = None,
@@ -132,12 +133,37 @@ class Column:
         unique: bool = False,
         **extras: Any,
     ) -> None:
-        self.type_ = type_
+        """Lightweight approximation of ``sqlalchemy.Column``.
+
+        The real SQLAlchemy ``Column`` constructor accepts a wide variety of
+        positional and keyword arguments.  The tests that exercise this stub
+        stick to the common patterns of passing an optional column name as the
+        first positional argument followed by a type, so we emulate just enough
+        of that behaviour to keep model declarations working.
+        """
+
+        name: str | None = None
+        inferred_type: _SQLType | None = None
+        remaining = list(args)
+        if remaining and isinstance(remaining[0], str):
+            name = remaining.pop(0)
+        if remaining:
+            inferred_type = remaining.pop(0)
+
+        self.name = name
+        self.type_ = type_ if type_ is not None else inferred_type
         self.primary_key = primary_key
         self.default = default
         self.nullable = nullable
         self.unique = unique
         self.extras = extras
+        self.table: "Table | None" = None
+        self.key: str | None = None
+
+    def with_name(self, name: str) -> "Column":
+        self.name = name
+        self.key = name
+        return self
 
 
 class _MetaData:
@@ -165,12 +191,30 @@ class Table:
     ) -> None:
         self.name = name
         self.metadata = metadata
-        self.columns = columns
+        bound_columns: list[Column] = []
+        for index, column in enumerate(columns):
+            if not isinstance(column, Column):
+                continue
+            if column.name is None:
+                column.with_name(column.key or f"column_{index}")
+            column.table = self
+            bound_columns.append(column)
+        self.columns = tuple(bound_columns)
+        self.c = {column.name: column for column in self.columns}
         self.options = options
         metadata.tables[name] = self
 
     def __repr__(self) -> str:  # pragma: no cover - debug helper
         return f"Table({self.name!r})"
+
+    def delete(self) -> tuple[str, "Table"]:
+        return ("delete", self)
+
+    def insert(self) -> tuple[str, "Table"]:
+        return ("insert", self)
+
+    def update(self) -> tuple[str, "Table"]:
+        return ("update", self)
 
 
 MetaData = _MetaData
@@ -360,6 +404,11 @@ class _Result:
     def scalar_one_or_none(self) -> Any:
         return self._value
 
+    def scalar_one(self) -> Any:
+        if self._value is None:
+            raise LookupError("No result")
+        return self._value
+
     def scalars(self) -> _Result:
         return self
 
@@ -371,11 +420,20 @@ class _Result:
 
 
 class AsyncSession:
+    def __init__(self) -> None:
+        self._objects: list[Any] = []
+
     async def execute(self, *_: Any, **__: Any) -> _Result:
         return _Result()
 
     async def scalar(self, *_: Any, **__: Any) -> Any:
         return None
+
+    def add(self, obj: Any) -> None:
+        self._objects.append(obj)
+
+    def add_all(self, objs: Iterable[Any]) -> None:
+        self._objects.extend(objs)
 
     async def commit(self) -> None:
         return None
@@ -493,8 +551,49 @@ def joinedload(*_: Any, **__: Any) -> str:
     return "joinedload"
 
 
-class DeclarativeBase:
+class _DeclarativeMeta(type):
+    def __new__(mcls, name: str, bases: tuple[type, ...], attrs: dict[str, Any]):
+        column_attrs = {
+            key: value for key, value in attrs.items() if isinstance(value, Column)
+        }
+        cls = super().__new__(mcls, name, bases, attrs)
+
+        metadata = getattr(cls, "metadata", None)
+        if metadata is None:
+            for base in bases:
+                metadata = getattr(base, "metadata", None)
+                if metadata is not None:
+                    break
+        if metadata is None:
+            metadata = MetaData()
+        cls.metadata = metadata
+
+        if attrs.get("__abstract__", False):
+            return cls
+
+        tablename = getattr(cls, "__tablename__", None)
+        if not tablename:
+            return cls
+
+        columns = []
+        for key, column in column_attrs.items():
+            column.with_name(column.name or key)
+            columns.append(column)
+
+        if columns:
+            cls.__table__ = Table(tablename, metadata, *columns)
+            if "__init__" not in attrs:
+                def __init__(self, **kwargs: Any) -> None:
+                    for key, value in kwargs.items():
+                        setattr(self, key, value)
+
+                cls.__init__ = __init__  # type: ignore[assignment]
+        return cls
+
+
+class DeclarativeBase(metaclass=_DeclarativeMeta):
     metadata = MetaData()
+    __abstract__ = True
 
 
 class Mapped:
@@ -525,8 +624,8 @@ sys.modules["sqlalchemy.orm"] = orm_module
 
 
 def declarative_base() -> type:
-    class Base:
-        metadata = MetaData()
+    class Base(DeclarativeBase):
+        pass
 
     return Base
 
