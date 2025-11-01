@@ -7,6 +7,8 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _BACKEND_ROOT = _PROJECT_ROOT / "backend"
 if str(_PROJECT_ROOT) not in sys.path:
@@ -21,8 +23,6 @@ try:
     _SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
     if not _SQLALCHEMY_AVAILABLE:
         # Try importing directly if ensure_sqlalchemy didn't find it
-        import importlib
-
         try:
             importlib.import_module("sqlalchemy")
             _SQLALCHEMY_AVAILABLE = True
@@ -58,6 +58,34 @@ if SQLiteTypeCompiler is not None:
 
 from types import ModuleType, SimpleNamespace
 
+import importlib
+from importlib import import_module
+
+try:  # pragma: no cover - optional pytest dependency
+    import pytest_asyncio  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - alias bundled shim
+    try:
+        try:
+            pytest.register_assert_rewrite("pytest_asyncio.plugin")
+        except Exception:
+            pass
+        pytest_asyncio = import_module("backend.pytest_asyncio")  # type: ignore[assignment]
+    except ModuleNotFoundError:
+        pytest_asyncio = ModuleType("pytest_asyncio")
+        pytest_asyncio.fixture = pytest.fixture  # type: ignore[attr-defined]
+    else:
+        sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
+else:  # pragma: no cover - already importable
+    sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
+
+if "pytest_asyncio" not in sys.modules:
+    sys.modules["pytest_asyncio"] = pytest_asyncio
+
+if hasattr(pytest_asyncio, "pytest_plugins"):
+    _ASYNC_PLUGINS = list(pytest_asyncio.pytest_plugins)  # type: ignore[attr-defined]
+else:  # pragma: no cover - fallback without plugin support
+    _ASYNC_PLUGINS: list[str] = []
+
 # Jose stubs
 try:
     from jose import JWTError, jwt  # type: ignore
@@ -80,10 +108,6 @@ else:
     JWTError = JWTError  # re-export for callers
     jwt = jwt  # re-export for callers
 
-import importlib
-from importlib import import_module
-
-import pytest
 
 if _SQLALCHEMY_AVAILABLE:
     try:
@@ -125,14 +149,18 @@ if _geo_sqlite is not None:
 
     _geo_sqlite.select_dialect = lambda name: _NoopDialect()
 
-try:  # pragma: no cover - optional dependency for async fixtures
-    import pytest_asyncio
-except ModuleNotFoundError:  # pragma: no cover - fallback stub when plugin missing
-    pytest_asyncio = ModuleType("pytest_asyncio")
-    pytest_asyncio.fixture = pytest.fixture  # type: ignore[attr-defined]
-    sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
+def _should_use_backend_fixtures() -> bool:
+    """Determine whether the heavy-weight backend fixtures should be enabled."""
 
-if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") == "1":
+    explicit = os.environ.get("ENABLE_BACKEND_TEST_FIXTURES")
+    if explicit == "1":
+        return True
+    if explicit == "0":
+        return False
+    return _SQLALCHEMY_AVAILABLE
+
+
+if _should_use_backend_fixtures():
     try:
         from backend.tests import (  # noqa: F401 - ensure fallback stubs are registered
             conftest as backend_conftest,
@@ -181,7 +209,7 @@ _backend_flow_session_factory = getattr(
 
 # Only define our own fixtures if backend fixtures are not available
 if _backend_flow_session_factory in (None, _missing_fixture):
-    pytest_plugins = []
+    pytest_plugins = list(_ASYNC_PLUGINS)
     from collections.abc import AsyncGenerator
     from contextlib import asynccontextmanager
 
@@ -338,7 +366,7 @@ if _backend_flow_session_factory in (None, _missing_fixture):
 
     client = client_fixture
 else:
-    pytest_plugins = ["backend.tests.conftest"]
+    pytest_plugins = list(_ASYNC_PLUGINS)
     flow_session_factory = _backend_flow_session_factory
     async_session_factory = getattr(
         backend_conftest, "async_session_factory", _missing_fixture
@@ -348,6 +376,16 @@ else:
     reset_metrics = getattr(backend_conftest, "reset_metrics", _missing_fixture)
     app_client = getattr(backend_conftest, "app_client", _missing_fixture)
     client = getattr(backend_conftest, "client_fixture", _missing_fixture)
+
+    # Re-export additional backend fixtures and hooks without registering the
+    # module as a pytest plugin (which conflicts when the backend suite is
+    # collected in the same process).
+    for _name, _value in vars(backend_conftest).items():
+        if _name.startswith("_"):
+            continue
+        if _name in globals():
+            continue
+        globals()[_name] = _value
 
 
 from backend.app.core import database as app_database

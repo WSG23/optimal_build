@@ -87,8 +87,14 @@ logger = structlog.get_logger()
 geocoding_service = GeocodingService()
 gps_logger = GPSPropertyLogger(geocoding_service, ura_service)
 market_data_service = MarketDataService()
-market_analytics = MarketIntelligenceAnalytics(market_data_service)
 advisory_service = AgentAdvisoryService()
+
+try:  # pragma: no cover - optional dependency path for analytics stack
+    market_analytics = MarketIntelligenceAnalytics(market_data_service)
+    _MARKET_ANALYTICS_ERROR: str | None = None
+except ImportError as exc:  # pragma: no cover - expose friendly error downstream
+    market_analytics = None  # type: ignore[assignment]
+    _MARKET_ANALYTICS_ERROR = str(exc)
 
 
 # Request/Response Models
@@ -553,6 +559,10 @@ async def get_property_market_intelligence(
             )
             property_type = PropertyType.OFFICE
 
+    if market_analytics is None:
+        detail = _MARKET_ANALYTICS_ERROR or "market analytics dependencies unavailable"
+        raise HTTPException(status_code=503, detail=detail)
+
     try:
         report = await market_analytics.generate_market_report(
             property_type=property_type,
@@ -999,6 +1009,10 @@ async def generate_market_report(
     - Actionable recommendations
     """
     try:
+        if market_analytics is None:
+            detail = _MARKET_ANALYTICS_ERROR or "market analytics dependencies unavailable"
+            raise HTTPException(status_code=503, detail=detail)
+
         report = await market_analytics.generate_market_report(
             property_type=request.property_type,
             location=request.location,

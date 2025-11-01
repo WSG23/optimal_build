@@ -13,8 +13,11 @@ from __future__ import annotations
 import sys
 from importlib import import_module
 
-# from backend._sqlalchemy_stub import ensure_sqlalchemy
-# ensure_sqlalchemy()
+from backend._sqlalchemy_stub import ensure_sqlalchemy
+
+# Ensure the lightweight SQLAlchemy shim (or vendored wheel) is available so
+# importing ``sqlalchemy`` succeeds during tests without external installs.
+ensure_sqlalchemy()
 
 _backend_app = import_module("backend.app")
 

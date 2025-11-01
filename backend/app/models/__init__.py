@@ -5,6 +5,10 @@ from __future__ import annotations
 import sys
 from types import ModuleType
 
+from backend._sqlalchemy_stub import ensure_sqlalchemy
+
+ensure_sqlalchemy()
+
 
 def _counterpart(name: str) -> str | None:
     """Return the alternate import path for ``app``/``backend.app`` modules."""

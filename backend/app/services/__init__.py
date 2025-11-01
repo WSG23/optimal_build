@@ -5,7 +5,6 @@ from . import (
     alerts,
     buildable,
     costs,
-    deals,
     finance,
     ingestion,
     integrations,
@@ -19,6 +18,11 @@ from . import (
     standards,
     storage,
 )
+
+try:  # pragma: no cover - optional dependency guard for lightweight environments
+    from . import deals
+except ImportError:  # pragma: no cover - skip deals services when metrics deps missing
+    deals = None  # type: ignore[assignment]
 
 __all__ = [
     "alerts",

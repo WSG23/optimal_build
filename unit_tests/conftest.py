@@ -1,5 +1,7 @@
 """Pytest configuration for unit_tests."""
 
+from tests.conftest import *  # noqa: F401,F403 - re-export shared fixtures and plugins
+
 import pytest
 
 

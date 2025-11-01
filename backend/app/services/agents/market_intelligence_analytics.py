@@ -7,15 +7,6 @@ from datetime import date, timedelta
 from typing import Any, Optional
 from uuid import UUID
 
-try:  # pragma: no cover - optional dependency
-    import pandas as pd
-except ModuleNotFoundError:  # pragma: no cover - fallback when pandas missing
-    pd = None  # type: ignore[assignment]
-
-try:  # pragma: no cover - optional dependency
-    import numpy as np
-except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
-    np = None  # type: ignore[assignment]
 from backend._compat.datetime import utcnow
 from sqlalchemy import String, and_, cast, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -99,12 +90,39 @@ class MarketIntelligenceAnalytics:
         market_data_service: MarketDataService,
         metrics_collector: Optional[MetricsCollector] = None,
     ):
-        if pd is None or np is None:
-            raise ImportError(
-                "MarketIntelligenceAnalytics requires 'pandas' and 'numpy'."
-            )
         self.market_data = market_data_service
         self.metrics = metrics_collector
+        self._analytics_support = self._detect_analytics_support()
+
+        if not self._analytics_support:  # pragma: no cover - logging side-effect
+            logger.warning(
+                "market_intelligence_analytics_dependencies_missing",
+                pandas_available=self._pandas_available,
+                numpy_available=self._numpy_available,
+            )
+
+    @property
+    def _pandas_available(self) -> bool:
+        try:
+            import pandas  # type: ignore  # pragma: no cover - optional dependency
+
+            return True
+        except ModuleNotFoundError:  # pragma: no cover - fallback when pandas missing
+            return False
+
+    @property
+    def _numpy_available(self) -> bool:
+        try:
+            import numpy  # type: ignore  # pragma: no cover - optional dependency
+
+            return True
+        except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
+            return False
+
+    def _detect_analytics_support(self) -> bool:
+        """Detect whether optional scientific dependencies are available."""
+
+        return self._pandas_available and self._numpy_available
 
     async def generate_market_report(
         self,
