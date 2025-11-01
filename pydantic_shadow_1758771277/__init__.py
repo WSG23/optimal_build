@@ -198,9 +198,13 @@ def _convert_value(value: Any, annotation: Any) -> Any:
             if arg is type(None):
                 continue
             try:
-                return _convert_value(value, arg)
+                converted = _convert_value(value, arg)
             except ValidationError:
                 continue
+            if converted is not value:
+                return converted
+            if isinstance(arg, type) and isinstance(converted, arg):
+                return converted
         return value
 
     if origin in {list, list, Sequence, MutableSequence}:  # type: ignore[name-defined]

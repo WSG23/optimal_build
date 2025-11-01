@@ -98,6 +98,19 @@ import app.utils.metrics as metrics
 
 _SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
 
+
+def _ensure_sqlalchemy_dialects() -> None:
+    """Ensure SQLAlchemy has its dialect registry loaded."""
+
+    import importlib
+    import sqlalchemy
+
+    module = getattr(sqlalchemy, "dialects", None)
+    if module is None:
+        module = importlib.import_module("sqlalchemy.dialects")
+        sqlalchemy.dialects = module
+
+
 # Import AsyncTestClient from FastAPI stub for testing
 try:
     from fastapi.testclient import AsyncTestClient
@@ -112,6 +125,7 @@ except ImportError:
 app: Any | None = None
 
 if _SQLALCHEMY_AVAILABLE:
+    _ensure_sqlalchemy_dialects()
     from sqlalchemy import Integer, String, event
     from sqlalchemy.exc import SQLAlchemyError
     from sqlalchemy.ext.asyncio import (
@@ -215,9 +229,11 @@ def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
     """Create a dedicated event loop for the entire test session."""
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         yield loop
     finally:
+        asyncio.set_event_loop(None)
         loop.close()
 
 
@@ -246,6 +262,8 @@ if _SQLALCHEMY_AVAILABLE:
         None,
     ]:
         """Provide a shared async session factory backed by in-memory SQLite."""
+
+        _ensure_sqlalchemy_dialects()
 
         engine = create_async_engine(
             "sqlite+aiosqlite:///:memory:",
@@ -352,6 +370,191 @@ if _SQLALCHEMY_AVAILABLE:
             finally:
                 await _truncate_all(db_session)
 
+    @pytest_asyncio.fixture(name="db_session")
+    async def db_session_alias(
+        session: AsyncSession,
+    ) -> AsyncGenerator[AsyncSession, None]:
+        """Compatibility alias exposing the standard session fixture."""
+
+        yield session
+
+    @pytest_asyncio.fixture
+    async def singapore_rules(
+        db_session: AsyncSession,
+    ) -> AsyncGenerator[list[Any], None]:
+        """Seed a minimal set of Singapore URA/BCA rules for compliance tests."""
+
+        from sqlalchemy import select
+
+        from app.models.rkp import RefRule, RefSource
+
+        existing = await db_session.scalar(
+            select(RefRule.id).where(RefRule.jurisdiction == "SG")
+        )
+        if existing:
+            result = await db_session.execute(
+                select(RefRule).where(RefRule.jurisdiction == "SG")
+            )
+            yield list(result.scalars())
+            return
+
+        ura_source = RefSource(
+            jurisdiction="SG",
+            authority="URA",
+            topic="zoning",
+            doc_title="Master Plan 2019 - Written Statement",
+            landing_url="https://www.ura.gov.sg/Corporate/Planning/Master-Plan",
+            fetch_kind="html",
+            is_active=True,
+        )
+        bca_source = RefSource(
+            jurisdiction="SG",
+            authority="BCA",
+            topic="building",
+            doc_title="Code on Accessibility in the Built Environment 2019",
+            landing_url="https://www1.bca.gov.sg/",
+            fetch_kind="pdf",
+            is_active=True,
+        )
+        db_session.add_all([ura_source, bca_source])
+        await db_session.flush()
+
+        rule_defs = [
+            # URA zoning controls
+            (
+                ura_source.id,
+                "URA",
+                "zoning",
+                "zoning.max_far",
+                "<=",
+                "2.8",
+                "ratio",
+                {"zone_code": "SG:residential"},
+            ),
+            (
+                ura_source.id,
+                "URA",
+                "zoning",
+                "zoning.max_building_height_m",
+                "<=",
+                "36",
+                "m",
+                {"zone_code": "SG:residential"},
+            ),
+            (
+                ura_source.id,
+                "URA",
+                "zoning",
+                "zoning.setback.front_min_m",
+                ">=",
+                "7.5",
+                "m",
+                {"zone_code": "SG:residential"},
+            ),
+            (
+                ura_source.id,
+                "URA",
+                "zoning",
+                "zoning.max_far",
+                "<=",
+                "10.0",
+                "ratio",
+                {"zone_code": "SG:commercial"},
+            ),
+            (
+                ura_source.id,
+                "URA",
+                "zoning",
+                "zoning.max_building_height_m",
+                "<=",
+                "280",
+                "m",
+                {"zone_code": "SG:commercial"},
+            ),
+            (
+                ura_source.id,
+                "URA",
+                "zoning",
+                "zoning.max_far",
+                "<=",
+                "2.5",
+                "ratio",
+                {"zone_code": "SG:industrial"},
+            ),
+            (
+                ura_source.id,
+                "URA",
+                "zoning",
+                "zoning.max_building_height_m",
+                "<=",
+                "50",
+                "m",
+                {"zone_code": "SG:industrial"},
+            ),
+            # BCA building requirements
+            (
+                bca_source.id,
+                "BCA",
+                "building",
+                "zoning.site_coverage.max_percent",
+                "<=",
+                "45%",
+                "%",
+                {"zone_code": "SG:residential"},
+            ),
+            (
+                bca_source.id,
+                "BCA",
+                "building",
+                "zoning.site_coverage.max_percent",
+                "<=",
+                "60%",
+                "%",
+                {"zone_code": "SG:commercial"},
+            ),
+            (
+                bca_source.id,
+                "BCA",
+                "building",
+                "zoning.site_coverage.max_percent",
+                "<=",
+                "70%",
+                "%",
+                {"zone_code": "SG:industrial"},
+            ),
+        ]
+
+        rules = [
+            RefRule(
+                jurisdiction="SG",
+                authority=authority,
+                topic=topic,
+                parameter_key=parameter_key,
+                operator=operator,
+                value=value,
+                unit=unit,
+                applicability=applicability,
+                review_status="approved",
+                is_published=True,
+                source_id=source_id,
+            )
+            for (
+                source_id,
+                authority,
+                topic,
+                parameter_key,
+                operator,
+                value,
+                unit,
+                applicability,
+            ) in rule_defs
+        ]
+
+        db_session.add_all(rules)
+        await db_session.flush()
+
+        yield rules
+
     @pytest.fixture
     def session_factory(
         async_session_factory: async_sessionmaker[AsyncSession],
@@ -396,6 +599,20 @@ if _SQLALCHEMY_AVAILABLE:
         """Compatibility alias exposing the app client under the traditional name."""
 
         yield app_client
+
+    @pytest.fixture(autouse=True)
+    def _force_inline_job_queue(monkeypatch: pytest.MonkeyPatch):
+        """Ensure background jobs run inline so tests avoid external brokers."""
+
+        import backend.jobs as jobs_module
+
+        original_backend = jobs_module.job_queue._backend
+        inline_backend = jobs_module._InlineBackend()
+        registry = getattr(original_backend, "_registry", {})
+        for name, (func, queue) in registry.items():
+            inline_backend.register(func, name, queue)
+        monkeypatch.setattr(jobs_module.job_queue, "_backend", inline_backend)
+        yield
 
     @pytest_asyncio.fixture
     async def market_demo_data(

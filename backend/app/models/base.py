@@ -55,6 +55,29 @@ class BaseModel(DeclarativeBase):
 
     __abstract__ = True
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Ensure subclasses always set extend_existing and avoid double-registration."""
+        table_args = getattr(cls, "__table_args__", None)
+
+        if table_args is None:
+            cls.__table_args__ = {"extend_existing": True}
+        elif isinstance(table_args, dict):
+            table_args.setdefault("extend_existing", True)
+        elif isinstance(table_args, tuple):
+            if table_args and isinstance(table_args[-1], dict):
+                options = dict(table_args[-1])
+                options.setdefault("extend_existing", True)
+                cls.__table_args__ = (*table_args[:-1], options)
+            else:
+                cls.__table_args__ = (*table_args, {"extend_existing": True})
+
+        metadata = getattr(cls, "metadata", None)
+        table_name = getattr(cls, "__tablename__", None)
+        if table_name and metadata is not None and table_name in metadata.tables:
+            metadata.remove(metadata.tables[table_name])
+
+        super().__init_subclass__(**kwargs)
+
     def as_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable representation of the model instance."""
 

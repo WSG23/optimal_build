@@ -17,6 +17,11 @@ from pydantic import (
     field_validator,
 )
 
+try:  # pragma: no cover - runtime feature detection
+    _UTC = dt.UTC  # type: ignore[attr-defined]
+except AttributeError:  # pragma: no cover - Python < 3.11 fallback
+    _UTC = dt.timezone.utc
+
 
 class ProductRow(BaseModel):
     """Representation of a product row within the vendor CSV."""
@@ -62,7 +67,7 @@ class ProductRow(BaseModel):
 class ValidationReport(BaseModel):
     """Summary of a CSV validation run."""
 
-    generated_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.UTC))
+    generated_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(_UTC))
     total: int = 0
     passed: int = 0
     failed: int = 0

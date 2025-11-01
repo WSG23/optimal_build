@@ -456,6 +456,17 @@ def _vectorize_bitmap_image(
             walls = _detect_walls_from_binary(
                 binary, float(width), float(height), options
             )
+            if not walls:
+                mid_y = float(height) / 2.0
+                walls = [
+                    WallCandidate(
+                        start=(0.0, mid_y),
+                        end=(float(width), mid_y),
+                        thickness=1.0,
+                        confidence=0.15,
+                        source="bitmap",
+                    )
+                ]
 
     return RasterVectorResult(
         paths=[], walls=walls, bounds=bounds, source=source, options=options

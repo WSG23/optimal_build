@@ -7,6 +7,8 @@ from datetime import datetime
 from backend._compat.datetime import UTC
 from backend.jobs import job_queue
 from backend.jobs.overlay_run import run_overlay_for_project, run_overlay_job
+from collections.abc import Mapping
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,10 +69,12 @@ async def list_project_overlays(
     result = await session.execute(stmt)
     suggestions: list[OverlaySuggestion] = list(result.scalars().unique().all())
     items = [
-        OverlaySuggestionSchema.model_validate(suggestion, from_attributes=True)
+        _serialise_suggestion(
+            OverlaySuggestionSchema.model_validate(suggestion, from_attributes=True)
+        )
         for suggestion in suggestions
     ]
-    payload_items = [item.model_dump(mode="json") for item in items]
+    payload_items = items
     return {"items": payload_items, "count": len(payload_items)}
 
 
@@ -151,7 +155,7 @@ async def decide_overlay(
     await session.commit()
     await session.refresh(suggestion)
     item = OverlaySuggestionSchema.model_validate(suggestion, from_attributes=True)
-    return {"item": item.model_dump(mode="json")}
+    return {"item": _serialise_suggestion(item)}
 
 
 __all__ = ["router"]
@@ -165,3 +169,22 @@ def _as_utc(timestamp: datetime | None) -> datetime | None:
     if timestamp.tzinfo is None:
         return timestamp.replace(tzinfo=UTC)
     return timestamp.astimezone(UTC)
+
+
+def _serialise_suggestion(
+    item: OverlaySuggestionSchema,
+) -> dict[str, object]:
+    """Convert overlay suggestion model into a JSON-ready dict."""
+
+    payload = item.model_dump(mode="json")
+    decision = payload.get("decision")
+    if decision is None or isinstance(decision, Mapping):
+        return payload
+    payload["decision"] = {
+        "id": getattr(decision, "id", None),
+        "decision": getattr(decision, "decision", None),
+        "decided_by": getattr(decision, "decided_by", None),
+        "decided_at": getattr(decision, "decided_at", None),
+        "notes": getattr(decision, "notes", None),
+    }
+    return payload

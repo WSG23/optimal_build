@@ -88,7 +88,7 @@ def _build_result(record: SingaporeProperty) -> ComplianceResult:
         metadata={"jurisdiction": "SG"},
     )
     return ComplianceResult(
-        property=SingaporePropertySchema.model_validate(record),
+        property=SingaporePropertySchema.model_validate(record, from_attributes=True),
         response=response,
     )
 

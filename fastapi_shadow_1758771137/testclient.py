@@ -21,6 +21,9 @@ class _SyncResponse:
             return None
         return json.loads(self.content.decode("utf-8"))
 
+    async def aread(self) -> bytes:
+        return self.content
+
 
 class TestClient:
     """Synchronous facade over :class:`fastapi.FastAPI.handle_request`."""
@@ -50,9 +53,17 @@ class TestClient:
                 }
             )
         prepared_files = {}
+        form_payload: dict[str, Any] = dict(data or {})
         if files:
             for key, (filename, payload, content_type) in files.items():
                 data_bytes = payload.read() if hasattr(payload, "read") else payload
+                if filename is None:
+                    form_payload[key] = (
+                        data_bytes.decode("utf-8")
+                        if isinstance(data_bytes, (bytes, bytearray))
+                        else str(data_bytes)
+                    )
+                    continue
                 prepared_files[key] = (
                     filename,
                     (
@@ -76,7 +87,7 @@ class TestClient:
                 path=path,
                 query_params=query_params,
                 json_body=json,
-                form_data=dict(data or {}),
+                form_data=form_payload,
                 files=prepared_files,
                 headers=prepared_headers,
             )
@@ -192,9 +203,17 @@ class AsyncTestClient:
                 }
             )
         prepared_files = {}
+        form_payload: dict[str, Any] = dict(data or {})
         if files:
             for key, (filename, payload, content_type) in files.items():
                 data_bytes = payload.read() if hasattr(payload, "read") else payload
+                if filename is None:
+                    form_payload[key] = (
+                        data_bytes.decode("utf-8")
+                        if isinstance(data_bytes, (bytes, bytearray))
+                        else str(data_bytes)
+                    )
+                    continue
                 prepared_files[key] = (
                     filename,
                     (
@@ -217,7 +236,7 @@ class AsyncTestClient:
             path=path,
             query_params=query_params,
             json_body=json,
-            form_data=dict(data or {}),
+            form_data=form_payload,
             files=prepared_files,
             headers=prepared_headers,
         )

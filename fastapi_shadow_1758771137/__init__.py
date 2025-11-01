@@ -16,8 +16,18 @@ from decimal import Decimal
 from enum import Enum
 from functools import cache, lru_cache
 from types import SimpleNamespace
-from typing import (Any, Dict, Literal, Optional, Tuple, Union, get_args,
-                    get_origin, get_type_hints)
+from typing import (
+    Any,
+    Dict,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
+from urllib.parse import parse_qsl
 
 from pydantic import BaseModel
 
@@ -786,6 +796,104 @@ class FastAPI:
 
         self._openapi_schema = schema
         return schema
+
+    async def __call__(self, scope, receive, send) -> None:
+        """Minimal ASGI entrypoint supporting httpx.AsyncClient."""
+
+        scope_type = scope.get("type")
+        if scope_type == "lifespan":
+            await self._handle_lifespan(receive, send)
+            return
+
+        if scope_type != "http":  # pragma: no cover - non-http scopes unused
+            raise RuntimeError(f"Unsupported ASGI scope: {scope_type}")
+
+        method = scope.get("method", "GET")
+        path = scope.get("path", "/")
+        raw_query = scope.get("query_string", b"")
+        query_params = dict(parse_qsl(raw_query.decode("utf-8"))) if raw_query else {}
+        headers = {
+            key.decode("latin-1"): value.decode("latin-1")
+            for key, value in scope.get("headers", [])
+        }
+
+        body = b""
+        more_body = True
+        json_payload: Any | None = None
+        form_data: dict[str, Any] = {}
+
+        while more_body:
+            message = await receive()
+            if message["type"] != "http.request":
+                continue
+            body += message.get("body", b"")
+            more_body = message.get("more_body", False)
+
+        if body:
+            content_type = headers.get("content-type", "")
+            try:
+                if "application/json" in content_type or not content_type:
+                    json_payload = json.loads(body.decode("utf-8"))
+                elif "application/x-www-form-urlencoded" in content_type:
+                    form_data = dict(parse_qsl(body.decode("utf-8")))
+            except (ValueError, UnicodeDecodeError):  # pragma: no cover - fallback
+                json_payload = None
+
+        status_code, response_headers, payload = await self.handle_request(
+            method=method,
+            path=path,
+            query_params=query_params,
+            json_body=json_payload,
+            form_data=form_data,
+            files={},
+            headers=headers,
+        )
+
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status_code,
+                "headers": [
+                    (key.encode("latin-1"), value.encode("latin-1"))
+                    for key, value in response_headers.items()
+                ],
+            }
+        )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": payload,
+                "more_body": False,
+            }
+        )
+
+    async def _handle_lifespan(self, receive, send) -> None:
+        """Process lifespan startup/shutdown events."""
+
+        async def _emit(message_type: str) -> None:
+            await send({"type": f"lifespan.{message_type}.complete"})
+
+        if self._lifespan is None:
+            while True:
+                message = await receive()
+                if message["type"] == "lifespan.startup":
+                    await _emit("startup")
+                elif message["type"] == "lifespan.shutdown":
+                    await _emit("shutdown")
+                    break
+            return
+
+        async with self._lifespan(self):
+            started = False
+            while True:
+                message = await receive()
+                if message["type"] == "lifespan.startup":
+                    if not started:
+                        await _emit("startup")
+                        started = True
+                elif message["type"] == "lifespan.shutdown":
+                    await _emit("shutdown")
+                    break
 
 
 async def _execute_route(
