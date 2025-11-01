@@ -17,6 +17,12 @@ const configuredDbUrl =
   defaultDbUrl
 const e2eDbUrl = process.env.PLAYWRIGHT_E2E_DB_URL ?? configuredDbUrl
 const buildableUsePostgis = process.env.BUILDABLE_USE_POSTGIS ?? '0'
+const isCI = Boolean(process.env.CI)
+const frontendPort = isCI ? 4173 : 3000
+const frontendCommand = isCI
+  ? 'pnpm preview:ci'
+  : 'pnpm dev -- --host 127.0.0.1 --port 3000'
+const frontendUrl = `http://127.0.0.1:${frontendPort}`
 
 export default defineConfig({
   testDir: path.resolve(__dirname, 'tests/e2e'),
@@ -24,8 +30,12 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report' }],
+  ],
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: frontendUrl,
     trace: 'on-first-retry',
   },
   webServer: [
@@ -40,20 +50,20 @@ export default defineConfig({
         BUILDABLE_USE_POSTGIS: buildableUsePostgis,
       },
       port: 8000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: !isCI,
       stdout: 'pipe',
       stderr: 'pipe',
       timeout: 120_000,
     },
     {
-      command: 'pnpm dev -- --host 127.0.0.1 --port 3000',
+      command: frontendCommand,
       cwd: path.resolve(rootDir, 'frontend'),
       env: {
         VITE_API_BASE_URL:
           process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/',
       },
-      port: 3000,
-      reuseExistingServer: !process.env.CI,
+      port: frontendPort,
+      reuseExistingServer: !isCI,
       stdout: 'pipe',
       stderr: 'pipe',
       timeout: 120_000,
