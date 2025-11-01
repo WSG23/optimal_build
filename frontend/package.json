@@ -11,7 +11,10 @@
     "lint": "eslint --ext .ts,.tsx src",
     "test": "node ../scripts/run-frontend-tests.mjs",
     "test:coverage": "node ../scripts/run-frontend-tests.mjs --coverage",
-    "test:e2e": "node scripts/run-e2e.js"
+    "test:e2e": "node scripts/run-e2e.js",
+    "test:bdd": "playwright test --project=bdd",
+    "bdd:smoke": "playwright test --project=bdd --grep @smoke",
+    "bdd:all": "playwright test --project=bdd"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -44,6 +47,10 @@
     "jsdom": "^24.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5.2.2",
-    "vite": "^4.5.0"
+    "vite": "^4.5.0",
+    "playwright-bdd": "^7.0.0",
+    "@cucumber/cucumber": "^11.0.0",
+    "@cucumber/messages": "^26.0.0",
+    "ts-node": "^10.9.2"
   }
 }
