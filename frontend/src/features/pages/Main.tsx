@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 
-import logoSrc from '@/shared/media/yosai-logo';
 import { ViewportFrame } from '@/components/layout/ViewportFrame';
 import Panel from '@/components/layout/Panel';
 import { PanelBody } from '@/components/layout/PanelBody';
-import PageMiniNav from '@/components/layout/PageMiniNav';
-import ClockTicker from '@/shared/components/app/security/ClockTicker';
+import ZenPageHeader from './components/ZenPageHeader';
+import { ZEN_MINI_NAV_ITEMS } from './components/zenMiniNavItems';
 import { useNoBodyScroll } from '@/shared/hooks/useNoBodyScroll';
 import { useFacilityLabel } from '@/shared/hooks/useFacilityLabel';
 import LiveFeedPanel from '@/shared/components/app/security/LiveFeedPanel';
@@ -128,27 +127,11 @@ export default function Main() {
   return (
     <div className="bg-neutral-950 text-white" data-testid={TID.page.main}>
       <ViewportFrame className="flex h-full flex-col gap-6">
-        <header className="mb-4 grid grid-cols-12 items-center gap-6">
-          <div className="col-span-3 flex items-center gap-3">
-            <img src={logoSrc} alt="YŌSAI INTEL" className="h-7 select-none" />
-          </div>
-          <div className="col-span-6">
-            <h1 className="text-center text-2xl font-semibold">Logged in as {facilityLabel}</h1>
-          </div>
-          <div className="col-span-3 flex items-center justify-end gap-4">
-            <PageMiniNav
-              items={[
-                { label: 'Export', to: '/export' },
-                { label: 'Mission Control', to: '/mission' },
-                { label: 'Mapping', to: '/mapping' },
-                { label: 'Compliance', to: '/compliance' },
-                { label: 'Settings', to: '/settings' },
-                { label: 'Reports', to: '/reports' },
-              ]}
-            />
-            <ClockTicker />
-          </div>
-        </header>
+        <ZenPageHeader
+          title="Main"
+          miniNavItems={ZEN_MINI_NAV_ITEMS}
+          centerSlot={<h1 className="text-center text-2xl font-semibold">Logged in as {facilityLabel}</h1>}
+        />
 
         <div
           className="grid flex-1 min-h-0 gap-6"

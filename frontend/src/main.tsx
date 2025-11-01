@@ -13,20 +13,20 @@ import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligenc
 import '@ob/tokens.css'
 import './index.css'
 import './styles/canonical-ui.css'
-import MainPage from './features/pages/Main'
-import MissionControlPage from './features/pages/MissionControl'
-import FacilitySensorsPage from './features/pages/FacilitySensors'
-import MappingUploadPage from './features/pages/MappingUpload'
-import DataUploadPage from './features/pages/DataUpload'
-import WeakSignalFeed from './features/pages/WeakSignalFeed'
-import TicketingPage from './features/pages/Ticketing'
-import SecurityDashboardPage from './features/pages/SecurityDashboard'
-import DPIADashboard from './features/pages/DPIADashboard'
-import DSARComplianceDashboard from './features/pages/DSARComplianceDashboard'
-import ROPADashboard from './features/pages/ROPADashboard'
-import CrossBorderTransferDashboard from './features/pages/CrossBorderTransferDashboard'
-import ComplianceViolationsPage from './features/pages/ComplianceViolations'
-import SettingsPage from './features/pages/Settings'
+const MainPage = React.lazy(() => import('./features/pages/Main'))
+const MissionControlPage = React.lazy(() => import('./features/pages/MissionControl'))
+const FacilitySensorsPage = React.lazy(() => import('./features/pages/FacilitySensors'))
+const MappingUploadPage = React.lazy(() => import('./features/pages/MappingUpload'))
+const DataUploadPage = React.lazy(() => import('./features/pages/DataUpload'))
+const WeakSignalFeed = React.lazy(() => import('./features/pages/WeakSignalFeed'))
+const TicketingPage = React.lazy(() => import('./features/pages/Ticketing'))
+const SecurityDashboardPage = React.lazy(() => import('./features/pages/SecurityDashboard'))
+const DPIADashboard = React.lazy(() => import('./features/pages/DPIADashboard'))
+const DSARComplianceDashboard = React.lazy(() => import('./features/pages/DSARComplianceDashboard'))
+const ROPADashboard = React.lazy(() => import('./features/pages/ROPADashboard'))
+const CrossBorderTransferDashboard = React.lazy(() => import('./features/pages/CrossBorderTransferDashboard'))
+const ComplianceViolationsPage = React.lazy(() => import('./features/pages/ComplianceViolations'))
+const SettingsPage = React.lazy(() => import('./features/pages/Settings'))
 import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
 import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
 import AgentPerformancePage from './pages/AgentPerformancePage'
