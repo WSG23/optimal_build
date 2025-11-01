@@ -35,6 +35,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
+        '@': path.resolve(__dirname, './src'),
         '@ob/tokens': path.resolve(__dirname, '../core/design-tokens/index.ts'),
         '@ob/tokens.css': path.resolve(
           __dirname,
