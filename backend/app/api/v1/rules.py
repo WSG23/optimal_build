@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+import os
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Literal
@@ -15,11 +17,17 @@ from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefRule, RefZoningLayer
 from app.services.normalize import NormalizedRule, RuleNormalizer
+from app.utils.cache import TTLCache
 from app.utils.logging import get_logger
 from pydantic import BaseModel
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+_RULES_CACHE_TTL_SECONDS = int(os.getenv("RULES_CACHE_TTL_SECONDS", "120"))
+_RULES_CACHE = TTLCache(
+    ttl_seconds=_RULES_CACHE_TTL_SECONDS, copy=lambda payload: copy.deepcopy(payload)
+)
 
 
 def _extract_zone_code(rule: RefRule) -> str | None:
@@ -31,6 +39,27 @@ def _extract_zone_code(rule: RefRule) -> str | None:
         if zone:
             return str(zone)
     return None
+
+
+def _normalize_review_status(
+    review_status: str | list[str] | None,
+) -> list[str]:
+    if not review_status:
+        return []
+    if isinstance(review_status, str):
+        raw_tokens = [review_status]
+    else:
+        raw_tokens = list(review_status)
+
+    statuses: list[str] = []
+    seen: set[str] = set()
+    for token in raw_tokens:
+        for candidate in token.split(","):
+            value = candidate.strip()
+            if value and value not in seen:
+                seen.add(value)
+                statuses.append(value)
+    return statuses
 
 
 def _serialise_rule(
@@ -118,6 +147,19 @@ async def list_rules(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> dict[str, object]:
+    statuses = _normalize_review_status(review_status)
+    cache_key = (
+        jurisdiction or "",
+        parameter_key or "",
+        authority or "",
+        topic or "",
+        tuple(statuses),
+    )
+
+    cached_payload = await _RULES_CACHE.get(cache_key)
+    if cached_payload is not None:
+        return cached_payload
+
     stmt = select(RefRule)
     filter_conditions: list[object] = []
     if jurisdiction:
@@ -144,44 +186,28 @@ async def list_rules(
     base_stmt = stmt
     rules: list[RefRule]
 
-    if review_status:
-        if isinstance(review_status, str):
-            raw_statuses = [review_status]
-        else:
-            raw_statuses = list(review_status)
-        statuses: list[str] = []
-        for raw_status in raw_statuses:
-            for token in raw_status.split(","):
-                token = token.strip()
-                if token:
-                    statuses.append(token)
-        if statuses:
-            seen_ids: set[int] = set()
-            collected: list[RefRule] = []
-            for status in statuses:
-                subset_stmt = base_stmt.where(RefRule.review_status == status)
-                result = await session.execute(subset_stmt)
-                subset_rules = result.scalars().all()
-                logger.debug(
-                    "rules_filter_subset",
-                    review_status=status,
-                    subset_count=len(subset_rules),
-                )
-                for rule in subset_rules:
-                    if rule.id not in seen_ids:
-                        seen_ids.add(rule.id)
-                        collected.append(rule)
-            rules = collected
+    if statuses:
+        seen_ids: set[int] = set()
+        collected: list[RefRule] = []
+        for status in statuses:
+            subset_stmt = base_stmt.where(RefRule.review_status == status)
+            result = await session.execute(subset_stmt)
+            subset_rules = result.scalars().all()
             logger.debug(
-                "rules_filter_combined",
-                requested_statuses=statuses,
-                total=len(rules),
+                "rules_filter_subset",
+                review_status=status,
+                subset_count=len(subset_rules),
             )
-        else:
-            result = await session.execute(
-                base_stmt.where(RefRule.review_status == "approved")
-            )
-            rules = result.scalars().all()
+            for rule in subset_rules:
+                if rule.id not in seen_ids:
+                    seen_ids.add(rule.id)
+                    collected.append(rule)
+        rules = collected
+        logger.debug(
+            "rules_filter_combined",
+            requested_statuses=statuses,
+            total=len(rules),
+        )
     else:
         filtered_stmt = base_stmt.where(RefRule.review_status == "approved")
         result = await session.execute(filtered_stmt)
@@ -195,7 +221,9 @@ async def list_rules(
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
     normalizer = RuleNormalizer()
     items = [_serialise_rule(rule, normalizer, zoning_lookup) for rule in rules]
-    return {"items": items, "count": len(items)}
+    payload = {"items": items, "count": len(items)}
+    await _RULES_CACHE.set(cache_key, payload)
+    return payload
 
 
 class ReviewAction(BaseModel):
@@ -235,6 +263,7 @@ async def review_rule(
 
     await session.commit()
     await session.refresh(rule)
+    await _RULES_CACHE.clear()
 
     zoning_lookup = await _load_zoning_lookup(session, [_extract_zone_code(rule)])
     normalizer = RuleNormalizer()

@@ -309,7 +309,7 @@ grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE" backend/app --include="*.py"
 **AI Agents Can Fix:**
 - [x] **Dependency Audit (Tier 2 - reference docs/archive/TECHNICAL_DEBT.MD for history):**
   - [ ] Update all packages with known security vulnerabilities
-  - [ ] Pin all 7 dependencies (asyncpg, shapely, pandas, numpy, statsmodels, scikit-learn, reportlab)
+  - [x] Pin all 7 dependencies (asyncpg, shapely, pandas, numpy, statsmodels, scikit-learn, reportlab)
   - [ ] Set up GitHub Dependabot (free, automated)
 - [x] **Code Security:**
   - [ ] Audit for SQL injection vulnerabilities (use parameterized queries only)
@@ -319,10 +319,10 @@ grep -r "f\".*SELECT\|f\".*INSERT\|f\".*UPDATE" backend/app --include="*.py"
   - [ ] Check password hashing (bcrypt/argon2, not plain text)
 - [x] **Basic Infrastructure Security:**
   - [ ] Verify HTTPS enforced (check nginx/deployment config)
-  - [ ] Verify CORS configured correctly (check FastAPI CORS middleware)
-  - [ ] Implement rate limiting on all endpoints (use slowapi or FastAPI middleware)
-  - [ ] Verify database credentials in environment variables (not hardcoded)
-  - [ ] Add security headers (HSTS, CSP, X-Frame-Options) to FastAPI responses
+  - [x] Verify CORS configured correctly (FastAPI `CORSMiddleware` in `backend/app/main.py`)
+  - [x] Implement rate limiting on all endpoints (slowapi integration in `backend/app/main.py`)
+  - [x] Verify database credentials in environment variables (validated in `backend/app/core/config.py`)
+  - [x] Add security headers (HSTS, CSP, X-Frame-Options via `backend/app/middleware/security.py`)
 
 **Success Criteria (AI Agents):**
 - ✅ Zero high/critical vulnerabilities in `npm audit` / `pip check` / `safety check`
@@ -370,8 +370,8 @@ free -h
   - [ ] Remove unused npm packages (`npm prune`)
   - [ ] Remove unused Python packages
 - [x] **Code-Level Optimization (Free):**
-  - [ ] Add database query result caching (use Python `functools.lru_cache`)
-  - [ ] Implement response caching for expensive API calls
+  - [x] Add database query result caching (async TTL cache in `backend/app/utils/cache.py`)
+  - [x] Implement response caching for expensive API calls (`/api/v1/rules` caching layer)
   - [ ] Optimize N+1 queries (use SQLAlchemy eager loading)
   - [ ] Add pagination to all list endpoints (limit 100 items default)
   - [ ] Compress API responses (gzip middleware)

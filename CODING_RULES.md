@@ -1075,12 +1075,33 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 2. **Progress markers:** No `🔄` or `❌` markers remain
 3. **Files exist:** All files listed in "Files Delivered:" section actually exist on disk
 4. **Tests pass:** "Test Status:" section shows ✅ passing tests (no ❌ or ⚠️ failures)
+5. **Manual QA executed (Rule 12.1):** UI phases require manual QA checklist with execution results
+
+**Rule 12.1: Manual QA Requirement for UI Phases**
+
+All phases with UI components (1A, 1B, 1C, 1D, 2B, 2C) MUST have:
+- Manual QA checklist file in `docs/development/testing/phase-{XY}-manual-qa-checklist.md`
+- Execution summary filled out with:
+  - **Tester:** (actual name, not blank)
+  - **Date:** (actual date, not blank)
+  - **Overall Result:** PASS, FAIL, or PARTIAL
+
+**Why this matters:**
+- Backend tests don't verify UI interactions (drag-and-drop, button clicks, responsive design)
+- Users experience the UI, not the API
+- Phase 1D was marked COMPLETE on Nov 1, 2025 without manual UI testing
+- This caused the enforcement gap that let incomplete work ship
+
+**Enforcement blocks commits if:**
+- Phase marked `✅ COMPLETE` in ROADMAP.MD
+- But manual QA checklist missing or not executed (template blanks still present)
 
 **Why file verification matters:**
 - Solo founders cannot review code quality
 - AI agents could check boxes without writing code
 - File verification ensures code was actually written
 - Test verification ensures code actually works
+- **Manual QA verification ensures UI was actually tested by a human**
 
 **Example violations caught:**
 ```

@@ -532,6 +532,76 @@ def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
                 "  -> Reinstate the checklist so gate enforcement remains active."
             )
 
+    # NEW: Rule 12.1 - Enforce manual QA for UI phases
+    # Check for phases marked COMPLETE with UI components
+    ui_phases_with_qa_requirement = {
+        "Phase 1A": "phase-1a-manual-qa-checklist.md",
+        "Phase 1B": "phase-1b-manual-qa-checklist.md",
+        "Phase 1C": "phase-1c-manual-qa-checklist.md",
+        "Phase 1D": "phase-1d-manual-qa-checklist.md",
+        "Phase 2B": "phase-2b-manual-qa-checklist.md",
+        "Phase 2C": "phase-2c-manual-qa-checklist.md",
+    }
+
+    import re
+
+    for phase_name, qa_checklist_file in ui_phases_with_qa_requirement.items():
+        # Check if this phase is marked COMPLETE in the roadmap
+        phase_pattern = rf"\| {re.escape(phase_name)} \|.*\| ✅ COMPLETE \|"
+        if re.search(phase_pattern, content):
+            # Phase is marked COMPLETE - verify manual QA checklist exists
+            qa_file_path = (
+                repo_root / "docs" / "development" / "testing" / qa_checklist_file
+            )
+
+            if not qa_file_path.exists():
+                errors.append(
+                    f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' "
+                    f"but manual QA checklist missing.\n"
+                    f"  -> Required: docs/development/testing/{qa_checklist_file}\n"
+                    f"  -> Rule 12.1: UI phases must have manual QA documented\n"
+                    f"  -> Create checklist before marking phase COMPLETE\n"
+                    f"  -> Example: docs/development/testing/"
+                    f"phase-1d-manual-qa-checklist.md"
+                )
+            else:
+                # QA file exists - verify it has been executed (not just a template)
+                try:
+                    qa_content = qa_file_path.read_text(encoding="utf-8")
+
+                    # Check for test execution summary (indicates QA was actually done)
+                    has_tester_name = (
+                        "**Tester:**" in qa_content
+                        and "_______________"
+                        not in qa_content.split("**Tester:**")[1].split("\n")[0]
+                    )
+                    has_date = (
+                        "**Date:**" in qa_content
+                        and "_______________"
+                        not in qa_content.split("**Date:**")[1].split("\n")[0]
+                    )
+                    has_result = "**Overall Result:**" in qa_content and (
+                        "PASS" in qa_content
+                        or "FAIL" in qa_content
+                        or "PARTIAL" in qa_content
+                    )
+
+                    if not (has_tester_name and has_date and has_result):
+                        errors.append(
+                            f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' "
+                            f"but manual QA not executed.\n"
+                            f"  -> File exists: {qa_checklist_file}\n"
+                            f"  -> But test execution summary not filled out\n"
+                            f"  -> Required: Tester, Date, Result "
+                            f"(PASS/FAIL/PARTIAL)\n"
+                            f"  -> Rule 12.1: Manual QA must be PERFORMED, "
+                            f"not just documented\n"
+                            f"  -> Execute tests and fill summary before "
+                            f"marking phase COMPLETE"
+                        )
+                except OSError:
+                    pass  # File existence already checked above
+
     return len(errors) == 0, errors
 
 
