@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -12,7 +13,9 @@ from uuid import uuid4
 
 import pytest
 
-pytestmark = pytest.mark.no_db
+pytestmark = [pytest.mark.no_db]
+
+os.environ.setdefault("SECRET_KEY", "test-secret")
 
 import app.utils.logging as logging_utils
 from app.core.config import settings
@@ -760,13 +763,13 @@ def test_structlog_distribution_present_when_found(
 ) -> None:
     """Should return True when structlog is installed."""
 
-    def fake_version(distribution: str) -> str:
-        if distribution == "structlog":
-            return "21.1.0"
-        raise logging_utils.PackageNotFoundError("Not found")
+    class FakeMetadata:
+        def version(self, distribution: str) -> str:
+            if distribution == "structlog":
+                return "21.1.0"
+            raise logging_utils.PackageNotFoundError("Not found")
 
-    fake_metadata = type("FakeMetadata", (), {"version": fake_version})()
-    monkeypatch.setattr(logging_utils, "importlib_metadata", fake_metadata)
+    monkeypatch.setattr(logging_utils, "importlib_metadata", FakeMetadata())
 
     result = _structlog_distribution_present()
 
@@ -778,11 +781,11 @@ def test_structlog_distribution_present_when_not_found(
 ) -> None:
     """Should return False when structlog is not installed."""
 
-    def fake_version(distribution: str) -> str:
-        raise logging_utils.PackageNotFoundError("Not found")
+    class FakeMetadata:
+        def version(self, distribution: str) -> str:
+            raise logging_utils.PackageNotFoundError("Not found")
 
-    fake_metadata = type("FakeMetadata", (), {"version": fake_version})()
-    monkeypatch.setattr(logging_utils, "importlib_metadata", fake_metadata)
+    monkeypatch.setattr(logging_utils, "importlib_metadata", FakeMetadata())
 
     result = _structlog_distribution_present()
 
@@ -806,11 +809,11 @@ def test_structlog_distribution_present_handles_generic_exception(
 ) -> None:
     """Should return False when metadata access raises any exception."""
 
-    def fake_version(distribution: str) -> str:
-        raise RuntimeError("Metadata error")
+    class FakeMetadata:
+        def version(self, distribution: str) -> str:
+            raise RuntimeError("Metadata error")
 
-    fake_metadata = type("FakeMetadata", (), {"version": fake_version})()
-    monkeypatch.setattr(logging_utils, "importlib_metadata", fake_metadata)
+    monkeypatch.setattr(logging_utils, "importlib_metadata", FakeMetadata())
 
     result = _structlog_distribution_present()
 
