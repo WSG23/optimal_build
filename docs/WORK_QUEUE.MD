@@ -17,14 +17,21 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 - **Acceptance Criteria:** Coverage report ≥ 80% on critical paths, flaky tests resolved, audit checklist updated.
 - **Files:** `backend/`, `tests/`, `docs/audits/PRE-PHASE-2D-AUDIT.MD`.
 
+### 2. Phase 2B – Renderer pipeline bootstrap
+- **Status:** READY (unblocked by process revision)
+- **Assigned:** Available (coordinate with visualization squad)
+- **Estimate:** 1 week for architecture spike, follow-on cards for implementation
+- **Description:** Kick off Phase 2B workstreams in parallel with the audit. Focus on renderer architecture validation, Prefect
+  job wiring, and updating preview generator scaffolding per [`docs/phase2b_visualisation_stub.md`](phase2b_visualisation_stub.md).
+- **Acceptance Criteria:** Architecture spike completed, initial Prefect flow skeleton checked in, dependency + risk log shared
+  with audit team to avoid conflicts.
+- **Files:** `backend/app/services/preview_generator.py`, `backend/flows/preview_generation.py`, `docs/phase2b_visualisation_stub.md`.
+
 ---
 
 ## 📋 Ready (Queued - Do After Active)
 
-### 3. Phase 2B: Implement 3D GLB renderer
-- **Status:** READY (blocked by Infrastructure Audit completion)
-- **Estimate:** 2-3 weeks
-- **Documentation:** Align with [`docs/ROADMAP.MD`](ROADMAP.MD) Phase 2B objectives.
+_No additional queued items until renderer bootstrap outcomes land; add next priorities here once capacity frees up._
 
 ---
 
