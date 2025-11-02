@@ -24,6 +24,24 @@ Tracks test harness issues that are **not bugs** in the application code.
 
 ---
 
+### 2. [Phase 2B Manual UI QA Checklist](../PHASE2B_VISUALISATION_STUB.MD#10-manual-ui-qa-checklist-preview-payload-builder)
+Defines the required manual walkthrough for the developer preview harness before closing Phase 2B renderer tasks.
+
+**Purpose:**
+- Ensures agents actually launch the preview UI and validate the structured payload after backend changes.
+- Captures screenshots/logs for audit so regressions are visible to the product owner.
+- Restores parity with Phase 1D, where manual UI QA was already mandated.
+
+**When to use:**
+- Any change that touches `backend/app/services/preview_generator.py`, renderer orchestration, or frontend preview consumption.
+- Before marking a Phase 2B work queue item complete or requesting PR review.
+
+**When NOT to use:**
+- Non-visual backend refactors that do not impact preview payloads (document rationale in the PR if skipping).
+- Infrastructure audit tasks unrelated to renderer output.
+
+---
+
 ## Workflows
 
 ### Adding a New Known Issue

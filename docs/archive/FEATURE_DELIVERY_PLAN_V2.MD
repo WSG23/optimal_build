@@ -83,7 +83,7 @@
 - **Backend:** 100% | **UI:** 85%
 - **Status source:** [Line 416](#phase-2b-asset-specific-feasibility) says "⚠️ IN PROGRESS"
 - **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅
-- **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [phase2b_visualisation_stub.md](phase2b_visualisation_stub.md)
+- **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [PHASE2B_VISUALISATION_STUB.MD](PHASE2B_VISUALISATION_STUB.MD)
 - [Jump to details ↓](#phase-2b-asset-specific-feasibility)
 
 ---
@@ -515,7 +515,7 @@
 
 **What's Missing (Next Focus):**
 - ✅ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use) with scoring engine, constraint logging, and scenario variants
-- ⏭️ Scenario-aware 3D preview generation and UI integration (deferred - see [Phase 2B Visualisation Delivery Plan](phase2b_visualisation_stub.md))
+- ⏭️ Scenario-aware 3D preview generation and UI integration (deferred - see [Phase 2B Visualisation Delivery Plan](PHASE2B_VISUALISATION_STUB.MD))
 - ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
 
 **Kickoff Deliverables (Planned):**

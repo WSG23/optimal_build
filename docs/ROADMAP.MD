@@ -17,7 +17,7 @@
 | Phase 1C | Core finance services live for early adopters | ✅ COMPLETE |
 | Phase 1D | Business performance dashboards shipped and QA signed off | ✅ COMPLETE |
 | Phase 2A | Advanced data ingestion stabilised across jurisdictions | ⚠️ IN PROGRESS |
-| Phase 2B | 3D visualisation stack + GLB renderer | ❌ NOT STARTED |
+| Phase 2B | 3D visualisation stack + GLB renderer | ⚠️ IN PROGRESS (parallel with audit) |
 | Phase 2C | Finance automation v2 (lending + cash flow) | ✅ COMPLETE |
 | Phase 2D | Infrastructure resilience, audit & launch-readiness sprint | ❌ NOT STARTED |
 
@@ -32,6 +32,9 @@
 - [ ] Phase 2D Gate: Pre-Phase 2D Infrastructure Audit & Quality Sprint complete (`PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.MD`)
 - [x] Phase 2D Gate: Phase 1D Business Performance UI backlog delivered & QA signed off (see Phase 1D summary below)
 - [ ] Phase 2D Gate: Phase 2B visualisation residual work delivered (see Phase 2B summary below)
+  - _Process update (2025-11-03): Execution can begin in parallel with the infrastructure audit so long as audit acceptance
+    criteria keep running in a dedicated track. Gate remains required for Phase 2D entry, but Phase 2B delivery tasks no longer
+    wait on audit completion to start._
 - [ ] Phase 2D Gate: Expansion Window 1 (HK, NZ, Seattle, Toronto) complete (`docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`)
 
 Scripts such as `scripts/check_phase_gate.py` rely on these exact checklist labels to enforce compliance before Phase 2D work can be merged.
@@ -61,7 +64,7 @@ Scripts such as `scripts/check_phase_gate.py` rely on these exact checklist labe
 
 ### Phase 2B – Visualisation Platform
 - **Goal:** Ship 3D GLB renderer and context-aware overlays for portfolio reviews.
-- **Current Status:** ❌ NOT STARTED – blocked on Phase 2D gate readiness.
+- **Current Status:** ⚠️ IN PROGRESS – process revised to run alongside the audit; release still contingent on hitting the Phase 2D gate.
 - **Key Outcomes Required:** Renderer performance benchmarking, asset tagging pipeline, UI integration plan.
 
 ### Phase 2C – Finance Automation v2

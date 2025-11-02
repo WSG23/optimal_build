@@ -104,8 +104,8 @@ This is a **LIVING DOCUMENT** that tracks ongoing technical debt across all proj
 
 **Documentation:**
 - [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
-- [docs/phase2b_visualisation_stub.md](docs/phase2b_visualisation_stub.md) - **Full 4-week implementation plan**
-- Frontend integration: phase2b_visualisation_stub.md Section 5 (lines 136-148)
+- [docs/PHASE2B_VISUALISATION_STUB.MD](docs/PHASE2B_VISUALISATION_STUB.MD) - **Full 4-week implementation plan**
+- Frontend integration: PHASE2B_VISUALISATION_STUB.MD Section 5 (lines 136-148)
 - Timeline: Section 7 (Week 1: API, Week 2: Renderer, Week 3: Frontend+QA, Week 4: Buffer)
 
 **Tracked in:** [BACKLOG.md](BACKLOG.md)

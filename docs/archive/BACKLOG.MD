@@ -134,10 +134,10 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 
 **Documentation:**
 - Requirements: [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
-- Detailed plan: [docs/phase2b_visualisation_stub.md](docs/phase2b_visualisation_stub.md)
+- Detailed plan: [docs/PHASE2B_VISUALISATION_STUB.MD](docs/PHASE2B_VISUALISATION_STUB.MD)
 
 **After Infrastructure Audit completes:**
-1. Read phase2b_visualisation_stub.md for implementation details
+1. Read PHASE2B_VISUALISATION_STUB.MD for implementation details
 2. Implement GLB generation with scenario variants
 3. Wire frontend 3D viewer component
 4. Mark Phase 2B ✅ COMPLETE
