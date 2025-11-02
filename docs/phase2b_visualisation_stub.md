@@ -6,6 +6,9 @@ This document lays out the path from the current JSON stub to a production-grade
 
 ## Changelog
 
+- **v0.3 (2025-11-03)** – Process updated to allow Phase 2B execution in parallel with the infrastructure audit.
+  - Added guardrails for coordination with audit coverage work and clarified dependency hand-offs.
+  - Documented renderer bootstrap priorities for the new work queue item.
 - **v0.2 (2025-10-22)** – Preview job model + synchronous generator implemented
   - Added `preview_jobs` table, service helpers, and API wiring so developer capture queues a preview job and records massing metadata. Response now includes `preview_job_id` and job status with polling-ready fields.
   - Frontend lists preview job status and stores the job id for future async polling; CLI documented for job orchestration (future renderer integration).
@@ -21,6 +24,13 @@ This document lays out the path from the current JSON stub to a production-grade
 - Support scenario-aware previews (base, expansion, reposition) without blocking core feasibility calls.
 - Persist preview artefacts in durable storage with cache-friendly URLs and asset versioning.
 - Instrument the pipeline (metrics, logs, alerts) so failed renders or stale assets are visible within existing monitoring.
+
+### 1.1 Parallel Execution Guardrails
+
+- Maintain weekly sync notes with the audit owner so renderer changes do not mask coverage regressions.
+- Flag any shared dependencies (SQLAlchemy models, logging utilities) via the audit checklist before merging.
+- Record integration risks in the work queue card to preserve visibility for the launch-readiness review.
+- Keep renderer experiments behind feature flags until audit sign-off so the release branch stays green.
 
 ---
 
