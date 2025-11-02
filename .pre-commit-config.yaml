@@ -27,6 +27,12 @@ repos:
       language: system
       pass_filenames: false
 
+    - id: check-shadow-dirs
+      name: Check for shadow directories (Rule 13.1)
+      entry: python3 scripts/check_shadow_directories.py
+      language: system
+      pass_filenames: false
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0
   hooks:

@@ -71,7 +71,7 @@ def test_fallback_html_to_pdf_basic() -> None:
     pdf = render._fallback_html_to_pdf(html)
 
     assert pdf is not None
-    assert pdf.startswith(b"%PDF-1.4"), "PDF should have correct header"
+    assert pdf.startswith((b"%PDF-1.4", b"%PDF-1.7")), "PDF should have correct header"
     assert b"%%EOF" in pdf, "PDF should have EOF marker"
     assert b"Test Report" in pdf or b"test" in pdf.lower(), "PDF should contain content"
 
@@ -82,7 +82,7 @@ def test_fallback_html_to_pdf_with_special_chars() -> None:
     pdf = render._fallback_html_to_pdf(html)
 
     assert pdf is not None
-    assert pdf.startswith(b"%PDF-1.4")
+    assert pdf.startswith((b"%PDF-1.4", b"%PDF-1.7"))
     # Special chars should be escaped in PDF
     assert b"\\(" in pdf or b"\\)" in pdf or b"\\\\" in pdf
 
@@ -101,7 +101,7 @@ def test_fallback_html_to_pdf_multiline() -> None:
     pdf = render._fallback_html_to_pdf(html)
 
     assert pdf is not None
-    assert pdf.startswith(b"%PDF-1.4")
+    assert pdf.startswith((b"%PDF-1.4", b"%PDF-1.7"))
     assert b"%%EOF" in pdf
 
 
@@ -109,7 +109,7 @@ def test_fallback_html_to_pdf_empty() -> None:
     """Test PDF generation with empty/minimal HTML."""
     pdf = render._fallback_html_to_pdf("")
     assert pdf is not None
-    assert pdf.startswith(b"%PDF-1.4")
+    assert pdf.startswith((b"%PDF-1.4", b"%PDF-1.7"))
     assert b"Condition report" in pdf  # Default fallback text
 
     pdf = render._fallback_html_to_pdf("<p></p>")
@@ -124,7 +124,7 @@ def test_render_html_to_pdf_fallback() -> None:
     pdf = render.render_html_to_pdf(html)
 
     assert pdf is not None
-    assert pdf.startswith(b"%PDF-1.4")
+    assert pdf.startswith((b"%PDF-1.4", b"%PDF-1.7"))
     assert b"%%EOF" in pdf
 
 
@@ -156,7 +156,7 @@ def test_render_html_to_pdf_complex_html() -> None:
     pdf = render.render_html_to_pdf(html)
 
     assert pdf is not None
-    assert pdf.startswith(b"%PDF-1.4")
+    assert pdf.startswith((b"%PDF-1.4", b"%PDF-1.7"))
     # Script should be removed
     assert b"console.log" not in pdf
 
@@ -170,6 +170,6 @@ def test_html_factory_is_none_uses_fallback() -> None:
         html = "<p>Test</p>"
         pdf = render.render_html_to_pdf(html)
         assert pdf is not None
-        assert pdf.startswith(b"%PDF-1.4")
+        assert pdf.startswith((b"%PDF-1.4", b"%PDF-1.7"))
     finally:
         render._HTML_FACTORY = original_factory

@@ -1151,6 +1151,131 @@ Context:
 
 ---
 
+## 13. Python Import Safety (CRITICAL)
+
+### 13.1 NEVER Create Shadow Directories
+
+**Rule:** NEVER create directories in your project that match the names of installed Python packages.
+
+**Why:** These "shadow directories" hijack Python's import system, causing all imports to load broken stub code instead of the real package. This breaks the entire application.
+
+**Critical Safety Issue for Non-Technical Founders:**
+- Shadow directories have caused multiple production-breaking incidents (Oct 30, Nov 2 2025)
+- Codex Cloud has repeatedly created these when encountering import errors
+- The damage is invisible until you try to run the app - then EVERYTHING breaks
+- Non-coders cannot easily diagnose or fix this without AI help
+
+**FORBIDDEN directory names:**
+```
+fastapi/
+starlette/
+pydantic/
+sqlalchemy/
+pytest/
+pytest_cov/
+celery/
+redis/
+alembic/
+... or ANY other package name from requirements.txt
+```
+
+**How Python imports work:**
+1. Python searches current directory FIRST
+2. Then searches PYTHONPATH
+3. Then searches site-packages (where pip installs packages)
+
+**If you create `fastapi/` in your project:**
+- `from fastapi import FastAPI` loads YOUR empty directory
+- NOT the real FastAPI from site-packages
+- Result: `ImportError: cannot import name 'FastAPI'`
+
+**If you encounter import errors, the CORRECT fixes are:**
+
+```bash
+# ✅ CORRECT Option 1: Fix PYTHONPATH
+export PYTHONPATH=/path/to/project:$PYTHONPATH
+
+# ✅ CORRECT Option 2: Use absolute imports in code
+from app.models import User  # Good
+from models import User      # Bad (ambiguous)
+
+# ✅ CORRECT Option 3: Fix sys.path in conftest.py
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+```
+
+**❌ NEVER do this:**
+```python
+# FORBIDDEN - creating shadow directory
+mkdir backend/fastapi
+echo "# Stub" > backend/fastapi/__init__.py
+
+# FORBIDDEN - creating "bridge" modules
+# These try to re-export the real package but always fail
+```
+
+**Exceptions (Legitimate Vendor Shims):**
+
+The following directories are **LEGITIMATE vendor shims** created Sep 21-23, 2025 during project bootstrap:
+
+- `prefect/` - Prefect flow compatibility layer for offline environments
+- `httpx/` - HTTP client compatibility layer for test environments
+- `structlog/` - Logging compatibility layer
+- `pydantic/` - Pydantic model compatibility layer
+- `backend/sqlalchemy/` - SQLAlchemy compatibility layer
+- `backend/prefect/` - Backend Prefect compatibility layer
+
+**These vendor shims:**
+1. Were intentionally created as architectural decisions
+2. Serve legitimate purposes for offline/test environments
+3. Have sophisticated import loaders that try real packages first
+4. Are whitelisted in `scripts/check_shadow_directories.py`
+
+**DO NOT delete these directories.**
+**DO NOT create new ones without explicit approval.**
+
+If you encounter import errors with these vendor shims, the problem is NOT the vendor shim itself - it's likely PYTHONPATH or a missing dependency.
+
+**Enforcement:**
+
+AI agents encountering import errors MUST:
+1. ❌ NOT create shadow directories
+2. ✅ Check if PYTHONPATH is set correctly
+3. ✅ Verify imports use absolute paths
+4. ✅ Ask user for guidance if unclear
+
+**Detection:**
+
+Run this to check for shadow directories:
+```bash
+# Check for common shadows
+ls -d backend/{fastapi,starlette,pydantic,sqlalchemy,pytest,celery} 2>/dev/null
+
+# If any exist, DELETE IMMEDIATELY:
+rm -rf backend/fastapi backend/starlette backend/pydantic
+```
+
+**Historical Context:**
+- Oct 30, 2025: Codex Cloud created `pydantic/` shadows (commit 165d5f5)
+- Nov 2, 2025 (PR #276): Codex Cloud added `sqlalchemy/`, `pytest_cov/`, `fastapi/` (commit aa0bfde)
+- Nov 2, 2025: Codex Cloud attempted to add MORE shadows in subsequent branch
+- All were caught and removed, but the pattern shows systemic risk
+
+**For Solo Founders:**
+
+If you're not a coder and AI agents create shadow directories:
+1. Your app will suddenly stop working with confusing errors
+2. The error messages will point to YOUR code, not the root cause
+3. You may not recognize the problem without AI help
+4. **Prevention is critical** - hence this rule
+
+**Automated Check:**
+
+The pre-commit hook checks for shadow directories and blocks commits that create them.
+
+---
+
 ## Questions?
 
 If a rule is unclear or seems wrong for a specific case:

@@ -4,8 +4,9 @@ from uuid import UUID
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="Agent advisory API requires seeded market intelligence data not yet available in tests"
+pytest.skip(
+    "Agent advisory API requires seeded market intelligence data not yet available in tests",
+    allow_module_level=True,
 )
 
 pytest.importorskip("sqlalchemy")

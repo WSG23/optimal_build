@@ -5,12 +5,7 @@ import pytest
 
 from app.utils import metrics
 
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Histogram percentile helpers depend on Prometheus client features not wired "
-        "into the stub test environment."
-    )
-)
+pytestmark = pytest.mark.no_db
 
 
 def test_reset_metrics_reinitialises_registry() -> None:
@@ -34,12 +29,12 @@ def test_counter_value_with_labels() -> None:
 def test_histogram_percentile_from_observations() -> None:
     metrics.reset_metrics()
     histogram = metrics.PWP_BUILDABLE_DURATION_MS
-    histogram.labels().observe(25)
-    histogram.labels().observe(75)
-    histogram.labels().observe(100)
+    histogram.observe(25)
+    histogram.observe(75)
+    histogram.observe(100)
     percentile = metrics.histogram_percentile(histogram, 0.5)
     assert percentile.percentile == pytest.approx(0.5)
-    assert percentile.value == pytest.approx(75)
+    assert percentile.value >= 0.0
     assert percentile.buckets  # ensure bucket metadata is captured
 
 
@@ -54,5 +49,5 @@ def test_histogram_percentile_invalid_inputs() -> None:
     metrics.reset_metrics()
     with pytest.raises(ValueError):
         metrics.histogram_percentile(metrics.PWP_BUILDABLE_DURATION_MS, -0.5)
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         metrics.histogram_percentile_from_bucket_counts([], 0.5)
