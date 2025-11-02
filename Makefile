@@ -270,14 +270,7 @@ test-aec: ## Run sample import, overlay, export flows and regression tests
 	cd frontend && npm test
 
 test-cov: ## Run tests with coverage
-	PYTHONPATH=$(CURDIR) JOB_QUEUE_BACKEND=inline $(PYTEST) backend/tests --cov=backend/app --cov-report=html --cov-report=term \
-		--ignore=backend/tests/test_api/test_developer_site_acquisition.py \
-		--ignore=backend/tests/test_api/test_openapi_generation.py \
-		--ignore=backend/tests/test_api/test_rules.py \
-		--ignore=backend/tests/test_exporters/test_condition_report_fallback.py \
-		--ignore=backend/tests/test_services/test_pwp.py \
-		--ignore=backend/tests/test_services/test_reference_sources.py \
-		--ignore=backend/tests/test_workflows/test_aec_pipeline.py
+	SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR) JOB_QUEUE_BACKEND=inline $(PYTEST) backend/tests --cov=backend/app --cov-report=html --cov-report=term-missing
 	@echo "Coverage report: backend/htmlcov/index.html"
 
 clean: ## Clean build artifacts

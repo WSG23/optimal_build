@@ -3,7 +3,7 @@
 **Purpose:** This document provides standardized commands and procedures for third-party auditors to verify code quality, test coverage, and compliance.
 
 **Last Updated:** 2025-11-02
-**Current Coverage Baseline:** 60.23% (622 tests passing)
+**Current Coverage Baseline:** 60.83% (622 tests passing)
 
 ---
 
@@ -48,9 +48,9 @@ SECRET_KEY=test-secret-key JOB_QUEUE_BACKEND=inline \
 - ✅ This is the **official tracking command** used in coverage baselines
 
 **Expected Results (as of 2025-11-02):**
-- Overall coverage: **60.23%**
+- Overall coverage: **60.83%**
 - Tests passing: **622**
-- Coverage gap to 80% target: **19.77 percentage points**
+- Coverage gap to 80% target: **19.17 percentage points**
 
 ### Alternative: Using Make Target
 
@@ -58,21 +58,13 @@ SECRET_KEY=test-secret-key JOB_QUEUE_BACKEND=inline \
 make test-cov
 ```
 
-**⚠️ WARNING:** The `make test-cov` target has a **critical limitation** - it ignores several test files:
-- `test_developer_site_acquisition.py` (enabled, contributes +1.86% coverage)
-- `test_finance_asset_breakdown.py` (enabled, contributes +2.41% coverage)
-- `test_openapi_generation.py`
-- `test_rules.py`
-- `test_condition_report_fallback.py`
-- `test_pwp.py`
-- `test_reference_sources.py`
-- `test_aec_pipeline.py`
+**✅ FIXED:** As of 2025-11-02, the `make test-cov` target has been updated to match the recommended pytest command. It now:
+- ✅ Runs all enabled tests (no more --ignore flags)
+- ✅ Includes `SECRET_KEY=test-secret-key` environment variable
+- ✅ Uses `--cov-report=term-missing` for detailed output
+- ✅ Produces same coverage results as manual pytest command
 
-See [Makefile:272-281](../Makefile#L272-L281) for the list of ignored files.
-
-**Result:** `make test-cov` will report **lower coverage** than the actual current state because it skips tests that have been enabled.
-
-**Recommendation:** Use the direct pytest command above for accurate audit results.
+**Result:** Both `make test-cov` and the manual pytest command now produce identical results (60.83% coverage, 622 tests passing).
 
 ---
 
@@ -232,7 +224,7 @@ SECRET_KEY=test-secret-key JOB_QUEUE_BACKEND=inline \
 ## Common Audit Questions
 
 ### Q: What is the current test coverage?
-**A:** 60.23% as of 2025-11-02 (622 tests passing). See [PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.MD](../../PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.MD) for baseline tracking.
+**A:** 60.83% as of 2025-11-02 (622 tests passing). See [PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.MD](../../PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.MD) for baseline tracking.
 
 ### Q: What is the coverage target?
 **A:** 80% backend coverage (Rule 10.1 in [CODING_RULES.md](../../CODING_RULES.md)).
@@ -303,7 +295,7 @@ Use this checklist for systematic audit:
 
 - [ ] **Coverage Measurement**
   - [ ] Run full pytest suite with coverage
-  - [ ] Verify coverage meets or exceeds documented baseline (60.23%)
+  - [ ] Verify coverage meets or exceeds documented baseline (60.83%)
   - [ ] Review HTML coverage report for any critical gaps
   - [ ] Check that core business logic (services/, api/) has adequate coverage
 
@@ -350,7 +342,7 @@ If you encounter issues during audit:
 3. **Common issues:**
    - **Tests fail with database errors:** Ensure PostgreSQL is running (`docker compose up -d`)
    - **Import errors:** Ensure venv is activated and dependencies installed
-   - **Coverage lower than expected:** Verify you're using the correct pytest command (not `make test-cov`)
+   - **Coverage lower than expected:** Verify you're using the correct pytest command (or `make test-cov` which now works correctly)
 
 ---
 
