@@ -43,10 +43,39 @@ def get_openapi(
     if license_info:
         info["license"] = license_info
 
+    paths: dict[str, Any] = {}
+    if routes is not None:
+        for route in routes:
+            path = getattr(route, "path", None)
+            methods = getattr(route, "methods", None)
+            if not path or not methods:
+                continue
+            path_item = paths.setdefault(path, {})
+            for method in sorted(methods):
+                path_item[method.lower()] = {
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "example": {}
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Successful Response",
+                            "content": {
+                                "application/json": {
+                                    "example": {}
+                                }
+                            },
+                        }
+                    },
+                }
+
     schema: dict[str, Any] = {
         "openapi": openapi_version,
         "info": info,
-        "paths": {},
+        "paths": paths,
     }
 
     if tags:

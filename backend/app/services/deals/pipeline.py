@@ -354,7 +354,11 @@ class AgentDealService:
             context=context,
             recorded_at=recorded_at,
         )
-        event_metadata = dict(event.metadata or {})
+        raw_metadata = getattr(event, "metadata", None)
+        if isinstance(raw_metadata, dict):
+            event_metadata = dict(raw_metadata)
+        else:
+            event_metadata = dict(getattr(event, "metadata_json", {}) or {})
         event_metadata["audit_log_id"] = str(log_entry.id)
         event.metadata = event_metadata
 

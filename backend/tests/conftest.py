@@ -38,6 +38,25 @@ _REPO_ROOT = _find_repo_root(Path(__file__).resolve())
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
+_ORIGINAL_ASYNCIO_GET_EVENT_LOOP = asyncio.get_event_loop
+
+
+def _patched_get_event_loop():
+    try:
+        return _ORIGINAL_ASYNCIO_GET_EVENT_LOOP()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
+
+
+asyncio.get_event_loop = _patched_get_event_loop
+
 
 def _ensure_namespace_package(name: str, location: Path) -> None:
     """Register a namespace style package without mutating ``sys.path``."""
@@ -91,6 +110,9 @@ try:  # pragma: no cover - async plugin is optional when running unit tests
 except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
     pytest_asyncio = import_module("backend.pytest_asyncio")
     sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
+    _USING_PYTEST_ASYNCIO_STUB = True
+else:
+    _USING_PYTEST_ASYNCIO_STUB = False
 
 pytest_asyncio = cast(Any, pytest_asyncio)
 
@@ -314,17 +336,19 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
         pass
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
-    """Create a dedicated event loop for the entire test session."""
+if _USING_PYTEST_ASYNCIO_STUB:
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        yield loop
-    finally:
-        asyncio.set_event_loop(None)
-        loop.close()
+    @pytest.fixture(scope="session")
+    def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
+        """Create a dedicated event loop for the entire test session."""
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            yield loop
+        finally:
+            asyncio.set_event_loop(None)
+            loop.close()
 
 
 if _SQLALCHEMY_AVAILABLE:

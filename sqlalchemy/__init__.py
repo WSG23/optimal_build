@@ -8,6 +8,7 @@ metadata declarations, and async helpers that the tests interact with.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from types import ModuleType
 from typing import Any, Callable, Iterable, Sequence
 import sys
@@ -148,6 +149,12 @@ class _ColumnExpression:
     def isnot(self, value: Any) -> tuple[str, str, Any]:
         return self._comparison("isnot", value)
 
+    def desc(self) -> tuple[str, str]:
+        return ("desc", self.column.name)
+
+    def asc(self) -> tuple[str, str]:
+        return ("asc", self.column.name)
+
 
 class Column:
     def __init__(
@@ -198,7 +205,11 @@ class Column:
     def __get__(self, instance: Any, owner: type | None = None) -> Any:
         if instance is None:
             return _ColumnExpression(self, owner)
-        return instance.__dict__.get(self.name, self._default_value())
+        if self.name in instance.__dict__:
+            return instance.__dict__[self.name]
+        value = self._default_value()
+        instance.__dict__[self.name] = value
+        return value
 
     def __set__(self, instance: Any, value: Any) -> None:
         instance.__dict__[self.name] = value
@@ -354,12 +365,22 @@ class Select:
         self._where: list[Any] = []
         self._limit: int | None = None
         self._offset: int | None = None
+        self._order_by: list[Any] = []
+
+    def _clone(self) -> "Select":
+        clone = Select(self.entities)
+        clone._where = list(self._where)
+        clone._limit = self._limit
+        clone._offset = self._offset
+        clone._order_by = list(self._order_by)
+        return clone
 
     def where(self, *conditions: Any, **_: Any) -> Select:
+        new = self._clone()
         for condition in conditions:
             if condition is not None:
-                self._where.append(condition)
-        return self
+                new._where.append(condition)
+        return new
 
     def join(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
@@ -368,7 +389,9 @@ class Select:
         return self
 
     def order_by(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
-        return self
+        new = self._clone()
+        new._order_by.extend(args)
+        return new
 
     def group_by(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
@@ -380,12 +403,14 @@ class Select:
         return self
 
     def limit(self, value: int | None) -> Select:
-        self._limit = value
-        return self
+        new = self._clone()
+        new._limit = value
+        return new
 
     def offset(self, value: int | None) -> Select:
-        self._offset = value
-        return self
+        new = self._clone()
+        new._offset = value
+        return new
 
     def distinct(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
@@ -512,6 +537,9 @@ class _Result:
     def first(self) -> Any:
         return self._values[0] if self._values else None
 
+    def unique(self) -> "_Result":
+        return self
+
 
 class AsyncSession:
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401, ANN001, ARG002
@@ -580,14 +608,62 @@ class AsyncSession:
             if pk_column is not None:
                 attr = pk_column.name
                 if getattr(obj, attr, None) is None:
-                    next_id = _PK_COUNTER.get(model, 0) + 1
-                    _PK_COUNTER[model] = next_id
-                    setattr(obj, attr, next_id)
+                    default = getattr(pk_column, "default", None)
+                    if callable(default):
+                        value = default()
+                    elif default is not None:
+                        value = default
+                    else:
+                        next_id = _PK_COUNTER.get(model, 0) + 1
+                        _PK_COUNTER[model] = next_id
+                        value = next_id
+                    setattr(obj, attr, value)
             if obj not in store:
                 store.append(obj)
+            now = datetime.now(timezone.utc)
+            if hasattr(obj, "created_at") and getattr(obj, "created_at", None) is None:
+                setattr(obj, "created_at", now)
+            if hasattr(obj, "updated_at"):
+                setattr(obj, "updated_at", now)
+            if hasattr(obj, "recorded_at") and getattr(obj, "recorded_at", None) is None:
+                setattr(obj, "recorded_at", now)
 
     async def close(self) -> None:  # pragma: no cover - compatibility hook
         await self.flush()
+
+    async def refresh(
+        self,
+        instance: Any,
+        attribute_names: Sequence[str] | None = None,
+    ) -> None:
+        await self.flush()
+        if attribute_names:
+            for name in attribute_names:
+                getattr(instance, name, None)
+
+    async def get(
+        self,
+        model: type,
+        ident: Any,
+        *,
+        options: Sequence[Any] | None = None,
+    ) -> Any | None:
+        await self.flush()
+        store = _DATABASE.get(model, [])
+        pk_attr = None
+        table = getattr(model, "__table__", None)
+        if table is not None:
+            for column in getattr(table, "columns", []):
+                if getattr(column, "primary_key", False):
+                    pk_attr = column.name
+                    break
+        pk_attr = pk_attr or "id"
+        target = str(ident)
+        for obj in store:
+            value = getattr(obj, pk_attr, None)
+            if value == ident or str(value) == target:
+                return obj
+        return None
 
 
 class _AsyncSessionContext:

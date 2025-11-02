@@ -133,7 +133,14 @@ class DealSchema(BaseModel):
 
     @classmethod
     def from_orm_deal(cls, deal: AgentDeal) -> "DealSchema":
-        return cls.model_validate(deal)
+        _ = getattr(deal, "id", None)
+        metadata_value = getattr(deal, "metadata", None)
+        if not isinstance(metadata_value, dict):
+            metadata_value = getattr(deal, "metadata_json", {}) or {}
+        payload = getattr(deal, "__dict__", {}).copy()
+        payload.pop("_sa_instance_state", None)
+        payload["metadata"] = metadata_value
+        return cls.model_validate(payload)
 
 
 class DealWithTimelineSchema(DealSchema):
@@ -233,7 +240,13 @@ class CommissionAdjustmentResponse(BaseModel):
     def from_orm_adjustment(
         cls, adjustment: AgentCommissionAdjustment
     ) -> "CommissionAdjustmentResponse":
-        return cls.model_validate(adjustment)
+        metadata_value = getattr(adjustment, "metadata", None)
+        if not isinstance(metadata_value, dict):
+            metadata_value = getattr(adjustment, "metadata_json", {}) or {}
+        payload = getattr(adjustment, "__dict__", {}).copy()
+        payload.pop("_sa_instance_state", None)
+        payload["metadata"] = metadata_value
+        return cls.model_validate(payload)
 
 
 class CommissionResponse(BaseModel):
@@ -283,7 +296,11 @@ class CommissionResponse(BaseModel):
             "paid_at": record.paid_at,
             "disputed_at": record.disputed_at,
             "resolved_at": record.resolved_at,
-            "metadata": record.metadata,
+            "metadata": (
+                record.metadata
+                if isinstance(record.metadata, dict)
+                else getattr(record, "metadata_json", {}) or {}
+            ),
             "audit_log_id": record.audit_log_id,
             "created_at": record.created_at,
             "updated_at": record.updated_at,
