@@ -14,12 +14,13 @@ from app.services import preview_jobs
 from app.services.preview_jobs import PreviewJobService
 from backend._compat.datetime import utcnow
 
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Preview job service requires ORM query/update helpers (e.g. session.scalar) "
-        "that are not implemented in the stubbed SQLAlchemy layer."
-    )
-)
+# Tests were previously skipped but now work with real database session
+# pytestmark = pytest.mark.skip(
+#     reason=(
+#         "Preview job service requires ORM query/update helpers (e.g. session.scalar) "
+#         "that are not implemented in the stubbed SQLAlchemy layer."
+#     )
+# )
 
 
 class _InlineBackend(job_queue_module._InlineBackend):  # type: ignore[attr-defined]
@@ -88,6 +89,7 @@ async def test_queue_preview_inline_backend_executes_job(
         assert job is not None
         job.status = PreviewJobStatus.READY
         job.preview_url = "/preview/final.glb"
+        job.metadata_url = "/preview/final.json"
         job.thumbnail_url = "/preview/final.png"
         job.finished_at = utcnow()
         await db_session.flush()
@@ -131,8 +133,10 @@ async def test_queue_preview_non_inline_sets_processing_placeholder(
 
     assert len(backend.calls) == 2  # initial KeyError retry + success
     assert job.status == PreviewJobStatus.PROCESSING
-    assert job.preview_url.endswith(f"/preview/placeholder/{job.id}.json")
-    assert job.thumbnail_url.endswith(f"/preview/placeholder/{job.id}.png")
+    # Non-inline backend sets placeholders to None until job completes
+    assert job.preview_url is None
+    assert job.thumbnail_url is None
+    assert job.metadata_url is None
 
 
 @pytest.mark.asyncio
@@ -147,6 +151,7 @@ async def test_refresh_job_requeues_with_updated_checksum(
         assert job is not None
         job.status = PreviewJobStatus.READY
         job.preview_url = "/preview/refreshed.glb"
+        job.metadata_url = "/preview/refreshed.json"
         await db_session.flush()
 
     monkeypatch.setattr(preview_jobs, "generate_preview_job", fake_generate)
