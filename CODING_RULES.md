@@ -749,6 +749,30 @@ make test
 - Frontend critical paths: Covered
 - Frontend overall: Best effort (JSDOM timing issues documented in `docs/development/testing/known-issues.md`)
 
+### 10.1 Backend feature completion checklist (MANDATORY)
+
+Every backend feature, bug fix, or infrastructure change **must** close with
+tests and a fresh coverage datapoint. Skipping this step is the number-one way
+our coverage target drifts.
+
+1. **Add or update automated tests** in the same pull request. Unit tests for
+   new business logic, integration tests for new APIs, and regression tests for
+   bug fixes.
+2. **Run the coverage suite locally** before marking the task complete:
+   ```bash
+   SECRET_KEY=test-secret JOB_QUEUE_BACKEND=inline \
+     .venv/bin/python -m pytest backend/tests \
+       --cov=backend/app --cov-report=term-missing
+   ```
+3. **Record the result** (percentage, date, command) in
+   `PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.MD` under “Baseline/Session Log”. If the
+   run changes the coverage trend materially, summarise the affected modules.
+4. If coverage decreases, explain why in the PR description and flag a follow-up
+   task to close the gap.
+
+Feature leads should not move a work item to “Done” until all four boxes are
+ticked.
+
 **Enforcement:**
 - CI blocks merges without passing tests
 - Pre-commit hooks run tests automatically
@@ -1149,6 +1173,21 @@ Context:
 
 **Reference:** See frontend/README_AI_AGENTS.md for detailed frontend guidelines.
 
+### 12.3 Manual UI QA for every frontend delivery (MANDATORY)
+
+All frontend feature/sub-phase work must finish with a human UI sweep. This is
+the enforcement counterpart to Rule 12.1/12.2.
+
+1. Build/run the relevant frontend surface (normally `npm run dev`).
+2. Execute the manual QA script for that feature (e.g. the Phase 1D checklist).
+3. Capture evidence (screenshots or video) and log outcomes in the appropriate
+   checklist file under `docs/development/testing/`.
+4. Only mark the feature complete once the checklist row is filled in and any
+   regressions have owners.
+
+CI cannot replace this. Manual UI QA is required because the product is a
+production B2B app, and our end users expect polished, professional workflows.
+
 ---
 
 ## 13. Python Import Safety (CRITICAL)
@@ -1178,6 +1217,26 @@ redis/
 alembic/
 ... or ANY other package name from requirements.txt
 ```
+
+**Whitelisted vendor shims (intentional):**
+
+The following directories were created during the September 2025 bootstrap to
+allow offline testing environments to masquerade as the real dependency. They
+live in the repo on purpose—do **not** delete them and do **not** treat them as
+shadow bugs.
+
+```
+prefect/
+httpx/
+structlog/
+pydantic/
+backend/sqlalchemy/
+backend/prefect/
+```
+
+If a directory is not in this whitelist, assume it is unsafe and remove it.
+When in doubt, run `python scripts/check_shadow_directories.py` and follow the
+error message.
 
 **How Python imports work:**
 1. Python searches current directory FIRST

@@ -1,7 +1,7 @@
 # PRE_PHASE_2D_INFRASTRUCTURE_AUDIT
 
 ## Baseline
-- 68.53% backend coverage from full suite (SECRET_KEY=test JOB_QUEUE_BACKEND=inline .venv/bin/python -m pytest backend/tests --cov=backend/app --cov-report=term-missing).
+- 55.0% backend coverage from full suite (`SECRET_KEY=test-secret JOB_QUEUE_BACKEND=inline .venv/bin/python -m pytest backend/tests --cov=backend/app --cov-report=term-missing`).
 
 ## Session Log
 - Added focused tests for logging serialization/configuration, database dependency cleanup, and Prometheus metrics helpers. These exercises broaden coverage across `backend/app/utils/logging.py`, `backend/app/utils/db.py`, and `backend/app/utils/metrics.py`. Coverage measurement pending due to missing offline SQLAlchemy/greenlet wheels in this environment.
@@ -11,3 +11,4 @@
 - Hardened observability by adding API error logging middleware, enabling gzip compression, documenting the slow-query threshold (`SLOW_QUERY_THRESHOLD_SECONDS`), and supplying scripts for system resource checks and local load tests. Apache Bench is unavailable in the sandbox, so the Python fallback script should be used when the backend is running locally.
 - Hardened the backend pytest harness to fall back to stubbed SQLAlchemy modules, added lazy service/script loaders, and taught overlay/finance feasibility tests to bootstrap their own module stubs. `SECRET_KEY=test JOB_QUEUE_BACKEND=inline python -m pytest backend/tests --maxfail=1` now passes with 16 tests exercising the targeted utilities/services while the remaining SQLAlchemy-dependent suites skip cleanly until real wheels are available.
 - Retired the unused `docker-compose.postgis.yml` variant, consolidated the bootstrap script so PostGIS installs via `init-db.sql`, documented the `BUILDABLE_USE_POSTGIS` toggle, and enhanced the Docker pruning helper (now reachable via `make docker-clean`) with a dry-run option for safely reviewing cleanup commands.
+- Removed lingering `fastapi`/`sqlalchemy` shadow stubs and re-ran the full coverage suite with the new utility tests. Run on 2025-11-02 produced 55.0% overall coverage; results captured in htmlcov/ for reference.
