@@ -14,7 +14,7 @@ from backend._compat.datetime import utcnow
 from backend.jobs import job
 from app.core.database import get_session
 from app.models.preview import PreviewJob, PreviewJobStatus
-from app.services.preview_generator import ensure_preview_asset
+from app.services.preview_generator import PreviewAssets, ensure_preview_asset
 
 
 def _resolve_session_dependency():
@@ -98,15 +98,19 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
         await session.flush()
 
         try:
-            preview_url = ensure_preview_asset(job.property_id, payload_layers)
-            job.preview_url = preview_url
+            assets: PreviewAssets = ensure_preview_asset(
+                job.property_id, payload_layers
+            )
+            job.preview_url = assets.preview_url
+            job.thumbnail_url = assets.thumbnail_url
             job.status = PreviewJobStatus.READY
             job.finished_at = utcnow()
             await session.commit()
             return {
                 "status": "ready",
                 "job_id": job_id,
-                "preview_url": preview_url,
+                "preview_url": assets.preview_url,
+                "thumbnail_url": assets.thumbnail_url,
             }
         except Exception as exc:  # pragma: no cover - defensive guard
             job.status = PreviewJobStatus.FAILED

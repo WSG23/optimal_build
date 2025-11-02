@@ -21,11 +21,9 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 - **Status:** READY (unblocked by process revision)
 - **Assigned:** Available (coordinate with visualization squad)
 - **Estimate:** 1 week for architecture spike, follow-on cards for implementation
-- **Description:** Kick off Phase 2B workstreams in parallel with the audit. Focus on renderer architecture validation, Prefect
-  job wiring, and updating preview generator scaffolding per [`docs/phase2b_visualisation_stub.md`](phase2b_visualisation_stub.md).
-- **Acceptance Criteria:** Architecture spike completed, initial Prefect flow skeleton checked in, dependency + risk log shared
-  with audit team to avoid conflicts.
-- **Files:** `backend/app/services/preview_generator.py`, `backend/flows/preview_generation.py`, `docs/phase2b_visualisation_stub.md`.
+- **Description:** Kick off Phase 2B workstreams in parallel with the audit. Focus on renderer architecture validation, Prefect job wiring, and updating preview generator scaffolding per [`docs/PHASE2B_VISUALISATION_STUB.MD`](PHASE2B_VISUALISATION_STUB.MD). **Manual UI QA is now mandatory:** follow Section 10 of the delivery plan and attach the completed checklist + screenshot to your PR before requesting review.
+- **Acceptance Criteria:** Architecture spike completed, initial Prefect flow skeleton checked in, dependency + risk log shared with audit team to avoid conflicts, and the Section 10 manual UI walkthrough executed with results documented in the PR/work queue entry.
+- **Files:** `backend/app/services/preview_generator.py`, `backend/flows/preview_generation.py`, `docs/PHASE2B_VISUALISATION_STUB.MD`.
 
 ---
 
@@ -67,3 +65,4 @@ _No additional queued items until renderer bootstrap outcomes land; add next pri
 4. After completing work, move the item to the Completed section with the completion date and relevant commit IDs.
 5. Update [`docs/ROADMAP.MD`](ROADMAP.MD) only when phase status changes (e.g., READY → COMPLETE).
 6. For infrastructure audit tasks, update `docs/audits/PRE-PHASE-2D-AUDIT.MD` checklists in parallel.
+7. For Phase 2B renderer items, execute the manual UI walkthrough in [`docs/PHASE2B_VISUALISATION_STUB.MD`](PHASE2B_VISUALISATION_STUB.MD#10-manual-ui-qa-checklist-preview-payload-builder) and include results before requesting review.

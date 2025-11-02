@@ -1,4 +1,4 @@
-# Phase 2B Visualisation Delivery Plan (v0.2)
+# Phase 2B Visualisation Delivery Plan (v0.4)
 
 This document lays out the path from the current JSON stub to a production-grade, scenario-aware 3D preview pipeline for developer feasibility. It supersedes the earlier stub-only note and should be treated as the working plan for Phase 2B visualisation work.
 
@@ -6,6 +6,10 @@ This document lays out the path from the current JSON stub to a production-grade
 
 ## Changelog
 
+- **v0.4 (2025-11-04)** – Manual QA guardrails reinstated after preview payload builder delivery.
+  - Documented the root cause: Phase 2B lacked a dedicated manual UI checklist, so agents skipped validating preview payloads in the test harness.
+  - Added enforcement steps requiring every Phase 2B code change to execute the UI walkthrough in Section 10 and record outcomes before closing work.
+  - Linked the work queue acceptance criteria to the new checklist so reviewers can block merges without the documented manual run.
 - **v0.3 (2025-11-03)** – Process updated to allow Phase 2B execution in parallel with the infrastructure audit.
   - Added guardrails for coordination with audit coverage work and clarified dependency hand-offs.
   - Documented renderer bootstrap priorities for the new work queue item.
@@ -31,6 +35,12 @@ This document lays out the path from the current JSON stub to a production-grade
 - Flag any shared dependencies (SQLAlchemy models, logging utilities) via the audit checklist before merging.
 - Record integration risks in the work queue card to preserve visibility for the launch-readiness review.
 - Keep renderer experiments behind feature flags until audit sign-off so the release branch stays green.
+
+### 1.2 Manual UI QA Enforcement
+
+- **Root cause:** Only Phase 1D deliverables had a manual UI checklist, so the Phase 2B preview payload builder shipped without anyone running the Web preview harness end-to-end. The missing guardrail meant agents relied solely on automated tests and never launched the renderer UI, leaving regressions invisible to the product owner.
+- **Process fix:** Every Phase 2B change must execute the walkthrough in [Section 10](#10-manual-ui-qa-checklist-preview-payload-builder) before the task can be marked complete. The resulting notes (pass/fail + observations) must be committed alongside the change (e.g., appended to the PR description or work queue entry).
+- **Enforcement:** Reviewers should reject Phase 2B merges lacking the manual UI results, and agents must block their own work until the checklist is filled out.
 
 ---
 
@@ -201,6 +211,36 @@ Dependencies: Phase 2B asset optimisers must emit per-scenario `massing_layers
 - [ ] Finalise renderer selection + infrastructure requirements.
 - [x] Draft `PreviewJob` model and migration script.
 - [x] Implement job queue entry point and CLI trigger (`python -m scripts.heritage.pipeline` unchanged; preview jobs now flow through `/api/v1/developers/preview-jobs/...`).
-- [ ] Extend geometry builder to output schema needed by renderer.
+- [x] Extend geometry builder to output schema needed by renderer.
 - [x] Update frontend to consume new status lifecycle.
 - [ ] Define monitoring dashboards and alerts.
+
+## 10. Manual UI QA Checklist (Preview Payload Builder)
+
+> **Mandatory for every Phase 2B change touching preview generation, renderer orchestration, or frontend consumption.** Agents must paste the completed checklist (with notes/screenshots) into the associated PR or work queue update.
+
+### Environment Prep
+
+- [ ] Backend running with latest preview payload changes: `JOB_QUEUE_BACKEND=inline uvicorn app.main:app --reload`
+- [ ] Prefect worker (or inline CLI) seeded with a property that has optimiser outputs: `python -m scripts.preview enqueue --property-id <TEST_PROPERTY_ID>`
+- [ ] Frontend dev server: `cd frontend && npm run dev`
+- [ ] Browser at `http://localhost:3000/agents/developers/<TEST_PROPERTY_ID>/preview`
+
+### Walkthrough Steps
+
+1. **Trigger render:** From the Site Acquisition view, click **“Generate Preview”** (or run the CLI command) and confirm a job id appears in the developer console/logs.
+   - [ ] Status banner transitions from `placeholder` → `processing` within the UI.
+2. **Poll for completion:** Leave the page open until the status flips to `ready` (or `failed`).
+   - [ ] Confirm the thumbnail placeholder updates to the new asset timestamp.
+   - [ ] If `failed`, capture the error message surfaced in the UI.
+3. **Inspect payload:** Use the UI “View JSON” affordance (or network tab) to download the generated payload.
+   - [ ] Bounding box, layer counts, and camera hints match expectations from backend logs.
+4. **Visual verification:** Rotate the preview in the test harness viewer.
+   - [ ] Massing layers render with colours and heights matching the optimiser seed data.
+5. **Regression capture:** Take a screenshot of the loaded preview (attach to PR if possible) and record any anomalies in `docs/development/testing/known-issues.md` if they are harness-specific.
+
+### Exit Criteria
+
+- [ ] Checklist completed with pass/fail notes.
+- [ ] Screenshot and/or console logs attached to PR/work queue note.
+- [ ] Any failures triaged (fixed immediately or documented with owner + follow-up task).
