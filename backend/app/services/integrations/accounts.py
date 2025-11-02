@@ -35,7 +35,23 @@ class ListingIntegrationAccountService:
             .order_by(ListingIntegrationAccount.provider)
         )
         result = await session.execute(stmt)
-        return [row[0] for row in result.all()]
+        accounts: list[ListingIntegrationAccount] = []
+        for row in result.all():
+            if isinstance(row, ListingIntegrationAccount):
+                accounts.append(row)
+                continue
+            if isinstance(row, tuple | list):  # type: ignore[arg-type]
+                if row:
+                    candidate = row[0]
+                    if isinstance(candidate, ListingIntegrationAccount):
+                        accounts.append(candidate)
+                continue
+            candidate = getattr(row, "_mapping", None)
+            if candidate:
+                first = next(iter(candidate.values()), None)
+                if isinstance(first, ListingIntegrationAccount):
+                    accounts.append(first)
+        return accounts
 
     async def get_account(
         self,

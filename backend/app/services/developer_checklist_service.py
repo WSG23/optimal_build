@@ -319,72 +319,86 @@ class DeveloperChecklistService:
     async def _ensure_tables(session: AsyncSession) -> None:
         """Create checklist tables if the current database has not yet bootstrapped them."""
 
-        connection = await session.connection()
-        dialect_name = connection.dialect.name
+        bind = None
+        if hasattr(session, "get_bind"):
+            try:
+                bind = session.get_bind()  # type: ignore[misc]
+            except Exception:  # pragma: no cover - compatibility shim
+                bind = None
+        if bind is None:
+            bind = getattr(session, "bind", None)
 
+        if bind is None or not hasattr(bind, "dialect"):
+            # In the lightweight SQLAlchemy stub the session operates purely in-memory,
+            # so there is no concept of bootstrapping tables against a physical engine.
+            DeveloperChecklistService._BOOTSTRAPPED_DIALECTS.add("stub")
+            return
+
+        dialect_name = bind.dialect.name
         if dialect_name in DeveloperChecklistService._BOOTSTRAPPED_DIALECTS:
             return
 
-        if dialect_name == "sqlite":
-            await connection.execute(
-                text(
-                    """
-                    CREATE TABLE IF NOT EXISTS developer_checklist_templates (
-                        id TEXT PRIMARY KEY,
-                        development_scenario TEXT NOT NULL,
-                        category TEXT NOT NULL,
-                        item_title TEXT NOT NULL,
-                        item_description TEXT,
-                        priority TEXT NOT NULL,
-                        typical_duration_days INTEGER,
-                        requires_professional INTEGER NOT NULL DEFAULT 0,
-                        professional_type TEXT,
-                        display_order INTEGER DEFAULT 0,
-                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        async with bind.begin() as connection:
+            if dialect_name == "sqlite":
+                await connection.execute(
+                    text(
+                        """
+                        CREATE TABLE IF NOT EXISTS developer_checklist_templates (
+                            id TEXT PRIMARY KEY,
+                            development_scenario TEXT NOT NULL,
+                            category TEXT NOT NULL,
+                            item_title TEXT NOT NULL,
+                            item_description TEXT,
+                            priority TEXT NOT NULL,
+                            typical_duration_days INTEGER,
+                            requires_professional INTEGER NOT NULL DEFAULT 0,
+                            professional_type TEXT,
+                            display_order INTEGER DEFAULT 0,
+                            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                        )
+                        """
                     )
-                    """
                 )
-            )
-            await connection.execute(
-                text(
-                    """
-                    CREATE TABLE IF NOT EXISTS developer_property_checklists (
-                        id TEXT PRIMARY KEY,
-                        property_id TEXT NOT NULL,
-                        template_id TEXT,
-                        development_scenario TEXT NOT NULL,
-                        category TEXT NOT NULL,
-                        item_title TEXT NOT NULL,
-                        item_description TEXT,
-                        priority TEXT NOT NULL,
-                        status TEXT NOT NULL,
-                        assigned_to TEXT,
-                        due_date TEXT,
-                        completed_date TEXT,
-                        completed_by TEXT,
-                        notes TEXT,
-                        metadata TEXT,
-                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                await connection.execute(
+                    text(
+                        """
+                        CREATE TABLE IF NOT EXISTS developer_property_checklists (
+                            id TEXT PRIMARY KEY,
+                            property_id TEXT NOT NULL,
+                            template_id TEXT,
+                            development_scenario TEXT NOT NULL,
+                            category TEXT NOT NULL,
+                            item_title TEXT NOT NULL,
+                            item_description TEXT,
+                            priority TEXT NOT NULL,
+                            status TEXT NOT NULL,
+                            assigned_to TEXT,
+                            due_date TEXT,
+                            completed_date TEXT,
+                            completed_by TEXT,
+                            notes TEXT,
+                            metadata TEXT,
+                            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                        )
+                        """
                     )
-                    """
                 )
-            )
-        else:
+            else:
 
-            def _create(connection_) -> None:
-                DeveloperChecklistTemplate.__table__.create(
-                    connection_, checkfirst=True
-                )
-                DeveloperPropertyChecklist.__table__.create(
-                    connection_, checkfirst=True
-                )
+                def _create(connection_) -> None:
+                    DeveloperChecklistTemplate.__table__.create(
+                        connection_, checkfirst=True
+                    )
+                    DeveloperPropertyChecklist.__table__.create(
+                        connection_, checkfirst=True
+                    )
 
-            try:
-                await connection.run_sync(_create)
-            except Exception:  # pragma: no cover - align with metadata bootstrap
-                pass
+                try:
+                    await connection.run_sync(_create)
+                except Exception:  # pragma: no cover - align with metadata bootstrap
+                    pass
 
         DeveloperChecklistService._BOOTSTRAPPED_DIALECTS.add(dialect_name)
 
@@ -604,7 +618,19 @@ class DeveloperChecklistService:
                 scenario = template.development_scenario
                 key = (scenario, template.item_title.strip().lower())
                 if scenario in scenarios_in_payload and key not in incoming_keys:
-                    await session.delete(template)
+                    if hasattr(session, "delete"):
+                        await session.delete(template)  # type: ignore[attr-defined]
+                    else:  # pragma: no cover - exercised under lightweight SQLAlchemy stub
+                        try:
+                            import sqlalchemy  # type: ignore[import-not-found]
+
+                            store_map = getattr(sqlalchemy, "_DATABASE", None)
+                        except Exception:  # pragma: no cover - defensive
+                            store_map = None
+                        if isinstance(store_map, dict):
+                            records = store_map.get(template.__class__)
+                            if isinstance(records, list) and template in records:
+                                records.remove(template)
                     deleted += 1
 
         if created or updated or deleted:

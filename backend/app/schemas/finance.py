@@ -398,9 +398,16 @@ class FinancingDrawdownScheduleSchema(BaseModel):
 class AssetFinancialSummarySchema(BaseModel):
     """Aggregated financial summary derived from asset optimisation."""
 
+    project_name: str | None = None
+    total_annual_revenue_sgd: Decimal | None = None
+    total_annual_noi_sgd: Decimal | None = None
+    total_capex_sgd: Decimal | None = None
+    total_nia_sqm: Decimal | None = None
+    dominant_risk_profile: str | None = None
+    blended_yield_pct: Decimal | None = None
+    # Legacy fields retained for compatibility with earlier API responses.
     total_estimated_revenue_sgd: Decimal | None = None
     total_estimated_capex_sgd: Decimal | None = None
-    dominant_risk_profile: str | None = None
     notes: list[str] = Field(default_factory=list)
 
 
@@ -408,19 +415,25 @@ class FinanceAssetBreakdownSchema(BaseModel):
     """Individual asset breakdown for Phase 2C asset-specific modelling."""
 
     asset_type: str
-    allocation_pct: Decimal | None = None
-    nia_sqm: Decimal | None = None
-    rent_psm_month: Decimal | None = None
-    gross_rent_annual_sgd: Decimal | None = None
-    vacancy_loss_sgd: Decimal | None = None
-    effective_gross_income_sgd: Decimal | None = None
-    operating_expenses_sgd: Decimal | None = None
-    noi_annual_sgd: Decimal | None = None
-    estimated_capex_sgd: Decimal | None = None
-    payback_years: Decimal | None = None
-    absorption_months: Decimal | None = None
+    allocation_pct: str | None = None
+    nia_sqm: str | None = None
+    rent_psm_month: str | None = None
+    gross_rent_annual_sgd: str | None = None
+    annual_revenue_sgd: str | None = None
+    vacancy_loss_sgd: str | None = None
+    effective_gross_income_sgd: str | None = None
+    operating_expenses_sgd: str | None = None
+    annual_opex_sgd: str | None = None
+    noi_annual_sgd: str | None = None
+    annual_noi_sgd: str | None = None
+    estimated_capex_sgd: str | None = None
+    capex_sgd: str | None = None
+    payback_years: str | None = None
+    absorption_months: str | None = None
+    stabilised_yield_pct: str | None = None
     risk_level: str | None = None
-    heritage_premium_pct: Decimal | None = None
+    risk_priority: int | None = None
+    heritage_premium_pct: str | None = None
     notes: list[str] = Field(default_factory=list)
 
 
