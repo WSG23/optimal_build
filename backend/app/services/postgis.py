@@ -71,7 +71,19 @@ async def load_layers_for_zone(
         return list(result.scalars().all())
 
     if geometry_column is not None:
-        return [row[0] for row in result.all()]
+        cleaned: list[RefZoningLayer] = []
+        for row in result.all():
+            if isinstance(row, RefZoningLayer):
+                cleaned.append(row)
+                continue
+            if isinstance(row, tuple | list):  # type: ignore[arg-type]
+                candidate = row[0] if row else None
+            else:
+                mapping = getattr(row, "_mapping", None)
+                candidate = next(iter(mapping.values()), None) if mapping else None
+            if isinstance(candidate, RefZoningLayer):
+                cleaned.append(candidate)
+        return cleaned
     return list(result.scalars().all())
 
 

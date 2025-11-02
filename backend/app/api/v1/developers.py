@@ -1601,7 +1601,10 @@ async def list_checklist_templates(
     templates = await DeveloperChecklistService.list_templates(
         session, development_scenario=development_scenario
     )
-    return [_serialize_checklist_template(template) for template in templates]
+    return [
+        _serialize_checklist_template(template).model_dump(by_alias=True)
+        for template in templates
+    ]
 
 
 @router.post(
@@ -1624,7 +1627,7 @@ async def create_checklist_template(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     await session.commit()
-    return _serialize_checklist_template(template)
+    return _serialize_checklist_template(template).model_dump(by_alias=True)
 
 
 @router.put(
@@ -1650,7 +1653,7 @@ async def update_checklist_template(
         raise HTTPException(status_code=404, detail="Template not found")
 
     await session.commit()
-    return _serialize_checklist_template(template)
+    return _serialize_checklist_template(template).model_dump(by_alias=True)
 
 
 @router.delete(
