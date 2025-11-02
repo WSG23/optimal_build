@@ -7,6 +7,7 @@ import {
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   Grid,
   Paper,
@@ -55,6 +56,8 @@ const EMPTY_ROI_SUMMARY: RoiSummary = {
   bestPaybackWeeks: null,
   projects: [],
 }
+
+const NOT_AVAILABLE_TEXT = 'Not available yet'
 
 export function BusinessPerformancePage() {
   const [deals, setDeals] = useState<DealSummary[]>([])
@@ -131,13 +134,16 @@ export function BusinessPerformancePage() {
     return Array.from(stageMap.values())
   }, [])
 
-  useEffect(() => {
-    const controller = new AbortController()
-    async function loadPipeline() {
+  const loadPipeline = useCallback(
+    async (controller?: AbortController) => {
+      const signal = controller?.signal
       try {
         setPipelineLoading(true)
         setPipelineError(null)
-        const fetchedDeals = await fetchDeals(controller.signal)
+        const fetchedDeals = await fetchDeals(signal)
+        if (signal?.aborted) {
+          return
+        }
         setDeals(fetchedDeals)
         setColumns(buildColumns(fetchedDeals))
         const firstDeal = fetchedDeals[0]
@@ -147,18 +153,31 @@ export function BusinessPerformancePage() {
           setSelectedDealId(null)
         }
       } catch (error) {
-        if ((error as { name?: string }).name === 'AbortError') {
+        if (signal?.aborted || (error as { name?: string }).name === 'AbortError') {
           return
         }
         console.error('Failed to load pipeline', error)
-        setPipelineError('Unable to load pipeline data.')
+        setPipelineError(
+          'We could not load your pipeline. Check your connection and try again.',
+        )
       } finally {
-        setPipelineLoading(false)
+        if (!signal?.aborted) {
+          setPipelineLoading(false)
+        }
       }
-    }
-    loadPipeline()
+    },
+    [buildColumns],
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadPipeline(controller)
     return () => controller.abort()
-  }, [buildColumns])
+  }, [loadPipeline])
+
+  const handlePipelineRetry = useCallback(() => {
+    void loadPipeline()
+  }, [loadPipeline])
 
   useEffect(() => {
     if (!selectedDealId) {
@@ -213,7 +232,7 @@ export function BusinessPerformancePage() {
           return
         }
         console.error('Failed to load deal details', error)
-        setDealError('Unable to load deal timeline or commissions.')
+        setDealError('We could not load deal history. Retry in a moment.')
         setTimeline([])
         setCommissions([])
       } finally {
@@ -375,7 +394,23 @@ export function BusinessPerformancePage() {
       </Grid>
 
       <Stack spacing={2} className="bp-page__alerts">
-        {pipelineError && <Alert severity="error">{pipelineError}</Alert>}
+        {pipelineError && (
+          <Alert
+            severity="error"
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={handlePipelineRetry}
+                disabled={pipelineLoading}
+              >
+                Retry
+              </Button>
+            }
+          >
+            {pipelineError}
+          </Alert>
+        )}
         {stageUpdateError && <Alert severity="warning">{stageUpdateError}</Alert>}
       </Stack>
 
@@ -475,7 +510,7 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
       label: 'Gross pipeline',
       value: snapshot.grossPipelineValue !== null
         ? currencyFormatter.format(snapshot.grossPipelineValue)
-        : '—',
+        : NOT_AVAILABLE_TEXT,
       helperText: 'All open opportunities, unweighted.',
     },
     {
@@ -483,7 +518,7 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
       label: 'Weighted pipeline',
       value: snapshot.weightedPipelineValue !== null
         ? currencyFormatter.format(snapshot.weightedPipelineValue)
-        : '—',
+        : NOT_AVAILABLE_TEXT,
       helperText: 'Weighted by confidence percentage.',
     },
     {
@@ -492,7 +527,7 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
       value:
         snapshot.conversionRate !== null
           ? `${(snapshot.conversionRate * 100).toFixed(1)}%`
-          : '—',
+          : NOT_AVAILABLE_TEXT,
     },
     {
       key: 'avgCycle',
@@ -500,7 +535,7 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
       value:
         snapshot.avgCycleDays !== null
           ? `${snapshot.avgCycleDays.toFixed(0)} days`
-          : '—',
+          : NOT_AVAILABLE_TEXT,
     },
     {
       key: 'confirmedCommission',
@@ -508,7 +543,7 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
       value:
         snapshot.confirmedCommissionAmount !== null
           ? currencyFormatter.format(snapshot.confirmedCommissionAmount)
-          : '—',
+          : NOT_AVAILABLE_TEXT,
     },
     {
       key: 'disputedCommission',
@@ -516,7 +551,7 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
       value:
         snapshot.disputedCommissionAmount !== null
           ? currencyFormatter.format(snapshot.disputedCommissionAmount)
-          : '—',
+          : NOT_AVAILABLE_TEXT,
     },
   ]
 }
@@ -553,7 +588,7 @@ function buildBenchmarks(
       label: 'Conversion rate',
       actual: conversion[0].valueNumeric !== null
         ? `${(conversion[0].valueNumeric * 100).toFixed(1)}%`
-        : conversion[0].valueText ?? '—',
+        : conversion[0].valueText ?? NOT_AVAILABLE_TEXT,
       benchmark:
         conversion[1]?.valueNumeric !== null
           ? `${(conversion[1].valueNumeric * 100).toFixed(1)}%`
@@ -569,7 +604,7 @@ function buildBenchmarks(
       actual:
         cycle[0].valueNumeric !== null
           ? `${cycle[0].valueNumeric.toFixed(0)} days`
-          : cycle[0].valueText ?? '—',
+          : cycle[0].valueText ?? NOT_AVAILABLE_TEXT,
       benchmark:
         cycle[1]?.valueNumeric !== null
           ? `${cycle[1].valueNumeric.toFixed(0)} days`
@@ -590,7 +625,7 @@ function buildBenchmarks(
       actual:
         pipeline[0].valueNumeric !== null
           ? currencyFormatter.format(pipeline[0].valueNumeric)
-          : pipeline[0].valueText ?? '—',
+          : pipeline[0].valueText ?? NOT_AVAILABLE_TEXT,
       benchmark:
         pipeline[1]?.valueNumeric !== null
           ? currencyFormatter.format(pipeline[1].valueNumeric)
@@ -650,7 +685,7 @@ function totalWeightedPipeline(columns: PipelineColumn[]): number | null {
 
 function formatCurrency(value: number | null) {
   if (value === null) {
-    return '—'
+    return NOT_AVAILABLE_TEXT
   }
   return new Intl.NumberFormat('en-SG', {
     style: 'currency',

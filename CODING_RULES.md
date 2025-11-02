@@ -1118,6 +1118,39 @@ Blocks commits until violations are fixed.
 
 ---
 
+**Rule 12.2: Production UI Quality Standards**
+
+**All frontend UI in Phase 1 and Phase 2 is production-quality B2B software.**
+
+Context:
+- This is a B2B platform for commercial real estate professionals
+- Users: Agents, Developers, Architects, Engineers
+- UI must be professional, polished, and user-friendly
+- The "test harness" concept was dropped in October 2025
+
+**Requirements for all frontend work:**
+- ✅ Professional error handling and loading states
+- ✅ User-friendly UX with clear feedback
+- ✅ Responsive design (desktop focus)
+- ✅ Material-UI consistency across components
+- ✅ Form validation and input sanitization
+- ✅ Manual QA testing before marking complete (Rule 12.1)
+
+**Why this matters:**
+- Oct 11, 2025: An AI agent misinterpreted "test harness" (testing framework issues)
+  as meaning frontend UI was temporary throwaway code
+- Created docs/planning/ui-status.md stating "ALL files in frontend/ are TEMPORARY"
+- This incorrect framing persisted until Nov 2, 2025
+- Led to confusion about UI quality expectations
+
+**What "test harness" actually means:**
+- Testing framework limitations (JSDOM timing, React Testing Library quirks)
+- NOT the production UI itself
+
+**Reference:** See frontend/README_AI_AGENTS.md for detailed frontend guidelines.
+
+---
+
 ## Questions?
 
 If a rule is unclear or seems wrong for a specific case:

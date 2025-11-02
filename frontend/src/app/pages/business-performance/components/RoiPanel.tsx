@@ -18,6 +18,8 @@ interface RoiPanelProps {
   summary: RoiSummary
 }
 
+const ROI_NOT_AVAILABLE = 'Not available yet'
+
 export function RoiPanel({ summary }: RoiPanelProps) {
   return (
     <Paper elevation={0} className="bp-roi">
@@ -39,7 +41,7 @@ export function RoiPanel({ summary }: RoiPanelProps) {
             value={
               summary.totalReviewHoursSaved !== null
                 ? `${summary.totalReviewHoursSaved.toFixed(1)}h`
-                : '—'
+                : ROI_NOT_AVAILABLE
             }
           />
         </Grid>
@@ -58,7 +60,11 @@ export function RoiPanel({ summary }: RoiPanelProps) {
         <Grid item xs={6} sm={4}>
           <RoiStat
             label="Best payback"
-            value={summary.bestPaybackWeeks !== null ? `${summary.bestPaybackWeeks} weeks` : '—'}
+            value={
+              summary.bestPaybackWeeks !== null
+                ? `${summary.bestPaybackWeeks} weeks`
+                : ROI_NOT_AVAILABLE
+            }
           />
         </Grid>
       </Grid>
@@ -97,7 +103,7 @@ export function RoiPanel({ summary }: RoiPanelProps) {
                       {formatPercent(project.acceptanceRate)}
                     </TableCell>
                     <TableCell align="right">
-                      {project.paybackWeeks ? `${project.paybackWeeks}w` : '—'}
+                      {project.paybackWeeks ? `${project.paybackWeeks}w` : ROI_NOT_AVAILABLE}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -116,25 +122,37 @@ interface RoiStatProps {
 }
 
 function RoiStat({ label, value }: RoiStatProps) {
+  const displayValue = value
+  const isPending = displayValue === ROI_NOT_AVAILABLE
   return (
-    <Card variant="outlined" className="bp-roi__stat">
+    <Card
+      variant="outlined"
+      className={`bp-roi__stat${isPending ? ' bp-roi__stat--pending' : ''}`}
+    >
       <CardContent>
         <Typography variant="overline" color="text.secondary">
           {label}
         </Typography>
-        <Typography variant="h6">{value}</Typography>
+        <Typography variant="h6" className="bp-roi__stat-value">
+          {displayValue}
+        </Typography>
+        {isPending && (
+          <Typography variant="caption" color="text.secondary">
+            Metrics will appear after your first automation run.
+          </Typography>
+        )}
       </CardContent>
     </Card>
   )
 }
 
 function formatNumber(value: number | null, suffix: string = '') {
-  if (value === null || Number.isNaN(value)) return '—'
+  if (value === null || Number.isNaN(value)) return ROI_NOT_AVAILABLE
   return `${value.toFixed(1)}${suffix}`
 }
 
 function formatPercent(value: number | null, absolute = false) {
-  if (value === null || Number.isNaN(value)) return '—'
+  if (value === null || Number.isNaN(value)) return ROI_NOT_AVAILABLE
   const normalized = absolute ? value : value * 100
   return `${normalized.toFixed(1)}%`
 }

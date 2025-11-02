@@ -212,7 +212,7 @@ export function AnalyticsPanel({
 
 function formatTooltipValue(value: number | null, name: string) {
   if (value === null || value === undefined) {
-    return ['—', name]
+    return ['Not available yet', name]
   }
   if (name.includes('pipeline')) {
     return [`${value.toFixed(1)}m`, name]

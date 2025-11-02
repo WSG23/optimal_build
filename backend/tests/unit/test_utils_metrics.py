@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import timedelta
 
 import pytest
 
@@ -27,7 +26,9 @@ def test_counter_value_with_labels() -> None:
     metrics.reset_metrics()
     metrics.REQUEST_COUNTER.labels(endpoint="/deals").inc()
     metrics.REQUEST_COUNTER.labels(endpoint="/deals").inc(3)
-    assert metrics.counter_value(metrics.REQUEST_COUNTER, {"endpoint": "/deals"}) == pytest.approx(4.0)
+    assert metrics.counter_value(
+        metrics.REQUEST_COUNTER, {"endpoint": "/deals"}
+    ) == pytest.approx(4.0)
 
 
 def test_histogram_percentile_from_observations() -> None:

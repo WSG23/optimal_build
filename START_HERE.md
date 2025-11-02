@@ -2,14 +2,13 @@
 
 **New to this project? Read these files IN ORDER:**
 
-1. **docs/planning/ui-status.md** - ⚠️ **READ FIRST** - Frontend UI status (CRITICAL: prevents wasted work)
-2. **docs/planning/features.md** - What we're building (full feature specification)
-3. **docs/ROADMAP.MD** - Current status (**START with "📊 Current Progress Snapshot"**)
-4. **docs/audits/PRE-PHASE-2D-AUDIT.MD** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
-5. **docs/WORK_QUEUE.MD** - ⚠️ **IMPORTANT** - Active task list & technical debt follow-ups
-6. **docs/ai-agents/next_steps.md** - How to choose your next task (decision tree)
-7. **docs/development/testing/known-issues.md** - Known test issues (read BEFORE testing to avoid wasting time)
-8. **docs/ai-agents/claude.md** - Coding guidelines and mandatory workflows
+1. **docs/planning/features.md** - What we're building (full feature specification)
+2. **docs/ROADMAP.MD** - Current status (**START with "📊 Current Progress Snapshot"**)
+3. **docs/audits/PRE-PHASE-2D-AUDIT.MD** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
+4. **docs/WORK_QUEUE.MD** - ⚠️ **IMPORTANT** - Active task list & technical debt follow-ups
+5. **docs/ai-agents/next_steps.md** - How to choose your next task (decision tree)
+6. **docs/development/testing/known-issues.md** - Known test issues (read BEFORE testing to avoid wasting time)
+7. **docs/ai-agents/claude.md** - Coding guidelines and mandatory workflows
 
 ---
 
@@ -90,29 +89,28 @@ This section lists ALL 20 instruction and reference files in this repository. Th
 
 ### 🎯 Core AI Agent Instructions (Must Read - Listed Above)
 1. ✅ **START_HERE.md** (this file) - Entry point and reading order
-2. ✅ **docs/planning/ui-status.md** - Frontend UI status and warnings
-3. ✅ **docs/planning/features.md** - Complete feature specifications
-4. ✅ **docs/ROADMAP.MD** - Project roadmap and current status
-5. ✅ **docs/ai-agents/next_steps.md** - Task decision guide
-6. ✅ **docs/development/testing/known-issues.md** - Known test harness issues (not bugs)
-7. ✅ **docs/ai-agents/claude.md** - Claude-specific instructions and workflows
-8. ✅ **docs/ai-agents/codex.md** - Codex-specific instructions and mandatory testing checklist
+2. ✅ **docs/planning/features.md** - Complete feature specifications
+3. ✅ **docs/ROADMAP.MD** - Project roadmap and current status
+4. ✅ **docs/ai-agents/next_steps.md** - Task decision guide
+5. ✅ **docs/development/testing/known-issues.md** - Known test harness issues (not bugs)
+6. ✅ **docs/ai-agents/claude.md** - Claude-specific instructions and workflows
+7. ✅ **docs/ai-agents/codex.md** - Codex-specific instructions and mandatory testing checklist
 
 ### 📋 Additional Reference Files (Read When Relevant)
-9. **docs/WORK_QUEUE.MD** - AI agent work queue (active tasks only)
-10. **docs/archive/TECHNICAL_DEBT.MD** - Historical technical debt inventory (for context only)
-11. **docs/handoff_playbook.md** - Session handoff guide and status snapshot
-12. **CODING_RULES.md** - 8 mandatory coding rules (enforced by CI)
-13. **CONTRIBUTING.md** - Git workflow, PR process, code review
-14. **docs/development/testing/advisory.md** - Testing best practices
-15. **docs/development/testing/summary.md** - Testing strategy overview
-16. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
-17. **docs/validation/live_testing_guide.md** - Manual/UAT testing procedures
-18. **docs/development/testing/overview.md** - Feature testing checklist
-19. **docs/planning/roadmap.md** - High-level project roadmap
-20. **frontend/README_AI_AGENTS.md** - ⚠️ Critical warnings about frontend test harnesses
-21. **docs/SOLO_FOUNDER_GUIDE.md** - Solo founder workflow with AI agents
-22. **docs/reviewer_sop.md** - Code review procedures
+8. **docs/WORK_QUEUE.MD** - AI agent work queue (active tasks only)
+9. **docs/archive/TECHNICAL_DEBT.MD** - Historical technical debt inventory (for context only)
+10. **docs/handoff_playbook.md** - Session handoff guide and status snapshot
+11. **CODING_RULES.md** - Mandatory coding rules (enforced by CI)
+12. **CONTRIBUTING.md** - Git workflow, PR process, code review
+13. **docs/development/testing/advisory.md** - Testing best practices
+14. **docs/development/testing/summary.md** - Testing strategy overview
+15. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
+16. **docs/validation/live_testing_guide.md** - Manual/UAT testing procedures
+17. **docs/development/testing/overview.md** - Feature testing checklist
+18. **docs/planning/roadmap.md** - High-level project roadmap
+19. **frontend/README_AI_AGENTS.md** - Frontend development guidelines
+20. **docs/SOLO_FOUNDER_GUIDE.md** - Solo founder workflow with AI agents
+21. **docs/reviewer_sop.md** - Code review procedures
 
 ### 📖 Supporting Documentation (Not Instructions)
 - **README.md** - General project overview

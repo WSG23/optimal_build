@@ -8,9 +8,9 @@
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
-    color-scheme: light dark;
-    color: rgba(0, 0, 0, 0.87);
-    background-color: #ffffff;
+    color-scheme: only light;
+    color: #0f172a;
+    background-color: #e2e8f0;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -20,19 +20,18 @@
 
 body {
     margin: 0;
-    padding: 2rem 0;
     min-height: 100vh;
     background: linear-gradient(135deg, #e2e8f0, #f8fafc);
-    display: flex;
-    justify-content: center;
 }
 
 #root {
     width: 100%;
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    text-align: left;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
 }
 
 a {
@@ -2851,6 +2850,9 @@ h3 {
     box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
     position: relative;
     isolation: isolate;
+    width: 100%;
+    max-width: 1440px;
+    flex: 1 1 auto;
 }
 
 .app-shell__sidebar {
@@ -3030,14 +3032,16 @@ h3 {
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(129, 140, 248, 0.16));
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .bp-summary-card__label {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08rem;
-    color: #4338ca;
+    color: #1e3a8a;
 }
 
 .bp-summary-card__value {
@@ -3417,14 +3421,14 @@ h3 {
 }
 
 .bp-roi {
-    background: rgba(15, 23, 42, 0.92);
-    color: rgba(248, 250, 252, 0.92);
+    background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);
+    color: #0f172a;
     border-radius: 1.1rem;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
 }
 
 .bp-roi__header h3 {
@@ -3433,7 +3437,7 @@ h3 {
 
 .bp-roi__header p {
     margin: 0;
-    color: rgba(226, 232, 240, 0.75);
+    color: #475569;
     font-size: 0.85rem;
 }
 
@@ -3444,51 +3448,62 @@ h3 {
 }
 
 .bp-roi__stat {
-    background: rgba(30, 64, 175, 0.35);
+    background: #ffffff;
     border-radius: 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
     padding: 0.75rem 0.85rem;
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
 }
 
 .bp-roi__stat span {
     font-size: 0.75rem;
     letter-spacing: 0.05rem;
     text-transform: uppercase;
-    color: rgba(226, 232, 240, 0.8);
+    color: #475569;
 }
 
-.bp-roi__stat strong {
-    font-size: 1.1rem;
+.bp-roi__stat-value {
+    color: #0f172a;
+    font-size: 1.2rem;
     font-weight: 600;
-    color: #f8fafc;
+}
+
+.bp-roi__stat--pending {
+    border-style: dashed;
+    background: rgba(148, 163, 184, 0.12);
+}
+
+.bp-roi__stat--pending .bp-roi__stat-value {
+    color: #475569;
 }
 
 .bp-roi__projects table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
 }
 
 .bp-roi__projects th,
 .bp-roi__projects td {
-    padding: 0.5rem 0.75rem;
+    padding: 0.6rem 0.75rem;
     text-align: left;
 }
 
 .bp-roi__projects thead {
-    color: rgba(226, 232, 240, 0.68);
+    color: #475569;
     text-transform: uppercase;
     letter-spacing: 0.08rem;
 }
 
 .bp-roi__projects tbody tr:nth-child(even) {
-    background: rgba(226, 232, 240, 0.05);
+    background: rgba(148, 163, 184, 0.12);
 }
 
 .bp-roi__projects tbody tr {
-    border-bottom: 1px solid rgba(226, 232, 240, 0.12);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .bp-page__placeholder .bp-placeholder {
@@ -3550,17 +3565,6 @@ h3 {
     border-radius: 0.9rem;
     border: 1px solid rgba(148, 163, 184, 0.18);
     margin-bottom: 0.75rem;
-}
-
-.bp-roi {
-    background: #ffffff;
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    border-radius: 1.1rem;
-    color: #1f2937;
-}
-
-.bp-roi__projects table {
-    width: 100%;
 }
 
 .bp-placeholder p {

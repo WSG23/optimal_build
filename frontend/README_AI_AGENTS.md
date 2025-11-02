@@ -1,70 +1,70 @@
 # ⚠️ FRONTEND README FOR AI AGENTS
 
-## 🚨 STOP - Read This Before Touching Any Frontend Code
+## 🚨 CRITICAL: Production UI Expectations
 
-**ALL files in `frontend/` are TEMPORARY TEST HARNESSES.**
+**ALL frontend UI in Phase 1 and Phase 2 is PRODUCTION-QUALITY B2B SOFTWARE.**
 
 ### Critical Facts
 
-1. **These UIs were created by AI agents (Claude/Codex) for manual testing**
-2. **Product owner was NOT involved in any UI design decisions**
-3. **These are NOT production interfaces for customers**
-4. **These WILL be replaced when actual product UI design happens**
+1. **This is a B2B platform for commercial real estate professionals**
+2. **Users are Agents, Developers, Architects, and Engineers**
+3. **UI must be professional, polished, and user-friendly**
+4. **Manual QA testing is MANDATORY before marking phases complete** (see CODING_RULES.md Rule 12.1)
 
 ### What This Means
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  DO NOT POLISH ANYTHING IN frontend/                  │
+│  PRODUCTION-QUALITY UI REQUIREMENTS:                   │
 │                                                         │
-│  - No offline fallback logic                           │
-│  - No professional error handling                      │
-│  - No UX improvements                                  │
-│  - No accessibility work                               │
-│  - No responsive design                                │
-│  - No performance optimizations                        │
+│  ✅ Professional error handling                        │
+│  ✅ User-friendly UX                                   │
+│  ✅ Responsive design (desktop focus)                  │
+│  ✅ Material-UI consistency                            │
+│  ✅ Proper loading states                              │
+│  ✅ Form validation                                    │
 └────────────────────────────────────────────────────────┘
 ```
 
 ### Purpose of frontend/
 
-**Only purpose:** Let product owner manually test that backend APIs work
+**Purpose:** Provide production B2B interfaces for commercial real estate workflows
 
-**That's it. Nothing more.**
+**Quality bar:** Professional software that users will rely on for their business operations
 
 ### What To Do If You See Frontend Errors
 
-**Option A (Preferred):** Document in TESTING_KNOWN_ISSUES.md and move on
+**Option A:** Fix bugs and verify with manual testing
 
-**Option B:** Ask product owner if they want minimal fix
+**Option B:** Document in TESTING_KNOWN_ISSUES.md if it's a test framework limitation (not app bug)
 
-**Option C (NEVER):** Apply professional tool standards, add offline modes, implement graceful degradation
+**Option C:** Ask product owner for UX/design guidance if requirements are unclear
 
-### Before ANY Frontend Work
+### Before Marking UI Work Complete
 
-**Read [ui-status.md](../docs/planning/ui-status.md) at repository root.**
+**MANDATORY:** Execute manual QA checklist (see `docs/development/testing/phase-*-manual-qa-checklist.md`)
 
-That document explains in detail why polishing test UI wastes time.
+Rule 12.1 in CODING_RULES.md enforces this requirement.
 
 ---
 
 ## File List
 
-All files in this directory are temporary test harnesses:
+Production UI components and infrastructure:
 
-- `src/pages/*.tsx` - Test pages for manual API verification
-- `src/api/*.ts` - API client wrappers (may be reused)
-- `src/components/*.tsx` - UI components (temporary)
-- `src/hooks/*.ts` - React hooks (may be reused)
-- `src/i18n/*.json` - Translations (temporary)
-- `*.css` - Styling (temporary)
+- `src/pages/*.tsx` - Production UI pages for B2B workflows
+- `src/api/*.ts` - API client wrappers
+- `src/components/*.tsx` - Reusable UI components
+- `src/hooks/*.ts` - React hooks
+- `src/i18n/*.json` - Internationalization (English/Japanese)
+- `*.css` - Production styling
 
-**Only `src/api/*.ts` and `src/hooks/*.ts` might survive to production. Everything else is throwaway code.**
+**All code should meet production quality standards.**
 
 ---
 
 ## Remember
 
-**Backend work has business value. Test UI polish does not.**
+**Both backend and frontend work have business value.**
 
-Focus on Phase 1D backend work (see [docs/ROADMAP.MD](../docs/ROADMAP.MD) and task priority in [docs/WORK_QUEUE.MD](../docs/WORK_QUEUE.MD)).
+All UI must be professional, polished, and user-friendly for B2B users (see CODING_RULES.md Rule 12.2).

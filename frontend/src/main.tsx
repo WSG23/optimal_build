@@ -130,7 +130,15 @@ const router = createBrowserRouter([
     element: businessPerformanceElement,
   },
   {
+    path: '/agents/performance',
+    element: businessPerformanceElement,
+  },
+  {
     path: '/app/gps-capture',
+    element: gpsCaptureElement,
+  },
+  {
+    path: '/agents/site-capture',
     element: gpsCaptureElement,
   },
   {
@@ -138,7 +146,15 @@ const router = createBrowserRouter([
     element: marketingElement,
   },
   {
+    path: '/agents/marketing',
+    element: marketingElement,
+  },
+  {
     path: '/app/advisory',
+    element: advisoryElement,
+  },
+  {
+    path: '/agents/advisory',
     element: advisoryElement,
   },
   {
@@ -146,7 +162,15 @@ const router = createBrowserRouter([
     element: integrationsElement,
   },
   {
+    path: '/agents/integrations',
+    element: integrationsElement,
+  },
+  {
     path: '/app/site-acquisition',
+    element: siteAcquisitionElement,
+  },
+  {
+    path: '/developers/site-acquisition',
     element: siteAcquisitionElement,
   },
   {
@@ -158,7 +182,15 @@ const router = createBrowserRouter([
     element: developerFeasibilityElement,
   },
   {
+    path: '/developers/asset-feasibility',
+    element: developerFeasibilityElement,
+  },
+  {
     path: '/app/financial-control',
+    element: financialControlElement,
+  },
+  {
+    path: '/developers/financial-control',
     element: financialControlElement,
   },
   {

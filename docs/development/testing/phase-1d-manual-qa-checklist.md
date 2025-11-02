@@ -9,15 +9,15 @@
 
 ## ⚠️ Important Context
 
-**This UI is a TEST HARNESS, not production UI.**
+**This is PRODUCTION B2B UI for commercial real estate professionals.**
 
-Per [docs/planning/ui-status.md](../../planning/ui-status.md):
-- UI was created by AI agents for manual API verification
-- NOT designed for end-users
-- Focus on **functionality**, not polish
-- Document issues, but don't over-invest in fixes
+Per CODING_RULES.md Rule 12.2:
+- UI must be professional, polished, and user-friendly
+- Users: Agents, Developers, Architects, Engineers
+- Material-UI consistency required
+- All backend APIs must work correctly
 
-**QA Goal:** Verify backend APIs work correctly via the UI test harness.
+**QA Goal:** Verify production-quality UI and backend APIs meet professional standards.
 
 ---
 
@@ -324,9 +324,9 @@ Based on [docs/phase_1d_business_performance_design.md](../../phase_1d_business_
 
 **Expected:**
 - [ ] No hard crashes (white screen of death)
-- [ ] Error messages display (even if basic)
+- [ ] Professional error messages display to user
 - [ ] Console logs API errors (for debugging)
-- [ ] **Note:** Per ui-status.md, professional error handling is NOT required for test harness
+- [ ] User-friendly error recovery options (e.g., "Retry" button)
 
 **Actual:** _______________
 
@@ -334,17 +334,15 @@ Based on [docs/phase_1d_business_performance_design.md](../../phase_1d_business_
 
 ---
 
-## 🐛 Known Issues (Expected)
+## 🐛 Known Issues
 
-From [docs/planning/ui-status.md](../../planning/ui-status.md), the following are **ACCEPTABLE** for test UI:
+Document any bugs or limitations found during testing:
 
-- ❌ No offline fallback logic → Expected
-- ❌ Basic error handling only → Expected
-- ❌ No loading animations → Expected
-- ❌ Limited accessibility features → Expected
-- ❌ No internationalization → Expected
+**Testing Framework Issues (not app bugs):**
+- See [docs/development/testing/known-issues.md](known-issues.md) for JSDOM/React Testing Library limitations
 
-**These are NOT blocking issues.** Document them, but don't fix unless they block API testing.
+**Application Issues:**
+- Document any production UI bugs found during manual QA here
 
 ---
 
@@ -392,19 +390,19 @@ From [docs/planning/ui-status.md](../../planning/ui-status.md), the following ar
 
 **If PARTIAL (Non-Critical Issues):**
 - [ ] Document non-blocking issues for future reference
-- [ ] Proceed with Phase 1D completion
-- [ ] Note issues will be addressed in real UI design phase
+- [ ] Assess whether issues impact user experience
+- [ ] Decide with product owner whether to fix before completion
 
 ---
 
 ## 🔗 Related Documentation
 
 - [Phase 1D Design Doc](../../phase_1d_business_performance_design.md)
-- [UI Status Warning](../../planning/ui-status.md)
+- [CODING_RULES.md](../../../CODING_RULES.md) - Rule 12.1 (Manual QA requirement), Rule 12.2 (Production UI standards)
 - [ROADMAP.MD](../../ROADMAP.MD)
 - [WORK_QUEUE.MD](../../WORK_QUEUE.MD)
 - PR #275 (Phase 1D UI implementation)
 
 ---
 
-**Remember:** This is a test harness to verify backend APIs work. Focus on functionality, not polish.
+**Remember:** This is production B2B software. UI must be professional and user-friendly.
