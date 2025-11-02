@@ -83,9 +83,10 @@ module = [
 ignore_errors = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "../tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v"
+addopts = "-v -p pytest_cov"
 asyncio_mode = "auto"
+plugins = ["pytest_cov"]

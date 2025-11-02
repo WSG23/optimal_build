@@ -415,6 +415,11 @@ class Select:
     def distinct(self, *args: Any, **kwargs: Any) -> Select:  # noqa: ARG002
         return self
 
+    def add_columns(self, *columns: Any) -> Select:
+        new = self._clone()
+        new.entities = tuple(list(new.entities) + list(columns))
+        return new
+
 
 def select(*entities: Any) -> Select:
     return Select(entities)
@@ -526,6 +531,13 @@ class _Result:
     def scalar_one(self) -> Any:
         if not self._values:
             raise LookupError("No result")
+        return self._values[0]
+
+    def one(self) -> Any:
+        if not self._values:
+            raise LookupError("No row was returned")
+        if len(self._values) > 1:
+            raise LookupError("Multiple rows were returned")
         return self._values[0]
 
     def scalars(self) -> _Result:
@@ -925,6 +937,18 @@ sql_module.func = func  # type: ignore[attr-defined]
 sql_module.text = text  # type: ignore[attr-defined]
 
 sys.modules["sqlalchemy.sql"] = sql_module
+
+
+schema_module = ModuleType("sqlalchemy.sql.schema")
+schema_module.Column = Column  # type: ignore[attr-defined]
+schema_module.Table = Table  # type: ignore[attr-defined]
+schema_module.MetaData = MetaData  # type: ignore[attr-defined]
+schema_module.ForeignKey = ForeignKey  # type: ignore[attr-defined]
+schema_module.UniqueConstraint = UniqueConstraint  # type: ignore[attr-defined]
+schema_module.CheckConstraint = CheckConstraint  # type: ignore[attr-defined]
+schema_module.Index = Index  # type: ignore[attr-defined]
+
+sys.modules["sqlalchemy.sql.schema"] = schema_module
 
 
 exc_module = ModuleType("sqlalchemy.exc")

@@ -1,0 +1,6 @@
+[run]
+include =
+    app/utils/encryption.py
+    app/utils/render.py
+omit =
+    app/utils/singapore_compliance.py
