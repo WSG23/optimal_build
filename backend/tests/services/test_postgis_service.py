@@ -135,3 +135,108 @@ def test_postgis_service_facade(monkeypatch):
     assert asyncio.run(service.parcel_area(parcel="parcel")) == 10
     assert asyncio.run(service.load_layers_for_zone("SG:zone")) == ["SG:zone"]
     assert calls == {"parcel": "parcel", "zone": "SG:zone"}
+
+
+def test_coerce_float_with_none():
+    """Test _coerce_float with None input."""
+    assert postgis._coerce_float(None) is None
+
+
+def test_coerce_float_with_invalid_int():
+    """Test _coerce_float with int that can't be converted."""
+    # This is a degenerate case - ints/floats typically convert fine
+    # but the code has defensive logic for TypeError/ValueError
+    assert postgis._coerce_float(42) == 42.0
+
+
+def test_coerce_float_with_string_that_fails():
+    """Test _coerce_float with string that can't be converted to float."""
+    assert postgis._coerce_float("not-a-number") is None
+
+
+def test_coerce_float_with_object_that_fails():
+    """Test _coerce_float with object that raises on float conversion."""
+
+    class BadObject:
+        def __str__(self):
+            raise ValueError("cannot convert")
+
+    assert postgis._coerce_float(BadObject()) is None
+
+
+@pytest.mark.asyncio
+async def test_parcel_area_with_none_parcel(monkeypatch):
+    """Test parcel_area when parcel is None."""
+    result = await postgis.parcel_area(None, None)
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_parcel_area_fallback_on_none_area_from_query(monkeypatch):
+    """Test parcel_area fallback when PostGIS query returns None."""
+    parcel = RefParcel(id=6, area_m2=100.0)
+
+    class StubSession:
+        async def scalar(self, stmt):
+            return None
+
+    monkeypatch.setattr(postgis.RefParcel, "geometry", object())
+
+    result = await postgis.parcel_area(StubSession(), parcel)
+    assert result == pytest.approx(100.0)
+
+
+@pytest.mark.asyncio
+async def test_parcel_area_fallback_on_invalid_area_type(monkeypatch):
+    """Test parcel_area fallback when area can't be converted to float."""
+    parcel = RefParcel(id=7, area_m2=200.0)
+
+    class BadValue:
+        def __float__(self):
+            raise ValueError("bad value")
+
+    class StubSession:
+        async def scalar(self, stmt):
+            return BadValue()
+
+    monkeypatch.setattr(postgis.RefParcel, "geometry", object())
+
+    result = await postgis.parcel_area(StubSession(), parcel)
+    assert result == pytest.approx(200.0)
+
+
+@pytest.mark.asyncio
+async def test_load_layers_with_geometry_tuple_format(monkeypatch):
+    """Test load_layers_for_zone with tuple-formatted rows."""
+    layer = RefZoningLayer(id=8, zone_code="SG:mixed")
+
+    class StubSession:
+        async def execute(self, stmt):
+            # Return row as tuple (common SQLAlchemy format)
+            return _FakeExecuteResult(rows=[(layer, "geometry_column")])
+
+    monkeypatch.setattr(postgis.RefZoningLayer, "geometry", literal_column("geom"))
+
+    rows = await postgis.load_layers_for_zone(StubSession(), "SG:mixed")
+    assert rows == [layer]
+
+
+@pytest.mark.asyncio
+async def test_load_layers_with_geometry_mapping_format(monkeypatch):
+    """Test load_layers_for_zone with _mapping attribute (Row objects)."""
+    layer = RefZoningLayer(id=9, zone_code="SG:park")
+
+    class RowObject:
+        def __init__(self, mapping):
+            self._mapping = mapping
+
+    class StubSession:
+        async def execute(self, stmt):
+            # Return row as object with _mapping attribute
+            row_obj = RowObject({RefZoningLayer: layer, "geom": "geometry_data"})
+            return _FakeExecuteResult(rows=[row_obj])
+
+    monkeypatch.setattr(postgis.RefZoningLayer, "geometry", literal_column("geom"))
+
+    rows = await postgis.load_layers_for_zone(StubSession(), "SG:park")
+    assert rows == [layer]
