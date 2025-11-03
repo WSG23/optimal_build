@@ -1188,6 +1188,61 @@ the enforcement counterpart to Rule 12.1/12.2.
 CI cannot replace this. Manual UI QA is required because the product is a
 production B2B app, and our end users expect polished, professional workflows.
 
+### 12.4 QA Checklist Completion Workflow (MANDATORY - AI AGENTS READ THIS)
+
+**Problem this solves:** Phase 1D was marked COMPLETE on Nov 1, 2025, but the
+manual QA checklist status was never updated from "READY FOR QA" to "COMPLETED".
+This violated the completion workflow and left documentation inconsistent.
+
+**For Solo Founders with AI Agents:** You cannot remember every step. This rule
+automates enforcement so AI agents MUST complete the full workflow.
+
+**MANDATORY workflow when executing manual QA:**
+
+1. **Before starting QA:** Checklist status should be `✅ READY FOR QA`
+2. **During QA:** Update test results in checklist (mark tests as Pass/Fail)
+3. **After QA execution:** AI agents MUST complete these steps IN ORDER:
+
+   a. **Update checklist status header** (line ~5 in checklist file):
+      - Change from: `**Status:** ✅ READY FOR QA`
+      - Change to: `**Status:** ✅ QA COMPLETE (YYYY-MM-DD)` or `**Status:** ✅ ARCHIVED (YYYY-MM-DD)`
+
+   b. **Complete "Next Steps" section** at end of checklist:
+      - If PASS: Check the boxes for updating WORK_QUEUE.MD and ROADMAP.MD
+      - If FAIL: Document issues and create fix tasks
+      - If PARTIAL: Document decision with product owner notes
+
+   c. **Update WORK_QUEUE.MD** (if not already done):
+      - Move phase item from "Ready" to "Completed" section
+      - Add completion date and QA status
+
+   d. **Update ROADMAP.MD** (if not already done):
+      - Ensure phase is marked `✅ COMPLETE` in Phase Overview table
+      - Ensure gate checkbox is checked `[x]` in Phase Gate Checklist
+
+   e. **Git commit** with message referencing QA completion:
+      - Example: `docs: complete Phase 1D manual QA checklist and archive`
+
+**What gets enforced:**
+- Pre-commit hook verifies checklist status is not `READY FOR QA` when phase is COMPLETE
+- Pre-commit hook verifies "Next Steps" section has at least one checkbox checked
+- Pre-commit hook verifies WORK_QUEUE.MD and ROADMAP.MD consistency
+
+**Example violation caught:**
+```
+RULE VIOLATION: Phase 1D marked '✅ COMPLETE' in ROADMAP.MD
+  -> But manual QA checklist status still says: '✅ READY FOR QA'
+  -> Checklist must be updated to: '✅ QA COMPLETE (2025-11-02)' or '✅ ARCHIVED (2025-11-02)'
+  -> Rule 12.4: Complete the QA checklist workflow
+  -> Update docs/development/testing/phase-1d-manual-qa-checklist.md line 5
+```
+
+**Why this matters for solo founders:**
+- AI agents work autonomously and may skip cleanup steps
+- You cannot manually track every documentation update
+- Automated enforcement ensures consistency without human oversight
+- Prevents "partial completion" where work is done but not documented properly
+
 ---
 
 ## 13. Python Import Safety (CRITICAL)

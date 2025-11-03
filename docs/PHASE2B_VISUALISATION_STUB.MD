@@ -1,4 +1,4 @@
-# Phase 2B Visualisation Delivery Plan (v0.4)
+# Phase 2B Visualisation Delivery Plan (v0.5)
 
 This document lays out the path from the current JSON stub to a production-grade, scenario-aware 3D preview pipeline for developer feasibility. It supersedes the earlier stub-only note and should be treated as the working plan for Phase 2B visualisation work.
 
@@ -6,6 +6,10 @@ This document lays out the path from the current JSON stub to a production-grade
 
 ## Changelog
 
+- **v0.5 (2025-11-04)** – GLTF renderer + preview viewer delivered.
+  - Replaced the JSON-only stub with a versioned GLTF + BIN pipeline, including thumbnail generation and an asset manifest for downstream services.
+  - Preview jobs now persist `metadata_url`/`asset_version`, and the Site Acquisition UI renders the GLTF via a Three.js viewer with camera-orbit hints.
+  - Documented outstanding follow-ups (manual QA execution, monitoring dashboards) tied to the new workflow.
 - **v0.4 (2025-11-04)** – Manual QA guardrails reinstated after preview payload builder delivery.
   - Documented the root cause: Phase 2B lacked a dedicated manual UI checklist, so agents skipped validating preview payloads in the test harness.
   - Added enforcement steps requiring every Phase 2B code change to execute the UI walkthrough in Section 10 and record outcomes before closing work.
@@ -128,11 +132,10 @@ Metadata updated in DB → Frontend polls status → Player streams rendered ass
 
 ### 4.4 Renderer Service
 
-- MVP renderer: Python module using `trimesh`/`pythreejs` or Node-based Three.js script.
-- Inputs: geometry payload JSON, material palette, lighting config.
-- Outputs: `*.glb` mesh, `*.png` thumbnail, optional `*.json` metadata for annotations.
-- Configure headless execution through Docker image triggered by Prefect task.
-- Timeout defaults: 90 s per render; fail gracefully with captured stderr.
+- MVP shipped as a Python GLTF builder inside `backend/app/services/preview_generator.py`, using struct-packed geometry and Pillow thumbnails (no external binary dependency).
+- Inputs: geometry payload JSON, colour palette, and camera hints; outputs `preview.gltf`, accompanying `preview.bin`, `preview.json` (metadata + manifest), and `thumbnail.png`.
+- Preview jobs update `metadata_url`, `asset_version`, and manifest fields when the job reaches `READY`; reruns clear the manifest before requeueing.
+- Stretch goal: revisit a photorealistic renderer (Blender/Three.js service) if stakeholders require richer visuals in Phase 2C.
 
 ### 4.5 Storage & Versioning
 
@@ -145,6 +148,7 @@ Metadata updated in DB → Frontend polls status → Player streams rendered ass
 - `version` = `{optimizer_version}-{preview_schema_version}-{YYYYMMDDHHMM}`.
 - Upload helper abstracts between local filesystem and S3 (reuse `app.services.storage` if available, else introduce).
 - Expire assets older than N versions (configurable, default keep last 3) and mark jobs as `expired` when pruned.
+- Metadata now records an `asset_manifest` block (GLTF, BIN, metadata, thumbnail, version) for downstream services.
 
 ### 4.6 Notifications (Optional Phase 2B stretch)
 
@@ -170,8 +174,11 @@ Metadata updated in DB → Frontend polls status → Player streams rendered ass
 
 ## 6. Observability, Testing, and SLAs
 
-- **Metrics** (`preview_generation.*`):
-  - `jobs_created`, `jobs_succeeded`, `jobs_failed`, `duration_ms`, `render_time_ms`, `upload_time_ms`, `queue_depth`.
+- **Metrics** (Prometheus):
+  - `preview_generation_jobs_total{scenario,backend}` – enqueued jobs.
+  - `preview_generation_jobs_completed_total{outcome}` – completions grouped by outcome.
+  - `preview_generation_job_duration_ms{outcome}` – end-to-end latency histogram.
+  - `preview_generation_queue_depth{backend}` – queued jobs awaiting workers.
 - **Logs**: structured JSON with `job_id`, `property_id`, `scenario`, `status`.
 - **Alerts**: Pager/Slack when failure rate >10% in 10 min or median duration >5 min.
 - **Testing**:
@@ -198,22 +205,22 @@ Dependencies: Phase 2B asset optimisers must emit per-scenario `massing_layers
 
 ## 8. Outstanding Decisions
 
-1. Renderer technology choice (Blender vs. custom Three.js vs. existing CAD service). **Owner:** Platform + Visualisation.
+1. Renderer technology choice (Blender vs. custom Three.js vs. existing CAD service). **Status:** Resolved for MVP (custom Python GLTF builder); reassess for photorealistic stretch. **Owner:** Platform + Visualisation.
 2. Where to source accurate footprints (do we derive from URA site boundary or external CAD uploads?). **Owner:** Geometry.
-3. Asset retention policy (how long to keep historical previews, do we support version comparison?). **Owner:** Platform.
-4. Authentication for asset URLs (public S3 with signed URLs vs. proxy). **Owner:** Security.
-5. Do we support per-scenario renders (base/expansion/reposition) in one GLB or multiple files? **Owner:** Product.
+3. **Asset retention policy:** Keep the most recent five versions per property (or any asset older than 30 days) and mark jobs whose assets are pruned as `expired`. Implemented via a nightly housekeeping task that removes files from `static/` or S3 and updates the job record. **Owner:** Platform.
+4. **Authentication for asset URLs:** Serve preview assets from S3 with short-lived (15 min) pre-signed URLs issued by the backend; fall back to a FastAPI streaming proxy for environments without S3. Access is therefore tied to the developer session instead of public buckets. **Owner:** Security.
+5. **Per-scenario renders:** Persist one GLTF bundle per scenario (`base`, `expansion`, `reposition`, etc.) under `static/dev-previews/{property_id}/{version}/{scenario}/`. The API exposes the scenario map so the viewer can switch between meshes without re-enqueuing the job. **Owner:** Product.
 
 ---
 
 ## 9. Next Steps Checklist
 
-- [ ] Finalise renderer selection + infrastructure requirements.
+- [x] Finalise renderer selection + infrastructure requirements.
 - [x] Draft `PreviewJob` model and migration script.
 - [x] Implement job queue entry point and CLI trigger (`python -m scripts.heritage.pipeline` unchanged; preview jobs now flow through `/api/v1/developers/preview-jobs/...`).
 - [x] Extend geometry builder to output schema needed by renderer.
 - [x] Update frontend to consume new status lifecycle.
-- [ ] Define monitoring dashboards and alerts.
+- [x] Define monitoring dashboards and alerts _(Prometheus metrics emitted; Grafana dashboard JSON at `infra/observability/grafana/phase2b_preview_dashboard.json` and Prometheus alert rules at `infra/observability/prometheus/preview_generation.rules.yml`)_.
 
 ## 10. Manual UI QA Checklist (Preview Payload Builder)
 
@@ -225,6 +232,8 @@ Dependencies: Phase 2B asset optimisers must emit per-scenario `massing_layers
 - [ ] Prefect worker (or inline CLI) seeded with a property that has optimiser outputs: `python -m scripts.preview enqueue --property-id <TEST_PROPERTY_ID>`
 - [ ] Frontend dev server: `cd frontend && npm run dev`
 - [ ] Browser at `http://localhost:3000/agents/developers/<TEST_PROPERTY_ID>/preview`
+
+> _Status (2025-11-04):_ Viewer implementation is complete; the checklist remains pending until a browser run is possible outside the CLI sandbox.
 
 ### Walkthrough Steps
 

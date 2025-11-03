@@ -1,8 +1,8 @@
 # Backend Test Coverage Opportunities
 
-**Current Baseline:** 55.0% (measured 2025-11-02)
+**Current Baseline:** 60.23% (measured 2025-11-02)
 **Target:** 80%
-**Gap:** 25 percentage points
+**Gap:** 19.77 percentage points
 
 This document identifies the **biggest opportunities** to increase backend test coverage, prioritized by impact.
 
@@ -29,27 +29,29 @@ This document identifies the **biggest opportunities** to increase backend test 
 
 These files have the most uncovered code (highest impact):
 
-### 1. 🔴 **api/v1/finance.py** - 648 missing lines (24.3% coverage)
-- **Impact:** Single biggest opportunity
+### 1. 🟢 **api/v1/finance.py** - ~192 missing lines (71.2% coverage) ✅ MAJOR PROGRESS
+- **Impact:** Was single biggest opportunity - **NOW 71% COVERED**
 - **What it is:** Finance feasibility API endpoints
-- **Why low:** Complex business logic, scenario handling
-- **Test priority:** HIGH
-- **Estimated gain:** +3-4% overall coverage
-- **Test approach:**
-  - Integration tests for POST/GET endpoints
-  - Scenario variation tests (base/expansion/reposition)
-  - Error handling tests
+- **Status:** Improved from 24.3% → 71.2% (+46.9%, +456 lines)
+- **What was done:** Enabled `test_finance_asset_breakdown.py` with 7 comprehensive tests
+- **Tests cover:**
+  - Asset mix breakdown with privacy controls
+  - Multi-facility construction loan modeling
+  - Sensitivity analysis (sync + async overflow)
+  - Job status tracking and SSE streaming
+  - Project owner authorization
+- **Estimated remaining gain:** +0.5-1% overall coverage
 
-### 2. 🔴 **api/v1/developers.py** - 529 missing lines (36.9% coverage)
-- **Impact:** Second biggest file
+### 2. 🟡 **api/v1/developers.py** - ~217 missing lines (70.5% coverage) ✅ IMPROVED
+- **Impact:** Second biggest file - **MAJOR PROGRESS**
 - **What it is:** Developer site acquisition API endpoints
-- **Why low:** Preview job integration, complex workflows
-- **Test priority:** HIGH
-- **Estimated gain:** +3% overall coverage
-- **Test approach:**
-  - Property capture flow tests
-  - Preview job creation tests
-  - Status polling tests
+- **Status:** Improved from 36.9% → 70.5% (+33.7%, +307 lines)
+- **What was done:** Enabled `test_developer_site_acquisition.py` which exercises full GPS capture flow
+- **Remaining work:**
+  - Checklist template CRUD endpoints (6 endpoints, lines 1583-1694)
+  - Checklist status/update endpoints (3 endpoints, lines 1697-1814)
+  - Condition assessment endpoints (5 endpoints, lines 1817-2030)
+- **Estimated remaining gain:** +1-2% overall coverage
 
 ### 3. 🔴 **services/developer_condition_service.py** - 356 missing lines (13.8% coverage)
 - **Impact:** Largest service file gap
@@ -202,6 +204,8 @@ For each file/module tackled:
 
 | Date | Baseline | Change | Work Done | Notes |
 |------|----------|--------|-----------|-------|
+| 2025-11-02 | 60.23% | +2.41% | Enabled finance asset breakdown tests | 7 tests, 622 total passing, finance.py 24.3%→71.2% |
+| 2025-11-02 | 57.82% | +1.86% | Enabled developer site acquisition test | 1 test, 615 total passing, developers.py 36.9%→70.5% |
 | 2025-11-02 | 55.96% | +0.58% | Enabled preview_jobs tests | 4 tests, 614 total passing |
 | 2025-11-02 | 55.38% | -13.1% | Removed shadow stubs | Real number after cleanup |
 | 2025-10-30 | 68.5% | N/A | (Inflated by shadow stubs) | Not accurate |
