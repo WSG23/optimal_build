@@ -338,9 +338,12 @@ class DeveloperChecklistService:
         if dialect_name in DeveloperChecklistService._BOOTSTRAPPED_DIALECTS:
             return
 
-        async with bind.begin() as connection:
-            if dialect_name == "sqlite":
-                await connection.execute(
+        connection = await session.connection()
+
+        if dialect_name == "sqlite":
+
+            def _create_sqlite(conn) -> None:
+                conn.execute(
                     text(
                         """
                         CREATE TABLE IF NOT EXISTS developer_checklist_templates (
@@ -360,7 +363,7 @@ class DeveloperChecklistService:
                         """
                     )
                 )
-                await connection.execute(
+                conn.execute(
                     text(
                         """
                         CREATE TABLE IF NOT EXISTS developer_property_checklists (
@@ -372,6 +375,8 @@ class DeveloperChecklistService:
                             item_title TEXT NOT NULL,
                             item_description TEXT,
                             priority TEXT NOT NULL,
+                            requires_professional INTEGER NOT NULL DEFAULT 0,
+                            professional_type TEXT,
                             status TEXT NOT NULL,
                             assigned_to TEXT,
                             due_date TEXT,
@@ -385,20 +390,25 @@ class DeveloperChecklistService:
                         """
                     )
                 )
-            else:
 
-                def _create(connection_) -> None:
-                    DeveloperChecklistTemplate.__table__.create(
-                        connection_, checkfirst=True
-                    )
-                    DeveloperPropertyChecklist.__table__.create(
-                        connection_, checkfirst=True
-                    )
+            try:
+                await connection.run_sync(_create_sqlite)
+            except Exception:  # pragma: no cover - align with metadata bootstrap
+                pass
+        else:
 
-                try:
-                    await connection.run_sync(_create)
-                except Exception:  # pragma: no cover - align with metadata bootstrap
-                    pass
+            def _create(connection_) -> None:
+                DeveloperChecklistTemplate.__table__.create(
+                    connection_, checkfirst=True
+                )
+                DeveloperPropertyChecklist.__table__.create(
+                    connection_, checkfirst=True
+                )
+
+            try:
+                await connection.run_sync(_create)
+            except Exception:  # pragma: no cover - align with metadata bootstrap
+                pass
 
         DeveloperChecklistService._BOOTSTRAPPED_DIALECTS.add(dialect_name)
 

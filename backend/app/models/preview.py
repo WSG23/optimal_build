@@ -52,6 +52,7 @@ class PreviewJob(BaseModel):
     finished_at = Column(DateTime(timezone=True))
     asset_version = Column(String(64))
     preview_url = Column(String(500))
+    metadata_url = Column(String(500))
     thumbnail_url = Column(String(500))
     payload_checksum = Column(String(128))
     message = Column(String(500))

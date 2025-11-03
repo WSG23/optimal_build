@@ -4,11 +4,14 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
-
-pytestmark = pytest.mark.skip(
-    reason="Developer GPS logging flow requires preview generation services not implemented in lightweight test harness"
-)
 from backend._compat.datetime import utcnow
+
+# Tests were previously skipped but now work with real database session and
+# preview job service
+# pytestmark = pytest.mark.skip(
+#     reason="Developer GPS logging flow requires preview generation services "
+#     "not implemented in lightweight test harness"
+# )
 
 from app.api.v1 import developers as developers_api
 from sqlalchemy import select
@@ -153,7 +156,7 @@ async def test_developer_log_property_returns_envelope(
     visualization = payload["visualization"]
     assert visualization["status"] in {"ready", "placeholder"}
     assert visualization["preview_available"] is True
-    assert visualization["concept_mesh_url"].endswith(".json")
+    assert visualization["concept_mesh_url"].endswith((".json", ".gltf", ".glb"))
     assert visualization["preview_job_id"]
     assert visualization["massing_layers"], "Massing layers should be included"
     assert visualization["color_legend"], "Colour legend should be populated"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -66,16 +67,32 @@ def test_ensure_preview_asset_writes_artifacts(monkeypatch, tmp_path):
 
     monkeypatch.setattr(preview_generator, "_PREVIEW_DIR", preview_dir)
 
-    assets = preview_generator.ensure_preview_asset(property_id, layers)
+    job_id = UUID("aaaaaaaa-0000-0000-0000-000000000001")
+    assets = preview_generator.ensure_preview_asset(property_id, job_id, layers)
 
-    assert assets.preview_url.endswith(f"{property_id}.json")
-    assert assets.thumbnail_url.endswith(f"{property_id}.png")
+    assert assets.asset_version
+    assert assets.preview_url.endswith(
+        f"{property_id}/{assets.asset_version}/preview.gltf"
+    )
+    assert assets.metadata_url.endswith(
+        f"{property_id}/{assets.asset_version}/preview.json"
+    )
+    assert assets.thumbnail_url.endswith(
+        f"{property_id}/{assets.asset_version}/thumbnail.png"
+    )
 
-    payload_path = preview_dir / f"{property_id}.json"
-    thumbnail_path = preview_dir / f"{property_id}.png"
+    asset_root = preview_dir / str(property_id) / assets.asset_version
+    payload_path = asset_root / "preview.json"
+    thumbnail_path = asset_root / "thumbnail.png"
+    gltf_path = asset_root / "preview.gltf"
+    binary_path = asset_root / "preview.bin"
 
-    payload = payload_path.read_text(encoding="utf-8")
-    assert "schema_version" in payload
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "1.0"
+    assert payload["asset_manifest"]["gltf"].endswith("preview.gltf")
+    assert payload["asset_manifest"]["binary"].endswith("preview.bin")
+    assert gltf_path.exists()
+    assert binary_path.exists()
     assert thumbnail_path.exists()
 
 

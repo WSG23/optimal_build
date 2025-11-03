@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 
 try:  # pragma: no cover - prefer real slowapi when available
@@ -134,6 +136,14 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
 
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+static_root = Path(__file__).resolve().parents[2] / "static"
+if static_root.exists():
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(static_root), html=False),
+        name="static",
+    )
 
 
 def custom_openapi() -> dict[str, Any]:

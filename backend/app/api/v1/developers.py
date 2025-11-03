@@ -316,25 +316,24 @@ def _serialise_preview_job(job) -> PreviewJobSchema:
         if isinstance(job.status, PreviewJobStatus)
         else str(job.status)
     )
-    if status == PreviewJobStatus.READY.value:
-        status_display = status
-        preview_url = job.preview_url
-        thumbnail_url = job.thumbnail_url
-    else:
-        status_display = "processing"
-        preview_url = job.preview_url or f"/preview/placeholder/{job.id}.json"
-        thumbnail_url = job.thumbnail_url or f"/preview/placeholder/{job.id}.png"
+    preview_url = job.preview_url if status == PreviewJobStatus.READY.value else None
+    metadata_url = job.metadata_url if status == PreviewJobStatus.READY.value else None
+    thumbnail_url = (
+        job.thumbnail_url if status == PreviewJobStatus.READY.value else None
+    )
     return PreviewJobSchema(
         id=job.id,
         property_id=job.property_id,
         scenario=job.scenario,
-        status=status_display,
+        status=status,
         preview_url=preview_url,
+        metadata_url=metadata_url,
         thumbnail_url=thumbnail_url,
         requested_at=job.requested_at,
         started_at=job.started_at,
         finished_at=job.finished_at,
         message=job.message,
+        asset_version=job.asset_version,
     )
 
 
@@ -393,7 +392,9 @@ class PreviewJobSchema(BaseModel):
     scenario: str
     status: str
     preview_url: str | None = None
+    metadata_url: str | None = None
     thumbnail_url: str | None = None
+    asset_version: str | None = None
     requested_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None
@@ -407,6 +408,7 @@ class DeveloperVisualizationSummary(BaseModel):
     preview_available: bool
     notes: list[str] = Field(default_factory=list)
     concept_mesh_url: str | None = None
+    preview_metadata_url: str | None = None
     thumbnail_url: str | None = None
     camera_orbit_hint: dict[str, float] | None = None
     preview_seed: int | None = None
@@ -888,6 +890,7 @@ def _build_visualization_summary(
         preview_available=False,
         notes=notes,
         concept_mesh_url=None,
+        preview_metadata_url=None,
         camera_orbit_hint=camera_orbit,
         preview_seed=scenario_count or 1,
         massing_layers=massing_layers,
@@ -1184,28 +1187,17 @@ async def developer_log_property_by_gps(
         if isinstance(preview_job.status, PreviewJobStatus)
         else str(preview_job.status)
     )
+    preview_available = preview_status == PreviewJobStatus.READY.value
+    concept_mesh_url = preview_job.preview_url if preview_available else None
+    preview_metadata_url = preview_job.metadata_url if preview_available else None
+    thumbnail_url = preview_job.thumbnail_url if preview_available else None
     status_for_response = preview_status
-    if preview_status not in {
-        PreviewJobStatus.READY.value,
-        PreviewJobStatus.FAILED.value,
-    }:
-        status_for_response = "placeholder"
-    preview_available = (
-        preview_status == PreviewJobStatus.READY.value
-        or status_for_response == "placeholder"
-    )
-    concept_mesh_url = preview_job.preview_url
-    thumbnail_url = preview_job.thumbnail_url
-    if status_for_response == "placeholder":
-        concept_mesh_url = (
-            concept_mesh_url or f"/preview/placeholder/{preview_job.id}.json"
-        )
-        thumbnail_url = thumbnail_url or f"/preview/placeholder/{preview_job.id}.png"
     visualization = visualization.model_copy(
         update={
             "status": status_for_response,
             "preview_available": preview_available,
             "concept_mesh_url": concept_mesh_url,
+            "preview_metadata_url": preview_metadata_url,
             "thumbnail_url": thumbnail_url,
             "preview_job_id": preview_job.id,
         }

@@ -48,6 +48,10 @@ ENTITLEMENTS_STUDY_COUNTER: Counter
 ENTITLEMENTS_ENGAGEMENT_COUNTER: Counter
 ENTITLEMENTS_LEGAL_COUNTER: Counter
 ENTITLEMENTS_EXPORT_COUNTER: Counter
+PREVIEW_JOBS_CREATED_TOTAL: Counter
+PREVIEW_JOBS_COMPLETED_TOTAL: Counter
+PREVIEW_JOB_DURATION_MS: Histogram
+PREVIEW_QUEUE_DEPTH: Gauge
 
 
 def _initialize_metrics() -> None:
@@ -72,6 +76,10 @@ def _initialize_metrics() -> None:
     global ENTITLEMENTS_ENGAGEMENT_COUNTER
     global ENTITLEMENTS_LEGAL_COUNTER
     global ENTITLEMENTS_EXPORT_COUNTER
+    global PREVIEW_JOBS_CREATED_TOTAL
+    global PREVIEW_JOBS_COMPLETED_TOTAL
+    global PREVIEW_JOB_DURATION_MS
+    global PREVIEW_QUEUE_DEPTH
 
     REGISTRY = CollectorRegistry(auto_describe=True)
 
@@ -198,6 +206,34 @@ def _initialize_metrics() -> None:
         "entitlements_export_requests_total",
         "Entitlements export requests processed by format.",
         labelnames=("format",),
+        registry=REGISTRY,
+    )
+
+    PREVIEW_JOBS_CREATED_TOTAL = Counter(
+        "preview_generation_jobs_total",
+        "Preview generation jobs enqueued.",
+        labelnames=("scenario", "backend"),
+        registry=REGISTRY,
+    )
+
+    PREVIEW_JOBS_COMPLETED_TOTAL = Counter(
+        "preview_generation_jobs_completed_total",
+        "Preview generation jobs completed grouped by outcome.",
+        labelnames=("outcome",),
+        registry=REGISTRY,
+    )
+
+    PREVIEW_JOB_DURATION_MS = Histogram(
+        "preview_generation_job_duration_ms",
+        "End-to-end preview job duration in milliseconds.",
+        labelnames=("outcome",),
+        registry=REGISTRY,
+    )
+
+    PREVIEW_QUEUE_DEPTH = Gauge(
+        "preview_generation_queue_depth",
+        "Current queued preview jobs awaiting processing.",
+        labelnames=("backend",),
         registry=REGISTRY,
     )
 

@@ -7,7 +7,7 @@ import json
 from typing import Mapping, Sequence
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend._compat.datetime import utcnow
@@ -19,6 +19,7 @@ if "preview.generate" not in _registry:
     job_queue.register(generate_preview_job, "preview.generate", queue="preview")
 
 from app.models.preview import PreviewJob, PreviewJobStatus
+from app.utils import metrics
 
 
 def _serialise_layers(
@@ -38,6 +39,19 @@ class PreviewJobService:
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def _record_queue_depth(self, backend_name: str) -> None:
+        """Update preview queue depth gauge for the supplied backend."""
+
+        result = await self._session.execute(
+            select(func.count())
+            .select_from(PreviewJob)
+            .where(PreviewJob.status == PreviewJobStatus.QUEUED)
+        )
+        queued_total = result.scalar() or 0
+        metrics.PREVIEW_QUEUE_DEPTH.labels(backend=backend_name).set(
+            float(queued_total)
+        )
 
     async def list_jobs(self, property_id: UUID) -> list[PreviewJob]:
         result = await self._session.execute(
@@ -70,6 +84,7 @@ class PreviewJobService:
             status=PreviewJobStatus.QUEUED,
             requested_at=utcnow(),
             started_at=None,
+            asset_version=None,
             payload_checksum=checksum,
             metadata={
                 "massing_layers": serialised_layers,
@@ -86,6 +101,14 @@ class PreviewJobService:
             )
 
         backend_name = getattr(job_queue._backend, "name", "inline")
+        job.metadata["job_backend"] = backend_name
+        await self._session.flush()
+        metrics.PREVIEW_JOBS_CREATED_TOTAL.labels(
+            scenario=scenario,
+            backend=backend_name,
+        ).inc()
+        await self._record_queue_depth(backend_name)
+
         if backend_name == "inline":
             await generate_preview_job(str(job.id))
         else:
@@ -109,11 +132,11 @@ class PreviewJobService:
         await self._session.refresh(job)
         if backend_name != "inline" and job.status == PreviewJobStatus.QUEUED:
             job.status = PreviewJobStatus.PROCESSING
-            job.preview_url = job.preview_url or f"/preview/placeholder/{job.id}.json"
-            job.thumbnail_url = (
-                job.thumbnail_url or f"/preview/placeholder/{job.id}.png"
-            )
+            job.preview_url = None
+            job.metadata_url = None
+            job.thumbnail_url = None
             await self._session.flush()
+            await self._record_queue_depth(backend_name)
 
         return job
 
@@ -133,8 +156,11 @@ class PreviewJobService:
         job.started_at = None
         job.finished_at = None
         job.preview_url = None
+        job.metadata_url = None
         job.asset_version = None
+        job.thumbnail_url = None
         job.message = None
+        job.metadata.pop("asset_manifest", None)
 
         registry = getattr(job_queue._backend, "_registry", {})
         if "preview.generate" not in registry:
@@ -143,6 +169,14 @@ class PreviewJobService:
             )
 
         backend_name = getattr(job_queue._backend, "name", "inline")
+        job.metadata["job_backend"] = backend_name
+        await self._session.flush()
+        metrics.PREVIEW_JOBS_CREATED_TOTAL.labels(
+            scenario=job.scenario,
+            backend=backend_name,
+        ).inc()
+        await self._record_queue_depth(backend_name)
+
         if backend_name == "inline":
             await generate_preview_job(str(job.id))
         else:
