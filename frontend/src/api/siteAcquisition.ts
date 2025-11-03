@@ -52,6 +52,7 @@ export interface DeveloperVisualizationSummary {
   previewAvailable: boolean
   notes: string[]
   conceptMeshUrl: string | null
+  previewMetadataUrl: string | null
   thumbnailUrl: string | null
   cameraOrbitHint: Record<string, number> | null
   previewSeed: number | null
@@ -359,7 +360,9 @@ export interface DeveloperPreviewJob {
   scenario: string
   status: string
   previewUrl: string | null
+  metadataUrl: string | null
   thumbnailUrl: string | null
+  assetVersion: string | null
   requestedAt: string
   startedAt: string | null
   finishedAt: string | null
@@ -515,6 +518,10 @@ function mapDeveloperVisualization(
       : false
   const conceptMeshUrl =
     coerceString(payload?.concept_mesh_url) ?? coerceString(payload?.conceptMeshUrl) ?? null
+  const previewMetadataUrl =
+    coerceString(payload?.preview_metadata_url) ??
+    coerceString(payload?.previewMetadataUrl) ??
+    null
   const thumbnailUrl =
     coerceString(payload?.thumbnail_url) ?? coerceString(payload?.thumbnailUrl) ?? null
   const cameraOrbitHint =
@@ -614,6 +621,7 @@ function mapDeveloperVisualization(
     previewAvailable: preview,
     notes,
     conceptMeshUrl,
+    previewMetadataUrl,
     thumbnailUrl,
     cameraOrbitHint,
     previewSeed: previewSeed ?? null,
@@ -764,7 +772,11 @@ function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
         scenario,
         status,
         previewUrl: coerceString(item.preview_url) ?? coerceString(item.previewUrl) ?? null,
+        metadataUrl:
+          coerceString(item.metadata_url) ?? coerceString(item.metadataUrl) ?? null,
         thumbnailUrl: coerceString(item.thumbnail_url) ?? coerceString(item.thumbnailUrl) ?? null,
+        assetVersion:
+          coerceString(item.asset_version) ?? coerceString(item.assetVersion) ?? null,
         requestedAt: coerceString(item.requested_at) ?? coerceString(item.requestedAt) ?? '',
         startedAt: coerceString(item.started_at) ?? coerceString(item.startedAt) ?? null,
         finishedAt: coerceString(item.finished_at) ?? coerceString(item.finishedAt) ?? null,

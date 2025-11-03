@@ -25,6 +25,7 @@ import {
   type SiteAcquisitionResult,
   type DeveloperPreviewJob,
 } from '../../../api/siteAcquisition'
+import { Preview3DViewer } from '../../components/site-acquisition/Preview3DViewer'
 
 const SCENARIO_OPTIONS: Array<{
   value: DevelopmentScenario
@@ -637,6 +638,8 @@ export function SiteAcquisitionPage() {
   const [isExportingReport, setIsExportingReport] = useState(false)
   const [reportExportMessage, setReportExportMessage] = useState<string | null>(null)
   const propertyId = capturedProperty?.propertyId ?? null
+  const previewViewerMetadataUrl =
+    previewJob?.metadataUrl ?? capturedProperty?.visualization?.previewMetadataUrl ?? null
 
   useEffect(() => {
     if (!capturedProperty?.previewJobs?.length) {
@@ -1370,6 +1373,7 @@ export function SiteAcquisitionPage() {
       previewAvailable: false,
       notes: [],
       conceptMeshUrl: null,
+      previewMetadataUrl: null,
       thumbnailUrl: null,
       cameraOrbitHint: null,
       previewSeed: null,
@@ -1572,8 +1576,14 @@ export function SiteAcquisitionPage() {
       if (previewJob.previewUrl) {
         previewItems.push({ label: 'Preview URL', value: previewJob.previewUrl })
       }
+      if (previewJob.metadataUrl) {
+        previewItems.push({ label: 'Metadata', value: previewJob.metadataUrl })
+      }
       if (previewJob.thumbnailUrl) {
         previewItems.push({ label: 'Thumbnail', value: previewJob.thumbnailUrl })
+      }
+      if (previewJob.assetVersion) {
+        previewItems.push({ label: 'Asset version', value: previewJob.assetVersion })
       }
       if (previewJob.message) {
         previewItems.push({ label: 'Notes', value: previewJob.message })
@@ -4763,6 +4773,53 @@ export function SiteAcquisitionPage() {
               </article>
             ))}
           </div>
+          {previewJob && (
+            <div
+              style={{
+                marginTop: '2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em',
+                    color: '#111827',
+                  }}
+                >
+                  Development Preview
+                </h3>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    color: '#4b5563',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {previewJob.status.toUpperCase()}
+                </span>
+              </div>
+              <Preview3DViewer
+                previewUrl={previewJob.previewUrl}
+                metadataUrl={previewViewerMetadataUrl}
+                status={previewJob.status}
+                thumbnailUrl={previewJob.thumbnailUrl}
+              />
+            </div>
+          )}
           {previewJob && (
             <div
               style={{

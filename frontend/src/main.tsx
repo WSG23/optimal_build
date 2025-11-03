@@ -23,6 +23,7 @@ import { AdvisoryPage } from './app/pages/advisory/AdvisoryPage'
 import { IntegrationsPage } from './app/pages/integrations/IntegrationsPage'
 import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitionPage'
 import { ChecklistTemplateManager } from './app/pages/site-acquisition/ChecklistTemplateManager'
+import { DeveloperPreviewStandalone } from './app/pages/site-acquisition/DeveloperPreviewStandalone'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -87,6 +88,16 @@ const siteAcquisitionElement = (
     description="Comprehensive property capture and development feasibility analysis for developers."
   >
     <SiteAcquisitionPage />
+  </AppShell>
+)
+
+const developerPreviewStandaloneElement = (
+  <AppShell
+    activeItem="siteAcquisition"
+    title="Developer preview"
+    description="Standalone preview viewer for manual QA of Phase 2B renders."
+  >
+    <DeveloperPreviewStandalone />
   </AppShell>
 )
 
@@ -172,6 +183,10 @@ const router = createBrowserRouter([
   {
     path: '/developers/site-acquisition',
     element: siteAcquisitionElement,
+  },
+  {
+    path: '/agents/developers/:propertyId/preview',
+    element: developerPreviewStandaloneElement,
   },
   {
     path: '/app/site-acquisition/checklist-templates',
