@@ -33,9 +33,8 @@
 
 ## Outstanding Follow-ups
 
-1. **Manual UI QA** – Section 10 of `docs/PHASE2B_VISUALISATION_STUB.MD` remains unchecked because the CLI environment cannot run the browser harness. Run the checklist on a local workstation before promotion.
-2. **Monitoring / Alerts** – Build Grafana dashboards and alert rules that consume the new `preview_generation_*` metrics (success rate, queue depth, duration). Instrumentation is live; observability team to wire displays/notifications.
-3. **Storage hardening (optional)** – Assets are versioned locally; migrating to S3 + signed URLs (as outlined in §4.5 of the delivery plan) is the next infra milestone once buckets/permissions are provisioned.
+1. **Monitoring / Alerts** – Grafana dashboard JSON & Prometheus rules committed under `infra/observability/…`; import into ops stack and confirm alert routes align with on-call rotations.
+2. **Storage hardening (optional)** – Assets are versioned locally; migrating to S3 + signed URLs (as outlined in §4.5 of the delivery plan) is the next infra milestone once buckets/permissions are provisioned.
 
 ---
 

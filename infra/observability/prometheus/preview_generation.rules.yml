@@ -1,0 +1,41 @@
+groups:
+  - name: preview-generation
+    interval: 30s
+    rules:
+      - alert: PreviewGenerationHighFailureRate
+        expr: |
+          sum(rate(preview_generation_jobs_completed_total{outcome="failed"}[10m]))
+            /
+          clamp_min(sum(rate(preview_generation_jobs_completed_total[10m])), 1)
+          > 0.10
+        for: 10m
+        labels:
+          severity: page
+          service: preview-generation
+        annotations:
+          summary: "Preview job failure rate above 10% for 10 minutes."
+          description: "Failure rate has exceeded 10% in the last 10 minutes. Investigate renderer logs and retry queue."
+
+      - alert: PreviewGenerationLatencyHigh
+        expr: |
+          histogram_quantile(
+            0.5,
+            sum by (le) (rate(preview_generation_job_duration_ms_bucket[15m]))
+          ) > 300000
+        for: 15m
+        labels:
+          severity: warn
+          service: preview-generation
+        annotations:
+          summary: "Median preview generation duration above 5 minutes."
+          description: "Preview jobs are taking more than 5 minutes on median over the past 15 minutes."
+
+      - alert: PreviewGenerationQueueDepthHigh
+        expr: preview_generation_queue_depth > 10
+        for: 5m
+        labels:
+          severity: warn
+          service: preview-generation
+        annotations:
+          summary: "Preview generation queue depth above 10."
+          description: "Jobs are piling up in the preview queue. Check worker availability or renderer throughput."

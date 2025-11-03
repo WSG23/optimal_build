@@ -6,12 +6,7 @@ from uuid import UUID, uuid4
 import pytest
 from backend._compat.datetime import utcnow
 
-pytestmark = pytest.mark.skip(
-    reason="Test causes pollution in full suite due to shared database state. "
-    "Passes individually but fails when run with other tests. "
-    "TODO: Add proper test isolation fixtures (database cleanup, session rollback). "
-    "See Part B of test isolation fix."
-)
+# Skip marker removed - market_demo_data fixture now properly cleans up test data
 
 from app.api.v1 import developers as developers_api
 from sqlalchemy import select

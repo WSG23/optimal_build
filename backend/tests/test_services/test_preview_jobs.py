@@ -14,12 +14,7 @@ from app.services import preview_jobs
 from app.services.preview_jobs import PreviewJobService
 from backend._compat.datetime import utcnow
 
-pytestmark = pytest.mark.skip(
-    reason="Test causes pollution in full suite due to shared database state. "
-    "Passes individually but fails when run with other tests. "
-    "TODO: Add proper test isolation fixtures (database cleanup, session rollback). "
-    "See Part B of test isolation fix."
-)
+# Skip marker removed - market_demo_data fixture now properly cleans up test data
 
 
 class _InlineBackend(job_queue_module._InlineBackend):  # type: ignore[attr-defined]

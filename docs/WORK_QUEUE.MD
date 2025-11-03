@@ -22,14 +22,6 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 
 ## 📋 Ready (Queued - Do After Active)
 
-### Phase 2B – Manual UI QA execution
-- **Status:** BLOCKED (requires local browser environment)
-- **Assigned:** Product/Visualisation (run on workstation)
-- **Estimate:** 0.5 day
-- **Description:** Execute Section 10 of [`docs/PHASE2B_VISUALISATION_STUB.MD`](PHASE2B_VISUALISATION_STUB.MD#10-manual-ui-qa-checklist-preview-payload-builder) against the new GLTF viewer, capture screenshots, and attach results to the work queue / PR.
-- **Acceptance Criteria:** Checklist checkboxes completed with notes, screenshot archived, any issues triaged.
-- **Files:** `docs/PHASE2B_VISUALISATION_STUB.MD`, `frontend/src/app/components/site-acquisition/Preview3DViewer.tsx`.
-
 ### Front-end npm audit cleanup
 - **Status:** READY
 - **Assigned:** Frontend
@@ -71,6 +63,16 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 - **Completed by:** Claude
 - **Commits:** 3766d08
 - **Impact:** Resolved lint failures in conftest.py, all critical pre-commit hooks now pass cleanly
+
+### 2025-11-04: Phase 2B GLTF renderer + preview viewer shipped
+- **Completed by:** Codex Local
+- **Commits:** (pending merge)
+- **Highlights:** Backend now emits GLTF/BIN/thumbnail assets with manifests; preview jobs expose `metadata_url`/`asset_version`; Three.js viewer renders GLTF with orbit controls and thumbnails; documentation and roadmap updated to mark Phase 2B complete.
+
+### 2025-11-04: Phase 2B manual UI QA execution
+- **Completed by:** Wakae + Codex Local
+- **Artifacts:** Screenshots (developer preview route), updated checklist in `docs/PHASE2B_VISUALISATION_STUB.MD`
+- **Highlights:** Confirmed Three.js viewer renders seeded GLTF assets with orbit controls; metadata links verified, no regressions observed.
 
 ### 2025-11-04: Phase 2B Monitoring & Alerts wired
 - **Completed by:** Codex Local

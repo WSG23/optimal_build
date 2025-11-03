@@ -6,12 +6,7 @@ from typing import Any
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="Test causes pollution in full suite due to shared database state. "
-    "Passes individually but fails when run with other tests. "
-    "TODO: Add proper test isolation fixtures (database cleanup, session rollback). "
-    "See Part B of test isolation fix."
-)
+# Skip marker removed - market_demo_data fixture now properly cleans up test data
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")

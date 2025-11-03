@@ -337,19 +337,42 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
 
 
 _SKIPPED_TEST_PATTERNS: dict[str, str] = {
-    "backend/tests/test_models/": "SQLAlchemy relationship features are not implemented in the stub ORM.",
-    "backend/tests/test_middleware/": "Middleware tests require the real FastAPI/Starlette ASGI stack.",
-    "backend/tests/test_services/test_agent_": "Agent performance pipelines depend on integrations not available in stubs.",
-    "backend/tests/test_services/test_compliance.py": "Compliance service relies on metadata removal helpers missing from the stub backend.",
-    "backend/tests/test_services/test_costs.py": "Cost index helpers require SQL features not present in the lightweight stub.",
-    "backend/tests/test_core/test_jwt_auth.py": "JWT verification relies on FastAPI response helpers not implemented in the shim yet.",
-    "backend/tests/test_services/test_developer_checklist": "Developer checklist workflows expect full ORM cascades and validations beyond the stub's capabilities.",
-    "backend/tests/test_services/test_developer_condition_service.py": "Developer condition reporting depends on historical ordering and ORM features not available in the stub backend.",
-    "backend/tests/test_services/test_entitlements.py": "Entitlements services depend on SQLAlchemy ordering, delete semantics, and ORM cascades that the stub ORM does not provide.",
+    "backend/tests/test_models/": (
+        "SQLAlchemy relationship features are not implemented in the stub ORM."
+    ),
+    "backend/tests/test_middleware/": (
+        "Middleware tests require the real FastAPI/Starlette ASGI stack."
+    ),
+    "backend/tests/test_services/test_agent_": (
+        "Agent performance pipelines depend on integrations not available in stubs."
+    ),
+    "backend/tests/test_services/test_compliance.py": (
+        "Compliance service relies on metadata removal helpers missing from the stub backend."
+    ),
+    "backend/tests/test_services/test_costs.py": (
+        "Cost index helpers require SQL features not present in the lightweight stub."
+    ),
+    "backend/tests/test_core/test_jwt_auth.py": (
+        "JWT verification relies on FastAPI response helpers not implemented in the shim yet."
+    ),
+    "backend/tests/test_services/test_developer_checklist": (
+        "Developer checklist workflows expect full ORM cascades and validations beyond "
+        "the stub's capabilities."
+    ),
+    "backend/tests/test_services/test_developer_condition_service.py": (
+        "Developer condition reporting depends on historical ordering and ORM features not "
+        "available in the stub backend."
+    ),
+    "backend/tests/test_services/test_entitlements.py": (
+        "Entitlements services depend on SQLAlchemy ordering, delete semantics, and ORM "
+        "cascades that the stub ORM does not provide."
+    ),
 }
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:  # pragma: no cover - collection hook
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:  # pragma: no cover - collection hook
     for item in items:
         nodeid = item.nodeid
         path = str(getattr(item, "fspath", ""))
@@ -755,7 +778,11 @@ if _SQLALCHEMY_AVAILABLE:
     async def market_demo_data(
         async_session_factory: async_sessionmaker[AsyncSession],
     ) -> AsyncGenerator[None, None]:
-        """Populate database with demo property data for market advisory tests."""
+        """Populate database with demo property data for market advisory tests.
+
+        Assumes Alembic migrations have already created the database schema.
+        Inserts demo data only, then cleans up on teardown to prevent test pollution.
+        """
 
         import uuid as uuid_module
 
@@ -767,53 +794,8 @@ if _SQLALCHEMY_AVAILABLE:
         )
 
         async with async_session_factory() as session:
-            try:
-                from sqlalchemy import text as sql_text
-
-                await session.execute(sql_text("SELECT 1 FROM properties LIMIT 1"))
-            except Exception:
-                await session.execute(
-                    sql_text(
-                        """
-                        CREATE TABLE IF NOT EXISTS properties (
-                            id TEXT PRIMARY KEY,
-                            name VARCHAR(255) NOT NULL,
-                            address VARCHAR(500) NOT NULL,
-                            postal_code VARCHAR(20),
-                            property_type VARCHAR(50) NOT NULL,
-                            status VARCHAR(50),
-                            location TEXT NOT NULL,
-                            district VARCHAR(50),
-                            subzone VARCHAR(100),
-                            planning_area VARCHAR(100),
-                            land_area_sqm DECIMAL(10, 2),
-                            gross_floor_area_sqm DECIMAL(12, 2),
-                            net_lettable_area_sqm DECIMAL(12, 2),
-                            building_height_m DECIMAL(6, 2),
-                            floors_above_ground INTEGER,
-                            floors_below_ground INTEGER,
-                            units_total INTEGER,
-                            year_built INTEGER,
-                            year_renovated INTEGER,
-                            developer VARCHAR(255),
-                            architect VARCHAR(255),
-                            tenure_type VARCHAR(50),
-                            lease_start_date DATE,
-                            lease_expiry_date DATE,
-                            zoning_code VARCHAR(50),
-                            plot_ratio DECIMAL(4, 2),
-                            is_conservation BOOLEAN,
-                            conservation_status VARCHAR(100),
-                            heritage_constraints JSON,
-                            ura_property_id VARCHAR(50) UNIQUE,
-                            data_source VARCHAR(50),
-                            external_references JSON
-                        )
-                        """
-                    )
-                )
-                await session.commit()
-
+            # Assume Alembic migrations already created the schema
+            # Just insert demo data
             demo_property = Property(
                 id=uuid_module.uuid4(),
                 name="Market Demo Tower",
@@ -842,8 +824,20 @@ if _SQLALCHEMY_AVAILABLE:
             )
             session.add(demo_property)
             await session.commit()
+            demo_property_id = demo_property.id
 
-        yield
+            try:
+                yield
+            finally:
+                # Cleanup: delete the demo property to prevent test pollution
+                # Use raw SQL to avoid triggering cascade queries to tables that may not exist
+                from sqlalchemy import text
+
+                await session.execute(
+                    text("DELETE FROM properties WHERE id = :id"),
+                    {"id": str(demo_property_id)},
+                )
+                await session.commit()
 
 else:
 
