@@ -602,6 +602,64 @@ def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
                 except OSError:
                     pass  # File existence already checked above
 
+                # NEW: Rule 12.4 - Verify QA checklist status is properly closed out
+                # Check if status is still "READY FOR QA" (incomplete workflow)
+                try:
+                    qa_content = qa_file_path.read_text(encoding="utf-8")
+
+                    # Extract status line (should be around line 5)
+                    status_match = re.search(
+                        r"\*\*Status:\*\*\s*(.+?)(?:\n|$)", qa_content, re.IGNORECASE
+                    )
+
+                    if status_match:
+                        status_value = status_match.group(1).strip()
+
+                        # Check if status is still "READY FOR QA" (incomplete)
+                        if "READY FOR QA" in status_value.upper():
+                            errors.append(
+                                f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' "
+                                f"but QA checklist status incomplete.\n"
+                                f"  -> Current status: '{status_value}'\n"
+                                f"  -> Must be: '✅ QA COMPLETE (YYYY-MM-DD)' or "
+                                f"'✅ ARCHIVED (YYYY-MM-DD)'\n"
+                                f"  -> Rule 12.4: Complete the QA checklist workflow\n"
+                                f"  -> Update {qa_checklist_file} status header (line ~5)\n"
+                                f"  -> See CODING_RULES.md section 12.4"
+                            )
+
+                    # NEW: Check if "Next Steps" section has been addressed
+                    # Look for the "Next Steps" section and verify some action was taken
+                    next_steps_match = re.search(
+                        r"## 📝 Next Steps.*?(?=##|$)",
+                        qa_content,
+                        re.DOTALL | re.IGNORECASE,
+                    )
+
+                    if next_steps_match:
+                        next_steps_content = next_steps_match.group(0)
+
+                        # Count checked boxes in Next Steps section
+                        checked_boxes = len(
+                            re.findall(r"- \[x\]", next_steps_content, re.IGNORECASE)
+                        )
+
+                        # If no boxes are checked, the workflow wasn't completed
+                        if checked_boxes == 0:
+                            errors.append(
+                                f"RULE VIOLATION: {phase_name} marked '✅ COMPLETE' "
+                                f"but QA checklist 'Next Steps' section not completed.\n"
+                                f"  -> File: {qa_checklist_file}\n"
+                                f"  -> No checkboxes marked [x] in 'Next Steps' section\n"
+                                f"  -> Required: Check boxes for WORK_QUEUE.MD and "
+                                f"ROADMAP.MD updates\n"
+                                f"  -> Rule 12.4: Complete the QA checklist workflow\n"
+                                f"  -> See CODING_RULES.md section 12.4"
+                            )
+
+                except OSError:
+                    pass  # File existence already checked above
+
     return len(errors) == 0, errors
 
 
