@@ -124,6 +124,27 @@ export function RouterProvider({ router }: RouterProviderProps) {
       return exactMatch.element
     }
 
+    // Check for parameterized routes (e.g., /agents/developers/:id/preview)
+    const paramMatch = routes.find((route) => {
+      const routeParts = route.path.split('/')
+      const pathParts = path.split('/')
+
+      if (routeParts.length !== pathParts.length) {
+        return false
+      }
+
+      return routeParts.every((part, i) => {
+        if (part.startsWith(':')) {
+          return true // parameter match
+        }
+        return part === pathParts[i]
+      })
+    })
+
+    if (paramMatch) {
+      return paramMatch.element
+    }
+
     return routes.find((route) => route.path === '/')?.element ?? null
   }, [path, routes])
 
