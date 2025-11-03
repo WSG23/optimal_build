@@ -91,6 +91,82 @@ async def test_reverse_geocode_handles_empty_payload() -> None:
 
 
 @pytest.mark.asyncio
+async def test_reverse_geocode_with_google_maps_fallback(monkeypatch) -> None:
+    """Test reverse_geocode attempts Google Maps fallback when OneMap fails."""
+
+    def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
+        if "revgeocodexy" in url:
+            return _FakeResponse(404, {})  # OneMap fails
+        raise AssertionError("unexpected URL in test")
+
+    service = _make_service_with_responder(responder)
+    service.google_maps_api_key = "test-key"  # Enable Google Maps fallback
+
+    # Mock the Google fallback to return something
+    async def mock_google_reverse(*args, **kwargs):
+        from app.services.geocoding import Address
+
+        return Address(
+            full_address="Google Address",
+            street_name="Google Street",
+            country="Singapore",
+        )
+
+    monkeypatch.setattr(service, "_google_reverse_geocode", mock_google_reverse)
+
+    address = await service.reverse_geocode(1.3, 103.8)
+
+    assert address is not None
+    assert address.full_address == "Google Address"
+
+
+@pytest.mark.asyncio
+async def test_geocode_with_google_maps_fallback(monkeypatch) -> None:
+    """Test geocode attempts Google Maps fallback when OneMap fails."""
+
+    def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
+        if "elastic/search" in url:
+            return _FakeResponse(404, {})  # OneMap fails
+        raise AssertionError("unexpected URL in test")
+
+    service = _make_service_with_responder(responder)
+    service.google_maps_api_key = "test-key"  # Enable Google Maps fallback
+
+    # Mock the Google fallback to return coordinates
+    async def mock_google_geocode(*args, **kwargs):
+        return (1.2345, 103.6789)
+
+    monkeypatch.setattr(service, "_google_geocode", mock_google_geocode)
+
+    coords = await service.geocode("Test Address")
+
+    assert coords == (1.2345, 103.6789)
+
+
+@pytest.mark.asyncio
+async def test_reverse_geocode_with_none_client() -> None:
+    """Test reverse_geocode when client is None."""
+    service = GeocodingService()
+    service.client = None
+
+    address = await service.reverse_geocode(1.3, 103.8)
+
+    assert address is not None
+    assert address.full_address.startswith("Mocked Address")
+
+
+@pytest.mark.asyncio
+async def test_geocode_with_none_client() -> None:
+    """Test geocode when client is None."""
+    service = GeocodingService()
+    service.client = None
+
+    coords = await service.geocode("Test Address")
+
+    assert coords == (1.3000, 103.8500)
+
+
+@pytest.mark.asyncio
 async def test_geocode_returns_onemap_coordinates(monkeypatch) -> None:
     def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
         if "elastic/search" in url:
