@@ -172,3 +172,109 @@ def test_conditional_headers_and_not_modified_logic() -> None:
         status_code=200, headers={"ETag": '"different"'}, content=b""
     )
     assert fetcher._is_not_modified(response, existing) is False
+
+
+@pytest.mark.asyncio
+async def test_fetch_without_existing_document() -> None:
+    """Test fetch without existing document (no conditional headers)."""
+    client = _StubHTTPClient(
+        head_response=HTTPResponse(status_code=200, headers={}, content=b""),
+        get_response=HTTPResponse(
+            status_code=200,
+            headers={"Content-Type": "application/pdf"},
+            content=b"PDF content",
+        ),
+    )
+    fetcher = ReferenceSourceFetcher(http_client=client)
+
+    result = await fetcher.fetch(_make_source(), existing=None)
+
+    assert result is not None
+    assert result.content == b"PDF content"
+
+
+@pytest.mark.asyncio
+async def test_fetch_with_non_pdf_fetch_kind() -> None:
+    """Test fetch with non-pdf/html/sitemap fetch_kind (no HEAD request)."""
+    client = _StubHTTPClient(
+        get_response=HTTPResponse(
+            status_code=200,
+            headers={"Content-Type": "application/json"},
+            content=b'{"data": "test"}',
+        )
+    )
+    fetcher = ReferenceSourceFetcher(http_client=client)
+
+    # Use a fetch_kind that's not pdf/html/sitemap
+    source = _make_source(fetch_kind="json")
+    result = await fetcher.fetch(source, existing=None)
+
+    assert result is not None
+    assert result.content == b'{"data": "test"}'
+
+
+@pytest.mark.asyncio
+async def test_fetch_conditional_with_non_standard_fetch_kind() -> None:
+    """Test conditional fetch with non-pdf/html/sitemap and existing document."""
+    client = _StubHTTPClient(
+        head_response=HTTPResponse(status_code=304, headers={}, content=b"")
+    )
+    fetcher = ReferenceSourceFetcher(http_client=client)
+
+    source = _make_source(fetch_kind="api")
+    existing = _make_document()
+    result = await fetcher.fetch(source, existing=existing)
+
+    assert result is None  # 304 means not modified
+
+
+@pytest.mark.asyncio
+async def test_fetch_returns_none_on_304_from_get() -> None:
+    """Test fetch returns None when GET returns 304."""
+    client = _StubHTTPClient(
+        head_response=HTTPResponse(status_code=200, headers={}, content=b""),
+        get_response=HTTPResponse(status_code=304, headers={}, content=b""),
+    )
+    fetcher = ReferenceSourceFetcher(http_client=client)
+
+    result = await fetcher.fetch(_make_source(), existing=_make_document())
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_fetch_head_501_not_implemented() -> None:
+    """Test fetch handles HEAD 501 (Not Implemented) gracefully."""
+    client = _StubHTTPClient(
+        head_response=HTTPResponse(status_code=501, headers={}, content=b""),
+        get_response=HTTPResponse(status_code=200, headers={}, content=b"data"),
+    )
+    fetcher = ReferenceSourceFetcher(http_client=client)
+
+    result = await fetcher.fetch(_make_source(), existing=None)
+
+    assert result is not None
+    assert result.content == b"data"
+
+
+def test_is_not_modified_with_last_modified_header() -> None:
+    """Test _is_not_modified uses Last-Modified header."""
+    fetcher = ReferenceSourceFetcher()
+    existing = _make_document()
+
+    response = HTTPResponse(
+        status_code=200,
+        headers={"Last-Modified": existing.http_last_modified},
+        content=b"",
+    )
+    assert fetcher._is_not_modified(response, existing) is True
+
+
+def test_is_not_modified_returns_false_without_existing() -> None:
+    """Test _is_not_modified returns False when no existing document."""
+    fetcher = ReferenceSourceFetcher()
+
+    response = HTTPResponse(
+        status_code=200, headers={"ETag": '"some-etag"'}, content=b""
+    )
+    assert fetcher._is_not_modified(response, None) is False
