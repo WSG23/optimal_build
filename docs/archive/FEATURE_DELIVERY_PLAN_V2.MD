@@ -518,6 +518,10 @@
 - ⏭️ Scenario-aware 3D preview generation and UI integration (deferred - see [Phase 2B Visualisation Delivery Plan](PHASE2B_VISUALISATION_STUB.MD))
 - ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
 
+**Testing Discipline (Phase 2B onward):**
+- Every Phase 2B feature or refactor must land with automated tests that keep the touched modules at or above the 80 % coverage gate.
+- Coverage regressions must be resolved before hand-off; if a temporary waiver is unavoidable, log the owner and expiry in `docs/WORK_QUEUE.MD` and reopen the task in the Phase 2B backlog.
+
 **Kickoff Deliverables (Planned):**
 - ✅ Stand up developer-specific GPS logging endpoint and API client so Site Acquisition no longer proxies through the agent route
 - ✅ Extend capture response with zoning envelope + max buildable metrics (baseline commercial template)

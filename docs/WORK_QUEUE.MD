@@ -90,3 +90,4 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 5. Update [`docs/ROADMAP.MD`](ROADMAP.MD) only when phase status changes (e.g., READY → COMPLETE).
 6. For infrastructure audit tasks, update `docs/audits/PRE-PHASE-2D-AUDIT.MD` checklists in parallel.
 7. For Phase 2B renderer items, execute the manual UI walkthrough in [`docs/PHASE2B_VISUALISATION_STUB.MD`](PHASE2B_VISUALISATION_STUB.MD#10-manual-ui-qa-checklist-preview-payload-builder) and include results before requesting review.
+8. Every feature or bug fix must land its tests (unit, integration, or regression) in the same change. If the legacy SQLAlchemy harness blocks execution, log a follow-up in this queue and stub the dependency so coverage continues trending upward.

@@ -74,6 +74,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "roi",
     "imports",
     "audit",
+    "compliance",
     # Finance flows rely on both feasibility and export endpoints being present in
     # the main application so that the interactive documentation exposes them.
     "feasibility",

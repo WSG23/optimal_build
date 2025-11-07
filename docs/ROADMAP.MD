@@ -50,6 +50,14 @@ Scripts such as `scripts/check_phase_gate.py` rely on these exact checklist labe
 
 ---
 
+## Quality & Testing Expectations
+
+- **Ship With Tests:** Every net-new feature must land with automated tests in the same change. Missing coverage is grounds for blocking a merge unless a legacy test harness limitation is documented and tracked in the work queue.
+- **Legacy Harness Retrofit:** The Infrastructure Audit backlog includes work to replace or stub the SQLAlchemy-heavy suites that do not run in the local harness. Continue writing tests against the newer async-friendly stubs; when a legacy gap is hit, capture a follow-up task so the stub retrofit closes the loop.
+- **Coverage Target:** Phase 2D gate requires ≥ 80 % executable coverage on critical services. Incremental features should trend coverage upward even before the legacy suites are re-enabled.
+
+---
+
 ## Phase Summaries
 
 ### Phase 1D – Business Performance Dashboards

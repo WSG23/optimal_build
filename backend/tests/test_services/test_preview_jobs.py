@@ -5,6 +5,7 @@ from __future__ import annotations
 from uuid import UUID
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 
 import backend.jobs as job_queue_module
@@ -61,7 +62,7 @@ class _StubQueueBackend(job_queue_module._BaseBackend):  # type: ignore[misc]
         )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def demo_property(db_session, market_demo_data):
     result = await db_session.execute(select(Property.id))
     property_id = result.scalar_one()

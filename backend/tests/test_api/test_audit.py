@@ -1,143 +1,65 @@
-"""Audit API integration tests."""
-
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
+from unittest.mock import AsyncMock
 
-pytestmark = pytest.mark.skip(
-    reason="Audit overlay API depends on optimisation pipeline not wired for tests"
-)
-
-pytest.importorskip("fastapi")
-pytest.importorskip("pydantic")
-pytest.importorskip("sqlalchemy")
-pytest.importorskip("pytest_asyncio")
-
-import pytest_asyncio
-from app.core.geometry import GeometrySerializer
-from app.core.models.geometry import GeometryGraph, Level, Relationship, Space
-from app.models.overlay import OverlaySourceGeometry
-from httpx import AsyncClient
-
-PROJECT_ID = 5812
-
-
-@pytest_asyncio.fixture
-async def seeded_project(async_session_factory):
-    """Seed source geometry required for overlay and export flows."""
-
-    geometry = GeometryGraph(
-        levels=[
-            Level(
-                id="level-01",
-                name="Ground Floor",
-                elevation=0.0,
-                metadata={"site_area_sqm": 15000, "heritage_zone": True},
-            )
-        ],
-        spaces=[
-            Space(
-                id="tower-a",
-                name="Tower A",
-                level_id="level-01",
-                metadata={"height_m": 52},
-            )
-        ],
-        relationships=[
-            Relationship(
-                rel_type="contains", source_id="level-01", target_id="tower-a"
-            ),
-        ],
-    )
-    serialized = GeometrySerializer.to_export(geometry)
-    checksum = geometry.fingerprint()
-
-    async with async_session_factory() as session:
-        record = OverlaySourceGeometry(
-            project_id=PROJECT_ID,
-            source_geometry_key="site",
-            graph=serialized,
-            metadata={"seed": "audit-test"},
-            checksum=checksum,
-        )
-        session.add(record)
-        await session.commit()
-    return PROJECT_ID
+from app.api.v1 import audit as audit_api
 
 
 @pytest.mark.asyncio
-async def test_audit_chain_and_diffs(
-    app_client: AsyncClient,
-    seeded_project: int,
-) -> None:
-    """Overlay, export and audit endpoints produce a verifiable ledger."""
-
-    project_id = seeded_project
-
-    run_response = await app_client.post(f"/api/v1/overlay/{project_id}/run")
-    assert run_response.status_code == 200
-    run_payload = run_response.json()
-    assert run_payload["project_id"] == project_id
-
-    list_response = await app_client.get(f"/api/v1/overlay/{project_id}")
-    assert list_response.status_code == 200
-    suggestions = list_response.json()["items"]
-    assert suggestions
-
-    decision_payload = {
-        "suggestion_id": suggestions[0]["id"],
-        "decision": "approve",
-        "decided_by": "Auditor",
-        "notes": "Initial approval for audit chain test.",
-    }
-    decision_response = await app_client.post(
-        f"/api/v1/overlay/{project_id}/decision",
-        json=decision_payload,
+async def test_list_project_audit_returns_serialised_logs(client, monkeypatch):
+    logs = [SimpleNamespace(version=1), SimpleNamespace(version=2)]
+    monkeypatch.setattr(audit_api, "verify_chain", AsyncMock(return_value=(True, logs)))
+    monkeypatch.setattr(
+        audit_api, "serialise_log", lambda log: {"version": log.version}
     )
-    assert decision_response.status_code == 200
 
-    export_response = await app_client.post(
-        f"/api/v1/export/{project_id}",
-        json={
-            "format": "pdf",
-            "include_source": True,
-            "include_approved_overlays": True,
-        },
+    response = await client.get("/api/v1/audit/42")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["project_id"] == 42
+    assert payload["valid"] is True
+    assert payload["count"] == 2
+    assert payload["items"][0]["version"] == 1
+
+
+@pytest.mark.asyncio
+async def test_diff_project_audit_returns_diff(client, monkeypatch):
+    log_a = SimpleNamespace(version=1)
+    log_b = SimpleNamespace(version=2)
+    logs = [log_a, log_b]
+    monkeypatch.setattr(
+        audit_api, "verify_chain", AsyncMock(return_value=(False, logs))
     )
-    assert export_response.status_code == 200
-    await export_response.aread()
-
-    audit_response = await app_client.get(f"/api/v1/audit/{project_id}")
-    assert audit_response.status_code == 200
-    audit_payload = audit_response.json()
-    assert audit_payload["project_id"] == project_id
-    assert audit_payload["valid"] is True
-    assert audit_payload["count"] >= 3
-
-    versions = [item["version"] for item in audit_payload["items"]]
-    assert versions == sorted(versions)
-
-    for index, entry in enumerate(audit_payload["items"]):
-        assert entry["hash"]
-        assert entry["signature"]
-        if index == 0:
-            assert entry["prev_hash"] in (None, "")
-        else:
-            assert entry["prev_hash"] == audit_payload["items"][index - 1]["hash"]
-
-    diff_response = await app_client.get(
-        f"/api/v1/audit/{project_id}/diff/{versions[0]}/{versions[-1]}"
+    monkeypatch.setattr(
+        audit_api, "serialise_log", lambda log: {"version": log.version}
     )
-    assert diff_response.status_code == 200
-    diff_payload = diff_response.json()
-    assert diff_payload["project_id"] == project_id
-    assert diff_payload["valid"] is True
-    assert diff_payload["version_a"]["version"] == versions[0]
-    assert diff_payload["version_b"]["version"] == versions[-1]
+    monkeypatch.setattr(
+        audit_api,
+        "diff_logs",
+        lambda a, b: {"changes": [{"field": "status", "from": "draft", "to": "final"}]},
+    )
 
-    context_diff = diff_payload["diff"]["context"]
-    assert set(context_diff) == {"added", "removed", "changed"}
-    assert context_diff["added"] or context_diff["removed"] or context_diff["changed"]
+    response = await client.get("/api/v1/audit/99/diff/1/2")
 
-    missing_response = await app_client.get(f"/api/v1/audit/{project_id}/diff/999/1000")
-    assert missing_response.status_code == 404
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["project_id"] == 99
+    assert payload["valid"] is False
+    assert payload["version_a"]["version"] == 1
+    assert payload["version_b"]["version"] == 2
+    assert payload["diff"]["changes"][0]["field"] == "status"
+
+
+@pytest.mark.asyncio
+async def test_diff_project_audit_missing_version_returns_404(client, monkeypatch):
+    logs = [SimpleNamespace(version=1)]
+    monkeypatch.setattr(audit_api, "verify_chain", AsyncMock(return_value=(True, logs)))
+
+    response = await client.get("/api/v1/audit/99/diff/1/3")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Audit entry not found"
