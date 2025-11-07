@@ -7,6 +7,7 @@ import random
 
 import pytest
 
+from app.models.property import PropertyType
 from app.services.agents.market_data_service import (
     MarketDataService,
     MockMarketDataProvider,
@@ -172,3 +173,68 @@ async def test_get_or_create_property_creates_new(monkeypatch):
     prop_id = await service._get_or_create_property(payload, session)
     assert prop_id
     assert len(session.executed) >= 2  # select + insert
+
+
+class _AsyncSessionStub:
+    def __init__(self):
+        self.commits = 0
+
+    async def commit(self):
+        self.commits += 1
+
+
+@pytest.mark.asyncio
+async def test_sync_provider_accumulates_results(monkeypatch):
+    service = MarketDataService()
+    provider = SimpleNamespace(
+        fetch_transactions=AsyncMock(return_value=[{"id": 1}]),
+        fetch_rental_data=AsyncMock(return_value=[{"id": 2}]),
+        fetch_market_indices=AsyncMock(return_value=[{"id": 3}]),
+    )
+    session = _AsyncSessionStub()
+
+    monkeypatch.setattr(service, "_store_transactions", AsyncMock(return_value=2))
+    monkeypatch.setattr(service, "_store_rentals", AsyncMock(return_value=1))
+    monkeypatch.setattr(service, "_store_indices", AsyncMock(return_value=4))
+    monkeypatch.setattr(
+        service, "_calculate_yield_benchmarks", AsyncMock(return_value=None)
+    )
+    monkeypatch.setattr(
+        service, "_update_absorption_metrics", AsyncMock(return_value=None)
+    )
+
+    result = await service.sync_provider(
+        "mocked", provider, session, property_types=[PropertyType.OFFICE]
+    )
+
+    assert result["results"]["transactions"] == 2
+    assert result["results"]["rentals"] == 1
+    assert result["results"]["indices"] == 4
+    assert "mocked" in service.sync_history
+    assert session.commits == 1
+
+
+@pytest.mark.asyncio
+async def test_sync_provider_collects_errors(monkeypatch):
+    service = MarketDataService()
+    provider = SimpleNamespace(
+        fetch_transactions=AsyncMock(side_effect=RuntimeError("boom")),
+        fetch_rental_data=AsyncMock(return_value=[]),
+        fetch_market_indices=AsyncMock(return_value=[]),
+    )
+    session = _AsyncSessionStub()
+
+    monkeypatch.setattr(service, "_store_transactions", AsyncMock(return_value=0))
+    monkeypatch.setattr(service, "_store_rentals", AsyncMock(return_value=0))
+    monkeypatch.setattr(service, "_store_indices", AsyncMock(return_value=0))
+    monkeypatch.setattr(
+        service, "_calculate_yield_benchmarks", AsyncMock(return_value=None)
+    )
+    monkeypatch.setattr(
+        service, "_update_absorption_metrics", AsyncMock(return_value=None)
+    )
+
+    result = await service.sync_provider(
+        "mocked", provider, session, property_types=[PropertyType.OFFICE]
+    )
+    assert result["results"]["errors"]

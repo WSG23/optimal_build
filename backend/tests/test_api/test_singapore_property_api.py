@@ -55,6 +55,7 @@ class _DBStub:
         self.records = records or []
         self.added: list = []
         self.commits = 0
+        self.deleted: list = []
 
     def query(self, model):
         return _QueryStub(self.records)
@@ -68,6 +69,11 @@ class _DBStub:
 
     def refresh(self, obj):
         return obj
+
+    def delete(self, obj):
+        if obj in self.records:
+            self.records.remove(obj)
+        self.deleted.append(obj)
 
     def close(self):
         return None
@@ -237,3 +243,58 @@ async def test_calculate_buildable_metrics_fallback(monkeypatch):
     result = await sg_api.calculate_buildable_metrics(payload)
     assert result["fallback_used"] is True
     assert result["plot_ratio"] == 2.8
+
+
+@pytest.mark.asyncio
+async def test_general_compliance_endpoint(monkeypatch):
+    class DummySession:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    monkeypatch.setattr("app.core.database.AsyncSessionLocal", lambda: DummySession())
+
+    ura_result = {
+        "status": SimpleNamespace(value="warning"),
+        "violations": ["setback"],
+        "warnings": [],
+        "rules_applied": {},
+    }
+    bca_result = {
+        "status": SimpleNamespace(value="passed"),
+        "violations": [],
+        "warnings": ["height"],
+        "requirements_applied": {},
+        "recommendations": ["add sprinklers"],
+    }
+
+    async def _ura(*_, **__):
+        return ura_result
+
+    async def _bca(*_, **__):
+        return bca_result
+
+    monkeypatch.setattr("app.utils.singapore_compliance.check_ura_compliance", _ura)
+    monkeypatch.setattr("app.utils.singapore_compliance.check_bca_compliance", _bca)
+
+    request = {
+        "land_area_sqm": 1500,
+        "zoning": "residential",
+        "proposed_gfa_sqm": 3200,
+        "proposed_height_m": 45,
+        "proposed_storeys": 12,
+    }
+    response = await sg_api.check_compliance(request, _Token(email="owner@example.com"))
+    assert response["status"] == "FAILED"
+    assert "setback" in response["violations"]
+
+
+def test_delete_property_removes_record():
+    prop = _make_property()
+    db = _DBStub([prop])
+
+    result = sg_api.delete_property(str(prop.id), _Token(email="owner@example.com"), db)
+    assert result["property_id"] == str(prop.id)
+    assert not db.records
