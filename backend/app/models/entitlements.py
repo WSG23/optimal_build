@@ -253,10 +253,10 @@ class EntStudy(BaseModel):
     project_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     study_type: Mapped[EntStudyType] = mapped_column(
-        SAEnum(EntStudyType, name="ent_study_type"), nullable=False
+        _enum(EntStudyType, name="ent_study_type"), nullable=False
     )
     status: Mapped[EntStudyStatus] = mapped_column(
-        SAEnum(EntStudyStatus, name="ent_study_status"), nullable=False
+        _enum(EntStudyStatus, name="ent_study_status"), nullable=False
     )
     summary: Mapped[Optional[str]] = mapped_column(Text)
     consultant: Mapped[Optional[str]] = mapped_column(String(120))
@@ -292,10 +292,10 @@ class EntEngagement(BaseModel):
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     organisation: Mapped[Optional[str]] = mapped_column(String(150))
     engagement_type: Mapped[EntEngagementType] = mapped_column(
-        SAEnum(EntEngagementType, name="ent_engagement_type"), nullable=False
+        _enum(EntEngagementType, name="ent_engagement_type"), nullable=False
     )
     status: Mapped[EntEngagementStatus] = mapped_column(
-        SAEnum(EntEngagementStatus, name="ent_engagement_status"), nullable=False
+        _enum(EntEngagementStatus, name="ent_engagement_status"), nullable=False
     )
     contact_email: Mapped[Optional[str]] = mapped_column(String(120))
     contact_phone: Mapped[Optional[str]] = mapped_column(String(40))
@@ -329,10 +329,10 @@ class EntLegalInstrument(BaseModel):
     project_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     instrument_type: Mapped[EntLegalInstrumentType] = mapped_column(
-        SAEnum(EntLegalInstrumentType, name="ent_legal_instrument_type"), nullable=False
+        _enum(EntLegalInstrumentType, name="ent_legal_instrument_type"), nullable=False
     )
     status: Mapped[EntLegalInstrumentStatus] = mapped_column(
-        SAEnum(EntLegalInstrumentStatus, name="ent_legal_instrument_status"),
+        _enum(EntLegalInstrumentStatus, name="ent_legal_instrument_status"),
         nullable=False,
     )
     reference_code: Mapped[Optional[str]] = mapped_column(String(80))

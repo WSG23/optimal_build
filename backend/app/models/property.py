@@ -269,7 +269,10 @@ class DevelopmentPipeline(BaseModel):
     # Project Information
     project_name = Column(String(255), nullable=False)
     developer = Column(String(255))
-    project_type = Column(SQLEnum(PropertyType), nullable=False)
+    project_type = Column(
+        SQLEnum(PropertyType, name="property_type", values_callable=_enum_values),
+        nullable=False,
+    )
 
     # Location
     location = Column(Geometry("POINT", srid=4326), nullable=False)
@@ -289,7 +292,10 @@ class DevelopmentPipeline(BaseModel):
     expected_launch = Column(Date)
 
     # Status
-    development_status = Column(SQLEnum(PropertyStatus), nullable=False)
+    development_status = Column(
+        SQLEnum(PropertyStatus, name="property_status", values_callable=_enum_values),
+        nullable=False,
+    )
     completion_percentage = Column(SQLDecimal(5, 2))
 
     # Market Impact
