@@ -30,13 +30,20 @@ class GeocodingService(AsyncClientService):
     def __init__(self):
         self.onemap_base_url = "https://www.onemap.gov.sg/api"
         self.google_maps_api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
-        try:
-            self.client = httpx.AsyncClient(timeout=30.0)
-        except RuntimeError:  # pragma: no cover - httpx stub unavailable
-            logger.warning(
-                "httpx AsyncClient unavailable; geocoding service will operate in mock mode"
+        self.offline_mode = getattr(settings, "OFFLINE_MODE", False)
+        if self.offline_mode:
+            logger.info(
+                "Geocoding service running in offline mode; using mock address/amenity data"
             )
             self.client = None  # type: ignore[assignment]
+        else:
+            try:
+                self.client = httpx.AsyncClient(timeout=30.0)
+            except RuntimeError:  # pragma: no cover - httpx stub unavailable
+                logger.warning(
+                    "httpx AsyncClient unavailable; geocoding service will operate in mock mode"
+                )
+                self.client = None  # type: ignore[assignment]
 
     @staticmethod
     def _build_mock_address(latitude: float, longitude: float) -> Address:

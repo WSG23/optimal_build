@@ -291,6 +291,7 @@ class Settings:
             "SLOW_QUERY_THRESHOLD_SECONDS",
             default_threshold,
         )
+        self.OFFLINE_MODE = _load_bool("OFFLINE_MODE", False)
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")

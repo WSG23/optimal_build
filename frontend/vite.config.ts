@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => {
       : `http://127.0.0.1:${backendPort}`
   const proxyTarget = resolvedApiBase.replace(/\/+$/, '')
 
+  console.log('[vite.config] BACKEND_PORT:', backendPort)
+  console.log('[vite.config] Proxy target:', proxyTarget)
+
   return {
     plugins: [react()],
     server: {
