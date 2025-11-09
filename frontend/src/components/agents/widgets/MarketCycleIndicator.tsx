@@ -61,10 +61,10 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
     );
   }
 
-  const formatPercent = (value?: number | null) => {
+  const formatPercent = (value?: number | null, decimals: number = 1) => {
     if (value === undefined || value === null || Number.isNaN(value)) return '—';
     const percentValue = Math.abs(value) <= 1 ? value * 100 : value;
-    return `${percentValue.toFixed(1)}%`;
+    return `${percentValue.toFixed(decimals)}%`;
   };
 
   const getMomentumIcon = (momentum?: number | null) => {
@@ -152,7 +152,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
               </Typography>
               {getMomentumIcon(cycleData.indicators.price_momentum)}
             </Box>
-            {cycleData.indicators.price_momentum !== undefined && (
+            {cycleData.indicators.price_momentum != null && (
               <Chip
                 label={formatPercent(cycleData.indicators.price_momentum)}
                 size="small"
@@ -176,7 +176,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
               </Typography>
               {getMomentumIcon(cycleData.indicators.rental_momentum)}
             </Box>
-            {cycleData.indicators.rental_momentum !== undefined && (
+            {cycleData.indicators.rental_momentum != null && (
               <Chip
                 label={formatPercent(cycleData.indicators.rental_momentum)}
                 size="small"
@@ -192,7 +192,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
           </Box>
         </Grid>
 
-        {cycleData.indicators.supply_demand_ratio !== undefined && (
+        {cycleData.indicators.supply_demand_ratio != null && (
           <Grid item xs={12}>
             <Box>
               <Typography variant="body2" color="textSecondary" gutterBottom>

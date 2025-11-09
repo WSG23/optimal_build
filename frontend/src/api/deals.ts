@@ -93,6 +93,22 @@ export interface DealTimelineEvent {
   auditLog: AuditLogSummary | null
 }
 
+export interface DealCommission {
+  id: string
+  commissionType: string
+  status: string
+  basisAmount: number | null
+  basisCurrency: string
+  commissionRate: number | null
+  commissionAmount: number | null
+  introducedAt: string | null
+  confirmedAt: string | null
+  invoicedAt: string | null
+  paidAt: string | null
+  disputedAt: string | null
+  resolvedAt: string | null
+}
+
 function toNumberOrNull(value: unknown): number | null {
   if (typeof value === 'number') {
     return Number.isNaN(value) ? null : value

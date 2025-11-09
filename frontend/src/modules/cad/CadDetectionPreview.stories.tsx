@@ -186,7 +186,7 @@ export const Default = () => (
     statusCounts={{ source: 0, pending: 3, approved: 1, rejected: 1 }}
     hiddenStatusCounts={{ source: 0, pending: 0, approved: 0, rejected: 0 }}
     activeStatuses={ALL_STATUSES}
-    hints={['Coordinate with SCDF on staging']}
+    hints={[{ key: 'staging', text: 'Coordinate with SCDF on staging' }]}
     zoneCode="RA"
   />
 )
@@ -195,7 +195,7 @@ export const Locked = () => (
   <PreviewStoryWrapper
     units={units.filter((unit) => unit.status !== 'rejected')}
     overlays={[]}
-    hints={['Awaiting overlays']}
+    hints={[{ key: 'awaiting', text: 'Awaiting overlays' }]}
     severitySummary={{ high: 0, medium: 0, low: 0, none: 0 }}
     statusCounts={{ source: 0, pending: 1, approved: 0, rejected: 0 }}
     hiddenStatusCounts={{ source: 0, pending: 0, approved: 0, rejected: 0 }}

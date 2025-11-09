@@ -16,6 +16,7 @@ import {
   type GpsCaptureSummary,
   type MarketIntelligenceSummary,
   type MetricValue,
+  type CoordinatePair,
   type QuickAnalysisScenarioSummary,
   type ProfessionalPackSummary,
   type ProfessionalPackType,

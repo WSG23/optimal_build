@@ -24,6 +24,7 @@ import {
   type DevelopmentScenario,
   type SiteAcquisitionResult,
   type DeveloperPreviewJob,
+  type DeveloperAssetOptimization,
 } from '../../../api/siteAcquisition'
 import { Preview3DViewer } from '../../components/site-acquisition/Preview3DViewer'
 
@@ -421,6 +422,7 @@ type ConditionAssessmentDraft = {
 type ScenarioComparisonKey = 'all' | DevelopmentScenario
 
 type ScenarioComparisonMetric = {
+  key: string
   label: string
   value: string
 }
@@ -1061,7 +1063,7 @@ export function SiteAcquisitionPage() {
   const scenarioAssessmentsMap = useMemo(() => {
     const map = new Map<DevelopmentScenario, ConditionAssessment>()
     scenarioAssessments.forEach((assessment) => {
-      if (assessment.scenario) {
+      if (assessment.scenario && assessment.scenario !== 'all') {
         map.set(assessment.scenario, assessment)
       }
     })
@@ -1071,7 +1073,7 @@ export function SiteAcquisitionPage() {
       conditionAssessment.scenario !== 'all'
     ) {
       map.set(
-        conditionAssessment.scenario as DevelopmentScenario,
+        conditionAssessment.scenario,
         conditionAssessment,
       )
     }
@@ -1162,7 +1164,7 @@ export function SiteAcquisitionPage() {
     [formatCurrency, formatNumberMetric],
   )
   const summariseScenarioMetrics = useCallback(
-    (metrics: Record<string, unknown> | null | undefined) => {
+    (metrics: Record<string, unknown> | null | undefined): ScenarioComparisonMetric[] => {
       if (!metrics) {
         return []
       }
@@ -1194,7 +1196,7 @@ export function SiteAcquisitionPage() {
       return selected.map((key) => ({
         key,
         label: formatMetricLabel(key),
-        value: metrics[key],
+        value: String(metrics[key]),
       }))
     },
     [formatMetricLabel],
@@ -1963,13 +1965,10 @@ export function SiteAcquisitionPage() {
     }
     return quickAnalysisScenarios.map((entry) => {
       const scenario =
-        typeof entry.scenario === 'string'
+        typeof entry.scenario === 'string' && entry.scenario !== 'all'
           ? (entry.scenario as DevelopmentScenario)
           : 'raw_land'
-      const label =
-        scenario === 'all'
-          ? 'All scenarios'
-          : scenarioLookup.get(scenario)?.label ?? formatScenarioLabel(scenario)
+      const label = scenarioLookup.get(scenario)?.label ?? formatScenarioLabel(scenario)
       const signals = buildFeasibilitySignals(entry)
       return {
         scenario,
@@ -2212,10 +2211,12 @@ export function SiteAcquisitionPage() {
         if (displaySummary) {
           quickMetrics = [
             {
+              key: 'checklist',
               label: 'Checklist',
               value: `${displaySummary.completed}/${displaySummary.total}`,
             },
             {
+              key: 'completion',
               label: 'Completion',
               value: `${displaySummary.completionPercentage}%`,
             },
@@ -8041,7 +8042,7 @@ type ConditionInsightView = {
   severity: InsightSeverity
   title: string
   detail: string
-  specialist?: string | null
+  specialist: string | null
 }
 
 const insightSeverityOrder: Record<InsightSeverity, number> = {

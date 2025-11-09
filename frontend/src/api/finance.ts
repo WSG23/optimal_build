@@ -352,7 +352,33 @@ interface FinanceFeasibilityRequestPayload {
       equity_draw?: string
       debt_draw?: string
     }>
+    asset_mix?: AssetMixPayload[]
+    construction_loan?: ConstructionLoanInputPayload
+    sensitivity_bands?: SensitivityBandPayload[]
   }
+}
+
+interface AssetMixPayload {
+  asset_type: string
+  allocation_pct?: string
+  nia_sqm?: string
+  rent_psm_month?: string
+  stabilised_vacancy_pct?: string
+  opex_pct_of_rent?: string
+  estimated_revenue_sgd?: string
+  estimated_capex_sgd?: string
+  absorption_months?: string
+  risk_level?: string | null
+  heritage_premium_pct?: string
+  notes?: string[]
+}
+
+interface SensitivityBandPayload {
+  parameter: string
+  low?: string
+  base?: string
+  high?: string
+  notes?: string[]
 }
 
 interface CostIndexSnapshotPayload {
@@ -562,9 +588,7 @@ function toOptionalString(value: unknown): string | undefined {
   return trimmed === '' ? undefined : trimmed
 }
 
-function toAssetMixPayload(
-  entry: FinanceAssetMixInput,
-): Record<string, unknown> {
+function toAssetMixPayload(entry: FinanceAssetMixInput): AssetMixPayload {
   return {
     asset_type: entry.assetType,
     allocation_pct: toOptionalString(entry.allocationPct),
@@ -583,7 +607,7 @@ function toAssetMixPayload(
 
 function toSensitivityBandPayload(
   band: SensitivityBandInput,
-): Record<string, unknown> {
+): SensitivityBandPayload {
   return {
     parameter: band.parameter,
     low: toOptionalString(band.low),
@@ -632,9 +656,16 @@ function toPayload(
   request: FinanceFeasibilityRequest,
 ): FinanceFeasibilityRequestPayload {
   const { scenario } = request
+  const projectId =
+    typeof request.projectId === 'number'
+      ? request.projectId
+      : Number.parseInt(String(request.projectId), 10)
+  if (!Number.isFinite(projectId)) {
+    throw new Error('Finance feasibility projectId must be numeric')
+  }
   return {
-    project_id: request.projectId,
-    project_name: request.projectName,
+    project_id: projectId,
+    project_name: request.projectName ?? undefined,
     fin_project_id: request.finProjectId,
     scenario: {
       name: scenario.name,
@@ -857,7 +888,7 @@ function mapConstructionLoanConfig(
         interestRate: facility.interest_rate ?? null,
         periodsPerYear: facility.periods_per_year ?? null,
         capitaliseInterest:
-          facility.capitalise_interest ?? facility.capitalised ?? true,
+          facility.capitalise_interest ?? true,
         upfrontFeePct: facility.upfront_fee_pct ?? null,
         exitFeePct: facility.exit_fee_pct ?? null,
         reserveMonths: null,
@@ -869,8 +900,7 @@ function mapConstructionLoanConfig(
   return {
     interestRate: payload.interest_rate ?? null,
     periodsPerYear: payload.periods_per_year ?? null,
-    capitaliseInterest:
-      payload.capitalise_interest ?? true,
+    capitaliseInterest: payload.capitalise_interest ?? true,
     facilities,
   }
 }
@@ -883,9 +913,7 @@ function mapConstructionLoanFacility(
     amount: payload.amount ?? null,
     interestRate: payload.interest_rate ?? null,
     periodsPerYear: payload.periods_per_year ?? null,
-    capitalised: Boolean(
-      payload.capitalised ?? payload.capitalise_interest ?? true,
-    ),
+    capitalised: Boolean(payload.capitalised ?? true),
     totalInterest: payload.total_interest ?? null,
     upfrontFee: payload.upfront_fee ?? null,
     exitFee: payload.exit_fee ?? null,
@@ -1444,7 +1472,9 @@ export async function listFinanceScenarios(
         finProjectId:
           typeof params.finProjectId === 'number'
             ? params.finProjectId
-            : FINANCE_FALLBACK_SUMMARY.finProjectId,
+            : typeof FINANCE_FALLBACK_SUMMARY.finProjectId === 'number'
+            ? FINANCE_FALLBACK_SUMMARY.finProjectId
+            : undefined,
         projectName: 'Offline Project',
         scenario: {
           name: 'Offline Feasibility Scenario',

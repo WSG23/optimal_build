@@ -255,6 +255,8 @@ export function BusinessPerformancePage() {
       setRoiSummary(EMPTY_ROI_SUMMARY)
       return
     }
+    // Type guard: agentId is guaranteed to be string after the check above
+    const validAgentId: string = agentId
     const controller = new AbortController()
     async function loadAnalytics() {
       try {
@@ -263,8 +265,8 @@ export function BusinessPerformancePage() {
 
         const [snapshot, history, conversionBench, cycleBench, pipelineBench] =
           await Promise.all([
-            fetchLatestSnapshot(agentId, controller.signal),
-            fetchSnapshotsHistory(agentId, 30, controller.signal),
+            fetchLatestSnapshot(validAgentId, controller.signal),
+            fetchSnapshotsHistory(validAgentId, 30, controller.signal),
             fetchBenchmarks('conversion_rate', { signal: controller.signal }),
             fetchBenchmarks('avg_cycle_days', { signal: controller.signal }),
             fetchBenchmarks('pipeline_weighted_value', {

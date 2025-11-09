@@ -155,7 +155,7 @@ export function FinanceScenarioCreator({
     setAssets((prev) => [
       ...prev,
       {
-        ...DEMO_ASSET_ROWS[0],
+        ...DEFAULT_ASSET_ROWS[0],
         id: `asset-${Date.now()}-${nextIndex}`,
         assetType: '',
         allocationPct: '',

@@ -141,7 +141,7 @@ interface RawQuickScenario {
   notes?: unknown
 }
 
-interface RawQuickAnalysis {
+export interface RawQuickAnalysis {
   generated_at?: string
   scenarios?: RawQuickScenario[]
 }
@@ -177,6 +177,25 @@ function coerceString(value: unknown): string | undefined {
     return value
   }
   return undefined
+}
+
+function coerceBoolean(value: unknown): boolean | null {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'number') {
+    return value !== 0
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true' || normalized === '1') {
+      return true
+    }
+    if (normalized === 'false' || normalized === '0') {
+      return false
+    }
+  }
+  return null
 }
 
 function mapAddress(payload: Record<string, unknown>): AddressSummary {
@@ -589,6 +608,14 @@ export const DEFAULT_SCENARIO_ORDER: readonly DevelopmentScenario[] = [
   'mixed_use_redevelopment',
 ]
 
+const DEVELOPMENT_SCENARIOS_SET = new Set<DevelopmentScenario>(
+  DEFAULT_SCENARIO_ORDER,
+)
+
+function isDevelopmentScenario(value: string | undefined): value is DevelopmentScenario {
+  return Boolean(value && DEVELOPMENT_SCENARIOS_SET.has(value as DevelopmentScenario))
+}
+
 export interface MarketIntelligenceSummary {
   propertyId: string
   report: Record<string, unknown>
@@ -861,13 +888,49 @@ export type ChecklistCategory =
   | 'utility_capacity'
   | 'access_rights'
 
+const CHECKLIST_CATEGORIES: readonly ChecklistCategory[] = [
+  'title_verification',
+  'zoning_compliance',
+  'environmental_assessment',
+  'structural_survey',
+  'heritage_constraints',
+  'utility_capacity',
+  'access_rights',
+]
+
+function isChecklistCategory(value: string | undefined): value is ChecklistCategory {
+  return Boolean(value && CHECKLIST_CATEGORIES.includes(value as ChecklistCategory))
+}
+
 export type ChecklistStatus =
   | 'pending'
   | 'in_progress'
   | 'completed'
   | 'not_applicable'
 
+const CHECKLIST_STATUSES: readonly ChecklistStatus[] = [
+  'pending',
+  'in_progress',
+  'completed',
+  'not_applicable',
+]
+
+function isChecklistStatus(value: string | undefined): value is ChecklistStatus {
+  return Boolean(value && CHECKLIST_STATUSES.includes(value as ChecklistStatus))
+}
+
 export type ChecklistPriority = 'critical' | 'high' | 'medium' | 'low'
+
+const CHECKLIST_PRIORITIES: readonly ChecklistPriority[] = [
+  'critical',
+  'high',
+  'medium',
+  'low',
+]
+
+function isChecklistPriority(value: string | undefined): value is ChecklistPriority {
+  return Boolean(value && CHECKLIST_PRIORITIES.includes(value as ChecklistPriority))
+}
 
 export interface ChecklistItem {
   id: string
@@ -937,10 +1000,10 @@ export interface ChecklistTemplateDraft {
   itemTitle: string
   itemDescription?: string | null
   priority: ChecklistPriority
-  typicalDurationDays?: number | null
+  typicalDurationDays?: number | string | null
   requiresProfessional?: boolean
   professionalType?: string | null
-  displayOrder?: number | null
+  displayOrder?: number | string | null
 }
 
 export interface ChecklistTemplateUpdate {
@@ -949,10 +1012,10 @@ export interface ChecklistTemplateUpdate {
   itemTitle?: string
   itemDescription?: string | null
   priority?: ChecklistPriority
-  typicalDurationDays?: number | null
+  typicalDurationDays?: number | string | null
   requiresProfessional?: boolean
   professionalType?: string | null
-  displayOrder?: number | null
+  displayOrder?: number | string | null
 }
 
 export interface ChecklistTemplateImportResult {
@@ -988,35 +1051,80 @@ export async function fetchPropertyChecklist(
     }
     const data = await response.json()
 
-    const itemsArray = Array.isArray(data?.items)
-      ? data.items
+    const itemsArray: Record<string, unknown>[] = Array.isArray(data?.items)
+      ? (data.items as Record<string, unknown>[])
       : Array.isArray(data)
-      ? data
+      ? (data as Record<string, unknown>[])
       : []
 
-    return itemsArray.map((item: Record<string, unknown>): ChecklistItem => ({
-      id: item.id,
-      propertyId: item.property_id,
-      developmentScenario: item.development_scenario,
-      category: item.category,
-      itemTitle: item.item_title,
-      itemDescription: item.item_description ?? undefined,
-      status: item.status,
-      priority: item.priority,
-      assignedTo: item.assigned_to ?? null,
-      dueDate: item.due_date ?? null,
-      completedAt: (item.completed_at ?? item.completed_date) ?? null,
-      notes: item.notes ?? null,
-      requiresProfessional: item.requires_professional ?? false,
-      professionalType: item.professional_type ?? null,
-      typicalDurationDays: item.typical_duration_days ?? null,
-      displayOrder: item.display_order ?? null,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-    }))
+    return itemsArray
+      .map((item) => mapChecklistItem(item))
+      .filter((item): item is ChecklistItem => item !== null)
   } catch (error) {
     console.error('Failed to fetch property checklist:', error)
     return []
+  }
+}
+
+function mapChecklistItem(item: Record<string, unknown>): ChecklistItem | null {
+  const id = coerceString(item.id)
+  const propertyId = coerceString(item.property_id)
+  const scenarioValue = coerceString(item.development_scenario)
+  const categoryValue = coerceString(item.category)
+  const itemTitle = coerceString(item.item_title)
+  const statusValue = coerceString(item.status)
+  const priorityValue = coerceString(item.priority)
+  const createdAt = coerceString(item.created_at)
+  const updatedAt = coerceString(item.updated_at)
+
+  if (
+    !id ||
+    !propertyId ||
+    !itemTitle ||
+    !createdAt ||
+    !updatedAt ||
+    !scenarioValue ||
+    !isDevelopmentScenario(scenarioValue) ||
+    !categoryValue ||
+    !isChecklistCategory(categoryValue) ||
+    !statusValue ||
+    !isChecklistStatus(statusValue) ||
+    !priorityValue ||
+    !isChecklistPriority(priorityValue)
+  ) {
+    return null
+  }
+
+  const assignedTo = coerceString(item.assigned_to) ?? null
+  const dueDate = coerceString(item.due_date) ?? null
+  const completedAt =
+    coerceString(item.completed_at) ?? coerceString(item.completed_date) ?? null
+  const notes = coerceString(item.notes) ?? null
+  const requiresProfessional =
+    coerceBoolean(item.requires_professional) ?? false
+  const professionalType = coerceString(item.professional_type) ?? null
+  const typicalDurationDays = coerceNumber(item.typical_duration_days)
+  const displayOrder = coerceNumber(item.display_order)
+
+  return {
+    id,
+    propertyId,
+    developmentScenario: scenarioValue,
+    category: categoryValue,
+    itemTitle,
+    itemDescription: coerceString(item.item_description) ?? undefined,
+    status: statusValue,
+    priority: priorityValue,
+    assignedTo,
+    dueDate,
+    completedAt,
+    notes,
+    requiresProfessional,
+    professionalType,
+    typicalDurationDays,
+    displayOrder,
+    createdAt,
+    updatedAt,
   }
 }
 
@@ -1227,10 +1335,13 @@ function buildTemplatePayload(
   }
   if (Object.prototype.hasOwnProperty.call(template, 'typicalDurationDays')) {
     const value = template.typicalDurationDays
-    payload.typicalDurationDays =
-      value === null || value === undefined || value === ''
-        ? null
-        : Number(value)
+    if (value === null || value === undefined) {
+      payload.typicalDurationDays = null
+    } else if (typeof value === 'string') {
+      payload.typicalDurationDays = value.trim() === '' ? null : Number(value)
+    } else {
+      payload.typicalDurationDays = value
+    }
   }
   if (Object.prototype.hasOwnProperty.call(template, 'requiresProfessional')) {
     payload.requiresProfessional = Boolean(template.requiresProfessional)
@@ -1240,10 +1351,13 @@ function buildTemplatePayload(
   }
   if (Object.prototype.hasOwnProperty.call(template, 'displayOrder')) {
     const value = template.displayOrder
-    payload.displayOrder =
-      value === null || value === undefined || value === ''
-        ? null
-        : Number(value)
+    if (value === null || value === undefined) {
+      payload.displayOrder = null
+    } else if (typeof value === 'string') {
+      payload.displayOrder = value.trim() === '' ? null : Number(value)
+    } else {
+      payload.displayOrder = value
+    }
   }
 
   return payload

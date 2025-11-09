@@ -28,6 +28,7 @@ import {
   type DevelopmentScenario,
   type GpsCaptureSummary,
   type UpdateChecklistRequest,
+  type RawQuickAnalysis,
 } from './agents'
 
 export interface SiteAcquisitionRequest {
@@ -207,12 +208,12 @@ export interface ConditionInsight {
 
 export interface ConditionAttachment {
   label: string
-  url?: string | null
+  url: string | null
 }
 
 export interface ConditionAssessment {
   propertyId: string
-  scenario?: DevelopmentScenario | null
+  scenario?: DevelopmentScenario | 'all' | null
   overallScore: number
   overallRating: string
   riskLevel: string
@@ -395,10 +396,16 @@ interface RawDeveloperVisualization {
   previewAvailable?: unknown
   concept_mesh_url?: unknown
   conceptMeshUrl?: unknown
+  preview_metadata_url?: unknown
+  previewMetadataUrl?: unknown
+  thumbnail_url?: unknown
+  thumbnailUrl?: unknown
   camera_orbit_hint?: unknown
   cameraOrbitHint?: unknown
   preview_seed?: unknown
   previewSeed?: unknown
+  preview_job_id?: unknown
+  previewJobId?: unknown
   notes?: unknown
   massing_layers?: unknown
   massingLayers?: unknown
@@ -417,11 +424,20 @@ interface RawDeveloperGpsResponse {
   existing_use: string
   property_info: Record<string, unknown> | null
   nearby_amenities: Record<string, unknown> | null
-  quick_analysis?: unknown
+  quick_analysis?: RawQuickAnalysis | null
   timestamp: string
   build_envelope?: RawDeveloperEnvelope | null
   visualization?: RawDeveloperVisualization | null
   optimizations?: Array<Record<string, unknown>> | null
+  financial_summary?: {
+    total_estimated_revenue_sgd?: number | null
+    total_estimated_capex_sgd?: number | null
+    dominant_risk_profile?: string | null
+    notes?: unknown[]
+    finance_blueprint?: unknown
+    financeBlueprint?: unknown
+  } | null
+  preview_jobs?: unknown
   heritage_context?: unknown
 }
 
@@ -1072,6 +1088,37 @@ function deriveVisualizationFromSummary(
     conceptMeshUrl: null,
     cameraOrbitHint: null,
     previewSeed: scenarioCount || null,
+    previewMetadataUrl: null,
+    thumbnailUrl: null,
+    previewJobId: null,
+    massingLayers: [],
+    colorLegend: [],
+  }
+}
+
+function createFallbackOptimization(
+  base: Pick<
+    DeveloperAssetOptimization,
+    | 'assetType'
+    | 'allocationPct'
+    | 'niaEfficiency'
+    | 'allocatedGfaSqm'
+    | 'targetFloorHeightM'
+    | 'parkingRatioPer1000Sqm'
+    | 'estimatedRevenueSgd'
+    | 'estimatedCapexSgd'
+    | 'absorptionMonths'
+    | 'riskLevel'
+    | 'notes'
+  >,
+): DeveloperAssetOptimization {
+  return {
+    rentPsmMonth: null,
+    stabilisedVacancyPct: null,
+    opexPctOfRent: null,
+    fitoutCostPsm: null,
+    heritagePremiumPct: null,
+    ...base,
   }
 }
 
@@ -1081,7 +1128,7 @@ function deriveOptimizationsFallback(
   const key = (landUse ?? '').toLowerCase()
   if (key.includes('residential')) {
     return [
-      {
+      createFallbackOptimization({
         assetType: 'residential',
         allocationPct: 70,
         niaEfficiency: 0.78,
@@ -1093,8 +1140,8 @@ function deriveOptimizationsFallback(
         absorptionMonths: 14,
         riskLevel: 'moderate',
         notes: [],
-      },
-      {
+      }),
+      createFallbackOptimization({
         assetType: 'serviced_apartments',
         allocationPct: 20,
         niaEfficiency: 0.72,
@@ -1106,8 +1153,8 @@ function deriveOptimizationsFallback(
         absorptionMonths: 12,
         riskLevel: 'balanced',
         notes: [],
-      },
-      {
+      }),
+      createFallbackOptimization({
         assetType: 'amenities',
         allocationPct: 10,
         niaEfficiency: 0.5,
@@ -1119,12 +1166,12 @@ function deriveOptimizationsFallback(
         absorptionMonths: 6,
         riskLevel: 'low',
         notes: [],
-      },
+      }),
     ]
   }
   if (key.includes('industrial') || key.includes('logistics')) {
     return [
-      {
+      createFallbackOptimization({
         assetType: 'high-spec logistics',
         allocationPct: 50,
         niaEfficiency: 0.75,
@@ -1136,8 +1183,8 @@ function deriveOptimizationsFallback(
         absorptionMonths: 16,
         riskLevel: 'balanced',
         notes: [],
-      },
-      {
+      }),
+      createFallbackOptimization({
         assetType: 'production',
         allocationPct: 30,
         niaEfficiency: 0.7,
@@ -1149,8 +1196,8 @@ function deriveOptimizationsFallback(
         absorptionMonths: 18,
         riskLevel: 'elevated',
         notes: [],
-      },
-      {
+      }),
+      createFallbackOptimization({
         assetType: 'support services',
         allocationPct: 20,
         niaEfficiency: 0.6,
@@ -1162,11 +1209,11 @@ function deriveOptimizationsFallback(
         absorptionMonths: 9,
         riskLevel: 'moderate',
         notes: [],
-      },
+      }),
     ]
   }
   return [
-    {
+    createFallbackOptimization({
       assetType: 'office',
       allocationPct: 60,
       niaEfficiency: 0.82,
@@ -1178,8 +1225,8 @@ function deriveOptimizationsFallback(
       absorptionMonths: 12,
       riskLevel: 'moderate',
       notes: [],
-    },
-    {
+    }),
+    createFallbackOptimization({
       assetType: 'retail',
       allocationPct: 25,
       niaEfficiency: 0.68,
@@ -1191,8 +1238,8 @@ function deriveOptimizationsFallback(
       absorptionMonths: 10,
       riskLevel: 'balanced',
       notes: [],
-    },
-    {
+    }),
+    createFallbackOptimization({
       assetType: 'amenities',
       allocationPct: 15,
       niaEfficiency: 0.55,
@@ -1204,7 +1251,7 @@ function deriveOptimizationsFallback(
       absorptionMonths: 6,
       riskLevel: 'low',
       notes: [],
-    },
+    }),
   ]
 }
 
@@ -1672,15 +1719,6 @@ export type {
   DevelopmentScenario,
   GpsCaptureSummary,
   UpdateChecklistRequest,
-  ConditionAssessment,
-  ConditionSystem,
-  ConditionAssessmentUpsertRequest,
-  ConditionReport,
-  ConditionReportChecklistSummary,
-  ChecklistTemplate,
-  ChecklistTemplateDraft,
-  ChecklistTemplateUpdate,
-  ChecklistTemplateImportResult,
   ChecklistCategory,
   ChecklistPriority,
 }

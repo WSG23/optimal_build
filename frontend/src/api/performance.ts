@@ -192,4 +192,4 @@ export async function fetchBenchmarks(
   return payload.map(mapBenchmark)
 }
 
-export type { PerformanceSnapshotSummary as PerformanceSnapshot, PerformanceBenchmarkEntry }
+export type { PerformanceSnapshotSummary as PerformanceSnapshot }

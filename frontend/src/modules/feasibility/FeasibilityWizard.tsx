@@ -25,6 +25,10 @@ type StoredAssetOptimization = {
   opexPctOfRent?: number | null
   fitoutCostPsm?: number | null
   notes?: string[]
+  estimatedRevenueSgd?: number | null
+  estimatedCapexSgd?: number | null
+  riskLevel?: string | null
+  absorptionMonths?: number | null
 }
 
 const ASSET_MIX_STORAGE_PREFIX = 'developer-asset-mix:'

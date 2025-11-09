@@ -387,7 +387,8 @@ export function ChecklistTemplateManager() {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) {
-    const { name, value, type, checked } = event.target
+    const { name, value, type } = event.target
+    const checked = 'checked' in event.target ? event.target.checked : false
     setForm((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -397,7 +398,8 @@ export function ChecklistTemplateManager() {
   function handleImportChange(
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
   ) {
-    const { name, value, type, checked } = event.target
+    const { name, value, type } = event.target
+    const checked = 'checked' in event.target ? event.target.checked : false
     setImportState((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
