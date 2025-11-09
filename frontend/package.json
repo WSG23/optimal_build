@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "preview:ci": "vite preview --host 127.0.0.1 --port 4173",
+    "typecheck": "tsc --noEmit",
     "lint:tokens": "node ../scripts/enforce-feasibility-tokens.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test:smoke": "playwright test tests/e2e --reporter=list",

@@ -2,6 +2,10 @@
   "name": "optimal_build",
   "private": true,
   "scripts": {
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "typecheck": "npm --prefix frontend run typecheck",
+    "test": "npm --prefix frontend run test",
     "format": "npm --prefix ui-admin run format",
     "format:fix": "npm --prefix ui-admin run format:fix"
   }
