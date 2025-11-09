@@ -210,8 +210,8 @@ export function AnalyticsPanel({
   )
 }
 
-function formatTooltipValue(value: number | null, name: string) {
-  if (value === null || value === undefined) {
+function formatTooltipValue(value: string | number, name: string) {
+  if (value === null || value === undefined || typeof value === 'string') {
     return ['Not available yet', name]
   }
   if (name.includes('pipeline')) {

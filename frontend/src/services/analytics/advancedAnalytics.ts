@@ -72,12 +72,24 @@ const graphNodeSchema = z.object({
   score: z.number().min(0),
 })
 
-const graphEdgeSchema = z.object({
+const graphEdgeInputSchema = z.object({
   id: z.string(),
   source: z.string(),
   target: z.string(),
-  weight: z.number().optional().default(0),
+  weight: z.number().optional(),
 })
+
+const graphEdgeSchema = graphEdgeInputSchema.transform((data) => ({
+  id: data.id,
+  source: data.source,
+  target: data.target,
+  weight: data.weight ?? 0,
+})) as z.ZodType<{
+  id: string
+  source: string
+  target: string
+  weight: number
+}>
 
 const graphSuccessSchema = z.object({
   kind: z.literal('graph'),

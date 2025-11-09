@@ -943,7 +943,7 @@ export function SiteAcquisitionPage() {
         })
         const scenarios = Array.from(scenarioSet)
         setAvailableChecklistScenarios(scenarios)
-        setActiveScenario((prev) => {
+        setActiveScenario((prev: 'all' | DevelopmentScenario) => {
           if (scenarios.length === 0) {
             return 'all'
           }
@@ -1965,7 +1965,7 @@ export function SiteAcquisitionPage() {
     }
     return quickAnalysisScenarios.map((entry) => {
       const scenario =
-        typeof entry.scenario === 'string' && entry.scenario !== 'all'
+        typeof entry.scenario === 'string' && entry.scenario
           ? (entry.scenario as DevelopmentScenario)
           : 'raw_land'
       const label = scenarioLookup.get(scenario)?.label ?? formatScenarioLabel(scenario)
@@ -5310,7 +5310,7 @@ export function SiteAcquisitionPage() {
                 acc[category].push(item)
                 return acc
               }, {} as Record<string, ChecklistItem[]>),
-            ).map(([category, items]) => (
+            ).map(([category, items]: [string, ChecklistItem[]]) => (
               <div
                 key={category}
                 style={{

@@ -248,6 +248,9 @@ export type ChecklistTemplateUpdate = AgentsChecklistTemplateUpdate
 export type ChecklistTemplateImportResult =
   AgentsChecklistTemplateImportResult
 
+// Re-export types from agents.ts
+export type { ChecklistItem, ChecklistSummary, ChecklistCategory, ChecklistPriority, DevelopmentScenario, ChecklistStatus, GpsCaptureSummary, UpdateChecklistRequest }
+
 function mapConditionAssessmentPayload(
   payload: Record<string, unknown>,
   fallbackPropertyId: string,
@@ -429,16 +432,18 @@ interface RawDeveloperGpsResponse {
   build_envelope?: RawDeveloperEnvelope | null
   visualization?: RawDeveloperVisualization | null
   optimizations?: Array<Record<string, unknown>> | null
-  financial_summary?: {
-    total_estimated_revenue_sgd?: number | null
-    total_estimated_capex_sgd?: number | null
-    dominant_risk_profile?: string | null
-    notes?: unknown[]
-    finance_blueprint?: unknown
-    financeBlueprint?: unknown
-  } | null
-  preview_jobs?: unknown
-  heritage_context?: unknown
+  financial_summary?: RawDeveloperFinancialSummary | null
+  preview_jobs?: Array<Record<string, unknown>> | null
+  heritage_context?: Record<string, unknown> | null
+}
+
+interface RawDeveloperFinancialSummary extends Record<string, unknown> {
+  total_estimated_revenue_sgd?: unknown
+  total_estimated_capex_sgd?: unknown
+  dominant_risk_profile?: unknown
+  notes?: unknown
+  finance_blueprint?: Record<string, unknown> | null
+  financeBlueprint?: Record<string, unknown> | null
 }
 
 function coerceNumeric(value: unknown): number | null {
@@ -1296,34 +1301,41 @@ export async function capturePropertyForDevelopment(
     signal,
   )
 
-  const buildEnvelope = rawPayload
-    ? mapDeveloperEnvelope(rawPayload.build_envelope)
+  const developerPayload = rawPayload as RawDeveloperGpsResponse | null
+
+  const buildEnvelope = developerPayload
+    ? mapDeveloperEnvelope(developerPayload.build_envelope)
     : deriveEnvelopeFromSummary(summary)
 
-  const visualization = rawPayload
-    ? mapDeveloperVisualization(rawPayload.visualization)
+  const visualization = developerPayload
+    ? mapDeveloperVisualization(developerPayload.visualization)
     : deriveVisualizationFromSummary(summary)
 
-  const optimizations = rawPayload
-    ? mapDeveloperOptimizations(rawPayload.optimizations)
+  const optimizations = developerPayload
+    ? mapDeveloperOptimizations(developerPayload.optimizations)
     : deriveOptimizationsFallback(summary.existingUse ?? null)
 
-  const financialSummary = rawPayload?.financial_summary
+  const financialSummary = developerPayload?.financial_summary
     ? {
         totalEstimatedRevenueSgd:
-          coerceNumeric(rawPayload.financial_summary.total_estimated_revenue_sgd) ?? null,
+          coerceNumeric(
+            developerPayload.financial_summary.total_estimated_revenue_sgd,
+          ) ?? null,
         totalEstimatedCapexSgd:
-          coerceNumeric(rawPayload.financial_summary.total_estimated_capex_sgd) ?? null,
+          coerceNumeric(
+            developerPayload.financial_summary.total_estimated_capex_sgd,
+          ) ?? null,
         dominantRiskProfile:
-          coerceString(rawPayload.financial_summary.dominant_risk_profile) ?? null,
-        notes: Array.isArray(rawPayload.financial_summary.notes)
-          ? (rawPayload.financial_summary.notes as unknown[])
+          coerceString(developerPayload.financial_summary.dominant_risk_profile) ?? null,
+        notes: Array.isArray(developerPayload.financial_summary.notes)
+          ? (developerPayload.financial_summary.notes as unknown[])
               .map((entry) => coerceString(entry) ?? '')
               .filter((entry): entry is string => entry.length > 0)
           : [],
         financeBlueprint: mapFinanceBlueprint(
-          rawPayload.financial_summary.finance_blueprint ??
-            (rawPayload.financial_summary as Record<string, unknown>).financeBlueprint,
+          developerPayload.financial_summary.finance_blueprint ??
+            (developerPayload.financial_summary as Record<string, unknown>)
+              .financeBlueprint,
         ),
       }
     : {
@@ -1334,15 +1346,15 @@ export async function capturePropertyForDevelopment(
         financeBlueprint: null,
       }
 
-  const heritageContext = rawPayload
+  const heritageContext = developerPayload
     ? mapHeritageContext(
-        rawPayload.heritage_context ??
-          (rawPayload as Record<string, unknown>).heritageContext,
+        developerPayload.heritage_context ??
+          (developerPayload as unknown as Record<string, unknown>).heritageContext,
       )
     : null
 
-  const previewJobs = rawPayload?.preview_jobs
-    ? mapPreviewJobs(rawPayload.preview_jobs)
+  const previewJobs = developerPayload?.preview_jobs
+    ? mapPreviewJobs(developerPayload.preview_jobs)
     : []
 
   return {
@@ -1710,17 +1722,6 @@ export {
   updateChecklistTemplateFromAgents as updateChecklistTemplate,
   deleteChecklistTemplateFromAgents as deleteChecklistTemplate,
   importChecklistTemplatesFromAgents as importChecklistTemplates,
+  OFFLINE_PROPERTY_ID,
+  DEFAULT_SCENARIO_ORDER,
 }
-
-export type {
-  ChecklistItem,
-  ChecklistStatus,
-  ChecklistSummary,
-  DevelopmentScenario,
-  GpsCaptureSummary,
-  UpdateChecklistRequest,
-  ChecklistCategory,
-  ChecklistPriority,
-}
-
-export { OFFLINE_PROPERTY_ID, DEFAULT_SCENARIO_ORDER }

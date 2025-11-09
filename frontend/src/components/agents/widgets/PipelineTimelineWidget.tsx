@@ -81,7 +81,22 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
     }
   };
 
-  const statusColor = (status: string) => {
+  const statusColorTimeline = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'success' as const;
+      case 'under_construction':
+        return 'warning' as const;
+      case 'approved':
+        return 'info' as const;
+      case 'planned':
+        return 'grey' as const;
+      default:
+        return 'grey' as const;
+    }
+  };
+
+  const statusColorChip = (status: string) => {
     switch (status) {
       case 'completed':
         return 'success' as const;
@@ -156,7 +171,7 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                     {completionLabel}
                   </TimelineOppositeContent>
                   <TimelineSeparator>
-                    <TimelineDot color={statusColor(project.status)}>
+                    <TimelineDot color={statusColorTimeline(project.status)}>
                       {statusIcon(project.status)}
                     </TimelineDot>
                     {index < majorDevelopments.length - 1 && <TimelineConnector />}
@@ -176,7 +191,7 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                           <Chip
                             size="small"
                             label={project.status.replace(/_/g, ' ')}
-                            color={statusColor(project.status)}
+                            color={statusColorChip(project.status)}
                           />
                           {project.units ? (
                             <Chip size="small" label={`${project.units} units`} variant="outlined" />
