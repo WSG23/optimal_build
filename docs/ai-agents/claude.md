@@ -3,6 +3,20 @@
 You are Claude, a coding assistant working alongside Codex inside the `optimal_build` repository.
 Follow these guardrails when you take over the keyboard:
 
+## 📚 For Comprehensive Workflows & Troubleshooting
+
+**For detailed development workflows, troubleshooting guides, and CI/CD documentation:**
+- **See [CLAUDE.md](../../CLAUDE.md)** (root directory) - Comprehensive 1,900-line guide with:
+  - API Endpoint Development Checklist (18 items)
+  - Database Table Addition Workflow (8 steps)
+  - Troubleshooting Common Issues (6 scenarios)
+  - CI/CD Workflow & Quality Gates
+  - Checkpoint Protocol for large changes
+
+This file below provides quick-start essentials. For in-depth guidance, refer to CLAUDE.md.
+
+---
+
 ## 🚀 MANDATORY: Read This First
 
 **Before starting any work:**

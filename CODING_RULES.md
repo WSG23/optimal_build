@@ -47,39 +47,154 @@ cd backend && alembic revision -m "add compliance_score column"
 - Do NOT define `SOME_ENUM = sa.Enum(..., create_type=False)` variables
 
 **Examples:**
+
+**❌ WRONG - Causes "type already exists" errors:**
 ```python
-# ❌ WRONG - causes "duplicate type" errors
+# Migration file - DO NOT DO THIS
+from alembic import op
+import sqlalchemy as sa
+
+# Defining enum with create_type=False still causes issues!
 DEAL_STATUS_ENUM = sa.Enum(
     "open", "closed_won", "closed_lost",
     name="deal_status",
-    create_type=False,  # ← This doesn't actually prevent autocreation!
+    create_type=False,  # ← This flag doesn't prevent autocreation reliably!
 )
 
 def upgrade() -> None:
-    # Manual creation
+    # Create ENUM type manually
     op.execute("CREATE TYPE deal_status AS ENUM ('open', 'closed_won', 'closed_lost')")
 
+    # Use the sa.Enum object in table definition
     op.create_table(
         "deals",
-        sa.Column("status", DEAL_STATUS_ENUM, nullable=False),  # ← Tries to create type again!
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("status", DEAL_STATUS_ENUM, nullable=False),  # ← SQLAlchemy tries to create type again!
     )
 
-# ✅ CORRECT - use String type
+# What happens: PostgreSQL ERROR: type "deal_status" already exists
+# Why: SQLAlchemy's Enum() metaclass ignores create_type=False in some contexts
+```
+
+**✅ CORRECT - Use sa.String() for ENUM columns:**
+```python
+# Migration file - RECOMMENDED PATTERN
+from alembic import op
+import sqlalchemy as sa
+
+
 def upgrade() -> None:
-    # Optional: Create ENUM type if you want DB-level validation
-    op.execute(
-        "CREATE TYPE deal_status AS ENUM ('open', 'closed_won', 'closed_lost')"
-    )
+    # Step 1: Create PostgreSQL ENUM type (for DB-level validation)
+    op.execute("CREATE TYPE deal_status AS ENUM ('open', 'closed_won', 'closed_lost')")
 
+    # Step 2: Create table with String columns
     op.create_table(
         "deals",
-        sa.Column("status", sa.String(), nullable=False),  # ← Simple string type
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("status", sa.String(), nullable=False),  # ← Use String, NOT sa.Enum()
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
     )
 
-    # Optional: Convert to ENUM type after table creation
-    op.execute(
-        "ALTER TABLE deals ALTER COLUMN status TYPE deal_status USING status::deal_status"
+    # Step 3: Convert String column to ENUM type
+    op.execute("ALTER TABLE deals ALTER COLUMN status TYPE deal_status USING status::deal_status")
+
+
+def downgrade() -> None:
+    # Reverse: Convert ENUM back to String, then drop table and type
+    op.execute("ALTER TABLE deals ALTER COLUMN status TYPE VARCHAR")
+    op.drop_table("deals")
+    op.execute("DROP TYPE deal_status")
+```
+
+**Real-world example from optimal_build:**
+```python
+# backend/migrations/versions/20251109_000001_add_finance_scenarios.py
+"""add finance scenarios table
+
+Revision ID: 20251109_000001
+Revises: 20251108_000005
+Create Date: 2025-11-09 10:00:00
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+revision = "20251109_000001"
+down_revision = "20251108_000005"
+
+
+def upgrade() -> None:
+    # Create ENUM types for scenario status
+    op.execute("""
+        CREATE TYPE scenario_status AS ENUM (
+            'draft',
+            'active',
+            'archived',
+            'deleted'
+        )
+    """)
+
+    # Create table with String columns (will be converted to ENUM)
+    op.create_table(
+        "finance_scenarios",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("project_id", sa.Integer(), nullable=False),
+        sa.Column("name", sa.String(200), nullable=False),
+        sa.Column("status", sa.String(), nullable=False, server_default="draft"),  # String type
+        sa.Column("budget", sa.Float(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
     )
+
+    # Add foreign key constraint
+    op.create_foreign_key(
+        "fk_finance_scenarios_project_id",
+        "finance_scenarios",
+        "projects",
+        ["project_id"],
+        ["id"],
+        ondelete="CASCADE",
+    )
+
+    # Create indexes (MANDATORY for foreign keys - Rule 9)
+    op.create_index("ix_finance_scenarios_project_id", "finance_scenarios", ["project_id"])
+    op.create_index("ix_finance_scenarios_status", "finance_scenarios", ["status"])
+    op.create_index("ix_finance_scenarios_created_at", "finance_scenarios", ["created_at"])
+
+    # Convert String column to ENUM type
+    op.execute("ALTER TABLE finance_scenarios ALTER COLUMN status TYPE scenario_status USING status::scenario_status")
+
+
+def downgrade() -> None:
+    # Convert ENUM back to String before dropping
+    op.execute("ALTER TABLE finance_scenarios ALTER COLUMN status TYPE VARCHAR")
+
+    op.drop_index("ix_finance_scenarios_created_at", "finance_scenarios")
+    op.drop_index("ix_finance_scenarios_status", "finance_scenarios")
+    op.drop_index("ix_finance_scenarios_project_id", "finance_scenarios")
+    op.drop_constraint("fk_finance_scenarios_project_id", "finance_scenarios", type_="foreignkey")
+    op.drop_table("finance_scenarios")
+    op.execute("DROP TYPE scenario_status")
+```
+
+**Why this pattern works:**
+1. PostgreSQL ENUM type is created separately with raw SQL
+2. Table is created with `sa.String()` columns (no type conflicts)
+3. After table creation, String columns are converted to ENUM type
+4. Downgrade reverses the process: ENUM → String → drop
+
+**Common pitfall - forgetting downgrade conversion:**
+```python
+# ❌ WRONG downgrade - will fail if column is still ENUM type
+def downgrade() -> None:
+    op.drop_table("deals")  # ERROR: cannot drop table because type deal_status depends on it
+    op.execute("DROP TYPE deal_status")
+
+# ✅ CORRECT downgrade - convert ENUM to String first
+def downgrade() -> None:
+    op.execute("ALTER TABLE deals ALTER COLUMN status TYPE VARCHAR")  # Convert first
+    op.drop_table("deals")  # Now safe to drop
+    op.execute("DROP TYPE deal_status")  # Now safe to drop type
 ```
 
 **Related issues:**
@@ -193,26 +308,211 @@ psql -c "SELECT enumlabel FROM pg_enum WHERE enumtypid = 'projecttype'::regtype;
 - Import from `sqlalchemy.ext.asyncio` not sync `sqlalchemy.orm`
 
 **Examples:**
+
+**❌ WRONG - Sync patterns (will break async event loop):**
 ```python
-# ✅ Correct - async patterns
-from sqlalchemy.ext.asyncio import AsyncSession
+# Wrong - Sync database code
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+
+# Sync engine - don't use this!
+engine = create_engine("postgresql://user:pass@localhost/db")
+
+def get_property(session: Session, property_id: str):  # ❌ Missing async
+    """This blocks the entire FastAPI event loop!"""
+    return session.query(SingaporeProperty).filter(
+        SingaporeProperty.id == property_id
+    ).first()  # ❌ Sync query - blocks other requests
+
+@router.get("/properties/{property_id}")  # ❌ Missing async
+def fetch_property(property_id: str, session: Session = Depends(get_db)):
+    """Sync route handler - kills performance!"""
+    return get_property(session, property_id)  # ❌ Can't use await in sync function
+
+# What happens:
+# - Request #1 starts, hits database query, BLOCKS
+# - Request #2 arrives, WAITS for request #1 to finish
+# - Request #3 arrives, WAITS for requests #1 and #2
+# - Result: Sequential processing instead of concurrent handling
+```
+
+**✅ CORRECT - Async patterns (enables concurrent request handling):**
+```python
+# Correct - Async database code
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException
+
+# Async engine
+engine = create_async_engine("postgresql+asyncpg://user:pass@localhost/db")
+
+router = APIRouter()
 
 async def get_property(session: AsyncSession, property_id: str):
+    """Async database function - allows other requests to run while waiting for DB."""
     result = await session.execute(
         select(SingaporeProperty).where(SingaporeProperty.id == property_id)
     )
     return result.scalar_one_or_none()
 
+async def get_properties_by_user(session: AsyncSession, user_id: int):
+    """Fetch multiple properties with proper async."""
+    result = await session.execute(
+        select(SingaporeProperty)
+        .where(SingaporeProperty.owner_id == user_id)
+        .order_by(SingaporeProperty.created_at.desc())
+    )
+    return result.scalars().all()
+
 @router.get("/properties/{property_id}")
-async def fetch_property(property_id: str, session: AsyncSession = Depends(get_db)):
-    return await get_property(session, property_id)
+async def fetch_property(
+    property_id: str,
+    session: AsyncSession = Depends(get_db)
+):
+    """Async route handler - properly yields control during I/O."""
+    property_obj = await get_property(session, property_id)
+    if not property_obj:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return property_obj
 
-# ❌ Wrong - sync patterns
-from sqlalchemy.orm import Session
+@router.get("/users/{user_id}/properties")
+async def fetch_user_properties(
+    user_id: int,
+    session: AsyncSession = Depends(get_db)
+):
+    """Multiple async operations in sequence."""
+    # Each 'await' yields control to other requests
+    properties = await get_properties_by_user(session, user_id)
 
-def get_property(session: Session, property_id: str):  # Missing async
-    return session.query(SingaporeProperty).filter(...).first()  # Sync query
+    # Can also do parallel async operations
+    import asyncio
+    results = await asyncio.gather(
+        get_property_count(session, user_id),
+        get_average_property_value(session, user_id),
+    )
+    count, avg_value = results
+
+    return {
+        "properties": properties,
+        "total_count": count,
+        "average_value": avg_value,
+    }
+```
+
+**Async transaction handling:**
+```python
+# ✅ CORRECT - Async transaction with error handling
+async def create_property_with_audit(
+    session: AsyncSession,
+    property_data: PropertyCreate,
+    user_id: int
+):
+    """Create property and audit log in a transaction."""
+    async with session.begin():  # ✅ Async transaction context
+        # Create property
+        property_obj = SingaporeProperty(**property_data.model_dump())
+        session.add(property_obj)
+        await session.flush()  # ✅ Get ID without committing
+
+        # Create audit log
+        audit_log = AuditLog(
+            user_id=user_id,
+            action="create_property",
+            resource_id=property_obj.id,
+        )
+        session.add(audit_log)
+
+        # Transaction commits automatically if no exception
+        # Rolls back automatically if exception occurs
+
+    await session.refresh(property_obj)  # ✅ Refresh after commit
+    return property_obj
+
+# ❌ WRONG - Sync transaction in async code
+async def create_property_wrong(session: AsyncSession, property_data: PropertyCreate):
+    with session.begin():  # ❌ Sync context manager in async function!
+        property_obj = SingaporeProperty(**property_data.model_dump())
+        session.add(property_obj)
+        session.flush()  # ❌ Sync flush - blocks event loop
+```
+
+**Common async patterns:**
+```python
+# Pattern 1: Single database query
+async def get_by_id(session: AsyncSession, model_class, id: int):
+    """Generic get by ID."""
+    result = await session.execute(
+        select(model_class).where(model_class.id == id)
+    )
+    return result.scalar_one_or_none()
+
+# Pattern 2: Query with relationships (avoid N+1)
+from sqlalchemy.orm import selectinload
+
+async def get_property_with_deals(session: AsyncSession, property_id: str):
+    """Eager load relationships to avoid N+1 queries."""
+    result = await session.execute(
+        select(SingaporeProperty)
+        .where(SingaporeProperty.id == property_id)
+        .options(selectinload(SingaporeProperty.deals))  # ✅ Eager load
+    )
+    return result.scalar_one_or_none()
+
+# Pattern 3: Create with relationships
+async def create_deal_with_commission(
+    session: AsyncSession,
+    deal_data: DealCreate,
+    commission_rate: float
+):
+    """Create parent and child records together."""
+    async with session.begin():
+        # Create parent
+        deal = Deal(**deal_data.model_dump())
+        session.add(deal)
+        await session.flush()  # Get deal.id
+
+        # Create child
+        commission = Commission(
+            deal_id=deal.id,
+            rate=commission_rate,
+            amount=deal.value * commission_rate,
+        )
+        session.add(commission)
+
+    return deal
+
+# Pattern 4: Batch operations
+async def update_property_statuses(
+    session: AsyncSession,
+    property_ids: list[str],
+    new_status: str
+):
+    """Update multiple records efficiently."""
+    async with session.begin():
+        await session.execute(
+            update(SingaporeProperty)
+            .where(SingaporeProperty.id.in_(property_ids))
+            .values(status=new_status, updated_at=sa.func.now())
+        )
+```
+
+**Why async matters:**
+```python
+# Comparison of concurrent request handling
+
+# ❌ Sync code - Sequential processing
+# Request 1: 0-200ms (database query takes 200ms)
+# Request 2: 200-400ms (waits for request 1, then takes 200ms)
+# Request 3: 400-600ms (waits for requests 1 and 2, then takes 200ms)
+# Total time: 600ms for 3 requests
+
+# ✅ Async code - Concurrent processing
+# Request 1: 0-200ms (starts, yields during DB query)
+# Request 2: 0-200ms (starts while request 1 is waiting, yields during DB query)
+# Request 3: 0-200ms (starts while requests 1 and 2 are waiting, yields during DB query)
+# Total time: ~200ms for 3 requests (all run concurrently)
+
+# Result: 3x throughput with async!
 ```
 
 ---
@@ -436,43 +736,256 @@ make verify  # Verify everything passes (runs format-check, lint, tests)
 
 **Examples:**
 
+### 7.1 No Unused Variables (Ruff F841)
+
+**❌ WRONG - Unused variable assigned:**
 ```python
-# ✅ Correct - no unused variables
-await generator.save_to_storage(...)
-# Variable not assigned if not needed
+# Bad - variable assigned but never used
+async def create_property(session: AsyncSession, property_data: PropertyCreate):
+    property_obj = SingaporeProperty(**property_data.model_dump())
+    session.add(property_obj)
+    await session.commit()
 
-# ❌ Wrong - unused variable
-storage_url = await generator.save_to_storage(...)  # Assigned but never used!
+    # ❌ F841: Variable 'result' is assigned but never used
+    result = await session.execute(select(SingaporeProperty).where(SingaporeProperty.id == property_obj.id))
 
-# ✅ Correct - proper exception chaining
-try:
-    risky_operation()
-except ValueError as e:
-    raise CustomError("Operation failed") from e  # Preserves original stack trace
+    return property_obj  # Should return 'result' or remove the query
 
-# ✅ Correct - suppress original exception when not relevant
-try:
-    file_path.resolve()
-except Exception:
-    raise HTTPException(status_code=403, detail="Invalid path") from None
+# Bad - function returns value but it's not used
+async def update_property_status(session: AsyncSession, property_id: str, status: str):
+    property_obj = await get_property(session, property_id)
 
-# ✅ Correct - re-raise HTTPException without modification
-except HTTPException:
-    raise  # Don't wrap or chain HTTPException
+    # ❌ F841: Variable 'updated_at' is assigned but never used
+    updated_at = await session.execute(
+        update(SingaporeProperty)
+        .where(SingaporeProperty.id == property_id)
+        .values(status=status, updated_at=sa.func.now())
+    )
 
-# ❌ Wrong - missing exception chain
-except ValueError:
-    raise CustomError("Operation failed")  # Lost original error context!
+    await session.commit()
+```
 
-# ✅ Correct - no mutable defaults
-def process_items(items: Optional[List[str]] = None) -> List[str]:
-    if items is None:
-        items = []
-    return items
+**✅ CORRECT - Only assign variables that will be used:**
+```python
+# Good - variable is used
+async def create_property(session: AsyncSession, property_data: PropertyCreate):
+    property_obj = SingaporeProperty(**property_data.model_dump())
+    session.add(property_obj)
+    await session.commit()
+    await session.refresh(property_obj)  # Use the object directly
+    return property_obj
 
-# ❌ Wrong - mutable default argument
-def process_items(items: List[str] = []) -> List[str]:  # Dangerous!
-    return items
+# Good - don't assign if not using the result
+async def update_property_status(session: AsyncSession, property_id: str, status: str):
+    await session.execute(  # No assignment - just execute
+        update(SingaporeProperty)
+        .where(SingaporeProperty.id == property_id)
+        .values(status=status, updated_at=sa.func.now())
+    )
+    await session.commit()
+
+# Good - use underscore for intentionally ignored values
+async def create_many(session: AsyncSession, items: list[dict]):
+    for item_data in items:
+        _ = await create_item(session, item_data)  # ✅ Underscore shows it's intentional
+    await session.commit()
+```
+
+### 7.2 Proper Exception Chaining (Ruff B904)
+
+**❌ WRONG - Missing exception chain:**
+```python
+# Bad - exception chain broken, original error lost
+async def create_finance_scenario(session: AsyncSession, data: FinanceScenarioCreate):
+    try:
+        scenario = FinanceScenario(**data.model_dump())
+        session.add(scenario)
+        await session.commit()
+        return scenario
+    except ValueError:
+        # ❌ B904: Missing 'from err' - original ValueError stack trace is lost!
+        raise HTTPException(status_code=422, detail="Invalid scenario data")
+
+# Bad - exception suppressed incorrectly
+async def process_property_data(data: dict):
+    try:
+        property_obj = SingaporeProperty(**data)
+        await validate_property(property_obj)
+        return property_obj
+    except ValidationError:
+        # ❌ B904: Should use 'from err' to show validation failure details
+        raise HTTPException(status_code=400, detail="Validation failed")
+```
+
+**✅ CORRECT - Proper exception chaining:**
+```python
+# Good - exception chained with 'from e'
+async def create_finance_scenario(session: AsyncSession, data: FinanceScenarioCreate):
+    try:
+        scenario = FinanceScenario(**data.model_dump())
+        session.add(scenario)
+        await session.commit()
+        return scenario
+    except ValueError as e:
+        # ✅ Original error preserved in stack trace
+        raise HTTPException(status_code=422, detail=f"Invalid scenario data: {str(e)}") from e
+
+# Good - explicit suppression with 'from None' when original error not relevant
+async def resolve_file_path(file_path: str):
+    try:
+        path = Path(file_path).resolve(strict=True)
+        return path
+    except (FileNotFoundError, RuntimeError):
+        # ✅ Original error not relevant to user, suppress it
+        raise HTTPException(status_code=403, detail="Invalid file path") from None
+
+# Good - re-raise HTTPException directly
+async def get_property_or_404(session: AsyncSession, property_id: str):
+    try:
+        property_obj = await get_property(session, property_id)
+        if not property_obj:
+            raise HTTPException(status_code=404, detail="Property not found")
+        return property_obj
+    except HTTPException:
+        raise  # ✅ Re-raise HTTPException directly, don't wrap it
+
+# Good - chain custom exceptions
+class PropertyValidationError(Exception):
+    pass
+
+async def validate_property(property_obj: SingaporeProperty):
+    try:
+        if property_obj.gross_floor_area <= 0:
+            raise ValueError("GFA must be positive")
+        if not property_obj.address:
+            raise ValueError("Address is required")
+    except ValueError as e:
+        # ✅ Chain custom exception from original
+        raise PropertyValidationError(f"Property validation failed: {e}") from e
+```
+
+### 7.3 No Mutable Default Arguments (Ruff B006)
+
+**❌ WRONG - Mutable default arguments:**
+```python
+# Bad - list default is shared across all calls!
+def process_properties(property_ids: list[str] = []):  # ❌ B006: Dangerous!
+    """This function has a bug - the default list is mutable!"""
+    property_ids.append("default-property")
+    return property_ids
+
+# What happens:
+first_call = process_properties()   # Returns: ["default-property"]
+second_call = process_properties()  # Returns: ["default-property", "default-property"]  ← BUG!
+third_call = process_properties()   # Returns: ["default-property", "default-property", "default-property"]
+
+# Bad - dict default is shared
+def create_property_filters(filters: dict = {}):  # ❌ B006: Dangerous!
+    filters["status"] = "active"
+    return filters
+
+# Bad - set default is shared
+def track_seen_ids(ids: set[str] = set()):  # ❌ B006: Dangerous!
+    ids.add("new-id")
+    return ids
+```
+
+**✅ CORRECT - Use None and initialize inside function:**
+```python
+# Good - None default, initialize inside
+def process_properties(property_ids: Optional[list[str]] = None) -> list[str]:
+    """Each call gets a fresh list."""
+    if property_ids is None:
+        property_ids = []
+    property_ids.append("default-property")
+    return property_ids
+
+# What happens (correct behavior):
+first_call = process_properties()   # Returns: ["default-property"]
+second_call = process_properties()  # Returns: ["default-property"]  ✅ Correct!
+third_call = process_properties()   # Returns: ["default-property"]  ✅ Correct!
+
+# Good - dict initialized inside
+def create_property_filters(filters: Optional[dict] = None) -> dict:
+    if filters is None:
+        filters = {}
+    filters["status"] = "active"
+    return filters
+
+# Good - set initialized inside
+def track_seen_ids(ids: Optional[set[str]] = None) -> set[str]:
+    if ids is None:
+        ids = set()
+    ids.add("new-id")
+    return ids
+
+# Good - use dataclass with field(default_factory=...)
+from dataclasses import dataclass, field
+
+@dataclass
+class PropertyFilter:
+    statuses: list[str] = field(default_factory=list)  # ✅ Each instance gets fresh list
+    tags: dict[str, str] = field(default_factory=dict)  # ✅ Each instance gets fresh dict
+```
+
+### 7.4 Type Hints on Public APIs
+
+**❌ WRONG - Missing type hints:**
+```python
+# Bad - no type hints, IDE can't help
+def calculate_roi(property_obj, holding_period):  # ❌ What types?
+    total_cost = property_obj.purchase_price + property_obj.renovation_cost
+    total_income = property_obj.rental_income * holding_period
+    return (total_income - total_cost) / total_cost
+
+# Bad - partial type hints
+def create_scenario(data: dict, user):  # ❌ 'user' type unknown
+    scenario = FinanceScenario(**data)
+    scenario.created_by = user.id  # Could fail if 'user' doesn't have 'id'
+    return scenario
+```
+
+**✅ CORRECT - Complete type hints:**
+```python
+# Good - complete type hints
+from typing import Optional
+
+def calculate_roi(
+    property_obj: SingaporeProperty,
+    holding_period: int,
+) -> float:
+    """Calculate ROI for a property over holding period."""
+    total_cost = property_obj.purchase_price + property_obj.renovation_cost
+    total_income = property_obj.rental_income * holding_period
+    return (total_income - total_cost) / total_cost
+
+# Good - Optional for nullable parameters
+async def create_scenario(
+    data: dict[str, Any],
+    user: User,
+    parent_scenario: Optional[FinanceScenario] = None,
+) -> FinanceScenario:
+    """Create a finance scenario."""
+    scenario = FinanceScenario(**data)
+    scenario.created_by = user.id
+
+    if parent_scenario:
+        scenario.parent_id = parent_scenario.id
+
+    return scenario
+
+# Good - Union types for multiple allowed types
+from typing import Union
+
+async def get_property(
+    session: AsyncSession,
+    property_id: Union[str, int],  # Can accept string UUID or integer ID
+) -> Optional[SingaporeProperty]:
+    """Get property by ID (string UUID or integer)."""
+    result = await session.execute(
+        select(SingaporeProperty).where(SingaporeProperty.id == str(property_id))
+    )
+    return result.scalar_one_or_none()
 ```
 
 **Automatic Enforcement:**
