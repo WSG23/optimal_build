@@ -235,9 +235,9 @@ def build_asset_financials(
                 absorption_months=_quantize_duration(item.absorption_months),
                 stabilised_yield_pct=stabilised_yield,
                 risk_level=item.risk_level,
-                risk_priority=RISK_PRIORITY.get(item.risk_level)
-                if item.risk_level
-                else None,
+                risk_priority=(
+                    RISK_PRIORITY.get(item.risk_level) if item.risk_level else None
+                ),
                 heritage_premium_pct=_quantize_percent(item.heritage_premium_pct),
                 notes=item.notes,
             )
@@ -291,9 +291,7 @@ def summarise_asset_financials(
         total_annual_revenue_sgd=(
             _quantize_currency(total_revenue) if total_revenue else None
         ),
-        total_annual_noi_sgd=(
-            _quantize_currency(total_noi) if total_noi else None
-        ),
+        total_annual_noi_sgd=(_quantize_currency(total_noi) if total_noi else None),
         total_nia_sqm=_quantize_area(total_nia) if total_nia else None,
         dominant_risk_profile=dominant,
         blended_yield_pct=blended_yield,

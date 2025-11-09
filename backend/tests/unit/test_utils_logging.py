@@ -18,19 +18,33 @@ class StubLogger:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict[str, object]]] = []
 
-    def info(self, event: str, **kwargs: object) -> None:  # pragma: no cover - invoked by log_event
+    def info(
+        self, event: str, **kwargs: object
+    ) -> None:  # pragma: no cover - invoked by log_event
         self.calls.append((event, kwargs))
 
 
 @pytest.mark.parametrize(
     "value, expected",
     [
-        (UUID("12345678-1234-5678-1234-567812345678"), "12345678-1234-5678-1234-567812345678"),
+        (
+            UUID("12345678-1234-5678-1234-567812345678"),
+            "12345678-1234-5678-1234-567812345678",
+        ),
         (Decimal("12.50"), "12.50"),
-        (datetime(2024, 5, 1, 12, 30, tzinfo=timezone.utc), "2024-05-01T12:30:00+00:00"),
+        (
+            datetime(2024, 5, 1, 12, 30, tzinfo=timezone.utc),
+            "2024-05-01T12:30:00+00:00",
+        ),
         (SampleEnum.VALUE, "example"),
-        ({"nested": datetime(2024, 5, 1, 0, 0, tzinfo=timezone.utc)}, {"nested": "2024-05-01T00:00:00+00:00"}),
-        ([UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")], ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]),
+        (
+            {"nested": datetime(2024, 5, 1, 0, 0, tzinfo=timezone.utc)},
+            {"nested": "2024-05-01T00:00:00+00:00"},
+        ),
+        (
+            [UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")],
+            ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"],
+        ),
     ],
 )
 def test_serialise_for_logging_normalises_values(value, expected) -> None:

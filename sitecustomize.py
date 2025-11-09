@@ -18,4 +18,3 @@ def _ensure_pytest_cov_loaded() -> None:
 
 
 _ensure_pytest_cov_loaded()
-

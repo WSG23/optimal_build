@@ -28,11 +28,9 @@ Look for a table with 4 rows:
    - NPV: -$537 SGD
    - IRR: -50%
 
-#### **✨ Test the Refresh Button:**
-- **Location:** Top right corner
-- **Action:** Click "Refresh" button
-- **Expected:** Button text changes to "Refreshing..." then back to "Refresh"
-- **Result:** Table data reloads (may flash briefly)
+#### **✨ Refreshing Finance Data**
+- Current build auto-loads scenarios when the page opens. There is **no dedicated Refresh button yet**.
+- ✅ To mimic a refresh, simply reload the page (or trigger `refresh()` via the scenario creator). You should see the `/api/v1/finance/scenarios` request in DevTools → Network with the seeded payload.
 
 ---
 

@@ -916,7 +916,9 @@ h3 {
     letter-spacing: 0.03em;
     border: none;
     cursor: pointer;
-    transition: box-shadow 0.1s ease, transform 0.1s ease;
+    transition:
+        box-shadow 0.1s ease,
+        transform 0.1s ease;
 }
 
 .cad-preview__summary-warning:hover,
@@ -2705,7 +2707,9 @@ h3 {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .agent-performance__deal:hover {
@@ -2800,7 +2804,8 @@ h3 {
 }
 
 .agent-performance__audit span {
-    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas,
+    font-family:
+        'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas,
         'Liberation Mono', 'Courier New', monospace;
     word-break: break-all;
 }
@@ -2837,7 +2842,8 @@ h3 {
 .agent-performance__analytics-agent {
     font-size: 0.8rem;
     color: #64748b;
-    font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas,
+    font-family:
+        'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas,
         'Liberation Mono', 'Courier New', monospace;
     background: rgba(100, 116, 139, 0.14);
     padding: 0.25rem 0.6rem;
@@ -2984,6 +2990,53 @@ h3 {
     flex: 1 1 auto;
 }
 
+/* Responsive overflow handling for smaller viewports */
+@media (max-width: 1440px) {
+    .app-shell {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+}
+
+@media (max-width: 1280px) {
+    .app-shell {
+        max-width: 100%;
+        border-radius: 1rem;
+    }
+
+    .app-shell__main {
+        padding: 2rem 2.5rem;
+    }
+
+    .app-shell__content {
+        padding: 1.5rem 2rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .app-shell {
+        grid-template-columns: 240px 1fr;
+        border-radius: 0.75rem;
+    }
+
+    .app-shell__sidebar {
+        padding: 2rem 1.25rem;
+    }
+
+    .app-shell__main {
+        padding: 1.5rem 2rem;
+    }
+
+    .app-shell__content {
+        padding: 1.25rem 1.5rem;
+        border-radius: 1rem;
+    }
+
+    .app-shell__header h1 {
+        font-size: 1.75rem;
+    }
+}
+
 .app-shell__sidebar {
     background: rgba(15, 23, 42, 0.98);
     color: #e2e8f0;
@@ -3083,7 +3136,9 @@ h3 {
     gap: 0.35rem;
     color: inherit;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
 }
 
 .app-nav__item button:hover {
@@ -3192,9 +3247,12 @@ h3 {
     align-items: start;
 }
 
-
 .bp-pipeline-wrapper {
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.03), rgba(59, 130, 246, 0.08));
+    background: linear-gradient(
+        145deg,
+        rgba(15, 23, 42, 0.03),
+        rgba(59, 130, 246, 0.08)
+    );
     border-radius: 1.25rem;
     padding: 1rem;
 }
@@ -3262,7 +3320,9 @@ h3 {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .bp-pipeline__deal:hover .bp-pipeline__deal-surface {
@@ -3745,7 +3805,11 @@ h3 {
 
 .gps-card--map {
     min-height: 260px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.18));
+    background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0.15),
+        rgba(99, 102, 241, 0.18)
+    );
     border-style: dashed;
     justify-content: center;
 }
@@ -3800,7 +3864,9 @@ h3 {
     color: #f8fafc;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .gps-form__submit:hover {
@@ -4053,7 +4119,9 @@ h3 {
     color: #f8fafc;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .mkt-actions button:disabled {
@@ -4113,218 +4181,218 @@ h3 {
 }
 
 .site-acquisition-template-manager {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
 .template-manager-header {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-  justify-content: space-between;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .template-manager-header h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.75rem;
+    margin: 0 0 0.25rem;
+    font-size: 1.75rem;
 }
 
 .template-manager-back {
-  color: #3366cc;
-  text-decoration: none;
-  font-weight: 600;
+    color: #3366cc;
+    text-decoration: none;
+    font-weight: 600;
 }
 
 .template-manager-back:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .template-manager-alert {
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
 }
 
 .template-manager-alert.error {
-  background: #ffeceb;
-  color: #a51616;
-  border: 1px solid #f5bbbb;
+    background: #ffeceb;
+    color: #a51616;
+    border: 1px solid #f5bbbb;
 }
 
 .template-manager-alert.success {
-  background: #edf9f0;
-  color: #146133;
-  border: 1px solid #b8e0c6;
+    background: #edf9f0;
+    color: #146133;
+    border: 1px solid #b8e0c6;
 }
 
 .template-manager-section {
-  background: #ffffff;
-  border: 1px solid #d5d9e2;
-  border-radius: 8px;
-  padding: 1.5rem;
+    background: #ffffff;
+    border: 1px solid #d5d9e2;
+    border-radius: 8px;
+    padding: 1.5rem;
 }
 
 .template-manager-controls {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-end;
-  margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
 }
 
 .template-manager-controls label {
-  display: flex;
-  flex-direction: column;
-  font-weight: 600;
-  font-size: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
 .template-manager-controls select,
 .template-manager-controls button {
-  margin-top: 0.25rem;
+    margin-top: 0.25rem;
 }
 
 .template-manager-controls button {
-  background: #f4f6fb;
-  border: 1px solid #d5d9e2;
-  border-radius: 6px;
-  padding: 0.45rem 0.85rem;
-  cursor: pointer;
+    background: #f4f6fb;
+    border: 1px solid #d5d9e2;
+    border-radius: 6px;
+    padding: 0.45rem 0.85rem;
+    cursor: pointer;
 }
 
 .template-manager-table {
-  width: 100%;
-  border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .template-manager-table th,
 .template-manager-table td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #eceff5;
-  text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #eceff5;
+    text-align: left;
 }
 
 .template-manager-table th {
-  background: #f6f8fb;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+    background: #f6f8fb;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .template-manager-actions {
-  display: flex;
-  gap: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
 }
 
 .template-manager-actions button {
-  border: 1px solid #cbd5e0;
-  background: #ffffff;
-  padding: 0.35rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
+    border: 1px solid #cbd5e0;
+    background: #ffffff;
+    padding: 0.35rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
 }
 
 .template-manager-actions button.danger {
-  border-color: #e09a9a;
-  color: #b81414;
+    border-color: #e09a9a;
+    color: #b81414;
 }
 
 .template-manager-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .template-manager-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-weight: 600;
 }
 
 .template-manager-form input,
 .template-manager-form select,
 .template-manager-form textarea {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #c6ccdd;
-  border-radius: 6px;
-  font-size: 0.95rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #c6ccdd;
+    border-radius: 6px;
+    font-size: 0.95rem;
 }
 
 .template-manager-form .checkbox {
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
 }
 
 .form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
 }
 
 .template-manager-form-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
 }
 
 .template-manager-form-actions button {
-  background: #1c64f2;
-  color: #ffffff;
-  border: none;
-  padding: 0.5rem 0.9rem;
-  border-radius: 6px;
-  cursor: pointer;
+    background: #1c64f2;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
 .template-manager-form-actions button.secondary {
-  background: #e5eaf4;
-  color: #314365;
+    background: #e5eaf4;
+    color: #314365;
 }
 
 .template-manager-form-heading {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .template-manager-form-heading h2 {
-  margin: 0;
+    margin: 0;
 }
 
 .template-manager-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
-  font-weight: 600;
-  padding: 0.25rem 0.7rem;
-  font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.8rem;
 }
 
 .template-manager-import textarea {
-  width: 100%;
+    width: 100%;
 }
 
 .template-manager-sample {
-  margin-top: 0.75rem;
+    margin-top: 0.75rem;
 }
 
 .template-manager-sample pre {
-  background: #0f172a;
-  color: #f8fafc;
-  padding: 0.75rem;
-  border-radius: 6px;
-  overflow-x: auto;
-  font-size: 0.85rem;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.75rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.85rem;
 }
 
 .template-manager-empty {
-  margin: 0;
-  color: #5b6478;
+    margin: 0;
+    color: #5b6478;
 }

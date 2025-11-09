@@ -17,7 +17,8 @@ import { FinanceSensitivityTable } from './components/FinanceSensitivityTable'
 import { FinanceScenarioCreator } from './components/FinanceScenarioCreator'
 import { useFinanceScenarios } from './hooks/useFinanceScenarios'
 
-const FINANCE_PROJECT_ID = '825c99d2-5167-4546-994c-6fab0f832c78'
+// Align with seeded Phase 2B finance demo data (see backend/scripts/seed_finance_demo.py)
+const FINANCE_PROJECT_ID = '401'
 const FINANCE_PROJECT_NAME = 'Finance Demo Development'
 const POLL_INTERVAL_MS = 5000
 const IN_PROGRESS_STATUSES = new Set([

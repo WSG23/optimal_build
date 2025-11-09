@@ -10,7 +10,10 @@ from pathlib import Path
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="File import API endpoints depend on storage and worker infrastructure not available in tests"
+    reason=(
+        "File import API endpoints depend on storage and worker "
+        "infrastructure not available in tests"
+    )
 )
 
 pytest.importorskip("fastapi")

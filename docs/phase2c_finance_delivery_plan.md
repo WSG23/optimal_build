@@ -156,7 +156,13 @@ Developer capture → optimiser plans + finance blueprint
 
 ---
 
-## 9. Timeline & Dependencies
+## 9. Known Issues / QA Findings
+
+- **Finance workspace viewport clipping (Phase 2C UI):** ✅ **RESOLVED** - The shared `AppShell` layout now supports horizontal scrolling on viewports ≤1440px via `overflow-x: auto`. Added responsive media queries at 1280px and 1024px breakpoints to optimize padding and sidebar width. The fix maintains the gradient background and rounded corners while ensuring all finance workspace content (capital stack, drawdown cards) is accessible on MacBook Air-sized displays (~1280px) without zoom tricks. Changes applied to `frontend/src/index.css` lines 2987-3032.
+
+---
+
+## 10. Timeline & Dependencies
 
 | Week | Deliverable | Owners | Dependencies |
 |------|-------------|--------|--------------|
@@ -170,7 +176,7 @@ Dependencies: completed heritage ingestion (Phase 2B), finance blueprint valid
 
 ---
 
-## 10. Outstanding Decisions
+## 11. Outstanding Decisions
 
 1. Where to persist per-asset financials (dedicated table vs. JSON metadata)? **Owner:** Backend lead.
 2. Do we compute sensitivities synchronously or via background jobs? **Owner:** Platform.
@@ -180,7 +186,7 @@ Dependencies: completed heritage ingestion (Phase 2B), finance blueprint valid
 
 ---
 
-## 11. Next Steps Checklist
+## 12. Next Steps Checklist
 
 - [ ] Finalise per-asset result schema and storage approach.
 - [ ] Confirm project ownership lookup mechanism (user ↔ project mapping).

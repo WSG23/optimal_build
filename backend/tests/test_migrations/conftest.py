@@ -19,9 +19,7 @@ except Exception:  # pragma: no cover - test suite uses lightweight SQLAlchemy s
 def alembic_config():
     """Get Alembic configuration for testing."""
     if Config is None:
-        pytest.skip(
-            "Alembic or SQLAlchemy not available; skipping migration tests"
-        )
+        pytest.skip("Alembic or SQLAlchemy not available; skipping migration tests")
     repo_root = Path(__file__).resolve().parents[3]
     alembic_ini = repo_root / "alembic.ini"
 

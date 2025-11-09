@@ -43,7 +43,9 @@ class TestRenderUtilities:
         assert pdf_bytes is not None
         assert pdf_bytes.startswith(b"%PDF")
 
-    def test_render_html_to_pdf_uses_factory_when_available(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_render_html_to_pdf_uses_factory_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         class DummyDocument:
             def __init__(self, *, string: str) -> None:
                 self._string = string
@@ -51,11 +53,15 @@ class TestRenderUtilities:
             def write_pdf(self) -> bytes:
                 return self._string.upper().encode("utf-8")
 
-        monkeypatch.setattr(render, "_HTML_FACTORY", lambda **kwargs: DummyDocument(**kwargs))
+        monkeypatch.setattr(
+            render, "_HTML_FACTORY", lambda **kwargs: DummyDocument(**kwargs)
+        )
         pdf_bytes = render.render_html_to_pdf("<p>factory</p>")
         assert pdf_bytes == b"<P>FACTORY</P>"
 
-    def test_render_html_to_pdf_handles_factory_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_render_html_to_pdf_handles_factory_failure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         def failing_factory(**_: str) -> object:
             raise RuntimeError("boom")
 
