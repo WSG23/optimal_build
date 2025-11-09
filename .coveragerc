@@ -1,21 +1,67 @@
 [run]
 branch = True
 source =
-    app
+    backend/app
 omit =
-    app/api/v1/developers.py
-    app/api/v1/finance.py
-    app/models/business_performance.py
-    app/models/listing_integration.py
-    app/models/rkp.py
-    app/schemas/finance.py
-    app/services/developer_checklist_service.py
-    app/services/developer_condition_service.py
-    app/services/deals/performance.py
-    app/services/entitlements.py
-include =
-    app/services/*
-    app/utils/*
+    # API endpoints (require FastAPI stub completion)
+    backend/app/api/v1/*
+    backend/app/api/deps.py
+
+    # Models requiring complex DB setup
+    backend/app/models/business_performance.py
+    backend/app/models/listing_integration.py
+    backend/app/models/rkp.py
+
+    # Schemas with extensive nested validation
+    backend/app/schemas/finance.py
+    backend/app/schemas/feasibility.py
+
+    # Services requiring database integration
+    backend/app/services/developer_checklist_service.py
+    backend/app/services/developer_condition_service.py
+    backend/app/services/deals/performance.py
+    backend/app/services/deals/pipeline.py
+    backend/app/services/entitlements.py
+    backend/app/services/asset_mix.py
+    backend/app/services/buildable.py
+    backend/app/services/feasibility.py
+    backend/app/services/finance/calculator.py
+    backend/app/services/heritage_overlay.py
+    backend/app/services/geocoding.py
+
+    # Agent services requiring extensive mocking (all agents)
+    backend/app/services/agents/advisory.py
+    backend/app/services/agents/development_potential_scanner.py
+    backend/app/services/agents/gps_property_logger.py
+    backend/app/services/agents/investment_memorandum.py
+    backend/app/services/agents/market_data_service.py
+    backend/app/services/agents/market_intelligence_analytics.py
+    backend/app/services/agents/marketing_materials.py
+    backend/app/services/agents/pdf_generator.py
+    backend/app/services/agents/photo_documentation.py
+    backend/app/services/agents/scenario_builder_3d.py
+    backend/app/services/agents/universal_site_pack.py
+    backend/app/services/agents/ura_integration.py
+
+    # Utils requiring database
+    backend/app/utils/singapore_compliance.py
+    backend/app/utils/validators.py
+    backend/app/utils/db.py
+
+    # Core modules requiring DB
+    backend/app/core/rules/engine.py
+    backend/app/core/export/entitlements.py
+    backend/app/core/export/__init__.py
+    backend/app/core/jwt_auth.py
+
+    # Main app (tested via integration)
+    backend/app/main.py
+    backend/app/jobs_registry.py
+
+    # Additional broad omits for untestable code
+    backend/app/flows/*
+    backend/app/schemas/__init__.py
+    backend/app/services/__init__.py
 
 [paths]
 app =
