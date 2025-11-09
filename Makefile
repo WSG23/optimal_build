@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint lint-prod test test-all test-cov smoke-buildable clean build deploy init-db db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -76,11 +76,84 @@ AEC_EXPORT_FORMAT ?= pdf
 AEC_DECIDED_BY ?= Planner Bot
 AEC_APPROVAL_NOTES ?= Approved via make export-approved
 
-help: ## Show this help message
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 📚 HELP & DOCUMENTATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+help: ## Show basic help message
 	@echo 'Usage: make [target]'
 	@echo ''
 	@echo 'Targets:'
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ''
+	@echo 'For detailed development guide: make help-dev'
+
+help-dev: ## Show comprehensive development workflow guide
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "🛠️  OPTIMAL_BUILD DEVELOPMENT GUIDE"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "━━━ Getting Started ━━━"
+	@echo "  make install            Install all dependencies"
+	@echo "  make dev                Start all services (backend + frontend + admin)"
+	@echo "  make status             Check service status"
+	@echo "  make stop               Stop all services"
+	@echo "  make ui-stop            Force kill UI servers on ports (if stuck)"
+	@echo ""
+	@echo "━━━ Code Quality & Verification ━━━"
+	@echo "  make quick-check        Fast checks (format + typecheck + lint)"
+	@echo "  make verify             Full verification (format + lint + rules + tests)"
+	@echo "  make hooks              Run pre-commit hooks on all files"
+	@echo "  make pre-commit-full    Comprehensive pre-commit validation"
+	@echo "  make ai-preflight       AI agent pre-flight checks"
+	@echo ""
+	@echo "━━━ TypeScript & Frontend ━━━"
+	@echo "  make typecheck          Run TypeScript type checking"
+	@echo "  make typecheck-watch    Watch mode for TypeScript errors"
+	@echo "  npm run lint            Lint frontend code"
+	@echo "  make clean-ui           Clean UI cache and build artifacts"
+	@echo ""
+	@echo "━━━ Testing ━━━"
+	@echo "  make test               Run unit tests (fast)"
+	@echo "  make test-all           Run all tests including integration"
+	@echo "  make test-cov           Run tests with coverage"
+	@echo "  make coverage-report    Generate and open coverage HTML report"
+	@echo "  make test-aec           Run AEC integration tests"
+	@echo ""
+	@echo "━━━ Database Management ━━━"
+	@echo "  make db.upgrade         Apply database migrations"
+	@echo "  make db.revision        Create new migration (set REVISION_MESSAGE)"
+	@echo "  make seed-data          Seed database with sample data"
+	@echo "  make db-backup          Backup local SQLite database"
+	@echo "  make db-restore         Restore from latest backup"
+	@echo ""
+	@echo "━━━ Cleaning & Troubleshooting ━━━"
+	@echo "  make clean              Clean build artifacts"
+	@echo "  make clean-ui           Clean frontend cache and build artifacts"
+	@echo "  make ui-stop            Kill stuck UI servers on ports"
+	@echo "  make reset              Full Docker reset with re-seeding"
+	@echo "  make docker-clean       Remove stopped containers and unused artifacts"
+	@echo ""
+	@echo "━━━ Pre-Deployment ━━━"
+	@echo "  make pre-deploy         Run all pre-deployment checks"
+	@echo "  make validate-delivery-plan  Validate roadmap and work queue"
+	@echo ""
+	@echo "━━━ Docker Operations ━━━"
+	@echo "  make build              Build production images"
+	@echo "  make logs               Show application logs"
+	@echo "  make down               Stop all Docker services"
+	@echo ""
+	@echo "━━━ Configuration ━━━"
+	@echo "  Ports: Backend=$(BACKEND_PORT), Frontend=$(FRONTEND_PORT), Admin=$(ADMIN_PORT)"
+	@echo "  Database: $(DEV_SQLITE_URL)"
+	@echo "  Logs: $(DEV_RUNTIME_DIR_ABS)/*.log"
+	@echo ""
+	@echo "📖 Documentation: See CLAUDE.md and CODING_RULES.md"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🔧 INSTALLATION & SETUP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 venv: ## Create venv & install backend+frontend deps
 	@if [ ! -d $(VENV) ]; then \
@@ -124,6 +197,10 @@ $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
 	@command -v $(PRE_COMMIT) >/dev/null 2>&1 && $(PRE_COMMIT) install || true
 
 install: venv ## Install dependencies (alias)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🎨 CODE FORMATTING & LINTING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 format: ## Format code (handled automatically by pre-commit hooks)
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -174,11 +251,61 @@ lint-prod: ## Run linting for backend production code (optional)
 		echo "No production directories found to lint."; \
 	fi
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ✅ TYPESCRIPT & FRONTEND VALIDATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+typecheck: ## Run TypeScript type checking
+	@echo "🔍 Running TypeScript type checks..."
+	@npm run --prefix frontend typecheck
+	@echo "✅ TypeScript checks passed"
+
+typecheck-watch: ## Watch mode for TypeScript type checking
+	@echo "👀 Watching TypeScript files for type errors..."
+	@cd frontend && npx tsc --noEmit --watch
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🧪 TESTING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 test: ## Run tests (unit tests only - fast)
 	$(PYTEST) -q unit_tests/
 
 test-all: ## Run all tests including integration tests
 	$(PYTEST) -q
+
+test-cov: ## Run tests with coverage
+	SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR) JOB_QUEUE_BACKEND=inline $(PYTEST) backend/tests --cov=backend/app --cov-report=html --cov-report=term-missing
+	@echo "Coverage report: backend/htmlcov/index.html"
+
+coverage-report: ## Generate and open coverage report
+	@echo "📊 Generating coverage report..."
+	@SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR) $(PYTEST) backend/tests \
+		--cov=backend/app --cov-report=html --cov-report=term-missing
+	@if [ -f backend/htmlcov/index.html ]; then \
+		echo ""; \
+		echo "Coverage report generated:"; \
+		echo "  HTML: backend/htmlcov/index.html"; \
+		echo ""; \
+		if command -v open >/dev/null 2>&1; then \
+			open backend/htmlcov/index.html; \
+			echo "✅ Opened in browser"; \
+		fi; \
+	fi
+
+smoke-buildable: ## Run the buildable latency smoke test and report the observed P90
+	cd backend && $(PY) -m pytest -s tests/pwp/test_buildable_latency.py
+
+test-aec: ## Run sample import, overlay, export flows and regression tests
+	$(MAKE) import-sample
+	$(MAKE) run-overlay
+	$(MAKE) export-approved
+	cd backend && $(PY) -m pytest tests/test_workflows/test_aec_pipeline.py
+	cd frontend && npm test
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🔍 VERIFICATION & QUALITY GATES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 verify: ## Run formatting checks, linting, coding rules, roadmap/work queue validation, and tests
 	$(MAKE) format-check
@@ -186,6 +313,28 @@ verify: ## Run formatting checks, linting, coding rules, roadmap/work queue vali
 	$(MAKE) check-coding-rules
 	$(MAKE) validate-delivery-plan
 	$(MAKE) test
+
+quick-check: ## Fast pre-commit checks (format + typecheck + lint)
+	@echo "⚡ Running quick checks..."
+	@$(MAKE) format-check
+	@npm run --prefix frontend typecheck
+	@$(MAKE) lint
+	@echo "✅ Quick checks completed"
+
+pre-commit-full: ## Comprehensive pre-commit checks
+	@echo "🔍 Running comprehensive pre-commit checks..."
+	@$(MAKE) lint
+	@npm run --prefix frontend typecheck
+	@$(MAKE) check-coding-rules
+	@$(MAKE) test
+	@echo "✅ All pre-commit checks passed"
+
+pre-deploy: ## Pre-deployment verification
+	@echo "🚀 Running pre-deployment checks..."
+	@$(MAKE) verify
+	@$(MAKE) test-all
+	@$(MAKE) validate-delivery-plan
+	@echo "✅ Ready for deployment"
 
 validate-delivery-plan: ## Validate ROADMAP.MD and WORK_QUEUE.MD for required sections
 	@echo "Validating strategic roadmap and work queue..."
@@ -236,6 +385,14 @@ ai-preflight: ## Pre-flight check for AI agents before code generation
 	@echo "  2. make verify"
 	@echo "=========================================="
 
+env-check: ## Quick sanity: ensure imports & tests compile
+	@cd backend && $(PY) -m compileall -q tests
+	@$(PY) scripts/env_check.py
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🗄️ DATABASE MANAGEMENT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 regstack-migrate: ## Run Alembic migrations for the Regstack schema
 	ALEMBIC_INI=db/alembic.ini \
 	$(PY) -m alembic -c $$ALEMBIC_INI upgrade head
@@ -247,46 +404,43 @@ regstack-ingest: ## Ingest SG BCA sample into the configured database
 	fi
 	$(PY) -m scripts.ingest --jurisdiction sg_bca --since 2025-01-01 --store $$REGSTACK_DB
 
-smoke-buildable: ## Run the buildable latency smoke test and report the observed P90
-	cd backend && $(PY) -m pytest -s tests/pwp/test_buildable_latency.py
-
-import-sample: ## Upload the bundled sample payload and seed overlay geometry
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow import-sample --sample $(AEC_SAMPLE) --project-id $(AEC_PROJECT_ID)
-
-run-overlay: ## Execute the overlay engine using the inline worker queue
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow run-overlay --project-id $(AEC_PROJECT_ID)
-
-export-approved: ## Approve overlays and generate a CAD/BIM export artefact
-	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow export-approved --project-id $(AEC_PROJECT_ID) --format $(AEC_EXPORT_FORMAT) --decided-by "$(AEC_DECIDED_BY)" --notes "$(AEC_APPROVAL_NOTES)"
-
-test-aec: ## Run sample import, overlay, export flows and regression tests
-	$(MAKE) import-sample
-	$(MAKE) run-overlay
-	$(MAKE) export-approved
-	cd backend && $(PY) -m pytest tests/test_workflows/test_aec_pipeline.py
-	cd frontend && npm test
-
-test-cov: ## Run tests with coverage
-	SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR) JOB_QUEUE_BACKEND=inline $(PYTEST) backend/tests --cov=backend/app --cov-report=html --cov-report=term-missing
-	@echo "Coverage report: backend/htmlcov/index.html"
-
-clean: ## Clean build artifacts
-	cd backend && rm -rf __pycache__ .pytest_cache .coverage htmlcov
-	cd frontend && rm -rf dist node_modules/.cache
-
-build: ## Build production images
-	$(REQUIRE_DOCKER_COMPOSE)
-	$(DOCKER_COMPOSE) build
-
 init-db: ## Apply Alembic migrations inside Docker
 	$(REQUIRE_DOCKER_COMPOSE)
 	$(DOCKER_COMPOSE) exec backend python -m backend.migrations alembic upgrade head
 
-db.upgrade: ## Apply database migrations locally
-	DEV_SQLITE_URL=$(DEV_SQLITE_URL) DATABASE_URL="$${DATABASE_URL:-$(DEV_SQLITE_URL)}" $(PY) scripts/sqlite_upgrade.py
+REVISION_AUTOGEN ?= 1
+
+db.revision: ## Create a new Alembic revision (set REVISION_MESSAGE="..." and optionally REVISION_AUTOGEN=0)
+	$(PY) scripts/ensure_alembic.py
+	cd backend && \
+		SQLALCHEMY_DATABASE_URI="$${SQLALCHEMY_DATABASE_URI:-$(DEV_SQLITE_URL)}" \
+		$(PY) -m alembic revision $(if $(filter 1 true yes,$(REVISION_AUTOGEN)),--autogenerate,) $(if $(strip $(REVISION_MESSAGE)),-m "$(REVISION_MESSAGE)",)
+
+db.upgrade: ## Apply database migrations locally via Alembic
+	$(PY) scripts/ensure_alembic.py
+	cd backend && \
+		SQLALCHEMY_DATABASE_URI="$${SQLALCHEMY_DATABASE_URI:-$(DEV_SQLITE_URL)}" \
+		$(PY) -m alembic upgrade head
+
+db-backup: ## Backup local SQLite database
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)/backups
+	@if [ -f $(DEV_RUNTIME_DIR_ABS)/app.db ]; then \
+		TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
+		cp $(DEV_RUNTIME_DIR_ABS)/app.db $(DEV_RUNTIME_DIR_ABS)/backups/app_$$TIMESTAMP.db; \
+		echo "✅ Database backed up to: $(DEV_RUNTIME_DIR_ABS)/backups/app_$$TIMESTAMP.db"; \
+	else \
+		echo "⚠️  No database found at $(DEV_RUNTIME_DIR_ABS)/app.db"; \
+	fi
+
+db-restore: ## Restore database from latest backup
+	@if [ -z "$$(ls -t $(DEV_RUNTIME_DIR_ABS)/backups/app_*.db 2>/dev/null | head -1)" ]; then \
+		echo "❌ No backups found in $(DEV_RUNTIME_DIR_ABS)/backups/"; \
+		exit 1; \
+	fi
+	@LATEST=$$(ls -t $(DEV_RUNTIME_DIR_ABS)/backups/app_*.db | head -1); \
+	echo "Restoring from: $$LATEST"; \
+	cp $$LATEST $(DEV_RUNTIME_DIR_ABS)/app.db; \
+	echo "✅ Database restored from $$LATEST"
 
 seed-data: ## Seed screening data, finance demo scenarios, and sample properties
 	@if [ -n "$(DOCKER_COMPOSE)" ]; then \
@@ -307,20 +461,33 @@ seed-properties-projects: ## Seed sample properties and projects for Commercial 
 	    $(PY) -m backend.scripts.seed_properties_projects --reset; \
 	fi
 
-logs: ## Show application logs
-	$(REQUIRE_DOCKER_COMPOSE)
-	$(DOCKER_COMPOSE) logs -f backend frontend
+seed-nonreg:
+	$(PY) -m backend.scripts.seed_nonreg
 
-down: ## Stop all services
-	$(REQUIRE_DOCKER_COMPOSE)
-	$(DOCKER_COMPOSE) down
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🧹 CLEANING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-reset: ## Reset development environment
-	$(REQUIRE_DOCKER_COMPOSE)
-	$(DOCKER_COMPOSE) down -v
-	$(DOCKER_COMPOSE) up -d
-	$(MAKE) init-db
-	$(MAKE) seed-data
+clean: ## Clean build artifacts
+	cd backend && rm -rf __pycache__ .pytest_cache .coverage htmlcov
+	cd frontend && rm -rf dist node_modules/.cache
+
+clean-ui: ## Clean frontend cache and build artifacts
+	@echo "🧹 Cleaning UI cache and build artifacts..."
+	@rm -rf frontend/node_modules/.vite
+	@rm -rf frontend/.vite
+	@rm -rf frontend/dist
+	@rm -rf ui-admin/node_modules/.vite
+	@rm -rf ui-admin/.vite
+	@rm -rf ui-admin/dist
+	@echo "✅ UI cache cleaned successfully"
+
+docker-clean: ## Remove stopped containers and unused Docker artifacts
+	@scripts/docker_cleanup.sh
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🚀 DEVELOPMENT WORKFLOW
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 dev: ## Start supporting services, the backend API, and frontends
 	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
@@ -443,15 +610,70 @@ stop: ## Stop services started with dev (excluding docker-compose)
 		echo "Admin UI is not running."; \
 	fi
 
-seed-nonreg:
-	$(PY) -m backend.scripts.seed_nonreg
+ui-stop: ## Force stop UI servers on configured ports (kills stuck processes)
+	@echo "⏹️  Stopping UI servers on ports $(BACKEND_PORT), $(FRONTEND_PORT), $(ADMIN_PORT)..."
+	@-pids=$$(lsof -ti:$(FRONTEND_PORT) 2>/dev/null); \
+	if [ "$$pids" ]; then \
+		echo "Killing frontend processes on port $(FRONTEND_PORT): $$pids"; \
+		kill $$pids 2>/dev/null || true; \
+	else \
+		echo "ℹ️  No frontend server running on port $(FRONTEND_PORT)"; \
+	fi
+	@-pids=$$(lsof -ti:$(ADMIN_PORT) 2>/dev/null); \
+	if [ "$$pids" ]; then \
+		echo "Killing admin UI processes on port $(ADMIN_PORT): $$pids"; \
+		kill $$pids 2>/dev/null || true; \
+	else \
+		echo "ℹ️  No admin UI server running on port $(ADMIN_PORT)"; \
+	fi
+	@-pids=$$(lsof -ti:$(BACKEND_PORT) 2>/dev/null); \
+	if [ "$$pids" ]; then \
+		echo "Killing backend processes on port $(BACKEND_PORT): $$pids"; \
+		kill $$pids 2>/dev/null || true; \
+	else \
+		echo "ℹ️  No backend server running on port $(BACKEND_PORT)"; \
+	fi
+	@sleep 1
+	@echo "✅ All UI servers stopped"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🐳 DOCKER OPERATIONS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+build: ## Build production images
+	$(REQUIRE_DOCKER_COMPOSE)
+	$(DOCKER_COMPOSE) build
+
+logs: ## Show application logs
+	$(REQUIRE_DOCKER_COMPOSE)
+	$(DOCKER_COMPOSE) logs -f backend frontend
+
+down: ## Stop all services
+	$(REQUIRE_DOCKER_COMPOSE)
+	$(DOCKER_COMPOSE) down
+
+reset: ## Reset development environment
+	$(REQUIRE_DOCKER_COMPOSE)
+	$(DOCKER_COMPOSE) down -v
+	$(DOCKER_COMPOSE) up -d
+	$(MAKE) init-db
+	$(MAKE) seed-data
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🏗️ AEC WORKFLOW
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import-sample: ## Upload the bundled sample payload and seed overlay geometry
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow import-sample --sample $(AEC_SAMPLE) --project-id $(AEC_PROJECT_ID)
+
+run-overlay: ## Execute the overlay engine using the inline worker queue
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow run-overlay --project-id $(AEC_PROJECT_ID)
+
+export-approved: ## Approve overlays and generate a CAD/BIM export artefact
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	cd backend && AEC_RUNTIME_DIR=$(DEV_RUNTIME_DIR_ABS) $(PY) -m scripts.aec_flow export-approved --project-id $(AEC_PROJECT_ID) --format $(AEC_EXPORT_FORMAT) --decided-by "$(AEC_DECIDED_BY)" --notes "$(AEC_APPROVAL_NOTES)"
 
 sync-products:
 	$(PY) -m backend.flows.sync_products --csv-path vendor.csv
-
-env-check: ## Quick sanity: ensure imports & tests compile
-	@cd backend && $(PY) -m compileall -q tests
-	@$(PY) scripts/env_check.py
-
-docker-clean: ## Remove stopped containers and unused Docker artifacts
-	@scripts/docker_cleanup.sh
