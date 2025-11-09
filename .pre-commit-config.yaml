@@ -28,10 +28,17 @@ repos:
       pass_filenames: false
 
     - id: check-shadow-dirs
-      name: Check for shadow directories (Rule 13.1)
+      name: Check for shadow directories (Rule 14.1)
       entry: python3 scripts/check_shadow_directories.py
       language: system
       pass_filenames: false
+
+    - id: check-enum-patterns
+      name: Check SQLAlchemy enum patterns have values_callable
+      entry: python3 backend/scripts/check_enum_patterns.py
+      language: system
+      files: ^backend/app/models/.*\.py$
+      pass_filenames: true
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0

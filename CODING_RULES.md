@@ -295,7 +295,159 @@ psql -c "SELECT enumlabel FROM pg_enum WHERE enumtypid = 'projecttype'::regtype;
 
 ---
 
-## 2. Async/Await for Database and API Operations
+## 2. SQLAlchemy Enum Serialization (MANDATORY)
+
+**Rule:** All SQLAlchemy enum columns MUST include `values_callable` parameter to serialize enum VALUES instead of NAMES.
+
+**Why:** Without `values_callable`, SQLAlchemy stores enum member NAMES (e.g., `"NEW_DEVELOPMENT"`) instead of VALUES (e.g., the string defined in `ProjectType.NEW_DEVELOPMENT.value`). This causes data corruption when enum values don't match their member names, breaks database constraints, and creates runtime errors.
+
+**How this bug happens:**
+```python
+# Python enum definition
+class ProjectType(str, Enum):
+    NEW_DEVELOPMENT = "NEW_DEVELOPMENT"  # VALUE = "NEW_DEVELOPMENT"
+    REDEVELOPMENT = "REDEVELOPMENT"
+
+# ❌ WRONG - Missing values_callable
+project_type = Column(SQLEnum(ProjectType), nullable=False)
+
+# What gets stored in database:
+# - Enum member NAME: "NEW_DEVELOPMENT" (the attribute name)
+# - NOT the .value: "NEW_DEVELOPMENT" (which happens to be the same)
+
+# This works by accident if NAME == VALUE, but breaks if they differ:
+class ProjectStatus(str, Enum):
+    ACTIVE = "active"  # NAME="ACTIVE", VALUE="active"
+    PENDING = "pending"
+
+status = Column(SQLEnum(ProjectStatus), nullable=False)
+# Database gets "ACTIVE" instead of "active" → constraint violation!
+```
+
+**How to follow:**
+
+### Pattern 1: Inline lambda (recommended for new code)
+```python
+from sqlalchemy import Column, Enum as SQLEnum
+from app.models.enums import ProjectType
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    # ✅ CORRECT - Inline values_callable
+    project_type = Column(
+        SQLEnum(ProjectType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
+```
+
+### Pattern 2: Reusable helper function (recommended for multiple enums)
+```python
+from enum import Enum
+from sqlalchemy import Enum as SAEnum
+
+def _enum(sa_enum: type[Enum], *, name: str) -> SAEnum:
+    """Serialize enums using their .value string representation."""
+    return SAEnum(
+        sa_enum,
+        name=name,
+        values_callable=lambda enum_cls: [member.value for member in enum_cls],
+    )
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    # ✅ CORRECT - Using helper function
+    project_type = Column(
+        _enum(ProjectType, name="project_type"),
+        nullable=False,
+    )
+```
+
+### Pattern 3: Pre-defined enum constants (recommended for migrations)
+```python
+from sqlalchemy import Enum
+
+# Define once, reuse across models
+PROJECT_TYPE_ENUM = Enum(
+    ProjectType,
+    name="project_type",
+    create_type=False,
+    values_callable=lambda enum_cls: [member.value for member in enum_cls],
+)
+
+class Project(Base):
+    project_type = Column(PROJECT_TYPE_ENUM, nullable=False)
+
+class DevelopmentPipeline(Base):
+    project_type = Column(PROJECT_TYPE_ENUM, nullable=False)
+```
+
+**Common mistakes:**
+
+```python
+# ❌ WRONG - No values_callable
+from sqlalchemy import Column, Enum as SQLEnum
+
+project_type = Column(SQLEnum(ProjectType), nullable=False)
+# Stores enum NAME instead of VALUE
+
+# ❌ WRONG - Empty values_callable
+project_type = Column(
+    SQLEnum(ProjectType, values_callable=lambda x: []),
+    nullable=False,
+)
+# Database accepts no values!
+
+# ❌ WRONG - Using str() instead of .value
+project_type = Column(
+    SQLEnum(ProjectType, values_callable=lambda x: [str(e) for e in x]),
+    nullable=False,
+)
+# str(enum) returns "ProjectType.NEW_DEVELOPMENT", not the value
+```
+
+**Verification:**
+
+Run the pre-commit hook to check all model files:
+```bash
+python3 backend/scripts/check_enum_patterns.py backend/app/models/*.py
+```
+
+Or test in Python console:
+```python
+from app.models.projects import ProjectType
+
+# Check what value is actually stored
+print(ProjectType.NEW_DEVELOPMENT.value)  # Should print: "NEW_DEVELOPMENT"
+print(ProjectType.NEW_DEVELOPMENT.name)   # Prints member name: "NEW_DEVELOPMENT"
+
+# For lowercase value enums:
+from app.models.entitlements import EntApprovalCategory
+print(EntApprovalCategory.PLANNING.value)  # Prints: "planning"
+print(EntApprovalCategory.PLANNING.name)   # Prints: "PLANNING"
+```
+
+**Enforcement:**
+
+This rule is automatically enforced by:
+- Pre-commit hook: `check-enum-patterns` (runs on every commit touching model files)
+- Script: `backend/scripts/check_enum_patterns.py` (can run manually)
+
+To check manually:
+```bash
+python3 backend/scripts/check_enum_patterns.py backend/app/models/*.py
+```
+
+**Historical context:**
+
+- Nov 9, 2025: Discovered 29 enum columns across 7 model files missing `values_callable`
+- Fixed in commits c1fac68 (property.py, entitlements.py) and ce4031b (remaining models)
+- Added automated check to prevent regression
+
+---
+
+## 3. Async/Await for Database and API Operations
 
 **Rule:** All database calls, API routes, and I/O operations must use `async`/`await`. No synchronous blocking operations in FastAPI routes or database queries.
 
@@ -517,7 +669,7 @@ async def update_property_statuses(
 
 ---
 
-## 3. Testing Before Commits
+## 4. Testing Before Commits
 
 **Rule:** Code formatting is **automatically handled by pre-commit hooks**. Run `make verify` before committing to ensure all checks pass.
 
@@ -550,7 +702,7 @@ pre-commit run --all-files
 
 ---
 
-## 4. Dependency Management
+## 5. Dependency Management
 
 **Rule:** When adding new dependencies, update the appropriate dependency file. Never install packages without tracking them. For formatters and linters, versions MUST match across all configuration files.
 
@@ -598,7 +750,7 @@ pip install some-random-package  # Not added to requirements.txt
 
 ---
 
-## 5. Singapore Property Compliance Validation
+## 6. Singapore Property Compliance Validation
 
 **Rule:** When modifying Singapore property models or compliance logic, always run compliance validation tests to ensure regulatory requirements are met.
 
@@ -637,7 +789,7 @@ curl -X POST http://localhost:9400/api/v1/singapore-property/check-compliance \
 
 ---
 
-## 6. Python Import Ordering and Formatting
+## 7. Python Import Ordering and Formatting
 
 **Rule:** Follow strict import ordering and formatting to match Black, Ruff, and isort hook standards. Imports must be grouped, sorted, and formatted according to the project's automated formatters.
 
@@ -709,7 +861,7 @@ make verify  # Verify everything passes (runs format-check, lint, tests)
 
 ---
 
-## 7. Code Quality Standards
+## 8. Code Quality Standards
 
 **Rule:** Write clean, maintainable Python code following PEP 8 and Ruff linting standards. Avoid common code smells caught by automated linters.
 
@@ -736,7 +888,7 @@ make verify  # Verify everything passes (runs format-check, lint, tests)
 
 **Examples:**
 
-### 7.1 No Unused Variables (Ruff F841)
+### 8.1 No Unused Variables (Ruff F841)
 
 **❌ WRONG - Unused variable assigned:**
 ```python
@@ -791,7 +943,7 @@ async def create_many(session: AsyncSession, items: list[dict]):
     await session.commit()
 ```
 
-### 7.2 Proper Exception Chaining (Ruff B904)
+### 8.2 Proper Exception Chaining (Ruff B904)
 
 **❌ WRONG - Missing exception chain:**
 ```python
@@ -864,7 +1016,7 @@ async def validate_property(property_obj: SingaporeProperty):
         raise PropertyValidationError(f"Property validation failed: {e}") from e
 ```
 
-### 7.3 No Mutable Default Arguments (Ruff B006)
+### 8.3 No Mutable Default Arguments (Ruff B006)
 
 **❌ WRONG - Mutable default arguments:**
 ```python
@@ -928,7 +1080,7 @@ class PropertyFilter:
     tags: dict[str, str] = field(default_factory=dict)  # ✅ Each instance gets fresh dict
 ```
 
-### 7.4 Type Hints on Public APIs
+### 8.4 Type Hints on Public APIs
 
 **❌ WRONG - Missing type hints:**
 ```python
@@ -1002,7 +1154,7 @@ async def get_property(
 
 ---
 
-## 8. AI Agent Testing Instructions (MANDATORY)
+## 9. AI Agent Testing Instructions (MANDATORY)
 
 **Rule:** When AI agents complete ANY feature, they MUST provide test instructions to the user. This includes backend tests, frontend tests, and UI manual test steps.
 
@@ -1010,7 +1162,7 @@ async def get_property(
 
 **How to follow:**
 
-### 8.1 MANDATORY Testing Checklist After Feature Completion
+### 9.1 MANDATORY Testing Checklist After Feature Completion
 
 When you complete ANY feature implementation, you MUST:
 
@@ -1037,7 +1189,7 @@ UI Manual Testing:
 4. Test edge cases: [list specific scenarios]
 ```
 
-### 8.2 Required Documentation References
+### 9.2 Required Documentation References
 
 Before proposing work, AI agents must read:
 - [`docs/ai-agents/next_steps.md`](docs/ai-agents/next_steps.md) (MANDATORY TESTING CHECKLIST section)
@@ -1051,7 +1203,7 @@ Mirror those references (or the exact commands they prescribe) in your response.
 
 If expectations change, update the docs first so the automation stays accurate.
 
-### 8.3 Examples
+### 9.3 Examples
 
 **✅ CORRECT - Complete test instructions:**
 ```markdown
@@ -1083,13 +1235,13 @@ I've completed the finance scenario privacy feature. The implementation is done.
 Run the tests to verify the feature works.
 ```
 
-### 8.4 Automatic Enforcement
+### 9.4 Automatic Enforcement
 
 - `scripts/check_coding_rules.py` verifies the guidance docs contain the mandatory references. Do not remove them without adding a replacement rule.
 - During reviews, reject any "next steps" that omit the required test instructions.
 - **FUTURE:** Commit message hook will enforce that feature commits include test commands in the message body.
 
-### 8.5 Compliance Check
+### 9.5 Compliance Check
 
 When completing a feature, ask yourself:
 - [ ] Did I provide backend pytest commands?
@@ -1102,7 +1254,7 @@ When completing a feature, ask yourself:
 
 ---
 
-## 9. Database Performance & Indexing
+## 10. Database Performance & Indexing
 
 **Rule:** All foreign keys MUST have indexes. Frequently queried columns SHOULD have indexes. Never deploy tables >1000 rows without appropriate indexes.
 
@@ -1183,7 +1335,7 @@ AND seq_scan > 100;
 
 ---
 
-## 10. Testing Requirements
+## 11. Testing Requirements
 
 **Rule:** All new features MUST have automated tests. Backend coverage >80% for critical paths. Frontend critical paths must have unit tests.
 
@@ -1262,7 +1414,7 @@ make test
 - Frontend critical paths: Covered
 - Frontend overall: Best effort (JSDOM timing issues documented in `docs/development/testing/known-issues.md`)
 
-### 10.1 Backend feature completion checklist (MANDATORY)
+### 11.1 Backend feature completion checklist (MANDATORY)
 
 Every backend feature, bug fix, or infrastructure change **must** close with
 tests and a fresh coverage datapoint. Skipping this step is the number-one way
@@ -1298,7 +1450,7 @@ ticked.
 
 ---
 
-## 11. Security Practices
+## 12. Security Practices
 
 **Rule:** Follow security best practices for authentication, input validation, secrets management, and API security. Never commit secrets.
 
@@ -1502,7 +1654,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 
 ---
 
-## 12. Phase Completion Gates (MANDATORY)
+## 13. Phase Completion Gates (MANDATORY)
 
 **Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [ROADMAP.MD](docs/ROADMAP.MD) while related tasks remain in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD) or the Phase 2D gate checklist has unchecked items.
 
@@ -1614,7 +1766,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 4. **Tests pass:** "Test Status:" section shows ✅ passing tests (no ❌ or ⚠️ failures)
 5. **Manual QA executed (Rule 12.1):** UI phases require manual QA checklist with execution results
 
-**Rule 12.1: Manual QA Requirement for UI Phases**
+**Rule 13.1: Manual QA Requirement for UI Phases**
 
 All phases with UI components (1A, 1B, 1C, 1D, 2B, 2C) MUST have:
 - Manual QA checklist file in `docs/development/testing/phase-{XY}-manual-qa-checklist.md`
@@ -1655,7 +1807,7 @@ Blocks commits until violations are fixed.
 
 ---
 
-**Rule 12.2: Production UI Quality Standards**
+**Rule 13.2: Production UI Quality Standards**
 
 **All frontend UI in Phase 1 and Phase 2 is production-quality B2B software.**
 
@@ -1686,7 +1838,7 @@ Context:
 
 **Reference:** See frontend/README_AI_AGENTS.md for detailed frontend guidelines.
 
-### 12.3 Manual UI QA for every frontend delivery (MANDATORY)
+### 13.3 Manual UI QA for every frontend delivery (MANDATORY)
 
 All frontend feature/sub-phase work must finish with a human UI sweep. This is
 the enforcement counterpart to Rule 12.1/12.2.
@@ -1701,7 +1853,7 @@ the enforcement counterpart to Rule 12.1/12.2.
 CI cannot replace this. Manual UI QA is required because the product is a
 production B2B app, and our end users expect polished, professional workflows.
 
-### 12.4 QA Checklist Completion Workflow (MANDATORY - AI AGENTS READ THIS)
+### 13.4 QA Checklist Completion Workflow (MANDATORY - AI AGENTS READ THIS)
 
 **Problem this solves:** Phase 1D was marked COMPLETE on Nov 1, 2025, but the
 manual QA checklist status was never updated from "READY FOR QA" to "COMPLETED".
@@ -1758,9 +1910,9 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' in ROADMAP.MD
 
 ---
 
-## 13. Python Import Safety (CRITICAL)
+## 14. Python Import Safety (CRITICAL)
 
-### 13.1 NEVER Create Shadow Directories
+### 14.1 NEVER Create Shadow Directories
 
 **Rule:** NEVER create directories in your project that match the names of installed Python packages.
 
