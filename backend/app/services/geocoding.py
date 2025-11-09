@@ -3,11 +3,11 @@
 from typing import Any, Dict, Optional, Tuple
 
 import structlog
+from pydantic import BaseModel
 
 import httpx
 from app.core.config import settings
 from app.services.base import AsyncClientService
-from pydantic import BaseModel
 
 logger = structlog.get_logger()
 

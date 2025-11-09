@@ -7,9 +7,6 @@ from typing import Iterable, Optional
 from uuid import UUID
 
 from backend._compat.datetime import UTC
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.audit.ledger import append_event
 from app.models.audit import AuditLog
@@ -21,6 +18,9 @@ from app.models.business_performance import (
     CommissionStatus,
     CommissionType,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from .utils import audit_project_key
 

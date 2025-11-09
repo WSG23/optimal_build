@@ -13,12 +13,13 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from uuid import uuid4
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from app.models.projects import Project, ProjectPhase, ProjectType
+
+from backend.jobs import JobDispatch, job_queue
 
 from app.core.config import settings
-from backend.jobs import JobDispatch, job_queue
+from app.models.projects import Project, ProjectPhase, ProjectType
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 def _build_asset_mix():

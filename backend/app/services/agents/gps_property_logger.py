@@ -16,17 +16,17 @@ try:  # pragma: no cover - geoalchemy may be optional in some environments
 except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missing
     WKTElement = None  # type: ignore[assignment]
 from backend._compat.datetime import utcnow
-from sqlalchemy import insert, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.ura_integration import URAIntegrationService
-from app.services.heritage_overlay import HeritageOverlayService
 from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
 )
 from app.services.geocoding import Address, GeocodingService
+from app.services.heritage_overlay import HeritageOverlayService
+from sqlalchemy import insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger()
 

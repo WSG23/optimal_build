@@ -8,8 +8,8 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi import HTTPException
 
-from app.api.v1 import finance as finance_api
 from app.api.deps import RequestIdentity
+from app.api.v1 import finance as finance_api
 from app.schemas.finance import SensitivityBandInput
 from app.services.finance import calculator
 

@@ -190,16 +190,18 @@ async def test_vectorize_payload_if_requested_handles_async_job(monkeypatch):
     monkeypatch.setattr(imports_api.job_queue, "enqueue", fake_enqueue)
     monkeypatch.setattr(imports_api, "vectorize_floorplan", fake_vectorize)
 
-    vector_payload, summary, derived_layers = (
-        await imports_api._vectorize_payload_if_requested(
-            enable_raster_processing=True,
-            raw_payload=b"bytes",
-            filename="plan.pdf",
-            content_type="application/pdf",
-            infer_walls=True,
-            import_id="imp-1",
-            layer_metadata=[],
-        )
+    (
+        vector_payload,
+        summary,
+        derived_layers,
+    ) = await imports_api._vectorize_payload_if_requested(
+        enable_raster_processing=True,
+        raw_payload=b"bytes",
+        filename="plan.pdf",
+        content_type="application/pdf",
+        infer_walls=True,
+        import_id="imp-1",
+        layer_metadata=[],
     )
     assert vector_payload["paths"]
     assert summary["paths"] >= 0

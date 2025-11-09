@@ -7,15 +7,15 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 from uuid import UUID
 
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from backend._compat.datetime import UTC, utcnow
 from backend.jobs import job
+
 from app.core.database import get_session
 from app.models.preview import PreviewJob, PreviewJobStatus
 from app.services.preview_generator import PreviewAssets, ensure_preview_asset
 from app.utils import metrics
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _resolve_session_dependency():

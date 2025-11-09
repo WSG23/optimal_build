@@ -18,13 +18,13 @@ from types import ModuleType
 from typing import Any, cast
 
 from backend._compat.datetime import UTC
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit.ledger import append_event
 from app.core.metrics import EXPORT_BASELINE_SECONDS
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _load_optional_module(name: str) -> ModuleType | None:

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import os
 
-from backend.jobs import celery_app
 import backend.jobs.finance_sensitivity  # noqa: F401 - register tasks with celery
+from backend.jobs import celery_app
 
 if celery_app is None:  # pragma: no cover
     raise SystemExit(

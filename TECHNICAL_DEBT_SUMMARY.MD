@@ -3,9 +3,7 @@
 This summary aggregates the open technical debt recorded in the actual system architecture documentation (`docs/architecture_honest.md`). Items are grouped by severity as described in that source.
 
 ## Critical Issues
-- **Disabled APIs** – `market_intelligence.py` and `agents.py` routers remain commented out while model dependencies are repaired. [Ref: backend/app/api/v1/__init__.py lines 69-70 in documentation.]
-- **Database migrations uninitialized** – Alembic 1.13.0 is installed but no `versions/` directory exists, so schema changes rely on manual operations.
-- **Metrics instrumentation missing** – `prometheus-client` is present without any collectors for latency, errors, or throughput.
+- _None_ – Market intelligence & agent routers are live, Alembic migrations are versioned, and RequestMetricsMiddleware plus `/metrics` expose throughput/latency/error collectors (see `docs/architecture_honest.md`).
 
 ## High Priority
 - **Rate limiting unimplemented** – Documented middleware behavior is absent; Redis-backed throttling is still pending.
@@ -18,8 +16,6 @@ This summary aggregates the open technical debt recorded in the actual system ar
 - **Compliance model placement** – Compliance data lives inside `singapore_property.py` rather than a dedicated `compliance.py` module as described elsewhere.
 
 ## Low Priority
-- **Directory naming mismatch** – The admin frontend lives in `ui-admin/` instead of the documented `admin/` path.
-- **Script relocation** – The expected `backend/scripts/ingest.py` actually sits in `/scripts/ingest.py`.
 - **Undocumented AI agents** – Ten of the eleven implemented agents are absent from the high-level documentation.
 
-*Source: `docs/architecture_honest.md`, last updated 2025-10-04.*
+*Source: `docs/architecture_honest.md`, last updated 2025-11-10.*

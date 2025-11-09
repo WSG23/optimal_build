@@ -23,6 +23,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type {
+  ValueType,
+  NameType,
+  Formatter,
+} from 'recharts/types/component/DefaultTooltipContent'
 import type { AnalyticsMetric, BenchmarkEntry, TrendPoint } from '../types'
 
 interface AnalyticsPanelProps {
@@ -210,18 +215,21 @@ export function AnalyticsPanel({
   )
 }
 
-function formatTooltipValue(value: string | number, name: string) {
-  if (value === null || value === undefined || typeof value === 'string') {
-    return ['Not available yet', name]
+const formatTooltipValue: Formatter<ValueType, NameType> = (rawValue, rawName) => {
+  const label = typeof rawName === 'string' ? rawName : String(rawName ?? '')
+  const numericValue = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? NaN)
+
+  if (!Number.isFinite(numericValue)) {
+    return ['Not available yet', label]
   }
-  if (name.includes('pipeline')) {
-    return [`${value.toFixed(1)}m`, name]
+  if (label.toLowerCase().includes('pipeline')) {
+    return [`${numericValue.toFixed(1)}m`, label]
   }
-  if (name.includes('Conversion')) {
-    return [`${value.toFixed(1)}%`, name]
+  if (label.toLowerCase().includes('conversion')) {
+    return [`${numericValue.toFixed(1)}%`, label]
   }
-  if (name.includes('Cycle')) {
-    return [`${value.toFixed(0)} days`, name]
+  if (label.toLowerCase().includes('cycle')) {
+    return [`${numericValue.toFixed(0)} days`, label]
   }
-  return [value, name]
+  return [numericValue.toString(), label]
 }

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
-
 from app.models.business_performance import AgentDeal
 from app.services.deals.utils import audit_project_key
 

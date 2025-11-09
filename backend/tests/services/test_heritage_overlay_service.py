@@ -8,8 +8,7 @@ import math
 import pytest
 from shapely.geometry import Point
 
-from app.services.heritage_overlay import HeritageOverlayService, _SHAPELY_AVAILABLE
-
+from app.services.heritage_overlay import _SHAPELY_AVAILABLE, HeritageOverlayService
 
 pytestmark = pytest.mark.skipif(
     not _SHAPELY_AVAILABLE, reason="Heritage overlay lookups require shapely"

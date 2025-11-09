@@ -11,8 +11,7 @@ from typing import Any, Union
 from uuid import UUID
 
 import structlog
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from backend._compat import compat_zip
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
@@ -27,7 +26,8 @@ from app.models.finance import (
 from app.models.projects import Project, ProjectPhase, ProjectType
 from app.models.rkp import RefCostIndex
 from app.services.finance import calculator
-from backend._compat import compat_zip
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
 

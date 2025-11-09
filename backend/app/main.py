@@ -55,26 +55,25 @@ except Exception:  # pragma: no cover - fallback for stubbed environments
         return getattr(client, "host", "127.0.0.1")
 
 
-from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.deps import require_viewer
 from app.api.v1 import TAGS_METADATA, api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
-from app.models.rkp import RefRule
-from app.schemas.buildable import (
-    BUILDABLE_REQUEST_EXAMPLE,
-    BUILDABLE_RESPONSE_EXAMPLE,
+from app.middleware.observability import (
+    ApiErrorLoggingMiddleware,
+    RequestMetricsMiddleware,
 )
-from app.middleware.observability import ApiErrorLoggingMiddleware
 from app.middleware.security import SecurityHeadersMiddleware
+from app.models.rkp import RefRule
+from app.schemas.buildable import BUILDABLE_REQUEST_EXAMPLE, BUILDABLE_RESPONSE_EXAMPLE
 from app.schemas.finance import (
     FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
     FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
 )
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 configure_logging()
 logger = get_logger(__name__)
@@ -111,6 +110,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(ApiErrorLoggingMiddleware, logger=logger)
+app.add_middleware(RequestMetricsMiddleware)
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[settings.API_RATE_LIMIT])
 app.state.limiter = limiter
@@ -144,6 +144,14 @@ if static_root.exists():
         StaticFiles(directory=str(static_root), html=False),
         name="static",
     )
+
+
+@app.get("/metrics", include_in_schema=False)
+async def prometheus_metrics() -> Response:
+    """Expose Prometheus metrics collected by the API."""
+
+    payload = metrics.export_metrics()
+    return Response(content=payload, media_type="text/plain; version=0.0.4")
 
 
 def custom_openapi() -> dict[str, Any]:

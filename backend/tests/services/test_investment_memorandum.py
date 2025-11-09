@@ -6,9 +6,7 @@ from types import SimpleNamespace
 from reportlab.platypus import Paragraph
 
 from app.models.property import PropertyType
-from app.services.agents.investment_memorandum import (
-    InvestmentMemorandumGenerator,
-)
+from app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
 
 
 def _property_data():

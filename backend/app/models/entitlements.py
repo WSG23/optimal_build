@@ -6,6 +6,8 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
+from app.models.base import BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     CheckConstraint,
     Date,
@@ -19,9 +21,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-
-from app.models.base import BaseModel, MetadataProxy
-from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
 

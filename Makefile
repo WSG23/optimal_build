@@ -220,8 +220,9 @@ format: ## Format code (handled automatically by pre-commit hooks)
 	@echo ""
 
 format-check: ## Check formatting (all Python files)
-	@$(BLACK) --check backend/app/ backend/tests/ tests/ || true
-	@$(ISORT) --check backend/app/ backend/tests/ tests/ || true
+	@echo "🔍 Checking Python formatting with pre-commit hooks..."
+	@$(PRE_COMMIT) run black --all-files || true
+	@$(PRE_COMMIT) run ruff --all-files || true
 
 lint: ## Run linting (all Python files)
 	@$(FLAKE8) backend/app/ backend/tests/ tests/ || true

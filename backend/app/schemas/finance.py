@@ -16,7 +16,6 @@ from pydantic import (
     model_validator,
 )
 
-
 FINANCE_FEASIBILITY_REQUEST_EXAMPLE = {
     "project_id": 0,
     "project_name": "string",

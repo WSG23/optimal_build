@@ -21,8 +21,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from sqlalchemy import String, cast, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.market import MarketCycle, YieldBenchmark
 from app.models.property import MarketTransaction, Property, RentalListing
@@ -31,6 +29,8 @@ from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches,
 )
+from sqlalchemy import String, cast, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class InvestmentHighlight(Flowable):

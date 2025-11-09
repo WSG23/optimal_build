@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import Select, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
@@ -22,6 +20,8 @@ from app.schemas.rulesets import (
     RulesetValidationRequest,
     RulesetValidationResponse,
 )
+from sqlalchemy import Select, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

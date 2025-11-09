@@ -8,9 +8,6 @@ from typing import Any
 
 from backend._compat import compat_dataclass
 from backend._compat.datetime import UTC
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.models.entitlements import (
     EntApprovalCategory,
@@ -22,6 +19,9 @@ from app.models.entitlements import (
     EntRoadmapItem,
     EntStudy,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200

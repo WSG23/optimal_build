@@ -7,9 +7,9 @@ from uuid import uuid4
 
 import pytest
 
-from app.models.developer_condition import DeveloperConditionAssessmentRecord
-from app.models.property import PropertyType, PropertyStatus
 import app.services.developer_condition_service as dev_condition_module
+from app.models.developer_condition import DeveloperConditionAssessmentRecord
+from app.models.property import PropertyStatus, PropertyType
 from app.services.developer_condition_service import (
     ConditionAssessment,
     ConditionInsight,

@@ -5,11 +5,10 @@ from __future__ import annotations
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, cast
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.services.costs import get_latest_cost_index
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 

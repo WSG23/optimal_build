@@ -32,14 +32,13 @@ os.environ.setdefault(
     "JOB_QUEUE_BACKEND", os.environ.get("JOB_QUEUE_BACKEND", "inline")
 )
 
-from sqlalchemy import select
-
 from app.core.database import AsyncSessionLocal, engine
 from app.core.geometry.builder import GraphBuilder
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.main import app
 from app.models.base import BaseModel
 from app.models.overlay import OverlaySourceGeometry
+from sqlalchemy import select
 
 from ..httpx import AsyncClient
 

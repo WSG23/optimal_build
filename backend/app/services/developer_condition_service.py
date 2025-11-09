@@ -8,13 +8,12 @@ from datetime import date, datetime
 from typing import Any, List, Optional
 from uuid import UUID
 
-from sqlalchemy import desc, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.developer_checklists import ChecklistPriority, ChecklistStatus
 from app.models.developer_condition import DeveloperConditionAssessmentRecord
 from app.models.property import Property, PropertyType
 from app.services.developer_checklist_service import DeveloperChecklistService
+from sqlalchemy import desc, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 if sys.version_info >= (3, 10):
     _dataclass = dataclass

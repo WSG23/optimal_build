@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
+from app.models.base import UUID, BaseModel, MetadataProxy
 from sqlalchemy import (
     DateTime,
     Enum as SQLEnum,
@@ -18,8 +19,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
-
-from app.models.base import UUID, BaseModel, MetadataProxy
 
 
 def _enum_values(enum_cls: type[Enum]) -> list[str]:

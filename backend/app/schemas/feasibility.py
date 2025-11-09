@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from app.schemas.finance import AssetFinancialSummarySchema
 from pydantic import BaseModel, Field
+
+from app.schemas.finance import AssetFinancialSummarySchema
 
 FeasibilityRuleSeverity = Literal["critical", "important", "informational"]
 FeasibilityRuleStatus = Literal["pass", "fail", "warning"]

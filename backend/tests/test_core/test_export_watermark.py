@@ -1,9 +1,9 @@
 from datetime import datetime
 
+import pytest
 from backend._compat.datetime import UTC
 
 from app.core.auth import PolicyContext, SignoffSnapshot, WorkspaceRole
-import pytest
 
 pytest.importorskip("sqlalchemy")
 

@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
-
-import pytest
 from unittest.mock import AsyncMock
 
-from app.api.v1 import overlay as overlay_api
-from app.api.deps import RequestIdentity
-from app.main import app
+import pytest
 
+from app.api.deps import RequestIdentity
+from app.api.v1 import overlay as overlay_api
+from app.main import app
 
 UTC = timezone.utc
 

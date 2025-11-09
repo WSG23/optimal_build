@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import importlib.util
+import inspect
 import sys
 import uuid
 from collections.abc import AsyncGenerator, Callable, Iterator
@@ -16,7 +16,6 @@ from types import ModuleType
 from typing import Any, cast
 
 import pytest
-
 from backend._sqlalchemy_stub import ensure_sqlalchemy
 
 # Import AsyncClient from httpx, but we'll wrap it for FastAPI testing
@@ -155,8 +154,8 @@ if _SQLALCHEMY_AVAILABLE:
         create_async_engine,
     )
     from sqlalchemy.orm import Mapped, mapped_column
-    from sqlalchemy.util import concurrency
     from sqlalchemy.pool import StaticPool
+    from sqlalchemy.util import concurrency
 
     # isort: off
     import app.models as app_models
@@ -202,9 +201,11 @@ if _SQLALCHEMY_AVAILABLE:
         concurrency.greenlet_spawn = _greenlet_spawn
         concurrency.have_greenlet = True
 
-        from sqlalchemy.ext.asyncio import engine as _async_engine
-        from sqlalchemy.ext.asyncio import result as _async_result
-        from sqlalchemy.ext.asyncio import session as _async_session
+        from sqlalchemy.ext.asyncio import (
+            engine as _async_engine,
+            result as _async_result,
+            session as _async_session,
+        )
 
         _async_engine.greenlet_spawn = _greenlet_spawn
         _async_session.greenlet_spawn = _greenlet_spawn
@@ -544,9 +545,8 @@ if _SQLALCHEMY_AVAILABLE:
     ) -> AsyncGenerator[list[Any], None]:
         """Seed a minimal set of Singapore URA/BCA rules for compliance tests."""
 
-        from sqlalchemy import select
-
         from app.models.rkp import RefRule, RefSource
+        from sqlalchemy import select
 
         existing = await db_session.scalar(
             select(RefRule.id).where(RefRule.jurisdiction == "SG")

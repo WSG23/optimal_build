@@ -2,26 +2,25 @@
 
 from __future__ import annotations
 
-import pytest
+import uuid as uuid_module
 from datetime import date, datetime
 from decimal import Decimal
-import uuid as uuid_module
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+import pytest
 
 from app.models.property import (
-    Property,
-    PropertyType,
-    PropertyStatus,
-    TenureType,
-    MarketTransaction,
-    RentalListing,
-    DevelopmentPipeline,
-    PropertyPhoto,
     DevelopmentAnalysis,
+    DevelopmentPipeline,
+    MarketTransaction,
+    Property,
+    PropertyPhoto,
+    PropertyStatus,
+    PropertyType,
+    RentalListing,
+    TenureType,
 )
-
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.asyncio
 

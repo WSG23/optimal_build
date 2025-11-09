@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone, date
+from datetime import date, datetime, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -22,7 +22,6 @@ from app.schemas.entitlements import (
     EntStudyStatus,
     EntStudyType,
 )
-
 
 UTC_NOW = datetime(2024, 1, 1, tzinfo=timezone.utc)
 ROADMAP_RECORD = {

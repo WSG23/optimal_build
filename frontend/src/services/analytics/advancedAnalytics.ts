@@ -72,24 +72,12 @@ const graphNodeSchema = z.object({
   score: z.number().min(0),
 })
 
-const graphEdgeInputSchema = z.object({
+const graphEdgeSchema = z.object({
   id: z.string(),
   source: z.string(),
   target: z.string(),
   weight: z.number().optional(),
 })
-
-const graphEdgeSchema = graphEdgeInputSchema.transform((data) => ({
-  id: data.id,
-  source: data.source,
-  target: data.target,
-  weight: data.weight ?? 0,
-})) as z.ZodType<{
-  id: string
-  source: string
-  target: string
-  weight: number
-}>
 
 const graphSuccessSchema = z.object({
   kind: z.literal('graph'),
@@ -203,6 +191,25 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown, message: string): 
   return result.data
 }
 
+function ensureGraphEdgesWeighted(
+  payload: GraphIntelligenceResponse,
+): GraphIntelligenceResponse {
+  if (payload.status !== 'ok') {
+    return payload
+  }
+  const edges = payload.graph.edges.map((edge) => ({
+    ...edge,
+    weight: edge.weight ?? 0,
+  }))
+  return {
+    ...payload,
+    graph: {
+      ...payload.graph,
+      edges,
+    },
+  }
+}
+
 function normaliseGraphResponse(
   payload: GraphIntelligenceResponse,
 ): GraphIntelligenceResponse {
@@ -262,7 +269,8 @@ export async function fetchGraphIntelligence(
       'Graph intelligence payload failed validation',
     )
     debugLog('[fetchGraphIntelligence] Validation passed, payload:', payload)
-    const normalized = normaliseGraphResponse(payload)
+    const weighted = ensureGraphEdgesWeighted(payload)
+    const normalized = normaliseGraphResponse(weighted)
     debugLog('[fetchGraphIntelligence] Returning normalized:', normalized)
     return normalized
   } catch (error) {

@@ -5,10 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.core.metrics import (
-    DECISION_REVIEW_BASELINE_SECONDS,
-    MetricsCollector,
-)
+from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS, MetricsCollector
 from app.core.metrics.roi import (
     RoiSnapshot,
     _aggregate_audit_metrics,

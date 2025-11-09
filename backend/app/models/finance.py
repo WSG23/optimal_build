@@ -6,6 +6,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
+from app.models.base import UUID, BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -18,9 +20,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-
-from app.models.base import BaseModel, MetadataProxy, UUID
-from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
 

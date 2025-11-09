@@ -5,9 +5,8 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import sqlalchemy as sa
 from app.models.entitlements import (
     EntApprovalCategory,
     EntApprovalType,
@@ -15,6 +14,7 @@ from app.models.entitlements import (
     EntRoadmapItem,
     EntRoadmapStatus,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.asyncio
 

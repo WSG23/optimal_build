@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException
-from unittest.mock import AsyncMock
 
 from app.api.v1 import listings as listings_api
 from app.core.jwt_auth import TokenData
-from app.models.listing_integration import ListingProvider, ListingAccountStatus
+from app.models.listing_integration import ListingAccountStatus, ListingProvider
 
 
 class _StubSession:

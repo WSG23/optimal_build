@@ -10,9 +10,8 @@ from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 from uuid import UUID
 
-from PIL import Image, ImageDraw
-
 from backend._compat.datetime import utcnow
+from PIL import Image, ImageDraw
 
 _BASE_DIR = Path(__file__).resolve().parents[2]
 _PREVIEW_DIR = _BASE_DIR / "static" / "dev-previews"

@@ -7,8 +7,6 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 import pytest_asyncio
 from app.models.audit import AuditLog
 from app.models.business_performance import DealAssetType, DealType, PipelineStage
@@ -16,6 +14,7 @@ from app.models.users import User
 from app.schemas.deals import DealWithTimelineSchema
 from app.services.deals import AgentDealService
 from app.services.deals.utils import audit_project_key
+from sqlalchemy import select
 
 
 @pytest_asyncio.fixture(autouse=True)

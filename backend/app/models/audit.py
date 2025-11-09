@@ -5,12 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
+from app.models.base import BaseModel
+from app.models.types import FlexibleJSONB
 from sqlalchemy import DateTime, Float, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
-
-from app.models.base import BaseModel
-from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
 

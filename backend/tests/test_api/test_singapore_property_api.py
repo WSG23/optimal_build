@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from decimal import Decimal
 from types import SimpleNamespace
@@ -10,6 +8,7 @@ from uuid import uuid4
 import pytest
 
 from app.api.v1 import singapore_property_api as sg_api
+from app.main import app
 from app.models.singapore_property import (
     AcquisitionStatus,
     ComplianceStatus,
@@ -17,7 +16,6 @@ from app.models.singapore_property import (
     PropertyTenure,
     PropertyZoning,
 )
-from app.main import app
 
 
 class _Token(SimpleNamespace):

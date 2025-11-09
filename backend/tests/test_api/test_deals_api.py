@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
-from unittest.mock import AsyncMock
 
 from app.api.deps import RequestIdentity
 from app.api.v1 import deals as deals_api

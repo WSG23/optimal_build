@@ -8,13 +8,13 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import Property, PropertyPhoto, PropertyStatus, PropertyType
 from app.services.agents.photo_documentation import (
     PhotoDocumentationManager,
     PhotoMetadata,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.skip(
     reason=(

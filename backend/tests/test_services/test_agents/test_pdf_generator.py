@@ -11,9 +11,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Paragraph, Table
 
-from app.services.agents.pdf_generator import CoverPage, PDFGenerator, PageNumberCanvas
+from app.services.agents.pdf_generator import CoverPage, PageNumberCanvas, PDFGenerator
 from app.services.storage import StorageResult
-
 
 # ============================================================================
 # HELPER FUNCTIONS

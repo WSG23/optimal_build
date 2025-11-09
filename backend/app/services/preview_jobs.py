@@ -7,12 +7,12 @@ import json
 from typing import Mapping, Sequence
 from uuid import UUID
 
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from backend._compat.datetime import utcnow
 from backend.jobs import job_queue
 from backend.jobs.preview_generate import generate_preview_job  # noqa: F401
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 _registry = getattr(job_queue._backend, "_registry", {})
 if "preview.generate" not in _registry:

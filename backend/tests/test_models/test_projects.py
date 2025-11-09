@@ -2,19 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
 from datetime import date, datetime
 
+import pytest
+
+from app.models.projects import ApprovalStatus, Project, ProjectPhase, ProjectType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.projects import (
-    Project,
-    ProjectType,
-    ProjectPhase,
-    ApprovalStatus,
-)
-
 
 pytestmark = pytest.mark.asyncio
 

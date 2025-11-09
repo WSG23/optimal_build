@@ -20,13 +20,12 @@ os.environ.setdefault("SECRET_KEY", "test-secret")
 import app.utils.logging as logging_utils
 from app.core.config import settings
 from app.utils.logging import (
+    _serialise_for_logging,
+    _structlog_distribution_present,
     configure_logging,
     get_logger,
     log_event,
-    _serialise_for_logging,
-    _structlog_distribution_present,
 )
-
 
 # ============================================================================
 # Tests for configure_logging()

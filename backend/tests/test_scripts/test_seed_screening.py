@@ -6,10 +6,9 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.models.rkp import RefSource
 from scripts.seed_screening import SeedSummary, seed_screening_sample_data
+from sqlalchemy import select
 
 
 def test_seed_screening_populates_reference_sources(async_session_factory) -> None:

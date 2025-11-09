@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from app.services.products import VendorProduct, VendorProductAdapter
 
 

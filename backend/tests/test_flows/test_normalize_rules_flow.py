@@ -6,10 +6,9 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from flows.normalize_rules import normalize_reference_rules
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

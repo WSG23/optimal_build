@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
-from unittest.mock import AsyncMock
 
-from app.api.v1 import performance as perf_api
 from app.api.deps import RequestIdentity
+from app.api.v1 import performance as perf_api
 from app.main import app
 
 

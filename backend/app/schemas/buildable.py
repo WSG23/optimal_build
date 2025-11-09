@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from app.core.config import settings
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -13,6 +12,8 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+from app.core.config import settings
 
 _BUILDABLE_DEFAULTS_EXAMPLE = {
     "plot_ratio": 3.5,

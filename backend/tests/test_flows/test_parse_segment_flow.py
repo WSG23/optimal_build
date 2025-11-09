@@ -8,11 +8,10 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy import select
-
 from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_storage import ReferenceStorage
 from flows.parse_segment import parse_reference_documents
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

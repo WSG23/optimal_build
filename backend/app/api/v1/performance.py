@@ -7,7 +7,6 @@ from typing import Iterable
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
@@ -17,6 +16,7 @@ from app.schemas.performance import (
     SnapshotRequest,
 )
 from app.services.deals import AgentPerformanceService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/performance", tags=["Business Performance"])
 

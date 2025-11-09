@@ -3,12 +3,11 @@
 from datetime import datetime
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_advisory import AgentAdvisoryFeedback
 from app.models.property import Property, PropertyType
-
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.asyncio
 

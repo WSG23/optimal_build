@@ -5,7 +5,6 @@ from decimal import Decimal
 from types import SimpleNamespace
 from uuid import uuid4
 
-
 from app.models.developer_checklists import ChecklistPriority, ChecklistStatus
 from app.models.property import PropertyStatus, PropertyType
 from app.services.developer_condition_service import (

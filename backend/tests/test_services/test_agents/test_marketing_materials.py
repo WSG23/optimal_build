@@ -7,7 +7,6 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import (
     Property,
@@ -21,6 +20,7 @@ from app.services.agents.marketing_materials import (
     FloorPlanDiagram,
     MarketingMaterialsGenerator,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.skip(
     reason=(

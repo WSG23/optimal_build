@@ -12,13 +12,14 @@ import structlog
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, Response
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
 
 from app.api.v1.agents import CoordinatePair, QuickAnalysisEnvelope
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus, DeveloperChecklistTemplate
 from app.models.property import Property
+from app.schemas.finance import FinanceAssetMixInput
 from app.services.agents.gps_property_logger import (
     DevelopmentScenario as CaptureScenario,
     GPSPropertyLogger,
@@ -26,7 +27,6 @@ from app.services.agents.gps_property_logger import (
 )
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.asset_mix import AssetOptimizationOutcome, build_asset_mix
-from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
 from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
@@ -38,9 +38,9 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from app.services.geocoding import Address, GeocodingService
-from app.schemas.finance import FinanceAssetMixInput
+from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
 from app.utils.render import render_html_to_pdf
-from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 logger = structlog.get_logger()

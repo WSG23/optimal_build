@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import random
 from datetime import date, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
-import random
 
 import pytest
 

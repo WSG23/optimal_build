@@ -6,7 +6,6 @@ from datetime import date, datetime, timedelta
 
 import pytest
 from backend._compat.datetime import UTC
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entitlements import (
     EntApprovalCategory,
@@ -32,7 +31,7 @@ from app.services.entitlements import (
     _normalise_limit,
     _normalise_offset,
 )
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # ============================================================================
 # HELPER FUNCTIONS

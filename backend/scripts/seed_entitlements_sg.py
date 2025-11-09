@@ -8,13 +8,13 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import structlog
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.entitlements import EntApprovalCategory, EntRoadmapStatus
 from app.services.entitlements import EntitlementsService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
 

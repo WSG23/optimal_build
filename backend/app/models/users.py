@@ -4,10 +4,10 @@ import uuid
 from enum import Enum
 
 from backend._compat.datetime import utcnow
-from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, String
-from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
+from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, String
+from sqlalchemy.orm import relationship
 
 
 class UserRole(str, Enum):

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import importlib.util
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.metrics import MetricsCollector
@@ -17,16 +17,49 @@ from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics,
 )
 from app.utils.logging import get_logger, log_event
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/market-intelligence", tags=["market-intelligence"])
 logger = get_logger(__name__)
 
 _market_data_service = MarketDataService()
 _metrics_collector = MetricsCollector()
-_market_analytics = MarketIntelligenceAnalytics(
-    _market_data_service,
-    metrics_collector=_metrics_collector,
-)
+
+
+def _dependency_available(module_name: str) -> bool:
+    spec = importlib.util.find_spec(module_name)
+    return spec is not None
+
+
+def _build_market_analytics() -> MarketIntelligenceAnalytics | None:
+    try:
+        return MarketIntelligenceAnalytics(
+            _market_data_service,
+            metrics_collector=_metrics_collector,
+        )
+    except ImportError as exc:  # pragma: no cover - exercised when deps missing
+        log_event(
+            logger,
+            "market_intelligence_dependencies_missing",
+            error=str(exc),
+        )
+        return None
+
+
+_market_analytics = _build_market_analytics()
+
+
+def _analytics_status() -> dict[str, object]:
+    dependency_state = {
+        "numpy": _dependency_available("numpy"),
+        "pandas": _dependency_available("pandas"),
+    }
+    ready = _market_analytics is not None and all(dependency_state.values())
+    return {
+        "status": "ready" if ready else "degraded",
+        "dependencies": dependency_state,
+        "metrics_attached": isinstance(_metrics_collector, MetricsCollector),
+    }
 
 
 @router.get("/report", response_model=MarketReportResponse)
@@ -42,6 +75,14 @@ async def generate_market_report(
     session: AsyncSession = Depends(get_session),
 ) -> MarketReportResponse:
     """Return a comprehensive market intelligence report for the requested segment."""
+
+    if _market_analytics is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Market intelligence analytics unavailable; ensure numpy and pandas are installed."
+            ),
+        )
 
     try:
         report = await _market_analytics.generate_market_report(
@@ -77,3 +118,10 @@ async def generate_market_report(
     )
 
     return MarketReportResponse(report=payload, generated_at=report.generated_at)
+
+
+@router.get("/health")
+async def market_intelligence_health() -> dict[str, object]:
+    """Expose dependency readiness for CI smoke tests."""
+
+    return _analytics_status()

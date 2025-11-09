@@ -9,12 +9,12 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
+from backend.flows import sync_products as sync_products_flow
+
+import pytest_asyncio
 from sqlalchemy import Column, DateTime, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
-
-import pytest_asyncio
-from backend.flows import sync_products as sync_products_flow
 
 
 class Base(DeclarativeBase):

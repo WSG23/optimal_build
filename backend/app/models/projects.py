@@ -4,6 +4,8 @@ import uuid
 from enum import Enum
 
 from backend._compat.datetime import utcnow
+
+from app.models.base import UUID, BaseModel
 from sqlalchemy import (
     DECIMAL,
     JSON,
@@ -18,8 +20,6 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.orm import relationship
-
-from app.models.base import UUID, BaseModel
 
 
 class ProjectType(str, Enum):

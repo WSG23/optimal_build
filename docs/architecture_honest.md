@@ -441,7 +441,7 @@ Managed services:
 ### Critical
 1. ~~**Disabled APIs**: `market_intelligence.py` and `agents.py` commented out~~ **✅ RESOLVED** - Both routers are now active and registered (as of 2025-10-19)
 2. ~~**No Database Migrations**: Alembic installed but not initialized~~ **✅ RESOLVED** - Alembic fully initialized with 19+ migration files (as of 2025-10-19)
-3. **No Metrics**: Prometheus client installed but no instrumentation (latency, errors, throughput all missing)
+3. ~~**No Metrics**: Prometheus client installed but no instrumentation (latency, errors, throughput all missing)~~ **✅ RESOLVED** – RequestMetricsMiddleware records request/latency counters and `/metrics` now exposes the Prometheus registry.
 
 ### High
 4. **Rate Limiting Missing**: Documented but not implemented in middleware
@@ -454,8 +454,8 @@ Managed services:
 9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
 
 ### Low
-10. **Directory Naming**: `ui-admin/` vs documented `admin/`
-11. **Script Location**: `ingest.py` in top-level `/scripts/` not `backend/scripts/`
+10. ~~**Directory Naming**: `ui-admin/` vs documented `admin/`~~ **✅ Documented** – Frontend references now point to the canonical `ui-admin/` directory.
+11. ~~**Script Location**: `ingest.py` in top-level `/scripts/` not `backend/scripts/`~~ **✅ Documented** – Runbook now references `/scripts/ingest.py` as the supported entry point.
 12. **Undocumented Features**: 10 of 11 AI agents not mentioned in docs
 
 ---
@@ -494,6 +494,7 @@ Managed services:
 - ✅ **API Routers Restored**: `market_intelligence.py` and `agents.py` are now active and fully functional
 - ✅ **Database Migrations Initialized**: Alembic fully operational with 19+ migration files tracking schema evolution
 - ✅ **Additional Routers Added**: Phase 1 completion brought 5+ new working routers (deals, performance, listings, developers, advanced_intelligence)
+- ✅ **Prometheus Instrumentation**: RequestMetricsMiddleware + `/metrics` endpoint now emit latency/error/throughput metrics for the API tier
 
 **Remaining Critical Issues:**
 - ❌ Prometheus metrics instrumentation still missing

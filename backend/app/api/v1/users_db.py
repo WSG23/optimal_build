@@ -5,15 +5,14 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+
 from sqlalchemy import Boolean, Column, DateTime, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
-from pydantic import BaseModel
-
 try:  # pragma: no cover - optional dependency
     import email_validator  # type: ignore  # noqa: F401
-
     from pydantic import EmailStr  # type: ignore
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore

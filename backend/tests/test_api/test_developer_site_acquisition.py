@@ -6,15 +6,14 @@ from uuid import UUID, uuid4
 import pytest
 from backend._compat.datetime import utcnow
 
-# Skip marker removed - market_demo_data fixture now properly cleans up test data
-
 from app.api.v1 import developers as developers_api
-from sqlalchemy import select
-
 from app.models.preview import PreviewJob
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address
 from httpx import AsyncClient
+from sqlalchemy import select
+
+# Skip marker removed - market_demo_data fixture now properly cleans up test data
 
 
 class _StubDeveloperLogger:

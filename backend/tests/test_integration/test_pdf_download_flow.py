@@ -14,8 +14,6 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import pytest_asyncio
 from app.models.property import (
     DevelopmentAnalysis,
@@ -24,7 +22,7 @@ from app.models.property import (
     PropertyType,
 )
 from httpx import AsyncClient
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.skip(
     reason="PDF rendering dependencies (WeasyPrint/Cairo) are unavailable in the audit sandbox"

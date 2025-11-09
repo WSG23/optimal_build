@@ -31,6 +31,8 @@ _GENERATE_LATEST: GenerateLatest = cast(GenerateLatest, generate_latest)
 
 REGISTRY: CollectorRegistry
 REQUEST_COUNTER: Counter
+REQUEST_LATENCY_MS: Histogram
+REQUEST_ERROR_COUNTER: Counter
 INGESTION_RUN_COUNTER: Counter
 INGESTED_RECORD_COUNTER: Counter
 ALERT_COUNTER: Counter
@@ -59,6 +61,8 @@ def _initialize_metrics() -> None:
 
     global REGISTRY
     global REQUEST_COUNTER
+    global REQUEST_LATENCY_MS
+    global REQUEST_ERROR_COUNTER
     global INGESTION_RUN_COUNTER
     global INGESTED_RECORD_COUNTER
     global ALERT_COUNTER
@@ -87,6 +91,20 @@ def _initialize_metrics() -> None:
         "api_requests_total",
         "Total API requests processed by endpoint.",
         labelnames=("endpoint",),
+        registry=REGISTRY,
+    )
+
+    REQUEST_LATENCY_MS = Histogram(
+        "api_request_duration_ms",
+        "API request latency in milliseconds by endpoint.",
+        labelnames=("endpoint",),
+        registry=REGISTRY,
+    )
+
+    REQUEST_ERROR_COUNTER = Counter(
+        "api_requests_failed_total",
+        "Total API requests that resulted in 5xx responses.",
+        labelnames=("endpoint", "status_code"),
         registry=REGISTRY,
     )
 
@@ -347,6 +365,12 @@ def histogram_percentile_from_bucket_counts(
     return HistogramPercentile(
         percentile=percentile, value=value, buckets=tuple(normalized)
     )
+
+
+def export_metrics() -> bytes:
+    """Return metrics in Prometheus text format."""
+
+    return _GENERATE_LATEST(REGISTRY)
 
 
 def _normalize_histogram_labels(

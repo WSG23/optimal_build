@@ -6,12 +6,12 @@ from datetime import datetime
 from typing import Any, Iterable
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from backend._compat import compat_dataclass
 
 from app.models.agent_advisory import AgentAdvisoryFeedback
 from app.models.property import Property, PropertyType
-from backend._compat import compat_dataclass
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @compat_dataclass(slots=True)

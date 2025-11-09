@@ -8,12 +8,12 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 import structlog
-from sqlalchemy import Column, Integer, String, Table, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models.base import BaseModel
 from app.models.rkp import RefGeocodeCache, RefParcel, RefSource, RefZoningLayer
+from sqlalchemy import Column, Integer, String, Table, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
 

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+from app.models.rkp import RefParcel, RefZoningLayer
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.rkp import RefParcel, RefZoningLayer
 
 
 def _coerce_float(value: object) -> float | None:

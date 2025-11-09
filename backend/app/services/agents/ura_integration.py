@@ -4,11 +4,11 @@ from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 import structlog
+from pydantic import BaseModel
 
 import httpx
 from app.core.config import settings
 from app.services.base import AsyncClientService
-from pydantic import BaseModel
 
 logger = structlog.get_logger()
 

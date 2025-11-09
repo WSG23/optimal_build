@@ -7,14 +7,14 @@ from contextlib import asynccontextmanager
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, AsyncIterator, Mapping, Sequence
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from backend.jobs import job
+
 from app.core.database import get_session
 from app.models.finance import FinResult, FinScenario
 from app.services.finance import calculator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 
 def _resolve_session_dependency():
@@ -91,8 +91,8 @@ async def process_finance_sensitivity_job(
 ) -> dict[str, Any]:
     from app.api.v1.finance import (
         _build_construction_interest_schedule,
-        _evaluate_sensitivity_bands,
         _decimal_from_value,
+        _evaluate_sensitivity_bands,
     )
     from app.schemas.finance import (
         FinanceSensitivityOutcomeSchema,

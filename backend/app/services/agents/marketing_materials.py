@@ -25,12 +25,12 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import Property, PropertyPhoto, PropertyType, RentalListing
 from app.services.agents.investment_memorandum import InvestmentHighlight
 from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class FloorPlanDiagram(Flowable):

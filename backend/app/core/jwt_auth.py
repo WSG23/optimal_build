@@ -8,7 +8,6 @@ from backend._compat.datetime import utcnow
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-
 from pydantic import BaseModel
 
 # Configuration - read SECRET_KEY from environment variable

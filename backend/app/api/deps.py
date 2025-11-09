@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Literal
 
+from backend._compat import compat_dataclass
 from fastapi import Depends, Header, HTTPException, status
 
 from app.core.config import settings
-from backend._compat import compat_dataclass
 
 Role = Literal["viewer", "reviewer", "admin"]
 

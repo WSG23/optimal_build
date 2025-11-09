@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
-
 from backend._compat.datetime import UTC
 
 pytest.importorskip("sqlalchemy")

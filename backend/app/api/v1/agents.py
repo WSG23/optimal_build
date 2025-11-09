@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, Optional
@@ -11,8 +12,7 @@ import structlog
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
 
 from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.database import get_session
@@ -33,7 +33,8 @@ from app.services.developer_checklist_service import (
     DeveloperChecklistService,
 )
 from app.services.geocoding import Address, GeocodingService
-from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 try:  # pragma: no cover - scenario builder has heavy optional deps
     from app.services.agents.scenario_builder_3d import (
@@ -91,6 +92,35 @@ market_analytics = MarketIntelligenceAnalytics(market_data_service)
 advisory_service = AgentAdvisoryService()
 
 
+def _dependency_available(module_name: str) -> bool:
+    spec = importlib.util.find_spec(module_name)
+    return spec is not None
+
+
+def _agents_dependency_status() -> dict[str, object]:
+    heavy_dependencies = {
+        "numpy": _dependency_available("numpy"),
+        "pandas": _dependency_available("pandas"),
+        "trimesh": _dependency_available("trimesh"),
+        "reportlab": _dependency_available("reportlab"),
+        "PIL": _dependency_available("PIL"),
+        "exifread": _dependency_available("exifread"),
+        "minio": _dependency_available("minio"),
+    }
+    optional_features = {
+        "three_d_builder": Quick3DScenarioBuilder is not None,
+        "site_pack_generator": UniversalSitePackGenerator is not None,
+        "investment_memorandum": InvestmentMemorandumGenerator is not None,
+        "marketing_materials": MarketingMaterialsGenerator is not None,
+    }
+    ready = all(heavy_dependencies.values())
+    return {
+        "status": "ready" if ready else "degraded",
+        "dependencies": heavy_dependencies,
+        "optional_features": optional_features,
+    }
+
+
 # Request/Response Models
 
 
@@ -135,6 +165,13 @@ class GPSLogResponse(BaseModel):
     nearby_amenities: Optional[Dict[str, Any]]
     quick_analysis: QuickAnalysisEnvelope
     timestamp: datetime
+
+
+@router.get("/health")
+async def agents_health() -> dict[str, object]:
+    """Expose agent router readiness for CI smoke tests."""
+
+    return _agents_dependency_status()
 
 
 class MarketIntelligenceResponse(BaseModel):
@@ -801,9 +838,8 @@ async def analyze_development_potential(
     scanner = DevelopmentPotentialScanner(buildable_service, finance_calc, ura_service)
 
     # Get property data
-    from sqlalchemy import select
-
     from app.models.property import Property
+    from sqlalchemy import select
 
     stmt = select(Property).where(Property.id == UUID(property_id))
     result = await db.execute(stmt)
@@ -936,9 +972,8 @@ async def generate_3d_scenarios(
     scenario_builder = Quick3DScenarioBuilder(postgis_service)
 
     # Get property data
-    from sqlalchemy import select
-
     from app.models.property import Property
+    from sqlalchemy import select
 
     stmt = select(Property).where(Property.id == UUID(property_id))
     result = await db.execute(stmt)

@@ -3,11 +3,11 @@
 from datetime import timedelta
 
 import pytest
+from backend._compat.datetime import utcnow
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 
-from backend._compat.datetime import utcnow
 from app.core.jwt_auth import (
     ALGORITHM,
     SECRET_KEY,

@@ -13,9 +13,6 @@ from typing import Any
 
 from backend._compat.datetime import UTC
 from backend.jobs import job
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.audit.ledger import append_event
 from app.core.config import settings
@@ -25,6 +22,9 @@ from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
 from app.models.rkp import RefRule
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 ENGINE_VERSION = "2024.1"
 

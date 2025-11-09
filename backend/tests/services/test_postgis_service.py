@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from sqlalchemy import literal_column
 
 from app.models.rkp import RefParcel, RefZoningLayer
 from app.services import postgis
+from sqlalchemy import literal_column
 
 
 @pytest.mark.asyncio

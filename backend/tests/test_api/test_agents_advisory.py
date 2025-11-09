@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
-from unittest.mock import AsyncMock
 
 from app.api.v1 import agents as agents_api
 from app.main import app

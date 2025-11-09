@@ -8,9 +8,6 @@ from typing import Iterable, Mapping, Optional, Sequence
 from uuid import UUID
 
 from backend._compat.datetime import UTC
-from sqlalchemy import Select, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.metrics import RoiSnapshot, compute_project_roi
 from app.data.performance_benchmarks_seed import SEED_BENCHMARKS
@@ -20,6 +17,9 @@ from app.models.business_performance import (
     AgentPerformanceSnapshot,
     PerformanceBenchmark,
 )
+from sqlalchemy import Select, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
 

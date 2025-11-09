@@ -17,6 +17,7 @@ import {
   TimelineDot,
   TimelineOppositeContent
 } from '@mui/lab';
+import type { TimelineDotProps } from '@mui/lab/TimelineDot';
 import BusinessIcon from '@mui/icons-material/Business';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -81,18 +82,20 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
     }
   };
 
-  const statusColorTimeline = (status: string) => {
+  type TimelineColor = NonNullable<TimelineDotProps['color']>;
+
+  const statusColorTimeline = (status: string): TimelineColor => {
     switch (status) {
       case 'completed':
-        return 'success' as const;
+        return 'success';
       case 'under_construction':
-        return 'warning' as const;
+        return 'warning';
       case 'approved':
-        return 'info' as const;
+        return 'info';
       case 'planned':
-        return 'grey' as const;
+        return 'grey';
       default:
-        return 'grey' as const;
+        return 'grey';
     }
   };
 

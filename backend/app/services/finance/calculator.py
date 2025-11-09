@@ -8,8 +8,9 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
 from types import MappingProxyType
 from typing import Any, Union
 
-from app.models.rkp import RefCostIndex
 from backend._compat import compat_zip
+
+from app.models.rkp import RefCostIndex
 
 NumberLike = Union[Decimal, int, float, str]
 CURRENCY_QUANTIZER = Decimal("0.01")

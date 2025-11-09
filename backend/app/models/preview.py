@@ -5,13 +5,12 @@ from __future__ import annotations
 import uuid
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, JSON, String
-from sqlalchemy.types import Enum as SQLEnum
-from sqlalchemy.orm import relationship
-
 from backend._compat.datetime import utcnow
 
-from app.models.base import BaseModel, MetadataProxy, UUID
+from app.models.base import UUID, BaseModel, MetadataProxy
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Index, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.types import Enum as SQLEnum
 
 
 def _enum_values(enum_cls: type[Enum]) -> list[str]:

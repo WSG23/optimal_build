@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from app.services.agents.investment_memorandum import (
-    InvestmentMemorandumGenerator,
-)
+from app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
 from app.services.agents.marketing_materials import AmenityIcons
 
 

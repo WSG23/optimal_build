@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
-
 import os
+from decimal import Decimal
 
 import pytest
 

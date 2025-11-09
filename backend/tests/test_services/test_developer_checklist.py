@@ -8,16 +8,13 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.developer_checklists import (
     ChecklistCategory,
     ChecklistPriority,
     ChecklistStatus,
 )
-from app.services.developer_checklist_service import (
-    DeveloperChecklistService,
-)
+from app.services.developer_checklist_service import DeveloperChecklistService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestTemplateManagement:

@@ -12,12 +12,11 @@ from time import perf_counter
 from typing import Any
 from uuid import UUID
 
+import backend.jobs.finance_sensitivity  # noqa: F401
+from backend.jobs import JobDispatch, job_queue
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.api.deps import RequestIdentity, require_reviewer
 from app.core.config import settings
@@ -53,8 +52,9 @@ from app.services.finance import (
 )
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
-from backend.jobs import JobDispatch, job_queue
-import backend.jobs.finance_sensitivity  # noqa: F401
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)

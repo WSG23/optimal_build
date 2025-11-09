@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from backend._compat import compat_dataclass
+
 from prefect import flow
 
 if importlib.util.find_spec("sqlalchemy") is None:  # pragma: no cover - stub fallback

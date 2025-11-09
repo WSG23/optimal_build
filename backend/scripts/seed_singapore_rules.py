@@ -10,10 +10,9 @@ Usage:
 
 import asyncio
 
-from sqlalchemy import select
-
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefRule, RefSource
+from sqlalchemy import select
 
 
 async def seed_singapore_rules():

@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from app.core.config import settings
+from app.models.base import BaseModel
+from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -19,10 +22,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
-from app.core.config import settings
-from app.models.base import BaseModel
-from app.models.types import FlexibleJSONB
 
 try:  # pragma: no cover - geometry support is optional in test environments
     if settings.BUILDABLE_USE_POSTGIS:

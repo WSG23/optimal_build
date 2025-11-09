@@ -7,7 +7,6 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.market import YieldBenchmark
 from app.models.property import (
@@ -19,6 +18,7 @@ from app.models.property import (
     TenureType,
 )
 from app.services.agents.universal_site_pack import UniversalSitePackGenerator
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.skip(
     reason=(

@@ -17,12 +17,12 @@ from reportlab.platypus import (
     SimpleDocTemplate,
     Spacer,
 )
-from sqlalchemy import String, cast, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.market import YieldBenchmark
 from app.models.property import DevelopmentAnalysis, MarketTransaction, Property
 from app.services.agents.pdf_generator import PageNumberCanvas, PDFGenerator
+from sqlalchemy import String, cast, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

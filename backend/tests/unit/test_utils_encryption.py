@@ -1,9 +1,8 @@
 import base64
+import builtins
 import importlib
 
 import pytest
-
-import builtins
 
 import app.utils.encryption as encryption
 

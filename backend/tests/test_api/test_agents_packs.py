@@ -5,7 +5,6 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-
 from fastapi import HTTPException
 
 from app.api.v1 import agents as agents_api

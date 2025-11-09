@@ -8,11 +8,11 @@ import pytest
 
 pytestmark = pytest.mark.no_db
 
-from fastapi import HTTPException
-
 import importlib.util
 import sys
 from pathlib import Path
+
+from fastapi import HTTPException
 
 _ROOT = Path(__file__).resolve().parents[3]
 

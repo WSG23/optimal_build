@@ -7,6 +7,8 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
+from app.models.base import UUID, BaseModel, MetadataProxy
+from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Date,
     DateTime,
@@ -21,9 +23,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-
-from app.models.base import UUID, BaseModel, MetadataProxy
-from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
 

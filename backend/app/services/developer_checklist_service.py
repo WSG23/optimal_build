@@ -7,10 +7,6 @@ from datetime import datetime, timedelta
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from uuid import UUID
 
-from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from app.models.developer_checklists import (
     ChecklistCategory,
     ChecklistPriority,
@@ -18,6 +14,9 @@ from app.models.developer_checklists import (
     DeveloperChecklistTemplate,
     DeveloperPropertyChecklist,
 )
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 ChecklistTemplateInput = Mapping[str, object]
 

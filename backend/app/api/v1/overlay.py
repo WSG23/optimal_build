@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 
 from backend._compat.datetime import UTC
 from backend.jobs import job_queue
 from backend.jobs.overlay_run import run_overlay_for_project, run_overlay_job
-from collections.abc import Mapping
-
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.audit.ledger import append_event
@@ -23,6 +19,9 @@ from app.schemas.overlay import (
     OverlayDecisionPayload,
     OverlaySuggestion as OverlaySuggestionSchema,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/overlay")
 

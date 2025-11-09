@@ -6,10 +6,7 @@ from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Iterable, Sequence, Union
 
-from app.schemas.finance import (
-    AssetFinancialSummarySchema,
-    FinanceAssetBreakdownSchema,
-)
+from app.schemas.finance import AssetFinancialSummarySchema, FinanceAssetBreakdownSchema
 
 NumberLike = Union[Decimal, int, float, str]
 

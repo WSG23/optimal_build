@@ -7,11 +7,11 @@ from typing import Any, cast
 from uuid import uuid4
 
 from backend._compat.datetime import UTC
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefIngestionRun
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 

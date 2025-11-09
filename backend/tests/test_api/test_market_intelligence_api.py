@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
+from unittest.mock import AsyncMock
 
 import pytest
-from unittest.mock import AsyncMock
 
 from app.api.v1 import market_intelligence as mi_api
 from app.main import app

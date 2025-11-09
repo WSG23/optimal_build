@@ -6,13 +6,12 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID as UUIDType, uuid4
 
+from app.models.base import BaseModel
+from app.models.types import FlexibleJSONB
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-
-from app.models.base import BaseModel
-from app.models.types import FlexibleJSONB
 
 
 class AgentAdvisoryFeedback(BaseModel):

@@ -10,12 +10,12 @@ import numpy as np
 import structlog
 import trimesh
 from geoalchemy2.functions import ST_AsText
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import Property, PropertyType
 from app.services.agents.ura_integration import URAZoningInfo
 from app.services.postgis import PostGISService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger()
 

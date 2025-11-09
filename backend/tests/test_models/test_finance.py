@@ -6,8 +6,6 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.finance import (
     FinCapitalStack,
@@ -17,7 +15,8 @@ from app.models.finance import (
     FinScenario,
     FinSchedule,
 )
-
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.asyncio
 
