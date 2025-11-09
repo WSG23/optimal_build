@@ -52,12 +52,17 @@ class AIAgent(BaseModel):
 
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, unique=True)
-    agent_type = Column(SQLEnum(AIAgentType), nullable=False)
+    agent_type = Column(
+        SQLEnum(AIAgentType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     description = Column(Text)
     version = Column(String(50), nullable=False, default="1.0.0")
 
     status = Column(
-        SQLEnum(AIAgentStatus), default=AIAgentStatus.ACTIVE, nullable=False
+        SQLEnum(AIAgentStatus, values_callable=lambda x: [e.value for e in x]),
+        default=AIAgentStatus.ACTIVE,
+        nullable=False,
     )
     is_enabled = Column(Boolean, default=True, nullable=False)
 

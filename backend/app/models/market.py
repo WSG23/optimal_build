@@ -54,7 +54,10 @@ class YieldBenchmark(BaseModel):
     location_tier = Column(String(20))  # prime, secondary, suburban
 
     # Property Classification
-    property_type = Column(SQLEnum(PropertyType), nullable=False)
+    property_type = Column(
+        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     property_grade = Column(String(20))  # A, B, C grade buildings
 
     # Cap Rate Metrics
@@ -122,7 +125,10 @@ class AbsorptionTracking(BaseModel):
 
     # Location
     district = Column(String(100))
-    property_type = Column(SQLEnum(PropertyType), nullable=False)
+    property_type = Column(
+        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
 
     # Sales Absorption (for new developments)
     total_units = Column(Integer)
@@ -173,7 +179,10 @@ class MarketCycle(BaseModel):
 
     # Period
     cycle_date = Column(Date, nullable=False)
-    property_type = Column(SQLEnum(PropertyType), nullable=False)
+    property_type = Column(
+        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     market_segment = Column(String(50))  # CBD, suburban, industrial zones
 
     # Cycle Phase
@@ -220,7 +229,9 @@ class MarketIndex(BaseModel):
     # Index Details
     index_date = Column(Date, nullable=False)
     index_name = Column(String(100), nullable=False)  # e.g., "PPI_Office", "RRI_Retail"
-    property_type = Column(SQLEnum(PropertyType))
+    property_type = Column(
+        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x])
+    )
 
     # Index Values
     index_value = Column(SQLDecimal(10, 2), nullable=False)
@@ -256,7 +267,10 @@ class CompetitiveSet(BaseModel):
     primary_property_id = Column(UUID())
 
     # Criteria
-    property_type = Column(SQLEnum(PropertyType), nullable=False)
+    property_type = Column(
+        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     location_bounds = Column(Geometry("POLYGON", srid=4326))
     radius_km = Column(SQLDecimal(5, 2))
 
@@ -295,7 +309,9 @@ class MarketAlert(BaseModel):
     alert_type = Column(
         String(50), nullable=False
     )  # price_change, new_supply, absorption_spike
-    property_type = Column(SQLEnum(PropertyType))
+    property_type = Column(
+        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x])
+    )
     location = Column(String(255))
 
     # Trigger Conditions

@@ -82,9 +82,14 @@ class Project(BaseModel):
     owner_email = Column(String(255))  # Simple email-based ownership for MVP
 
     # Project Classification
-    project_type = Column(SQLEnum(ProjectType), nullable=False)
+    project_type = Column(
+        SQLEnum(ProjectType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+    )
     current_phase = Column(
-        SQLEnum(ProjectPhase), default=ProjectPhase.CONCEPT, nullable=False
+        SQLEnum(ProjectPhase, values_callable=lambda x: [e.value for e in x]),
+        default=ProjectPhase.CONCEPT,
+        nullable=False,
     )
 
     # Timeline
@@ -96,7 +101,8 @@ class Project(BaseModel):
     # URA (Urban Redevelopment Authority)
     ura_submission_number = Column(String(100))
     ura_approval_status = Column(
-        SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED
+        SQLEnum(ApprovalStatus, values_callable=lambda x: [e.value for e in x]),
+        default=ApprovalStatus.NOT_SUBMITTED,
     )
     ura_submission_date = Column(Date)
     ura_approval_date = Column(Date)
@@ -105,7 +111,8 @@ class Project(BaseModel):
     # BCA (Building and Construction Authority)
     bca_submission_number = Column(String(100))
     bca_approval_status = Column(
-        SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED
+        SQLEnum(ApprovalStatus, values_callable=lambda x: [e.value for e in x]),
+        default=ApprovalStatus.NOT_SUBMITTED,
     )
     bca_submission_date = Column(Date)
     bca_approval_date = Column(Date)
@@ -115,7 +122,8 @@ class Project(BaseModel):
 
     # SCDF (Singapore Civil Defence Force)
     scdf_approval_status = Column(
-        SQLEnum(ApprovalStatus), default=ApprovalStatus.NOT_SUBMITTED
+        SQLEnum(ApprovalStatus, values_callable=lambda x: [e.value for e in x]),
+        default=ApprovalStatus.NOT_SUBMITTED,
     )
     scdf_submission_date = Column(Date)
     scdf_approval_date = Column(Date)

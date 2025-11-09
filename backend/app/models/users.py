@@ -33,7 +33,11 @@ class User(BaseModel):
     full_name = Column(String(255), nullable=False)
     hashed_password = Column(String(255), nullable=False)
 
-    role = Column(SQLEnum(UserRole), default=UserRole.VIEWER, nullable=False)
+    role = Column(
+        SQLEnum(UserRole, values_callable=lambda x: [e.value for e in x]),
+        default=UserRole.VIEWER,
+        nullable=False,
+    )
     company_name = Column(String(255))
     phone_number = Column(String(50))
 

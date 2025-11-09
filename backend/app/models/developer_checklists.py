@@ -53,6 +53,28 @@ class ChecklistPriority(str, enum.Enum):
     LOW = "low"
 
 
+CHECKLIST_CATEGORY_DB_ENUM = Enum(
+    ChecklistCategory,
+    name="checklist_category",
+    create_type=False,
+    values_callable=lambda enum_cls: [member.value for member in enum_cls],
+)
+
+CHECKLIST_STATUS_DB_ENUM = Enum(
+    ChecklistStatus,
+    name="checklist_status",
+    create_type=False,
+    values_callable=lambda enum_cls: [member.value for member in enum_cls],
+)
+
+CHECKLIST_PRIORITY_DB_ENUM = Enum(
+    ChecklistPriority,
+    name="checklist_priority",
+    create_type=False,
+    values_callable=lambda enum_cls: [member.value for member in enum_cls],
+)
+
+
 class DeveloperChecklistTemplate(Base):
     """Template for due diligence checklist items by development scenario."""
 
@@ -60,10 +82,10 @@ class DeveloperChecklistTemplate(Base):
 
     id = Column(UUID(), primary_key=True, default=uuid4)
     development_scenario = Column(String(50), nullable=False, index=True)
-    category = Column(Enum(ChecklistCategory), nullable=False, index=True)
+    category = Column(CHECKLIST_CATEGORY_DB_ENUM, nullable=False, index=True)
     item_title = Column(String(255), nullable=False)
     item_description = Column(Text, nullable=True)
-    priority = Column(Enum(ChecklistPriority), nullable=False)
+    priority = Column(CHECKLIST_PRIORITY_DB_ENUM, nullable=False)
     typical_duration_days = Column(Integer, nullable=True)
     requires_professional = Column(Boolean, nullable=False, default=False)
     professional_type = Column(String(100), nullable=True)
@@ -108,14 +130,14 @@ class DeveloperPropertyChecklist(Base):
         nullable=True,
     )
     development_scenario = Column(String(50), nullable=False, index=True)
-    category = Column(Enum(ChecklistCategory), nullable=False)
+    category = Column(CHECKLIST_CATEGORY_DB_ENUM, nullable=False)
     item_title = Column(String(255), nullable=False)
     item_description = Column(Text, nullable=True)
-    priority = Column(Enum(ChecklistPriority), nullable=False)
+    priority = Column(CHECKLIST_PRIORITY_DB_ENUM, nullable=False)
     requires_professional = Column(Boolean, nullable=False, default=False)
     professional_type = Column(String(100), nullable=True)
     status = Column(
-        Enum(ChecklistStatus),
+        CHECKLIST_STATUS_DB_ENUM,
         nullable=False,
         default=ChecklistStatus.PENDING,
         index=True,
