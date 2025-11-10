@@ -172,9 +172,58 @@ From PHASE2B_VISUALISATION_STUB.MD Section 10 requirements:
      - ✅ Zoom (scroll)
 
 5. **Regression capture** - ✅ COMPLETED
-   - Screenshots captured (7 from Capture test, 3 from Refresh test)
-   - No anomalies observed
-   - All functionality working as expected
+- Screenshots captured (7 from Capture test, 3 from Refresh test)
+- No anomalies observed
+- All functionality working as expected
+
+---
+
+## Test Run 3 - Async Queue Verification (RQ Backend)
+**Date:** 2025-11-10
+**Tester:** User (wakaekihara)
+**Test Type:** Production-style run with Redis + RQ worker
+**Environment:** `JOB_QUEUE_BACKEND=rq`, Redis (docker) on `localhost:6379`, RQ worker listening on `preview`
+
+### Environment Prep
+- [x] Redis started via `docker compose up redis`
+- [x] RQ worker started with fork-safety disabled:
+  ```bash
+  OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
+  RQ_REDIS_URL=redis://localhost:6379/2 \
+  .venv/bin/rq worker preview
+  ```
+- [x] Backend launched with async queue + relaxed rate limit to accommodate polling:
+  ```bash
+  OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
+  API_RATE_LIMIT=120/minute \
+  SECRET_KEY=dev-secret \
+  JOB_QUEUE_BACKEND=rq \
+  .venv/bin/uvicorn app.main:app --reload
+  ```
+- [x] Frontend dev server on port 3003 (`BACKEND_PORT=8000`) and Site Acquisition page opened in Chrome.
+- [x] Network tab filtered to Fetch/XHR to watch `/preview-jobs/{id}` polling.
+
+### Capture + Refresh Walkthrough
+
+1. **Capture Property**
+   - Status chip sequence observed in UI: `QUEUED → PROCESSING → READY` (each state visible for ~2–3 seconds while the worker ran).
+   - RQ worker console showed:
+     ```
+     16:09:48 preview: Job OK (preview.generate)
+     ```
+   - Network log recorded 200 responses for the polling endpoint; no 429s thanks to the increased rate limit.
+2. **Refresh Preview**
+   - Clicking “Refresh preview render” re-queued the existing job ID. Status again stepped through all three states before settling on READY.
+   - The worker emitted a second `Job OK` entry with the new timestamp.
+   - UI asset version and thumbnail timestamp incremented, proving the refresh created a new artefact version.
+
+### Crash / Rate-Limit Notes
+- Initial attempts resulted in a macOS crash (“crashed on child side of fork pre-exec”) when Pillow tried to load AppKit inside the forked worker. Setting `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` for both the worker and backend resolved the issue.
+- Default API rate limit (`10/minute`) caused the polling requests to receive HTTP 429 once the job exceeded ~40 seconds. Overriding `API_RATE_LIMIT` to `120/minute` allowed the frontend to poll until READY without errors.
+
+### Evidence Collected
+- Screenshots showing the `QUEUED`, `PROCESSING`, and `READY` states plus the worker terminal output.
+- Network log (DevTools HAR) demonstrating successful polling cadence with async backend.
 
 ---
 

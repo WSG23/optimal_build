@@ -254,3 +254,5 @@ _Execution note (2025-11-04):_ Backend/API confirmed healthy via CLI POST to `/a
 - [x] Checklist completed with pass/fail notes.
 - [x] Screenshot and/or console logs attached to PR/work queue note.
 - [x] Any failures triaged (fixed immediately or documented with owner + follow-up task). _(No failures observed during run.)_
+
+_Async verification note (2025-11-10):_ The same checklist was re-run with `JOB_QUEUE_BACKEND=rq`, Redis, and an RQ worker (`.venv/bin/rq worker preview`). With `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` and `API_RATE_LIMIT=120/minute`, the Site Acquisition UI clearly stepped through `QUEUED → PROCESSING → READY`, confirming the production-style queue behaves as expected.

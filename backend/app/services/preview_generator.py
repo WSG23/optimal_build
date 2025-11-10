@@ -40,7 +40,7 @@ class PreviewAssets:
 
 
 def _serialise_layer(
-    layer: Mapping[str, object], *, index: int
+    layer: Mapping[str, object], *, index: int, base_elevation: float = 0.0
 ) -> tuple[dict[str, object], list[tuple[float, float, float]]]:
     raw = dict(layer)
     name = str(raw.get("asset_type") or raw.get("name") or f"Layer {index}")
@@ -54,12 +54,12 @@ def _serialise_layer(
     half = side / 2
 
     base_vertices = [
-        (-half, -half, 0.0),
-        (half, -half, 0.0),
-        (half, half, 0.0),
-        (-half, half, 0.0),
+        (-half, -half, base_elevation),
+        (half, -half, base_elevation),
+        (half, half, base_elevation),
+        (-half, half, base_elevation),
     ]
-    top_vertices = [(x, y, height) for (x, y, _z) in base_vertices]
+    top_vertices = [(x, y, base_elevation + height) for (x, y, _z) in base_vertices]
     vertices = base_vertices + top_vertices
 
     footprint = [
@@ -479,14 +479,28 @@ def build_preview_payload(
     property_id: UUID,
     massing_layers: Iterable[Mapping[str, object]],
 ) -> dict[str, object]:
-    """Generate a structured preview payload from massing layer metadata."""
+    """Generate a structured preview payload from massing layer metadata.
+
+    Layers are stacked vertically: first layer at ground level (z=0),
+    subsequent layers stacked on top of previous layer's height.
+    """
 
     serialised_layers: list[dict[str, object]] = []
     all_vertices: list[tuple[float, float, float]] = []
+    current_elevation = 0.0
+
     for idx, layer in enumerate(massing_layers, start=1):
-        serialised, vertices = _serialise_layer(layer, index=idx)
+        serialised, vertices = _serialise_layer(
+            layer, index=idx, base_elevation=current_elevation
+        )
         serialised_layers.append(serialised)
         all_vertices.extend(vertices)
+
+        # Stack next layer on top of this one
+        layer_height = float(
+            layer.get("estimated_height_m") or layer.get("height") or 0.0
+        )
+        current_elevation += layer_height
 
     if not serialised_layers:
         raise ValueError("Preview payload requires at least one massing layer")
