@@ -47,6 +47,7 @@
 **Tester:** User (wakaekihara)
 **Test Type:** Live browser testing with Capture Property & Refresh Preview buttons
 **Environment:** Development (inline backend execution)
+**Status:** ✅ **PASSED** - All functionality verified working
 
 ### Environment Prep
 - [x] Backend running: `OFFLINE_MODE=1 SECRET_KEY=dev-secret JOB_QUEUE_BACKEND=inline uvicorn app.main:app --reload`
@@ -238,6 +239,13 @@ From PHASE2B_VISUALISATION_STUB.MD Section 10 requirements:
 - UI showing all metadata fields populated correctly
 - Evidence of synchronous execution (identical timestamps)
 
+**Test Run 3 (2025-11-10):**
+- Layer stacking verification after fixing vertical elevation
+- 3 screenshots showing corrected "wedding cake" stacking
+- Confirmed layers now stack vertically (gray base → blue/teal layer → brown/orange layer → green/teal top)
+- Verified each layer sits on top of previous layer's height
+- All camera controls (orbit, pan, zoom) working correctly with stacked geometry
+
 ---
 
 ## Phase 2B Completion Status
@@ -260,8 +268,17 @@ From PHASE2B_VISUALISATION_STUB.MD Section 10 requirements:
 - Infrastructure supports both inline (dev) and async (prod) execution modes
 
 ### 📋 Recommended Follow-ups (Post-Phase 2B)
-1. **Production Testing**: Verify status transitions with async Celery/RQ backend
+1. **Production Testing**: Verify status transitions with async Celery/RQ backend on Linux (RQ has macOS fork safety limitations with Pillow/graphics libraries)
 2. **Layer Breakdown UI**: Add detailed massing inspection panel (Phase 2C)
 3. **Monitoring**: Set up Grafana dashboards for preview generation metrics
 4. **Performance**: Monitor generation times in production with real property data
 5. **Asset Cleanup**: Implement automated cleanup of old preview versions (housekeeping task)
+
+### 🔍 Known Limitations
+
+**RQ Backend on macOS**:
+- RQ uses `fork()` for worker processes, which conflicts with macOS fork safety when graphics libraries (Pillow/Cairo) are loaded
+- **Impact**: RQ worker crashes with `SIGABRT` on macOS during preview generation
+- **Workaround**: Use inline backend for development (`JOB_QUEUE_BACKEND=inline`)
+- **Production**: Deploy to Linux where fork is safe, or use Celery which handles this better
+- **Status Observation**: In development, status transitions happen too fast (<1 second) to observe with inline backend - this is expected and normal
