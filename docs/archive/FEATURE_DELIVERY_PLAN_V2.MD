@@ -382,6 +382,100 @@
 
 ---
 
+#### Phase 1D Technical Design Specification
+
+**Implementation Snapshot (2025-10-11):** Milestone M1 delivered – database schema, models, service layer, deal CRUD/stage APIs in place with backend tests validating workflow. Stage transitions emit `deal_stage_transition` audit ledger entries (deterministic UUID→int mapping). Timeline responses include `duration_seconds`. Remaining milestones (commissions, analytics, benchmarks) pending.
+
+**Data Model Additions ([backend/app/models/business_performance.py](../backend/app/models/business_performance.py)):**
+
+*Core Tables:*
+- `agent_deals`: Primary pipeline entity across any asset class. Columns: id (UUID PK), project_id (FK→projects, nullable), property_id (FK→properties, nullable), agent_id (FK→users, required), title, asset_type (Enum + portfolio), deal_type (Enum: buy_side, sell_side, lease, management, other), pipeline_stage (Enum), status (Enum: open, closed_won, closed_lost, cancelled), lead_source, estimated_value_amount (Numeric 16,2), estimated_value_currency (String 3), expected_close_date, actual_close_date, confidence (Numeric 4,2), metadata (JSONB).
+- `agent_deal_stage_events`: Immutable stage history for timeline/SLA. Columns: id, deal_id (FK), from_stage (Enum, nullable), to_stage (Enum), changed_by (FK→users), note (Text), recorded_at (timezone aware).
+- `agent_deal_contacts`: Counterparty/company contacts. Columns: id, deal_id, contact_type (Enum: principal, co_broke, legal, finance, other), name, email, phone, company, notes.
+- `agent_deal_documents`: Artefact references (S3/Drive). Columns: id, deal_id, document_type (Enum: loi, valuation, agreement, financials, other), title, uri, mime_type, uploaded_by, uploaded_at, metadata.
+
+*Commission & Audit Tables:*
+- `agent_commission_records`: Commission ledger with audit-stamped lifecycle. Columns: id, deal_id, agent_id, commission_type (Enum: introducer, exclusive, co_broke, referral, bonus), basis_amount, basis_currency, commission_rate (Numeric 5,4), commission_amount (Numeric 16,2, nullable until calculated), status (Enum: pending, confirmed, invoiced, paid, disputed, written_off), introduced_at, confirmed_at, invoiced_at, paid_at, disputed_at, resolved_at, audit_log_id (FK→audit_logs, nullable).
+- `agent_commission_adjustments`: Clawbacks/adjustments. Columns: id, commission_id, adjustment_type (Enum: clawback, bonus, correction), amount, currency, note, recorded_by, recorded_at, audit_log_id.
+
+*Analytics Support Tables:*
+- `agent_performance_snapshots`: Materialised daily snapshot for dashboards; recalculated nightly. Columns: id, agent_id, as_of_date, deals_open, deals_closed_won, gross_pipeline_value, weighted_pipeline_value, avg_cycle_days, conversion_rate, roi_metrics (JSONB).
+- `performance_benchmarks`: Industry reference metrics (CSV/API imports). Columns: id, metric_key, asset_type, deal_type, cohort (Enum: industry_avg, top_quartile, internal_avg), value_numeric, value_text, source, effective_date.
+
+*Enumerations:*
+- PipelineStage: lead_captured, qualification, needs_analysis, proposal, negotiation, agreement, due_diligence, awaiting_closure, closed_won, closed_lost
+- DealStatus: open, closed_won, closed_lost, cancelled
+- DealType: buy_side, sell_side, lease, management, capital_raise, other
+- CommissionStatus: pending, confirmed, invoiced, paid, disputed, written_off
+- CommissionType: introducer, exclusive, co_broke, referral, bonus
+
+*Indices:*
+- `agent_deals`: composite (agent_id, pipeline_stage) for Kanban queries; (project_id, status) for reporting
+- `agent_deal_stage_events`: (deal_id, recorded_at), (to_stage, recorded_at DESC) for recent transitions
+- `agent_commission_records`: (agent_id, status), (deal_id) for lookups; optional unique constraint (deal_id, agent_id, commission_type) prevents duplicates
+- `agent_performance_snapshots`: unique (agent_id, as_of_date)
+- `performance_benchmarks`: composite (metric_key, asset_type, cohort, effective_date DESC)
+
+**Backend Architecture:**
+
+*Services:*
+- [app/services/deals/pipeline.py](../backend/app/services/deals/pipeline.py): CRUD for AgentDeal, stage transition helpers appending AgentDealStageEvent, weighted pipeline calculations, `timeline_with_audit()` enriches stage history with hashed audit ledger entries.
+- [app/services/deals/commission.py](../backend/app/services/deals/commission.py): Commission lifecycle management; emits audit log events (deal_commission_introduced, deal_commission_confirmed, etc.) via existing audit_logs chain.
+- [app/services/deals/performance.py](../backend/app/services/deals/performance.py): Aggregation routines to compute metrics per agent/property type; writes to agent_performance_snapshots.
+- [app/services/deals/benchmark_ingest.py](../backend/app/services/deals/benchmark_ingest.py): Loader for CSV/JSON benchmark data (Prefect or management CLI).
+
+*API Routes ([backend/app/api/v1/deals.py](../backend/app/api/v1/deals.py)):*
+- GET /api/v1/deals: Paginated filter by agent, stage, property, search text
+- POST /api/v1/deals: Create new deal
+- PATCH /api/v1/deals/{deal_id}: Update metadata, expected close, etc
+- POST /api/v1/deals/{deal_id}/stage: Transition stage (body: to_stage, optional note). Records event + audit log (deal_stage_transition)
+- GET /api/v1/deals/{deal_id}/timeline: Stage history + commission events aggregated for timeline display
+- GET /api/v1/deals/{deal_id}/commissions, POST /api/v1/deals/{deal_id}/commissions: Manage commission records
+- POST /api/v1/commissions/{commission_id}/status: Update status, attach supporting doc reference; logs to audit
+- GET /api/v1/performance/summary?agent_id=…&period=…: Latest snapshot metrics + ROI breakdown
+- GET /api/v1/performance/benchmarks?asset_type=…: Benchmark entries filtered by asset type/cohort
+
+*Authentication/Authorization:* Reuse existing `require_agent` / `require_viewer` dependencies ([app/api/deps.py](../backend/app/api/deps.py)). Stage transitions and commission operations require write permissions.
+
+*Background Jobs:*
+- Nightly `agent_performance_snapshots_flow` (Prefect) or queue job `performance.generate_snapshots` to roll up per-agent metrics (conversion rate by property type, weighted pipeline, average cycle)
+- Optional hourly trigger to recompute snapshots for active deals (Kanban performance numbers)
+- Benchmark ingest handled via `seed_performance_benchmarks_flow` / `performance.seed_benchmarks` job when remote datasets refresh
+
+*Integration with Audit Log:*
+- Every stage change writes AuditLog row (event_type="deal_stage_transition") with deterministic hash linking to previous entry for that project/deal; context includes IDs, stage, user
+- Commission lifecycle events log event_type (deal_commission_status_change) with same chaining rules
+- Store audit_log_id on commission tables for direct traceability
+
+**Frontend Plan:**
+
+*New Route:* `/agents/performance` (or extend integrations page) with two tabs: Pipeline (Kanban) and Analytics
+
+*Pipeline Kanban (PipelineBoard component):* Columns map to PipelineStage; cards display counterparty, asset type, estimated value, latest activity, quick actions (move stage, log note). Initial implementation at `/agents/performance` with audit-aware timeline panel.
+
+*Deal Detail Drawer:* Timeline (stage events + commission history) with audit hash/signature badges, contact list, documents, manual adjustments.
+
+*Analytics Dashboard:* Charts using existing design-system components (bar charts, donut). Data sources: `/performance/summary`, `/performance/benchmarks`.
+
+*Commission Dispute UI:* Modal to mark commission as disputed, collects reason, optionally attaches doc (URI stored via agent_deal_documents).
+
+*State Management:* React Query hooks hitting new API layer functions ([frontend/src/api/deals.ts](../frontend/src/api/deals.ts)). Align with patterns used in listing integrations.
+
+*Testing:* Component tests for pipeline board interactions and API hook mocks; snapshot tests for analytics charts referencing known data.
+
+**Backend Test Coverage:**
+- [backend/tests/test_services/test_agent_performance.py](../backend/tests/test_services/test_agent_performance.py) covers AgentPerformanceService aggregation (deal/commission scenarios, daily snapshot generation)
+- [backend/tests/test_api/test_performance.py](../backend/tests/test_api/test_performance.py) validates `/api/v1/performance` endpoints (snapshots + benchmarks) when executed on Python ≥3.10 / real FastAPI
+
+**Implementation Phasing:**
+1. Foundation (M1): Migrations, models, basic CRUD service, API list/create/update, Kanban read-only view. Tests for models and pipeline service.
+2. Stage transitions & timeline (M2): Stage event endpoints, audit logging, timeline API, Kanban drag/drop.
+3. Commission ledger (M3): Commission models/services APIs, audit integration, dispute handling UI.
+4. Analytics & benchmarks (M4): Snapshot job, performance API, dashboard charts, benchmark ingestion script + sample dataset.
+5. Polish & docs (M5): Update ROADMAP.MD and WORK_QUEUE.MD, add docs (docs/agents/business_performance.md), expand TESTING_DOCUMENTATION_SUMMARY.md.
+
+---
+
 **Requirements (from FEATURES.md lines 63-68):**
 - Cross-Asset Deal Pipeline tracker
 - ROI Analytics dashboard
@@ -522,6 +616,128 @@
   - See detailed spec in [Phase 2B Visualisation Delivery Plan](PHASE2B_VISUALISATION_STUB.MD) Section 4.4.1
 - ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
 
+---
+
+#### Phase 2B Technical Specifications
+
+**Asset Optimizer Engine (v0.4)**
+
+*Algorithm:* Curve-driven scoring with weighted components (NOI, risk, market demand, heritage uplift). Score normalization: `(score - min_score) / (max_score - min_score)`. Adjustment factor from `asset_mix_curves.json`. Constraint priority: user overrides → heritage → market. Zoning constraints non-negotiable (fail fast with HTTP 422 if violated).
+
+*Inputs:* Site geometry, zoning context, program defaults ([phase2b_asset_optimisation_inputs.md](phase2b_asset_optimisation_inputs.md)), market signals (Quick Analysis), heritage data (URA + NHB overlays), finance envelope, user constraints.
+
+*Outputs:* Per-asset allocation %, NIA, absorption curve, rent/opex assumptions, CAPEX, risk score, constraint logs, scenario variants (base/expansion/reposition). Allocations sum to 100% ±0.1%, absorption [3,60] months, parking as bays per 1,000 sqm GFA.
+
+*Heritage Risk Classification:* Explicit overlay rating → conservation=true → year_built<1970 → user override → default "low".
+
+*Data Actions:* [P0] Finalize `asset_mix_profiles.json` + `asset_mix_curves.json`, surface zoning metadata. [P1] Heritage overlay ingestion, Quick Analysis market metrics. [P2] Versioning policy (embed `optimizer_version` in outputs).
+
+**Heritage Overlay Ingestion Pipeline (v0.5)**
+
+*Data Sources:* URA Conservation Areas (shapefile/GeoJSON), NHB Historic Sites (GeoJSON), NHB National Monuments (GeoJSON), NHB Heritage Trails (KML→GeoJSON). 194 features total merged. Access via data.gov.sg (no credentials required initially).
+
+*Pipeline:* `fetch` (downloads raw data) → `transform` (shapely-based normalization, SVY21→WGS84, bbox/centroid, simplification tolerance 0.00001) → `load` (copies to `backend/app/data/heritage_overlays.geojson`, records metadata) → `publish` (S3 upload if required).
+
+*Output Schema:* {name, risk [high|medium|low|info], source, boundary (GeoJSON Polygon), bbox, centroid, notes, effective_date, heritage_premium_pct, attributes{ura_category, planning_area}}.
+
+*Components:* CLI `python -m scripts.heritage [fetch|transform|load|pipeline]`. Dependencies: shapely≥2.0, pyproj≥3.6, fiona≥1.9 (optional). Spatial index: STRtree. Performance target: <10ms P95.
+
+*Refresh Cadence:* Weekly (manual CLI initially, Prefect/cron planned). Rollback retention: 90 days, last 2 versions.
+
+**Finance Architecture Template**
+
+*Capital Structure Targets:* Base case: 35% equity, 60% debt, 5% preferred, LTV 60%, LTC 65%, DSCR 1.35. Upside: 30/65/5, LTV 58%, DSCR 1.40. Downside: 45/50/5, LTV 55%, DSCR 1.25.
+
+*Debt Terms:* Construction loan 60% of dev cost @ 4.8% (SORA 3M + 240bps), 4yr tenor, interest-only. Bridge/mezzanine 10% @ 8.5% fixed, 2yr bullet. Permanent debt 55% of stabilised value @ 4.2% (SORA + 180bps), 7yr, 20yr amort with 30% balloon.
+
+*Equity Waterfall:* Tier 1: 12% IRR → 10% promote. Tier 2: 18% IRR → 20% promote. Preferred return: 9% annual. Catch-up: 50/50 after pref, clawback if IRR <12% on exit.
+
+*Cash Flow Timing:* Land acquisition (months 0-3), construction (3-33), leasing/sales (24-42), stabilisation (42-54), exit/refinance (48-51).
+
+*Exit Assumptions:* Base cap rate 4.0% (prime office/hospitality), upside 3.6%, downside 4.5%. Sale costs 2.25% (broker 1.75%, legal 0.25%, stamp 0.25%). Refinance: 65% LTV @ SORA + 170bps, 5yr tenor, 25yr amort.
+
+*Sensitivity Bands:* Rent [-8%, 0%, +6%], Exit cap rate [+40bps, 0, -30bps], Construction cost [+10%, 0%, -5%], Interest rate [+150bps, 0, -75bps].
+
+---
+
+#### Phase 2B Visualization Delivery Audit
+
+**Date:** 2025-11-04 | **Status:** ✅ COMPLETE
+
+**Delivered Components:**
+- `backend/app/services/preview_generator.py:25` – GLTF construction, asset manifest, Pillow thumbnail generation
+- `backend/jobs/preview_generate.py:99` – preview job writes metadata_url, updates manifest, returns URLs
+- `backend/app/services/preview_jobs.py:120` – resets metadata on refresh
+- `backend/app/api/v1/developers.py:318` – API surfaces metadata_url + visualization summary
+- `frontend/src/api/siteAcquisition.ts:507` – client parses previewMetadataUrl + job metadataUrl
+- `frontend/src/app/components/site-acquisition/Preview3DViewer.tsx:1` – GLTF viewer with orbit controls
+- `frontend/src/app/pages/site-acquisition/SiteAcquisitionPage.tsx:638` – wires manifest URLs, surfaces asset version
+
+**Migration:** `backend/migrations/versions/20251104_000021_add_preview_metadata_url.py:1` adds metadata_url column
+
+**Tests:** `backend/tests/test_services/test_preview_generator.py:9` verifies GLTF+BIN output
+
+**Observability:** Prometheus metrics (`preview_generation_jobs_total`, `preview_generation_jobs_completed_total`, `preview_generation_job_duration_ms`, `preview_generation_queue_depth`)
+
+**Outstanding Follow-ups:**
+1. Monitoring/Alerts – Grafana dashboard JSON + Prometheus rules committed, import into ops stack
+2. Storage hardening (optional) – Migrate to S3 + signed URLs (§4.5 of delivery plan) once buckets provisioned
+
+---
+
+#### Phase 2B Manual QA Results
+
+**Test Run 1 (2025-11-03):** Initial implementation with pre-generated job
+- Environment: inline backend execution
+- Property ID: `6a0b64be-fc56-458b-87fc-7c9b17c24bff`, Preview Job ID: `24a62073-1cfb-4db2-835b-13952cd184f6`
+- ✅ Status transitions (placeholder → processing → ready) within UI
+- ✅ Thumbnail placeholder updated with new asset timestamp
+- ✅ Bounding box, layer counts, camera hints match backend logs
+- ✅ Gray site boundary renders correctly, blue/teal building mass renders as 3D volumetric form
+- ✅ Camera orbit/pan/zoom controls functional
+- Observations: Job pre-generated, status showed READY immediately. Thumbnail displayed as small pink/magenta square. Metadata available at `/static/dev-previews/.../preview.json`.
+
+**Test Run 2 (2025-11-10):** End-to-end capture & refresh workflow
+- Tester: User (wakaekihara), Environment: inline backend, Browser: Chrome on macOS
+- ✅ Capture Property button triggers preview generation successfully
+- ✅ POST `/api/v1/developers/properties/log-gps` completed with 200 OK
+- ✅ Job ID `23a32344-fb0f-4c5e-a0aa-1a5fd22ee04f` displayed with status READY
+- ✅ Timestamps populated (requested/started/finished at 12:19 am - identical due to inline execution <1s)
+- ✅ Asset URLs populated (preview GLTF, metadata JSON, thumbnail PNG)
+- ✅ 3D viewer rendered with gray site boundary + blue/teal building mass
+- ✅ Refresh Preview button regenerates assets with new timestamps
+- ⚠️ Status transitions too fast to observe with inline execution (<1 second) - expected behavior for dev mode
+- Evidence: 10 total screenshots captured (7 Capture workflow, 3 Refresh workflow)
+
+**Test Run 3 (2025-11-10):** Async queue verification (RQ backend)
+- Environment: Redis docker + RQ worker, Browser: Chrome
+- ✅ Status chip sequence observed: QUEUED → PROCESSING → READY (each visible 2-3s)
+- ✅ RQ worker console: `16:09:48 preview: Job OK (preview.generate)`
+- ✅ Polling endpoint: 200 responses, no 429s (increased rate limit to 120/min)
+- ✅ Refresh Preview re-queued job, status stepped through all states again
+- ⚠️ Known limitation: RQ on macOS crashes with Pillow/Cairo (SIGABRT on fork). Workaround: inline backend for dev, Linux for production.
+- Evidence: Screenshots of QUEUED/PROCESSING/READY states + worker terminal output, Network HAR log
+
+**Phase 2B Completion Status:**
+- ✅ Preview job data model and API endpoints
+- ✅ GLTF preview generation pipeline
+- ✅ Asset versioning and storage
+- ✅ Frontend 3D viewer integration
+- ✅ Capture Property workflow
+- ✅ Refresh Preview workflow
+- ✅ Manual UI testing (development environment)
+- ✅ Automated integration tests ([backend/tests/test_integration/test_preview_job_integration.py](../backend/tests/test_integration/test_preview_job_integration.py))
+- ✅ Documentation of expected behavior and limitations
+
+**🎯 Ready for Production** – Phase 2B preview viewer functionally complete, all manual QA satisfied
+
+**📋 Recommended Follow-ups (Post-Phase 2B):**
+1. Production testing with async Celery/RQ on Linux (RQ has macOS fork safety limitations)
+2. Layer breakdown UI – detailed massing inspection panel (Phase 2C)
+3. Monitoring – Grafana dashboards for preview generation metrics
+4. Performance – monitor generation times in production with real property data
+5. Asset cleanup – automated cleanup of old preview versions (housekeeping task)
+
 **Testing Discipline (Phase 2B onward):**
 - Every Phase 2B feature or refactor must land with automated tests that keep the touched modules at or above the 80 % coverage gate.
 - Coverage regressions must be resolved before hand-off; if a temporary waiver is unavoidable, log the owner and expiry in `docs/WORK_QUEUE.MD` and reopen the task in the Phase 2B backlog.
@@ -579,6 +795,62 @@
 - No other role can access financial data
 
 **Estimated Effort:** 6-8 weeks (complex financial logic + UI)
+
+---
+
+#### Phase 2C Finance Delivery Plan (v0.4)
+
+**Changelog:**
+- v0.4 (2025-11-11): Finance feasibility runs persist structured per-asset breakdowns into `fin_asset_breakdowns`, enabling exports/scenario summaries to rely on canonical ORM rows instead of JSON blobs. API tests verify ORM records and asset mix responses stay in sync.
+- v0.3 (2025-11-10): Capital stack slices inherit construction-loan facility metadata (reserve/amortisation/tenor/capitalisation). Sensitivity explorer renders per-parameter delta cards with sparklines. Added `POST /api/v1/finance/scenarios/{id}/sensitivity` + workspace controls for on-demand sensitivity reruns. Frontend unit test reminder: retest once Vitest harness issues resolved before Phase 2C sign-off.
+- v0.2 (2025-11-10): Finance privacy guard enforces developer identity headers, logs denied attempts, increments `finance_privacy_denials_total` metric for auditability.
+
+**Current Baseline:**
+
+*Backend:* `POST /api/v1/finance/feasibility` escalates costs, computes NPV/IRR, optional DSCR timelines, capital stack, drawdown schedules ([backend/app/api/v1/finance.py](../backend/app/api/v1/finance.py)). Asset optimiser ([app/services/asset_mix.py](../backend/app/services/asset_mix.py)) emits estimated revenue, capex, risk, confidence per asset type; feasibility engine consolidates into `AssetFinancialSummarySchema`. Finance results persist to `fin_scenarios`, `fin_capital_stacks`, `fin_results` tables. Finance blueprint (capital stack targets, sensitivity bands) attached to developer GPS capture responses (`DeveloperFinancialSummary`). Role guard uses `require_reviewer` for mutations, `require_viewer` for reads.
+
+*Frontend:* [frontend/src/modules/finance/FinanceWorkspace.tsx](../frontend/src/modules/finance/FinanceWorkspace.tsx) lists scenarios (static project id 401), renders scenario table (escalated cost, NPV, IRR, min DSCR, loan-to-cost), capital stack cards with progress bars, drawdown schedule table. No asset-level panels, no sensitivity toggles, no privacy messaging.
+
+*Data & Security:* Finance API accepts `project_id` as UUID/int but doesn't verify caller ownership. Role header defaults to admin/viewer; any viewer-level role can read scenarios. No end-to-end sensitivity pipeline (only blueprint bands exist).
+
+**Gap Analysis:**
+- Asset-specific financial modelling: Optimiser outputs persist to `fin_asset_breakdowns`, but lack derived cap rate/NOI projections for exports/downloads/cross-scenario comparisons
+- Financing architecture: Capital stack summary exists, lacks tranche metadata in UI; construction loan interest carry/facility terms not modelled
+- Sensitivity analysis: Blueprint bands delivered, no API/UI layer to run +/- scenarios or visualise results
+- Privacy controls: Finance scenarios readable by any viewer; need developer-only scope (owner-based) + logging
+- Advanced analytics: IRR/NPV present; MOIC, equity multiple, payback, DSCR heat maps, price/volume sensitivities absent
+- Observability/testing: Metrics counters exist, no asset-level validation or regression suite
+
+**Implementation Plan:**
+
+*Backend:*
+1. Asset Finance Engine: Introduce `app/services/finance/asset_models.py` to translate optimiser outcomes into per-asset cash-flow models using `re_metrics.py` helpers. Extend `AssetFinancialSummarySchema` and `FinResult` metadata with per-asset NOI, capex, payback, risk notes. Persist structured asset results (`fin_asset_breakdowns` table or JSON metadata).
+2. Construction Loan & Interest Carry: Enhance `calculator.drawdown_schedule` to compute interest carry and outstanding balance costs; store in `FinResult` metadata. Support facility terms (rate, fees, interest reserve) from blueprint/request payload.
+3. Sensitivity Batching: Add optional `sensitivity` flag to feasibility request that spawns +/- scenarios (rent, cost, rate) using blueprint bands, summarising deltas (NPV, IRR, loan-to-cost). Persist sensitivity runs as child scenarios or embed in metadata.
+4. Privacy Enforcement: Create `require_developer_owner` dependency validating JWT/project association. Restrict `/finance/scenarios` and `/finance/export` to project owners (404 for non-owners), audit access. Store scenario visibility flags (private, shared) for future collaboration. **Update (Nov 2025):** `_ensure_project_owner` now enforces owner-only access. Requests must include `X-User-Email` or `X-User-Id` headers matching `Project` owner (admins bypass via `X-Role: admin`). Every denial emits `finance_privacy_denied` log + increments `finance_privacy_denials_total{reason="<cause>"}` counter.
+5. API Schema Updates: Populate `asset_mix_summary` field. Add `asset_breakdowns`, `sensitivity_summary`, `privacy_scope` to `FinanceFeasibilityResponse`. Update OpenAPI + schema tests.
+6. Testing: Service unit tests for asset finance calculators. API tests verifying privacy checks, asset breakdown structure, sensitivity delta correctness. Fixture covering each asset type with deterministic optimiser output.
+
+*Frontend:*
+1. Workspace Layout: Replace static project id with selection from captured developer properties (route params/state). Gate finance module behind developer role; display privacy banner when data is private.
+2. Asset Breakdown Panel: New component summarising per-asset NOI, capex, risk, absorption (stacked bar + tabular detail). Link back to optimiser constraints/notes.
+3. Financing Architecture: Expand capital stack section with tranche table (rate, fees, maturity), interest carry summary. Surface loan-to-cost, weighted debt rate, equity multiple. **Update (Nov 2025):** Backend responses merge construction-loan facility metadata (reserve/amortisation periods, capitalisation flag, compounding frequency) into each capital stack slice for complete tranche matrix display.
+4. Sensitivity Explorer: UI to toggle rent/cost/rate bands; render results (sparkline or delta cards) from API sensitivity payload. **Update (Nov 2025):** Explorer ships per-parameter delta cards with sparklines (base, upside, downside). Added editable sensitivity bands + backend endpoint to rerun analysis per scenario. Provide CSV/JSON download.
+5. Scenario Management: Mark scenario primary/private, show last run timestamp + reviewer log. **Update (Nov 2025):** Workspace exposes "Make primary" action backed by `PATCH /api/v1/finance/scenarios/{id}`, auto-demoting sibling scenarios. Add refresh + duplicate controls (when backend endpoints implemented).
+6. Testing: Component tests for new panels (mock API data). Cypress/RTL tests ensuring privacy banner appears for non-developer roles.
+
+**Privacy & Entitlements:** Introduce developer ownership checks using project membership (owner email/user id). Log access events with `log_event` including scenario_id, user_id, role. Update CLA to note finance data is developer-private, add follow-up tasks in WORK_QUEUE.MD. Coordinate with `ui-admin` for admin override tooling (view-only with explicit grant).
+
+**Observability & Testing Strategy:**
+- Metrics: `finance.asset_model.duration_ms`, `finance.asset_model.failures`, `finance.sensitivity.runs`, `finance.privacy.denied_requests`
+- Logs: Structured entries for sensitivity batches, loan carry calculations, privacy denials
+- Alerts: Trigger when finance run errors exceed 5% or duration > 3s P95
+- Regression Suite: Expand [backend/tests/test_api](../backend/tests/test_api) coverage; ensure pytest fixtures seeded with asset mix data
+- Frontend QA: Manual checklist covering scenario selection, sensitivity toggles, downloads
+- **Test Harness Caveat (Nov 2025):** Frontend unit tests blocked by known infrastructure issues (Vitest vs node runner resolution, `tsx` IPC `EPERM`, JSDOM misconfiguration). Retest once harness fixed before Phase 2C sign-off, capture results in this document.
+
+**Known Issues / QA Findings:**
+- Finance workspace viewport clipping (Phase 2C UI): ✅ **RESOLVED** - Shared `AppShell` layout now supports horizontal scrolling on viewports ≤1440px via `overflow-x: auto`. Added responsive media queries at 1280px and 1024px breakpoints. Fix maintains gradient background and rounded corners while ensuring all finance workspace content accessible on MacBook Air-sized displays (~1280px). Changes applied to [frontend/src/index.css](../frontend/src/index.css) lines 2987-3032.
 
 ---
 
