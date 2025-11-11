@@ -88,7 +88,16 @@ describe('Finance capital stack and drawdown components', () => {
           share: '0.6667',
           rate: '0.0650',
           trancheOrder: 1,
-          metadata: {},
+          metadata: {
+            facility: {
+              upfront_fee_pct: '1.0',
+              exit_fee_pct: '2.0',
+              reserve_months: 6,
+              amortisation_months: 24,
+              periods_per_year: 12,
+              capitalise_interest: true,
+            },
+          },
         },
       ],
     },
@@ -119,6 +128,16 @@ describe('Finance capital stack and drawdown components', () => {
       peakDebtBalance: '800.00',
       finalDebtBalance: '800.00',
     },
+    assetMixSummary: null,
+    assetBreakdowns: [],
+    constructionLoanInterest: null,
+    constructionLoan: null,
+    sensitivityResults: [],
+    sensitivityJobs: [],
+    sensitivityBands: [],
+    isPrimary: true,
+    isPrivate: false,
+    updatedAt: null,
   }
 
   it('renders the capital stack overview for scenarios with data', () => {
@@ -131,6 +150,10 @@ describe('Finance capital stack and drawdown components', () => {
     assert.ok(screen.getByText('Capital stack overview'))
     assert.ok(screen.getByText('Scenario A'))
     assert.ok(screen.getByText('Equity share'))
+    assert.ok(screen.getByText('Tranche / facility detail'))
+    assert.ok(screen.getByText('Senior Loan'))
+    assert.ok(screen.getByText('Interest reserve (months)'))
+    assert.ok(screen.getByText('Interest handling'))
   })
 
   it('renders the drawdown table for scenarios with schedules', () => {

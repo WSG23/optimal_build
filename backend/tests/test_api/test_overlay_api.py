@@ -6,6 +6,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from fastapi import HTTPException
+
 from app.api.deps import RequestIdentity
 from app.api.v1 import overlay as overlay_api
 from app.main import app
@@ -125,8 +127,10 @@ async def test_list_project_overlays_serialises_decision(client):
 def test_normalise_decision_value():
     assert overlay_api._normalise_decision_value("approve") == "approved"
     assert overlay_api._normalise_decision_value("REJECTED") == "rejected"
-    with pytest.raises(ValueError, match="Invalid decision"):
+    with pytest.raises(HTTPException) as excinfo:
         overlay_api._normalise_decision_value("maybe")
+    assert excinfo.value.status_code == 400
+    assert "Decision must be approve or reject" in excinfo.value.detail
 
 
 @pytest.mark.asyncio

@@ -113,6 +113,9 @@ class FinScenario(BaseModel):
     results: Mapped[list[FinResult]] = relationship(
         "FinResult", back_populates="scenario", cascade="all, delete-orphan"
     )
+    asset_breakdowns: Mapped[list["FinAssetBreakdown"]] = relationship(
+        "FinAssetBreakdown", back_populates="scenario", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (Index("idx_fin_scenarios_project_name", "project_id", "name"),)
 
@@ -250,6 +253,42 @@ class FinResult(BaseModel):
     __table_args__ = (Index("idx_fin_results_project_name", "project_id", "name"),)
 
 
+class FinAssetBreakdown(BaseModel):
+    """Per-asset finance breakdown persisted for reporting/export."""
+
+    __tablename__ = "fin_asset_breakdowns"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[UUID] = mapped_column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    scenario_id: Mapped[int] = mapped_column(
+        ForeignKey("fin_scenarios.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    asset_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    allocation_pct: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 4))
+    nia_sqm: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    rent_psm_month: Mapped[Optional[Decimal]] = mapped_column(Numeric(16, 2))
+    annual_noi_sgd: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 2))
+    annual_revenue_sgd: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 2))
+    estimated_capex_sgd: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 2))
+    payback_years: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 4))
+    absorption_months: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 4))
+    stabilised_yield_pct: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 6))
+    risk_level: Mapped[Optional[str]] = mapped_column(String(40))
+    risk_priority: Mapped[Optional[int]] = mapped_column(Integer)
+    notes_json: Mapped[list[str]] = mapped_column(
+        "notes", JSONType, default=list, nullable=False
+    )
+
+    scenario: Mapped[FinScenario] = relationship(
+        "FinScenario", back_populates="asset_breakdowns"
+    )
+
+
 __all__ = [
     "FinProject",
     "FinScenario",
@@ -257,4 +296,5 @@ __all__ = [
     "FinSchedule",
     "FinCapitalStack",
     "FinResult",
+    "FinAssetBreakdown",
 ]

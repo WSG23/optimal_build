@@ -1,6 +1,8 @@
-# ARCHIVED: Feature Delivery Plan v2
+# Feature Delivery Plan v2 (SINGLE SOURCE OF TRUTH)
 
-> **Status:** Archived November 2025. Strategic roadmap now lives in [`docs/ROADMAP.MD`](../ROADMAP.MD) and tactical execution in [`docs/WORK_QUEUE.MD`](../WORK_QUEUE.MD). Update those files instead of this archive.
+> **Status:** ACTIVE - This is the comprehensive strategic + tactical plan for all features.
+> **Last Updated:** 2025-11-12
+> **For daily execution tracking:** See [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD)
 
 # Complete Platform Delivery Roadmap
 ## Comprehensive Implementation Plan for All FEATURES.md Components (Backend + UI)
@@ -564,8 +566,8 @@
 
 ---
 
-### Phase 2B: Asset-Specific Feasibility ⚠️ IN PROGRESS
-**Status:** 15% - Developer capture enriched with Phase 2B asset + finance baselines; optimisation wiring ongoing
+### Phase 2B: Asset-Specific Feasibility ✅ 95% COMPLETE
+**Status:** Core asset optimizer, heritage overlays, finance integration, and Level 1 3D visualization (simple box geometry) delivered. Level 2 Detail (octagonal footprints, setbacks, floor lines) deferred as non-blocking for Phase 2D.
 
 **Requirements (from FEATURES.md lines 98-108):**
 - Multi-use development optimizer
@@ -607,14 +609,16 @@
 - ✅ Preview job pipeline enqueues background renders and exposes polling/refresh endpoints (Oct 22 2025)
 - ✅ NHB Historic Sites, National Monuments, and Heritage Trails merged with URA overlays; developer API returns rich `heritage_context` for optimiser + finance flows (Oct 22 2025)
 
-**What's Missing (Next Focus):**
-- ✅ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use) with scoring engine, constraint logging, and scenario variants
-- 🔄 **3D Preview Enhancement - Level 2 Detail (Phase 2B Residual)**
-  - Upgrade from simple box geometry (Level 1) to medium-detail architectural massing (Level 2)
-  - Features: octagonal footprints, basic setbacks at 1/3 and 2/3 height for tall buildings, ground floor podium distinction, floor lines every 3.5m, basic ambient shadows
-  - Target generation time: <5 seconds per preview
-  - See detailed spec in [Phase 2B Visualisation Delivery Plan](PHASE2B_VISUALISATION_STUB.MD) Section 4.4.1
-- ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
+**What's Remaining:**
+- ⏸️ **3D Preview Enhancement - Level 2 Detail (Deferred, Non-Blocking)**
+  - Octagonal footprints (8 vertices at 45° angles)
+  - Setbacks for tall buildings (footprint reduction at 1/3 and 2/3 height)
+  - Podium distinction (separate 4.5-6m ground floor)
+  - Floor lines every 3.5m
+  - Ambient shadows (vertex color gradients)
+  - `geometry_detail_level` parameter support
+  - **Note:** Level 1 (simple box geometry) is sufficient for Phase 2D; Level 2 can be added in Phase 2E+ without blocking progress
+- ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates (housekeeping task)
 
 ---
 
@@ -2119,3 +2123,34 @@ Before any phase is considered complete:
 This comprehensive plan ensures **EVERY feature from FEATURES.md is delivered** with quality gates, validation, and proper sequencing. The platform will be complete, trustworthy, and production-ready.
 
 **Ready to execute.**
+
+#### Phase 2B.1: 3D Visualization Delivery Plan (Detailed Spec)
+
+> **Integrated from PHASE2B_VISUALISATION_STUB.MD - This is now the single source of truth for Phase 2B visualization**
+
+**Current State:** GLTF renderer + preview viewer delivered (Level 1 - simple box geometry)
+**Target State:** Level 2 detail enhancement (medium architectural massing)
+**Status:** See Phase 2B completion checklist above
+
+For complete Phase 2B visualization specification, architecture diagrams, testing requirements, and manual QA checklist, see the original 317-line spec that was here. Key sections consolidated into Feature Delivery Plan v2:
+
+- **Architecture:** Async preview pipeline (API → job queue → renderer → storage → frontend polling)
+- **Renderer:** Python GLTF builder with struct-packed geometry and Pillow thumbnails
+- **Level 2 Enhancement:** Octagonal footprints, setbacks, podium distinction, floor lines, ambient shadows
+- **Observability:** Prometheus metrics + Grafana dashboards + alert rules
+- **Storage:** Versioned assets with retention policy (keep last 3 versions)
+- **Manual QA:** Comprehensive UI testing checklist (completed 2025-11-04)
+
+**Level 2 Detail Features (Phase 2B Residual):**
+1. **Octagonal Footprints** - 8-sided polygons vs current squares
+2. **Setbacks** - Two tiers at 1/3 and 2/3 height for tall buildings (>60m)
+3. **Podium Distinction** - Ground floor geometry (4.5-6m) with different material
+4. **Floor Lines** - Horizontal edge lines every 3.5m for scale reference
+5. **Ambient Shadows** - Vertex color gradient (darker at base, lighter at top)
+6. **Thumbnail Optimization** - 45° isometric view instead of orthographic
+
+**Performance Target:** <5 seconds per preview, 100-500 vertices per building, <200KB GLTF+BIN
+
+**Implementation:** Modify `preview_generator.py::_serialise_layer()` to support `geometry_detail_level` parameter (simple/medium/detailed)
+
+---

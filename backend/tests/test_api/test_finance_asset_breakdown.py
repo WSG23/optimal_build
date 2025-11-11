@@ -17,8 +17,10 @@ from uuid import uuid4
 from backend.jobs import JobDispatch, job_queue
 
 from app.core.config import settings
+from app.models.finance import FinAssetBreakdown
 from app.models.projects import Project, ProjectPhase, ProjectType
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
@@ -186,6 +188,9 @@ async def test_finance_asset_mix_breakdown_and_privacy(
     sensitivity = body["sensitivity_results"]
     assert sensitivity, "Sensitivity results should be returned"
     assert sensitivity[0]["parameter"] == "Rent"
+    bands = body["sensitivity_bands"]
+    assert isinstance(bands, list)
+    assert bands[0]["parameter"] == "Rent"
     assert body.get("updated_at"), "Expected updated_at in response payload"
 
     fin_project_id = body["fin_project_id"]
@@ -209,9 +214,25 @@ async def test_finance_asset_mix_breakdown_and_privacy(
         "sensitivity_results"
     ], "Persisted scenario should include sensitivity results"
     assert persisted[
+        "sensitivity_bands"
+    ], "Expected sensitivity band config in response"
+    assert persisted[
         "construction_loan_interest"
     ], "Persisted scenario should include construction loan interest"
     assert persisted["construction_loan"] is not None
+
+    async with async_session_factory() as session:
+        db_rows = await session.execute(
+            select(FinAssetBreakdown).where(
+                FinAssetBreakdown.scenario_id == body["scenario_id"]
+            )
+        )
+        asset_rows = db_rows.scalars().all()
+    assert len(asset_rows) == 2
+    assert {row.asset_type for row in asset_rows} == {"office", "retail"}
+    office_row = next(row for row in asset_rows if row.asset_type == "office")
+    assert str(office_row.annual_noi_sgd) not in (None, "")
+    assert office_row.notes_json, "Notes should round-trip to the database"
 
     export_response = await app_client.get(
         f"/api/v1/finance/export?scenario_id={body['scenario_id']}",
@@ -818,3 +839,164 @@ async def test_finance_scenario_update_allows_marking_primary(
         headers={"X-Role": "viewer", "X-User-Email": "viewer@example.com"},
     )
     assert viewer_response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_finance_sensitivity_rerun_sync(
+    app_client: AsyncClient,
+) -> None:
+    payload = {
+        "project_id": 501,
+        "project_name": "Sensitivity Rerun",
+        "scenario": {
+            "name": "Rerun Scenario",
+            "currency": "SGD",
+            "is_primary": True,
+            "cost_escalation": {
+                "amount": "420000",
+                "base_period": "2024-Q1",
+                "series_name": "construction_cost_index",
+                "jurisdiction": "SG",
+            },
+            "cash_flow": {
+                "discount_rate": "0.08",
+                "cash_flows": ["-420000", "135000", "160000", "180000"],
+            },
+            "drawdown_schedule": [
+                {"period": "M0", "equity_draw": "120000", "debt_draw": "0"},
+                {"period": "M1", "equity_draw": "0", "debt_draw": "150000"},
+            ],
+            "construction_loan": {
+                "interest_rate": "0.045",
+                "periods_per_year": 12,
+                "capitalise_interest": True,
+            },
+            "sensitivity_bands": [
+                {"parameter": "Rent", "low": "-5", "base": "0", "high": "6"}
+            ],
+            "asset_mix": _build_asset_mix(),
+        },
+    }
+
+    response = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=payload,
+        headers=ADMIN_HEADERS,
+    )
+    assert response.status_code == 200
+    scenario_id = response.json()["scenario_id"]
+
+    rerun_payload = {
+        "sensitivity_bands": [
+            {"parameter": "Rent", "low": "-3", "base": "0", "high": "4"},
+            {"parameter": "Construction Cost", "low": "8", "base": "0", "high": "-4"},
+        ]
+    }
+
+    rerun_response = await app_client.post(
+        f"/api/v1/finance/scenarios/{scenario_id}/sensitivity",
+        json=rerun_payload,
+        headers=ADMIN_HEADERS,
+    )
+    assert rerun_response.status_code == 200
+    rerun_body = rerun_response.json()
+    assert rerun_body["sensitivity_results"], "Expected synchronous sensitivity output"
+    assert rerun_body["sensitivity_bands"][0]["high"] == "4"
+    assert rerun_body["sensitivity_jobs"][0]["status"] == "completed"
+
+
+@pytest.mark.asyncio
+async def test_finance_sensitivity_rerun_async_enqueue(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 1)
+
+    recorded: dict[str, Any] = {}
+
+    async def fake_enqueue(job_name, scenario_id, *, bands, context, queue=None):
+        recorded["job_name"] = job_name
+        recorded["scenario_id"] = scenario_id
+        recorded["bands"] = bands
+        recorded["context"] = context
+        return JobDispatch(
+            backend="celery",
+            job_name=job_name,
+            queue=queue,
+            status="queued",
+            task_id="rerun-job-1",
+        )
+
+    monkeypatch.setattr(job_queue._backend, "name", "celery", raising=False)
+    monkeypatch.setattr(job_queue, "enqueue", fake_enqueue, raising=False)
+
+    payload = {
+        "project_id": 502,
+        "project_name": "Async Sensitivity",
+        "scenario": {
+            "name": "Async Scenario",
+            "currency": "SGD",
+            "is_primary": False,
+            "cost_escalation": {
+                "amount": "300000",
+                "base_period": "2024-Q1",
+                "series_name": "construction_cost_index",
+                "jurisdiction": "SG",
+            },
+            "cash_flow": {
+                "discount_rate": "0.08",
+                "cash_flows": ["-300000", "90000", "110000", "125000"],
+            },
+            "drawdown_schedule": [
+                {"period": "Q1", "equity_draw": "100000", "debt_draw": "0"},
+                {"period": "Q2", "equity_draw": "0", "debt_draw": "150000"},
+            ],
+            "construction_loan": {
+                "interest_rate": "0.05",
+                "periods_per_year": 12,
+                "capitalise_interest": True,
+            },
+            "sensitivity_bands": [
+                {"parameter": "Rent", "low": "-4", "base": "0", "high": "5"}
+            ],
+            "asset_mix": _build_asset_mix(),
+        },
+    }
+
+    response = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=payload,
+        headers=ADMIN_HEADERS,
+    )
+    assert response.status_code == 200
+    scenario_id = response.json()["scenario_id"]
+
+    rerun_payload = {
+        "sensitivity_bands": [
+            {"parameter": "Rent", "low": "-4", "base": "0", "high": "5"},
+            {"parameter": "Interest Rate", "low": "1.5", "base": "0", "high": "-0.5"},
+        ]
+    }
+
+    rerun_response = await app_client.post(
+        f"/api/v1/finance/scenarios/{scenario_id}/sensitivity",
+        json=rerun_payload,
+        headers=ADMIN_HEADERS,
+    )
+    assert rerun_response.status_code == 200
+    body = rerun_response.json()
+    assert recorded["job_name"] == "finance.sensitivity"
+    assert recorded["scenario_id"] == scenario_id
+    sensitivity_result = next(
+        result for result in body["results"] if result["name"] == "sensitivity_analysis"
+    )
+    bands_meta = sensitivity_result["metadata"]["bands"]
+    assert any(entry.get("parameter") == "__async__" for entry in bands_meta)
+
+    jobs_response = await app_client.get(
+        f"/api/v1/finance/jobs?scenario_id={scenario_id}",
+        headers=ADMIN_HEADERS,
+    )
+    assert jobs_response.status_code == 200
+    jobs = jobs_response.json()
+    assert jobs, "Expected queued job metadata"

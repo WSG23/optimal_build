@@ -26,3 +26,20 @@ When bumping Playwright (or when rebuilding the offline cache), perform the foll
    ```
 
 If the environment lacks apt access, set `PLAYWRIGHT_INSTALL_WITH_DEPS=0` before invoking the E2E helper. The wrapper script will then reuse the cached browser binaries instead of attempting to install additional system packages.
+
+## Running unit tests (Vitest)
+
+Component/unit tests now run via Vitest with the threads pool (see `frontend/vitest.config.ts`). This avoids the old fork-based runner that caused SIP/IPC failures on macOS.
+
+```bash
+# Run the whole suite
+npm --prefix frontend run test
+
+# Run a focused subset
+npm --prefix frontend run test -- FinanceSensitivityControls.test.tsx
+
+# Watch mode (threads pool still enforced)
+npm --prefix frontend run test:watch
+```
+
+CI should call the same script (`npm --prefix frontend run test`). If you see `vitest-pool`: timeout errors, make sure you are on Node 20+ and haven’t overridden the pool flags.

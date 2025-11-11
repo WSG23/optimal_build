@@ -48,14 +48,18 @@ describe('FinanceAssetBreakdown component', () => {
   it('renders summary metrics and table rows', () => {
     render(
       <TranslationProvider>
-        <FinanceAssetBreakdown summary={summary} breakdowns={breakdowns} />
+        <FinanceAssetBreakdown
+          summary={summary}
+          breakdowns={breakdowns}
+          currency="SGD"
+        />
       </TranslationProvider>,
     )
 
     expect(screen.getByText(i18n.t('finance.assets.title'))).toBeTruthy()
     expect(screen.getByText(i18n.t('finance.assets.totals.revenue'))).toBeTruthy()
-    expect(screen.getByText('Office')).toBeTruthy()
-    expect(screen.getByText('Retail')).toBeTruthy()
+    expect(screen.getAllByText('Office').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Retail').length).toBeGreaterThan(0)
     expect(
       screen.getByText('Aggregate performance from optimiser base case.'),
     ).toBeTruthy()
@@ -64,7 +68,7 @@ describe('FinanceAssetBreakdown component', () => {
   it('shows empty state when no data available', () => {
     render(
       <TranslationProvider>
-        <FinanceAssetBreakdown summary={null} breakdowns={[]} />
+        <FinanceAssetBreakdown summary={null} breakdowns={[]} currency="SGD" />
       </TranslationProvider>,
     )
 
@@ -72,5 +76,19 @@ describe('FinanceAssetBreakdown component', () => {
     expect(
       screen.getByText(i18n.t('finance.assets.empty')),
     ).toBeTruthy()
+  })
+  it('renders allocation legend segments', () => {
+    render(
+      <TranslationProvider>
+        <FinanceAssetBreakdown
+          summary={summary}
+          breakdowns={breakdowns}
+          currency="SGD"
+        />
+      </TranslationProvider>,
+    )
+
+    expect(screen.getAllByText(/55\.0%/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/25\.0%/).length).toBeGreaterThan(0)
   })
 })

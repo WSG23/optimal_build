@@ -74,7 +74,19 @@ if _runtime_module is not None:
     _reexport(_runtime_module)
 else:
 
-    __all__ = ["BaseModel", "model_validator", "field_validator", "Field"]
+    __all__ = ["BaseModel", "ConfigDict", "model_validator", "field_validator", "Field"]
+
+    class ConfigDict(dict):
+        """Minimal representation of :class:`pydantic.ConfigDict`.
+
+        Pydantic v2 exposes ``ConfigDict`` as a convenience helper that accepts
+        keyword arguments and stores them in an immutable mapping. The stub only
+        needs to preserve the supplied key/value pairs so downstream schemas can
+        read flags such as ``from_attributes=True`` or ``extra=\"allow\"``.
+        """
+
+        def __init__(self, **kwargs: Any) -> None:
+            super().__init__(kwargs)
 
     def Field(default: Any = None, **_: Any) -> Any:
         """Return the provided default value."""

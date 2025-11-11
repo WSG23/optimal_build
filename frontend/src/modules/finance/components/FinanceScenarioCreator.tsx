@@ -256,6 +256,12 @@ export function FinanceScenarioCreator({
             <span>{t('finance.scenarioCreator.fields.projectId')}</span>
             <input value={projectId} readOnly />
           </label>
+          {projectName ? (
+            <label className="finance-scenario-creator__field">
+              <span>{t('finance.scenarioCreator.fields.projectName')}</span>
+              <input value={projectName} readOnly />
+            </label>
+          ) : null}
         </div>
 
         <div className="finance-scenario-creator__assets">

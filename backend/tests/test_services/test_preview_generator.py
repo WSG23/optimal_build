@@ -48,7 +48,8 @@ def test_build_preview_payload_returns_prism(monkeypatch):
     ]
     assert payload["layers"][0]["metrics"]["gfa_sqm"] == 900.0
     assert payload["layers"][0]["metrics"]["estimated_height_m"] == 45.0
-    assert payload["bounding_box"]["max"]["z"] == 45.0
+    # Bounding box should reflect total stacked height (45 + 18)
+    assert payload["bounding_box"]["max"]["z"] == 63.0
     assert payload["camera_orbit_hint"]["radius"] > 0
 
 

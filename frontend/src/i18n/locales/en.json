@@ -257,6 +257,20 @@
       "refresh": "Recompute scenarios",
       "refreshing": "Recomputing…"
     },
+    "projectSelector": {
+      "title": "Project selection",
+      "description": "Link to a captured developer property or enter a project ID to load finance scenarios.",
+      "current": "Active project: {{value}}",
+      "inputLabel": "Project ID",
+      "inputPlaceholder": "e.g. 00000000-0000-0000-0000-000000000000",
+      "submit": "Load project",
+      "recentLabel": "Recent captures",
+      "refresh": "Refresh",
+      "pickPlaceholder": "Select a capture…",
+      "empty": "Capture a site from the Site Acquisition workspace to see it here.",
+      "hint": "Use “Send to finance workspace” on Site Acquisition to prefill these values.",
+      "defaultLabel": "Project {{id}}"
+    },
     "errors": {
       "generic": "Unable to load finance scenarios."
     },
@@ -268,7 +282,19 @@
         "npv": "Net present value",
         "irr": "Internal rate of return",
         "minDscr": "Minimum DSCR",
-        "loanToCost": "Loan-to-cost"
+        "loanToCost": "Loan-to-cost",
+        "lastRun": "Last run"
+      },
+      "actions": {
+        "makePrimary": "Make primary",
+        "makingPrimary": "Setting…"
+      },
+      "badges": {
+        "primary": "Primary"
+      },
+      "messages": {
+        "primarySuccess": "\"{{name}}\" is now the primary scenario.",
+        "primaryError": "Unable to update the primary scenario."
       },
       "empty": "No finance scenarios are available."
     },
@@ -284,6 +310,34 @@
         "equity": "Equity",
         "debt": "Debt",
         "other": "Other"
+      },
+      "tranches": {
+        "title": "Tranche / facility detail",
+        "headers": {
+          "name": "Facility",
+          "type": "Type",
+          "amount": "Amount",
+          "share": "Share",
+          "rate": "Rate",
+          "periods": "Periods/year",
+          "capitalised": "Interest handling",
+          "upfront": "Upfront fee",
+          "exit": "Exit fee",
+          "reserve": "Interest reserve (months)",
+          "amortisation": "Amortisation (months)"
+        },
+        "tooltips": {
+          "upfront": "One-time fee charged on facility drawdown.",
+          "exit": "Fee payable on loan repayment or refinancing.",
+          "reserve": "Months of interest held in reserve for this facility.",
+          "amortisation": "Repayment tenor for this facility (months)."
+        },
+        "values": {
+          "capitalised": {
+            "yes": "Capitalised",
+            "no": "Serviced"
+          }
+        }
       }
     },
     "drawdown": {
@@ -315,11 +369,14 @@
         "headers": {
           "asset": "Asset",
           "allocation": "Allocation",
+          "nia": "NIA (sqm)",
+          "rent": "Rent / sqm / month",
           "noi": "NOI (annual)",
           "capex": "Capex",
           "payback": "Payback (years)",
           "absorption": "Absorption (months)",
-          "risk": "Risk profile"
+          "risk": "Risk profile",
+          "notes": "Notes"
         }
       }
     },
@@ -360,12 +417,20 @@
         }
       }
     },
+    "privacy": {
+      "restrictedTitle": "Developer-only workspace",
+      "restrictedBody": "Finance modelling data is restricted to developer or admin roles. Update your API role (X-Role header) to \"developer\" before continuing.",
+      "roleHint": "Current role: {{role}}",
+      "privateTitle": "Private finance scenario",
+      "privateBody": "This scenario is marked as private for the developer team. Share these outputs only with authorised project members."
+    },
     "scenarioCreator": {
       "title": "Create finance scenario",
       "description": "Enter asset mix assumptions to generate a fresh Phase 2C feasibility run.",
       "fields": {
         "name": "Scenario name",
         "projectId": "Project ID",
+        "projectName": "Project name",
         "allocation": "Allocation %"
       },
       "placeholders": {
@@ -450,6 +515,37 @@
           "irr": "IRR",
           "escalatedCost": "Escalated cost",
           "totalInterest": "Total interest"
+        }
+      },
+      "summary": {
+        "title": "Parameter impact summary",
+        "labels": {
+          "best": "Upside scenario",
+          "worst": "Downside scenario",
+          "base": "Base scenario: {{label}}",
+          "baseUnknown": "Base scenario unavailable",
+          "baseShort": "Base"
+        },
+        "deltas": {
+          "title": "Scenario deltas",
+          "empty": "No scenario deltas available yet."
+        }
+      },
+      "controls": {
+        "title": "Sensitivity bands",
+        "description": "Adjust parameter deltas and rerun the analysis for the selected scenario.",
+        "parameter": "Parameter",
+        "low": "Low (%)",
+        "base": "Base (%)",
+        "high": "High (%)",
+        "add": "Add parameter",
+        "remove": "Remove",
+        "run": "Run sensitivity",
+        "running": "Running…",
+        "success": "Sensitivity analysis updated.",
+        "errors": {
+          "parameterRequired": "Enter at least one parameter with a delta.",
+          "generic": "Unable to rerun sensitivity analysis."
         }
       }
     },

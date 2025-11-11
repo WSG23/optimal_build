@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import React from 'react'
 
 import type { FinanceScenarioSummary } from '../../../../api/finance'
@@ -52,8 +52,10 @@ function buildScenario(overrides: Partial<FinanceScenarioSummary> = {}): Finance
     constructionLoan: null,
     sensitivityResults: [],
     sensitivityJobs: [],
+    sensitivityBands: [],
     isPrimary: true,
     isPrivate: false,
+    updatedAt: '2025-01-01T00:00:00Z',
   }
   return { ...base, ...overrides }
 }
@@ -90,6 +92,9 @@ describe('FinanceScenarioTable', () => {
     expect(
       screen.getByRole('columnheader', { name: i18n.t('finance.table.headers.escalatedCost') }),
     ).toBeVisible()
+    expect(
+      screen.getByRole('columnheader', { name: i18n.t('finance.table.headers.lastRun') }),
+    ).toBeVisible()
 
     const rows = screen.getAllByRole('row')
     expect(rows).toHaveLength(3)
@@ -98,10 +103,40 @@ describe('FinanceScenarioTable', () => {
     expect(firstCells[0].textContent).toContain('SGD')
     expect(firstCells[1].textContent).toContain('SGD')
     expect(firstCells[2].textContent).toContain('%')
+    expect(firstCells[firstCells.length - 1].textContent).not.toEqual('')
 
     const secondCells = within(rows[2]).getAllByRole('cell')
     expect(secondCells[0].textContent).toContain('SGD')
     expect(secondCells[1].textContent).toContain('SGD')
     expect(secondCells[2].textContent).toContain('%')
+    expect(secondCells[secondCells.length - 1].textContent).not.toEqual('')
+  })
+
+  it('allows marking a scenario as primary', () => {
+    const onMarkPrimary = vi.fn()
+    const scenarios: FinanceScenarioSummary[] = [
+      buildScenario({ scenarioId: 1, scenarioName: 'Primary', isPrimary: true }),
+      buildScenario({ scenarioId: 2, scenarioName: 'Secondary', isPrimary: false }),
+    ]
+
+    render(
+      <TranslationProvider>
+        <FinanceScenarioTable
+          scenarios={scenarios}
+          onMarkPrimary={onMarkPrimary}
+          updatingScenarioId={null}
+        />
+      </TranslationProvider>,
+    )
+
+    expect(
+      screen.getByText(i18n.t('finance.table.badges.primary')),
+    ).toBeVisible()
+
+    const button = screen.getByRole('button', {
+      name: i18n.t('finance.table.actions.makePrimary'),
+    })
+    fireEvent.click(button)
+    expect(onMarkPrimary).toHaveBeenCalledWith(2)
   })
 })

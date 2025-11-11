@@ -1920,6 +1920,73 @@ export function SiteAcquisitionPage() {
     previewJob,
   ])
 
+  const layerBreakdown = useMemo(() => {
+    const layers = capturedProperty?.visualization?.massingLayers ?? []
+    if (!layers.length) {
+      return []
+    }
+
+    const legendLookup = new Map(
+      (capturedProperty?.visualization?.colorLegend ?? []).map((entry) => [
+        entry.assetType.toLowerCase(),
+        entry,
+      ]),
+    )
+
+    const toTitleCase = (value: string) =>
+      value
+        .split(/[\s_-]+/)
+        .filter(Boolean)
+        .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+        .join(' ')
+
+    const formatAreaValue = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      const precision = value >= 1000 ? 0 : 2
+      return `${formatNumberMetric(value, { maximumFractionDigits: precision })} sqm`
+    }
+
+    const formatHeightValue = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      return `${formatNumberMetric(value, { maximumFractionDigits: 1 })} m`
+    }
+
+    return layers.map((layer, index) => {
+      const legend = legendLookup.get(layer.assetType.toLowerCase())
+      const allocationValue =
+        layer.allocationPct !== null && layer.allocationPct !== undefined
+          ? `${formatNumberMetric(layer.allocationPct, { maximumFractionDigits: 0 })}%`
+          : '—'
+      const subtitle = legend?.label
+        ? `${legend.label}${allocationValue !== '—' ? ` · ${allocationValue}` : ''}`
+        : allocationValue !== '—'
+          ? `${allocationValue} of programme`
+          : 'Programme share pending'
+
+      return {
+        id: `${layer.assetType}-${index}`,
+        label: toTitleCase(layer.assetType),
+        subtitle,
+        color: legend?.color ?? layer.color ?? '#4f46e5',
+        description: legend?.description ?? null,
+        metrics: [
+          { label: 'Allocation', value: allocationValue },
+          { label: 'GFA', value: formatAreaValue(layer.gfaSqm) },
+          { label: 'NIA', value: formatAreaValue(layer.niaSqm) },
+          { label: 'Height', value: formatHeightValue(layer.estimatedHeightM) },
+        ],
+      }
+    })
+  }, [
+    capturedProperty?.visualization?.colorLegend,
+    capturedProperty?.visualization?.massingLayers,
+    formatNumberMetric,
+  ])
+
   useEffect(() => {
     if (scenarioOverrideEntries.length === 0) {
       if (scenarioComparisonBase !== null) {
@@ -2791,6 +2858,10 @@ export function SiteAcquisitionPage() {
       setPreviewJob(result.previewJobs?.[0] ?? null)
       if (result.propertyId) {
         try {
+          const propertyLabel =
+            result.propertyInfo?.propertyName?.trim() ||
+            result.address?.fullAddress?.trim() ||
+            null
           sessionStorage.setItem(
             buildAssetMixStorageKey(result.propertyId),
             JSON.stringify({
@@ -2798,6 +2869,13 @@ export function SiteAcquisitionPage() {
               buildEnvelope: result.buildEnvelope,
               financialSummary: result.financialSummary,
               visualization: result.visualization,
+              propertyInfo: result.propertyInfo,
+              address: result.address,
+              metadata: {
+                propertyId: result.propertyId,
+                propertyName: propertyLabel,
+                capturedAt: result.timestamp ?? new Date().toISOString(),
+              },
             }),
           )
         } catch (storageError) {
@@ -4853,6 +4931,145 @@ export function SiteAcquisitionPage() {
                 Status updates automatically while processing.
               </span>
             </div>
+          )}
+          {layerBreakdown.length > 0 && (
+            <section
+              style={{
+                marginTop: '2rem',
+                border: '1px solid #e5e7eb',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                background: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                }}
+              >
+                <h4
+                  style={{
+                    margin: 0,
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em',
+                    color: '#111827',
+                  }}
+                >
+                  Layer breakdown
+                </h4>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '0.9rem',
+                    color: '#4b5563',
+                  }}
+                >
+                  Detailed optimiser output per massing layer (allocation, GFA, NIA, and height).
+                </p>
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '1rem',
+                }}
+              >
+                {layerBreakdown.map((layer) => (
+                  <article
+                    key={layer.id}
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      padding: '1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                      background: '#f9fafb',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '9999px',
+                          background: layer.color,
+                          boxShadow: '0 0 0 1px rgb(255 255 255 / 0.8)',
+                        }}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            letterSpacing: '-0.01em',
+                            color: '#111827',
+                          }}
+                        >
+                          {layer.label}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>{layer.subtitle}</span>
+                      </div>
+                    </div>
+                    <dl
+                      style={{
+                        margin: 0,
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      {layer.metrics.map((metric) => (
+                        <div
+                          key={`${layer.id}-${metric.label}`}
+                          style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}
+                        >
+                          <dt
+                            style={{
+                              margin: 0,
+                              fontSize: '0.7rem',
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: '#9ca3af',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {metric.label}
+                          </dt>
+                          <dd
+                            style={{
+                              margin: 0,
+                              fontWeight: 600,
+                              color: '#1f2937',
+                              fontSize: '0.95rem',
+                            }}
+                          >
+                            {metric.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {layer.description && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.8rem',
+                          color: '#4b5563',
+                        }}
+                      >
+                        {layer.description}
+                      </p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
           )}
         </section>
       )}

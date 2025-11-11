@@ -219,70 +219,21 @@ PostgreSQL or ship seeded SQLite fixtures so the UI works out-of-the-box.
 
 ---
 
-### Frontend: Node.js Test Runner JSDOM Environment Setup Issues
-
-**Documented by:** Claude on 2025-10-19
-**Affects:** `npm --prefix frontend run test` (10 out of 26 tests failing)
-
-**Symptom:**
-Multiple frontend component tests fail with environment setup errors when running via Node.js test runner:
-```
-TypeError: Cannot set property navigator of #<Object> which has only a getter
-ReferenceError: window is not defined
-TypeError: For queries bound to document.body a global document has to be available
-```
-
-**Failing Tests (10/26):**
-- `FeasibilityWizard.test.tsx` - window is not defined
-- `FinanceStackAndDrawdown.test.tsx` (2 tests) - navigator property error, document not available
-- `AgentAdvisoryPage.test.tsx` - navigator property error
-- `AgentIntegrationsPage.test.tsx` - navigator property error
-- `AgentPerformancePage.test.tsx` - navigator property error
-- `AgentsGpsCapturePage.test.tsx` - window is not defined
-- `AdvancedIntelligence.test.tsx` (3 tests) - navigator property error, document not available
-
-**Passing Tests (16/26):**
-- All API-level tests (agents, buildable, finance) - ✅ Passing
-- CAD detection helpers - ✅ Passing
-
-**Root Cause:**
-The Node.js test runner with JSDOM setup in `scripts/test-bootstrap.mjs` has incomplete browser environment mocking. Specifically:
-1. `window` object not properly initialized for some tests
-2. `navigator` property configured as read-only in some contexts
-3. `document.body` not available for React Testing Library's `screen` queries
-
-**Impact:**
-- ❌ Cannot run full frontend test suite successfully (10/26 tests fail)
-- ✅ API-level tests and pure logic tests work fine
-- ✅ **Application code works correctly in production** - these are test environment issues, not code bugs
-- ✅ Component-specific tests for new features (e.g., SiteAcquisitionPage) don't exist yet, so this doesn't block new feature development
-
-**Workaround:**
-For feature development:
-1. Run backend tests for backend changes
-2. Run `npm --prefix frontend run lint` to catch syntax/style issues
-3. Test manually in browser (`make dev` and navigate to component)
-4. Accept that some pre-existing component tests will fail due to test setup issues
-
-For CI/CD:
-- Consider setting frontend test suite to "advisory" status until fixed
-- Or configure CI to expect 10 known failures
-
-**Next Steps:**
-1. Fix `scripts/test-bootstrap.mjs` to properly initialize JSDOM environment
-2. Add proper window/navigator/document mocks in test setup
-3. Ensure all 26 tests pass
-4. Consider switching to Vitest (has better JSDOM integration) or Jest (more mature test runner)
-
-**Estimated Fix Effort:** 2-4 hours
-- Investigate test-bootstrap.mjs and JSDOM setup
-- Add proper mocks for window/navigator/document
-- Update failing test files if needed
-- Verify all 26 tests pass
-
----
-
 ## Resolved Issues
+
+### Frontend: Node.js Test Runner JSDOM Environment Setup Issues – RESOLVED
+
+**Resolution Date:** 2025-11-11
+**Resolved By:** Codex + Claude
+**Fix Description:** Migrated the unit-test harness to Vitest (see `frontend/vitest.config.ts`) and forced the pool to `threads` (min 1 / max 2 workers). This avoids the macOS fork-limit crashes and gives us a clean JSDOM environment via Vite’s React plugin. Tests now run with:
+
+```bash
+npm --prefix frontend run test -- <pattern>
+# e.g.
+npm --prefix frontend run test -- FinanceSensitivityControls.test.tsx
+```
+
+**Status:** All existing component tests pass under Vitest; the prior “10/26 failing” note no longer applies. CI should call the standard `npm --prefix frontend run test` script (already wired to Vitest). If you need to run specific suites locally, prefer the `--` pattern selector to keep execution fast.
 
 ### Migration Audit: Legacy Downgrade Guards Missing - RESOLVED
 

@@ -5,6 +5,8 @@ import { useTranslation } from '../../../i18n'
 
 interface FinanceScenarioTableProps {
   scenarios: FinanceScenarioSummary[]
+  onMarkPrimary?: (scenarioId: number) => void
+  updatingScenarioId?: number | null
 }
 
 function toNumber(value: string | null | undefined): number | null {
@@ -69,7 +71,29 @@ function formatDscr(
   }).format(value)
 }
 
-export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
+function formatDateTime(
+  value: string | null | undefined,
+  locale: string,
+  fallback: string,
+): string {
+  if (!value) {
+    return fallback
+  }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return fallback
+  }
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
+}
+
+export function FinanceScenarioTable({
+  scenarios,
+  onMarkPrimary,
+  updatingScenarioId = null,
+}: FinanceScenarioTableProps) {
   const { t, i18n } = useTranslation()
   const fallback = t('common.fallback.dash')
   const locale = i18n.language
@@ -95,6 +119,8 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
           irr,
           minDscr,
           loanToCost,
+          isPrimary: Boolean(scenario.isPrimary),
+          updatedAt: scenario.updatedAt ?? null,
         }
       }),
     [scenarios],
@@ -118,12 +144,34 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
             <th scope="col">{t('finance.table.headers.irr')}</th>
             <th scope="col">{t('finance.table.headers.minDscr')}</th>
             <th scope="col">{t('finance.table.headers.loanToCost')}</th>
+            <th scope="col">{t('finance.table.headers.lastRun')}</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
-              <th scope="row">{row.name}</th>
+              <th scope="row">
+                <div className="finance-table__scenario-cell">
+                  <span>{row.name}</span>
+                  {row.isPrimary ? (
+                    <span className="finance-table__badge">
+                      {t('finance.table.badges.primary')}
+                    </span>
+                  ) : null}
+                  {!row.isPrimary && onMarkPrimary ? (
+                    <button
+                      type="button"
+                      className="finance-table__primary-button"
+                      onClick={() => onMarkPrimary(row.id)}
+                      disabled={updatingScenarioId === row.id}
+                    >
+                      {updatingScenarioId === row.id
+                        ? t('finance.table.actions.makingPrimary')
+                        : t('finance.table.actions.makePrimary')}
+                    </button>
+                  ) : null}
+                </div>
+              </th>
               <td>
                 {formatCurrency(
                   row.escalatedCost,
@@ -136,6 +184,7 @@ export function FinanceScenarioTable({ scenarios }: FinanceScenarioTableProps) {
               <td>{formatPercent(row.irr, locale, fallback)}</td>
               <td>{formatDscr(row.minDscr, locale, fallback)}</td>
               <td>{formatPercent(row.loanToCost, locale, fallback)}</td>
+              <td>{formatDateTime(row.updatedAt, locale, fallback)}</td>
             </tr>
           ))}
         </tbody>

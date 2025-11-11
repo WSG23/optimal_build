@@ -668,9 +668,24 @@ export function AgentsGpsCapturePage({
               >
                 {t('agentsCapture.results.viewFeasibility')}
               </Link>
-              <Link to="/finance" className="agents-capture__cta-link">
-                {t('agentsCapture.results.openFinance')}
-              </Link>
+              {(() => {
+                const financeProjectName =
+                  result.propertyInfo?.propertyName?.trim() ||
+                  result.address.fullAddress?.trim() ||
+                  null
+                const financeLink = result.propertyId
+                  ? `/developers/finance?projectId=${encodeURIComponent(result.propertyId)}${
+                      financeProjectName
+                        ? `&projectName=${encodeURIComponent(financeProjectName)}`
+                        : ''
+                    }`
+                  : '/developers/finance'
+                return (
+                  <Link to={financeLink} className="agents-capture__cta-link">
+                    {t('agentsCapture.results.openFinance')}
+                  </Link>
+                )
+              })()}
             </div>
 
             <footer className="agents-capture__footer">

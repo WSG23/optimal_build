@@ -16,12 +16,18 @@ import backend.jobs.finance_sensitivity  # noqa: F401
 from backend.jobs import JobDispatch, job_queue
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.api.deps import RequestIdentity, require_reviewer
 from app.core.config import settings
 from app.core.database import get_session
-from app.models.finance import FinCapitalStack, FinProject, FinResult, FinScenario
+from app.models.finance import (
+    FinAssetBreakdown,
+    FinCapitalStack,
+    FinProject,
+    FinResult,
+    FinScenario,
+)
 from app.models.projects import Project
 from app.models.rkp import RefCostIndex
 from app.schemas.finance import (
@@ -51,11 +57,13 @@ from app.services.finance import (
     serialise_breakdown,
     summarise_asset_financials,
 )
+from app.services.finance.asset_models import AssetFinanceBreakdown
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)
@@ -71,6 +79,28 @@ class FinanceScenarioUpdatePayload(BaseModel):
     scenario_name: str | None = None
     description: str | None = None
     is_primary: bool | None = None
+
+
+class FinanceSensitivityRunPayload(BaseModel):
+    """Payload for rerunning sensitivity analysis on a scenario."""
+
+    sensitivity_bands: list[SensitivityBandInput]
+
+    @field_validator("sensitivity_bands")
+    @classmethod
+    def _validate_bands(
+        cls, value: list[SensitivityBandInput]
+    ) -> list[SensitivityBandInput]:
+        if not value:
+            raise ValueError("At least one sensitivity band must be provided.")
+        for index, band in enumerate(value, start=1):
+            if not band.parameter or not band.parameter.strip():
+                raise ValueError(f"Sensitivity band #{index} is missing a parameter.")
+            if band.low is None and band.base is None and band.high is None:
+                raise ValueError(
+                    f"Sensitivity band '{band.parameter}' must define at least one delta."
+                )
+        return value
 
 
 def _normalise_project_id(project_id: str | int | UUID) -> UUID:
@@ -198,6 +228,86 @@ def _facility_metadata_from_input(
     return metadata
 
 
+def _decimal_to_string(value: Decimal | None, places: int | None = None) -> str | None:
+    if value is None:
+        return None
+    if places is not None:
+        quant = Decimal(1).scaleb(-places)
+        try:
+            value = value.quantize(quant, rounding=ROUND_HALF_UP)
+        except (InvalidOperation, ValueError):
+            pass
+    return format(value, "f")
+
+
+def _serialise_asset_breakdown_model(
+    record: FinAssetBreakdown,
+) -> FinanceAssetBreakdownSchema:
+    return FinanceAssetBreakdownSchema(
+        asset_type=record.asset_type,
+        allocation_pct=_decimal_to_string(record.allocation_pct, places=4),
+        nia_sqm=_decimal_to_string(record.nia_sqm, places=2),
+        rent_psm_month=_decimal_to_string(record.rent_psm_month, places=2),
+        gross_rent_annual_sgd=_decimal_to_string(record.annual_revenue_sgd, places=2),
+        annual_revenue_sgd=_decimal_to_string(record.annual_revenue_sgd, places=2),
+        vacancy_loss_sgd=None,
+        effective_gross_income_sgd=None,
+        operating_expenses_sgd=None,
+        annual_opex_sgd=None,
+        noi_annual_sgd=_decimal_to_string(record.annual_noi_sgd, places=2),
+        annual_noi_sgd=_decimal_to_string(record.annual_noi_sgd, places=2),
+        estimated_capex_sgd=_decimal_to_string(record.estimated_capex_sgd, places=2),
+        capex_sgd=_decimal_to_string(record.estimated_capex_sgd, places=2),
+        payback_years=_decimal_to_string(record.payback_years, places=2),
+        absorption_months=_decimal_to_string(record.absorption_months, places=1),
+        stabilised_yield_pct=_decimal_to_string(record.stabilised_yield_pct, places=4),
+        risk_level=record.risk_level,
+        risk_priority=record.risk_priority,
+        heritage_premium_pct=None,
+        notes=list(record.notes_json or []),
+    )
+
+
+def _build_asset_breakdown_records(
+    project_uuid: UUID,
+    scenario: FinScenario,
+    breakdowns: AssetFinanceBreakdown | Sequence[AssetFinanceBreakdown] | None,
+) -> list[FinAssetBreakdown]:
+    """Convert calculated asset breakdowns into ORM rows for persistence."""
+
+    if breakdowns is None:
+        return []
+
+    if isinstance(breakdowns, AssetFinanceBreakdown):
+        queue: Sequence[AssetFinanceBreakdown] = (breakdowns,)
+    else:
+        queue = tuple(breakdowns)
+
+    records: list[FinAssetBreakdown] = []
+    for entry in queue:
+        notes = entry.notes or ()
+        records.append(
+            FinAssetBreakdown(
+                project_id=project_uuid,
+                scenario=scenario,
+                asset_type=entry.asset_type,
+                allocation_pct=entry.allocation_pct,
+                nia_sqm=entry.nia_sqm,
+                rent_psm_month=entry.rent_psm_month,
+                annual_noi_sgd=entry.annual_noi_sgd,
+                annual_revenue_sgd=entry.annual_revenue_sgd,
+                estimated_capex_sgd=entry.estimated_capex_sgd,
+                payback_years=entry.payback_years,
+                absorption_months=entry.absorption_months,
+                stabilised_yield_pct=entry.stabilised_yield_pct,
+                risk_level=entry.risk_level,
+                risk_priority=entry.risk_priority,
+                notes_json=list(notes),
+            )
+        )
+    return records
+
+
 def _build_facility_metadata_map(
     loan_config: ConstructionLoanInput | None,
 ) -> dict[str, dict[str, str | bool | int]]:
@@ -247,6 +357,167 @@ def _merge_facility_metadata(
         merged.pop("facility", None)
 
     return merged
+
+
+def _store_sensitivity_metadata(
+    session: AsyncSession,
+    scenario: FinScenario,
+    entries: Sequence[Mapping[str, Any] | FinanceSensitivityOutcomeSchema],
+) -> None:
+    """Persist sensitivity metadata on the scenario's results."""
+
+    existing_result: FinResult | None = None
+    for candidate in scenario.results:
+        if candidate.name == "sensitivity_analysis":
+            existing_result = candidate
+            break
+    if existing_result is None:
+        existing_result = FinResult(
+            project_id=scenario.project_id,
+            scenario=scenario,
+            name="sensitivity_analysis",
+            value=None,
+            unit=None,
+            metadata={},
+        )
+        session.add(existing_result)
+
+    serialised: list[dict[str, Any]] = []
+    for entry in entries:
+        if isinstance(entry, FinanceSensitivityOutcomeSchema):
+            serialised.append(entry.model_dump(mode="json"))
+        else:
+            serialised.append(_json_safe(entry))
+
+    existing_result.metadata = {"bands": serialised}
+    flag_modified(existing_result, "metadata_json")
+
+
+def _clear_sensitivity_jobs(scenario: FinScenario) -> None:
+    """Remove tracked sensitivity jobs from scenario assumptions."""
+
+    assumptions = dict(scenario.assumptions or {})
+    async_jobs = assumptions.get("async_jobs")
+    if isinstance(async_jobs, dict) and async_jobs.pop("sensitivity", None) is not None:
+        if async_jobs:
+            assumptions["async_jobs"] = async_jobs
+        else:
+            assumptions.pop("async_jobs", None)
+        scenario.assumptions = assumptions
+
+
+def _base_finance_metrics(
+    scenario: FinScenario,
+) -> tuple[Decimal, Decimal | None, Decimal, Decimal | None]:
+    """Extract baseline finance metrics required for sensitivity runs."""
+
+    escalated_cost: Decimal | None = None
+    base_npv: Decimal | None = None
+    base_irr: Decimal | None = None
+    interest_total: Decimal | None = None
+
+    for result in scenario.results:
+        if result.name == "escalated_cost" and result.value is not None:
+            escalated_cost = _decimal_from_value(result.value)
+        elif result.name == "npv" and result.value is not None:
+            base_npv = _decimal_from_value(result.value)
+        elif result.name == "irr" and result.value is not None:
+            base_irr = _decimal_from_value(result.value)
+        elif result.name == "construction_loan_interest" and result.value is not None:
+            interest_total = _decimal_from_value(result.value)
+
+    if escalated_cost is None or base_npv is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Scenario is missing baseline finance results for sensitivity analysis.",
+        )
+    return base_npv, base_irr, escalated_cost, interest_total
+
+
+def _rebuild_drawdown_summary(
+    assumptions: Mapping[str, Any],
+    *,
+    currency: str,
+) -> calculator.FinancingDrawdownSchedule | None:
+    """Derive the drawdown summary from stored assumptions."""
+
+    drawdown_config = assumptions.get("drawdown_schedule")
+    if not isinstance(drawdown_config, list) or not drawdown_config:
+        return None
+
+    schedule_inputs = []
+    for entry in drawdown_config:
+        if not isinstance(entry, Mapping):
+            continue
+        schedule_inputs.append(
+            {
+                "period": str(entry.get("period", "")),
+                "equity_draw": _decimal_from_value(entry.get("equity_draw", "0")),
+                "debt_draw": _decimal_from_value(entry.get("debt_draw", "0")),
+            }
+        )
+    if not schedule_inputs:
+        return None
+    return calculator.drawdown_schedule(
+        schedule_inputs,
+        currency=currency,
+    )
+
+
+def _build_sensitivity_job_context(
+    scenario: FinScenario,
+    *,
+    assumptions: Mapping[str, Any],
+    escalated_cost: Decimal,
+    drawdown_summary: calculator.FinancingDrawdownSchedule | None,
+    loan_config: ConstructionLoanInput | None,
+) -> dict[str, Any]:
+    """Construct the job context payload for async sensitivity runs."""
+
+    cash_config = assumptions.get("cash_flow") or {}
+    cash_flows = cash_config.get("cash_flows") or []
+    discount_rate = cash_config.get("discount_rate", "0")
+    currency = (
+        getattr(scenario.fin_project, "currency", None)
+        or assumptions.get("currency")
+        or "SGD"
+    )
+    drawdown_schema = (
+        _convert_drawdown_schedule(drawdown_summary)
+        if drawdown_summary is not None
+        else None
+    )
+
+    return {
+        "cash_flows": [str(value) for value in cash_flows],
+        "discount_rate": str(discount_rate),
+        "escalated_cost": str(escalated_cost),
+        "currency": currency,
+        "interest_periods": (
+            loan_config.periods_per_year
+            if loan_config and loan_config.periods_per_year
+            else 12
+        ),
+        "capitalise_interest": (
+            loan_config.capitalise_interest if loan_config else True
+        ),
+        "base_interest_rate": (
+            str(loan_config.interest_rate)
+            if loan_config and loan_config.interest_rate is not None
+            else None
+        ),
+        "schedule": (
+            drawdown_schema.model_dump(mode="json") if drawdown_schema else None
+        ),
+        "facilities": (
+            [
+                facility.model_dump(mode="json")
+                for facility in (loan_config.facilities or [])
+            ]
+            if loan_config and loan_config.facilities
+            else []
+        ),
+    }
 
 
 def _project_uuid_from_scenario(scenario: FinScenario) -> UUID:
@@ -627,6 +898,19 @@ async def _summarise_persisted_scenario(
             status_code=500, detail="Finance project missing for scenario"
         )
 
+    sensitivity_band_inputs: list[SensitivityBandInput] = []
+    raw_bands = assumptions.get("sensitivity_bands")
+    if isinstance(raw_bands, list):
+        for entry in raw_bands:
+            if not isinstance(entry, Mapping):
+                continue
+            try:
+                sensitivity_band_inputs.append(
+                    SensitivityBandInput.model_validate(entry)
+                )
+            except Exception:  # pragma: no cover - tolerate invalid legacy rows
+                continue
+
     cost_config = assumptions.get("cost_escalation") or {}
     cash_config = assumptions.get("cash_flow") or {}
     dscr_config = assumptions.get("dscr")
@@ -877,6 +1161,14 @@ async def _summarise_persisted_scenario(
 
     asset_mix_summary_schema: AssetFinancialSummarySchema | None = None
     asset_breakdown_schemas: list[FinanceAssetBreakdownSchema] = []
+    if getattr(scenario, "asset_breakdowns", None):
+        asset_breakdown_schemas = [
+            _serialise_asset_breakdown_model(record)
+            for record in sorted(
+                scenario.asset_breakdowns,
+                key=lambda item: getattr(item, "id", 0) or 0,
+            )
+        ]
     construction_interest_schema: ConstructionLoanInterestSchema | None = None
     construction_interest_metadata: dict[str, Any] | None = None
     construction_interest_value: Decimal | None = None
@@ -884,6 +1176,7 @@ async def _summarise_persisted_scenario(
         scenario.results, key=lambda item: getattr(item, "id", 0) or 0
     )
     asset_processed = False
+    sensitivity_metadata_rows: list[dict[str, Any]] | None = None
     for stored in ordered_results:
         metadata = stored.metadata if isinstance(stored.metadata, dict) else None
         if stored.name == "asset_financials" and metadata and not asset_processed:
@@ -896,7 +1189,7 @@ async def _summarise_persisted_scenario(
                 except Exception:  # pragma: no cover - defensive for historical data
                     asset_mix_summary_schema = None
             breakdown_meta = metadata.get("breakdowns")
-            if isinstance(breakdown_meta, list):
+            if isinstance(breakdown_meta, list) and not asset_breakdown_schemas:
                 converted: list[FinanceAssetBreakdownSchema] = []
                 for entry in breakdown_meta:
                     if not isinstance(entry, dict):
@@ -915,9 +1208,11 @@ async def _summarise_persisted_scenario(
             bands_meta = metadata.get("bands")
             if isinstance(bands_meta, list):
                 parsed_entries: list[FinanceSensitivityOutcomeSchema] = []
+                cleaned_metadata: list[dict[str, Any]] = []
                 for entry in bands_meta:
                     if not isinstance(entry, dict):
                         continue
+                    cleaned_metadata.append(entry)
                     if entry.get("parameter") == "__async__":
                         continue
                     try:
@@ -928,6 +1223,8 @@ async def _summarise_persisted_scenario(
                         continue
                 if parsed_entries:
                     sensitivity_results = parsed_entries
+                if cleaned_metadata:
+                    sensitivity_metadata_rows = cleaned_metadata
             continue
 
         if stored.name == "construction_loan_interest" and metadata:
@@ -1024,6 +1321,15 @@ async def _summarise_persisted_scenario(
                 metadata=construction_interest_metadata,
             )
         )
+    if sensitivity_metadata_rows:
+        results.append(
+            FinanceResultSchema(
+                name="sensitivity_analysis",
+                value=None,
+                unit=None,
+                metadata={"bands": sensitivity_metadata_rows},
+            )
+        )
 
     drawdown_schema = None
     if drawdown_summary:
@@ -1051,6 +1357,7 @@ async def _summarise_persisted_scenario(
         construction_loan=construction_loan_config,
         sensitivity_results=sensitivity_results,
         sensitivity_jobs=sensitivity_jobs,
+        sensitivity_bands=sensitivity_band_inputs,
         is_primary=bool(scenario.is_primary),
         is_private=bool(getattr(scenario, "is_private", False)),
         updated_at=scenario.updated_at,
@@ -1896,6 +2203,7 @@ async def run_finance_feasibility(
         asset_breakdown_schemas: list[FinanceAssetBreakdownSchema] = []
         asset_mix_summary_schema: AssetFinancialSummarySchema | None = None
         asset_financial_metadata: dict[str, object] | None = None
+        asset_breakdown_models: list[FinAssetBreakdown] = []
         if payload.scenario.asset_mix:
             asset_inputs = [
                 AssetFinanceInput(
@@ -1928,6 +2236,9 @@ async def run_finance_feasibility(
                     for breakdown in asset_breakdown_schemas
                 ],
             }
+            asset_breakdown_models = _build_asset_breakdown_records(
+                project_uuid, scenario, asset_breakdowns
+            )
 
         construction_interest_schema: ConstructionLoanInterestSchema | None = None
         construction_interest_metadata: dict[str, Any] | None = None
@@ -2160,10 +2471,14 @@ async def run_finance_feasibility(
                 )
             )
 
+        if asset_breakdown_models:
+            session.add_all(asset_breakdown_models)
+
         session.add_all(results)
 
         await session.flush()
         await session.commit()
+        await session.refresh(scenario)
 
         log_event(
             logger,
@@ -2198,6 +2513,7 @@ async def run_finance_feasibility(
             construction_loan=loan_config,
             sensitivity_results=sensitivity_results,
             sensitivity_jobs=sensitivity_jobs,
+            sensitivity_bands=payload.scenario.sensitivity_bands or [],
             is_primary=bool(scenario.is_primary),
             is_private=bool(getattr(scenario, "is_private", False)),
             updated_at=scenario.updated_at,
@@ -2231,6 +2547,7 @@ async def list_finance_scenarios(
             selectinload(FinScenario.fin_project),
             selectinload(FinScenario.capital_stack),
             selectinload(FinScenario.results),
+            selectinload(FinScenario.asset_breakdowns),
         )
         .order_by(FinScenario.id)
     )
@@ -2299,6 +2616,7 @@ async def update_finance_scenario(
             selectinload(FinScenario.fin_project),
             selectinload(FinScenario.capital_stack),
             selectinload(FinScenario.results),
+            selectinload(FinScenario.asset_breakdowns),
         )
     )
     scenario = (await session.execute(base_stmt)).scalars().first()
@@ -2349,7 +2667,10 @@ async def list_finance_jobs(
     stmt = (
         select(FinScenario)
         .where(FinScenario.id == scenario_id)
-        .options(selectinload(FinScenario.fin_project))
+        .options(
+            selectinload(FinScenario.fin_project),
+            selectinload(FinScenario.asset_breakdowns),
+        )
     )
     scenario = (await session.execute(stmt)).scalars().first()
     if scenario is None:
@@ -2428,6 +2749,7 @@ async def update_construction_loan(
             selectinload(FinScenario.fin_project),
             selectinload(FinScenario.capital_stack),
             selectinload(FinScenario.results),
+            selectinload(FinScenario.asset_breakdowns),
         )
     )
     scenario = (await session.execute(stmt)).scalars().first()
@@ -2515,10 +2837,126 @@ async def update_construction_loan(
             existing_result.metadata = _json_safe(construction_interest_metadata)
 
     await session.commit()
-    await session.refresh(
-        scenario,
-        attribute_names=["fin_project", "capital_stack", "results"],
+    scenario = (await session.execute(stmt)).scalars().first()
+    if scenario is None:
+        raise HTTPException(status_code=404, detail="Finance scenario not found")
+    return await _summarise_persisted_scenario(scenario, session=session)
+
+
+@router.post(
+    "/scenarios/{scenario_id}/sensitivity",
+    response_model=FinanceFeasibilityResponse,
+)
+async def rerun_finance_sensitivity(
+    scenario_id: int,
+    payload: FinanceSensitivityRunPayload,
+    session: AsyncSession = Depends(get_session),
+    identity: RequestIdentity = Depends(require_reviewer),
+) -> FinanceFeasibilityResponse:
+    """Recompute or enqueue sensitivity analysis for an existing scenario."""
+
+    base_stmt = (
+        select(FinScenario)
+        .where(FinScenario.id == scenario_id)
+        .options(
+            selectinload(FinScenario.fin_project),
+            selectinload(FinScenario.capital_stack),
+            selectinload(FinScenario.results),
+            selectinload(FinScenario.asset_breakdowns),
+        )
     )
+    scenario = (await session.execute(base_stmt)).scalars().first()
+    if scenario is None:
+        raise HTTPException(status_code=404, detail="Finance scenario not found")
+
+    project_uuid = _project_uuid_from_scenario(scenario)
+    await _ensure_project_owner(session, project_uuid, identity)
+
+    try:
+        base_npv, base_irr, escalated_cost, base_interest_total = _base_finance_metrics(
+            scenario
+        )
+    except HTTPException:
+        raise
+
+    currency = (
+        getattr(scenario.fin_project, "currency", None)
+        or (scenario.assumptions or {}).get("currency")
+        or "SGD"
+    )
+
+    assumptions = dict(scenario.assumptions or {})
+    assumptions["sensitivity_bands"] = [
+        band.model_dump(mode="json") for band in payload.sensitivity_bands
+    ]
+    scenario.assumptions = assumptions
+
+    drawdown_summary = _rebuild_drawdown_summary(assumptions, currency=currency)
+    raw_loan = assumptions.get("construction_loan")
+    loan_config: ConstructionLoanInput | None = None
+    if isinstance(raw_loan, Mapping):
+        try:
+            loan_config = ConstructionLoanInput.model_validate(raw_loan)
+        except Exception:  # pragma: no cover - tolerate legacy payloads
+            loan_config = None
+
+    sync_threshold = max(1, settings.FINANCE_SENSITIVITY_MAX_SYNC_BANDS)
+    if len(payload.sensitivity_bands) <= sync_threshold:
+        (
+            sensitivity_results,
+            sensitivity_metadata,
+        ) = _evaluate_sensitivity_bands(
+            payload.sensitivity_bands,
+            base_npv=base_npv,
+            base_irr=base_irr,
+            escalated_cost=escalated_cost,
+            base_interest_total=base_interest_total,
+            currency=currency,
+        )
+        _store_sensitivity_metadata(session, scenario, sensitivity_metadata or [])
+        _clear_sensitivity_jobs(scenario)
+        await session.commit()
+    else:
+        job_context = _build_sensitivity_job_context(
+            scenario,
+            assumptions=assumptions,
+            escalated_cost=escalated_cost,
+            drawdown_summary=drawdown_summary,
+            loan_config=loan_config,
+        )
+        dispatch: JobDispatch = await job_queue.enqueue(
+            "finance.sensitivity",
+            scenario.id,
+            bands=[band.model_dump(mode="json") for band in payload.sensitivity_bands],
+            context=job_context,
+            queue="finance",
+        )
+        queued_at = datetime.now(timezone.utc)
+        job_status = FinanceJobStatusSchema(
+            scenario_id=scenario.id,
+            task_id=dispatch.task_id,
+            status=dispatch.status,
+            backend=dispatch.backend,
+            queued_at=queued_at,
+        )
+        _record_async_job(scenario, job_status)
+        _store_sensitivity_metadata(
+            session,
+            scenario,
+            [
+                {
+                    "parameter": "__async__",
+                    "status": dispatch.status,
+                    "task_id": dispatch.task_id,
+                    "queue": dispatch.queue,
+                }
+            ],
+        )
+        await session.commit()
+
+    scenario = (await session.execute(base_stmt)).scalars().first()
+    if scenario is None:
+        raise HTTPException(status_code=404, detail="Finance scenario not found")
     return await _summarise_persisted_scenario(scenario, session=session)
 
 

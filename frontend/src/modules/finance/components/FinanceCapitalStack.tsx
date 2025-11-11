@@ -7,6 +7,8 @@ interface FinanceCapitalStackProps {
   scenarios: FinanceScenarioSummary[]
 }
 
+type CapitalStackSlice = NonNullable<FinanceScenarioSummary['capitalStack']>['slices'][number]
+
 function toNumber(value: string | null | undefined): number | null {
   if (typeof value !== 'string') {
     return null
@@ -173,6 +175,10 @@ export function FinanceCapitalStack({
                   </li>
                 ))}
               </ul>
+              <CapitalStackTrancheTable
+                currency={card.currency}
+                slices={capitalStack.slices}
+              />
             </article>
           )
         })}
@@ -182,3 +188,152 @@ export function FinanceCapitalStack({
 }
 
 export default FinanceCapitalStack
+
+interface CapitalStackTrancheTableProps {
+  currency: string
+  slices: CapitalStackSlice[]
+}
+
+type SliceMetadata = Record<string, unknown>
+
+function extractFacilityMetadata(metadata?: SliceMetadata): SliceMetadata {
+  if (!metadata) {
+    return {}
+  }
+  if (metadata.facility && typeof metadata.facility === 'object') {
+    return metadata.facility as SliceMetadata
+  }
+  if (metadata.detail && typeof metadata.detail === 'object') {
+    const detail = metadata.detail as SliceMetadata
+    if (detail.facility && typeof detail.facility === 'object') {
+      return detail.facility as SliceMetadata
+    }
+    return detail
+  }
+  return metadata
+}
+
+function normaliseNumber(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function CapitalStackTrancheTable({
+  currency,
+  slices,
+}: CapitalStackTrancheTableProps) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language
+  const fallback = t('common.fallback.dash')
+
+  if (slices.length === 0) {
+    return null
+  }
+
+  const formatCurrencyCell = (value: string | null | undefined) =>
+    formatCurrency(value ?? '', currency, locale, fallback)
+  const formatPercentCell = (value: string | null | undefined) =>
+    formatPercent(value, locale, fallback)
+
+  return (
+    <div className="finance-capital__tranche-wrapper">
+      <h4 className="finance-capital__tranche-title">
+        {t('finance.capitalStack.tranches.title')}
+      </h4>
+      <table className="finance-capital__tranche-table">
+        <thead>
+          <tr>
+            <th scope="col">{t('finance.capitalStack.tranches.headers.name')}</th>
+            <th scope="col">{t('finance.capitalStack.tranches.headers.type')}</th>
+            <th scope="col">{t('finance.capitalStack.tranches.headers.amount')}</th>
+            <th scope="col">{t('finance.capitalStack.tranches.headers.share')}</th>
+            <th scope="col">{t('finance.capitalStack.tranches.headers.rate')}</th>
+            <th scope="col">{t('finance.capitalStack.tranches.headers.periods')}</th>
+            <th scope="col">{t('finance.capitalStack.tranches.headers.capitalised')}</th>
+            <th
+              scope="col"
+              title={t('finance.capitalStack.tranches.tooltips.upfront')}
+            >
+              {t('finance.capitalStack.tranches.headers.upfront')}
+            </th>
+            <th
+              scope="col"
+              title={t('finance.capitalStack.tranches.tooltips.exit')}
+            >
+              {t('finance.capitalStack.tranches.headers.exit')}
+            </th>
+            <th
+              scope="col"
+              title={t('finance.capitalStack.tranches.tooltips.reserve')}
+            >
+              {t('finance.capitalStack.tranches.headers.reserve')}
+            </th>
+            <th
+              scope="col"
+              title={t('finance.capitalStack.tranches.tooltips.amortisation')}
+            >
+              {t('finance.capitalStack.tranches.headers.amortisation')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {slices.map((slice) => {
+            const metadata = slice.metadata as SliceMetadata | undefined
+            const facilityMeta = extractFacilityMetadata(metadata)
+            const upfront =
+              facilityMeta.upfront_fee_pct ??
+              facilityMeta.upfrontFeePct ??
+              null
+            const exitFee =
+              facilityMeta.exit_fee_pct ?? facilityMeta.exitFeePct ?? null
+            const reserveMonths = normaliseNumber(
+              facilityMeta.reserve_months ?? facilityMeta.reserveMonths,
+            )
+            const amortMonths = normaliseNumber(
+              facilityMeta.amortisation_months ?? facilityMeta.amortisationMonths,
+            )
+            const periodsPerYear = normaliseNumber(
+              facilityMeta.periods_per_year ?? facilityMeta.periodsPerYear,
+            )
+            const capitalisedValue =
+              typeof facilityMeta.capitalise_interest === 'boolean'
+                ? facilityMeta.capitalise_interest
+                : typeof facilityMeta.capitaliseInterest === 'boolean'
+                  ? facilityMeta.capitaliseInterest
+                  : null
+            return (
+              <tr key={`${slice.name}-${slice.trancheOrder ?? 0}`}>
+                <th scope="row">{slice.name}</th>
+                <td>
+                  {t(`finance.capitalStack.categories.${slice.category}`, {
+                    defaultValue: slice.category,
+                  })}
+                </td>
+                <td>{formatCurrencyCell(slice.amount)}</td>
+                <td>{formatPercentCell(slice.share)}</td>
+                <td>{formatPercentCell(slice.rate)}</td>
+                <td>{periodsPerYear ?? fallback}</td>
+                <td>
+                  {capitalisedValue === null
+                    ? fallback
+                    : t(
+                        `finance.capitalStack.tranches.values.capitalised.${
+                          capitalisedValue ? 'yes' : 'no'
+                        }`,
+                      )}
+                </td>
+                <td>{upfront ? `${upfront}%` : fallback}</td>
+                <td>{exitFee ? `${exitFee}%` : fallback}</td>
+                <td>{reserveMonths ?? fallback}</td>
+                <td>{amortMonths ?? fallback}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}

@@ -527,6 +527,7 @@ class FinanceFeasibilityResponse(BaseModel):
         default_factory=list
     )
     sensitivity_jobs: list[FinanceJobStatusSchema] = Field(default_factory=list)
+    sensitivity_bands: list[SensitivityBandInput] = Field(default_factory=list)
     is_primary: bool = False
     is_private: bool = False
     updated_at: datetime | None = None

@@ -310,8 +310,16 @@ export interface FinanceScenarioSummary {
   constructionLoan: ConstructionLoanInput | null
   sensitivityResults: FinanceSensitivityOutcome[]
   sensitivityJobs: FinanceJobStatus[]
+  sensitivityBands: SensitivityBandInput[]
   isPrimary?: boolean
   isPrivate?: boolean
+  updatedAt?: string | null
+}
+
+export interface FinanceScenarioUpdateInput {
+  scenarioName?: string
+  description?: string | null
+  isPrimary?: boolean
 }
 
 interface FinanceFeasibilityRequestPayload {
@@ -493,6 +501,8 @@ interface ConstructionLoanFacilityInputPayload {
   capitalise_interest?: boolean | null
   upfront_fee_pct?: string | null
   exit_fee_pct?: string | null
+  reserve_months?: number | null
+  amortisation_months?: number | null
 }
 
 interface ConstructionLoanInputPayload {
@@ -511,6 +521,8 @@ interface ConstructionLoanFacilityPayload {
   total_interest?: string | null
   upfront_fee?: string | null
   exit_fee?: string | null
+  reserve_months?: number | null
+  amortisation_months?: number | null
 }
 
 interface ConstructionLoanInterestEntryPayload {
@@ -571,6 +583,7 @@ interface FinanceFeasibilityResponsePayload {
   construction_loan?: ConstructionLoanInputPayload | null
   sensitivity_results?: FinanceSensitivityOutcomePayload[] | null
   sensitivity_jobs?: FinanceJobStatusPayload[] | null
+  sensitivity_bands?: SensitivityBandPayload[] | null
   is_primary?: boolean | null
   is_private?: boolean | null
 }
@@ -638,6 +651,14 @@ function toConstructionLoanPayload(
         : undefined,
     upfront_fee_pct: toOptionalString(facility.upfrontFeePct),
     exit_fee_pct: toOptionalString(facility.exitFeePct),
+    reserve_months:
+      typeof facility.reserveMonths === 'number'
+        ? facility.reserveMonths
+        : undefined,
+    amortisation_months:
+      typeof facility.amortisationMonths === 'number'
+        ? facility.amortisationMonths
+        : undefined,
   }))
 
   return {
@@ -891,8 +912,8 @@ function mapConstructionLoanConfig(
           facility.capitalise_interest ?? true,
         upfrontFeePct: facility.upfront_fee_pct ?? null,
         exitFeePct: facility.exit_fee_pct ?? null,
-        reserveMonths: null,
-        amortisationMonths: null,
+        reserveMonths: facility.reserve_months ?? null,
+        amortisationMonths: facility.amortisation_months ?? null,
         metadata: null,
       }))
     : null
@@ -967,6 +988,18 @@ function mapSensitivityOutcome(
   }
 }
 
+function mapSensitivityBand(
+  payload: SensitivityBandPayload,
+): SensitivityBandInput {
+  return {
+    parameter: payload.parameter,
+    low: payload.low ?? undefined,
+    base: payload.base ?? undefined,
+    high: payload.high ?? undefined,
+    notes: Array.isArray(payload.notes) ? [...payload.notes] : [],
+  }
+}
+
 function mapJobStatus(payload: FinanceJobStatusPayload): FinanceJobStatus {
   return {
     scenarioId: payload.scenario_id,
@@ -992,6 +1025,9 @@ function mapResponse(
     : []
   const jobSource = Array.isArray(payload.sensitivity_jobs)
     ? payload.sensitivity_jobs
+    : []
+  const bandSource = Array.isArray(payload.sensitivity_bands)
+    ? payload.sensitivity_bands
     : []
 
   const rawProjectId = payload.project_id
@@ -1019,6 +1055,7 @@ function mapResponse(
   const constructionLoan = mapConstructionLoanConfig(payload.construction_loan)
   const sensitivityResults = sensitivitySource.map(mapSensitivityOutcome)
   const sensitivityJobs = jobSource.map(mapJobStatus)
+  const sensitivityBands = bandSource.map(mapSensitivityBand)
 
   return {
     scenarioId: payload.scenario_id,
@@ -1038,8 +1075,10 @@ function mapResponse(
     constructionLoan,
     sensitivityResults,
     sensitivityJobs,
+    sensitivityBands,
     isPrimary: payload.is_primary ?? undefined,
     isPrivate: payload.is_private ?? undefined,
+    updatedAt: payload.updated_at ?? null,
   }
 }
 
@@ -1212,8 +1251,10 @@ const FINANCE_FALLBACK_SUMMARY: FinanceScenarioSummary = {
   constructionLoan: null,
   sensitivityResults: [],
   sensitivityJobs: [],
+  sensitivityBands: [],
   isPrimary: true,
   isPrivate: false,
+  updatedAt: null,
 }
 
 function cloneFinanceSummary(
@@ -1541,6 +1582,91 @@ export async function updateConstructionLoan(
     throw new Error(
       message ||
         `Construction loan update failed with status ${response.status}`,
+    )
+  }
+
+  const payload = (await response.json()) as FinanceFeasibilityResponsePayload
+  return mapResponse(payload)
+}
+
+export async function updateFinanceScenario(
+  scenarioId: number,
+  input: FinanceScenarioUpdateInput,
+  options: FinanceFeasibilityOptions = {},
+): Promise<FinanceScenarioSummary> {
+  if (!Number.isFinite(Number(scenarioId))) {
+    throw new Error('scenarioId is required to update a finance scenario')
+  }
+  const headers = applyIdentityHeaders({
+    'Content-Type': 'application/json',
+  })
+  const body: Record<string, unknown> = {}
+  if (input.scenarioName !== undefined) {
+    body["scenario_name"] = input.scenarioName
+  }
+  if (input.description !== undefined) {
+    body["description"] = input.description
+  }
+  if (input.isPrimary !== undefined) {
+    body["is_primary"] = input.isPrimary
+  }
+  const response = await fetch(
+    buildUrl(`api/v1/finance/scenarios/${scenarioId}`, apiBaseUrl),
+    {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+      signal: options.signal,
+    },
+  )
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message || `Finance scenario update failed with status ${response.status}`,
+    )
+  }
+  const payload = (await response.json()) as FinanceFeasibilityResponsePayload
+  return mapResponse(payload)
+}
+
+export async function runScenarioSensitivity(
+  scenarioId: number,
+  bands: SensitivityBandInput[],
+  options: FinanceFeasibilityOptions = {},
+): Promise<FinanceScenarioSummary> {
+  if (!Number.isFinite(Number(scenarioId))) {
+    throw new Error('scenarioId is required to rerun sensitivity analysis')
+  }
+  if (!Array.isArray(bands) || bands.length === 0) {
+    throw new Error('At least one sensitivity band must be supplied')
+  }
+
+  const headers = applyIdentityHeaders({
+    'Content-Type': 'application/json',
+  })
+
+  const body = {
+    sensitivity_bands: bands.map(toSensitivityBandPayload),
+  }
+
+  const response = await fetch(
+    buildUrl(
+      `api/v1/finance/scenarios/${scenarioId}/sensitivity`,
+      apiBaseUrl,
+    ),
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: options.signal,
+    },
+  )
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message ||
+        `Sensitivity rerun failed with status ${response.status}`,
     )
   }
 

@@ -51,6 +51,7 @@ const baseScenario: FinanceScenarioSummary = {
   },
   sensitivityResults: [],
   sensitivityJobs: [],
+  sensitivityBands: [],
   isPrimary: true,
   isPrivate: false,
 }

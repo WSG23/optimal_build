@@ -256,6 +256,20 @@
       "refresh": "シナリオを再計算",
       "refreshing": "再計算中…"
     },
+    "projectSelector": {
+      "title": "プロジェクト選択",
+      "description": "開発者キャプチャからプロジェクトIDを指定するか、手動でIDを入力して財務シナリオを読み込みます。",
+      "current": "現在のプロジェクト: {{value}}",
+      "inputLabel": "プロジェクトID",
+      "inputPlaceholder": "例) 00000000-0000-0000-0000-000000000000",
+      "submit": "読み込む",
+      "recentLabel": "最近のキャプチャ",
+      "refresh": "再読込",
+      "pickPlaceholder": "キャプチャを選択…",
+      "empty": "サイトアクイジションでプロパティをキャプチャすると一覧に表示されます。",
+      "hint": "サイトアクイジション画面の「財務ワークスペースへ送信」を使うと自動で値が設定されます。",
+      "defaultLabel": "プロジェクト {{id}}"
+    },
     "errors": {
       "generic": "財務シナリオを読み込めませんでした。"
     },
@@ -267,7 +281,19 @@
         "npv": "正味現在価値",
         "irr": "内部収益率",
         "minDscr": "最低DSCR",
-        "loanToCost": "ローン対コスト比"
+        "loanToCost": "ローン対コスト比",
+        "lastRun": "最終実行"
+      },
+      "actions": {
+        "makePrimary": "主要シナリオに設定",
+        "makingPrimary": "設定中…"
+      },
+      "badges": {
+        "primary": "主要"
+      },
+      "messages": {
+        "primarySuccess": "「{{name}}」を主要シナリオに設定しました。",
+        "primaryError": "主要シナリオを更新できませんでした。"
       },
       "empty": "利用可能な財務シナリオがありません。"
     },
@@ -283,6 +309,34 @@
         "equity": "自己資本",
         "debt": "借入金",
         "other": "その他"
+      },
+      "tranches": {
+        "title": "トランシェ / ファシリティ詳細",
+        "headers": {
+          "name": "名称",
+          "type": "区分",
+          "amount": "金額",
+          "share": "構成比",
+          "rate": "金利",
+          "periods": "年換算期数",
+          "capitalised": "利息処理",
+          "upfront": "アレンジ費",
+          "exit": "エグジット費",
+          "reserve": "リザーブ（月数）",
+          "amortisation": "返済期間（月数）"
+        },
+        "tooltips": {
+          "upfront": "借入実行時に発生する手数料。",
+          "exit": "返済・リファイナンス時に発生する手数料。",
+          "reserve": "当該トランシェで確保する利息リザーブ月数。",
+          "amortisation": "返済（アモチ）期間の目安（月数）。"
+        },
+        "values": {
+          "capitalised": {
+            "yes": "利息を資本化",
+            "no": "利息を支払い"
+          }
+        }
       }
     },
     "drawdown": {
@@ -300,6 +354,95 @@
         "peakDebt": "最大借入残高"
       },
       "moreEntries": "さらに{{count}}期間"
+    },
+    "sensitivity": {
+      "title": "感度分析",
+      "controls": {
+        "parameters": "パラメータ",
+        "selectAll": "全て選択"
+      },
+      "actions": {
+        "downloadCsv": "CSVをダウンロード",
+        "downloadJson": "JSONをダウンロード"
+      },
+      "empty": "感度分析の結果はまだありません。",
+      "pendingNotice": "進行中の感度ジョブが{{count}}件あります…",
+      "table": {
+        "caption": "{{parameter}}の感度結果",
+        "headers": {
+          "delta": "変化",
+          "npv": "NPV",
+          "irr": "IRR",
+          "escalatedCost": "エスカレーション後コスト",
+          "totalInterest": "利息合計"
+        }
+      },
+      "summary": {
+        "title": "パラメータ影響サマリー",
+        "labels": {
+          "best": "上振れケース",
+          "worst": "下振れケース",
+          "base": "基準シナリオ: {{label}}",
+          "baseUnknown": "基準シナリオ情報なし",
+          "baseShort": "基準"
+        },
+        "deltas": {
+          "title": "シナリオ別デルタ",
+          "empty": "このパラメータのデルタはまだありません。"
+        }
+      },
+      "controls": {
+        "title": "感度バンド",
+        "description": "各パラメータの増減幅を調整して、選択中のシナリオで再計算します。",
+        "parameter": "パラメータ",
+        "low": "下限 (%)",
+        "base": "基準 (%)",
+        "high": "上限 (%)",
+        "add": "パラメータを追加",
+        "remove": "削除",
+        "run": "感度分析を実行",
+        "running": "再計算中…",
+        "success": "感度分析を更新しました。",
+        "errors": {
+          "parameterRequired": "少なくとも1つのパラメータと変動幅を入力してください。",
+          "generic": "感度分析を再実行できませんでした。"
+        }
+      }
+    },
+    "scenarioCreator": {
+      "title": "財務シナリオ作成",
+      "description": "アセットミックスの前提を入力して財務シミュレーションを生成します。",
+      "fields": {
+        "name": "シナリオ名",
+        "projectId": "プロジェクトID",
+        "projectName": "プロジェクト名",
+        "allocation": "配分率"
+      },
+      "placeholders": {
+        "name": "Phase 2C Base Case"
+      },
+      "assets": {
+        "caption": "アセットミックス入力",
+        "headers": {
+          "assetType": "アセットタイプ",
+          "nia": "NIA (㎡)",
+          "rent": "賃料 / ㎡ / 月",
+          "vacancy": "空室率",
+          "opex": "OPEX比率",
+          "revenue": "年間収益",
+          "capex": "CAPEX",
+          "absorption": "吸収月数",
+          "risk": "リスク",
+          "notes": "メモ"
+        }
+      }
+    },
+    "privacy": {
+      "restrictedTitle": "開発者専用ワークスペース",
+      "restrictedBody": "この財務モジュールは開発者または管理者ロールのみ閲覧できます。X-Roleヘッダーを「developer」に設定した上で再読み込みしてください。",
+      "roleHint": "現在のロール: {{role}}",
+      "privateTitle": "プライベート財務シナリオ",
+      "privateBody": "このシナリオは開発チーム限定です。許可されたメンバー以外との共有は控えてください。"
     }
   },
   "agentsCapture": {

@@ -3,9 +3,24 @@
 Roadmap for evolving the finance workspace from the current generic feasibility snapshot into a developer-private modelling suite that satisfies Phase 2C acceptance criteria (asset-specific models, enhanced financing views, sensitivities, and data privacy).
 
 ---
-
 ## Changelog
 
+- **v0.5 (2025-11-11)** – Finance workspace adds a project selector sourced from
+  captured developer properties (also honoured via `/developers/finance?projectId=...`
+  links), privacy gating for developer/admin roles, and a refreshed asset mix
+  panel with allocation legends and richer per-asset metrics. Scenario creator
+  and CTA links now carry the active project context through to backend runs.
+- **v0.4 (2025-11-11)** – Finance feasibility runs now persist structured
+  per-asset breakdowns into `fin_asset_breakdowns`, enabling exports and
+  scenario summaries to rely on canonical rows instead of JSON blobs. API tests
+  verify the ORM records and asset mix responses stay in sync.
+- **v0.3 (2025-11-10)** – Capital stack slices now inherit construction-loan
+  facility metadata (reserve/amortisation/tenor/capitalisation) and the
+  sensitivity explorer renders per-parameter delta cards with sparklines. Added
+  a reminder to re-run the frontend unit suite once the Vitest harness issues
+  are resolved before Phase 2C sign-off. Introduced
+  `POST /api/v1/finance/scenarios/{id}/sensitivity` plus corresponding workspace
+  controls so developers can re-run sensitivity bands on demand.
 - **v0.2 (2025-11-10)** – Enforced finance privacy guard now requires developer
   identity headers, logs denied attempts, and increments the new
   `finance_privacy_denials_total` metric for auditability.
@@ -29,6 +44,8 @@ Roadmap for evolving the finance workspace from the current generic feasibility 
 
 - `POST /api/v1/finance/feasibility` escalates costs, computes NPV/IRR, optional DSCR timelines, capital stack, and drawdown schedules (see `backend/app/api/v1/finance.py`).
 - Asset optimiser (`app/services/asset_mix.py`) now emits estimated revenue, capex, risk, and confidence metrics per asset type; feasibility engine consolidates totals in `AssetFinancialSummarySchema`.
+- Finance runs persist detailed per-asset metrics into `fin_asset_breakdowns`,
+  making scenario summaries/export pipelines consume structured ORM rows.
 - Finance results persist to `fin_scenarios`, `fin_capital_stacks`, and `fin_results` tables; drawdowns stored via JSON metadata.
 - Finance blueprint (capital stack targets, sensitivity bands) is attached to developer GPS capture responses (`DeveloperFinancialSummary`).
 - Role guard uses `require_reviewer` for mutations and `require_viewer` for reads—no project-specific privacy yet.
@@ -54,7 +71,7 @@ Roadmap for evolving the finance workspace from the current generic feasibility 
 
 | Requirement | Gap |
 |-------------|-----|
-| Asset-specific financial modelling | Optimiser produces revenue/capex per asset, but finance API neither stores nor exposes breakdowns. No NOI, cap rate, or cash-flow projections per asset. |
+| Asset-specific financial modelling | Optimiser outputs now persist to `fin_asset_breakdowns`, but we still lack derived cap rate / NOI projections for exports, download artefacts, and cross-scenario comparisons. |
 | Financing architecture (equity/debt breakdown, loan modelling) | Capital stack summary exists but lacks tranche metadata surfaced in UI; construction loan interest carry and facility terms are not modelled. |
 | Sensitivity analysis | Blueprint bands delivered, yet no API/UI layer to run +/- scenarios or visualise results. |
 | Privacy controls | Finance scenarios readable by any viewer; need developer-only scope (owner-based) and logging. |
@@ -122,14 +139,32 @@ Developer capture → optimiser plans + finance blueprint
 1. **Workspace Layout**
    - Replace static project id with selection from captured developer properties (pass via route params/state).
    - Gate finance module behind developer role; display privacy banner when data is private.
+     - **Update (Nov 2025):** Workspace now includes a project picker that reads
+       developer captures (session storage) or accepts manual project ids / query
+       params and surfaces a developer-only privacy notice based on scenario
+       metadata. Site Acquisition links now jump directly into the selected
+       project.
 2. **Asset Breakdown Panel**
    - New component summarising per-asset NOI, capex, risk, absorption (stacked bar + tabular detail).
    - Link back to optimiser constraints/notes for context.
+     - **Update (Nov 2025):** Asset panel includes stacked allocation bars,
+       legend, rent/NIA columns, and per-asset notes sourced from optimiser
+       metadata.
 3. **Financing Architecture**
    - Expand capital stack section with tranche table (rate, fees, maturity) and interest carry summary.
+     - **Update (Nov 2025):** Back-end responses now merge construction-loan
+       facility metadata (reserve/amortisation periods, capitalisation flag,
+       compounding frequency) directly into each capital stack slice so the UI
+       can display a complete tranche matrix without relying on ad-hoc detail
+       objects.
    - Surface loan-to-cost, weighted debt rate, equity multiple.
 4. **Sensitivity Explorer**
    - UI to toggle rent/cost/rate bands; render results (sparkline or delta cards) from API sensitivity payload.
+     - **Update (Nov 2025):** Explorer now ships per-parameter delta cards with
+       sparklines that highlight the base, upside, and downside permutations in
+       addition to the headline summary rows.
+     - **Update (Nov 2025):** Added editable sensitivity bands in the finance
+       workspace plus a backend endpoint to rerun the analysis per scenario.
    - Provide CSV/JSON download for sensitivity runs.
 5. **Scenario Management**
    - Allow marking scenario primary/private; show last run timestamp and reviewer log.
@@ -164,7 +199,7 @@ surface in Grafana/alerts.
 - **Alerts:** Trigger when finance run errors exceed 5% or duration > 3 s P95.
 - **Regression Suite:** Expand `backend/tests/test_api` coverage; ensure `pytest` fixtures seeded with asset mix data.
 - **Frontend QA:** Manual checklist (per `TESTING_ADVISORY.md`) covering scenario selection, sensitivity toggles, downloads.
-- **Test Harness Caveat (Nov 2025):** Frontend unit tests are currently blocked by known infrastructure issues (Vitest vs. node runner resolution, `tsx` IPC `EPERM`, and JSDOM misconfiguration). Retest once the harness is fixed before Phase 2C sign-off.
+- **Test Harness Caveat (Nov 2025):** Frontend unit tests are currently blocked by known infrastructure issues (Vitest vs. node runner resolution, `tsx` IPC `EPERM`, and JSDOM misconfiguration). Retest once the harness is fixed before Phase 2C sign-off and capture the results in this document prior to closing Phase 2C.
 
 ---
 
@@ -190,7 +225,7 @@ Dependencies: completed heritage ingestion (Phase 2B), finance blueprint valid
 
 ## 11. Outstanding Decisions
 
-1. Where to persist per-asset financials (dedicated table vs. JSON metadata)? **Owner:** Backend lead.
+1. ~~Where to persist per-asset financials (dedicated table vs. JSON metadata)?~~ **Resolved (v0.4):** canonical records now live in `fin_asset_breakdowns`; downstream consumers should query the table instead of FinResult blobs.
 2. Do we compute sensitivities synchronously or via background jobs? **Owner:** Platform.
 3. Default currency handling for multi-market expansion? **Owner:** Finance/Product.
 4. Privacy fallback: should non-owners see scenario existence (redacted metadata) or receive 404? **Owner:** Product + Legal.
@@ -200,7 +235,7 @@ Dependencies: completed heritage ingestion (Phase 2B), finance blueprint valid
 
 ## 12. Next Steps Checklist
 
-- [ ] Finalise per-asset result schema and storage approach.
+- [x] Finalise per-asset result schema and storage approach (v0.4: `fin_asset_breakdowns` populated per scenario).
 - [ ] Confirm project ownership lookup mechanism (user ↔ project mapping).
 - [ ] Draft API contract updates for frontend (asset breakdowns, sensitivities, privacy).
 - [ ] Align on sensitivity batching process (sync vs async, caching).

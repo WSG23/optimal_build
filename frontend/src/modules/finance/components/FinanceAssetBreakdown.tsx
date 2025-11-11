@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+
 import {
   type AssetFinancialSummary,
   type FinanceAssetBreakdown as FinanceAssetBreakdownType,
@@ -7,7 +9,18 @@ import { useTranslation } from '../../../i18n'
 interface FinanceAssetBreakdownProps {
   summary: AssetFinancialSummary | null
   breakdowns: FinanceAssetBreakdownType[]
+  currency?: string
 }
+
+const COLOR_SCALE = [
+  '#4f6bed',
+  '#57a773',
+  '#f4b000',
+  '#cc5f82',
+  '#6c5ce7',
+  '#2cb3c8',
+  '#f16e5c',
+] as const
 
 function toNumber(value: string | null | undefined): number | null {
   if (value == null) {
@@ -69,13 +82,42 @@ function formatNumber(
   }).format(parsed)
 }
 
+function toPercentValue(value: string | null | undefined): number {
+  const numeric = toNumber(value)
+  if (numeric === null) {
+    return 0
+  }
+  if (numeric > 1) {
+    return Math.min(numeric, 100)
+  }
+  return Math.min(numeric * 100, 100)
+}
+
 export function FinanceAssetBreakdown({
   summary,
   breakdowns,
+  currency = 'SGD',
 }: FinanceAssetBreakdownProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const fallback = t('common.fallback.dash')
+
+  const allocationSegments = useMemo(() => {
+    return breakdowns
+      .map((entry, index) => {
+        const percent = toPercentValue(entry.allocationPct ?? null)
+        return {
+          assetType: entry.assetType || t('common.fallback.unknown'),
+          percent,
+          color: COLOR_SCALE[index % COLOR_SCALE.length],
+        }
+      })
+      .filter((segment) => segment.percent > 0)
+  }, [breakdowns, t])
+  const totalPercent = allocationSegments.reduce(
+    (sum, segment) => sum + segment.percent,
+    0,
+  )
 
   const hasSummary =
     summary &&
@@ -99,6 +141,42 @@ export function FinanceAssetBreakdown({
   return (
     <section className="finance-assets">
       <h2 className="finance-assets__title">{t('finance.assets.title')}</h2>
+      {allocationSegments.length > 0 ? (
+        <div className="finance-assets__bar" aria-hidden="true">
+          {allocationSegments.map((segment) => (
+            <span
+              key={segment.assetType}
+              className="finance-assets__bar-segment"
+              style={{
+                width: `${
+                  totalPercent > 0 ? (segment.percent / totalPercent) * 100 : 0
+                }%`,
+                backgroundColor: segment.color,
+              }}
+              title={`${segment.assetType} · ${segment.percent.toFixed(1)}%`}
+            />
+          ))}
+        </div>
+      ) : null}
+      {allocationSegments.length > 0 ? (
+        <ul className="finance-assets__legend">
+          {allocationSegments.map((segment) => (
+            <li key={`${segment.assetType}-legend`}>
+              <span
+                className="finance-assets__legend-swatch"
+                style={{ backgroundColor: segment.color }}
+                aria-hidden="true"
+              />
+              <span className="finance-assets__legend-label">
+                {segment.assetType}
+              </span>
+              <span className="finance-assets__legend-value">
+                {segment.percent.toFixed(1)}%
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {hasSummary && summary ? (
         <dl className="finance-assets__summary">
           <div>
@@ -106,7 +184,7 @@ export function FinanceAssetBreakdown({
             <dd>
               {formatCurrency(
                 summary.totalEstimatedRevenueSgd ?? null,
-                'SGD',
+                currency,
                 locale,
                 fallback,
               )}
@@ -117,7 +195,7 @@ export function FinanceAssetBreakdown({
             <dd>
               {formatCurrency(
                 summary.totalEstimatedCapexSgd ?? null,
-                'SGD',
+                currency,
                 locale,
                 fallback,
               )}
@@ -142,6 +220,12 @@ export function FinanceAssetBreakdown({
                   {t('finance.assets.table.headers.allocation')}
                 </th>
                 <th scope="col">
+                  {t('finance.assets.table.headers.nia')}
+                </th>
+                <th scope="col">
+                  {t('finance.assets.table.headers.rent')}
+                </th>
+                <th scope="col">
                   {t('finance.assets.table.headers.noi')}
                 </th>
                 <th scope="col">
@@ -162,9 +246,24 @@ export function FinanceAssetBreakdown({
                   <th scope="row">{entry.assetType}</th>
                   <td>{formatPercent(entry.allocationPct ?? null, locale, fallback)}</td>
                   <td>
+                    {formatNumber(
+                      entry.niaSqm ?? null,
+                      locale,
+                      fallback,
+                    )}
+                  </td>
+                  <td>
+                    {formatCurrency(
+                      entry.rentPsmMonth ?? null,
+                      currency,
+                      locale,
+                      fallback,
+                    )}
+                  </td>
+                  <td>
                     {formatCurrency(
                       entry.noiAnnualSgd ?? null,
-                      'SGD',
+                      currency,
                       locale,
                       fallback,
                     )}
@@ -172,7 +271,7 @@ export function FinanceAssetBreakdown({
                   <td>
                     {formatCurrency(
                       entry.estimatedCapexSgd ?? null,
-                      'SGD',
+                      currency,
                       locale,
                       fallback,
                     )}
@@ -188,6 +287,11 @@ export function FinanceAssetBreakdown({
                     )}
                   </td>
                   <td>{entry.riskLevel ?? fallback}</td>
+                  <td>
+                    {entry.notes?.length
+                      ? entry.notes.join('; ')
+                      : fallback}
+                  </td>
                 </tr>
               ))}
             </tbody>
