@@ -6,24 +6,23 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'happy-dom',
+    environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}', 'src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
-        'src/**/*.test.{ts,tsx}',
         'src/**/__tests__/**',
+        'src/**/*.{test,spec}.{ts,tsx}',
         'src/test/**',
-        '**/*.d.ts',
-        '**/node_modules/**',
       ],
     },
   },
   resolve: {
     alias: {
+      '@': path.resolve(__dirname, './src'),
       '@ob/tokens': path.resolve(__dirname, '../core/design-tokens/index.ts'),
       '@ob/tokens.css': path.resolve(
         __dirname,
