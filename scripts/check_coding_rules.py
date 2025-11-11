@@ -499,37 +499,35 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
 
 
 def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
-    """Ensure the roadmap retains the Phase 2D gate checklist (Rule 12)."""
+    """Ensure the work queue retains task tracking sections (Rule 12)."""
 
     errors: list[str] = []
-    roadmap_file = repo_root / "docs" / "ROADMAP.MD"
+    work_queue_file = repo_root / "docs" / "WORK_QUEUE.MD"
 
-    if not roadmap_file.exists():
+    if not work_queue_file.exists():
         errors.append(
-            "RULE VIOLATION: docs/ROADMAP.MD is required for strategic status tracking.\n"
-            "  -> Restore the roadmap file before proceeding."
+            "RULE VIOLATION: docs/WORK_QUEUE.MD is required for task tracking.\n"
+            "  -> Restore the work queue file before proceeding."
         )
         return False, errors
 
     try:
-        content = roadmap_file.read_text(encoding="utf-8")
+        content = work_queue_file.read_text(encoding="utf-8")
     except OSError as exc:
-        errors.append(f"RULE VIOLATION: Unable to read {roadmap_file}\n  -> {exc}")
+        errors.append(f"RULE VIOLATION: Unable to read {work_queue_file}\n  -> {exc}")
         return False, errors
 
     required_markers = [
-        "Phase 2D Gate: Pre-Phase",
-        "Phase 1D Business Performance UI backlog",
-        "Phase 2B visualisation residual work",
-        "Expansion Window 1",
+        "Active (Do Now",
+        "Ready (Queued",
+        "Completed (Last 30 Days)",
     ]
-
     for marker in required_markers:
         if marker not in content:
             errors.append(
-                "RULE VIOLATION: docs/ROADMAP.MD must include the Phase 2D gate checklist.\n"
-                f"  -> Missing marker containing: '{marker}'\n"
-                "  -> Reinstate the checklist so gate enforcement remains active."
+                "RULE VIOLATION: docs/WORK_QUEUE.MD must include task tracking sections.\n"
+                f"  -> Missing section marker: '{marker}'\n"
+                "  -> Reinstate the sections so task tracking remains active."
             )
 
     # NEW: Rule 12.1 - Enforce manual QA for UI phases

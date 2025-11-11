@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-ROADMAP_PATH = REPO_ROOT / "docs" / "ROADMAP.MD"
+ROADMAP_PATH = REPO_ROOT / "docs" / "feature_delivery_plan_v2.md"
 WORK_QUEUE_PATH = REPO_ROOT / "docs" / "WORK_QUEUE.MD"
 
 
@@ -31,7 +31,7 @@ def validate_roadmap(content: str) -> list[str]:
     for snippet in required_snippets:
         if snippet not in content:
             errors.append(
-                "ROADMAP.MD is missing required content:\n"
+                "feature_delivery_plan_v2.md is missing required content:\n"
                 f"  -> '{snippet}'\n"
                 "  -> Restore this section to keep stakeholders aligned."
             )
@@ -83,7 +83,8 @@ def main() -> int:
         return 1
 
     print(
-        "✅ Documentation validation passed! ROADMAP.MD and WORK_QUEUE.MD look healthy."
+        "✅ Documentation validation passed! "
+        "feature_delivery_plan_v2.md and WORK_QUEUE.MD look healthy."
     )
     return 0
 
