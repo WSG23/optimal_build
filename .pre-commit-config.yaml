@@ -40,6 +40,13 @@ repos:
       files: ^backend/app/models/.*\.py$
       pass_filenames: true
 
+    - id: check-documentation-whitelist
+      name: Documentation whitelist enforcement (Rule 14.2)
+      entry: python3 scripts/check_documentation_whitelist.py
+      language: system
+      pass_filenames: false
+      files: ^docs/.*\.md$
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0
   hooks:

@@ -1,0 +1,97 @@
+# Documentation Whitelist
+# This file controls which .md files are allowed in the docs/ directory
+# to prevent documentation sprawl after the 2025-11-12 consolidation.
+#
+# POLICY: After documentation consolidation, AI agents MUST NOT create new
+# documentation files without explicit user approval. All new documentation
+# should be added to existing files (feature_delivery_plan_v2.md, WORK_QUEUE.MD).
+#
+# To add a new documentation file:
+# 1. Get explicit user approval
+# 2. Add the file path to allowed_files below
+# 3. Document WHY the new file is needed (can't fit in existing docs)
+# 4. Commit this whitelist update WITH the new file
+
+# Core documentation (single sources of truth)
+allowed_files:
+  # Strategic planning
+  - docs/feature_delivery_plan_v2.md
+  - docs/WORK_QUEUE.MD
+
+  # Agent decision guides
+  - docs/ai-agents/next_steps.md
+
+  # Infrastructure and audits
+  - docs/audits/PRE-PHASE-2D-AUDIT.MD
+
+  # Development guides
+  - docs/development/testing/known-issues.md
+  - docs/development/testing/summary.md
+
+  # Planning and status
+  - docs/planning/features.md
+  - docs/planning/ui-status.md
+
+  # Observability
+  - docs/observability/preview_generation_monitoring.md
+
+  # Archive management
+  - docs/archive/README.md
+
+  # Phase-specific archives (frozen, no new files)
+  - docs/archive/documentation-consolidation/ROADMAP_archived_2025-11-12.md
+  - docs/archive/documentation-consolidation/documentation_consolidation_strategy_archived_2025-11-12.md
+  - docs/archive/documentation-consolidation/validation_live_walkthrough_plan_archived_2025-11-12.md
+  - docs/archive/documentation-consolidation/PRE_PHASE_2D_INFRASTRUCTURE_AUDIT_session_log_archived_2025-11-12.md
+  - docs/archive/phase2b/PHASE2B_VISUALISATION_STUB_archived_2025-11-12.md
+  - docs/archive/phase2b/phase2b_asset_optimisation_inputs_completed_2025-11-04.md
+  - docs/archive/phase2b/phase2b_asset_optimizer_spec_completed_2025-11-04.md
+  - docs/archive/phase2b/phase2b_delivery_audit_2025-11-04.md
+  - docs/archive/phase2b/phase2b_finance_architecture_template_completed_2025-11-04.md
+  - docs/archive/phase2b/phase2b_heritage_ingestion_plan_completed_2025-11-01.md
+  - docs/archive/phase2b/phase2b_manual_qa_results_2025-11-10.md
+  - docs/archive/phase2c/phase2c_finance_delivery_plan_archived_2025-11-12.md
+  - docs/archive/feature_delivery_plan_v1_deprecated.md
+
+# Archive directories (can contain historical files)
+allowed_archive_patterns:
+  - docs/archive/**/*.md
+
+# Exceptions (temporary files that will be removed)
+# Format: "path/to/file.md  # Reason + removal date"
+exceptions: []
+
+# Automatic allowances (patterns that are always allowed)
+automatic_allow:
+  # README files for directory navigation
+  - "**/README.md"
+
+  # Generated documentation (API docs, coverage reports)
+  - "docs/generated/**/*.md"
+
+# Configuration
+enforcement:
+  # Block commits with unauthorized .md files
+  strict_mode: true
+
+  # Provide helpful error message pointing to this file
+  error_message: |
+    DOCUMENTATION SPRAWL PREVENTION (Rule 14.2)
+
+    New .md file detected in docs/ that is not whitelisted.
+
+    POLICY: After 2025-11-12 consolidation, new documentation files require
+    explicit user approval to prevent documentation sprawl.
+
+    INSTEAD OF creating new files:
+    1. Add content to docs/feature_delivery_plan_v2.md (strategic)
+    2. Add content to docs/WORK_QUEUE.MD (execution tracking)
+    3. Add content to existing relevant documentation
+
+    IF this new file is truly necessary:
+    1. Get explicit user approval
+    2. Add file path to .documentation-whitelist.yaml
+    3. Document WHY it can't fit in existing docs
+    4. Commit whitelist update WITH the new file
+
+    See .documentation-whitelist.yaml for details.

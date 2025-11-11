@@ -1193,7 +1193,7 @@ UI Manual Testing:
 
 Before proposing work, AI agents must read:
 - [`docs/ai-agents/next_steps.md`](docs/ai-agents/next_steps.md) (MANDATORY TESTING CHECKLIST section)
-- Review the phase summary in [`docs/ROADMAP.MD`](docs/ROADMAP.MD) and the corresponding item in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD)
+- Review the phase summary in [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md) and the corresponding item in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD)
 - [`docs/development/testing/known-issues.md`](docs/development/testing/known-issues.md) (check for known test failures before reporting)
 - [`docs/planning/ui-status.md`](docs/planning/ui-status.md) (understand UI implementation status)
 - [`docs/development/testing/summary.md`](docs/development/testing/summary.md) (find smoke/regression suites)
@@ -1656,7 +1656,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 
 ## 13. Phase Completion Gates (MANDATORY)
 
-**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [ROADMAP.MD](docs/ROADMAP.MD) while related tasks remain in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD) or the Phase 2D gate checklist has unchecked items.
+**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) while related tasks remain in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD) or the Phase 2D gate checklist has unchecked items.
 
 **Why:** Phase 1D and Phase 2B were left 60% and 85% incomplete because AI agents marked backend work as "done" and moved to Phase 2C without completing frontend UI components. This creates abandoned features and technical debt.
 
@@ -1668,7 +1668,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
    - Search Active/Ready sections for the phase label → Must be absent
    - Ensure deferred work is logged under "Ready" or "Blocked" with next steps (not left implicit)
 
-2. **Review the Phase 2D gate checklist in ROADMAP.MD:**
+2. **Review the Phase 2D gate checklist in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md):**
    - All relevant checkboxes must be `[x]`
    - If the phase is a prerequisite for the gate, confirm the checkbox is updated concurrently
 
@@ -1683,7 +1683,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
    - ✅ Relevant Phase 2D gate checkbox updated
    - ✅ UI manual testing passed
 
-   May I mark Phase X as "✅ COMPLETE" in ROADMAP.MD?
+   May I mark Phase X as "✅ COMPLETE" in feature_delivery_plan_v2.md?
    ```
 
 5. **Only after user approval:**
@@ -1782,7 +1782,7 @@ All phases with UI components (1A, 1B, 1C, 1D, 2B, 2C) MUST have:
 - This caused the enforcement gap that let incomplete work ship
 
 **Enforcement blocks commits if:**
-- Phase marked `✅ COMPLETE` in ROADMAP.MD
+- Phase marked `✅ COMPLETE` in feature_delivery_plan_v2.md
 - But manual QA checklist missing or not executed (template blanks still present)
 
 **Why file verification matters:**
@@ -1873,7 +1873,7 @@ automates enforcement so AI agents MUST complete the full workflow.
       - Change to: `**Status:** ✅ QA COMPLETE (YYYY-MM-DD)` or `**Status:** ✅ ARCHIVED (YYYY-MM-DD)`
 
    b. **Complete "Next Steps" section** at end of checklist:
-      - If PASS: Check the boxes for updating WORK_QUEUE.MD and ROADMAP.MD
+      - If PASS: Check the boxes for updating WORK_QUEUE.MD and feature_delivery_plan_v2.md
       - If FAIL: Document issues and create fix tasks
       - If PARTIAL: Document decision with product owner notes
 
@@ -1881,7 +1881,7 @@ automates enforcement so AI agents MUST complete the full workflow.
       - Move phase item from "Ready" to "Completed" section
       - Add completion date and QA status
 
-   d. **Update ROADMAP.MD** (if not already done):
+   d. **Update [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md)** (if not already done):
       - Ensure phase is marked `✅ COMPLETE` in Phase Overview table
       - Ensure gate checkbox is checked `[x]` in Phase Gate Checklist
 
@@ -1891,11 +1891,11 @@ automates enforcement so AI agents MUST complete the full workflow.
 **What gets enforced:**
 - Pre-commit hook verifies checklist status is not `READY FOR QA` when phase is COMPLETE
 - Pre-commit hook verifies "Next Steps" section has at least one checkbox checked
-- Pre-commit hook verifies WORK_QUEUE.MD and ROADMAP.MD consistency
+- Pre-commit hook verifies WORK_QUEUE.MD and feature_delivery_plan_v2.md consistency
 
 **Example violation caught:**
 ```
-RULE VIOLATION: Phase 1D marked '✅ COMPLETE' in ROADMAP.MD
+RULE VIOLATION: Phase 1D marked '✅ COMPLETE' in feature_delivery_plan_v2.md
   -> But manual QA checklist status still says: '✅ READY FOR QA'
   -> Checklist must be updated to: '✅ QA COMPLETE (2025-11-02)' or '✅ ARCHIVED (2025-11-02)'
   -> Rule 12.4: Complete the QA checklist workflow
@@ -2052,6 +2052,72 @@ If you're not a coder and AI agents create shadow directories:
 **Automated Check:**
 
 The pre-commit hook checks for shadow directories and blocks commits that create them.
+
+---
+
+### 14.2 Documentation Sprawl Prevention (MANDATORY)
+
+**Rule:** After the 2025-11-12 documentation consolidation, AI agents MUST NOT create new .md files in `docs/` without explicit user approval. All new documentation must be added to existing files or explicitly whitelisted.
+
+**Why:**
+- Documentation sprawl was a major problem before consolidation
+- Multiple overlapping/contradictory documents created confusion
+- Feature Delivery Plan v2 and WORK_QUEUE.MD are now single sources of truth
+- Creating new docs fragments the knowledge base
+
+**How to follow:**
+
+**For AI agents:**
+1. **Default behavior:** Add new documentation to existing files:
+   - Strategic content → `docs/feature_delivery_plan_v2.md`
+   - Task tracking → `docs/WORK_QUEUE.MD`
+   - Known issues → `docs/development/testing/known-issues.md`
+   - Phase details → Update relevant section in existing docs
+
+2. **If new file is truly necessary:**
+   - Get explicit user approval FIRST
+   - Add file path to `.documentation-whitelist.yaml`
+   - Document WHY it can't fit in existing docs
+   - Commit whitelist update WITH the new file in same commit
+
+**Whitelisted files:**
+
+See `.documentation-whitelist.yaml` for the complete list. Current core docs:
+- `docs/feature_delivery_plan_v2.md` - Strategic delivery plan (single source of truth)
+- `docs/WORK_QUEUE.MD` - Daily task tracking
+- `docs/ai-agents/next_steps.md` - AI agent decision guide
+- `docs/planning/features.md` - Product requirements
+- Plus testing guides, audits, and archived historical docs
+
+**Examples:**
+
+```bash
+# ✅ CORRECT - Add to existing file
+# User: "Document the new Phase 2D feature"
+# AI: Updates docs/feature_delivery_plan_v2.md section for Phase 2D
+
+# ❌ WRONG - Create new file without approval
+# AI: Creates docs/phase2d_implementation_plan.md
+# Pre-commit hook: BLOCKED - file not whitelisted
+
+# ✅ CORRECT - Get approval first
+# AI: "This Phase 2D spec is 500+ lines. May I create docs/phase2d_detailed_spec.md?"
+# User: "Yes, approved"
+# AI: Adds to .documentation-whitelist.yaml, creates file, commits both together
+```
+
+**Automated Check:**
+
+The pre-commit hook `check-documentation-whitelist` enforces this rule:
+- Detects new .md files in `docs/` directory
+- Checks against `.documentation-whitelist.yaml`
+- Blocks commit if file is not whitelisted
+- Provides clear error message with instructions
+
+**Automatic allowances:**
+- `**/README.md` - Directory navigation files always allowed
+- `docs/generated/**/*.md` - Auto-generated docs always allowed
+- `docs/archive/**/*.md` - Historical archive additions allowed (with user approval)
 
 ---
 
