@@ -15,6 +15,9 @@ from app.utils import metrics
 from httpx import AsyncClient
 
 
+ADMIN_HEADERS = {"X-Role": "admin"}
+
+
 @pytest.mark.asyncio
 async def test_finance_metrics_surface_in_health(
     app_client: AsyncClient, session
@@ -69,7 +72,9 @@ async def test_finance_metrics_surface_in_health(
         },
     }
 
-    response = await app_client.post("/api/v1/finance/feasibility", json=payload)
+    response = await app_client.post(
+        "/api/v1/finance/feasibility", json=payload, headers=ADMIN_HEADERS
+    )
     assert response.status_code == 200
     body = response.json()
 
@@ -82,6 +87,7 @@ async def test_finance_metrics_surface_in_health(
     export_response = await app_client.get(
         "/api/v1/finance/export",
         params={"scenario_id": scenario_id},
+        headers=ADMIN_HEADERS,
     )
     assert export_response.status_code == 200
     assert export_response.headers["content-type"].startswith("text/csv")

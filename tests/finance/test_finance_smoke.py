@@ -20,8 +20,9 @@ from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
 from httpx import AsyncClient
 
-REVIEWER_HEADERS = {"X-Role": "reviewer"}
-VIEWER_HEADERS = {"X-Role": "viewer"}
+OWNER_EMAIL = "smoke@example.com"
+REVIEWER_HEADERS = {"X-Role": "reviewer", "X-User-Email": OWNER_EMAIL}
+VIEWER_HEADERS = {"X-Role": "viewer", "X-User-Email": OWNER_EMAIL}
 
 
 def _wrap_model_validator(func):
@@ -278,7 +279,7 @@ async def test_finance_feasibility_and_export_metrics(
     export_response = await app_client.get(
         "/api/v1/finance/export",
         params={"scenario_id": scenario_id},
-        headers=VIEWER_HEADERS,
+        headers=REVIEWER_HEADERS,
     )
     assert export_response.status_code == 200
     assert export_response.headers["content-type"].startswith("text/csv")

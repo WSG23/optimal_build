@@ -76,8 +76,13 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 
 ### 2025-11-04: Phase 2B Monitoring & Alerts wired
 - **Completed by:** Codex Local
-- **Artifacts:** `infra/observability/grafana/phase2b_preview_dashboard.json`, `infra/observability/prometheus/preview_generation.rules.yml`
-- **Highlights:** Grafana import-ready dashboard plus Prometheus alert rules covering failure rate, latency, and queue depth; documented runbook updated with import instructions.
+- **Artifacts:** `infra/observability/grafana/dashboards/phase2b_preview_dashboard.json`, `infra/observability/prometheus/preview_generation.rules.yml`, compose stack under `infra/observability/docker-compose.yml`
+- **Highlights:** Grafana import-ready dashboard plus Prometheus alert rules covering failure rate, latency, and queue depth; documented runbook updated with import instructions. Added `preview_generation_job_duration_ms:p95` recording rule for reuse across alerts/dashboards.
+
+### 2025-11-10: Preview asset lifecycle (retention + cleanup)
+- **Completed by:** Codex Local
+- **Artifacts:** `backend/scripts/preview_cleanup.py`, `settings.PREVIEW_MAX_VERSIONS`
+- **Highlights:** Configurable retention (default 3 versions per property) with a CLI that prunes old `static/dev-previews` directories and marks matching `PreviewJob` rows as `expired`. Documented in `docs/PHASE2B_VISUALISATION_STUB.MD`.
 
 ---
 

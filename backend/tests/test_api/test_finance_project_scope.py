@@ -14,6 +14,9 @@ from app.models.finance import FinProject
 from httpx import AsyncClient
 
 
+ADMIN_HEADERS = {"X-Role": "admin"}
+
+
 @pytest.mark.asyncio
 async def test_finance_feasibility_rejects_foreign_fin_project(
     app_client: AsyncClient, async_session_factory
@@ -60,7 +63,9 @@ async def test_finance_feasibility_rejects_foreign_fin_project(
         },
     }
 
-    response = await app_client.post("/api/v1/finance/feasibility", json=payload)
+    response = await app_client.post(
+        "/api/v1/finance/feasibility", json=payload, headers=ADMIN_HEADERS
+    )
     assert response.status_code in (403, 404)
 
     async with async_session_factory() as verify_session:

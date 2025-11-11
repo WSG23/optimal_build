@@ -194,6 +194,7 @@ class Settings:
     ALLOW_VIEWER_MUTATIONS: bool
     LISTING_TOKEN_SECRET: str
     SLOW_QUERY_THRESHOLD_SECONDS: float
+    PREVIEW_MAX_VERSIONS: int
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -292,6 +293,7 @@ class Settings:
             default_threshold,
         )
         self.OFFLINE_MODE = _load_bool("OFFLINE_MODE", False)
+        self.PREVIEW_MAX_VERSIONS = _load_positive_int("PREVIEW_MAX_VERSIONS", 3)
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")

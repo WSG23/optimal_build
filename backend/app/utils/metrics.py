@@ -45,6 +45,7 @@ FINANCE_FEASIBILITY_TOTAL: Counter
 FINANCE_FEASIBILITY_DURATION_MS: Histogram
 FINANCE_EXPORT_TOTAL: Counter
 FINANCE_EXPORT_DURATION_MS: Histogram
+FINANCE_PRIVACY_DENIALS: Counter
 ENTITLEMENTS_ROADMAP_COUNTER: Counter
 ENTITLEMENTS_STUDY_COUNTER: Counter
 ENTITLEMENTS_ENGAGEMENT_COUNTER: Counter
@@ -75,6 +76,7 @@ def _initialize_metrics() -> None:
     global FINANCE_FEASIBILITY_DURATION_MS
     global FINANCE_EXPORT_TOTAL
     global FINANCE_EXPORT_DURATION_MS
+    global FINANCE_PRIVACY_DENIALS
     global ENTITLEMENTS_ROADMAP_COUNTER
     global ENTITLEMENTS_STUDY_COUNTER
     global ENTITLEMENTS_ENGAGEMENT_COUNTER
@@ -189,6 +191,13 @@ def _initialize_metrics() -> None:
         "finance_export_duration_ms",
         "Duration of finance scenario exports in milliseconds.",
         labelnames=(),
+        registry=REGISTRY,
+    )
+
+    FINANCE_PRIVACY_DENIALS = Counter(
+        "finance_privacy_denials_total",
+        "Finance API requests rejected due to ownership/privacy enforcement.",
+        labelnames=("reason",),
         registry=REGISTRY,
     )
 

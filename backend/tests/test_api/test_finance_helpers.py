@@ -48,11 +48,28 @@ async def test_ensure_project_owner_honours_admin(monkeypatch):
     session = _StubSession((owner_id, None))
     await finance_api._ensure_project_owner(session, uuid4(), identity)
 
+    owner_email = "owner@example.com"
+    identity = _identity(role="reviewer", email=owner_email)
+    session = _StubSession((None, owner_email))
+    await finance_api._ensure_project_owner(session, uuid4(), identity)
+
+    identity = _identity(role="reviewer")
+    session = _StubSession((owner_id, owner_email))
+    with pytest.raises(HTTPException) as missing_identity:
+        await finance_api._ensure_project_owner(session, uuid4(), identity)
+    assert missing_identity.value.status_code == 403
+
     identity = _identity(role="viewer", user_id=str(uuid4()))
-    session = _StubSession((owner_id, "owner@example.com"))
+    session = _StubSession((owner_id, owner_email))
     with pytest.raises(HTTPException) as exc:
         await finance_api._ensure_project_owner(session, uuid4(), identity)
     assert exc.value.status_code == 403
+
+    identity = _identity(role="reviewer", email=owner_email)
+    session = _StubSession(None)
+    with pytest.raises(HTTPException) as missing_project:
+        await finance_api._ensure_project_owner(session, uuid4(), identity)
+    assert missing_project.value.status_code == 403
 
 
 def test_build_construction_interest_schedule_calculates_interest():

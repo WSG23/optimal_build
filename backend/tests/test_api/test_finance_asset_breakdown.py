@@ -22,6 +22,9 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
+ADMIN_HEADERS = {"X-Role": "admin"}
+
+
 def _build_asset_mix():
     return [
         {
@@ -183,11 +186,12 @@ async def test_finance_asset_mix_breakdown_and_privacy(
     sensitivity = body["sensitivity_results"]
     assert sensitivity, "Sensitivity results should be returned"
     assert sensitivity[0]["parameter"] == "Rent"
+    assert body.get("updated_at"), "Expected updated_at in response payload"
 
     fin_project_id = body["fin_project_id"]
     list_response = await app_client.get(
         f"/api/v1/finance/scenarios?fin_project_id={fin_project_id}",
-        headers={"X-Role": "reviewer"},
+        headers={"X-Role": "reviewer", "X-User-Email": owner_email},
     )
     assert list_response.status_code == 200
     scenarios = list_response.json()
@@ -211,7 +215,7 @@ async def test_finance_asset_mix_breakdown_and_privacy(
 
     export_response = await app_client.get(
         f"/api/v1/finance/export?scenario_id={body['scenario_id']}",
-        headers={"X-Role": "reviewer"},
+        headers={"X-Role": "reviewer", "X-User-Email": owner_email},
     )
     assert export_response.status_code == 200
     export_text = export_response.text
@@ -263,7 +267,7 @@ async def test_update_finance_construction_loan(
     create_response = await app_client.post(
         "/api/v1/finance/feasibility",
         json=base_payload,
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert create_response.status_code == 200
     scenario_id = create_response.json()["scenario_id"]
@@ -297,7 +301,7 @@ async def test_update_finance_construction_loan(
     patch_response = await app_client.patch(
         f"/api/v1/finance/scenarios/{scenario_id}/construction-loan",
         json=update_payload,
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert patch_response.status_code == 200
     body = patch_response.json()
@@ -378,7 +382,7 @@ async def test_finance_sensitivity_overflow_enqueues_job(
     response = await app_client.post(
         "/api/v1/finance/feasibility",
         json=payload,
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert response.status_code == 200
     body = response.json()
@@ -393,7 +397,7 @@ async def test_finance_sensitivity_overflow_enqueues_job(
 
     jobs_response = await app_client.get(
         f"/api/v1/finance/jobs?scenario_id={body['scenario_id']}",
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert jobs_response.status_code == 200
     jobs = jobs_response.json()
@@ -404,7 +408,7 @@ async def test_finance_sensitivity_overflow_enqueues_job(
 
     status_response = await app_client.get(
         f"/api/v1/finance/scenarios/{body['scenario_id']}/status",
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert status_response.status_code == 200
     status_body = status_response.json()
@@ -445,14 +449,14 @@ async def test_finance_jobs_completed_when_no_async_entries(
     response = await app_client.post(
         "/api/v1/finance/feasibility",
         json=payload,
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert response.status_code == 200
     scenario_id = response.json()["scenario_id"]
 
     jobs_response = await app_client.get(
         f"/api/v1/finance/jobs?scenario_id={scenario_id}",
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert jobs_response.status_code == 200
     jobs = jobs_response.json()
@@ -558,7 +562,7 @@ async def test_finance_sensitivity_job_execution(
         response = await app_client.post(
             "/api/v1/finance/feasibility",
             json=payload,
-            headers={"X-Role": "reviewer"},
+            headers=ADMIN_HEADERS,
         )
         assert response.status_code == 200
         scenario_id = response.json()["scenario_id"]
@@ -576,7 +580,7 @@ async def test_finance_sensitivity_job_execution(
 
         jobs_response = await app_client.get(
             f"/api/v1/finance/jobs?scenario_id={scenario_id}",
-            headers={"X-Role": "reviewer"},
+            headers=ADMIN_HEADERS,
         )
         assert jobs_response.status_code == 200
         jobs = jobs_response.json()
@@ -592,7 +596,7 @@ async def test_finance_sensitivity_job_execution(
 
         scenario_response = await app_client.get(
             f"/api/v1/finance/scenarios?fin_project_id={response.json()['fin_project_id']}",
-            headers={"X-Role": "reviewer"},
+            headers=ADMIN_HEADERS,
         )
         assert scenario_response.status_code == 200
         latest = scenario_response.json()[-1]
@@ -641,7 +645,7 @@ async def test_finance_status_stream_returns_updates(
     response = await app_client.post(
         "/api/v1/finance/feasibility",
         json=payload,
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     )
     assert response.status_code == 200
     scenario_id = response.json()["scenario_id"]
@@ -649,7 +653,7 @@ async def test_finance_status_stream_returns_updates(
     async with app_client.stream(
         "GET",
         f"/api/v1/finance/scenarios/{scenario_id}/status-stream",
-        headers={"X-Role": "reviewer"},
+        headers=ADMIN_HEADERS,
     ) as stream:
         chunks = []
         async for chunk in stream.aiter_bytes():
@@ -723,5 +727,94 @@ async def test_finance_scenarios_require_project_owner(
     viewer_response = await app_client.get(
         f"/api/v1/finance/scenarios?fin_project_id={fin_project_id}",
         headers=viewer_headers,
+    )
+    assert viewer_response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_finance_scenario_update_allows_marking_primary(
+    app_client: AsyncClient,
+    async_session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    owner_email = "owner@example.com"
+    project_uuid = uuid4()
+    async with async_session_factory() as session:
+        project = Project(
+            id=project_uuid,
+            project_name="Primary Toggle Project",
+            project_code="FINANCE-PRIMARY",
+            project_type=ProjectType.NEW_DEVELOPMENT,
+            current_phase=ProjectPhase.CONCEPT,
+            owner_email=owner_email,
+        )
+        session.add(project)
+        await session.commit()
+
+    base_payload = {
+        "project_id": str(project_uuid),
+        "project_name": "Primary Toggle Project",
+        "scenario": {
+            "name": "Scenario One",
+            "currency": "SGD",
+            "is_primary": True,
+            "cost_escalation": {
+                "amount": "150000",
+                "base_period": "2024-Q1",
+                "series_name": "construction_cost_index",
+                "jurisdiction": "SG",
+            },
+            "cash_flow": {"discount_rate": "0.08", "cash_flows": ["-150000", "60000"]},
+            "drawdown_schedule": [
+                {"period": "Q1", "equity_draw": "75000", "debt_draw": "0"},
+                {"period": "Q2", "equity_draw": "0", "debt_draw": "75000"},
+            ],
+            "asset_mix": _build_asset_mix(),
+        },
+    }
+
+    reviewer_headers = {"X-Role": "reviewer", "X-User-Email": owner_email}
+    scenario_one = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=base_payload,
+        headers=reviewer_headers,
+    )
+    assert scenario_one.status_code == 200
+    scenario_one_id = scenario_one.json()["scenario_id"]
+
+    base_payload["scenario"]["name"] = "Scenario Two"
+    base_payload["scenario"]["is_primary"] = False
+    scenario_two = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=base_payload,
+        headers=reviewer_headers,
+    )
+    assert scenario_two.status_code == 200
+    scenario_two_id = scenario_two.json()["scenario_id"]
+
+    promote_response = await app_client.patch(
+        f"/api/v1/finance/scenarios/{scenario_two_id}",
+        json={"is_primary": True},
+        headers=reviewer_headers,
+    )
+    assert promote_response.status_code == 200
+    promote_body = promote_response.json()
+    assert promote_body["is_primary"] is True
+    assert promote_body["scenario_name"] == "Scenario Two"
+    assert promote_body["updated_at"], "Updated scenario should include timestamp"
+
+    scenarios = await app_client.get(
+        f"/api/v1/finance/scenarios?project_id={project_uuid}",
+        headers=reviewer_headers,
+    )
+    assert scenarios.status_code == 200
+    payload = scenarios.json()
+    scenario_map = {entry["scenario_id"]: entry for entry in payload}
+    assert scenario_map[scenario_two_id]["is_primary"] is True
+    assert scenario_map[scenario_one_id]["is_primary"] is False
+
+    viewer_response = await app_client.patch(
+        f"/api/v1/finance/scenarios/{scenario_two_id}",
+        json={"is_primary": False},
+        headers={"X-Role": "viewer", "X-User-Email": "viewer@example.com"},
     )
     assert viewer_response.status_code == 403

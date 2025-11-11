@@ -6,6 +6,9 @@ Roadmap for evolving the finance workspace from the current generic feasibility 
 
 ## Changelog
 
+- **v0.2 (2025-11-10)** – Enforced finance privacy guard now requires developer
+  identity headers, logs denied attempts, and increments the new
+  `finance_privacy_denials_total` metric for auditability.
 - **v0.1 (2025-10-22)** – Captured current-state audit and implementation track for backend models, frontend workspace, sensitivity tooling, and privacy hardening.
 
 ---
@@ -130,6 +133,7 @@ Developer capture → optimiser plans + finance blueprint
    - Provide CSV/JSON download for sensitivity runs.
 5. **Scenario Management**
    - Allow marking scenario primary/private; show last run timestamp and reviewer log.
+     - **Update (Nov 2025):** Workspace now exposes a “Make primary” action backed by `PATCH /api/v1/finance/scenarios/{id}`, automatically demoting sibling scenarios so reviewers can designate the canonical run.
    - Add refresh + duplicate controls (calls to new backend endpoints when implemented).
 6. **Testing**
    - Component tests for new panels (mock API data).
@@ -144,6 +148,13 @@ Developer capture → optimiser plans + finance blueprint
 - Update CLA (`docs/ROADMAP.MD` acceptance) to note finance data is developer-private and add follow-up tasks in `docs/WORK_QUEUE.MD`.
 - Coordinate with `ui-admin` for admin override tooling (view-only with explicit grant).
 
+**Update (Nov 2025):** `_ensure_project_owner` now enforces owner-only access for
+all finance endpoints. Requests must include `X-User-Email` or `X-User-Id`
+headers matching the `Project` owner (admins bypass via `X-Role: admin`). Every
+denial emits a `finance_privacy_denied` log entry and increments the
+`finance_privacy_denials_total{reason="<cause>"}` counter so privacy regressions
+surface in Grafana/alerts.
+
 ---
 
 ## 8. Observability & Testing Strategy
@@ -153,6 +164,7 @@ Developer capture → optimiser plans + finance blueprint
 - **Alerts:** Trigger when finance run errors exceed 5% or duration > 3 s P95.
 - **Regression Suite:** Expand `backend/tests/test_api` coverage; ensure `pytest` fixtures seeded with asset mix data.
 - **Frontend QA:** Manual checklist (per `TESTING_ADVISORY.md`) covering scenario selection, sensitivity toggles, downloads.
+- **Test Harness Caveat (Nov 2025):** Frontend unit tests are currently blocked by known infrastructure issues (Vitest vs. node runner resolution, `tsx` IPC `EPERM`, and JSDOM misconfiguration). Retest once the harness is fixed before Phase 2C sign-off.
 
 ---
 

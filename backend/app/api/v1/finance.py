@@ -28,6 +28,7 @@ from app.schemas.finance import (
     AssetFinancialSummarySchema,
     CapitalStackSliceSchema,
     CapitalStackSummarySchema,
+    ConstructionLoanFacilityInput,
     ConstructionLoanInput,
     ConstructionLoanInterestSchema,
     CostIndexProvenance,
@@ -52,7 +53,7 @@ from app.services.finance import (
 )
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -62,6 +63,14 @@ logger = get_logger(__name__)
 
 class ConstructionLoanUpdatePayload(BaseModel):
     construction_loan: ConstructionLoanInput
+
+
+class FinanceScenarioUpdatePayload(BaseModel):
+    """Mutable fields for a persisted finance scenario."""
+
+    scenario_name: str | None = None
+    description: str | None = None
+    is_primary: bool | None = None
 
 
 def _normalise_project_id(project_id: str | int | UUID) -> UUID:
@@ -83,6 +92,35 @@ def _normalise_project_id(project_id: str | int | UUID) -> UUID:
         ) from e
 
 
+def _normalise_facility_key(value: str | None) -> str | None:
+    if value is None:
+        return None
+    trimmed = value.strip().lower()
+    return trimmed or None
+
+
+def _raise_finance_privacy_error(
+    *,
+    project_uuid: UUID,
+    identity: RequestIdentity,
+    reason: str,
+    detail: str,
+) -> None:
+    """Log and surface a consistent privacy denial response."""
+
+    metrics.FINANCE_PRIVACY_DENIALS.labels(reason=reason).inc()
+    log_event(
+        logger,
+        "finance_privacy_denied",
+        project_id=str(project_uuid),
+        role=identity.role,
+        user_id=identity.user_id,
+        email=identity.email,
+        reason=reason,
+    )
+    raise HTTPException(status_code=403, detail=detail)
+
+
 async def _ensure_project_owner(
     session: AsyncSession,
     project_uuid: UUID,
@@ -99,20 +137,32 @@ async def _ensure_project_owner(
     result = await session.execute(stmt)
     row = result.first()
     if row is None:
-        # Legacy/demo environments may submit finance requests before the project
-        # catalogue is hydrated. In that case we skip the ownership guard.
-        return
+        _raise_finance_privacy_error(
+            project_uuid=project_uuid,
+            identity=identity,
+            reason="project_missing",
+            detail="Finance data restricted to project owner.",
+        )
 
     owner_id, owner_email = row
     if owner_id is None and owner_email is None:
-        # Legacy demo data has no ownership metadata; fall back to role guard only.
-        return
+        _raise_finance_privacy_error(
+            project_uuid=project_uuid,
+            identity=identity,
+            reason="owner_metadata_missing",
+            detail="Finance data restricted to project owner.",
+        )
 
-    if identity.role == "reviewer" and not identity.user_id and not identity.email:
-        # Developer tooling historically allowed reviewer requests without explicit
-        # identity metadata. Maintain that behaviour to avoid blocking seeded
-        # fixtures while Phase 2C privacy headers are rolled out.
-        return
+    if not identity.user_id and not identity.email:
+        _raise_finance_privacy_error(
+            project_uuid=project_uuid,
+            identity=identity,
+            reason="identity_metadata_missing",
+            detail=(
+                "Finance data restricted to project owner; "
+                "supply X-User-Id or X-User-Email headers."
+            ),
+        )
 
     matches = False
     if identity.user_id and owner_id is not None:
@@ -121,10 +171,82 @@ async def _ensure_project_owner(
         matches |= owner_email.lower() == identity.email.lower()
 
     if not matches:
-        raise HTTPException(
-            status_code=403,
-            detail="Finance data restricted to project owner",
+        _raise_finance_privacy_error(
+            project_uuid=project_uuid,
+            identity=identity,
+            reason="ownership_mismatch",
+            detail="Finance data restricted to project owner.",
         )
+
+
+def _facility_metadata_from_input(
+    facility: ConstructionLoanFacilityInput,
+) -> dict[str, str | bool | int]:
+    metadata: dict[str, str | bool | int] = {}
+    if facility.upfront_fee_pct is not None:
+        metadata["upfront_fee_pct"] = str(facility.upfront_fee_pct)
+    if facility.exit_fee_pct is not None:
+        metadata["exit_fee_pct"] = str(facility.exit_fee_pct)
+    if facility.reserve_months is not None:
+        metadata["reserve_months"] = int(facility.reserve_months)
+    if facility.amortisation_months is not None:
+        metadata["amortisation_months"] = int(facility.amortisation_months)
+    if facility.periods_per_year is not None:
+        metadata["periods_per_year"] = int(facility.periods_per_year)
+    if facility.capitalise_interest is not None:
+        metadata["capitalise_interest"] = bool(facility.capitalise_interest)
+    return metadata
+
+
+def _build_facility_metadata_map(
+    loan_config: ConstructionLoanInput | None,
+) -> dict[str, dict[str, str | bool | int]]:
+    """Index construction loan facilities by a normalised name for lookups."""
+
+    metadata_map: dict[str, dict[str, str | bool | int]] = {}
+    if not loan_config or not loan_config.facilities:
+        return metadata_map
+
+    for idx, facility in enumerate(loan_config.facilities):
+        key = _normalise_facility_key(facility.name) or f"facility_{idx}"
+        meta = _facility_metadata_from_input(facility)
+        if meta:
+            metadata_map[key] = meta
+    return metadata_map
+
+
+def _merge_facility_metadata(
+    metadata: Mapping[str, Any] | None,
+    facility_meta: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Normalise slice metadata and append facility details when available."""
+
+    merged: dict[str, Any] = dict(metadata or {})
+    facility_block: dict[str, Any] | None = None
+
+    def _ensure_facility_block() -> dict[str, Any]:
+        nonlocal facility_block
+        if facility_block is None:
+            existing = merged.get("facility")
+            facility_block = dict(existing) if isinstance(existing, Mapping) else {}
+            merged["facility"] = facility_block
+        return facility_block
+
+    detail = merged.pop("detail", None)
+    if isinstance(detail, Mapping):
+        nested = detail.get("facility")
+        if isinstance(nested, Mapping):
+            _ensure_facility_block().update(nested)
+        else:
+            _ensure_facility_block().update(detail)
+
+    if facility_meta:
+        _ensure_facility_block().update(facility_meta)
+
+    if facility_block is not None and not facility_block:
+        merged.pop("facility", None)
+
+    return merged
 
 
 def _project_uuid_from_scenario(scenario: FinScenario) -> UUID:
@@ -219,6 +341,8 @@ def _build_construction_interest_schedule(
                 "total_interest": str(facility_interest),
                 "upfront_fee": str(upfront_fee) if upfront_fee is not None else None,
                 "exit_fee": str(exit_fee) if exit_fee is not None else None,
+                "reserve_months": facility.get("reserve_months"),
+                "amortisation_months": facility.get("amortisation_months"),
             }
         )
 
@@ -597,6 +721,8 @@ async def _summarise_persisted_scenario(
         )
         dscr_entries = [_convert_dscr_entry(entry) for entry in timeline]
 
+    facility_metadata_map = _build_facility_metadata_map(construction_loan_config)
+
     capital_stack_inputs: list[Mapping[str, Any]] = []
     if scenario.capital_stack:
         ordered = sorted(
@@ -606,6 +732,9 @@ async def _summarise_persisted_scenario(
             ),
         )
         for entry in ordered:
+            facility_key = _normalise_facility_key(entry.name)
+            facility_meta = facility_metadata_map.get(facility_key)
+            metadata = _merge_facility_metadata(entry.metadata, facility_meta)
             capital_stack_inputs.append(
                 {
                     "name": entry.name,
@@ -613,22 +742,29 @@ async def _summarise_persisted_scenario(
                     "amount": entry.amount or Decimal("0"),
                     "rate": entry.rate,
                     "tranche_order": entry.tranche_order,
-                    "metadata": dict(entry.metadata or {}),
+                    "metadata": metadata,
                 }
             )
     elif isinstance(capital_stack_config, list):
         for item in capital_stack_config:
+            slice_payload = item.model_dump(mode="json")
+            facility_key = _normalise_facility_key(slice_payload.get("name"))
+            facility_meta = facility_metadata_map.get(facility_key)
+            metadata = _merge_facility_metadata(
+                slice_payload.get("metadata"), facility_meta
+            )
             capital_stack_inputs.append(
                 {
-                    "name": item.get("name", ""),
-                    "source_type": item.get("source_type", "other"),
-                    "amount": _decimal_from_value(item.get("amount", "0")),
+                    "name": slice_payload.get("name", ""),
+                    "source_type": slice_payload.get("source_type", "other"),
+                    "amount": _decimal_from_value(slice_payload.get("amount", "0")),
                     "rate": (
-                        _decimal_from_value(item.get("rate"))
-                        if item.get("rate") is not None
+                        _decimal_from_value(slice_payload.get("rate"))
+                        if slice_payload.get("rate") is not None
                         else None
                     ),
-                    "tranche_order": item.get("tranche_order"),
+                    "tranche_order": slice_payload.get("tranche_order"),
+                    "metadata": metadata,
                 }
             )
 
@@ -915,6 +1051,9 @@ async def _summarise_persisted_scenario(
         construction_loan=construction_loan_config,
         sensitivity_results=sensitivity_results,
         sensitivity_jobs=sensitivity_jobs,
+        is_primary=bool(scenario.is_primary),
+        is_private=bool(getattr(scenario, "is_private", False)),
+        updated_at=scenario.updated_at,
     )
 
 
@@ -1606,12 +1745,27 @@ async def run_finance_feasibility(
                 ],
             }
 
+        facility_metadata_map = _build_facility_metadata_map(
+            payload.scenario.construction_loan
+        )
         capital_stack_summary_schema: CapitalStackSummarySchema | None = None
         capital_stack_result_metadata: dict[str, object] | None = None
         if payload.scenario.capital_stack:
-            stack_inputs = [
-                item.model_dump(mode="json") for item in payload.scenario.capital_stack
-            ]
+            stack_inputs: list[dict[str, Any]] = []
+            for slice_input in payload.scenario.capital_stack:
+                facility_key = _normalise_facility_key(slice_input.name)
+                facility_meta = facility_metadata_map.get(facility_key)
+                metadata = _merge_facility_metadata(slice_input.metadata, facility_meta)
+                stack_inputs.append(
+                    {
+                        "name": slice_input.name,
+                        "source_type": slice_input.source_type,
+                        "amount": slice_input.amount,
+                        "rate": slice_input.rate,
+                        "tranche_order": slice_input.tranche_order,
+                        "metadata": metadata,
+                    }
+                )
             stack_summary = calculator.capital_stack_summary(
                 stack_inputs,
                 currency=payload.scenario.currency,
@@ -1627,7 +1781,12 @@ async def run_finance_feasibility(
                     if component.tranche_order is not None
                     else idx
                 )
-                component_metadata = _json_safe(dict(component.metadata))
+                component_metadata = dict(component.metadata or {})
+                combined_metadata: dict[str, object] = {}
+                if component_metadata:
+                    combined_metadata.update(component_metadata)
+                combined_metadata.setdefault("category", component.category)
+                combined_metadata.setdefault("share", str(component.share))
                 capital_stack_rows.append(
                     FinCapitalStack(
                         project_id=project_uuid,
@@ -1638,11 +1797,7 @@ async def run_finance_feasibility(
                         amount=component.amount,
                         rate=component.rate,
                         equity_share=component.share,
-                        metadata={
-                            "category": component.category,
-                            "share": str(component.share),
-                            "detail": component_metadata,
-                        },
+                        metadata=_json_safe(combined_metadata),
                     )
                 )
                 slices_payload.append(
@@ -1656,7 +1811,7 @@ async def run_finance_feasibility(
                             str(component.rate) if component.rate is not None else None
                         ),
                         "tranche_order": component.tranche_order,
-                        "metadata": component_metadata,
+                        "metadata": _json_safe(combined_metadata),
                     }
                 )
             if capital_stack_rows:
@@ -2043,6 +2198,9 @@ async def run_finance_feasibility(
             construction_loan=loan_config,
             sensitivity_results=sensitivity_results,
             sensitivity_jobs=sensitivity_jobs,
+            is_primary=bool(scenario.is_primary),
+            is_private=bool(getattr(scenario, "is_private", False)),
+            updated_at=scenario.updated_at,
         )
     finally:
         duration_ms = (perf_counter() - start_time) * 1000
@@ -2120,6 +2278,64 @@ async def list_finance_scenarios(
         summaries.append(await _summarise_persisted_scenario(scenario, session=session))
 
     return summaries
+
+
+@router.patch(
+    "/scenarios/{scenario_id}",
+    response_model=FinanceFeasibilityResponse,
+)
+async def update_finance_scenario(
+    scenario_id: int,
+    payload: FinanceScenarioUpdatePayload,
+    session: AsyncSession = Depends(get_session),
+    identity: RequestIdentity = Depends(require_reviewer),
+) -> FinanceFeasibilityResponse:
+    """Update mutable fields on a persisted finance scenario."""
+
+    base_stmt = (
+        select(FinScenario)
+        .where(FinScenario.id == scenario_id)
+        .options(
+            selectinload(FinScenario.fin_project),
+            selectinload(FinScenario.capital_stack),
+            selectinload(FinScenario.results),
+        )
+    )
+    scenario = (await session.execute(base_stmt)).scalars().first()
+    if scenario is None:
+        raise HTTPException(status_code=404, detail="Finance scenario not found")
+
+    project_uuid = _project_uuid_from_scenario(scenario)
+    await _ensure_project_owner(session, project_uuid, identity)
+
+    updated = False
+    if payload.scenario_name is not None:
+        name = payload.scenario_name.strip()
+        if name and name != scenario.name:
+            scenario.name = name
+            updated = True
+    if payload.description is not None and payload.description != scenario.description:
+        scenario.description = payload.description
+        updated = True
+    if payload.is_primary is not None and payload.is_primary != scenario.is_primary:
+        scenario.is_primary = payload.is_primary
+        updated = True
+        if payload.is_primary:
+            await session.execute(
+                update(FinScenario)
+                .where(
+                    FinScenario.fin_project_id == scenario.fin_project_id,
+                    FinScenario.id != scenario.id,
+                )
+                .values(is_primary=False)
+            )
+
+    if updated:
+        await session.commit()
+        scenario = (await session.execute(base_stmt)).scalars().first()
+        if scenario is None:
+            raise HTTPException(status_code=404, detail="Finance scenario not found")
+    return await _summarise_persisted_scenario(scenario, session=session)
 
 
 @router.get("/jobs", response_model=list[FinanceJobStatusSchema])

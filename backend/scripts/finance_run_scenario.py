@@ -13,6 +13,7 @@ import httpx
 DEFAULT_PROJECT_ID = 401
 DEFAULT_SCENARIO_NAME = "Workspace Quick Run"
 DEFAULT_PROJECT_NAME = "Finance Workspace"
+DEFAULT_OWNER_EMAIL = "developer@example.com"
 
 
 def _default_payload(
@@ -87,11 +88,12 @@ def run_feasibility(
     payload: dict[str, Any],
     export_path: Path,
     timeout: float,
+    owner_email: str,
 ) -> None:
     export_path.parent.mkdir(parents=True, exist_ok=True)
 
     with httpx.Client(base_url=api_base, timeout=timeout) as client:
-        reviewer_headers = {"X-Role": "reviewer"}
+        reviewer_headers = {"X-Role": "reviewer", "X-User-Email": owner_email}
         response = client.post(
             "/api/v1/finance/feasibility", json=payload, headers=reviewer_headers
         )
@@ -112,7 +114,7 @@ def run_feasibility(
 
         print(f"Created finance scenario {scenario_id}")
 
-        viewer_headers = {"X-Role": "viewer"}
+        viewer_headers = {"X-Role": "viewer", "X-User-Email": owner_email}
         export = client.get(
             "/api/v1/finance/export",
             params={"scenario_id": scenario_id},
@@ -170,6 +172,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default=30.0,
         help="HTTP request timeout in seconds (default: %(default)s)",
     )
+    parser.add_argument(
+        "--owner-email",
+        default=DEFAULT_OWNER_EMAIL,
+        help="Email used for finance ownership headers (default: %(default)s)",
+    )
     return parser.parse_args(argv)
 
 
@@ -195,6 +202,7 @@ def main(argv: list[str] | None = None) -> None:
         payload=payload,
         export_path=args.export_path,
         timeout=args.timeout,
+        owner_email=args.owner_email,
     )
 
 

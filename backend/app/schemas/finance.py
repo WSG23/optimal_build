@@ -244,6 +244,8 @@ class ConstructionLoanFacilityInput(BaseModel):
     capitalise_interest: bool | None = None
     upfront_fee_pct: Decimal | None = Field(default=None, ge=Decimal("0"))
     exit_fee_pct: Decimal | None = Field(default=None, ge=Decimal("0"))
+    reserve_months: int | None = Field(default=None, ge=0)
+    amortisation_months: int | None = Field(default=None, ge=0)
 
     @field_serializer("interest_rate", when_used="json")
     def _serialise_interest_rate(self, value: Decimal | None) -> str | None:
@@ -447,6 +449,8 @@ class ConstructionLoanFacilitySchema(BaseModel):
     total_interest: Decimal | None = None
     upfront_fee: Decimal | None = None
     exit_fee: Decimal | None = None
+    reserve_months: int | None = None
+    amortisation_months: int | None = None
 
 
 class ConstructionLoanInterestEntrySchema(BaseModel):
@@ -523,6 +527,9 @@ class FinanceFeasibilityResponse(BaseModel):
         default_factory=list
     )
     sensitivity_jobs: list[FinanceJobStatusSchema] = Field(default_factory=list)
+    is_primary: bool = False
+    is_private: bool = False
+    updated_at: datetime | None = None
 
 
 __all__ = [
