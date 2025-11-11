@@ -515,7 +515,11 @@
 
 **What's Missing (Next Focus):**
 - ✅ Asset-specific feasibility optimizers (office, retail, industrial, residential, mixed-use) with scoring engine, constraint logging, and scenario variants
-- ⏭️ Scenario-aware 3D preview generation and UI integration (deferred - see [Phase 2B Visualisation Delivery Plan](PHASE2B_VISUALISATION_STUB.MD))
+- 🔄 **3D Preview Enhancement - Level 2 Detail (Phase 2B Residual)**
+  - Upgrade from simple box geometry (Level 1) to medium-detail architectural massing (Level 2)
+  - Features: octagonal footprints, basic setbacks at 1/3 and 2/3 height for tall buildings, ground floor podium distinction, floor lines every 3.5m, basic ambient shadows
+  - Target generation time: <5 seconds per preview
+  - See detailed spec in [Phase 2B Visualisation Delivery Plan](PHASE2B_VISUALISATION_STUB.MD) Section 4.4.1
 - ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates
 
 **Testing Discipline (Phase 2B onward):**

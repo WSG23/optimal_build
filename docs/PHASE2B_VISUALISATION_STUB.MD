@@ -137,6 +137,64 @@ Metadata updated in DB → Frontend polls status → Player streams rendered ass
 - Preview jobs update `metadata_url`, `asset_version`, and manifest fields when the job reaches `READY`; reruns clear the manifest before requeueing.
 - Stretch goal: revisit a photorealistic renderer (Blender/Three.js service) if stakeholders require richer visuals in Phase 2C.
 
+
+#### 4.4.1 Level 2 Detail Enhancement (Phase 2B Residual)
+
+**Current State (Level 1):** Simple box geometry with square footprints, basic height extrusion, generation time <1 second.
+
+**Target State (Level 2 - Recommended):** Medium-detail architectural massing suitable for early-stage developer presentations and feasibility review.
+
+**Level 2 Features:**
+
+1. **Octagonal Footprints**
+   - Replace square footprints with 8-sided polygons to approximate complex building shapes
+   - Vertices at 45° angles for chamfered corners
+   - Maintains performance while adding architectural character
+
+2. **Basic Setbacks for Tall Buildings**
+   - Apply two setback tiers for buildings >60m height:
+     - First setback at 1/3 total height (reduces footprint by 15%)
+     - Second setback at 2/3 total height (reduces footprint by additional 10%)
+   - Creates tapered massing typical of modern high-rises
+
+3. **Ground Floor Podium Distinction**
+   - Separate ground floor geometry (typically 4.5-6m height)
+   - Visual distinction for retail/commercial base in mixed-use developments
+   - Different material/color in GLTF for podium vs tower
+
+4. **Floor Lines Every 3.5m**
+   - Add horizontal edge lines at typical floor intervals (3.5m spacing)
+   - Provides scale reference and architectural detail
+   - Implemented as additional geometry primitives (thin quads)
+
+5. **Basic Ambient Shadows**
+   - Simple ambient occlusion approximation at ground level
+   - Darker vertex colors at base, gradient to lighter at top
+   - No raytracing required - pre-computed vertex colors
+
+6. **Thumbnail Optimization**
+   - 45° isometric view (not straight-on orthographic)
+   - Camera positioned at 30-45° elevation for better depth perception
+   - 512x512 PNG thumbnail with transparent background
+
+**Performance Target:**
+- Generation time: <5 seconds per preview (acceptable for background job queue)
+- Geometry complexity: 100-500 vertices per building (up from current 8-24)
+- File size: <200KB for GLTF+BIN combined
+
+**Implementation Guidance:**
+- Modify `preview_generator.py::_serialise_layer()` to support geometry mode parameter:
+  - `mode="simple"` (current Level 1 - square footprint)
+  - `mode="medium"` (Level 2 - octagonal + setbacks + floor lines)
+  - `mode="detailed"` (future Level 3 - facade articulation)
+- Add `geometry_detail_level` setting to `PreviewJob` model (default "medium")
+- Camera position configured via `preview_generator.py::_generate_thumbnail()` camera hints
+
+**Level 3 (Future Enhancement - Not Phase 2B):**
+- Facade articulation (window grids, balconies)
+- Material textures (glass, concrete, brick)
+- Rooftop features (mechanical, amenities)
+- Generation time: 10-30 seconds
 ### 4.5 Storage & Versioning
 
 - Directory structure:
