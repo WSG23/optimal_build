@@ -147,7 +147,7 @@ Metadata updated in DB → Frontend polls status → Player streams rendered ass
   ```
 - `version` = `{optimizer_version}-{preview_schema_version}-{YYYYMMDDHHMM}`.
 - Upload helper abstracts between local filesystem and S3 (reuse `app.services.storage` if available, else introduce).
-- Expire assets older than N versions (configurable, default keep last 3) and mark jobs as `expired` when pruned.
+- Expire assets older than N versions (configurable, default keep last 3) and mark jobs as `expired` when pruned. Use `backend/scripts/preview_cleanup.py --max-versions <N>` (wired to `settings.PREVIEW_MAX_VERSIONS`) to prune old directories and update `PreviewJob` rows.
 - Metadata now records an `asset_manifest` block (GLTF, BIN, metadata, thumbnail, version) for downstream services.
 
 ### 4.6 Notifications (Optional Phase 2B stretch)

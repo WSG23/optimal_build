@@ -50,6 +50,11 @@ DEFAULT_ARTIFACT_DIR = Path("artifacts")
 BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = 8000
 ENTITLEMENTS_PROJECT_ID = 90301
+FINANCE_OWNER_EMAIL = "demo-owner@example.com"
+FINANCE_REVIEWER_HEADERS = {
+    "X-Role": "reviewer",
+    "X-User-Email": FINANCE_OWNER_EMAIL,
+}
 
 
 LOGGER = structlog.get_logger(__name__)
@@ -355,7 +360,7 @@ def capture_finance_asset_mix(client: httpx.Client) -> list[dict[str, Any]]:
             "POST",
             "/api/v1/developers/properties/log-gps",
             json=capture_payload,
-            headers={"X-Role": "reviewer"},
+            headers=FINANCE_REVIEWER_HEADERS,
         )
     except SmokeError as exc:
         LOGGER.warning(
@@ -427,10 +432,7 @@ def run_finance_smoke(
     asset_mix_inputs: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     _log("Executing finance feasibility smoke request")
-    auth_headers = {
-        "X-Role": "reviewer",
-        "X-User-Email": "demo-owner@example.com",
-    }
+    auth_headers = dict(FINANCE_REVIEWER_HEADERS)
     max_sync_bands = max(1, getattr(settings, "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3))
     sensitivity_templates = [
         {

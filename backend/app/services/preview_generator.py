@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw
 _BASE_DIR = Path(__file__).resolve().parents[2]
 _PREVIEW_DIR = _BASE_DIR / "static" / "dev-previews"
 _PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
+PREVIEW_STORAGE_DIR = _PREVIEW_DIR
 
 _DEFAULT_LAYER_COLOURS = [
     "#6366F1",

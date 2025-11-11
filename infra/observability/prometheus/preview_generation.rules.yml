@@ -2,6 +2,15 @@ groups:
   - name: preview-generation
     interval: 30s
     rules:
+      - record: preview_generation_job_duration_ms:p95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(preview_generation_job_duration_ms_bucket{outcome="ready"}[15m])
+            )
+          )
+
       - alert: PreviewGenerationHighFailureRate
         expr: |
           sum(rate(preview_generation_jobs_completed_total{outcome="failed"}[10m]))
@@ -39,3 +48,16 @@ groups:
         annotations:
           summary: "Preview generation queue depth above 10."
           description: "Jobs are piling up in the preview queue. Check worker availability or renderer throughput."
+
+  - name: finance-privacy
+    interval: 30s
+    rules:
+      - alert: FinancePrivacyDenialsSpike
+        expr: sum(rate(finance_privacy_denials_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: warn
+          service: finance-api
+        annotations:
+          summary: "Finance privacy denials detected"
+          description: "Finance endpoints rejected at least one request in the last 5 minutes. Check identity headers and project ownership."

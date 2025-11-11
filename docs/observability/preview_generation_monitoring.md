@@ -3,7 +3,7 @@
 **Last updated:** 2025-11-04
 **Phase:** 2B Visualisation
 
-This note describes how to visualise and alert on the new `preview_generation_*` metrics emitted by the backend when developer preview jobs are queued and processed. A ready-to-import Grafana dashboard is checked into the repo at `infra/observability/grafana/phase2b_preview_dashboard.json`, and matching Prometheus alert rules live at `infra/observability/prometheus/preview_generation.rules.yml`.
+This note describes how to visualise and alert on the new `preview_generation_*` metrics emitted by the backend when developer preview jobs are queued and processed. A ready-to-import Grafana dashboard is checked into the repo at `infra/observability/grafana/dashboards/phase2b_preview_dashboard.json`, and matching Prometheus alert rules live at `infra/observability/prometheus/preview_generation.rules.yml`. A self-contained Prometheus/Grafana stack is available via `infra/observability/docker-compose.yml`.
 
 ---
 
@@ -15,17 +15,38 @@ This note describes how to visualise and alert on the new `preview_generation_*`
 | `preview_generation_jobs_completed_total` | Counter | `outcome ∈ {ready, failed}` | Jobs that reached a terminal state. |
 | `preview_generation_job_duration_ms` | Histogram | `outcome` | End-to-end job latency (request → completion) in milliseconds. |
 | `preview_generation_queue_depth` | Gauge | `backend` | Current number of jobs still marked as `queued`. |
+| `finance_privacy_denials_total` | Counter | `reason` | Finance API requests rejected by the ownership/privacy guard (Phase 2C). |
 
 > The `backend` label distinguishes inline execution (tests/local) from asynchronous queue runners (e.g., RQ, Celery).
+
+**Recording rules**
+
+| Rule | Definition | Purpose |
+|------|------------|---------|
+| `preview_generation_job_duration_ms:p95` | `histogram_quantile(0.95, sum by (le)(rate(preview_generation_job_duration_ms_bucket{outcome="ready"}[15m])))` | Reusable p95 latency series used by both dashboards and alerts. |
 
 ---
 
 ## 2. Grafana Dashboard Suggestions
 
-### 2.1 Importing the dashboard
+### 2.1 Local compose stack (Prometheus + Grafana)
+
+1. Ensure the backend is running locally on port `8000` (so that Prometheus can scrape `http://host.docker.internal:8000/metrics`).
+2. From the repo root run:
+   ```bash
+   cd infra/observability
+   docker compose up
+   ```
+   - Prometheus is exposed at <http://localhost:9090>
+   - Grafana is available at <http://localhost:3001> (user/pass: `admin`/`admin`)
+3. The compose file automatically mounts the dashboard JSON and provisioning files so the “Phase 2B Preview” folder appears as soon as Grafana finishes booting.
+
+### 2.2 Importing the dashboard into an existing Grafana
+
+If you already have a shared Grafana instance and do not want to run the compose stack:
 
 1. In Grafana, go to **Dashboards → New → Import**.
-2. Upload `infra/observability/grafana/phase2b_preview_dashboard.json` (or paste its contents in the JSON field).
+2. Upload `infra/observability/grafana/dashboards/phase2b_preview_dashboard.json` (or paste its contents in the JSON field).
 3. Select your Prometheus datasource and click **Import**. Panels will populate automatically.
 
 ### 2.2 Job Throughput (manual reference)
@@ -70,6 +91,20 @@ histogram_quantile(
 )
 ```
 
+### 2.6 Finance Privacy Denials
+
+**Panel title:** _Finance privacy denials (per second)_
+
+**PromQL:**
+
+```promql
+sum by (reason) (
+  rate(finance_privacy_denials_total[5m])
+)
+```
+
+Add the panel to the Phase 2B dashboard so spikes stand out next to preview telemetry.
+
 ---
 
 ## 3. Alert Rules
@@ -113,6 +148,20 @@ annotations:
 
 ### 3.3 Queue Stuck
 
+```
+
+### 3.4 Finance Privacy Regression
+
+```
+alert: FinancePrivacyDenialsSpike
+expr: sum(rate(finance_privacy_denials_total[5m])) > 0
+for: 5m
+labels:
+  severity: warn
+  service: finance-api
+annotations:
+  summary: "Finance privacy denials detected"
+  description: "Finance endpoints rejected at least one request in the last 5 minutes. Investigate missing identity headers or incorrect project ownership."
 ```
 alert: PreviewQueueStalled
 expr: preview_generation_queue_depth > 10
