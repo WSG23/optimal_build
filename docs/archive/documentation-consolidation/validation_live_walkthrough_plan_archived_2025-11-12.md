@@ -62,7 +62,7 @@ Action items:
 ### Post-Session Checklist
 
 - [ ] Upload recording and transcript to shared drive.
-- [ ] Summarise top three findings in `docs/ROADMAP.MD` and add follow-up tasks to `docs/WORK_QUEUE.MD`.
+- [ ] Summarise top three findings in `docs/feature_delivery_plan_v2.md` and add follow-up tasks to `docs/WORK_QUEUE.MD`.
 - [ ] File follow-up tasks in backlog (label: `agent-validation`).
 
 ## Success Criteria

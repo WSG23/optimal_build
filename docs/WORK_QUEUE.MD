@@ -34,6 +34,11 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 
 ## ✅ Completed (Last 30 Days)
 
+### 2025-11-12: Roadmap link consolidation + validator update
+- **Completed by:** Codex Local
+- **Commits:** (pending)
+- **Highlights:** Removed stale `ROADMAP.MD` links across enforcement docs, QA checklists, and scripts; `make validate-delivery-plan`/`scripts/check_phase_gate.py` now target `feature_delivery_plan_v2.md`.
+
 ### 2025-11-01: Database indexing (9 composite indexes)
 - **Completed by:** Claude + Codex
 - **Commits:** 1d11b6d, ...
@@ -92,7 +97,7 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 2. Cross-check context docs: [`docs/development/testing/known-issues.md`](development/testing/known-issues.md), [`docs/planning/ui-status.md`](planning/ui-status.md), [`docs/development/testing/summary.md`](development/testing/summary.md), and the repository [`README.md`](../README.md).
 3. If a task is unclear, consult the linked documentation or add clarifying notes in this file.
 4. After completing work, move the item to the Completed section with the completion date and relevant commit IDs.
-5. Update [`docs/ROADMAP.MD`](ROADMAP.MD) only when phase status changes (e.g., READY → COMPLETE).
+5. Update [`feature_delivery_plan_v2.md`](feature_delivery_plan_v2.md) only when phase status changes (e.g., READY → COMPLETE).
 6. For infrastructure audit tasks, update `docs/audits/PRE-PHASE-2D-AUDIT.MD` checklists in parallel.
 7. For Phase 2B renderer items, execute the manual UI walkthrough in [`docs/PHASE2B_VISUALISATION_STUB.MD`](PHASE2B_VISUALISATION_STUB.MD#10-manual-ui-qa-checklist-preview-payload-builder) and include results before requesting review.
 8. Every feature or bug fix must land its tests (unit, integration, or regression) in the same change. If the legacy SQLAlchemy harness blocks execution, log a follow-up in this queue and stub the dependency so coverage continues trending upward.

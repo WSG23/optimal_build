@@ -382,7 +382,7 @@ Document any bugs or limitations found during testing:
 
 **If PASS:**
 - [x] Update [docs/WORK_QUEUE.MD](../../WORK_QUEUE.MD) - mark Phase 1D as QA complete
-- [x] Update [docs/ROADMAP.MD](../../ROADMAP.MD) Phase 1D gate checkbox
+- [x] Update [docs/feature_delivery_plan_v2.md](../../feature_delivery_plan_v2.md) Phase 1D gate checkbox
 - [x] Archive this checklist with completion date (2025-11-09)
 
 **If FAIL (Critical Issues):**
@@ -401,7 +401,7 @@ Document any bugs or limitations found during testing:
 
 - [Phase 1D Design Doc](../../phase_1d_business_performance_design.md)
 - [CODING_RULES.md](../../../CODING_RULES.md) - Rule 12.1 (Manual QA requirement), Rule 12.2 (Production UI standards)
-- [ROADMAP.MD](../../ROADMAP.MD)
+- [feature_delivery_plan_v2.md](../../feature_delivery_plan_v2.md)
 - [WORK_QUEUE.MD](../../WORK_QUEUE.MD)
 - PR #275 (Phase 1D UI implementation)
 

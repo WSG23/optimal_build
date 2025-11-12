@@ -650,7 +650,7 @@ def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
                                 f"  -> File: {qa_checklist_file}\n"
                                 f"  -> No checkboxes marked [x] in 'Next Steps' section\n"
                                 f"  -> Required: Check boxes for WORK_QUEUE.MD and "
-                                f"ROADMAP.MD updates\n"
+                                f"feature_delivery_plan_v2.md updates\n"
                                 f"  -> Rule 12.4: Complete the QA checklist workflow\n"
                                 f"  -> See CODING_RULES.md section 12.4"
                             )

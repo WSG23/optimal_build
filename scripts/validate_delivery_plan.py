@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate ROADMAP.MD and WORK_QUEUE.MD for required structure."""
+"""Validate docs/feature_delivery_plan_v2.md and WORK_QUEUE.MD for required structure."""
 
 from __future__ import annotations
 
@@ -21,11 +21,17 @@ def validate_roadmap(content: str) -> list[str]:
     errors: list[str] = []
 
     required_snippets = [
-        "## 📈 Phase Overview",
-        "## ✅ Phase Gate Checklist",
-        "Phase 2D Gate: Pre-Phase",
+        "## 📊 Current Progress Snapshot",
+        "### ✅ Phase Gate Checklist",
+        "Phase 2D Gate:",
         "docs/WORK_QUEUE.MD",
-        "## Phase Summaries",
+        "## 📋 PHASE 1:",
+        "## 📋 PHASE 2:",
+        "## 📋 PHASE 3:",
+        "## 📋 PHASE 4:",
+        "## 📋 PHASE 5:",
+        "## 📋 PHASE 6:",
+        "## 📊 ESTIMATED TIMELINE & EFFORT",
     ]
 
     for snippet in required_snippets:

@@ -180,7 +180,7 @@ Developer capture → optimiser plans + finance blueprint
 
 - Introduce developer ownership checks using project membership (owner email/user id).
 - Log access events with `log_event` including `scenario_id`, `user_id`, `role`.
-- Update CLA (`docs/ROADMAP.MD` acceptance) to note finance data is developer-private and add follow-up tasks in `docs/WORK_QUEUE.MD`.
+- Update CLA (`docs/feature_delivery_plan_v2.md` acceptance) to note finance data is developer-private and add follow-up tasks in `docs/WORK_QUEUE.MD`.
 - Coordinate with `ui-admin` for admin override tooling (view-only with explicit grant).
 
 **Update (Nov 2025):** `_ensure_project_owner` now enforces owner-only access for

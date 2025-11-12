@@ -20,7 +20,7 @@ This is a **ONE-TIME CHECKLIST** that should be archived after all work is compl
 2. All checkboxes in "Week 1: Automated Testing Infrastructure" are [x] checked
 3. All checkboxes in "Week 2: Security Audit" are [x] checked
 4. All checkboxes in "Week 2: Infrastructure Optimization" are [x] checked
-5. Phase 2D Gate Checklist in [ROADMAP.MD](docs/ROADMAP.MD) shows [x] for "Pre-Phase 2D Infrastructure Audit"
+5. Phase 2D Gate Checklist in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) shows [x] for "Pre-Phase 2D Infrastructure Audit"
 
 **📁 HOW TO ARCHIVE:**
 ```bash
@@ -32,7 +32,7 @@ git mv PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md \
        docs/archive/PRE_PHASE_2D_INFRASTRUCTURE_AUDIT_COMPLETED_$(date +%Y-%m-%d).md
 
 # Update docs/WORK_QUEUE.MD - mark item #3 as "Completed" with date
-# Update ROADMAP.MD - add completion date to Phase 2D gate
+# Update docs/feature_delivery_plan_v2.md - add completion date to Phase 2D gate
 
 # Commit
 git add -A
@@ -557,7 +557,7 @@ free -h
 - **Article:** [47 Startups Failed - Inc.com](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
 - **Related:** [docs/WORK_QUEUE.MD](../WORK_QUEUE.MD) - Ongoing debt tracking (archived context: [`docs/archive/TECHNICAL_DEBT.MD`](../archive/TECHNICAL_DEBT.MD))
 - **Related:** [CODING_RULES.md](CODING_RULES.md) - Quality standards
-- **Related:** [docs/ROADMAP.MD](docs/ROADMAP.MD) - Phase progression
+- **Related:** [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) - Phase progression
 
 ---
 

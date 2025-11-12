@@ -3,7 +3,7 @@
 **New to this project? Read these files IN ORDER:**
 
 1. **docs/planning/features.md** - What we're building (full feature specification)
-2. **docs/ROADMAP.MD** - Current status (**START with "📊 Current Progress Snapshot"**)
+2. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
 3. **docs/audits/PRE-PHASE-2D-AUDIT.MD** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
 4. **docs/WORK_QUEUE.MD** - ⚠️ **IMPORTANT** - Active task list & technical debt follow-ups
 5. **docs/ai-agents/next_steps.md** - How to choose your next task (decision tree)
@@ -14,14 +14,14 @@
 
 ## ⚠️ CRITICAL: When You Complete Work
 
-🛑 **MANDATORY: Update `docs/WORK_QUEUE.MD` and `docs/ROADMAP.MD` BEFORE asking user to commit**
+🛑 **MANDATORY: Update `docs/WORK_QUEUE.MD` and `docs/feature_delivery_plan_v2.md` BEFORE asking user to commit**
 
-`docs/WORK_QUEUE.MD` is the **single source of truth** for active tasks; `docs/ROADMAP.MD` captures strategic status.
+`docs/WORK_QUEUE.MD` is the **single source of truth** for active tasks; `docs/feature_delivery_plan_v2.md` captures strategic status.
 
 **Every time you complete a feature/milestone:**
 1. ✅ Update `docs/WORK_QUEUE.MD` (move item to Completed, capture commits, add follow-ups)
-2. ✅ Refresh `docs/ROADMAP.MD` phase summary if status changed
-3. ✅ Stage docs with code: `git add docs/WORK_QUEUE.MD docs/ROADMAP.MD`
+2. ✅ Refresh `docs/feature_delivery_plan_v2.md` phase summary if status changed
+3. ✅ Stage docs with code: `git add docs/WORK_QUEUE.MD docs/feature_delivery_plan_v2.md`
 4. ✅ Include in same commit as your code changes
 
 **See Step 7c in [docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md) for detailed instructions.**
@@ -77,7 +77,7 @@ This ensures continuity between sessions and alignment with previous work.
 
 ---
 
-**Ready to start? Go read `docs/ROADMAP.MD` first!** 📊
+**Ready to start? Go read `docs/feature_delivery_plan_v2.md` first!** 📊
 
 ---
 
@@ -90,7 +90,7 @@ This section lists ALL 20 instruction and reference files in this repository. Th
 ### 🎯 Core AI Agent Instructions (Must Read - Listed Above)
 1. ✅ **START_HERE.md** (this file) - Entry point and reading order
 2. ✅ **docs/planning/features.md** - Complete feature specifications
-3. ✅ **docs/ROADMAP.MD** - Project roadmap and current status
+3. ✅ **docs/feature_delivery_plan_v2.md** - Project roadmap and current status
 4. ✅ **docs/ai-agents/next_steps.md** - Task decision guide
 5. ✅ **docs/development/testing/known-issues.md** - Known test harness issues (not bugs)
 6. ✅ **docs/ai-agents/claude.md** - Claude-specific instructions and workflows

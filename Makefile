@@ -337,7 +337,7 @@ pre-deploy: ## Pre-deployment verification
 	@$(MAKE) validate-delivery-plan
 	@echo "✅ Ready for deployment"
 
-validate-delivery-plan: ## Validate ROADMAP.MD and WORK_QUEUE.MD for required sections
+validate-delivery-plan: ## Validate feature_delivery_plan_v2.md and WORK_QUEUE.MD for required sections
 	@echo "Validating strategic roadmap and work queue..."
 	@$(PY) scripts/validate_delivery_plan.py
 

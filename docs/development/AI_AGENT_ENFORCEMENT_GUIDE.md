@@ -13,7 +13,7 @@ As a solo founder with AI agents building your product, you face a critical chal
 
 ### Real Example: Phase 1D Manual QA (Nov 2025)
 
-- **Nov 1:** Phase 1D marked `✅ COMPLETE` in ROADMAP.MD
+- **Nov 1:** Phase 1D marked `✅ COMPLETE` in [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md)
 - **Nov 2:** Manual QA checklist executed (4/12 tests passed)
 - **Nov 2:** Work moved to next phase (Phase 2B)
 - **Problem:** Checklist status never updated from `READY FOR QA` to `COMPLETED`
@@ -61,7 +61,7 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but QA checklist status incomplet
    - a. Update checklist status header to `✅ QA COMPLETE (YYYY-MM-DD)`
    - b. Complete "Next Steps" section (check relevant boxes)
    - c. Update WORK_QUEUE.MD (move to Completed section)
-   - d. Update ROADMAP.MD (verify phase marked COMPLETE)
+   - d. Update [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md) (verify phase marked COMPLETE)
    - e. Git commit with message referencing QA completion
 
 **Why this works:**
@@ -77,7 +77,7 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but QA checklist status incomplet
 **Instructions for AI agents:**
 
 - After completing work, move item to "Completed" section with completion date
-- Update ROADMAP.MD only when phase status changes (e.g., READY → COMPLETE)
+- Update [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md) only when phase status changes (e.g., READY → COMPLETE)
 - For UI phases, execute manual UI walkthrough and include results before review
 
 ---
@@ -161,7 +161,7 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but QA checklist status incomplet
 
 **If PASS:**
 - [x] Update WORK_QUEUE.MD - mark Phase 1D as QA complete
-- [x] Update ROADMAP.MD Phase 1D gate checkbox
+- [x] Update [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md) Phase 1D gate checkbox
 - [x] Archive this checklist with completion date
 ```
 

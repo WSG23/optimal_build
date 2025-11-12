@@ -38,7 +38,7 @@ Per CODING_RULES.md Rule 12.2:
 ## 📋 Next Steps
 
 - [x] Mark phase as COMPLETE in WORK_QUEUE.MD
-- [x] Update ROADMAP.MD with completion date
+- [x] Update [feature_delivery_plan_v2.md](../../feature_delivery_plan_v2.md) with completion date
 - [x] Backend tests passing
 
 **QA Completed:** 2025-11-09

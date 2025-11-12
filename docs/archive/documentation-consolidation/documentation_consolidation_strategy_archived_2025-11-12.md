@@ -1,6 +1,6 @@
 # Documentation Consolidation Strategy
 
-> **Update (Nov 2025):** The active roadmap now lives in [`docs/ROADMAP.MD`](ROADMAP.MD) and the task queue in [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD). Historical instructions below reference the pre-migration file layout.
+> **Update (Nov 2025):** The active roadmap now lives in [`docs/feature_delivery_plan_v2.md`](../../feature_delivery_plan_v2.md) and the task queue in [`docs/WORK_QUEUE.MD`](../../WORK_QUEUE.MD). Historical instructions below reference the pre-migration file layout.
 
 **Status**: Recommendation
 **Created**: 2025-10-29

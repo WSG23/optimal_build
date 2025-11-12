@@ -1259,7 +1259,7 @@ Example (Hong Kong, 100,000 sqft office):
 - [ ] Singapore regression test passed
 
 **If approved:**
-- Update `docs/ROADMAP.MD` and `docs/WORK_QUEUE.MD` → Mark jurisdiction ✅ and log follow-up actions
+- Update `docs/feature_delivery_plan_v2.md` and `docs/WORK_QUEUE.MD` → Mark jurisdiction ✅ and log follow-up actions
 - Move to next jurisdiction (if in expansion window)
 
 **If NOT approved:**
@@ -1301,7 +1301,7 @@ Example (Hong Kong, 100,000 sqft office):
 - [ ] PM approved
 
 **Documentation:**
-- [ ] `ROADMAP.MD` and `WORK_QUEUE.MD` updated
+- [ ] `docs/feature_delivery_plan_v2.md` and `docs/WORK_QUEUE.MD` updated
 - [ ] `NEXT_STEPS` updated (if last jurisdiction)
 
 ---

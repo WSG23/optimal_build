@@ -13,7 +13,7 @@ checks before opening a pull request.
    - Specifies every feature requirement
    - **THIS IS THE SOURCE OF TRUTH**
 
-2. **[docs/ROADMAP.MD](docs/ROADMAP.MD)** - Comprehensive delivery roadmap
+2. **[docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md)** - Comprehensive delivery roadmap
    - Maps 100% of FEATURES.md into 6 phases
    - Shows dependencies and priorities
    - Includes acceptance criteria and estimates
@@ -45,7 +45,7 @@ checks before opening a pull request.
 
 Before writing any code, confirm you've:
 - [ ] Read `docs/planning/features.md` completely
-- [ ] Reviewed ROADMAP.MD for strategic status
+- [ ] Reviewed docs/feature_delivery_plan_v2.md for strategic status
 - [ ] Checked `docs/WORK_QUEUE.MD` for active tasks
 - [ ] Checked `docs/ai-agents/next_steps.md` for priorities
 - [ ] Read CODING_RULES.md for technical standards
