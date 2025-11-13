@@ -255,7 +255,9 @@
     "subtitle": "Compare escalated cost, NPV, IRR and DSCR metrics across seeded scenarios.",
     "actions": {
       "refresh": "Recompute scenarios",
-      "refreshing": "Recomputing…"
+      "refreshing": "Recomputing…",
+      "exportCsv": "Export CSV",
+      "exporting": "Exporting…"
     },
     "projectSelector": {
       "title": "Project selection",
@@ -272,7 +274,8 @@
       "defaultLabel": "Project {{id}}"
     },
     "errors": {
-      "generic": "Unable to load finance scenarios."
+      "generic": "Unable to load finance scenarios.",
+      "export": "Unable to export the selected scenario."
     },
     "table": {
       "caption": "Finance scenario comparison",
@@ -283,20 +286,35 @@
         "irr": "Internal rate of return",
         "minDscr": "Minimum DSCR",
         "loanToCost": "Loan-to-cost",
-        "lastRun": "Last run"
+        "lastRun": "Last run",
+        "actions": "Actions"
       },
       "actions": {
         "makePrimary": "Make primary",
-        "makingPrimary": "Setting…"
+        "makingPrimary": "Setting…",
+        "openMenu": "Open scenario actions",
+        "delete": "Delete scenario",
+        "deleting": "Deleting…"
       },
       "badges": {
         "primary": "Primary"
       },
       "messages": {
         "primarySuccess": "\"{{name}}\" is now the primary scenario.",
-        "primaryError": "Unable to update the primary scenario."
+        "primaryError": "Unable to update the primary scenario.",
+        "deleteSuccess": "\"{{name}}\" was deleted.",
+        "deleteError": "Unable to delete the selected scenario."
       },
       "empty": "No finance scenarios are available."
+    },
+    "dialogs": {
+      "deleteScenario": {
+        "title": "Delete this scenario?",
+        "body": "This will remove \"{{name}}\" and all saved finance results. This action cannot be undone.",
+        "cancel": "Keep scenario",
+        "confirm": "Delete scenario",
+        "deleting": "Deleting…"
+      }
     },
     "capitalStack": {
       "title": "Capital stack overview",

@@ -254,7 +254,9 @@
     "subtitle": "シード済みシナリオのエスカレーションコスト、NPV、IRR、DSCRを比較できます。",
     "actions": {
       "refresh": "シナリオを再計算",
-      "refreshing": "再計算中…"
+      "refreshing": "再計算中…",
+      "exportCsv": "CSVをエクスポート",
+      "exporting": "エクスポート中…"
     },
     "projectSelector": {
       "title": "プロジェクト選択",
@@ -271,7 +273,8 @@
       "defaultLabel": "プロジェクト {{id}}"
     },
     "errors": {
-      "generic": "財務シナリオを読み込めませんでした。"
+      "generic": "財務シナリオを読み込めませんでした。",
+      "export": "選択したシナリオをエクスポートできませんでした。"
     },
     "table": {
       "caption": "財務シナリオ比較",
@@ -282,20 +285,35 @@
         "irr": "内部収益率",
         "minDscr": "最低DSCR",
         "loanToCost": "ローン対コスト比",
-        "lastRun": "最終実行"
+        "lastRun": "最終実行",
+        "actions": "操作"
       },
       "actions": {
         "makePrimary": "主要シナリオに設定",
-        "makingPrimary": "設定中…"
+        "makingPrimary": "設定中…",
+        "openMenu": "シナリオの操作を開く",
+        "delete": "シナリオを削除",
+        "deleting": "削除中…"
       },
       "badges": {
         "primary": "主要"
       },
       "messages": {
         "primarySuccess": "「{{name}}」を主要シナリオに設定しました。",
-        "primaryError": "主要シナリオを更新できませんでした。"
+        "primaryError": "主要シナリオを更新できませんでした。",
+        "deleteSuccess": "「{{name}}」を削除しました。",
+        "deleteError": "選択したシナリオを削除できませんでした。"
       },
       "empty": "利用可能な財務シナリオがありません。"
+    },
+    "dialogs": {
+      "deleteScenario": {
+        "title": "このシナリオを削除しますか?",
+        "body": "「{{name}}」と保存済みの財務結果がすべて削除されます。この操作は取り消せません。",
+        "cancel": "シナリオを保持",
+        "confirm": "シナリオを削除",
+        "deleting": "削除中…"
+      }
     },
     "capitalStack": {
       "title": "資本構成の内訳",
