@@ -2335,6 +2335,42 @@ h3 {
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-text-subtle);
 }
+.finance-access-gate__action {
+    margin-top: var(--ob-space-050);
+    padding: var(--ob-space-050) var(--ob-space-125);
+    border-radius: var(--ob-radius-pill);
+    border: none;
+    background: var(--ob-color-brand-primary-emphasis);
+    color: var(--ob-color-text-inverse);
+    font-weight: var(--ob-font-weight-semibold);
+    cursor: pointer;
+    width: fit-content;
+}
+.finance-access-gate__action:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary-emphasis);
+    outline-offset: 2px;
+}
+.finance-access-gate__action:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+.finance-identity-helper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    margin-top: var(--ob-space-050);
+}
+.finance-identity-helper--compact {
+    margin-top: var(--ob-space-025);
+}
+.finance-access-gate__status {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-subtle);
+}
+.finance-access-gate__status--error {
+    color: var(--ob-color-danger-strong);
+}
 
 .finance-workspace__refresh {
     padding: var(--ob-space-050) var(--ob-space-125);
@@ -2382,7 +2418,7 @@ h3 {
     background: var(--ob-color-surface-default);
     border-radius: var(--ob-radius-2xl);
     box-shadow: 0 12px 24px rgb(var(--ob-color-surface-inverse-rgb) / 0.08);
-    overflow: hidden;
+    overflow: auto;
 }
 
 .finance-table {
@@ -2803,6 +2839,7 @@ h3 {
     margin-top: var(--ob-space-150);
     border-top: 1px solid var(--ob-color-border-neutral);
     padding-top: var(--ob-space-125);
+    overflow-x: auto;
 }
 
 .finance-capital__tranche-title {
@@ -2818,6 +2855,7 @@ h3 {
     width: 100%;
     border-collapse: collapse;
     font-size: var(--ob-font-size-sm);
+    min-width: 800px;
 }
 
 .finance-capital__tranche-table th,
@@ -2825,6 +2863,7 @@ h3 {
     padding: var(--ob-space-050) var(--ob-space-075);
     border-bottom: 1px solid var(--ob-color-border-faint);
     text-align: left;
+    white-space: nowrap;
 }
 
 .finance-capital__tranche-table tbody tr:last-child th,
