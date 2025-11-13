@@ -358,6 +358,8 @@ function mapConditionAssessmentPayload(
   }
 }
 
+export type GeometryDetailLevel = 'simple' | 'medium'
+
 export interface DeveloperPreviewJob {
   id: string
   propertyId: string
@@ -371,6 +373,7 @@ export interface DeveloperPreviewJob {
   startedAt: string | null
   finishedAt: string | null
   message: string | null
+  geometryDetailLevel: GeometryDetailLevel | null
 }
 
 const DEVELOPER_GPS_ENDPOINT = '/api/v1/developers/properties/log-gps'
@@ -769,6 +772,14 @@ function mapHeritageContext(payload: unknown): DeveloperHeritageContext | null {
   }
 }
 
+function normaliseGeometryDetailLevel(value: unknown): GeometryDetailLevel | null {
+  const text = coerceString(value)?.toLowerCase()
+  if (text === 'simple' || text === 'medium') {
+    return text
+  }
+  return null
+}
+
 function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
   if (!Array.isArray(payload)) {
     return []
@@ -802,6 +813,9 @@ function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
         startedAt: coerceString(item.started_at) ?? coerceString(item.startedAt) ?? null,
         finishedAt: coerceString(item.finished_at) ?? coerceString(item.finishedAt) ?? null,
         message: coerceString(item.message) ?? null,
+        geometryDetailLevel: normaliseGeometryDetailLevel(
+          item.geometry_detail_level ?? item.geometryDetailLevel,
+        ),
       }
     })
     .filter((entry): entry is DeveloperPreviewJob => entry !== null)
@@ -1414,10 +1428,18 @@ export async function fetchPreviewJob(
   return job ?? null
 }
 
-export async function refreshPreviewJob(jobId: string): Promise<DeveloperPreviewJob | null> {
+export async function refreshPreviewJob(
+  jobId: string,
+  detailLevel?: GeometryDetailLevel,
+): Promise<DeveloperPreviewJob | null> {
+  const requestInit: RequestInit = { method: 'POST' }
+  if (detailLevel) {
+    requestInit.headers = { 'Content-Type': 'application/json' }
+    requestInit.body = JSON.stringify({ geometry_detail_level: detailLevel })
+  }
   const response = await fetch(
     buildUrl(`api/v1/developers/preview-jobs/${jobId}/refresh`),
-    { method: 'POST' },
+    requestInit,
   )
   if (!response.ok) {
     return null

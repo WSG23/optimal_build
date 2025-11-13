@@ -12,7 +12,7 @@ import structlog
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.api.v1.agents import CoordinatePair, QuickAnalysisEnvelope
 from app.core.database import get_session
@@ -27,6 +27,7 @@ from app.services.agents.gps_property_logger import (
 )
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.asset_mix import AssetOptimizationOutcome, build_asset_mix
+from app.services import preview_generator
 from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
@@ -321,6 +322,11 @@ def _serialise_preview_job(job) -> PreviewJobSchema:
     thumbnail_url = (
         job.thumbnail_url if status == PreviewJobStatus.READY.value else None
     )
+    detail_level = None
+    if isinstance(job.metadata, dict):
+        raw_level = job.metadata.get("geometry_detail_level")
+        if isinstance(raw_level, str):
+            detail_level = raw_level
     return PreviewJobSchema(
         id=job.id,
         property_id=job.property_id,
@@ -334,6 +340,7 @@ def _serialise_preview_job(job) -> PreviewJobSchema:
         finished_at=job.finished_at,
         message=job.message,
         asset_version=job.asset_version,
+        geometry_detail_level=detail_level,
     )
 
 
@@ -399,6 +406,28 @@ class PreviewJobSchema(BaseModel):
     started_at: datetime | None = None
     finished_at: datetime | None = None
     message: str | None = None
+    geometry_detail_level: str | None = None
+
+
+class PreviewJobRefreshRequest(BaseModel):
+    """Request body for preview job refresh operations."""
+
+    geometry_detail_level: str | None = Field(
+        default=None, description="Optional geometry detail level override"
+    )
+
+    @field_validator("geometry_detail_level")
+    @classmethod
+    def _validate_detail_level(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        normalised = value.strip().lower()
+        if normalised not in preview_generator.SUPPORTED_GEOMETRY_DETAIL_LEVELS:
+            valid = ", ".join(
+                sorted(preview_generator.SUPPORTED_GEOMETRY_DETAIL_LEVELS)
+            )
+            raise ValueError(f"geometry_detail_level must be one of: {valid}")
+        return normalised
 
 
 class DeveloperVisualizationSummary(BaseModel):
@@ -1291,6 +1320,7 @@ async def get_preview_job(
 )
 async def refresh_preview_job(
     job_id: UUID,
+    refresh_request: PreviewJobRefreshRequest | None = None,
     session: AsyncSession = Depends(get_session),
 ) -> PreviewJobSchema:
     """Re-render a preview job using stored metadata."""
@@ -1300,7 +1330,12 @@ async def refresh_preview_job(
     if job is None:
         raise HTTPException(status_code=404, detail="Preview job not found")
     try:
-        await service.refresh_job(job)
+        await service.refresh_job(
+            job,
+            geometry_detail_level=(
+                refresh_request.geometry_detail_level if refresh_request else None
+            ),
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     await session.commit()

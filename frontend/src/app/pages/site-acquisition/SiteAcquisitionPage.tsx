@@ -25,6 +25,7 @@ import {
   type SiteAcquisitionResult,
   type DeveloperPreviewJob,
   type DeveloperAssetOptimization,
+  type GeometryDetailLevel,
 } from '../../../api/siteAcquisition'
 import { Preview3DViewer } from '../../components/site-acquisition/Preview3DViewer'
 
@@ -74,6 +75,11 @@ const DEFAULT_CONDITION_SYSTEMS = [
   'Compliance & envelope maintenance',
 ]
 const HISTORY_FETCH_LIMIT = 10
+const PREVIEW_DETAIL_OPTIONS: GeometryDetailLevel[] = ['medium', 'simple']
+const PREVIEW_DETAIL_LABELS: Record<GeometryDetailLevel, string> = {
+  medium: 'Medium (octagonal, setbacks, floor lines)',
+  simple: 'Simple (fast box geometry)',
+}
 
 type QuickAnalysisSnapshot = {
   propertyId: string
@@ -594,6 +600,8 @@ export function SiteAcquisitionPage() {
   const [error, setError] = useState<string | null>(null)
   const [capturedProperty, setCapturedProperty] = useState<SiteAcquisitionResult | null>(null)
   const [previewJob, setPreviewJob] = useState<DeveloperPreviewJob | null>(null)
+  const [previewDetailLevel, setPreviewDetailLevel] =
+    useState<GeometryDetailLevel>('medium')
   const [isRefreshingPreview, setIsRefreshingPreview] = useState(false)
 
   // Checklist state
@@ -703,17 +711,25 @@ export function SiteAcquisitionPage() {
     }
   }, [previewJob, previewJob?.id, previewJob?.status])
 
+  useEffect(() => {
+    if (previewJob?.geometryDetailLevel) {
+      setPreviewDetailLevel(previewJob.geometryDetailLevel)
+    } else {
+      setPreviewDetailLevel('medium')
+    }
+  }, [previewJob?.geometryDetailLevel])
+
   const handleRefreshPreview = useCallback(async () => {
     if (!previewJob) {
       return
     }
     setIsRefreshingPreview(true)
-    const refreshed = await refreshPreviewJob(previewJob.id)
+    const refreshed = await refreshPreviewJob(previewJob.id, previewDetailLevel)
     if (refreshed) {
       setPreviewJob(refreshed)
     }
     setIsRefreshingPreview(false)
-  }, [previewJob])
+  }, [previewDetailLevel, previewJob])
   const [isHistoryModalOpen, setHistoryModalOpen] = useState(false)
   const [quickAnalysisHistory, setQuickAnalysisHistory] = useState<
     QuickAnalysisSnapshot[]
@@ -4897,6 +4913,10 @@ export function SiteAcquisitionPage() {
                 status={previewJob.status}
                 thumbnailUrl={previewJob.thumbnailUrl}
               />
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+                Geometry detail:{' '}
+                <strong>{describeDetailLevel(previewJob.geometryDetailLevel)}</strong>
+              </p>
             </div>
           )}
           {previewJob && (
@@ -4904,10 +4924,48 @@ export function SiteAcquisitionPage() {
               style={{
                 marginTop: '1rem',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
+                flexWrap: 'wrap',
+                alignItems: 'flex-end',
+                gap: '1rem',
               }}
             >
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem',
+                  fontSize: '0.85rem',
+                  color: '#374151',
+                }}
+              >
+                <span style={{ fontWeight: 600, color: '#111827' }}>Geometry detail</span>
+                <select
+                  value={previewDetailLevel}
+                  onChange={(event) =>
+                    setPreviewDetailLevel(event.target.value as GeometryDetailLevel)
+                  }
+                  disabled={isRefreshingPreview}
+                  style={{
+                    minWidth: '240px',
+                    padding: '0.45rem 0.65rem',
+                    borderRadius: '8px',
+                    border: '1px solid #d1d5db',
+                    background: isRefreshingPreview ? '#f3f4f6' : '#fff',
+                    color: '#111827',
+                  }}
+                >
+                  {PREVIEW_DETAIL_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {PREVIEW_DETAIL_LABELS[option]}
+                    </option>
+                  ))}
+                </select>
+                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                  {previewDetailLevel === 'simple'
+                    ? 'Fast render for smoke testing.'
+                    : 'Detailed render with setbacks, podiums, and floor lines.'}
+                </span>
+              </label>
               <button
                 type="button"
                 onClick={handleRefreshPreview}
@@ -8452,4 +8510,12 @@ function getDeltaVisuals(
     border: '#fecaca',
     text: '#b91c1c',
   }
+}
+const describeDetailLevel = (
+  level: GeometryDetailLevel | null | undefined,
+): string => {
+  if (level && PREVIEW_DETAIL_LABELS[level]) {
+    return PREVIEW_DETAIL_LABELS[level]
+  }
+  return PREVIEW_DETAIL_LABELS.medium
 }

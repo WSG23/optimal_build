@@ -12,7 +12,11 @@ from backend.jobs import job
 
 from app.core.database import get_session
 from app.models.preview import PreviewJob, PreviewJobStatus
-from app.services.preview_generator import PreviewAssets, ensure_preview_asset
+from app.services.preview_generator import (
+    PreviewAssets,
+    ensure_preview_asset,
+    normalise_geometry_detail_level,
+)
 from app.utils import metrics
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -136,7 +140,8 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
             await _update_queue_depth(session, backend_name)
             return {"status": "missing", "job_id": job_id}
 
-        payload_layers = job.metadata.get("massing_layers") if job.metadata else None
+        job_metadata = job.metadata if isinstance(job.metadata, dict) else {}
+        payload_layers = job_metadata.get("massing_layers")
         if not isinstance(payload_layers, list) or not payload_layers:
             job.status = PreviewJobStatus.FAILED
             job.finished_at = utcnow()
@@ -145,6 +150,10 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
             await _record_completion(session, job, "failed", backend_name)
             return {"status": "failed", "job_id": job_id}
 
+        detail_level = normalise_geometry_detail_level(
+            job_metadata.get("geometry_detail_level")
+        )
+
         job.status = PreviewJobStatus.PROCESSING
         job.started_at = utcnow()
         job.message = None
@@ -152,7 +161,10 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
 
         try:
             assets: PreviewAssets = ensure_preview_asset(
-                job.property_id, job.id, payload_layers
+                job.property_id,
+                job.id,
+                payload_layers,
+                geometry_detail_level=detail_level,
             )
             job.preview_url = assets.preview_url
             job.metadata_url = assets.metadata_url

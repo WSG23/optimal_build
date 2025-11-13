@@ -9,6 +9,7 @@ import pytest
 from backend._compat.datetime import utcnow
 
 import pytest_asyncio
+from app.core.config import settings
 from app.models.preview import PreviewJob, PreviewJobStatus
 from app.models.property import Property
 from app.services import preview_jobs
@@ -105,6 +106,12 @@ async def test_queue_preview_inline_backend_executes_job(
     assert calls == [str(job.id)]
     assert job.metadata["camera_orbit"] == {"azimuth": 45.0}
     assert job.metadata["massing_layers"][0]["id"] == "layer-1"
+    assert (
+        job.metadata["geometry_detail_level"] == settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
+    )
+    assert (
+        job.metadata["geometry_detail_level"] == settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
+    )
 
 
 @pytest.mark.asyncio
@@ -182,3 +189,65 @@ async def test_refresh_job_requires_massing_layers(db_session, demo_property):
 
     with pytest.raises(ValueError):
         await service.refresh_job(job)
+
+
+@pytest.mark.asyncio
+async def test_queue_preview_allows_geometry_detail_override(
+    monkeypatch, db_session, demo_property
+):
+    inline_backend = _InlineBackend()
+    monkeypatch.setattr(job_queue_module.job_queue, "_backend", inline_backend)
+
+    async def fake_generate(job_id: str) -> None:
+        job = await db_session.get(PreviewJob, UUID(job_id))
+        assert job is not None
+        job.status = PreviewJobStatus.READY
+        job.preview_url = "/preview/simple.glb"
+        job.metadata_url = "/preview/simple.json"
+        job.thumbnail_url = "/preview/simple.png"
+        job.finished_at = utcnow()
+        await db_session.flush()
+
+    monkeypatch.setattr(preview_jobs, "generate_preview_job", fake_generate)
+
+    service = PreviewJobService(db_session)
+    job = await service.queue_preview(
+        property_id=demo_property,
+        scenario="simple-detail",
+        massing_layers=[{"id": "layer-s", "height": 24}],
+        geometry_detail_level="simple",
+    )
+
+    assert job.metadata["geometry_detail_level"] == "simple"
+
+
+@pytest.mark.asyncio
+async def test_refresh_job_applies_geometry_override(
+    monkeypatch, db_session, demo_property
+):
+    inline_backend = _InlineBackend()
+    monkeypatch.setattr(job_queue_module.job_queue, "_backend", inline_backend)
+
+    async def fake_generate(job_id: str) -> None:
+        job = await db_session.get(PreviewJob, UUID(job_id))
+        assert job is not None
+        job.status = PreviewJobStatus.READY
+        job.preview_url = "/preview/detail.glb"
+        job.metadata_url = "/preview/detail.json"
+        job.thumbnail_url = "/preview/detail.png"
+        job.finished_at = utcnow()
+        await db_session.flush()
+
+    monkeypatch.setattr(preview_jobs, "generate_preview_job", fake_generate)
+
+    service = PreviewJobService(db_session)
+    job = await service.queue_preview(
+        property_id=demo_property,
+        scenario="detail-switch",
+        massing_layers=[{"id": "layer-d", "height": 32}],
+        geometry_detail_level="simple",
+    )
+    assert job.metadata["geometry_detail_level"] == "simple"
+
+    refreshed = await service.refresh_job(job, geometry_detail_level="medium")
+    assert refreshed.metadata["geometry_detail_level"] == "medium"

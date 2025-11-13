@@ -14,6 +14,7 @@ _DEFAULT_ALLOWED_ORIGINS = (
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 _DEFAULT_RATE_LIMIT = "10/minute"
 _TEST_RATE_LIMIT = "1000/minute"
+_GEOMETRY_DETAIL_LEVELS = {"simple", "medium"}
 
 
 def _load_bool(name: str, default: bool) -> bool:
@@ -128,6 +129,16 @@ def _load_allowed_hosts() -> list[str]:
     return list(dict.fromkeys(hosts))
 
 
+def _load_geometry_detail_level() -> str:
+    """Return preview geometry detail level."""
+
+    raw_value = os.getenv("PREVIEW_GEOMETRY_DETAIL_LEVEL")
+    if not raw_value:
+        return "medium"
+    candidate = raw_value.strip().lower()
+    return candidate if candidate in _GEOMETRY_DETAIL_LEVELS else "medium"
+
+
 def _derive_redis_url(base_url: str, db: int) -> str:
     """Return ``base_url`` pointing at a specific Redis database index.
 
@@ -195,6 +206,7 @@ class Settings:
     LISTING_TOKEN_SECRET: str
     SLOW_QUERY_THRESHOLD_SECONDS: float
     PREVIEW_MAX_VERSIONS: int
+    PREVIEW_GEOMETRY_DETAIL_LEVEL: str
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -294,6 +306,7 @@ class Settings:
         )
         self.OFFLINE_MODE = _load_bool("OFFLINE_MODE", False)
         self.PREVIEW_MAX_VERSIONS = _load_positive_int("PREVIEW_MAX_VERSIONS", 3)
+        self.PREVIEW_GEOMETRY_DETAIL_LEVEL = _load_geometry_detail_level()
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")

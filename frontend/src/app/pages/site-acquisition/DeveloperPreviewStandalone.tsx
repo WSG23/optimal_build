@@ -9,6 +9,17 @@ import { Preview3DViewer } from '../../components/site-acquisition/Preview3DView
 import { useRouterLocation } from '../../../router'
 
 const PATH_PATTERN = /^\/agents\/developers\/([^/]+)\/preview\/?$/
+const DETAIL_LABELS: Record<'simple' | 'medium', string> = {
+  medium: 'Medium (octagonal, setbacks, floor lines)',
+  simple: 'Simple (fast box geometry)',
+}
+
+function renderDetailLabel(level: DeveloperPreviewJob['geometryDetailLevel']): string {
+  if (level && DETAIL_LABELS[level]) {
+    return DETAIL_LABELS[level]
+  }
+  return DETAIL_LABELS.medium
+}
 
 export function DeveloperPreviewStandalone() {
   const { path } = useRouterLocation()
@@ -163,6 +174,10 @@ export function DeveloperPreviewStandalone() {
             <div>
               <dt>Scenario</dt>
               <dd>{previewJob.scenario}</dd>
+            </div>
+            <div>
+              <dt>Geometry detail</dt>
+              <dd>{renderDetailLabel(previewJob.geometryDetailLevel)}</dd>
             </div>
             <div>
               <dt>Requested at</dt>

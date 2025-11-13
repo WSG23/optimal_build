@@ -41,11 +41,12 @@ def test_build_preview_payload_returns_prism(monkeypatch):
     assert payload["property_id"] == str(property_id)
     assert payload["generated_at"] == "2025-01-01T00:00:00Z"
     assert payload["schema_version"] == "1.0"
-    assert payload["layers"][0]["geometry"]["prism"]["vertices"][0] == [
-        -15.0,
-        -15.0,
-        0.0,
-    ]
+    first_geometry = payload["layers"][0]["geometry"]
+    assert first_geometry["detail_level"] == "medium"
+    prism = first_geometry["prism"]
+    assert len(prism["vertices"]) > 16
+    assert len(prism["faces"]) > 20
+    assert first_geometry["floor_lines"][0] == pytest.approx(3.5)
     assert payload["layers"][0]["metrics"]["gfa_sqm"] == 900.0
     assert payload["layers"][0]["metrics"]["estimated_height_m"] == 45.0
     # Bounding box should reflect total stacked height (45 + 18)
@@ -90,6 +91,7 @@ def test_ensure_preview_asset_writes_artifacts(monkeypatch, tmp_path):
 
     payload = json.loads(payload_path.read_text(encoding="utf-8"))
     assert payload["schema_version"] == "1.0"
+    assert payload["geometry_detail_level"] == "medium"
     assert payload["asset_manifest"]["gltf"].endswith("preview.gltf")
     assert payload["asset_manifest"]["binary"].endswith("preview.bin")
     assert gltf_path.exists()
@@ -102,3 +104,27 @@ def test_build_preview_payload_requires_layers():
 
     with pytest.raises(ValueError):
         preview_generator.build_preview_payload(property_id, [])
+
+
+def test_build_preview_payload_respects_simple_detail(monkeypatch):
+    property_id = UUID("00000000-0000-0000-0000-000000000124")
+    layers = [
+        {
+            "asset_type": "Residential",
+            "gfa_sqm": 625.0,
+            "estimated_height_m": 30.0,
+        }
+    ]
+
+    monkeypatch.setattr(
+        preview_generator,
+        "utcnow",
+        lambda: datetime(2025, 1, 2, tzinfo=timezone.utc),
+    )
+
+    payload = preview_generator.build_preview_payload(
+        property_id, layers, geometry_detail_level="simple"
+    )
+    geometry = payload["layers"][0]["geometry"]
+    assert geometry["detail_level"] == "simple"
+    assert len(geometry["prism"]["vertices"]) == 8

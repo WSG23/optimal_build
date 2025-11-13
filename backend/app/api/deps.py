@@ -9,9 +9,9 @@ from fastapi import Depends, Header, HTTPException, status
 
 from app.core.config import settings
 
-Role = Literal["viewer", "reviewer", "admin"]
+Role = Literal["viewer", "developer", "reviewer", "admin"]
 
-_VIEWER_ROLES: set[str] = {"viewer", "reviewer", "admin"}
+_VIEWER_ROLES: set[str] = {"viewer", "developer", "reviewer", "admin"}
 _REVIEWER_ROLES: set[str] = {"reviewer", "admin"}
 
 

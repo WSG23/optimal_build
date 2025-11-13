@@ -18,7 +18,9 @@ _registry = getattr(job_queue._backend, "_registry", {})
 if "preview.generate" not in _registry:
     job_queue.register(generate_preview_job, "preview.generate", queue="preview")
 
+from app.core.config import settings
 from app.models.preview import PreviewJob, PreviewJobStatus
+from app.services import preview_generator
 from app.utils import metrics
 
 
@@ -71,6 +73,7 @@ class PreviewJobService:
         scenario: str,
         massing_layers: Sequence[Mapping[str, object]],
         camera_orbit: Mapping[str, float] | None = None,
+        geometry_detail_level: str | None = None,
     ) -> PreviewJob:
         """Create a preview job and enqueue it for asynchronous rendering."""
 
@@ -82,6 +85,9 @@ class PreviewJobService:
         )
 
         try:
+            detail_level = preview_generator.normalise_geometry_detail_level(
+                geometry_detail_level or settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
+            )
             serialised_layers = _serialise_layers(massing_layers)
             logger.info(
                 f"[QUEUE_PREVIEW_START] Serialised {len(serialised_layers)} layers"
@@ -104,6 +110,7 @@ class PreviewJobService:
                 metadata={
                     "massing_layers": serialised_layers,
                     "camera_orbit": camera_orbit or {},
+                    "geometry_detail_level": detail_level,
                 },
             )
             self._session.add(job)
@@ -193,16 +200,27 @@ class PreviewJobService:
 
         return job
 
-    async def refresh_job(self, job: PreviewJob) -> PreviewJob:
+    async def refresh_job(
+        self, job: PreviewJob, *, geometry_detail_level: str | None = None
+    ) -> PreviewJob:
         """Re-enqueue a preview job using stored metadata."""
 
-        payload_layers = job.metadata.get("massing_layers") if job.metadata else None
+        metadata_dict = dict(job.metadata or {})
+        payload_layers = metadata_dict.get("massing_layers")
         if not isinstance(payload_layers, list) or not payload_layers:
             raise ValueError("Preview job missing massing layer metadata")
 
         serialised_layers = _serialise_layers(payload_layers)
         checksum_source = json.dumps(serialised_layers, sort_keys=True).encode("utf-8")
         job.payload_checksum = hashlib.sha256(checksum_source).hexdigest()
+        metadata_dict["massing_layers"] = serialised_layers
+
+        detail_level = preview_generator.normalise_geometry_detail_level(
+            geometry_detail_level
+            or (metadata_dict.get("geometry_detail_level"))
+            or settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
+        )
+        metadata_dict["geometry_detail_level"] = detail_level
 
         job.status = PreviewJobStatus.QUEUED
         job.requested_at = utcnow()
@@ -213,7 +231,9 @@ class PreviewJobService:
         job.asset_version = None
         job.thumbnail_url = None
         job.message = None
-        job.metadata.pop("asset_manifest", None)
+        metadata_dict.pop("asset_manifest", None)
+        metadata_dict["geometry_detail_level"] = detail_level
+        job.metadata = metadata_dict
 
         registry = getattr(job_queue._backend, "_registry", {})
         if "preview.generate" not in registry:
