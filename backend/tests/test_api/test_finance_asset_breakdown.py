@@ -842,6 +842,87 @@ async def test_finance_scenario_update_allows_marking_primary(
 
 
 @pytest.mark.asyncio
+async def test_finance_scenario_delete_removes_persisted_data(
+    app_client: AsyncClient,
+) -> None:
+    payload = {
+        "project_id": 777,
+        "project_name": "Scenario Delete Project",
+        "scenario": {
+            "name": "Disposable Scenario",
+            "currency": "SGD",
+            "is_primary": False,
+            "cost_escalation": {
+                "amount": "180000",
+                "base_period": "2024-Q1",
+                "series_name": "construction_cost_index",
+                "jurisdiction": "SG",
+            },
+            "cash_flow": {"discount_rate": "0.08", "cash_flows": ["-180000", "95000"]},
+            "asset_mix": _build_asset_mix(),
+        },
+    }
+
+    owner_headers = {"X-Role": "reviewer", "X-User-Email": "delete-owner@example.com"}
+    response = await app_client.post(
+        "/api/v1/finance/feasibility", json=payload, headers=owner_headers
+    )
+    assert response.status_code == 200
+    scenario_id = response.json()["scenario_id"]
+    fin_project_id = response.json()["fin_project_id"]
+
+    delete_response = await app_client.delete(
+        f"/api/v1/finance/scenarios/{scenario_id}", headers=owner_headers
+    )
+    assert delete_response.status_code == 204
+    assert delete_response.content == b""
+
+    list_response = await app_client.get(
+        f"/api/v1/finance/scenarios?fin_project_id={fin_project_id}",
+        headers=owner_headers,
+    )
+    assert list_response.status_code == 200
+    remaining = list_response.json()
+    assert all(entry["scenario_id"] != scenario_id for entry in remaining)
+
+
+@pytest.mark.asyncio
+async def test_finance_scenario_delete_requires_reviewer_role(
+    app_client: AsyncClient,
+) -> None:
+    payload = {
+        "project_id": 778,
+        "project_name": "Scenario Delete Permissions",
+        "scenario": {
+            "name": "Protected Scenario",
+            "currency": "SGD",
+            "is_primary": False,
+            "cost_escalation": {
+                "amount": "200000",
+                "base_period": "2024-Q1",
+                "series_name": "construction_cost_index",
+                "jurisdiction": "SG",
+            },
+            "cash_flow": {"discount_rate": "0.08", "cash_flows": ["-200000", "105000"]},
+            "asset_mix": _build_asset_mix(),
+        },
+    }
+
+    owner_headers = {"X-Role": "reviewer", "X-User-Email": "delete-owner@example.com"}
+    response = await app_client.post(
+        "/api/v1/finance/feasibility", json=payload, headers=owner_headers
+    )
+    assert response.status_code == 200
+    scenario_id = response.json()["scenario_id"]
+
+    viewer_headers = {"X-Role": "viewer", "X-User-Email": "delete-owner@example.com"}
+    delete_response = await app_client.delete(
+        f"/api/v1/finance/scenarios/{scenario_id}", headers=viewer_headers
+    )
+    assert delete_response.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_finance_sensitivity_rerun_sync(
     app_client: AsyncClient,
 ) -> None:

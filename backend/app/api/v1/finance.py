@@ -14,11 +14,11 @@ from uuid import UUID
 
 import backend.jobs.finance_sensitivity  # noqa: F401
 from backend.jobs import JobDispatch, job_queue
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator
 
-from app.api.deps import RequestIdentity, require_reviewer
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.core.config import settings
 from app.core.database import get_session
 from app.models.finance import (
@@ -2531,7 +2531,7 @@ async def list_finance_scenarios(
     project_id: str | int | UUID | None = Query(None),
     fin_project_id: int | None = Query(None),
     session: AsyncSession = Depends(get_session),
-    identity: RequestIdentity = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_viewer),
 ) -> list[FinanceFeasibilityResponse]:
     """Return previously persisted finance scenarios for the requested project."""
 
@@ -2656,11 +2656,42 @@ async def update_finance_scenario(
     return await _summarise_persisted_scenario(scenario, session=session)
 
 
+@router.delete("/scenarios/{scenario_id}", status_code=204)
+async def delete_finance_scenario(
+    scenario_id: int,
+    session: AsyncSession = Depends(get_session),
+    identity: RequestIdentity = Depends(require_reviewer),
+) -> Response:
+    """Delete a persisted finance scenario and associated modelling data."""
+
+    stmt = (
+        select(FinScenario)
+        .where(FinScenario.id == scenario_id)
+        .options(selectinload(FinScenario.fin_project))
+    )
+    scenario = (await session.execute(stmt)).scalars().first()
+    if scenario is None:
+        raise HTTPException(status_code=404, detail="Finance scenario not found")
+
+    project_uuid = _project_uuid_from_scenario(scenario)
+    await _ensure_project_owner(session, project_uuid, identity)
+    await session.delete(scenario)
+    await session.commit()
+
+    log_event(
+        logger,
+        "finance_feasibility_deleted",
+        scenario_id=scenario_id,
+        project_id=str(project_uuid),
+    )
+    return Response(status_code=204)
+
+
 @router.get("/jobs", response_model=list[FinanceJobStatusSchema])
 async def list_finance_jobs(
     scenario_id: int = Query(..., ge=1),
     session: AsyncSession = Depends(get_session),
-    identity: RequestIdentity = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_viewer),
 ) -> list[FinanceJobStatusSchema]:
     """Return pending finance job metadata for a persisted scenario."""
 
@@ -2704,7 +2735,7 @@ async def _load_scenario_for_status(
 async def finance_scenario_status(
     scenario_id: int,
     session: AsyncSession = Depends(get_session),
-    identity: RequestIdentity = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_viewer),
 ) -> dict[str, Any]:
     """Expose job status metadata for polling clients."""
 

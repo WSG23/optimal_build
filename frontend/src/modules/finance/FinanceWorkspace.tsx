@@ -31,6 +31,7 @@ import {
 } from './components/FinanceProjectSelector'
 import {
   FinanceAccessGate,
+  FinanceIdentityHelper,
   FinancePrivacyNotice,
 } from './components/FinancePrivacyNotice'
 import { useFinanceScenarios } from './hooks/useFinanceScenarios'
@@ -307,6 +308,12 @@ export function FinanceWorkspace() {
   const [promotingScenarioId, setPromotingScenarioId] = useState<number | null>(null)
   const [runningSensitivity, setRunningSensitivity] = useState(false)
   const [sensitivityError, setSensitivityError] = useState<string | null>(null)
+  const identityErrorRegex = /restricted/i
+  const needsScenarioIdentity =
+    typeof error === 'string' && identityErrorRegex.test(error)
+  const needsScenarioCreateIdentity =
+    typeof scenarioError === 'string' &&
+    identityErrorRegex.test(scenarioError)
 
   useEffect(() => {
     if (!scenarioMessage) {
@@ -613,15 +620,21 @@ export function FinanceWorkspace() {
               <div className="finance-workspace__error" role="alert">
                 <strong>{t('finance.errors.generic')}</strong>
                 <span className="finance-workspace__error-detail">{error}</span>
+                {needsScenarioIdentity && (
+                  <FinanceIdentityHelper compact />
+                )}
               </div>
             )}
             {loading && (
               <p className="finance-workspace__status">{t('common.loading')}</p>
             )}
             {scenarioError && (
-              <p className="finance-workspace__error" role="alert">
+              <div className="finance-workspace__error" role="alert">
                 {scenarioError}
-              </p>
+                {needsScenarioCreateIdentity && (
+                  <FinanceIdentityHelper compact />
+                )}
+              </div>
             )}
             {scenarioMessage && (
               <p className="finance-workspace__status" role="status">

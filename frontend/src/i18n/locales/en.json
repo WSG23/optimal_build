@@ -418,12 +418,15 @@
       }
     },
     "privacy": {
-      "restrictedTitle": "Developer-only workspace",
-      "restrictedBody": "Finance modelling data is restricted to developer or admin roles. Update your API role (X-Role header) to \"developer\" before continuing.",
-      "roleHint": "Current role: {{role}}",
-      "privateTitle": "Private finance scenario",
-      "privateBody": "This scenario is marked as private for the developer team. Share these outputs only with authorised project members."
-    },
+    "restrictedTitle": "Developer-only workspace",
+    "restrictedBody": "Finance modelling data is restricted to developer or admin roles. Update your API role (X-Role header) to \"developer\" before continuing.",
+    "roleHint": "Current role: {{role}}",
+    "applyDemoIdentity": "Use demo developer identity",
+    "applyDemoIdentityHint": "Demo finance headers stored. Reload if the data does not appear immediately.",
+    "applyDemoIdentityError": "Unable to store credentials in this browser. Please update localStorage manually.",
+    "privateTitle": "Private finance scenario",
+    "privateBody": "This scenario is marked as private for the developer team. Share these outputs only with authorised project members."
+  },
     "scenarioCreator": {
       "title": "Create finance scenario",
       "description": "Enter asset mix assumptions to generate a fresh Phase 2C feasibility run.",
