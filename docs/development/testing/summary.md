@@ -24,7 +24,7 @@ Tracks test harness issues that are **not bugs** in the application code.
 
 ---
 
-### 2. [Phase 2B Manual UI QA Checklist](../PHASE2B_VISUALISATION_STUB.MD#10-manual-ui-qa-checklist-preview-payload-builder)
+### 2. [Phase 2B Manual UI QA Checklist](../archive/phase2b/PHASE2B_VISUALISATION_STUB_archived_2025-11-12.md#10-manual-ui-qa-checklist-preview-payload-builder)
 Defines the required manual walkthrough for the developer preview harness before closing Phase 2B renderer tasks.
 
 **Purpose:**

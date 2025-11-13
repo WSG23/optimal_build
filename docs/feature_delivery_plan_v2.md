@@ -85,7 +85,7 @@
 - **Backend:** 100% | **UI:** 85%
 - **Status source:** [Line 416](#phase-2b-asset-specific-feasibility) says "⚠️ IN PROGRESS"
 - **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅
-- **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [PHASE2B_VISUALISATION_STUB.MD](PHASE2B_VISUALISATION_STUB.MD)
+- **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [PHASE2B_VISUALISATION_STUB.MD](archive/phase2b/PHASE2B_VISUALISATION_STUB_archived_2025-11-12.md)
 - [Jump to details ↓](#phase-2b-asset-specific-feasibility)
 
 ---
@@ -608,16 +608,10 @@
 - ✅ Asset optimiser upgraded to curve-driven scoring with constraint logs, confidence scores, and scenario variants (Oct 22 2025)
 - ✅ Preview job pipeline enqueues background renders and exposes polling/refresh endpoints (Oct 22 2025)
 - ✅ NHB Historic Sites, National Monuments, and Heritage Trails merged with URA overlays; developer API returns rich `heritage_context` for optimiser + finance flows (Oct 22 2025)
+- ✅ Level 2 preview renderer (Nov 2025): octagonal footprints, stepped setbacks/podiums, per-floor shading, isometric thumbnails, and `geometry_detail_level` control wired through `PreviewJob` metadata (`medium` default, `simple` fallback for low-spec). Site Acquisition UI exposes a selector so QA/users can refresh renders in either mode; backend/API accept the `geometry_detail_level` body param (default governed by `PREVIEW_GEOMETRY_DETAIL_LEVEL`).
 
 **What's Remaining:**
-- ⏸️ **3D Preview Enhancement - Level 2 Detail (Deferred, Non-Blocking)**
-  - Octagonal footprints (8 vertices at 45° angles)
-  - Setbacks for tall buildings (footprint reduction at 1/3 and 2/3 height)
-  - Podium distinction (separate 4.5-6m ground floor)
-  - Floor lines every 3.5m
-  - Ambient shadows (vertex color gradients)
-  - `geometry_detail_level` parameter support
-  - **Note:** Level 1 (simple box geometry) is sufficient for Phase 2D; Level 2 can be added in Phase 2E+ without blocking progress
+- ✅ **3D Preview Level 2 Detail** – Octagonal footprints, stepped setbacks (>60 m), podium coloration, per-floor banding (vertex shading), isometric thumbnails, and `geometry_detail_level` overrides now ship by default (Nov 2025). Frontend viewer automatically renders the richer GLTF payload.
 - ⏭️ Automate NHB dataset refresh (Monuments/Trails) + add override management for future conservation updates (housekeeping task)
 
 ---
@@ -755,7 +749,7 @@
 ---
 
 ### Phase 2C: Complete Financial Control & Modeling ✅ BACKEND / UI VERIFIED
-**Status:** Asset finance engine wired to developer capture, finance API gated by role, and construction loan interest now modelled with multi-facility carry + reviewer UI. ORM models now align with UUID-backed finance tables, and the smoke runner has a static asset-mix fallback so finance execution proceeds even when GPS capture is offline. Synchronous sensitivity loads are capped via `FINANCE_SENSITIVITY_MAX_SYNC_BANDS`; remaining work covers async batching, caching, and tranche editing (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
+**Status:** Finance workspace now supports captured-project selection + privacy banners, scenario promotion/refresh, capital stack and tranche metadata cards, construction-loan editing, per-asset breakdown panels, sensitivity reruns (CSV/JSON export + summaries), and job timelines. Backend persists `fin_asset_breakdowns`, enforces `_ensure_project_owner`, and mirrors responses from canonical ORM rows. Remaining backlog focuses on advanced analytics (MOIC/equity multiple/DSCR heat maps) and hardening async sensitivity batching/caching (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
 
 **Manual QA (2025‑10‑27 @demo-owner@example.com):** ✅ Created “Phase 2C Base Case” scenario from the finance workspace, confirmed asset mix summary (`SGD 123,600` revenue, balanced/moderate mix), construction-loan facility breakdown, and sensitivity tables/CSV export (rent/construction-cost/interest bands match backend payload). Issue encountered: finance run initially failed due to missing `is_private` column mapping—fixed by adding the field to `FinScenario` ORM before re-test.
 
@@ -777,19 +771,19 @@
 - Advanced analytics (IRR, MOIC, DSCR, NPV)
 
 **What Exists:**
-- ✅ NPV/IRR backend calculations
-- ✅ Capital stack visualization (basic)
-- ✅ Drawdown schedule tracking
-- ✅ Asset-level finance breakdowns exposed via `/finance/feasibility` and surfaced in the developer finance UI
-- ✅ Finance scenario access restricted to reviewer/admin roles; Site Acquisition returns finance-ready asset mix payloads
-- ✅ Construction loan interest carry calculated (capitalised vs expensed) with UI summary/table
-- ✅ Sensitivity engine returns rent / construction cost / interest variants; finance workspace now includes toggles + CSV/JSON export controls
-- ⚠️ Finance dashboard (partial)
+- ✅ NPV/IRR backend calculations with persisted `FinResult` metadata
+- ✅ Capital stack cards with tranche metadata (rate/fees/reserve/amortisation/capitalisation flags) plus loan-to-cost + weighted debt summaries
+- ✅ Drawdown schedule tracking + construction-loan interest viewer and inline facility editor
+- ✅ Asset-level finance breakdowns rendered from `fin_asset_breakdowns` via `FinanceAssetBreakdown`
+- ✅ Project selector + privacy guard + scenario promotion workflow, respecting developer ownership checks
+- ✅ Sensitivity engine delivers rent / construction cost / interest variants; workspace ships rerun controls, CSV/JSON downloads, impact summaries, and job timelines
+- ✅ Finance scenario access restricted to developer/reviewer/admin headers; denied attempts logged and metered through `finance_privacy_denials_total`
+- ⚠️ Finance observability dashboard scaffolded (Prometheus/Grafana) – alert tuning deferred
 
 **What's Missing:**
-- 🟡 Enhanced financing UI (equity/debt tranche details & sensitivity explorer)
-- ✅ Construction loan detailed modelling (fees, multiple facilities, facility editor)
-- ❌ Scenario sensitivity analysis UI / batch runners
+- 🟡 Advanced analytics UI (MOIC/equity multiple, DSCR heat maps, per-asset KPI exports) to finish the dashboard deliverable
+- 🟡 Sensitivity batching resiliency: validate async worker path on Linux, add caching/back-pressure + status polling polish
+- 🟡 Download packaging: bundle scenario JSON/CSV + tranche metadata into auditor-ready exports
 
 **Acceptance Criteria:**
 - Developer creates private financial models
@@ -813,44 +807,41 @@
 
 *Backend:* `POST /api/v1/finance/feasibility` escalates costs, computes NPV/IRR, optional DSCR timelines, capital stack, drawdown schedules ([backend/app/api/v1/finance.py](../backend/app/api/v1/finance.py)). Asset optimiser ([app/services/asset_mix.py](../backend/app/services/asset_mix.py)) emits estimated revenue, capex, risk, confidence per asset type; feasibility engine consolidates into `AssetFinancialSummarySchema`. Finance results persist to `fin_scenarios`, `fin_capital_stacks`, `fin_results` tables. Finance blueprint (capital stack targets, sensitivity bands) attached to developer GPS capture responses (`DeveloperFinancialSummary`). Role guard uses `require_reviewer` for mutations, `require_viewer` for reads.
 
-*Frontend:* [frontend/src/modules/finance/FinanceWorkspace.tsx](../frontend/src/modules/finance/FinanceWorkspace.tsx) lists scenarios (static project id 401), renders scenario table (escalated cost, NPV, IRR, min DSCR, loan-to-cost), capital stack cards with progress bars, drawdown schedule table. No asset-level panels, no sensitivity toggles, no privacy messaging.
+*Frontend:* [frontend/src/modules/finance/FinanceWorkspace.tsx](../frontend/src/modules/finance/FinanceWorkspace.tsx) lets developers pick captured projects (query params + storage), promotes scenarios, edits construction facilities, and renders capital stack cards, tranche tables, drawdowns, per-asset breakdowns, sensitivity tables/summaries, privacy banners, and job timelines.
 
-*Data & Security:* Finance API accepts `project_id` as UUID/int but doesn't verify caller ownership. Role header defaults to admin/viewer; any viewer-level role can read scenarios. No end-to-end sensitivity pipeline (only blueprint bands exist).
+*Data & Security:* `_ensure_project_owner` now guards every finance endpoint (admins bypass via `X-Role: admin`), logs denials, and increments `finance_privacy_denials_total`. Requests must supply `X-User-Email`/`X-User-Id`, scenarios default to private, and async sensitivity runs honour the same guard (worker tokens still need Linux validation).
 
-**Gap Analysis:**
-- Asset-specific financial modelling: Optimiser outputs persist to `fin_asset_breakdowns`, but lack derived cap rate/NOI projections for exports/downloads/cross-scenario comparisons
-- Financing architecture: Capital stack summary exists, lacks tranche metadata in UI; construction loan interest carry/facility terms not modelled
-- Sensitivity analysis: Blueprint bands delivered, no API/UI layer to run +/- scenarios or visualise results
-- Privacy controls: Finance scenarios readable by any viewer; need developer-only scope (owner-based) + logging
-- Advanced analytics: IRR/NPV present; MOIC, equity multiple, payback, DSCR heat maps, price/volume sensitivities absent
-- Observability/testing: Metrics counters exist, no asset-level validation or regression suite
+**Gap Analysis (Nov 2025):**
+- Asset-specific financial modelling: ✅ Persisted & rendered; remaining work is richer exports + multi-scenario comparison tooling
+- Financing architecture: ✅ UI shows tranche metadata + interest editor; analytics overlays (MOIC/DSCR heat maps) still outstanding
+- Sensitivity analysis: ✅ API/UI reruns exist; production worker path/caching/back-pressure needs validation
+- Privacy controls: ✅ Developer-only guard + metrics shipped; admin override UX deferred
+- Advanced analytics: ❌ MOIC/equity multiple, DSCR heat maps, price/volume sensitivities absent
+- Observability/testing: ⚠️ Metrics emitted; Grafana alerts + Vitest migration tracked separately
 
 **Implementation Plan:**
 
 *Backend:*
-1. Asset Finance Engine: Introduce `app/services/finance/asset_models.py` to translate optimiser outcomes into per-asset cash-flow models using `re_metrics.py` helpers. Extend `AssetFinancialSummarySchema` and `FinResult` metadata with per-asset NOI, capex, payback, risk notes. Persist structured asset results (`fin_asset_breakdowns` table or JSON metadata).
-2. Construction Loan & Interest Carry: Enhance `calculator.drawdown_schedule` to compute interest carry and outstanding balance costs; store in `FinResult` metadata. Support facility terms (rate, fees, interest reserve) from blueprint/request payload.
-3. Sensitivity Batching: Add optional `sensitivity` flag to feasibility request that spawns +/- scenarios (rent, cost, rate) using blueprint bands, summarising deltas (NPV, IRR, loan-to-cost). Persist sensitivity runs as child scenarios or embed in metadata.
-4. Privacy Enforcement: Create `require_developer_owner` dependency validating JWT/project association. Restrict `/finance/scenarios` and `/finance/export` to project owners (404 for non-owners), audit access. Store scenario visibility flags (private, shared) for future collaboration. **Update (Nov 2025):** `_ensure_project_owner` now enforces owner-only access. Requests must include `X-User-Email` or `X-User-Id` headers matching `Project` owner (admins bypass via `X-Role: admin`). Every denial emits `finance_privacy_denied` log + increments `finance_privacy_denials_total{reason="<cause>"}` counter.
-5. API Schema Updates: Populate `asset_mix_summary` field. Add `asset_breakdowns`, `sensitivity_summary`, `privacy_scope` to `FinanceFeasibilityResponse`. Update OpenAPI + schema tests.
-6. Testing: Service unit tests for asset finance calculators. API tests verifying privacy checks, asset breakdown structure, sensitivity delta correctness. Fixture covering each asset type with deterministic optimiser output.
+1. Sensitivity resilience: Validate the `finance.sensitivity` RQ worker path on Linux, add caching/back-pressure, and persist async job metadata for polling/history.
+2. Analytics aggregator: Extend `FinResult` metadata with MOIC/equity multiple, DSCR heat map bins, and per-asset KPI deltas so the UI can render the complete finance dashboard.
+3. Export packaging: Bundle scenario JSON/CSV + tranche metadata + sensitivity deltas into signed artifacts for auditors/downloads.
+4. Observability polish: Promote `finance.asset_model.*` / `finance.sensitivity.*` metrics to Grafana dashboards and wire alert thresholds.
+5. Testing: Expand API/unit coverage for analytics + exports; keep deterministic fixtures per asset type.
 
 *Frontend:*
-1. Workspace Layout: Replace static project id with selection from captured developer properties (route params/state). Gate finance module behind developer role; display privacy banner when data is private.
-2. Asset Breakdown Panel: New component summarising per-asset NOI, capex, risk, absorption (stacked bar + tabular detail). Link back to optimiser constraints/notes.
-3. Financing Architecture: Expand capital stack section with tranche table (rate, fees, maturity), interest carry summary. Surface loan-to-cost, weighted debt rate, equity multiple. **Update (Nov 2025):** Backend responses merge construction-loan facility metadata (reserve/amortisation periods, capitalisation flag, compounding frequency) into each capital stack slice for complete tranche matrix display.
-4. Sensitivity Explorer: UI to toggle rent/cost/rate bands; render results (sparkline or delta cards) from API sensitivity payload. **Update (Nov 2025):** Explorer ships per-parameter delta cards with sparklines (base, upside, downside). Added editable sensitivity bands + backend endpoint to rerun analysis per scenario. Provide CSV/JSON download.
-5. Scenario Management: Mark scenario primary/private, show last run timestamp + reviewer log. **Update (Nov 2025):** Workspace exposes "Make primary" action backed by `PATCH /api/v1/finance/scenarios/{id}`, auto-demoting sibling scenarios. Add refresh + duplicate controls (when backend endpoints implemented).
-6. Testing: Component tests for new panels (mock API data). Cypress/RTL tests ensuring privacy banner appears for non-developer roles.
+1. Analytics UI: Add MOIC/equity multiple cards, DSCR heat-map visualisations, and KPI exports alongside the existing summary stack.
+2. Download bundles: Provide a one-click export (ZIP/CSV/JSON) that mirrors backend packaging, including tranche metadata and sensitivity deltas.
+3. Job UX polish: Surface async worker statuses when running outside inline mode, and improve retry/error messaging around cached reruns.
+4. Testing: Keep RTL/Vitest suites updated (post-harness fix) for analytics panels, export flows, and access banners.
 
-**Privacy & Entitlements:** Introduce developer ownership checks using project membership (owner email/user id). Log access events with `log_event` including scenario_id, user_id, role. Update CLA to note finance data is developer-private, add follow-up tasks in WORK_QUEUE.MD. Coordinate with `ui-admin` for admin override tooling (view-only with explicit grant).
+**Privacy & Entitlements:** `_ensure_project_owner` now enforces developer-only scope; future work is admin override UX + audit-log surfacing. Continue logging `finance_privacy_denied` metrics for every rejection and document overrides in WORK_QUEUE.MD when granted.
 
 **Observability & Testing Strategy:**
 - Metrics: `finance.asset_model.duration_ms`, `finance.asset_model.failures`, `finance.sensitivity.runs`, `finance.privacy.denied_requests`
 - Logs: Structured entries for sensitivity batches, loan carry calculations, privacy denials
-- Alerts: Trigger when finance run errors exceed 5% or duration > 3s P95
+- Alerts: Trigger when finance run errors exceed 5% or duration > 3 s P95 (Grafana wiring pending)
 - Regression Suite: Expand [backend/tests/test_api](../backend/tests/test_api) coverage; ensure pytest fixtures seeded with asset mix data
-- Frontend QA: Manual checklist covering scenario selection, sensitivity toggles, downloads
+- Frontend QA: Manual checklist covering project selection, privacy banner, sensitivity reruns, downloads
 - **Test Harness Caveat (Nov 2025):** Frontend unit tests blocked by known infrastructure issues (Vitest vs node runner resolution, `tsx` IPC `EPERM`, JSDOM misconfiguration). Retest once harness fixed before Phase 2C sign-off, capture results in this document.
 
 **Known Issues / QA Findings:**
@@ -2151,6 +2142,6 @@ For complete Phase 2B visualization specification, architecture diagrams, testin
 
 **Performance Target:** <5 seconds per preview, 100-500 vertices per building, <200KB GLTF+BIN
 
-**Implementation:** Modify `preview_generator.py::_serialise_layer()` to support `geometry_detail_level` parameter (simple/medium/detailed)
+**Implementation:** Modify `preview_generator.py::_serialise_layer()` to support `geometry_detail_level` parameter (simple/medium/detailed). **Status:** Complete for `simple` + `medium`. Default is configurable via `PREVIEW_GEOMETRY_DETAIL_LEVEL`, and the Site Acquisition UI/API allow per-job overrides when refreshing previews.
 
 ---

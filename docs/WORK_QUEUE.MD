@@ -30,6 +30,14 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 - **Acceptance Criteria:** Audit report captured, fixes applied where safe, unresolved items logged with owner/action.
 - **Files:** `frontend/package-lock.json`, `frontend/package.json`.
 
+### Phase 2C – Finance analytics & sensitivity hardening
+- **Status:** READY
+- **Assigned:** Platform (Finance)
+- **Estimate:** 4-5 days
+- **Description:** Implement the remaining Phase 2C items called out in `docs/feature_delivery_plan_v2.md`: surface MOIC/equity multiple + DSCR heat-map analytics in `FinanceWorkspace`, package CSV/JSON exports with tranche metadata, and validate the async `finance.sensitivity` worker path (caching/back-pressure + status polling polish).
+- **Acceptance Criteria:** Analytics panel + export bundle shipped, async reruns verified on Linux with metrics/alerts updated, doc status updated to note completion.
+- **Files:** `frontend/src/modules/finance/*`, `backend/app/api/v1/finance.py`, `backend/app/services/finance/asset_models.py`, `docs/feature_delivery_plan_v2.md`.
+
 ---
 
 ## ✅ Completed (Last 30 Days)
@@ -38,6 +46,11 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 - **Completed by:** Codex Local
 - **Commits:** (pending)
 - **Highlights:** Removed stale `ROADMAP.MD` links across enforcement docs, QA checklists, and scripts; `make validate-delivery-plan`/`scripts/check_phase_gate.py` now target `feature_delivery_plan_v2.md`.
+
+### 2025-11-12: Phase 2B preview Level 2 detail shipped
+- **Completed by:** Codex Local
+- **Commits:** (pending)
+- **Highlights:** Added `geometry_detail_level` support, octagonal footprints with podium/setback tiers, per-floor shading, and isometric thumbnails for preview jobs; default detail level set to `medium`, with `simple` fallback toggle + Site Acquisition UI control.
 
 ### 2025-11-01: Database indexing (9 composite indexes)
 - **Completed by:** Claude + Codex
@@ -76,7 +89,7 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 
 ### 2025-11-04: Phase 2B manual UI QA execution
 - **Completed by:** Wakae + Codex Local
-- **Artifacts:** Screenshots (developer preview route), updated checklist in `docs/PHASE2B_VISUALISATION_STUB.MD`
+- **Artifacts:** Screenshots (developer preview route), updated checklist in `docs/archive/phase2b/phase2b_manual_qa_results_2025-11-10.md`
 - **Highlights:** Confirmed Three.js viewer renders seeded GLTF assets with orbit controls; metadata links verified, no regressions observed.
 
 ### 2025-11-04: Phase 2B Monitoring & Alerts wired
@@ -87,7 +100,7 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 ### 2025-11-10: Preview asset lifecycle (retention + cleanup)
 - **Completed by:** Codex Local
 - **Artifacts:** `backend/scripts/preview_cleanup.py`, `settings.PREVIEW_MAX_VERSIONS`
-- **Highlights:** Configurable retention (default 3 versions per property) with a CLI that prunes old `static/dev-previews` directories and marks matching `PreviewJob` rows as `expired`. Documented in `docs/PHASE2B_VISUALISATION_STUB.MD`.
+- **Highlights:** Configurable retention (default 3 versions per property) with a CLI that prunes old `static/dev-previews` directories and marks matching `PreviewJob` rows as `expired`. Documented in `docs/feature_delivery_plan_v2.md`.
 
 ---
 
@@ -99,5 +112,5 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 4. After completing work, move the item to the Completed section with the completion date and relevant commit IDs.
 5. Update [`feature_delivery_plan_v2.md`](feature_delivery_plan_v2.md) only when phase status changes (e.g., READY → COMPLETE).
 6. For infrastructure audit tasks, update `docs/audits/PRE-PHASE-2D-AUDIT.MD` checklists in parallel.
-7. For Phase 2B renderer items, execute the manual UI walkthrough in [`docs/PHASE2B_VISUALISATION_STUB.MD`](PHASE2B_VISUALISATION_STUB.MD#10-manual-ui-qa-checklist-preview-payload-builder) and include results before requesting review.
+7. For Phase 2B renderer items, execute the manual UI walkthrough in [`archive/phase2b/PHASE2B_VISUALISATION_STUB_archived_2025-11-12.md`](archive/phase2b/PHASE2B_VISUALISATION_STUB_archived_2025-11-12.md#10-manual-ui-qa-checklist-preview-payload-builder) and include results before requesting review.
 8. Every feature or bug fix must land its tests (unit, integration, or regression) in the same change. If the legacy SQLAlchemy harness blocks execution, log a follow-up in this queue and stub the dependency so coverage continues trending upward.
