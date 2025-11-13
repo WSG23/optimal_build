@@ -1629,6 +1629,58 @@ export async function updateFinanceScenario(
   return mapResponse(payload)
 }
 
+export async function deleteFinanceScenario(
+  scenarioId: number,
+  options: FinanceFeasibilityOptions = {},
+): Promise<void> {
+  if (!Number.isFinite(Number(scenarioId))) {
+    throw new Error('scenarioId is required to delete a finance scenario')
+  }
+  const headers = applyIdentityHeaders({
+    'Content-Type': 'application/json',
+  })
+  const response = await fetch(
+    buildUrl(`api/v1/finance/scenarios/${scenarioId}`, apiBaseUrl),
+    {
+      method: 'DELETE',
+      headers,
+      signal: options.signal,
+    },
+  )
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message || `Finance scenario delete failed with status ${response.status}`,
+    )
+  }
+}
+
+export async function exportFinanceScenarioCsv(
+  scenarioId: number,
+  options: FinanceFeasibilityOptions = {},
+): Promise<Blob> {
+  if (!Number.isFinite(Number(scenarioId))) {
+    throw new Error('scenarioId is required to export a finance scenario')
+  }
+  const headers = applyIdentityHeaders({})
+  const url = buildUrl(
+    `api/v1/finance/export?scenario_id=${scenarioId}`,
+    apiBaseUrl,
+  )
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+    signal: options.signal,
+  })
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message || `Finance scenario export failed with status ${response.status}`,
+    )
+  }
+  return await response.blob()
+}
+
 export async function runScenarioSensitivity(
   scenarioId: number,
   bands: SensitivityBandInput[],
