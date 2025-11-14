@@ -256,7 +256,8 @@
       "refresh": "シナリオを再計算",
       "refreshing": "再計算中…",
       "exportCsv": "CSVをエクスポート",
-      "exporting": "エクスポート中…"
+      "exporting": "エクスポート中…",
+      "exportSuccess": "財務CSVをダウンロードしました。"
     },
     "projectSelector": {
       "title": "プロジェクト選択",

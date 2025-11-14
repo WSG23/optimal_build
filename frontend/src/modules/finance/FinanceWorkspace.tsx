@@ -4,8 +4,11 @@ import {
   updateConstructionLoan,
   updateFinanceScenario,
   runScenarioSensitivity,
+  deleteFinanceScenario,
+  exportFinanceScenarioCsv,
   type ConstructionLoanInput,
   type SensitivityBandInput,
+  type FinanceScenarioSummary,
 } from '../../api/finance'
 import { resolveDefaultRole } from '../../api/identity'
 import { AppLayout } from '../../App'
@@ -24,6 +27,7 @@ import {
   buildSensitivitySummaries,
 } from './components/FinanceSensitivitySummary'
 import { FinanceScenarioCreator } from './components/FinanceScenarioCreator'
+import { FinanceScenarioDeleteDialog } from './components/FinanceScenarioDeleteDialog'
 import { FinanceSensitivityControls } from './components/FinanceSensitivityControls'
 import {
   FinanceProjectSelector,
@@ -308,6 +312,10 @@ export function FinanceWorkspace() {
   const [promotingScenarioId, setPromotingScenarioId] = useState<number | null>(null)
   const [runningSensitivity, setRunningSensitivity] = useState(false)
   const [sensitivityError, setSensitivityError] = useState<string | null>(null)
+  const [scenarioPendingDelete, setScenarioPendingDelete] =
+    useState<FinanceScenarioSummary | null>(null)
+  const [deletingScenarioId, setDeletingScenarioId] = useState<number | null>(null)
+  const [exportingScenario, setExportingScenario] = useState(false)
   const identityErrorRegex = /restricted/i
   const needsScenarioIdentity =
     typeof error === 'string' && identityErrorRegex.test(error)
@@ -503,6 +511,35 @@ export function FinanceWorkspace() {
     )
   }, [primaryScenario])
 
+  const handleExportCsv = useCallback(async () => {
+    if (!primaryScenario || exportingScenario) {
+      return
+    }
+    setExportingScenario(true)
+    setScenarioError(null)
+    try {
+      const blob = await exportFinanceScenarioCsv(primaryScenario.scenarioId)
+      const url = URL.createObjectURL(blob)
+      const filename = `finance_scenario_${primaryScenario.scenarioId}.csv`
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = filename
+      anchor.style.display = 'none'
+      document.body.appendChild(anchor)
+      anchor.click()
+      document.body.removeChild(anchor)
+      URL.revokeObjectURL(url)
+      setScenarioMessage(t('finance.actions.exportSuccess'))
+    } catch (err) {
+      console.error('[finance] failed to export finance scenario', err)
+      setScenarioError(
+        err instanceof Error ? err.message : t('finance.errors.export'),
+      )
+    } finally {
+      setExportingScenario(false)
+    }
+  }, [primaryScenario, exportingScenario, t])
+
   const handleSaveLoan = useCallback(
     async (input: ConstructionLoanInput) => {
       if (!primaryScenario) {
@@ -558,6 +595,45 @@ export function FinanceWorkspace() {
     [promotingScenarioId, refresh, t],
   )
 
+  const handleRequestDeleteScenario = useCallback(
+    (scenario: FinanceScenarioSummary) => {
+      setScenarioPendingDelete(scenario)
+      setScenarioMessage(null)
+    },
+    [],
+  )
+
+  const handleCancelDelete = useCallback(() => {
+    setScenarioPendingDelete(null)
+  }, [])
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!scenarioPendingDelete) {
+      return
+    }
+    const scenarioId = scenarioPendingDelete.scenarioId
+    const scenarioName = scenarioPendingDelete.scenarioName
+    setDeletingScenarioId(scenarioId)
+    setScenarioError(null)
+    try {
+      await deleteFinanceScenario(scenarioId)
+      setScenarioMessage(
+        t('finance.table.messages.deleteSuccess', { name: scenarioName }),
+      )
+      setScenarioPendingDelete(null)
+      await refresh()
+    } catch (err) {
+      console.error('[finance] failed to delete finance scenario', err)
+      setScenarioError(
+        err instanceof Error
+          ? err.message
+          : t('finance.table.messages.deleteError'),
+      )
+    } finally {
+      setDeletingScenarioId(null)
+    }
+  }, [scenarioPendingDelete, refresh, t])
+
   const handleRunSensitivity = useCallback(
     async (bands: SensitivityBandInput[]) => {
       if (!primaryScenario || runningSensitivity) {
@@ -592,16 +668,28 @@ export function FinanceWorkspace() {
       title={t('finance.title')}
       subtitle={t('finance.subtitle')}
       actions={
-        <button
-          type="button"
-          className="finance-workspace__refresh"
-          onClick={refresh}
-          disabled={loading}
-        >
-          {loading
-            ? t('finance.actions.refreshing')
-            : t('finance.actions.refresh')}
-        </button>
+        <div className="finance-workspace__actions">
+          <button
+            type="button"
+            className="finance-workspace__refresh"
+            onClick={refresh}
+            disabled={loading}
+          >
+            {loading
+              ? t('finance.actions.refreshing')
+              : t('finance.actions.refresh')}
+          </button>
+          <button
+            type="button"
+            className="finance-workspace__export"
+            onClick={handleExportCsv}
+            disabled={!primaryScenario || exportingScenario}
+          >
+            {exportingScenario
+              ? t('finance.actions.exporting')
+              : t('finance.actions.exportCsv')}
+          </button>
+        </div>
       }
     >
       <section className="finance-workspace">
@@ -676,6 +764,8 @@ export function FinanceWorkspace() {
                     scenarios={scenarios}
                     onMarkPrimary={handleMarkPrimary}
                     updatingScenarioId={promotingScenarioId}
+                    onDeleteScenario={handleRequestDeleteScenario}
+                    deletingScenarioId={deletingScenarioId}
                   />
                   <FinanceCapitalStack scenarios={scenarios} />
                   <FinanceDrawdownSchedule scenarios={scenarios} />
@@ -736,6 +826,18 @@ export function FinanceWorkspace() {
                 ) : null}
               </>
             )}
+            <FinanceScenarioDeleteDialog
+              open={Boolean(scenarioPendingDelete)}
+              scenarioName={scenarioPendingDelete?.scenarioName ?? ''}
+              pending={
+                Boolean(
+                  scenarioPendingDelete &&
+                    deletingScenarioId === scenarioPendingDelete.scenarioId,
+                )
+              }
+              onCancel={handleCancelDelete}
+              onConfirm={handleConfirmDelete}
+            />
           </>
         )}
       </section>

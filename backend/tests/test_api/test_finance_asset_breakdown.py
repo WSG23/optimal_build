@@ -844,9 +844,24 @@ async def test_finance_scenario_update_allows_marking_primary(
 @pytest.mark.asyncio
 async def test_finance_scenario_delete_removes_persisted_data(
     app_client: AsyncClient,
+    async_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    project_uuid = uuid4()
+    owner_email = "delete-owner@example.com"
+    async with async_session_factory() as session:
+        project = Project(
+            id=project_uuid,
+            project_name="Scenario Delete Project",
+            project_code="FINANCE-DELETE-001",
+            project_type=ProjectType.NEW_DEVELOPMENT,
+            current_phase=ProjectPhase.CONCEPT,
+            owner_email=owner_email,
+        )
+        session.add(project)
+        await session.commit()
+
     payload = {
-        "project_id": 777,
+        "project_id": str(project_uuid),
         "project_name": "Scenario Delete Project",
         "scenario": {
             "name": "Disposable Scenario",
@@ -863,7 +878,7 @@ async def test_finance_scenario_delete_removes_persisted_data(
         },
     }
 
-    owner_headers = {"X-Role": "reviewer", "X-User-Email": "delete-owner@example.com"}
+    owner_headers = {"X-Role": "reviewer", "X-User-Email": owner_email}
     response = await app_client.post(
         "/api/v1/finance/feasibility", json=payload, headers=owner_headers
     )
@@ -889,9 +904,24 @@ async def test_finance_scenario_delete_removes_persisted_data(
 @pytest.mark.asyncio
 async def test_finance_scenario_delete_requires_reviewer_role(
     app_client: AsyncClient,
+    async_session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    project_uuid = uuid4()
+    owner_email = "delete-owner@example.com"
+    async with async_session_factory() as session:
+        project = Project(
+            id=project_uuid,
+            project_name="Scenario Delete Permissions",
+            project_code="FINANCE-DELETE-002",
+            project_type=ProjectType.NEW_DEVELOPMENT,
+            current_phase=ProjectPhase.CONCEPT,
+            owner_email=owner_email,
+        )
+        session.add(project)
+        await session.commit()
+
     payload = {
-        "project_id": 778,
+        "project_id": str(project_uuid),
         "project_name": "Scenario Delete Permissions",
         "scenario": {
             "name": "Protected Scenario",
@@ -908,14 +938,14 @@ async def test_finance_scenario_delete_requires_reviewer_role(
         },
     }
 
-    owner_headers = {"X-Role": "reviewer", "X-User-Email": "delete-owner@example.com"}
+    owner_headers = {"X-Role": "reviewer", "X-User-Email": owner_email}
     response = await app_client.post(
         "/api/v1/finance/feasibility", json=payload, headers=owner_headers
     )
     assert response.status_code == 200
     scenario_id = response.json()["scenario_id"]
 
-    viewer_headers = {"X-Role": "viewer", "X-User-Email": "delete-owner@example.com"}
+    viewer_headers = {"X-Role": "viewer", "X-User-Email": owner_email}
     delete_response = await app_client.delete(
         f"/api/v1/finance/scenarios/{scenario_id}", headers=viewer_headers
     )

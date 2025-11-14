@@ -257,7 +257,8 @@
       "refresh": "Recompute scenarios",
       "refreshing": "Recomputing…",
       "exportCsv": "Export CSV",
-      "exporting": "Exporting…"
+      "exporting": "Exporting…",
+      "exportSuccess": "Finance CSV downloaded."
     },
     "projectSelector": {
       "title": "Project selection",

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { findResult, type FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
@@ -7,6 +7,8 @@ interface FinanceScenarioTableProps {
   scenarios: FinanceScenarioSummary[]
   onMarkPrimary?: (scenarioId: number) => void
   updatingScenarioId?: number | null
+  onDeleteScenario?: (scenario: FinanceScenarioSummary) => void
+  deletingScenarioId?: number | null
 }
 
 function toNumber(value: string | null | undefined): number | null {
@@ -93,6 +95,8 @@ export function FinanceScenarioTable({
   scenarios,
   onMarkPrimary,
   updatingScenarioId = null,
+  onDeleteScenario,
+  deletingScenarioId = null,
 }: FinanceScenarioTableProps) {
   const { t, i18n } = useTranslation()
   const fallback = t('common.fallback.dash')
@@ -121,6 +125,7 @@ export function FinanceScenarioTable({
           loanToCost,
           isPrimary: Boolean(scenario.isPrimary),
           updatedAt: scenario.updatedAt ?? null,
+          scenario,
         }
       }),
     [scenarios],
@@ -145,6 +150,11 @@ export function FinanceScenarioTable({
             <th scope="col">{t('finance.table.headers.minDscr')}</th>
             <th scope="col">{t('finance.table.headers.loanToCost')}</th>
             <th scope="col">{t('finance.table.headers.lastRun')}</th>
+            <th scope="col">
+              <span className="sr-only">
+                {t('finance.table.headers.actions')}
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -185,10 +195,87 @@ export function FinanceScenarioTable({
               <td>{formatDscr(row.minDscr, locale, fallback)}</td>
               <td>{formatPercent(row.loanToCost, locale, fallback)}</td>
               <td>{formatDateTime(row.updatedAt, locale, fallback)}</td>
+              <td className="finance-table__actions-cell">
+                {onDeleteScenario ? (
+                  <FinanceScenarioActions
+                    disabled={deletingScenarioId === row.id}
+                    onDelete={() => onDeleteScenario(row.scenario)}
+                    menuLabel={t('finance.table.actions.openMenu')}
+                    deleteLabel={
+                      deletingScenarioId === row.id
+                        ? t('finance.table.actions.deleting')
+                        : t('finance.table.actions.delete')
+                    }
+                  />
+                ) : null}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+interface FinanceScenarioActionsProps {
+  onDelete: () => void
+  disabled?: boolean
+  menuLabel: string
+  deleteLabel: string
+}
+
+function FinanceScenarioActions({
+  onDelete,
+  disabled = false,
+  menuLabel,
+  deleteLabel,
+}: FinanceScenarioActionsProps) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!open) {
+      return undefined
+    }
+    function handleClick(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false)
+      }
+    }
+    window.addEventListener('mousedown', handleClick)
+    return () => window.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  return (
+    <div className="finance-table__actions" ref={containerRef}>
+      <button
+        type="button"
+        className="finance-table__actions-button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span aria-hidden="true">⋮</span>
+        <span className="sr-only">{menuLabel}</span>
+      </button>
+      {open ? (
+        <div className="finance-table__actions-menu" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onDelete()
+            }}
+            disabled={disabled}
+          >
+            {deleteLabel}
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }
