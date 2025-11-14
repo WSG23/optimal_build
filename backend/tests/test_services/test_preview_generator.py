@@ -30,13 +30,24 @@ def test_build_preview_payload_returns_prism(monkeypatch):
         },
     ]
 
+    color_legend = [
+        {
+            "asset_type": "residential",
+            "label": "Residential",
+            "color": "#ff0000",
+            "description": "Primary stack",
+        }
+    ]
+
     monkeypatch.setattr(
         preview_generator,
         "utcnow",
         lambda: datetime(2025, 1, 1, tzinfo=timezone.utc),
     )
 
-    payload = preview_generator.build_preview_payload(property_id, layers)
+    payload = preview_generator.build_preview_payload(
+        property_id, layers, color_legend=color_legend
+    )
 
     assert payload["property_id"] == str(property_id)
     assert payload["generated_at"] == "2025-01-01T00:00:00Z"
@@ -52,6 +63,7 @@ def test_build_preview_payload_returns_prism(monkeypatch):
     # Bounding box should reflect total stacked height (45 + 18)
     assert payload["bounding_box"]["max"]["z"] == 63.0
     assert payload["camera_orbit_hint"]["radius"] > 0
+    assert payload["color_legend"][0]["label"] == "Residential"
 
 
 def test_ensure_preview_asset_writes_artifacts(monkeypatch, tmp_path):
@@ -70,7 +82,10 @@ def test_ensure_preview_asset_writes_artifacts(monkeypatch, tmp_path):
     monkeypatch.setattr(preview_generator, "_PREVIEW_DIR", preview_dir)
 
     job_id = UUID("aaaaaaaa-0000-0000-0000-000000000001")
-    assets = preview_generator.ensure_preview_asset(property_id, job_id, layers)
+    legend = [{"asset_type": "residential", "label": "Res", "color": "#ff0000"}]
+    assets = preview_generator.ensure_preview_asset(
+        property_id, job_id, layers, color_legend=legend
+    )
 
     assert assets.asset_version
     assert assets.preview_url.endswith(
@@ -94,6 +109,7 @@ def test_ensure_preview_asset_writes_artifacts(monkeypatch, tmp_path):
     assert payload["geometry_detail_level"] == "medium"
     assert payload["asset_manifest"]["gltf"].endswith("preview.gltf")
     assert payload["asset_manifest"]["binary"].endswith("preview.bin")
+    assert payload["color_legend"][0]["label"] == "Res"
     assert gltf_path.exists()
     assert binary_path.exists()
     assert thumbnail_path.exists()

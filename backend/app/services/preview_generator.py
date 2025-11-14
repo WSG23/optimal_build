@@ -568,9 +568,10 @@ def _build_layer_mesh(
     colour = _normalise_hex_colour(layer.get("color"), index)
     floor_lines = geometry.get("floor_lines")
     base_elevation = float(geometry.get("base_elevation") or 0.0)
+    layer_id = str(layer.get("id") or f"layer-{index}")
 
     if isinstance(faces, Sequence) and faces:
-        return _build_custom_mesh(
+        mesh = _build_custom_mesh(
             name=name,
             colour=colour,
             vertices=vertices,
@@ -578,6 +579,9 @@ def _build_layer_mesh(
             floor_lines=floor_lines,
             base_elevation=base_elevation,
         )
+        if mesh is not None:
+            mesh["layer_id"] = layer_id
+        return mesh
 
     # Convert original XYZ (with Z up) into glTF coordinates (Y up) for legacy boxes.
     converted: list[list[float]] = []
@@ -596,6 +600,7 @@ def _build_layer_mesh(
         "color": colour,
         "min": mins,
         "max": maxs,
+        "layer_id": layer_id,
     }
 
 
@@ -754,7 +759,11 @@ def _build_gltf_document(
                 ],
             }
         )
-        nodes.append({"name": mesh_data["name"], "mesh": mesh_index})
+        node_entry: dict[str, object] = {"name": mesh_data["name"], "mesh": mesh_index}
+        layer_id = mesh_data.get("layer_id")
+        if isinstance(layer_id, str):
+            node_entry["extras"] = {"layer_id": layer_id}
+        nodes.append(node_entry)
 
     gltf: dict[str, object] = {
         "asset": {
@@ -917,6 +926,7 @@ def build_preview_payload(
     massing_layers: Iterable[Mapping[str, object]],
     *,
     geometry_detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
+    color_legend: Iterable[Mapping[str, object]] | None = None,
 ) -> dict[str, object]:
     """Generate a structured preview payload from massing layer metadata.
 
@@ -945,6 +955,11 @@ def build_preview_payload(
         raise ValueError("Preview payload requires at least one massing layer")
 
     bounds = _calculate_bounds(all_vertices)
+    legend_payload: list[dict[str, object]] = []
+    if color_legend is not None:
+        for entry in color_legend:
+            legend_payload.append(dict(entry))
+
     payload = {
         "schema_version": "1.0",
         "property_id": str(property_id),
@@ -954,6 +969,8 @@ def build_preview_payload(
         "geometry_detail_level": detail_level,
         "layers": serialised_layers,
     }
+    if legend_payload:
+        payload["color_legend"] = legend_payload
     return payload
 
 
@@ -963,6 +980,7 @@ def ensure_preview_asset(
     massing_layers: Iterable[Mapping[str, object]],
     *,
     geometry_detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
+    color_legend: Iterable[Mapping[str, object]] | None = None,
 ) -> PreviewAssets:
     """Persist preview artefacts for a property and return accessible URLs."""
 
@@ -971,6 +989,7 @@ def ensure_preview_asset(
         property_id,
         massing_layers,
         geometry_detail_level=detail_level,
+        color_legend=color_legend,
     )
 
     asset_version = f"{utcnow().strftime('%Y%m%d%H%M%S')}-{job_id.hex[:8]}"

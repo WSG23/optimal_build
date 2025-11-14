@@ -1205,11 +1205,16 @@ async def developer_log_property_by_gps(
         layer.model_dump() if hasattr(layer, "model_dump") else layer.__dict__
         for layer in visualization.massing_layers
     ]
+    legend_payload = [
+        entry.model_dump() if hasattr(entry, "model_dump") else entry.__dict__
+        for entry in visualization.color_legend
+    ]
     preview_job = await preview_service.queue_preview(
         property_id=result.property_id,
         scenario="base",
         massing_layers=massing_payload,
         camera_orbit=visualization.camera_orbit_hint or {},
+        color_legend=legend_payload,
     )
     preview_status = (
         preview_job.status.value

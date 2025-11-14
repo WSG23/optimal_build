@@ -98,6 +98,7 @@ async def test_queue_preview_inline_backend_executes_job(
         scenario="base",
         massing_layers=[{"id": "layer-1", "height": 120}],
         camera_orbit={"azimuth": 45.0},
+        color_legend=[{"asset_type": "layer-1", "label": "Layer", "color": "#ff0000"}],
     )
 
     assert job.status == PreviewJobStatus.READY
@@ -106,6 +107,7 @@ async def test_queue_preview_inline_backend_executes_job(
     assert calls == [str(job.id)]
     assert job.metadata["camera_orbit"] == {"azimuth": 45.0}
     assert job.metadata["massing_layers"][0]["id"] == "layer-1"
+    assert job.metadata["color_legend"][0]["asset_type"] == "layer-1"
     assert (
         job.metadata["geometry_detail_level"] == settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
     )

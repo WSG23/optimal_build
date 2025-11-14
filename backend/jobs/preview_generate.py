@@ -153,6 +153,8 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
         detail_level = normalise_geometry_detail_level(
             job_metadata.get("geometry_detail_level")
         )
+        color_legend = job_metadata.get("color_legend")
+        legend_payload = color_legend if isinstance(color_legend, list) else None
 
         job.status = PreviewJobStatus.PROCESSING
         job.started_at = utcnow()
@@ -165,6 +167,7 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
                 job.id,
                 payload_layers,
                 geometry_detail_level=detail_level,
+                color_legend=legend_payload,
             )
             job.preview_url = assets.preview_url
             job.metadata_url = assets.metadata_url

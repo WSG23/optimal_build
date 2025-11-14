@@ -74,6 +74,7 @@ class PreviewJobService:
         massing_layers: Sequence[Mapping[str, object]],
         camera_orbit: Mapping[str, float] | None = None,
         geometry_detail_level: str | None = None,
+        color_legend: Sequence[Mapping[str, object]] | None = None,
     ) -> PreviewJob:
         """Create a preview job and enqueue it for asynchronous rendering."""
 
@@ -89,13 +90,15 @@ class PreviewJobService:
                 geometry_detail_level or settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
             )
             serialised_layers = _serialise_layers(massing_layers)
+            legend_payload = _serialise_layers(color_legend) if color_legend else []
             logger.info(
                 f"[QUEUE_PREVIEW_START] Serialised {len(serialised_layers)} layers"
             )
 
-            checksum_source = json.dumps(serialised_layers, sort_keys=True).encode(
-                "utf-8"
-            )
+            checksum_source = json.dumps(
+                {"layers": serialised_layers, "legend": legend_payload},
+                sort_keys=True,
+            ).encode("utf-8")
             checksum = hashlib.sha256(checksum_source).hexdigest()
             logger.info(f"[QUEUE_PREVIEW_START] Computed checksum: {checksum[:16]}...")
 
@@ -111,6 +114,7 @@ class PreviewJobService:
                     "massing_layers": serialised_layers,
                     "camera_orbit": camera_orbit or {},
                     "geometry_detail_level": detail_level,
+                    "color_legend": legend_payload,
                 },
             )
             self._session.add(job)
@@ -211,9 +215,18 @@ class PreviewJobService:
             raise ValueError("Preview job missing massing layer metadata")
 
         serialised_layers = _serialise_layers(payload_layers)
-        checksum_source = json.dumps(serialised_layers, sort_keys=True).encode("utf-8")
+        legend_payload = metadata_dict.get("color_legend")
+        if isinstance(legend_payload, list):
+            legend_payload = _serialise_layers(legend_payload)
+        else:
+            legend_payload = []
+        checksum_source = json.dumps(
+            {"layers": serialised_layers, "legend": legend_payload},
+            sort_keys=True,
+        ).encode("utf-8")
         job.payload_checksum = hashlib.sha256(checksum_source).hexdigest()
         metadata_dict["massing_layers"] = serialised_layers
+        metadata_dict["color_legend"] = legend_payload
 
         detail_level = preview_generator.normalise_geometry_detail_level(
             geometry_detail_level

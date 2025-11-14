@@ -16,6 +16,7 @@ type PreviewMetadata = {
 }
 
 const FALLBACK_HEIGHT = 420
+type LayerObjectMap = Map<string, THREE.Object3D[]>
 
 function disposeScene(root: THREE.Object3D | null) {
   if (!root) {
@@ -33,15 +34,33 @@ function disposeScene(root: THREE.Object3D | null) {
   })
 }
 
-export function Preview3DViewer({ previewUrl, metadataUrl, status, thumbnailUrl }: Preview3DViewerProps) {
+export function Preview3DViewer({
+  previewUrl,
+  metadataUrl,
+  status,
+  thumbnailUrl,
+  layerVisibility,
+  focusLayerId = null,
+}: Preview3DViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const animationRef = useRef<number | null>(null)
   const controlsRef = useRef<OrbitControls | null>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const defaultCameraStateRef = useRef<{
+    position: THREE.Vector3
+    target: THREE.Vector3
+  } | null>(null)
+  const layerObjectsRef = useRef<LayerObjectMap>(new Map())
+  const layerVisibilityRef = useRef<Record<string, boolean> | undefined>()
+  const focusLayerIdRef = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [metadataWarning, setMetadataWarning] = useState<string | null>(null)
+
+  layerVisibilityRef.current = layerVisibility
+  focusLayerIdRef.current = focusLayerId
 
   useEffect(() => {
     if (!previewUrl) {
@@ -104,6 +123,8 @@ export function Preview3DViewer({ previewUrl, metadataUrl, status, thumbnailUrl 
         const width = container.clientWidth || 640
         const height = container.clientHeight || FALLBACK_HEIGHT
 
+        layerObjectsRef.current = new Map()
+
         const scene = new THREE.Scene()
         scene.background = new THREE.Color('#f5f5f7')
         sceneRef.current = scene
@@ -140,9 +161,20 @@ export function Preview3DViewer({ previewUrl, metadataUrl, status, thumbnailUrl 
                 material.opacity = 0.94
               }
             }
+            const layerId =
+              (typeof child.userData?.layer_id === 'string' && child.userData.layer_id) ||
+              (typeof child.name === 'string' && child.name.trim()) ||
+              null
+            if (layerId) {
+              const existing = layerObjectsRef.current.get(layerId) ?? []
+              existing.push(child)
+              layerObjectsRef.current.set(layerId, existing)
+            }
           }
         })
         scene.add(root)
+        updateMeshVisibility(layerObjectsRef.current, layerVisibilityRef.current)
+        updateMeshHighlight(layerObjectsRef.current, focusLayerIdRef.current ?? null)
 
         const bounds = new THREE.Box3().setFromObject(root)
         const size = bounds.getSize(new THREE.Vector3())
@@ -191,6 +223,11 @@ export function Preview3DViewer({ previewUrl, metadataUrl, status, thumbnailUrl 
         camera.lookAt(target)
         controls.target.copy(target)
         controls.update()
+        cameraRef.current = camera
+        defaultCameraStateRef.current = {
+          position: camera.position.clone(),
+          target: controls.target.clone(),
+        }
 
         const animate = () => {
           animationRef.current = requestAnimationFrame(animate)
@@ -252,8 +289,24 @@ export function Preview3DViewer({ previewUrl, metadataUrl, status, thumbnailUrl 
         disposeScene(sceneRef.current)
         sceneRef.current = null
       }
+      layerObjectsRef.current = new Map()
     }
   }, [previewUrl, metadataUrl])
+
+  useEffect(() => {
+    updateMeshVisibility(layerObjectsRef.current, layerVisibility)
+  }, [layerVisibility])
+
+  useEffect(() => {
+    updateMeshHighlight(layerObjectsRef.current, focusLayerId)
+    focusCameraOnLayer(
+      focusLayerId,
+      layerObjectsRef.current,
+      cameraRef.current,
+      controlsRef.current,
+      defaultCameraStateRef.current,
+    )
+  }, [focusLayerId])
 
   if (!previewUrl) {
     return (
@@ -313,4 +366,105 @@ export function Preview3DViewer({ previewUrl, metadataUrl, status, thumbnailUrl 
       )}
     </div>
   )
+}
+
+function updateMeshVisibility(
+  map: LayerObjectMap,
+  visibility?: Record<string, boolean>,
+) {
+  if (!map.size) {
+    return
+  }
+  if (!visibility) {
+    map.forEach((objects) => {
+      objects.forEach((object) => {
+        object.visible = true
+      })
+    })
+    return
+  }
+  map.forEach((objects, layerId) => {
+    const isVisible = visibility[layerId] !== false
+    objects.forEach((object) => {
+      object.visible = isVisible
+    })
+  })
+}
+
+function updateMeshHighlight(map: LayerObjectMap, focusLayerId: string | null) {
+  if (!map.size) {
+    return
+  }
+  const hasFocus = Boolean(focusLayerId)
+  map.forEach((objects, layerId) => {
+    const isFocus = !hasFocus || layerId === focusLayerId
+    objects.forEach((object) => {
+      object.traverse((node) => {
+        if (node instanceof THREE.Mesh) {
+          const materials = Array.isArray(node.material)
+            ? node.material
+            : [node.material]
+          materials.forEach((material) => {
+            if (!material) {
+              return
+            }
+            const materialWithUserData = material as {
+              userData?: { __baseOpacity?: number; [key: string]: unknown }
+              opacity?: number
+              transparent: boolean
+              needsUpdate: boolean
+            }
+            const baseOpacity =
+              materialWithUserData.userData?.__baseOpacity ??
+              (typeof materialWithUserData.opacity === 'number'
+                ? materialWithUserData.opacity
+                : 0.94)
+            materialWithUserData.userData = {
+              ...materialWithUserData.userData,
+              __baseOpacity: baseOpacity,
+            }
+            material.transparent = true
+            material.opacity = isFocus ? baseOpacity : Math.min(baseOpacity * 0.35, 0.5)
+            material.needsUpdate = true
+          })
+        }
+      })
+    })
+  })
+}
+
+function focusCameraOnLayer(
+  layerId: string | null,
+  map: LayerObjectMap,
+  camera: THREE.PerspectiveCamera | null,
+  controls: OrbitControls | null,
+  defaults: { position: THREE.Vector3; target: THREE.Vector3 } | null,
+) {
+  if (!camera || !controls) {
+    return
+  }
+  if (!layerId) {
+    if (defaults) {
+      camera.position.copy(defaults.position)
+      controls.target.copy(defaults.target)
+      controls.update()
+    }
+    return
+  }
+  const objects = map.get(layerId)
+  if (!objects || objects.length === 0) {
+    return
+  }
+  const box = new THREE.Box3()
+  objects.forEach((object) => box.expandByObject(object))
+  if (box.isEmpty()) {
+    return
+  }
+  const center = box.getCenter(new THREE.Vector3())
+  const size = box.getSize(new THREE.Vector3())
+  const radius = Math.max(size.x, size.y, size.z) * 1.6 || 30
+  const offset = new THREE.Vector3(radius, radius, radius)
+  camera.position.copy(center.clone().add(offset))
+  controls.target.copy(center)
+  controls.update()
 }
