@@ -934,14 +934,19 @@ def build_preview_payload(
     subsequent layers stacked on top of previous layer's height.
     """
 
-    # Build a color lookup map from the color legend (asset_type -> color)
+    # Build lookup maps from the color legend (asset_type -> color/label)
     color_map: dict[str, str] = {}
+    label_map: dict[str, str] = {}
     if color_legend is not None:
         for entry in color_legend:
             asset_type = entry.get("asset_type")
             color = entry.get("color")
-            if isinstance(asset_type, str) and isinstance(color, str):
-                color_map[asset_type] = color
+            label = entry.get("label")
+            if isinstance(asset_type, str):
+                if isinstance(color, str):
+                    color_map[asset_type] = color
+                if isinstance(label, str) and label.strip():
+                    label_map[asset_type] = label
 
     serialised_layers: list[dict[str, object]] = []
     all_vertices: list[tuple[float, float, float]] = []
@@ -949,11 +954,14 @@ def build_preview_payload(
     detail_level = normalise_geometry_detail_level(geometry_detail_level)
 
     for idx, layer in enumerate(massing_layers, start=1):
-        # Apply color from legend if available
+        # Apply color and label from legend if available
         layer_dict = dict(layer)
         asset_type = layer_dict.get("asset_type")
-        if isinstance(asset_type, str) and asset_type in color_map:
-            layer_dict["color"] = color_map[asset_type]
+        if isinstance(asset_type, str):
+            if asset_type in color_map:
+                layer_dict["color"] = color_map[asset_type]
+            if asset_type in label_map:
+                layer_dict["name"] = label_map[asset_type]
         layer = layer_dict
         serialised, vertices, preview_height = _serialise_layer(
             layer,
