@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import json
-from dataclasses import field, replace
+from dataclasses import dataclass, field, replace
 from importlib import resources
 from typing import Any, Iterable, Mapping, Sequence
 
-from backend._compat import compat_dataclass
 
-
-@compat_dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class AssetOptimizationPlan:
     """Represents an allocation recommendation for a specific asset type."""
 
@@ -40,7 +38,7 @@ class AssetOptimizationPlan:
     alternative_scenarios: tuple[str, ...] = ()
 
 
-@compat_dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class ConstraintViolation:
     """Records when a constraint had to be relaxed or enforced."""
 
@@ -50,7 +48,7 @@ class ConstraintViolation:
     asset_type: str | None = None
 
 
-@compat_dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class AssetOptimizationScenario:
     """Alternative optimisation state for sensitivity analysis."""
 
@@ -59,7 +57,7 @@ class AssetOptimizationScenario:
     description: str | None = None
 
 
-@compat_dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class AssetOptimizationOutcome:
     """Container returned by the optimiser with metadata."""
 
@@ -69,7 +67,7 @@ class AssetOptimizationOutcome:
     confidence: float | None = None
 
 
-_PROFILE_CONFIG = {
+_PROFILE_CONFIG: dict[str, dict[str, str | None]] = {
     "commercial": {
         "primary": "office",
         "secondary": "retail",
@@ -330,7 +328,9 @@ def _apply_scoring_adjustments(
     for plan in plans:
         score = raw_scores[plan.asset_type]
         if score_span and score_span > 1e-6:
-            normalised = (score - float(min_score)) / score_span
+            # min_score is guaranteed non-None because score_span > 0 means both max and min were set
+            assert min_score is not None
+            normalised = (score - min_score) / score_span
         else:
             normalised = 0.5
         normalized_scores[plan.asset_type] = normalised
@@ -343,7 +343,7 @@ def _apply_scoring_adjustments(
         if note_delta not in notes:
             notes.append(note_delta)
         updated.append(
-            replace(plan, allocation_pct=plan.allocation_pct + delta, notes=notes)
+            replace(plan, allocation_pct=plan.allocation_pct + delta, notes=notes)  # type: ignore[type-var]
         )
 
     return updated, raw_scores, normalized_scores
@@ -362,7 +362,7 @@ def _load_asset_profiles() -> dict[str, list[AssetOptimizationPlan]]:
         raise RuntimeError("Unable to load asset mix configuration") from exc
 
     try:
-        raw_profiles: dict[str, list[dict[str, object]]] = json.loads(profile_text)
+        raw_profiles: dict[str, list[dict[str, Any]]] = json.loads(profile_text)
     except json.JSONDecodeError as exc:  # pragma: no cover - defensive
         raise RuntimeError("Invalid asset mix configuration JSON") from exc
 
@@ -694,14 +694,12 @@ def _apply_intensity_adjustments(
         _update_allocation(plan_lookup, config.get("amenities"), amenities_delta)
 
         note = "Elevated density to absorb additional GFA uplift."
-        for asset in filter(
-            None,
-            [
-                config.get("primary"),
-                config.get("secondary"),
-                config.get("tertiary"),
-            ],
-        ):
+        asset_types: list[str | None] = [
+            config.get("primary"),
+            config.get("secondary"),
+            config.get("tertiary"),
+        ]
+        for asset in filter(None, asset_types):
             _set_plan_risk(
                 plan_lookup,
                 asset,
