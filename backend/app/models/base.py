@@ -7,12 +7,13 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import CHAR, TypeDecorator
+from sqlalchemy import Dialect
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.types import CHAR, TypeDecorator, TypeEngine
 
 
-class UUID(TypeDecorator):
+class UUID(TypeDecorator[uuid_module.UUID]):
     """Platform-independent UUID type.
 
     Uses PostgreSQL's UUID type when available, otherwise uses
@@ -22,13 +23,15 @@ class UUID(TypeDecorator):
     impl = CHAR
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):
+    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[Any]:
         if dialect.name == "postgresql":
             return dialect.type_descriptor(PGUUID(as_uuid=True))
         else:
             return dialect.type_descriptor(CHAR(36))
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(
+        self, value: Any, dialect: Dialect
+    ) -> uuid_module.UUID | str | None:
         if value is None:
             return value
         if isinstance(value, int):
@@ -39,7 +42,9 @@ class UUID(TypeDecorator):
             return value
         return str(value)
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(
+        self, value: Any, dialect: Dialect
+    ) -> uuid_module.UUID | None:
         if value is None:
             return value
         elif dialect.name == "postgresql":
