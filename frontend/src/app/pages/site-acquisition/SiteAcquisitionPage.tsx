@@ -26,8 +26,15 @@ import {
   type DeveloperPreviewJob,
   type DeveloperAssetOptimization,
   type GeometryDetailLevel,
+  type DeveloperColorLegendEntry,
 } from '../../../api/siteAcquisition'
 import { Preview3DViewer } from '../../components/site-acquisition/Preview3DViewer'
+import {
+  normalisePreviewLayer,
+  normaliseLegendEntry,
+  type PreviewLayerMetadata,
+  type PreviewLegendEntry,
+} from './previewMetadata'
 
 const SCENARIO_OPTIONS: Array<{
   value: DevelopmentScenario
@@ -603,6 +610,21 @@ export function SiteAcquisitionPage() {
   const [previewDetailLevel, setPreviewDetailLevel] =
     useState<GeometryDetailLevel>('medium')
   const [isRefreshingPreview, setIsRefreshingPreview] = useState(false)
+  const [previewLayerMetadata, setPreviewLayerMetadata] = useState<
+    PreviewLayerMetadata[]
+  >([])
+  const [previewLayerVisibility, setPreviewLayerVisibility] = useState<
+    Record<string, boolean>
+  >({})
+  const [previewFocusLayerId, setPreviewFocusLayerId] = useState<string | null>(
+    null,
+  )
+  const [isPreviewMetadataLoading, setIsPreviewMetadataLoading] = useState(false)
+  const [previewMetadataError, setPreviewMetadataError] = useState<string | null>(
+    null,
+  )
+  const [legendEntries, setLegendEntries] = useState<PreviewLegendEntry[]>([])
+  const legendBaselineRef = useRef<PreviewLegendEntry[]>([])
 
   // Checklist state
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([])
@@ -650,6 +672,35 @@ export function SiteAcquisitionPage() {
   const propertyId = capturedProperty?.propertyId ?? null
   const previewViewerMetadataUrl =
     previewJob?.metadataUrl ?? capturedProperty?.visualization?.previewMetadataUrl ?? null
+  const colorLegendEntries = useMemo(() => {
+    if (legendEntries.length > 0) {
+      return legendEntries
+    }
+    return capturedProperty?.visualization?.colorLegend ?? []
+  }, [capturedProperty?.visualization?.colorLegend, legendEntries])
+  const legendPayloadForPreview = useMemo<DeveloperColorLegendEntry[]>(
+    () =>
+      colorLegendEntries.map((entry) => ({
+        assetType: entry.assetType,
+        label: entry.label,
+        color: entry.color,
+        description: entry.description,
+      })),
+    [colorLegendEntries],
+  )
+  const legendHasPendingChanges = useMemo(() => {
+    if (!legendBaselineRef.current.length && !colorLegendEntries.length) {
+      return false
+    }
+    try {
+      return (
+        JSON.stringify(colorLegendEntries) !==
+        JSON.stringify(legendBaselineRef.current)
+      )
+    } catch {
+      return true
+    }
+  }, [colorLegendEntries])
 
   useEffect(() => {
     if (!capturedProperty?.previewJobs?.length) {
@@ -719,17 +770,191 @@ export function SiteAcquisitionPage() {
     }
   }, [previewJob?.geometryDetailLevel])
 
+  useEffect(() => {
+    if (!capturedProperty?.propertyId) {
+      setLegendEntries([])
+      legendBaselineRef.current = []
+      return
+    }
+    const baseLegend = (capturedProperty.visualization?.colorLegend ?? []).map(
+      (entry) => ({ ...entry }),
+    )
+    setLegendEntries(baseLegend)
+    legendBaselineRef.current = baseLegend
+  }, [capturedProperty?.propertyId, capturedProperty?.visualization?.colorLegend])
+
+  useEffect(() => {
+    if (!previewViewerMetadataUrl) {
+      setPreviewLayerMetadata([])
+      setPreviewLayerVisibility({})
+      setPreviewFocusLayerId(null)
+      setPreviewMetadataError(null)
+      setIsPreviewMetadataLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    let cancelled = false
+
+    async function loadMetadata() {
+      setIsPreviewMetadataLoading(true)
+      setPreviewMetadataError(null)
+      try {
+        const response = await fetch(previewViewerMetadataUrl, {
+          signal: controller.signal,
+          cache: 'reload',
+        })
+        if (!response.ok) {
+          throw new Error(`Metadata fetch failed (${response.status})`)
+        }
+        const payload = (await response.json()) as {
+          layers?: Array<Record<string, unknown>>
+          color_legend?: Array<Record<string, unknown>>
+        }
+        if (cancelled) {
+          return
+        }
+        const layers = Array.isArray(payload.layers)
+          ? payload.layers
+              .map((layer) => normalisePreviewLayer(layer))
+              .filter((layer): layer is PreviewLayerMetadata => layer !== null)
+          : []
+        setPreviewLayerMetadata(layers)
+        setPreviewLayerVisibility((prev) => {
+          if (!layers.length) {
+            return {}
+          }
+          return layers.reduce<Record<string, boolean>>((acc, layer) => {
+            acc[layer.id] = prev[layer.id] !== undefined ? prev[layer.id] : true
+            return acc
+          }, {})
+        })
+        setPreviewFocusLayerId((current) => {
+          if (!current) {
+            return null
+          }
+          return layers.some((layer) => layer.id === current) ? current : null
+        })
+        const legend = Array.isArray(payload.color_legend)
+          ? payload.color_legend
+              .map((entry) => normaliseLegendEntry(entry))
+              .filter((entry): entry is PreviewLegendEntry => entry !== null)
+          : []
+        const clonedLegend = legend.map((entry) => ({ ...entry }))
+        setLegendEntries(clonedLegend)
+        legendBaselineRef.current = clonedLegend
+      } catch (metaError) {
+        if (cancelled || controller.signal.aborted) {
+          return
+        }
+        console.error('Failed to load preview metadata:', metaError)
+        setPreviewMetadataError(
+          metaError instanceof Error
+            ? metaError.message
+            : 'Unable to load preview metadata.',
+        )
+        setPreviewLayerMetadata([])
+        setPreviewLayerVisibility({})
+        setPreviewFocusLayerId(null)
+      } finally {
+        if (!cancelled) {
+          setIsPreviewMetadataLoading(false)
+        }
+      }
+    }
+
+    loadMetadata()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [previewViewerMetadataUrl, previewJob?.id, previewJob?.finishedAt])
+
   const handleRefreshPreview = useCallback(async () => {
     if (!previewJob) {
       return
     }
     setIsRefreshingPreview(true)
-    const refreshed = await refreshPreviewJob(previewJob.id, previewDetailLevel)
+    const refreshed = await refreshPreviewJob(
+      previewJob.id,
+      previewDetailLevel,
+      legendPayloadForPreview,
+    )
     if (refreshed) {
       setPreviewJob(refreshed)
     }
     setIsRefreshingPreview(false)
-  }, [previewDetailLevel, previewJob])
+  }, [legendPayloadForPreview, previewDetailLevel, previewJob])
+  const hiddenLayerCount = useMemo(
+    () =>
+      previewLayerMetadata.filter(
+        (layer) => previewLayerVisibility[layer.id] === false,
+      ).length,
+    [previewLayerMetadata, previewLayerVisibility],
+  )
+  const handleToggleLayerVisibility = useCallback((layerId: string) => {
+    setPreviewLayerVisibility((prev) => {
+      const next = { ...prev }
+      const currentVisible = next[layerId] !== false
+      next[layerId] = !currentVisible
+      return next
+    })
+  }, [])
+  const handleSoloPreviewLayer = useCallback(
+    (layerId: string) => {
+      setPreviewLayerVisibility(
+        previewLayerMetadata.reduce<Record<string, boolean>>((acc, layer) => {
+          acc[layer.id] = layer.id === layerId
+          return acc
+        }, {}),
+      )
+      setPreviewFocusLayerId(layerId)
+    },
+    [previewLayerMetadata],
+  )
+  const handleShowAllLayers = useCallback(() => {
+    setPreviewLayerVisibility(
+      previewLayerMetadata.reduce<Record<string, boolean>>((acc, layer) => {
+        acc[layer.id] = true
+        return acc
+      }, {}),
+    )
+    setPreviewFocusLayerId(null)
+  }, [previewLayerMetadata])
+  const handleFocusLayer = useCallback((layerId: string) => {
+    setPreviewFocusLayerId((current) => (current === layerId ? null : layerId))
+  }, [])
+  const handleResetLayerFocus = useCallback(() => {
+    setPreviewFocusLayerId(null)
+  }, [])
+  const handleLegendEntryChange = useCallback(
+    (
+      assetType: string,
+      field: 'label' | 'color' | 'description',
+      value: string,
+    ) => {
+      setLegendEntries((prev) => {
+        if (!prev.length) {
+          return prev
+        }
+        return prev.map((entry) => {
+          if (entry.assetType !== assetType) {
+            return entry
+          }
+          if (field === 'description') {
+            const nextDescription = value.trim() === '' ? null : value
+            return { ...entry, description: nextDescription }
+          }
+          return { ...entry, [field]: value }
+        })
+      })
+    },
+    [],
+  )
+  const handleLegendReset = useCallback(() => {
+    const baseline = legendBaselineRef.current
+    setLegendEntries(baseline.map((entry) => ({ ...entry })))
+  }, [])
   const [isHistoryModalOpen, setHistoryModalOpen] = useState(false)
   const [quickAnalysisHistory, setQuickAnalysisHistory] = useState<
     QuickAnalysisSnapshot[]
@@ -1816,8 +2041,8 @@ export function SiteAcquisitionPage() {
         })
       }
 
-      if (visualization.colorLegend?.length > 0) {
-        const legendPreview = visualization.colorLegend
+      if (colorLegendEntries.length > 0) {
+        const legendPreview = colorLegendEntries
           .slice(0, 3)
           .map((entry) => entry.label)
           .join(', ')
@@ -1934,6 +2159,7 @@ export function SiteAcquisitionPage() {
     nearestBusStop,
     nearestMrtStation,
     previewJob,
+    colorLegendEntries,
   ])
 
   const layerBreakdown = useMemo(() => {
@@ -1943,10 +2169,7 @@ export function SiteAcquisitionPage() {
     }
 
     const legendLookup = new Map(
-      (capturedProperty?.visualization?.colorLegend ?? []).map((entry) => [
-        entry.assetType.toLowerCase(),
-        entry,
-      ]),
+      colorLegendEntries.map((entry) => [entry.assetType.toLowerCase(), entry]),
     )
 
     const toTitleCase = (value: string) =>
@@ -1977,15 +2200,17 @@ export function SiteAcquisitionPage() {
         layer.allocationPct !== null && layer.allocationPct !== undefined
           ? `${formatNumberMetric(layer.allocationPct, { maximumFractionDigits: 0 })}%`
           : '—'
-      const subtitle = legend?.label
-        ? `${legend.label}${allocationValue !== '—' ? ` · ${allocationValue}` : ''}`
-        : allocationValue !== '—'
-          ? `${allocationValue} of programme`
-          : 'Programme share pending'
+
+      // Use legend label if available, otherwise title-case asset type
+      const displayLabel = legend?.label ?? toTitleCase(layer.assetType)
+
+      const subtitle = allocationValue !== '—'
+        ? `${toTitleCase(layer.assetType)} · ${allocationValue}`
+        : toTitleCase(layer.assetType)
 
       return {
         id: `${layer.assetType}-${index}`,
-        label: toTitleCase(layer.assetType),
+        label: displayLabel,
         subtitle,
         color: legend?.color ?? layer.color ?? '#4f46e5',
         description: legend?.description ?? null,
@@ -1997,11 +2222,7 @@ export function SiteAcquisitionPage() {
         ],
       }
     })
-  }, [
-    capturedProperty?.visualization?.colorLegend,
-    capturedProperty?.visualization?.massingLayers,
-    formatNumberMetric,
-  ])
+  }, [colorLegendEntries, capturedProperty?.visualization?.massingLayers, formatNumberMetric])
 
   useEffect(() => {
     if (scenarioOverrideEntries.length === 0) {
@@ -2868,6 +3089,7 @@ export function SiteAcquisitionPage() {
         latitude: lat,
         longitude: lon,
         developmentScenarios: selectedScenarios,
+        previewDetailLevel,
       })
 
       setCapturedProperty(result)
@@ -4912,6 +5134,8 @@ export function SiteAcquisitionPage() {
                 metadataUrl={previewViewerMetadataUrl}
                 status={previewJob.status}
                 thumbnailUrl={previewJob.thumbnailUrl}
+                layerVisibility={previewLayerVisibility}
+                focusLayerId={previewFocusLayerId}
               />
               <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
                 Geometry detail:{' '}
@@ -4989,6 +5213,436 @@ export function SiteAcquisitionPage() {
                 Status updates automatically while processing.
               </span>
             </div>
+          )}
+          {previewJob && (
+            <section
+              style={{
+                marginTop: '1.5rem',
+                border: '1px solid #e5e7eb',
+                borderRadius: '16px',
+                padding: '1.2rem',
+                background: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                  alignItems: 'center',
+                }}
+              >
+                <div>
+                  <h4
+                    style={{
+                      margin: 0,
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      letterSpacing: '-0.01em',
+                      color: '#111827',
+                    }}
+                  >
+                    Rendered layers
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
+                    Hide, solo, and zoom specific massing layers directly from the Site Acquisition
+                    workspace while reviewing the Phase 2B preview.
+                  </p>
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: previewMetadataError ? '#b45309' : '#4b5563',
+                  }}
+                >
+                  {isPreviewMetadataLoading
+                    ? 'Loading preview metadata…'
+                    : previewMetadataError
+                      ? `Metadata error: ${previewMetadataError}`
+                      : `${previewLayerMetadata.length} layers${
+                          hiddenLayerCount ? ` · ${hiddenLayerCount} hidden` : ''
+                        }`}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleShowAllLayers}
+                  disabled={
+                    isPreviewMetadataLoading ||
+                    !previewLayerMetadata.length ||
+                    (hiddenLayerCount === 0 && !previewFocusLayerId)
+                  }
+                  style={{
+                    padding: '0.35rem 0.8rem',
+                    borderRadius: '9999px',
+                    border: '1px solid #d1d5db',
+                    background: '#f9fafb',
+                    fontWeight: 600,
+                    color: '#111827',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Show all layers
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetLayerFocus}
+                  disabled={!previewFocusLayerId}
+                  style={{
+                    padding: '0.35rem 0.8rem',
+                    borderRadius: '9999px',
+                    border: '1px solid #d1d5db',
+                    background: '#f9fafb',
+                    fontWeight: 600,
+                    color: previewFocusLayerId ? '#111827' : '#9ca3af',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Reset view
+                </button>
+              </div>
+              {!isPreviewMetadataLoading && !previewMetadataError && previewLayerMetadata.length === 0 && (
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+                  Layer metrics will populate once the preview metadata asset is ready. Refresh the
+                  render if the queue has expired.
+                </p>
+              )}
+              {previewLayerMetadata.length > 0 && (
+                <div style={{ overflowX: 'auto' }}>
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      minWidth: '640px',
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+                        <th style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>Layer</th>
+                        <th style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>Allocation</th>
+                        <th style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>GFA (sqm)</th>
+                        <th style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>NIA (sqm)</th>
+                        <th style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>Est. height (m)</th>
+                        <th style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>Est. floors</th>
+                        <th style={{ padding: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>Controls</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewLayerMetadata.map((layer) => {
+                        const isVisible = previewLayerVisibility[layer.id] !== false
+                        return (
+                          <tr key={layer.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <th
+                              scope="row"
+                              style={{
+                                padding: '0.65rem 0.5rem',
+                                fontSize: '0.9rem',
+                                fontWeight: 600,
+                                color: '#111827',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  width: '14px',
+                                  height: '14px',
+                                  borderRadius: '9999px',
+                                  background: layer.color,
+                                  boxShadow: '0 0 0 1px rgb(255 255 255 / 0.5)',
+                                }}
+                                aria-hidden="true"
+                              />
+                              {layer.name}
+                            </th>
+                            <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                              {layer.metrics.allocationPct != null
+                                ? `${formatNumberMetric(layer.metrics.allocationPct, {
+                                    maximumFractionDigits:
+                                      layer.metrics.allocationPct >= 10 ? 0 : 1,
+                                  })}%`
+                                : '—'}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                              {layer.metrics.gfaSqm != null
+                                ? `${formatNumberMetric(layer.metrics.gfaSqm, {
+                                    maximumFractionDigits:
+                                      layer.metrics.gfaSqm >= 1000 ? 0 : 1,
+                                  })}`
+                                : '—'}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                              {layer.metrics.niaSqm != null
+                                ? `${formatNumberMetric(layer.metrics.niaSqm, {
+                                    maximumFractionDigits:
+                                      layer.metrics.niaSqm >= 1000 ? 0 : 1,
+                                  })}`
+                                : '—'}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                              {layer.metrics.heightM != null
+                                ? `${formatNumberMetric(layer.metrics.heightM, {
+                                    maximumFractionDigits: 1,
+                                  })}`
+                                : '—'}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                              {layer.metrics.floors != null
+                                ? formatNumberMetric(layer.metrics.floors, {
+                                    maximumFractionDigits: 0,
+                                  })
+                                : '—'}
+                            </td>
+                            <td
+                              style={{
+                                padding: '0.65rem 0.5rem',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '0.4rem',
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleToggleLayerVisibility(layer.id)}
+                                style={{
+                                  padding: '0.25rem 0.6rem',
+                                  borderRadius: '9999px',
+                                  border: '1px solid #d1d5db',
+                                  background: isVisible ? '#f9fafb' : '#fee2e2',
+                                  color: isVisible ? '#111827' : '#991b1b',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {isVisible ? 'Hide' : 'Show'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSoloPreviewLayer(layer.id)}
+                                style={{
+                                  padding: '0.25rem 0.6rem',
+                                  borderRadius: '9999px',
+                                  border: '1px solid #d1d5db',
+                                  background: '#f9fafb',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                  color: '#111827',
+                                }}
+                              >
+                                Solo
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleFocusLayer(layer.id)}
+                                style={{
+                                  padding: '0.25rem 0.6rem',
+                                  borderRadius: '9999px',
+                                  border: '1px solid #d1d5db',
+                                  background:
+                                    previewFocusLayerId === layer.id ? '#e0e7ff' : '#f9fafb',
+                                  color:
+                                    previewFocusLayerId === layer.id ? '#312e81' : '#111827',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {previewFocusLayerId === layer.id ? 'Focused' : 'Zoom'}
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
+          {colorLegendEntries.length > 0 && (
+            <section
+              style={{
+                marginTop: '1.25rem',
+                border: '1px solid #e5e7eb',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                background: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                  alignItems: 'center',
+                }}
+              >
+                <div>
+                  <h4
+                    style={{
+                      margin: 0,
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      letterSpacing: '-0.01em',
+                      color: '#111827',
+                    }}
+                  >
+                    Colour legend editor
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
+                    Update the palette, labels, and descriptions before regenerating the preview so
+                    property captures and developer decks stay consistent.
+                  </p>
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: legendHasPendingChanges ? '#b45309' : '#10b981',
+                  }}
+                >
+                  {legendHasPendingChanges
+                    ? 'Palette edits pending preview refresh'
+                    : 'Palette synced with latest preview'}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                  gap: '1rem',
+                }}
+              >
+                {colorLegendEntries.map((entry) => (
+                  <div
+                    key={entry.assetType}
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      padding: '0.9rem',
+                      background: '#f9fafb',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.6rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong style={{ fontSize: '0.9rem', color: '#111827' }}>{entry.assetType}</strong>
+                      <input
+                        type="color"
+                        aria-label={`Colour for ${entry.assetType}`}
+                        value={entry.color}
+                        onChange={(event) =>
+                          handleLegendEntryChange(entry.assetType, 'color', event.target.value)
+                        }
+                        style={{
+                          width: '36px',
+                          height: '24px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          padding: 0,
+                          background: '#fff',
+                        }}
+                      />
+                    </div>
+                    <label
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                        fontSize: '0.8rem',
+                        color: '#4b5563',
+                      }}
+                    >
+                      Label
+                      <input
+                        type="text"
+                        value={entry.label}
+                        onChange={(event) =>
+                          handleLegendEntryChange(entry.assetType, 'label', event.target.value)
+                        }
+                        style={{
+                          padding: '0.4rem 0.55rem',
+                          borderRadius: '8px',
+                          border: '1px solid #d1d5db',
+                          fontSize: '0.9rem',
+                        }}
+                      />
+                    </label>
+                    <label
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                        fontSize: '0.8rem',
+                        color: '#4b5563',
+                      }}
+                    >
+                      Description
+                      <textarea
+                        value={entry.description ?? ''}
+                        onChange={(event) =>
+                          handleLegendEntryChange(
+                            entry.assetType,
+                            'description',
+                            event.target.value,
+                          )
+                        }
+                        rows={2}
+                        style={{
+                          resize: 'vertical',
+                          minHeight: '56px',
+                          padding: '0.4rem 0.55rem',
+                          borderRadius: '8px',
+                          border: '1px solid #d1d5db',
+                          fontSize: '0.9rem',
+                        }}
+                      />
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                  alignItems: 'center',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleLegendReset}
+                  disabled={legendBaselineRef.current.length === 0}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '9999px',
+                    border: '1px solid #d1d5db',
+                    background: '#f9fafb',
+                    fontWeight: 600,
+                    color: '#111827',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Reset to preview defaults
+                </button>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+                  Use “Refresh preview render” after editing the palette so GLTF colours match the
+                  updated legend.
+                </p>
+              </div>
+            </section>
           )}
           {layerBreakdown.length > 0 && (
             <section
