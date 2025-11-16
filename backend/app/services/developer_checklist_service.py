@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from uuid import UUID
 
 from app.models.developer_checklists import (
@@ -341,7 +341,7 @@ class DeveloperChecklistService:
 
         if dialect_name == "sqlite":
 
-            def _create_sqlite(conn) -> None:
+            def _create_sqlite(conn: Any) -> None:
                 conn.execute(
                     text(
                         """
@@ -396,7 +396,7 @@ class DeveloperChecklistService:
                 pass
         else:
 
-            def _create(connection_) -> None:
+            def _create(connection_: Any) -> None:
                 DeveloperChecklistTemplate.__table__.create(
                     connection_, checkfirst=True
                 )

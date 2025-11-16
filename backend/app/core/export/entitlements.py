@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import csv
 import io
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from dataclasses import dataclass
 from backend._compat.datetime import UTC
@@ -47,10 +48,10 @@ class EntitlementsSnapshot:
 
 
 async def _collect_all(
-    fetch_page,
+    fetch_page: Callable[..., Any],
     *,
     page_size: int = EXPORT_PAGE_SIZE,
-) -> list:
+) -> list[Any]:
     records: list = []
     offset = 0
     while True:
@@ -64,7 +65,7 @@ async def _collect_all(
     return records
 
 
-def _serialise_roadmap(records) -> list[dict[str, object]]:
+def _serialise_roadmap(records: Iterable[Any]) -> list[dict[str, object]]:
     serialised: list[dict[str, object]] = []
     for item in records:
         serialised.append(

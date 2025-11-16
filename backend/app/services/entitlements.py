@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from dataclasses import dataclass
@@ -17,6 +17,7 @@ from app.models.entitlements import (
     EntEngagementStatus,
     EntLegalInstrument,
     EntRoadmapItem,
+    EntRoadmapStatus,
     EntStudy,
 )
 from sqlalchemy import select
@@ -116,7 +117,7 @@ class EntitlementsService:
         authority: EntAuthority,
         code: str,
         name: str,
-        category,
+        category: EntApprovalCategory | str,
         description: str | None = None,
         requirements: dict | None = None,
         processing_time_days: int | None = None,
@@ -210,12 +211,12 @@ class EntitlementsService:
         project_id: int,
         approval_type_id: int | None,
         sequence_order: int | None,
-        status,
+        status: EntRoadmapStatus,
         status_changed_at: datetime | None,
-        target_submission_date,
-        target_decision_date,
-        actual_submission_date,
-        actual_decision_date,
+        target_submission_date: date | None,
+        target_decision_date: date | None,
+        actual_submission_date: date | None,
+        actual_decision_date: date | None,
         notes: str | None,
         metadata: dict | None,
     ) -> EntRoadmapItem:
@@ -322,7 +323,7 @@ class EntitlementsService:
         page_items = all_items[offset_value : offset_value + limit_value]
         return PageResult(items=page_items, total=total)
 
-    async def create_study(self, **kwargs) -> EntStudy:
+    async def create_study(self, **kwargs: Any) -> EntStudy:
         record = EntStudy(**kwargs)
         self.session.add(record)
         await self.session.flush()
@@ -333,7 +334,7 @@ class EntitlementsService:
         *,
         study_id: int,
         project_id: int,
-        **updates,
+        **updates: Any,
     ) -> EntStudy:
         stmt = select(EntStudy).where(
             EntStudy.id == study_id, EntStudy.project_id == project_id
@@ -378,7 +379,7 @@ class EntitlementsService:
         page_items = all_items[offset_value : offset_value + limit_value]
         return PageResult(items=page_items, total=total)
 
-    async def create_engagement(self, **kwargs) -> EntEngagement:
+    async def create_engagement(self, **kwargs: Any) -> EntEngagement:
         record = EntEngagement(**kwargs)
         if record.status == EntEngagementStatus.ACTIVE and not record.meetings:
             record.meetings = []
@@ -391,7 +392,7 @@ class EntitlementsService:
         *,
         engagement_id: int,
         project_id: int,
-        **updates,
+        **updates: Any,
     ) -> EntEngagement:
         stmt = select(EntEngagement).where(
             EntEngagement.id == engagement_id,
@@ -440,7 +441,7 @@ class EntitlementsService:
         page_items = all_items[offset_value : offset_value + limit_value]
         return PageResult(items=page_items, total=total)
 
-    async def create_legal_instrument(self, **kwargs) -> EntLegalInstrument:
+    async def create_legal_instrument(self, **kwargs: Any) -> EntLegalInstrument:
         record = EntLegalInstrument(**kwargs)
         self.session.add(record)
         await self.session.flush()
@@ -451,7 +452,7 @@ class EntitlementsService:
         *,
         instrument_id: int,
         project_id: int,
-        **updates,
+        **updates: Any,
     ) -> EntLegalInstrument:
         stmt = select(EntLegalInstrument).where(
             EntLegalInstrument.id == instrument_id,
