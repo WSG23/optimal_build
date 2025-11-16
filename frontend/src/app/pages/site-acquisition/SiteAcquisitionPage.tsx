@@ -2205,13 +2205,10 @@ export function SiteAcquisitionPage() {
       // Use legend label if available, otherwise title-case asset type
       const displayLabel = legend?.label ?? toTitleCase(layer.assetType)
 
-      // If custom label exists, show only allocation; otherwise show "AssetType · Allocation"
-      const hasCustomLabel = legend?.label && legend.label !== toTitleCase(layer.assetType)
-      const subtitle = hasCustomLabel
-        ? allocationValue
-        : allocationValue !== '—'
-          ? `${toTitleCase(layer.assetType)} · ${allocationValue}`
-          : toTitleCase(layer.assetType)
+      // Subtitle: always show "AssetType · Allocation" format for context
+      const subtitle = allocationValue !== '—'
+        ? `${toTitleCase(layer.assetType)} · ${allocationValue}`
+        : toTitleCase(layer.assetType)
 
       return {
         id: `${layer.assetType}-${index}`,
