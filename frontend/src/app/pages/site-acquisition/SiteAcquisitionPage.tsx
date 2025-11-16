@@ -850,7 +850,10 @@ export function SiteAcquisitionPage() {
           : []
         const clonedLegend = legend.map((entry) => ({ ...entry }))
         setLegendEntries(clonedLegend)
-        legendBaselineRef.current = clonedLegend
+        // Set baseline only on first load, never update after regenerating preview
+        if (legendBaselineRef.current.length === 0) {
+          legendBaselineRef.current = clonedLegend
+        }
       } catch (metaError) {
         if (cancelled || controller.signal.aborted) {
           return
