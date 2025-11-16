@@ -5539,10 +5539,10 @@ export function SiteAcquisitionPage() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.9rem', color: '#111827' }}>{entry.assetType}</strong>
+                      <strong style={{ fontSize: '0.9rem', color: '#111827' }}>{toTitleCase(entry.assetType)}</strong>
                       <input
                         type="color"
-                        aria-label={`Colour for ${entry.assetType}`}
+                        aria-label={`Colour for ${toTitleCase(entry.assetType)}`}
                         value={entry.color}
                         onChange={(event) =>
                           handleLegendEntryChange(entry.assetType, 'color', event.target.value)
