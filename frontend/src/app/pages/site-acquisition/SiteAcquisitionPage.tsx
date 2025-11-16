@@ -784,11 +784,12 @@ export function SiteAcquisitionPage() {
       legendBaselineRef.current = []
       return
     }
-    const baseLegend = (capturedProperty.visualization?.colorLegend ?? []).map(
+    // Load user's saved color legend customizations (if any)
+    // Note: baseline is set from preview metadata, not from saved customizations
+    const savedLegend = (capturedProperty.visualization?.colorLegend ?? []).map(
       (entry) => ({ ...entry }),
     )
-    setLegendEntries(baseLegend)
-    legendBaselineRef.current = baseLegend
+    setLegendEntries(savedLegend)
   }, [capturedProperty?.propertyId, capturedProperty?.visualization?.colorLegend])
 
   useEffect(() => {
