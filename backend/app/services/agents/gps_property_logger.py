@@ -385,7 +385,7 @@ class GPSPropertyLogger:
         address: Address,
         ura_zoning: Any,
         property_info: Any,
-    ):
+    ) -> None:
         """Update existing property with latest information."""
         # Update fields that might have changed
         property_record.updated_at = utcnow()
@@ -403,7 +403,7 @@ class GPSPropertyLogger:
 
     async def _log_property_access(
         self, session: AsyncSession, property_id: UUID, user_id: Optional[UUID]
-    ):
+    ) -> None:
         """Log property access for audit trail."""
         # This would integrate with the existing audit system
         # For now, we'll just log it

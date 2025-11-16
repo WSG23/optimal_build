@@ -252,7 +252,7 @@ class ConstructionLoanFacilityInput(BaseModel):
         return _format_rate(value)
 
     @field_serializer("upfront_fee_pct", "exit_fee_pct", when_used="json")
-    def _serialise_percentages(self, value: Decimal | None, info) -> str | None:
+    def _serialise_percentages(self, value: Decimal | None, info: Any) -> str | None:
         return _format_percentage(value)
 
 

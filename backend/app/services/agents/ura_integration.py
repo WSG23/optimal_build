@@ -41,7 +41,7 @@ class URAPropertyInfo(BaseModel):
 class URAIntegrationService(AsyncClientService):
     """Service for integrating with URA APIs for property and zoning data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_url = "https://www.ura.gov.sg/uraDataService/insertNewToken.action"
         self.access_key = getattr(settings, "URA_ACCESS_KEY", None)
         self.token = None

@@ -426,7 +426,7 @@ class PhotoDocumentationManager:
         exif_data: Dict[str, Any],
         user_metadata: Optional[Dict[str, str]],
         session: AsyncSession,
-    ):
+    ) -> None:
         """Create photo record in database."""
 
         # Create point geometry if location available

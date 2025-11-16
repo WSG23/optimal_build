@@ -27,7 +27,7 @@ class Address(BaseModel):
 class GeocodingService(AsyncClientService):
     """Service for geocoding and reverse geocoding using OneMap API (Singapore)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.onemap_base_url = "https://www.onemap.gov.sg/api"
         self.google_maps_api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
         self.offline_mode = getattr(settings, "OFFLINE_MODE", False)
