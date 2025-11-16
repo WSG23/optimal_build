@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any, List, Optional
@@ -15,18 +14,8 @@ from app.services.developer_checklist_service import DeveloperChecklistService
 from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-if sys.version_info >= (3, 10):
-    _dataclass = dataclass
-else:
 
-    def _dataclass(cls=None, /, **kwargs):
-        kwargs.pop("slots", None)
-        if cls is None:
-            return lambda wrapped: dataclass(wrapped, **kwargs)
-        return dataclass(cls, **kwargs)
-
-
-@_dataclass(slots=True)
+@dataclass(slots=True)
 class ConditionSystem:
     """Represents the condition of a building subsystem."""
 
@@ -60,7 +49,7 @@ class ConditionSystem:
         )
 
 
-@_dataclass(slots=True)
+@dataclass(slots=True)
 class ConditionInsight:
     """Derived insight highlighting key risks or opportunities."""
 
@@ -80,7 +69,7 @@ class ConditionInsight:
         }
 
 
-@_dataclass(slots=True)
+@dataclass(slots=True)
 class ConditionAssessment:
     """Aggregated condition assessment for a property."""
 
