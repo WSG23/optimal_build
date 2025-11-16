@@ -6,7 +6,7 @@ import hashlib
 import json
 from collections.abc import Iterable, Iterator, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 Point2D = tuple[float, float]
 
@@ -244,15 +244,15 @@ class GeometryGraph:
 
     def _get_collection_for(self, entity: GeometryEntity) -> dict[str, GeometryEntity]:
         if isinstance(entity, Level):
-            return self.levels
+            return cast(dict[str, GeometryEntity], self.levels)
         if isinstance(entity, Space):
-            return self.spaces
+            return cast(dict[str, GeometryEntity], self.spaces)
         if isinstance(entity, Wall):
-            return self.walls
+            return cast(dict[str, GeometryEntity], self.walls)
         if isinstance(entity, Door):
-            return self.doors
+            return cast(dict[str, GeometryEntity], self.doors)
         if isinstance(entity, Fixture):
-            return self.fixtures
+            return cast(dict[str, GeometryEntity], self.fixtures)
         raise TypeError(f"Unsupported entity type: {type(entity)!r}")
 
     def add_entity(self, entity: EntityType) -> EntityType:
@@ -263,26 +263,28 @@ class GeometryGraph:
 
     def get_entity(self, entity_id: str) -> GeometryEntity | None:
         """Return the entity with the provided identifier if present."""
-        for collection in (
-            self.levels,
-            self.spaces,
-            self.walls,
-            self.doors,
-            self.fixtures,
-        ):
+        collections: tuple[dict[str, GeometryEntity], ...] = (
+            cast(dict[str, GeometryEntity], self.levels),
+            cast(dict[str, GeometryEntity], self.spaces),
+            cast(dict[str, GeometryEntity], self.walls),
+            cast(dict[str, GeometryEntity], self.doors),
+            cast(dict[str, GeometryEntity], self.fixtures),
+        )
+        for collection in collections:
             if entity_id in collection:
                 return collection[entity_id]
         return None
 
     def iter_entities(self) -> Iterator[GeometryEntity]:
         """Iterate over every entity in the graph."""
-        for collection in (
-            self.levels,
-            self.spaces,
-            self.walls,
-            self.doors,
-            self.fixtures,
-        ):
+        collections: tuple[dict[str, GeometryEntity], ...] = (
+            cast(dict[str, GeometryEntity], self.levels),
+            cast(dict[str, GeometryEntity], self.spaces),
+            cast(dict[str, GeometryEntity], self.walls),
+            cast(dict[str, GeometryEntity], self.doors),
+            cast(dict[str, GeometryEntity], self.fixtures),
+        )
+        for collection in collections:
             yield from collection.values()
 
     def add_relationship(self, relationship: Relationship) -> Relationship:
