@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import field, replace
 from importlib import resources
-from typing import Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from backend._compat import compat_dataclass
 
@@ -85,8 +85,8 @@ _PROFILE_CONFIG = {
 }
 
 
-def _load_curve_config() -> dict[str, object]:
-    default: dict[str, object] = {
+def _load_curve_config() -> dict[str, Any]:
+    default: dict[str, Any] = {
         "expansion": {
             "primary": 6.0,
             "primary_high": 9.0,
@@ -181,7 +181,8 @@ def _load_curve_config() -> dict[str, object]:
 _CURVE_CONFIG = _load_curve_config()
 
 
-def _maybe_float(value: object) -> float | None:
+def _maybe_float(value: Any) -> float | None:
+    """Convert value to float, returning None if conversion fails."""
     if value is None:
         return None
     try:
@@ -190,7 +191,8 @@ def _maybe_float(value: object) -> float | None:
         return None
 
 
-def _maybe_int(value: object) -> int | None:
+def _maybe_int(value: Any) -> int | None:
+    """Convert value to int, returning None if conversion fails."""
     if value is None:
         return None
     try:
@@ -223,7 +225,7 @@ def _normalise(values: Sequence[float]) -> list[float]:
 def _calculate_market_factor(
     plan: AssetOptimizationPlan,
     metrics: Mapping[str, float | str] | None,
-    scoring_cfg: Mapping[str, object],
+    scoring_cfg: Mapping[str, Any],
 ) -> float:
     if not metrics:
         return 0.0
@@ -261,7 +263,7 @@ def _calculate_heritage_factor(
     plan: AssetOptimizationPlan,
     heritage_enabled: bool,
     heritage_risk: str | None,
-    scoring_cfg: Mapping[str, object],
+    scoring_cfg: Mapping[str, Any],
 ) -> float:
     if not heritage_enabled:
         return 0.0

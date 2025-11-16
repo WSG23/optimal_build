@@ -152,11 +152,26 @@ class HeritageOverlayService:
         overlays: list[HeritageOverlay] = []
         for entry in raw:
             bbox = entry.get("bbox") or {}
+            # Extract bbox coordinates with type checking
+            min_lon_val = bbox.get("min_lon")
+            min_lat_val = bbox.get("min_lat")
+            max_lon_val = bbox.get("max_lon")
+            max_lat_val = bbox.get("max_lat")
+
+            # Skip if any coordinate is missing
+            if (
+                min_lon_val is None
+                or min_lat_val is None
+                or max_lon_val is None
+                or max_lat_val is None
+            ):
+                continue
+
             try:
-                min_lon = float(bbox.get("min_lon"))
-                min_lat = float(bbox.get("min_lat"))
-                max_lon = float(bbox.get("max_lon"))
-                max_lat = float(bbox.get("max_lat"))
+                min_lon = float(min_lon_val)
+                min_lat = float(min_lat_val)
+                max_lon = float(max_lon_val)
+                max_lat = float(max_lat_val)
             except (TypeError, ValueError):
                 continue
 
