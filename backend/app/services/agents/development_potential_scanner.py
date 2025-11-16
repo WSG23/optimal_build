@@ -414,7 +414,7 @@ class DevelopmentPotentialScanner:
         analysis_type: str,
         analysis_result: Any,
         session: AsyncSession,
-    ):
+    ) -> None:
         """Save analysis results to database."""
 
         # Prepare a lightweight financial summary for storage

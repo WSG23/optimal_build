@@ -47,7 +47,7 @@ class FloorPlanDiagram(Flowable):
         self.width = width
         self.height = height
 
-    def draw(self):
+    def draw(self) -> None:
         """Draw simplified floor plan."""
         # Background
         self.canv.setFillColor(colors.HexColor("#f8f9fa"))
@@ -108,7 +108,7 @@ class AmenityIcons(Flowable):
         self.width = width
         self.height = 2 * inch
 
-    def draw(self):
+    def draw(self) -> None:
         """Draw amenity icons."""
         icons_per_row = 4
         icon_size = 40

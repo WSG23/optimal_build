@@ -134,13 +134,13 @@ class MockMarketDataProvider(MarketDataProvider):
 class MarketDataService:
     """Service for managing market data synchronization and storage."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.providers: Dict[str, MarketDataProvider] = {
             "mock": MockMarketDataProvider()
         }
         self.sync_history: Dict[str, datetime] = {}
 
-    def register_provider(self, name: str, provider: MarketDataProvider):
+    def register_provider(self, name: str, provider: MarketDataProvider) -> None:
         """Register a data provider."""
         self.providers[name] = provider
         logger.info(f"Registered market data provider: {name}")
@@ -410,7 +410,7 @@ class MarketDataService:
 
         return str(property_id)
 
-    async def _calculate_yield_benchmarks(self, session: AsyncSession):
+    async def _calculate_yield_benchmarks(self, session: AsyncSession) -> None:
         """Calculate and update yield benchmarks."""
         # This is a simplified version - in production, implement full calculation
 
@@ -449,7 +449,7 @@ class MarketDataService:
         # Execute raw SQL for efficiency
         await session.execute(stmt, {"cutoff_date": cutoff_date})
 
-    async def _update_absorption_metrics(self, session: AsyncSession):
+    async def _update_absorption_metrics(self, session: AsyncSession) -> None:
         """Update absorption tracking metrics."""
         # Simplified - in production, track actual project absorption
 

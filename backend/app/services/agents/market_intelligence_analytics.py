@@ -956,7 +956,7 @@ class MarketIntelligenceAnalytics:
 
     def _record_metrics(
         self, property_type: PropertyType, location: str, yields: dict[str, Any]
-    ):
+    ) -> None:
         """Record metrics for monitoring."""
         if not self.metrics:
             return

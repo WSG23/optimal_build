@@ -42,7 +42,7 @@ class InvestmentHighlight(Flowable):
         self.width = width
         self.height = 1.5 * inch
 
-    def draw(self):
+    def draw(self) -> None:
         """Draw investment highlights boxes."""
         box_width = self.width / len(self.highlights)
 
