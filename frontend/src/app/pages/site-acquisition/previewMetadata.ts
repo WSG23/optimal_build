@@ -30,7 +30,10 @@ export function normalisePreviewLayer(
   }
   const color =
     (typeof raw.color === 'string' && raw.color.trim()) || '#1c7ed6'
-  const metrics = raw.metrics && typeof raw.metrics === 'object' ? raw.metrics : {}
+  const metrics: Record<string, unknown> =
+    raw.metrics && typeof raw.metrics === 'object'
+      ? (raw.metrics as Record<string, unknown>)
+      : {}
   return {
     id,
     name,

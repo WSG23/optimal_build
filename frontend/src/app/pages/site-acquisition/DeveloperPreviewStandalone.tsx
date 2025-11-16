@@ -121,7 +121,8 @@ export function DeveloperPreviewStandalone() {
       setMetadataLoading(true)
       setMetadataError(null)
       try {
-        const response = await fetch(previewJob.metadataUrl, {
+        // previewJob and metadataUrl are guaranteed non-null due to early return check above
+        const response = await fetch(previewJob!.metadataUrl!, {
           signal: controller.signal,
           cache: 'reload',
         })
@@ -173,7 +174,7 @@ export function DeveloperPreviewStandalone() {
       controller.abort()
     }
   }, [
-    previewJob?.metadataUrl,
+    previewJob,
     setLayerMetadata,
     setLegendEntries,
     setLayerVisibility,

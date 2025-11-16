@@ -586,6 +586,7 @@ interface FinanceFeasibilityResponsePayload {
   sensitivity_bands?: SensitivityBandPayload[] | null
   is_primary?: boolean | null
   is_private?: boolean | null
+  updated_at?: string | null
 }
 
 interface ConstructionLoanUpdateRequestPayload {
