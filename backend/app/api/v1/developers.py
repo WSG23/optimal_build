@@ -2160,33 +2160,33 @@ def _build_scenario_comparison_entries(
         entry = ScenarioComparisonEntryResponse(
             scenario=scenario_key,
             label=label,
-            recorded_at=(
+            recordedAt=(
                 assessment.recorded_at.isoformat() if assessment.recorded_at else None
             ),
-            overall_score=assessment.overall_score,
-            overall_rating=assessment.overall_rating,
-            risk_level=assessment.risk_level,
-            checklist_completed=(
+            overallScore=assessment.overall_score,
+            overallRating=assessment.overall_rating,
+            riskLevel=assessment.risk_level,
+            checklistCompleted=(
                 checklist_progress["completed"] if checklist_progress else None
             ),
-            checklist_total=(
+            checklistTotal=(
                 checklist_progress["total"] if checklist_progress else None
             ),
-            checklist_percent=(
+            checklistPercent=(
                 checklist_progress["percent"] if checklist_progress else None
             ),
-            primary_insight=(
+            primaryInsight=(
                 _serialize_condition_insight(primary_insight)
                 if primary_insight
                 else None
             ),
-            insight_count=len(assessment.insights),
-            recommended_action=(
+            insightCount=len(assessment.insights),
+            recommendedAction=(
                 assessment.recommended_actions[0]
                 if assessment.recommended_actions
                 else None
             ),
-            inspector_name=assessment.inspector_name,
+            inspectorName=assessment.inspector_name,
             source="manual" if assessment.recorded_at else "heuristic",
         )
         entries.append(entry)
@@ -2271,17 +2271,17 @@ def _serialize_checklist_template(
 ) -> ChecklistTemplateResponse:
     return ChecklistTemplateResponse(
         id=str(template.id),
-        development_scenario=template.development_scenario,
+        developmentScenario=template.development_scenario,
         category=template.category.value,
-        item_title=template.item_title,
-        item_description=template.item_description,
+        itemTitle=template.item_title,
+        itemDescription=template.item_description,
         priority=template.priority.value,
-        typical_duration_days=template.typical_duration_days,
-        requires_professional=template.requires_professional,
-        professional_type=template.professional_type,
-        display_order=template.display_order,
-        created_at=template.created_at.isoformat(),
-        updated_at=template.updated_at.isoformat(),
+        typicalDurationDays=template.typical_duration_days,
+        requiresProfessional=template.requires_professional,
+        professionalType=template.professional_type,
+        displayOrder=template.display_order,
+        createdAt=template.created_at.isoformat(),
+        updatedAt=template.updated_at.isoformat(),
     )
 
 
