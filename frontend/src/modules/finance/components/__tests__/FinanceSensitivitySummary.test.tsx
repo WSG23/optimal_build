@@ -4,10 +4,8 @@ import React from 'react'
 
 import type { FinanceSensitivityOutcome } from '../../../../api/finance'
 import { TranslationProvider } from '../../../../i18n'
-import {
-  FinanceSensitivitySummary,
-  buildSensitivitySummaries,
-} from '../FinanceSensitivitySummary'
+import { FinanceSensitivitySummary } from '../FinanceSensitivitySummary'
+import { buildSensitivitySummaries } from '../sensitivitySummary'
 
 describe('FinanceSensitivitySummary', () => {
   const outcomes: FinanceSensitivityOutcome[] = [

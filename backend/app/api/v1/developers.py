@@ -356,6 +356,23 @@ class DeveloperGPSLogRequest(BaseModel):
             "Defaults to the core commercial scenarios if omitted."
         ),
     )
+    preview_geometry_detail_level: str | None = Field(
+        default=None,
+        description="Optional geometry detail override for the generated preview job.",
+    )
+
+    @field_validator("preview_geometry_detail_level")
+    @classmethod
+    def _validate_preview_detail_level(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        normalised = value.strip().lower()
+        if normalised not in preview_generator.SUPPORTED_GEOMETRY_DETAIL_LEVELS:
+            valid = ", ".join(
+                sorted(preview_generator.SUPPORTED_GEOMETRY_DETAIL_LEVELS)
+            )
+            raise ValueError(f"preview_geometry_detail_level must be one of: {valid}")
+        return normalised
 
 
 class DeveloperBuildEnvelope(BaseModel):
@@ -414,6 +431,10 @@ class PreviewJobRefreshRequest(BaseModel):
 
     geometry_detail_level: str | None = Field(
         default=None, description="Optional geometry detail level override"
+    )
+    color_legend: list[DeveloperColorLegendEntry] | None = Field(
+        default=None,
+        description="Optional colour legend overrides to persist on the preview job",
     )
 
     @field_validator("geometry_detail_level")
@@ -1214,6 +1235,7 @@ async def developer_log_property_by_gps(
         scenario="base",
         massing_layers=massing_payload,
         camera_orbit=visualization.camera_orbit_hint or {},
+        geometry_detail_level=request.preview_geometry_detail_level,
         color_legend=legend_payload,
     )
     preview_status = (
@@ -1340,6 +1362,7 @@ async def refresh_preview_job(
             geometry_detail_level=(
                 refresh_request.geometry_detail_level if refresh_request else None
             ),
+            color_legend=(refresh_request.color_legend if refresh_request else None),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -264,7 +264,7 @@ def _serialise_layer(
     detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
 ) -> tuple[dict[str, object], list[tuple[float, float, float]], float]:
     raw = dict(layer)
-    name = str(raw.get("asset_type") or raw.get("name") or f"Layer {index}")
+    name = str(raw.get("name") or raw.get("asset_type") or f"Layer {index}")
     requested_height = float(raw.get("estimated_height_m") or raw.get("height") or 0.0)
     gfa = float(
         raw.get("gfa_sqm") or raw.get("nia_sqm") or raw.get("floor_area_sqm") or 100.0

@@ -71,7 +71,7 @@ export function FinanceSensitivityControls({
     setRows(toEditableBands(scenario))
     setLocalError(null)
     setSubmitting(false)
-  }, [scenario.scenarioId])
+  }, [scenario])
 
   const maxRows = 8
   const canAddRow = rows.length < maxRows

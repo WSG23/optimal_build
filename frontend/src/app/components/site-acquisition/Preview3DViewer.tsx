@@ -8,6 +8,8 @@ interface Preview3DViewerProps {
   metadataUrl?: string | null
   status: string
   thumbnailUrl?: string | null
+  layerVisibility?: Record<string, boolean>
+  focusLayerId?: string | null
 }
 
 type PreviewMetadata = {
@@ -294,10 +296,18 @@ export function Preview3DViewer({
   }, [previewUrl, metadataUrl])
 
   useEffect(() => {
+    console.log('[Preview3DViewer] Layer visibility changed:', layerVisibility)
+    console.log('[Preview3DViewer] Available layers:', Array.from(layerObjectsRef.current.keys()))
     updateMeshVisibility(layerObjectsRef.current, layerVisibility)
+    // Re-render scene after visibility changes
+    if (rendererRef.current && sceneRef.current && cameraRef.current) {
+      rendererRef.current.render(sceneRef.current, cameraRef.current)
+    }
   }, [layerVisibility])
 
   useEffect(() => {
+    console.log('[Preview3DViewer] Focus layer changed:', focusLayerId)
+    console.log('[Preview3DViewer] Available layers:', Array.from(layerObjectsRef.current.keys()))
     updateMeshHighlight(layerObjectsRef.current, focusLayerId)
     focusCameraOnLayer(
       focusLayerId,
@@ -306,6 +316,10 @@ export function Preview3DViewer({
       controlsRef.current,
       defaultCameraStateRef.current,
     )
+    // Re-render scene after focus/highlight changes
+    if (rendererRef.current && sceneRef.current && cameraRef.current) {
+      rendererRef.current.render(sceneRef.current, cameraRef.current)
+    }
   }, [focusLayerId])
 
   if (!previewUrl) {

@@ -35,6 +35,7 @@ export interface SiteAcquisitionRequest {
   latitude: number
   longitude: number
   developmentScenarios: DevelopmentScenario[]
+  previewDetailLevel?: GeometryDetailLevel
 }
 
 export interface DeveloperBuildEnvelope {
@@ -1290,14 +1291,19 @@ export async function capturePropertyForDevelopment(
       developmentScenarios: request.developmentScenarios,
     },
     async (_baseUrl, payload, options = {}) => {
+      const requestBody: Record<string, unknown> = {
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        development_scenarios: payload.developmentScenarios,
+      }
+      if (request.previewDetailLevel) {
+        requestBody.preview_geometry_detail_level = request.previewDetailLevel
+      }
+
       const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          latitude: payload.latitude,
-          longitude: payload.longitude,
-          development_scenarios: payload.developmentScenarios,
-        }),
+        body: JSON.stringify(requestBody),
         signal: options.signal,
       })
 
@@ -1431,11 +1437,24 @@ export async function fetchPreviewJob(
 export async function refreshPreviewJob(
   jobId: string,
   detailLevel?: GeometryDetailLevel,
+  colorLegend?: DeveloperColorLegendEntry[],
 ): Promise<DeveloperPreviewJob | null> {
-  const requestInit: RequestInit = { method: 'POST' }
+  const requestPayload: Record<string, unknown> = {}
   if (detailLevel) {
+    requestPayload.geometry_detail_level = detailLevel
+  }
+  if (colorLegend && colorLegend.length > 0) {
+    requestPayload.color_legend = colorLegend.map((entry) => ({
+      asset_type: entry.assetType,
+      label: entry.label,
+      color: entry.color,
+      description: entry.description,
+    }))
+  }
+  const requestInit: RequestInit = { method: 'POST' }
+  if (Object.keys(requestPayload).length > 0) {
     requestInit.headers = { 'Content-Type': 'application/json' }
-    requestInit.body = JSON.stringify({ geometry_detail_level: detailLevel })
+    requestInit.body = JSON.stringify(requestPayload)
   }
   const response = await fetch(
     buildUrl(`api/v1/developers/preview-jobs/${jobId}/refresh`),

@@ -205,7 +205,11 @@ class PreviewJobService:
         return job
 
     async def refresh_job(
-        self, job: PreviewJob, *, geometry_detail_level: str | None = None
+        self,
+        job: PreviewJob,
+        *,
+        geometry_detail_level: str | None = None,
+        color_legend: Sequence[Mapping[str, object]] | None = None,
     ) -> PreviewJob:
         """Re-enqueue a preview job using stored metadata."""
 
@@ -215,11 +219,15 @@ class PreviewJobService:
             raise ValueError("Preview job missing massing layer metadata")
 
         serialised_layers = _serialise_layers(payload_layers)
-        legend_payload = metadata_dict.get("color_legend")
-        if isinstance(legend_payload, list):
-            legend_payload = _serialise_layers(legend_payload)
+        if color_legend is not None:
+            legend_payload = _serialise_layers(color_legend)
         else:
-            legend_payload = []
+            stored_legend = metadata_dict.get("color_legend")
+            legend_payload = (
+                _serialise_layers(stored_legend)
+                if isinstance(stored_legend, list)
+                else []
+            )
         checksum_source = json.dumps(
             {"layers": serialised_layers, "legend": legend_payload},
             sort_keys=True,

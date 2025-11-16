@@ -2205,9 +2205,13 @@ export function SiteAcquisitionPage() {
       // Use legend label if available, otherwise title-case asset type
       const displayLabel = legend?.label ?? toTitleCase(layer.assetType)
 
-      const subtitle = allocationValue !== '—'
-        ? `${toTitleCase(layer.assetType)} · ${allocationValue}`
-        : toTitleCase(layer.assetType)
+      // If custom label exists, show only allocation; otherwise show "AssetType · Allocation"
+      const hasCustomLabel = legend?.label && legend.label !== toTitleCase(layer.assetType)
+      const subtitle = hasCustomLabel
+        ? allocationValue
+        : allocationValue !== '—'
+          ? `${toTitleCase(layer.assetType)} · ${allocationValue}`
+          : toTitleCase(layer.assetType)
 
       return {
         id: `${layer.assetType}-${index}`,
@@ -5539,10 +5543,10 @@ export function SiteAcquisitionPage() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.9rem', color: '#111827' }}>{toTitleCase(entry.assetType)}</strong>
+                      <strong style={{ fontSize: '0.9rem', color: '#111827' }}>{toTitleCase(entry.label)}</strong>
                       <input
                         type="color"
-                        aria-label={`Colour for ${toTitleCase(entry.assetType)}`}
+                        aria-label={`Colour for ${toTitleCase(entry.label)}`}
                         value={entry.color}
                         onChange={(event) =>
                           handleLegendEntryChange(entry.assetType, 'color', event.target.value)

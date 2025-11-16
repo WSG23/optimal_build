@@ -13,7 +13,7 @@ import {
 import { resolveDefaultRole } from '../../api/identity'
 import { AppLayout } from '../../App'
 import { useTranslation } from '../../i18n'
-import { useRouterController, useRouterLocation } from '../../router'
+import { useRouterController } from '../../router'
 import { FinanceAssetBreakdown } from './components/FinanceAssetBreakdown'
 import { FinanceCapitalStack } from './components/FinanceCapitalStack'
 import { FinanceDrawdownSchedule } from './components/FinanceDrawdownSchedule'
@@ -22,10 +22,8 @@ import { FinanceJobTimeline } from './components/FinanceJobTimeline'
 import { FinanceLoanInterest } from './components/FinanceLoanInterest'
 import { FinanceScenarioTable } from './components/FinanceScenarioTable'
 import { FinanceSensitivityTable } from './components/FinanceSensitivityTable'
-import {
-  FinanceSensitivitySummary,
-  buildSensitivitySummaries,
-} from './components/FinanceSensitivitySummary'
+import { FinanceSensitivitySummary } from './components/FinanceSensitivitySummary'
+import { buildSensitivitySummaries } from './components/sensitivitySummary'
 import { FinanceScenarioCreator } from './components/FinanceScenarioCreator'
 import { FinanceScenarioDeleteDialog } from './components/FinanceScenarioDeleteDialog'
 import { FinanceSensitivityControls } from './components/FinanceSensitivityControls'
@@ -246,10 +244,12 @@ export function FinanceWorkspace() {
     projectParams.finProjectId ?? undefined,
   )
   const [storageVersion, setStorageVersion] = useState(0)
-  const capturedProjects = useMemo(
-    () => readCapturedProjectsFromStorage(),
-    [storageVersion],
+  const [capturedProjects, setCapturedProjects] = useState<FinanceProjectOption[]>(() =>
+    readCapturedProjectsFromStorage(),
   )
+  useEffect(() => {
+    setCapturedProjects(readCapturedProjectsFromStorage())
+  }, [storageVersion])
   useEffect(() => {
     if (projectParams.projectId && projectParams.projectId !== selectedProjectId) {
       setSelectedProjectId(projectParams.projectId)
