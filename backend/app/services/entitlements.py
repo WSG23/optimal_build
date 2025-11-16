@@ -6,7 +6,7 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 from backend._compat.datetime import UTC
 
 from app.models.entitlements import (
@@ -41,7 +41,7 @@ def _normalise_offset(offset: int | None) -> int:
     return offset
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class PageResult:
     """Result bundle containing records and total count."""
 

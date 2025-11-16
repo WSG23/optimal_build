@@ -8,12 +8,12 @@ from typing import Final
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 
 from app.models.rkp import RefDocument, RefSource
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class HTTPResponse:
     """Simplified HTTP response payload."""
 
@@ -102,7 +102,7 @@ class SimpleHTTPClient:
         ) from last_error
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class FetchedDocument:
     """Result of fetching a reference document."""
 

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Iterable
 from uuid import UUID, uuid4
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 
 from app.models.agent_advisory import AgentAdvisoryFeedback
 from app.models.property import Property, PropertyType
@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class AdvisorySummary:
     """Structured advisory results returned to the API layer."""
 

@@ -6,7 +6,7 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from math import ceil
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 from backend._compat.datetime import UTC
 
 from app.models.audit import AuditLog
@@ -24,7 +24,7 @@ DECISION_REVIEW_BASELINE_SECONDS = 15.0 * 60.0  # Manual overlay review per item
 PAYBACK_BASELINE_HOURS = 40.0  # Typical onboarding effort amortised in hours.
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class RoiSnapshot:
     """Aggregated ROI insights for a single project."""
 

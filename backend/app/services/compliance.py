@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 
 from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 from app.schemas.compliance import ComplianceCheckResponse
@@ -16,7 +16,7 @@ from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class ComplianceResult:
     """Outcome emitted by the compliance service."""
 

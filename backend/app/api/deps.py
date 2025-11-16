@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 from fastapi import Depends, Header, HTTPException, status
 
 from app.core.config import settings
@@ -15,7 +15,7 @@ _VIEWER_ROLES: set[str] = {"viewer", "developer", "reviewer", "admin"}
 _REVIEWER_ROLES: set[str] = {"reviewer", "admin"}
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class RequestIdentity:
     """Represents caller role/identity extracted from headers."""
 

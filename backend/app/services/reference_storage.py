@@ -8,11 +8,11 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 from backend._compat.datetime import UTC
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class ReferenceStorageResult:
     """Metadata about a persisted reference document."""
 

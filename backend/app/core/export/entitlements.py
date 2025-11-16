@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from enum import Enum
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 from backend._compat.datetime import UTC
 
 from app.services.entitlements import EntitlementsService
@@ -34,7 +34,7 @@ class EntitlementsExportFormat(str, Enum):
         }[self]
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class EntitlementsSnapshot:
     """Serialised snapshot used for exports."""
 
