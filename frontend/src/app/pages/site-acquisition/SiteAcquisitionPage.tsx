@@ -808,7 +808,8 @@ export function SiteAcquisitionPage() {
       setIsPreviewMetadataLoading(true)
       setPreviewMetadataError(null)
       try {
-        const response = await fetch(previewViewerMetadataUrl, {
+        // previewViewerMetadataUrl is guaranteed non-null due to early return check above
+        const response = await fetch(previewViewerMetadataUrl!, {
           signal: controller.signal,
           cache: 'reload',
         })
