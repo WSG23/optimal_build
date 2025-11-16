@@ -599,6 +599,14 @@ function computeChecklistSummary(
   }
 }
 
+function toTitleCase(value: string): string {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .join(' ')
+}
+
 export function SiteAcquisitionPage() {
   const [latitude, setLatitude] = useState('1.3000')
   const [longitude, setLongitude] = useState('103.8500')
@@ -2171,13 +2179,6 @@ export function SiteAcquisitionPage() {
     const legendLookup = new Map(
       colorLegendEntries.map((entry) => [entry.assetType.toLowerCase(), entry]),
     )
-
-    const toTitleCase = (value: string) =>
-      value
-        .split(/[\s_-]+/)
-        .filter(Boolean)
-        .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
-        .join(' ')
 
     const formatAreaValue = (value: number | null | undefined) => {
       if (value === null || value === undefined) {
@@ -5361,7 +5362,7 @@ export function SiteAcquisitionPage() {
                                 }}
                                 aria-hidden="true"
                               />
-                              {layer.name}
+                              {toTitleCase(layer.name)}
                             </th>
                             <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
                               {layer.metrics.allocationPct != null
