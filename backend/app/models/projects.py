@@ -199,5 +199,5 @@ class Project(BaseModel):
     owner = relationship("User", back_populates="projects")
     ai_sessions = relationship("AIAgentSession", back_populates="project")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Project {self.project_name} ({self.project_code})>"

@@ -115,7 +115,7 @@ Base = BaseModel
 class MetadataProxy:
     """Expose ``metadata_json`` via the conventional ``metadata`` attribute."""
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance: Any, owner: Any) -> dict[str, Any]:
         if instance is None:
             return BaseModel.metadata
         value = getattr(instance, "metadata_json", None)
@@ -124,7 +124,7 @@ class MetadataProxy:
             instance.metadata_json = value
         return value
 
-    def __set__(self, instance, value):
+    def __set__(self, instance: Any, value: dict[str, Any] | None) -> None:
         instance.metadata_json = value or {}
 
 

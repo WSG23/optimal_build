@@ -258,5 +258,5 @@ class SingaporeProperty(BaseModel):
     )  # One property can link to one project
     # ai_sessions = relationship("AIAgentSession", back_populates="property")  # Disabled - table not created yet
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SingaporeProperty {self.property_name} ({self.postal_code})>"

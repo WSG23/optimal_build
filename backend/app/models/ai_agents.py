@@ -93,7 +93,7 @@ class AIAgent(BaseModel):
         "AIAgentSession", back_populates="agent", cascade="all, delete-orphan"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<AIAgent {self.name} ({self.agent_type})>"
 
 
@@ -147,7 +147,7 @@ class AIAgentSession(BaseModel):
     project = relationship("Project", back_populates="ai_sessions")
     # property = relationship("SingaporeProperty", back_populates="ai_sessions")  # Disabled - circular dependency issue
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<AIAgentSession {self.id} (Agent: {self.agent_id}, User: {self.user_id})>"
         )
