@@ -5627,7 +5627,7 @@ export function SiteAcquisitionPage() {
                 <button
                   type="button"
                   onClick={handleLegendReset}
-                  disabled={legendBaselineRef.current.length === 0}
+                  disabled={colorLegendEntries.length === 0}
                   style={{
                     padding: '0.45rem 0.85rem',
                     borderRadius: '9999px',
@@ -5636,6 +5636,8 @@ export function SiteAcquisitionPage() {
                     fontWeight: 600,
                     color: '#111827',
                     fontSize: '0.85rem',
+                    cursor: colorLegendEntries.length === 0 ? 'not-allowed' : 'pointer',
+                    opacity: colorLegendEntries.length === 0 ? 0.5 : 1,
                   }}
                 >
                   Reset to preview defaults
