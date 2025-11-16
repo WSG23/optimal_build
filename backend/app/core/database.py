@@ -8,6 +8,7 @@ import time
 from collections.abc import AsyncGenerator
 from importlib.util import find_spec
 from pathlib import Path
+from typing import Any
 
 from app.core.config import settings
 from sqlalchemy import event
@@ -47,13 +48,23 @@ if _SLOW_QUERY_THRESHOLD > 0:
 
     @event.listens_for(engine.sync_engine, "before_cursor_execute")
     def _before_cursor_execute(
-        conn, cursor, statement, parameters, context, executemany
+        conn: Any,
+        cursor: Any,
+        statement: Any,
+        parameters: Any,
+        context: Any,
+        executemany: Any,
     ) -> None:
         context._query_start_time = time.perf_counter()
 
     @event.listens_for(engine.sync_engine, "after_cursor_execute")
     def _after_cursor_execute(
-        conn, cursor, statement, parameters, context, executemany
+        conn: Any,
+        cursor: Any,
+        statement: Any,
+        parameters: Any,
+        context: Any,
+        executemany: Any,
     ) -> None:
         start_time = getattr(context, "_query_start_time", None)
         if start_time is None:

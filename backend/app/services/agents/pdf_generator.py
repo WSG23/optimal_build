@@ -25,17 +25,17 @@ from app.services.storage import StorageService, get_storage_service
 class PageNumberCanvas(canvas.Canvas):
     """Custom canvas to add page numbers and headers/footers."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         canvas.Canvas.__init__(self, *args, **kwargs)
         self._saved_page_states = []
         self.company_name = kwargs.get("company_name", "Commercial Property Advisors")
         self.document_title = kwargs.get("document_title", "Professional Pack")
 
-    def showPage(self):
+    def showPage(self) -> None:
         self._saved_page_states.append(dict(self.__dict__))
         self._startPage()
 
-    def save(self):
+    def save(self) -> None:
         """Add page numbers to each page."""
         num_pages = len(self._saved_page_states)
         for state in self._saved_page_states:
@@ -44,7 +44,7 @@ class PageNumberCanvas(canvas.Canvas):
             canvas.Canvas.showPage(self)
         canvas.Canvas.save(self)
 
-    def draw_page_header_footer(self, page_count):
+    def draw_page_header_footer(self, page_count: int) -> None:
         """Draw headers and footers on each page."""
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.grey)
@@ -72,7 +72,13 @@ class PageNumberCanvas(canvas.Canvas):
 class CoverPage(Flowable):
     """Custom flowable for cover page."""
 
-    def __init__(self, title, subtitle, property_info, logo_path=None):
+    def __init__(
+        self,
+        title: str,
+        subtitle: str,
+        property_info: dict[str, Any],
+        logo_path: str | None = None,
+    ) -> None:
         Flowable.__init__(self)
         self.title = title
         self.subtitle = subtitle
@@ -81,7 +87,7 @@ class CoverPage(Flowable):
         self.width = A4[0]
         self.height = A4[1]
 
-    def draw(self):
+    def draw(self) -> None:
         """Draw the cover page."""
         canvas = self.canv
 
