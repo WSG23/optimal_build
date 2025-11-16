@@ -29,25 +29,25 @@ except Exception:  # pragma: no cover - fallback for stubbed environments
     class Limiter:
         """No-op limiter keeping API wiring intact during tests."""
 
-        def __init__(self, *_, **__) -> None:
+        def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
-        def limit(self, *_, **__):
-            def decorator(func):
+        def limit(self, *_: Any, **__: Any) -> Any:
+            def decorator(func: Any) -> Any:
                 return func
 
             return decorator
 
-        def _inject_headers(self, response: Response, _rate_limit) -> Response:
+        def _inject_headers(self, response: Response, _rate_limit: Any) -> Response:
             return response
 
     class SlowAPIMiddleware:
         """Trivial middleware shim when slowapi is missing."""
 
-        def __init__(self, app, **_):
+        def __init__(self, app: Any, **_: Any) -> None:
             self.app = app
 
-        async def __call__(self, scope, receive, send):
+        async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
             await self.app(scope, receive, send)
 
     def get_remote_address(request: Request) -> str:

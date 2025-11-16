@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable
 
 from fastapi import Request, Response
 
@@ -13,16 +13,18 @@ try:  # pragma: no cover - prefer Starlette when available
 except ModuleNotFoundError:  # pragma: no cover - lightweight fallback
 
     class BaseHTTPMiddleware:  # type: ignore[no-redef]
-        def __init__(self, app) -> None:
+        def __init__(self, app: Any) -> None:
             self.app = app
 
-        async def dispatch(self, request: Request, call_next):  # pragma: no cover
+        async def dispatch(
+            self, request: Request, call_next: Any
+        ) -> Any:  # pragma: no cover
             return await call_next(request)
 
-        async def __call__(self, scope, receive, send):
+        async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
             request = Request(scope=scope)
 
-            async def call_next(_: Request):
+            async def call_next(_: Request) -> Response:
                 await self.app(scope, receive, send)
                 return Response()
 
