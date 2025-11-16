@@ -287,7 +287,7 @@ def _serialise_layer(
         )
 
     serialised = {
-        "id": raw.get("id") or f"layer-{index}",
+        "id": raw.get("id") or raw.get("asset_type") or f"layer-{index}",
         "name": name,
         "color": raw.get("color"),
         "metrics": {
@@ -934,12 +934,27 @@ def build_preview_payload(
     subsequent layers stacked on top of previous layer's height.
     """
 
+    # Build a color lookup map from the color legend (asset_type -> color)
+    color_map: dict[str, str] = {}
+    if color_legend is not None:
+        for entry in color_legend:
+            asset_type = entry.get("asset_type")
+            color = entry.get("color")
+            if isinstance(asset_type, str) and isinstance(color, str):
+                color_map[asset_type] = color
+
     serialised_layers: list[dict[str, object]] = []
     all_vertices: list[tuple[float, float, float]] = []
     current_elevation = 0.0
     detail_level = normalise_geometry_detail_level(geometry_detail_level)
 
     for idx, layer in enumerate(massing_layers, start=1):
+        # Apply color from legend if available
+        layer_dict = dict(layer)
+        asset_type = layer_dict.get("asset_type")
+        if isinstance(asset_type, str) and asset_type in color_map:
+            layer_dict["color"] = color_map[asset_type]
+        layer = layer_dict
         serialised, vertices, preview_height = _serialise_layer(
             layer,
             index=idx,
