@@ -341,7 +341,7 @@ Based on [docs/phase_1d_business_performance_design.md](../../phase_1d_business_
 Document any bugs or limitations found during testing:
 
 **Testing Framework Issues (not app bugs):**
-- See [docs/development/testing/known-issues.md](known-issues.md) for JSDOM/React Testing Library limitations
+- See [Known Testing Issues](../../all_steps_to_product_completion.md#-known-testing-issues) for JSDOM/React Testing Library limitations
 
 **Application Issues:**
 - Document any production UI bugs found during manual QA here
@@ -381,12 +381,12 @@ Document any bugs or limitations found during testing:
 ## 📝 Next Steps
 
 **If PASS:**
-- [x] Update [docs/WORK_QUEUE.MD](../../WORK_QUEUE.MD) - mark Phase 1D as QA complete
-- [x] Update [docs/feature_delivery_plan_v2.md](../../feature_delivery_plan_v2.md) Phase 1D gate checkbox
+- [x] Update [Unified Execution Backlog](../../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) - mark Phase 1D as QA complete
+- [x] Update [docs/all_steps_to_product_completion.md](../../all_steps_to_product_completion.md) Phase 1D gate checkbox
 - [x] Archive this checklist with completion date (2025-11-09)
 
 **If FAIL (Critical Issues):**
-- [ ] Document issues in [docs/development/testing/known-issues.md](known-issues.md)
+- [ ] Document issues in [Known Testing Issues](../../all_steps_to_product_completion.md#-known-testing-issues)
 - [ ] Create minimal fix tasks (if blocking)
 - [ ] Re-test after fixes
 
@@ -401,8 +401,8 @@ Document any bugs or limitations found during testing:
 
 - [Phase 1D Design Doc](../../phase_1d_business_performance_design.md)
 - [CODING_RULES.md](../../../CODING_RULES.md) - Rule 12.1 (Manual QA requirement), Rule 12.2 (Production UI standards)
-- [feature_delivery_plan_v2.md](../../feature_delivery_plan_v2.md)
-- [WORK_QUEUE.MD](../../WORK_QUEUE.MD)
+- [all_steps_to_product_completion.md](../../all_steps_to_product_completion.md)
+- [Unified Execution Backlog](../../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)
 - PR #275 (Phase 1D UI implementation)
 
 ---

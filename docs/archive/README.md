@@ -7,7 +7,7 @@ This directory contains historical documentation that has been completed, supers
 ### Documentation Consolidation (Nov 2025)
 **Context:** Major documentation consolidation to establish Feature Delivery Plan v2 as single source of truth.
 
-- **ROADMAP_archived_2025-11-12.md** - High-level phase overview (superseded by WORK_QUEUE.MD)
+- **ROADMAP_archived_2025-11-12.md** - High-level phase overview (superseded by [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work))
 - **documentation_consolidation_strategy_archived_2025-11-12.md** - Meta-document about consolidation (obsolete after consolidation complete)
 - **validation_live_walkthrough_plan_archived_2025-11-12.md** - Agent validation session plan (Feb 2025 sessions)
 - **PRE_PHASE_2D_INFRASTRUCTURE_AUDIT_session_log_archived_2025-11-12.md** - Duplicate session log (master checklist in docs/audits/)
@@ -54,8 +54,8 @@ Archived documents are:
 ## Current Active Documents
 
 See repository root and `docs/` for active documentation:
-- **docs/feature_delivery_plan_v2.md** - SINGLE SOURCE OF TRUTH for all phases
-- **docs/WORK_QUEUE.MD** - Daily execution tracking
+- **docs/all_steps_to_product_completion.md** - SINGLE SOURCE OF TRUTH for all phases
+- **docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work** - Daily execution tracking
 - **docs/ai-agents/next_steps.md** - AI agent decision guide
 - **docs/audits/PRE-PHASE-2D-AUDIT.MD** - Active infrastructure audit checklist
 

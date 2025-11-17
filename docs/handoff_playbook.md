@@ -2,13 +2,13 @@
 
 ## Purpose
 - Give new owners and AI agents an immediate snapshot of where to resume work and how to execute within the documented process.
-- Points to the authoritative sources so status stays consistent with `docs/feature_delivery_plan_v2.md` and `docs/WORK_QUEUE.MD`.
+- Points to the authoritative sources so status stays consistent with `docs/all_steps_to_product_completion.md` (strategic + tactical).
 
 ## Mandatory Orientation (Read Before Planning)
 1. `UI_STATUS.md` – understand the test-harness UI constraints and avoid polishing scaffolding.
 2. `START_HERE.md` – confirms the official reading order and reinforces the single source of truth workflow.
-3. `README.md` – onboarding note that requires `feature_delivery_plan_v2.md`, `WORK_QUEUE.MD`, and `NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`.
-4. `docs/feature_delivery_plan_v2.md` – project status, acceptance criteria, progress ledger (paired with `docs/WORK_QUEUE.MD` for task detail).
+3. `README.md` – onboarding note that requires `all_steps_to_product_completion.md` (including the Unified Execution Backlog) and `NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md`.
+4. `docs/all_steps_to_product_completion.md` – project status, acceptance criteria, progress ledger, and tactical backlog.
 5. `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` – decision guide for picking the next task.
 6. `CODING_RULES.md` and `CONTRIBUTING.md` – quality gates, coding standards, and testing workflow.
 
@@ -18,8 +18,8 @@
 - Phases 3+ (Architect, Engineer, Integrations, Mobile) – scoped, dependent on Phase 2 infrastructure, not started.
 
 ## Immediate Actions (Carry Over)
-- Run and complete the agent live walkthroughs, capture findings in `docs/WORK_QUEUE.MD` (Active/Ready updates) and `docs/feature_delivery_plan_v2.md`, and file follow-up tickets with `agent-validation` label.
-- Keep `docs/feature_delivery_plan_v2.md` as the live status log and `docs/WORK_QUEUE.MD` as the execution log—update both with every change.
+- Run and complete the agent live walkthroughs, capture findings inside the [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work), and file follow-up tickets with `agent-validation` label.
+- Keep `docs/all_steps_to_product_completion.md` as both the live status log and execution log—update the backlog + phase sections with every change.
 - Maintain `TESTING_KNOWN_ISSUES.md` when tests are skipped or harness limits surface during validation or development.
 
 ## Build Targets – Phase 2 (Developer Foundation)
@@ -40,6 +40,6 @@
 - **Note:** Pre-commit hooks automatically enforce `make format` and `make verify` checks when you commit. If hooks fail, fix violations before bypassing with `--no-verify`.
 
 ## When You Finish Work
-- Update `docs/WORK_QUEUE.MD` immediately—move tasks, record blockers, and add completion context—then refresh `docs/feature_delivery_plan_v2.md` snapshot/dependencies.
+- Update the [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) immediately—move tasks, record blockers, and add completion context—then refresh the surrounding phase snapshot/dependencies in `docs/all_steps_to_product_completion.md`.
 - Note resolved or new limitations in `TESTING_KNOWN_ISSUES.md`.
 - Reference this playbook in handoff notes so future contributors know the orientation path and current targets.

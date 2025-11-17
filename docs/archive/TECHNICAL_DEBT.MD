@@ -63,7 +63,7 @@ This is a **LIVING DOCUMENT** that tracks ongoing technical debt across all proj
 - ROI panel
 - Manual QA checklist (8 items)
 
-**Documentation:** [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 274-392
+**Documentation:** [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) lines 274-392
 **Tracked in:** [BACKLOG.md](BACKLOG.md)
 
 ---
@@ -103,7 +103,7 @@ This is a **LIVING DOCUMENT** that tracks ongoing technical debt across all proj
 - ❌ Alerts (failure rate >10%, median duration >5min)
 
 **Documentation:**
-- [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
+- [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) lines 455-508
 - [docs/PHASE2B_VISUALISATION_STUB.MD](docs/PHASE2B_VISUALISATION_STUB.MD) - **Full 4-week implementation plan**
 - Frontend integration: PHASE2B_VISUALISATION_STUB.MD Section 5 (lines 136-148)
 - Timeline: Section 7 (Week 1: API, Week 2: Renderer, Week 3: Frontend+QA, Week 4: Buffer)
@@ -357,7 +357,7 @@ Split URL across multiple lines or add exception comment.
 - Large datasets paginated
 - Real-time monitoring in place
 
-**Documentation:** [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 1557-1578
+**Documentation:** [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) lines 1557-1578
 
 ---
 
@@ -386,7 +386,7 @@ Split URL across multiple lines or add exception comment.
 - Threat detection active
 - Compliance certifications obtained
 
-**Documentation:** [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 1582-1604
+**Documentation:** [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) lines 1582-1604
 
 ---
 
@@ -492,7 +492,7 @@ Split URL across multiple lines or add exception comment.
 - [BACKLOG.md](BACKLOG.md) - AI agent work queue (active tasks)
 - [CODING_RULES.md](CODING_RULES.md) - Rules that created these exceptions
 - [.coding-rules-exceptions.yml](.coding-rules-exceptions.yml) - Formal exception list
-- [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) - Phase completion tracking
+- [docs/all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) - Phase completion tracking
 - [docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md](docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md) - Decision guide
 
 ---

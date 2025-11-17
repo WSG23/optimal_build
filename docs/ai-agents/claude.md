@@ -28,7 +28,7 @@ This file below provides quick-start essentials. For in-depth guidance, refer to
 
 2. **Then read [`docs/handoff_playbook.md`](docs/handoff_playbook.md)** - Contains:
    - Current project status snapshot (Phase 1 100% complete, Phase 2 10% complete)
-   - Links to all authoritative sources (feature_delivery_plan_v2.md, WORK_QUEUE.MD, NEXT_STEPS, CODING_RULES, etc.)
+   - Links to all authoritative sources (all_steps_to_product_completion.md, [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work), NEXT_STEPS, CODING_RULES, etc.)
    - Immediate actions to carry forward from previous session
 
 **⚠️ IMPORTANT:** If asked to "list all instruction files" or "list all documentation", do NOT use grep/find. Instead, read the "Complete Documentation Inventory" section in START_HERE.md - it's the authoritative list.

@@ -292,6 +292,37 @@ export interface DrawdownSchedule {
   finalDebtBalance: string
 }
 
+export interface FinanceAnalyticsBucket {
+  key: string
+  label: string
+  count: number
+  periods: string[]
+}
+
+export interface FinanceAnalyticsMetadata {
+  moic?: string | null
+  equity_multiple?: string | null
+  cash_flow_summary?: {
+    invested_equity?: string | null
+    distributions?: string | null
+    net_cash?: string | null
+  }
+  dscr_heatmap?: {
+    buckets?: FinanceAnalyticsBucket[]
+    entries?: Array<{
+      period?: string
+      dscr?: string | null
+      bucket?: string | null
+    }>
+  }
+  drawdown_summary?: {
+    total_equity?: string | null
+    total_debt?: string | null
+    peak_debt_balance?: string | null
+  }
+  [key: string]: unknown
+}
+
 export interface FinanceScenarioSummary {
   scenarioId: number
   projectId: number | string

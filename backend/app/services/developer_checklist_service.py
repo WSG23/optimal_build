@@ -4,7 +4,20 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+    TypedDict,
+    Union,
+    cast,
+)
 from uuid import UUID
 
 from app.models.developer_checklists import (
@@ -18,10 +31,42 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-ChecklistTemplateInput = Mapping[str, object]
+
+class ChecklistTemplateDefinition(TypedDict):
+    development_scenario: str
+    category: ChecklistCategory
+    item_title: str
+    item_description: Optional[str]
+    priority: ChecklistPriority
+    typical_duration_days: Optional[int]
+    requires_professional: bool
+    professional_type: Optional[str]
+    display_order: Optional[int]
 
 
-DEFAULT_TEMPLATE_DEFINITIONS: Tuple[ChecklistTemplateInput, ...] = (
+class ChecklistTemplatePayload(TypedDict, total=False):
+    development_scenario: str
+    category: Union[ChecklistCategory, str]
+    item_title: str
+    item_description: Optional[str]
+    priority: Union[ChecklistPriority, str]
+    typical_duration_days: Union[int, str, None]
+    requires_professional: Union[bool, str, int, None]
+    professional_type: Optional[str]
+    display_order: Union[int, str, None]
+
+
+ChecklistTemplateInput = Union[Mapping[str, object], ChecklistTemplatePayload]
+
+
+class ChecklistMetadataEntry(TypedDict, total=False):
+    requires_professional: bool
+    professional_type: Optional[str]
+    typical_duration_days: Optional[int]
+    display_order: Optional[int]
+
+
+DEFAULT_TEMPLATE_DEFINITIONS: Tuple[ChecklistTemplatePayload, ...] = (
     {
         "development_scenario": "raw_land",
         "category": "title_verification",
@@ -250,22 +295,25 @@ def _coerce_priority(value: object) -> ChecklistPriority:
     raise ValueError(f"Unsupported checklist priority value: {value!r}")
 
 
-def _normalise_definition(definition: ChecklistTemplateInput) -> Dict[str, object]:
-    scenario = str(definition.get("development_scenario", "")).strip()
+def _normalise_definition(
+    definition: ChecklistTemplateInput,
+) -> ChecklistTemplateDefinition:
+    source = dict(definition)
+    scenario = str(source.get("development_scenario", "")).strip()
     if not scenario:
         raise ValueError("development_scenario is required")
 
-    item_title = str(definition.get("item_title", "")).strip()
+    item_title = str(source.get("item_title", "")).strip()
     if not item_title:
         raise ValueError("item_title is required")
 
-    category = _coerce_category(definition.get("category"))
-    priority = _coerce_priority(definition.get("priority"))
-    item_description_value = definition.get("item_description")
-    typical_duration_value = definition.get("typical_duration_days")
-    professional_type_value = definition.get("professional_type")
-    requires_professional_value = definition.get("requires_professional")
-    display_order_value = definition.get("display_order")
+    category = _coerce_category(source.get("category"))
+    priority = _coerce_priority(source.get("priority"))
+    item_description_value = source.get("item_description")
+    typical_duration_value = source.get("typical_duration_days")
+    professional_type_value = source.get("professional_type")
+    requires_professional_value = source.get("requires_professional")
+    display_order_value = source.get("display_order")
 
     item_description = (
         str(item_description_value).strip()
@@ -296,17 +344,17 @@ def _normalise_definition(definition: ChecklistTemplateInput) -> Dict[str, objec
     if display_order_value is not None and display_order_value != "":
         display_order = int(display_order_value)
 
-    return {
-        "development_scenario": scenario,
-        "category": category,
-        "item_title": item_title,
-        "item_description": item_description,
-        "priority": priority,
-        "typical_duration_days": typical_duration,
-        "requires_professional": requires_professional,
-        "professional_type": professional_type,
-        "display_order": display_order,
-    }
+    return ChecklistTemplateDefinition(
+        development_scenario=scenario,
+        category=category,
+        item_title=item_title,
+        item_description=item_description,
+        priority=priority,
+        typical_duration_days=typical_duration,
+        requires_professional=requires_professional,
+        professional_type=professional_type,
+        display_order=display_order,
+    )
 
 
 class DeveloperChecklistService:
@@ -466,15 +514,16 @@ class DeveloperChecklistService:
         session: AsyncSession, payload: ChecklistTemplateInput
     ) -> DeveloperChecklistTemplate:
         await DeveloperChecklistService._ensure_tables(session)
-        definition = _normalise_definition(payload)
-        scenario = definition["development_scenario"]
-        title = definition["item_title"]
+        normalized = _normalise_definition(payload)
+        scenario = normalized["development_scenario"]
+        title = normalized["item_title"]
 
         if await DeveloperChecklistService._template_exists(session, scenario, title):
             raise ValueError(
                 f"Template '{title}' already exists for scenario '{scenario}'."
             )
 
+        definition: Dict[str, Any] = dict(normalized)
         display_order = definition.get("display_order")
         if display_order is None:
             display_order = await DeveloperChecklistService._next_display_order(
@@ -482,7 +531,7 @@ class DeveloperChecklistService:
             )
             definition["display_order"] = display_order
 
-        template = DeveloperChecklistTemplate(**definition)  # type: ignore[arg-type]
+        template = DeveloperChecklistTemplate(**definition)
         session.add(template)
         await session.flush()
         await session.refresh(template)
@@ -587,9 +636,10 @@ class DeveloperChecklistService:
         incoming_keys: set[Tuple[str, str]] = set()
 
         for raw_definition in definitions:
-            definition = _normalise_definition(raw_definition)
-            scenario = definition["development_scenario"]
-            title_key = definition["item_title"].lower()
+            normalized_definition = _normalise_definition(raw_definition)
+            definition: Dict[str, Any] = dict(normalized_definition)
+            scenario = normalized_definition["development_scenario"]
+            title_key = normalized_definition["item_title"].lower()
 
             key = (scenario, title_key)
             incoming_keys.add(key)
@@ -614,9 +664,7 @@ class DeveloperChecklistService:
                 if changed:
                     updated += 1
             else:
-                template = DeveloperChecklistTemplate(
-                    **definition  # type: ignore[arg-type]
-                )
+                template = DeveloperChecklistTemplate(**definition)
                 session.add(template)
                 created += 1
                 existing_index[key] = template
@@ -777,7 +825,12 @@ class DeveloperChecklistService:
         items = list(result.scalars().all())
 
         def _display_order_for(item: DeveloperPropertyChecklist) -> int:
-            metadata: dict[str, Any] = item.metadata or {}  # type: ignore[assignment,has-type]
+            metadata_raw = getattr(item, "metadata", None)
+            metadata: Mapping[str, Any]
+            if isinstance(metadata_raw, Mapping):
+                metadata = metadata_raw
+            else:
+                metadata = {}
             template_order = getattr(item.template, "display_order", None)
             metadata_order = metadata.get("display_order")
 
@@ -813,8 +866,13 @@ class DeveloperChecklistService:
 
         formatted: List[dict[str, object]] = []
         for item in items:
-            payload = item.to_dict()
-            metadata = payload.get("metadata") or {}
+            payload = cast(MutableMapping[str, Any], item.to_dict())
+            metadata_raw = payload.get("metadata")
+            metadata: Mapping[str, Any]
+            if isinstance(metadata_raw, Mapping):
+                metadata = metadata_raw
+            else:
+                metadata = {}
 
             requires_professional = metadata.get("requires_professional")
             professional_type = metadata.get("professional_type")

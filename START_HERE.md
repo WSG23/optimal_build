@@ -3,26 +3,26 @@
 **New to this project? Read these files IN ORDER:**
 
 1. **docs/planning/features.md** - What we're building (full feature specification)
-2. **docs/feature_delivery_plan_v2.md** - Current status (**START with "📊 Current Progress Snapshot"**)
+2. **docs/all_steps_to_product_completion.md** - Current status (**START with "📊 Current Progress Snapshot"**)
 3. **docs/audits/PRE-PHASE-2D-AUDIT.MD** - 🚨 **CRITICAL** - 2-week audit before Phase 2D (prevents startup failure)
-4. **docs/WORK_QUEUE.MD** - ⚠️ **IMPORTANT** - Active task list & technical debt follow-ups
+4. **docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work** - ⚠️ **IMPORTANT** - Active task list & technical debt follow-ups
 5. **docs/ai-agents/next_steps.md** - How to choose your next task (decision tree)
-6. **docs/development/testing/known-issues.md** - Known test issues (read BEFORE testing to avoid wasting time)
+6. **docs/all_steps_to_product_completion.md#-known-testing-issues** - Known test issues (read BEFORE testing to avoid wasting time)
 7. **docs/ai-agents/claude.md** - Coding guidelines and mandatory workflows
 
 ---
 
 ## ⚠️ CRITICAL: When You Complete Work
 
-🛑 **MANDATORY: Update `docs/WORK_QUEUE.MD` and `docs/feature_delivery_plan_v2.md` BEFORE asking user to commit**
+🛑 **MANDATORY: Update the unified backlog + phase summary in `docs/all_steps_to_product_completion.md` BEFORE asking user to commit**
 
-`docs/WORK_QUEUE.MD` is the **single source of truth** for active tasks; `docs/feature_delivery_plan_v2.md` captures strategic status.
+The subsection [📌 Unified Execution Backlog & Deferred Work](docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) is the **single source of truth** for active tasks; the same file also captures strategic status by phase.
 
 **Every time you complete a feature/milestone:**
-1. ✅ Update `docs/WORK_QUEUE.MD` (move item to Completed, capture commits, add follow-ups)
-2. ✅ Refresh `docs/feature_delivery_plan_v2.md` phase summary if status changed
-3. ✅ Stage docs with code: `git add docs/WORK_QUEUE.MD docs/feature_delivery_plan_v2.md`
-4. ✅ Include in same commit as your code changes
+1. ✅ Update the backlog subsection (move item to Completed, capture commits, add follow-ups)
+2. ✅ Refresh the relevant phase summary if status changed
+3. ✅ Stage docs with code: `git add docs/all_steps_to_product_completion.md`
+4. ✅ Include changes in the same commit as your code
 
 **See Step 7c in [docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md) for detailed instructions.**
 
@@ -77,7 +77,7 @@ This ensures continuity between sessions and alignment with previous work.
 
 ---
 
-**Ready to start? Go read `docs/feature_delivery_plan_v2.md` first!** 📊
+**Ready to start? Go read `docs/all_steps_to_product_completion.md` first!** 📊
 
 ---
 
@@ -90,14 +90,14 @@ This section lists ALL 20 instruction and reference files in this repository. Th
 ### 🎯 Core AI Agent Instructions (Must Read - Listed Above)
 1. ✅ **START_HERE.md** (this file) - Entry point and reading order
 2. ✅ **docs/planning/features.md** - Complete feature specifications
-3. ✅ **docs/feature_delivery_plan_v2.md** - Project roadmap and current status
+3. ✅ **docs/all_steps_to_product_completion.md** - Project roadmap and current status
 4. ✅ **docs/ai-agents/next_steps.md** - Task decision guide
-5. ✅ **docs/development/testing/known-issues.md** - Known test harness issues (not bugs)
+5. ✅ **docs/all_steps_to_product_completion.md#-known-testing-issues** - Known test harness issues (not bugs)
 6. ✅ **docs/ai-agents/claude.md** - Claude-specific instructions and workflows
 7. ✅ **docs/ai-agents/codex.md** - Codex-specific instructions and mandatory testing checklist
 
 ### 📋 Additional Reference Files (Read When Relevant)
-8. **docs/WORK_QUEUE.MD** - AI agent work queue (active tasks only)
+8. **docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work** - AI agent work queue (active tasks only)
 9. **docs/archive/TECHNICAL_DEBT.MD** - Historical technical debt inventory (for context only)
 10. **docs/handoff_playbook.md** - Session handoff guide and status snapshot
 11. **CODING_RULES.md** - Mandatory coding rules (enforced by CI)

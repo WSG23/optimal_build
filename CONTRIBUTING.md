@@ -13,13 +13,13 @@ checks before opening a pull request.
    - Specifies every feature requirement
    - **THIS IS THE SOURCE OF TRUTH**
 
-2. **[docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md)** - Comprehensive delivery roadmap
+2. **[docs/all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md)** - Comprehensive delivery roadmap
    - Maps 100% of FEATURES.md into 6 phases
    - Shows dependencies and priorities
    - Includes acceptance criteria and estimates
    - **ALWAYS CHECK THIS BEFORE STARTING NEW WORK**
 
-3. **[docs/WORK_QUEUE.MD](docs/WORK_QUEUE.MD)** - Tactical task list & technical debt tracker
+3. **[Unified Execution Backlog](docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)** - Tactical task list & technical debt tracker
    - Ordered Active/Ready queues for AI agents
    - Completed log with commits for the last 30 days
    - **UPDATE THIS AFTER EVERY TASK**
@@ -45,8 +45,8 @@ checks before opening a pull request.
 
 Before writing any code, confirm you've:
 - [ ] Read `docs/planning/features.md` completely
-- [ ] Reviewed docs/feature_delivery_plan_v2.md for strategic status
-- [ ] Checked `docs/WORK_QUEUE.MD` for active tasks
+- [ ] Reviewed docs/all_steps_to_product_completion.md for strategic status
+- [ ] Checked the unified backlog in `docs/all_steps_to_product_completion.md` for active tasks
 - [ ] Checked `docs/ai-agents/next_steps.md` for priorities
 - [ ] Read CODING_RULES.md for technical standards
 - [ ] Understand which phase you're working in
@@ -455,4 +455,4 @@ If PDF shows blank in browser:
 
 - [docs/PDF_TESTING_CHECKLIST.md](docs/PDF_TESTING_CHECKLIST.md) - Complete testing checklist
 - [CODING_RULES.md](CODING_RULES.md) - General coding standards
-- [docs/development/testing/known-issues.md](docs/development/testing/known-issues.md) - Known test limitations
+- [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues) - Known test limitations

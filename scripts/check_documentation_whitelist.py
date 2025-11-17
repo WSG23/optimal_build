@@ -5,8 +5,8 @@ Documentation Whitelist Enforcement (Rule 14.2)
 Prevents AI agents from creating unauthorized .md files in docs/ directory
 after the 2025-11-12 documentation consolidation.
 
-POLICY: New documentation must be added to existing files (feature_delivery_plan_v2.md,
-WORK_QUEUE.MD) unless explicitly approved by user and whitelisted.
+POLICY: New documentation must be added to the consolidated plan
+(`docs/all_steps_to_product_completion.md`) unless explicitly approved by user and whitelisted.
 
 This script runs as a pre-commit hook to enforce the whitelist.
 """

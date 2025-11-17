@@ -1193,8 +1193,8 @@ UI Manual Testing:
 
 Before proposing work, AI agents must read:
 - [`docs/ai-agents/next_steps.md`](docs/ai-agents/next_steps.md) (MANDATORY TESTING CHECKLIST section)
-- Review the phase summary in [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md) and the corresponding item in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD)
-- [`docs/development/testing/known-issues.md`](docs/development/testing/known-issues.md) (check for known test failures before reporting)
+- Review the phase summary in [`docs/all_steps_to_product_completion.md`](docs/all_steps_to_product_completion.md) and the corresponding item in the [📌 Unified Execution Backlog](docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)
+- [`docs/all_steps_to_product_completion.md#-known-testing-issues`](docs/all_steps_to_product_completion.md#-known-testing-issues) (check for known test failures before reporting)
 - [`docs/planning/ui-status.md`](docs/planning/ui-status.md) (understand UI implementation status)
 - [`docs/development/testing/summary.md`](docs/development/testing/summary.md) (find smoke/regression suites)
 - [`README.md`](README.md) (`make dev` notes for log monitoring)
@@ -1247,7 +1247,7 @@ When completing a feature, ask yourself:
 - [ ] Did I provide backend pytest commands?
 - [ ] Did I provide frontend test commands (if applicable)?
 - [ ] Did I provide specific UI manual test steps?
-- [ ] Did I reference `docs/development/testing/known-issues.md` to avoid duplicate reports?
+- [ ] Did I reference `docs/all_steps_to_product_completion.md#-known-testing-issues` to avoid duplicate reports?
 - [ ] Did I check `docs/planning/ui-status.md` to understand current implementation state?
 
 **If you answered NO to any of these, your work is incomplete.**
@@ -1412,7 +1412,7 @@ make test
 - Backend critical paths: >80%
 - Backend overall: >70%
 - Frontend critical paths: Covered
-- Frontend overall: Best effort (JSDOM timing issues documented in `docs/development/testing/known-issues.md`)
+- Frontend overall: Best effort (JSDOM timing issues documented in `docs/all_steps_to_product_completion.md#-known-testing-issues`)
 
 ### 11.1 Backend feature completion checklist (MANDATORY)
 
@@ -1444,7 +1444,7 @@ ticked.
 - Phase gate checks verify test coverage before phase completion
 
 **Exceptions:**
-- Frontend tests have known JSDOM timing issues (see `docs/development/testing/known-issues.md`)
+- Frontend tests have known JSDOM timing issues (see `docs/all_steps_to_product_completion.md#-known-testing-issues`)
 - Test harness UI (non-production) may have lower coverage
 - Document test gaps in commit messages if test is deferred
 
@@ -1656,7 +1656,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 
 ## 13. Phase Completion Gates (MANDATORY)
 
-**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) while related tasks remain in [`docs/WORK_QUEUE.MD`](docs/WORK_QUEUE.MD) or the Phase 2D gate checklist has unchecked items.
+**Rule:** AI agents MUST NOT mark a phase as "✅ COMPLETE" in [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) while related tasks remain in the [📌 Unified Execution Backlog](docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) or the Phase 2D gate checklist has unchecked items.
 
 **Why:** Phase 1D and Phase 2B were left 60% and 85% incomplete because AI agents marked backend work as "done" and moved to Phase 2C without completing frontend UI components. This creates abandoned features and technical debt.
 
@@ -1664,11 +1664,11 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 
 ### Before marking ANY phase "✅ COMPLETE":
 
-1. **Confirm WORK_QUEUE.MD has no open work for the phase:**
+1. **Confirm the Unified Execution Backlog has no open work for the phase:**
    - Search Active/Ready sections for the phase label → Must be absent
    - Ensure deferred work is logged under "Ready" or "Blocked" with next steps (not left implicit)
 
-2. **Review the Phase 2D gate checklist in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md):**
+2. **Review the Phase 2D gate checklist in [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md):**
    - All relevant checkboxes must be `[x]`
    - If the phase is a prerequisite for the gate, confirm the checkbox is updated concurrently
 
@@ -1679,11 +1679,11 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 4. **Ask user for explicit approval:**
    ```markdown
    Phase X checklist is complete:
-   - ✅ No open tasks for this phase in WORK_QUEUE.MD
+   - ✅ No open tasks for this phase in the Unified Execution Backlog
    - ✅ Relevant Phase 2D gate checkbox updated
    - ✅ UI manual testing passed
 
-   May I mark Phase X as "✅ COMPLETE" in feature_delivery_plan_v2.md?
+   May I mark Phase X as "✅ COMPLETE" in all_steps_to_product_completion.md?
    ```
 
 5. **Only after user approval:**
@@ -1698,7 +1698,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
    - Use `❌` for blocked or deferred work
    - Add unchecked `- [ ]` items to checklist
 
-3. **Add incomplete work to [WORK_QUEUE.MD](WORK_QUEUE.MD):**
+3. **Add incomplete work to the [Unified Execution Backlog](docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work):**
    - List each incomplete item with estimate
    - Mark as "BLOCKED - waiting for Phase X completion"
 
@@ -1741,7 +1741,7 @@ See [TRANSITION_PHASE_CHECKLIST.md](TRANSITION_PHASE_CHECKLIST.md) for:
 - ✅ Commission ledger backend
 - ✅ Business Performance page scaffold
 
-**In Progress (see WORK_QUEUE.MD):**
+**In Progress (see Unified Execution Backlog):**
 - 🔄 Pipeline Kanban board component (1-2 days)
 - 🔄 Deal insights panel (1-2 days)
 - 🔄 Analytics panel (1-2 days)
@@ -1782,7 +1782,7 @@ All phases with UI components (1A, 1B, 1C, 1D, 2B, 2C) MUST have:
 - This caused the enforcement gap that let incomplete work ship
 
 **Enforcement blocks commits if:**
-- Phase marked `✅ COMPLETE` in feature_delivery_plan_v2.md
+- Phase marked `✅ COMPLETE` in all_steps_to_product_completion.md
 - But manual QA checklist missing or not executed (template blanks still present)
 
 **Why file verification matters:**
@@ -1873,15 +1873,15 @@ automates enforcement so AI agents MUST complete the full workflow.
       - Change to: `**Status:** ✅ QA COMPLETE (YYYY-MM-DD)` or `**Status:** ✅ ARCHIVED (YYYY-MM-DD)`
 
    b. **Complete "Next Steps" section** at end of checklist:
-      - If PASS: Check the boxes for updating WORK_QUEUE.MD and feature_delivery_plan_v2.md
+      - If PASS: Check the boxes for updating the backlog + roadmap in all_steps_to_product_completion.md
       - If FAIL: Document issues and create fix tasks
       - If PARTIAL: Document decision with product owner notes
 
-   c. **Update WORK_QUEUE.MD** (if not already done):
+   c. **Update the Unified Execution Backlog** (if not already done):
       - Move phase item from "Ready" to "Completed" section
       - Add completion date and QA status
 
-   d. **Update [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md)** (if not already done):
+   d. **Update [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md)** (if not already done):
       - Ensure phase is marked `✅ COMPLETE` in Phase Overview table
       - Ensure gate checkbox is checked `[x]` in Phase Gate Checklist
 
@@ -1891,11 +1891,11 @@ automates enforcement so AI agents MUST complete the full workflow.
 **What gets enforced:**
 - Pre-commit hook verifies checklist status is not `READY FOR QA` when phase is COMPLETE
 - Pre-commit hook verifies "Next Steps" section has at least one checkbox checked
-- Pre-commit hook verifies WORK_QUEUE.MD and feature_delivery_plan_v2.md consistency
+- Pre-commit hook verifies the unified backlog + phase summaries in all_steps_to_product_completion.md
 
 **Example violation caught:**
 ```
-RULE VIOLATION: Phase 1D marked '✅ COMPLETE' in feature_delivery_plan_v2.md
+RULE VIOLATION: Phase 1D marked '✅ COMPLETE' in all_steps_to_product_completion.md
   -> But manual QA checklist status still says: '✅ READY FOR QA'
   -> Checklist must be updated to: '✅ QA COMPLETE (2025-11-02)' or '✅ ARCHIVED (2025-11-02)'
   -> Rule 12.4: Complete the QA checklist workflow
@@ -2062,16 +2062,16 @@ The pre-commit hook checks for shadow directories and blocks commits that create
 **Why:**
 - Documentation sprawl was a major problem before consolidation
 - Multiple overlapping/contradictory documents created confusion
-- Feature Delivery Plan v2 and WORK_QUEUE.MD are now single sources of truth
+- Feature Delivery Plan v2 (now “All Steps to Product Completion”) is the single source of truth
 - Creating new docs fragments the knowledge base
 
 **How to follow:**
 
 **For AI agents:**
 1. **Default behavior:** Add new documentation to existing files:
-   - Strategic content → `docs/feature_delivery_plan_v2.md`
-   - Task tracking → `docs/WORK_QUEUE.MD`
-   - Known issues → `docs/development/testing/known-issues.md`
+   - Strategic content → `docs/all_steps_to_product_completion.md`
+   - Task tracking → `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work`
+   - Known issues → `docs/all_steps_to_product_completion.md#-known-testing-issues`
    - Phase details → Update relevant section in existing docs
 
 2. **If new file is truly necessary:**
@@ -2083,8 +2083,8 @@ The pre-commit hook checks for shadow directories and blocks commits that create
 **Whitelisted files:**
 
 See `.documentation-whitelist.yaml` for the complete list. Current core docs:
-- `docs/feature_delivery_plan_v2.md` - Strategic delivery plan (single source of truth)
-- `docs/WORK_QUEUE.MD` - Daily task tracking
+- `docs/all_steps_to_product_completion.md` - Strategic delivery plan (single source of truth)
+- `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work` - Daily task tracking
 - `docs/ai-agents/next_steps.md` - AI agent decision guide
 - `docs/planning/features.md` - Product requirements
 - Plus testing guides, audits, and archived historical docs
@@ -2094,7 +2094,7 @@ See `.documentation-whitelist.yaml` for the complete list. Current core docs:
 ```bash
 # ✅ CORRECT - Add to existing file
 # User: "Document the new Phase 2D feature"
-# AI: Updates docs/feature_delivery_plan_v2.md section for Phase 2D
+# AI: Updates docs/all_steps_to_product_completion.md section for Phase 2D
 
 # ❌ WRONG - Create new file without approval
 # AI: Creates docs/phase2d_implementation_plan.md

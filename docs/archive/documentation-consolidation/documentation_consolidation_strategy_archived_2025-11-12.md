@@ -1,6 +1,6 @@
 # Documentation Consolidation Strategy
 
-> **Update (Nov 2025):** The active roadmap now lives in [`docs/feature_delivery_plan_v2.md`](../../feature_delivery_plan_v2.md) and the task queue in [`docs/WORK_QUEUE.MD`](../../WORK_QUEUE.MD). Historical instructions below reference the pre-migration file layout.
+> **Update (Nov 2025):** The active roadmap now lives in [`docs/all_steps_to_product_completion.md`](../../all_steps_to_product_completion.md) and the task queue in [`docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work`](../../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work). Historical instructions below reference the pre-migration file layout.
 
 **Status**: Recommendation
 **Created**: 2025-10-29

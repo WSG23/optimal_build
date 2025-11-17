@@ -38,7 +38,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PHASE_GATE_DOC = Path("docs/feature_delivery_plan_v2.md")
+PHASE_GATE_DOC = Path("docs/all_steps_to_product_completion.md")
 REQUIRED_MARKERS = {
     "Phase 2D Gate: Pre-Phase": (
         r"- \[x\] Phase 2D Gate: Pre-Phase\u202f?2D Infrastructure Audit"
@@ -111,7 +111,7 @@ def main() -> int:
     for item in missing:
         print(f"  • {item}", file=sys.stderr)
     print(
-        "\nUpdate docs/feature_delivery_plan_v2.md once the prerequisite work is done.",
+        "\nUpdate docs/all_steps_to_product_completion.md once the prerequisite work is done.",
         file=sys.stderr,
     )
     return 1

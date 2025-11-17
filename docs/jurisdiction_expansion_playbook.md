@@ -1259,7 +1259,7 @@ Example (Hong Kong, 100,000 sqft office):
 - [ ] Singapore regression test passed
 
 **If approved:**
-- Update `docs/feature_delivery_plan_v2.md` and `docs/WORK_QUEUE.MD` → Mark jurisdiction ✅ and log follow-up actions
+- Update `docs/all_steps_to_product_completion.md` (phase summary + [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)) → Mark jurisdiction ✅ and log follow-up actions
 - Move to next jurisdiction (if in expansion window)
 
 **If NOT approved:**
@@ -1301,7 +1301,7 @@ Example (Hong Kong, 100,000 sqft office):
 - [ ] PM approved
 
 **Documentation:**
-- [ ] `docs/feature_delivery_plan_v2.md` and `docs/WORK_QUEUE.MD` updated
+- [ ] Phase summary + Unified Execution Backlog updated in `docs/all_steps_to_product_completion.md`
 - [ ] `NEXT_STEPS` updated (if last jurisdiction)
 
 ---

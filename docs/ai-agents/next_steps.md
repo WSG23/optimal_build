@@ -2,8 +2,8 @@
 
 > **⚠️ IMPORTANT:** This is a **DECISION GUIDE**, not a status tracker.
 >
-> **For strategic status:** See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — start with the "📊 Current Progress Snapshot" section
-> **For actionable tasks:** Check [WORK_QUEUE.MD](../WORK_QUEUE.MD) before coding
+> **For strategic status:** See [all_steps_to_product_completion.md](all_steps_to_product_completion.md) — start with the "📊 Current Progress Snapshot" section
+> **For actionable tasks:** Check [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) before coding
 >
 > **Last Updated:** 2025-10-23 (added read-only dashboard policy)
 
@@ -27,7 +27,7 @@
 **Before touching ANY frontend file, read UI_STATUS.md.**
 
 ### Step 1: Check Current Status (5 min)
-→ Read [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md), beginning with the "📊 Current Progress Snapshot" section
+→ Read [all_steps_to_product_completion.md](all_steps_to_product_completion.md), beginning with the "📊 Current Progress Snapshot" section
 
 Look for:
 - ✅ What's complete
@@ -35,7 +35,7 @@ Look for:
 - ❌ What's not started
 
 ### Step 2: Check for Known Issues (5 min)
-→ Read [Testing Known Issues](../development/testing/known-issues.md)
+→ Read [Testing Known Issues](../all_steps_to_product_completion.md#-known-testing-issues)
 
 This prevents you from:
 - ❌ Investigating known test harness issues
@@ -49,7 +49,7 @@ This prevents you from:
 → Read [CODING_RULES.md](../CODING_RULES.md) (reference while coding)
 
 ### Step 4: Choose Your Task (5 min)
-→ Review [WORK_QUEUE.MD](../WORK_QUEUE.MD) and follow the decision tree below
+→ Review [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) and follow the decision tree below
 
 ### Step 5: After Implementation - ALWAYS Suggest Tests ⚠️
 → When you complete ANY feature, you MUST provide test commands to the user
@@ -63,7 +63,7 @@ This prevents you from:
 
 ### Question 1: Is there a ❌ NOT STARTED task in current phase?
 
-**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — confirm phase priority, then cross-check [WORK_QUEUE.MD](../WORK_QUEUE.MD) Active items
+**Check:** [all_steps_to_product_completion.md](all_steps_to_product_completion.md) — confirm phase priority, then cross-check [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) Active items
 
 **If YES:** Build that task (skip to "How to Start")
 
@@ -86,7 +86,7 @@ This prevents you from:
 
 ### Question 3: What's the next unblocked phase?
 
-**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for phase sequencing, then ensure the task appears in [WORK_QUEUE.MD](../WORK_QUEUE.MD)
+**Check:** [all_steps_to_product_completion.md](all_steps_to_product_completion.md) for phase sequencing, then ensure the task appears in [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)
 
 **Look for:**
 - Phase marked ❌ NOT STARTED
@@ -104,8 +104,8 @@ This prevents you from:
 ### Before Writing Code:
 
 **1. Read the phase requirements**
-- Strategic context: [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
-- Execution details: [WORK_QUEUE.MD](../WORK_QUEUE.MD)
+- Strategic context: [all_steps_to_product_completion.md](all_steps_to_product_completion.md)
+- Execution details: [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)
 - Find your phase section
 - Note: Requirements, Acceptance Criteria, Estimated Effort
 
@@ -121,7 +121,7 @@ This prevents you from:
 
 **4. Review mandatory testing guides**
 - Locate the phase-specific testing notes in:
-  - [`Testing Known Issues`](../development/testing/known-issues.md) – search for the phase name (e.g., "Phase 2A") to see manual flows that must be re-run
+  - [`Testing Known Issues`](../all_steps_to_product_completion.md#-known-testing-issues) – search for the phase name (e.g., "Phase 2A") to see manual flows that must be re-run
   - [`ui-status.md`](../planning/ui-status.md) – confirm which UI surfaces require verification
   - [`Testing Documentation Summary`](../development/testing/summary.md) – find the "minimum coverage" smoke or regression suites
   - [`README.md`](../README.md) – the `make dev` section explains how to monitor `.devstack/backend.log` while testing
@@ -190,9 +190,9 @@ Manual UI testing:
 
 ---
 
-**7b. Update TESTING_KNOWN_ISSUES.md if needed** (CRITICAL)
+**7b. Update Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues) if needed** (CRITICAL)
 
-When you encounter test issues, you MUST check and update TESTING_KNOWN_ISSUES.md:
+When you encounter test issues, you MUST check and update Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues):
 
 ✅ **If you FIX a known issue:**
 - Move it from "Active Issues" to "Resolved Issues"
@@ -207,7 +207,7 @@ When you encounter test issues, you MUST check and update TESTING_KNOWN_ISSUES.m
 - Example: "Frontend tests timeout but app works correctly"
 
 ✅ **If tests fail due to REAL bugs:**
-- Do NOT add to TESTING_KNOWN_ISSUES.md
+- Do NOT add to Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues)
 - Fix the bug instead
 
 **Why this matters:**
@@ -217,27 +217,27 @@ When you encounter test issues, you MUST check and update TESTING_KNOWN_ISSUES.m
 
 ---
 
-**7c. Update WORK_QUEUE.MD and feature_delivery_plan_v2.md BEFORE asking user to commit** ⚠️ BLOCKING STEP
+**7c. Update all_steps_to_product_completion.md (backlog + phase summary) BEFORE asking user to commit** ⚠️ BLOCKING STEP
 
 🛑 **STOP: Do not proceed to commit until you complete this step.**
 
-When you finish implementing a feature/milestone, you MUST update both documents **in the same commit** as your code changes.
+When you finish implementing a feature/milestone, you MUST update the backlog + phase sections **in the same commit** as your code changes.
 
 **Why this is mandatory:**
-- `WORK_QUEUE.MD` is the **single source of truth** for active tasks and technical debt follow-ups
-- `feature_delivery_plan_v2.md` communicates strategic status to stakeholders and future agents
+- The [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) is the **single source of truth** for active tasks and technical debt follow-ups
+- `all_steps_to_product_completion.md` communicates strategic status to stakeholders and future agents
 - Outdated docs create duplicate work, conflicting priorities, and failed gate checks
 
 ---
 
 **Required updates:**
 
-✅ **Step 1: Update WORK_QUEUE.MD (execution log)**
+✅ **Step 1: Update the Unified Execution Backlog (execution log)**
 - Move items between **Active → Completed** or **Ready → Active** as work progresses
 - Add completion date, commit hashes, and impact summary for finished items
 - Record new blockers or follow-up actions under the appropriate section
 
-✅ **Step 2: Update docs/feature_delivery_plan_v2.md (strategic snapshot)**
+✅ **Step 2: Update docs/all_steps_to_product_completion.md (strategic snapshot)**
 - Adjust the phase status table if progress or completion changed
 - Update the relevant phase summary bullets with what shipped and remaining risks
 - Tick Phase 2D gate checkboxes when prerequisites are satisfied (e.g., audit complete)
@@ -245,7 +245,7 @@ When you finish implementing a feature/milestone, you MUST update both documents
 
 ✅ **Step 3: Stage the documentation with your code changes**
 ```bash
-git add docs/WORK_QUEUE.MD docs/feature_delivery_plan_v2.md
+git add docs/all_steps_to_product_completion.md
 # These go in the SAME commit as your feature code
 ```
 
@@ -259,11 +259,9 @@ Backend changes:
 
 Tests: pytest passing (12/12)
 
-Updated docs/WORK_QUEUE.MD:
-- Moved "Infrastructure Audit - Option 10" to Completed with commit hashes
-- Logged new follow-up task for hook telemetry
-
-Updated docs/feature_delivery_plan_v2.md:
+Updated docs/all_steps_to_product_completion.md:
+- Unified backlog: Moved "Infrastructure Audit - Option 10" to Completed with commit hashes
+- Unified backlog: Logged new follow-up task for hook telemetry
 - Phase 1D summary: noted audit blocker resolved
 - Phase 2D gate checkbox: Pre-Phase 2D Infrastructure Audit marked [x]
 ```
@@ -294,7 +292,7 @@ Updated docs/feature_delivery_plan_v2.md:
 ```
 **Fix:** Change to `[x]` when the prerequisite work is finished.
 
-**❌ MISTAKE #3: Marking a phase complete while WORK_QUEUE.MD still has open items**
+**❌ MISTAKE #3: Marking a phase complete while the Unified Execution Backlog still has open items**
 ```markdown
 | Phase | Status |
 | Phase 1D | ✅ COMPLETE |
@@ -424,7 +422,7 @@ Provide this to the user:
 ---
 
 **Document the current status so the next builder isn’t guessing:**
-- After sharing the script, update [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for that phase with the manual-testing status (**Pending**, **In Progress**, or **Complete**) and list any blockers.
+- After sharing the script, update [all_steps_to_product_completion.md](all_steps_to_product_completion.md) for that phase with the manual-testing status (**Pending**, **In Progress**, or **Complete**) and list any blockers.
 - Capture the active environment context (for example, “Backend reset running”, “Using fallback propertyId”, “Waiting on Claude seed script”). When the situation changes, update the note.
 - If manual tests are blocked, call it out in the plan doc and in your handoff message so the next agent knows exactly what remains.
 
@@ -550,11 +548,11 @@ Backend/Frontend changes:
 Tests: [Backend X/X passing, Frontend status]
 Files: [Key files created/modified]
 
-Updated feature_delivery_plan_v2.md:
+Updated all_steps_to_product_completion.md:
 - Phase X progress: Y% → Z%
 - Added [Feature Name] to delivered milestones
 
-See feature_delivery_plan_v2.md for full details."
+See all_steps_to_product_completion.md for full details."
 ```
 
 ---
@@ -574,7 +572,7 @@ Phase 1D: ❌ NOT STARTED ← Do this next
 
 **RIGHT:**
 ```markdown
-For current status, see the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md
+For current status, see the "📊 Current Progress Snapshot" section in all_steps_to_product_completion.md
 ```
 
 ---
@@ -591,7 +589,7 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 
 ### ❌ Don't Start Phase 2 Before Phase 1 Done
 
-**Check:** [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — look at the "Phase 1 Completion Gate" checklist
+**Check:** [all_steps_to_product_completion.md](all_steps_to_product_completion.md) — look at the "Phase 1 Completion Gate" checklist
 
 **Phase 1 Completion Gate:**
 - All 6 Agent tools implemented
@@ -607,8 +605,8 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 ### Scenario 1: "I'm starting fresh on this project"
 
 **Do this:**
-1. Read the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md (5 min)
-2. Read TESTING_KNOWN_ISSUES.md (5 min)
+1. Read the "📊 Current Progress Snapshot" section in all_steps_to_product_completion.md (5 min)
+2. Read Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues) (5 min)
 3. Find first ❌ NOT STARTED task without blockers
 4. Read that phase's requirements
 5. Start building
@@ -620,7 +618,7 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 ### Scenario 2: "Previous AI agent just finished Phase X"
 
 **Do this:**
-1. Verify Phase X shows ✅ COMPLETE in feature_delivery_plan_v2.md
+1. Verify Phase X shows ✅ COMPLETE in all_steps_to_product_completion.md
 2. Look for next ❌ NOT STARTED phase
 3. Check for blockers
 4. If blocked, find next unblocked phase
@@ -633,10 +631,10 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 ### Scenario 3: "Tests are failing - is this a bug?"
 
 **Do this:**
-1. Check TESTING_KNOWN_ISSUES.md first
+1. Check Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues) first
 2. Is it listed there? → Not a bug, skip it
 3. Not listed? → Investigate as real bug
-4. If new issue found → Document it (see workflow in TESTING_KNOWN_ISSUES.md)
+4. If new issue found → Document it (see workflow in Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues))
 
 ---
 
@@ -655,7 +653,7 @@ For current status, see the "📊 Current Progress Snapshot" section in feature_
 ### Scenario 5: "User says 'continue where we left off'"
 
 **Do this:**
-1. Read the "📊 Current Progress Snapshot" section in feature_delivery_plan_v2.md
+1. Read the "📊 Current Progress Snapshot" section in all_steps_to_product_completion.md
 2. Find the most recent ✅ COMPLETE phase
 3. Look for next ❌ NOT STARTED
 4. That's where you left off
@@ -688,7 +686,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 ### ⚠️ CRITICAL: Do NOT Start Phase 2D Until This Is Complete
 
-**When Phase 2C shows ✅ COMPLETE in feature_delivery_plan_v2.md:**
+**When Phase 2C shows ✅ COMPLETE in all_steps_to_product_completion.md:**
 
 🛑 **STOP** - Do NOT immediately start Phase 2D.
 
@@ -796,8 +794,8 @@ Phase 3+: Later phases (depend on Phase 2)
 ✅ **Documentation:**
 - [ ] Each jurisdiction has README.md with ENV vars
 - [ ] Each jurisdiction has map_overrides.yaml
-- [ ] feature_delivery_plan_v2.md updated with expansion status
-- [ ] TESTING_KNOWN_ISSUES.md updated if new issues found
+- [ ] all_steps_to_product_completion.md updated with expansion status
+- [ ] Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues) updated if new issues found
 
 **Once all checks pass:** Proceed to Phase 2D with multi-jurisdiction support in place.
 
@@ -811,13 +809,13 @@ Phase 3+: Later phases (depend on Phase 2)
 
 > "⚠️ WARNING: Phase 2D has started but Expansion Window 1 (4 new jurisdictions) is not complete.
 >
-> According to feature_delivery_plan_v2.md, all 4 jurisdictions (Hong Kong, New Zealand, Seattle, Toronto) should be added BEFORE Phase 2D starts.
+> According to all_steps_to_product_completion.md, all 4 jurisdictions (Hong Kong, New Zealand, Seattle, Toronto) should be added BEFORE Phase 2D starts.
 >
 > **Risk:** Phase 2D-6 code will be built with Singapore-only assumptions, requiring 6-12 months refactoring later.
 >
 > **Recommendation:** Pause Phase 2D and complete Expansion Window 1 first (5-6 weeks).
 >
-> See docs/feature_delivery_plan_v2.md section 'JURISDICTION EXPANSION WINDOWS' for full rationale."
+> See docs/all_steps_to_product_completion.md section 'JURISDICTION EXPANSION WINDOWS' for full rationale."
 
 **Don't proceed with Phase 2D** until user explicitly confirms to skip expansion or complete it.
 
@@ -831,7 +829,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 **For Claude:** [`docs/jurisdiction_expansion_playbook.md`](jurisdiction_expansion_playbook.md) → Section 5 "Claude Workflow"
 
-**For Strategy/Rationale:** [`docs/feature_delivery_plan_v2.md`](docs/feature_delivery_plan_v2.md) → Section "JURISDICTION EXPANSION WINDOWS"
+**For Strategy/Rationale:** [`docs/all_steps_to_product_completion.md`](docs/all_steps_to_product_completion.md) → Section "JURISDICTION EXPANSION WINDOWS"
 
 ---
 
@@ -845,8 +843,8 @@ Phase 3+: Later phases (depend on Phase 2)
 - ✅ Validation results change priorities
 
 ### DON'T ASK when:
-- ❌ Status is clear in feature_delivery_plan_v2.md
-- ❌ Test failure is in TESTING_KNOWN_ISSUES.md
+- ❌ Status is clear in all_steps_to_product_completion.md
+- ❌ Test failure is in Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues)
 - ❌ Coding pattern exists in codebase
 - ❌ Answer is in FEATURES.md or CODING_RULES.md
 
@@ -858,7 +856,7 @@ Phase 3+: Later phases (depend on Phase 2)
 
 ### When You Complete a Phase:
 
-**1. Update feature_delivery_plan_v2.md (Required)**
+**1. Update all_steps_to_product_completion.md (Required)**
 - Change ❌ NOT STARTED → ✅ COMPLETE
 - Add completion date
 - Add test status
@@ -866,9 +864,9 @@ Phase 3+: Later phases (depend on Phase 2)
 
 **2. Do NOT Update This File**
 - This file is a guide, not a status tracker
-- Status lives in feature_delivery_plan_v2.md only
+- Status lives in all_steps_to_product_completion.md only
 
-**3. Update TESTING_KNOWN_ISSUES.md (If Applicable)**
+**3. Update Known Testing Issues section (docs/all_steps_to_product_completion.md#-known-testing-issues) (If Applicable)**
 - Add new issues to "Active Issues"
 - Move resolved issues to "Resolved Issues"
 - Follow the workflow in that document
@@ -879,11 +877,11 @@ Phase 3+: Later phases (depend on Phase 2)
 
 | Question | Answer |
 |----------|--------|
-| **"What's the current status?"** | [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) — see "📊 Current Progress Snapshot" |
+| **"What's the current status?"** | [all_steps_to_product_completion.md](all_steps_to_product_completion.md) — see "📊 Current Progress Snapshot" |
 | **"What should I build next?"** | Use decision tree above |
 | **"Phase 2C is done - what's next?"** | 🛑 STOP - Do Expansion Window 1 (add 4 jurisdictions) BEFORE Phase 2D |
 | **"How do I add a jurisdiction?"** | [jurisdiction_expansion_playbook.md](jurisdiction_expansion_playbook.md) |
-| **"Are there known test issues?"** | [Testing Known Issues](../development/testing/known-issues.md) |
+| **"Are there known test issues?"** | [Testing Known Issues](../all_steps_to_product_completion.md#-known-testing-issues) |
 | **"What are the requirements?"** | [FEATURES.md](../FEATURES.md) + phase section in delivery plan |
 | **"How should I write code?"** | [CODING_RULES.md](../CODING_RULES.md) |
 | **"How do I update docs?"** | See "Update Workflow" above |
@@ -898,7 +896,7 @@ Before saying "I'm done with Phase X":
 - [ ] ✅ Backend tests written and passing
 - [ ] ✅ Frontend tests written (even if timing issues exist)
 - [ ] ✅ Code follows CODING_RULES.md
-- [ ] ✅ feature_delivery_plan_v2.md updated (status → ✅ COMPLETE)
+- [ ] ✅ all_steps_to_product_completion.md updated (status → ✅ COMPLETE)
 - [ ] ✅ Commit message describes what was delivered
 - [ ] ✅ Known issues documented (if any)
 
@@ -906,6 +904,6 @@ Before saying "I'm done with Phase X":
 
 ## 🚀 Ready to Start?
 
-**Go to:** the "📊 Current Progress Snapshot" section in [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
+**Go to:** the "📊 Current Progress Snapshot" section in [all_steps_to_product_completion.md](all_steps_to_product_completion.md)
 
 Find your next task and start building! 💪

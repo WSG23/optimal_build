@@ -1,10 +1,10 @@
 # Optimal Build Strategic Roadmap
 
-**Purpose:** High-level strategic phases, gate criteria, and business outcomes for Optimal Build. This file replaces `docs/feature_delivery_plan_v2.md` as the stakeholder-facing source of truth.
+**Purpose:** High-level strategic phases, gate criteria, and business outcomes for Optimal Build. This file replaces `docs/all_steps_to_product_completion.md` as the stakeholder-facing source of truth.
 
 **Primary Audience:** Product managers, stakeholders, onboarding engineers.
 
-**Update Cadence:** Review monthly or whenever a phase status changes. For daily execution updates, see [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD).
+**Update Cadence:** Review monthly or whenever a phase status changes. For daily execution updates, see [`docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work`]([Unified Execution Backlog](../../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)).
 
 ---
 
@@ -21,7 +21,7 @@
 | Phase 2C | Finance automation v2 (lending + cash flow) | ✅ COMPLETE |
 | Phase 2D | Infrastructure resilience, audit & launch-readiness sprint | ❌ NOT STARTED |
 
-> **Implementation detail:** Tactical task ordering, assignments, and acceptance criteria live in [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD).
+> **Implementation detail:** Tactical task ordering, assignments, and acceptance criteria live in [`docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work`]([Unified Execution Backlog](../../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)).
 
 ---
 
@@ -91,6 +91,6 @@ Scripts such as `scripts/check_phase_gate.py` rely on these exact checklist labe
 
 1. **Stakeholders:** Review the phase overview table and milestone list to understand strategic positioning.
 2. **Product & Delivery Leads:** Update status rows when a phase materially progresses or completes.
-3. **AI Agents & Developers:** Before coding, check [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD) for actionable tasks, then reflect status changes here.
+3. **AI Agents & Developers:** Before coding, check [`docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work`]([Unified Execution Backlog](../../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)) for actionable tasks, then reflect status changes here.
 
 For historical context and detailed execution logs, see the archived roadmap in [`docs/archive/FEATURE_DELIVERY_PLAN_V2.MD`](archive/FEATURE_DELIVERY_PLAN_V2.MD).

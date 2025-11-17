@@ -1,6 +1,6 @@
 # ✅ Live Testing Guide - Finance & Intelligence Pages
 
-> Need the broader feature plan or next development step? See `docs/feature_delivery_plan_v2.md` for strategic context and `docs/WORK_QUEUE.MD` for the current execution order.
+> Need the broader feature plan or next development step? See `docs/all_steps_to_product_completion.md` for strategic context and its [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) for the current execution order.
 
 ## 🎯 You should now have http://localhost:4400/#/finance open
 

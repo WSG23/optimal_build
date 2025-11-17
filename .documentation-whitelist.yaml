@@ -4,7 +4,7 @@
 #
 # POLICY: After documentation consolidation, AI agents MUST NOT create new
 # documentation files without explicit user approval. All new documentation
-# should be added to existing files (feature_delivery_plan_v2.md, WORK_QUEUE.MD).
+# should be added to existing files (all_steps_to_product_completion.md, WORK_QUEUE.MD).
 #
 # To add a new documentation file:
 # 1. Get explicit user approval
@@ -15,7 +15,7 @@
 # Core documentation (single sources of truth)
 allowed_files:
   # Strategic planning
-  - docs/feature_delivery_plan_v2.md
+  - docs/all_steps_to_product_completion.md
   - docs/WORK_QUEUE.MD
 
   # Agent decision guides
@@ -84,7 +84,7 @@ enforcement:
     explicit user approval to prevent documentation sprawl.
 
     INSTEAD OF creating new files:
-    1. Add content to docs/feature_delivery_plan_v2.md (strategic)
+    1. Add content to docs/all_steps_to_product_completion.md (strategic)
     2. Add content to docs/WORK_QUEUE.MD (execution tracking)
     3. Add content to existing relevant documentation
 

@@ -117,7 +117,7 @@ Read these documents IN ORDER before writing any code:
    - Defines user roles and requirements
    - ~30 min read
 
-2. **[docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md)** - Delivery roadmap
+2. **[docs/all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md)** - Delivery roadmap
    - Maps 100% of features into 6 phases
    - Shows dependencies and priorities
    - Check BEFORE starting new work
@@ -144,14 +144,14 @@ Read these documents IN ORDER before writing any code:
 ### Priority 3: Context Documents (REFERENCE)
 6. **[README.md](README.md)** - Project overview
 7. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
-8. **[docs/development/testing/known-issues.md](docs/development/testing/known-issues.md)** - Known test failures
+8. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
 9. **[docs/development/testing/summary.md](docs/development/testing/summary.md)** - Test suites
 
 ### Verification Checkpoint
 
 Before proceeding, confirm:
 - [ ] I have read features.md completely
-- [ ] I have reviewed feature_delivery_plan_v2.md for the current phase
+- [ ] I have reviewed all_steps_to_product_completion.md for the current phase
 - [ ] I have checked next_steps.md for priorities
 - [ ] I have read CODING_RULES.md sections relevant to my task
 - [ ] I understand which phase I'm working in
@@ -198,9 +198,9 @@ make validate-delivery-plan
    ```
 
 2. **Review relevant documentation:**
-   - Check feature_delivery_plan_v2.md for your phase
+   - Check all_steps_to_product_completion.md for your phase
    - Review next_steps.md for current priorities
-   - Check known-issues.md for test limitations
+   - Review the Known Testing Issues section in `docs/all_steps_to_product_completion.md`
 
 3. **Plan your changes:**
    - Identify files to modify
@@ -888,7 +888,7 @@ cd frontend && npm run lint
 
 ## Troubleshooting Common Issues
 
-This section helps AI agents quickly diagnose and fix common issues without reinventing solutions. Before reporting a bug, check if it's a known issue documented in [docs/development/testing/known-issues.md](docs/development/testing/known-issues.md).
+This section helps AI agents quickly diagnose and fix common issues without reinventing solutions. Before reporting a bug, check if it's a known issue documented in [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues).
 
 ### Pre-Commit Hook Failures
 
@@ -921,7 +921,7 @@ This section helps AI agents quickly diagnose and fix common issues without rein
    ```
 
    **Solution:**
-   - Update docs/feature_delivery_plan_v2.md to reflect actual status
+   - Update docs/all_steps_to_product_completion.md to reflect actual status
    - Mark phase as "⚠️ IN PROGRESS" until all items complete
    - Or complete remaining items before marking phase COMPLETE
    - See [Phase Gate Compliance](#phase-gate-compliance) section
@@ -1081,13 +1081,13 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Known Issues:**
 
 1. **React Testing Library async timing issues:**
-   - Check [docs/development/testing/known-issues.md](docs/development/testing/known-issues.md#frontend-react-testing-library-async-timing)
+   - Check [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#frontend-react-testing-library-async-timing)
    - These are JSDOM environment issues, NOT application bugs
    - Application code works correctly in browser
    - Solution: Manual testing in browser + backend test coverage
 
 2. **JSDOM environment setup issues:**
-   - Check [docs/development/testing/known-issues.md](docs/development/testing/known-issues.md#frontend-nodejs-test-runner-jsdom-environment-setup-issues)
+   - Check [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#frontend-nodejs-test-runner-jsdom-environment-setup-issues)
    - 10 out of 26 tests fail due to JSDOM setup
    - These failures don't indicate broken functionality
    - Solution: Run backend tests + manual UI testing
@@ -1142,7 +1142,7 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Root Cause:** WeasyPrint requires system libraries (Cairo, Pango, GDK-Pixbuf) not available in all environments
 
 **Check Known Issues:**
-- See [docs/development/testing/known-issues.md](docs/development/testing/known-issues.md#pdf-rendering-dependencies-absent-in-sandbox)
+- See [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#pdf-rendering-dependencies-absent-in-sandbox)
 - This is an **environment limitation**, not an application bug
 
 **Solutions:**
@@ -1271,7 +1271,7 @@ op.create_index('ix_scenarios_project_id', 'scenarios', ['project_id'])
 
 ### Rule 12: Phase Completion Gates
 
-**Before marking ANY phase "✅ COMPLETE" in feature_delivery_plan_v2.md:**
+**Before marking ANY phase "✅ COMPLETE" in all_steps_to_product_completion.md:**
 
 1. **Check for incomplete items:**
    - Search for `- [ ]` (unchecked) → Must be ZERO
@@ -1512,7 +1512,7 @@ git commit -m "Add finance scenario privacy feature"
 4. **Document when tests are deferred**
    - If test coverage is temporarily lower, explain why in commit message
    - Create follow-up task to add missing tests
-   - Update `docs/development/testing/known-issues.md` if applicable
+   - Update `docs/all_steps_to_product_completion.md#-known-testing-issues` if applicable
 
 5. **Checkpoint before large changes**
    - If `make verify` will take >5 minutes, ask user if you should proceed
@@ -1593,7 +1593,7 @@ make format
 # Fix: Use sa.String() instead of sa.Enum()
 
 # Phase gate violation
-# Fix: Update feature_delivery_plan_v2.md to reflect actual status
+# Fix: Update all_steps_to_product_completion.md to reflect actual status
 ```
 
 **3. Re-run verification:**
@@ -1612,7 +1612,7 @@ make hooks
 **1. Check known issues:**
 ```bash
 # Review known test failures
-cat docs/development/testing/known-issues.md
+cat docs/all_steps_to_product_completion.md#-known-testing-issues
 ```
 
 **2. Run specific test:**
@@ -1627,7 +1627,7 @@ pytest backend/tests/ -v --tb=short
 
 **4. Frontend test issues:**
 - JSDOM timing issues are documented
-- Check docs/development/testing/known-issues.md
+- Check docs/all_steps_to_product_completion.md#-known-testing-issues
 - May need to adjust test timeouts
 
 ### If Make Verify Fails
@@ -1681,7 +1681,7 @@ make stop
 
 - **CODING_RULES.md** - 12 technical rules (MUST follow)
 - **CONTRIBUTING.md** - Workflow and tooling
-- **docs/feature_delivery_plan_v2.md** - Roadmap and phases
+- **docs/all_steps_to_product_completion.md** - Roadmap and phases
 - **docs/ai-agents/next_steps.md** - Current priorities
 - **.pre-commit-config.yaml** - Pre-commit hook configuration
 - **.coding-rules-exceptions.yml** - Documented rule exceptions
@@ -1703,7 +1703,7 @@ make stop
 
 **If you need help:**
 - Review CODING_RULES.md for specific rule guidance
-- Check docs/development/testing/known-issues.md for test issues
+- Check docs/all_steps_to_product_completion.md#-known-testing-issues for test issues
 - Ask user for clarification if requirements unclear
 
 **If documentation is unclear:**

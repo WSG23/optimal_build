@@ -187,4 +187,4 @@ annotations:
 
 1. Import the PromQL panels into the central Grafana instance (phase owner: Platform SRE).
 2. Create alertmanager routes for `preview_generation_*` alert groups.
-3. Update `docs/WORK_QUEUE.MD` once dashboards are live and linked.
+3. Update the [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) once dashboards are live and linked.

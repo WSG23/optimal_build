@@ -13,8 +13,8 @@ That file provides the exact sequence for AI agents and developers to onboard ef
 This is a comprehensive index of all documentation in the `docs/` directory.
 
 ### Core Planning Documents:
-- [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) - Complete roadmap and current status
-- [WORK_QUEUE.MD](WORK_QUEUE.MD) - Tactical task list and technical debt actions
+- [all_steps_to_product_completion.md](all_steps_to_product_completion.md) - Complete roadmap and current status
+- [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) - Tactical task list and technical debt actions
 - [ai-agents/next_steps.md](ai-agents/next_steps.md) - What to build next
 - [handoff_playbook.md](handoff_playbook.md) - Session handoff guide
 
@@ -24,7 +24,7 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 - [demos/agents_capture_demo.md](demos/agents_capture_demo.md) - Demo script
 
 ### Testing & Quality:
-- [development/testing/known-issues.md](development/testing/known-issues.md) - **Known test harness issues** (critical for AI agents)
+- [all_steps_to_product_completion.md#-known-testing-issues](all_steps_to_product_completion.md#-known-testing-issues) - **Known test harness issues** (critical for AI agents)
 - [development/testing/summary.md](development/testing/summary.md) - Overview of testing workflows
 - [development/testing/advisory.md](development/testing/advisory.md) - Phase 1B testing guide
 
@@ -50,13 +50,13 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 ## 🎯 Quick Decision Tree
 
 **Question:** "What should I build next?"
-→ Check [WORK_QUEUE.MD](WORK_QUEUE.MD) for Active/Ready tasks, then confirm context in [ai-agents/next_steps.md](ai-agents/next_steps.md)
+→ Check [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) for Active/Ready tasks, then confirm context in [ai-agents/next_steps.md](ai-agents/next_steps.md)
 
 **Question:** "Is this feature in scope?"
 → Check [planning/features.md](planning/features.md)
 
 **Question:** "What phase are we in?"
-→ Check [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md)
+→ Check [all_steps_to_product_completion.md](all_steps_to_product_completion.md)
 
 **Question:** "How do I write this code?"
 → Check [CODING_RULES.md](../CODING_RULES.md)
@@ -65,7 +65,7 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 → Check feature-specific guides in `agents/` or `frontend/`
 
 **Question:** "Test is failing - is this a known issue?"
-→ Check [development/testing/known-issues.md](development/testing/known-issues.md)
+→ Check [all_steps_to_product_completion.md#-known-testing-issues](all_steps_to_product_completion.md#-known-testing-issues)
 
 **Question:** "I fixed a test issue - how do I update docs?"
 → Check [development/testing/summary.md](development/testing/summary.md)
@@ -83,24 +83,24 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 
 ### ✅ DO:
 - Always check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md before starting
-- Follow the phase order in feature_delivery_plan_v2.md
+- Follow the phase order in all_steps_to_product_completion.md
 - Get validation feedback between phases
-- Update progress in feature_delivery_plan_v2.md and WORK_QUEUE.MD as you go
+- Update progress in all_steps_to_product_completion.md and [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) as you go
 - Ask questions if requirements are unclear
 
 ---
 
 ## 📊 Current Project Status
 
-See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for the latest status snapshot and [WORK_QUEUE.MD](WORK_QUEUE.MD) for current execution priorities.
+See [all_steps_to_product_completion.md](all_steps_to_product_completion.md) for the latest status snapshot and [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) for current execution priorities.
 
 ---
 
 ## 🤝 Getting Help
 
-**For strategic questions:** Review `planning/features.md` and `feature_delivery_plan_v2.md`
+**For strategic questions:** Review `planning/features.md` and `all_steps_to_product_completion.md`
 **For technical questions:** Check CODING_RULES.md and existing code
-**For priority questions:** Check WORK_QUEUE.MD and NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
+**For priority questions:** Check [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) and NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
 **For user questions:** Check feature-specific guides
 
 **Still unclear?** Ask the project owner before proceeding.
@@ -110,8 +110,8 @@ See [feature_delivery_plan_v2.md](feature_delivery_plan_v2.md) for the latest st
 ## 🔄 Keeping Documentation Current
 
 **After completing a feature:**
-1. Update `WORK_QUEUE.MD` (move item, add commits, document follow-ups)
-2. Update status in `feature_delivery_plan_v2.md` (❌ → ✅)
+1. Update `[Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)` (move item, add commits, document follow-ups)
+2. Update status in `all_steps_to_product_completion.md` (❌ → ✅)
 3. Update `NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` with new priorities
 4. Add user guide if customer-facing feature
 5. Update this README if major milestone reached

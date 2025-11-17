@@ -90,10 +90,10 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 - ❌ Deal insights panel (timeline, audit metadata)
 - ❌ Analytics panel (KPI cards, trend charts, benchmarks)
 - ❌ ROI panel (project-level ROI tracking)
-- ❌ Manual QA checklist (8 items in feature_delivery_plan_v2.md lines 351-363)
+- ❌ Manual QA checklist (8 items in all_steps_to_product_completion.md lines 351-363)
 
 **Documentation:**
-- Requirements: [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 274-392
+- Requirements: [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) lines 274-392
 - UI specs: Lines 315-343 (primary persona: Agent Team Leads)
 - API endpoints: Lines 330 (deals, timeline, commissions, performance)
 
@@ -133,7 +133,7 @@ Pattern: Month 0-12 works fine → Month 13-18 adding features breaks things →
 - ❌ WebGL 2 detection with graceful fallback
 
 **Documentation:**
-- Requirements: [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) lines 455-508
+- Requirements: [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) lines 455-508
 - Detailed plan: [docs/PHASE2B_VISUALISATION_STUB.MD](docs/PHASE2B_VISUALISATION_STUB.MD)
 
 **After Infrastructure Audit completes:**

@@ -434,10 +434,10 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
     errors: list[str] = []
 
     guidance_file = repo_root / "docs" / "ai-agents" / "next_steps.md"
-    work_queue_file = repo_root / "docs" / "WORK_QUEUE.MD"
+    backlog_file = repo_root / "docs" / "all_steps_to_product_completion.md"
 
     required_refs = [
-        "development/testing/known-issues.md",
+        "all_steps_to_product_completion.md#-known-testing-issues",
         "planning/ui-status.md",
         "development/testing/summary.md",
         "README.md",
@@ -462,9 +462,9 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
             return ""
 
     guidance_content = _read(guidance_file)
-    work_queue_content = _read(work_queue_file)
+    backlog_content = _read(backlog_file)
 
-    if not guidance_content or not work_queue_content:
+    if not guidance_content or not backlog_content:
         return len(errors) == 0, errors
 
     # Check for file references
@@ -476,9 +476,10 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
                 "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
                 "  -> See CODING_RULES.md section 8.2"
             )
-        if ref not in work_queue_content:
+        if ref not in backlog_content:
             errors.append(
-                "RULE VIOLATION: docs/WORK_QUEUE.MD must reference "
+                "RULE VIOLATION: docs/all_steps_to_product_completion.md "
+                "must reference "
                 f"'{ref}' within relevant phase guidance.\n"
                 "  -> Rule 8.2: AI agents must read canonical testing guides.\n"
                 "  -> See CODING_RULES.md section 8.2"
@@ -486,7 +487,7 @@ def check_ai_guidance_references(repo_root: Path) -> tuple[bool, list[str]]:
 
     # NEW: Check for required content sections (Rule 8.1)
     for section, doc_path in required_content_sections:
-        content = guidance_content if "next_steps" in doc_path else work_queue_content
+        content = guidance_content if "next_steps" in doc_path else backlog_content
         if section not in content:
             errors.append(
                 f"RULE VIOLATION: {doc_path} must contain '{section}' section.\n"
@@ -502,19 +503,19 @@ def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
     """Ensure the work queue retains task tracking sections (Rule 12)."""
 
     errors: list[str] = []
-    work_queue_file = repo_root / "docs" / "WORK_QUEUE.MD"
+    backlog_file = repo_root / "docs" / "all_steps_to_product_completion.md"
 
-    if not work_queue_file.exists():
+    if not backlog_file.exists():
         errors.append(
-            "RULE VIOLATION: docs/WORK_QUEUE.MD is required for task tracking.\n"
-            "  -> Restore the work queue file before proceeding."
+            "RULE VIOLATION: docs/all_steps_to_product_completion.md is missing.\n"
+            "  -> Restore the consolidated roadmap/backlog file before proceeding."
         )
         return False, errors
 
     try:
-        content = work_queue_file.read_text(encoding="utf-8")
+        content = backlog_file.read_text(encoding="utf-8")
     except OSError as exc:
-        errors.append(f"RULE VIOLATION: Unable to read {work_queue_file}\n  -> {exc}")
+        errors.append(f"RULE VIOLATION: Unable to read {backlog_file}\n  -> {exc}")
         return False, errors
 
     required_markers = [
@@ -525,7 +526,7 @@ def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
     for marker in required_markers:
         if marker not in content:
             errors.append(
-                "RULE VIOLATION: docs/WORK_QUEUE.MD must include task tracking sections.\n"
+                "RULE VIOLATION: Unified backlog must include task tracking sections.\n"
                 f"  -> Missing section marker: '{marker}'\n"
                 "  -> Reinstate the sections so task tracking remains active."
             )
@@ -649,8 +650,8 @@ def check_phase_completion_gates(repo_root: Path) -> tuple[bool, list[str]]:
                                 f"but QA checklist 'Next Steps' section not completed.\n"
                                 f"  -> File: {qa_checklist_file}\n"
                                 f"  -> No checkboxes marked [x] in 'Next Steps' section\n"
-                                f"  -> Required: Check boxes for WORK_QUEUE.MD and "
-                                f"feature_delivery_plan_v2.md updates\n"
+                                f"  -> Required: Check boxes for backlog + roadmap updates "
+                                f"in docs/all_steps_to_product_completion.md\n"
                                 f"  -> Rule 12.4: Complete the QA checklist workflow\n"
                                 f"  -> See CODING_RULES.md section 12.4"
                             )

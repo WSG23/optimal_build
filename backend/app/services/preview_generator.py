@@ -6,8 +6,9 @@ import json
 import math
 import struct
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
@@ -36,6 +37,8 @@ _PODIUM_MAX_HEIGHT_M = 6.0
 _SETBACK_THRESHOLD_M = 60.0
 _MIN_EFFECTIVE_HEIGHT_M = 3.0
 
+NumberLike = float | int | Decimal | str
+
 
 def normalise_geometry_detail_level(value: str | None) -> str:
     """Return a supported geometry detail level."""
@@ -46,6 +49,134 @@ def normalise_geometry_detail_level(value: str | None) -> str:
     if candidate in SUPPORTED_GEOMETRY_DETAIL_LEVELS:
         return candidate
     return DEFAULT_GEOMETRY_DETAIL_LEVEL
+
+
+def _coerce_float(
+    value: object | None, *, default: float | None = None
+) -> float | None:
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, str):
+        trimmed = value.strip()
+        if not trimmed:
+            return default
+        try:
+            return float(trimmed)
+        except ValueError:
+            return default
+    return default
+
+
+def _coerce_str(value: object | None, *, default: str | None = None) -> str | None:
+    if value is None:
+        return default
+    if isinstance(value, str):
+        trimmed = value.strip()
+        return trimmed if trimmed else default
+    return str(value)
+
+
+@dataclass(slots=True)
+class MassingLayerInput:
+    """Normalised massing layer payload."""
+
+    identifier: str
+    asset_type: str
+    name: str
+    color: str | None
+    allocation_pct: float | None
+    gfa_sqm: float
+    nia_sqm: float | None
+    estimated_height_m: float
+    estimated_floors: float | None
+
+    @classmethod
+    def from_mapping(
+        cls,
+        payload: Mapping[str, object],
+        *,
+        index: int,
+    ) -> "MassingLayerInput":
+        asset_type = _coerce_str(payload.get("asset_type"), default=f"layer-{index}")
+        assert asset_type is not None  # for type checkers
+        identifier = _coerce_str(payload.get("id"), default=asset_type) or asset_type
+        default_name = payload.get("name") or asset_type or f"Layer {index}"
+        name = _coerce_str(default_name, default=f"Layer {index}") or f"Layer {index}"
+
+        gfa = (
+            _coerce_float(payload.get("gfa_sqm"))
+            or _coerce_float(payload.get("nia_sqm"))
+            or _coerce_float(payload.get("floor_area_sqm"))
+            or 100.0
+        )
+        gfa = gfa if gfa and gfa > 0 else 100.0
+
+        estimated_height = _coerce_float(payload.get("estimated_height_m"))
+        fallback_height = _coerce_float(payload.get("height"), default=0.0) or 0.0
+        height_value = (
+            estimated_height if estimated_height is not None else fallback_height
+        )
+
+        return cls(
+            identifier=identifier,
+            asset_type=asset_type,
+            name=name,
+            color=_coerce_str(payload.get("color")),
+            allocation_pct=_coerce_float(payload.get("allocation_pct")),
+            gfa_sqm=gfa,
+            nia_sqm=_coerce_float(payload.get("nia_sqm")),
+            estimated_height_m=height_value,
+            estimated_floors=_coerce_float(payload.get("estimated_floors")),
+        )
+
+
+@dataclass(slots=True)
+class ColorLegendEntry:
+    """Normalised legend entry used for payload + UI."""
+
+    asset_type: str
+    label: str | None = None
+    color: str | None = None
+    description: str | None = None
+
+    @classmethod
+    def from_mapping(cls, payload: Mapping[str, object]) -> "ColorLegendEntry":
+        asset_type = _coerce_str(payload.get("asset_type"))
+        if not asset_type:
+            raise ValueError("Legend entry missing asset_type")
+        return cls(
+            asset_type=asset_type,
+            label=_coerce_str(payload.get("label")),
+            color=_coerce_str(payload.get("color")),
+            description=_coerce_str(payload.get("description")),
+        )
+
+    def to_payload(self) -> dict[str, object]:
+        data: dict[str, object] = {"asset_type": self.asset_type}
+        if self.label:
+            data["label"] = self.label
+        if self.color:
+            data["color"] = self.color
+        if self.description:
+            data["description"] = self.description
+        return data
+
+
+def _normalise_payload(entry: Mapping[str, object] | Any) -> dict[str, object]:
+    """Convert model/Mapping inputs into plain dictionaries."""
+
+    if isinstance(entry, dict):
+        return dict(entry)
+    if isinstance(entry, Mapping):
+        return dict(entry.items())
+    model_dump = getattr(entry, "model_dump", None)
+    if callable(model_dump):
+        return dict(model_dump())
+    raise TypeError("Preview payload entries must be mapping-compatible")
 
 
 @dataclass(slots=True, frozen=True)
@@ -257,18 +388,13 @@ def _build_medium_geometry(
 
 
 def _serialise_layer(
-    layer: Mapping[str, object],
+    layer: MassingLayerInput,
     *,
-    index: int,
     base_elevation: float = 0.0,
     detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
 ) -> tuple[dict[str, object], list[tuple[float, float, float]], float]:
-    raw = dict(layer)
-    name = str(raw.get("name") or raw.get("asset_type") or f"Layer {index}")
-    requested_height = float(raw.get("estimated_height_m") or raw.get("height") or 0.0)
-    gfa = float(
-        raw.get("gfa_sqm") or raw.get("nia_sqm") or raw.get("floor_area_sqm") or 100.0
-    )
+    requested_height = layer.estimated_height_m
+    gfa = layer.gfa_sqm
 
     preview_height = max(requested_height, 0.0)
     normalised_level = normalise_geometry_detail_level(detail_level)
@@ -287,15 +413,15 @@ def _serialise_layer(
         )
 
     serialised = {
-        "id": raw.get("id") or raw.get("asset_type") or f"layer-{index}",
-        "name": name,
-        "color": raw.get("color"),
+        "id": layer.identifier,
+        "name": layer.name,
+        "color": layer.color,
         "metrics": {
-            "allocation_pct": raw.get("allocation_pct"),
+            "allocation_pct": layer.allocation_pct,
             "gfa_sqm": gfa,
-            "nia_sqm": raw.get("nia_sqm"),
+            "nia_sqm": layer.nia_sqm,
             "estimated_height_m": requested_height,
-            "estimated_floors": raw.get("estimated_floors"),
+            "estimated_floors": layer.estimated_floors,
         },
         "geometry": geometry,
     }
@@ -928,10 +1054,10 @@ def _write_thumbnail(
 
 def build_preview_payload(
     property_id: UUID,
-    massing_layers: Iterable[Mapping[str, object]],
+    massing_layers: Iterable[Mapping[str, object] | Any],
     *,
     geometry_detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
-    color_legend: Iterable[Mapping[str, object]] | None = None,
+    color_legend: Iterable[Mapping[str, object] | Any] | None = None,
 ) -> dict[str, object]:
     """Generate a structured preview payload from massing layer metadata.
 
@@ -942,16 +1068,19 @@ def build_preview_payload(
     # Build lookup maps from the color legend (asset_type -> color/label)
     color_map: dict[str, str] = {}
     label_map: dict[str, str] = {}
+    legend_entries: list[ColorLegendEntry] = []
     if color_legend is not None:
         for entry in color_legend:
-            asset_type = entry.get("asset_type")
-            color = entry.get("color")
-            label = entry.get("label")
-            if isinstance(asset_type, str):
-                if isinstance(color, str):
-                    color_map[asset_type] = color
-                if isinstance(label, str) and label.strip():
-                    label_map[asset_type] = label
+            try:
+                payload = _normalise_payload(entry)
+                legend_entry = ColorLegendEntry.from_mapping(payload)
+            except (TypeError, ValueError):
+                continue
+            legend_entries.append(legend_entry)
+            if legend_entry.color:
+                color_map[legend_entry.asset_type] = legend_entry.color
+            if legend_entry.label:
+                label_map[legend_entry.asset_type] = legend_entry.label
 
     serialised_layers: list[dict[str, object]] = []
     all_vertices: list[tuple[float, float, float]] = []
@@ -959,18 +1088,18 @@ def build_preview_payload(
     detail_level = normalise_geometry_detail_level(geometry_detail_level)
 
     for idx, layer in enumerate(massing_layers, start=1):
-        # Apply color and label from legend if available
-        layer_dict = dict(layer)
-        asset_type = layer_dict.get("asset_type")
-        if isinstance(asset_type, str):
-            if asset_type in color_map:
-                layer_dict["color"] = color_map[asset_type]
-            if asset_type in label_map:
-                layer_dict["name"] = label_map[asset_type]
-        layer = layer_dict
+        try:
+            layer_payload = _normalise_payload(layer)
+        except TypeError:
+            continue
+        layer_input = MassingLayerInput.from_mapping(layer_payload, index=idx)
+        if layer_input.asset_type in color_map:
+            layer_input.color = color_map[layer_input.asset_type]
+        if layer_input.asset_type in label_map:
+            layer_input.name = label_map[layer_input.asset_type]
+
         serialised, vertices, preview_height = _serialise_layer(
-            layer,
-            index=idx,
+            layer_input,
             base_elevation=current_elevation,
             detail_level=detail_level,
         )
@@ -983,10 +1112,7 @@ def build_preview_payload(
         raise ValueError("Preview payload requires at least one massing layer")
 
     bounds = _calculate_bounds(all_vertices)
-    legend_payload: list[dict[str, object]] = []
-    if color_legend is not None:
-        for entry in color_legend:
-            legend_payload.append(dict(entry))
+    legend_payload = [entry.to_payload() for entry in legend_entries]
 
     payload = {
         "schema_version": "1.0",
@@ -1005,10 +1131,10 @@ def build_preview_payload(
 def ensure_preview_asset(
     property_id: UUID,
     job_id: UUID,
-    massing_layers: Iterable[Mapping[str, object]],
+    massing_layers: Iterable[Mapping[str, object] | Any],
     *,
     geometry_detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
-    color_legend: Iterable[Mapping[str, object]] | None = None,
+    color_legend: Iterable[Mapping[str, object] | Any] | None = None,
 ) -> PreviewAssets:
     """Persist preview artefacts for a property and return accessible URLs."""
 

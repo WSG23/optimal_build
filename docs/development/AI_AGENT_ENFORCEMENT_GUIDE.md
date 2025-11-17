@@ -13,7 +13,7 @@ As a solo founder with AI agents building your product, you face a critical chal
 
 ### Real Example: Phase 1D Manual QA (Nov 2025)
 
-- **Nov 1:** Phase 1D marked `✅ COMPLETE` in [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md)
+- **Nov 1:** Phase 1D marked `✅ COMPLETE` in [all_steps_to_product_completion.md](../all_steps_to_product_completion.md)
 - **Nov 2:** Manual QA checklist executed (4/12 tests passed)
 - **Nov 2:** Work moved to next phase (Phase 2B)
 - **Problem:** Checklist status never updated from `READY FOR QA` to `COMPLETED`
@@ -60,8 +60,8 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but QA checklist status incomplet
 3. **After QA execution (CRITICAL - AI agents often skip this):**
    - a. Update checklist status header to `✅ QA COMPLETE (YYYY-MM-DD)`
    - b. Complete "Next Steps" section (check relevant boxes)
-   - c. Update WORK_QUEUE.MD (move to Completed section)
-   - d. Update [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md) (verify phase marked COMPLETE)
+   - c. Update [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) (move to Completed section)
+   - d. Update [all_steps_to_product_completion.md](../all_steps_to_product_completion.md) (verify phase marked COMPLETE)
    - e. Git commit with message referencing QA completion
 
 **Why this works:**
@@ -71,13 +71,13 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but QA checklist status incomplet
 
 ### Layer 3: Work Queue Checklist (Task Tracking)
 
-**File:** `docs/WORK_QUEUE.MD`
+**File:** `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work`
 **Section:** "Operating Instructions for AI Agents" (lines 77-86)
 
 **Instructions for AI agents:**
 
 - After completing work, move item to "Completed" section with completion date
-- Update [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md) only when phase status changes (e.g., READY → COMPLETE)
+- Update [all_steps_to_product_completion.md](../all_steps_to_product_completion.md) only when phase status changes (e.g., READY → COMPLETE)
 - For UI phases, execute manual UI walkthrough and include results before review
 
 ---
@@ -160,8 +160,8 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but QA checklist status incomplet
 ## 📝 Next Steps
 
 **If PASS:**
-- [x] Update WORK_QUEUE.MD - mark Phase 1D as QA complete
-- [x] Update [feature_delivery_plan_v2.md](../feature_delivery_plan_v2.md) Phase 1D gate checkbox
+- [x] Update [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) - mark Phase 1D as QA complete
+- [x] Update [all_steps_to_product_completion.md](../all_steps_to_product_completion.md) Phase 1D gate checkbox
 - [x] Archive this checklist with completion date
 ```
 
@@ -187,7 +187,7 @@ RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but QA checklist status incomplet
 | **MUST** | Status not "READY FOR QA" | Pre-commit hook | Every commit |
 | **MUST** | Next Steps addressed | Pre-commit hook | Every commit |
 | **SHOULD** | Follow step-by-step workflow | CODING_RULES.md guidance | AI agent reads at task start |
-| **SHOULD** | Update WORK_QUEUE.MD | WORK_QUEUE.MD instructions | AI agent reads during phase work |
+| **SHOULD** | Update [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) | [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) instructions | AI agent reads during phase work |
 
 ---
 

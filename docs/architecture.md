@@ -629,7 +629,7 @@ User (Developer Site Acquisition)
 - `backend/app/services/heritage_overlay` → `backend/app/utils/singapore_compliance`
 - `backend/app/services/preview_jobs` ↔ `backend/app/jobs_registry`
 
-**No circular imports detected.** If new circular references appear, record in WORK_QUEUE.MD with owners and remediation tasks.
+**No circular imports detected.** If new circular references appear, record in [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) with owners and remediation tasks.
 
 ---
 
@@ -789,8 +789,8 @@ jurisdictions/sg_bca/
 ### Development
 
 - [Testing Documentation](development/testing/summary.md) - Test suites and coverage
-- [Known Issues](development/testing/known-issues.md) - Test infrastructure issues
-- [WORK_QUEUE.MD](WORK_QUEUE.MD) - Active tasks and blockers
+- [Known Issues](all_steps_to_product_completion.md#-known-testing-issues) - Test infrastructure issues
+- [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) - Active tasks and blockers
 
 ---
 

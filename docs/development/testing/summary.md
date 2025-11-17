@@ -4,7 +4,7 @@ This file explains the testing documentation system for both humans and AI agent
 
 ## Key Documents
 
-### 1. [Testing Known Issues](known-issues.md)
+### 1. [Testing Known Issues](../../all_steps_to_product_completion.md#-known-testing-issues)
 Tracks test harness issues that are **not bugs** in the application code.
 
 **Purpose:**
@@ -49,12 +49,12 @@ Defines the required manual walkthrough for the developer preview harness before
 #### AI Agent discovers issue:
 1. 🤖 AI explains issue and proposes documenting it
 2. 👤 **Human decides**: "Document it" / "No, fix it" / "Document until Phase X"
-3. 🤖 AI adds to `known-issues.md`
+3. 🤖 AI adds to `../../all_steps_to_product_completion.md#-known-testing-issues`
 4. 🤖 AI adds code comments pointing to documentation
 5. 📝 AI notes "Documented by [name] on [date]"
 
 #### Human discovers issue:
-1. Add to `known-issues.md` "Active Issues" section
+1. Add to `../../all_steps_to_product_completion.md#-known-testing-issues` "Active Issues" section
 2. Add code comments in affected files
 3. Note discovery date
 4. OR ask AI agent to document it for you
@@ -75,7 +75,7 @@ Defines the required manual walkthrough for the developer preview harness before
 
 #### Human fixes issue:
 1. Fix the issue, verify tests pass
-2. Follow maintenance checklist in `known-issues.md`
+2. Follow maintenance checklist in `../../all_steps_to_product_completion.md#-known-testing-issues`
 3. OR ask AI agent to update documentation for you
 
 ---
@@ -109,7 +109,7 @@ AI: *changes working code*
 **With documentation:**
 ```
 User: "Run tests"
-AI: "Tests failing. Checking known-issues.md..."
+AI: "Tests failing. Checking ../../all_steps_to_product_completion.md#-known-testing-issues..."
 AI: "This is documented as known test harness timing issue.
      HTML dump shows page renders correctly. Feature works.
      Backend tests pass. Status: ✅ Feature complete, ⚠️ Test harness issue."
@@ -131,4 +131,4 @@ As of 2025-10-11:
    - Status: Fixed in Phase 1C
    - Solution: Use SQLite-compatible syntax in tests
 
-See [known-issues.md](known-issues.md) for full details.
+See [../../all_steps_to_product_completion.md#-known-testing-issues](../../all_steps_to_product_completion.md#-known-testing-issues) for full details.

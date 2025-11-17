@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate docs/feature_delivery_plan_v2.md and WORK_QUEUE.MD for required structure."""
+"""Validate docs/all_steps_to_product_completion.md for required structure."""
 
 from __future__ import annotations
 
@@ -7,8 +7,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-ROADMAP_PATH = REPO_ROOT / "docs" / "feature_delivery_plan_v2.md"
-WORK_QUEUE_PATH = REPO_ROOT / "docs" / "WORK_QUEUE.MD"
+ROADMAP_PATH = REPO_ROOT / "docs" / "all_steps_to_product_completion.md"
 
 
 def _read(path: Path) -> str:
@@ -24,7 +23,6 @@ def validate_roadmap(content: str) -> list[str]:
         "## 📊 Current Progress Snapshot",
         "### ✅ Phase Gate Checklist",
         "Phase 2D Gate:",
-        "docs/WORK_QUEUE.MD",
         "## 📋 PHASE 1:",
         "## 📋 PHASE 2:",
         "## 📋 PHASE 3:",
@@ -37,34 +35,42 @@ def validate_roadmap(content: str) -> list[str]:
     for snippet in required_snippets:
         if snippet not in content:
             errors.append(
-                "feature_delivery_plan_v2.md is missing required content:\n"
+                "all_steps_to_product_completion.md is missing required content:\n"
                 f"  -> '{snippet}'\n"
                 "  -> Restore this section to keep stakeholders aligned."
             )
 
-    return errors
-
-
-def validate_work_queue(content: str) -> list[str]:
-    errors: list[str] = []
-
-    required_snippets = [
-        "# Work Queue (AI Agent Task List)",
-        "## 🚀 Active",
-        "## 📋 Ready",
-        "## ✅ Completed",
-        "docs/development/testing/known-issues.md",
-        "docs/planning/ui-status.md",
-        "docs/development/testing/summary.md",
-        "README.md",
+    # Backlog + deferred work now lives inside the roadmap file.
+    backlog_markers = [
+        "## 📌 Unified Execution Backlog & Deferred Work",
+        "### 🚀 Active",
+        "### 📋 Ready",
+        "### ✅ Completed",
+        "### 🧭 Operating Instructions for AI Agents",
+        "### 🧱 Technical Debt Radar",
+        "### ⚠️ Known Testing Issues",
     ]
 
-    for snippet in required_snippets:
-        if snippet not in content:
+    for marker in backlog_markers:
+        if marker not in content:
             errors.append(
-                "WORK_QUEUE.MD is missing required content:\n"
-                f"  -> '{snippet}'\n"
-                "  -> Update the queue to include the full operating instructions."
+                "Unified backlog section is missing required content:\n"
+                f"  -> '{marker}'\n"
+                "  -> Restore the consolidated backlog before proceeding."
+            )
+
+    required_refs = [
+        "development/testing/summary.md",
+        "planning/ui-status.md",
+        "docs/README.md",
+    ]
+
+    for ref in required_refs:
+        if ref not in content:
+            errors.append(
+                "Unified backlog is missing required reference:\n"
+                f"  -> '{ref}'\n"
+                "  -> Ensure operating instructions point to canonical context docs."
             )
 
     return errors
@@ -73,14 +79,12 @@ def validate_work_queue(content: str) -> list[str]:
 def main() -> int:
     try:
         roadmap_content = _read(ROADMAP_PATH)
-        work_queue_content = _read(WORK_QUEUE_PATH)
     except FileNotFoundError as exc:
         print(f"❌ Validation failed: {exc}")
         return 1
 
     errors = []
     errors.extend(validate_roadmap(roadmap_content))
-    errors.extend(validate_work_queue(work_queue_content))
 
     if errors:
         print("❌ Documentation validation failed:\n")
@@ -90,7 +94,7 @@ def main() -> int:
 
     print(
         "✅ Documentation validation passed! "
-        "feature_delivery_plan_v2.md and WORK_QUEUE.MD look healthy."
+        "all_steps_to_product_completion.md looks healthy."
     )
     return 0
 

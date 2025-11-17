@@ -1,7 +1,7 @@
 # COMPLETE COMPREHENSIVE COMMERCIAL DEVELOPMENT PLATFORM
 Singapore Projects | Global Users | All Property Types | All Development Scenarios
 
-> **Working roadmap:** strategic status lives in `docs/feature_delivery_plan_v2.md`, while day-to-day execution and technical debt are tracked in `docs/WORK_QUEUE.MD`. Check both to see the latest milestone, open threads, and where development left off.
+> **Working roadmap:** both strategic status and the day-to-day backlog now live in `docs/all_steps_to_product_completion.md` (see [📌 Unified Execution Backlog & Deferred Work](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)). Check that section to see the latest milestone, open threads, and where development left off.
 
 ## 🌍 GEOGRAPHIC & USER SCOPE
 

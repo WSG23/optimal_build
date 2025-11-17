@@ -20,7 +20,7 @@ This is a **ONE-TIME CHECKLIST** that should be archived after all work is compl
 2. All checkboxes in "Week 1: Automated Testing Infrastructure" are [x] checked
 3. All checkboxes in "Week 2: Security Audit" are [x] checked
 4. All checkboxes in "Week 2: Infrastructure Optimization" are [x] checked
-5. Phase 2D Gate Checklist in [feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) shows [x] for "Pre-Phase 2D Infrastructure Audit"
+5. Phase 2D Gate Checklist in [all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) shows [x] for "Pre-Phase 2D Infrastructure Audit"
 
 **📁 HOW TO ARCHIVE:**
 ```bash
@@ -31,8 +31,8 @@ mkdir -p docs/archive
 git mv PRE_PHASE_2D_INFRASTRUCTURE_AUDIT.md \
        docs/archive/PRE_PHASE_2D_INFRASTRUCTURE_AUDIT_COMPLETED_$(date +%Y-%m-%d).md
 
-# Update docs/WORK_QUEUE.MD - mark item #3 as "Completed" with date
-# Update docs/feature_delivery_plan_v2.md - add completion date to Phase 2D gate
+# Update docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work - mark item #3 as "Completed" with date
+# Update docs/all_steps_to_product_completion.md - add completion date to Phase 2D gate
 
 # Commit
 git add -A
@@ -258,7 +258,7 @@ cat .github/workflows/*.yaml | grep pytest
 - ✅ Entitlement enum tests use portable `sa.cast` expressions (no more `::text`); both assertions pass under SQLite.
 - ✅ Developer checklist model tests now run via the new `db_session` fixture alias and the models expose `requires_professional` / `professional_type` columns.
 - ✅ Agent performance + AEC workflow suites pass after refreshing fixtures and golden manifests; full run now reports **213 passed, 23 skipped, 0 failed**.
-- ⚠️ PDF integration/service suites are skipped in the sandbox (`backend/tests/test_services/test_universal_site_pack.py`, `backend/tests/test_integration/test_pdf_download_flow.py`) because the WeasyPrint/Cairo stack is unavailable; documented in `development/testing/known-issues.md`.
+- ⚠️ PDF integration/service suites are skipped in the sandbox (`backend/tests/test_services/test_universal_site_pack.py`, `backend/tests/test_integration/test_pdf_download_flow.py`) because the WeasyPrint/Cairo stack is unavailable; documented in [Known Testing Issues](../all_steps_to_product_completion.md#-known-testing-issues).
 - ⚠️ Full audit run `JOB_QUEUE_BACKEND=inline .venv/bin.python -m pytest backend/tests --cov=backend/app --cov-report=term-missing` now completes with **68.53 %** coverage (up +35.0 pp from baseline). Coverage still <80 %; remaining hotspots include the utility helpers (`backend/app/utils/logging.py`, `backend/app/utils/db.py`, `backend/app/utils/metrics.py`) and the feasibility/overlay services.
 - ✅ Catalogued foreign-key columns missing supporting indexes and staged Alembic revision `20251028_000020_add_foreign_key_indexes.py`; indexes will deploy with the next migration run.
 - ✅ Eliminated the production fallback for `SECRET_KEY`; the API now refuses to boot unless `SECRET_KEY` is present (pytest keeps the high-volume test default).
@@ -457,7 +457,7 @@ free -h
 - Measure resource utilisation / right-size configs
 - Configure logging/alerting scripts
 - Run lightweight load test + document findings
-- Update `docs/WORK_QUEUE.MD` and deferred list
+- Update `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work` and deferred list
 
 ---
 
@@ -493,7 +493,7 @@ free -h
 
 **Documentation:**
 - ✅ Audit findings documented in this file
-- ✅ `docs/WORK_QUEUE.MD` updated (Tier 2 marked complete)
+- ✅ `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work` updated (Tier 2 marked complete)
 - ✅ Deferred items documented in [transition-checklist.md](../planning/transition-checklist.md)
 - ✅ Commit all changes to git
 
@@ -555,9 +555,9 @@ free -h
 ## 📚 References
 
 - **Article:** [47 Startups Failed - Inc.com](https://www.inc.com/maria-jose-gutierrez-chavez/47-startups-failed-most-made-the-same-coding-mistake/91251802)
-- **Related:** [docs/WORK_QUEUE.MD](../WORK_QUEUE.MD) - Ongoing debt tracking (archived context: [`docs/archive/TECHNICAL_DEBT.MD`](../archive/TECHNICAL_DEBT.MD))
+- **Related:** [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) - Ongoing debt tracking (archived context: [`docs/archive/TECHNICAL_DEBT.MD`](../archive/TECHNICAL_DEBT.MD))
 - **Related:** [CODING_RULES.md](CODING_RULES.md) - Quality standards
-- **Related:** [docs/feature_delivery_plan_v2.md](docs/feature_delivery_plan_v2.md) - Phase progression
+- **Related:** [docs/all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md) - Phase progression
 
 ---
 
@@ -568,7 +568,7 @@ free -h
 1. **STOP** - Do NOT start Phase 2D immediately
 2. **Run this 2-week audit sprint** (this document)
 3. **Fix all critical issues** (database, testing, security, infrastructure)
-4. **Update `docs/WORK_QUEUE.MD`** with any deferred items
+4. **Update `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work`** with any deferred items
 5. **THEN** proceed to Phase 2D with solid foundation
 
 **This 2-week investment prevents 18 months of technical debt hell.**

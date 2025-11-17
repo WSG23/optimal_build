@@ -9,6 +9,7 @@ import {
   type ConstructionLoanInput,
   type SensitivityBandInput,
   type FinanceScenarioSummary,
+  type FinanceAnalyticsMetadata,
 } from '../../api/finance'
 import { resolveDefaultRole } from '../../api/identity'
 import { AppLayout } from '../../App'
@@ -24,6 +25,7 @@ import { FinanceScenarioTable } from './components/FinanceScenarioTable'
 import { FinanceSensitivityTable } from './components/FinanceSensitivityTable'
 import { FinanceSensitivitySummary } from './components/FinanceSensitivitySummary'
 import { buildSensitivitySummaries } from './components/sensitivitySummary'
+import { FinanceAnalyticsPanel } from './components/FinanceAnalyticsPanel'
 import { FinanceScenarioCreator } from './components/FinanceScenarioCreator'
 import { FinanceScenarioDeleteDialog } from './components/FinanceScenarioDeleteDialog'
 import { FinanceSensitivityControls } from './components/FinanceSensitivityControls'
@@ -354,6 +356,18 @@ export function FinanceWorkspace() {
     }
     return [...scenarios].sort((a, b) => b.scenarioId - a.scenarioId)[0]
   }, [scenarios])
+  const analyticsMetadata = useMemo<FinanceAnalyticsMetadata | null>(() => {
+    if (!primaryScenario) {
+      return null
+    }
+    const analyticsResult = primaryScenario.results.find(
+      (entry) => entry.name === 'analytics_overview',
+    )
+    if (!analyticsResult || !analyticsResult.metadata) {
+      return null
+    }
+    return analyticsResult.metadata as FinanceAnalyticsMetadata
+  }, [primaryScenario])
   const showEmptyState = !loading && !error && scenarios.length === 0
 
   useEffect(() => {
@@ -520,7 +534,7 @@ export function FinanceWorkspace() {
     try {
       const blob = await exportFinanceScenarioCsv(primaryScenario.scenarioId)
       const url = URL.createObjectURL(blob)
-      const filename = `finance_scenario_${primaryScenario.scenarioId}.csv`
+      const filename = `finance_scenario_${primaryScenario.scenarioId}.zip`
       const anchor = document.createElement('a')
       anchor.href = url
       anchor.download = filename
@@ -772,6 +786,12 @@ export function FinanceWorkspace() {
                 </div>
                 {primaryScenario ? (
                   <>
+                    {analyticsMetadata ? (
+                      <FinanceAnalyticsPanel
+                        analytics={analyticsMetadata}
+                        currency={primaryScenario.currency}
+                      />
+                    ) : null}
                     <div className="finance-workspace__sections finance-workspace__sections--details">
                       <FinanceAssetBreakdown
                         summary={primaryScenario.assetMixSummary}

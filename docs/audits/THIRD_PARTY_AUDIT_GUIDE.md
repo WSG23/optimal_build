@@ -80,7 +80,7 @@ make verify
 1. **Format checks** - Black (code formatting) and isort (import sorting)
 2. **Linting** - Flake8 (Python), mypy (type checking), ESLint (frontend)
 3. **Coding rules** - Validates compliance with [CODING_RULES.md](../../CODING_RULES.md)
-4. **Delivery plan** - Validates feature_delivery_plan_v2.md and WORK_QUEUE.MD structure
+4. **Delivery plan** - Validates all_steps_to_product_completion.md and [Unified Execution Backlog](../all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) structure
 5. **Unit tests** - Runs fast unit tests
 
 **Note:** `make verify` only runs unit tests (fast), not the full integration suite. For full coverage, use the pytest command above.

@@ -1,8 +1,10 @@
-# Feature Delivery Plan v2 (SINGLE SOURCE OF TRUTH)
+# All Steps to Product Completion (Single Source of Truth)
 
-> **Status:** ACTIVE - This is the comprehensive strategic + tactical plan for all features.
-> **Last Updated:** 2025-11-12
-> **For daily execution tracking:** See [`docs/WORK_QUEUE.MD`](WORK_QUEUE.MD)
+> **Status:** ACTIVE – This document now contains the full strategic roadmap, day-to-day execution backlog, outstanding technical debt, and known testing limitations. If it is not listed here, it is not part of the plan.
+>
+> **Last Updated:** 2025-11-17
+>
+> **Navigation tip:** Strategic phase status lives in the sections below, while the unified backlog/debt tracker is available in [📌 Unified Execution Backlog & Deferred Work](#-unified-execution-backlog--deferred-work).
 
 # Complete Platform Delivery Roadmap
 ## Comprehensive Implementation Plan for All FEATURES.md Components (Backend + UI)
@@ -147,6 +149,194 @@
 - Each role depends on previous role's infrastructure
 - Early validation prevents costly rewrites
 - Can launch partial product (Agents-only) while building remaining roles
+
+---
+
+## 📌 Unified Execution Backlog & Deferred Work
+
+**Last Updated:** 2025-11-17
+**Scope:** This section consolidates the former `WORK_QUEUE.MD`, `TECHNICAL_DEBT_SUMMARY.MD`, and `development/testing/known-issues.md` so every outstanding item—feature work, tech debt, or harness limitation—lives in one place. Update these subsections whenever work starts, wraps, or is deferred.
+
+### 🚀 Active (Do Now - Priority Order)
+
+#### 1. Infrastructure Audit - Option 11: Backend test coverage 68% → 80%
+- **Status:** IN PROGRESS (Codex Local)
+- **Assigned:** Codex Local
+- **Estimate:** 8 hours
+- **Description:** Expand unit and integration coverage for audit-critical services (ingestion pipelines, finance adapters).
+- **Acceptance Criteria:** Coverage report ≥ 80% on critical paths, flaky tests resolved, audit checklist updated.
+- **Files:** `backend/`, `tests/`, `docs/audits/PRE-PHASE-2D-AUDIT.MD`.
+
+### 📋 Ready (Queued - Do After Active)
+
+#### Front-end npm audit cleanup
+- **Status:** READY
+- **Assigned:** Frontend
+- **Estimate:** 1 day
+- **Description:** Resolve 3 moderate npm vulnerabilities identified on 2025-11-17:
+  1. **esbuild <=0.24.2** - Development server can read responses from any website (GHSA-67mh-4wv8-2f99, CVSS 5.3)
+     - Fix requires `npm audit fix --force` → vite@7.2.2 (breaking change)
+     - Impact: Development only, not production
+  2. **vite <=6.1.6** - Multiple low-severity issues + depends on vulnerable esbuild
+     - Same fix as esbuild (upgrade to vite@7.2.2)
+  3. **js-yaml <4.1.1** - Prototype pollution in merge (GHSA-mh29-5h37-fv8m, CVSS 5.3)
+     - Safe fix blocked by peer dependency conflicts (eslint-plugin-react-hooks@4.6.2 incompatible with eslint@9)
+- **Remediation Options:**
+  - Option A: Upgrade vite to 7.x (breaking change, requires testing all dev workflows)
+  - Option B: Accept development-only risk (esbuild issue only affects dev server)
+  - Option C: Upgrade eslint-plugin-react-hooks to v5.x to unblock js-yaml fix
+- **Acceptance Criteria:** Vulnerabilities resolved or risk accepted with documented justification, `npm audit` shows 0 moderate+ issues or explained exceptions.
+- **Files:** `frontend/package.json`, `frontend/package-lock.json`.
+
+#### Phase 2C – Finance analytics & sensitivity hardening
+- **Status:** READY
+- **Assigned:** Platform (Finance)
+- **Estimate:** 4-5 days
+- **Description:** Implement the remaining Phase 2C items called out in this doc: surface MOIC/equity multiple + DSCR heat-map analytics in `FinanceWorkspace`, package CSV/JSON exports with tranche metadata, and validate the async `finance.sensitivity` worker path (caching/back-pressure + status polling polish).
+- **Acceptance Criteria:** Analytics panel + export bundle shipped, async reruns verified on Linux with metrics/alerts updated, doc status updated to note completion.
+- **Files:** `frontend/src/modules/finance/*`, `backend/app/api/v1/finance.py`, `backend/app/services/finance/asset_models.py`, `docs/all_steps_to_product_completion.md`.
+
+#### Preview generator typed payload refactor (Tech debt)
+- **Status:** READY
+- **Assigned:** Platform (Visualization)
+- **Estimate:** 3 days
+- **Description:** Introduce TypedDicts / dataclasses for GLTF payload parts (`massing_layers`, `color_legend`, camera hints) inside `preview_generator.py` and replace the current `dict[str, Any]` plumbing. Goal is to narrow object types so mypy can re-validate the render pipeline without suppressions.
+- **Context:** Part of Tier 1 preventive measures to eliminate 88+ weakly-typed JSON/Dict errors. See [Known Testing Issues](#-known-testing-issues) for root cause analysis. This file accounts for ~25 of the 511 total type errors.
+- **Acceptance Criteria:** New typed helpers cover layer + legend schemas, mypy runs clean for `backend/app/services/preview_generator.py` without `ignore_errors`, and renderer tests updated to use the typed helpers.
+- **Files:** `backend/app/services/preview_generator.py`, `backend/jobs/preview_generate.py`, `backend/tests/test_services/test_preview_generator.py`.
+
+#### Developer checklist service typing hardening (Tech debt)
+- **Status:** READY
+- **Assigned:** Platform (Site Acquisition)
+- **Estimate:** 1.5 days
+- **Description:** Wrap checklist payloads in structured models (TypedDict or Pydantic) within `developer_checklist_service.py`, replace raw `object` conversions, and tighten return types so downstream APIs/UI no longer operate on `Any`.
+- **Context:** Part of Tier 1 preventive measures to eliminate weakly-typed metadata fields. See [Known Testing Issues](#-known-testing-issues) for analysis. This file accounts for 6 type errors.
+- **Acceptance Criteria:** Service functions expose typed signatures, mypy runs without `ignore_errors` for the module, and regression tests cover the conversion helpers.
+- **Files:** `backend/app/services/developer_checklist_service.py`, `backend/tests/test_services/test_developer_checklist_service.py`.
+
+#### Add Pydantic and SQLAlchemy mypy plugins (Tech debt)
+- **Status:** READY
+- **Assigned:** Platform (Infrastructure)
+- **Estimate:** 2 hours
+- **Description:** Add `pydantic[mypy]` to requirements and configure both Pydantic and SQLAlchemy mypy plugins in `mypy.ini`. This will eliminate 200+ Pydantic BaseModel type errors and 284 SQLAlchemy false positives that are currently blocking the mypy-critical pre-commit hook.
+- **Context:** Tier 2 preventive measure. See [Known Testing Issues](#-known-testing-issues) for full analysis. Expected to reduce total errors from 511 → ~150 (71% reduction).
+- **Acceptance Criteria:**
+  - `pydantic[mypy]` added to `backend/requirements.txt`
+  - Pydantic and SQLAlchemy plugins configured in `mypy.ini`
+  - mypy-critical pre-commit hook passes without skipping
+  - Error count reduced to <200 when running `mypy backend/app/api/ backend/app/schemas/`
+- **Files:** `backend/requirements.txt`, `mypy.ini`, `.pre-commit-config.yaml`.
+
+---
+
+### ✅ Completed (Last 30 Days)
+
+- **2025-11-12:** Roadmap link consolidation + validator update (Codex Local) — Removed stale `ROADMAP.MD` links across enforcement docs, QA checklists, and scripts; `make validate-delivery-plan` now targets `all_steps_to_product_completion.md`.
+- **2025-11-12:** Phase 2B preview Level 2 detail shipped (Codex Local) — Added `geometry_detail_level` support, octagonal footprints with podium/setback tiers, per-floor shading, and isometric thumbnails for preview jobs; Site Acquisition UI toggle wired.
+- **2025-11-10:** Preview asset lifecycle retention + cleanup (Codex Local) — Added `backend/scripts/preview_cleanup.py` and retention policy (`settings.PREVIEW_MAX_VERSIONS`).
+- **2025-11-04:** Phase 2B GLTF renderer + preview viewer shipped (Codex Local) — Backend now emits GLTF/BIN/thumbnail bundles; viewer renders GLTF with orbit controls and metadata links.
+- **2025-11-04:** Phase 2B monitoring metrics wired (Codex Local) — Added Prometheus counters/histograms and Grafana dashboards for preview jobs.
+- **2025-11-04:** Phase 2B manual UI QA execution (Wakae + Codex Local) — Completed manual walkthrough documented in `docs/archive/phase2b/phase2b_manual_qa_results_2025-11-10.md`.
+- **2025-11-02:** Phase 2C Finance complete (WSG23 + Claude) — Commits 7beff36/d0752f5, smoke tests ✅.
+- **2025-11-02:** Infrastructure Audit Option 10 (Claude) — Pre-commit hook fixes landed.
+- **2025-11-01:** Database indexing (Claude + Codex) — Added 9 composite indexes (11‑39% perf gain).
+
+Older wins moved to archive for brevity; see git history for prior months.
+
+---
+
+### 🧭 Operating Instructions for AI Agents
+
+1. **Before starting work**, review the Active section to confirm priority.
+2. Cross-check context docs before coding: [`docs/development/testing/summary.md`](development/testing/summary.md), [`docs/planning/ui-status.md`](planning/ui-status.md), [`docs/README.md`](README.md), plus the [Known Testing Issues](#-known-testing-issues) subsection below.
+3. Clarify ambiguous scope inside this section (add notes inline) instead of starting extra docs.
+4. After completing work, move the item to ✅ Completed with date + commits/artifacts.
+5. Update the relevant phase block in this file whenever feature status changes.
+6. Infra audit items must also update `docs/audits/PRE-PHASE-2D-AUDIT.MD`.
+7. All Phase 2B renderer work requires the manual UI walkthrough (see archive link) with screenshots attached before review.
+8. Every feature/bug fix ships with tests. If a harness blocks execution, note it here with a follow-up item before closing the task.
+
+---
+
+### 🧱 Technical Debt Radar
+
+> Source: Former `TECHNICAL_DEBT_SUMMARY.MD` (2025-11-10). Keep the bullets in sync with `docs/architecture_honest.md`.
+
+**Critical:** _None_ – Market intelligence & agent routers are live, Alembic migrations are versioned, and `RequestMetricsMiddleware` plus `/metrics` expose throughput/latency/error collectors.
+
+**High Priority**
+- Rate limiting middleware still missing; Redis-backed throttling needs implementation.
+- Domain naming inconsistent (mixed pluralization / `_api` suffixes) across models + schemas.
+- Authentication logic remains fragmented across `users_secure.py`, `users_db.py`, `core/jwt_auth.py`, and `core/auth/policy.py`.
+
+**Medium Priority**
+- `documents` MinIO bucket referenced in docs but not present in `docker-compose.yml`.
+- Market schema drift: documentation cites `market_transactions`, production uses YieldBenchmark/AbsorptionTracking/MarketCycle tables.
+- Compliance models live inside `singapore_property.py` instead of a dedicated module.
+
+**Low Priority**
+- Ten of eleven AI agents exist in code but lack coverage in high-level docs. Update agent catalog when feasible.
+
+---
+
+### ⚠️ Known Testing Issues (Harness Limitations)
+
+This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. These entries describe **test harness or sandbox constraints**—not product bugs.
+
+#### Purpose
+- Distinguish real bugs vs known harness issues so AI agents do not re-triage them.
+- Provide repeatable workarounds and workflows for manual testers.
+
+#### Workflow for Adding/Resolving Issues
+1. AI documents the issue and requests approval to log it here.
+2. Human confirms whether to document or fix immediately.
+3. When resolved, move the entry to the “Resolved Issues” list with date + owner.
+4. Update test files/comments referencing the issue.
+
+#### Active Issues
+
+##### Dev Seeder: Postgres-Only Dependency
+- **Documented by:** Codex on 2025-10-13
+- **Symptom:** `python -m backend.scripts.seed_properties_projects` and `make seed-data` fail in sandbox with `PermissionError` / missing Postgres UUID types.
+- **Root Cause:** Seeder relies on Postgres-only types (`sqlalchemy.dialects.postgresql.UUID`). SQLite fallback not supported.
+- **Impact:** Cannot seed demo data inside sandbox; production unaffected.
+- **Workaround:** Run seeders inside Docker/Postgres. For local validation rely on code review or manual Postgres environment. Long-term fix requires switching to shared UUID type.
+
+##### Frontend: React Testing Library Async Timing
+- **Documented by:** Claude on 2025-10-11
+- **Symptom:** Tests fail to find text even though DOM contains it (Phase 1B + 1C pages).
+- **Root Cause:** React state updates finish after `waitFor()` timeout in JSDOM.
+- **Impact:** Frontend unit tests for some pages fail; runtime works.
+- **Workaround:** Manually verify UI, inspect HTML dumps, keep tests but note limitation. Future fix may require different testing strategy or harness config.
+
+##### SQLite vs PostgreSQL SQL Compatibility
+- **Documented by:** Claude on 2025-10-11
+- **Symptom:** Raw SQL with Postgres syntax fails in SQLite tests.
+- **Workaround:** Wrap SQL in `text()` and use SQLite-compatible functions when writing tests. Production keeps Postgres syntax.
+
+##### Marketing Packs UI Requires Demo Seed Data
+- **Documented by:** Codex on 2025-10-13
+- **Symptom:** Marketing page falls back to offline preview without seeded data.
+- **Workaround:** Seed demo dataset into `.devstack/app.db` using:
+  ```bash
+  cd /Users/wakaekihara/GitHub/optimal_build
+  source .venv/bin/activate
+  SQLALCHEMY_DATABASE_URI="sqlite+aiosqlite:///./.devstack/app.db" \
+    python -m backend.scripts.seed_market_demo
+  ```
+  Restart uvicorn and reuse the printed property UUID.
+
+##### Backend: Mypy Type Checking Errors (511 remaining)
+- **Documented by:** Claude on 2025-11-16
+- **Status:** 511 errors total (284 SQLAlchemy stub gaps, 227 real/complex issues).
+- **Key Categories:** SQLAlchemy stub gaps, weakly typed JSON, missing type narrowing, Pydantic validator mismatches, import conflicts, stub override mismatches.
+- **Strategy:** Focus on Tier 1 preventive steps (TypedDicts/Pydantic schemas, pre-commit type checks) and Tier 2 plugin enablement. Do not attempt to fix all errors blindly—target high leverage areas (preview generator, developer checklist service, mypy plugins).
+
+#### Resolved Issues (Historical Reference)
+- **Frontend JSDOM runner instability (2025-11-11):** Migrated to Vitest + thread pool (Codex + Claude). `npm --prefix frontend run test` now stable.
+- **Migration audit downgrade guards (2025-10-18):** Verified guards existed, added entries to `.coding-rules-exceptions.yml`.
+- **Backend API tests skipped on Python 3.9 (2025-10-11):** Upgraded to Python 3.13, added FastAPI dependency overrides; tests now run.
+- **PDF rendering deps missing (2025-10-28):** Documented absence of Cairo/Pango libs in sandbox; treat as environment constraint when PDF tests fail.
 
 ---
 
@@ -474,7 +664,7 @@
 2. Stage transitions & timeline (M2): Stage event endpoints, audit logging, timeline API, Kanban drag/drop.
 3. Commission ledger (M3): Commission models/services APIs, audit integration, dispute handling UI.
 4. Analytics & benchmarks (M4): Snapshot job, performance API, dashboard charts, benchmark ingestion script + sample dataset.
-5. Polish & docs (M5): Update feature_delivery_plan_v2.md and WORK_QUEUE.MD, add docs (docs/agents/business_performance.md), expand TESTING_DOCUMENTATION_SUMMARY.md.
+5. Polish & docs (M5): Update all_steps_to_product_completion.md and [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work), add docs (docs/agents/business_performance.md), expand TESTING_DOCUMENTATION_SUMMARY.md.
 
 ---
 
@@ -557,7 +747,7 @@
 - Due diligence checklist auto-populates by scenario
 
 **Testing references:**
-- [`Testing Known Issues`](development/testing/known-issues.md) — "Phase 2A" section lists mandatory manual walkthroughs (capture, checklist, assessment, PDF export)
+- [`Testing Known Issues`](all_steps_to_product_completion.md#-known-testing-issues) — "Phase 2A" section lists mandatory manual walkthroughs (capture, checklist, assessment, PDF export)
 - [`Testing Summary`](development/testing/summary.md) — comprehensive testing expectations for all features
 - [`ui-status.md`](planning/ui-status.md) — details the developer workspace components that must render after changes
 - [`README.md`](../README.md) — see the `make dev` guidance for monitoring `.devstack/backend.log` during verification
@@ -740,7 +930,7 @@
 
 **Testing Discipline (Phase 2B onward):**
 - Every Phase 2B feature or refactor must land with automated tests that keep the touched modules at or above the 80 % coverage gate.
-- Coverage regressions must be resolved before hand-off; if a temporary waiver is unavoidable, log the owner and expiry in `docs/WORK_QUEUE.MD` and reopen the task in the Phase 2B backlog.
+- Coverage regressions must be resolved before hand-off; if a temporary waiver is unavoidable, log the owner and expiry in the [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) and reopen the task in the Phase 2B backlog.
 
 **Kickoff Deliverables (Planned):**
 - ✅ Stand up developer-specific GPS logging endpoint and API client so Site Acquisition no longer proxies through the agent route
@@ -751,7 +941,7 @@
 ---
 
 ### Phase 2C: Complete Financial Control & Modeling ✅ BACKEND / UI VERIFIED
-**Status:** Finance workspace now supports captured-project selection + privacy banners, scenario promotion/refresh, capital stack and tranche metadata cards, construction-loan editing, per-asset breakdown panels, sensitivity reruns (CSV/JSON export + summaries), and job timelines. Backend persists `fin_asset_breakdowns`, enforces `_ensure_project_owner`, and mirrors responses from canonical ORM rows. Remaining backlog focuses on advanced analytics (MOIC/equity multiple/DSCR heat maps) and hardening async sensitivity batching/caching (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
+**Status:** Finance workspace now supports captured-project selection + privacy banners, scenario promotion/refresh, capital stack and tranche metadata cards, construction-loan editing, per-asset breakdown panels, sensitivity reruns (CSV/JSON export + summaries), and job timelines. Backend persists `fin_asset_breakdowns`, enforces `_ensure_project_owner`, and mirrors responses from canonical ORM rows. Advanced analytics (MOIC/equity multiple, DSCR heat map buckets, cash flow summaries) now surface via the new `analytics_overview` result and UI panel, and the finance export endpoint produces a ZIP bundle (scenario CSV + JSON + tranche metadata + sensitivity results). Remaining backlog focuses on async sensitivity batching/caching hardening (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
 
 **Manual QA (2025‑10‑27 @demo-owner@example.com):** ✅ Created “Phase 2C Base Case” scenario from the finance workspace, confirmed asset mix summary (`SGD 123,600` revenue, balanced/moderate mix), construction-loan facility breakdown, and sensitivity tables/CSV export (rent/construction-cost/interest bands match backend payload). Issue encountered: finance run initially failed due to missing `is_private` column mapping—fixed by adding the field to `FinScenario` ORM before re-test.
 
@@ -836,7 +1026,7 @@
 3. Job UX polish: Surface async worker statuses when running outside inline mode, and improve retry/error messaging around cached reruns.
 4. Testing: Keep RTL/Vitest suites updated (post-harness fix) for analytics panels, export flows, and access banners.
 
-**Privacy & Entitlements:** `_ensure_project_owner` now enforces developer-only scope; future work is admin override UX + audit-log surfacing. Continue logging `finance_privacy_denied` metrics for every rejection and document overrides in WORK_QUEUE.MD when granted.
+**Privacy & Entitlements:** `_ensure_project_owner` now enforces developer-only scope; future work is admin override UX + audit-log surfacing. Continue logging `finance_privacy_denied` metrics for every rejection and document overrides in [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) when granted.
 
 **Observability & Testing Strategy:**
 - Metrics: `finance.asset_model.duration_ms`, `finance.asset_model.failures`, `finance.sensitivity.runs`, `finance.privacy.denied_requests`
