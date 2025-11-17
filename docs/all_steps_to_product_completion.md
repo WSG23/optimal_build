@@ -170,7 +170,7 @@ _No active tasks. Pull from the Ready queue below._
 - **Description:** Remaining backlog after Phase 2C delivery.
   - ✅ MOIC/equity multiple + DSCR analytics panel shipped (FinanceWorkspace) – verify via manual QA notes.
   - ✅ Capital stack export bundle now includes tranche metadata JSON/CSV (2025-11-18).
-  - ☐ Validate async `finance.sensitivity` worker path (caching/back-pressure + status polling polish).
+  - ☐ Validate async `finance.sensitivity` worker path (caching/back-pressure + status polling polish). Follow [`docs/validation/finance_sensitivity_linux.md`](docs/validation/finance_sensitivity_linux.md) for Linux test procedure.
 - **Acceptance Criteria:** Async reruns verified on Linux with metrics/alerts updated, documentation updated to reflect completion.
 - **Files:** `frontend/src/modules/finance/*`, `backend/app/api/v1/finance.py`, `backend/app/services/finance/asset_models.py`, `docs/all_steps_to_product_completion.md`.
 

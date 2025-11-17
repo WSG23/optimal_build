@@ -298,6 +298,9 @@ class Settings:
         self.FINANCE_SENSITIVITY_MAX_SYNC_BANDS = _load_positive_int(
             "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 3
         )
+        self.FINANCE_SENSITIVITY_MAX_PENDING_JOBS = _load_positive_int(
+            "FINANCE_SENSITIVITY_MAX_PENDING_JOBS", 3
+        )
 
         default_threshold = 0.0 if "pytest" in sys.modules else 0.5
         self.SLOW_QUERY_THRESHOLD_SECONDS = _load_non_negative_float(

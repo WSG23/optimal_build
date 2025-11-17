@@ -35,6 +35,10 @@ allowed_files:
   # Observability
   - docs/observability/preview_generation_monitoring.md
 
+  # Validation procedures
+  - docs/validation/live_testing_guide.md
+  - docs/validation/finance_sensitivity_linux.md
+
   # Archive management
   - docs/archive/README.md
 

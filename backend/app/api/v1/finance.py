@@ -853,6 +853,11 @@ def _scenario_job_statuses(scenario: FinScenario) -> list[FinanceJobStatusSchema
     return job_entries
 
 
+def _has_pending_sensitivity_job(scenario: FinScenario) -> bool:
+    jobs = _scenario_job_statuses(scenario)
+    return any(job.status not in {"completed", "failed"} for job in jobs)
+
+
 def _status_payload(scenario: FinScenario) -> dict[str, Any]:
     jobs = _scenario_job_statuses(scenario)
     pending = any(job.status not in {"completed", "failed"} for job in jobs)
@@ -887,9 +892,32 @@ def _record_async_job(
         ),
     }
     sensitivity_jobs.append(payload)
+    max_entries = max(1, settings.FINANCE_SENSITIVITY_MAX_PENDING_JOBS)
+    while len(sensitivity_jobs) > max_entries:
+        sensitivity_jobs.pop(0)
     async_jobs["sensitivity"] = sensitivity_jobs
     assumptions["async_jobs"] = async_jobs
     scenario.assumptions = assumptions
+
+
+def _band_payloads_equal(
+    existing: Sequence[Mapping[str, Any]] | None,
+    new_payloads: Sequence[Mapping[str, Any]],
+) -> bool:
+    if existing is None:
+        return False
+
+    def _normalise(entries: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+        cleaned: list[dict[str, Any]] = []
+        for entry in entries:
+            if not isinstance(entry, Mapping):
+                continue
+            snapshot = json.loads(json.dumps(entry, default=str, sort_keys=True))
+            cleaned.append(snapshot)
+        cleaned.sort(key=lambda item: json.dumps(item, sort_keys=True))
+        return cleaned
+
+    return _normalise(existing) == _normalise(new_payloads)
 
 
 def _quantize_currency(value: Decimal | None) -> Decimal | None:
@@ -3074,9 +3102,22 @@ async def rerun_finance_sensitivity(
     )
 
     assumptions = dict(scenario.assumptions or {})
-    assumptions["sensitivity_bands"] = [
+    existing_band_payloads = (
+        assumptions.get("sensitivity_bands")
+        if isinstance(assumptions.get("sensitivity_bands"), list)
+        else None
+    )
+    new_band_payloads = [
         band.model_dump(mode="json") for band in payload.sensitivity_bands
     ]
+    if _band_payloads_equal(
+        existing_band_payloads, new_band_payloads
+    ) and not _has_pending_sensitivity_job(scenario):
+        await session.commit()
+        scenario = (await session.execute(base_stmt)).scalars().first()
+        assert scenario is not None
+        return await _summarise_persisted_scenario(scenario, session=session)
+    assumptions["sensitivity_bands"] = new_band_payloads
     scenario.assumptions = assumptions
 
     drawdown_summary = _rebuild_drawdown_summary(assumptions, currency=currency)
@@ -3105,6 +3146,11 @@ async def rerun_finance_sensitivity(
         _clear_sensitivity_jobs(scenario)
         await session.commit()
     else:
+        if _has_pending_sensitivity_job(scenario):
+            await session.commit()
+            scenario = (await session.execute(base_stmt)).scalars().first()
+            assert scenario is not None
+            return await _summarise_persisted_scenario(scenario, session=session)
         job_context = _build_sensitivity_job_context(
             scenario,
             assumptions=assumptions,

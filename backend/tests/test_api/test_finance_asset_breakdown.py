@@ -1222,3 +1222,85 @@ async def test_finance_sensitivity_rerun_async_enqueue(
     assert jobs_response.status_code == 200
     jobs = jobs_response.json()
     assert jobs, "Expected queued job metadata"
+
+
+@pytest.mark.asyncio
+async def test_finance_sensitivity_rerun_async_deduplicates_pending(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "FINANCE_SENSITIVITY_MAX_SYNC_BANDS", 1)
+
+    enqueue_calls = 0
+
+    async def fake_enqueue(job_name, scenario_id, *, bands, context, queue=None):
+        nonlocal enqueue_calls
+        enqueue_calls += 1
+        return JobDispatch(
+            backend="celery",
+            job_name=job_name,
+            queue=queue,
+            status="queued",
+            task_id=f"job-{enqueue_calls}",
+        )
+
+    monkeypatch.setattr(job_queue._backend, "name", "celery", raising=False)
+    monkeypatch.setattr(job_queue, "enqueue", fake_enqueue, raising=False)
+
+    payload = {
+        "project_id": 503,
+        "project_name": "Async Dedup",
+        "scenario": {
+            "name": "Dedup Scenario",
+            "currency": "SGD",
+            "is_primary": False,
+            "cost_escalation": {
+                "amount": "200000",
+                "base_period": "2024-Q1",
+                "series_name": "construction_cost_index",
+                "jurisdiction": "SG",
+            },
+            "cash_flow": {
+                "discount_rate": "0.08",
+                "cash_flows": ["-200000", "60000", "80000", "90000"],
+            },
+            "sensitivity_bands": [
+                {"parameter": "Rent", "low": "-4", "base": "0", "high": "5"}
+            ],
+            "asset_mix": _build_asset_mix(),
+        },
+    }
+
+    response = await app_client.post(
+        "/api/v1/finance/feasibility",
+        json=payload,
+        headers=ADMIN_HEADERS,
+    )
+    assert response.status_code == 200
+    scenario_id = response.json()["scenario_id"]
+
+    rerun_payload = {
+        "sensitivity_bands": [
+            {"parameter": "Rent", "low": "-4", "base": "0", "high": "5"},
+            {"parameter": "Interest Rate", "low": "1.5", "base": "0", "high": "-0.5"},
+        ]
+    }
+
+    first = await app_client.post(
+        f"/api/v1/finance/scenarios/{scenario_id}/sensitivity",
+        json=rerun_payload,
+        headers=ADMIN_HEADERS,
+    )
+    assert first.status_code == 200
+    assert enqueue_calls == 1
+
+    second = await app_client.post(
+        f"/api/v1/finance/scenarios/{scenario_id}/sensitivity",
+        json=rerun_payload,
+        headers=ADMIN_HEADERS,
+    )
+    assert second.status_code == 200
+    assert enqueue_calls == 1, "Expected pending job to prevent duplicate enqueue"
+    body = second.json()
+    assert body["sensitivity_jobs"], "Expected job status payload"
+    assert body["sensitivity_jobs"][0]["status"] == "queued"
