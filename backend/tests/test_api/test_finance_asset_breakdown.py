@@ -283,6 +283,27 @@ async def test_finance_export_bundle_includes_artifacts(
                 "discount_rate": "0.08",
                 "cash_flows": ["-500000", "-300000", "600000", "500000"],
             },
+            "capital_stack": [
+                {
+                    "name": "Developer Equity",
+                    "source_type": "equity",
+                    "amount": "600000",
+                    "rate": None,
+                    "tranche_order": 1,
+                },
+                {
+                    "name": "Construction Loan",
+                    "source_type": "debt",
+                    "amount": "400000",
+                    "rate": "0.055",
+                    "tranche_order": 2,
+                    "metadata": {
+                        "amortisation_years": 5,
+                        "reserve_enabled": True,
+                        "upfront_fee_pct": "0.75",
+                    },
+                },
+            ],
             "asset_mix": _build_asset_mix(),
         },
     }
@@ -304,8 +325,16 @@ async def test_finance_export_bundle_includes_artifacts(
     archive = zipfile.ZipFile(io.BytesIO(export_response.content))
     names = set(archive.namelist())
     assert {"scenario.csv", "scenario.json"}.issubset(names)
+    assert "capital_stack.csv" in names
+    assert "capital_stack.json" in names
     summary_payload = json.loads(archive.read("scenario.json"))
     assert summary_payload["scenario_id"] == scenario_id
+    capital_csv = archive.read("capital_stack.csv").decode("utf-8")
+    assert "Metadata" in capital_csv.splitlines()[0]
+    capital_json = json.loads(archive.read("capital_stack.json"))
+    assert isinstance(capital_json.get("slices"), list)
+    slice_metadata = capital_json["slices"][0].get("metadata")
+    assert isinstance(slice_metadata, dict) and slice_metadata != {}
     if "sensitivity.json" in names:
         sensitivity_payload = json.loads(archive.read("sensitivity.json"))
         assert isinstance(sensitivity_payload, list)

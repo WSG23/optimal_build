@@ -8,11 +8,12 @@ import struct
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence, TypedDict, cast
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
 from PIL import Image, ImageDraw
+from typing import Literal, NotRequired
 
 _BASE_DIR = Path(__file__).resolve().parents[2]
 _PREVIEW_DIR = _BASE_DIR / "static" / "dev-previews"
@@ -38,6 +39,93 @@ _SETBACK_THRESHOLD_M = 60.0
 _MIN_EFFECTIVE_HEIGHT_M = 3.0
 
 NumberLike = float | int | Decimal | str
+
+
+class Vector3Dict(TypedDict):
+    x: float
+    y: float
+    z: float
+
+
+class BoundingBoxDict(TypedDict):
+    min: Vector3Dict
+    max: Vector3Dict
+
+
+class CameraOrbitHint(TypedDict):
+    theta: float
+    phi: float
+    radius: float
+    target_x: float
+    target_y: float
+    target_z: float
+
+
+class PrismPayload(TypedDict):
+    vertices: list[list[float]]
+    faces: list[list[int]]
+
+
+class GeometryPayload(TypedDict, total=False):
+    detail_level: Literal["simple", "medium"]
+    base_elevation: float
+    height: float
+    preview_height: float
+    footprint: dict[str, Any]
+    top_footprint: dict[str, Any]
+    floor_lines: list[float]
+    prism: PrismPayload
+
+
+class LayerMetricsPayload(TypedDict):
+    allocation_pct: float | None
+    gfa_sqm: float
+    nia_sqm: float | None
+    estimated_height_m: float
+    estimated_floors: float | None
+
+
+class PreviewLayerPayload(TypedDict):
+    id: str
+    name: str
+    color: str | None
+    metrics: LayerMetricsPayload
+    geometry: GeometryPayload
+
+
+class ColorLegendPayload(TypedDict, total=False):
+    asset_type: str
+    label: NotRequired[str]
+    color: NotRequired[str]
+    description: NotRequired[str]
+
+
+class AssetManifestPayload(TypedDict):
+    gltf: str
+    metadata: str
+    binary: str
+    thumbnail: str
+    version: str
+
+
+class PreviewPayload(TypedDict, total=False):
+    schema_version: str
+    property_id: str
+    generated_at: str
+    bounding_box: BoundingBoxDict
+    camera_orbit_hint: CameraOrbitHint
+    geometry_detail_level: str
+    layers: list[PreviewLayerPayload]
+    color_legend: list[ColorLegendPayload]
+    asset_manifest: AssetManifestPayload
+
+
+class ThumbnailShape(TypedDict):
+    base: list[tuple[float, float]]
+    top: list[tuple[float, float]]
+    base_elevation: float
+    top_elevation: float
+    colour: tuple[float, float, float, float]
 
 
 def normalise_geometry_detail_level(value: str | None) -> str:
@@ -155,8 +243,8 @@ class ColorLegendEntry:
             description=_coerce_str(payload.get("description")),
         )
 
-    def to_payload(self) -> dict[str, object]:
-        data: dict[str, object] = {"asset_type": self.asset_type}
+    def to_payload(self) -> ColorLegendPayload:
+        data: ColorLegendPayload = {"asset_type": self.asset_type}
         if self.label:
             data["label"] = self.label
         if self.color:
@@ -256,7 +344,7 @@ def _build_simple_geometry(
     footprint_area: float,
     base_elevation: float,
     preview_height: float,
-) -> tuple[dict[str, object], list[tuple[float, float, float]], float]:
+) -> tuple[GeometryPayload, list[tuple[float, float, float]], float]:
     """Return geometry metadata for the legacy box prism."""
 
     side = math.sqrt(max(footprint_area, 1.0))
@@ -293,7 +381,7 @@ def _build_simple_geometry(
         [3, 0, 4],
         [3, 4, 7],
     ]
-    geometry = {
+    geometry: GeometryPayload = {
         "detail_level": "simple",
         "base_elevation": base_elevation,
         "height": preview_height,
@@ -314,7 +402,7 @@ def _build_medium_geometry(
     footprint_area: float,
     base_elevation: float,
     height: float,
-) -> tuple[dict[str, object], list[tuple[float, float, float]], float]:
+) -> tuple[GeometryPayload, list[tuple[float, float, float]], float]:
     """Return octagonal geometry with podium + setback detail."""
 
     polygon = _regular_polygon_vertices(
@@ -371,7 +459,7 @@ def _build_medium_geometry(
         base_elevation + rel_height for rel_height in _build_floor_line_heights(height)
     ]
 
-    geometry = {
+    geometry: GeometryPayload = {
         "detail_level": "medium",
         "base_elevation": base_elevation,
         "height": height,
@@ -392,7 +480,7 @@ def _serialise_layer(
     *,
     base_elevation: float = 0.0,
     detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
-) -> tuple[dict[str, object], list[tuple[float, float, float]], float]:
+) -> tuple[PreviewLayerPayload, list[tuple[float, float, float]], float]:
     requested_height = layer.estimated_height_m
     gfa = layer.gfa_sqm
 
@@ -412,7 +500,7 @@ def _serialise_layer(
             preview_height=preview_height,
         )
 
-    serialised = {
+    serialised: PreviewLayerPayload = {
         "id": layer.identifier,
         "name": layer.name,
         "color": layer.color,
@@ -431,7 +519,7 @@ def _serialise_layer(
 
 def _calculate_bounds(
     vertices: Sequence[tuple[float, float, float]]
-) -> dict[str, dict[str, float]]:
+) -> BoundingBoxDict:
     xs = [x for x, _y, _z in vertices]
     ys = [y for _x, y, _z in vertices]
     zs = [z for _x, _y, z in vertices]
@@ -441,7 +529,7 @@ def _calculate_bounds(
     }
 
 
-def _camera_orbit_from_bounds(bounds: dict[str, dict[str, float]]) -> dict[str, float]:
+def _camera_orbit_from_bounds(bounds: BoundingBoxDict) -> CameraOrbitHint:
     dx = bounds["max"]["x"] - bounds["min"]["x"]
     dy = bounds["max"]["y"] - bounds["min"]["y"]
     dz = bounds["max"]["z"] - bounds["min"]["z"]
@@ -676,7 +764,7 @@ def _build_custom_mesh(
 
 
 def _build_layer_mesh(
-    layer: Mapping[str, object],
+    layer: PreviewLayerPayload,
     *,
     index: int,
 ) -> dict[str, object] | None:
@@ -686,17 +774,35 @@ def _build_layer_mesh(
     prism = geometry.get("prism")
     if not isinstance(prism, Mapping):
         return None
-    vertices = prism.get("vertices")
-    if not isinstance(vertices, Sequence):
+    raw_vertices = prism.get("vertices")
+    if not isinstance(raw_vertices, Sequence):
         return None
-    faces = prism.get("faces")
+    raw_faces = prism.get("faces")
     name = str(layer.get("name") or layer.get("id") or f"Layer {index}")
     colour = _normalise_hex_colour(layer.get("color"), index)
     floor_lines = geometry.get("floor_lines")
     base_elevation = float(geometry.get("base_elevation") or 0.0)
     layer_id = str(layer.get("id") or f"layer-{index}")
 
-    if isinstance(faces, Sequence) and faces:
+    vertices: list[list[float]] = []
+    for vertex in raw_vertices:
+        if not isinstance(vertex, Sequence) or len(vertex) != 3:
+            return None
+        x, y, z = float(vertex[0]), float(vertex[1]), float(vertex[2])
+        vertices.append([x, y, z])
+
+    faces: list[list[int]] | None = None
+    if isinstance(raw_faces, Sequence):
+        parsed_faces: list[list[int]] = []
+        for face in raw_faces:
+            if not isinstance(face, Sequence):
+                return None
+            if len(face) < 3:
+                continue
+            parsed_faces.append([int(value) for value in face])
+        faces = parsed_faces if parsed_faces else None
+
+    if faces:
         mesh = _build_custom_mesh(
             name=name,
             colour=colour,
@@ -712,8 +818,6 @@ def _build_layer_mesh(
     # Convert original XYZ (with Z up) into glTF coordinates (Y up) for legacy boxes.
     converted: list[list[float]] = []
     for vertex in vertices:
-        if not isinstance(vertex, Sequence) or len(vertex) != 3:
-            return None
         x, y, z = float(vertex[0]), float(vertex[1]), float(vertex[2])
         converted.append([x, z, y])
 
@@ -733,7 +837,7 @@ def _build_layer_mesh(
 def _build_gltf_document(
     property_id: UUID,
     asset_version: str,
-    layers: Sequence[Mapping[str, object]],
+    layers: Sequence[PreviewLayerPayload],
 ) -> tuple[dict[str, object], bytes]:
     buffer = bytearray()
     buffer_views: list[dict[str, object]] = []
@@ -747,10 +851,10 @@ def _build_gltf_document(
         if mesh_data is None:
             continue
 
-        positions = mesh_data["positions"]
-        normals = mesh_data["normals"]
-        indices = mesh_data["indices"]
-        colour = mesh_data["color"]
+        positions = cast(list[float], mesh_data["positions"])
+        normals = cast(list[float], mesh_data["normals"])
+        indices = cast(list[int], mesh_data["indices"])
+        colour = cast(tuple[float, float, float, float], mesh_data["color"])
 
         # Positions
         pos_bytes = struct.pack("<" + "f" * len(positions), *positions)
@@ -767,14 +871,16 @@ def _build_gltf_document(
             }
         )
         pos_accessor_index = len(accessors)
+        min_bounds = cast(list[float], mesh_data["min"])
+        max_bounds = cast(list[float], mesh_data["max"])
         accessors.append(
             {
                 "bufferView": buffer_view_index,
                 "componentType": 5126,
                 "count": len(positions) // 3,
                 "type": "VEC3",
-                "min": mesh_data["min"],
-                "max": mesh_data["max"],
+                "min": min_bounds,
+                "max": max_bounds,
             }
         )
 
@@ -803,8 +909,8 @@ def _build_gltf_document(
         )
 
         color_accessor_index = None
-        vertex_colors = mesh_data.get("vertex_colors")
-        if isinstance(vertex_colors, list) and vertex_colors:
+        vertex_colors = cast(list[float] | None, mesh_data.get("vertex_colors"))
+        if vertex_colors:
             color_bytes = struct.pack("<" + "f" * len(vertex_colors), *vertex_colors)
             color_offset = len(buffer)
             buffer.extend(color_bytes)
@@ -919,7 +1025,7 @@ def _build_gltf_document(
 
 def _write_thumbnail(
     asset_dir: Path,
-    layers: Sequence[Mapping[str, object]],
+    layers: Sequence[PreviewLayerPayload],
 ) -> None:
     size = 512
     image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
@@ -933,7 +1039,7 @@ def _write_thumbnail(
         iso_y = (x + y) * sin_a - z * 0.9
         return iso_x, iso_y
 
-    shapes: list[dict[str, object]] = []
+    shapes: list[ThumbnailShape] = []
     iso_points: list[tuple[float, float]] = []
 
     for index, layer in enumerate(layers):
@@ -975,13 +1081,13 @@ def _write_thumbnail(
         colour = _normalise_hex_colour(layer.get("color"), index)
 
         shapes.append(
-            {
-                "base": base_polygon,
-                "top": top_polygon,
-                "base_elevation": base_elevation,
-                "top_elevation": top_elevation,
-                "colour": colour,
-            }
+            ThumbnailShape(
+                base=base_polygon,
+                top=top_polygon,
+                base_elevation=base_elevation,
+                top_elevation=top_elevation,
+                colour=colour,
+            )
         )
 
         for x, y in base_polygon:
@@ -1044,10 +1150,11 @@ def _write_thumbnail(
             )
 
     # Use LANCZOS for Pillow < 10, Resampling.LANCZOS for Pillow >= 10
-    try:
-        resample = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
-    except AttributeError:
-        resample = Image.LANCZOS  # type: ignore[attr-defined]
+    resampling_attr = getattr(Image, "Resampling", None)
+    if resampling_attr is not None:
+        resample = cast(Any, resampling_attr).LANCZOS
+    else:
+        resample = Image.LANCZOS
     image = image.resize((256, 256), resample)
     image.save(asset_dir / "thumbnail.png", "PNG")
 
@@ -1058,7 +1165,7 @@ def build_preview_payload(
     *,
     geometry_detail_level: str = DEFAULT_GEOMETRY_DETAIL_LEVEL,
     color_legend: Iterable[Mapping[str, object] | Any] | None = None,
-) -> dict[str, object]:
+) -> PreviewPayload:
     """Generate a structured preview payload from massing layer metadata.
 
     Layers are stacked vertically: first layer at ground level (z=0),
@@ -1072,8 +1179,8 @@ def build_preview_payload(
     if color_legend is not None:
         for entry in color_legend:
             try:
-                payload = _normalise_payload(entry)
-                legend_entry = ColorLegendEntry.from_mapping(payload)
+                legend_payload_entry = _normalise_payload(entry)
+                legend_entry = ColorLegendEntry.from_mapping(legend_payload_entry)
             except (TypeError, ValueError):
                 continue
             legend_entries.append(legend_entry)
@@ -1082,7 +1189,7 @@ def build_preview_payload(
             if legend_entry.label:
                 label_map[legend_entry.asset_type] = legend_entry.label
 
-    serialised_layers: list[dict[str, object]] = []
+    serialised_layers: list[PreviewLayerPayload] = []
     all_vertices: list[tuple[float, float, float]] = []
     current_elevation = 0.0
     detail_level = normalise_geometry_detail_level(geometry_detail_level)
@@ -1112,9 +1219,11 @@ def build_preview_payload(
         raise ValueError("Preview payload requires at least one massing layer")
 
     bounds = _calculate_bounds(all_vertices)
-    legend_payload = [entry.to_payload() for entry in legend_entries]
+    legend_payload: list[ColorLegendPayload] = [
+        entry.to_payload() for entry in legend_entries
+    ]
 
-    payload = {
+    payload: PreviewPayload = {
         "schema_version": "1.0",
         "property_id": str(property_id),
         "generated_at": utcnow().isoformat().replace("+00:00", "Z"),
@@ -1153,7 +1262,7 @@ def ensure_preview_asset(
     gltf_document, binary_blob = _build_gltf_document(
         property_id,
         asset_version,
-        payload["layers"],  # type: ignore[arg-type]
+        payload["layers"],
     )
 
     base_url = f"/static/dev-previews/{property_id}/{asset_version}"
@@ -1177,7 +1286,7 @@ def ensure_preview_asset(
     binary_path = asset_dir / "preview.bin"
     binary_path.write_bytes(binary_blob)
 
-    _write_thumbnail(asset_dir, payload["layers"])  # type: ignore[arg-type]
+    _write_thumbnail(asset_dir, payload["layers"])
 
     return PreviewAssets(
         preview_url=f"{base_url}/preview.gltf",

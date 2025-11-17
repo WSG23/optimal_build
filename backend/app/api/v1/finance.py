@@ -1536,8 +1536,25 @@ def _capital_stack_to_csv(summary: CapitalStackSummarySchema) -> str:
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(["Name", "Source", "Category", "Amount", "Share", "Rate"])
+    writer.writerow(
+        [
+            "Name",
+            "Source",
+            "Category",
+            "Amount",
+            "Share",
+            "Rate",
+            "Tranche Order",
+            "Metadata",
+        ]
+    )
     for component in summary.slices:
+        metadata_payload = ""
+        if component.metadata:
+            try:
+                metadata_payload = json.dumps(component.metadata, sort_keys=True)
+            except TypeError:
+                metadata_payload = str(component.metadata)
         writer.writerow(
             [
                 component.name,
@@ -1546,6 +1563,8 @@ def _capital_stack_to_csv(summary: CapitalStackSummarySchema) -> str:
                 component.amount,
                 component.share,
                 component.rate or "",
+                component.tranche_order or "",
+                metadata_payload,
             ]
         )
     return buffer.getvalue()
@@ -3185,6 +3204,12 @@ async def export_finance_scenario(
                 archive.writestr(
                     "capital_stack.csv", _capital_stack_to_csv(summary.capital_stack)
                 )
+                capital_stack_payload = summary_payload.get("capital_stack")
+                if capital_stack_payload:
+                    archive.writestr(
+                        "capital_stack.json",
+                        json.dumps(capital_stack_payload, indent=2, sort_keys=True),
+                    )
             if summary.sensitivity_results:
                 archive.writestr(
                     "sensitivity.json",

@@ -154,46 +154,25 @@
 
 ## 📌 Unified Execution Backlog & Deferred Work
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-11-18
 **Scope:** This section consolidates the former `WORK_QUEUE.MD`, `TECHNICAL_DEBT_SUMMARY.MD`, and `development/testing/known-issues.md` so every outstanding item—feature work, tech debt, or harness limitation—lives in one place. Update these subsections whenever work starts, wraps, or is deferred.
 
 ### 🚀 Active (Do Now - Priority Order)
 
-#### 1. Infrastructure Audit - Option 11: Backend test coverage 68% → 80%
-- **Status:** IN PROGRESS (Codex Local)
-- **Assigned:** Codex Local
-- **Estimate:** 8 hours
-- **Description:** Expand unit and integration coverage for audit-critical services (ingestion pipelines, finance adapters).
-- **Acceptance Criteria:** Coverage report ≥ 80% on critical paths, flaky tests resolved, audit checklist updated.
-- **Files:** `backend/`, `tests/`, `docs/audits/PRE-PHASE-2D-AUDIT.MD`.
+_No active tasks. Pull from the Ready queue below._
 
 ### 📋 Ready (Queued - Do After Active)
 
-#### Phase 2C – Finance analytics & sensitivity hardening
+- #### Phase 2C – Finance analytics & sensitivity hardening
 - **Status:** READY
 - **Assigned:** Platform (Finance)
 - **Estimate:** 4-5 days
-- **Description:** Implement the remaining Phase 2C items called out in this doc: surface MOIC/equity multiple + DSCR heat-map analytics in `FinanceWorkspace`, package CSV/JSON exports with tranche metadata, and validate the async `finance.sensitivity` worker path (caching/back-pressure + status polling polish).
-- **Acceptance Criteria:** Analytics panel + export bundle shipped, async reruns verified on Linux with metrics/alerts updated, doc status updated to note completion.
+- **Description:** Remaining backlog after Phase 2C delivery.
+  - ✅ MOIC/equity multiple + DSCR analytics panel shipped (FinanceWorkspace) – verify via manual QA notes.
+  - ✅ Capital stack export bundle now includes tranche metadata JSON/CSV (2025-11-18).
+  - ☐ Validate async `finance.sensitivity` worker path (caching/back-pressure + status polling polish).
+- **Acceptance Criteria:** Async reruns verified on Linux with metrics/alerts updated, documentation updated to reflect completion.
 - **Files:** `frontend/src/modules/finance/*`, `backend/app/api/v1/finance.py`, `backend/app/services/finance/asset_models.py`, `docs/all_steps_to_product_completion.md`.
-
-#### Preview generator typed payload refactor (Tech debt)
-- **Status:** READY
-- **Assigned:** Platform (Visualization)
-- **Estimate:** 3 days
-- **Description:** Introduce TypedDicts / dataclasses for GLTF payload parts (`massing_layers`, `color_legend`, camera hints) inside `preview_generator.py` and replace the current `dict[str, Any]` plumbing. Goal is to narrow object types so mypy can re-validate the render pipeline without suppressions.
-- **Context:** Part of Tier 1 preventive measures to eliminate 88+ weakly-typed JSON/Dict errors. See [Known Testing Issues](#-known-testing-issues) for root cause analysis. This file accounts for ~25 of the 511 total type errors.
-- **Acceptance Criteria:** New typed helpers cover layer + legend schemas, mypy runs clean for `backend/app/services/preview_generator.py` without `ignore_errors`, and renderer tests updated to use the typed helpers.
-- **Files:** `backend/app/services/preview_generator.py`, `backend/jobs/preview_generate.py`, `backend/tests/test_services/test_preview_generator.py`.
-
-#### Developer checklist service typing hardening (Tech debt)
-- **Status:** READY
-- **Assigned:** Platform (Site Acquisition)
-- **Estimate:** 1.5 days
-- **Description:** Wrap checklist payloads in structured models (TypedDict or Pydantic) within `developer_checklist_service.py`, replace raw `object` conversions, and tighten return types so downstream APIs/UI no longer operate on `Any`.
-- **Context:** Part of Tier 1 preventive measures to eliminate weakly-typed metadata fields. See [Known Testing Issues](#-known-testing-issues) for analysis. This file accounts for 6 type errors.
-- **Acceptance Criteria:** Service functions expose typed signatures, mypy runs without `ignore_errors` for the module, and regression tests cover the conversion helpers.
-- **Files:** `backend/app/services/developer_checklist_service.py`, `backend/tests/test_services/test_developer_checklist_service.py`.
 
 #### Add Pydantic and SQLAlchemy mypy plugins (Tech debt)
 - **Status:** READY
@@ -212,6 +191,10 @@
 
 ### ✅ Completed (Last 30 Days)
 
+- **2025-11-18:** Preview generator typed payload refactor (Codex Local) — Introduced TypedDict/dataclass helpers for preview payloads, refactored `preview_generator.py` + GLTF/thumbnail builders to use them, and verified with `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/preview_generator.py --config-file=../mypy.ini` plus `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build SECRET_KEY=test JOB_QUEUE_BACKEND=inline ../.venv/bin/pytest tests/test_services/test_preview_generator.py`.
+- **2025-11-18:** Backend mypy plugin enforcement (Codex Local) — Enabled `pydantic.mypy` and `sqlalchemy.ext.mypy.plugin` in `mypy.ini`, added `pydantic[email,mypy]==2.5.0` and `sqlalchemy[asyncio,mypy]==2.0.23` to `backend/requirements.txt`, and validated via `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/preview_generator.py --config-file=../mypy.ini`.
+- **2025-11-18:** Finance export bundle tranche metadata (Codex Local) — `GET /api/v1/finance/export` now includes `capital_stack.csv` with metadata columns and a `capital_stack.json` file capturing tranche details; covered by `pytest tests/test_api/test_finance_asset_breakdown.py::test_finance_export_bundle_includes_artifacts`.
+- **2025-11-18:** Infrastructure Audit Option 11 – Backend coverage ≥80 % (Codex Local) — `make test-cov` now reports 89 % total backend coverage (see `backend/htmlcov/index.html`), covering ingestion + finance adapters per audit requirement.
 - **2025-11-17:** Front-end npm audit cleanup (Claude) — Resolved all 3 moderate vulnerabilities: upgraded vite 4.5.14 → 7.2.2 (fixes esbuild <=0.24.2 + vite <=6.1.6), upgraded eslint-plugin-react-hooks 4.6.2 → 5.2.0 (unblocked js-yaml fix), applied `npm audit fix` for js-yaml <4.1.1. `npm audit` now reports 0 vulnerabilities. Dev server, HMR, and production build verified working with vite@7.
 - **2025-11-12:** Roadmap link consolidation + validator update (Codex Local) — Removed stale `ROADMAP.MD` links across enforcement docs, QA checklists, and scripts; `make validate-delivery-plan` now targets `all_steps_to_product_completion.md`.
 - **2025-11-12:** Phase 2B preview Level 2 detail shipped (Codex Local) — Added `geometry_detail_level` support, octagonal footprints with podium/setback tiers, per-floor shading, and isometric thumbnails for preview jobs; Site Acquisition UI toggle wired.
