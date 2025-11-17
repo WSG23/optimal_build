@@ -169,25 +169,6 @@
 
 ### 📋 Ready (Queued - Do After Active)
 
-#### Front-end npm audit cleanup
-- **Status:** READY
-- **Assigned:** Frontend
-- **Estimate:** 1 day
-- **Description:** Resolve 3 moderate npm vulnerabilities identified on 2025-11-17:
-  1. **esbuild <=0.24.2** - Development server can read responses from any website (GHSA-67mh-4wv8-2f99, CVSS 5.3)
-     - Fix requires `npm audit fix --force` → vite@7.2.2 (breaking change)
-     - Impact: Development only, not production
-  2. **vite <=6.1.6** - Multiple low-severity issues + depends on vulnerable esbuild
-     - Same fix as esbuild (upgrade to vite@7.2.2)
-  3. **js-yaml <4.1.1** - Prototype pollution in merge (GHSA-mh29-5h37-fv8m, CVSS 5.3)
-     - Safe fix blocked by peer dependency conflicts (eslint-plugin-react-hooks@4.6.2 incompatible with eslint@9)
-- **Remediation Options:**
-  - Option A: Upgrade vite to 7.x (breaking change, requires testing all dev workflows)
-  - Option B: Accept development-only risk (esbuild issue only affects dev server)
-  - Option C: Upgrade eslint-plugin-react-hooks to v5.x to unblock js-yaml fix
-- **Acceptance Criteria:** Vulnerabilities resolved or risk accepted with documented justification, `npm audit` shows 0 moderate+ issues or explained exceptions.
-- **Files:** `frontend/package.json`, `frontend/package-lock.json`.
-
 #### Phase 2C – Finance analytics & sensitivity hardening
 - **Status:** READY
 - **Assigned:** Platform (Finance)
@@ -231,6 +212,7 @@
 
 ### ✅ Completed (Last 30 Days)
 
+- **2025-11-17:** Front-end npm audit cleanup (Claude) — Resolved all 3 moderate vulnerabilities: upgraded vite 4.5.14 → 7.2.2 (fixes esbuild <=0.24.2 + vite <=6.1.6), upgraded eslint-plugin-react-hooks 4.6.2 → 5.2.0 (unblocked js-yaml fix), applied `npm audit fix` for js-yaml <4.1.1. `npm audit` now reports 0 vulnerabilities. Dev server, HMR, and production build verified working with vite@7.
 - **2025-11-12:** Roadmap link consolidation + validator update (Codex Local) — Removed stale `ROADMAP.MD` links across enforcement docs, QA checklists, and scripts; `make validate-delivery-plan` now targets `all_steps_to_product_completion.md`.
 - **2025-11-12:** Phase 2B preview Level 2 detail shipped (Codex Local) — Added `geometry_detail_level` support, octagonal footprints with podium/setback tiers, per-floor shading, and isometric thumbnails for preview jobs; Site Acquisition UI toggle wired.
 - **2025-11-10:** Preview asset lifecycle retention + cleanup (Codex Local) — Added `backend/scripts/preview_cleanup.py` and retention policy (`settings.PREVIEW_MAX_VERSIONS`).
