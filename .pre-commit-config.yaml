@@ -47,6 +47,15 @@ repos:
       pass_filenames: false
       files: ^docs/.*\.md$
 
+    - id: mypy-critical
+      name: mypy (critical paths - blocks on new errors)
+      entry: bash -c 'cd backend && ../.venv/bin/mypy app/api/ app/schemas/ --config-file=../mypy.ini --no-error-summary --exclude "(app/schemas/user\.py|app/api/v1/test_users\.py|app/schemas/buildable\.py|app/api/v1/users_secure\.py)"'
+      language: system
+      types: [python]
+      pass_filenames: false
+      files: ^backend/app/(api|schemas)/
+      exclude: ^backend/app/(schemas/user\.py|api/v1/test_users\.py|schemas/buildable\.py|api/v1/users_secure\.py)$
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0
   hooks:

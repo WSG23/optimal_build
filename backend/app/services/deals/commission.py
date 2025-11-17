@@ -85,7 +85,7 @@ class AgentCommissionService:
             if field and getattr(record, field, None) is None:
                 setattr(record, field, record.introduced_at)
         if metadata:
-            record.metadata = metadata
+            record.metadata = metadata  # type: ignore[assignment,has-type]
 
         session.add(record)
         await session.flush()
@@ -120,7 +120,7 @@ class AgentCommissionService:
         if timestamp_field:
             setattr(record, timestamp_field, occurred_at or datetime.now(UTC))
         if metadata is not None:
-            record.metadata = metadata
+            record.metadata = metadata  # type: ignore[assignment,has-type]
 
         audit_log = await self._append_audit(
             session=session,
@@ -161,7 +161,7 @@ class AgentCommissionService:
             recorded_at=recorded_at or datetime.now(UTC),
         )
         if metadata:
-            adjustment.metadata = metadata
+            adjustment.metadata = metadata  # type: ignore[assignment,has-type]
 
         session.add(adjustment)
         await session.flush()

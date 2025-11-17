@@ -253,20 +253,25 @@ from app.models import User
 # 1. Format code (auto-fixes)
 make format
 
-# 2. Run all checks
+# 2. Run type checking on new code (if you modified app/api/ or app/schemas/)
+make typecheck-backend
+
+# 3. Run all checks
 make verify
 
-# 3. Fix any violations
-# (Repeat steps 1-2 until clean)
+# 4. Fix any violations
+# (Repeat steps 1-3 until clean)
 
-# 4. Run pre-commit hooks
+# 5. Run pre-commit hooks
 make hooks
 
-# 5. Test your changes
+# 6. Test your changes
 pytest backend/tests/test_[your_feature].py -v
 ```
 
 **NEVER present code to the user until:**
+- `make format` passes ✅
+- `make typecheck-backend` passes ✅ (if you modified app/api/ or app/schemas/)
 - `make verify` passes ✅
 - `make hooks` passes ✅
 - Tests pass ✅
@@ -1551,6 +1556,8 @@ git commit -m "Add finance scenario privacy feature"
 - [ ] Database indexes on foreign keys (Rule 9)
 - [ ] Input validation with Pydantic (Rule 11)
 - [ ] Authentication required on endpoints (Rule 11)
+- [ ] Ran `make typecheck-backend` and passes ✅ (if modified app/api/ or app/schemas/)
+- [ ] Mypy errors in new code = 0 (no new type errors introduced)
 - [ ] Ran `make verify` and all checks pass ✅
 - [ ] Ran `make hooks` and pre-commit passes ✅
 - [ ] Tests written and passing ✅

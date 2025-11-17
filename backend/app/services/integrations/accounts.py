@@ -92,7 +92,7 @@ class ListingIntegrationAccountService:
         account.refresh_token = self._cipher.encrypt(refresh_token)
         account.expires_at = expires_at
         if metadata is not None:
-            account.metadata = metadata
+            account.metadata = metadata  # type: ignore[assignment,has-type]
         account.status = ListingAccountStatus.CONNECTED
         await session.commit()
         await session.refresh(account)

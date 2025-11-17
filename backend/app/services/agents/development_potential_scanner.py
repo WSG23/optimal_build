@@ -164,7 +164,7 @@ class DevelopmentPotentialScanner:
         )
 
         # Estimate land value
-        land_value = await self._estimate_land_value(
+        _land_value = await self._estimate_land_value(
             property_data, gfa_potential, optimal_use_mix
         )
 
@@ -174,7 +174,6 @@ class DevelopmentPotentialScanner:
             development_scenarios=scenarios,
             site_constraints=site_constraints,
             development_opportunities=opportunities,
-            estimated_land_value=land_value,
         )
 
     async def _analyze_existing_building(
@@ -211,11 +210,11 @@ class DevelopmentPotentialScanner:
         aei_opportunities = self._identify_aei_opportunities(property_data)
 
         # Cost and value estimates
-        redevelopment_cost = await self._estimate_redevelopment_cost(
+        _redevelopment_cost = await self._estimate_redevelopment_cost(
             property_data, redevelopment_gfa
         )
 
-        value_uplift = await self._calculate_value_uplift(
+        _value_uplift = await self._calculate_value_uplift(
             property_data, renovation_potential, redevelopment_gfa
         )
 
@@ -225,8 +224,6 @@ class DevelopmentPotentialScanner:
             renovation_potential=renovation_potential,
             adaptive_reuse_options=adaptive_reuse,
             asset_enhancement_opportunities=aei_opportunities,
-            estimated_redevelopment_cost=redevelopment_cost,
-            projected_value_uplift=value_uplift,
         )
 
     async def _analyze_historical_property(

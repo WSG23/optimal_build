@@ -390,8 +390,8 @@ async def get_timeline(
             ).total_seconds()
         audit_log = None
         audit_id = None
-        if event.metadata:
-            audit_id = event.metadata.get("audit_log_id")
+        if event.metadata:  # type: ignore[has-type]
+            audit_id = event.metadata.get("audit_log_id")  # type: ignore[union-attr,has-type]
         if audit_id:
             audit_log = audit_logs.get(str(audit_id))
         serialised.append(

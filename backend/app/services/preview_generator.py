@@ -917,7 +917,12 @@ def _write_thumbnail(
                 width=2,
             )
 
-    image = image.resize((256, 256), Image.LANCZOS)
+    # Use LANCZOS for Pillow < 10, Resampling.LANCZOS for Pillow >= 10
+    try:
+        resample = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
+    except AttributeError:
+        resample = Image.LANCZOS  # type: ignore[attr-defined]
+    image = image.resize((256, 256), resample)
     image.save(asset_dir / "thumbnail.png", "PNG")
 
 

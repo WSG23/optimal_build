@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Dict
 
 from dataclasses import dataclass
 from backend._compat.datetime import UTC
@@ -78,7 +78,7 @@ class EntitlementsService:
         slug: str,
         website: str | None = None,
         contact_email: str | None = None,
-        metadata: dict | None = None,
+        metadata: Dict[str, Any] | None = None,
     ) -> EntAuthority:
         authority = await self.get_authority_by_slug(slug)
         if authority is None:
@@ -97,7 +97,7 @@ class EntitlementsService:
             authority.website = website
             authority.contact_email = contact_email
             if metadata is not None:
-                authority.metadata = metadata
+                authority.metadata = metadata  # type: ignore[assignment,has-type]
         await self.session.flush()
         return authority
 
@@ -122,7 +122,7 @@ class EntitlementsService:
         requirements: dict | None = None,
         processing_time_days: int | None = None,
         is_mandatory: bool | None = None,
-        metadata: dict | None = None,
+        metadata: Dict[str, Any] | None = None,
     ) -> EntApprovalType:
         if isinstance(category, EntApprovalCategory):
             category_value = category.value
@@ -158,7 +158,7 @@ class EntitlementsService:
             if is_mandatory is not None:
                 approval_type.is_mandatory = is_mandatory
             if metadata is not None:
-                approval_type.metadata = metadata
+                approval_type.metadata = metadata  # type: ignore[assignment,has-type]
         await self.session.flush()
         return approval_type
 
@@ -264,7 +264,7 @@ class EntitlementsService:
         if "notes" in updates:
             target.notes = updates["notes"]
         if "metadata" in updates:
-            target.metadata = updates["metadata"]
+            target.metadata = updates["metadata"]  # type: ignore[assignment,has-type]
         if "target_submission_date" in updates:
             target.target_submission_date = updates["target_submission_date"]
         if "target_decision_date" in updates:

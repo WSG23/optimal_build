@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -98,7 +98,7 @@ class LoginResponse(BaseModel):
 
 # API Endpoints
 @router.post("/signup", response_model=UserResponse)
-def signup(user_data: UserSignup, db: Session = Depends(get_db)):
+def signup(user_data: UserSignup, db: Session = Depends(get_db)) -> UserResponse:
     """Register a new user with database persistence."""
 
     # Check if email already exists
@@ -126,7 +126,7 @@ def signup(user_data: UserSignup, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(credentials: UserLogin, db: Session = Depends(get_db)):
+def login(credentials: UserLogin, db: Session = Depends(get_db)) -> LoginResponse:
     """Login with email and password, returns JWT tokens."""
 
     # Get user from database
@@ -148,7 +148,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 async def get_me(
     current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
-):
+) -> UserResponse:
     """Get current user info from JWT token."""
     user = db.query(UserDB).filter(UserDB.email == current_user.email).first()
 
@@ -159,7 +159,7 @@ async def get_me(
 
 
 @router.get("/list")
-def list_users(db: Session = Depends(get_db)):
+def list_users(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """List all users (for testing - remove in production!)."""
     users = db.query(UserDB).all()
     return {
@@ -169,7 +169,7 @@ def list_users(db: Session = Depends(get_db)):
 
 
 @router.get("/test")
-def test_endpoint():
+def test_endpoint() -> Dict[str, Any]:
     """Test endpoint to verify API is working."""
     return {
         "status": "ok",

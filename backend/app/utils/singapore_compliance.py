@@ -369,11 +369,11 @@ async def calculate_gfa_utilization_async(
 
     # Create buildable defaults using property data
     defaults = BuildableDefaults(
-        plot_ratio=float(property.gross_plot_ratio),
-        site_area_m2=float(property.land_area_sqm),
-        site_coverage=0.45,  # Default, will be overridden by zoning rules
-        floor_height_m=4.0,  # Default floor-to-floor from config
-        efficiency_factor=0.82,  # 82% efficiency (18% loss for walls, MEP, structure, circulation)
+        plotRatio=float(property.gross_plot_ratio),
+        siteAreaM2=float(property.land_area_sqm),
+        siteCoverage=0.45,  # Default, will be overridden by zoning rules
+        floorHeightM=4.0,  # Default floor-to-floor from config
+        efficiencyFactor=0.82,  # 82% efficiency (18% loss for walls, MEP, structure, circulation)
     )
 
     # Create resolved zone (simplified for Singapore MVP - no PostGIS integration yet)

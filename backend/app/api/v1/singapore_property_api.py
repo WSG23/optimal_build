@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Dict, Generator
 
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -44,7 +44,7 @@ _sync_engine = None
 _SessionLocal = None
 
 
-def get_sync_db():
+def get_sync_db() -> Generator[Session, None, None]:
     """Get synchronous database session for MVP."""
     global _sync_engine, _SessionLocal
 
@@ -176,7 +176,7 @@ class PropertyResponse(BaseModel):
         from_attributes = True
 
     @classmethod
-    def from_orm(cls, obj):
+    def from_orm(cls, obj: Any) -> PropertyResponse:
         """Convert SQLAlchemy model to Pydantic, handling UUIDs."""
         data = {
             "id": str(obj.id),
@@ -240,7 +240,7 @@ def create_property(
     property_data: PropertyCreate,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_sync_db),
-):
+) -> PropertyResponse:
     """
     Create a new Singapore property with automatic compliance checking.
 
@@ -308,7 +308,7 @@ def list_properties(
     compliance_status: ComplianceStatus | None = Query(None),
     skip: int = 0,
     limit: int = 100,
-):
+) -> list[PropertyResponse]:
     """
     List all Singapore properties with optional filters.
 
@@ -338,7 +338,7 @@ def get_property(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_sync_db),
-):
+) -> PropertyResponse:
     """Get a specific property by ID."""
     try:
         property_uuid = uuid.UUID(property_id)
@@ -366,7 +366,7 @@ def update_property(
     property_update: PropertyUpdate,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_sync_db),
-):
+) -> PropertyResponse:
     """
     Update a property and re-run compliance checks.
 
@@ -409,7 +409,7 @@ def check_property_compliance(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_sync_db),
-):
+) -> ComplianceCheckResponse:
     """
     Run detailed BCA and URA compliance checks for a property.
 
@@ -453,7 +453,7 @@ def calculate_property_gfa(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_sync_db),
-):
+) -> Dict[str, Any]:
     """
     Calculate GFA utilization and remaining development potential.
 
@@ -491,7 +491,7 @@ def calculate_property_gfa(
 @router.post("/calculate/buildable")
 async def calculate_buildable_metrics(
     request: dict[str, Any], current_user: TokenData = Depends(get_current_user)
-):
+) -> Dict[str, Any]:
     """
     Calculate buildable metrics using jurisdiction-agnostic system.
 
@@ -523,9 +523,9 @@ async def calculate_buildable_metrics(
 
     # Create buildable defaults
     defaults = BuildableDefaults(
-        site_area_m2=float(land_area),
-        floor_height_m=4.0,  # Building science constant
-        efficiency_factor=0.82,  # 82% efficiency
+        siteAreaM2=float(land_area),
+        floorHeightM=4.0,  # Building science constant
+        efficiencyFactor=0.82,  # 82% efficiency
     )
 
     # Create resolved zone for jurisdiction-agnostic lookup
@@ -653,7 +653,7 @@ async def calculate_buildable_metrics(
 @router.post("/check-compliance")
 async def check_compliance(
     request: dict[str, Any], current_user: TokenData = Depends(get_current_user)
-):
+) -> Dict[str, Any]:
     """
     Check building code compliance for proposed design against Singapore URA/BCA rules.
 
@@ -771,7 +771,7 @@ def delete_property(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_sync_db),
-):
+) -> Dict[str, str]:
     """Soft delete a property (marks as inactive)."""
     try:
         property_uuid = uuid.UUID(property_id)

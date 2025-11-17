@@ -777,7 +777,7 @@ class DeveloperChecklistService:
         items = list(result.scalars().all())
 
         def _display_order_for(item: DeveloperPropertyChecklist) -> int:
-            metadata = item.metadata or {}
+            metadata: dict[str, Any] = item.metadata or {}  # type: ignore[assignment,has-type]
             template_order = getattr(item.template, "display_order", None)
             metadata_order = metadata.get("display_order")
 

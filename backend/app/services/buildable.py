@@ -56,19 +56,19 @@ class BuildableService:
         self, buildable_input: BuildableInput
     ) -> BuildableCalculation:
         defaults = BuildableDefaults(
-            plot_ratio=buildable_input.plot_ratio or BuildableDefaults().plot_ratio,
-            site_area_m2=buildable_input.land_area or BuildableDefaults().site_area_m2,
-            site_coverage=(
+            plotRatio=buildable_input.plot_ratio or BuildableDefaults().plot_ratio,
+            siteAreaM2=buildable_input.land_area or BuildableDefaults().site_area_m2,
+            siteCoverage=(
                 buildable_input.site_coverage
                 if buildable_input.site_coverage is not None
                 else BuildableDefaults().site_coverage
             ),
-            floor_height_m=(
+            floorHeightM=(
                 buildable_input.floor_height_m
                 if buildable_input.floor_height_m is not None
                 else BuildableDefaults().floor_height_m
             ),
-            efficiency_factor=(
+            efficiencyFactor=(
                 buildable_input.efficiency_ratio
                 if buildable_input.efficiency_ratio is not None
                 else BuildableDefaults().efficiency_factor

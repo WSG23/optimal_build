@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 
@@ -42,7 +44,7 @@ def _normalise_pagination(limit: int, offset: int) -> tuple[int, int]:
     return limit_value, offset_value
 
 
-def _model_list(schema, records):
+def _model_list(schema: Any, records: Any) -> list[Any]:
     return [schema.model_validate(record, from_attributes=True) for record in records]
 
 

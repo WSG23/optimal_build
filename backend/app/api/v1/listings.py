@@ -37,7 +37,7 @@ def _serialize_account(account: ListingIntegrationAccount) -> dict[str, Any]:
         "status": account.status.value,
         "created_at": account.created_at.isoformat() if account.created_at else None,
         "updated_at": account.updated_at.isoformat() if account.updated_at else None,
-        "metadata": account.metadata,
+        "metadata": account.metadata,  # type: ignore[dict-item,has-type]
         "expires_at": account.expires_at.isoformat() if account.expires_at else None,
     }
 
@@ -165,7 +165,7 @@ def _resolve_provider(value: str) -> ListingProvider:
         ) from exc
 
 
-def _client_for(provider: ListingProvider):
+def _client_for(provider: ListingProvider) -> Any:
     client = CLIENTS.get(provider)
     if client is None:
         raise HTTPException(

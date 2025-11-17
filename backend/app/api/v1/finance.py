@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import zipfile
 from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
@@ -389,7 +390,7 @@ def _store_sensitivity_metadata(
         else:
             serialised.append(_json_safe(entry))
 
-    existing_result.metadata = {"bands": serialised}
+    existing_result.metadata = {"bands": serialised}  # type: ignore[assignment,has-type]
     flag_modified(existing_result, "metadata_json")
 
 
@@ -651,6 +652,101 @@ def _json_safe(value: Any) -> Any:
 def _format_percentage_label(delta: Decimal) -> str:
     quantized = delta.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     return f"{quantized:+.2f}%"
+
+
+def _decimal_to_string(value: Decimal | None, *, places: int = 4) -> str | None:
+    if value is None:
+        return None
+    quantiser = Decimal(1).scaleb(-places)
+    try:
+        quantized = value.quantize(quantiser, rounding=ROUND_HALF_UP)
+    except (InvalidOperation, ValueError):
+        quantized = value
+    return format(quantized, "f")
+
+
+def _build_finance_analytics_summary(
+    cash_flows: Sequence[Decimal],
+    dscr_entries: Sequence[calculator.DscrEntry],
+    drawdown: FinancingDrawdownScheduleSchema | None,
+) -> dict[str, Any] | None:
+    """Assemble advanced analytics (MOIC, DSCR heat map) for the dashboard."""
+
+    if not cash_flows and not dscr_entries and drawdown is None:
+        return None
+
+    invested = Decimal("0")
+    distributions = Decimal("0")
+    for entry in cash_flows:
+        if entry < 0:
+            invested += abs(entry)
+        elif entry > 0:
+            distributions += entry
+    moic_value = None
+    if invested > 0 and distributions > 0:
+        moic_value = distributions / invested
+    equity_multiple = moic_value
+
+    dscr_buckets: list[dict[str, Any]] = []
+    dscr_bucket_defs: list[tuple[str, str, Decimal | None, Decimal | None]] = [
+        ("lt_1", "< 1.00x", None, Decimal("1.0")),
+        ("range_1_125", "1.00x – 1.25x", Decimal("1.0"), Decimal("1.25")),
+        ("range_125_150", "1.25x – 1.50x", Decimal("1.25"), Decimal("1.5")),
+        ("gte_150", "≥ 1.50x", Decimal("1.5"), None),
+    ]
+    bucket_counters: dict[str, dict[str, Any]] = {}
+    for key, label, _lower, _upper in dscr_bucket_defs:
+        bucket = {"key": key, "label": label, "count": 0, "periods": []}
+        bucket_counters[key] = bucket
+        dscr_buckets.append(bucket)
+
+    dscr_entries_payload: list[dict[str, Any]] = []
+    for entry in dscr_entries:
+        dscr_value = entry.dscr
+        bucket_key = None
+        if dscr_value is not None:
+            for key, _, lower, upper in dscr_bucket_defs:
+                meets_lower = lower is None or dscr_value >= lower
+                meets_upper = upper is None or dscr_value < upper
+                if meets_lower and meets_upper:
+                    bucket_key = key
+                    break
+            if bucket_key:
+                bucket = bucket_counters[bucket_key]
+                bucket["count"] += 1
+                bucket["periods"].append(str(entry.period))
+        dscr_entries_payload.append(
+            {
+                "period": entry.period,
+                "dscr": _decimal_to_string(dscr_value),
+                "bucket": bucket_key,
+            }
+        )
+
+    analytics: dict[str, Any] = {
+        "cash_flow_summary": {
+            "invested_equity": _decimal_to_string(invested),
+            "distributions": _decimal_to_string(distributions),
+            "net_cash": _decimal_to_string(distributions - invested),
+        }
+    }
+    if moic_value is not None:
+        analytics["moic"] = _decimal_to_string(moic_value)
+    if equity_multiple is not None:
+        analytics["equity_multiple"] = _decimal_to_string(equity_multiple)
+    analytics["dscr_heatmap"] = {
+        "buckets": dscr_buckets,
+        "entries": dscr_entries_payload,
+    }
+    if drawdown is not None:
+        analytics["drawdown_summary"] = {
+            "total_equity": _decimal_to_string(drawdown.total_equity, places=2),
+            "total_debt": _decimal_to_string(drawdown.total_debt, places=2),
+            "peak_debt_balance": _decimal_to_string(
+                drawdown.peak_debt_balance, places=2
+            ),
+        }
+    return analytics
 
 
 def _evaluate_sensitivity_bands(
@@ -1178,7 +1274,7 @@ async def _summarise_persisted_scenario(
     asset_processed = False
     sensitivity_metadata_rows: list[dict[str, Any]] | None = None
     for stored in ordered_results:
-        metadata = stored.metadata if isinstance(stored.metadata, dict) else None
+        metadata: dict[str, Any] | None = stored.metadata if isinstance(stored.metadata, dict) else None  # type: ignore[assignment,has-type]
         if stored.name == "asset_financials" and metadata and not asset_processed:
             summary_meta = metadata.get("summary")
             if summary_meta:
@@ -1435,6 +1531,26 @@ def _flush_buffer(stream: io.StringIO) -> bytes | None:
     return data.encode("utf-8")
 
 
+def _capital_stack_to_csv(summary: CapitalStackSummarySchema) -> str:
+    """Serialise capital stack slices into CSV rows."""
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["Name", "Source", "Category", "Amount", "Share", "Rate"])
+    for component in summary.slices:
+        writer.writerow(
+            [
+                component.name,
+                component.source_type,
+                component.category,
+                component.amount,
+                component.share,
+                component.rate or "",
+            ]
+        )
+    return buffer.getvalue()
+
+
 def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes]:
     """Yield CSV rows describing a scenario and its persisted results."""
 
@@ -1459,7 +1575,7 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
         if chunk:
             yield chunk
 
-        metadata = result.metadata if isinstance(result.metadata, dict) else None
+        metadata: dict[str, Any] | None = result.metadata if isinstance(result.metadata, dict) else None  # type: ignore[assignment,has-type]
         if result.name == "dscr_timeline" and metadata:
             timeline = metadata.get("entries")
             if timeline:
@@ -1857,8 +1973,8 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
         (item for item in ordered_results if item.name == "escalated_cost"), None
     )
     cost_meta = None
-    if escalated is not None and isinstance(escalated.metadata, dict):
-        cost_meta = escalated.metadata.get("cost_index")
+    if escalated is not None and isinstance(escalated.metadata, dict):  # type: ignore[has-type]
+        cost_meta = escalated.metadata.get("cost_index")  # type: ignore[union-attr,has-type]
 
     if cost_meta:
         writer.writerow([])
@@ -2354,6 +2470,13 @@ async def run_finance_feasibility(
         if not sensitivity_jobs:
             sensitivity_jobs = [_default_job_status(scenario.id)]
 
+        cash_flow_values: list[Decimal] = []
+        for raw in cash_inputs.cash_flows:
+            try:
+                cash_flow_values.append(_decimal_from_value(raw))
+            except (InvalidOperation, ValueError):
+                continue
+
         results: list[FinResult] = [
             FinResult(
                 project_id=project_uuid,
@@ -2471,6 +2594,21 @@ async def run_finance_feasibility(
                 )
             )
 
+        analytics_metadata = _build_finance_analytics_summary(
+            cash_flow_values, dscr_entries, drawdown_schedule_schema
+        )
+        if analytics_metadata:
+            results.append(
+                FinResult(
+                    project_id=project_uuid,
+                    scenario=scenario,
+                    name="analytics_overview",
+                    value=None,
+                    unit=None,
+                    metadata=_json_safe(analytics_metadata),
+                )
+            )
+
         if asset_breakdown_models:
             session.add_all(asset_breakdown_models)
 
@@ -2500,7 +2638,7 @@ async def run_finance_feasibility(
                     name=result.name,
                     value=result.value,
                     unit=result.unit,
-                    metadata=dict(result.metadata or {}),
+                    metadata=dict(result.metadata or {}),  # type: ignore[arg-type,has-type]
                 )
                 for result in results
             ],
@@ -2997,15 +3135,7 @@ async def export_finance_scenario(
     session: AsyncSession = Depends(get_session),
     identity: RequestIdentity = Depends(require_reviewer),
 ) -> StreamingResponse:
-    """Stream a CSV export describing the requested finance scenario.
-
-    The export is optimised for spreadsheet workflows and mirrors the data that
-    is persisted after running the feasibility analysis. Consumers receive the
-    same escalated cost provenance, headline ratios, and the optional DSCR
-    timeline that appear in the UI. A ``400`` error is raised for non-positive
-    scenario identifiers while a ``404`` is returned when the scenario cannot be
-    found.
-    """
+    """Stream a ZIP bundle with CSV/JSON finance scenario artefacts."""
 
     metrics.REQUEST_COUNTER.labels(endpoint="finance_export").inc()
     metrics.FINANCE_EXPORT_TOTAL.inc()
@@ -3036,9 +3166,38 @@ async def export_finance_scenario(
             scenario.fin_project, "currency", "USD"
         )
 
-        iterator = _iter_results_csv(scenario, currency=str(currency))
-        filename = f"finance_scenario_{scenario.id}.csv"
-        response = StreamingResponse(iterator, media_type="text/csv")
+        summary = await _summarise_persisted_scenario(scenario, session=session)
+        summary_payload = summary.model_dump(mode="json")
+
+        csv_buffer = io.BytesIO()
+        for chunk in _iter_results_csv(scenario, currency=str(currency)):
+            csv_buffer.write(chunk)
+        csv_bytes = csv_buffer.getvalue()
+
+        archive_buffer = io.BytesIO()
+        with zipfile.ZipFile(archive_buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("scenario.csv", csv_bytes)
+            archive.writestr(
+                "scenario.json",
+                json.dumps(summary_payload, indent=2, sort_keys=True),
+            )
+            if summary.capital_stack is not None:
+                archive.writestr(
+                    "capital_stack.csv", _capital_stack_to_csv(summary.capital_stack)
+                )
+            if summary.sensitivity_results:
+                archive.writestr(
+                    "sensitivity.json",
+                    json.dumps(summary.sensitivity_results, indent=2, default=str),
+                )
+
+        archive_buffer.seek(0)
+        archive_bytes = archive_buffer.getvalue()
+        filename = f"finance_scenario_{scenario.id}.zip"
+        response = StreamingResponse(
+            iter([archive_bytes]),
+            media_type="application/zip",
+        )
         response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         log_event(logger, "finance_feasibility_export", scenario_id=scenario.id)

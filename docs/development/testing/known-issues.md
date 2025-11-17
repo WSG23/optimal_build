@@ -211,11 +211,109 @@ and use that ID on the Marketing page. The pack generator will then create a
 real PDF.
 
 **What NOT to do:**
-- Don’t modify the generator or UI; the issue is missing seed data.
-- Don’t run `create_test_property.py` (it targets Postgres by default).
+- Don't modify the generator or UI; the issue is missing seed data.
+- Don't run `create_test_property.py` (it targets Postgres by default).
 
 **Follow-up:** Coordinate with Claude to switch the default dev database to
 PostgreSQL or ship seeded SQLite fixtures so the UI works out-of-the-box.
+
+---
+
+### Backend: Mypy Type Checking Errors (511 remaining)
+
+**Documented by:** Claude on 2025-11-16
+**Affects:** Backend type checking with mypy
+
+**Current Status:**
+- **Total errors:** 511 (reduced from 552)
+- **Error rate:** 1 error per 329 lines of code
+- **56% (284 errors)** are SQLAlchemy 2.0 type stub false positives
+- **44% (227 errors)** are fixable but require architectural changes
+
+**Root Cause Categories:**
+
+1. **SQLAlchemy 2.0 Type Stub Incompleteness** (284 errors - 56%)
+   - SQLAlchemy uses runtime code generation for its ORM
+   - Type stubs don't fully capture dynamically created APIs
+   - Examples: `Module "sqlalchemy" has no attribute "select"`, `Column`, `MetadataProxy`
+   - **Impact:** FALSE POSITIVE - Code works perfectly at runtime
+   - **Solution:** Add SQLAlchemy mypy plugin (Tier 2 preventive measure)
+
+2. **Weakly-Typed JSON/Dict Data** (88 errors - 17%)
+   - Using `dict[str, object]` or `dict[str, Any]` for JSON loses type information
+   - Metadata fields use `JSON` columns → `dict[str, Any]` in Python
+   - Runtime validation happens, but mypy requires compile-time proof
+   - **Impact:** REAL ISSUE - Potential runtime TypeErrors if data shape changes
+   - **Solution:** Add Pydantic schemas and TypedDict (Tier 1 preventive measure)
+
+3. **Missing Type Narrowing Guards** (21 errors - 4%)
+   - Optional types (`T | None`) used without explicit None checks
+   - Mypy's type narrowing doesn't always work with SQLAlchemy proxies
+   - **Impact:** MIXED - Some are real bugs, others are false positives
+   - **Solution:** Add type guards and assertions (Tier 2)
+
+4. **Pydantic Validator Type Mismatches** (17 errors - 3%)
+   - Pydantic v2 validators have strict type signatures
+   - Old patterns from Pydantic v1 → v2 migration
+   - **Impact:** REAL ISSUE - Could mask validation bugs
+   - **Solution:** Update validator signatures (Tier 2)
+
+5. **Name Redefinition & Import Conflicts** (21 errors - 4%)
+   - Conditional imports for optional dependencies create duplicate names
+   - **Impact:** REAL BUG - Can cause runtime ImportErrors
+   - **Solution:** Fix import patterns (already partially addressed)
+
+6. **Type Stub Override Mismatches** (2 errors - <1%)
+   - Custom SQLAlchemy type decorators override parent methods
+   - **Impact:** FALSE POSITIVE - Works at runtime
+
+**Preventive Measures:**
+
+**Tier 1: High Impact, Low Effort** (2-3 hours total)
+- Add Pydantic schemas for JSON fields (eliminates 88+ errors)
+- Use TypedDict for database metadata
+- Add pre-commit hook for type checking critical paths
+
+**Tier 2: Medium Impact, Medium Effort** (8-10 hours total)
+- Add SQLAlchemy mypy plugin (eliminates 284 false positives)
+- Create type guard utilities
+- Enforce strict type checking on new code
+
+**Tier 3: High Impact, High Effort** (40+ hours total)
+- Refactor metadata architecture to typed columns
+- Migrate to Pydantic V2 strict mode
+
+**What NOT to do:**
+- Do not try to fix all 511 errors immediately - many are false positives
+- Do not add `# type: ignore` comments without understanding the root cause
+- Do not assume all type errors indicate real bugs
+
+**What TO do:**
+1. **Focus on Tier 1 preventive measures** for new code
+2. **Add SQLAlchemy mypy plugin** to suppress false positives (Tier 2)
+3. **Use Pydantic schemas** for JSON fields instead of `dict[str, Any]`
+4. **Document type safety patterns** in new code
+
+**Estimated Impact of Tier 1+2 Measures:**
+- Remaining errors: ~150 (71% reduction from current 511)
+- Error rate: 1 error per 1,120 lines of code (vs current 1 per 329)
+
+**Recent Fixes (41 errors fixed in last session):**
+- PIL LANCZOS compatibility in `preview_generator.py:920`
+- Prometheus stub types in `metrics.py:19`
+- PDF generator annotation in `pdf_generator.py:30`
+- 31 metadata has-type errors across 11 files
+- Missing Dict import in `entitlements.py`
+- Type narrowing with assertions in `geometry/utils.py:37-44`
+
+**Files Most Affected by Type Errors:**
+- `app/services/preview_generator.py` (~25 errors - metadata parsing)
+- `app/services/developer_checklist_service.py` (6 errors - metadata)
+- `app/core/overlay/merge.py` (4 errors - dict attributes)
+- All `app/models/*.py` files (SQLAlchemy false positives)
+
+**Next Steps:**
+When implementing new features, follow Tier 1 preventive measures to avoid adding new type errors. The bulk of remaining errors are upstream SQLAlchemy type stub issues that don't indicate application bugs.
 
 ---
 

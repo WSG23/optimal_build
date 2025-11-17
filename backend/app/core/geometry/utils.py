@@ -40,6 +40,13 @@ def derive_setback_overrides(
     max_y = _coerce_float(site_bounds.get("max_y"))
     if None in (min_x, max_x, min_y, max_y):
         return {}
+    # Type narrowing: after None check, all values are guaranteed float
+    assert (
+        min_x is not None
+        and max_x is not None
+        and min_y is not None
+        and max_y is not None
+    )
 
     building_min_x = float("inf")
     building_max_x = float("-inf")

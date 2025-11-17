@@ -735,6 +735,8 @@
 3. Monitoring – Grafana dashboards for preview generation metrics
 4. Performance – monitor generation times in production with real property data
 5. Asset cleanup – automated cleanup of old preview versions (housekeeping task)
+6. Preview generator typed payloads – replace dynamic `dict[str, Any]` blobs with TypedDicts so renderer + worker code can re-enable mypy on `preview_generator.py`.
+7. Developer checklist service typing – move JSON parsing into structured helpers so checklist APIs stop returning `object`/`Any` and regains type coverage.
 
 **Testing Discipline (Phase 2B onward):**
 - Every Phase 2B feature or refactor must land with automated tests that keep the touched modules at or above the 80 % coverage gate.

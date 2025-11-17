@@ -311,7 +311,7 @@ def _collect_quick_metrics(
     return metrics
 
 
-def _serialise_preview_job(job) -> PreviewJobSchema:
+def _serialise_preview_job(job: Any) -> PreviewJobSchema:
     status = (
         job.status.value
         if isinstance(job.status, PreviewJobStatus)
@@ -1649,7 +1649,7 @@ async def list_checklist_templates(
     ),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> List[Dict[str, Any]]:
     """Return checklist templates, optionally filtered by development scenario."""
 
     await DeveloperChecklistService.ensure_templates_seeded(session)
@@ -1671,7 +1671,7 @@ async def create_checklist_template(
     request: ChecklistTemplateCreateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> Dict[str, Any]:
     """Create a new checklist template definition."""
 
     try:
@@ -1694,7 +1694,7 @@ async def update_checklist_template(
     request: ChecklistTemplateUpdateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> Dict[str, Any]:
     """Update an existing checklist template definition."""
 
     try:
@@ -1719,7 +1719,7 @@ async def delete_checklist_template(
     template_id: UUID,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> Response:
     """Delete a checklist template."""
 
     deleted = await DeveloperChecklistService.delete_template(session, template_id)
@@ -1738,7 +1738,7 @@ async def bulk_import_checklist_templates(
     request: ChecklistTemplateBulkImportRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> ChecklistTemplateBulkImportResponse:
     """Bulk import checklist templates from a JSON payload."""
 
     templates_payload = [
@@ -1763,7 +1763,7 @@ async def get_property_checklists(
     status: Optional[str] = None,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> ChecklistItemsResponse:
     """
     Get due diligence checklist items for a property.
 
@@ -1827,7 +1827,7 @@ async def get_checklist_summary(
     property_id: UUID,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> ChecklistSummaryResponse:
     """Get a summary of checklist completion status for a property."""
     summary = await DeveloperChecklistService.get_checklist_summary(
         session, property_id
@@ -1844,7 +1844,7 @@ async def update_checklist_item(
     request: UpdateChecklistStatusRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> ChecklistItemResponse:
     """Update a checklist item's status and notes."""
     try:
         checklist_status = ChecklistStatus(request.status)
@@ -1882,7 +1882,7 @@ async def get_condition_assessment(
     scenario: Optional[str] = None,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> ConditionAssessmentResponse:
     """
     Generate a developer property condition assessment.
 
@@ -1914,7 +1914,7 @@ async def upsert_condition_assessment(
     request: ConditionAssessmentUpsertRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> ConditionAssessmentResponse:
     """Persist a developer inspection assessment for a property."""
 
     scenario_key = _normalise_scenario_param(request.scenario)
@@ -1978,7 +1978,7 @@ async def get_condition_assessment_history(
     limit: int = Query(20, ge=1, le=200),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> List[ConditionAssessmentResponse]:
     """Return stored inspection assessments ordered by most recent first."""
 
     scenario_key = _normalise_scenario_param(scenario)
@@ -1999,7 +1999,7 @@ async def get_condition_assessment_scenarios(
     property_id: UUID,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> List[ConditionAssessmentResponse]:
     """Return the latest stored inspection assessment for each scenario."""
 
     assessments = await DeveloperConditionService.get_latest_assessments_by_scenario(
@@ -2017,7 +2017,7 @@ async def export_condition_report(
     report_format: str = Query("json", alias="format", pattern="^(json|pdf)$"),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-):
+) -> Response | JSONResponse:
     """Return a structured condition report in JSON (default) or PDF format."""
 
     property_record = await session.get(Property, property_id)
@@ -2053,28 +2053,28 @@ async def export_condition_report(
     )
 
     report = ConditionReportResponse(
-        property_id=str(property_id),
-        property_name=property_record.name,
+        propertyId=str(property_id),
+        propertyName=property_record.name,
         address=property_record.address,
-        generated_at=datetime.utcnow().isoformat(),
-        scenario_assessments=[
+        generatedAt=datetime.utcnow().isoformat(),
+        scenarioAssessments=[
             _serialize_condition_assessment(assessment)
             for assessment in scenario_assessments
         ],
         history=[_serialize_condition_assessment(assessment) for assessment in history],
-        checklist_summary=(
+        checklistSummary=(
             ChecklistProgressResponse(
                 total=checklist_summary_raw["total"],
                 completed=checklist_summary_raw["completed"],
-                in_progress=checklist_summary_raw["in_progress"],
+                inProgress=checklist_summary_raw["in_progress"],
                 pending=checklist_summary_raw["pending"],
-                not_applicable=checklist_summary_raw["not_applicable"],
-                completion_percentage=checklist_summary_raw["completion_percentage"],
+                notApplicable=checklist_summary_raw["not_applicable"],
+                completionPercentage=checklist_summary_raw["completion_percentage"],
             )
             if checklist_summary_raw
             else None
         ),
-        scenario_comparison=scenario_comparison,
+        scenarioComparison=scenario_comparison,
     )
 
     if report_format == "pdf":
@@ -2130,8 +2130,8 @@ def _serialize_condition_assessment(
         systems=[_serialize_condition_system(system) for system in assessment.systems],
         recommended_actions=assessment.recommended_actions,
         recorded_at=recorded_at,
-        inspector_name=assessment.inspector_name,
-        recorded_by=str(assessment.recorded_by) if assessment.recorded_by else None,
+        inspectorName=assessment.inspector_name,
+        recordedBy=str(assessment.recorded_by) if assessment.recorded_by else None,
         attachments=list(assessment.attachments or []),
         insights=[
             _serialize_condition_insight(insight) for insight in assessment.insights

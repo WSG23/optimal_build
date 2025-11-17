@@ -1,4 +1,4 @@
-.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -107,8 +107,10 @@ help-dev: ## Show comprehensive development workflow guide
 	@echo "  make pre-commit-full    Comprehensive pre-commit validation"
 	@echo "  make ai-preflight       AI agent pre-flight checks"
 	@echo ""
-	@echo "━━━ TypeScript & Frontend ━━━"
-	@echo "  make typecheck          Run TypeScript type checking"
+	@echo "━━━ Type Checking ━━━"
+	@echo "  make typecheck          Run TypeScript type checking (frontend)"
+	@echo "  make typecheck-backend  Run Python type checking (backend API/schemas)"
+	@echo "  make typecheck-all      Run both TypeScript and Python type checking"
 	@echo "  make typecheck-watch    Watch mode for TypeScript errors"
 	@echo "  npm run lint            Lint frontend code"
 	@echo "  make clean-ui           Clean UI cache and build artifacts"
@@ -256,10 +258,20 @@ lint-prod: ## Run linting for backend production code (optional)
 # ✅ TYPESCRIPT & FRONTEND VALIDATION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-typecheck: ## Run TypeScript type checking
+typecheck: ## Run TypeScript type checking (frontend only)
 	@echo "🔍 Running TypeScript type checks..."
 	@npm run --prefix frontend typecheck
 	@echo "✅ TypeScript checks passed"
+
+typecheck-backend: ## Run Python type checking (mypy on critical paths)
+	@echo "🔍 Running Python type checks on critical paths (app/api/, app/schemas/)..."
+	@cd backend && $(MYPY) app/api/ app/schemas/ --config-file=../mypy.ini --no-error-summary
+	@echo "✅ Python type checks passed"
+
+typecheck-all: ## Run both TypeScript and Python type checking
+	@echo "🔍 Running all type checks..."
+	@$(MAKE) typecheck
+	@$(MAKE) typecheck-backend
 
 typecheck-watch: ## Watch mode for TypeScript type checking
 	@echo "👀 Watching TypeScript files for type errors..."
@@ -308,9 +320,10 @@ test-aec: ## Run sample import, overlay, export flows and regression tests
 # 🔍 VERIFICATION & QUALITY GATES
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-verify: ## Run formatting checks, linting, coding rules, roadmap/work queue validation, and tests
+verify: ## Run formatting checks, linting, type checking, coding rules, roadmap/work queue validation, and tests
 	$(MAKE) format-check
 	$(MAKE) lint
+	$(MAKE) typecheck-backend
 	$(MAKE) check-coding-rules
 	$(MAKE) validate-delivery-plan
 	$(MAKE) test

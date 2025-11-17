@@ -38,6 +38,22 @@ Legend: `IN PROGRESS` = actively being worked, `READY` = unblocked and next in l
 - **Acceptance Criteria:** Analytics panel + export bundle shipped, async reruns verified on Linux with metrics/alerts updated, doc status updated to note completion.
 - **Files:** `frontend/src/modules/finance/*`, `backend/app/api/v1/finance.py`, `backend/app/services/finance/asset_models.py`, `docs/feature_delivery_plan_v2.md`.
 
+### Preview generator typed payload refactor (Tech debt)
+- **Status:** READY
+- **Assigned:** Platform (Visualization)
+- **Estimate:** 3 days
+- **Description:** Introduce TypedDicts / dataclasses for GLTF payload parts (`massing_layers`, `color_legend`, camera hints) inside `preview_generator.py` and replace the current `dict[str, Any]` plumbing. Goal is to narrow object types so mypy can re-validate the render pipeline without suppressions.
+- **Acceptance Criteria:** New typed helpers cover layer + legend schemas, mypy runs clean for `backend/app/services/preview_generator.py` without `ignore_errors`, and renderer tests updated to use the typed helpers.
+- **Files:** `backend/app/services/preview_generator.py`, `backend/jobs/preview_generate.py`, `backend/tests/test_services/test_preview_generator.py`.
+
+### Developer checklist service typing hardening (Tech debt)
+- **Status:** READY
+- **Assigned:** Platform (Site Acquisition)
+- **Estimate:** 1.5 days
+- **Description:** Wrap checklist payloads in structured models (TypedDict or Pydantic) within `developer_checklist_service.py`, replace raw `object` conversions, and tighten return types so downstream APIs/UI no longer operate on `Any`.
+- **Acceptance Criteria:** Service functions expose typed signatures, mypy runs without `ignore_errors` for the module, and regression tests cover the conversion helpers.
+- **Files:** `backend/app/services/developer_checklist_service.py`, `backend/tests/test_services/test_developer_checklist_service.py`.
+
 ---
 
 ## ✅ Completed (Last 30 Days)

@@ -27,7 +27,7 @@ class PageNumberCanvas(canvas.Canvas):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         canvas.Canvas.__init__(self, *args, **kwargs)
-        self._saved_page_states = []
+        self._saved_page_states: list[dict[str, Any]] = []
         self.company_name = kwargs.get("company_name", "Commercial Property Advisors")
         self.document_title = kwargs.get("document_title", "Professional Pack")
 

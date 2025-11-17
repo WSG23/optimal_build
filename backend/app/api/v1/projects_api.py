@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException
@@ -100,7 +100,7 @@ async def create_project(
     project_data: ProjectCreate,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> ProjectResponse:
     """Create a new project for the authenticated user."""
 
     # Create new project with user's email
@@ -122,7 +122,9 @@ async def create_project(
 
 
 @router.get("/list", response_model=List[ProjectResponse])
-async def list_projects(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+async def list_projects(
+    db: Session = Depends(get_db), skip: int = 0, limit: int = 100
+) -> List[ProjectResponse]:
     """List all active projects (no auth required for viewing)."""
     projects = (
         db.query(ProjectDB).filter(ProjectDB.is_active).offset(skip).limit(limit).all()
@@ -136,7 +138,7 @@ async def get_project(
     project_id: str,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> ProjectResponse:
     """Get a specific project by ID."""
     project = (
         db.query(ProjectDB)
@@ -156,7 +158,7 @@ async def update_project(
     project_update: ProjectUpdate,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> ProjectResponse:
     """Update a project (must be owner)."""
     project = (
         db.query(ProjectDB)
@@ -185,7 +187,7 @@ async def delete_project(
     project_id: str,
     current_user: TokenData = Depends(get_current_user),
     db: Session = Depends(get_db),
-):
+) -> Dict[str, str]:
     """Soft delete a project (marks as inactive) - must be owner."""
     project = (
         db.query(ProjectDB)
@@ -205,7 +207,7 @@ async def delete_project(
 
 
 @router.get("/stats/summary")
-async def get_project_stats(db: Session = Depends(get_db)):
+async def get_project_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get project statistics (temporarily without auth for testing)."""
     # Temporarily disabled authentication for testing
     # current_user: TokenData = Depends(get_current_user)

@@ -1,6 +1,6 @@
 """Secure user API with validation and password hashing."""
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException
@@ -62,7 +62,7 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/signup", response_model=UserResponse)
-def signup(user_data: UserSignup):
+def signup(user_data: UserSignup) -> UserResponse:
     """Register a new user with validation and password hashing."""
 
     # Check if email already exists
@@ -93,7 +93,7 @@ def signup(user_data: UserSignup):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(credentials: UserLogin):
+def login(credentials: UserLogin) -> LoginResponse:
     """Login with email and password, returns JWT tokens."""
 
     # Check if user exists
@@ -118,7 +118,7 @@ def login(credentials: UserLogin):
 
 
 @router.get("/test")
-def test():
+def test() -> Dict[str, Any]:
     """Test endpoint to verify API is working."""
     return {
         "status": "ok",
@@ -134,7 +134,7 @@ def test():
 
 
 @router.get("/list")
-def list_users():
+def list_users() -> Dict[str, Any]:
     """List all users (for testing - remove in production!)."""
     safe_users = []
     for _email, user in users_db.items():
@@ -145,7 +145,7 @@ def list_users():
 
 
 @router.get("/me")
-async def get_me(current_user: TokenData = Depends(get_current_user)):
+async def get_me(current_user: TokenData = Depends(get_current_user)) -> UserResponse:
     """Get current user info from JWT token."""
     if current_user.email not in users_db:
         raise HTTPException(status_code=404, detail="User not found")
