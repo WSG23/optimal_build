@@ -205,6 +205,7 @@ _No active tasks. Pull from the Ready queue below._
 - **2025-11-02:** Phase 2C Finance complete (WSG23 + Claude) — Commits 7beff36/d0752f5, smoke tests ✅.
 - **2025-11-02:** Infrastructure Audit Option 10 (Claude) — Pre-commit hook fixes landed.
 - **2025-11-01:** Database indexing (Claude + Codex) — Added 9 composite indexes (11‑39% perf gain).
+- **2025-11-17:** Medium debt cleanup — MinIO documents bucket auto-created, market schema docs aligned to production tables, compliance enums extracted to shared model.
 
 Older wins moved to archive for brevity; see git history for prior months.
 
@@ -235,9 +236,7 @@ Older wins moved to archive for brevity; see git history for prior months.
 - Authentication logic remains fragmented across `users_secure.py`, `users_db.py`, `core/jwt_auth.py`, and `core/auth/policy.py`.
 
 **Medium Priority**
-- `documents` MinIO bucket referenced in docs but not present in `docker-compose.yml`.
-- Market schema drift: documentation cites `market_transactions`, production uses YieldBenchmark/AbsorptionTracking/MarketCycle tables.
-- Compliance models live inside `singapore_property.py` instead of a dedicated module.
+- _None_ — documents bucket now provisioned in `docker-compose.yml`, market schema documentation updated to match production tables, and compliance enums moved into `backend/app/models/compliance.py` (2025-11-17).
 
 **Low Priority**
 - Ten of eleven AI agents exist in code but lack coverage in high-level docs. Update agent catalog when feasible.

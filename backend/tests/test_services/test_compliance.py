@@ -7,11 +7,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.models.singapore_property import (
-    ComplianceStatus,
-    PropertyZoning,
-    SingaporeProperty,
-)
+from app.models.compliance import ComplianceStatus
+from app.models.singapore_property import PropertyZoning, SingaporeProperty
 from app.services.compliance import (
     ComplianceResult,
     ComplianceService,

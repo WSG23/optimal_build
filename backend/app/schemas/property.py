@@ -8,7 +8,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.models.singapore_property import ComplianceStatus, SingaporeProperty
+from app.models.compliance import ComplianceStatus
+from app.models.singapore_property import SingaporeProperty
 
 
 class PropertyComplianceSummary(BaseModel):
