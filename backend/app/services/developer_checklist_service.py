@@ -10,9 +10,9 @@ from typing import (
     Iterable,
     List,
     Mapping,
-    MutableMapping,
     Optional,
     Sequence,
+    SupportsInt,
     Tuple,
     TypedDict,
     Union,
@@ -64,6 +64,53 @@ class ChecklistMetadataEntry(TypedDict, total=False):
     professional_type: Optional[str]
     typical_duration_days: Optional[int]
     display_order: Optional[int]
+
+
+class ChecklistItemSerialized(TypedDict, total=False):
+    id: str
+    property_id: str
+    development_scenario: str
+    category: str
+    item_title: str
+    item_description: Optional[str]
+    priority: str
+    status: str
+    requires_professional: bool
+    professional_type: Optional[str]
+    assigned_to: Optional[str]
+    due_date: Optional[str]
+    completed_date: Optional[str]
+    completed_by: Optional[str]
+    notes: Optional[str]
+    metadata: Mapping[str, Any]
+    created_at: str
+    updated_at: str
+    typical_duration_days: Optional[int]
+    display_order: Optional[int]
+
+
+class ChecklistSummaryBucket(TypedDict):
+    total: int
+    completed: int
+    in_progress: int
+    pending: int
+    not_applicable: int
+
+
+class ChecklistSummaryDict(ChecklistSummaryBucket):
+    property_id: str
+    completion_percentage: int
+    by_category_status: Dict[str, ChecklistSummaryBucket]
+
+
+def _new_summary_bucket() -> ChecklistSummaryBucket:
+    return {
+        "total": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "pending": 0,
+        "not_applicable": 0,
+    }
 
 
 DEFAULT_TEMPLATE_DEFINITIONS: Tuple[ChecklistTemplatePayload, ...] = (
@@ -326,7 +373,7 @@ def _normalise_definition(
     if typical_duration_value is None or typical_duration_value == "":
         typical_duration = None
     else:
-        typical_duration = int(typical_duration_value)
+        typical_duration = int(cast(Union[str, SupportsInt], typical_duration_value))
 
     requires_professional = bool(requires_professional_value)
 
@@ -342,7 +389,7 @@ def _normalise_definition(
 
     display_order = None
     if display_order_value is not None and display_order_value != "":
-        display_order = int(display_order_value)
+        display_order = int(cast(Union[str, SupportsInt], display_order_value))
 
     return ChecklistTemplateDefinition(
         development_scenario=scenario,
@@ -369,7 +416,7 @@ class DeveloperChecklistService:
         bind = None
         if hasattr(session, "get_bind"):
             try:
-                bind = session.get_bind()  # type: ignore[misc]
+                bind = session.get_bind()
             except Exception:  # pragma: no cover - compatibility shim
                 bind = None
         if bind is None:
@@ -675,11 +722,12 @@ class DeveloperChecklistService:
                 scenario = template.development_scenario
                 key = (scenario, template.item_title.strip().lower())
                 if scenario in scenarios_in_payload and key not in incoming_keys:
-                    if hasattr(session, "delete"):
-                        await session.delete(template)  # type: ignore[attr-defined]
+                    delete_method = getattr(session, "delete", None)
+                    if callable(delete_method):
+                        await delete_method(template)
                     else:  # pragma: no cover - exercised under lightweight SQLAlchemy stub
                         try:
-                            import sqlalchemy  # type: ignore[import-not-found]
+                            import sqlalchemy
 
                             store_map = getattr(sqlalchemy, "_DATABASE", None)
                         except Exception:  # pragma: no cover - defensive
@@ -861,12 +909,13 @@ class DeveloperChecklistService:
     @staticmethod
     def format_property_checklist_items(
         items: Iterable[DeveloperPropertyChecklist],
-    ) -> List[dict[str, object]]:
+    ) -> List[ChecklistItemSerialized]:
         """Serialise checklist records with template-aware fallbacks."""
 
-        formatted: List[dict[str, object]] = []
+        formatted: List[ChecklistItemSerialized] = []
         for item in items:
-            payload = cast(MutableMapping[str, Any], item.to_dict())
+            raw_payload = item.to_dict()
+            payload = cast(ChecklistItemSerialized, dict(raw_payload))
             metadata_raw = payload.get("metadata")
             metadata: Mapping[str, Any]
             if isinstance(metadata_raw, Mapping):
@@ -938,52 +987,39 @@ class DeveloperChecklistService:
     async def get_checklist_summary(
         session: AsyncSession,
         property_id: UUID,
-    ) -> dict:
+    ) -> ChecklistSummaryDict:
         """Get a summary of checklist completion status for a property."""
         await DeveloperChecklistService._ensure_tables(session)
         items = await DeveloperChecklistService.get_property_checklist(
             session, property_id
         )
 
-        totals = {
+        totals: ChecklistSummaryBucket = {
+            **_new_summary_bucket(),
             "total": len(items),
-            "completed": 0,
-            "in_progress": 0,
-            "pending": 0,
-            "not_applicable": 0,
         }
+        by_category: Dict[str, ChecklistSummaryBucket] = {}
 
-        by_category: Dict[str, Dict[str, int]] = defaultdict(
-            lambda: {
-                "total": 0,
-                "completed": 0,
-                "in_progress": 0,
-                "pending": 0,
-                "not_applicable": 0,
-            }
-        )
+        def _apply_status(
+            bucket: ChecklistSummaryBucket, status: ChecklistStatus
+        ) -> None:
+            if status == ChecklistStatus.COMPLETED:
+                bucket["completed"] += 1
+            elif status == ChecklistStatus.IN_PROGRESS:
+                bucket["in_progress"] += 1
+            elif status == ChecklistStatus.NOT_APPLICABLE:
+                bucket["not_applicable"] += 1
+            else:
+                bucket["pending"] += 1
 
         for item in items:
             status = item.status
-            if status == ChecklistStatus.COMPLETED:
-                totals["completed"] += 1
-            elif status == ChecklistStatus.IN_PROGRESS:
-                totals["in_progress"] += 1
-            elif status == ChecklistStatus.NOT_APPLICABLE:
-                totals["not_applicable"] += 1
-            else:
-                totals["pending"] += 1
+            _apply_status(totals, status)
 
             category_key = item.category.value
-            by_category[category_key]["total"] += 1
-            if status == ChecklistStatus.COMPLETED:
-                by_category[category_key]["completed"] += 1
-            elif status == ChecklistStatus.IN_PROGRESS:
-                by_category[category_key]["in_progress"] += 1
-            elif status == ChecklistStatus.NOT_APPLICABLE:
-                by_category[category_key]["not_applicable"] += 1
-            else:
-                by_category[category_key]["pending"] += 1
+            bucket = by_category.setdefault(category_key, _new_summary_bucket())
+            bucket["total"] += 1
+            _apply_status(bucket, status)
 
         completion_percentage = (
             int((totals["completed"] / totals["total"]) * 100)
@@ -991,11 +1027,7 @@ class DeveloperChecklistService:
             else 0
         )
 
-        by_category_serialised = {
-            category: dict(stats) for category, stats in by_category.items()
-        }
-
-        return {
+        summary: ChecklistSummaryDict = {
             "property_id": str(property_id),
             "total": totals["total"],
             "completed": totals["completed"],
@@ -1003,8 +1035,9 @@ class DeveloperChecklistService:
             "pending": totals["pending"],
             "not_applicable": totals["not_applicable"],
             "completion_percentage": completion_percentage,
-            "by_category_status": by_category_serialised,
+            "by_category_status": by_category,
         }
+        return summary
 
 
 __all__ = [

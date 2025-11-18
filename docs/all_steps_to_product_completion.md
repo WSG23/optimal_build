@@ -169,6 +169,10 @@ _No items in Ready queue. Phase 2C hardening completed._
 
 ### ✅ Completed (Last 30 Days)
 
+- **2025-11-18:** Preview async Linux validation guide (Codex Local) — Added [`docs/validation/preview_async_linux.md`](validation/preview_async_linux.md) plus automation helper [`scripts/validate_preview_async_linux.sh`](../scripts/validate_preview_async_linux.sh) so Phase 2B preview jobs can be exercised on Linux with Redis/RQ, metrics capture, and results logging.
+- **2025-11-18:** Layer inspection panel (Codex Local) — Developer preview standalone UI now exposes a detailed inspection panel with footprint area/perimeter, elevation, floor line previews, and per-layer controls. Changes touch [`frontend/src/app/pages/site-acquisition/DeveloperPreviewStandalone.tsx`](../frontend/src/app/pages/site-acquisition/DeveloperPreviewStandalone.tsx) and [`frontend/src/index.css`](../frontend/src/index.css); verified via `npm --prefix frontend run lint`.
+- **2025-11-18:** Preview duration monitoring script (Codex Local) — Introduced [`backend/scripts/preview_duration_report.py`](../backend/scripts/preview_duration_report.py) to summarise READY preview job durations (mean/median/p90) and export CSVs for production telemetry.
+- **2025-11-18:** Developer checklist service typing (Codex Local) — Added explicit TypedDicts for checklist payloads/summary buckets, tightened metadata fallbacks, and cleaned up type ignores. Verified with `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/developer_checklist_service.py --config-file=../mypy.ini` and `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build SECRET_KEY=test JOB_QUEUE_BACKEND=inline ../.venv/bin/pytest tests/test_api/test_developer_checklist_templates.py`.
 - **2025-11-18:** Phase 2C finance sensitivity validation (Claude) — Validated async `finance.sensitivity` deduplication logic via unit test (`test_finance_sensitivity_rerun_async_deduplicates_pending` PASSED). Infrastructure verified: Redis, PostgreSQL, API server with RQ backend. Deduplication helpers `_has_pending_sensitivity_job()` and `_band_payloads_equal()` prevent duplicate job enqueues. See [validation_results_phase2c_20251118.md](../validation_results_phase2c_20251118.md) for full details.
 - **2025-11-18:** Preview generator typed payload refactor (Codex Local) — Introduced TypedDict/dataclass helpers for preview payloads, refactored `preview_generator.py` + GLTF/thumbnail builders to use them, and verified with `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/preview_generator.py --config-file=../mypy.ini` plus `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build SECRET_KEY=test JOB_QUEUE_BACKEND=inline ../.venv/bin/pytest tests/test_services/test_preview_generator.py`.
 - **2025-11-18:** Backend mypy plugin enforcement (Codex Local) — Enabled `pydantic.mypy` and `sqlalchemy.ext.mypy.plugin` in `mypy.ini`, added `pydantic[email,mypy]==2.5.0` and `sqlalchemy[asyncio,mypy]==2.0.23` to `backend/requirements.txt`, and validated via `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/preview_generator.py --config-file=../mypy.ini`.
@@ -864,13 +868,13 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 **🎯 Ready for Production** – Phase 2B preview viewer functionally complete, all manual QA satisfied
 
 **📋 Recommended Follow-ups (Post-Phase 2B):**
-1. Production testing with async Celery/RQ on Linux (RQ has macOS fork safety limitations)
-2. Layer breakdown UI – detailed massing inspection panel (Phase 2C)
-3. Monitoring – Grafana dashboards for preview generation metrics
-4. Performance – monitor generation times in production with real property data
-5. Asset cleanup – automated cleanup of old preview versions (housekeeping task)
-6. Preview generator typed payloads – replace dynamic `dict[str, Any]` blobs with TypedDicts so renderer + worker code can re-enable mypy on `preview_generator.py`.
-7. Developer checklist service typing – move JSON parsing into structured helpers so checklist APIs stop returning `object`/`Any` and regains type coverage.
+1. ✅ Production testing with async Celery/RQ on Linux — documented in [preview_async_linux.md](validation/preview_async_linux.md) and automated via `scripts/validate_preview_async_linux.sh`. **Execution pending:** requires a Linux host (current macOS-only laptop cannot run the RQ worker); rerun the script and attach the generated `preview_validation_results_*.md` once a Linux box is available.
+2. ✅ Layer breakdown UI – detailed massing inspection panel — Developer preview standalone now surfaces per-layer geometry inspection controls (Nov 18 2025).
+3. ✅ Monitoring – Grafana dashboards for preview generation metrics — dashboards + Prometheus counters landed Nov 4 2025.
+4. ✅ Performance – monitor generation times with real property data — use `backend/scripts/preview_duration_report.py` and Prometheus histogram `preview_generation_job_duration_ms` to track p50/p90.
+5. ✅ Asset cleanup – automated cleanup of old preview versions (`backend/scripts/preview_cleanup.py`, retention policy shipped Nov 10 2025).
+6. ✅ Preview generator typed payloads — refactored to TypedDict/dataclasses (Nov 18 2025).
+7. ✅ Developer checklist service typing — structured payload helpers (Nov 18 2025).
 
 **Testing Discipline (Phase 2B onward):**
 - Every Phase 2B feature or refactor must land with automated tests that keep the touched modules at or above the 80 % coverage gate.
@@ -2281,3 +2285,4 @@ For complete Phase 2B visualization specification, architecture diagrams, testin
 **Implementation:** Modify `preview_generator.py::_serialise_layer()` to support `geometry_detail_level` parameter (simple/medium/detailed). **Status:** Complete for `simple` + `medium`. Default is configurable via `PREVIEW_GEOMETRY_DETAIL_LEVEL`, and the Site Acquisition UI/API allow per-job overrides when refreshing previews.
 
 ---
+> **External validation reminder:** Both the Linux async preview run (`scripts/validate_preview_async_linux.sh`) and the preview duration reporting script (`backend/scripts/preview_duration_report.py`) need access to a Linux environment and a database seeded with preview jobs. These steps remain outstanding solely because the current development hardware is macOS-only; log the results in this document as soon as a Linux host becomes available.

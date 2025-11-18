@@ -38,6 +38,7 @@ allowed_files:
   # Validation procedures
   - docs/validation/live_testing_guide.md
   - docs/validation/finance_sensitivity_linux.md
+  - docs/validation/preview_async_linux.md
 
   # Archive management
   - docs/archive/README.md

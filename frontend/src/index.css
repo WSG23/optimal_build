@@ -469,6 +469,111 @@ h3 {
     cursor: not-allowed;
 }
 
+.developer-preview-standalone__inspection {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: #111927;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.developer-preview-standalone__inspection-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.developer-preview-standalone__inspection-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.developer-preview-standalone__inspection-swatch {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.9rem;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.developer-preview-standalone__inspection-label {
+    margin: 0;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #cbd5f5;
+}
+
+.developer-preview-standalone__inspection-select {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8rem;
+    color: #cbd5f5;
+    gap: 0.35rem;
+}
+
+.developer-preview-standalone__inspection-select select {
+    border-radius: 0.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.7);
+    color: #f8fafc;
+    padding: 0.4rem 0.75rem;
+}
+
+.developer-preview-standalone__inspection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.developer-preview-standalone__inspection-grid dt {
+    margin: 0 0 0.35rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(226, 232, 240, 0.75);
+}
+
+.developer-preview-standalone__inspection-grid dd {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #f8fafc;
+}
+
+.developer-preview-standalone__inspection-footprint,
+.developer-preview-standalone__inspection-floorlines {
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+    padding-top: 1rem;
+}
+
+.developer-preview-standalone__inspection-footprint h4,
+.developer-preview-standalone__inspection-floorlines h4 {
+    margin: 0 0 0.5rem;
+    color: #e2e8f0;
+}
+
+.developer-preview-standalone__inspection-floorlines {
+    color: #cbd5f5;
+    font-size: 0.95rem;
+}
+
+.developer-preview-standalone__inspection-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.developer-preview-standalone__layers-button.is-active {
+    background: #4f46e5;
+    color: #fff;
+    border-color: #4338ca;
+}
+
 .developer-preview-standalone__legend {
     margin-top: 1.5rem;
     display: flex;

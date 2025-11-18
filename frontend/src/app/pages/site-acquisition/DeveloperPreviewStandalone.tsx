@@ -47,6 +47,7 @@ export function DeveloperPreviewStandalone() {
   const [layerMetadata, setLayerMetadata] = useState<PreviewLayerMetadata[]>([])
   const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>({})
   const [focusLayerId, setFocusLayerId] = useState<string | null>(null)
+  const [inspectionLayerId, setInspectionLayerId] = useState<string | null>(null)
   const [legendEntries, setLegendEntries] = useState<PreviewLegendEntry[]>([])
 
   useEffect(() => {
@@ -181,6 +182,19 @@ export function DeveloperPreviewStandalone() {
     setFocusLayerId,
   ])
 
+  useEffect(() => {
+    if (layerMetadata.length === 0) {
+      setInspectionLayerId(null)
+      return
+    }
+    setInspectionLayerId((current) => {
+      if (current && layerMetadata.some((layer) => layer.id === current)) {
+        return current
+      }
+      return layerMetadata[0]?.id ?? null
+    })
+  }, [layerMetadata])
+
   const statusNotice = useMemo(() => {
     if (!previewJob) {
       return null
@@ -210,6 +224,11 @@ export function DeveloperPreviewStandalone() {
     [layerMetadata, layerVisibility],
   )
   const hasHiddenLayers = hiddenLayerCount > 0
+
+  const inspectedLayer = useMemo(
+    () => layerMetadata.find((layer) => layer.id === inspectionLayerId) ?? null,
+    [inspectionLayerId, layerMetadata],
+  )
 
   const handleToggleLayerVisibility = (layerId: string) => {
     setLayerVisibility((prev) => {
@@ -244,6 +263,10 @@ export function DeveloperPreviewStandalone() {
 
   const handleResetFocus = () => {
     setFocusLayerId(null)
+  }
+
+  const handleInspectLayer = (layerId: string) => {
+    setInspectionLayerId(layerId)
   }
 
   if (!propertyId) {
@@ -464,11 +487,124 @@ export function DeveloperPreviewStandalone() {
                           >
                             {focusLayerId === layer.id ? 'Focused' : 'Zoom'}
                           </button>
+                          <button
+                            type="button"
+                            className={`developer-preview-standalone__layer-action${
+                              inspectionLayerId === layer.id ? ' is-active' : ''
+                            }`}
+                            onClick={() => handleInspectLayer(layer.id)}
+                            aria-pressed={inspectionLayerId === layer.id}
+                          >
+                            Inspect
+                          </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {inspectedLayer && (
+              <div className="developer-preview-standalone__inspection">
+                <div className="developer-preview-standalone__inspection-header">
+                  <div className="developer-preview-standalone__inspection-title">
+                    <span
+                      className="developer-preview-standalone__inspection-swatch"
+                      style={{ background: inspectedLayer.color }}
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p className="developer-preview-standalone__inspection-label">Inspecting</p>
+                      <h3>{toTitleCase(inspectedLayer.name)}</h3>
+                    </div>
+                  </div>
+                  <label className="developer-preview-standalone__inspection-select">
+                    <span>Layer</span>
+                    <select
+                      value={inspectionLayerId ?? ''}
+                      onChange={(event) => handleInspectLayer(event.target.value)}
+                    >
+                      {layerMetadata.map((layer) => (
+                        <option key={layer.id} value={layer.id}>
+                          {toTitleCase(layer.name)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="developer-preview-standalone__inspection-grid">
+                  <div>
+                    <dt>Detail level</dt>
+                    <dd>{inspectedLayer.geometry?.detailLevel ?? '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Base elevation</dt>
+                    <dd>{formatMeters(inspectedLayer.geometry?.baseElevationM)}</dd>
+                  </div>
+                  <div>
+                    <dt>Top elevation</dt>
+                    <dd>{formatMeters(inspectedLayer.geometry?.topElevationM)}</dd>
+                  </div>
+                  <div>
+                    <dt>Preview height</dt>
+                    <dd>{formatMeters(inspectedLayer.geometry?.previewHeightM)}</dd>
+                  </div>
+                  <div>
+                    <dt>Floors (est.)</dt>
+                    <dd>{formatNumber(inspectedLayer.metrics.floors, 0)}</dd>
+                  </div>
+                  <div>
+                    <dt>Allocation</dt>
+                    <dd>{formatPercent(inspectedLayer.metrics.allocationPct)}</dd>
+                  </div>
+                </div>
+                <div className="developer-preview-standalone__inspection-footprint">
+                  <h4>Footprint metrics</h4>
+                  <div className="developer-preview-standalone__inspection-grid">
+                    <div>
+                      <dt>Base area</dt>
+                      <dd>{formatArea(inspectedLayer.geometry?.footprintAreaSqm)}</dd>
+                    </div>
+                    <div>
+                      <dt>Base perimeter</dt>
+                      <dd>{formatMeters(inspectedLayer.geometry?.footprintPerimeterM)}</dd>
+                    </div>
+                    <div>
+                      <dt>Top area</dt>
+                      <dd>{formatArea(inspectedLayer.geometry?.topFootprintAreaSqm)}</dd>
+                    </div>
+                    <div>
+                      <dt>Top perimeter</dt>
+                      <dd>{formatMeters(inspectedLayer.geometry?.topFootprintPerimeterM)}</dd>
+                    </div>
+                  </div>
+                </div>
+                {inspectedLayer.geometry?.floorLineHeights.length ? (
+                  <div className="developer-preview-standalone__inspection-floorlines">
+                    <h4>Floor line heights</h4>
+                    <p>
+                      {summariseFloorLines(inspectedLayer.geometry.floorLineHeights)}
+                    </p>
+                  </div>
+                ) : null}
+                <div className="developer-preview-standalone__inspection-controls">
+                  <button
+                    type="button"
+                    onClick={() => handleSoloLayer(inspectedLayer.id)}
+                    className="developer-preview-standalone__layers-button"
+                  >
+                    Solo layer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFocusLayer(inspectedLayer.id)}
+                    className={`developer-preview-standalone__layers-button${
+                      focusLayerId === inspectedLayer.id ? ' is-active' : ''
+                    }`}
+                  >
+                    {focusLayerId === inspectedLayer.id ? 'Focused' : 'Zoom to layer'}
+                  </button>
+                </div>
               </div>
             )}
             {legendEntries.length > 0 && (
@@ -522,4 +658,32 @@ function formatNumber(value: number | null, fractionDigits = 1): string {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(value)
+}
+
+function formatMeters(value: number | null, fractionDigits = 1): string {
+  if (value === null) {
+    return '—'
+  }
+  return `${formatNumber(value, fractionDigits)} m`
+}
+
+function formatArea(value: number | null): string {
+  if (value === null) {
+    return '—'
+  }
+  return `${formatNumber(value, 1)} sqm`
+}
+
+const FLOOR_LINE_PREVIEW_COUNT = 5
+
+function summariseFloorLines(heights: number[]): string {
+  if (heights.length === 0) {
+    return 'No floor lines provided.'
+  }
+  const sorted = [...heights].sort((a, b) => a - b)
+  const preview = sorted.slice(0, FLOOR_LINE_PREVIEW_COUNT).map((height) => formatMeters(height))
+  const remaining = sorted.length - preview.length
+  return remaining > 0
+    ? `${preview.join(', ')} … (+${remaining} more)`
+    : preview.join(', ')
 }

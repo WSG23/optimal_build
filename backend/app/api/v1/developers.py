@@ -2011,13 +2011,14 @@ async def get_condition_assessment_scenarios(
 
 @router.get(
     "/properties/{property_id}/condition-assessment/report",
+    response_model=None,
 )
 async def export_condition_report(
     property_id: UUID,
     report_format: str = Query("json", alias="format", pattern="^(json|pdf)$"),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-) -> Response | JSONResponse:
+) -> Response:
     """Return a structured condition report in JSON (default) or PDF format."""
 
     property_record = await session.get(Property, property_id)
