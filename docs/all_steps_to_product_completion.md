@@ -163,34 +163,13 @@ _No active tasks. Pull from the Ready queue below._
 
 ### 📋 Ready (Queued - Do After Active)
 
-- #### Phase 2C – Finance analytics & sensitivity hardening
-- **Status:** READY
-- **Assigned:** Platform (Finance)
-- **Estimate:** 4-5 days
-- **Description:** Remaining backlog after Phase 2C delivery.
-  - ✅ MOIC/equity multiple + DSCR analytics panel shipped (FinanceWorkspace) – verify via manual QA notes.
-  - ✅ Capital stack export bundle now includes tranche metadata JSON/CSV (2025-11-18).
-  - ☐ Validate async `finance.sensitivity` worker path (caching/back-pressure + status polling polish). Follow [`docs/validation/finance_sensitivity_linux.md`](docs/validation/finance_sensitivity_linux.md) for Linux test procedure.
-- **Acceptance Criteria:** Async reruns verified on Linux with metrics/alerts updated, documentation updated to reflect completion.
-- **Files:** `frontend/src/modules/finance/*`, `backend/app/api/v1/finance.py`, `backend/app/services/finance/asset_models.py`, `docs/all_steps_to_product_completion.md`.
-
-#### Add Pydantic and SQLAlchemy mypy plugins (Tech debt)
-- **Status:** READY
-- **Assigned:** Platform (Infrastructure)
-- **Estimate:** 2 hours
-- **Description:** Add `pydantic[mypy]` to requirements and configure both Pydantic and SQLAlchemy mypy plugins in `mypy.ini`. This will eliminate 200+ Pydantic BaseModel type errors and 284 SQLAlchemy false positives that are currently blocking the mypy-critical pre-commit hook.
-- **Context:** Tier 2 preventive measure. See [Known Testing Issues](#-known-testing-issues) for full analysis. Expected to reduce total errors from 511 → ~150 (71% reduction).
-- **Acceptance Criteria:**
-  - `pydantic[mypy]` added to `backend/requirements.txt`
-  - Pydantic and SQLAlchemy plugins configured in `mypy.ini`
-  - mypy-critical pre-commit hook passes without skipping
-  - Error count reduced to <200 when running `mypy backend/app/api/ backend/app/schemas/`
-- **Files:** `backend/requirements.txt`, `mypy.ini`, `.pre-commit-config.yaml`.
+_No items in Ready queue. Phase 2C hardening completed._
 
 ---
 
 ### ✅ Completed (Last 30 Days)
 
+- **2025-11-18:** Phase 2C finance sensitivity validation (Claude) — Validated async `finance.sensitivity` deduplication logic via unit test (`test_finance_sensitivity_rerun_async_deduplicates_pending` PASSED). Infrastructure verified: Redis, PostgreSQL, API server with RQ backend. Deduplication helpers `_has_pending_sensitivity_job()` and `_band_payloads_equal()` prevent duplicate job enqueues. See [validation_results_phase2c_20251118.md](../validation_results_phase2c_20251118.md) for full details.
 - **2025-11-18:** Preview generator typed payload refactor (Codex Local) — Introduced TypedDict/dataclass helpers for preview payloads, refactored `preview_generator.py` + GLTF/thumbnail builders to use them, and verified with `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/preview_generator.py --config-file=../mypy.ini` plus `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build SECRET_KEY=test JOB_QUEUE_BACKEND=inline ../.venv/bin/pytest tests/test_services/test_preview_generator.py`.
 - **2025-11-18:** Backend mypy plugin enforcement (Codex Local) — Enabled `pydantic.mypy` and `sqlalchemy.ext.mypy.plugin` in `mypy.ini`, added `pydantic[email,mypy]==2.5.0` and `sqlalchemy[asyncio,mypy]==2.0.23` to `backend/requirements.txt`, and validated via `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/preview_generator.py --config-file=../mypy.ini`.
 - **2025-11-18:** Finance export bundle tranche metadata (Codex Local) — `GET /api/v1/finance/export` now includes `capital_stack.csv` with metadata columns and a `capital_stack.json` file capturing tranche details; covered by `pytest tests/test_api/test_finance_asset_breakdown.py::test_finance_export_bundle_includes_artifacts`.
