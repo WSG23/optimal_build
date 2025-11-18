@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
+import redis
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -79,6 +80,59 @@ configure_logging()
 logger = get_logger(__name__)
 
 
+def _storage_available(storage_uri: str) -> bool:
+    """Return True when the configured rate-limit backend is reachable."""
+
+    if storage_uri.startswith("redis://") or storage_uri.startswith("rediss://"):
+        client = redis.Redis.from_url(
+            storage_uri, socket_connect_timeout=1, socket_timeout=1
+        )
+        try:
+            return bool(client.ping())
+        except Exception as exc:  # pragma: no cover - defensive logging only
+            log_event(
+                logger,
+                "rate_limit_storage_unavailable",
+                storage_uri=storage_uri,
+                error=str(exc),
+            )
+            return False
+        finally:
+            try:
+                client.close()
+            except Exception:  # pragma: no cover - best-effort cleanup
+                pass
+
+    return True
+
+
+def _create_rate_limiter(
+    rate_limit: str,
+    storage_uri: str,
+    limiter_class: type[Limiter] = Limiter,
+) -> tuple[Limiter, str]:
+    """Initialise SlowAPI rate limiter with storage fallback."""
+
+    resolved_storage = storage_uri if _storage_available(storage_uri) else "memory://"
+
+    if resolved_storage != storage_uri:
+        log_event(
+            logger,
+            "rate_limit_storage_fallback",
+            requested_storage=storage_uri,
+            active_storage=resolved_storage,
+        )
+    else:
+        log_event(logger, "rate_limit_storage_configured", storage_uri=resolved_storage)
+
+    limiter = limiter_class(
+        key_func=get_remote_address,
+        default_limits=[rate_limit],
+        storage_uri=resolved_storage,
+    )
+    return limiter, resolved_storage
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
@@ -112,8 +166,12 @@ app.add_middleware(
 app.add_middleware(ApiErrorLoggingMiddleware, logger=logger)
 app.add_middleware(RequestMetricsMiddleware)
 
-limiter = Limiter(key_func=get_remote_address, default_limits=[settings.API_RATE_LIMIT])
+limiter, limiter_storage = _create_rate_limiter(
+    rate_limit=settings.API_RATE_LIMIT,
+    storage_uri=settings.RATE_LIMIT_STORAGE_URI,
+)
 app.state.limiter = limiter
+app.state.rate_limit_storage = limiter_storage
 app.add_middleware(SlowAPIMiddleware)
 
 
