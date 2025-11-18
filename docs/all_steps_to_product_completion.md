@@ -83,11 +83,11 @@
 - **Missing:** Pipeline Kanban UI, Deal insights panel, Analytics panel, ROI panel, Manual UI testing (0/8 checks done)
 - [Jump to details ↓](#phase-1d-business-performance-management)
 
-**[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ⚠️ IN PROGRESS
-- **Backend:** 100% | **UI:** 85%
-- **Status source:** [Line 416](#phase-2b-asset-specific-feasibility) says "⚠️ IN PROGRESS"
-- **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅
-- **Missing:** 3D preview UI renderer (GLB generation + interactive viewer) - See [PHASE2B_VISUALISATION_STUB.MD](archive/phase2b/PHASE2B_VISUALISATION_STUB_archived_2025-11-12.md)
+**[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- **Status source:** [Line 703](#phase-2b-asset-specific-feasibility) says "✅ 95% COMPLETE" (housekeeping tasks remain)
+- **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅, 3D preview UI renderer (Preview3DViewer.tsx 484 lines with Three.js/GLTFLoader) ✅
+- **Remaining:** NHB dataset refresh automation (housekeeping, not blocking)
 - [Jump to details ↓](#phase-2b-asset-specific-feasibility)
 
 ---
