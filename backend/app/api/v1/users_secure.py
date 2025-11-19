@@ -14,6 +14,7 @@ except ImportError:  # pragma: no cover - fallback when validator missing
 
 from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_current_user
 from app.schemas.user import UserSignupBase
+from app.services.account_lockout import get_lockout_service
 from app.utils.security import hash_password, verify_password
 
 router = APIRouter(prefix="/secure-users", tags=["Secure Users"])
@@ -94,17 +95,43 @@ def signup(user_data: UserSignup) -> UserResponse:
 
 @router.post("/login", response_model=LoginResponse)
 def login(credentials: UserLogin) -> LoginResponse:
-    """Login with email and password, returns JWT tokens."""
+    """Login with email and password, returns JWT tokens.
+
+    Implements account lockout after 5 failed attempts within 5 minutes.
+    Lockout duration is 15 minutes.
+    """
+    lockout_service = get_lockout_service()
+    email = credentials.email
+
+    # Check if account is locked
+    if lockout_service.is_locked(email):
+        remaining = lockout_service.get_lockout_remaining_seconds(email)
+        raise HTTPException(
+            status_code=429,
+            detail=f"Account temporarily locked due to too many failed attempts. Try again in {remaining} seconds.",
+        )
 
     # Check if user exists
     if credentials.email not in users_db:
+        # Record failed attempt even for non-existent users (prevent enumeration)
+        lockout_service.record_failed_attempt(email)
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     user = users_db[credentials.email]
 
     # Verify password
     if not verify_password(credentials.password, user["hashed_password"]):
+        is_locked = lockout_service.record_failed_attempt(email)
+        if is_locked:
+            remaining = lockout_service.get_lockout_remaining_seconds(email)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Account locked due to too many failed attempts. Try again in {remaining} seconds.",
+            )
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # Clear failed attempts on successful login
+    lockout_service.record_successful_login(email)
 
     # Create JWT tokens
     tokens = create_tokens(user)

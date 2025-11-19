@@ -63,6 +63,10 @@ from app.middleware.observability import (
     ApiErrorLoggingMiddleware,
     RequestMetricsMiddleware,
 )
+from app.middleware.request_guards import (
+    CorrelationIdMiddleware,
+    RequestSizeLimitMiddleware,
+)
 from app.middleware.security import SecurityHeadersMiddleware
 from app.models.rkp import RefRule
 from app.schemas.buildable import BUILDABLE_REQUEST_EXAMPLE, BUILDABLE_RESPONSE_EXAMPLE
@@ -111,6 +115,10 @@ app.add_middleware(
 )
 app.add_middleware(ApiErrorLoggingMiddleware, logger=logger)
 app.add_middleware(RequestMetricsMiddleware)
+# Request size limit: 10 MB (DoS protection)
+app.add_middleware(RequestSizeLimitMiddleware, max_size_bytes=10 * 1024 * 1024)
+# Correlation ID for request tracing (outermost for full coverage)
+app.add_middleware(CorrelationIdMiddleware)
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[settings.API_RATE_LIMIT])
 app.state.limiter = limiter

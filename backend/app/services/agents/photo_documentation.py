@@ -243,9 +243,13 @@ class PhotoDocumentationManager:
                 return None
 
             # Extract degrees, minutes, seconds
-            degrees = float(eval(parts[0]))
-            minutes = float(eval(parts[1]))
-            seconds = float(eval(parts[2]))
+            # Handle both integer and fraction formats (e.g., "22" or "22/1")
+            degrees = self._parse_exif_number(parts[0])
+            minutes = self._parse_exif_number(parts[1])
+            seconds = self._parse_exif_number(parts[2])
+
+            if degrees is None or minutes is None or seconds is None:
+                return None
 
             # Convert to decimal
             decimal = degrees + (minutes / 60) + (seconds / 3600)
@@ -257,6 +261,27 @@ class PhotoDocumentationManager:
             return decimal
 
         except Exception:
+            return None
+
+    def _parse_exif_number(self, value: str) -> Optional[float]:
+        """Parse EXIF number which may be integer or fraction (e.g., '22/1').
+
+        Args:
+            value: String value from EXIF data
+
+        Returns:
+            Parsed float value, or None if parsing fails
+        """
+        try:
+            value = value.strip()
+            if "/" in value:
+                # Handle fraction format like "22/1" or "103993/3600"
+                numerator, denominator = value.split("/")
+                return float(numerator) / float(denominator)
+            else:
+                # Handle simple integer/float format
+                return float(value)
+        except (ValueError, ZeroDivisionError):
             return None
 
     def _extract_timestamp_from_exif(

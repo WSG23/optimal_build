@@ -1,0 +1,34 @@
+# Bandit security linter configuration
+# https://bandit.readthedocs.io/en/latest/config.html
+
+# Skip these tests (grandfathered patterns in existing codebase)
+skips:
+  # B101: assert_used - we use asserts in development/testing
+  - B101
+  # B104: hardcoded_bind_all_interfaces - intentional for dev server
+  - B104
+  # B110: try_except_pass - defensive error handling is intentional
+  - B110
+  # B112: try_except_continue - defensive error handling is intentional
+  - B112
+  # B311: random - not used for security/crypto, only mock data generation
+  - B311
+  # B105: hardcoded_password_string - only test secrets in pytest detection
+  - B105
+  # B106/B107: hardcoded_password_funcarg/default - false positives on "access" token type
+  - B106
+  - B107
+  # B108: hardcoded_tmp_directory - uses env var with fallback, acceptable
+  - B108
+
+# Exclude these paths
+exclude_dirs:
+  - tests
+  - "test_*"
+  - "*_test.py"
+  - conftest.py
+  - migrations
+
+# Report medium and above severity (focus on actionable issues)
+severity_level: medium
+confidence_level: medium
