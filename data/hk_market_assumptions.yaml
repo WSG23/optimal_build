@@ -1,0 +1,27 @@
+hk_market_data:
+  currency: "HKD"
+  units: "sqft"
+
+  rent_psf_month:
+    office: 11.5
+    retail: 18.7
+    residential: 9.2
+    industrial: 5.8
+
+  opex_assumptions:
+    property_tax_percent: 5.0
+    management_fee_percent: 2.5
+    utilities_percent: 1.8
+    insurance_percent: 0.4
+    maintenance_percent: 2.0
+
+  vacancy_rates:
+    office: 0.10
+    retail: 0.07
+    residential: 0.05
+    industrial: 0.08
+
+  finance_assumptions:
+    construction_loan_rate: 4.2
+    equity_debt_split: [30, 70]
+    exit_cap_rate: 4.5

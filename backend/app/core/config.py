@@ -198,6 +198,8 @@ class Settings:
     LOG_LEVEL: str
 
     DEFAULT_ROLE: str
+    HK_DATA_GOV_API_KEY: str
+    HK_GEOSPATIAL_TOKEN: str
 
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
     BUILDABLE_EFFICIENCY_RATIO: float
@@ -283,6 +285,8 @@ class Settings:
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
         self.DEFAULT_ROLE = os.getenv("DEFAULT_ROLE", "viewer")
+        self.HK_DATA_GOV_API_KEY = os.getenv("HK_DATA_GOV_API_KEY", "public")
+        self.HK_GEOSPATIAL_TOKEN = os.getenv("HK_GEOSPATIAL_TOKEN", "")
 
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
             "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0

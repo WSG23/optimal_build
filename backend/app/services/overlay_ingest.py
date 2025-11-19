@@ -137,4 +137,15 @@ async def ingest_parsed_import_geometry(
     return record
 
 
-__all__ = ["ingest_parsed_import_geometry"]
+INGESTION_HANDLERS: dict[str, str] = {
+    "hk": "backend.scripts.ingest_hk_zones:ingest_hk_zones",
+}
+
+
+def get_ingestion_handler(jurisdiction: str) -> str | None:
+    """Return the fully-qualified ingestion handler for ``jurisdiction``."""
+
+    return INGESTION_HANDLERS.get(jurisdiction.lower())
+
+
+__all__ = ["ingest_parsed_import_geometry", "INGESTION_HANDLERS", "get_ingestion_handler"]

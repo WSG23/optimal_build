@@ -40,6 +40,9 @@ allowed_files:
   - docs/validation/finance_sensitivity_linux.md
   - docs/validation/preview_async_linux.md
 
+  # Jurisdiction expansion
+  - docs/jurisdictions/hk.md
+
   # Archive management
   - docs/archive/README.md
 

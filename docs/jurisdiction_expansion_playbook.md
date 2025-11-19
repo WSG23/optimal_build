@@ -1362,6 +1362,55 @@ echo "GOOGLE_MAPS_API_KEY=your_key_here" >> .env
 - **Units:** Square meters
 - **Lessons:** OneMap very reliable, heritage data from NHB
 
+## 10. Expansion Window 1 Execution Plan (2025-11-18)
+
+> **Scope:** Hong Kong, New Zealand, Seattle (Washington State), Toronto (Ontario) — must complete before Phase 2D begins so multi-jurisdiction delivery is the default.
+
+### 10.1 Cross-Cutting Tasks
+
+- [ ] Create `docs/jurisdictions/expansion_window_1.yaml` capturing API keys, base URLs, coordinate systems, and contacts for all four markets.
+- [ ] Extend `backend/app/core/config.py` to accept `JURISDICTION_FEATURE_FLAGS` so new markets can be toggled independently.
+- [ ] Ensure `RefRule`, `MarketMetric`, and `PreviewJob` tables expose `jurisdiction_code`; add an Alembic migration if gaps remain.
+- [ ] Update frontend routing to accept `?jurisdiction=<code>` on `/agents/performance` and `/developers/*` pages (Singapore remains the default).
+- [ ] Add pytest marker helper `@pytest.mark.jurisdiction("HK")` etc. so data-dependent suites can be skipped/enabled cleanly.
+
+### 10.2 Hong Kong (data.gov.hk + Lands Department)
+
+- [ ] DATA.GOV.HK account + `HK_DATA_GOV_API_KEY` documented in `.env.example`.
+- [ ] Author ingestion script `backend/scripts/ingest_hk_zones.py` (GeoJSON → PostGIS) and register parser in `core/registry.py`.
+- [ ] Capture rent/OPEX/vacancy metrics from CBRE & Hong Kong Rating and Valuation Department, save as `data/hk_market_assumptions.yaml` (HKD, sqft).
+- [ ] Update finance defaults for HK currency/units; add sample property fixture + preview CLI command to regression instructions.
+
+### 10.3 New Zealand (LINZ + Stats NZ)
+
+- [ ] Document LINZ WFS endpoints (no API key) and create helper `backend/scripts/ingest_nz_parcels.py`.
+- [ ] Decide on geocoding provider (Google Maps vs. LINZ AddressFinder) and add env var plumbing.
+- [ ] Gather rent/OPEX data from Stats NZ/CBRE and store as `data/nz_market_assumptions.yaml` (NZD, sqm).
+- [ ] Add pytest fixtures verifying Auckland capture + finance export with NZ units.
+
+### 10.4 Seattle, Washington (data.seattle.gov/Socrata)
+
+- [ ] Request `SODA_API_TOKEN`, list dataset IDs for parcels, zoning overlays, heritage.
+- [ ] Build ingestion flow `scripts/ingest_seattle_zoning.py` that normalises zoning codes to internal enums.
+- [ ] Record rent/OPEX metrics (USD/sqft) from CBRE Seattle reports in `data/seattle_market_assumptions.yaml`.
+- [ ] Add end-to-end test that captures a Seattle parcel and ensures preview/finance output uses imperial units.
+
+### 10.5 Toronto, Ontario (open.toronto.ca)
+
+- [ ] Catalogue parcel/zoning/heritage datasets and add `TORONTO_OPEN_DATA_TOKEN` to `.env.example`.
+- [ ] Convert shapefiles to GeoJSON (ogr2ogr) inside `scripts/ingest_toronto_zoning.py`; wire overlays into heritage service.
+- [ ] Document CAD rent/OPEX metrics from CMHC/Colliers in `data/toronto_market_assumptions.yaml`.
+- [ ] Plan QA script for `/developers/projects?jurisdiction=TOR` once ingestion is complete.
+
+### 10.6 Responsibilities & Sign-off
+
+- **PM:** provide datasets/credentials and mark checkboxes as evidence arrives.
+- **Codex:** implement ingestion scripts, config toggles, preview/finance integration.
+- **Claude:** run validation scripts (preview + finance), capture logs/metrics, file issues.
+- **Exit criteria:** One seed property + finance scenario per jurisdiction, preview job bundle saved under `static/dev-previews/<jurisdiction>/`, and finance export containing local currency output.
+
+---
+
 ### Future Jurisdictions (Expansion Window 2)
 
 - UK (England & Wales)
