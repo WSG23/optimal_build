@@ -55,7 +55,11 @@ class YieldBenchmark(BaseModel):
 
     # Property Classification
     property_type = Column(
-        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        SQLEnum(
+            PropertyType,
+            name="property_type",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         nullable=False,
     )
     property_grade = Column(String(20))  # A, B, C grade buildings
@@ -126,7 +130,11 @@ class AbsorptionTracking(BaseModel):
     # Location
     district = Column(String(100))
     property_type = Column(
-        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        SQLEnum(
+            PropertyType,
+            name="property_type",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         nullable=False,
     )
 
@@ -180,7 +188,11 @@ class MarketCycle(BaseModel):
     # Period
     cycle_date = Column(Date, nullable=False)
     property_type = Column(
-        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        SQLEnum(
+            PropertyType,
+            name="property_type",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         nullable=False,
     )
     market_segment = Column(String(50))  # CBD, suburban, industrial zones
@@ -230,7 +242,11 @@ class MarketIndex(BaseModel):
     index_date = Column(Date, nullable=False)
     index_name = Column(String(100), nullable=False)  # e.g., "PPI_Office", "RRI_Retail"
     property_type = Column(
-        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x])
+        SQLEnum(
+            PropertyType,
+            name="property_type",
+            values_callable=lambda x: [e.value for e in x],
+        )
     )
 
     # Index Values
@@ -268,7 +284,11 @@ class CompetitiveSet(BaseModel):
 
     # Criteria
     property_type = Column(
-        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x]),
+        SQLEnum(
+            PropertyType,
+            name="property_type",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         nullable=False,
     )
     location_bounds = Column(Geometry("POLYGON", srid=4326))
@@ -310,7 +330,11 @@ class MarketAlert(BaseModel):
         String(50), nullable=False
     )  # price_change, new_supply, absorption_spike
     property_type = Column(
-        SQLEnum(PropertyType, values_callable=lambda x: [e.value for e in x])
+        SQLEnum(
+            PropertyType,
+            name="property_type",
+            values_callable=lambda x: [e.value for e in x],
+        )
     )
     location = Column(String(255))
 
