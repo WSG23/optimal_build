@@ -20,6 +20,7 @@ if "preview.generate" not in _registry:
 
 from app.core.config import settings
 from app.models.preview import PreviewJob, PreviewJobStatus
+from app.models.property import Property
 from app.services import preview_generator
 from app.utils import metrics
 
@@ -102,6 +103,17 @@ class PreviewJobService:
             checksum = hashlib.sha256(checksum_source).hexdigest()
             logger.info(f"[QUEUE_PREVIEW_START] Computed checksum: {checksum[:16]}...")
 
+            property_record = await self._session.get(Property, property_id)
+            jurisdiction_code = (
+                property_record.jurisdiction_code if property_record else "SG"
+            )
+            job_metadata = {
+                "massing_layers": serialised_layers,
+                "camera_orbit": camera_orbit or {},
+                "geometry_detail_level": detail_level,
+                "color_legend": legend_payload,
+                "jurisdiction_code": jurisdiction_code,
+            }
             job = PreviewJob(
                 property_id=property_id,
                 scenario=scenario,
@@ -110,12 +122,7 @@ class PreviewJobService:
                 started_at=None,
                 asset_version=None,
                 payload_checksum=checksum,
-                metadata={
-                    "massing_layers": serialised_layers,
-                    "camera_orbit": camera_orbit or {},
-                    "geometry_detail_level": detail_level,
-                    "color_legend": legend_payload,
-                },
+                metadata=job_metadata,
             )
             self._session.add(job)
             logger.info("[QUEUE_PREVIEW_START] Added job to session, about to flush")

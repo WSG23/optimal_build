@@ -294,6 +294,15 @@ class FinanceScenarioInput(BaseModel):
     asset_mix: list[FinanceAssetMixInput] | None = None
     construction_loan: ConstructionLoanInput | None = None
     sensitivity_bands: list[SensitivityBandInput] | None = None
+    jurisdiction_code: str = Field(
+        default="SG", alias="jurisdictionCode", min_length=1, max_length=10
+    )
+
+    @field_validator("jurisdiction_code")
+    @classmethod
+    def _normalise_jurisdiction(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        return cleaned or "SG"
 
 
 class FinanceFeasibilityRequest(BaseModel):

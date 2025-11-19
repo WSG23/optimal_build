@@ -1380,6 +1380,7 @@ echo "GOOGLE_MAPS_API_KEY=your_key_here" >> .env
 - [ ] Author ingestion script `backend/scripts/ingest_hk_zones.py` (GeoJSON → PostGIS) and register parser in `core/registry.py`.
 - [ ] Capture rent/OPEX/vacancy metrics from CBRE & Hong Kong Rating and Valuation Department, save as `data/hk_market_assumptions.yaml` (HKD, sqft).
 - [ ] Update finance defaults for HK currency/units; add sample property fixture + preview CLI command to regression instructions.
+- Demo property for automation: `Central Harbour Gateway` (`88a5b6d4-2d25-4ff1-a549-7bbd2d5e81c2`). Use it when running preview validation scripts or finance smoke tests.
 
 ### 10.3 New Zealand (LINZ + Stats NZ)
 

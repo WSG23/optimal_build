@@ -68,6 +68,7 @@ class PropertyLogResult:
         quick_analysis: Optional[Dict[str, Any]] = None,
         timestamp: datetime = None,
         heritage_overlay: Optional[Dict[str, Any]] = None,
+        jurisdiction_code: str = "SG",
     ):
         self.property_id = property_id
         self.address = address
@@ -79,6 +80,7 @@ class PropertyLogResult:
         self.quick_analysis = quick_analysis
         self.timestamp = timestamp or utcnow()
         self.heritage_overlay = heritage_overlay
+        self.jurisdiction_code = jurisdiction_code
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
@@ -96,6 +98,7 @@ class PropertyLogResult:
             "quick_analysis": self.quick_analysis,
             "timestamp": self.timestamp.isoformat(),
             "heritage_overlay": self.heritage_overlay,
+            "jurisdiction_code": self.jurisdiction_code,
         }
 
 
@@ -116,6 +119,7 @@ class GPSPropertyLogger:
         session: AsyncSession,
         user_id: Optional[UUID] = None,
         scenarios: Optional[List[DevelopmentScenario]] = None,
+        jurisdiction_code: str | None = None,
     ) -> PropertyLogResult:
         """
         Log a property from GPS coordinates.
@@ -128,6 +132,7 @@ class GPSPropertyLogger:
         5. Create or update property record
         6. Return comprehensive property information
         """
+        jurisdiction = (jurisdiction_code or "SG").strip().upper() or "SG"
         try:
             # Step 1: Reverse geocode to get address
             logger.info(f"Reverse geocoding coordinates: {latitude}, {longitude}")
@@ -137,6 +142,8 @@ class GPSPropertyLogger:
                 raise ValueError(
                     f"Could not reverse geocode coordinates: {latitude}, {longitude}"
                 )
+            if jurisdiction == "HK" and address.country != "Hong Kong":
+                address.country = "Hong Kong"
 
             # Step 2: Check if property already exists at this location
             property_record = await self._find_existing_property(
@@ -169,12 +176,15 @@ class GPSPropertyLogger:
             # Step 5: Create or update property record
             if property_record:
                 property_id = property_record.id
-                # Update existing property with latest info
                 await self._update_property(
-                    session, property_record, address, ura_zoning, property_info
+                    session,
+                    property_record,
+                    address,
+                    ura_zoning,
+                    property_info,
+                    jurisdiction,
                 )
             else:
-                # Create new property record
                 property_id = await self._create_property(
                     session,
                     address,
@@ -184,6 +194,7 @@ class GPSPropertyLogger:
                     ura_zoning,
                     existing_use,
                     property_info,
+                    jurisdiction,
                 )
 
             await session.commit()
@@ -206,6 +217,7 @@ class GPSPropertyLogger:
                 transactions=transactions,
                 rentals=rentals,
                 heritage_overlay=heritage_overlay,
+                jurisdiction_code=jurisdiction,
             )
 
             if property_info is None:
@@ -317,6 +329,7 @@ class GPSPropertyLogger:
         ura_zoning: Any,
         existing_use: str,
         property_info: Any,
+        jurisdiction_code: str,
     ) -> UUID:
         """Create new property record."""
         property_id = uuid4()
@@ -341,6 +354,7 @@ class GPSPropertyLogger:
             "postal_code": address.postal_code,
             "property_type": property_type,
             "status": PropertyStatus.EXISTING,
+            "jurisdiction_code": jurisdiction_code,
             "location": location_value,
             "district": address.district,
             "zoning_code": ura_zoning.zone_code if ura_zoning else None,
@@ -385,10 +399,12 @@ class GPSPropertyLogger:
         address: Address,
         ura_zoning: Any,
         property_info: Any,
+        jurisdiction_code: str,
     ) -> None:
         """Update existing property with latest information."""
         # Update fields that might have changed
         property_record.updated_at = utcnow()
+        property_record.jurisdiction_code = jurisdiction_code
 
         if ura_zoning:
             property_record.zoning_code = ura_zoning.zone_code
@@ -466,6 +482,7 @@ class GPSPropertyLogger:
         transactions: List[Dict[str, Any]],
         rentals: List[Dict[str, Any]],
         heritage_overlay: Optional[Dict[str, Any]],
+        jurisdiction_code: str = "SG",
     ) -> Dict[str, Any]:
         """Generate a lightweight, scenario-based analysis for GPS captures."""
 

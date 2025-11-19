@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import html
 from datetime import datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 from uuid import UUID
 
@@ -12,7 +12,7 @@ import structlog
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from app.api.v1.agents import CoordinatePair, QuickAnalysisEnvelope
 from app.core.database import get_session
@@ -39,6 +39,7 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from app.services.geocoding import Address, GeocodingService
+from app.services.jurisdictions import get_jurisdiction_config
 from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
 from app.utils.render import render_html_to_pdf
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -360,6 +361,12 @@ class DeveloperGPSLogRequest(BaseModel):
         default=None,
         description="Optional geometry detail override for the generated preview job.",
     )
+    jurisdiction_code: str | None = Field(
+        default="SG",
+        alias="jurisdictionCode",
+        validation_alias=AliasChoices("jurisdictionCode", "jurisdiction_code"),
+        description="Jurisdiction code for the captured property (e.g. 'SG', 'HK').",
+    )
 
     @field_validator("preview_geometry_detail_level")
     @classmethod
@@ -373,6 +380,14 @@ class DeveloperGPSLogRequest(BaseModel):
             )
             raise ValueError(f"preview_geometry_detail_level must be one of: {valid}")
         return normalised
+
+    @field_validator("jurisdiction_code")
+    @classmethod
+    def _normalise_jurisdiction(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip().upper()
+        return trimmed or "SG"
 
 
 class DeveloperBuildEnvelope(BaseModel):
@@ -744,6 +759,7 @@ class DeveloperGPSLogResponse(BaseModel):
     property_id: UUID
     address: Address
     coordinates: CoordinatePair
+    jurisdiction_code: str
     ura_zoning: Dict[str, Any]
     existing_use: str
     property_info: Optional[Dict[str, Any]]
@@ -768,6 +784,8 @@ class DeveloperFinancialSummary(BaseModel):
     finance_blueprint: DeveloperFinanceBlueprint | None = None
     constraint_log: list[DeveloperConstraintViolation] = Field(default_factory=list)
     optimizer_confidence: float | None = None
+    currency_code: str = "SGD"
+    currency_symbol: str = "S$"
     asset_mix_finance_inputs: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -1059,16 +1077,46 @@ def _decimal_or_none(value: Any) -> Decimal | None:
         return None
 
 
+SQM_PER_SQFT = Decimal("0.09290304")
+SQFT_PER_SQM = Decimal("10.7639104")
+
+
+def _convert_area_to_sqm(value: Decimal | None, *, from_units: str) -> Decimal | None:
+    if value is None:
+        return None
+    if from_units.lower() == "sqft":
+        return (value * SQM_PER_SQFT).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return value
+
+
+def _convert_rent_to_psm(value: Decimal | None, *, rent_metric: str) -> Decimal | None:
+    if value is None:
+        return None
+    metric = rent_metric.lower()
+    if metric in {"psf_month", "psf"}:
+        return (value * SQFT_PER_SQM).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return value
+
+
 def _build_finance_asset_mix_inputs(
     optimizations: Sequence[DeveloperAssetOptimization],
+    *,
+    jurisdiction_code: str,
 ) -> list[dict[str, Any]]:
+    jurisdiction = get_jurisdiction_config(jurisdiction_code)
     finance_inputs: list[dict[str, Any]] = []
     for opt in optimizations:
+        nia = _convert_area_to_sqm(
+            _decimal_or_none(opt.nia_sqm), from_units=jurisdiction.area_units
+        )
+        rent_psm = _convert_rent_to_psm(
+            _decimal_or_none(opt.rent_psm_month), rent_metric=jurisdiction.rent_metric
+        )
         finance_input = FinanceAssetMixInput(
             asset_type=opt.asset_type,
             allocation_pct=_decimal_or_none(opt.allocation_pct),
-            nia_sqm=_decimal_or_none(opt.nia_sqm),
-            rent_psm_month=_decimal_or_none(opt.rent_psm_month),
+            nia_sqm=nia,
+            rent_psm_month=rent_psm,
             stabilised_vacancy_pct=_decimal_or_none(opt.stabilised_vacancy_pct),
             opex_pct_of_rent=_decimal_or_none(opt.opex_pct_of_rent),
             estimated_revenue_sgd=_decimal_or_none(opt.estimated_revenue_sgd),
@@ -1087,6 +1135,7 @@ def _summarise_financials(
     *,
     constraint_log: Sequence[DeveloperConstraintViolation] | None = None,
     optimizer_confidence: float | None = None,
+    jurisdiction_code: str = "SG",
 ) -> DeveloperFinancialSummary:
     total_revenue = sum(
         (opt.estimated_revenue_sgd or 0.0)
@@ -1124,14 +1173,19 @@ def _summarise_financials(
         "Phase 2B finance blueprint attached with capital stack, debt facility, and sensitivity defaults."
     )
 
+    jurisdiction = get_jurisdiction_config(jurisdiction_code)
     summary = DeveloperFinancialSummary(
         total_estimated_revenue_sgd=total_revenue or None,
         total_estimated_capex_sgd=total_capex or None,
         dominant_risk_profile=dominant,
         notes=notes,
         finance_blueprint=finance_blueprint,
+        currency_code=jurisdiction.currency_code,
+        currency_symbol=jurisdiction.currency_symbol,
     )
-    summary.asset_mix_finance_inputs = _build_finance_asset_mix_inputs(optimizations)
+    summary.asset_mix_finance_inputs = _build_finance_asset_mix_inputs(
+        optimizations, jurisdiction_code=jurisdiction.code
+    )
     if constraint_log:
         summary.constraint_log = list(constraint_log)
     if optimizer_confidence is not None:
@@ -1170,6 +1224,7 @@ async def developer_log_property_by_gps(
         session=session,
         user_id=user_uuid,
         scenarios=request.development_scenarios,
+        jurisdiction_code=request.jurisdiction_code,
     )
 
     quick_analysis_payload = result.quick_analysis or {
@@ -1179,10 +1234,14 @@ async def developer_log_property_by_gps(
     quick_analysis = QuickAnalysisEnvelope.model_validate(quick_analysis_payload)
 
     property_metadata = await session.get(Property, result.property_id)
+    property_jurisdiction = (
+        property_metadata.jurisdiction_code if property_metadata else "SG"
+    )
     property_info_payload = _to_mapping(result.property_info)
     property_info_dict: dict[str, Any] = (
         dict(property_info_payload) if property_info_payload else {}
     )
+    property_info_dict.setdefault("jurisdiction_code", property_jurisdiction)
     if property_metadata is not None:
         if property_metadata.is_conservation is not None:
             property_info_dict.setdefault(
@@ -1272,6 +1331,7 @@ async def developer_log_property_by_gps(
         optimizations,
         constraint_log=constraint_log,
         optimizer_confidence=optimization_outcome.confidence,
+        jurisdiction_code=property_jurisdiction,
     )
 
     heritage_constraints = heritage_context.get("constraints") or []
@@ -1294,6 +1354,7 @@ async def developer_log_property_by_gps(
             latitude=result.coordinates[0],
             longitude=result.coordinates[1],
         ),
+        jurisdiction_code=property_jurisdiction,
         ura_zoning=result.ura_zoning,
         existing_use=result.existing_use,
         nearby_amenities=result.nearby_amenities,

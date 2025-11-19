@@ -16,7 +16,7 @@ Use the helper script to execute the full workflow and capture logs:
 
 ```bash
 # From repo root on Linux
-export PREVIEW_PROPERTY_ID="00000000-0000-0000-0000-000000000001"  # replace with real property UUID
+export PREVIEW_PROPERTY_ID="88a5b6d4-2d25-4ff1-a549-7bbd2d5e81c2"  # HK demo property
 export DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/building_compliance"
 bash scripts/validate_preview_async_linux.sh
 ```

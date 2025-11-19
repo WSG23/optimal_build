@@ -99,6 +99,26 @@ This prevents you from:
 
 ---
 
+## 🚀 Expansion Window 1 (Hong Kong / New Zealand / Seattle / Toronto)
+
+> **Status:** READY — execute after verifying the Phase 2D gate checklist at the top of `all_steps_to_product_completion.md`.
+
+1. **Review the playbook:** [`docs/jurisdiction_expansion_playbook.md#10-expansion-window-1-execution-plan`](../jurisdiction_expansion_playbook.md#10-expansion-window-1-execution-plan).
+2. **Codex tasks (per jurisdiction):**
+   - Scaffold ingestion script (`scripts/ingest_<jurisdiction>_zoning.py`) and register it in `core/registry.py`.
+   - Add market assumption file under `data/<jurisdiction>_market_assumptions.yaml` and wire into the finance service.
+   - Extend preview + finance services to respect new currencies/units.
+   - For Hong Kong validations, use the seeded `Central Harbour Gateway` property (`88a5b6d4-2d25-4ff1-a549-7bbd2d5e81c2`) when triggering preview/finance scripts.
+3. **Claude tasks:**
+   - Run the relevant ingestion script, capture logs, and attach sample preview bundles.
+   - Execute validation scripts/QA walkthroughs once data is loaded.
+4. **PM tasks:**
+   - Provide API keys/datasets, keep the playbook checkboxes updated, and sign off when each jurisdiction has one seed property + finance scenario documented.
+
+When there is no higher-priority Active/Ready task, start with Hong Kong and work clockwise: HK → NZ → Seattle → Toronto. Update `docs/all_steps_to_product_completion.md` after each jurisdiction reaches the “seed property generated + finance export verified” milestone.
+
+---
+
 ## 📚 How to Start a New Phase
 
 ### Before Writing Code:

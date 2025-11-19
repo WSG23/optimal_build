@@ -58,6 +58,7 @@ from app.services.finance import (
     serialise_breakdown,
     summarise_asset_financials,
 )
+from app.services.jurisdictions import get_jurisdiction_config
 from app.services.finance.asset_models import AssetFinanceBreakdown
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
@@ -2082,6 +2083,13 @@ async def run_finance_feasibility(
             project_id=str(project_uuid),
             scenario=payload.scenario.name,
         )
+
+        jurisdiction = get_jurisdiction_config(payload.scenario.jurisdiction_code)
+        if not payload.scenario.currency or not payload.scenario.currency.strip():
+            payload.scenario.currency = jurisdiction.currency_code
+        cost_jurisdiction = payload.scenario.cost_escalation.jurisdiction
+        if not cost_jurisdiction or not cost_jurisdiction.strip():
+            payload.scenario.cost_escalation.jurisdiction = jurisdiction.code
 
         fin_project: FinProject | None = None
         if payload.fin_project_id is not None:

@@ -1,7 +1,9 @@
 """Hong Kong zoning ingestion from Planning Department WFS service.
 
 Fetches Regulated Area polygons from the CSDI WFS endpoint, reprojects from
-EPSG:2326 (HK80 Grid) to WGS84 (EPSG:4326), and normalizes into the overlay schema.
+EPSG:2326 (HK80 Grid) to WGS84 (EPSG:4326), and normalizes into the overlay
+schema. Optionally, the script can persist the polygons into ``ref_zoning_layers``
+so the buildable and preview engines can consume Hong Kong overlays.
 
 WFS Endpoint: https://www.ozp.tpb.gov.hk/arcgis/services/DATA/RA_PLAN_CSDI/MapServer/WFSServer
 """
@@ -11,15 +13,27 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import asyncio
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Sequence, Tuple
 from xml.etree import ElementTree
 
 import httpx
 import structlog
+from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
+from shapely.geometry.base import BaseGeometry
+from shapely.geometry import mapping as shapely_mapping
+from shapely.validation import make_valid
 
 from app.core.config import settings
+from app.core.database import AsyncSessionLocal
+from app.models.rkp import RefZoningLayer
+
+try:  # pragma: no cover - optional dependency when PostGIS disabled
+    from geoalchemy2.shape import from_shape
+except ModuleNotFoundError:  # pragma: no cover - geoalchemy2 not installed
+    from_shape = None  # type: ignore
 
 logger = structlog.get_logger(__name__)
 
@@ -44,6 +58,17 @@ class HKIngestionOptions:
     max_features: int
     skip_transform: bool
     force_transform: bool
+    persist: bool
+    layer_name: str
+    reset_layer: bool
+
+
+@dataclass
+class HKZoneRecord:
+    zone_code: str
+    geometry_feature: dict[str, Any]
+    shapely_geometry: BaseGeometry
+    attributes: dict[str, Any]
 
 
 def _get_capabilities(wfs_url: str) -> dict[str, Any]:
@@ -206,6 +231,76 @@ def _save_geojson(geojson: dict[str, Any], output_dir: str, filename: str) -> Pa
     return file_path
 
 
+def _force_multipolygon(geometry: BaseGeometry) -> MultiPolygon:
+    """Convert the provided geometry into a MultiPolygon."""
+
+    if isinstance(geometry, MultiPolygon):
+        return geometry
+    if isinstance(geometry, Polygon):
+        return MultiPolygon([geometry])
+    if isinstance(geometry, GeometryCollection):
+        polygons: list[Polygon] = []
+        for child in geometry.geoms:
+            if isinstance(child, MultiPolygon):
+                polygons.extend(child.geoms)
+            elif isinstance(child, Polygon):
+                polygons.append(child)
+        if polygons:
+            return MultiPolygon(polygons)
+    raise ValueError(f"Unsupported geometry type: {geometry.geom_type}")
+
+
+def _normalise_zone_feature(feature: dict[str, Any]) -> HKZoneRecord:
+    geometry_payload = feature.get("geometry")
+    if not isinstance(geometry_payload, dict):
+        raise ValueError("Feature missing geometry")
+
+    raw_geometry = make_valid(shape(geometry_payload))
+    if raw_geometry.is_empty:
+        raise ValueError("Geometry is empty after validation")
+
+    multipolygon = _force_multipolygon(raw_geometry)
+    properties = feature.get("properties") or {}
+    zone_code = properties.get("RA_PLAN_NO") or properties.get("OBJECTID")
+    if not zone_code:
+        raise ValueError("Feature missing RA_PLAN_NO")
+
+    attributes = {
+        "plan_no": properties.get("RA_PLAN_NO"),
+        "name_en": properties.get("RA_ENG"),
+        "name_zh": properties.get("RA_CHT") or properties.get("RA_CHS"),
+        "gazette_date": properties.get("GAZ_DATE"),
+        "scheme": properties.get("OZP_SCHM"),
+        "sector": properties.get("SECT_NO"),
+        "sub_area": properties.get("SUB_AREA"),
+        "plan_scale": properties.get("PLAN_SCALE"),
+        "download_links": {
+            "geojson": properties.get("GEOJSON_LINK"),
+            "gml": properties.get("GML_LINK"),
+            "shp": properties.get("SHP_LINK"),
+        },
+    }
+
+    geometry_feature = {
+        "type": "Feature",
+        "geometry": shapely_mapping(multipolygon),
+        "properties": {
+            "ra_plan_no": properties.get("RA_PLAN_NO"),
+            "scheme": properties.get("OZP_SCHM"),
+            "sector": properties.get("SECT_NO"),
+            "sub_area": properties.get("SUB_AREA"),
+            "plan_scale": properties.get("PLAN_SCALE"),
+        },
+    }
+
+    return HKZoneRecord(
+        zone_code=str(zone_code),
+        geometry_feature=geometry_feature,
+        shapely_geometry=multipolygon,
+        attributes=attributes,
+    )
+
+
 def _extract_declared_crs_name(geojson: dict[str, Any]) -> Optional[str]:
     """Return the CRS name declared in the GeoJSON if provided."""
     crs_block = geojson.get("crs")
@@ -267,6 +362,45 @@ def _should_transform_to_wgs84(geojson: dict[str, Any]) -> Tuple[bool, str]:
         return True, "sample_outside_wgs84_range"
 
     return True, "no_crs_metadata"
+
+
+async def _persist_zone_records(
+    records: Sequence[HKZoneRecord],
+    *,
+    jurisdiction: str,
+    layer_name: str,
+    reset_layer: bool,
+) -> int:
+    if not records:
+        return 0
+
+    async with AsyncSessionLocal() as session:
+        if reset_layer:
+            await session.execute(
+                RefZoningLayer.__table__.delete().where(
+                    RefZoningLayer.jurisdiction == jurisdiction,
+                    RefZoningLayer.layer_name == layer_name,
+                )
+            )
+
+        has_geometry_column = getattr(RefZoningLayer, "geometry", None) is not None
+        payloads: list[dict[str, Any]] = []
+        for record in records:
+            payload: dict[str, Any] = {
+                "jurisdiction": jurisdiction,
+                "layer_name": layer_name,
+                "zone_code": record.zone_code,
+                "attributes": record.attributes,
+                "bounds_json": record.geometry_feature,
+            }
+            if has_geometry_column and from_shape is not None:
+                payload["geometry"] = from_shape(record.shapely_geometry, srid=4326)
+            payloads.append(payload)
+
+        await session.execute(RefZoningLayer.__table__.insert(), payloads)
+        await session.commit()
+
+    return len(records)
 
 
 def ingest_hk_zones(options: HKIngestionOptions) -> dict[str, Any]:
@@ -346,10 +480,36 @@ def ingest_hk_zones(options: HKIngestionOptions) -> dict[str, Any]:
         f"regulated_areas_{options.typename.replace(':', '_')}.geojson",
     )
 
+    persisted = 0
+    if options.persist:
+        zone_records: list[HKZoneRecord] = []
+        for feature in geojson.get("features", []):
+            try:
+                zone_records.append(_normalise_zone_feature(feature))
+            except ValueError as exc:
+                logger.warning("hk_ingest:zone_skip", reason=str(exc))
+        if zone_records:
+            persisted = asyncio.run(
+                _persist_zone_records(
+                    zone_records,
+                    jurisdiction="HK",
+                    layer_name=options.layer_name,
+                    reset_layer=options.reset_layer,
+                )
+            )
+            logger.info(
+                "hk_ingest:ref_zoning_persisted",
+                persisted_records=persisted,
+                layer_name=options.layer_name,
+            )
+        else:
+            logger.warning("hk_ingest:zone_records_empty")
+
     logger.info(
         "hk_ingest:completed",
         processed_records=feature_count,
         output_file=str(output_file),
+        persisted_records=persisted,
     )
 
     return {
@@ -358,6 +518,7 @@ def ingest_hk_zones(options: HKIngestionOptions) -> dict[str, Any]:
         "output_file": str(output_file),
         "typename": options.typename,
         "available_layers": [layer["name"] for layer in capabilities["layers"]],
+        "persisted_records": persisted,
     }
 
 
@@ -401,6 +562,23 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Only list available layers from WFS capabilities.",
     )
+    parser.add_argument(
+        "--persist",
+        action="store_true",
+        help="Persist polygons into ref_zoning_layers after download.",
+    )
+    parser.add_argument(
+        "--layer-name",
+        default="regulated_area",
+        help="Layer name stored in ref_zoning_layers when persisting.",
+    )
+    parser.add_argument(
+        "--no-reset-layer",
+        action="store_false",
+        dest="reset_layer",
+        help="Do not delete existing HK rows for the layer before inserting.",
+    )
+    parser.set_defaults(reset_layer=True)
     return parser.parse_args()
 
 
@@ -425,6 +603,9 @@ def main() -> None:
         max_features=args.max_features,
         skip_transform=args.skip_transform,
         force_transform=args.force_transform,
+        persist=args.persist,
+        layer_name=args.layer_name,
+        reset_layer=args.reset_layer,
     )
 
     result = ingest_hk_zones(options)

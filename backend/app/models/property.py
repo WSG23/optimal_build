@@ -89,6 +89,7 @@ class Property(BaseModel):
     name = Column(String(255), nullable=False)
     address = Column(String(500), nullable=False)
     postal_code = Column(String(20))
+    jurisdiction_code = Column(String(10), nullable=False, index=True, default="SG")
     property_type = Column(
         SQLEnum(
             PropertyType,

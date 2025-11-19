@@ -148,4 +148,8 @@ def get_ingestion_handler(jurisdiction: str) -> str | None:
     return INGESTION_HANDLERS.get(jurisdiction.lower())
 
 
-__all__ = ["ingest_parsed_import_geometry", "INGESTION_HANDLERS", "get_ingestion_handler"]
+__all__ = [
+    "ingest_parsed_import_geometry",
+    "INGESTION_HANDLERS",
+    "get_ingestion_handler",
+]

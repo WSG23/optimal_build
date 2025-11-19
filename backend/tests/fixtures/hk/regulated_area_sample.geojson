@@ -1,0 +1,62 @@
+{
+  "type": "FeatureCollection",
+  "name": "REGULATED_AREA_SAMPLE",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [114.15, 22.3],
+            [114.151, 22.3],
+            [114.151, 22.301],
+            [114.15, 22.301],
+            [114.15, 22.3]
+          ]
+        ]
+      },
+      "properties": {
+        "RA_PLAN_NO": "RA/HK/001",
+        "RA_ENG": "Central District",
+        "RA_CHT": "Central Chinese Name",
+        "GAZ_DATE": "1/1/2024",
+        "OZP_SCHM": "HK",
+        "SECT_NO": "A1",
+        "SUB_AREA": "CENT",
+        "PLAN_SCALE": 5000,
+        "GEOJSON_LINK": "https://example.com/geojson",
+        "GML_LINK": "https://example.com/gml",
+        "SHP_LINK": "https://example.com/shp"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [114.2, 22.32],
+            [114.202, 22.32],
+            [114.202, 22.321],
+            [114.2, 22.321],
+            [114.2, 22.32]
+          ]
+        ]
+      },
+      "properties": {
+        "RA_PLAN_NO": "RA/HK/002",
+        "OZP_SCHM": "HK",
+        "SECT_NO": "A2",
+        "SUB_AREA": "ADM",
+        "PLAN_SCALE": 7500
+      }
+    }
+  ]
+}

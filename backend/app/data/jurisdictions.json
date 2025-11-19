@@ -1,0 +1,69 @@
+{
+  "SG": {
+    "code": "SG",
+    "name": "Singapore",
+    "currency_code": "SGD",
+    "currency_symbol": "S$",
+    "area_units": "sqm",
+    "rent_metric": "psm_month",
+    "market_data": {
+      "rent_psm_month": {
+        "office": 128.0,
+        "retail": 360.0,
+        "industrial": 26.0,
+        "residential": 65.0
+      },
+      "opex_assumptions_pct": {
+        "office": 18.0,
+        "retail": 22.0,
+        "industrial": 15.0,
+        "residential": 25.0
+      },
+      "vacancy_rates_pct": {
+        "office": 6.0,
+        "retail": 4.0,
+        "industrial": 8.0,
+        "residential": 7.0
+      },
+      "finance_assumptions": {
+        "construction_loan_rate_pct": 4.0,
+        "equity_debt_split_pct": [30.0, 70.0],
+        "exit_cap_rate_pct": 4.25
+      }
+    }
+  },
+  "HK": {
+    "code": "HK",
+    "name": "Hong Kong",
+    "currency_code": "HKD",
+    "currency_symbol": "HK$",
+    "area_units": "sqft",
+    "rent_metric": "psf_month",
+    "market_data": {
+      "rent_psf_month": {
+        "office": 11.5,
+        "retail": 18.7,
+        "residential": 9.2,
+        "industrial": 5.8
+      },
+      "opex_assumptions_pct": {
+        "property_tax_percent": 5.0,
+        "management_fee_percent": 2.5,
+        "utilities_percent": 1.8,
+        "insurance_percent": 0.4,
+        "maintenance_percent": 2.0
+      },
+      "vacancy_rates_pct": {
+        "office": 10.0,
+        "retail": 7.0,
+        "residential": 5.0,
+        "industrial": 8.0
+      },
+      "finance_assumptions": {
+        "construction_loan_rate_pct": 4.2,
+        "equity_debt_split_pct": [30.0, 70.0],
+        "exit_cap_rate_pct": 4.5
+      }
+    }
+  }
+}

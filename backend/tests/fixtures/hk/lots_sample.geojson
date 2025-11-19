@@ -1,0 +1,57 @@
+{
+  "type": "FeatureCollection",
+  "name": "LOT_SAMPLE",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:2326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [835000.0, 815000.0],
+            [835010.0, 815000.0],
+            [835010.0, 815010.0],
+            [835000.0, 815010.0],
+            [835000.0, 815000.0]
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 101,
+        "LOTID": 123456,
+        "LOTCSUID": "HKLOT0001",
+        "SHAPE_Length": 40.0,
+        "SHAPE_Area": 100.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [836000.0, 816000.0],
+            [836020.0, 816000.0],
+            [836020.0, 816020.0],
+            [836000.0, 816020.0],
+            [836000.0, 816000.0]
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 102,
+        "LOTID": 789012,
+        "LOTCSUID": "HKLOT0002",
+        "SHAPE_Length": 80.0,
+        "SHAPE_Area": 400.0,
+        "ZONE_CODE": "HK:COMMERCIAL"
+      }
+    }
+  ]
+}
