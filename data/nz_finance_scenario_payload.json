@@ -1,0 +1,74 @@
+{
+  "project_id": 401,
+  "project_name": "Commercial Bay NZ",
+  "scenario": {
+    "name": "NZ Base Case",
+    "description": "Finance validation run using NZ market assumptions",
+    "currency": "NZD",
+    "is_primary": false,
+    "cost_escalation": {
+      "amount": "1800000",
+      "base_period": "2025-Q4",
+      "series_name": "construction_all_in",
+      "jurisdiction": "NZ",
+      "provider": "Public"
+    },
+    "cash_flow": {
+      "discount_rate": "0.08",
+      "cash_flows": [
+        "-1200",
+        "-800",
+        "1600",
+        "900"
+      ]
+    },
+    "dscr": {
+      "net_operating_incomes": [
+        "0",
+        "1500",
+        "-200"
+      ],
+      "debt_services": [
+        "0",
+        "1100",
+        "900"
+      ],
+      "period_labels": [
+        "M0",
+        "M1",
+        "M2"
+      ]
+    },
+    "capital_stack": [
+      {
+        "name": "Equity",
+        "source_type": "equity",
+        "amount": "500"
+      },
+      {
+        "name": "Senior Loan",
+        "source_type": "debt",
+        "amount": "950",
+        "rate": "0.063",
+        "tranche_order": 1
+      }
+    ],
+    "drawdown_schedule": [
+      {
+        "period": "M0",
+        "equity_draw": "200",
+        "debt_draw": "0"
+      },
+      {
+        "period": "M1",
+        "equity_draw": "300",
+        "debt_draw": "350"
+      },
+      {
+        "period": "M2",
+        "equity_draw": "0",
+        "debt_draw": "600"
+      }
+    ]
+  }
+}

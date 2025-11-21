@@ -1,0 +1,73 @@
+# New Zealand Market Assumptions
+# Data Source: CBRE Auckland Q4 2025 Figures Report + Colliers NZ Research Report November 2025
+# Last Updated: 2025-11-20
+# Currency: NZD
+# Units: Square meters (sqm)
+# Cities Covered: Auckland, Wellington, Christchurch
+
+nz_market_data:
+  currency: "NZD"
+  currency_symbol: "NZ$"
+  units: "sqm"
+
+  # Rent assumptions (NZD per sqm per month)
+  # Source: CBRE Auckland Q4 2025 - converted from annual to monthly (÷12)
+  rent_psm_month:
+    office: 33.0          # Blended avg of Prime CBD (52.08) and Secondary CBD (32.92)
+    retail: 150.0         # Major Regional Centre (700-2900/yr avg ~1800/yr = 150/mo)
+    residential: 28.0     # Estimate based on market conditions
+    industrial: 16.0      # Blended Prime (17.92) and Secondary (14.17)
+
+  # Operating expense assumptions (as percentage of gross rent)
+  # Source: NZ commercial property management standards
+  opex_assumptions:
+    property_tax_percent: 2.0     # Rates (lower than HK/SG)
+    management_fee_percent: 2.5   # Standard management fee
+    utilities_percent: 1.5        # Utilities and services
+    insurance_percent: 0.6        # Higher due to seismic risk
+    maintenance_percent: 2.0      # Building maintenance and repairs
+
+  # Vacancy rates (as decimal)
+  # Source: CBRE Auckland Q4 2025
+  vacancy_rates:
+    office: 0.12          # ~12% blended (Prime CBD 11.4%, Secondary CBD 27.4%)
+    retail: 0.02          # Low vacancy in strong centres (1.3% Major Regional)
+    residential: 0.03     # Estimate
+    industrial: 0.017     # Very tight market (Prime 1.6%, Secondary 1.7%)
+
+  # Finance and investment assumptions
+  # Source: Colliers NZ Research Report November 2025 + CBRE yield data
+  finance_assumptions:
+    construction_loan_rate: 6.3        # Current floating rate (Nov 2025)
+    equity_debt_split: [30, 70]        # 30% equity, 70% debt (standard)
+    exit_cap_rate: 6.5                 # Mid-point across asset classes
+
+  # Detailed yield ranges by asset type (for reference)
+  # Source: CBRE Auckland Q4 2025
+  yields:
+    office:
+      prime_cbd: [5.15, 8.80]          # Prime CBD yields range
+      secondary_cbd: [5.75, 9.50]      # Secondary CBD yields range
+    industrial:
+      prime: [4.90, 6.20]              # Prime industrial yields
+      secondary: [5.45, 7.20]          # Secondary industrial yields
+    retail:
+      major_regional: [6.50, 7.25]     # Major regional centre yields
+      lfr_centre: [6.60, 7.40]         # Large format retail yields
+
+  # Economic context (for reference)
+  # Source: Colliers NZ Research Report November 2025
+  economic_indicators:
+    official_cash_rate: 2.50           # OCR as of November 2025 (down 300bps from 5.50%)
+    gdp_growth_forecast: "positive"    # Recovery expected from Q4 2025
+    interest_rate_trend: "declining"   # Downward trajectory from peak
+
+# City-specific notes:
+# - Auckland: Primary market with most liquidity, data above primarily reflects Auckland
+# - Wellington: Limited data available, use Auckland assumptions as proxy
+# - Christchurch: Limited data available, use Auckland assumptions as proxy with potential 10-15% rent discount
+#
+# TODO for future updates:
+# - Gather Wellington and Christchurch specific rent/vacancy data
+# - Validate residential rent assumptions with actual market data
+# - Update quarterly as new CBRE/Colliers reports are released

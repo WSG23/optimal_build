@@ -42,6 +42,8 @@ allowed_files:
 
   # Jurisdiction expansion
   - docs/jurisdictions/hk.md
+  - docs/jurisdictions/nz.md
+  - docs/jurisdictions/sg.md
 
   # Archive management
   - docs/archive/README.md

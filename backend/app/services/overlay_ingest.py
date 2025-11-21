@@ -139,6 +139,12 @@ async def ingest_parsed_import_geometry(
 
 INGESTION_HANDLERS: dict[str, str] = {
     "hk": "backend.scripts.ingest_hk_zones:ingest_hk_zones",
+    "nz": "backend.scripts.ingest_nz_zones:ingest_nz_zones",
+}
+
+PARCEL_INGESTION_HANDLERS: dict[str, str] = {
+    "sg": "backend.scripts.ingest_sg_parcels:ingest_parcels",
+    "nz": "backend.scripts.ingest_nz_parcels:ingest_parcels",
 }
 
 
@@ -148,8 +154,16 @@ def get_ingestion_handler(jurisdiction: str) -> str | None:
     return INGESTION_HANDLERS.get(jurisdiction.lower())
 
 
+def get_parcel_ingestion_handler(jurisdiction: str) -> str | None:
+    """Return the parcel ingestion handler path for ``jurisdiction``."""
+
+    return PARCEL_INGESTION_HANDLERS.get(jurisdiction.lower())
+
+
 __all__ = [
     "ingest_parsed_import_geometry",
     "INGESTION_HANDLERS",
+    "PARCEL_INGESTION_HANDLERS",
     "get_ingestion_handler",
+    "get_parcel_ingestion_handler",
 ]

@@ -65,5 +65,39 @@
         "exit_cap_rate_pct": 4.5
       }
     }
+  },
+  "NZ": {
+    "code": "NZ",
+    "name": "New Zealand",
+    "currency_code": "NZD",
+    "currency_symbol": "NZ$",
+    "area_units": "sqm",
+    "rent_metric": "psm_month",
+    "market_data": {
+      "rent_psm_month": {
+        "office": 33.0,
+        "retail": 150.0,
+        "residential": 28.0,
+        "industrial": 16.0
+      },
+      "opex_assumptions_pct": {
+        "property_tax_percent": 2.0,
+        "management_fee_percent": 2.5,
+        "utilities_percent": 1.5,
+        "insurance_percent": 0.6,
+        "maintenance_percent": 2.0
+      },
+      "vacancy_rates_pct": {
+        "office": 12.0,
+        "retail": 2.0,
+        "residential": 3.0,
+        "industrial": 1.7
+      },
+      "finance_assumptions": {
+        "construction_loan_rate_pct": 6.3,
+        "equity_debt_split_pct": [30.0, 70.0],
+        "exit_cap_rate_pct": 6.5
+      }
+    }
   }
 }
