@@ -8,8 +8,8 @@ from uuid import uuid4
 import pytest
 
 import pytest_asyncio
+from app.models.compliance import ComplianceStatus
 from app.models.singapore_property import (
-    ComplianceStatus,
     PropertyTenure,
     PropertyZoning,
     SingaporeProperty,

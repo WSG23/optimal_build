@@ -8,8 +8,8 @@ from backend._compat.datetime import utcnow
 import pytest_asyncio
 from app.api.v1 import compliance as compliance_api
 from app.main import app
+from app.models.compliance import ComplianceStatus
 from app.models.singapore_property import (
-    ComplianceStatus,
     PropertyTenure,
     PropertyZoning,
     SingaporeProperty,

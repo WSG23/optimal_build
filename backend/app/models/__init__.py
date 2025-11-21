@@ -25,6 +25,7 @@ else:
     # Import model modules so their metadata is registered with SQLAlchemy.
     from . import agent_advisory  # Added: agent advisory feedback model
     from . import ai_agents  # Added: AI agents model
+    from . import compliance  # Added: shared compliance enums
     from . import developer_condition  # Added: developer condition assessments
     from . import listing_integration  # Added: external listing integrations
     from . import projects  # Added: development projects model
@@ -51,6 +52,7 @@ else:
         "developer_condition": developer_condition,
         "audit": audit,
         "business_performance": business_performance,
+        "compliance": compliance,
         "developer_checklists": developer_checklists,
         "entitlements": entitlements,
         "finance": finance,

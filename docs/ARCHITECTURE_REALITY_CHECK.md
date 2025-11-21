@@ -121,8 +121,8 @@ backend/app/core/
 ├── users.py              # User authentication & management
 ├── projects.py           # Development projects
 ├── property.py           # Property data
-├── singapore_property.py # Singapore-specific (includes ComplianceStatus enum)
-├── market.py             # Market data (YieldBenchmark, AbsorptionTracking, MarketCycle, etc.)
+├── singapore_property.py # Singapore-specific (references shared ComplianceStatus enum)
+├── market.py             # Market data (market_transactions + analytics tables)
 ├── ai_agents.py          # AI agent configurations
 ├── audit.py              # Audit trails
 ├── entitlements.py       # Entitlements
@@ -133,8 +133,8 @@ backend/app/core/
 ├── rulesets.py           # Rulesets
 └── types.py              # Shared types
 
-📝 Note: No market_transactions table (has YieldBenchmark, etc. instead)
-📝 Note: No standalone compliance.py (embedded in singapore_property.py)
+📝 Note: Market tables include `market_transactions` plus analytics tables (`yield_benchmarks`, `absorption_tracking`, `market_cycles`).
+📝 Note: Compliance enums now live in `backend/app/models/compliance.py` instead of being nested in `singapore_property.py`.
 ```
 
 **Schemas** (`backend/app/schemas/`)
@@ -273,6 +273,7 @@ backend/app/core/
 - `users` - User authentication & management
 - `projects` - Development projects
 - `singapore_property` - Singapore-specific regulatory data
+- `market_transactions` - Historical transactions linked to properties
 - `yield_benchmarks` - Financial yield data
 - `absorption_tracking` - Market absorption
 - `market_cycle` - Market cycle data
@@ -281,7 +282,7 @@ backend/app/core/
 - `market_alert` - Market alerts
 - `ai_agents` - AI agent configurations
 
-📝 Note: No `market_transactions` table (different schema than documented)
+📝 Note: Documentation now reflects the combined transaction and analytics tables.
 
 #### **Redis** (Port: 6379) — ✅ Working
 - **Version**: Redis 7-alpine
@@ -296,7 +297,7 @@ backend/app/core/
 - **Configured Buckets**:
   - `cad-imports` ✅
   - `cad-exports` ✅
-  - `documents` ⚙️ (mentioned in docs but not in docker-compose.yml)
+  - `documents` ✅ (auto-created by `minio-init` sidecar)
 - **Features**:
   - Lifecycle management ⚙️ (optional via STORAGE_RETENTION_DAYS)
   - Webhook notifications ✅ (in generate_reports.py)
@@ -449,9 +450,9 @@ Managed services:
 6. **Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)
 
 ### Medium
-7. **MinIO Bucket**: `documents` bucket documented but not in docker-compose.yml
-8. **Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.
-9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
+7. ~~**MinIO Bucket**: `documents` bucket documented but not in docker-compose.yml~~ **✅ RESOLVED** – `minio-init` sidecar now provisions the bucket during local startup.
+8. ~~**Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.~~ **✅ RESOLVED** – Documentation updated to match production tables (transactions + analytics).
+9. ~~**Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)~~ **✅ RESOLVED** – Compliance enums extracted to `backend/app/models/compliance.py` for reuse.
 
 ### Low
 10. ~~**Directory Naming**: `ui-admin/` vs documented `admin/`~~ **✅ Documented** – Frontend references now point to the canonical `ui-admin/` directory.

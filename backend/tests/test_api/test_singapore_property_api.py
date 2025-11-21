@@ -9,9 +9,9 @@ import pytest
 
 from app.api.v1 import singapore_property_api as sg_api
 from app.main import app
+from app.models.compliance import ComplianceStatus
 from app.models.singapore_property import (
     AcquisitionStatus,
-    ComplianceStatus,
     FeasibilityStatus,
     PropertyTenure,
     PropertyZoning,

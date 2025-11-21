@@ -19,9 +19,9 @@ from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.core.jwt_auth import TokenData, get_current_user
+from app.models.compliance import ComplianceStatus
 from app.models.singapore_property import (
     AcquisitionStatus,
-    ComplianceStatus,
     DevelopmentStatus,
     FeasibilityStatus,
     PropertyTenure,
