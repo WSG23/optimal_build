@@ -9,8 +9,9 @@ from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
 import structlog
-from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
+
+from backend._compat.datetime import utcnow  # isort: skip (backend._compat ordering)
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -136,6 +137,13 @@ class GPSLogRequest(BaseModel):
             "Defaults to the core commercial scenarios if omitted."
         ),
     )
+    jurisdiction_code: str | None = Field(
+        None,
+        description=(
+            "Jurisdiction code (e.g., 'SG', 'HK', 'NZ'). "
+            "Defaults to 'SG' if omitted."
+        ),
+    )
 
 
 class CoordinatePair(BaseModel):
@@ -234,7 +242,7 @@ class AdvisoryFeedbackRequest(BaseModel):
     )
     submitted_by: Optional[str] = Field(
         None,
-        description="Optional identifier for the agent submitting the feedback if not authenticated.",
+        description="Optional identifier for the agent submitting feedback if not authenticated.",
     )
     metadata: Dict[str, Any] | None = Field(
         default=None,
@@ -355,6 +363,7 @@ async def log_property_by_gps(
             session=db,
             user_id=user_uuid,
             scenarios=request.development_scenarios,
+            jurisdiction_code=request.jurisdiction_code,
         )
         quick_analysis_payload = result.quick_analysis or {
             "generated_at": utcnow().isoformat(),

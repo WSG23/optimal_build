@@ -127,6 +127,7 @@ export interface LogPropertyByGpsRequest {
   latitude: number
   longitude: number
   developmentScenarios?: DevelopmentScenario[]
+  jurisdictionCode?: string
 }
 
 interface RawAmenity {
@@ -537,6 +538,7 @@ async function postLogProperty(
       latitude: payload.latitude,
       longitude: payload.longitude,
       development_scenarios: payload.developmentScenarios,
+      jurisdiction_code: payload.jurisdictionCode,
     }),
     signal: options.signal,
   })

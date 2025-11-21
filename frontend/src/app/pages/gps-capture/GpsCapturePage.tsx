@@ -19,6 +19,7 @@ import {
 export function GpsCapturePage() {
   const [latitude, setLatitude] = useState<string>('1.3000')
   const [longitude, setLongitude] = useState<string>('103.8500')
+  const [jurisdictionCode, setJurisdictionCode] = useState<string>('SG')
   const [selectedScenarios, setSelectedScenarios] = useState<
     DevelopmentScenario[]
   >([...DEFAULT_SCENARIO_ORDER])
@@ -85,6 +86,7 @@ export function GpsCapturePage() {
           longitude: parsedLon,
           developmentScenarios:
             selectedScenarios.length > 0 ? selectedScenarios : undefined,
+          jurisdictionCode: jurisdictionCode || undefined,
         })
         setCaptureSummary(summary)
         setCapturedSites((prev) => [
@@ -118,7 +120,7 @@ export function GpsCapturePage() {
         setCaptureLoading(false)
       }
     },
-    [latitude, longitude, selectedScenarios],
+    [latitude, longitude, jurisdictionCode, selectedScenarios],
   )
 
   const handleGeneratePack = useCallback(
@@ -181,6 +183,20 @@ export function GpsCapturePage() {
                 onChange={(event) => setLongitude(event.target.value)}
                 required
               />
+            </div>
+            <div className="gps-form__group">
+              <label htmlFor="jurisdictionCode">Jurisdiction</label>
+              <select
+                id="jurisdictionCode"
+                name="jurisdictionCode"
+                value={jurisdictionCode}
+                onChange={(event) => setJurisdictionCode(event.target.value)}
+                required
+              >
+                <option value="SG">Singapore</option>
+                <option value="HK">Hong Kong</option>
+                <option value="NZ">New Zealand</option>
+              </select>
             </div>
             <div className="gps-form__group">
               <label>Development scenarios</label>

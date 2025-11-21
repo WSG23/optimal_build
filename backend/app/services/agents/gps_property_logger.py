@@ -283,6 +283,7 @@ class GPSPropertyLogger:
                 quick_analysis=quick_analysis,
                 timestamp=utcnow(),
                 heritage_overlay=heritage_overlay,
+                jurisdiction_code=jurisdiction,
             )
 
         except Exception as e:
