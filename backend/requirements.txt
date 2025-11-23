@@ -44,7 +44,7 @@ pillow==10.4.0
 exifread==3.0.0
 trimesh==4.0.0
 ezdxf==1.1.0
-reportlab==4.0.8
+reportlab==4.4.5
 minio==7.2.0
 
 # Development
