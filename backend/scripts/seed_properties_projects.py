@@ -146,6 +146,29 @@ _PROPERTIES: Sequence[dict[str, object]] = (
         "plot_ratio": Decimal("15.8"),
         "data_source": "seed_properties",
     },
+    {
+        "id": UUID("aa3f0dbe-0b74-4f65-9f5e-0fbfa6c7f3b4"),
+        "name": "Space Needle",
+        "address": "400 Broad Street, Seattle, WA 98109, USA",
+        "postal_code": "98109",
+        "jurisdiction_code": "SEA",
+        "property_type": PropertyType.COMMERCIAL,
+        "status": PropertyStatus.EXISTING,
+        "location": "SRID=4326;POINT(-122.3493129 47.6205054)",
+        "district": "Seattle Center",
+        "planning_area": "Seattle Center Urban Center",
+        "land_area_sqm": Decimal("11148"),  # ~120,000 sqft
+        "gross_floor_area_sqm": Decimal("75000"),
+        "net_lettable_area_sqm": Decimal("65000"),
+        "building_height_m": Decimal("184"),
+        "floors_above_ground": 6,
+        "units_total": 10,
+        "year_built": 1962,
+        "tenure_type": TenureType.FREEHOLD,
+        "zoning_code": "SM-SLU-160",
+        "plot_ratio": Decimal("6.5"),
+        "data_source": "seed_properties",
+    },
 )
 
 

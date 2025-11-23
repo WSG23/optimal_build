@@ -17,6 +17,7 @@ allowed_files:
   # Strategic planning
   - docs/all_steps_to_product_completion.md
   - docs/WORK_QUEUE.MD
+  - docs/TECHNICAL_DEBT.md
 
   # Agent decision guides
   - docs/ai-agents/next_steps.md
@@ -44,6 +45,7 @@ allowed_files:
   - docs/jurisdictions/hk.md
   - docs/jurisdictions/nz.md
   - docs/jurisdictions/sg.md
+  - docs/jurisdictions/seattle.md
 
   # Archive management
   - docs/archive/README.md
