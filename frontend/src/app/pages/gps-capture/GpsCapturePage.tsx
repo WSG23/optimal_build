@@ -196,6 +196,7 @@ export function GpsCapturePage() {
                 <option value="SG">Singapore</option>
                 <option value="HK">Hong Kong</option>
                 <option value="NZ">New Zealand</option>
+                <option value="SEA">Seattle / King County</option>
               </select>
             </div>
             <div className="gps-form__group">
