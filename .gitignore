@@ -326,7 +326,13 @@ frontend/.tmp-e2e-*/
 backend/static/dev-previews/
 
 # Large geospatial data files (downloaded from government portals)
-data/hk/
-data/sg/
+data/hk/*
+!data/hk/README.md
+data/sg/*
+!data/sg/README.md
 data/seattle/*.geojson
+data/seattle/*
+!data/seattle/README.md
+data/nz/*
+!data/nz/README.md
 data/nz/*.geojson
