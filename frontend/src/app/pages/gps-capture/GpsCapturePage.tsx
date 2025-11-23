@@ -92,7 +92,9 @@ export function GpsCapturePage() {
         setCapturedSites((prev) => [
           {
             propertyId: summary.propertyId,
-            address: summary.address.fullAddress,
+            address: summary.address.fullAddress.startsWith('Mocked Address')
+              ? `Captured site (${parsedLat.toFixed(5)}, ${parsedLon.toFixed(5)})`
+              : summary.address.fullAddress,
             district: summary.address.district,
             scenario: summary.quickAnalysis.scenarios[0]?.scenario ?? null,
             capturedAt: summary.timestamp,
@@ -197,6 +199,7 @@ export function GpsCapturePage() {
                 <option value="HK">Hong Kong</option>
                 <option value="NZ">New Zealand</option>
                 <option value="SEA">Seattle / King County</option>
+                <option value="TOR">Toronto</option>
               </select>
             </div>
             <div className="gps-form__group">
@@ -266,8 +269,10 @@ export function GpsCapturePage() {
             <ul className="gps-panel__list">
               {quickAnalysis.scenarios.map((scenario) => (
                 <li key={scenario.scenario}>
-                  <strong>{formatScenarioLabel(scenario.scenario)}</strong>
-                  <span>{scenario.headline}</span>
+                  <div className="gps-panel__headline">
+                    <strong>{formatScenarioLabel(scenario.scenario)}</strong>
+                    <span>{scenario.headline}</span>
+                  </div>
                   {Object.keys(scenario.metrics).length > 0 && (
                     <dl className="gps-panel__metrics">
                       {Object.entries(scenario.metrics).map(

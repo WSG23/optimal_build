@@ -133,5 +133,39 @@
         "exit_cap_rate_pct": 5.05
       }
     }
+  },
+  "TOR": {
+    "code": "TOR",
+    "name": "Toronto",
+    "currency_code": "CAD",
+    "currency_symbol": "C$",
+    "area_units": "sqft",
+    "rent_metric": "psf_month",
+    "market_data": {
+      "rent_psf_month": {
+        "office": 2.80,
+        "retail": 3.50,
+        "residential": 2.65,
+        "industrial": 1.15
+      },
+      "opex_assumptions_pct": {
+        "property_tax_percent": 1.2,
+        "management_fee_percent": 3.0,
+        "utilities_percent": 2.0,
+        "insurance_percent": 0.6,
+        "maintenance_percent": 2.5
+      },
+      "vacancy_rates_pct": {
+        "office": 18.5,
+        "retail": 4.5,
+        "residential": 2.8,
+        "industrial": 3.2
+      },
+      "finance_assumptions": {
+        "construction_loan_rate_pct": 6.95,
+        "equity_debt_split_pct": [30.0, 70.0],
+        "exit_cap_rate_pct": 5.25
+      }
+    }
   }
 }
