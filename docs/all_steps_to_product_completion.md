@@ -1205,7 +1205,7 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ### Expansion Window 1: After Phase 2C (Dec 2025 - Jan 2026)
 
-**Status:** ❌ NOT STARTED (Blocked: Waiting for Phase 2C completion)
+**Status:** ⚠️ 75% COMPLETE (3 of 4 jurisdictions validated, Toronto pending)
 
 **Goal:** Add 4 new jurisdictions BEFORE building Phase 2D-6, ensuring all subsequent phases are built multi-jurisdiction from the start.
 
@@ -1358,10 +1358,10 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 **Expansion Window 1 Progress:**
 - 🇸🇬 Singapore: ✅ COMPLETE (Baseline)
-- 🇭🇰 Hong Kong: ✅ READY (GPS logging, preview jobs, and finance exports validated with HK currency/unit defaults)
-- 🇳🇿 New Zealand: ❌ NOT STARTED (Target: Jan 2026)
-- 🇺🇸 Washington State: ❌ NOT STARTED (Target: Jan 2026)
-- 🇨🇦 Ontario: ❌ NOT STARTED (Target: Feb 2026)
+- 🇭🇰 Hong Kong: ✅ COMPLETE (GPS logging, preview jobs, and finance exports validated with HK currency/unit defaults - 2025-11-18)
+- 🇳🇿 New Zealand: ✅ COMPLETE (GPS logging validated with NZ jurisdiction code, preview jobs storing metadata correctly, jurisdictions.json configured with NZD market data - 2025-11-23)
+- 🇺🇸 Washington State: ✅ COMPLETE (GPS logging validated with SEA jurisdiction code, preview jobs functional, jurisdictions.json configured with USD market data - 2025-11-23)
+- 🇨🇦 Ontario: ❌ NOT STARTED (Target: TBD - deferred)
 
 ---
 
