@@ -668,8 +668,15 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 **Goal:** Complete all 9 Developer tools so developers can manage full project lifecycle
 
-### Phase 2A: Universal GPS Site Acquisition ✅ COMPLETE
-**Status:** 100% - Developer Site Acquisition workspace live end-to-end; GPS capture currently reuses the shared agent `POST /api/v1/agents/commercial-property/properties/log-gps` endpoint while a developer-specific route is tracked as backlog
+### Phase 2A: Universal GPS Site Acquisition ⚠️ IN PROGRESS
+**Status:** 60% - Core GPS capture works but missing key FEATURES.md requirements (address input, interactive map, real geocoding, photo uploads)
+**Gaps to align with FEATURES.md (backlog - ~2 weeks effort):**
+- [ ] Forward geocoding: add address input (`123 Main St`) → coords via Google Maps Geocoding API (2 days)
+- [ ] Reverse geocoding: replace mocked address with real reverse-geocode from coords (1 day)
+- [ ] Map/pin-drop: replace placeholder card with interactive map to set coords (3 days)
+- [ ] Zoning lookup on capture: fetch/display zoning for the resolved point (e.g., URA/other jurisdiction overlays) (2 days)
+- [ ] GPS photo/attachment capture: allow photo uploads with capture (2 days)
+- [ ] Pack generator wiring: connect "Generate pack" buttons to real pack export pipeline (2 days)
 
 **Requirements (from FEATURES.md lines 86-96):**
 - Mobile property capture (GPS-enabled)
