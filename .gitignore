@@ -328,3 +328,5 @@ backend/static/dev-previews/
 # Large geospatial data files (downloaded from government portals)
 data/hk/
 data/sg/
+data/seattle/*.geojson
+data/nz/*.geojson
