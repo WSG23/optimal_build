@@ -11,13 +11,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, Generator
+from typing import Any, Dict
 
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.core.config import settings
 from app.core.jwt_auth import TokenData, get_current_user
 from app.models.singapore_property import (
     AcquisitionStatus,
@@ -28,41 +27,16 @@ from app.models.singapore_property import (
     PropertyZoning,
     SingaporeProperty,
 )
+from app.core.database import get_session
 from app.utils.singapore_compliance import (
     calculate_gfa_utilization,
-    run_full_compliance_check_sync,
-    update_property_compliance_sync,
+    run_full_compliance_check,
+    update_property_compliance,
 )
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
-
-# MVP: Simple synchronous database session for Singapore properties
-# This creates a separate sync session just for this MVP feature
-_sync_engine = None
-_SessionLocal = None
-
-
-def get_sync_db() -> Generator[Session, None, None]:
-    """Get synchronous database session for MVP."""
-    global _sync_engine, _SessionLocal
-
-    if _sync_engine is None:
-        # Use the same database URL but synchronous
-        original_url = str(settings.SQLALCHEMY_DATABASE_URI)
-        db_url = original_url.replace("+aiosqlite", "").replace("+asyncpg", "+psycopg2")
-
-        _sync_engine = create_engine(db_url, pool_pre_ping=True)
-        _SessionLocal = sessionmaker(
-            autocommit=False, autoflush=False, bind=_sync_engine
-        )
-
-    db = _SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 # Pydantic Request/Response Models
@@ -236,10 +210,10 @@ class ComplianceCheckResponse(BaseModel):
 
 
 @router.post("/create", response_model=PropertyResponse)
-def create_property(
+async def create_property(
     property_data: PropertyCreate,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db),
+    db: AsyncSession = Depends(get_session),
 ) -> PropertyResponse:
     """
     Create a new Singapore property with automatic compliance checking.
@@ -289,19 +263,19 @@ def create_property(
     )
 
     # Run compliance checks and update property
-    update_property_compliance_sync(new_property)
+    await update_property_compliance(new_property, db)
 
     # Save to database
     db.add(new_property)
-    db.commit()
-    db.refresh(new_property)
+    await db.commit()
+    await db.refresh(new_property)
 
     return PropertyResponse.from_orm(new_property)
 
 
 @router.get("/list", response_model=list[PropertyResponse])
-def list_properties(
-    db: Session = Depends(get_sync_db),
+async def list_properties(
+    db: AsyncSession = Depends(get_session),
     acquisition_status: AcquisitionStatus | None = Query(None),
     feasibility_status: FeasibilityStatus | None = Query(None),
     zoning: PropertyZoning | None = Query(None),
@@ -314,30 +288,31 @@ def list_properties(
 
     Public endpoint - no authentication required for viewing.
     """
-    query = db.query(SingaporeProperty)
+    stmt = select(SingaporeProperty)
 
     if acquisition_status:
-        query = query.filter(SingaporeProperty.acquisition_status == acquisition_status)
+        stmt = stmt.where(SingaporeProperty.acquisition_status == acquisition_status)
     if feasibility_status:
-        query = query.filter(SingaporeProperty.feasibility_status == feasibility_status)
+        stmt = stmt.where(SingaporeProperty.feasibility_status == feasibility_status)
     if zoning:
-        query = query.filter(SingaporeProperty.zoning == zoning)
+        stmt = stmt.where(SingaporeProperty.zoning == zoning)
     if compliance_status:
-        query = query.filter(
+        stmt = stmt.where(
             (SingaporeProperty.bca_compliance_status == compliance_status)
             | (SingaporeProperty.ura_compliance_status == compliance_status)
         )
 
-    properties = query.offset(skip).limit(limit).all()
+    result = await db.execute(stmt.offset(skip).limit(limit))
+    properties = result.scalars().all()
 
     return [PropertyResponse.from_orm(p) for p in properties]
 
 
 @router.get("/{property_id}", response_model=PropertyResponse)
-def get_property(
+async def get_property(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db),
+    db: AsyncSession = Depends(get_session),
 ) -> PropertyResponse:
     """Get a specific property by ID."""
     try:
@@ -345,14 +320,12 @@ def get_property(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    property_obj = (
-        db.query(SingaporeProperty)
-        .filter(
-            SingaporeProperty.id == property_uuid,
-            SingaporeProperty.owner_email == current_user.email,
-        )
-        .first()
+    stmt = select(SingaporeProperty).where(
+        SingaporeProperty.id == property_uuid,
+        SingaporeProperty.owner_email == current_user.email,
     )
+    result = await db.execute(stmt)
+    property_obj = result.scalar_one_or_none()
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -361,11 +334,11 @@ def get_property(
 
 
 @router.put("/{property_id}", response_model=PropertyResponse)
-def update_property(
+async def update_property(
     property_id: str,
     property_update: PropertyUpdate,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db),
+    db: AsyncSession = Depends(get_session),
 ) -> PropertyResponse:
     """
     Update a property and re-run compliance checks.
@@ -377,14 +350,12 @@ def update_property(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    property_obj = (
-        db.query(SingaporeProperty)
-        .filter(
-            SingaporeProperty.id == property_uuid,
-            SingaporeProperty.owner_email == current_user.email,
-        )
-        .first()
+    stmt = select(SingaporeProperty).where(
+        SingaporeProperty.id == property_uuid,
+        SingaporeProperty.owner_email == current_user.email,
     )
+    result = await db.execute(stmt)
+    property_obj = result.scalar_one_or_none()
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -395,20 +366,20 @@ def update_property(
         setattr(property_obj, field, value)
 
     # Re-run compliance checks
-    update_property_compliance_sync(property_obj)
+    await update_property_compliance(property_obj, db)
     property_obj.updated_at = utcnow()
 
-    db.commit()
-    db.refresh(property_obj)
+    await db.commit()
+    await db.refresh(property_obj)
 
     return PropertyResponse.from_orm(property_obj)
 
 
 @router.post("/{property_id}/check-compliance", response_model=ComplianceCheckResponse)
-def check_property_compliance(
+async def check_property_compliance(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db),
+    db: AsyncSession = Depends(get_session),
 ) -> ComplianceCheckResponse:
     """
     Run detailed BCA and URA compliance checks for a property.
@@ -421,20 +392,18 @@ def check_property_compliance(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    property_obj = (
-        db.query(SingaporeProperty)
-        .filter(
-            SingaporeProperty.id == property_uuid,
-            SingaporeProperty.owner_email == current_user.email,
-        )
-        .first()
+    stmt = select(SingaporeProperty).where(
+        SingaporeProperty.id == property_uuid,
+        SingaporeProperty.owner_email == current_user.email,
     )
+    result_query = await db.execute(stmt)
+    property_obj = result_query.scalar_one_or_none()
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
 
     # Run full compliance check
-    result = run_full_compliance_check_sync(property_obj)
+    result = await run_full_compliance_check(property_obj, db)
 
     return ComplianceCheckResponse(
         property_id=property_id,
@@ -449,10 +418,10 @@ def check_property_compliance(
 
 
 @router.get("/calculate/gfa-utilization/{property_id}")
-def calculate_property_gfa(
+async def calculate_property_gfa(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db),
+    db: AsyncSession = Depends(get_session),
 ) -> Dict[str, Any]:
     """
     Calculate GFA utilization and remaining development potential.
@@ -464,14 +433,12 @@ def calculate_property_gfa(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    property_obj = (
-        db.query(SingaporeProperty)
-        .filter(
-            SingaporeProperty.id == property_uuid,
-            SingaporeProperty.owner_email == current_user.email,
-        )
-        .first()
+    stmt = select(SingaporeProperty).where(
+        SingaporeProperty.id == property_uuid,
+        SingaporeProperty.owner_email == current_user.email,
     )
+    result_query = await db.execute(stmt)
+    property_obj = result_query.scalar_one_or_none()
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -767,10 +734,10 @@ async def check_compliance(
 
 
 @router.delete("/{property_id}")
-def delete_property(
+async def delete_property(
     property_id: str,
     current_user: TokenData = Depends(get_current_user),
-    db: Session = Depends(get_sync_db),
+    db: AsyncSession = Depends(get_session),
 ) -> Dict[str, str]:
     """Soft delete a property (marks as inactive)."""
     try:
@@ -778,20 +745,18 @@ def delete_property(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    property_obj = (
-        db.query(SingaporeProperty)
-        .filter(
-            SingaporeProperty.id == property_uuid,
-            SingaporeProperty.owner_email == current_user.email,
-        )
-        .first()
+    stmt = select(SingaporeProperty).where(
+        SingaporeProperty.id == property_uuid,
+        SingaporeProperty.owner_email == current_user.email,
     )
+    result = await db.execute(stmt)
+    property_obj = result.scalar_one_or_none()
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
 
     # Soft delete
-    db.delete(property_obj)
-    db.commit()
+    await db.delete(property_obj)
+    await db.commit()
 
     return {"message": "Property deleted successfully", "property_id": property_id}
