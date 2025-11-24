@@ -46,6 +46,7 @@ allowed_files:
   - docs/jurisdictions/nz.md
   - docs/jurisdictions/sg.md
   - docs/jurisdictions/seattle.md
+  - docs/jurisdictions/toronto.md
 
   # Archive management
   - docs/archive/README.md
