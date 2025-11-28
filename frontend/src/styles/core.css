@@ -1,0 +1,232 @@
+/* styles/core.css
+   Global resets, root variables, base typography, utility classes.
+   Also includes legacy .app-layout, .locale-switcher, .app-home patterns.
+   Extracted from src/index.css (lines 1–200).
+*/
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+:root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: only light;
+    color: #0f172a;
+    background-color: #e2e8f0;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+}
+
+#root {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+}
+
+a {
+    font-weight: 500;
+    color: #2563eb;
+    text-decoration: inherit;
+}
+a:hover {
+    color: #1d4ed8;
+}
+
+h1,
+h2,
+h3 {
+    line-height: 1.1;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.app-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+}
+
+.app-layout__nav {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.app-layout__brand h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+    color: #ffffff;
+}
+
+.app-layout__brand p {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 0.95rem;
+}
+
+.app-layout__nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.app-layout__nav-link {
+    display: block;
+    padding: 0.65rem 1rem;
+    border-radius: 0.75rem;
+    color: inherit;
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.app-layout__nav-link--active {
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.app-layout__main {
+    padding: 2.5rem 3.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.app-layout__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 1.75rem 2.5rem;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.app-layout__header h2 {
+    margin: 0 0 0.35rem;
+    font-size: 2rem;
+}
+
+.app-layout__header p {
+    margin: 0;
+    color: #475569;
+    max-width: 540px;
+}
+
+.app-layout__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.app-layout__locale select {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid #cbd5f5;
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+.app-layout__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.app-home {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.app-home__card {
+    background: #ffffff;
+    padding: 1.75rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 16px 24px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.locale-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.locale-switcher__label {
+    font-weight: 600;
+}
+
+.locale-switcher__select {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid #cbd5f5;
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+.locale-switcher__select:focus {
+    outline: 2px solid #2563eb;
+    border-color: #2563eb;
+}
+
+.app-home__card h3 {
+    margin: 0;
+}
+
+.app-home__card p {
+    margin: 0;
+    color: #475569;
+    flex: 1;
+}
+
+.app-home__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.25rem;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+    width: fit-content;
+}

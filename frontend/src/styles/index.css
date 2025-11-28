@@ -1,0 +1,28 @@
+/* styles/index.css
+   CSS module aggregator - imports all feature modules in cascade order.
+
+   CSS MIGRATION RULES:
+   1. @ob/tokens.css is imported FIRST in main.tsx (not here) for design token variables
+   2. Order matters for CSS specificity - do NOT reorder imports
+   3. core.css must be first (contains resets, @font-face, @keyframes, global vars)
+   4. app-shell.css must come before page-specific modules
+   5. When adding new modules, place them in logical cascade order
+   6. Never split @media queries across files
+   7. Asset paths (url(...)) are relative to each CSS file's location
+*/
+
+/* Core styles and resets (must be first) */
+@import './core.css';
+
+/* App shell and navigation (layout foundation) */
+@import './app-shell.css';
+
+/* Feature modules (order matches original index.css line numbers) */
+@import './developer-preview.css';
+@import './agents-capture.css';
+@import './cad.css';
+@import './feasibility.css';
+@import './finance.css';
+@import './agent-performance.css';
+@import './business-performance.css';
+@import './gps-capture.css';
