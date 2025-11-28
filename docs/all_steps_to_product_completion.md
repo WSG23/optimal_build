@@ -2,7 +2,7 @@
 
 > **Status:** ACTIVE – This document now contains the full strategic roadmap, day-to-day execution backlog, outstanding technical debt, and known testing limitations. If it is not listed here, it is not part of the plan.
 >
-> **Last Updated:** 2025-11-17
+> **Last Updated:** 2025-11-29
 >
 > **Navigation tip:** Strategic phase status lives in the sections below, while the unified backlog/debt tracker is available in [📌 Unified Execution Backlog & Deferred Work](#-unified-execution-backlog--deferred-work).
 
@@ -164,50 +164,53 @@ _No active tasks. Pull from the Ready queue below._
 ### 📋 Ready (Queued - Do After Active)
 
 **Updated Spec Integration (32 New Features from features.md v2):**
+> ✅ **Spec Status:** All 32 features now documented in `docs/planning/features.md` (2025-11-29)
+> 📋 **Implementation Status:** Queued for development — see phase-specific sections below for details
 
 **Agent Enhancements (Phase 1 additions):**
-- [ ] Voice notes on site capture (add to Phase 1A GPS capture)
-- [ ] Accuracy bands display (±8-15% by asset class) on quick analysis
-- [ ] Sales Velocity Model advisory tool (add to Phase 1B)
-- [ ] Expanded listing portals: Zillow, LoopNet, Realtor.com, RealEstate.co.nz, HK portals (Phase 1C)
-- [ ] Expanded CRM integrations: Salesforce, HubSpot, BoomTown, kvCORE (Phase 1C)
-- [ ] Explicit watermark text for Acquisition vs Sales phases (enhance Phase 1A marketing packs)
+- [ ] Voice notes on site capture (add to Phase 1A GPS capture) — *spec: features.md line 32*
+- [ ] Accuracy bands display (±8-15% by asset class) on quick analysis — *spec: features.md line 31*
+- [ ] Sales Velocity Model advisory tool (add to Phase 1B) — *spec: features.md line 58*
+- [ ] Expanded listing portals: Zillow, LoopNet, Realtor.com, RealEstate.co.nz, HK portals (Phase 1C) — *spec: features.md lines 63-67*
+- [ ] Expanded CRM integrations: Salesforce, HubSpot, BoomTown, kvCORE (Phase 1C) — *spec: features.md lines 69-71*
+- [ ] Explicit watermark text for Acquisition vs Sales phases (enhance Phase 1A marketing packs) — *spec: features.md lines 48-51*
 
 **Developer Enhancements (Phase 2 additions):**
-- [ ] Global Engineering Defaults (structural grids, core sizes, MEP allowances by jurisdiction)
-- [ ] GFA→NIA accuracy bands (±5-12% display)
-- [ ] Multi-jurisdiction financing structures (SG LTV/ABSD, NZ LVR, US DSCR, Toronto CMHC, HK IO)
-- [ ] ARGUS-Compatible Export (6 CSV spec: Rent Roll, Leasing, OpEx, CapEx, Financing, 120-month Cashflow)
-- [ ] Engineering Layers visualization (structural grid, MEP trunks, plenum, civil, façade)
-- [ ] Clash & Impact Board (lightweight clash detection, area/cost impact bands)
-- [ ] Sign-Off Workflow documentation (Engineers propose → Architects approve → Developer exports)
-- [ ] Document/Data Room Integrations (Box, Dropbox, Google Drive, SharePoint)
-- [ ] Scenario lineage with export hashes (enhance audit trail)
+- [ ] Global Engineering Defaults (structural grids, core sizes, MEP allowances by jurisdiction) — *spec: features.md lines 109-114*
+- [ ] GFA→NIA accuracy bands (±5-12% display) — *spec: features.md line 102*
+- [ ] Multi-jurisdiction financing structures (SG LTV/ABSD, NZ LVR, US DSCR, Toronto CMHC, HK IO) — *spec: features.md lines 127-132*
+- [ ] ARGUS-Compatible Export (6 CSV spec: Rent Roll, Leasing, OpEx, CapEx, Financing, 120-month Cashflow) — *spec: features.md lines 184-191*
+- [ ] Engineering Layers visualization (structural grid, MEP trunks, plenum, civil, façade) — *spec: features.md lines 116-122*
+- [ ] Clash & Impact Board (lightweight clash detection, area/cost impact bands) — *spec: features.md lines 123-126*
+- [ ] Sign-Off Workflow documentation (Engineers propose → Architects approve → Developer exports) — *spec: features.md line 145*
+- [ ] Document/Data Room Integrations (Box, Dropbox, Google Drive, SharePoint) — *spec: features.md lines 192-194*
+- [ ] Scenario lineage with export hashes (enhance audit trail) — *spec: features.md lines 195-198*
 
 **Architect Enhancements (Phase 3 additions):**
-- [ ] Non-Destructive Overlays (AI suggestions as visual hints only)
-- [ ] Sign-Off Gateway (architect unlocks permit submissions)
-- [ ] Multi-jurisdiction building codes (NZBC, Seattle SDCI, Toronto OBC, HK BD)
-- [ ] Authority Package Build formats (CORENET, ACCELA, HK e-portal)
-- [ ] Audit Attribution (every compliance action tied to architect identity)
+- [ ] Non-Destructive Overlays (AI suggestions as visual hints only) — *spec: features.md line 202*
+- [ ] Sign-Off Gateway (architect unlocks permit submissions) — *spec: features.md line 250*
+- [ ] Multi-jurisdiction building codes (NZBC, Seattle SDCI, Toronto OBC, HK BD) — *spec: features.md lines 208-213*
+- [ ] Authority Package Build formats (CORENET, ACCELA, HK e-portal) — *spec: features.md lines 251-254*
+- [ ] Audit Attribution (every compliance action tied to architect identity) — *spec: features.md line 272*
 
 **Engineer Enhancements (Phase 4 additions):**
-- [ ] Parametric reserves (discipline-specific reserves updating feasibility)
-- [ ] Clash & Coordination panel (clash detection, impact assessment, coordination log)
-- [ ] ROI / Value Panel (m² saved, clashes prevented, redesign costs avoided)
-- [ ] Digital PE endorsement
-- [ ] Multi-jurisdiction engineering codes (NZ seismic, Seattle IBC, Toronto OBC, HK Fire/BD)
+- [ ] Parametric reserves (discipline-specific reserves updating feasibility) — *spec: features.md line 297*
+- [ ] Clash & Coordination panel (clash detection, impact assessment, coordination log) — *spec: features.md lines 323-326*
+- [ ] ROI / Value Panel (m² saved, clashes prevented, redesign costs avoided) — *spec: features.md lines 337-341*
+- [ ] Digital PE endorsement — *spec: features.md line 334*
+- [ ] Multi-jurisdiction engineering codes (NZ seismic, Seattle IBC, Toronto OBC, HK Fire/BD) — *spec: features.md lines 310-315*
 
 **New Cross-Cutting Systems:**
-- [ ] Verification & Transparency Suite - Option 1: Excel/CSV Export
-- [ ] Verification & Transparency Suite - Option 2: "Show My Math" Panel
-- [ ] Verification & Transparency Suite - Option 3: Verifiable Audit Trail with export hashes
-- [ ] Global Accuracy System (accuracy bands by asset type + dynamic improvement by phase)
-- [ ] Confidence labels on all main outputs
+- [ ] Verification & Transparency Suite - Option 1: Excel/CSV Export — *spec: features.md lines 370-373*
+- [ ] Verification & Transparency Suite - Option 2: "Show My Math" Panel — *spec: features.md lines 375-379*
+- [ ] Verification & Transparency Suite - Option 3: Verifiable Audit Trail with export hashes — *spec: features.md lines 381-386*
+- [ ] Global Accuracy System (accuracy bands by asset type + dynamic improvement by phase) — *spec: features.md lines 390-412*
+- [ ] Confidence labels on all main outputs — *spec: features.md lines 410-412*
 
 ---
 
 ### ✅ Completed (Last 30 Days)
+- **2025-11-29:** Updated Spec Integration (32 features) documented (Claude) — Integrated all 32 new/enhanced features from the updated global product spec into both `docs/planning/features.md` and `docs/all_steps_to_product_completion.md`. Features organized by role (Agents: 8, Developers: 12, Architects: 5, Engineers: 5, Cross-Cutting: 2). Added phase-specific "Queued Enhancements" sections and new "Cross-Cutting Systems" section for Verification & Transparency Suite and Global Accuracy System. All features now have line-number references to the canonical spec.
 
 - **2025-11-18:** Pre-Phase 2D infrastructure audit closed (Codex Local) — `make lint` and `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build JOB_QUEUE_BACKEND=inline SECRET_KEY=test ../.venv/bin/pytest --cov=app --cov-report=term-missing` now pass (83 % backend coverage). Updated [`docs/audits/PRE-PHASE-2D-AUDIT.MD`](audits/PRE-PHASE-2D-AUDIT.MD) with the new commands, plugin notes, and the remaining benchmarking caveat (Postgres currently unreachable from the sandbox).
 - **2025-11-18:** Phase 1D manual QA revalidated (Codex Local) — Reviewed commit history (no `frontend/src/app/pages/business-performance/*` changes since PR #275) and attached backend regression run results. [`docs/development/testing/phase-1d-manual-qa-checklist.md`](development/testing/phase-1d-manual-qa-checklist.md) now records the 2025-11-18 audit and preserves the original walkthrough for when seeded data returns.
