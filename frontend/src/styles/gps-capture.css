@@ -210,6 +210,13 @@
     color: #1f2937;
 }
 
+.gps-panel__accuracy-band {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 400;
+    cursor: help;
+}
+
 .gps-pack-options {
     display: grid;
     gap: 0.5rem;

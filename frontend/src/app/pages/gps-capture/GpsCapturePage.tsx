@@ -13,6 +13,7 @@ import {
   fetchPropertyMarketIntelligence,
   generateProfessionalPack,
   logPropertyByGpsWithFeatures,
+  type AccuracyBand,
   type DevelopmentScenario,
   type GpsCaptureSummaryWithFeatures,
   type DeveloperFeatureData,
@@ -481,39 +482,57 @@ export function GpsCapturePage() {
           </p>
           {quickAnalysis ? (
             <ul className="gps-panel__list">
-              {quickAnalysis.scenarios.map((scenario) => (
-                <li key={scenario.scenario}>
-                  <div className="gps-panel__headline">
-                    <strong>{formatScenarioLabel(scenario.scenario)}</strong>
-                    <span>{scenario.headline}</span>
-                  </div>
-                  {Object.keys(scenario.metrics).length > 0 && (
-                    <dl className="gps-panel__metrics">
-                      {Object.entries(scenario.metrics).map(
-                        ([metricKey, metricValue]) => (
-                          <div key={metricKey}>
-                            <dt>{humanizeMetricKey(metricKey)}</dt>
-                            <dd>
-                              {formatMetricValue(
-                                metricValue,
-                                metricKey,
-                                captureSummary?.currencySymbol,
-                              )}
-                            </dd>
-                          </div>
-                        ),
-                      )}
-                    </dl>
-                  )}
-                  {scenario.notes.length > 0 && (
-                    <ul className="gps-panel__notes">
-                      {scenario.notes.map((note, index) => (
-                        <li key={index}>{note}</li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
+              {quickAnalysis.scenarios.map((scenario) => {
+                // Extract accuracy_bands from metrics (if present)
+                const accuracyBands = scenario.metrics.accuracy_bands
+                // Filter out accuracy_bands key from display
+                const displayMetrics = Object.entries(scenario.metrics).filter(
+                  ([key]) => key !== 'accuracy_bands',
+                )
+                return (
+                  <li key={scenario.scenario}>
+                    <div className="gps-panel__headline">
+                      <strong>{formatScenarioLabel(scenario.scenario)}</strong>
+                      <span>{scenario.headline}</span>
+                    </div>
+                    {displayMetrics.length > 0 && (
+                      <dl className="gps-panel__metrics">
+                        {displayMetrics.map(([metricKey, metricValue]) => {
+                          const band = accuracyBands?.[metricKey]
+                          return (
+                            <div key={metricKey}>
+                              <dt>{humanizeMetricKey(metricKey)}</dt>
+                              <dd>
+                                {formatMetricValue(
+                                  metricValue,
+                                  metricKey,
+                                  captureSummary?.currencySymbol,
+                                )}
+                                {band && (
+                                  <span
+                                    className="gps-panel__accuracy-band"
+                                    title={`Accuracy band: ${band.source || 'estimated'}`}
+                                  >
+                                    {' '}
+                                    ({formatAccuracyBand(band)})
+                                  </span>
+                                )}
+                              </dd>
+                            </div>
+                          )
+                        })}
+                      </dl>
+                    )}
+                    {scenario.notes.length > 0 && (
+                      <ul className="gps-panel__notes">
+                        {scenario.notes.map((note, index) => (
+                          <li key={index}>{note}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           ) : (
             <p>
@@ -771,6 +790,22 @@ function formatPackLabel(value: ProfessionalPackType) {
 
 function humanizeMetricKey(key: string) {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+/**
+ * Format accuracy band as display string (e.g., "±8-10%")
+ */
+function formatAccuracyBand(band: AccuracyBand): string {
+  const lowAbs = Math.abs(band.low_pct)
+  const highAbs = Math.abs(band.high_pct)
+  // If low and high are same magnitude, show as single value
+  if (lowAbs === highAbs) {
+    return `±${lowAbs}%`
+  }
+  // Show range with min first
+  const minVal = Math.min(lowAbs, highAbs)
+  const maxVal = Math.max(lowAbs, highAbs)
+  return `±${minVal}-${maxVal}%`
 }
 
 function formatMetricValue(

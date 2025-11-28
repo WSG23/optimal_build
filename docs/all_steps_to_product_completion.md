@@ -42,11 +42,11 @@
 
 > **Note (2025-11-29):** The Updated Spec v2 added 32 new features. Phases below show v1 (original scope) as complete, but v2 enhancements are documented and queued for implementation.
 
-**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ⚠️ v1 COMPLETE, v2 PENDING (3 items)
+**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ⚠️ v1 COMPLETE, v2 PENDING (2 items)
 - **Backend:** 100% (v1) | **UI:** 100% (v1)
 - GPS Capture, Quick Analysis, Marketing Pack Generator all shipped
-- **v2 Done:** ✅ Multi-jurisdiction zoning sources
-- **v2 Pending:** Voice notes, accuracy bands (±8-15%), watermarks
+- **v2 Done:** ✅ Multi-jurisdiction zoning sources, ✅ Accuracy bands display (±8-15%)
+- **v2 Pending:** Voice notes, watermarks
 - [Jump to details ↓](#phase-1a-gps-capture--quick-analysis)
 
 **[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ⚠️ v1 COMPLETE, v2 PENDING (1 item)
@@ -167,7 +167,7 @@ _No active tasks. Pull from the Ready queue below._
 
 **Agent Enhancements (Phase 1 additions):**
 - [ ] Voice notes on site capture (add to Phase 1A GPS capture) — *spec: features.md line 32*
-- [ ] Accuracy bands display (±8-15% by asset class) on quick analysis — *spec: features.md line 31*
+- ✅ Accuracy bands display (±8-15% by asset class) on quick analysis — *spec: features.md line 31* — **IMPLEMENTED 2025-11-29**
 - [ ] Sales Velocity Model advisory tool (add to Phase 1B) — *spec: features.md line 58*
 - [ ] Expanded listing portals: Zillow, LoopNet, Realtor.com, RealEstate.co.nz, HK portals (Phase 1C) — *spec: features.md lines 63-67*
 - [ ] Expanded CRM integrations: Salesforce, HubSpot, BoomTown, kvCORE (Phase 1C) — *spec: features.md lines 69-71*
@@ -338,8 +338,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 **Goal:** Complete all 6 Agent tools so agents can work entire development lifecycle
 
-### Phase 1A: GPS Capture & Quick Analysis ⚠️ v1 COMPLETE, v2 PENDING
-**Status:** Original scope 100% complete. New features from Updated Spec v2 are documented but NOT implemented.
+### Phase 1A: GPS Capture & Quick Analysis ⚠️ v1 COMPLETE, v2 PENDING (2 items)
+**Status:** Original scope 100% complete. 2 of 4 v2 features implemented (Multi-jurisdiction zoning, Accuracy bands display).
 
 **Backend Deliverables:**
 - ✅ Mobile GPS Logger with Singapore coordinate capture
@@ -353,7 +353,7 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 **Queued Enhancements (from Updated Spec v2):**
 - [ ] Voice notes on site capture (audio recording with GPS tagging)
-- [ ] Accuracy bands display (±8-15% by asset class) on quick analysis outputs
+- ✅ Accuracy bands display (±8-15% by asset class) on quick analysis outputs — **IMPLEMENTED 2025-11-29**
 - [ ] Explicit watermark text for Acquisition vs Sales vs Pre-Development phases
 - ✅ Multi-jurisdiction zoning sources (Auckland/NZ, Seattle SDCI, Toronto bylaws, HK OZP) — IMPLEMENTED via Expansion Window 1
 

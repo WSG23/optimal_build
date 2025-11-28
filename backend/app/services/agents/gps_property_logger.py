@@ -14,7 +14,7 @@ from geoalchemy2.functions import ST_GeomFromText
 try:  # pragma: no cover - geoalchemy may be optional in some environments
     from geoalchemy2.elements import WKTElement
 except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missing
-    WKTElement = None  # type: ignore[assignment]
+    WKTElement = None
 from backend._compat.datetime import utcnow
 
 from app.models.property import Property, PropertyStatus, PropertyType
@@ -53,6 +53,106 @@ class DevelopmentScenario(str, Enum):
         ]
 
 
+# Accuracy bands for Quick Analysis metrics by asset class.
+# Values represent percentage range (±%) based on data completeness and market volatility.
+# Source: Phase 1A spec "Accuracy Bands display (±8-15% by asset class)"
+# Dict structure: { metric_category: { low_pct: float, high_pct: float, source: str } }
+QUICK_ANALYSIS_ACCURACY_BANDS: Dict[str, Dict[str, Any]] = {
+    # Metric-level bands (apply across all scenarios)
+    "gfa": {"low_pct": -10, "high_pct": 8, "source": "plot_ratio_variance"},
+    "site_area": {"low_pct": -5, "high_pct": 5, "source": "survey_tolerance"},
+    "plot_ratio": {"low_pct": -3, "high_pct": 3, "source": "zoning_interpretation"},
+    "price_psf": {"low_pct": -12, "high_pct": 10, "source": "transaction_variance"},
+    "rent_psm": {"low_pct": -15, "high_pct": 12, "source": "market_volatility"},
+    "valuation": {"low_pct": -12, "high_pct": 12, "source": "appraisal_variance"},
+    "noi": {"low_pct": -15, "high_pct": 10, "source": "income_projection"},
+    "heritage_risk": {"low_pct": -8, "high_pct": 15, "source": "regulatory_assessment"},
+    "uplift": {"low_pct": -15, "high_pct": 10, "source": "gfa_variance_compound"},
+}
+
+# Asset class-specific adjustments (multiplier on base bands)
+ASSET_CLASS_ACCURACY_MODIFIERS: Dict[str, float] = {
+    "office": 1.0,  # baseline
+    "retail": 1.15,  # +15% wider bands due to higher volatility
+    "industrial": 0.9,  # -10% narrower bands, more standardised
+    "residential": 1.1,  # +10% wider bands
+    "mixed_use": 1.2,  # +20% wider bands due to complexity
+    "heritage": 1.25,  # +25% wider bands due to regulatory uncertainty
+}
+
+
+def _get_accuracy_band(
+    metric_key: str, asset_class: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """Get accuracy band for a metric, optionally adjusted by asset class.
+
+    Args:
+        metric_key: The metric name (e.g., 'potential_gfa_sqm')
+        asset_class: Optional asset class for band adjustment
+
+    Returns:
+        Dict with low_pct, high_pct, source, or None if no band defined
+    """
+    # Map metric keys to band categories
+    key_mapping = {
+        "potential_gfa_sqm": "gfa",
+        "gfa_sqm": "gfa",
+        "approved_gfa": "gfa",
+        "uplift_gfa_sqm": "uplift",
+        "site_area_sqm": "site_area",
+        "plot_ratio": "plot_ratio",
+        "average_psf": "price_psf",
+        "average_price_psf": "price_psf",
+        "est_noi": "noi",
+        "estimated_noi": "noi",
+        "est_valuation": "valuation",
+        "estimated_value": "valuation",
+        "heritage_risk_score": "heritage_risk",
+        "rent_psm": "rent_psm",
+        "average_rent": "rent_psm",
+    }
+
+    band_key = key_mapping.get(metric_key)
+    if not band_key or band_key not in QUICK_ANALYSIS_ACCURACY_BANDS:
+        return None
+
+    base_band = QUICK_ANALYSIS_ACCURACY_BANDS[band_key].copy()
+
+    # Apply asset class modifier if provided
+    if asset_class:
+        modifier = ASSET_CLASS_ACCURACY_MODIFIERS.get(asset_class.lower(), 1.0)
+        base_band["low_pct"] = round(base_band["low_pct"] * modifier, 1)
+        base_band["high_pct"] = round(base_band["high_pct"] * modifier, 1)
+        base_band["asset_class"] = asset_class
+
+    return base_band
+
+
+def _add_accuracy_bands_to_metrics(
+    metrics: Dict[str, Any], asset_class: Optional[str] = None
+) -> Dict[str, Any]:
+    """Add accuracy bands to metrics that have defined band configurations.
+
+    Args:
+        metrics: Dictionary of metric values
+        asset_class: Optional asset class for band adjustment
+
+    Returns:
+        New dictionary with accuracy_bands key containing band info per metric
+    """
+    accuracy_bands: Dict[str, Dict[str, Any]] = {}
+
+    for metric_key, metric_value in metrics.items():
+        if metric_value is not None and isinstance(metric_value, (int, float)):
+            band = _get_accuracy_band(metric_key, asset_class)
+            if band:
+                accuracy_bands[metric_key] = band
+
+    if accuracy_bands:
+        return {**metrics, "accuracy_bands": accuracy_bands}
+    return metrics
+
+
 class PropertyLogResult:
     """Result of GPS property logging."""
 
@@ -66,7 +166,7 @@ class PropertyLogResult:
         property_info: Optional[Dict[str, Any]] = None,
         nearby_amenities: Optional[Dict[str, Any]] = None,
         quick_analysis: Optional[Dict[str, Any]] = None,
-        timestamp: datetime = None,
+        timestamp: Optional[datetime] = None,
         heritage_overlay: Optional[Dict[str, Any]] = None,
         jurisdiction_code: str = "SG",
     ):
@@ -604,16 +704,17 @@ class GPSPropertyLogger:
         else:
             headline = "Plot ratio or site area missing — manual GFA check needed"
 
+        metrics = {
+            "site_area_sqm": site_area,
+            "plot_ratio": plot_ratio,
+            "potential_gfa_sqm": potential_gfa,
+            "nearby_development_count": development_count,
+            "nearest_completion": nearest_completion,
+        }
         return {
             "scenario": DevelopmentScenario.RAW_LAND.value,
             "headline": headline,
-            "metrics": {
-                "site_area_sqm": site_area,
-                "plot_ratio": plot_ratio,
-                "potential_gfa_sqm": potential_gfa,
-                "nearby_development_count": development_count,
-                "nearest_completion": nearest_completion,
-            },
+            "metrics": _add_accuracy_bands_to_metrics(metrics),
             "notes": list(
                 filter(
                     None,
@@ -670,16 +771,17 @@ class GPSPropertyLogger:
         else:
             headline = "No approved GFA data — assess existing building efficiency"
 
+        metrics = {
+            "approved_gfa_sqm": approved_gfa,
+            "scenario_gfa_sqm": potential_gfa,
+            "gfa_uplift_sqm": uplift,
+            "recent_transaction_count": transaction_count,
+            "average_psf_price": average_psf,
+        }
         return {
             "scenario": DevelopmentScenario.EXISTING_BUILDING.value,
             "headline": headline,
-            "metrics": {
-                "approved_gfa_sqm": approved_gfa,
-                "scenario_gfa_sqm": potential_gfa,
-                "gfa_uplift_sqm": uplift,
-                "recent_transaction_count": transaction_count,
-                "average_psf_price": average_psf,
-            },
+            "metrics": _add_accuracy_bands_to_metrics(metrics),
             "notes": [
                 "Consider retrofit or adaptive reuse options to unlock unused GFA",
             ],
@@ -730,13 +832,14 @@ class GPSPropertyLogger:
                 f"{len(development_plans)} planned projects nearby may influence heritage dialogue"
             )
 
+        metrics = {
+            "completion_year": completion_year,
+            "heritage_risk": heritage_risk,
+        }
         return {
             "scenario": DevelopmentScenario.HERITAGE_PROPERTY.value,
             "headline": f"Heritage risk assessment: {heritage_risk.upper()}",
-            "metrics": {
-                "completion_year": completion_year,
-                "heritage_risk": heritage_risk,
-            },
+            "metrics": _add_accuracy_bands_to_metrics(metrics, asset_class="heritage"),
             "notes": [note for note in notes if note],
         }
 
@@ -778,17 +881,18 @@ class GPSPropertyLogger:
                 "No nearby rental comps in dataset — check brokerage feeds for fresh pricing"
             )
 
+        metrics = {
+            "nearby_mrt_count": amenity_summary,
+            "current_use": existing_use,
+            "building_height_m": building_height,
+            "average_monthly_rent": average_rent,
+            "rental_comparable_count": rental_count,
+            "property_type": property_type.value,
+        }
         return {
             "scenario": DevelopmentScenario.UNDERUSED_ASSET.value,
             "headline": "Review asset utilisation versus surrounding demand",
-            "metrics": {
-                "nearby_mrt_count": amenity_summary,
-                "current_use": existing_use,
-                "building_height_m": building_height,
-                "average_monthly_rent": average_rent,
-                "rental_comparable_count": rental_count,
-                "property_type": property_type.value,
-            },
+            "metrics": _add_accuracy_bands_to_metrics(metrics),
             "notes": notes,
         }
 
@@ -859,8 +963,9 @@ class GPSPropertyLogger:
             [
                 t
                 for t in transactions
-                if t.get("transaction_date")
-                and t.get("transaction_date") >= "2020-01-01"
+                if (txn_date := t.get("transaction_date"))
+                and isinstance(txn_date, str)
+                and txn_date >= "2020-01-01"
             ]
         )
 
@@ -869,17 +974,18 @@ class GPSPropertyLogger:
                 f"{recent_transactions} recent transactions signal active market"
             )
 
+        metrics = {
+            "site_area_sqm": site_area,
+            "plot_ratio": plot_ratio,
+            "potential_gfa_sqm": potential_gfa,
+            "permitted_use_groups": len(use_groups),
+            "nearby_amenities_count": amenity_count,
+            "recent_transactions": recent_transactions,
+            "existing_use": existing_use,
+        }
         return {
             "scenario": DevelopmentScenario.MIXED_USE_REDEVELOPMENT.value,
             "headline": headline,
-            "metrics": {
-                "site_area_sqm": site_area,
-                "plot_ratio": plot_ratio,
-                "potential_gfa_sqm": potential_gfa,
-                "permitted_use_groups": len(use_groups),
-                "nearby_amenities_count": amenity_count,
-                "recent_transactions": recent_transactions,
-                "existing_use": existing_use,
-            },
+            "metrics": _add_accuracy_bands_to_metrics(metrics, asset_class="mixed_use"),
             "notes": notes,
         }

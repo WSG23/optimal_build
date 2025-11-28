@@ -80,10 +80,24 @@ export interface NearbyAmenitySummary {
 
 export type MetricValue = number | string | null
 
+/** Accuracy band for a metric value (±% range based on data quality and asset class) */
+export interface AccuracyBand {
+  low_pct: number // negative percentage (e.g., -10 for -10%)
+  high_pct: number // positive percentage (e.g., 8 for +8%)
+  source?: string // source of the band calculation
+  asset_class?: string // asset class adjustment applied
+}
+
+/** Metrics with optional accuracy_bands key containing bands per metric */
+export interface QuickAnalysisMetrics {
+  [key: string]: MetricValue
+  accuracy_bands?: Record<string, AccuracyBand>
+}
+
 export interface QuickAnalysisScenarioSummary {
   scenario: DevelopmentScenario
   headline: string
-  metrics: Record<string, MetricValue>
+  metrics: QuickAnalysisMetrics
   notes: string[]
 }
 
