@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi import HTTPException
 
-from app.api.v1 import finance as finance_api
+from app.api.v1 import finance_common, finance_export
 from app.schemas.finance import FinanceJobStatusSchema, SensitivityBandInput
 
 
@@ -25,26 +25,26 @@ class _StubSchedule:
 
 def test_normalise_project_id_and_project_uuid_helpers():
     project_uuid = uuid4()
-    assert finance_api._normalise_project_id(str(project_uuid)) == project_uuid
+    assert finance_common.normalise_project_id(str(project_uuid)) == project_uuid
 
-    uuid_from_int = finance_api._normalise_project_id(123456)
+    uuid_from_int = finance_common.normalise_project_id(123456)
     assert isinstance(uuid_from_int, UUID)
 
     with pytest.raises(HTTPException) as excinfo:
-        finance_api._normalise_project_id(-1)
+        finance_common.normalise_project_id(-1)
     assert excinfo.value.status_code == 422
 
     scenario = SimpleNamespace(project_id=str(project_uuid))
-    assert finance_api._project_uuid_from_scenario(scenario) == project_uuid
+    assert finance_common.project_uuid_from_scenario(scenario) == project_uuid
 
     with pytest.raises(HTTPException) as exc_scenario:
-        finance_api._project_uuid_from_scenario(SimpleNamespace(project_id=object()))
+        finance_common.project_uuid_from_scenario(SimpleNamespace(project_id=object()))
     assert exc_scenario.value.status_code == 500
 
 
 def test_build_construction_interest_schedule_and_facilities():
     schedule = _StubSchedule([_StubEntry(1, "1000000"), _StubEntry(2, "1500000")])
-    schema, payload = finance_api._build_construction_interest_schedule(
+    schema, payload = finance_export.build_construction_interest_schedule(
         schedule,
         currency="SGD",
         base_interest_rate=Decimal("0.06"),
@@ -79,7 +79,7 @@ def test_evaluate_sensitivity_bands_returns_metadata():
             notes=["base"],
         )
     ]
-    results, metadata = finance_api._evaluate_sensitivity_bands(
+    results, metadata = finance_export.evaluate_sensitivity_bands(
         bands,
         base_npv=Decimal("1000000"),
         base_irr=Decimal("0.12"),
@@ -94,7 +94,7 @@ def test_evaluate_sensitivity_bands_returns_metadata():
 
 def test_scenario_job_statuses_and_status_payload():
     scenario = SimpleNamespace(id=7, assumptions=None)
-    default_status = finance_api._scenario_job_statuses(scenario)
+    default_status = finance_common.scenario_job_statuses(scenario)
     assert default_status[0].status == "completed"
 
     scenario_with_jobs = SimpleNamespace(
@@ -113,7 +113,7 @@ def test_scenario_job_statuses_and_status_payload():
         },
         updated_at=datetime(2024, 1, 2, tzinfo=timezone.utc),
     )
-    payload = finance_api._status_payload(scenario_with_jobs)
+    payload = finance_common.status_payload(scenario_with_jobs)
     assert payload["pending_jobs"] is True
     assert payload["jobs"][0]["task_id"] == "abc123"
 
@@ -130,7 +130,7 @@ def test_record_async_job_appends_entries():
         backend="inline",
         queued_at=datetime(2024, 2, 1, tzinfo=timezone.utc),
     )
-    finance_api._record_async_job(scenario, job_status)
+    finance_common.record_async_job(scenario, job_status)
     jobs = scenario.assumptions["async_jobs"]["sensitivity"]
     assert jobs[-1]["task_id"] == "new-job"
     assert jobs[-1]["queued_at"].startswith("2024-02-01")

@@ -78,7 +78,11 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     # Finance flows rely on both feasibility and export endpoints being present in
     # the main application so that the interactive documentation exposes them.
     "feasibility",
-    "finance",
+    # finance.py split into 4 domain modules (Phase 1 refactoring)
+    "finance_scenarios",  # GET/PATCH/DELETE /scenarios
+    "finance_jobs",  # GET /jobs, GET /scenarios/{id}/status
+    "finance_export",  # PATCH construction-loan, POST sensitivity, GET /export
+    "finance_feasibility",  # POST /feasibility
     "entitlements",
     "test_users",  # Simple user API for learning
     "users_secure",  # Secure user API with validation
