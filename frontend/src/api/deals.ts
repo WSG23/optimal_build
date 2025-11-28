@@ -1,25 +1,6 @@
-function normaliseBaseUrl(value: string | undefined | null): string {
-  if (typeof value !== 'string') {
-    return '/'
-  }
-  const trimmed = value.trim()
-  return trimmed === '' ? '/' : trimmed
-}
+import { buildSimpleUrl, toNumberOrNull } from './utils'
 
-const metaEnv =
-  typeof import.meta !== 'undefined' && import.meta
-    ? (import.meta as ImportMeta).env
-    : undefined
-const rawApiBaseUrl = metaEnv?.VITE_API_BASE_URL ?? null
-const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
-
-function buildUrl(path: string, base: string = apiBaseUrl) {
-  const normalised = base.endsWith('/') ? base.slice(0, -1) : base
-  if (path.startsWith('/')) {
-    return `${normalised}${path}`
-  }
-  return `${normalised}/${path}`
-}
+const buildUrl = buildSimpleUrl
 
 export type DealStage =
   | 'lead_captured'
@@ -107,17 +88,6 @@ export interface DealCommission {
   paidAt: string | null
   disputedAt: string | null
   resolvedAt: string | null
-}
-
-function toNumberOrNull(value: unknown): number | null {
-  if (typeof value === 'number') {
-    return Number.isNaN(value) ? null : value
-  }
-  if (value === null || value === undefined) {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? null : parsed
 }
 
 function mapDeal(payload: Record<string, unknown>): DealSummary {
