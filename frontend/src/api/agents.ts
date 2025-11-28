@@ -90,7 +90,7 @@ export interface AccuracyBand {
 
 /** Metrics with optional accuracy_bands key containing bands per metric */
 export interface QuickAnalysisMetrics {
-  [key: string]: MetricValue
+  [key: string]: MetricValue | Record<string, AccuracyBand> | undefined
   accuracy_bands?: Record<string, AccuracyBand>
 }
 
@@ -315,28 +315,31 @@ function mapNearbyAmenities(
 
 function mapMetrics(
   metrics: Record<string, unknown> | null | undefined,
-): Record<string, MetricValue> {
+): QuickAnalysisMetrics {
   if (!metrics) {
     return {}
   }
 
-  return Object.fromEntries(
-    Object.entries(metrics).map(([key, value]) => {
-      if (value == null) {
-        return [key, null]
-      }
-      if (typeof value === 'number') {
-        return [key, value]
-      }
-      if (typeof value === 'string') {
-        return [key, value]
-      }
-      if (typeof value === 'boolean') {
-        return [key, value ? 'true' : 'false']
-      }
-      return [key, String(value)]
-    }),
-  )
+  const result: QuickAnalysisMetrics = {}
+
+  for (const [key, value] of Object.entries(metrics)) {
+    if (key === 'accuracy_bands' && value && typeof value === 'object') {
+      // Preserve accuracy_bands object as-is
+      result.accuracy_bands = value as Record<string, AccuracyBand>
+    } else if (value == null) {
+      result[key] = null
+    } else if (typeof value === 'number') {
+      result[key] = value
+    } else if (typeof value === 'string') {
+      result[key] = value
+    } else if (typeof value === 'boolean') {
+      result[key] = value ? 'true' : 'false'
+    } else {
+      result[key] = String(value)
+    }
+  }
+
+  return result
 }
 
 function mapScenario(

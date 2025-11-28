@@ -95,21 +95,34 @@ def _get_accuracy_band(
     """
     # Map metric keys to band categories
     key_mapping = {
+        # GFA-related metrics
         "potential_gfa_sqm": "gfa",
         "gfa_sqm": "gfa",
         "approved_gfa": "gfa",
+        "approved_gfa_sqm": "gfa",
+        "scenario_gfa_sqm": "gfa",
+        # Uplift metrics
         "uplift_gfa_sqm": "uplift",
+        "gfa_uplift_sqm": "uplift",
+        # Site/area metrics
         "site_area_sqm": "site_area",
         "plot_ratio": "plot_ratio",
+        # Price/transaction metrics
         "average_psf": "price_psf",
         "average_price_psf": "price_psf",
+        "average_psf_price": "price_psf",
+        # NOI and valuation
         "est_noi": "noi",
         "estimated_noi": "noi",
         "est_valuation": "valuation",
         "estimated_value": "valuation",
+        # Heritage metrics
         "heritage_risk_score": "heritage_risk",
+        "heritage_risk": "heritage_risk",
+        # Rental metrics
         "rent_psm": "rent_psm",
         "average_rent": "rent_psm",
+        "average_monthly_rent": "rent_psm",
     }
 
     band_key = key_mapping.get(metric_key)
