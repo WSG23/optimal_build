@@ -121,6 +121,8 @@ export interface GpsCaptureSummary {
   nearbyAmenities: NearbyAmenitySummary | null
   quickAnalysis: QuickAnalysisSummary
   timestamp: string
+  jurisdictionCode: string
+  currencySymbol: string
 }
 
 export interface LogPropertyByGpsRequest {
@@ -160,6 +162,8 @@ interface RawGpsResponse {
   nearby_amenities: Record<string, unknown> | null
   quick_analysis?: RawQuickAnalysis | null
   timestamp: string
+  jurisdiction_code: string
+  currency_symbol: string
 }
 
 function coerceNumber(value: unknown): number | null {
@@ -359,6 +363,87 @@ function mapQuickAnalysis(payload: RawQuickAnalysis): QuickAnalysisSummary {
 }
 
 export const OFFLINE_PROPERTY_ID = 'offline-property'
+
+// Developer feature types for hybrid API function
+export interface DeveloperVisualizationSummary {
+  status: string
+  previewAvailable: boolean
+  notes: string[]
+  conceptMeshUrl: string | null
+  previewMetadataUrl: string | null
+  thumbnailUrl: string | null
+  cameraOrbitHint: Record<string, number> | null
+  previewSeed: number | null
+  previewJobId: string | null
+  massingLayers: DeveloperMassingLayer[]
+  colorLegend: DeveloperColorLegendEntry[]
+}
+
+export interface DeveloperMassingLayer {
+  assetType: string
+  allocationPct: number
+  gfaSqm: number | null
+  niaSqm: number | null
+  estimatedHeightM: number | null
+  color: string
+}
+
+export interface DeveloperColorLegendEntry {
+  assetType: string
+  label: string
+  color: string
+  description: string | null
+}
+
+export interface DeveloperAssetOptimization {
+  assetType: string
+  allocationPct: number
+  allocatedGfaSqm: number | null
+  niaEfficiency: number | null
+  targetFloorHeightM: number | null
+  parkingRatioPer1000Sqm: number | null
+  rentPsmMonth: number | null
+  stabilisedVacancyPct: number | null
+  opexPctOfRent: number | null
+  estimatedRevenueSgd: number | null
+  estimatedCapexSgd: number | null
+  fitoutCostPsm: number | null
+  absorptionMonths: number | null
+  riskLevel: string | null
+  heritagePremiumPct: number | null
+  notes: string[]
+}
+
+export interface DeveloperFinancialSummary {
+  totalEstimatedRevenueSgd: number | null
+  totalEstimatedCapexSgd: number | null
+  dominantRiskProfile: string | null
+  notes: string[]
+}
+
+export interface DeveloperHeritageContext {
+  flag: boolean
+  risk: string | null
+  notes: string[]
+  constraints: string[]
+  assumption: string | null
+  overlay: {
+    name: string | null
+    source: string | null
+    heritagePremiumPct: number | null
+  } | null
+}
+
+export interface DeveloperFeatureData {
+  visualization: DeveloperVisualizationSummary | null
+  optimizations: DeveloperAssetOptimization[]
+  financialSummary: DeveloperFinancialSummary | null
+  heritageContext: DeveloperHeritageContext | null
+}
+
+export interface GpsCaptureSummaryWithFeatures extends GpsCaptureSummary {
+  developerFeatures: DeveloperFeatureData | null
+}
 const OFFLINE_MARKET_WARNING =
   'Using offline market intelligence preview. Backend data unavailable.'
 const OFFLINE_PACK_WARNING =
@@ -450,6 +535,8 @@ const GPS_FALLBACK_SUMMARY: GpsCaptureSummary = {
     ],
   },
   timestamp: '2025-01-15T08:05:00Z',
+  jurisdictionCode: 'SG',
+  currencySymbol: 'S$',
 }
 
 function cloneGpsSummary(summary: GpsCaptureSummary): GpsCaptureSummary {
@@ -495,6 +582,8 @@ function cloneGpsSummary(summary: GpsCaptureSummary): GpsCaptureSummary {
       })),
     },
     timestamp: summary.timestamp,
+    jurisdictionCode: summary.jurisdictionCode,
+    currencySymbol: summary.currencySymbol,
   }
 }
 
@@ -586,6 +675,8 @@ export async function logPropertyByGps(
       nearbyAmenities: mapNearbyAmenities(payload.nearby_amenities),
       quickAnalysis: mapQuickAnalysis(quickAnalysisPayload),
       timestamp: payload.timestamp,
+      jurisdictionCode: payload.jurisdiction_code,
+      currencySymbol: payload.currency_symbol,
     }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
@@ -610,12 +701,285 @@ export const DEFAULT_SCENARIO_ORDER: readonly DevelopmentScenario[] = [
   'mixed_use_redevelopment',
 ]
 
+// ========== Hybrid API for optional developer features ==========
+
+const DEVELOPER_GPS_ENDPOINT = '/api/v1/developers/properties/log-gps'
+
+export interface FeatureEnabledRequest extends LogPropertyByGpsRequest {
+  enabledFeatures: {
+    preview3D: boolean
+    assetOptimization: boolean
+    financialSummary: boolean
+    heritageContext: boolean
+  }
+}
+
+interface RawDeveloperResponse extends RawGpsResponse {
+  visualization?: Record<string, unknown>
+  optimizations?: Record<string, unknown>[]
+  financial_summary?: Record<string, unknown>
+  heritage_context?: Record<string, unknown>
+}
+
+function mapVisualization(
+  raw: Record<string, unknown> | undefined,
+): DeveloperVisualizationSummary | null {
+  if (!raw) return null
+
+  const massingLayers = Array.isArray(raw.massing_layers)
+    ? (raw.massing_layers as Record<string, unknown>[]).map((layer) => ({
+        assetType: String(layer.asset_type ?? ''),
+        allocationPct: Number(layer.allocation_pct ?? 0),
+        gfaSqm: layer.gfa_sqm != null ? Number(layer.gfa_sqm) : null,
+        niaSqm: layer.nia_sqm != null ? Number(layer.nia_sqm) : null,
+        estimatedHeightM:
+          layer.estimated_height_m != null
+            ? Number(layer.estimated_height_m)
+            : null,
+        color: String(layer.color ?? '#888888'),
+      }))
+    : []
+
+  const colorLegend = Array.isArray(raw.color_legend)
+    ? (raw.color_legend as Record<string, unknown>[]).map((entry) => ({
+        assetType: String(entry.asset_type ?? ''),
+        label: String(entry.label ?? ''),
+        color: String(entry.color ?? '#888888'),
+        description:
+          entry.description != null ? String(entry.description) : null,
+      }))
+    : []
+
+  return {
+    status: String(raw.status ?? 'unknown'),
+    previewAvailable: Boolean(raw.preview_available),
+    notes: Array.isArray(raw.notes) ? (raw.notes as string[]) : [],
+    conceptMeshUrl:
+      raw.concept_mesh_url != null ? String(raw.concept_mesh_url) : null,
+    previewMetadataUrl:
+      raw.preview_metadata_url != null
+        ? String(raw.preview_metadata_url)
+        : null,
+    thumbnailUrl: raw.thumbnail_url != null ? String(raw.thumbnail_url) : null,
+    cameraOrbitHint: raw.camera_orbit_hint as Record<string, number> | null,
+    previewSeed: raw.preview_seed != null ? Number(raw.preview_seed) : null,
+    previewJobId:
+      raw.preview_job_id != null ? String(raw.preview_job_id) : null,
+    massingLayers,
+    colorLegend,
+  }
+}
+
+function mapOptimizations(
+  raw: Record<string, unknown>[] | undefined,
+): DeveloperAssetOptimization[] {
+  if (!Array.isArray(raw)) return []
+
+  return raw.map((opt) => ({
+    assetType: String(opt.asset_type ?? ''),
+    allocationPct: Number(opt.allocation_pct ?? 0),
+    allocatedGfaSqm:
+      opt.allocated_gfa_sqm != null ? Number(opt.allocated_gfa_sqm) : null,
+    niaEfficiency:
+      opt.nia_efficiency != null ? Number(opt.nia_efficiency) : null,
+    targetFloorHeightM:
+      opt.target_floor_height_m != null
+        ? Number(opt.target_floor_height_m)
+        : null,
+    parkingRatioPer1000Sqm:
+      opt.parking_ratio_per_1000_sqm != null
+        ? Number(opt.parking_ratio_per_1000_sqm)
+        : null,
+    rentPsmMonth:
+      opt.rent_psm_month != null ? Number(opt.rent_psm_month) : null,
+    stabilisedVacancyPct:
+      opt.stabilised_vacancy_pct != null
+        ? Number(opt.stabilised_vacancy_pct)
+        : null,
+    opexPctOfRent:
+      opt.opex_pct_of_rent != null ? Number(opt.opex_pct_of_rent) : null,
+    estimatedRevenueSgd:
+      opt.estimated_revenue_sgd != null
+        ? Number(opt.estimated_revenue_sgd)
+        : null,
+    estimatedCapexSgd:
+      opt.estimated_capex_sgd != null ? Number(opt.estimated_capex_sgd) : null,
+    fitoutCostPsm:
+      opt.fitout_cost_psm != null ? Number(opt.fitout_cost_psm) : null,
+    absorptionMonths:
+      opt.absorption_months != null ? Number(opt.absorption_months) : null,
+    riskLevel: opt.risk_level != null ? String(opt.risk_level) : null,
+    heritagePremiumPct:
+      opt.heritage_premium_pct != null
+        ? Number(opt.heritage_premium_pct)
+        : null,
+    notes: Array.isArray(opt.notes) ? (opt.notes as string[]) : [],
+  }))
+}
+
+function mapFinancialSummary(
+  raw: Record<string, unknown> | undefined,
+): DeveloperFinancialSummary | null {
+  if (!raw) return null
+
+  return {
+    totalEstimatedRevenueSgd:
+      raw.total_estimated_revenue_sgd != null
+        ? Number(raw.total_estimated_revenue_sgd)
+        : null,
+    totalEstimatedCapexSgd:
+      raw.total_estimated_capex_sgd != null
+        ? Number(raw.total_estimated_capex_sgd)
+        : null,
+    dominantRiskProfile:
+      raw.dominant_risk_profile != null
+        ? String(raw.dominant_risk_profile)
+        : null,
+    notes: Array.isArray(raw.notes) ? (raw.notes as string[]) : [],
+  }
+}
+
+function mapHeritageContext(
+  raw: Record<string, unknown> | undefined,
+): DeveloperHeritageContext | null {
+  if (!raw) return null
+
+  const overlayRaw = raw.overlay as Record<string, unknown> | null | undefined
+  const overlay = overlayRaw
+    ? {
+        name: overlayRaw.name != null ? String(overlayRaw.name) : null,
+        source: overlayRaw.source != null ? String(overlayRaw.source) : null,
+        heritagePremiumPct:
+          overlayRaw.heritage_premium_pct != null
+            ? Number(overlayRaw.heritage_premium_pct)
+            : null,
+      }
+    : null
+
+  return {
+    flag: Boolean(raw.flag),
+    risk: raw.risk != null ? String(raw.risk) : null,
+    notes: Array.isArray(raw.notes) ? (raw.notes as string[]) : [],
+    constraints: Array.isArray(raw.constraints)
+      ? (raw.constraints as string[])
+      : [],
+    assumption: raw.assumption != null ? String(raw.assumption) : null,
+    overlay,
+  }
+}
+
+/**
+ * Hybrid GPS capture function that routes to developer endpoint when features are enabled
+ * Falls back to standard agent endpoint when no developer features are requested
+ */
+export async function logPropertyByGpsWithFeatures(
+  request: FeatureEnabledRequest,
+  signal?: AbortSignal,
+): Promise<GpsCaptureSummaryWithFeatures> {
+  const { enabledFeatures, ...baseRequest } = request
+
+  const anyFeatureEnabled =
+    enabledFeatures.preview3D ||
+    enabledFeatures.assetOptimization ||
+    enabledFeatures.financialSummary ||
+    enabledFeatures.heritageContext
+
+  // If no developer features enabled, use standard agent endpoint
+  if (!anyFeatureEnabled) {
+    const summary = await logPropertyByGps(baseRequest, undefined, signal)
+    return { ...summary, developerFeatures: null }
+  }
+
+  // Use developer endpoint for enhanced features
+  try {
+    const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        latitude: baseRequest.latitude,
+        longitude: baseRequest.longitude,
+        development_scenarios: baseRequest.developmentScenarios,
+        jurisdiction_code: baseRequest.jurisdictionCode,
+      }),
+      signal,
+    })
+
+    if (!response.ok) {
+      const detail = await response.text()
+      throw new Error(
+        detail ||
+          `Request to ${DEVELOPER_GPS_ENDPOINT} failed with ${response.status}`,
+      )
+    }
+
+    const rawPayload = (await response.json()) as RawDeveloperResponse
+
+    const quickAnalysisPayload =
+      rawPayload.quick_analysis ??
+      ({
+        generated_at: rawPayload.timestamp,
+        scenarios: [],
+      } satisfies RawQuickAnalysis)
+
+    const baseSummary: GpsCaptureSummary = {
+      propertyId: rawPayload.property_id,
+      address: mapAddress(rawPayload.address),
+      coordinates: {
+        latitude: rawPayload.coordinates.latitude,
+        longitude: rawPayload.coordinates.longitude,
+      },
+      uraZoning: mapUraZoning(rawPayload.ura_zoning),
+      existingUse: rawPayload.existing_use,
+      propertyInfo: mapPropertyInfo(rawPayload.property_info),
+      nearbyAmenities: mapNearbyAmenities(rawPayload.nearby_amenities),
+      quickAnalysis: mapQuickAnalysis(quickAnalysisPayload),
+      timestamp: rawPayload.timestamp,
+      jurisdictionCode: rawPayload.jurisdiction_code,
+      currencySymbol: rawPayload.currency_symbol,
+    }
+
+    const developerFeatures: DeveloperFeatureData = {
+      visualization: enabledFeatures.preview3D
+        ? mapVisualization(rawPayload.visualization)
+        : null,
+      optimizations: enabledFeatures.assetOptimization
+        ? mapOptimizations(rawPayload.optimizations)
+        : [],
+      financialSummary: enabledFeatures.financialSummary
+        ? mapFinancialSummary(rawPayload.financial_summary)
+        : null,
+      heritageContext: enabledFeatures.heritageContext
+        ? mapHeritageContext(rawPayload.heritage_context)
+        : null,
+    }
+
+    return { ...baseSummary, developerFeatures }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
+    if (error instanceof TypeError) {
+      console.warn(
+        '[agents] Developer GPS capture request failed, using offline fallback data',
+        error,
+      )
+      const fallback = createGpsFallbackSummary(baseRequest)
+      return { ...fallback, developerFeatures: null }
+    }
+    throw error
+  }
+}
+
 const DEVELOPMENT_SCENARIOS_SET = new Set<DevelopmentScenario>(
   DEFAULT_SCENARIO_ORDER,
 )
 
-function isDevelopmentScenario(value: string | undefined): value is DevelopmentScenario {
-  return Boolean(value && DEVELOPMENT_SCENARIOS_SET.has(value as DevelopmentScenario))
+function isDevelopmentScenario(
+  value: string | undefined,
+): value is DevelopmentScenario {
+  return Boolean(
+    value && DEVELOPMENT_SCENARIOS_SET.has(value as DevelopmentScenario),
+  )
 }
 
 export interface MarketIntelligenceSummary {
@@ -716,7 +1080,9 @@ export async function fetchPropertyMarketIntelligence(
       throw error
     }
     const detail =
-      error instanceof Error ? error.message : 'Unable to load market intelligence.'
+      error instanceof Error
+        ? error.message
+        : 'Unable to load market intelligence.'
     return {
       propertyId,
       report: createOfflineMarketIntelligenceReport(months),
@@ -732,11 +1098,7 @@ export async function generateProfessionalPack(
   signal?: AbortSignal,
 ): Promise<ProfessionalPackSummary> {
   if (propertyId === OFFLINE_PROPERTY_ID) {
-    return createOfflinePackSummary(
-      propertyId,
-      packType,
-      OFFLINE_PACK_WARNING,
-    )
+    return createOfflinePackSummary(propertyId, packType, OFFLINE_PACK_WARNING)
   }
 
   const url = buildUrl(
@@ -762,9 +1124,7 @@ export async function generateProfessionalPack(
       return createOfflinePackSummary(
         propertyId,
         packType,
-        detail
-          ? `${OFFLINE_PACK_WARNING} (${detail})`
-          : OFFLINE_PACK_WARNING,
+        detail ? `${OFFLINE_PACK_WARNING} (${detail})` : OFFLINE_PACK_WARNING,
       )
     }
 
@@ -853,13 +1213,15 @@ function createOfflineMarketIntelligenceReport(months: number) {
       projects_in_pipeline: 5,
       completions_next_12_months: 2,
       occupancy_rate: 0.93,
-      headline: 'Limited new supply supports rental stability through the next cycle.',
+      headline:
+        'Limited new supply supports rental stability through the next cycle.',
     },
     yield_benchmarks: {
       core_yield: 0.041,
       value_add_yield: 0.047,
       opportunistic_yield: 0.052,
-      commentary: 'CBD mixed-use yields tightened 15 bps over the past quarter.',
+      commentary:
+        'CBD mixed-use yields tightened 15 bps over the past quarter.',
     },
     absorption_trends: {
       average_absorption_months: 7,
@@ -900,8 +1262,12 @@ const CHECKLIST_CATEGORIES: readonly ChecklistCategory[] = [
   'access_rights',
 ]
 
-function isChecklistCategory(value: string | undefined): value is ChecklistCategory {
-  return Boolean(value && CHECKLIST_CATEGORIES.includes(value as ChecklistCategory))
+function isChecklistCategory(
+  value: string | undefined,
+): value is ChecklistCategory {
+  return Boolean(
+    value && CHECKLIST_CATEGORIES.includes(value as ChecklistCategory),
+  )
 }
 
 export type ChecklistStatus =
@@ -917,7 +1283,9 @@ const CHECKLIST_STATUSES: readonly ChecklistStatus[] = [
   'not_applicable',
 ]
 
-function isChecklistStatus(value: string | undefined): value is ChecklistStatus {
+function isChecklistStatus(
+  value: string | undefined,
+): value is ChecklistStatus {
   return Boolean(value && CHECKLIST_STATUSES.includes(value as ChecklistStatus))
 }
 
@@ -930,8 +1298,12 @@ const CHECKLIST_PRIORITIES: readonly ChecklistPriority[] = [
   'low',
 ]
 
-function isChecklistPriority(value: string | undefined): value is ChecklistPriority {
-  return Boolean(value && CHECKLIST_PRIORITIES.includes(value as ChecklistPriority))
+function isChecklistPriority(
+  value: string | undefined,
+): value is ChecklistPriority {
+  return Boolean(
+    value && CHECKLIST_PRIORITIES.includes(value as ChecklistPriority),
+  )
 }
 
 export interface ChecklistItem {
@@ -1056,8 +1428,8 @@ export async function fetchPropertyChecklist(
     const itemsArray: Record<string, unknown>[] = Array.isArray(data?.items)
       ? (data.items as Record<string, unknown>[])
       : Array.isArray(data)
-      ? (data as Record<string, unknown>[])
-      : []
+        ? (data as Record<string, unknown>[])
+        : []
 
     return itemsArray
       .map((item) => mapChecklistItem(item))
@@ -1241,16 +1613,16 @@ function mapChecklistTemplateResponse(
     typeof durationValue === 'number'
       ? durationValue
       : typeof durationValue === 'string' && durationValue.trim() !== ''
-      ? Number(durationValue)
-      : null
+        ? Number(durationValue)
+        : null
 
   const displayOrderValue = payload.displayOrder
   const displayOrderNumber =
     typeof displayOrderValue === 'number'
       ? displayOrderValue
       : typeof displayOrderValue === 'string' && displayOrderValue.trim() !== ''
-      ? Number(displayOrderValue)
-      : null
+        ? Number(displayOrderValue)
+        : null
 
   return {
     id: String(payload.id ?? ''),
@@ -1451,9 +1823,7 @@ export async function importChecklistTemplates(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        templates: templates.map((template) =>
-          buildTemplatePayload(template),
-        ),
+        templates: templates.map((template) => buildTemplatePayload(template)),
         replaceExisting,
       }),
     },

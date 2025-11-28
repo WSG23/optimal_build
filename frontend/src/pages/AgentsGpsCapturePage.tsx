@@ -24,6 +24,10 @@ import {
   fetchPropertyMarketIntelligence,
   generateProfessionalPack,
 } from '../api/agents'
+import {
+  forwardGeocodeAddress,
+  reverseGeocodeCoords,
+} from '../api/geocoding'
 import { useTranslation } from '../i18n'
 import { Link } from '../router'
 
@@ -380,12 +384,14 @@ export function AgentsGpsCapturePage({
   const locale = i18n.language ?? 'en'
   const [latitude, setLatitude] = useState<string>(DEFAULT_LATITUDE)
   const [longitude, setLongitude] = useState<string>(DEFAULT_LONGITUDE)
+  const [address, setAddress] = useState<string>('')
   const [selectedScenarios, setSelectedScenarios] = useState<
     Set<DevelopmentScenario>
   >(() => new Set(DEFAULT_SCENARIO_ORDER))
   const [result, setResult] = useState<GpsCaptureSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [geocodeError, setGeocodeError] = useState<string | null>(null)
   const [marketReport, setMarketReport] =
     useState<MarketIntelligenceSummary | null>(null)
   const [marketLoading, setMarketLoading] = useState(false)
@@ -413,6 +419,7 @@ export function AgentsGpsCapturePage({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
+    setGeocodeError(null)
 
     const lat = Number.parseFloat(latitude)
     const lon = Number.parseFloat(longitude)
@@ -551,6 +558,67 @@ export function AgentsGpsCapturePage({
     >
       <section className="agents-capture">
         <form className="agents-capture__form" onSubmit={handleSubmit}>
+          <div className="agents-capture__grid">
+            <label className="agents-capture__field">
+              <span>Address (optional)</span>
+              <div className="agents-capture__address-row">
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  placeholder="123 Main Street, Singapore"
+                />
+                <div className="agents-capture__address-actions">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!address.trim()) {
+                        setGeocodeError('Enter an address to geocode.')
+                        return
+                      }
+                      try {
+                        const result = await forwardGeocodeAddress(address.trim())
+                        setLatitude(result.latitude.toString())
+                        setLongitude(result.longitude.toString())
+                        setGeocodeError(null)
+                      } catch (err) {
+                        const message =
+                          err instanceof Error ? err.message : 'Geocoding failed.'
+                        setGeocodeError(message)
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    Geocode address
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const lat = Number.parseFloat(latitude)
+                      const lon = Number.parseFloat(longitude)
+                      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                        setGeocodeError('Enter valid coordinates to reverse geocode.')
+                        return
+                      }
+                      try {
+                        const result = await reverseGeocodeCoords(lat, lon)
+                        setAddress(result.formattedAddress)
+                        setGeocodeError(null)
+                      } catch (err) {
+                        const message =
+                          err instanceof Error ? err.message : 'Reverse geocoding failed.'
+                        setGeocodeError(message)
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    Reverse geocode
+                  </button>
+                </div>
+              </div>
+            </label>
+          </div>
+          {geocodeError && <p className="agents-capture__error">{geocodeError}</p>}
           <div className="agents-capture__grid">
             <label className="agents-capture__field">
               <span>{t('agentsCapture.form.latitude')}</span>

@@ -1,24 +1,54 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
+  lazy,
+  Suspense,
   type FormEvent,
 } from 'react'
 import {
   DEFAULT_SCENARIO_ORDER,
   fetchPropertyMarketIntelligence,
   generateProfessionalPack,
-  logPropertyByGps,
+  logPropertyByGpsWithFeatures,
   type DevelopmentScenario,
-  type GpsCaptureSummary,
+  type GpsCaptureSummaryWithFeatures,
+  type DeveloperFeatureData,
   type MarketIntelligenceSummary,
   type ProfessionalPackSummary,
   type ProfessionalPackType,
 } from '../../../api/agents'
+import {
+  useFeaturePreferences,
+  type UserRole,
+} from '../../../hooks/useFeaturePreferences'
+import {
+  forwardGeocodeAddress,
+  reverseGeocodeCoords,
+} from '../../../api/geocoding'
+import {
+  FeatureTogglePanel,
+  AssetOptimizationSummary,
+  FinancialSummaryCard,
+  HeritageContextCard,
+} from '../../components/gps-capture'
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
+
+// Lazy load the 3D preview viewer to avoid loading THREE.js unless needed
+const Preview3DViewer = lazy(() =>
+  import('../../components/site-acquisition/Preview3DViewer').then((m) => ({
+    default: m.Preview3DViewer,
+  })),
+)
 
 export function GpsCapturePage() {
+  const role: UserRole = 'agent'
   const [latitude, setLatitude] = useState<string>('1.3000')
   const [longitude, setLongitude] = useState<string>('103.8500')
+  const [address, setAddress] = useState<string>('')
   const [jurisdictionCode, setJurisdictionCode] = useState<string>('SG')
   const [selectedScenarios, setSelectedScenarios] = useState<
     DevelopmentScenario[]
@@ -27,7 +57,17 @@ export function GpsCapturePage() {
   const [captureLoading, setCaptureLoading] = useState(false)
   const [captureError, setCaptureError] = useState<string | null>(null)
   const [captureSummary, setCaptureSummary] =
-    useState<GpsCaptureSummary | null>(null)
+    useState<GpsCaptureSummaryWithFeatures | null>(null)
+  const [developerFeatures, setDeveloperFeatures] =
+    useState<DeveloperFeatureData | null>(null)
+
+  // Feature preferences hook for optional developer features
+  const {
+    preferences: featurePreferences,
+    entitlements: featureEntitlements,
+    toggleFeature,
+    unlockFeature,
+  } = useFeaturePreferences(role)
 
   const [marketSummary, setMarketSummary] =
     useState<MarketIntelligenceSummary | null>(null)
@@ -49,22 +89,131 @@ export function GpsCapturePage() {
     }>
   >([])
 
+  const [geocodeError, setGeocodeError] = useState<string | null>(null)
+  const [mapError, setMapError] = useState<string | null>(null)
+  const mapContainerRef = useRef<HTMLDivElement | null>(null)
+  const mapInstanceRef = useRef<mapboxgl.Map | null>(null)
+  const mapMarkerRef = useRef<mapboxgl.Marker | null>(null)
+
   const today = useMemo(
     () => new Date().toLocaleString(undefined, { dateStyle: 'medium' }),
     [],
   )
 
-  const handleScenarioToggle = useCallback(
-    (scenario: DevelopmentScenario) => {
-      setSelectedScenarios((prev) => {
-        if (prev.includes(scenario)) {
-          return prev.filter((item) => item !== scenario)
-        }
-        return [...prev, scenario]
-      })
-    },
-    [],
-  )
+  const handleScenarioToggle = useCallback((scenario: DevelopmentScenario) => {
+    setSelectedScenarios((prev) => {
+      if (prev.includes(scenario)) {
+        return prev.filter((item) => item !== scenario)
+      }
+      return [...prev, scenario]
+    })
+  }, [])
+
+  const handleForwardGeocode = useCallback(async () => {
+    if (!address.trim()) {
+      setGeocodeError('Please enter an address to geocode.')
+      return
+    }
+    try {
+      setGeocodeError(null)
+      const result = await forwardGeocodeAddress(address.trim())
+      setLatitude(result.latitude.toString())
+      setLongitude(result.longitude.toString())
+      setCaptureSummary((prev) =>
+        prev
+          ? {
+              ...prev,
+              address: {
+                ...prev.address,
+                fullAddress: result.formattedAddress,
+              },
+              coordinates: {
+                latitude: result.latitude,
+                longitude: result.longitude,
+              },
+            }
+          : prev,
+      )
+      if (mapInstanceRef.current && mapMarkerRef.current) {
+        mapInstanceRef.current.setCenter([result.longitude, result.latitude])
+        mapMarkerRef.current.setLngLat([result.longitude, result.latitude])
+      }
+    } catch (error) {
+      console.error('Forward geocode failed', error)
+      setGeocodeError(
+        error instanceof Error ? error.message : 'Unable to geocode address.',
+      )
+    }
+  }, [address])
+
+  const handleReverseGeocode = useCallback(async () => {
+    const parsedLat = Number(latitude)
+    const parsedLon = Number(longitude)
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLon)) {
+      setGeocodeError(
+        'Please provide valid coordinates before reverse geocoding.',
+      )
+      return
+    }
+    try {
+      setGeocodeError(null)
+      const result = await reverseGeocodeCoords(parsedLat, parsedLon)
+      setAddress(result.formattedAddress)
+      setCaptureSummary((prev) =>
+        prev
+          ? {
+              ...prev,
+              address: {
+                ...prev.address,
+                fullAddress: result.formattedAddress,
+              },
+            }
+          : prev,
+      )
+    } catch (error) {
+      console.error('Reverse geocode failed', error)
+      setGeocodeError(
+        error instanceof Error ? error.message : 'Unable to reverse geocode.',
+      )
+    }
+  }, [latitude, longitude])
+
+  useEffect(() => {
+    const token = import.meta.env.VITE_MAPBOX_TOKEN
+    if (!token) {
+      setMapError('Mapbox token not set; map preview disabled.')
+      return
+    }
+    if (mapInstanceRef.current || !mapContainerRef.current) {
+      return
+    }
+    mapboxgl.accessToken = token
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [Number(longitude) || 103.85, Number(latitude) || 1.3],
+      zoom: 12,
+    })
+    const marker = new mapboxgl.Marker({ draggable: true })
+      .setLngLat([Number(longitude) || 103.85, Number(latitude) || 1.3])
+      .addTo(map)
+    marker.on('dragend', () => {
+      const lngLat = marker.getLngLat()
+      setLatitude(lngLat.lat.toFixed(6))
+      setLongitude(lngLat.lng.toFixed(6))
+    })
+    map.on('click', (event) => {
+      const { lng, lat } = event.lngLat
+      setLatitude(lat.toFixed(6))
+      setLongitude(lng.toFixed(6))
+      marker.setLngLat([lng, lat])
+    })
+    mapInstanceRef.current = map
+    mapMarkerRef.current = marker
+    return () => {
+      map.remove()
+    }
+  }, [latitude, longitude])
 
   const handleCapture = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -81,19 +230,30 @@ export function GpsCapturePage() {
         setCaptureError(null)
         setMarketSummary(null)
         setMarketError(null)
-        const summary = await logPropertyByGps({
+        setDeveloperFeatures(null)
+
+        // Use hybrid API that routes to developer endpoint when features are enabled
+        const summary = await logPropertyByGpsWithFeatures({
           latitude: parsedLat,
           longitude: parsedLon,
           developmentScenarios:
             selectedScenarios.length > 0 ? selectedScenarios : undefined,
           jurisdictionCode: jurisdictionCode || undefined,
+          enabledFeatures: featurePreferences,
+        })
+        console.log('[GPS Capture] Received summary:', {
+          jurisdictionCode: summary.jurisdictionCode,
+          currencySymbol: summary.currencySymbol,
+          hasDeveloperFeatures: summary.developerFeatures !== null,
         })
         setCaptureSummary(summary)
+        setDeveloperFeatures(summary.developerFeatures)
         setCapturedSites((prev) => [
           {
             propertyId: summary.propertyId,
             address: summary.address.fullAddress.startsWith('Mocked Address')
-              ? `Captured site (${parsedLat.toFixed(5)}, ${parsedLon.toFixed(5)})`
+              ? address ||
+                `Captured site (${parsedLat.toFixed(5)}, ${parsedLon.toFixed(5)})`
               : summary.address.fullAddress,
             district: summary.address.district,
             scenario: summary.quickAnalysis.scenarios[0]?.scenario ?? null,
@@ -122,7 +282,14 @@ export function GpsCapturePage() {
         setCaptureLoading(false)
       }
     },
-    [latitude, longitude, jurisdictionCode, selectedScenarios],
+    [
+      address,
+      latitude,
+      longitude,
+      jurisdictionCode,
+      selectedScenarios,
+      featurePreferences,
+    ],
   )
 
   const handleGeneratePack = useCallback(
@@ -166,6 +333,27 @@ export function GpsCapturePage() {
             Add photos and field notes before sending to developers.
           </p>
           <form className="gps-form" onSubmit={handleCapture}>
+            <div className="gps-form__group">
+              <label htmlFor="address">Address (optional)</label>
+              <div className="gps-form__address-row">
+                <input
+                  id="address"
+                  name="address"
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  placeholder="123 Main Street, Singapore"
+                />
+                <div className="gps-form__address-actions">
+                  <button type="button" onClick={handleForwardGeocode}>
+                    Geocode address
+                  </button>
+                  <button type="button" onClick={handleReverseGeocode}>
+                    Reverse geocode
+                  </button>
+                </div>
+              </div>
+              {geocodeError && <p className="gps-error">{geocodeError}</p>}
+            </div>
             <div className="gps-form__group">
               <label htmlFor="latitude">Latitude</label>
               <input
@@ -217,6 +405,13 @@ export function GpsCapturePage() {
                 ))}
               </div>
             </div>
+            <FeatureTogglePanel
+              preferences={featurePreferences}
+              entitlements={featureEntitlements}
+              onToggle={toggleFeature}
+              onUnlock={unlockFeature}
+              disabled={captureLoading}
+            />
             <button
               type="submit"
               className="gps-form__submit"
@@ -239,8 +434,12 @@ export function GpsCapturePage() {
               </p>
               {captureSummary.address.district && (
                 <p>
-                  District:{' '}
-                  <strong>{captureSummary.address.district}</strong>
+                  District: <strong>{captureSummary.address.district}</strong>
+                </p>
+              )}
+              {captureSummary.uraZoning?.zoneCode && (
+                <p>
+                  Zoning: <strong>{captureSummary.uraZoning.zoneCode}</strong>
                 </p>
               )}
             </div>
@@ -248,9 +447,24 @@ export function GpsCapturePage() {
         </div>
         <div className="gps-card gps-card--map">
           <h2>Site preview</h2>
-          <p>
-            Map (Mapbox) preview placeholder. The production implementation will
-            show coordinates, reverse-geocoded address, and draw radius overlays.
+          {mapError ? (
+            <p className="gps-error">{mapError}</p>
+          ) : (
+            <div
+              className="gps-map"
+              ref={mapContainerRef}
+              aria-label="Map preview"
+              style={{
+                height: '320px',
+                borderRadius: '12px',
+                overflow: 'hidden',
+              }}
+            />
+          )}
+          <p className="gps-map__hint">
+            Click on the map or drag the marker to update coordinates. Geocoding
+            uses Google Maps; set <code>VITE_GOOGLE_MAPS_API_KEY</code> and
+            <code>VITE_MAPBOX_TOKEN</code> in your environment.
           </p>
         </div>
       </section>
@@ -279,7 +493,13 @@ export function GpsCapturePage() {
                         ([metricKey, metricValue]) => (
                           <div key={metricKey}>
                             <dt>{humanizeMetricKey(metricKey)}</dt>
-                            <dd>{formatMetricValue(metricValue)}</dd>
+                            <dd>
+                              {formatMetricValue(
+                                metricValue,
+                                metricKey,
+                                captureSummary?.currencySymbol,
+                              )}
+                            </dd>
                           </div>
                         ),
                       )}
@@ -311,11 +531,15 @@ export function GpsCapturePage() {
               <dl className="gps-panel__metrics">
                 <div>
                   <dt>Property type</dt>
-                  <dd>{extractReportValue(marketSummary.report, 'property_type')}</dd>
+                  <dd>
+                    {extractReportValue(marketSummary.report, 'property_type')}
+                  </dd>
                 </div>
                 <div>
                   <dt>Location</dt>
-                  <dd>{extractReportValue(marketSummary.report, 'location')}</dd>
+                  <dd>
+                    {extractReportValue(marketSummary.report, 'location')}
+                  </dd>
                 </div>
                 <div>
                   <dt>Period analysed</dt>
@@ -334,8 +558,8 @@ export function GpsCapturePage() {
           ) : (
             <p>
               This panel will display comparables, supply dynamics, yield
-              benchmarks, and absorption trends returned by the market intelligence
-              service after capture.
+              benchmarks, and absorption trends returned by the market
+              intelligence service after capture.
             </p>
           )}
           <p>
@@ -344,16 +568,16 @@ export function GpsCapturePage() {
               {marketSummary
                 ? today
                 : captureSummary
-                ? 'fetching…'
-                : 'pending capture'}
+                  ? 'fetching…'
+                  : 'pending capture'}
             </strong>
           </p>
         </div>
         <div className="gps-panel">
           <h3>Marketing packs</h3>
           <p>
-            Generate professional packs for developers and investors. The UI will
-            integrate with the pack generator once APIs are finalised.
+            Generate professional packs for developers and investors. The UI
+            will integrate with the pack generator once APIs are finalised.
           </p>
           <div className="gps-pack-options">
             {PACK_TYPES.map((packType) => (
@@ -376,13 +600,17 @@ export function GpsCapturePage() {
             ) : (
               <ul>
                 {packs.map((pack) => (
-                  <li key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}`}>
+                  <li
+                    key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}`}
+                  >
                     <strong>{formatPackLabel(pack.packType)}</strong> •{' '}
                     {new Date(pack.generatedAt).toLocaleString()} —{' '}
                     {pack.downloadUrl ? (
                       <a href={pack.downloadUrl}>Download</a>
                     ) : pack.isFallback ? (
-                      <span title={pack.warning ?? 'Preview pack generated offline'}>
+                      <span
+                        title={pack.warning ?? 'Preview pack generated offline'}
+                      >
                         Preview only
                       </span>
                     ) : (
@@ -395,6 +623,71 @@ export function GpsCapturePage() {
           </div>
         </div>
       </section>
+
+      {/* Developer features section - shown when any feature is enabled and data exists */}
+      {developerFeatures && (
+        <section className="gps-page__developer-features">
+          {/* 3D Preview Viewer */}
+          {featurePreferences.preview3D && developerFeatures.visualization && (
+            <div className="gps-panel gps-panel--preview">
+              <h3>3D Preview</h3>
+              <Suspense
+                fallback={
+                  <div className="gps-panel__loading">Loading 3D viewer...</div>
+                }
+              >
+                <Preview3DViewer
+                  previewUrl={developerFeatures.visualization.conceptMeshUrl}
+                  metadataUrl={
+                    developerFeatures.visualization.previewMetadataUrl
+                  }
+                  status={developerFeatures.visualization.status}
+                  thumbnailUrl={developerFeatures.visualization.thumbnailUrl}
+                />
+              </Suspense>
+              {developerFeatures.visualization.notes.length > 0 && (
+                <ul className="gps-panel__notes">
+                  {developerFeatures.visualization.notes.map((note, index) => (
+                    <li key={index}>{note}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Asset Optimization Summary */}
+          {featurePreferences.assetOptimization &&
+            developerFeatures.optimizations.length > 0 && (
+              <div className="gps-panel">
+                <AssetOptimizationSummary
+                  optimizations={developerFeatures.optimizations}
+                  currencySymbol={captureSummary?.currencySymbol}
+                />
+              </div>
+            )}
+
+          {/* Financial Summary */}
+          {featurePreferences.financialSummary &&
+            developerFeatures.financialSummary && (
+              <div className="gps-panel">
+                <FinancialSummaryCard
+                  summary={developerFeatures.financialSummary}
+                  currencySymbol={captureSummary?.currencySymbol}
+                />
+              </div>
+            )}
+
+          {/* Heritage Context */}
+          {featurePreferences.heritageContext &&
+            developerFeatures.heritageContext && (
+              <div className="gps-panel">
+                <HeritageContextCard
+                  context={developerFeatures.heritageContext}
+                />
+              </div>
+            )}
+        </section>
+      )}
 
       <section className="gps-page__captures">
         <div className="gps-panel">
@@ -418,9 +711,7 @@ export function GpsCapturePage() {
                     <td>{site.address}</td>
                     <td>{site.district ?? '—'}</td>
                     <td>
-                      {site.scenario
-                        ? formatScenarioLabel(site.scenario)
-                        : '—'}
+                      {site.scenario ? formatScenarioLabel(site.scenario) : '—'}
                     </td>
                     <td>{new Date(site.capturedAt).toLocaleString()}</td>
                     <td>
@@ -479,17 +770,59 @@ function formatPackLabel(value: ProfessionalPackType) {
 }
 
 function humanizeMetricKey(key: string) {
-  return key
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase())
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
-function formatMetricValue(value: unknown) {
+function formatMetricValue(
+  value: unknown,
+  metricKey?: string,
+  currencySymbol?: string,
+) {
   if (value === null || value === undefined) {
     return '—'
   }
   if (typeof value === 'number') {
-    return Number.isInteger(value) ? value.toString() : value.toFixed(2)
+    const formattedNumber = Number.isInteger(value)
+      ? value.toLocaleString()
+      : value.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+
+    // Add currency symbol if metric key suggests it's a price/financial value
+    // Exclude count/number fields that happen to contain financial keywords
+    const isCountField =
+      metricKey &&
+      (metricKey.includes('count') ||
+        metricKey.includes('number') ||
+        metricKey.includes('quantity') ||
+        metricKey.includes('units'))
+
+    const hasFinancialKeyword =
+      metricKey &&
+      !isCountField &&
+      (metricKey.includes('price') ||
+        metricKey.includes('noi') ||
+        metricKey.includes('valuation') ||
+        metricKey.includes('capex') ||
+        metricKey.includes('rent') ||
+        metricKey.includes('cost') ||
+        metricKey.includes('value') ||
+        metricKey.includes('revenue') ||
+        metricKey.includes('income'))
+
+    console.log('[formatMetricValue]', {
+      metricKey,
+      currencySymbol,
+      isCountField,
+      hasFinancialKeyword,
+      willAddSymbol: !!(currencySymbol && hasFinancialKeyword),
+    })
+
+    if (currencySymbol && hasFinancialKeyword) {
+      return `${currencySymbol}${formattedNumber}`
+    }
+    return formattedNumber
   }
   return String(value)
 }

@@ -202,6 +202,7 @@ class Settings:
     HK_GEOSPATIAL_TOKEN: str
     NZ_LINZ_API_KEY: str
     SEATTLE_SODA_APP_TOKEN: str
+    TORONTO_SODA_APP_TOKEN: str
 
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
     BUILDABLE_EFFICIENCY_RATIO: float
@@ -291,6 +292,7 @@ class Settings:
         self.HK_GEOSPATIAL_TOKEN = os.getenv("HK_GEOSPATIAL_TOKEN", "")
         self.NZ_LINZ_API_KEY = os.getenv("NZ_LINZ_API_KEY", "public")
         self.SEATTLE_SODA_APP_TOKEN = os.getenv("SEATTLE_SODA_APP_TOKEN", "public")
+        self.TORONTO_SODA_APP_TOKEN = os.getenv("TORONTO_SODA_APP_TOKEN", "public")
 
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
             "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0

@@ -173,6 +173,8 @@ class GPSLogResponse(BaseModel):
     nearby_amenities: Optional[Dict[str, Any]]
     quick_analysis: QuickAnalysisEnvelope
     timestamp: datetime
+    jurisdiction_code: str
+    currency_symbol: str
 
 
 @router.get("/health")
@@ -371,6 +373,11 @@ async def log_property_by_gps(
         }
         quick_analysis = QuickAnalysisEnvelope.model_validate(quick_analysis_payload)
 
+        # Get jurisdiction config for currency info
+        from app.services.jurisdictions import get_jurisdiction_config
+
+        jurisdiction = get_jurisdiction_config(result.jurisdiction_code)
+
         return GPSLogResponse(
             property_id=result.property_id,
             address=result.address,
@@ -384,6 +391,8 @@ async def log_property_by_gps(
             nearby_amenities=result.nearby_amenities,
             quick_analysis=quick_analysis,
             timestamp=result.timestamp,
+            jurisdiction_code=jurisdiction.code,
+            currency_symbol=jurisdiction.currency_symbol,
         )
 
     except Exception as exc:
@@ -397,6 +406,7 @@ async def log_property_by_gps(
             latitude=request.latitude,
             longitude=request.longitude,
             scenarios=request.development_scenarios,
+            jurisdiction_code=request.jurisdiction_code,
         )
         try:
             await DeveloperChecklistService.ensure_templates_seeded(db)
@@ -436,11 +446,15 @@ def _build_mock_gps_response(
     latitude: float,
     longitude: float,
     scenarios: Optional[list[DevelopmentScenario]],
+    jurisdiction_code: str | None = None,
 ) -> GPSLogResponse:
     """Return a deterministic sample response when live services are unavailable."""
 
+    from app.services.jurisdictions import get_jurisdiction_config
+
     generated_at = utcnow()
     resolved_scenarios = scenarios or DevelopmentScenario.default_set()
+    jurisdiction = get_jurisdiction_config(jurisdiction_code)
 
     quick_scenarios: list[QuickAnalysisScenario] = []
     for scenario in resolved_scenarios:
@@ -559,6 +573,8 @@ def _build_mock_gps_response(
         nearby_amenities=nearby_amenities,
         quick_analysis=quick_analysis,
         timestamp=generated_at,
+        jurisdiction_code=jurisdiction.code,
+        currency_symbol=jurisdiction.currency_symbol,
     )
 
 

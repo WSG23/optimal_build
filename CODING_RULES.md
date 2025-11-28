@@ -714,6 +714,8 @@ pre-commit run --all-files
 **Frontend (TypeScript/React):**
 - Add to `frontend/package.json` using `npm install --save <package>` or `npm install --save-dev <package>`
 - Admin UI: Add to `ui-admin/package.json`
+- Keep frontend modules small: aim for <500 lines per file. If a component/page grows beyond ~600 lines, refactor into smaller components/hooks. Do not introduce new single-file pages over 800 lines; split them before merging.
+- Line-count guidance applies to frontend files only. Backend modules don’t have a hard limit, but split them when readability or change velocity suffers.
 
 **Version Synchronization (IMPORTANT):**
 When updating formatter/linter versions, update ALL occurrences:

@@ -1170,6 +1170,8 @@ Manual testing in UI to validate real-world usage.
 
 ### 6.1 GPS Capture (Phase 2A)
 
+**TODO:** Implement the interactive map/pin-drop control on `/app/site-acquisition` so users can click to populate lat/lng; current UI only exposes text inputs.
+
 **Test:**
 1. Open browser: `http://localhost:4400/app/site-acquisition`
 2. Select jurisdiction: `{Jurisdiction Name}` from dropdown

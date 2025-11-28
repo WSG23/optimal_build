@@ -36,6 +36,7 @@ export interface SiteAcquisitionRequest {
   longitude: number
   developmentScenarios: DevelopmentScenario[]
   previewDetailLevel?: GeometryDetailLevel
+  jurisdictionCode?: string
 }
 
 export interface DeveloperBuildEnvelope {
@@ -1298,6 +1299,9 @@ export async function capturePropertyForDevelopment(
       }
       if (request.previewDetailLevel) {
         requestBody.preview_geometry_detail_level = request.previewDetailLevel
+      }
+      if (request.jurisdictionCode) {
+        requestBody.jurisdiction_code = request.jurisdictionCode
       }
 
       const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {

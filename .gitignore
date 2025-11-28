@@ -335,4 +335,6 @@ data/seattle/*
 !data/seattle/README.md
 data/nz/*
 !data/nz/README.md
+data/toronto/*
+!data/toronto/README.md
 data/nz/*.geojson
