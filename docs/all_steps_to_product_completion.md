@@ -42,16 +42,18 @@
 
 > **Note (2025-11-29):** The Updated Spec v2 added 32 new features. Phases below show v1 (original scope) as complete, but v2 enhancements are documented and queued for implementation.
 
-**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ⚠️ v1 COMPLETE, v2 PENDING
+**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ⚠️ v1 COMPLETE, v2 PENDING (3 items)
 - **Backend:** 100% (v1) | **UI:** 100% (v1)
 - GPS Capture, Quick Analysis, Marketing Pack Generator all shipped
-- **v2 Pending:** Voice notes, accuracy bands (±8-15%), multi-jurisdiction zoning, watermarks
+- **v2 Done:** ✅ Multi-jurisdiction zoning sources
+- **v2 Pending:** Voice notes, accuracy bands (±8-15%), watermarks
 - [Jump to details ↓](#phase-1a-gps-capture--quick-analysis)
 
-**[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ⚠️ v1 COMPLETE, v2 PENDING
+**[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ⚠️ v1 COMPLETE, v2 PENDING (1 item)
 - **Backend:** 100% (v1) | **UI:** 100% (v1)
 - Asset Mix Strategy, Market Positioning, Absorption Forecasting, Feedback Loop
-- **v2 Pending:** Sales Velocity Model, multi-jurisdiction market data sources
+- **v2 Done:** ✅ Multi-jurisdiction market data sources
+- **v2 Pending:** Sales Velocity Model
 - [Jump to details ↓](#phase-1b-agent-advisory-services)
 
 **[Phase 1C: Listing Integrations (Mocks)](#phase-1c-listing-integrations-mocks)** ⚠️ v1 COMPLETE, v2 PENDING
@@ -353,7 +355,7 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - [ ] Voice notes on site capture (audio recording with GPS tagging)
 - [ ] Accuracy bands display (±8-15% by asset class) on quick analysis outputs
 - [ ] Explicit watermark text for Acquisition vs Sales vs Pre-Development phases
-- [ ] Multi-jurisdiction zoning sources (Auckland/NZ, Seattle SDCI, Toronto bylaws, HK OZP)
+- ✅ Multi-jurisdiction zoning sources (Auckland/NZ, Seattle SDCI, Toronto bylaws, HK OZP) — IMPLEMENTED via Expansion Window 1
 
 **UI/UX Deliverables (2025-10-13):**
 - ✅ Marketing Packs page with gradient hero section
@@ -385,7 +387,7 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 **Queued Enhancements (from Updated Spec v2):**
 - [ ] Sales Velocity Model advisory tool (demand vs absorption, inventory, market benchmarks)
-- [ ] Multi-jurisdiction market data sources (NZ Stats, Toronto TRREB/MLS, Seattle King County, HK RVD)
+- ✅ Multi-jurisdiction market data sources (NZ Stats, Toronto TRREB/MLS, Seattle King County, HK RVD) — IMPLEMENTED via jurisdictions.json
 
 **UI/UX Deliverables (2025-10-13):**
 - ✅ Advisory Services page with Apple minimalist design
