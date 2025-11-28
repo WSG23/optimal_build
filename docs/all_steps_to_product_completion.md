@@ -163,7 +163,47 @@ _No active tasks. Pull from the Ready queue below._
 
 ### 📋 Ready (Queued - Do After Active)
 
-_No items in Ready queue. Phase 2C hardening completed._
+**Updated Spec Integration (32 New Features from features.md v2):**
+
+**Agent Enhancements (Phase 1 additions):**
+- [ ] Voice notes on site capture (add to Phase 1A GPS capture)
+- [ ] Accuracy bands display (±8-15% by asset class) on quick analysis
+- [ ] Sales Velocity Model advisory tool (add to Phase 1B)
+- [ ] Expanded listing portals: Zillow, LoopNet, Realtor.com, RealEstate.co.nz, HK portals (Phase 1C)
+- [ ] Expanded CRM integrations: Salesforce, HubSpot, BoomTown, kvCORE (Phase 1C)
+- [ ] Explicit watermark text for Acquisition vs Sales phases (enhance Phase 1A marketing packs)
+
+**Developer Enhancements (Phase 2 additions):**
+- [ ] Global Engineering Defaults (structural grids, core sizes, MEP allowances by jurisdiction)
+- [ ] GFA→NIA accuracy bands (±5-12% display)
+- [ ] Multi-jurisdiction financing structures (SG LTV/ABSD, NZ LVR, US DSCR, Toronto CMHC, HK IO)
+- [ ] ARGUS-Compatible Export (6 CSV spec: Rent Roll, Leasing, OpEx, CapEx, Financing, 120-month Cashflow)
+- [ ] Engineering Layers visualization (structural grid, MEP trunks, plenum, civil, façade)
+- [ ] Clash & Impact Board (lightweight clash detection, area/cost impact bands)
+- [ ] Sign-Off Workflow documentation (Engineers propose → Architects approve → Developer exports)
+- [ ] Document/Data Room Integrations (Box, Dropbox, Google Drive, SharePoint)
+- [ ] Scenario lineage with export hashes (enhance audit trail)
+
+**Architect Enhancements (Phase 3 additions):**
+- [ ] Non-Destructive Overlays (AI suggestions as visual hints only)
+- [ ] Sign-Off Gateway (architect unlocks permit submissions)
+- [ ] Multi-jurisdiction building codes (NZBC, Seattle SDCI, Toronto OBC, HK BD)
+- [ ] Authority Package Build formats (CORENET, ACCELA, HK e-portal)
+- [ ] Audit Attribution (every compliance action tied to architect identity)
+
+**Engineer Enhancements (Phase 4 additions):**
+- [ ] Parametric reserves (discipline-specific reserves updating feasibility)
+- [ ] Clash & Coordination panel (clash detection, impact assessment, coordination log)
+- [ ] ROI / Value Panel (m² saved, clashes prevented, redesign costs avoided)
+- [ ] Digital PE endorsement
+- [ ] Multi-jurisdiction engineering codes (NZ seismic, Seattle IBC, Toronto OBC, HK Fire/BD)
+
+**New Cross-Cutting Systems:**
+- [ ] Verification & Transparency Suite - Option 1: Excel/CSV Export
+- [ ] Verification & Transparency Suite - Option 2: "Show My Math" Panel
+- [ ] Verification & Transparency Suite - Option 3: Verifiable Audit Trail with export hashes
+- [ ] Global Accuracy System (accuracy bands by asset type + dynamic improvement by phase)
+- [ ] Confidence labels on all main outputs
 
 ---
 
@@ -310,6 +350,12 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ✅ PDF download endpoint with absolute URLs
 - ✅ Documentation & demo scripts
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Voice notes on site capture (audio recording with GPS tagging)
+- [ ] Accuracy bands display (±8-15% by asset class) on quick analysis outputs
+- [ ] Explicit watermark text for Acquisition vs Sales vs Pre-Development phases
+- [ ] Multi-jurisdiction zoning sources (Auckland/NZ, Seattle SDCI, Toronto bylaws, HK OZP)
+
 **UI/UX Deliverables (2025-10-13):**
 - ✅ Marketing Packs page with gradient hero section
 - ✅ Interactive pack type selector (card-based with icons)
@@ -337,6 +383,10 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ✅ Market Positioning calculator (pricing, tenant mix)
 - ✅ Absorption Forecasting engine (velocity predictions)
 - ✅ Buyer/Tenant Feedback Loop system
+
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Sales Velocity Model advisory tool (demand vs absorption, inventory, market benchmarks)
+- [ ] Multi-jurisdiction market data sources (NZ Stats, Toronto TRREB/MLS, Seattle King County, HK RVD)
 
 **UI/UX Deliverables (2025-10-13):**
 - ✅ Advisory Services page with Apple minimalist design
@@ -413,6 +463,10 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ⏭️ Real EdgeProp OAuth (requires API credentials)
 - ⏭️ Real Zoho OAuth (requires API credentials)
 - ⏭️ Marketing Automation with watermarking
+
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Expanded listing portals: Zillow, LoopNet, Realtor.com, RealEstate.co.nz, HK portals
+- [ ] Expanded CRM integrations: Salesforce, HubSpot, BoomTown, kvCORE
 
 **Technical Requirements:**
 - OAuth integration for each platform
@@ -730,6 +784,12 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
   - Mixed-use (complex coordination)
 - Heritage constraint integration
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Global Engineering Defaults (structural grids, core sizes, MEP allowances by jurisdiction)
+- [ ] GFA→NIA accuracy bands (±5-12% display with confidence labels)
+- [ ] Engineering Layers visualization (structural grid, MEP trunks/risers, plenum depth, civil, façade)
+- [ ] Clash & Impact Board (lightweight clash detection, area/cost impact bands ±%)
+
 **Technical Complexity:**
 - Asset-specific calculators for each property type
 - Constraint engines (zoning, heritage, technical)
@@ -922,6 +982,13 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
   - Refinancing strategies
 - Advanced analytics (IRR, MOIC, DSCR, NPV)
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Multi-jurisdiction financing structures (SG LTV/ABSD, NZ LVR/CCCFA, US DSCR, Toronto CMHC, HK IO-heavy)
+- [ ] ARGUS-Compatible Export (6 CSVs: Rent Roll, Leasing, OpEx, CapEx, Financing, 120-month Cashflow)
+- [ ] Scenario lineage with export hashes (hash-versioned scenario chains for audit trail)
+- [ ] Capital Raise Pack spec (Teaser, IM, Financial Model, ARGUS CSV, sensitivity PDF, exit assumptions, compliance)
+- [ ] Document/Data Room Integrations (Box, Dropbox, Google Drive, SharePoint)
+
 **What Exists:**
 - ✅ NPV/IRR backend calculations with persisted `FinResult` metadata
 - ✅ Capital stack cards with tranche metadata (rate/fees/reserve/amortisation/capitalisation flags) plus loan-to-cost + weighted debt summaries
@@ -1034,6 +1101,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Multi-disciplinary approval workflows
 - Progress coordination across teams
 - Stakeholder management
+
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Sign-Off Workflow documentation (Engineers propose → Architects approve → Developer exports)
 
 **Technical Requirements:**
 - Invitation system (roles: Architect, Engineer, etc.)
@@ -1425,6 +1495,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Renovation/heritage workflow
 - Multi-use coordination
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Non-Destructive Overlays (AI suggestions appear as visual hints only, never overwrite architect geometry)
+
 **Technical Requirements:**
 - IFC/DWG/RVT import/export (existing)
 - Plugin development for each CAD platform
@@ -1449,6 +1522,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Asset-specific regulatory requirements (5 types)
 - Height restriction management (4 types)
 - Change of use compliance
+
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Multi-jurisdiction building codes (NZBC, Seattle SDCI, Toronto OBC, HK BD)
 
 **What Exists:**
 - ✅ Basic compliance checking engine
@@ -1558,6 +1634,10 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Complex approval orchestration
 - Amendment & revision control
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Sign-Off Gateway (architect unlocks permit submissions only after approval)
+- [ ] Authority Package Build formats (CORENET, ACCELA, HK e-portal)
+
 **Dependencies:**
 - Phase 2F (Regulatory Navigation)
 - Phase 3D (Design Rationale)
@@ -1612,6 +1692,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Professional insurance coordination
 - Comprehensive audit protection
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Audit Attribution (every compliance action tied to architect identity with timestamps)
+
 **Technical Requirements:**
 - QA checklist system by asset type
 - Shop drawing review workflow
@@ -1655,6 +1738,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Specialty areas (Civil, Structural, MEP, Façade, Fire/Life Safety)
 - Renovation/heritage engineering
 - Multi-asset coordination
+
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Parametric reserves (discipline-specific reserves that update feasibility dynamically)
 
 **Technical Requirements:**
 - Discipline-specific workspace UI
@@ -1710,6 +1796,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Authority coordination (technical submissions)
 - PE certification requirements
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Multi-jurisdiction engineering codes (NZ seismic, Seattle IBC, Toronto OBC, HK Fire/BD)
+
 **Dependencies:**
 - Phase 3B (Compliance Command)
 - Phase 3F (Authority Submissions)
@@ -1733,6 +1822,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Heritage engineering coordination
 - Construction support
 
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Clash & Coordination panel (clash detection, impact assessment, coordination log)
+
 **Dependencies:**
 - Phase 2E (Team Coordination)
 - Phase 3E (Architect Coordination)
@@ -1755,6 +1847,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Singapore PE endorsement (audit stamped)
 - Technical documentation
 - Construction phase certification
+
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] Digital PE endorsement (cryptographic signature with timestamp)
 
 **Technical Requirements:**
 - PE credential verification
@@ -1780,6 +1875,9 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Heritage technical documentation
 - Construction documentation (as-built)
 - Operations & maintenance packages
+
+**Queued Enhancements (from Updated Spec v2):**
+- [ ] ROI / Value Panel (m² saved, clashes prevented, redesign costs avoided)
 
 **Technical Requirements:**
 - Template system by asset type
@@ -2065,6 +2163,87 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ✅ Security audit passed
 - ✅ Performance SLAs met
 - ✅ Ready for public launch
+
+---
+
+## 📋 CROSS-CUTTING SYSTEMS (New from Updated Spec v2)
+
+These systems span multiple phases and should be implemented incrementally alongside Phase 2-6 work.
+
+### Verification & Transparency Suite ❌ NOT STARTED
+**Status:** 0% - Critical for auditor/investor confidence
+
+**Requirements (from Updated Spec v2):**
+Three implementation options (can implement all):
+
+**Option 1: Excel/CSV Export**
+- Export all assumptions, formulas, and rule pack versions
+- Downloadable, offline-verifiable format
+- Includes jurisdiction-specific rule references
+
+**Option 2: "Show My Math" Panel**
+- Human-readable formulas with plain-English explanations
+- Attribution to source data (market rents, zoning rules, etc.)
+- Dependency chains showing calculation flow
+
+**Option 3: Verifiable Audit Trail**
+- Timeline of all scenario changes
+- Role-tagged events (who changed what)
+- Version ID and export hashes for tamper detection
+- Hash-chained entries for immutability proof
+
+**Technical Requirements:**
+- Formula extraction and documentation system
+- Audit log enhancement with hash chaining
+- Export packaging with integrity verification
+- UI panels for formula inspection
+
+**Acceptance Criteria:**
+- Auditors can verify any calculation independently
+- All outputs show clear provenance
+- Export hashes allow tamper detection
+- Dependency chains are human-readable
+
+**Estimated Effort:** 6-8 weeks (incremental across phases)
+
+---
+
+### Global Accuracy System ❌ NOT STARTED
+**Status:** 0% - Critical for user trust and professional liability
+
+**Requirements (from Updated Spec v2):**
+
+**Pre-Acquisition Accuracy Bands by Asset Type:**
+| Asset Type | Accuracy Band |
+|---|---|
+| Mid-Rise Residential | ±8-10% |
+| High-Rise Residential | ±10-12% |
+| Office | ±5-8% |
+| Industrial | ±5% |
+| Retail | ±8-12% |
+| Mixed-Use | ±10-15% |
+
+**Dynamic Accuracy Improvement by Phase:**
+| Phase | Accuracy | Description |
+|---|---|---|
+| Phase 1 (Quick Analysis) | ±5-12% | Desktop feasibility |
+| Phase 2 (Detailed Feasibility) | ±3-5% | Full financial model |
+| Phase 3 (Architect Sign-Off) | ±1-3% | Design-confirmed |
+| Phase 4 (Engineer Sign-Off) | Exact | Construction-ready |
+
+**Technical Requirements:**
+- Confidence labels on all main outputs (GFA, NIA, revenue, cost)
+- Accuracy band calculation engine based on asset type + phase
+- UI badges showing current accuracy tier
+- Warning when accuracy band exceeds thresholds
+
+**Acceptance Criteria:**
+- Every estimate displays its accuracy band
+- Accuracy improves as project progresses through phases
+- Users understand confidence levels at each stage
+- Professional liability disclaimers tied to accuracy bands
+
+**Estimated Effort:** 4-6 weeks (incremental across phases)
 
 ---
 
