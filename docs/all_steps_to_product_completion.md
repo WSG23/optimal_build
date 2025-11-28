@@ -42,11 +42,10 @@
 
 > **Note (2025-11-29):** The Updated Spec v2 added 32 new features. Phases below show v1 (original scope) as complete, but v2 enhancements are documented and queued for implementation.
 
-**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ⚠️ v1 COMPLETE, v2 PENDING (2 items)
-- **Backend:** 100% (v1) | **UI:** 100% (v1)
+**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ✅ COMPLETE
+- **Backend:** 100% | **UI:** 100%
 - GPS Capture, Quick Analysis, Marketing Pack Generator all shipped
-- **v2 Done:** ✅ Multi-jurisdiction zoning sources, ✅ Accuracy bands display (±8-15%)
-- **v2 Pending:** Voice notes, watermarks
+- **v2 Done:** ✅ Multi-jurisdiction zoning sources, ✅ Accuracy bands display (±8-15%), ✅ Voice notes on site capture, ✅ Watermarks on marketing pack images
 - [Jump to details ↓](#phase-1a-gps-capture--quick-analysis)
 
 **[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ⚠️ v1 COMPLETE, v2 PENDING (1 item)
@@ -338,8 +337,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 **Goal:** Complete all 6 Agent tools so agents can work entire development lifecycle
 
-### Phase 1A: GPS Capture & Quick Analysis ⚠️ v1 COMPLETE, v2 PENDING (2 items)
-**Status:** Original scope 100% complete. 2 of 4 v2 features implemented (Multi-jurisdiction zoning, Accuracy bands display).
+### Phase 1A: GPS Capture & Quick Analysis ✅ COMPLETE
+**Status:** All features complete including v2 enhancements (Multi-jurisdiction zoning, Accuracy bands, Voice notes, Watermarks).
 
 **Backend Deliverables:**
 - ✅ Mobile GPS Logger with Singapore coordinate capture
@@ -350,11 +349,13 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ✅ Marketing pack generation (4 types: Universal, Investment, Sales, Lease)
 - ✅ PDF download endpoint with absolute URLs
 - ✅ Documentation & demo scripts
+- ✅ Voice notes on site capture (audio recording with GPS tagging) — **IMPLEMENTED 2025-11-29**
+- ✅ Image watermarks for marketing materials (PIL-based, diagonal + corner) — **IMPLEMENTED 2025-11-29**
 
-**Queued Enhancements (from Updated Spec v2):**
-- [ ] Voice notes on site capture (audio recording with GPS tagging)
+**v2 Enhancements (all complete):**
+- ✅ Voice notes on site capture (audio recording with GPS tagging) — **IMPLEMENTED 2025-11-29**
 - ✅ Accuracy bands display (±8-15% by asset class) on quick analysis outputs — **IMPLEMENTED 2025-11-29**
-- [ ] Explicit watermark text for Acquisition vs Sales vs Pre-Development phases
+- ✅ Watermarks on marketing pack images (diagonal + corner watermarks for feasibility materials) — **IMPLEMENTED 2025-11-29**
 - ✅ Multi-jurisdiction zoning sources (Auckland/NZ, Seattle SDCI, Toronto bylaws, HK OZP) — IMPLEMENTED via Expansion Window 1
 
 **UI/UX Deliverables (2025-10-13):**

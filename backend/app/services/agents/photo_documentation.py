@@ -377,18 +377,32 @@ class PhotoDocumentationManager:
         return tags
 
     async def _generate_image_versions(
-        self, image: Image, photo_id: UUID
+        self, image: Image, photo_id: UUID, apply_watermark: bool = True
     ) -> Dict[str, BytesIO]:
-        """Generate multiple versions of the image."""
+        """Generate multiple versions of the image.
+
+        Args:
+            image: PIL Image object
+            photo_id: UUID of the photo
+            apply_watermark: If True, generate watermarked versions for marketing
+
+        Returns:
+            Dictionary of version name to BytesIO buffer
+        """
+        from app.services.agents.image_watermark import (
+            apply_watermark as add_watermark,
+            apply_diagonal_watermark,
+        )
+
         versions = {}
 
-        # Original
+        # Original (no watermark - for internal use)
         original_buffer = BytesIO()
         image.save(original_buffer, format="JPEG", quality=95)
         original_buffer.seek(0)
         versions["original"] = original_buffer
 
-        # Thumbnail (300x300)
+        # Thumbnail (300x300) - no watermark, too small
         thumbnail = image.copy()
         thumbnail.thumbnail((300, 300), Image.Resampling.LANCZOS)
         thumb_buffer = BytesIO()
@@ -411,6 +425,24 @@ class PhotoDocumentationManager:
         web.save(web_buffer, format="JPEG", quality=85, optimize=True)
         web_buffer.seek(0)
         versions["web"] = web_buffer
+
+        # Generate watermarked versions for marketing materials
+        if apply_watermark:
+            # Watermarked web version (corner watermark)
+            web_watermarked_bytes = add_watermark(
+                web_buffer.getvalue(),
+                position="bottom-right",
+            )
+            versions["web_watermarked"] = BytesIO(web_watermarked_bytes)
+
+            # Watermarked medium version with diagonal pattern (for marketing pack)
+            medium_buffer.seek(0)
+            marketing_watermarked_bytes = apply_diagonal_watermark(
+                medium_buffer.getvalue(),
+                opacity=80,  # More subtle for marketing
+                repeat=True,
+            )
+            versions["marketing"] = BytesIO(marketing_watermarked_bytes)
 
         return versions
 
@@ -521,6 +553,9 @@ class PhotoDocumentationManager:
                     "thumbnail": f"{settings.S3_ENDPOINT}/{settings.S3_BUCKET}/{base_key}/thumbnail.jpg",
                     "medium": f"{settings.S3_ENDPOINT}/{settings.S3_BUCKET}/{base_key}/medium.jpg",
                     "web": f"{settings.S3_ENDPOINT}/{settings.S3_BUCKET}/{base_key}/web.jpg",
+                    # Watermarked versions for marketing materials
+                    "web_watermarked": f"{settings.S3_ENDPOINT}/{settings.S3_BUCKET}/{base_key}/web_watermarked.jpg",
+                    "marketing": f"{settings.S3_ENDPOINT}/{settings.S3_BUCKET}/{base_key}/marketing.jpg",
                 }
 
             if photo.capture_location:

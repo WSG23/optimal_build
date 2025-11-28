@@ -407,3 +407,48 @@ class DevelopmentAnalysis(BaseModel):
         Index("idx_analysis_property_date", "property_id", "analysis_date"),
         Index("idx_analysis_type", "analysis_type"),
     )
+
+
+class VoiceNote(BaseModel):
+    """Voice notes recorded during site visits for property documentation."""
+
+    __tablename__ = "property_voice_notes"
+
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+
+    # Property Reference
+    property_id = Column(UUID(), ForeignKey("properties.id"), nullable=False)
+    property = relationship("Property", backref="voice_notes")
+
+    # Optional association with a specific photo
+    photo_id = Column(UUID(), ForeignKey("property_photos.id"), nullable=True)
+    photo = relationship("PropertyPhoto", backref="voice_notes")
+
+    # Audio File Details
+    storage_key = Column(String(500), nullable=False)  # S3/MinIO key
+    filename = Column(String(255))
+    mime_type = Column(String(50), default="audio/webm")
+    file_size_bytes = Column(Integer)
+    duration_seconds = Column(SQLDecimal(8, 2))  # Duration in seconds
+
+    # Recording Metadata
+    capture_date = Column(DateTime)
+    capture_location = Column(Geometry("POINT", srid=4326))
+
+    # Transcription (optional, for future AI transcription)
+    transcript = Column(String)  # Text transcript of the audio
+    transcript_confidence = Column(SQLDecimal(3, 2))  # 0-1 confidence score
+    transcript_language = Column(String(10), default="en")
+
+    # User Notes
+    title = Column(String(255))  # Optional title for the note
+    tags = Column(JSON)  # User-added tags
+
+    # Audio Metadata (from browser or device)
+    audio_metadata = Column(JSON)  # Sample rate, channels, codec info
+
+    __table_args__ = (
+        Index("idx_voice_note_property", "property_id"),
+        Index("idx_voice_note_photo", "photo_id"),
+        Index("idx_voice_note_capture_date", "capture_date"),
+    )

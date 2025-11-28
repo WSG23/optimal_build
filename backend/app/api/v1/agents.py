@@ -28,6 +28,7 @@ from app.services.agents.gps_property_logger import (
     GPSPropertyLogger,
 )
 from app.services.agents.photo_documentation import PhotoDocumentationManager
+from app.services.agents.voice_note_service import VoiceNoteService
 from app.services.agents.ura_integration import ura_service
 from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
@@ -294,6 +295,42 @@ class PhotoUploadResponse(BaseModel):
     capture_timestamp: datetime
     auto_tags: list[str]
     public_url: str
+
+
+class VoiceNoteUploadRequest(BaseModel):
+    """Request model for voice note upload metadata."""
+
+    duration_seconds: float | None = Field(
+        None, description="Duration of the recording in seconds"
+    )
+    latitude: float | None = Field(None, ge=-90, le=90)
+    longitude: float | None = Field(None, ge=-180, le=180)
+    title: str | None = Field(None, max_length=255)
+    tags: list[str] | None = None
+    photo_id: str | None = Field(None, description="Optional associated photo ID")
+
+
+class VoiceNoteResponse(BaseModel):
+    """Response model for voice note."""
+
+    voice_note_id: str
+    property_id: str
+    storage_key: str
+    location: dict[str, float] | None = None
+    capture_timestamp: datetime
+    duration_seconds: float | None = None
+    file_size: int
+    title: str | None = None
+    photo_id: str | None = None
+    public_url: str
+
+
+class VoiceNoteUpdateRequest(BaseModel):
+    """Request model for updating voice note metadata."""
+
+    title: str | None = Field(None, max_length=255)
+    tags: list[str] | None = None
+    transcript: str | None = None
 
 
 class MarketSyncRequest(BaseModel):
@@ -965,6 +1002,208 @@ async def get_property_photos(
 
         return photos
 
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+# ============================================================================
+# Voice Note Endpoints
+# ============================================================================
+
+
+@router.post("/properties/{property_id}/voice-notes")
+async def upload_voice_note(
+    property_id: str,
+    file: UploadFile = File(...),
+    duration_seconds: float | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    title: str | None = None,
+    tags: str | None = None,
+    photo_id: str | None = None,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> VoiceNoteResponse:
+    """
+    Upload a voice note recording for a property.
+
+    Supported audio formats: webm, mp3, wav, ogg, m4a, mp4.
+    Voice notes can optionally be associated with a photo for context.
+    """
+    if not file.content_type or not file.content_type.startswith("audio/"):
+        raise HTTPException(status_code=400, detail="File must be an audio file")
+
+    # Read file data
+    audio_data = await file.read()
+
+    # Prepare location if provided
+    location = None
+    if latitude is not None and longitude is not None:
+        location = {"latitude": latitude, "longitude": longitude}
+
+    # Parse tags if provided
+    tag_list = tags.split(",") if tags else None
+
+    voice_note_service = VoiceNoteService()
+
+    try:
+        metadata = await voice_note_service.process_voice_note(
+            audio_data=audio_data,
+            property_id=property_id,
+            filename=file.filename or "voice_note.webm",
+            mime_type=file.content_type,
+            session=db,
+            duration_seconds=duration_seconds,
+            location=location,
+            title=title,
+            tags=tag_list,
+            photo_id=photo_id,
+        )
+
+        result = metadata.to_dict()
+
+        return VoiceNoteResponse(
+            voice_note_id=result["voice_note_id"],
+            property_id=result["property_id"],
+            storage_key=result["storage_key"],
+            location=result.get("location"),
+            capture_timestamp=datetime.fromisoformat(result["capture_timestamp"]),
+            duration_seconds=result.get("duration_seconds"),
+            file_size=result["file_size"],
+            title=result.get("title"),
+            photo_id=result.get("photo_id"),
+            public_url=result["public_url"],
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/properties/{property_id}/voice-notes")
+async def get_property_voice_notes(
+    property_id: str,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> list[dict[str, Any]]:
+    """Get all voice notes for a property."""
+    voice_note_service = VoiceNoteService()
+
+    try:
+        voice_notes = await voice_note_service.get_property_voice_notes(
+            property_id=property_id, session=db, include_urls=True
+        )
+
+        return voice_notes
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/properties/{property_id}/voice-notes/{voice_note_id}")
+async def get_voice_note(
+    property_id: str,
+    voice_note_id: str,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> dict[str, Any]:
+    """Get a specific voice note by ID."""
+    voice_note_service = VoiceNoteService()
+
+    try:
+        voice_note = await voice_note_service.get_voice_note(
+            voice_note_id=voice_note_id, session=db
+        )
+
+        if not voice_note:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        # Verify it belongs to the property
+        if voice_note["property_id"] != property_id:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        return voice_note
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.patch("/properties/{property_id}/voice-notes/{voice_note_id}")
+async def update_voice_note(
+    property_id: str,
+    voice_note_id: str,
+    request: VoiceNoteUpdateRequest,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> dict[str, Any]:
+    """Update voice note metadata (title, tags, or transcript)."""
+    voice_note_service = VoiceNoteService()
+
+    try:
+        # First verify the voice note exists and belongs to this property
+        existing = await voice_note_service.get_voice_note(
+            voice_note_id=voice_note_id, session=db
+        )
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        if existing["property_id"] != property_id:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        updated = await voice_note_service.update_voice_note(
+            voice_note_id=voice_note_id,
+            session=db,
+            title=request.title,
+            tags=request.tags,
+            transcript=request.transcript,
+        )
+
+        if not updated:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        return updated
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.delete("/properties/{property_id}/voice-notes/{voice_note_id}")
+async def delete_voice_note(
+    property_id: str,
+    voice_note_id: str,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> dict[str, str]:
+    """Delete a voice note and its audio file."""
+    voice_note_service = VoiceNoteService()
+
+    try:
+        # First verify the voice note exists and belongs to this property
+        existing = await voice_note_service.get_voice_note(
+            voice_note_id=voice_note_id, session=db
+        )
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        if existing["property_id"] != property_id:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        success = await voice_note_service.delete_voice_note(
+            voice_note_id=voice_note_id, session=db
+        )
+
+        if not success:
+            raise HTTPException(status_code=404, detail="Voice note not found")
+
+        return {"status": "deleted", "voice_note_id": voice_note_id}
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

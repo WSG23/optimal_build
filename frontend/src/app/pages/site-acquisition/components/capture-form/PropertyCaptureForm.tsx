@@ -13,6 +13,7 @@
 import type React from 'react'
 import type { DevelopmentScenario, SiteAcquisitionResult } from '../../../../../api/siteAcquisition'
 import { SCENARIO_OPTIONS, JURISDICTION_OPTIONS } from '../../constants'
+import { VoiceNoteRecorder } from './VoiceNoteRecorder'
 
 // ============================================================================
 // Types
@@ -480,6 +481,14 @@ export function PropertyCaptureForm({
           </div>
         )}
       </form>
+
+      {/* Voice Note Recorder */}
+      <VoiceNoteRecorder
+        propertyId={capturedProperty?.propertyId ?? null}
+        latitude={latitude ? parseFloat(latitude) : undefined}
+        longitude={longitude ? parseFloat(longitude) : undefined}
+        disabled={isCapturing}
+      />
     </section>
   )
 }
