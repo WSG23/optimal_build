@@ -20,7 +20,7 @@
 > This summary is a **read-only dashboard** derived from the detailed phase sections below.
 > **To update progress:** Scroll to the detailed phase section and update the "Status:" line there.
 >
-> **Last Updated:** 2025-10-23 (reflects status from detailed sections)
+> **Last Updated:** 2025-11-29 (reflects v1/v2 status distinction from Updated Spec integration)
 >
 > **🤖 AI AGENTS:** Read [ai-agents/next_steps.md](ai-agents/next_steps.md) for guidance on choosing your next task.
 
@@ -38,57 +38,53 @@
 
 ---
 
-### ✅ Complete Phases
+### ⚠️ v1 Complete, v2 Enhancements Pending
 
-**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ✅ COMPLETE
-- **Backend:** 100% | **UI:** 100%
-- **Status source:** Detailed section confirms "✅ COMPLETE"
+> **Note (2025-11-29):** The Updated Spec v2 added 32 new features. Phases below show v1 (original scope) as complete, but v2 enhancements are documented and queued for implementation.
+
+**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ⚠️ v1 COMPLETE, v2 PENDING
+- **Backend:** 100% (v1) | **UI:** 100% (v1)
 - GPS Capture, Quick Analysis, Marketing Pack Generator all shipped
+- **v2 Pending:** Voice notes, accuracy bands (±8-15%), multi-jurisdiction zoning, watermarks
 - [Jump to details ↓](#phase-1a-gps-capture--quick-analysis)
 
-**[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ✅ COMPLETE
-- **Backend:** 100% | **UI:** 100%
-- **Status source:** Detailed section confirms "✅ COMPLETE"
+**[Phase 1B: Agent Advisory Services](#phase-1b-agent-advisory-services)** ⚠️ v1 COMPLETE, v2 PENDING
+- **Backend:** 100% (v1) | **UI:** 100% (v1)
 - Asset Mix Strategy, Market Positioning, Absorption Forecasting, Feedback Loop
+- **v2 Pending:** Sales Velocity Model, multi-jurisdiction market data sources
 - [Jump to details ↓](#phase-1b-agent-advisory-services)
 
-**[Phase 1C: Listing Integrations (Mocks)](#phase-1c-listing-integrations-mocks)** ✅ COMPLETE
-- **Backend:** 100% | **UI:** 100%
-- **Status source:** Detailed section confirms "✅ COMPLETE (Mocks)"
+**[Phase 1C: Listing Integrations (Mocks)](#phase-1c-listing-integrations-mocks)** ⚠️ v1 COMPLETE, v2 PENDING
+- **Backend:** 100% (v1) | **UI:** 100% (v1)
 - PropertyGuru mock, EdgeProp mock, Zoho CRM mock, Token encryption
-- Note: Real OAuth pending API credentials (future work, not blocking)
+- **v2 Pending:** Zillow, LoopNet, Realtor.com, RealEstate.co.nz, HK portals, Salesforce, HubSpot, BoomTown, kvCORE
 - [Jump to details ↓](#phase-1c-listing-integrations-mocks)
 
 **[Phase 2A: Universal GPS Site Acquisition](#phase-2a-universal-gps-site-acquisition)** ✅ COMPLETE
 - **Backend:** 100% | **UI:** 100%
-- **Status source:** Detailed section confirms "✅ COMPLETE"
 - Site Acquisition workspace, due diligence checklists, manual inspection capture
 - [Jump to details ↓](#phase-2a-universal-gps-site-acquisition)
 
-**[Phase 2C: Complete Financial Control & Modeling](#phase-2c-complete-financial-control--modeling)** ✅ COMPLETE
-- **Backend:** 100% | **UI:** 100%
-- **Status source:** [Line 523](#phase-2c-complete-financial-control--modeling) says "✅ BACKEND / UI VERIFIED"
-- **Completed:** Asset finance engine ✅, Construction loan interest ✅, Finance workspace ✅, Smoke tests verified ✅
-- Smoke artifacts: `artifacts/smokes_phase2c/` (2025-10-28)
+**[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ⚠️ v1 95% COMPLETE, v2 PENDING
+- **Backend:** 95% (v1) | **UI:** 95% (v1)
+- Asset optimizer, heritage overlays, finance integration, Level 1 3D
+- **v2 Pending:** Global Engineering Defaults, GFA→NIA accuracy bands, Engineering Layers, Clash & Impact Board
+- [Jump to details ↓](#phase-2b-asset-specific-feasibility)
+
+**[Phase 2C: Complete Financial Control & Modeling](#phase-2c-complete-financial-control--modeling)** ⚠️ v1 COMPLETE, v2 PENDING
+- **Backend:** 100% (v1) | **UI:** 100% (v1)
+- Asset finance engine, Construction loan interest, Finance workspace, Smoke tests verified
+- **v2 Pending:** ARGUS export (6 CSVs), multi-jurisdiction financing, scenario lineage, Capital Raise Pack, Data Room integrations
 - [Jump to details ↓](#phase-2c-complete-financial-control--modeling)
 
 ---
 
 ### ⏸️ In Progress Phases
 
-**[Phase 1D: Business Performance Management](#phase-1d-business-performance-management)** ⚠️ IN PROGRESS
-- **Backend:** 100% | **UI:** 20%
-- **Status source:** [Line 268](#phase-1d-business-performance-management) says "⚠️ IN PROGRESS - 60%"
-- **Completed:** Deal Pipeline API ✅, Commission ledger ✅, ROI Analytics backend ✅, Performance Snapshots ✅
-- **Missing:** Pipeline Kanban UI, Deal insights panel, Analytics panel, ROI panel, Manual UI testing (0/8 checks done)
-- [Jump to details ↓](#phase-1d-business-performance-management)
-
-**[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ✅ COMPLETE
+**[Phase 1D: Business Performance Management](#phase-1d-business-performance-management)** ✅ v1 COMPLETE
 - **Backend:** 100% | **UI:** 100%
-- **Status source:** [Line 703](#phase-2b-asset-specific-feasibility) says "✅ 95% COMPLETE" (housekeeping tasks remain)
-- **Completed:** Asset optimizer ✅, Heritage overlay backend ✅, Preview job infrastructure ✅, 3D preview UI renderer (Preview3DViewer.tsx 484 lines with Three.js/GLTFLoader) ✅
-- **Remaining:** NHB dataset refresh automation (housekeeping, not blocking)
-- [Jump to details ↓](#phase-2b-asset-specific-feasibility)
+- Deal Pipeline UI, insights, analytics, and ROI panels shipped (November 2025)
+- [Jump to details ↓](#phase-1d-business-performance-management)
 
 ---
 
@@ -336,12 +332,12 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-## 📋 PHASE 1: AGENT FOUNDATION (100% Complete) ✅
+## 📋 PHASE 1: AGENT FOUNDATION (v1 Complete, v2 Enhancements Pending)
 
 **Goal:** Complete all 6 Agent tools so agents can work entire development lifecycle
 
-### Phase 1A: GPS Capture & Quick Analysis ✅ COMPLETE
-**Status:** 100% - Backend + UI Complete, Ready for validation
+### Phase 1A: GPS Capture & Quick Analysis ⚠️ v1 COMPLETE, v2 PENDING
+**Status:** Original scope 100% complete. New features from Updated Spec v2 are documented but NOT implemented.
 
 **Backend Deliverables:**
 - ✅ Mobile GPS Logger with Singapore coordinate capture
@@ -378,8 +374,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-### Phase 1B: Development Advisory Services ✅ COMPLETE
-**Status:** 100% - Backend + UI Complete (2025-10-13)
+### Phase 1B: Development Advisory Services ⚠️ v1 COMPLETE, v2 PENDING
+**Status:** Original scope 100% complete. New features from Updated Spec v2 are documented but NOT implemented.
 
 **Backend Deliverables (from FEATURES.md lines 49-54):**
 - ✅ Asset Mix Strategy tool (mixed-use optimizer)
@@ -422,8 +418,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-### Phase 1C: Listing Integrations ✅ COMPLETE (Mocks)
-**Status:** 100% - Backend + UI Complete (2025-10-13)
+### Phase 1C: Listing Integrations ⚠️ v1 COMPLETE (Mocks), v2 PENDING
+**Status:** Original scope 100% complete (mock integrations). New features from Updated Spec v2 are documented but NOT implemented.
 
 **Backend Deliverables (from FEATURES.md lines 56-61):**
 - ✅ PropertyGuru mock integration with token lifecycle
@@ -773,8 +769,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-### Phase 2B: Asset-Specific Feasibility ✅ 95% COMPLETE
-**Status:** Core asset optimizer, heritage overlays, finance integration, and Level 1 3D visualization (simple box geometry) delivered. Level 2 Detail (octagonal footprints, setbacks, floor lines) deferred as non-blocking for Phase 2D.
+### Phase 2B: Asset-Specific Feasibility ⚠️ v1 95% COMPLETE, v2 PENDING
+**Status:** Original scope 95% complete (core asset optimizer, heritage overlays, finance integration, Level 1 3D). New features from Updated Spec v2 are documented but NOT implemented.
 
 **Requirements (from FEATURES.md lines 98-108):**
 - Multi-use development optimizer
@@ -963,8 +959,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-### Phase 2C: Complete Financial Control & Modeling ✅ BACKEND / UI VERIFIED
-**Status:** Finance workspace now supports captured-project selection + privacy banners, scenario promotion/refresh, capital stack and tranche metadata cards, construction-loan editing, per-asset breakdown panels, sensitivity reruns (CSV/JSON export + summaries), and job timelines. Backend persists `fin_asset_breakdowns`, enforces `_ensure_project_owner`, and mirrors responses from canonical ORM rows. Advanced analytics (MOIC/equity multiple, DSCR heat map buckets, cash flow summaries) now surface via the new `analytics_overview` result and UI panel, and the finance export endpoint produces a ZIP bundle (scenario CSV + JSON + tranche metadata + sensitivity results). Remaining backlog focuses on async sensitivity batching/caching hardening (see [Phase 2C Finance Delivery Plan](phase2c_finance_delivery_plan.md)).
+### Phase 2C: Complete Financial Control & Modeling ⚠️ v1 BACKEND/UI VERIFIED, v2 PENDING
+**Status:** Original scope complete (finance workspace, capital stack, sensitivity, exports). New features from Updated Spec v2 (ARGUS export, multi-jurisdiction financing, data room integrations) are documented but NOT implemented.
 
 **Manual QA (2025‑10‑27 @demo-owner@example.com):** ✅ Created “Phase 2C Base Case” scenario from the finance workspace, confirmed asset mix summary (`SGD 123,600` revenue, balanced/moderate mix), construction-loan facility breakdown, and sensitivity tables/CSV export (rent/construction-cost/interest bands match backend payload). Issue encountered: finance run initially failed due to missing `is_private` column mapping—fixed by adding the field to `FinScenario` ORM before re-test.
 
