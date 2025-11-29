@@ -176,6 +176,7 @@ class Settings:
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
     RQ_REDIS_URL: str
+    RATE_LIMIT_STORAGE_URI: str
 
     ODA_LICENSE_KEY: str
 
@@ -247,12 +248,18 @@ class Settings:
         default_celery_broker = _derive_redis_url(redis_base, 0)
         default_celery_backend = _derive_redis_url(redis_base, 1)
         default_rq_url = _derive_redis_url(redis_base, 2)
+        default_rate_limit_storage = (
+            "memory://" if "pytest" in sys.modules else _derive_redis_url(redis_base, 3)
+        )
 
         self.CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", default_celery_broker)
         self.CELERY_RESULT_BACKEND = os.getenv(
             "CELERY_RESULT_BACKEND", default_celery_backend
         )
         self.RQ_REDIS_URL = os.getenv("RQ_REDIS_URL", default_rq_url)
+        self.RATE_LIMIT_STORAGE_URI = os.getenv(
+            "RATE_LIMIT_STORAGE_URI", default_rate_limit_storage
+        )
 
         self.ODA_LICENSE_KEY = os.getenv("ODA_LICENSE_KEY", "")
 
