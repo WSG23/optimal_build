@@ -92,6 +92,7 @@ class PhotoDocumentationManager:
         filename: str,
         session: AsyncSession,
         user_metadata: Optional[Dict[str, str]] = None,
+        phase: Optional[str] = None,
     ) -> PhotoMetadata:
         """
         Process and store a property photo.
@@ -100,9 +101,17 @@ class PhotoDocumentationManager:
         1. Validate the photo format
         2. Extract EXIF data for location and timestamp
         3. Analyze image for site conditions
-        4. Store photo in MinIO/S3
+        4. Store photo in MinIO/S3 with phase-specific watermarks
         5. Create database record
         6. Return photo metadata
+
+        Args:
+            photo_data: Raw photo bytes
+            property_id: Property ID
+            filename: Original filename
+            session: Database session
+            user_metadata: Optional user-provided metadata
+            phase: Property phase (acquisition or sales) for watermark text
         """
         try:
             photo_id = uuid4()
@@ -125,8 +134,8 @@ class PhotoDocumentationManager:
             # Analyze image for conditions
             auto_tags = await self._analyze_site_conditions(image)
 
-            # Generate optimized versions
-            versions = await self._generate_image_versions(image, photo_id)
+            # Generate optimized versions with phase-specific watermarks
+            versions = await self._generate_image_versions(image, photo_id, phase=phase)
 
             # Store all versions in S3
             storage_key = await self._store_photo_versions(
@@ -377,7 +386,11 @@ class PhotoDocumentationManager:
         return tags
 
     async def _generate_image_versions(
-        self, image: Image, photo_id: UUID, apply_watermark: bool = True
+        self,
+        image: Image,
+        photo_id: UUID,
+        apply_watermark: bool = True,
+        phase: Optional[str] = None,
     ) -> Dict[str, BytesIO]:
         """Generate multiple versions of the image.
 
@@ -385,6 +398,7 @@ class PhotoDocumentationManager:
             image: PIL Image object
             photo_id: UUID of the photo
             apply_watermark: If True, generate watermarked versions for marketing
+            phase: Property phase (acquisition or sales) for watermark text
 
         Returns:
             Dictionary of version name to BytesIO buffer
@@ -392,7 +406,11 @@ class PhotoDocumentationManager:
         from app.services.agents.image_watermark import (
             apply_watermark as add_watermark,
             apply_diagonal_watermark,
+            get_watermark_text_for_phase,
         )
+
+        # Get phase-specific watermark text
+        watermark_text = get_watermark_text_for_phase(phase)
 
         versions = {}
 
@@ -428,9 +446,10 @@ class PhotoDocumentationManager:
 
         # Generate watermarked versions for marketing materials
         if apply_watermark:
-            # Watermarked web version (corner watermark)
+            # Watermarked web version (corner watermark with phase-specific text)
             web_watermarked_bytes = add_watermark(
                 web_buffer.getvalue(),
+                text=watermark_text,
                 position="bottom-right",
             )
             versions["web_watermarked"] = BytesIO(web_watermarked_bytes)
@@ -439,6 +458,7 @@ class PhotoDocumentationManager:
             medium_buffer.seek(0)
             marketing_watermarked_bytes = apply_diagonal_watermark(
                 medium_buffer.getvalue(),
+                text=watermark_text,
                 opacity=80,  # More subtle for marketing
                 repeat=True,
             )

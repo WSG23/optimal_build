@@ -7,6 +7,7 @@ export interface FeaturePreferences {
   assetOptimization: boolean
   financialSummary: boolean
   heritageContext: boolean
+  photoDocumentation: boolean
 }
 
 export type FeatureEntitlements = FeaturePreferences
@@ -23,6 +24,7 @@ const DEFAULT_PREFERENCES: FeaturePreferences = {
   assetOptimization: false,
   financialSummary: false,
   heritageContext: false,
+  photoDocumentation: false,
 }
 
 const DEFAULT_ENTITLEMENTS_BY_ROLE: Record<UserRole, FeatureEntitlements> = {
@@ -31,12 +33,14 @@ const DEFAULT_ENTITLEMENTS_BY_ROLE: Record<UserRole, FeatureEntitlements> = {
     assetOptimization: false,
     financialSummary: false,
     heritageContext: false,
+    photoDocumentation: false,
   },
   developer: {
     preview3D: true,
     assetOptimization: true,
     financialSummary: true,
     heritageContext: true,
+    photoDocumentation: true,
   },
 }
 
@@ -74,6 +78,10 @@ function loadState(role: UserRole): StoredFeatureState {
           typeof preferences.heritageContext === 'boolean'
             ? preferences.heritageContext
             : defaultsForRole.heritageContext,
+        photoDocumentation:
+          typeof preferences.photoDocumentation === 'boolean'
+            ? preferences.photoDocumentation
+            : defaultsForRole.photoDocumentation,
       },
       entitlements: {
         preview3D:
@@ -92,6 +100,10 @@ function loadState(role: UserRole): StoredFeatureState {
           typeof entitlements.heritageContext === 'boolean'
             ? entitlements.heritageContext
             : defaultsForRole.heritageContext,
+        photoDocumentation:
+          typeof entitlements.photoDocumentation === 'boolean'
+            ? entitlements.photoDocumentation
+            : defaultsForRole.photoDocumentation,
       },
     }
   } catch {
@@ -117,7 +129,8 @@ export function hasAnyDeveloperFeatureEnabled(
     preferences.preview3D ||
     preferences.assetOptimization ||
     preferences.financialSummary ||
-    preferences.heritageContext
+    preferences.heritageContext ||
+    preferences.photoDocumentation
   )
 }
 

@@ -935,6 +935,7 @@ async def upload_property_photo(
     file: UploadFile = File(...),
     notes: str | None = None,
     tags: str | None = None,
+    phase: str | None = None,
     db: AsyncSession = Depends(get_session),
     role: Role = Depends(get_request_role),
 ) -> PhotoUploadResponse:
@@ -944,8 +945,15 @@ async def upload_property_photo(
     This endpoint will:
     - Extract EXIF data for location and timestamp
     - Auto-tag site conditions
-    - Generate multiple image versions
+    - Generate multiple image versions with phase-specific watermarks
     - Store in S3/MinIO
+
+    Args:
+        property_id: The property ID
+        file: The image file to upload
+        notes: Optional notes about the photo
+        tags: Optional comma-separated tags
+        phase: Property phase (acquisition or sales) - determines watermark text
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -959,6 +967,8 @@ async def upload_property_photo(
         user_metadata["notes"] = notes
     if tags:
         user_metadata["tags"] = tags.split(",")
+    if phase:
+        user_metadata["phase"] = phase
 
     photo_manager = PhotoDocumentationManager()
 
@@ -969,6 +979,7 @@ async def upload_property_photo(
             filename=file.filename or "photo.jpg",
             session=db,
             user_metadata=user_metadata,
+            phase=phase,
         )
 
         result = metadata.to_dict()
@@ -1003,6 +1014,30 @@ async def get_property_photos(
         return photos
 
     except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.delete("/properties/{property_id}/photos/{photo_id}")
+async def delete_property_photo(
+    property_id: str,
+    photo_id: str,
+    db: AsyncSession = Depends(get_session),
+    role: Role = Depends(get_request_role),
+) -> dict[str, bool]:
+    """Delete a property photo and all its versions from storage."""
+    photo_manager = PhotoDocumentationManager()
+
+    try:
+        success = await photo_manager.delete_photo(photo_id=photo_id, session=db)
+        if not success:
+            raise HTTPException(status_code=404, detail="Photo not found")
+        await db.commit()
+        return {"deleted": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 

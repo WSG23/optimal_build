@@ -45,6 +45,12 @@ const FEATURE_OPTIONS: FeatureOption[] = [
     label: 'Heritage Context',
     description: 'Display heritage constraints and conservation requirements',
   },
+  {
+    key: 'photoDocumentation',
+    label: 'Photo Documentation',
+    description:
+      'Capture property photos with auto-watermarking for marketing materials',
+  },
 ]
 
 export function FeatureTogglePanel({

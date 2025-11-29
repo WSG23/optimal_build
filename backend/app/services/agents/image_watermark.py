@@ -4,6 +4,7 @@ Applies visible watermarks to property photos for marketing materials
 to indicate they are for feasibility purposes only and not for permits.
 """
 
+from enum import Enum
 from io import BytesIO
 from typing import Tuple
 
@@ -19,8 +20,49 @@ import structlog
 logger = structlog.get_logger()
 
 
-# Default watermark text for marketing materials
+# Phase-specific watermark text
+class PropertyPhase(str, Enum):
+    """Property phase determines watermark text for marketing materials."""
+
+    ACQUISITION = "acquisition"
+    SALES = "sales"
+
+
+# Phase-specific watermark text mapping
+PHASE_WATERMARK_TEXT = {
+    PropertyPhase.ACQUISITION: "Feasibility Assessment Only – Not for Construction",
+    PropertyPhase.SALES: "Sales Material – Subject to Final Approval",
+}
+
+# Default watermark text for marketing materials (backwards compatibility)
 DEFAULT_WATERMARK_TEXT = "Marketing Feasibility Only – Not for Permit or Construction"
+
+
+def get_watermark_text_for_phase(phase: PropertyPhase | str | None) -> str:
+    """Get appropriate watermark text for a property phase.
+
+    Args:
+        phase: Property phase (acquisition or sales) or None for default
+
+    Returns:
+        Watermark text appropriate for the phase
+    """
+    if phase is None:
+        return DEFAULT_WATERMARK_TEXT
+
+    # Handle string input
+    if isinstance(phase, str):
+        phase_lower = phase.lower()
+        if phase_lower == "acquisition":
+            return PHASE_WATERMARK_TEXT[PropertyPhase.ACQUISITION]
+        elif phase_lower == "sales":
+            return PHASE_WATERMARK_TEXT[PropertyPhase.SALES]
+        else:
+            return DEFAULT_WATERMARK_TEXT
+
+    # Handle enum input
+    return PHASE_WATERMARK_TEXT.get(phase, DEFAULT_WATERMARK_TEXT)
+
 
 # Watermark styling constants
 WATERMARK_OPACITY = 128  # 0-255 (50% opacity)
@@ -270,5 +312,8 @@ __all__ = [
     "apply_watermark",
     "apply_diagonal_watermark",
     "should_apply_watermark",
+    "get_watermark_text_for_phase",
+    "PropertyPhase",
+    "PHASE_WATERMARK_TEXT",
     "DEFAULT_WATERMARK_TEXT",
 ]

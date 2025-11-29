@@ -11,6 +11,7 @@ import {
   forwardGeocodeAddress,
   reverseGeocodeCoords,
 } from '../../../api/geocoding'
+import { useFeaturePreferences } from '../../../hooks/useFeaturePreferences'
 
 // Extracted types, constants, utils, and hooks
 import type { QuickAnalysisEntry } from './types'
@@ -52,6 +53,7 @@ import {
   InspectionHistoryModal,
 } from './components/modals'
 import { PropertyCaptureForm } from './components/capture-form'
+import { PhotoDocumentation } from './components/photos'
 
 // Note: Constants, types, and utility functions are now imported from:
 // - ./types - Page-specific types
@@ -72,6 +74,10 @@ export function SiteAcquisitionPage() {
   const [error, setError] = useState<string | null>(null)
   const [capturedProperty, setCapturedProperty] =
     useState<SiteAcquisitionResult | null>(null)
+
+  // Feature preferences for toggling optional features
+  // Using 'developer' role by default for Site Acquisition page
+  const { preferences } = useFeaturePreferences('developer')
 
   // Preview job state - managed by usePreviewJob hook
   const {
@@ -920,6 +926,16 @@ export function SiteAcquisitionPage() {
         onSystemChange={handleAssessmentSystemChange}
         setActiveScenario={setActiveScenario}
       />
+
+      {/* Photo Documentation Section - controlled by feature toggle */}
+      {capturedProperty && preferences.photoDocumentation && (
+        <div style={{ marginTop: '2rem' }}>
+          <PhotoDocumentation
+            propertyId={capturedProperty.propertyId}
+            defaultPhase="acquisition"
+          />
+        </div>
+      )}
 
       <QuickAnalysisHistoryModal
         isOpen={isQuickAnalysisHistoryOpen}
