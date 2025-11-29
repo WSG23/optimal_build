@@ -1,42 +1,5 @@
 import { applyIdentityHeaders } from './identity'
-
-const metaEnv =
-  typeof import.meta !== 'undefined' && import.meta
-    ? (import.meta as ImportMeta).env
-    : undefined
-
-const rawApiBaseUrl =
-  metaEnv?.VITE_API_BASE_URL ??
-  metaEnv?.VITE_API_URL ??
-  metaEnv?.VITE_API_BASE ??
-  null
-
-function normaliseBaseUrl(value: string | undefined | null): string {
-  if (typeof value !== 'string') {
-    return '/'
-  }
-  const trimmed = value.trim()
-  return trimmed === '' ? '/' : trimmed
-}
-
-function buildUrl(path: string, base: string): string {
-  if (/^https?:/i.test(path)) {
-    return path
-  }
-
-  const trimmed = path.startsWith('/') ? path.slice(1) : path
-  const root = normaliseBaseUrl(base)
-
-  if (/^https?:/i.test(root)) {
-    const normalisedRoot = root.endsWith('/') ? root : `${root}/`
-    return new URL(trimmed, normalisedRoot).toString()
-  }
-
-  const normalisedRoot = root.endsWith('/') ? root : `${root}/`
-  return `${normalisedRoot}${trimmed}`
-}
-
-const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
+import { buildUrl, apiBaseUrl, toOptionalString } from './shared'
 
 export interface CostEscalationInput {
   amount: string
@@ -622,15 +585,6 @@ interface FinanceFeasibilityResponsePayload {
 
 interface ConstructionLoanUpdateRequestPayload {
   construction_loan: ConstructionLoanInputPayload
-}
-
-function toOptionalString(value: unknown): string | undefined {
-  if (value == null) {
-    return undefined
-  }
-  const stringValue = typeof value === 'string' ? value : String(value)
-  const trimmed = stringValue.trim()
-  return trimmed === '' ? undefined : trimmed
 }
 
 function toAssetMixPayload(entry: FinanceAssetMixInput): AssetMixPayload {

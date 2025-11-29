@@ -4,10 +4,17 @@
  */
 
 import {
+  buildUrl,
+  coerceNumber as coerceNumeric,
+  coerceString,
+  boolish,
+  roundOptional,
+} from './shared'
+
+import {
   fetchChecklistSummary as fetchChecklistSummaryFromAgents,
   fetchPropertyChecklist as fetchPropertyChecklistFromAgents,
   logPropertyByGps,
-  buildUrl,
   updateChecklistItem as updateChecklistItemFromAgents,
   fetchChecklistTemplates as fetchChecklistTemplatesFromAgents,
   createChecklistTemplate as createChecklistTemplateFromAgents,
@@ -457,45 +464,6 @@ interface RawDeveloperFinancialSummary extends Record<string, unknown> {
   notes?: unknown
   finance_blueprint?: Record<string, unknown> | null
   financeBlueprint?: Record<string, unknown> | null
-}
-
-function coerceNumeric(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-  return null
-}
-
-function coerceString(value: unknown): string | null {
-  if (typeof value === 'string' && value.trim() !== '') {
-    return value
-  }
-  return null
-}
-
-function boolish(value: unknown): boolean {
-  if (typeof value === 'boolean') {
-    return value
-  }
-  if (typeof value === 'number') {
-    return value !== 0
-  }
-  if (typeof value === 'string') {
-    const normalised = value.trim().toLowerCase()
-    return ['true', 't', 'yes', 'y', '1'].includes(normalised)
-  }
-  return false
-}
-
-function roundOptional(value: number | null): number | null {
-  if (value === null) {
-    return null
-  }
-  return Math.round(value * 100) / 100
 }
 
 function mapDeveloperEnvelope(
@@ -1858,7 +1826,7 @@ export async function fetchPropertyVoiceNotes(
   }
 
   const url = buildUrl(
-    `api/agents/commercial-property/properties/${propertyId}/voice-notes`,
+    `api/v1/agents/commercial-property/properties/${propertyId}/voice-notes`,
   )
   const response = await fetch(url)
   if (!response.ok) {
@@ -1882,10 +1850,194 @@ export async function deleteVoiceNote(
   voiceNoteId: string,
 ): Promise<boolean> {
   const url = buildUrl(
-    `api/agents/commercial-property/properties/${propertyId}/voice-notes/${voiceNoteId}`,
+    `api/v1/agents/commercial-property/properties/${propertyId}/voice-notes/${voiceNoteId}`,
   )
   const response = await fetch(url, { method: 'DELETE' })
   return response.ok
+}
+
+// ============================================================================
+// Property Photos API
+// ============================================================================
+
+/**
+ * Photo version type - backend generates multiple versions for different uses
+ */
+export type PhotoVersion =
+  | 'original' // Full quality, no watermark (internal use)
+  | 'thumbnail' // 300x300, no watermark (UI previews)
+  | 'medium' // 1200x1200, no watermark (reports)
+  | 'web' // 1920x1920, no watermark (web display)
+  | 'web_watermarked' // 1920x1920, corner watermark
+  | 'marketing' // 1200x1200, diagonal repeating watermark
+
+/**
+ * Phase type determines watermark text for marketing materials
+ */
+export type PropertyPhase = 'acquisition' | 'sales'
+
+export interface PropertyPhoto {
+  photoId: string
+  propertyId: string
+  storageKey: string
+  filename: string
+  mimeType: string
+  fileSize: number
+  captureTimestamp: string | null
+  autoTags: string[]
+  location: {
+    latitude: number | null
+    longitude: number | null
+  } | null
+  notes: string | null
+  tags: string[]
+  versions: Partial<Record<PhotoVersion, string>>
+}
+
+function mapPropertyPhoto(payload: Record<string, unknown>): PropertyPhoto {
+  const versions: Partial<Record<PhotoVersion, string>> = {}
+  // Backend returns 'urls', frontend uses 'versions'
+  const versionsRaw = payload.urls ?? payload.versions ?? payload.image_versions
+  if (versionsRaw && typeof versionsRaw === 'object') {
+    const v = versionsRaw as Record<string, unknown>
+    if (typeof v.original === 'string') versions.original = v.original
+    if (typeof v.thumbnail === 'string') versions.thumbnail = v.thumbnail
+    if (typeof v.medium === 'string') versions.medium = v.medium
+    if (typeof v.web === 'string') versions.web = v.web
+    if (typeof v.web_watermarked === 'string') versions.web_watermarked = v.web_watermarked
+    if (typeof v.marketing === 'string') versions.marketing = v.marketing
+  }
+  // Fall back to public_url if versions not provided
+  if (Object.keys(versions).length === 0) {
+    const publicUrl = payload.public_url ?? payload.publicUrl
+    if (typeof publicUrl === 'string') {
+      versions.original = publicUrl
+    }
+  }
+
+  return {
+    photoId: String(payload.photo_id ?? payload.photoId ?? ''),
+    propertyId: String(payload.property_id ?? payload.propertyId ?? ''),
+    storageKey: String(payload.storage_key ?? payload.storageKey ?? ''),
+    filename: String(payload.filename ?? ''),
+    mimeType: String(payload.mime_type ?? payload.mimeType ?? 'image/jpeg'),
+    fileSize: Number(payload.file_size ?? payload.fileSize ?? 0),
+    captureTimestamp:
+      typeof payload.capture_timestamp === 'string'
+        ? payload.capture_timestamp
+        : typeof payload.captureTimestamp === 'string'
+          ? payload.captureTimestamp
+          : null,
+    autoTags: Array.isArray(payload.auto_tags)
+      ? payload.auto_tags
+      : Array.isArray(payload.autoTags)
+        ? payload.autoTags
+        : Array.isArray(payload.auto_tagged_conditions)
+          ? payload.auto_tagged_conditions
+          : [],
+    location: payload.location
+      ? {
+          latitude:
+            typeof (payload.location as Record<string, unknown>).latitude === 'number'
+              ? ((payload.location as Record<string, unknown>).latitude as number)
+              : null,
+          longitude:
+            typeof (payload.location as Record<string, unknown>).longitude === 'number'
+              ? ((payload.location as Record<string, unknown>).longitude as number)
+              : null,
+        }
+      : null,
+    notes:
+      typeof payload.notes === 'string' ? payload.notes : null,
+    tags: Array.isArray(payload.tags) ? payload.tags : [],
+    versions,
+  }
+}
+
+/**
+ * Fetch all photos for a property
+ */
+export async function fetchPropertyPhotos(
+  propertyId: string,
+): Promise<PropertyPhoto[]> {
+  if (propertyId === OFFLINE_PROPERTY_ID) {
+    return []
+  }
+
+  const url = buildUrl(`api/v1/agents/commercial-property/properties/${propertyId}/photos`)
+  const response = await fetch(url)
+  if (!response.ok) {
+    console.error('Failed to fetch photos:', response.statusText)
+    return []
+  }
+
+  const data = await response.json()
+  if (!Array.isArray(data)) {
+    return []
+  }
+
+  return data.map((entry: Record<string, unknown>) => mapPropertyPhoto(entry))
+}
+
+/**
+ * Upload a photo for a property
+ */
+export async function uploadPropertyPhoto(
+  propertyId: string,
+  file: File,
+  options?: {
+    notes?: string
+    tags?: string[]
+    phase?: PropertyPhase
+  },
+): Promise<PropertyPhoto | null> {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (options?.notes) {
+    formData.append('notes', options.notes)
+  }
+  if (options?.tags && options.tags.length > 0) {
+    formData.append('tags', options.tags.join(','))
+  }
+  if (options?.phase) {
+    formData.append('phase', options.phase)
+  }
+
+  const url = buildUrl(`api/v1/agents/commercial-property/properties/${propertyId}/photos`)
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    console.error('Failed to upload photo:', response.statusText)
+    return null
+  }
+
+  const data = await response.json()
+  return mapPropertyPhoto(data)
+}
+
+/**
+ * Delete a photo
+ */
+export async function deletePropertyPhoto(
+  propertyId: string,
+  photoId: string,
+): Promise<boolean> {
+  const url = buildUrl(`api/v1/agents/commercial-property/properties/${propertyId}/photos/${photoId}`)
+  const response = await fetch(url, { method: 'DELETE' })
+  return response.ok
+}
+
+/**
+ * Get the URL for a specific photo version
+ */
+export function getPhotoVersionUrl(
+  photo: PropertyPhoto,
+  version: PhotoVersion,
+): string | null {
+  return photo.versions[version] ?? photo.versions.original ?? null
 }
 
 export {

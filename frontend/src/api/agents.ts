@@ -1,26 +1,12 @@
-function normaliseBaseUrl(value: string | undefined | null): string {
-  if (typeof value !== 'string') {
-    return '/'
-  }
-  const trimmed = value.trim()
-  return trimmed === '' ? '/' : trimmed
-}
+import {
+  coerceNumber,
+  coerceString,
+  coerceBoolean,
+  buildUrl,
+  apiBaseUrl,
+} from './shared'
 
 const API_PREFIX = 'api/v1/agents/commercial-property/properties/log-gps'
-const metaEnv =
-  typeof import.meta !== 'undefined' && import.meta
-    ? (import.meta as ImportMeta).env
-    : undefined
-const rawApiBaseUrl = metaEnv?.VITE_API_BASE_URL ?? null
-const apiBaseUrl = normaliseBaseUrl(rawApiBaseUrl)
-
-function buildUrl(path: string, base: string = apiBaseUrl) {
-  const normalised = base.endsWith('/') ? base.slice(0, -1) : base
-  if (path.startsWith('/')) {
-    return `${normalised}${path}`
-  }
-  return `${normalised}/${path}`
-}
 
 export type DevelopmentScenario =
   | 'raw_land'
@@ -180,52 +166,15 @@ interface RawGpsResponse {
   currency_symbol: string
 }
 
-function coerceNumber(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-  return null
-}
-
-function coerceString(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    return value
-  }
-  return undefined
-}
-
-function coerceBoolean(value: unknown): boolean | null {
-  if (typeof value === 'boolean') {
-    return value
-  }
-  if (typeof value === 'number') {
-    return value !== 0
-  }
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase()
-    if (normalized === 'true' || normalized === '1') {
-      return true
-    }
-    if (normalized === 'false' || normalized === '0') {
-      return false
-    }
-  }
-  return null
-}
-
 function mapAddress(payload: Record<string, unknown>): AddressSummary {
   return {
     fullAddress: coerceString(payload.full_address) ?? '',
-    streetName: coerceString(payload.street_name),
-    buildingName: coerceString(payload.building_name),
-    blockNumber: coerceString(payload.block_number),
-    postalCode: coerceString(payload.postal_code),
-    district: coerceString(payload.district),
-    country: coerceString(payload.country),
+    streetName: coerceString(payload.street_name) ?? undefined,
+    buildingName: coerceString(payload.building_name) ?? undefined,
+    blockNumber: coerceString(payload.block_number) ?? undefined,
+    postalCode: coerceString(payload.postal_code) ?? undefined,
+    district: coerceString(payload.district) ?? undefined,
+    country: coerceString(payload.country) ?? undefined,
   }
 }
 
@@ -252,8 +201,8 @@ function mapUraZoning(
     : []
 
   return {
-    zoneCode: coerceString(payload.zone_code),
-    zoneDescription: coerceString(payload.zone_description),
+    zoneCode: coerceString(payload.zone_code) ?? undefined,
+    zoneDescription: coerceString(payload.zone_description) ?? undefined,
     plotRatio: coerceNumber(payload.plot_ratio),
     buildingHeightLimit: coerceNumber(payload.building_height_limit),
     siteCoverage: coerceNumber(payload.site_coverage),
