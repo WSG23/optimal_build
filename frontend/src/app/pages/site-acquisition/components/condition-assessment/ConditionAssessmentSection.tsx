@@ -13,7 +13,6 @@
  * Receives all data and handlers via props (no internal state).
  */
 
-import type { CSSProperties } from 'react'
 import type {
   ConditionAssessment,
   DevelopmentScenario,
@@ -24,7 +23,13 @@ import {
   classifySystemSeverity,
   getSeverityVisuals,
   getDeltaVisuals,
+  type ToneType,
 } from '../../utils/insights'
+import { InsightCard } from './InsightCard'
+import { SystemRatingCard } from './SystemRatingCard'
+import { ScenarioComparisonCard } from './ScenarioComparisonCard'
+import { ManualInspectionControls } from './ManualInspectionControls'
+import { OverallAssessmentCard } from './OverallAssessmentCard'
 
 // ============================================================================
 // Types
@@ -221,116 +226,23 @@ export function ConditionAssessmentSection({
               alignItems: 'flex-start',
             }}
           >
-            <div
-              style={{
-                flex: '1 1 260px',
-                background: '#f5f5f7',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: '#6e6e73',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Overall Rating
-              </span>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: '0.75rem',
-                }}
-              >
-                <span style={{ fontSize: '2.5rem', fontWeight: 700 }}>
-                  {conditionAssessment.overallRating}
-                </span>
-                <span style={{ fontSize: '1rem', color: '#6e6e73' }}>
-                  {conditionAssessment.overallScore}/100 · {conditionAssessment.riskLevel} risk
-                </span>
-              </div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '0.9375rem',
-                  color: '#3a3a3c',
-                  lineHeight: 1.5,
-                }}
-              >
-                {conditionAssessment.summary}
-              </p>
-              {conditionAssessment.scenarioContext && (
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '0.875rem',
-                    color: '#0071e3',
-                  }}
-                >
-                  {conditionAssessment.scenarioContext}
-                </p>
-              )}
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                  fontSize: '0.8125rem',
-                  color: '#6e6e73',
-                }}
-              >
-                <span>
-                  Inspector:{' '}
-                  <strong>{conditionAssessment.inspectorName?.trim() || 'Not recorded'}</strong>
-                </span>
-                {conditionAssessment.recordedAt && (
-                  <span>Logged {formatRecordedTimestamp(conditionAssessment.recordedAt)}</span>
-                )}
-              </div>
-              {conditionAssessment.attachments.length > 0 && (
-                <div>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      marginTop: '0.5rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      color: '#6e6e73',
-                      letterSpacing: '0.06em',
-                    }}
-                  >
-                    Attachments
-                  </span>
-                  <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.2rem' }}>
-                    {conditionAssessment.attachments.map((attachment, index) => (
-                      <li key={`current-attachment-${index}`} style={{ fontSize: '0.85rem' }}>
-                        {attachment.url ? (
-                          <a
-                            href={attachment.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ color: '#0a84ff' }}
-                          >
-                            {attachment.label}
-                          </a>
-                        ) : (
-                          attachment.label
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <OverallAssessmentCard
+              rating={conditionAssessment.overallRating}
+              score={conditionAssessment.overallScore}
+              riskLevel={conditionAssessment.riskLevel}
+              summary={conditionAssessment.summary}
+              scenarioContext={conditionAssessment.scenarioContext ?? null}
+              inspectorName={conditionAssessment.inspectorName ?? null}
+              recordedAtLabel={
+                conditionAssessment.recordedAt
+                  ? formatRecordedTimestamp(conditionAssessment.recordedAt)
+                  : null
+              }
+              attachments={conditionAssessment.attachments.map((a) => ({
+                label: a.label,
+                url: a.url ?? null,
+              }))}
+            />
             <div
               style={{
                 flex: '1 1 280px',
@@ -405,98 +317,17 @@ export function ConditionAssessmentSection({
                   gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                 }}
               >
-                {combinedConditionInsights.map((insight) => {
-                  const visuals = getSeverityVisuals(insight.severity)
-                  const isChecklistInsight = insight.id.startsWith('checklist-')
-                  const chipStyle: CSSProperties = {
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.3rem 0.6rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    background: 'rgba(15, 23, 42, 0.08)',
-                    color: '#0f172a',
-                    border: '1px solid rgba(15, 23, 42, 0.12)',
-                  }
-                  return (
-                    <div
-                      key={insight.id}
-                      style={{
-                        border: `1px solid ${visuals.border}`,
-                        background: visuals.background,
-                        color: visuals.text,
-                        borderRadius: '12px',
-                        padding: '1.2rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.65rem',
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.08em',
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '0.35rem',
-                            height: '0.35rem',
-                            borderRadius: '9999px',
-                            background: visuals.indicator,
-                          }}
-                        />
-                        {visuals.label}
-                      </span>
-                      <strong style={{ fontSize: '0.95rem', lineHeight: 1.4 }}>
-                        {insight.title}
-                      </strong>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '0.85rem',
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {insight.detail}
-                      </p>
-                      {(insight.specialist || isChecklistInsight) && (
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          {isChecklistInsight && (
-                            <span
-                              style={{
-                                ...chipStyle,
-                                background: 'rgba(29, 78, 216, 0.08)',
-                                color: '#1d4ed8',
-                                border: '1px solid rgba(29, 78, 216, 0.15)',
-                              }}
-                            >
-                              Checklist follow-up
-                            </span>
-                          )}
-                          {insight.specialist && (
-                            <span style={chipStyle}>
-                              Specialist · <strong>{insight.specialist}</strong>
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+                {combinedConditionInsights.map((insight) => (
+                  <InsightCard
+                    key={insight.id}
+                    id={insight.id}
+                    visuals={getSeverityVisuals(insight.severity)}
+                    title={insight.title}
+                    detail={insight.detail}
+                    isChecklistInsight={insight.id.startsWith('checklist-')}
+                    specialist={insight.specialist ?? null}
+                  />
+                ))}
               </div>
             </div>
           )}
@@ -519,268 +350,52 @@ export function ConditionAssessmentSection({
               const previousScore =
                 typeof comparison?.previous?.score === 'number' ? comparison?.previous?.score : null
               const systemSeverity = classifySystemSeverity(system.rating, delta)
-              const badgeVisuals = getSeverityVisuals(systemSeverity)
-              const deltaVisuals = getDeltaVisuals(delta)
 
               return (
-                <div
+                <SystemRatingCard
                   key={system.name}
-                  style={{
-                    border: '1px solid #e5e5e7',
-                    borderRadius: '12px',
-                    padding: '1.25rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      flexWrap: 'wrap',
-                      gap: '0.6rem',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.35rem',
-                      }}
-                    >
-                      <h3
-                        style={{
-                          margin: 0,
-                          fontSize: '1.0625rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {system.name}
-                      </h3>
-                      {previousRating && previousScore !== null && (
-                        <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                          Previous {previousRating} · {previousScore}/100
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                        gap: '0.45rem',
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.3rem 0.65rem',
-                          borderRadius: '9999px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          border: `1px solid ${badgeVisuals.border}`,
-                          background: badgeVisuals.background,
-                          color: badgeVisuals.text,
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '0.35rem',
-                            height: '0.35rem',
-                            borderRadius: '9999px',
-                            background: badgeVisuals.indicator,
-                          }}
-                        />
-                        {system.rating} · {system.score}/100
-                      </span>
-                      {delta !== null && (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            padding: '0.25rem 0.55rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            background: deltaVisuals.background,
-                            color: deltaVisuals.text,
-                            border: `1px solid ${deltaVisuals.border}`,
-                          }}
-                        >
-                          {delta > 0 ? '▲' : delta < 0 ? '▼' : '■'} {formatDeltaValue(delta)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '0.9rem',
-                      color: '#3a3a3c',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {system.notes}
-                  </p>
-                  <ul
-                    style={{
-                      margin: 0,
-                      paddingLeft: '1.1rem',
-                      fontSize: '0.875rem',
-                      color: '#3a3a3c',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {system.recommendedActions.map((action) => (
-                      <li key={action}>{action}</li>
-                    ))}
-                  </ul>
-                </div>
+                  systemName={system.name}
+                  rating={system.rating}
+                  score={system.score}
+                  notes={system.notes}
+                  recommendedActions={system.recommendedActions}
+                  previousRating={previousRating}
+                  previousScore={previousScore}
+                  delta={delta}
+                  formattedDelta={formatDeltaValue(delta)}
+                  badgeVisuals={getSeverityVisuals(systemSeverity)}
+                  deltaVisuals={getDeltaVisuals(delta)}
+                />
               )
             })}
           </div>
 
           {/* Manual Inspection Capture */}
-          <div
-            style={{
-              border: '1px solid #e5e5e7',
-              borderRadius: '12px',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '0.75rem',
-              }}
-            >
-              <div
-                style={{
-                  maxWidth: '520px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.35rem',
-                }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: '1.0625rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  Manual inspection capture
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563', lineHeight: 1.5 }}>
-                  Log a fresh site visit or update the latest inspection without waiting for
-                  automated sync.
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => openAssessmentEditor('new')}
-                  disabled={!capturedProperty}
-                  style={{
-                    border: '1px solid #1d1d1f',
-                    background: capturedProperty ? '#1d1d1f' : '#f5f5f7',
-                    color: capturedProperty ? 'white' : '#1d1d1f88',
-                    borderRadius: '9999px',
-                    padding: '0.45rem 1.1rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    cursor: capturedProperty ? 'pointer' : 'not-allowed',
-                  }}
-                >
-                  Log inspection
-                </button>
-                {conditionAssessment && (
-                  <button
-                    type="button"
-                    onClick={() => openAssessmentEditor('edit')}
-                    disabled={!capturedProperty}
-                    style={{
-                      border: '1px solid #1d1d1f',
-                      background: 'white',
-                      color: '#1d1d1f',
-                      borderRadius: '9999px',
-                      padding: '0.45rem 1.1rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      cursor: capturedProperty ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    Edit latest
-                  </button>
-                )}
-              </div>
-            </div>
-            {assessmentSaveMessage && (
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '0.85rem',
-                  color: assessmentSaveMessage.includes('success') ? '#15803d' : '#c53030',
-                }}
-              >
-                {assessmentSaveMessage}
-              </p>
-            )}
-            {capturedProperty ? (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.6rem',
-                  fontSize: '0.85rem',
-                  color: '#4b5563',
-                }}
-              >
-                {latestAssessmentEntry ? (
-                  <>
-                    <span>
-                      Last recorded:{' '}
-                      <strong>{formatRecordedTimestamp(latestAssessmentEntry.recordedAt)}</strong>
-                    </span>
-                    <span>•</span>
-                    <span>
-                      Scenario:{' '}
-                      <strong>{formatScenarioLabel(latestAssessmentEntry.scenario)}</strong>
-                    </span>
-                    <span>•</span>
-                    <span>
-                      Rating:{' '}
-                      <strong>
-                        {latestAssessmentEntry.overallRating} ·{' '}
-                        {latestAssessmentEntry.overallScore}/100
-                      </strong>
-                    </span>
-                  </>
-                ) : (
-                  <span>
-                    No manual inspections logged yet - use &quot;Log inspection&quot; to create one.
-                  </span>
-                )}
-              </div>
-            ) : (
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>
-                Capture a property to enable manual inspection logging.
-              </p>
-            )}
-          </div>
+          <ManualInspectionControls
+            hasProperty={!!capturedProperty}
+            hasExistingAssessment={!!conditionAssessment}
+            saveMessage={assessmentSaveMessage}
+            statusItems={
+              latestAssessmentEntry
+                ? [
+                    {
+                      label: 'Last recorded',
+                      value: formatRecordedTimestamp(latestAssessmentEntry.recordedAt),
+                    },
+                    {
+                      label: 'Scenario',
+                      value: formatScenarioLabel(latestAssessmentEntry.scenario),
+                    },
+                    {
+                      label: 'Rating',
+                      value: `${latestAssessmentEntry.overallRating} · ${latestAssessmentEntry.overallScore}/100`,
+                    },
+                  ]
+                : null
+            }
+            onLogNew={() => openAssessmentEditor('new')}
+            onEditLatest={() => openAssessmentEditor('edit')}
+          />
 
           {/* Inspection History Summary */}
           <InlineInspectionHistorySummary />
@@ -1117,112 +732,20 @@ export function ConditionAssessmentSection({
                         assessment.riskLevel,
                         baseScenarioAssessment.riskLevel,
                       )
-                      const toneColorMap: Record<'positive' | 'negative' | 'neutral', string> = {
-                        positive: '#15803d',
-                        negative: '#c53030',
-                        neutral: '#6e6e73',
-                      }
 
                       return (
-                        <div
-                          key={assessment.scenario}
-                          style={{
-                            border: '1px solid #e5e5e7',
-                            borderRadius: '12px',
-                            padding: '1.25rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.6rem',
-                            background: '#ffffff',
-                          }}
-                        >
-                          <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
-                            {formatScenarioLabel(assessment.scenario)}
-                          </strong>
-                          <div
-                            style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.4rem',
-                              fontSize: '0.9rem',
-                              color: '#3a3a3c',
-                            }}
-                          >
-                            <span>
-                              Score {assessment.overallScore}/100{' '}
-                              <span
-                                style={{
-                                  color:
-                                    scoreDelta > 0
-                                      ? '#15803d'
-                                      : scoreDelta < 0
-                                        ? '#c53030'
-                                        : '#6e6e73',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {scoreDelta === 0
-                                  ? 'Δ 0'
-                                  : `Δ ${scoreDelta > 0 ? '+' : ''}${scoreDelta}`}
-                              </span>
-                            </span>
-                            <span
-                              style={{
-                                color: toneColorMap[ratingInfo.tone],
-                                fontWeight: 600,
-                              }}
-                            >
-                              {ratingInfo.text}
-                            </span>
-                            <span
-                              style={{
-                                color: toneColorMap[riskInfo.tone],
-                                fontWeight: 600,
-                              }}
-                            >
-                              {riskInfo.text}
-                            </span>
-                          </div>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: '0.9rem',
-                              color: '#3a3a3c',
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            {assessment.summary}
-                          </p>
-                          {assessment.scenarioContext && (
-                            <p
-                              style={{
-                                margin: 0,
-                                fontSize: '0.85rem',
-                                color: '#0071e3',
-                              }}
-                            >
-                              {assessment.scenarioContext}
-                            </p>
-                          )}
-                          {assessment.recommendedActions.length > 0 && (
-                            <div style={{ display: 'grid', gap: '0.4rem' }}>
-                              <strong style={{ fontSize: '0.85rem' }}>Actions</strong>
-                              <ul
-                                style={{
-                                  margin: 0,
-                                  paddingLeft: '1.1rem',
-                                  fontSize: '0.85rem',
-                                  color: '#3a3a3c',
-                                  lineHeight: 1.4,
-                                }}
-                              >
-                                {assessment.recommendedActions.map((action) => (
-                                  <li key={action}>{action}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
+                        <ScenarioComparisonCard
+                          key={assessment.scenario ?? 'default'}
+                          scenarioKey={assessment.scenario ?? 'default'}
+                          scenarioLabel={formatScenarioLabel(assessment.scenario)}
+                          score={assessment.overallScore}
+                          scoreDelta={scoreDelta}
+                          ratingChange={ratingInfo as { text: string; tone: ToneType }}
+                          riskChange={riskInfo as { text: string; tone: ToneType }}
+                          summary={assessment.summary}
+                          scenarioContext={assessment.scenarioContext ?? null}
+                          recommendedActions={assessment.recommendedActions}
+                        />
                       )
                     })}
                   </div>

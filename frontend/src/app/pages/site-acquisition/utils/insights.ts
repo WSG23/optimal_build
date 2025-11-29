@@ -7,6 +7,18 @@
 import type { InsightSeverity } from '../types'
 
 // ============================================================================
+// Tone Color Map (for rating/risk change display)
+// ============================================================================
+
+export type ToneType = 'positive' | 'negative' | 'neutral'
+
+export const toneColorMap: Record<ToneType, string> = {
+  positive: '#15803d',
+  negative: '#c53030',
+  neutral: '#6e6e73',
+}
+
+// ============================================================================
 // Severity Classification
 // ============================================================================
 
