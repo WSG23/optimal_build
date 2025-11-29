@@ -17,11 +17,8 @@ pytestmark = pytest.mark.skip(
     )
 )
 
-from app.models.singapore_property import (
-    ComplianceStatus,
-    PropertyZoning,
-    SingaporeProperty,
-)
+from app.models.compliance import ComplianceStatus
+from app.models.singapore_property import PropertyZoning, SingaporeProperty
 from app.utils import singapore_compliance as compliance
 
 
