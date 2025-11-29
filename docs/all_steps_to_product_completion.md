@@ -42,7 +42,7 @@
 
 > **Note (2025-11-29):** The Updated Spec v2 added 32 new features. Phases below show v1 (original scope) as complete, but v2 enhancements are documented and queued for implementation.
 
-**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)** ✅ COMPLETE
+**[Phase 1A: GPS Capture & Quick Analysis](#phase-1a-gps-capture--quick-analysis)**  COMPLETE
 - **Backend:** 100% | **UI:** 100%
 - GPS Capture, Quick Analysis, Marketing Pack Generator all shipped
 - **v2 Done:** ✅ Multi-jurisdiction zoning sources, ✅ Accuracy bands display (±8-15%), ✅ Voice notes on site capture, ✅ Watermarks on marketing pack images
@@ -165,12 +165,12 @@ _No active tasks. Pull from the Ready queue below._
 > 📋 **Implementation Status:** Queued for development — see phase-specific sections below for details
 
 **Agent Enhancements (Phase 1 additions):**
-- [ ] Voice notes on site capture (add to Phase 1A GPS capture) — *spec: features.md line 32*
+- ✅ Voice notes on site capture (add to Phase 1A GPS capture) — *spec: features.md line 32* — **IMPLEMENTED 2025-11-29**
 - ✅ Accuracy bands display (±8-15% by asset class) on quick analysis — *spec: features.md line 31* — **IMPLEMENTED 2025-11-29**
 - [ ] Sales Velocity Model advisory tool (add to Phase 1B) — *spec: features.md line 58*
 - [ ] Expanded listing portals: Zillow, LoopNet, Realtor.com, RealEstate.co.nz, HK portals (Phase 1C) — *spec: features.md lines 63-67*
 - [ ] Expanded CRM integrations: Salesforce, HubSpot, BoomTown, kvCORE (Phase 1C) — *spec: features.md lines 69-71*
-- [ ] Explicit watermark text for Acquisition vs Sales phases (enhance Phase 1A marketing packs) — *spec: features.md lines 48-51*
+- ✅ Explicit watermark text for Acquisition vs Sales phases (enhance Phase 1A marketing packs) — *spec: features.md lines 48-51* — **IMPLEMENTED 2025-11-29**
 
 **Developer Enhancements (Phase 2 additions):**
 - [ ] Global Engineering Defaults (structural grids, core sizes, MEP allowances by jurisdiction) — *spec: features.md lines 109-114*
