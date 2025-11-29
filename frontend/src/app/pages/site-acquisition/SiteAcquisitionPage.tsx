@@ -577,7 +577,7 @@ export function SiteAcquisitionPage() {
       error={assessmentHistoryError}
       latestEntry={latestAssessmentEntry}
       previousEntry={previousAssessmentEntry}
-      formatScenario={formatScenarioLabel}
+      formatScenario={(scenario) => formatScenarioLabel(scenario as DevelopmentScenario | 'all' | null | undefined)}
       formatTimestamp={formatRecordedTimestamp}
       onViewTimeline={() => setHistoryModalOpen(true)}
       onLogInspection={() => openAssessmentEditor('new')}
@@ -863,7 +863,7 @@ export function SiteAcquisitionPage() {
         comparisonScenariosCount={comparisonScenarios.length}
         activeScenario={activeScenario}
         scenarioLookup={scenarioLookup}
-        propertyId={propertyId}
+        propertyId={capturedProperty?.propertyId ?? null}
         isExportingReport={isExportingReport}
         reportExportMessage={reportExportMessage}
         setActiveScenario={setActiveScenario}

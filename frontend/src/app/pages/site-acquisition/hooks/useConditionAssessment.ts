@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  exportConditionReport,
   fetchConditionAssessment,
   fetchConditionAssessmentHistory,
   fetchScenarioAssessments,
@@ -66,6 +67,10 @@ export interface UseConditionAssessmentResult {
   isLoadingScenarioAssessments: boolean
   scenarioAssessmentsError: string | null
 
+  // Report export state
+  isExportingReport: boolean
+  reportExportMessage: string | null
+
   // Derived values
   latestAssessmentEntry: ConditionAssessment | null
   previousAssessmentEntry: ConditionAssessment | null
@@ -83,6 +88,7 @@ export interface UseConditionAssessmentResult {
   resetAssessmentDraft: () => void
   loadAssessmentHistory: (options?: { silent?: boolean }) => Promise<void>
   loadScenarioAssessments: (options?: { silent?: boolean }) => Promise<void>
+  handleReportExport: (format: 'json' | 'pdf') => Promise<void>
 }
 
 // ============================================================================
@@ -123,6 +129,10 @@ export function useConditionAssessment({
     null,
   )
   const scenarioAssessmentsRequestIdRef = useRef(0)
+
+  // Report export state
+  const [isExportingReport, setIsExportingReport] = useState(false)
+  const [reportExportMessage, setReportExportMessage] = useState<string | null>(null)
 
   // ============================================================================
   // Derived Values
@@ -506,6 +516,46 @@ export function useConditionAssessment({
   )
 
   // ============================================================================
+  // Report Export
+  // ============================================================================
+
+  const handleReportExport = useCallback(
+    async (format: 'json' | 'pdf') => {
+      if (!propertyId) {
+        return
+      }
+      try {
+        setIsExportingReport(true)
+        setReportExportMessage(null)
+        const { blob, filename } = await exportConditionReport(propertyId, format)
+        const downloadUrl = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(downloadUrl)
+        setReportExportMessage(
+          format === 'pdf'
+            ? 'Condition report downloaded (PDF).'
+            : 'Condition report downloaded (JSON).',
+        )
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Unable to download condition report.'
+        console.error('Failed to export condition report:', error)
+        setReportExportMessage(message)
+      } finally {
+        setIsExportingReport(false)
+      }
+    },
+    [propertyId],
+  )
+
+  // ============================================================================
   // Return
   // ============================================================================
 
@@ -534,6 +584,10 @@ export function useConditionAssessment({
     isLoadingScenarioAssessments,
     scenarioAssessmentsError,
 
+    // Report export state
+    isExportingReport,
+    reportExportMessage,
+
     // Derived values
     latestAssessmentEntry,
     previousAssessmentEntry,
@@ -547,5 +601,6 @@ export function useConditionAssessment({
     resetAssessmentDraft,
     loadAssessmentHistory,
     loadScenarioAssessments,
+    handleReportExport,
   }
 }

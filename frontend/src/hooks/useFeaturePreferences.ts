@@ -53,8 +53,8 @@ function loadState(role: UserRole): StoredFeatureState {
       }
     }
     const parsed = JSON.parse(stored) as Partial<StoredFeatureState>
-    const preferences = parsed.preferences ?? {}
-    const entitlements = parsed.entitlements ?? {}
+    const preferences = parsed.preferences ?? ({} as Partial<FeaturePreferences>)
+    const entitlements = parsed.entitlements ?? ({} as Partial<FeatureEntitlements>)
     const defaultsForRole = DEFAULT_ENTITLEMENTS_BY_ROLE[role]
     return {
       preferences: {

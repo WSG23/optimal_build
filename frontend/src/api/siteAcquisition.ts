@@ -253,6 +253,12 @@ export type ChecklistTemplateImportResult =
 // Re-export types from agents.ts
 export type { ChecklistItem, ChecklistSummary, ChecklistCategory, ChecklistPriority, DevelopmentScenario, ChecklistStatus, GpsCaptureSummary, UpdateChecklistRequest }
 
+// Type aliases for backward compatibility
+export type ConditionAssessmentEntry = ConditionAssessment
+export type PreviewJob = DeveloperPreviewJob
+export type PreviewJobInfo = DeveloperPreviewJob
+export type CapturedProperty = SiteAcquisitionResult
+
 function mapConditionAssessmentPayload(
   payload: Record<string, unknown>,
   fallbackPropertyId: string,
@@ -434,6 +440,8 @@ interface RawDeveloperGpsResponse {
   nearby_amenities: Record<string, unknown> | null
   quick_analysis?: RawQuickAnalysis | null
   timestamp: string
+  jurisdiction_code: string
+  currency_symbol: string
   build_envelope?: RawDeveloperEnvelope | null
   visualization?: RawDeveloperVisualization | null
   optimizations?: Array<Record<string, unknown>> | null
@@ -1759,6 +1767,125 @@ export async function exportConditionReport(
     type: 'application/json',
   })
   return { blob, filename }
+}
+
+// ============================================================================
+// Voice Notes API
+// ============================================================================
+
+export interface PropertyVoiceNote {
+  voiceNoteId: string
+  propertyId: string
+  photoId: string | null
+  storageKey: string
+  filename: string
+  mimeType: string
+  fileSize: number
+  durationSeconds: number | null
+  captureDate: string | null
+  title: string | null
+  tags: string[]
+  transcript: string | null
+  audioMetadata: Record<string, unknown> | null
+  publicUrl: string
+  location?: {
+    latitude: number | null
+    longitude: number | null
+  } | null
+}
+
+function mapVoiceNote(payload: Record<string, unknown>): PropertyVoiceNote {
+  return {
+    voiceNoteId: String(payload.voice_note_id ?? payload.voiceNoteId ?? ''),
+    propertyId: String(payload.property_id ?? payload.propertyId ?? ''),
+    photoId:
+      typeof payload.photo_id === 'string'
+        ? payload.photo_id
+        : typeof payload.photoId === 'string'
+          ? payload.photoId
+          : null,
+    storageKey: String(payload.storage_key ?? payload.storageKey ?? ''),
+    filename: String(payload.filename ?? ''),
+    mimeType: String(payload.mime_type ?? payload.mimeType ?? 'audio/webm'),
+    fileSize: Number(payload.file_size ?? payload.fileSize ?? 0),
+    durationSeconds:
+      typeof payload.duration_seconds === 'number'
+        ? payload.duration_seconds
+        : typeof payload.durationSeconds === 'number'
+          ? payload.durationSeconds
+          : null,
+    captureDate:
+      typeof payload.capture_date === 'string'
+        ? payload.capture_date
+        : typeof payload.captureDate === 'string'
+          ? payload.captureDate
+          : null,
+    title:
+      typeof payload.title === 'string' ? payload.title : null,
+    tags: Array.isArray(payload.tags) ? payload.tags : [],
+    transcript:
+      typeof payload.transcript === 'string' ? payload.transcript : null,
+    audioMetadata:
+      payload.audio_metadata && typeof payload.audio_metadata === 'object'
+        ? (payload.audio_metadata as Record<string, unknown>)
+        : payload.audioMetadata && typeof payload.audioMetadata === 'object'
+          ? (payload.audioMetadata as Record<string, unknown>)
+          : null,
+    publicUrl: String(payload.public_url ?? payload.publicUrl ?? ''),
+    location: payload.location
+      ? {
+          latitude:
+            typeof (payload.location as Record<string, unknown>).latitude === 'number'
+              ? (payload.location as Record<string, unknown>).latitude as number
+              : null,
+          longitude:
+            typeof (payload.location as Record<string, unknown>).longitude === 'number'
+              ? (payload.location as Record<string, unknown>).longitude as number
+              : null,
+        }
+      : null,
+  }
+}
+
+/**
+ * Fetch all voice notes for a property
+ */
+export async function fetchPropertyVoiceNotes(
+  propertyId: string,
+): Promise<PropertyVoiceNote[]> {
+  if (propertyId === OFFLINE_PROPERTY_ID) {
+    return []
+  }
+
+  const url = buildUrl(
+    `api/agents/commercial-property/properties/${propertyId}/voice-notes`,
+  )
+  const response = await fetch(url)
+  if (!response.ok) {
+    console.error('Failed to fetch voice notes:', response.statusText)
+    return []
+  }
+
+  const data = await response.json()
+  if (!Array.isArray(data)) {
+    return []
+  }
+
+  return data.map((entry: Record<string, unknown>) => mapVoiceNote(entry))
+}
+
+/**
+ * Delete a voice note
+ */
+export async function deleteVoiceNote(
+  propertyId: string,
+  voiceNoteId: string,
+): Promise<boolean> {
+  const url = buildUrl(
+    `api/agents/commercial-property/properties/${propertyId}/voice-notes/${voiceNoteId}`,
+  )
+  const response = await fetch(url, { method: 'DELETE' })
+  return response.ok
 }
 
 export {

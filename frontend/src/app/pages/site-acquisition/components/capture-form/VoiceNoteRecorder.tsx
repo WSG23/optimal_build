@@ -283,7 +283,7 @@ export function VoiceNoteRecorder({
       }
 
       const response = await fetch(
-        `/api/agents/commercial-property/properties/${propertyId}/voice-notes`,
+        `/api/v1/agents/commercial-property/properties/${propertyId}/voice-notes`,
         {
           method: 'POST',
           body: formData,

@@ -432,7 +432,7 @@ class VoiceNote(BaseModel):
     duration_seconds = Column(SQLDecimal(8, 2))  # Duration in seconds
 
     # Recording Metadata
-    capture_date = Column(DateTime)
+    capture_date = Column(DateTime(timezone=True))
     capture_location = Column(Geometry("POINT", srid=4326))
 
     # Transcription (optional, for future AI transcription)

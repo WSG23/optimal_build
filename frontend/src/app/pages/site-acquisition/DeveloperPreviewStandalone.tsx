@@ -643,15 +643,15 @@ type PreviewMetadataPayload = {
   color_legend?: Array<Record<string, unknown>>
 }
 
-function formatPercent(value: number | null): string {
-  if (value === null) {
+function formatPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined) {
     return '—'
   }
   return `${value.toFixed(1)}%`
 }
 
-function formatNumber(value: number | null, fractionDigits = 1): string {
-  if (value === null) {
+function formatNumber(value: number | null | undefined, fractionDigits = 1): string {
+  if (value === null || value === undefined) {
     return '—'
   }
   return new Intl.NumberFormat(undefined, {
@@ -660,15 +660,15 @@ function formatNumber(value: number | null, fractionDigits = 1): string {
   }).format(value)
 }
 
-function formatMeters(value: number | null, fractionDigits = 1): string {
-  if (value === null) {
+function formatMeters(value: number | null | undefined, fractionDigits = 1): string {
+  if (value === null || value === undefined) {
     return '—'
   }
   return `${formatNumber(value, fractionDigits)} m`
 }
 
-function formatArea(value: number | null): string {
-  if (value === null) {
+function formatArea(value: number | null | undefined): string {
+  if (value === null || value === undefined) {
     return '—'
   }
   return `${formatNumber(value, 1)} sqm`

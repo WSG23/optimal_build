@@ -11,9 +11,11 @@
  */
 
 import type React from 'react'
+import { useState } from 'react'
 import type { DevelopmentScenario, SiteAcquisitionResult } from '../../../../../api/siteAcquisition'
 import { SCENARIO_OPTIONS, JURISDICTION_OPTIONS } from '../../constants'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
+import { VoiceNoteList } from './VoiceNoteList'
 
 // ============================================================================
 // Types
@@ -65,6 +67,13 @@ export function PropertyCaptureForm({
   onReverseGeocode,
   onToggleScenario,
 }: PropertyCaptureFormProps) {
+  // Track when a new voice note is uploaded to refresh the list
+  const [voiceNoteRefreshTrigger, setVoiceNoteRefreshTrigger] = useState(0)
+
+  const handleVoiceNoteUploaded = () => {
+    setVoiceNoteRefreshTrigger((prev) => prev + 1)
+  }
+
   return (
     <section
       style={{
@@ -488,6 +497,13 @@ export function PropertyCaptureForm({
         latitude={latitude ? parseFloat(latitude) : undefined}
         longitude={longitude ? parseFloat(longitude) : undefined}
         disabled={isCapturing}
+        onUploadComplete={handleVoiceNoteUploaded}
+      />
+
+      {/* Previously Saved Voice Notes */}
+      <VoiceNoteList
+        propertyId={capturedProperty?.propertyId ?? null}
+        refreshTrigger={voiceNoteRefreshTrigger}
       />
     </section>
   )

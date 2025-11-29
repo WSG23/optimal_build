@@ -9,6 +9,7 @@ import type {
   DevelopmentScenario,
   SiteAcquisitionResult,
   ConditionAttachment,
+  ChecklistCategory,
 } from '../../../api/siteAcquisition'
 
 // ============================================================================
@@ -99,7 +100,7 @@ export type QuickAnalysisSnapshot = {
 
 export type OfflineChecklistTemplate = {
   developmentScenario: DevelopmentScenario
-  category: string
+  category: ChecklistCategory
   itemTitle: string
   itemDescription?: string
   priority: 'critical' | 'high' | 'medium' | 'low'
@@ -176,3 +177,27 @@ export type SystemComparisonEntry = {
 // ============================================================================
 
 export type ParsedAttachment = ConditionAttachment
+
+// ============================================================================
+// Scenario Option Types
+// ============================================================================
+
+export type ScenarioOption = {
+  value: DevelopmentScenario
+  label: string
+  icon: string
+  description?: string
+}
+
+// ============================================================================
+// Checklist Progress Types
+// ============================================================================
+
+export type ChecklistProgressSummary = {
+  total: number
+  completed: number
+  inProgress: number
+  pending: number
+  notApplicable: number
+  completionPercentage: number
+}

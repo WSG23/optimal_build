@@ -7,11 +7,14 @@
  */
 
 import type { DevelopmentScenario } from '../../../../../api/siteAcquisition'
-import type { ScenarioOption, ChecklistProgressSummary } from '../../types'
+import type { ScenarioOption } from '../../types'
 
 // ============================================================================
 // Types
 // ============================================================================
+
+/** Simple progress stats shape returned by useScenarioComparison hook */
+type ProgressStats = { total: number; completed: number } | null | undefined
 
 export interface ScenarioFocusSectionProps {
   // Data
@@ -23,8 +26,8 @@ export interface ScenarioFocusSectionProps {
     headline: string
     detail?: string | null
   }
-  scenarioChecklistProgress: Record<DevelopmentScenario, ChecklistProgressSummary | undefined>
-  displaySummary: ChecklistProgressSummary
+  scenarioChecklistProgress: Record<string, { total: number; completed: number }>
+  displaySummary: ProgressStats
 
   // History state
   quickAnalysisHistoryCount: number

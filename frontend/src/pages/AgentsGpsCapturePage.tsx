@@ -265,8 +265,8 @@ function formatMetricLabel(key: string, translate: ReturnType<typeof useTranslat
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
 }
 
-function formatMetricValue(value: MetricValue, locale: string): string {
-  if (value === null) {
+function formatMetricValue(value: MetricValue | undefined, locale: string): string {
+  if (value === null || value === undefined) {
     return '—'
   }
   if (typeof value === 'number') {
@@ -339,7 +339,13 @@ function ScenarioCard({
 }) {
   const { t } = useTranslation()
 
-  const entries = useMemo(() => Object.entries(scenario.metrics), [scenario.metrics])
+  const entries = useMemo(
+    () =>
+      Object.entries(scenario.metrics).filter(
+        ([key]) => key !== 'accuracy_bands',
+      ) as [string, MetricValue | undefined][],
+    [scenario.metrics],
+  )
 
   return (
     <article className="agents-capture__scenario-card">

@@ -1,0 +1,113 @@
+/* finance/modals-actions.css
+   Modals, table actions menu.
+   Extracted from finance.css (lines 297-405).
+*/
+
+.finance-table__actions {
+    position: relative;
+    display: inline-flex;
+}
+
+.finance-table__actions-button {
+    border: none;
+    background: transparent;
+    font-size: var(--ob-font-size-lg);
+    line-height: 1;
+    cursor: pointer;
+    color: var(--ob-color-text-muted);
+    padding: var(--ob-space-025) var(--ob-space-050);
+    border-radius: var(--ob-radius-md);
+}
+
+.finance-table__actions-button:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary-emphasis);
+    outline-offset: 2px;
+}
+
+.finance-table__actions-menu {
+    position: absolute;
+    top: calc(100% + var(--ob-space-025));
+    right: 0;
+    background: var(--ob-color-surface-default);
+    border: 1px solid var(--ob-color-border-neutral);
+    border-radius: var(--ob-radius-lg);
+    box-shadow: 0 8px 20px rgb(var(--ob-color-surface-inverse-rgb) / 0.12);
+    min-width: 160px;
+    padding: var(--ob-space-050);
+    z-index: 10;
+}
+
+.finance-table__actions-menu button {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: var(--ob-space-075) var(--ob-space-100);
+    border-radius: var(--ob-radius-md);
+    cursor: pointer;
+    color: var(--ob-color-text-muted);
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.finance-table__actions-menu button:hover,
+.finance-table__actions-menu button:focus-visible {
+    background: var(--ob-color-surface-strong);
+    color: var(--ob-color-text-strong);
+}
+
+.finance-table__actions-menu button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.finance-modal {
+    position: fixed;
+    inset: 0;
+    background: rgb(var(--ob-color-surface-inverse-rgb) / 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ob-space-200);
+    z-index: 200;
+}
+
+.finance-modal__content {
+    background: var(--ob-color-surface-default);
+    border-radius: var(--ob-radius-2xl);
+    box-shadow: 0 20px 45px rgb(var(--ob-color-surface-inverse-rgb) / 0.2);
+    max-width: 480px;
+    width: 100%;
+    padding: var(--ob-space-200);
+}
+
+.finance-modal__content h3 {
+    margin-top: 0;
+    margin-bottom: var(--ob-space-075);
+}
+
+.finance-modal__actions {
+    margin-top: var(--ob-space-150);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ob-space-075);
+}
+
+.finance-modal__button {
+    border-radius: var(--ob-radius-pill);
+    padding: var(--ob-space-050) var(--ob-space-125);
+    border: 1px solid var(--ob-color-border-neutral);
+    background: var(--ob-color-surface-strong);
+    cursor: pointer;
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.finance-modal__danger {
+    border-color: var(--ob-color-error-strong);
+    background: var(--ob-color-error-soft);
+    color: var(--ob-color-error-strong);
+}
+
+.finance-modal__button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

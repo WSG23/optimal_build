@@ -25,6 +25,8 @@ import {
   type PreviewLayerMetadata,
   type PreviewLegendEntry,
 } from '../previewMetadata'
+import type { LayerBreakdownItem } from '../types'
+import { toTitleCase } from '../utils/formatters'
 
 // ============================================================================
 // Types
@@ -60,6 +62,8 @@ export interface UsePreviewJobResult {
 
   // Derived values
   previewViewerMetadataUrl: string | null
+  /** Layer breakdown items for rendering the massing summary panel */
+  layerBreakdown: LayerBreakdownItem[]
 
   // Actions
   handleRefreshPreview: () => Promise<void>
@@ -151,6 +155,65 @@ export function usePreviewJob({
       ).length,
     [previewLayerMetadata, previewLayerVisibility],
   )
+
+  // Layer breakdown for massing summary panel
+  const layerBreakdown = useMemo((): LayerBreakdownItem[] => {
+    const layers = capturedProperty?.visualization?.massingLayers ?? []
+    if (!layers.length) {
+      return []
+    }
+
+    const legendLookup = new Map(
+      colorLegendEntries.map((entry) => [entry.assetType.toLowerCase(), entry]),
+    )
+
+    const formatAreaValue = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      const precision = value >= 1000 ? 0 : 2
+      return `${value.toLocaleString('en-US', { maximumFractionDigits: precision })} sqm`
+    }
+
+    const formatHeightValue = (value: number | null | undefined) => {
+      if (value === null || value === undefined) {
+        return '—'
+      }
+      return `${value.toLocaleString('en-US', { maximumFractionDigits: 1 })} m`
+    }
+
+    return layers.map((layer, index) => {
+      const legend = legendLookup.get(layer.assetType.toLowerCase())
+      const allocationValue =
+        layer.allocationPct !== null && layer.allocationPct !== undefined
+          ? `${layer.allocationPct.toLocaleString('en-US', { maximumFractionDigits: 0 })}%`
+          : '—'
+
+      // Use legend label if available, otherwise title-case asset type
+      const displayLabel = legend?.label ?? toTitleCase(layer.assetType)
+
+      // Subtitle: show custom label or asset type, followed by allocation
+      const labelForSubtitle = legend?.label ?? toTitleCase(layer.assetType)
+      const subtitle =
+        allocationValue !== '—'
+          ? `${labelForSubtitle} · ${allocationValue}`
+          : labelForSubtitle
+
+      return {
+        id: `${layer.assetType}-${index}`,
+        label: displayLabel,
+        subtitle,
+        color: legend?.color ?? layer.color ?? '#4f46e5',
+        description: legend?.description ?? null,
+        metrics: [
+          { label: 'Allocation', value: allocationValue },
+          { label: 'GFA', value: formatAreaValue(layer.gfaSqm) },
+          { label: 'NIA', value: formatAreaValue(layer.niaSqm) },
+          { label: 'Height', value: formatHeightValue(layer.estimatedHeightM) },
+        ],
+      }
+    })
+  }, [colorLegendEntries, capturedProperty?.visualization?.massingLayers])
 
   // ============================================================================
   // Effects
@@ -451,6 +514,7 @@ export function usePreviewJob({
 
     // Derived values
     previewViewerMetadataUrl,
+    layerBreakdown,
 
     // Actions
     handleRefreshPreview,

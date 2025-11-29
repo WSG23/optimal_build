@@ -121,9 +121,10 @@ function normaliseGeometry(raw: unknown): PreviewLayerGeometry | null {
     null
   const footprint = extractPolygonRing(data.footprint)
   const topFootprint = extractPolygonRing(data.top_footprint ?? data.topFootprint)
-  const floorLines = Array.isArray(data.floor_lines ?? data.floorLines)
-    ? (data.floor_lines ?? data.floorLines)
-        .map((value) => (typeof value === 'number' ? value : null))
+  const rawFloorLines = data.floor_lines ?? data.floorLines
+  const floorLines = Array.isArray(rawFloorLines)
+    ? (rawFloorLines as unknown[])
+        .map((value: unknown) => (typeof value === 'number' ? value : null))
         .filter((value): value is number => value !== null)
     : []
   const topElevation =

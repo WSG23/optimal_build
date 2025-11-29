@@ -859,10 +859,10 @@ export function useScenarioComparison({
     }
     const scoreDelta =
       latestAssessmentEntry.overallScore - previousAssessmentEntry.overallScore
-    const latestRatingIndex = CONDITION_RATINGS.indexOf(
+    const latestRatingIndex = (CONDITION_RATINGS as readonly string[]).indexOf(
       latestAssessmentEntry.overallRating,
     )
-    const previousRatingIndex = CONDITION_RATINGS.indexOf(
+    const previousRatingIndex = (CONDITION_RATINGS as readonly string[]).indexOf(
       previousAssessmentEntry.overallRating,
     )
     let ratingTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'
@@ -879,10 +879,10 @@ export function useScenarioComparison({
     ) {
       ratingTrend = 'changed'
     }
-    const latestRiskIndex = CONDITION_RISK_LEVELS.indexOf(
+    const latestRiskIndex = (CONDITION_RISK_LEVELS as readonly string[]).indexOf(
       latestAssessmentEntry.riskLevel,
     )
-    const previousRiskIndex = CONDITION_RISK_LEVELS.indexOf(
+    const previousRiskIndex = (CONDITION_RISK_LEVELS as readonly string[]).indexOf(
       previousAssessmentEntry.riskLevel,
     )
     let riskTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'

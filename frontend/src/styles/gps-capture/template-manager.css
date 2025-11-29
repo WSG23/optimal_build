@@ -1,0 +1,221 @@
+/* gps-capture/template-manager.css
+   Template manager component.
+   Extracted from gps-capture.css (lines 467-683).
+*/
+
+.site-acquisition-template-manager {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.template-manager-header {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.template-manager-header h1 {
+    margin: 0 0 0.25rem;
+    font-size: 1.75rem;
+}
+
+.template-manager-back {
+    color: #3366cc;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.template-manager-back:hover {
+    text-decoration: underline;
+}
+
+.template-manager-alert {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.template-manager-alert.error {
+    background: #ffeceb;
+    color: #a51616;
+    border: 1px solid #f5bbbb;
+}
+
+.template-manager-alert.success {
+    background: #edf9f0;
+    color: #146133;
+    border: 1px solid #b8e0c6;
+}
+
+.template-manager-section {
+    background: #ffffff;
+    border: 1px solid #d5d9e2;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.template-manager-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.template-manager-controls label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.template-manager-controls select,
+.template-manager-controls button {
+    margin-top: 0.25rem;
+}
+
+.template-manager-controls button {
+    background: #f4f6fb;
+    border: 1px solid #d5d9e2;
+    border-radius: 6px;
+    padding: 0.45rem 0.85rem;
+    cursor: pointer;
+}
+
+.template-manager-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.template-manager-table th,
+.template-manager-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #eceff5;
+    text-align: left;
+}
+
+.template-manager-table th {
+    background: #f6f8fb;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.template-manager-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.template-manager-actions button {
+    border: 1px solid #cbd5e0;
+    background: #ffffff;
+    padding: 0.35rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.template-manager-actions button.danger {
+    border-color: #e09a9a;
+    color: #b81414;
+}
+
+.template-manager-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.template-manager-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-weight: 600;
+}
+
+.template-manager-form input,
+.template-manager-form select,
+.template-manager-form textarea {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #c6ccdd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.template-manager-form .checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.template-manager-form-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.template-manager-form-actions button {
+    background: #1c64f2;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.template-manager-form-actions button.secondary {
+    background: #e5eaf4;
+    color: #314365;
+}
+
+.template-manager-form-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.template-manager-form-heading h2 {
+    margin: 0;
+}
+
+.template-manager-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+.template-manager-import textarea {
+    width: 100%;
+}
+
+.template-manager-sample {
+    margin-top: 0.75rem;
+}
+
+.template-manager-sample pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.75rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+}
+
+.template-manager-empty {
+    margin: 0;
+    color: #5b6478;
+}
