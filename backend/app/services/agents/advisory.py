@@ -64,6 +64,43 @@ class AgentAdvisoryService:
                 ("support services", 0.2, "House value-add services."),
             ],
         }
+        self._velocity_defaults: dict[str, dict[str, float]] = {
+            "SG": {
+                "velocity_p25": 18,
+                "velocity_median": 24,
+                "velocity_p75": 32,
+                "inventory_months": 8.0,
+                "median_psf": 2050,
+            },
+            "SEA": {
+                "velocity_p25": 14,
+                "velocity_median": 20,
+                "velocity_p75": 28,
+                "inventory_months": 9.0,
+                "median_psf": 780,
+            },
+            "NZ": {
+                "velocity_p25": 10,
+                "velocity_median": 16,
+                "velocity_p75": 22,
+                "inventory_months": 10.0,
+                "median_psf": 520,
+            },
+            "TOR": {
+                "velocity_p25": 16,
+                "velocity_median": 22,
+                "velocity_p75": 30,
+                "inventory_months": 7.5,
+                "median_psf": 1100,
+            },
+            "HK": {
+                "velocity_p25": 12,
+                "velocity_median": 18,
+                "velocity_p75": 26,
+                "inventory_months": 11.0,
+                "median_psf": 1900,
+            },
+        }
 
     async def build_summary(
         self, *, property_id: UUID, session: AsyncSession
@@ -368,6 +405,143 @@ class AgentAdvisoryService:
                 }
             )
         return timeline
+
+    def build_sales_velocity(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Calculate a lightweight sales velocity forecast using defaults + overrides."""
+
+        jurisdiction = str(payload.get("jurisdiction") or "SG").upper()
+        asset_type = str(
+            payload.get("asset_type") or payload.get("assetType") or "mixed_use"
+        )
+        price_band = payload.get("price_band") or payload.get("priceBand")
+        units_planned = payload.get("units_planned") or payload.get("unitsPlanned")
+        launch_window = payload.get("launch_window") or payload.get("launchWindow")
+        benchmarks_override = (
+            payload.get("benchmarks_override")
+            or payload.get("benchmarksOverride")
+            or {}
+        )
+
+        defaults = self._velocity_defaults.get(
+            jurisdiction, self._velocity_defaults["SG"]
+        )
+
+        def _safe_number(value: Any, fallback: float | None = None) -> float | None:
+            if isinstance(value, (int, float)):
+                return float(value)
+            try:
+                parsed = float(value)
+                return parsed
+            except (TypeError, ValueError):
+                return fallback
+
+        velocity_p25 = _safe_number(
+            benchmarks_override.get("velocityPctl25"), defaults["velocity_p25"]
+        )
+        velocity_median = _safe_number(
+            benchmarks_override.get("velocityMedian"), defaults["velocity_median"]
+        )
+        velocity_p75 = _safe_number(
+            benchmarks_override.get("velocityPctl75"), defaults["velocity_p75"]
+        )
+        inventory_months = _safe_number(
+            payload.get("inventory_months") or payload.get("inventoryMonths"),
+            defaults["inventory_months"],
+        )
+        median_psf = _safe_number(
+            benchmarks_override.get("medianPsf"), defaults["median_psf"]
+        )
+
+        asset_multiplier = {
+            "residential": 1.0,
+            "condo": 1.0,
+            "apartment": 0.95,
+            "office": 0.75,
+            "retail": 0.85,
+            "mixed_use": 0.9,
+            "industrial": 0.65,
+        }.get(asset_type, 0.85)
+
+        recent_absorption = _safe_number(
+            payload.get("recent_absorption") or payload.get("recentAbsorption"),
+            None,
+        )
+        velocity_units_per_month = (
+            recent_absorption
+            if recent_absorption is not None
+            else (velocity_median or defaults["velocity_median"]) * asset_multiplier
+        )
+
+        absorption_months = (
+            inventory_months / velocity_units_per_month
+            if inventory_months and velocity_units_per_month
+            else None
+        )
+
+        confidence = 0.55
+        if recent_absorption is not None:
+            confidence += 0.15
+        if inventory_months is not None:
+            confidence += 0.1
+        if benchmarks_override:
+            confidence += 0.05
+        confidence = min(confidence, 0.95)
+
+        risks: list[dict[str, str]] = []
+        if inventory_months and velocity_p75:
+            ratio = inventory_months / velocity_p75
+            if ratio >= 1.2:
+                risks.append({"label": "Oversupply", "level": "high"})
+            elif ratio >= 0.95:
+                risks.append({"label": "Oversupply", "level": "medium"})
+        if price_band and median_psf:
+            risks.append({"label": "Price sensitivity", "level": "medium"})
+
+        recommendations: list[str] = []
+        if absorption_months and absorption_months > 9:
+            recommendations.append(
+                "Phase launch in 2-3 tranches to avoid flooding supply."
+            )
+        if velocity_units_per_month and velocity_units_per_month < (velocity_p25 or 0):
+            recommendations.append(
+                "Increase broker incentives or opener discounts to lift velocity."
+            )
+        if not recommendations:
+            recommendations.append(
+                "Proceed with planned launch cadence; monitor weekly uptake."
+            )
+
+        return {
+            "forecast": {
+                "velocity_units_per_month": (
+                    round(velocity_units_per_month, 2)
+                    if velocity_units_per_month is not None
+                    else None
+                ),
+                "absorption_months": (
+                    round(absorption_months, 2)
+                    if absorption_months is not None
+                    else None
+                ),
+                "confidence": round(confidence, 2),
+            },
+            "benchmarks": {
+                "inventory_months": inventory_months,
+                "velocity_p25": velocity_p25,
+                "velocity_median": velocity_median,
+                "velocity_p75": velocity_p75,
+                "median_psf": median_psf,
+            },
+            "recommendations": recommendations,
+            "risks": risks,
+            "context": {
+                "jurisdiction": jurisdiction,
+                "asset_type": asset_type,
+                "price_band": price_band,
+                "units_planned": units_planned,
+                "launch_window": launch_window,
+            },
+        }
 
     def _map_feedback(self, feedback: AgentAdvisoryFeedback) -> dict[str, Any]:
         return {

@@ -2,10 +2,12 @@ import { useState } from 'react'
 import type {
   AdvisorySummary,
   AdvisoryFeedbackPayload,
+  SalesVelocityResponse,
 } from '../../../api/advisory'
 import {
   fetchAdvisorySummary,
   submitAdvisoryFeedback,
+  computeSalesVelocity,
 } from '../../../api/advisory'
 
 export function AdvisoryPage() {
@@ -20,6 +22,25 @@ export function AdvisoryPage() {
     channel: '',
   })
   const [submitting, setSubmitting] = useState(false)
+  const [velocityInput, setVelocityInput] = useState({
+    jurisdiction: 'SG',
+    asset_type: 'residential',
+    price_band: '1800-2200_psf',
+    units_planned: 200,
+    launch_window: '2025-Q2',
+    inventory_months: '',
+    recent_absorption: '',
+  })
+  const [velocityResult, setVelocityResult] = useState<SalesVelocityResponse | null>(null)
+  const [velocityError, setVelocityError] = useState<string | null>(null)
+  const [velocityLoading, setVelocityLoading] = useState(false)
+
+  const parseNumber = (value: string): number | null => {
+    const trimmed = value.trim()
+    if (trimmed === '') return null
+    const parsed = Number(trimmed)
+    return Number.isFinite(parsed) ? parsed : null
+  }
 
   async function handleLoad() {
     if (!propertyId.trim()) return
@@ -56,6 +77,31 @@ export function AdvisoryPage() {
       alert(err instanceof Error ? err.message : 'Failed to submit feedback')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleComputeVelocity() {
+    setVelocityLoading(true)
+    setVelocityError(null)
+    try {
+      const payload = {
+        jurisdiction: velocityInput.jurisdiction,
+        asset_type: velocityInput.asset_type,
+        price_band: velocityInput.price_band || null,
+        units_planned: velocityInput.units_planned || null,
+        launch_window: velocityInput.launch_window || null,
+        inventory_months: parseNumber(velocityInput.inventory_months),
+        recent_absorption: parseNumber(velocityInput.recent_absorption),
+      }
+      const result = await computeSalesVelocity(payload)
+      setVelocityResult(result)
+    } catch (err) {
+      setVelocityError(
+        err instanceof Error ? err.message : 'Failed to compute sales velocity',
+      )
+      setVelocityResult(null)
+    } finally {
+      setVelocityLoading(false)
     }
   }
 
@@ -573,6 +619,341 @@ export function AdvisoryPage() {
                 </div>
               ))}
             </div>
+          </section>
+
+          {/* Sales Velocity Model */}
+          <section
+            style={{
+              background: 'white',
+              border: '1px solid #d2d2d7',
+              borderRadius: '18px',
+              padding: '2rem',
+              marginBottom: '2rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1.25rem',
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    fontSize: '1.75rem',
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em',
+                    margin: 0,
+                  }}
+                >
+                  Sales Velocity Model
+                </h2>
+                <p style={{ margin: '0.35rem 0 0', color: '#6e6e73' }}>
+                  Forecast launch cadence with inventory and velocity benchmarks.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleComputeVelocity}
+                disabled={velocityLoading}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  color: 'white',
+                  background: velocityLoading ? '#d2d2d7' : '#1d1d1f',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: velocityLoading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {velocityLoading ? 'Computing...' : 'Run forecast'}
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '1rem',
+                marginBottom: '1.5rem',
+              }}
+            >
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  Jurisdiction
+                </label>
+                <select
+                  value={velocityInput.jurisdiction}
+                  onChange={(e) =>
+                    setVelocityInput((prev) => ({ ...prev, jurisdiction: e.target.value }))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid #d2d2d7',
+                  }}
+                >
+                  <option value="SG">Singapore</option>
+                  <option value="SEA">Seattle</option>
+                  <option value="TOR">Toronto</option>
+                  <option value="NZ">New Zealand</option>
+                  <option value="HK">Hong Kong</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  Asset type
+                </label>
+                <select
+                  value={velocityInput.asset_type}
+                  onChange={(e) =>
+                    setVelocityInput((prev) => ({ ...prev, asset_type: e.target.value }))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid #d2d2d7',
+                  }}
+                >
+                  <option value="residential">Residential</option>
+                  <option value="office">Office</option>
+                  <option value="retail">Retail</option>
+                  <option value="mixed_use">Mixed-use</option>
+                  <option value="industrial">Industrial</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  Price band
+                </label>
+                <input
+                  type="text"
+                  value={velocityInput.price_band}
+                  onChange={(e) =>
+                    setVelocityInput((prev) => ({ ...prev, price_band: e.target.value }))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid #d2d2d7',
+                  }}
+                  placeholder="e.g. 1800-2200_psf"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  Units planned
+                </label>
+                <input
+                  type="number"
+                  value={velocityInput.units_planned ?? ''}
+                  onChange={(e) =>
+                    setVelocityInput((prev) => ({
+                      ...prev,
+                      units_planned: e.target.value === '' ? null : Number(e.target.value),
+                    }))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid #d2d2d7',
+                  }}
+                  min={0}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  Launch window
+                </label>
+                <input
+                  type="text"
+                  value={velocityInput.launch_window}
+                  onChange={(e) =>
+                    setVelocityInput((prev) => ({ ...prev, launch_window: e.target.value }))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid #d2d2d7',
+                  }}
+                  placeholder="e.g. 2025-Q2"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  Inventory (months, optional)
+                </label>
+                <input
+                  type="number"
+                  value={velocityInput.inventory_months}
+                  onChange={(e) =>
+                    setVelocityInput((prev) => ({ ...prev, inventory_months: e.target.value }))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid #d2d2d7',
+                  }}
+                  min={0}
+                  step="0.1"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  Recent absorption (units/mo, optional)
+                </label>
+                <input
+                  type="number"
+                  value={velocityInput.recent_absorption}
+                  onChange={(e) =>
+                    setVelocityInput((prev) => ({ ...prev, recent_absorption: e.target.value }))
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid #d2d2d7',
+                  }}
+                  min={0}
+                  step="0.1"
+                />
+              </div>
+            </div>
+
+            {velocityError && (
+              <div
+                style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fecdd3',
+                  color: '#b91c1c',
+                  padding: '0.9rem 1rem',
+                  borderRadius: '10px',
+                  marginBottom: '1rem',
+                  fontSize: '0.95rem',
+                }}
+              >
+                {velocityError}
+              </div>
+            )}
+
+            {velocityResult && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '1rem',
+                  }}
+                >
+                  <div style={{ padding: '1.25rem', background: '#f5f5f7', borderRadius: '12px' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#6e6e73', marginBottom: '0.5rem' }}>
+                      Velocity
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                      {velocityResult.forecast.velocity_units_per_month ?? '—'}{' '}
+                      <span style={{ fontSize: '0.95rem', color: '#6e6e73' }}>units/mo</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '1.25rem', background: '#f5f5f7', borderRadius: '12px' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#6e6e73', marginBottom: '0.5rem' }}>
+                      Absorption
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                      {velocityResult.forecast.absorption_months ?? '—'}{' '}
+                      <span style={{ fontSize: '0.95rem', color: '#6e6e73' }}>months</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '1.25rem', background: '#f5f5f7', borderRadius: '12px' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#6e6e73', marginBottom: '0.5rem' }}>
+                      Confidence
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                      {(velocityResult.forecast.confidence * 100).toFixed(0)}%
+                    </div>
+                  </div>
+                </div>
+
+                {velocityResult.risks.length > 0 && (
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {velocityResult.risks.map((risk, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '999px',
+                          border: '1px solid #d2d2d7',
+                          background: risk.level === 'high' ? '#fef2f2' : '#fefce8',
+                          color: risk.level === 'high' ? '#b91c1c' : '#854d0e',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {risk.label} ({risk.level})
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {velocityResult.recommendations.length > 0 && (
+                  <div>
+                    <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 600 }}>
+                      Recommendations
+                    </h3>
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#4b5563' }}>
+                      {velocityResult.recommendations.map((rec, idx) => (
+                        <li key={idx} style={{ marginBottom: '0.35rem' }}>
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div>
+                  <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 600 }}>
+                    Benchmarks
+                  </h3>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    <div style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '10px' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#6e6e73' }}>Inventory</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {velocityResult.benchmarks.inventory_months ?? '—'} months
+                      </div>
+                    </div>
+                    <div style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '10px' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#6e6e73' }}>Velocity p25 / p50 / p75</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {[velocityResult.benchmarks.velocity_p25, velocityResult.benchmarks.velocity_median, velocityResult.benchmarks.velocity_p75]
+                          .map((v) => (v == null ? '—' : v))
+                          .join(' / ')}{' '}
+                        units/mo
+                      </div>
+                    </div>
+                    <div style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '10px' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#6e6e73' }}>Median PSF</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {velocityResult.benchmarks.median_psf ?? '—'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Feedback Loop */}

@@ -81,6 +81,46 @@ export interface AdvisoryFeedbackPayload {
   metadata?: Record<string, unknown>
 }
 
+export type SalesVelocityRiskLevel = 'low' | 'medium' | 'high'
+
+export interface SalesVelocityRequest {
+  jurisdiction: string
+  asset_type: string
+  price_band?: string | null
+  units_planned?: number | null
+  launch_window?: string | null
+  inventory_months?: number | null
+  recent_absorption?: number | null
+  benchmarks_override?: Record<string, number> | null
+}
+
+export interface SalesVelocityForecast {
+  velocity_units_per_month: number | null
+  absorption_months: number | null
+  confidence: number
+}
+
+export interface SalesVelocityBenchmarks {
+  inventory_months: number | null
+  velocity_p25: number | null
+  velocity_median: number | null
+  velocity_p75: number | null
+  median_psf: number | null
+}
+
+export interface SalesVelocityRisk {
+  label: string
+  level: SalesVelocityRiskLevel | string
+}
+
+export interface SalesVelocityResponse {
+  forecast: SalesVelocityForecast
+  benchmarks: SalesVelocityBenchmarks
+  recommendations: string[]
+  risks: SalesVelocityRisk[]
+  context: Record<string, unknown>
+}
+
 export async function fetchAdvisorySummary(
   propertyId: string,
   signal?: AbortSignal,
@@ -145,4 +185,27 @@ export async function fetchAdvisoryFeedback(
 
   const payload = (await response.json()) as AdvisoryFeedbackItem[]
   return payload
+}
+
+export async function computeSalesVelocity(
+  payload: SalesVelocityRequest,
+  signal?: AbortSignal,
+): Promise<SalesVelocityResponse> {
+  const response = await fetch(
+    buildUrl('/api/v1/agents/commercial-property/advisory/sales-velocity'),
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal,
+    },
+  )
+
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(detail || 'Failed to compute sales velocity')
+  }
+
+  const result = (await response.json()) as SalesVelocityResponse
+  return result
 }

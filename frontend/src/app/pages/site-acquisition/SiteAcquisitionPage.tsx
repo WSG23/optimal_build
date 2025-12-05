@@ -38,6 +38,7 @@ import {
   ConditionAssessmentSection,
   ConditionAssessmentEditor,
 } from './components/condition-assessment'
+import { SalesVelocityCard } from './components/advisory/SalesVelocityCard'
 // InspectionHistoryContent is used by InspectionHistoryModal component
 import {
   PropertyOverviewSection,
@@ -842,6 +843,12 @@ export function SiteAcquisitionPage() {
           onOpenInspectionHistory={() => setHistoryModalOpen(true)}
           formatScenarioLabel={formatScenarioLabel}
         />
+      )}
+
+      {capturedProperty && (
+        <div style={{ marginBottom: '2rem' }}>
+          <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
+        </div>
       )}
 
       {/* Due Diligence Checklist */}

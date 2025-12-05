@@ -8,8 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from sqlalchemy import Boolean, Column, DateTime, String, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 try:  # pragma: no cover - optional dependency
     import email_validator  # type: ignore  # noqa: F401

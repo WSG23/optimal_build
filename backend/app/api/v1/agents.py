@@ -260,6 +260,61 @@ class AdvisorySummaryResponse(BaseModel):
     feedback: list[AdvisoryFeedbackItem]
 
 
+class SalesVelocityBenchmarks(BaseModel):
+    inventory_months: float | None
+    velocity_p25: float | None
+    velocity_median: float | None
+    velocity_p75: float | None
+    median_psf: float | None
+
+
+class SalesVelocityForecast(BaseModel):
+    velocity_units_per_month: float | None
+    absorption_months: float | None
+    confidence: float
+
+
+class SalesVelocityRisk(BaseModel):
+    label: str
+    level: str
+
+
+class SalesVelocityRequest(BaseModel):
+    jurisdiction: str = Field(
+        ..., description="Jurisdiction code, e.g. SG, NZ, TOR, SEA, HK."
+    )
+    asset_type: str = Field(
+        ..., description="Asset type, e.g. residential, office, retail."
+    )
+    price_band: str | None = Field(
+        default=None, description="Price band label (e.g. 1800-2200_psf)."
+    )
+    units_planned: int | None = Field(
+        default=None, description="Total units planned for launch."
+    )
+    launch_window: str | None = Field(
+        default=None, description="Planned launch window (e.g. 2025-Q2)."
+    )
+    inventory_months: float | None = Field(
+        default=None, description="Optional override for months of inventory."
+    )
+    recent_absorption: float | None = Field(
+        default=None, description="Optional override: recent absorption (units/month)."
+    )
+    benchmarks_override: dict[str, float] | None = Field(
+        default=None,
+        description="Optional overrides for benchmarks (velocityPctl25/Median/75, medianPsf).",
+    )
+
+
+class SalesVelocityResponse(BaseModel):
+    forecast: SalesVelocityForecast
+    benchmarks: SalesVelocityBenchmarks
+    recommendations: list[str]
+    risks: list[SalesVelocityRisk]
+    context: dict[str, Any]
+
+
 class PropertyAnalysisRequest(BaseModel):
     """Request model for property development analysis."""
 
@@ -799,6 +854,26 @@ async def submit_property_advisory_feedback(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     return _convert_feedback_items([stored])[0]
+
+
+@router.post(
+    "/advisory/sales-velocity", response_model=SalesVelocityResponse, status_code=200
+)
+async def compute_sales_velocity(
+    payload: SalesVelocityRequest,
+    role: Role = Depends(get_request_role),
+) -> SalesVelocityResponse:
+    """Return a lightweight sales velocity forecast using market defaults and optional overrides."""
+
+    result = advisory_service.build_sales_velocity(payload.dict())
+
+    return SalesVelocityResponse(
+        forecast=SalesVelocityForecast(**result["forecast"]),
+        benchmarks=SalesVelocityBenchmarks(**result["benchmarks"]),
+        recommendations=result["recommendations"],
+        risks=[SalesVelocityRisk(**risk) for risk in result.get("risks", [])],
+        context=result.get("context", {}),
+    )
 
 
 def _build_mock_market_report(property_data: Property, months: int) -> Dict[str, Any]:

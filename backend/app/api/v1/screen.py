@@ -53,7 +53,10 @@ class ZoneResolution:
     },
 )
 async def screen_buildable(
-    payload: BuildableRequest = Body(..., example=BUILDABLE_REQUEST_EXAMPLE),
+    payload: BuildableRequest = Body(
+        ...,
+        examples={"default": BUILDABLE_REQUEST_EXAMPLE},
+    ),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> BuildableResponse:
