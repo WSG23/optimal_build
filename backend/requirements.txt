@@ -67,4 +67,11 @@ types-passlib==1.7.7.20250602
 # Note: starlette explicitly pinned above for CVE-2025-54121, CVE-2025-62727
 # Previous CVE tracking: GHSA-f96h-pmfr-66vw (fixed 0.40.0), GHSA-2c2j-9gv5-cj73 (fixed 0.47.2)
 # urllib3: GHSA-pq67-6m6q-mj2v (min fix: 2.0.0, using 2.5.0)
-urllib3==2.5.0
+
+# AI / RAG Logic
+langchain==0.1.0
+langchain-community==0.0.12
+langchain-openai==0.0.3
+chromadb==0.4.22
+tiktoken==0.5.2
+openai==1.7.0

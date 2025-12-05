@@ -1,4 +1,4 @@
-.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset dev dev-local stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -96,6 +96,7 @@ help-dev: ## Show comprehensive development workflow guide
 	@echo "━━━ Getting Started ━━━"
 	@echo "  make install            Install all dependencies"
 	@echo "  make dev                Start all services (backend + frontend + admin)"
+	@echo "  make dev-local          Start local only (no Docker, SQLite)"
 	@echo "  make status             Check service status"
 	@echo "  make stop               Stop all services"
 	@echo "  make ui-stop            Force kill UI servers on ports (if stuck)"
@@ -514,6 +515,21 @@ dev: ## Start supporting services, the backend API, and frontends
 	else \
 		$(DOCKER_COMPOSE) up -d; \
 	fi
+	@$(MAKE) _dev-services
+
+dev-local: ## Start local development (no Docker, SQLite only)
+	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
+	@echo "🏠 Starting local development (no Docker)..."
+	@echo "🧹 Cleaning up any existing processes on ports..."
+	@-pids=$$(lsof -ti:$(BACKEND_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
+	@-pids=$$(lsof -ti:$(FRONTEND_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
+	@-pids=$$(lsof -ti:$(ADMIN_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
+	@rm -f $(DEV_BACKEND_PID) $(DEV_FRONTEND_PID) $(DEV_ADMIN_PID)
+	@sleep 1
+	@if [ -d uvicorn ]; then echo "WARNING: './uvicorn/' package detected; it will shadow the real uvicorn. Rename or remove it." >&2; fi
+	@$(MAKE) _dev-services
+
+_dev-services: ## Internal target to start backend, frontend, and admin UI
 	@if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
 		echo "Backend API already running (PID $$(cat $(DEV_BACKEND_PID)))."; \
 		echo "✅ API running on port $(BACKEND_PORT)."; \
@@ -523,6 +539,7 @@ dev: ## Start supporting services, the backend API, and frontends
 	                : "Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file."; \
 		( \
 			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
+			SECRET_KEY=$${SECRET_KEY:-dev-secret-key-do-not-use-in-production} \
 			DEV_SQLITE_URL="$(DEV_SQLITE_URL)" SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
 				nohup $(BACKEND_CMD) > "$(DEV_BACKEND_LOG)" 2>&1 & \
 			echo $$! > "$(DEV_BACKEND_PID)" \

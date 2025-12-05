@@ -4,21 +4,60 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
 
 from app.api.deps import require_viewer
 from app.schemas.feasibility import (
     FeasibilityAssessmentRequest,
     FeasibilityAssessmentResponse,
-    FeasibilityRulesResponse,
-    NewFeasibilityProjectInput,
 )
 from app.services.feasibility import (
-    generate_feasibility_rules,
     run_feasibility_assessment,
+    _normalise_assessment_payload,
 )
 
-router = APIRouter(prefix="/feasibility", tags=["feasibility"])
+router = APIRouter(prefix="/feasibility", tags=["Feasibility"])
+
+
+@router.websocket("/ws")
+async def ws_feasibility(websocket: WebSocket):
+    """
+    Real-time feasibility assessment via WebSockets.
+    Accepts JSON payload matching FeasibilityAssessmentRequest.
+    Returns JSON payload matching FeasibilityAssessmentResponse.
+    """
+    await websocket.accept()
+    try:
+        while True:
+            # Receive payload
+            data = await websocket.receive_json()
+
+            try:
+                # Normalise and validate
+                # Note: reusing internal helpers from service layer for consistency
+                # In a larger refactor, these should be exposed properly
+                normalised = _normalise_assessment_payload(data)
+                request = FeasibilityAssessmentRequest(**normalised)
+
+                # Run assessment (synchronous logic, but fast enough for MVP)
+                # For very heavy blocking logic, allow wrapping in run_in_executor
+                response = run_feasibility_assessment(request)
+
+                # Send back response
+                await websocket.send_json(response.dict())
+
+            except ValidationError as e:
+                await websocket.send_json(
+                    {"error": "Validation Error", "details": e.errors()}
+                )
+            except Exception as e:
+                await websocket.send_json(
+                    {"error": "Processing Error", "details": str(e)}
+                )
+
+    except WebSocketDisconnect:
+        pass  # Normal disconnect
 
 
 def _normalise_project_payload(data: dict[str, Any]) -> dict[str, Any]:
@@ -50,27 +89,6 @@ def _normalise_project_payload(data: dict[str, Any]) -> dict[str, Any]:
     elif "build_envelope" in data:
         normalised["build_envelope"] = _normalise_envelope(data.get("build_envelope"))
     return normalised
-
-
-def _normalise_assessment_payload(data: dict[str, Any]) -> dict[str, Any]:
-    normalised = dict(data)
-    project_payload = normalised.get("project")
-    if isinstance(project_payload, dict):
-        normalised["project"] = _normalise_project_payload(project_payload)
-    if "selectedRuleIds" in normalised:
-        normalised["selected_rule_ids"] = normalised.pop("selectedRuleIds")
-    return normalised
-
-
-@router.post("/rules", response_model=FeasibilityRulesResponse)
-async def fetch_rules(
-    payload: dict[str, Any],
-    _: str = Depends(require_viewer),
-) -> FeasibilityRulesResponse:
-    """Return the recommended rules for the submitted project."""
-
-    project = NewFeasibilityProjectInput(**_normalise_project_payload(payload))
-    return generate_feasibility_rules(project)
 
 
 @router.post("/assessment", response_model=FeasibilityAssessmentResponse)

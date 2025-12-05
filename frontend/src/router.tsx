@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
-import type { AnchorHTMLAttributes, MouseEventHandler, ReactNode } from 'react'
+import type { AnchorHTMLAttributes, MouseEventHandler, ReactNode, Ref } from 'react'
 import {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -211,10 +212,13 @@ export function createLinkClickHandler(
 
 interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   to: string
-  children: ReactNode
+  children?: ReactNode
 }
 
-export function Link({ to, children, onClick, ...rest }: LinkProps) {
+export const Link = forwardRef(function Link(
+  { to, children, onClick, ...rest }: LinkProps,
+  ref: Ref<HTMLAnchorElement>,
+) {
   const context = useContext(RouterContext)
 
   const handleClick = useMemo<MouseEventHandler<HTMLAnchorElement>>(
@@ -223,11 +227,11 @@ export function Link({ to, children, onClick, ...rest }: LinkProps) {
   )
 
   return (
-    <a href={to} onClick={handleClick} {...rest}>
+    <a ref={ref} href={to} onClick={handleClick} {...rest}>
       {children}
     </a>
   )
-}
+})
 
 export function useRouterPath() {
   const location = useRouterLocation()

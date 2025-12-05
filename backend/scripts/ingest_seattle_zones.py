@@ -4,6 +4,10 @@ Fetches zoning polygons from the Seattle Open Data SODA endpoint or a local
 GeoJSON file, reprojects if necessary, and persists to ``ref_zoning_layers`` with
 ``jurisdiction="SEA"``.
 
+When no ``--input-path`` is provided, the script uses a paginated Socrata fetch
+(``SODAFetcher``) with the optional ``SEATTLE_SODA_APP_TOKEN`` environment
+variable for higher rate limits.
+
 Example usage (local GeoJSON) ::
 
     PYTHONPATH=$REPO_ROOT \\
@@ -36,7 +40,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Optional, Sequence, Tuple
 
-import httpx
 import structlog
 from pyproj import Transformer
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
@@ -47,6 +50,7 @@ from shapely.validation import make_valid
 import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefZoningLayer
+from jurisdictions.base_fetchers import SODAFetcher, SodaConfig
 
 try:  # pragma: no cover - optional PostGIS column
     from geoalchemy2.shape import from_shape
@@ -320,21 +324,16 @@ async def _fetch_zones_from_soda(
     if not dataset_id:
         raise ValueError("dataset_id is required for SODA fetches")
 
-    params: dict[str, str] = {"$format": "geojson"}
-    if max_features is not None:
-        params["$limit"] = str(max_features)
-
-    headers = {}
-    if app_token and app_token != "public":
-        headers["X-App-Token"] = app_token
-
-    url = f"{SODA_BASE}/{dataset_id}.geojson"
-    async with httpx.AsyncClient(timeout=180.0) as client:
-        response = await client.get(url, params=params, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-
-    return data
+    config = SodaConfig(
+        base_url=SODA_BASE,
+        dataset_id=dataset_id,
+        app_token=app_token,
+    )
+    fetcher = SODAFetcher(config, logger=logger)
+    return await asyncio.to_thread(
+        fetcher.fetch_geojson,
+        max_features=max_features,
+    )
 
 
 async def ingest_seattle_zones(options: ZoningIngestionOptions) -> dict[str, Any]:

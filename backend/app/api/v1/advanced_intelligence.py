@@ -187,13 +187,49 @@ async def graph_intelligence(
     return _sample_graph_payload(workspace_id)
 
 
+@router.post("/ingest")
+async def ingest_knowledge(
+    text: str = Query(..., description="Text content to ingest"),
+    source: str = Query(..., description="Source identifier"),
+    _: str = Depends(require_viewer),
+) -> dict[str, Any]:
+    """Ingest new knowledge into the RAG engine."""
+    from app.services.intelligence import intelligence_service
+
+    success = intelligence_service.ingest_text(text, source)
+    return {
+        "status": "ok" if success else "error",
+        "message": (
+            "Ingested successfully" if success else "Failed to ingest (check logs)"
+        ),
+    }
+
+
 @router.get("/predictive")
 async def predictive_intelligence(
     workspace_id: str = Query(..., alias="workspaceId"),
+    query: str = Query(None, description="Optional natural language query"),
     _: str = Depends(require_viewer),
 ) -> dict[str, Any]:
-    """Return stubbed predictive analytics for the requested workspace."""
+    """Return predictive analytics. If 'query' is provided, uses RAG agent."""
 
+    if query:
+        from app.services.intelligence import intelligence_service
+
+        # Use Real AI
+        answer = intelligence_service.query_agent(query)
+
+        return {
+            "kind": "predictive_agent",
+            "status": "ok",
+            "summary": answer,
+            "generatedAt": _timestamp(),
+            # Keep stubs for UI compatibility
+            "horizonMonths": 6,
+            "segments": [],
+        }
+
+    # Fallback to stub if no query
     return _sample_predictive_payload(workspace_id)
 
 

@@ -4,6 +4,8 @@ import type { ChangeEvent, FormEvent } from 'react'
 
 import { useTranslation } from '../../i18n'
 import { DetectedUnit, DetectionStatus } from './types'
+import { useFeasibilityLoop } from './useFeasibilityLoop'
+import { RoiSummary } from './RoiSummary'
 
 type OverlaySummary = {
   key: string
@@ -142,6 +144,15 @@ export function CadDetectionPreview({
     }
   }
 
+  const { metrics: liveMetrics, loading: loopLoading } = useFeasibilityLoop(units, zoneCode || null);
+
+  const displayMetrics = liveMetrics || {
+    automationScore: 0.72,
+    savingsPercent: 15,
+    reviewHoursSaved: 8,
+    paybackWeeks: 6
+  }; // Fallback/Initial state
+
   return (
     <section className="cad-preview">
       <header className="cad-preview__header">
@@ -171,6 +182,11 @@ export function CadDetectionPreview({
       </header>
 
       <div className="cad-preview__grid">
+        <RoiSummary
+          metrics={displayMetrics}
+          loading={loopLoading}
+          isLive={true}
+        />
         <div className="cad-preview__panel">
           <h3>{t('detection.overlays')}</h3>
           {overlays.length === 0 ? (
@@ -243,14 +259,14 @@ export function CadDetectionPreview({
                     }).format(percent)
                     const tooltipText = hiddenCount > 0
                       ? t('detection.severitySummary.tooltipHidden', {
-                          label,
-                          count: hiddenCount,
-                        })
+                        label,
+                        count: hiddenCount,
+                      })
                       : t('detection.severitySummary.tooltip', {
-                          label,
-                          count,
-                          percent: formattedPercent,
-                        })
+                        label,
+                        count,
+                        percent: formattedPercent,
+                      })
                     return (
                       <button
                         type="button"
@@ -278,9 +294,9 @@ export function CadDetectionPreview({
                     })
                     const tooltip = hidden
                       ? t('detection.statusFilters.tooltipHidden', {
-                          label,
-                          count: hidden,
-                        })
+                        label,
+                        count: hidden,
+                      })
                       : label
                     return (
                       <span

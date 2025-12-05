@@ -10,6 +10,7 @@ import AgentsGpsCapturePage from './pages/AgentsGpsCapturePage'
 import { FeasibilityWizard } from './modules/feasibility/FeasibilityWizard'
 import { FinanceWorkspace } from './modules/finance'
 import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligence'
+import { YosaiThemeProvider } from './theme/YosaiThemeProvider'
 import '@ob/tokens.css'
 import './styles/index.css'
 import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
@@ -267,7 +268,9 @@ if (!container) {
 ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <TranslationProvider>
-      <RouterProvider router={router} />
+      <YosaiThemeProvider>
+        <RouterProvider router={router} />
+      </YosaiThemeProvider>
     </TranslationProvider>
   </React.StrictMode>,
 )
