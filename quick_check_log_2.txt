@@ -1,0 +1,47 @@
+⚡ Running quick checks...
+🔍 Checking Python formatting with pre-commit hooks...
+black....................................................................Passed
+ruff.....................................................................Failed
+- hook id: ruff
+- exit code: 1
+
+scripts/check_ui_canon.py:167:101: E501 Line too long (103 > 100)
+    |
+165 |                             rule="no-inline-styles",
+166 |                             message=(
+167 |                                 "Inline styles detected. Use CSS classes from page-layout.css instead."
+    |                                                                                                     ^^^ E501
+168 |                             ),
+169 |                             snippet=line.strip()[:80],
+    |
+
+scripts/check_ui_canon.py:205:101: E501 Line too long (104 > 100)
+    |
+203 |                             rule="no-hardcoded-colors",
+204 |                             message=(
+205 |                                 f"Hardcoded color '{match.group()}' detected. Use CSS variable instead."
+    |                                                                                                     ^^^^ E501
+206 |                             ),
+207 |                             snippet=line.strip()[:80],
+    |
+
+Found 2 errors.
+
+
+> building-compliance-frontend@1.0.0 typecheck
+> tsc --noEmit
+
+Success: no issues found in 16 source files
+
+> building-compliance-frontend@1.0.0 lint
+> eslint --ext .ts,.tsx src
+
+
+/Users/tombrayman/Projects/GitHub/optimal_build/frontend/src/pages/visualizations/__tests__/AdvancedIntelligence.test.tsx
+  2:32  warning  'vi' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  2:36  warning  'beforeEach' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  4:26  warning  'waitFor' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
+
+✅ Quick checks completed

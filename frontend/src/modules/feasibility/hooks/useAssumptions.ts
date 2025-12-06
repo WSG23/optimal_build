@@ -1,8 +1,9 @@
 import type { ChangeEvent } from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import type { AssumptionInputs, AssumptionErrors } from '../types'
 import { DEFAULT_ASSUMPTIONS } from '../types'
+import { getEngineeringDefaults, type EngineeringDefaults } from '../../../api/feasibility'
 
 interface UseAssumptionsResult {
   assumptionInputs: AssumptionInputs
@@ -22,9 +23,35 @@ export function useAssumptions(): UseAssumptionsResult {
     }),
   )
   const [assumptionErrors, setAssumptionErrors] = useState<AssumptionErrors>({})
-  const [appliedAssumptions, setAppliedAssumptions] = useState({
+  const [appliedAssumptions, setAppliedAssumptions] = useState<{
+    typFloorToFloorM: number
+    efficiencyRatio: number
+  }>({
     ...DEFAULT_ASSUMPTIONS,
   })
+
+  useEffect(() => {
+    const controller = new AbortController()
+    getEngineeringDefaults(controller.signal)
+      .then((defaults: EngineeringDefaults) => {
+        if (!defaults || typeof defaults.typFloorToFloorM !== 'number') {
+           console.warn('Invalid defaults received:', defaults)
+           return
+        }
+        setAssumptionInputs({
+          typFloorToFloorM: (defaults.typFloorToFloorM || DEFAULT_ASSUMPTIONS.typFloorToFloorM).toString(),
+          efficiencyRatio: (defaults.efficiencyRatio || DEFAULT_ASSUMPTIONS.efficiencyRatio).toString(),
+        })
+        setAppliedAssumptions({
+          typFloorToFloorM: defaults.typFloorToFloorM || DEFAULT_ASSUMPTIONS.typFloorToFloorM,
+          efficiencyRatio: defaults.efficiencyRatio || DEFAULT_ASSUMPTIONS.efficiencyRatio,
+        })
+      })
+      .catch((err: unknown) => {
+        console.warn('Failed to load engineering defaults', err)
+      })
+    return () => controller.abort()
+  }, [])
 
   const handleAssumptionChange = useCallback(
     (key: keyof AssumptionInputs) => (event: ChangeEvent<HTMLInputElement>) => {

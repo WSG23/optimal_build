@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 from app.schemas.finance import AssetFinancialSummarySchema
 
@@ -14,6 +15,8 @@ FeasibilityRuleStatus = Literal["pass", "fail", "warning"]
 
 class BuildEnvelopeSnapshot(BaseModel):
     """Optional snapshot of zoning envelope inputs."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
     site_area_sqm: float | None = Field(default=None, gt=0)
     allowable_plot_ratio: float | None = Field(default=None, gt=0)
@@ -25,6 +28,8 @@ class BuildEnvelopeSnapshot(BaseModel):
 class NewFeasibilityProjectInput(BaseModel):
     """Input details describing the project under assessment."""
 
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     name: str = Field(..., min_length=1)
     site_address: str = Field(..., min_length=1)
     site_area_sqm: float = Field(..., gt=0)
@@ -32,6 +37,8 @@ class NewFeasibilityProjectInput(BaseModel):
     target_gross_floor_area_sqm: float | None = Field(None, gt=0)
     building_height_meters: float | None = Field(None, gt=0)
     build_envelope: BuildEnvelopeSnapshot | None = None
+    typ_floor_to_floor_m: float | None = Field(None, gt=0)
+    efficiency_ratio: float | None = Field(None, gt=0, le=1.0)
 
 
 class FeasibilityRule(BaseModel):
@@ -69,6 +76,8 @@ class FeasibilityRulesResponse(BaseModel):
 class FeasibilityAssessmentRequest(BaseModel):
     """Request payload for evaluating the selected rules."""
 
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     project: NewFeasibilityProjectInput
     selected_rule_ids: list[str]
 
@@ -89,6 +98,7 @@ class BuildableAreaSummary(BaseModel):
     estimated_unit_count: int
     site_coverage_percent: float
     remarks: str | None = None
+    accuracy_range: str | None = None
 
 
 class AssetConstraintViolation(BaseModel):

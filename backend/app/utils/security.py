@@ -7,7 +7,7 @@ import hmac
 import secrets
 
 try:  # pragma: no cover - prefer passlib when available
-    from passlib.context import CryptContext  # type: ignore[import-untyped]
+    from passlib.context import CryptContext  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - fallback implementation
     CryptContext = None
 

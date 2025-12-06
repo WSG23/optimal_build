@@ -310,11 +310,11 @@ backend/app/core/
 - **Password Hashing**: ✅ bcrypt via passlib 1.7.4
 - **Token Storage**: ⚙️ Documented as HTTP-only cookies (not verified in code)
 - **RBAC**: ⚙️ Roles mentioned (admin/user/developer/consultant) but not fully verified
-- **Auth Logic**: Split across `users_secure.py`, `users_db.py`, `core/jwt_auth.py`, `core/auth/policy.py`
+- **Auth Logic**: Centralised in `app/core/auth/service.py` (legacy wrappers kept for backwards compatibility)
 
 ### API Security
 - **CORS**: ✅ Configured in main.py
-- **Rate Limiting**: ❌ Documented but **not implemented** in middleware
+- **Rate Limiting**: ✅ SlowAPI limiter backed by Redis (`RATE_LIMIT_STORAGE_URI`, defaults to DB 3)
 - **Input Validation**: ✅ Pydantic 2.5.0
 - **SQL Injection Prevention**: ✅ SQLAlchemy ORM
 
@@ -444,12 +444,12 @@ Managed services:
 3. ~~**No Metrics**: Prometheus client installed but no instrumentation (latency, errors, throughput all missing)~~ **✅ RESOLVED** – RequestMetricsMiddleware records request/latency counters and `/metrics` now exposes the Prometheus registry.
 
 ### High
-4. **Rate Limiting Missing**: Documented but not implemented in middleware
+4. ~~**Rate Limiting Missing**: Documented but not implemented in middleware~~ **✅ RESOLVED** – SlowAPI now enforces limits with Redis-backed storage.
 5. **Inconsistent Naming**: Mix of plural/singular models, `_api` suffixes, no clear convention
-6. **Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)
+6. ~~**Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)~~ **✅ RESOLVED** – Consolidated into `app/core/auth/service.py` with thin wrappers for compatibility.
 
 ### Medium
-7. **MinIO Bucket**: `documents` bucket documented but not in docker-compose.yml
+7. ~~**MinIO Bucket**: `documents` bucket documented but not in docker-compose.yml~~ **✅ RESOLVED** – `DOCUMENTS_BUCKET_NAME` default added; MinIOService bootstraps documents/imports/exports buckets.
 8. **Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.
 9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
 

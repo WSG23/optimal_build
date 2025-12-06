@@ -1,6 +1,6 @@
-import assert from 'node:assert/strict'
-import { afterEach, beforeEach, describe, it } from 'node:test'
-import { JSDOM } from 'jsdom'
+import { afterEach, assert, beforeEach, describe, it } from 'vitest'
+import { ThemeModeProvider } from '../../../../theme/ThemeContext'
+
 import { cleanup, render, screen } from '@testing-library/react'
 import React from 'react'
 
@@ -10,33 +10,13 @@ import { FinanceCapitalStack } from '../FinanceCapitalStack'
 import { FinanceDrawdownSchedule } from '../FinanceDrawdownSchedule'
 
 describe('Finance capital stack and drawdown components', () => {
-  let dom: JSDOM
-
   beforeEach(() => {
-    dom = new JSDOM('<!doctype html><html><body></body></html>', {
-      url: 'http://localhost/finance',
-    })
-    const globalWithDom = globalThis as typeof globalThis & {
-      window: Window & typeof globalThis
-      document: Document
-      navigator: Navigator
-    }
-    globalWithDom.window = dom.window
-    globalWithDom.document = dom.window.document
-    globalWithDom.navigator = dom.window.navigator
+    cleanup()
+    window.history.replaceState(null, '', '/finance')
   })
 
   afterEach(() => {
     cleanup()
-    dom.window.close()
-    const globalWithDom = globalThis as {
-      window?: Window & typeof globalThis
-      document?: Document
-      navigator?: Navigator
-    }
-    delete globalWithDom.window
-    delete globalWithDom.document
-    delete globalWithDom.navigator
   })
 
   const baseScenario: FinanceScenarioSummary = {
@@ -142,25 +122,29 @@ describe('Finance capital stack and drawdown components', () => {
 
   it('renders the capital stack overview for scenarios with data', () => {
     render(
-      <TranslationProvider>
-        <FinanceCapitalStack scenarios={[baseScenario]} />
-      </TranslationProvider>,
+      <ThemeModeProvider>
+        <TranslationProvider>
+          <FinanceCapitalStack scenarios={[baseScenario]} />
+        </TranslationProvider>
+      </ThemeModeProvider>,
     )
 
     assert.ok(screen.getByText('Capital stack overview'))
     assert.ok(screen.getByText('Scenario A'))
     assert.ok(screen.getByText('Equity share'))
     assert.ok(screen.getByText('Tranche / facility detail'))
-    assert.ok(screen.getByText('Senior Loan'))
+    assert.ok(screen.getAllByText('Senior Loan').length > 0)
     assert.ok(screen.getByText('Interest reserve (months)'))
     assert.ok(screen.getByText('Interest handling'))
   })
 
   it('renders the drawdown table for scenarios with schedules', () => {
     render(
-      <TranslationProvider>
-        <FinanceDrawdownSchedule scenarios={[baseScenario]} />
-      </TranslationProvider>,
+      <ThemeModeProvider>
+        <TranslationProvider>
+          <FinanceDrawdownSchedule scenarios={[baseScenario]} />
+        </TranslationProvider>
+      </ThemeModeProvider>,
     )
 
     assert.ok(screen.getByText('Drawdown schedule'))

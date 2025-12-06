@@ -12,17 +12,39 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from functools import wraps
 from importlib import import_module
 from pathlib import Path
-from types import ModuleType
-from typing import Any, cast
+from types import ModuleType, TracebackType
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar, cast, overload
+
+if TYPE_CHECKING:
+    from fastapi.testclient import AsyncTestClient as FastAPIAsyncClient
+    from httpx import AsyncClient as HTTPXAsyncClient
+
+    AsyncClientType: TypeAlias = HTTPXAsyncClient | FastAPIAsyncClient
+else:
+    AsyncClientType: TypeAlias = Any
 
 import pytest
-from backend._sqlalchemy_stub import ensure_sqlalchemy
 
-# Import AsyncClient from httpx, but we'll wrap it for FastAPI testing
+
+AsyncClient: type[Any]
+
 try:
-    from httpx import AsyncClient as _RealAsyncClient
+    from fastapi.testclient import AsyncTestClient as _FastAPIAsyncClient
+
+    AsyncClient = _FastAPIAsyncClient
 except ImportError:
-    _RealAsyncClient = None  # type: ignore[assignment]
+    try:
+        from httpx import AsyncClient as _HTTPXAsyncClient
+    except ImportError:
+
+        class _HTTPXAsyncClientStub:  # pragma: no cover - runtime fallback
+            """Fallback stub used when httpx is not installed."""
+
+            pass
+
+        AsyncClient = _HTTPXAsyncClientStub
+    else:
+        AsyncClient = _HTTPXAsyncClient
 
 
 def _find_repo_root(current: Path) -> Path:
@@ -45,7 +67,7 @@ except RuntimeError:
 _ORIGINAL_ASYNCIO_GET_EVENT_LOOP = asyncio.get_event_loop
 
 
-def _patched_get_event_loop():
+def _patched_get_event_loop() -> asyncio.AbstractEventLoop:
     try:
         return _ORIGINAL_ASYNCIO_GET_EVENT_LOOP()
     except RuntimeError:
@@ -55,6 +77,19 @@ def _patched_get_event_loop():
 
 
 asyncio.get_event_loop = _patched_get_event_loop
+
+
+_FixtureFunc = TypeVar("_FixtureFunc", bound=Callable[..., Any])
+
+
+class _PytestAsyncioLike(Protocol):
+    @overload
+    def fixture(self, __func: _FixtureFunc) -> _FixtureFunc: ...
+
+    @overload
+    def fixture(
+        self, *args: Any, **kwargs: Any
+    ) -> Callable[[_FixtureFunc], _FixtureFunc]: ...
 
 
 def _ensure_namespace_package(name: str, location: Path) -> None:
@@ -78,10 +113,14 @@ def _ensure_namespace_package(name: str, location: Path) -> None:
 
 _ensure_namespace_package("backend", _REPO_ROOT)
 
+
+load_optional_package: Callable[[str, str, str], Any] | None
 try:
-    from backend._stub_loader import load_optional_package
+    from backend._stub_loader import load_optional_package as _load_optional_package
 except ModuleNotFoundError:
-    load_optional_package = None  # type: ignore[assignment]
+    load_optional_package = None
+else:
+    load_optional_package = _load_optional_package
 
 if load_optional_package is not None:
     try:
@@ -105,7 +144,7 @@ if load_optional_package is not None:
                 spec.loader.exec_module(module)
 
 try:  # pragma: no cover - async plugin is optional when running unit tests
-    import pytest_asyncio  # type: ignore[import-not-found]
+    import pytest_asyncio
 except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
     pytest_asyncio = import_module("backend.pytest_asyncio")
     sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
@@ -113,11 +152,13 @@ except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
 else:
     _USING_PYTEST_ASYNCIO_STUB = False
 
-pytest_asyncio = cast(Any, pytest_asyncio)
+pytest_asyncio = cast(_PytestAsyncioLike, pytest_asyncio)
 
 import app.utils.metrics as metrics
 
-_SQLALCHEMY_AVAILABLE = ensure_sqlalchemy()
+_SQLALCHEMY_AVAILABLE = True
+_SORTED_TABLES: tuple[Any, ...]
+StaticPool: type[Any]
 
 
 def _ensure_sqlalchemy_dialects() -> None:
@@ -131,17 +172,6 @@ def _ensure_sqlalchemy_dialects() -> None:
         sqlalchemy.dialects = module
 
 
-# Import AsyncTestClient from FastAPI stub for testing
-try:
-    from fastapi.testclient import AsyncTestClient
-
-    AsyncClient = AsyncTestClient  # type: ignore[misc,assignment]
-except ImportError:
-    if _RealAsyncClient is not None:
-        AsyncClient = _RealAsyncClient  # type: ignore[misc,assignment]
-    else:
-        AsyncClient = None  # type: ignore[assignment]
-
 app: Any | None = None
 
 if _SQLALCHEMY_AVAILABLE:
@@ -154,7 +184,7 @@ if _SQLALCHEMY_AVAILABLE:
         create_async_engine,
     )
     from sqlalchemy.orm import Mapped, mapped_column
-    from sqlalchemy.pool import StaticPool
+    from sqlalchemy.pool import StaticPool as _SQLAlchemyStaticPool
     from sqlalchemy.util import concurrency
 
     # isort: off
@@ -184,15 +214,22 @@ if _SQLALCHEMY_AVAILABLE:
                 await self._lock.acquire()
                 return self
 
-            async def __aexit__(self, exc_type, exc, tb) -> None:
+            async def __aexit__(
+                self,
+                exc_type: type[BaseException] | None,
+                exc: BaseException | None,
+                tb: TracebackType | None,
+            ) -> None:
                 self._lock.release()
 
-        async def _await_only(value):
+        async def _await_only(value: Any) -> Any:
             if asyncio.iscoroutine(value):
                 return await value
             return value
 
-        async def _greenlet_spawn(func, *args, **kwargs):
+        async def _greenlet_spawn(
+            func: Callable[..., Any], *args: Any, **kwargs: Any
+        ) -> Any:
             return await asyncio.to_thread(func, *args, **kwargs)
 
         concurrency.AsyncAdaptedLock = lambda *_, **__: _AsyncLock()
@@ -213,7 +250,7 @@ if _SQLALCHEMY_AVAILABLE:
 
     if "projects" not in getattr(BaseModel.metadata, "tables", {}):
 
-        class _ProjectStub(BaseModel):
+        class _ProjectStub(BaseModel):  # type: ignore[misc]
             """Minimal project table used for tests that only require an ID."""
 
             __tablename__ = "projects"
@@ -223,11 +260,12 @@ if _SQLALCHEMY_AVAILABLE:
                 String(120), nullable=False, default="Test Project"
             )
 
+    StaticPool = _SQLAlchemyStaticPool
     _SORTED_TABLES = tuple(BaseModel.metadata.sorted_tables)
 else:
     SQLAlchemyError = RuntimeError  # noqa: F811  # fallback when SQLAlchemy unavailable
-    StaticPool = type("StaticPool", (), {})  # type: ignore[assignment]
-    _SORTED_TABLES: tuple[Any, ...] = ()
+    StaticPool = type("StaticPool", (), {})
+    _SORTED_TABLES = ()
 
 _pytest_asyncio_stub = ModuleType("pytest_asyncio")
 
@@ -240,13 +278,13 @@ def _run(coro: Any) -> Any:
 
 def _wrap_fixture(
     func: Callable[..., Any], *, args: tuple[Any, ...], kwargs: dict[str, Any]
-):
+) -> Any:
     decorator = pytest.fixture(*args, **kwargs)
 
     if inspect.isasyncgenfunction(func):
 
         @wraps(func)
-        def _wrapper(*f_args: Any, **f_kwargs: Any):
+        def _wrapper(*f_args: Any, **f_kwargs: Any) -> Iterator[Any]:
             agen = func(*f_args, **f_kwargs)
             try:
                 try:
@@ -277,23 +315,25 @@ def _wrap_fixture(
     return decorator(func)
 
 
-def fixture(*f_args: Any, **f_kwargs: Any):
+def fixture(*f_args: Any, **f_kwargs: Any) -> Any:
     if f_args and callable(f_args[0]) and len(f_args) == 1 and not f_kwargs:
         return _wrap_fixture(f_args[0], args=(), kwargs={})
 
-    def decorator(func: Callable[..., Any]):
+    def decorator(func: Callable[..., Any]) -> Any:
         return _wrap_fixture(func, args=f_args, kwargs=f_kwargs)
 
     return decorator
 
 
-_pytest_asyncio_stub.fixture = fixture  # type: ignore[attr-defined]
+_pytest_asyncio_stub.fixture = fixture
 _pytest_asyncio_stub.__all__ = ["fixture"]
 sys.modules.setdefault("pytest_asyncio", _pytest_asyncio_stub)
-pytest_asyncio = _pytest_asyncio_stub  # type: ignore[assignment]
+pytest_asyncio = cast(_PytestAsyncioLike, _pytest_asyncio_stub)
 
 
-def pytest_addoption(parser):  # pragma: no cover - exercised indirectly
+def pytest_addoption(
+    parser: pytest.Parser,
+) -> None:  # pragma: no cover - exercised indirectly
     parser.addini(
         "asyncio_mode",
         "Compatibility option consumed by the lightweight pytest-asyncio stub.",
@@ -314,8 +354,8 @@ def pytest_configure(
     )
 
 
-@pytest.hookimpl(tryfirst=True)  # pragma: no cover - exercised indirectly
-def pytest_pyfunc_call(pyfuncitem):
+@pytest.hookimpl(tryfirst=True)  # type: ignore[misc]  # pragma: no cover - exercised indirectly
+def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
     test_func = pyfuncitem.obj
     if inspect.iscoroutinefunction(test_func):
         if pyfuncitem.get_closest_marker("asyncio") is None:
@@ -325,16 +365,6 @@ def pytest_pyfunc_call(pyfuncitem):
         _run(test_func(**call_kwargs))
         return True
     return None
-
-
-try:  # pragma: no cover - optional dependency for API tests
-    from httpx import AsyncClient
-except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline testing
-
-    class AsyncClient:  # type: ignore[no-redef]
-        """Fallback stub used when httpx is not installed."""
-
-        pass
 
 
 _SKIPPED_TEST_PATTERNS: dict[str, str] = {
@@ -385,7 +415,7 @@ def pytest_collection_modifyitems(
 
 if _USING_PYTEST_ASYNCIO_STUB:
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="session")  # type: ignore[misc]
     def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
         """Create a dedicated event loop for the entire test session."""
 
@@ -417,7 +447,7 @@ if _SQLALCHEMY_AVAILABLE:
         async with factory() as session:
             await _truncate_all(session)
 
-    @pytest_asyncio.fixture(scope="session")
+    @pytest_asyncio.fixture(scope="session")  # type: ignore[misc]
     async def flow_session_factory() -> AsyncGenerator[
         async_sessionmaker[AsyncSession],
         None,
@@ -433,8 +463,8 @@ if _SQLALCHEMY_AVAILABLE:
             future=True,
         )
 
-        @event.listens_for(engine.sync_engine, "connect")
-        def _register_sqlite_functions(dbapi_connection, _) -> None:
+        @event.listens_for(engine.sync_engine, "connect")  # type: ignore[misc]
+        def _register_sqlite_functions(dbapi_connection: Any, _: Any) -> None:
             """Provide minimal SQLite stubs for Postgres-specific helpers."""
 
             def _gen_random_uuid() -> str:
@@ -461,7 +491,7 @@ if _SQLALCHEMY_AVAILABLE:
         finally:
             await engine.dispose()
 
-    @pytest_asyncio.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)  # type: ignore[misc]
     async def _cleanup_flow_session_factory(
         flow_session_factory: async_sessionmaker[AsyncSession],
         request: pytest.FixtureRequest,
@@ -478,7 +508,7 @@ if _SQLALCHEMY_AVAILABLE:
         finally:
             await _reset_database(flow_session_factory)
 
-    @pytest_asyncio.fixture(autouse=True)
+    @pytest_asyncio.fixture(autouse=True)  # type: ignore[misc]
     async def _override_async_session_factory(
         flow_session_factory: async_sessionmaker[AsyncSession],
         monkeypatch: pytest.MonkeyPatch,
@@ -507,7 +537,7 @@ if _SQLALCHEMY_AVAILABLE:
 
         yield
 
-    @pytest_asyncio.fixture
+    @pytest_asyncio.fixture  # type: ignore[misc]
     async def async_session_factory(
         flow_session_factory: async_sessionmaker[AsyncSession],
     ) -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
@@ -519,7 +549,7 @@ if _SQLALCHEMY_AVAILABLE:
         finally:
             await _reset_database(flow_session_factory)
 
-    @pytest_asyncio.fixture
+    @pytest_asyncio.fixture  # type: ignore[misc]
     async def session(
         async_session_factory: async_sessionmaker[AsyncSession],
     ) -> AsyncGenerator[AsyncSession, None]:
@@ -531,7 +561,7 @@ if _SQLALCHEMY_AVAILABLE:
             finally:
                 await _truncate_all(db_session)
 
-    @pytest_asyncio.fixture(name="db_session")
+    @pytest_asyncio.fixture(name="db_session")  # type: ignore[misc]
     async def db_session_alias(
         session: AsyncSession,
     ) -> AsyncGenerator[AsyncSession, None]:
@@ -539,7 +569,7 @@ if _SQLALCHEMY_AVAILABLE:
 
         yield session
 
-    @pytest_asyncio.fixture
+    @pytest_asyncio.fixture  # type: ignore[misc]
     async def singapore_rules(
         db_session: AsyncSession,
     ) -> AsyncGenerator[list[Any], None]:
@@ -715,7 +745,7 @@ if _SQLALCHEMY_AVAILABLE:
 
         yield rules
 
-    @pytest.fixture
+    @pytest.fixture  # type: ignore[misc]
     def session_factory(
         async_session_factory: async_sessionmaker[AsyncSession],
     ) -> Callable[[], AbstractAsyncContextManager[AsyncSession]]:
@@ -728,10 +758,10 @@ if _SQLALCHEMY_AVAILABLE:
 
         return _factory
 
-    @pytest_asyncio.fixture
+    @pytest_asyncio.fixture  # type: ignore[misc]
     async def app_client(
         async_session_factory: async_sessionmaker[AsyncSession],
-    ) -> AsyncGenerator[AsyncClient, None]:
+    ) -> AsyncGenerator[AsyncClientType, None]:
         """Provide an HTTPX client with the database dependency overridden."""
 
         async def _override_get_session() -> AsyncGenerator[AsyncSession, None]:
@@ -741,6 +771,7 @@ if _SQLALCHEMY_AVAILABLE:
         if app is None:
             pytest.skip("FastAPI app is unavailable in the current test environment")
 
+        assert app is not None
         app.dependency_overrides[get_session] = _override_get_session
         async with AsyncClient(
             app=app,
@@ -752,16 +783,16 @@ if _SQLALCHEMY_AVAILABLE:
         app.dependency_overrides.pop(get_session, None)
         await _reset_database(async_session_factory)
 
-    @pytest_asyncio.fixture(name="client")
+    @pytest_asyncio.fixture(name="client")  # type: ignore[misc]
     async def client_fixture(
-        app_client: AsyncClient,
-    ) -> AsyncGenerator[AsyncClient, None]:
+        app_client: AsyncClientType,
+    ) -> AsyncGenerator[AsyncClientType, None]:
         """Compatibility alias exposing the app client under the traditional name."""
 
         yield app_client
 
-    @pytest.fixture(autouse=True)
-    def _force_inline_job_queue(monkeypatch: pytest.MonkeyPatch):
+    @pytest.fixture(autouse=True)  # type: ignore[misc]
+    def _force_inline_job_queue(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         """Ensure background jobs run inline so tests avoid external brokers."""
 
         import backend.jobs as jobs_module
@@ -774,7 +805,7 @@ if _SQLALCHEMY_AVAILABLE:
         monkeypatch.setattr(jobs_module.job_queue, "_backend", inline_backend)
         yield
 
-    @pytest_asyncio.fixture
+    @pytest_asyncio.fixture  # type: ignore[misc]
     async def market_demo_data(
         async_session_factory: async_sessionmaker[AsyncSession],
     ) -> AsyncGenerator[None, None]:
@@ -841,7 +872,7 @@ if _SQLALCHEMY_AVAILABLE:
 
 else:
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=True)  # type: ignore[misc]
     def _skip_without_sqlalchemy(request: pytest.FixtureRequest) -> None:
         """Skip tests that require SQLAlchemy when the dependency is missing."""
 
@@ -850,7 +881,7 @@ else:
         pytest.skip("SQLAlchemy is unavailable in the current test environment")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # type: ignore[misc]
 def reset_metrics() -> Iterator[None]:
     """Reset application metrics before and after every test."""
 

@@ -1,7 +1,11 @@
 # Claude AI Agent Guide for optimal_build
 
-**Version:** 1.1
-**Last Updated:** 2025-11-09
+> [!IMPORTANT] > **PRIMARY DIRECTIVE**: As an Anthropic agent (Claude), your primary operating procedure is to adhere to the Master Control Prompt.
+
+**Pointer**: You must read and follow **[MCP.md](./MCP.md)** before proceeding with any task.
+
+**Version:** 1.2
+**Last Updated:** 2025-12-06
 
 This document provides comprehensive guidance for Claude (and other AI agents) when working on the optimal_build codebase. Follow these rules strictly to maintain code quality and project consistency.
 
@@ -61,30 +65,34 @@ make hooks
 **Tone:** Professional, precise, and quality-focused. No apologies or filler phrases.
 
 **Code References:** When referencing files or code locations, use markdown links to make them clickable:
-- For files: `[filename.py](backend/app/filename.py)`
-- For specific lines: `[filename.py:42](backend/app/filename.py#L42)`
-- For line ranges: `[filename.py:42-51](backend/app/filename.py#L42-L51)`
-- For folders: `[backend/app/models/](backend/app/models/)`
+
+-   For files: `[filename.py](backend/app/filename.py)`
+-   For specific lines: `[filename.py:42](backend/app/filename.py#L42)`
+-   For line ranges: `[filename.py:42-51](backend/app/filename.py#L42-L51)`
+-   For folders: `[backend/app/models/](backend/app/models/)`
 
 **Commit Messages:** Use imperative mood with "why" context
-- ✅ "Add compliance scoring to Property model to track regulatory violations"
-- ❌ "Added compliance_score field"
-- ✅ "Fix ENUM migration pattern to prevent 'type already exists' errors"
-- ❌ "Fixed migrations"
+
+-   ✅ "Add compliance scoring to Property model to track regulatory violations"
+-   ❌ "Added compliance_score field"
+-   ✅ "Fix ENUM migration pattern to prevent 'type already exists' errors"
+-   ❌ "Fixed migrations"
 
 **Checkpoint Protocol (CRITICAL):**
-- **Stop after critical steps** and wait for user approval
-- Ask "Should I proceed with implementing X?" before large changes
-- Show implementation plan before execution for complex features
-- Never make large architectural changes without explicit user approval
-- Example: "I've identified 12 files that need updates. Should I proceed with refactoring the authentication system?"
+
+-   **Stop after critical steps** and wait for user approval
+-   Ask "Should I proceed with implementing X?" before large changes
+-   Show implementation plan before execution for complex features
+-   Never make large architectural changes without explicit user approval
+-   Example: "I've identified 12 files that need updates. Should I proceed with refactoring the authentication system?"
 
 **Explanations:**
-- Provide concise explanations with the "why" behind technical decisions
-- Focus on **why** this solution was chosen, not just **what** was done
-- Include file paths with line numbers: `backend/app/models/property.py:142`
-- Use active voice over passive voice
-- Clarity over comprehensiveness
+
+-   Provide concise explanations with the "why" behind technical decisions
+-   Focus on **why** this solution was chosen, not just **what** was done
+-   Include file paths with line numbers: `backend/app/models/property.py:142`
+-   Use active voice over passive voice
+-   Clarity over comprehensiveness
 
 **Examples:**
 
@@ -95,6 +103,7 @@ This uses an ENUM for compliance status to prevent invalid states and adds an in
 to enable fast querying of non-compliant properties.
 
 Should I proceed with:
+
 1. Creating the database migration
 2. Adding API endpoints for compliance filtering
 3. Writing unit tests for the new scoring logic
@@ -112,36 +121,42 @@ if this works for you or if you'd like me to change anything.
 Read these documents IN ORDER before writing any code:
 
 ### Priority 1: Product Requirements (MANDATORY)
+
 1. **[docs/planning/features.md](docs/planning/features.md)** - Complete product vision
-   - Source of truth for ALL features
-   - Defines user roles and requirements
-   - ~30 min read
+
+    - Source of truth for ALL features
+    - Defines user roles and requirements
+    - ~30 min read
 
 2. **[docs/all_steps_to_product_completion.md](docs/all_steps_to_product_completion.md)** - Delivery roadmap
-   - Maps 100% of features into 6 phases
-   - Shows dependencies and priorities
-   - Check BEFORE starting new work
-   - ~20 min read
+
+    - Maps 100% of features into 6 phases
+    - Shows dependencies and priorities
+    - Check BEFORE starting new work
+    - ~20 min read
 
 3. **[docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md)** - Current priorities
-   - What to build next
-   - Completed vs. in-progress features
-   - Check daily
-   - ~5 min read
+    - What to build next
+    - Completed vs. in-progress features
+    - Check daily
+    - ~5 min read
 
 ### Priority 2: Technical Standards (MANDATORY)
+
 4. **[CODING_RULES.md](CODING_RULES.md)** - Technical standards
-   - 12 rules covering migrations, async, security
-   - Pre-commit hooks enforce these
-   - Must follow in ALL code
-   - ~45 min read
+
+    - 12 rules covering migrations, async, security
+    - Pre-commit hooks enforce these
+    - Must follow in ALL code
+    - ~45 min read
 
 5. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Workflow and tooling
-   - Setup, testing, linting
-   - Code review checklist
-   - ~15 min read
+    - Setup, testing, linting
+    - Code review checklist
+    - ~15 min read
 
 ### Priority 3: Context Documents (REFERENCE)
+
 6. **[README.md](README.md)** - Project overview
 7. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
 8. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
@@ -150,12 +165,13 @@ Read these documents IN ORDER before writing any code:
 ### Verification Checkpoint
 
 Before proceeding, confirm:
-- [ ] I have read features.md completely
-- [ ] I have reviewed all_steps_to_product_completion.md for the current phase
-- [ ] I have checked next_steps.md for priorities
-- [ ] I have read CODING_RULES.md sections relevant to my task
-- [ ] I understand which phase I'm working in
-- [ ] I know the acceptance criteria for my task
+
+-   [ ] I have read features.md completely
+-   [ ] I have reviewed all_steps_to_product_completion.md for the current phase
+-   [ ] I have checked next_steps.md for priorities
+-   [ ] I have read CODING_RULES.md sections relevant to my task
+-   [ ] I understand which phase I'm working in
+-   [ ] I know the acceptance criteria for my task
 
 ---
 
@@ -169,11 +185,13 @@ make ai-preflight
 ```
 
 This verifies:
-- Tool versions match (Black, Ruff, etc.)
-- Coding rules compliance
-- No existing violations
+
+-   Tool versions match (Black, Ruff, etc.)
+-   Coding rules compliance
+-   No existing violations
 
 **Manual checks:**
+
 ```bash
 # Check tool versions
 make check-tool-versions
@@ -192,41 +210,47 @@ make validate-delivery-plan
 ### Step 1: Plan and Document (BEFORE coding)
 
 1. **Check existing work:**
-   ```bash
-   git status
-   git log --oneline -10
-   ```
+
+    ```bash
+    git status
+    git log --oneline -10
+    ```
 
 2. **Review relevant documentation:**
-   - Check all_steps_to_product_completion.md for your phase
-   - Review next_steps.md for current priorities
-   - Review the Known Testing Issues section in `docs/all_steps_to_product_completion.md`
+
+    - Check all_steps_to_product_completion.md for your phase
+    - Review next_steps.md for current priorities
+    - Review the Known Testing Issues section in `docs/all_steps_to_product_completion.md`
 
 3. **Plan your changes:**
-   - Identify files to modify
-   - Check for existing migrations (NEVER edit existing ones)
-   - Verify no conflicts with in-progress work
+    - Identify files to modify
+    - Check for existing migrations (NEVER edit existing ones)
+    - Verify no conflicts with in-progress work
 
 ### Step 2: Write Code (DURING coding)
 
 Follow ALL rules in CODING_RULES.md:
 
 **Rule 1: Database Migrations**
-- NEVER edit existing migration files
-- Create new migrations: `alembic revision -m "description"`
-- Use `sa.String()` for ENUM columns (NOT `sa.Enum()`)
-- Match Python enum VALUES exactly in SQL
+
+-   NEVER edit existing migration files
+-   Create new migrations: `alembic revision -m "description"`
+-   Use `sa.String()` for ENUM columns (NOT `sa.Enum()`)
+-   Match Python enum VALUES exactly in SQL
 
 **Rule 2: Async/Await**
-- ALL database calls use `async`/`await`
-- ALL API routes use `async def`
-- Use `AsyncSession` not `Session`
+
+-   ALL database calls use `async`/`await`
+-   ALL API routes use `async def`
+-   Use `AsyncSession` not `Session`
 
 **Rule 3: Testing**
-- Run `make verify` before committing
-- Pre-commit hooks auto-format code
+
+-   Run `make verify` before committing
+-   Pre-commit hooks auto-format code
 
 **Rule 6: Import Ordering**
+
 ```python
 # 1. Standard library
 import os
@@ -241,9 +265,10 @@ from app.models import User
 ```
 
 **Rule 7: Code Quality**
-- No unused variables or imports
-- Use `raise ... from e` for exception chaining
-- No mutable default arguments
+
+-   No unused variables or imports
+-   Use `raise ... from e` for exception chaining
+-   No mutable default arguments
 
 ### Step 3: Validate (AFTER coding)
 
@@ -270,31 +295,36 @@ pytest backend/tests/test_[your_feature].py -v
 ```
 
 **NEVER present code to the user until:**
-- `make format` passes ✅
-- `make typecheck-backend` passes ✅ (if you modified app/api/ or app/schemas/)
-- `make verify` passes ✅
-- `make hooks` passes ✅
-- Tests pass ✅
+
+-   `make format` passes ✅
+-   `make typecheck-backend` passes ✅ (if you modified app/api/ or app/schemas/)
+-   `make verify` passes ✅
+-   `make hooks` passes ✅
+-   Tests pass ✅
 
 ### Step 4: Provide Test Instructions (MANDATORY)
 
 When you complete ANY feature, you MUST provide:
 
 **a) Backend test commands:**
+
 ```bash
 .venv/bin/pytest backend/tests/test_api/test_[feature].py -v
 .venv/bin/pytest backend/tests/test_services/test_[feature].py -v
 ```
 
 **b) Frontend test commands (if applicable):**
+
 ```bash
 cd frontend && npm test -- src/modules/[feature]/__tests__
 cd frontend && npm run lint
 ```
 
 **c) UI manual test steps:**
+
 ```markdown
 UI Manual Testing:
+
 1. Navigate to [URL]
 2. Click [button/action]
 3. Verify [expected outcome]
@@ -302,6 +332,7 @@ UI Manual Testing:
 ```
 
 **Example:**
+
 ```markdown
 I've completed the finance scenario privacy feature. Please test:
 
@@ -309,9 +340,10 @@ Backend tests:
 .venv/bin/pytest backend/tests/test_api/test_finance.py::test_scenario_privacy -v
 
 Frontend tests:
-cd frontend && npm test -- src/modules/finance/__tests__/FinanceScenarioTable.test.tsx
+cd frontend && npm test -- src/modules/finance/**tests**/FinanceScenarioTable.test.tsx
 
 UI Manual Testing:
+
 1. Navigate to /finance/scenarios
 2. Create a new scenario
 3. Toggle "Make Private" checkbox
@@ -330,46 +362,52 @@ This section provides detailed step-by-step workflows for common development tas
 When creating a new API endpoint, ensure ALL of the following:
 
 **Setup & Design:**
-- [ ] Uses `async def` for route handler (Rule 2)
-- [ ] Type hints for all parameters and return values
-- [ ] Pydantic request model defined with validation
-- [ ] Pydantic response model defined
-- [ ] Endpoint follows RESTful naming conventions
+
+-   [ ] Uses `async def` for route handler (Rule 2)
+-   [ ] Type hints for all parameters and return values
+-   [ ] Pydantic request model defined with validation
+-   [ ] Pydantic response model defined
+-   [ ] Endpoint follows RESTful naming conventions
 
 **Validation & Security:**
-- [ ] Input validation with Pydantic `Field()` validators
-- [ ] Authentication check: `current_user: User = Depends(get_current_user)` (Rule 11)
-- [ ] Authorization check: verify user owns resource or has required role
-- [ ] SQL injection prevented: use SQLAlchemy ORM, never f-strings (Rule 11)
-- [ ] XSS prevention: output validation for user-generated content
-- [ ] Rate limiting configured (if public endpoint)
+
+-   [ ] Input validation with Pydantic `Field()` validators
+-   [ ] Authentication check: `current_user: User = Depends(get_current_user)` (Rule 11)
+-   [ ] Authorization check: verify user owns resource or has required role
+-   [ ] SQL injection prevented: use SQLAlchemy ORM, never f-strings (Rule 11)
+-   [ ] XSS prevention: output validation for user-generated content
+-   [ ] Rate limiting configured (if public endpoint)
 
 **Error Handling & Logging:**
-- [ ] Specific error handling (no bare `except:` clauses) (Rule 7)
-- [ ] HTTPException with proper status codes (401, 403, 404, 422, 500)
-- [ ] Proper exception chaining with `from e` (Rule 7 - Ruff B904)
-- [ ] Logging for errors and important events
-- [ ] Audit logging for sensitive operations (user data, financial data)
+
+-   [ ] Specific error handling (no bare `except:` clauses) (Rule 7)
+-   [ ] HTTPException with proper status codes (401, 403, 404, 422, 500)
+-   [ ] Proper exception chaining with `from e` (Rule 7 - Ruff B904)
+-   [ ] Logging for errors and important events
+-   [ ] Audit logging for sensitive operations (user data, financial data)
 
 **Documentation:**
-- [ ] Google-style docstring with Args, Returns, Raises sections
-- [ ] OpenAPI schema will be updated (run: `make openapi` if available)
-- [ ] API documentation updated (if applicable)
+
+-   [ ] Google-style docstring with Args, Returns, Raises sections
+-   [ ] OpenAPI schema will be updated (run: `make openapi` if available)
+-   [ ] API documentation updated (if applicable)
 
 **Testing:**
-- [ ] Unit tests for business logic
-- [ ] Integration tests with test database
-- [ ] Test success case (200/201 response)
-- [ ] Test unauthorized case (401 response)
-- [ ] Test forbidden case (403 response)
-- [ ] Test not found case (404 response)
-- [ ] Test invalid input case (422 response)
-- [ ] Verify with: `pytest backend/tests/test_api/test_[feature].py -v`
+
+-   [ ] Unit tests for business logic
+-   [ ] Integration tests with test database
+-   [ ] Test success case (200/201 response)
+-   [ ] Test unauthorized case (401 response)
+-   [ ] Test forbidden case (403 response)
+-   [ ] Test not found case (404 response)
+-   [ ] Test invalid input case (422 response)
+-   [ ] Verify with: `pytest backend/tests/test_api/test_[feature].py -v`
 
 **Performance:**
-- [ ] Database indexes on foreign keys used in query (Rule 9)
-- [ ] No N+1 query problems (use `selectinload()` or `joinedload()`)
-- [ ] Query performance <500ms for typical requests
+
+-   [ ] Database indexes on foreign keys used in query (Rule 9)
+-   [ ] No N+1 query problems (use `selectinload()` or `joinedload()`)
+-   [ ] Query performance <500ms for typical requests
 
 **Example API Endpoint:**
 
@@ -460,48 +498,55 @@ async def create_finance_scenario(
 When adding a new database table, follow these 8 steps:
 
 **Step 1: Design Schema**
-- Define SQLAlchemy model in `backend/app/models/`
-- Add indexes for:
-  - All foreign keys (Rule 9 - MANDATORY)
-  - Frequently queried columns (status, created_at, etc.)
-  - Columns used in WHERE clauses
-- Include timestamps: `created_at`, `updated_at`
-- Add foreign key constraints with proper cascades (`CASCADE`, `SET NULL`, `RESTRICT`)
-- Choose appropriate column types (use `sa.String()` for ENUMs per Rule 1.2)
+
+-   Define SQLAlchemy model in `backend/app/models/`
+-   Add indexes for:
+    -   All foreign keys (Rule 9 - MANDATORY)
+    -   Frequently queried columns (status, created_at, etc.)
+    -   Columns used in WHERE clauses
+-   Include timestamps: `created_at`, `updated_at`
+-   Add foreign key constraints with proper cascades (`CASCADE`, `SET NULL`, `RESTRICT`)
+-   Choose appropriate column types (use `sa.String()` for ENUMs per Rule 1.2)
 
 **Step 2: Create Migration**
+
 ```bash
 cd backend && alembic revision -m "add user_preferences table"
 ```
 
 **Step 3: Review Generated Migration**
-- Verify all columns, constraints, and indexes are correct
-- Use `sa.String()` for ENUM columns (NOT `sa.Enum()` - Rule 1.2)
-- Match Python enum VALUES exactly in SQL (Rule 1.3)
-- Add custom SQL if needed (triggers, functions, check constraints)
-- Test both upgrade AND downgrade paths
+
+-   Verify all columns, constraints, and indexes are correct
+-   Use `sa.String()` for ENUM columns (NOT `sa.Enum()` - Rule 1.2)
+-   Match Python enum VALUES exactly in SQL (Rule 1.3)
+-   Add custom SQL if needed (triggers, functions, check constraints)
+-   Test both upgrade AND downgrade paths
 
 **Step 4: Update Models**
-- Add Pydantic schemas for API request/response in `backend/app/schemas/`
-- Update related models with SQLAlchemy relationships
-- Add type hints for all fields
-- Add docstrings for complex fields
+
+-   Add Pydantic schemas for API request/response in `backend/app/schemas/`
+-   Update related models with SQLAlchemy relationships
+-   Add type hints for all fields
+-   Add docstrings for complex fields
 
 **Step 5: Write Repository Layer (if applicable)**
-- Create repository class with CRUD operations
-- Use async methods: `async def create()`, `async def get()`, etc.
-- Add proper transaction handling with `async with session.begin()`
-- Add query optimization: `selectinload()`, `joinedload()` for relationships
+
+-   Create repository class with CRUD operations
+-   Use async methods: `async def create()`, `async def get()`, etc.
+-   Add proper transaction handling with `async with session.begin()`
+-   Add query optimization: `selectinload()`, `joinedload()` for relationships
 
 **Step 6: Test Thoroughly**
-- Unit tests for model validation
-- Integration tests with real database
-- Test migration upgrade: `alembic upgrade head`
-- Test migration downgrade: `alembic downgrade -1`
-- Test foreign key constraints and cascades
-- Test unique constraints with duplicate data
+
+-   Unit tests for model validation
+-   Integration tests with real database
+-   Test migration upgrade: `alembic upgrade head`
+-   Test migration downgrade: `alembic downgrade -1`
+-   Test foreign key constraints and cascades
+-   Test unique constraints with duplicate data
 
 **Step 7: Run Migration**
+
 ```bash
 cd backend
 alembic upgrade head
@@ -509,9 +554,10 @@ pytest backend/tests/test_models/test_[new_model].py -v
 ```
 
 **Step 8: Update Documentation**
-- Add table to database schema docs (if applicable)
-- Update ER diagrams (if applicable)
-- Document retention policies (if sensitive data)
+
+-   Add table to database schema docs (if applicable)
+-   Update ER diagrams (if applicable)
+-   Document retention policies (if sensitive data)
 
 **Example Migration:**
 
@@ -584,26 +630,31 @@ def downgrade() -> None:
 I've completed the planning phase for [FEATURE NAME]. Here's the implementation plan:
 
 **Scope:**
-- 3 new database tables (user_preferences, user_sessions, user_audit_log)
-- 5 new API endpoints (CRUD + search)
-- 2 frontend components (PreferencesModal, SessionsTable)
-- Estimated 8-12 hours of work
+
+-   3 new database tables (user_preferences, user_sessions, user_audit_log)
+-   5 new API endpoints (CRUD + search)
+-   2 frontend components (PreferencesModal, SessionsTable)
+-   Estimated 8-12 hours of work
 
 **Files to modify:**
+
 1. [backend/app/models/user.py:142-200](backend/app/models/user.py#L142-L200) - Add relationships
 2. [backend/app/api/v1/users.py](backend/app/api/v1/users.py) - Add new endpoints
 3. [frontend/src/pages/settings/Preferences.tsx](frontend/src/pages/settings/Preferences.tsx) - Add UI
 
 **Dependencies:**
-- Requires PostgreSQL 13+ (for JSONB column)
-- No breaking changes to existing APIs
-- Backward compatible migration
+
+-   Requires PostgreSQL 13+ (for JSONB column)
+-   No breaking changes to existing APIs
+-   Backward compatible migration
 
 **Risks:**
-- User table will grow by ~1KB per user (acceptable for <100K users)
-- New audit_log table may need retention policy (recommend 90 days)
+
+-   User table will grow by ~1KB per user (acceptable for <100K users)
+-   New audit_log table may need retention policy (recommend 90 days)
 
 **Should I proceed with:**
+
 1. Creating the migrations
 2. Implementing the API endpoints
 3. Adding the frontend components
@@ -621,36 +672,42 @@ This project uses **comprehensive pre-commit hooks** defined in [.pre-commit-con
 ### Automated Checks (Run on Every Commit)
 
 **Local hooks (scripts/):**
-- `audit-migrations` - Verifies migration integrity
-- `check-migration-enums` - Enforces ENUM pattern rules (Rule 1.2)
-- `pdf-smoke-test` - Tests PDF generation
-- `phase-gate` - Enforces phase completion rules (Rule 12)
+
+-   `audit-migrations` - Verifies migration integrity
+-   `check-migration-enums` - Enforces ENUM pattern rules (Rule 1.2)
+-   `pdf-smoke-test` - Tests PDF generation
+-   `phase-gate` - Enforces phase completion rules (Rule 12)
 
 **Standard hooks:**
-- `end-of-file-fixer` - Ensures files end with newline
-- `trailing-whitespace` - Removes trailing whitespace
-- `check-yaml` - Validates YAML syntax
-- `check-merge-conflict` - Detects merge conflict markers
+
+-   `end-of-file-fixer` - Ensures files end with newline
+-   `trailing-whitespace` - Removes trailing whitespace
+-   `check-yaml` - Validates YAML syntax
+-   `check-merge-conflict` - Detects merge conflict markers
 
 **Python formatting:**
-- `black` - Code formatting (88 chars, auto-fix)
-- `ruff` - Import sorting + linting (auto-fix)
-- `flake8` - Additional linting for test files
-- `mypy` - Type checking (backend/)
+
+-   `black` - Code formatting (88 chars, auto-fix)
+-   `ruff` - Import sorting + linting (auto-fix)
+-   `flake8` - Additional linting for test files
+-   `mypy` - Type checking (backend/)
 
 **Frontend formatting:**
-- `prettier` - Format JS/TS/CSS (frontend/ and ui-admin/)
-- `eslint` - Lint JS/TS (frontend/ and ui-admin/)
+
+-   `prettier` - Format JS/TS/CSS (frontend/ and ui-admin/)
+-   `eslint` - Lint JS/TS (frontend/ and ui-admin/)
 
 ### How Pre-Commit Hooks Work
 
 **During `git commit`:**
+
 1. Hooks run automatically
 2. Auto-fixable issues are corrected (black, ruff, prettier)
 3. Modified files are auto-staged
 4. Commit succeeds or fails based on results
 
 **If hooks modify files:**
+
 ```bash
 # Files were auto-formatted
 # Just commit again
@@ -658,6 +715,7 @@ git commit -m "your message"
 ```
 
 **To run hooks manually:**
+
 ```bash
 # Run on staged files
 pre-commit run
@@ -670,6 +728,7 @@ make hooks
 ```
 
 **To bypass hooks (NOT RECOMMENDED):**
+
 ```bash
 # Skip pre-commit hooks
 git commit --no-verify
@@ -681,42 +740,49 @@ SKIP_PRE_PUSH_CHECKS=1 git push
 ### Custom Pre-Commit Scripts
 
 **audit_migrations.py:**
-- Checks migration file integrity
-- Verifies no edits to existing migrations
-- Ensures migrations are sequential
+
+-   Checks migration file integrity
+-   Verifies no edits to existing migrations
+-   Ensures migrations are sequential
 
 **check_migration_enums.py:**
-- Enforces Rule 1.2 (no `sa.Enum()` with `create_type=False`)
-- Scans migration files for forbidden patterns
-- Grandfathers existing violations (see .coding-rules-exceptions.yml)
+
+-   Enforces Rule 1.2 (no `sa.Enum()` with `create_type=False`)
+-   Scans migration files for forbidden patterns
+-   Grandfathers existing violations (see .coding-rules-exceptions.yml)
 
 **check_phase_gate.py:**
-- Enforces Rule 12 (phase completion gates)
-- Verifies no unchecked `[ ]` items in completed phases
-- Checks files listed in "Files Delivered" exist
-- Validates test status (no ❌ or ⚠️ in completed phases)
+
+-   Enforces Rule 12 (phase completion gates)
+-   Verifies no unchecked `[ ]` items in completed phases
+-   Checks files listed in "Files Delivered" exist
+-   Validates test status (no ❌ or ⚠️ in completed phases)
 
 **smoke_test_pdfs.py:**
-- Runs when PDF generation code changes
-- Validates PDF can be generated and has content
-- Checks Safari compatibility (strictest browser)
+
+-   Runs when PDF generation code changes
+-   Validates PDF can be generated and has content
+-   Checks Safari compatibility (strictest browser)
 
 ### Coding Rules Exceptions
 
 Some pre-existing code violates current rules. These are documented in:
-- **.coding-rules-exceptions.yml** - Rule violations (with cleanup plan)
-- **.coding-rules.yaml** - Rule configuration
+
+-   **.coding-rules-exceptions.yml** - Rule violations (with cleanup plan)
+-   **.coding-rules.yaml** - Rule configuration
 
 **Format:**
+
 ```yaml
 exceptions:
-  rule_1_2_enum_pattern:
-    - backend/migrations/versions/20250220_000009_old_migration.py
-    # Reason: Pre-existing migration, grandfathered
-    # Cleanup: Do not edit; follow new pattern for future migrations
+    rule_1_2_enum_pattern:
+        - backend/migrations/versions/20250220_000009_old_migration.py
+        # Reason: Pre-existing migration, grandfathered
+        # Cleanup: Do not edit; follow new pattern for future migrations
 ```
 
 **Adding exceptions (RARE):**
+
 1. Document WHY exception is needed
 2. Add cleanup plan
 3. Update .coding-rules-exceptions.yml
@@ -729,6 +795,7 @@ exceptions:
 ### Database Migrations (Rule 1)
 
 **NEVER edit existing migrations:**
+
 ```bash
 # ✅ CORRECT
 alembic revision -m "add compliance_score column"
@@ -741,6 +808,7 @@ alembic revision -m "add compliance_score column"
 See comprehensive examples in [CODING_RULES.md Rule 1.2](CODING_RULES.md#12-postgresql-enum-types-in-migrations)
 
 **ENUM values match Python (Rule 1.3):**
+
 ```python
 # Python model
 class ProjectType(str, Enum):
@@ -842,6 +910,7 @@ async def test_create_scenario_unauthorized(client):
 ```
 
 **Run tests:**
+
 ```bash
 # Unit tests (fast)
 pytest backend/tests/ -v
@@ -859,19 +928,20 @@ pytest backend/tests/test_api/test_finance.py::test_create_scenario_success -v
 
 ```typescript
 // frontend/src/modules/finance/components/__tests__/FinanceScenarioTable.test.tsx
-import { render, screen } from '@testing-library/react';
-import { FinanceScenarioTable } from '../FinanceScenarioTable';
+import { render, screen } from '@testing-library/react'
+import { FinanceScenarioTable } from '../FinanceScenarioTable'
 
 test('renders scenario table with data', () => {
-  const scenarios = [{ id: 1, name: 'Test', npv: 1000000 }];
-  render(<FinanceScenarioTable scenarios={scenarios} />);
+    const scenarios = [{ id: 1, name: 'Test', npv: 1000000 }]
+    render(<FinanceScenarioTable scenarios={scenarios} />)
 
-  expect(screen.getByText('Test')).toBeInTheDocument();
-  expect(screen.getByText('$1,000,000')).toBeInTheDocument();
-});
+    expect(screen.getByText('Test')).toBeInTheDocument()
+    expect(screen.getByText('$1,000,000')).toBeInTheDocument()
+})
 ```
 
 **Run tests:**
+
 ```bash
 cd frontend && npm test
 cd frontend && npm run lint
@@ -879,10 +949,10 @@ cd frontend && npm run lint
 
 ### Coverage Requirements
 
-- Backend critical paths: **>80%**
-- Backend overall: **>70%**
-- Frontend critical paths: **Covered**
-- Frontend overall: Best effort (JSDOM timing issues documented)
+-   Backend critical paths: **>80%**
+-   Backend overall: **>70%**
+-   Frontend critical paths: **Covered**
+-   Frontend overall: Best effort (JSDOM timing issues documented)
 
 ---
 
@@ -897,50 +967,57 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Common Causes:**
 
 1. **Black/Ruff formatting issues**
-   ```bash
-   # Fix automatically
-   make format
 
-   # Re-run hooks
-   make hooks
-   ```
+    ```bash
+    # Fix automatically
+    make format
+
+    # Re-run hooks
+    make hooks
+    ```
 
 2. **Migration ENUM pattern violation** (Rule 1.2)
-   ```
-   ERROR: Migration uses forbidden sa.Enum() pattern
-   File: backend/migrations/versions/20251109_000001_add_table.py
-   ```
 
-   **Solution:**
-   - Replace `sa.Enum()` with `sa.String()` in column definition
-   - See [CODING_RULES.md Rule 1.2](CODING_RULES.md#12-postgresql-enum-types-in-migrations) for correct pattern
+    ```
+    ERROR: Migration uses forbidden sa.Enum() pattern
+    File: backend/migrations/versions/20251109_000001_add_table.py
+    ```
+
+    **Solution:**
+
+    - Replace `sa.Enum()` with `sa.String()` in column definition
+    - See [CODING_RULES.md Rule 1.2](CODING_RULES.md#12-postgresql-enum-types-in-migrations) for correct pattern
 
 3. **Phase gate violation** (Rule 12)
-   ```
-   ERROR: Phase 1D marked COMPLETE but has unchecked [ ] items
-   ```
 
-   **Solution:**
-   - Update docs/all_steps_to_product_completion.md to reflect actual status
-   - Mark phase as "⚠️ IN PROGRESS" until all items complete
-   - Or complete remaining items before marking phase COMPLETE
-   - See [Phase Gate Compliance](#phase-gate-compliance) section
+    ```
+    ERROR: Phase 1D marked COMPLETE but has unchecked [ ] items
+    ```
+
+    **Solution:**
+
+    - Update docs/all_steps_to_product_completion.md to reflect actual status
+    - Mark phase as "⚠️ IN PROGRESS" until all items complete
+    - Or complete remaining items before marking phase COMPLETE
+    - See [Phase Gate Compliance](#phase-gate-compliance) section
 
 4. **Ruff linting violations**
-   ```
-   backend/app/api/v1/finance.py:142: F841 local variable 'result' is assigned to but never used
-   backend/app/services/property.py:89: B904 Within an except clause, raise exceptions with from err
-   ```
 
-   **Solution:**
-   - F841: Remove unused variable or prefix with `_` if intentionally unused
-   - B904: Add `from e` to exception: `raise CustomError("Failed") from e`
-   - See [CODING_RULES.md Rule 7](CODING_RULES.md#7-code-quality-standards) for details
+    ```
+    backend/app/api/v1/finance.py:142: F841 local variable 'result' is assigned to but never used
+    backend/app/services/property.py:89: B904 Within an except clause, raise exceptions with from err
+    ```
+
+    **Solution:**
+
+    - F841: Remove unused variable or prefix with `_` if intentionally unused
+    - B904: Add `from e` to exception: `raise CustomError("Failed") from e`
+    - See [CODING_RULES.md Rule 7](CODING_RULES.md#7-code-quality-standards) for details
 
 5. **Still failing after fixes?**
-   - Check `.coding-rules-exceptions.yml` for documented exceptions
-   - Review [CODING_RULES.md](CODING_RULES.md) for the specific rule
-   - Ask user for clarification if requirements are unclear
+    - Check `.coding-rules-exceptions.yml` for documented exceptions
+    - Review [CODING_RULES.md](CODING_RULES.md) for the specific rule
+    - Ask user for clarification if requirements are unclear
 
 ### Test Coverage Below Threshold
 
@@ -949,39 +1026,43 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Solution:**
 
 1. **Run coverage report:**
-   ```bash
-   pytest backend/tests/ --cov=app --cov-report=html
-   # Open: backend/htmlcov/index.html in browser
-   ```
+
+    ```bash
+    pytest backend/tests/ --cov=app --cov-report=html
+    # Open: backend/htmlcov/index.html in browser
+    ```
 
 2. **Identify uncovered lines:**
-   - Look for red lines in the HTML report
-   - Focus on critical paths (authentication, data validation, business logic)
-   - Ignore boilerplate code (imports, class definitions)
+
+    - Look for red lines in the HTML report
+    - Focus on critical paths (authentication, data validation, business logic)
+    - Ignore boilerplate code (imports, class definitions)
 
 3. **Add unit tests for uncovered code:**
-   ```python
-   # Example: Cover error handling path
-   async def test_create_scenario_with_invalid_project_id(client, test_user):
-       """Test creating scenario with non-existent project returns 403."""
-       response = await client.post(
-           "/api/v1/finance/scenarios",
-           json={"project_id": 99999, "name": "Test"},
-           headers={"Authorization": f"Bearer {test_user.token}"}
-       )
-       assert response.status_code == 403
-       assert "Not authorized" in response.json()["detail"]
-   ```
+
+    ```python
+    # Example: Cover error handling path
+    async def test_create_scenario_with_invalid_project_id(client, test_user):
+        """Test creating scenario with non-existent project returns 403."""
+        response = await client.post(
+            "/api/v1/finance/scenarios",
+            json={"project_id": 99999, "name": "Test"},
+            headers={"Authorization": f"Bearer {test_user.token}"}
+        )
+        assert response.status_code == 403
+        assert "Not authorized" in response.json()["detail"]
+    ```
 
 4. **Re-run coverage:**
-   ```bash
-   pytest backend/tests/ --cov=app --cov-report=term-missing
-   # Check that coverage increased
-   ```
+
+    ```bash
+    pytest backend/tests/ --cov=app --cov-report=term-missing
+    # Check that coverage increased
+    ```
 
 5. **Update coverage tracking:**
-   - If coverage increases, note it in commit message
-   - If coverage decreases, explain why in PR description
+    - If coverage increases, note it in commit message
+    - If coverage decreases, explain why in PR description
 
 ### Database Migration Conflicts
 
@@ -990,42 +1071,48 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Common Solutions:**
 
 1. **Multiple migration heads (branching):**
-   ```bash
-   # Check for multiple heads
-   cd backend && alembic heads
 
-   # If multiple heads exist, create merge migration
-   alembic merge heads -m "merge migration branches"
+    ```bash
+    # Check for multiple heads
+    cd backend && alembic heads
 
-   # Review generated merge migration carefully
-   # Then run upgrade
-   alembic upgrade head
-   ```
+    # If multiple heads exist, create merge migration
+    alembic merge heads -m "merge migration branches"
+
+    # Review generated merge migration carefully
+    # Then run upgrade
+    alembic upgrade head
+    ```
 
 2. **Migration dependency out of order:**
-   ```
-   ERROR: Can't locate revision identifier: '20251108_000005'
-   ```
 
-   **Solution:**
-   - Check `down_revision` in your migration matches the actual latest migration
-   - Run `alembic history` to see migration chain
-   - Fix the `down_revision` value in your migration file
+    ```
+    ERROR: Can't locate revision identifier: '20251108_000005'
+    ```
+
+    **Solution:**
+
+    - Check `down_revision` in your migration matches the actual latest migration
+    - Run `alembic history` to see migration chain
+    - Fix the `down_revision` value in your migration file
 
 3. **ENUM type already exists:**
-   ```
-   ERROR: type "deal_status" already exists
-   ```
 
-   **Solution:**
-   - Add `IF NOT EXISTS` to CREATE TYPE:
-   ```python
-   op.execute("CREATE TYPE IF NOT EXISTS deal_status AS ENUM ('open', 'closed')")
-   ```
+    ```
+    ERROR: type "deal_status" already exists
+    ```
+
+    **Solution:**
+
+    - Add `IF NOT EXISTS` to CREATE TYPE:
+
+    ```python
+    op.execute("CREATE TYPE IF NOT EXISTS deal_status AS ENUM ('open', 'closed')")
+    ```
 
 4. **NEVER edit existing migrations** (Rule 1.1)
-   - Always create NEW migration to fix issues
-   - Use `alembic revision -m "fix enum type creation"` for corrections
+    - Always create NEW migration to fix issues
+    - Use `alembic revision -m "fix enum type creation"` for corrections
 
 ### Async/Await Errors
 
@@ -1034,43 +1121,46 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Common Solutions:**
 
 1. **Missing `await` on database operation:**
-   ```python
-   # ❌ WRONG - forgot await
-   result = session.execute(select(Property).where(Property.id == property_id))
 
-   # ✅ CORRECT
-   result = await session.execute(select(Property).where(Property.id == property_id))
-   ```
+    ```python
+    # ❌ WRONG - forgot await
+    result = session.execute(select(Property).where(Property.id == property_id))
+
+    # ✅ CORRECT
+    result = await session.execute(select(Property).where(Property.id == property_id))
+    ```
 
 2. **Using sync Session instead of AsyncSession:**
-   ```python
-   # ❌ WRONG
-   from sqlalchemy.orm import Session
 
-   def get_property(session: Session, property_id: str):
-       return session.query(Property).filter(...).first()
+    ```python
+    # ❌ WRONG
+    from sqlalchemy.orm import Session
 
-   # ✅ CORRECT
-   from sqlalchemy.ext.asyncio import AsyncSession
-   from sqlalchemy import select
+    def get_property(session: Session, property_id: str):
+        return session.query(Property).filter(...).first()
 
-   async def get_property(session: AsyncSession, property_id: str):
-       result = await session.execute(select(Property).where(Property.id == property_id))
-       return result.scalar_one_or_none()
-   ```
+    # ✅ CORRECT
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy import select
+
+    async def get_property(session: AsyncSession, property_id: str):
+        result = await session.execute(select(Property).where(Property.id == property_id))
+        return result.scalar_one_or_none()
+    ```
 
 3. **API route missing `async def`:**
-   ```python
-   # ❌ WRONG
-   @router.get("/properties/{property_id}")
-   def fetch_property(property_id: str, session: AsyncSession = Depends(get_db)):
-       return get_property(session, property_id)  # Can't await in sync function!
 
-   # ✅ CORRECT
-   @router.get("/properties/{property_id}")
-   async def fetch_property(property_id: str, session: AsyncSession = Depends(get_db)):
-       return await get_property(session, property_id)
-   ```
+    ```python
+    # ❌ WRONG
+    @router.get("/properties/{property_id}")
+    def fetch_property(property_id: str, session: AsyncSession = Depends(get_db)):
+        return get_property(session, property_id)  # Can't await in sync function!
+
+    # ✅ CORRECT
+    @router.get("/properties/{property_id}")
+    async def fetch_property(property_id: str, session: AsyncSession = Depends(get_db)):
+        return await get_property(session, property_id)
+    ```
 
 4. **Reference:** See [CODING_RULES.md Rule 2](CODING_RULES.md#2-asyncawait-for-database-and-api-operations) for complete async patterns
 
@@ -1081,18 +1171,20 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Known Issues:**
 
 1. **React Testing Library async timing issues:**
-   - Check [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#frontend-react-testing-library-async-timing)
-   - These are JSDOM environment issues, NOT application bugs
-   - Application code works correctly in browser
-   - Solution: Manual testing in browser + backend test coverage
+
+    - Check [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#frontend-react-testing-library-async-timing)
+    - These are JSDOM environment issues, NOT application bugs
+    - Application code works correctly in browser
+    - Solution: Manual testing in browser + backend test coverage
 
 2. **JSDOM environment setup issues:**
-   - Check [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#frontend-nodejs-test-runner-jsdom-environment-setup-issues)
-   - 10 out of 26 tests fail due to JSDOM setup
-   - These failures don't indicate broken functionality
-   - Solution: Run backend tests + manual UI testing
+    - Check [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#frontend-nodejs-test-runner-jsdom-environment-setup-issues)
+    - 10 out of 26 tests fail due to JSDOM setup
+    - These failures don't indicate broken functionality
+    - Solution: Run backend tests + manual UI testing
 
 **Workaround for frontend development:**
+
 1. Run backend tests for backend changes: `pytest backend/tests/ -v`
 2. Run linting: `npm --prefix frontend run lint`
 3. Test manually in browser: `make dev` and navigate to component
@@ -1105,35 +1197,38 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Diagnostic Steps:**
 
 1. **Run individual checks to isolate the issue:**
-   ```bash
-   # Check formatting (usually auto-fixable)
-   make format-check
 
-   # Check linting (may need manual fixes)
-   make lint
+    ```bash
+    # Check formatting (usually auto-fixable)
+    make format-check
 
-   # Check coding rules compliance
-   make check-coding-rules
+    # Check linting (may need manual fixes)
+    make lint
 
-   # Run tests
-   make test
-   ```
+    # Check coding rules compliance
+    make check-coding-rules
+
+    # Run tests
+    make test
+    ```
 
 2. **Fix issues one by one:**
-   - **Format issues:** Run `make format` to auto-fix
-   - **Lint issues:** Fix manually based on error messages
-   - **Rule violations:** See specific rule in [CODING_RULES.md](CODING_RULES.md)
-   - **Test failures:** See "Test Coverage Below Threshold" above
+
+    - **Format issues:** Run `make format` to auto-fix
+    - **Lint issues:** Fix manually based on error messages
+    - **Rule violations:** See specific rule in [CODING_RULES.md](CODING_RULES.md)
+    - **Test failures:** See "Test Coverage Below Threshold" above
 
 3. **Re-run verify:**
-   ```bash
-   make verify
-   ```
+
+    ```bash
+    make verify
+    ```
 
 4. **Common gotchas:**
-   - Pre-commit hooks may have modified files → commit again
-   - Version mismatch in Black/Ruff → check [CODING_RULES.md Rule 4](CODING_RULES.md#4-dependency-management)
-   - New dependencies not tracked → add to requirements.txt
+    - Pre-commit hooks may have modified files → commit again
+    - Version mismatch in Black/Ruff → check [CODING_RULES.md Rule 4](CODING_RULES.md#4-dependency-management)
+    - New dependencies not tracked → add to requirements.txt
 
 ### PDF Generation Errors (Sandbox Environment)
 
@@ -1142,32 +1237,35 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 **Root Cause:** WeasyPrint requires system libraries (Cairo, Pango, GDK-Pixbuf) not available in all environments
 
 **Check Known Issues:**
-- See [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#pdf-rendering-dependencies-absent-in-sandbox)
-- This is an **environment limitation**, not an application bug
+
+-   See [docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues#pdf-rendering-dependencies-absent-in-sandbox)
+-   This is an **environment limitation**, not an application bug
 
 **Solutions:**
 
 1. **For local development:**
-   ```bash
-   # macOS
-   brew install cairo pango gdk-pixbuf libffi
 
-   # Ubuntu/Debian
-   sudo apt-get install libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0 libffi-dev
+    ```bash
+    # macOS
+    brew install cairo pango gdk-pixbuf libffi
 
-   # Then reinstall Python packages
-   pip install -r backend/requirements.txt
-   ```
+    # Ubuntu/Debian
+    sudo apt-get install libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0 libffi-dev
+
+    # Then reinstall Python packages
+    pip install -r backend/requirements.txt
+    ```
 
 2. **For sandbox/CI environments without system packages:**
-   - Tests are automatically skipped with `@pytest.mark.skip` decorator
-   - PDF functionality works in Docker/production environments
-   - Use manual testing for PDF verification
+
+    - Tests are automatically skipped with `@pytest.mark.skip` decorator
+    - PDF functionality works in Docker/production environments
+    - Use manual testing for PDF verification
 
 3. **Check if PDF generation works in your environment:**
-   ```bash
-   python -c "from weasyprint import HTML; print('PDF generation available')"
-   ```
+    ```bash
+    python -c "from weasyprint import HTML; print('PDF generation available')"
+    ```
 
 ---
 
@@ -1176,6 +1274,7 @@ This section helps AI agents quickly diagnose and fix common issues without rein
 ### 1. Editing Existing Migrations
 
 **NEVER DO THIS:**
+
 ```bash
 # ❌ WRONG
 vim backend/migrations/versions/20240919_000005_enable_postgis.py
@@ -1183,6 +1282,7 @@ vim backend/migrations/versions/20240919_000005_enable_postgis.py
 ```
 
 **INSTEAD:**
+
 ```bash
 # ✅ CORRECT
 cd backend && alembic revision -m "add new column"
@@ -1200,11 +1300,13 @@ See detailed examples in [Troubleshooting](#asyncawait-errors) and [CODING_RULES
 ### 4. Missing Test Instructions
 
 **NEVER DO THIS:**
+
 ```markdown
 I've completed the feature. The implementation is done.
 ```
 
 **INSTEAD:**
+
 ```markdown
 I've completed the finance scenario privacy feature. Please test:
 
@@ -1212,6 +1314,7 @@ Backend tests:
 .venv/bin/pytest backend/tests/test_api/test_finance.py::test_scenario_privacy -v
 
 UI Manual Testing:
+
 1. Navigate to /finance/scenarios
 2. Create a scenario and toggle "Make Private"
 3. Verify lock icon appears
@@ -1221,30 +1324,36 @@ UI Manual Testing:
 ### 5. Marking Incomplete Phases Complete
 
 **NEVER DO THIS:**
+
 ```markdown
 ### Phase 1D: Business Performance ✅ COMPLETE
 
 **UI Implementation Checklist:**
-- [ ] Pipeline Kanban board
-- [ ] Deal insights panel
+
+-   [ ] Pipeline Kanban board
+-   [ ] Deal insights panel
 ```
 
 **INSTEAD:**
+
 ```markdown
 ### Phase 1D: Business Performance ⚠️ 80% COMPLETE
 
 **Completed:**
-- ✅ Backend API
-- ✅ Page scaffold
+
+-   ✅ Backend API
+-   ✅ Page scaffold
 
 **In Progress (see next_steps.md):**
-- 🔄 Pipeline Kanban board (1-2 days)
-- 🔄 Deal insights panel (1-2 days)
+
+-   🔄 Pipeline Kanban board (1-2 days)
+-   🔄 Deal insights panel (1-2 days)
 ```
 
 ### 6. No Database Indexes
 
 **NEVER DO THIS:**
+
 ```python
 # ❌ WRONG - Foreign key without index
 op.create_table(
@@ -1255,6 +1364,7 @@ op.create_table(
 ```
 
 **INSTEAD:**
+
 ```python
 # ✅ CORRECT - Index foreign keys
 op.create_table(
@@ -1274,41 +1384,49 @@ op.create_index('ix_scenarios_project_id', 'scenarios', ['project_id'])
 **Before marking ANY phase "✅ COMPLETE" in all_steps_to_product_completion.md:**
 
 1. **Check for incomplete items:**
-   - Search for `- [ ]` (unchecked) → Must be ZERO
-   - Search for `🔄` (In Progress) → Must be ZERO
-   - Search for `❌` (Incomplete) → Must be ZERO
+
+    - Search for `- [ ]` (unchecked) → Must be ZERO
+    - Search for `🔄` (In Progress) → Must be ZERO
+    - Search for `❌` (Incomplete) → Must be ZERO
 
 2. **Verify UI testing:**
-   - User must confirm: "✅ All manual tests passing"
+
+    - User must confirm: "✅ All manual tests passing"
 
 3. **Verify files exist:**
-   - All files in "Files Delivered:" section must exist on disk
+
+    - All files in "Files Delivered:" section must exist on disk
 
 4. **Verify tests pass:**
-   - "Test Status:" shows ✅ (no ❌ or ⚠️)
+
+    - "Test Status:" shows ✅ (no ❌ or ⚠️)
 
 5. **Ask user for approval:**
-   ```markdown
-   Phase X checklist is complete:
-   - ✅ All [ ] items checked
-   - ✅ No 🔄 In Progress markers
-   - ✅ No ❌ incomplete items
-   - ✅ UI manual testing passed
-   - ✅ All files in "Files Delivered" exist
-   - ✅ All tests passing
 
-   May I mark Phase X as "✅ COMPLETE"?
-   ```
+    ```markdown
+    Phase X checklist is complete:
+
+    -   ✅ All [ ] items checked
+    -   ✅ No 🔄 In Progress markers
+    -   ✅ No ❌ incomplete items
+    -   ✅ UI manual testing passed
+    -   ✅ All files in "Files Delivered" exist
+    -   ✅ All tests passing
+
+    May I mark Phase X as "✅ COMPLETE"?
+    ```
 
 **Automated enforcement:**
 
 The pre-commit hook `check_phase_gate.py` verifies:
-- No unchecked `[ ]` items in completed phases
-- No `🔄` or `❌` markers in completed phases
-- All files in "Files Delivered:" exist
-- Test status shows ✅ (not ❌ or ⚠️)
+
+-   No unchecked `[ ]` items in completed phases
+-   No `🔄` or `❌` markers in completed phases
+-   All files in "Files Delivered:" exist
+-   Test status shows ✅ (not ❌ or ⚠️)
 
 **Example violation caught:**
+
 ```
 RULE VIOLATION: Phase 1D marked '✅ COMPLETE' but has:
   -> 4 unchecked [ ] checklist items
@@ -1328,6 +1446,7 @@ This section documents the continuous integration and deployment workflow for op
 The project uses GNU Make for workflow automation. All quality checks are defined as Make targets:
 
 **Pre-Flight Checks:**
+
 ```bash
 # Run before starting any work (MANDATORY)
 make ai-preflight
@@ -1339,6 +1458,7 @@ make status
 ```
 
 **Code Quality Checks:**
+
 ```bash
 # Format code automatically (Black, Ruff, isort)
 make format
@@ -1354,6 +1474,7 @@ make lint
 ```
 
 **Testing:**
+
 ```bash
 # Run all backend tests
 make test
@@ -1368,6 +1489,7 @@ pytest backend/tests/test_api/test_finance.py -v
 ```
 
 **Comprehensive Verification:**
+
 ```bash
 # Run ALL quality checks (use before committing)
 make verify
@@ -1376,6 +1498,7 @@ make verify
 ```
 
 **Pre-Commit Hooks:**
+
 ```bash
 # Run pre-commit hooks manually (runs on git commit automatically)
 make hooks
@@ -1386,6 +1509,7 @@ pre-commit install
 ```
 
 **Database Operations:**
+
 ```bash
 # Create new migration
 cd backend && alembic revision -m "description"
@@ -1404,6 +1528,7 @@ alembic heads
 ```
 
 **Development Server:**
+
 ```bash
 # Start development server (backend + frontend)
 make dev
@@ -1420,38 +1545,45 @@ make logs
 The pre-commit framework runs automatically on `git commit`. Here's what it does:
 
 **1. File Format Checks (Auto-fix):**
-- `end-of-file-fixer` - Ensures files end with newline
-- `trailing-whitespace` - Removes trailing whitespace
-- `check-yaml` - Validates YAML syntax
-- `check-merge-conflict` - Detects merge conflict markers
+
+-   `end-of-file-fixer` - Ensures files end with newline
+-   `trailing-whitespace` - Removes trailing whitespace
+-   `check-yaml` - Validates YAML syntax
+-   `check-merge-conflict` - Detects merge conflict markers
 
 **2. Python Formatting (Auto-fix):**
-- `black` - Code formatting (88 char line length)
-- `ruff` - Import sorting + linting (with `--fix` flag)
-  - Fixes: import order, unused imports, line length
-  - Checks: code quality (F841, B904, B006, etc.)
+
+-   `black` - Code formatting (88 char line length)
+-   `ruff` - Import sorting + linting (with `--fix` flag)
+    -   Fixes: import order, unused imports, line length
+    -   Checks: code quality (F841, B904, B006, etc.)
 
 **3. Python Type Checking (Manual fix required):**
-- `mypy` - Type checking for `backend/` directory
-  - Verifies: type hints, return types, parameter types
-  - Failures require manual code changes
+
+-   `mypy` - Type checking for `backend/` directory
+    -   Verifies: type hints, return types, parameter types
+    -   Failures require manual code changes
 
 **4. Frontend Formatting (Auto-fix):**
-- `prettier` - Format JS/TS/CSS (`frontend/` and `ui-admin/`)
-- `eslint` - Lint JS/TS with auto-fix where possible
+
+-   `prettier` - Format JS/TS/CSS (`frontend/` and `ui-admin/`)
+-   `eslint` - Lint JS/TS with auto-fix where possible
 
 **5. Custom Project Rules (Manual fix required):**
-- `audit-migrations` - Verifies migration integrity (Rule 1.1)
-- `check-migration-enums` - Enforces ENUM pattern (Rule 1.2)
-- `phase-gate` - Enforces phase completion rules (Rule 12)
-- `pdf-smoke-test` - Tests PDF generation (when PDF code changes)
+
+-   `audit-migrations` - Verifies migration integrity (Rule 1.1)
+-   `check-migration-enums` - Enforces ENUM pattern (Rule 1.2)
+-   `phase-gate` - Enforces phase completion rules (Rule 12)
+-   `pdf-smoke-test` - Tests PDF generation (when PDF code changes)
 
 **Hook Behavior:**
-- **Auto-fix hooks:** Modify files in-place, then you commit again
-- **Check hooks:** Block commit if they fail, require manual fixes
-- **Skip hooks:** `git commit --no-verify` (NOT RECOMMENDED - only with user approval)
+
+-   **Auto-fix hooks:** Modify files in-place, then you commit again
+-   **Check hooks:** Block commit if they fail, require manual fixes
+-   **Skip hooks:** `git commit --no-verify` (NOT RECOMMENDED - only with user approval)
 
 **Example commit workflow:**
+
 ```bash
 # 1. Stage your changes
 git add backend/app/models/finance.py
@@ -1473,70 +1605,80 @@ git commit -m "Add finance scenario privacy feature"
 ### Quality Gates
 
 **Before Committing:**
-- [ ] `make ai-preflight` passes (verify environment is correct)
-- [ ] `make verify` passes (format, lint, rules, tests all pass)
-- [ ] `make hooks` passes (pre-commit hooks run successfully)
-- [ ] Tests added for new functionality
-- [ ] Coverage maintained or improved (>80% for critical paths)
+
+-   [ ] `make ai-preflight` passes (verify environment is correct)
+-   [ ] `make verify` passes (format, lint, rules, tests all pass)
+-   [ ] `make hooks` passes (pre-commit hooks run successfully)
+-   [ ] Tests added for new functionality
+-   [ ] Coverage maintained or improved (>80% for critical paths)
 
 **Before Marking Phase Complete (Rule 12):**
-- [ ] No unchecked `[ ]` items in phase section
-- [ ] No `🔄` (In Progress) or `❌` (Incomplete) markers
-- [ ] All files in "Files Delivered" exist on disk
-- [ ] Test status shows ✅ (no ❌ or ⚠️)
-- [ ] Manual UI QA completed (for phases with frontend work)
-- [ ] User approval obtained
+
+-   [ ] No unchecked `[ ]` items in phase section
+-   [ ] No `🔄` (In Progress) or `❌` (Incomplete) markers
+-   [ ] All files in "Files Delivered" exist on disk
+-   [ ] Test status shows ✅ (no ❌ or ⚠️)
+-   [ ] Manual UI QA completed (for phases with frontend work)
+-   [ ] User approval obtained
 
 **Before Pushing to Remote:**
-- [ ] All commits have passed pre-commit hooks
-- [ ] Branch is up to date with main: `git pull origin main`
-- [ ] No merge conflicts
-- [ ] Commit messages follow standards (imperative mood + context)
+
+-   [ ] All commits have passed pre-commit hooks
+-   [ ] Branch is up to date with main: `git pull origin main`
+-   [ ] No merge conflicts
+-   [ ] Commit messages follow standards (imperative mood + context)
 
 ### CI/CD Best Practices
 
 **For AI Agents:**
 
 1. **Always run `make verify` before claiming work is complete**
-   - Don't rely on pre-commit hooks alone
-   - Verify tests pass locally before pushing
+
+    - Don't rely on pre-commit hooks alone
+    - Verify tests pass locally before pushing
 
 2. **Never bypass quality checks without user approval**
-   - Don't use `git commit --no-verify` unless explicitly approved
-   - Don't use `SKIP_PRE_PUSH_CHECKS=1` unless explicitly approved
+
+    - Don't use `git commit --no-verify` unless explicitly approved
+    - Don't use `SKIP_PRE_PUSH_CHECKS=1` unless explicitly approved
 
 3. **Fix root causes, not symptoms**
-   - If a hook fails, fix the underlying issue
-   - Don't add exceptions to `.coding-rules-exceptions.yml` without justification
+
+    - If a hook fails, fix the underlying issue
+    - Don't add exceptions to `.coding-rules-exceptions.yml` without justification
 
 4. **Document when tests are deferred**
-   - If test coverage is temporarily lower, explain why in commit message
-   - Create follow-up task to add missing tests
-   - Update `docs/all_steps_to_product_completion.md#-known-testing-issues` if applicable
+
+    - If test coverage is temporarily lower, explain why in commit message
+    - Create follow-up task to add missing tests
+    - Update `docs/all_steps_to_product_completion.md#-known-testing-issues` if applicable
 
 5. **Checkpoint before large changes**
-   - If `make verify` will take >5 minutes, ask user if you should proceed
-   - Show scope of changes before implementing
+    - If `make verify` will take >5 minutes, ask user if you should proceed
+    - Show scope of changes before implementing
 
 **Common CI/CD Issues:**
 
 1. **"make verify fails but pre-commit passes"**
-   - `make verify` runs additional checks (test coverage, coding rules)
-   - Fix the specific failure reported by `make verify`
+
+    - `make verify` runs additional checks (test coverage, coding rules)
+    - Fix the specific failure reported by `make verify`
 
 2. **"Tests pass locally but fail in CI"**
-   - Check environment differences (Python version, dependencies)
-   - Verify `.env` values aren't hardcoded
-   - Check for race conditions in async tests
+
+    - Check environment differences (Python version, dependencies)
+    - Verify `.env` values aren't hardcoded
+    - Check for race conditions in async tests
 
 3. **"Pre-commit hooks modify files repeatedly"**
-   - Usually Black/Ruff version mismatch between venv and `.pre-commit-config.yaml`
-   - See [CODING_RULES.md Rule 4](CODING_RULES.md#4-dependency-management) for version sync
+
+    - Usually Black/Ruff version mismatch between venv and `.pre-commit-config.yaml`
+    - See [CODING_RULES.md Rule 4](CODING_RULES.md#4-dependency-management) for version sync
 
 4. **"Hooks are slow (>30 seconds)"**
-   - Pre-commit caches hook environments
-   - First run after changes is slower
-   - Run `pre-commit run --all-files` once to pre-cache
+    - Pre-commit caches hook environments
+    - First run after changes is slower
+    - Run `pre-commit run --all-files` once to pre-cache
 
 ---
 
@@ -1544,33 +1686,33 @@ git commit -m "Add finance scenario privacy feature"
 
 ### Before Committing Code
 
-- [ ] Read all required documentation (see [Required Reading Order](#required-reading-order))
-- [ ] Ran `make ai-preflight` successfully
-- [ ] **Asked user for approval before large changes** (Checkpoint Protocol)
-- [ ] Code follows ALL rules in CODING_RULES.md
-- [ ] No unused variables or imports (Ruff F841, F401)
-- [ ] Proper exception chaining with `from e` (Ruff B904)
-- [ ] All database operations use async/await (Rule 2)
-- [ ] Import ordering correct (Rule 6)
-- [ ] No edits to existing migrations (Rule 1)
-- [ ] Database indexes on foreign keys (Rule 9)
-- [ ] Input validation with Pydantic (Rule 11)
-- [ ] Authentication required on endpoints (Rule 11)
-- [ ] Ran `make typecheck-backend` and passes ✅ (if modified app/api/ or app/schemas/)
-- [ ] Mypy errors in new code = 0 (no new type errors introduced)
-- [ ] Ran `make verify` and all checks pass ✅
-- [ ] Ran `make hooks` and pre-commit passes ✅
-- [ ] Tests written and passing ✅
-- [ ] **Provided test instructions to user (Rule 8)** - backend, frontend, and UI manual tests
+-   [ ] Read all required documentation (see [Required Reading Order](#required-reading-order))
+-   [ ] Ran `make ai-preflight` successfully
+-   [ ] **Asked user for approval before large changes** (Checkpoint Protocol)
+-   [ ] Code follows ALL rules in CODING_RULES.md
+-   [ ] No unused variables or imports (Ruff F841, F401)
+-   [ ] Proper exception chaining with `from e` (Ruff B904)
+-   [ ] All database operations use async/await (Rule 2)
+-   [ ] Import ordering correct (Rule 6)
+-   [ ] No edits to existing migrations (Rule 1)
+-   [ ] Database indexes on foreign keys (Rule 9)
+-   [ ] Input validation with Pydantic (Rule 11)
+-   [ ] Authentication required on endpoints (Rule 11)
+-   [ ] Ran `make typecheck-backend` and passes ✅ (if modified app/api/ or app/schemas/)
+-   [ ] Mypy errors in new code = 0 (no new type errors introduced)
+-   [ ] Ran `make verify` and all checks pass ✅
+-   [ ] Ran `make hooks` and pre-commit passes ✅
+-   [ ] Tests written and passing ✅
+-   [ ] **Provided test instructions to user (Rule 8)** - backend, frontend, and UI manual tests
 
 ### Before Marking Phase Complete
 
-- [ ] No unchecked `[ ]` items in phase section
-- [ ] No `🔄` (In Progress) or `❌` (Incomplete) markers
-- [ ] All files in "Files Delivered" exist on disk
-- [ ] Test status shows ✅ (no ❌ or ⚠️)
-- [ ] User confirmed UI manual testing passed
-- [ ] User approved marking phase complete
+-   [ ] No unchecked `[ ]` items in phase section
+-   [ ] No `🔄` (In Progress) or `❌` (Incomplete) markers
+-   [ ] All files in "Files Delivered" exist on disk
+-   [ ] Test status shows ✅ (no ❌ or ⚠️)
+-   [ ] User confirmed UI manual testing passed
+-   [ ] User approved marking phase complete
 
 ---
 
@@ -1597,42 +1739,49 @@ make format
 ```
 
 **3. Re-run verification:**
+
 ```bash
 make verify
 make hooks
 ```
 
 **4. If still failing:**
-- Check .coding-rules-exceptions.yml for documented exceptions
-- Review CODING_RULES.md for the specific rule
-- Ask user for clarification
+
+-   Check .coding-rules-exceptions.yml for documented exceptions
+-   Review CODING_RULES.md for the specific rule
+-   Ask user for clarification
 
 ### If Tests Fail
 
 **1. Check known issues:**
+
 ```bash
 # Review known test failures
 cat docs/all_steps_to_product_completion.md#-known-testing-issues
 ```
 
 **2. Run specific test:**
+
 ```bash
 pytest backend/tests/test_api/test_[feature].py::test_[specific] -vv
 ```
 
 **3. Check test logs:**
+
 ```bash
 pytest backend/tests/ -v --tb=short
 ```
 
 **4. Frontend test issues:**
-- JSDOM timing issues are documented
-- Check docs/all_steps_to_product_completion.md#-known-testing-issues
-- May need to adjust test timeouts
+
+-   JSDOM timing issues are documented
+-   Check docs/all_steps_to_product_completion.md#-known-testing-issues
+-   May need to adjust test timeouts
 
 ### If Make Verify Fails
 
 **1. Run individual checks:**
+
 ```bash
 make format-check  # Check formatting
 make lint          # Check linting
@@ -1643,6 +1792,7 @@ make test          # Run tests
 **2. Fix issues one by one**
 
 **3. Re-run verify:**
+
 ```bash
 make verify
 ```
@@ -1679,12 +1829,12 @@ make stop
 
 ### Essential Files
 
-- **CODING_RULES.md** - 12 technical rules (MUST follow)
-- **CONTRIBUTING.md** - Workflow and tooling
-- **docs/all_steps_to_product_completion.md** - Roadmap and phases
-- **docs/ai-agents/next_steps.md** - Current priorities
-- **.pre-commit-config.yaml** - Pre-commit hook configuration
-- **.coding-rules-exceptions.yml** - Documented rule exceptions
+-   **CODING_RULES.md** - 12 technical rules (MUST follow)
+-   **CONTRIBUTING.md** - Workflow and tooling
+-   **docs/all_steps_to_product_completion.md** - Roadmap and phases
+-   **docs/ai-agents/next_steps.md** - Current priorities
+-   **.pre-commit-config.yaml** - Pre-commit hook configuration
+-   **.coding-rules-exceptions.yml** - Documented rule exceptions
 
 ### Essential Rules
 
@@ -1702,50 +1852,55 @@ make stop
 ## Support and Feedback
 
 **If you need help:**
-- Review CODING_RULES.md for specific rule guidance
-- Check docs/all_steps_to_product_completion.md#-known-testing-issues for test issues
-- Ask user for clarification if requirements unclear
+
+-   Review CODING_RULES.md for specific rule guidance
+-   Check docs/all_steps_to_product_completion.md#-known-testing-issues for test issues
+-   Ask user for clarification if requirements unclear
 
 **If documentation is unclear:**
-- Ask user to clarify requirements
-- Suggest documentation improvements
-- Never guess or assume
+
+-   Ask user to clarify requirements
+-   Suggest documentation improvements
+-   Never guess or assume
 
 **If pre-commit hooks are blocking you:**
-- Read the error message carefully
-- Fix the underlying issue (don't bypass hooks)
-- Use `--no-verify` ONLY as last resort with user approval
+
+-   Read the error message carefully
+-   Fix the underlying issue (don't bypass hooks)
+-   Use `--no-verify` ONLY as last resort with user approval
 
 ---
 
 ## Version History
 
 **v1.1 (2025-11-09):**
-- Added Communication Style section with checkpoint protocol
-- Added Common Development Workflows section:
-  - API Endpoint Development Checklist (18 items)
-  - Database Table Addition Workflow (8 steps)
-  - Checkpoint Protocol Integration with templates
-- Added Troubleshooting Common Issues section:
-  - Pre-commit hook failures
-  - Test coverage issues
-  - Database migration conflicts
-  - Async/await errors
-  - Frontend test failures
-  - PDF generation errors
-- Added CI/CD Workflow section:
-  - Make targets overview
-  - Pre-commit hook pipeline details
-  - Quality gates documentation
-  - CI/CD best practices
-- Enhanced Quality Checklist with checkpoint protocol
-- Improved Table of Contents with new sections
+
+-   Added Communication Style section with checkpoint protocol
+-   Added Common Development Workflows section:
+    -   API Endpoint Development Checklist (18 items)
+    -   Database Table Addition Workflow (8 steps)
+    -   Checkpoint Protocol Integration with templates
+-   Added Troubleshooting Common Issues section:
+    -   Pre-commit hook failures
+    -   Test coverage issues
+    -   Database migration conflicts
+    -   Async/await errors
+    -   Frontend test failures
+    -   PDF generation errors
+-   Added CI/CD Workflow section:
+    -   Make targets overview
+    -   Pre-commit hook pipeline details
+    -   Quality gates documentation
+    -   CI/CD best practices
+-   Enhanced Quality Checklist with checkpoint protocol
+-   Improved Table of Contents with new sections
 
 **v1.0 (2025-10-30):**
-- Initial comprehensive guide
-- Integrated with pre-commit rules
-- Added phase gate compliance
-- Added emergency procedures
+
+-   Initial comprehensive guide
+-   Integrated with pre-commit rules
+-   Added phase gate compliance
+-   Added emergency procedures
 
 ---
 

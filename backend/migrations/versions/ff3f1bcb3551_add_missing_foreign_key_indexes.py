@@ -32,11 +32,14 @@ def upgrade() -> None:
 
     bind = op.get_bind()
     inspector = sa.inspect(bind)
+    existing_tables = inspector.get_table_names()
 
-    # Helper function to create index only if it doesn't exist
+    # Helper function to create index only if table and column exist
     def create_index_if_not_exists(
         index_name: str, table_name: str, columns: list[str]
     ) -> None:
+        if table_name not in existing_tables:
+            return  # Table doesn't exist, skip
         existing_indexes = [idx["name"] for idx in inspector.get_indexes(table_name)]
         if index_name not in existing_indexes:
             op.create_index(index_name, table_name, columns)
@@ -60,7 +63,7 @@ def upgrade() -> None:
         ["audit_log_id"],
     )
 
-    # ai_agent_sessions
+    # ai_agent_sessions (may not exist)
     create_index_if_not_exists(
         "ix_ai_agent_sessions_agent_id", "ai_agent_sessions", ["agent_id"]
     )

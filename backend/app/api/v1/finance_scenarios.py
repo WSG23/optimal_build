@@ -23,6 +23,7 @@ from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.core.database import get_session
 from app.models.finance import (
     FinProject,
+    FinResult,
     FinScenario,
 )
 from app.models.projects import Project
@@ -468,8 +469,11 @@ async def summarise_persisted_scenario(
     )
     asset_processed = False
     sensitivity_metadata_rows: list[dict[str, Any]] | None = None
+    analytics_overview_result: FinResult | None = None
     for stored in ordered_results:
-        metadata: dict[str, Any] | None = stored.metadata if isinstance(stored.metadata, dict) else None  # type: ignore[assignment,has-type]
+        metadata: dict[str, Any] | None = (  # type: ignore[assignment,has-type]
+            stored.metadata if isinstance(stored.metadata, dict) else None
+        )
         if stored.name == "asset_financials" and metadata and not asset_processed:
             summary_meta = metadata.get("summary")
             if summary_meta:
@@ -527,6 +531,10 @@ async def summarise_persisted_scenario(
                 construction_interest_value = stored.value
             except Exception:  # pragma: no cover - defensive for historical data
                 construction_interest_schema = None
+
+        if stored.name == "analytics_overview":
+            analytics_overview_result = stored
+            continue
 
     results: list[FinanceResultSchema] = [
         FinanceResultSchema(
@@ -619,6 +627,20 @@ async def summarise_persisted_scenario(
                 value=None,
                 unit=None,
                 metadata={"bands": sensitivity_metadata_rows},
+            )
+        )
+
+    if analytics_overview_result:
+        results.append(
+            FinanceResultSchema(
+                name="analytics_overview",
+                value=analytics_overview_result.value,
+                unit=analytics_overview_result.unit,
+                metadata=(
+                    analytics_overview_result.metadata
+                    if isinstance(analytics_overview_result.metadata, dict)
+                    else {}
+                ),
             )
         )
 

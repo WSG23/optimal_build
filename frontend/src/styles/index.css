@@ -17,6 +17,9 @@
 /* App shell and navigation (layout foundation) */
 @import './app-shell.css';
 
+/* Shared page layout patterns */
+@import './page-layout.css';
+
 /* Feature modules (order matches original index.css line numbers) */
 @import './developer-preview.css';
 @import './agents-capture.css';
@@ -26,3 +29,7 @@
 @import './agent-performance.css';
 @import './business-performance.css';
 @import './gps-capture.css';
+@import './advisory.css';
+@import './site-acquisition.css';
+@import './visualizations.css';
+@import './phase-management.css';

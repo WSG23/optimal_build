@@ -1,14 +1,12 @@
 """User API with real database support using SQLAlchemy."""
 
-import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-
-from sqlalchemy import Boolean, Column, DateTime, String, create_engine
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 try:  # pragma: no cover - optional dependency
     import email_validator  # type: ignore  # noqa: F401
@@ -16,12 +14,18 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
 
-from backend._compat.datetime import utcnow
-
-from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_current_user
+from app.core.auth import (
+    AuthService,
+    AuthUser,
+    SqlAlchemyAuthRepository,
+    TokenData,
+    TokenResponse,
+    UserORMBase,
+    get_current_user,
+)
 from app.schemas.user import UserSignupBase
+from app.services.account_lockout import get_lockout_service
 from app.utils.db import session_dependency
-from app.utils.security import hash_password, verify_password
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"
@@ -29,33 +33,15 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+
+# Ensure the shared user table exists
+UserORMBase.metadata.create_all(bind=engine)
 
 router = APIRouter(prefix="/users-db", tags=["Database Users"])
 
-
-# Database Model
-class UserDB(Base):
-    __tablename__ = "users"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"user_{uuid.uuid4().hex[:8]}"
-    )
-    email = Column(String, unique=True, nullable=False, index=True)
-    username = Column(String, unique=True, nullable=False, index=True)
-    full_name = Column(String, nullable=False)
-    company_name = Column(String, nullable=True)
-    hashed_password = Column(String, nullable=False)
-    created_at = Column(DateTime, default=utcnow)
-    is_active = Column(Boolean, default=True)
-
-
-# Create tables
-Base.metadata.create_all(bind=engine)
-
-
 # Dependency to get DB session
 get_db = session_dependency(SessionLocal)
+auth_service = AuthService(lockout_service=get_lockout_service())
 
 
 # Pydantic models
@@ -75,6 +61,18 @@ class UserResponse(BaseModel):
     company_name: Optional[str]
     created_at: datetime
     is_active: bool
+
+    @classmethod
+    def from_auth_user(cls, user: AuthUser) -> "UserResponse":
+        return cls(
+            id=user.id,
+            email=user.email,
+            username=user.username,
+            full_name=user.full_name,
+            company_name=user.company_name,
+            created_at=user.created_at,
+            is_active=user.is_active,
+        )
 
     class Config:
         from_attributes = True
@@ -100,48 +98,26 @@ class LoginResponse(BaseModel):
 def signup(user_data: UserSignup, db: Session = Depends(get_db)) -> UserResponse:
     """Register a new user with database persistence."""
 
-    # Check if email already exists
-    if db.query(UserDB).filter(UserDB.email == user_data.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    # Check if username already exists
-    if db.query(UserDB).filter(UserDB.username == user_data.username).first():
-        raise HTTPException(status_code=400, detail="Username already taken")
-
-    # Create new user
-    db_user = UserDB(
-        email=user_data.email,
-        username=user_data.username,
-        full_name=user_data.full_name,
-        company_name=user_data.company_name,
-        hashed_password=hash_password(user_data.password),
-    )
-
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-
-    return UserResponse.model_validate(db_user)
+    repo = SqlAlchemyAuthRepository(db)
+    user = auth_service.register_user(user_data, repo=repo)
+    return UserResponse.from_auth_user(user)
 
 
 @router.post("/login", response_model=LoginResponse)
 def login(credentials: UserLogin, db: Session = Depends(get_db)) -> LoginResponse:
     """Login with email and password, returns JWT tokens."""
 
-    # Get user from database
-    user = db.query(UserDB).filter(UserDB.email == credentials.email).first()
-
-    if not user or not verify_password(credentials.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    # Create JWT tokens
-    user_dict = {"id": user.id, "email": user.email, "username": user.username}
-    tokens = create_tokens(user_dict)
-
-    # Create response
-    user_response = UserResponse.model_validate(user)
-
-    return LoginResponse(message="Login successful", user=user_response, tokens=tokens)
+    repo = SqlAlchemyAuthRepository(db)
+    result = auth_service.login(
+        email=credentials.email,
+        password=credentials.password,
+        repo=repo,
+    )
+    return LoginResponse(
+        message="Login successful",
+        user=UserResponse.from_auth_user(result.user),
+        tokens=result.tokens,
+    )
 
 
 @router.get("/me", response_model=UserResponse)
@@ -149,20 +125,20 @@ async def get_me(
     current_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> UserResponse:
     """Get current user info from JWT token."""
-    user = db.query(UserDB).filter(UserDB.email == current_user.email).first()
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return UserResponse.model_validate(user)
+    repo = SqlAlchemyAuthRepository(db)
+    user = auth_service.ensure_user_exists(current_user.email, repo=repo)
+    return UserResponse.from_auth_user(user)
 
 
 @router.get("/list")
 def list_users(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """List all users (for testing - remove in production!)."""
-    users = db.query(UserDB).all()
+
+    repo = SqlAlchemyAuthRepository(db)
+    users = [UserResponse.from_auth_user(u) for u in repo.list_users()]
     return {
-        "users": [UserResponse.model_validate(u) for u in users],
+        "users": users,
         "total": len(users),
     }
 

@@ -771,6 +771,21 @@ export function FinanceWorkspace() {
                 {t('finance.table.empty')}
               </p>
             )}
+            {primaryScenario?.scenarioId === 0 && (
+                <div className="finance-workspace__warning" role="alert" style={{
+                    backgroundColor: 'var(--color-warning-subtle)',
+                    color: 'var(--color-warning-strong)',
+                    padding: 'var(--space-4)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: 'var(--space-6)',
+                    border: '1px solid var(--color-warning-border)'
+                }}>
+                    <strong>{t('finance.warnings.offlineMode')}</strong>
+                    <p style={{ margin: 0 }}>
+                        {t('finance.warnings.offlineModeDetail') || 'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
+                    </p>
+                </div>
+            )}
             {scenarios.length > 0 && (
               <>
                 <div className="finance-workspace__sections">

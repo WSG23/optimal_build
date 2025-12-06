@@ -25,6 +25,7 @@ export function FinanceProjectSelector({
   onRefresh,
 }: FinanceProjectSelectorProps) {
   const { t } = useTranslation()
+  const [isExpanded, setIsExpanded] = useState(false)
   const [manualId, setManualId] = useState(selectedProjectId)
 
   useEffect(() => {
@@ -54,10 +55,15 @@ export function FinanceProjectSelector({
       return
     }
     onProjectChange(trimmed, null)
+    setIsExpanded(false)
   }
 
   const handleOptionChange = (value: string) => {
     if (!value) {
+      return
+    }
+    if (value === 'manual') {
+      setIsExpanded(true)
       return
     }
     const option = recentOptions.find((item) => item.id === value)
@@ -65,6 +71,7 @@ export function FinanceProjectSelector({
       return
     }
     onProjectChange(option.id, option.projectName ?? option.label)
+    setIsExpanded(false)
   }
 
   const helperLabel =
@@ -75,73 +82,71 @@ export function FinanceProjectSelector({
 
   return (
     <section className="finance-project-selector" aria-live="polite">
-      <header className="finance-project-selector__header">
+      <div className="finance-project-selector__header">
         <div>
-          <h2>{t('finance.projectSelector.title')}</h2>
-          <p>{t('finance.projectSelector.description')}</p>
+           <h2>{t('finance.projectSelector.title')}</h2>
         </div>
-        <p className="finance-project-selector__active">
-          {t('finance.projectSelector.current', { value: helperLabel })}
-        </p>
-      </header>
-      <div className="finance-project-selector__body">
-        <form
-          className="finance-project-selector__form"
-          onSubmit={handleManualSubmit}
-        >
-          <label htmlFor="finance-project-id">
-            {t('finance.projectSelector.inputLabel')}
-          </label>
-          <div className="finance-project-selector__input-row">
-            <input
-              id="finance-project-id"
-              value={manualId}
-              onChange={(event) => setManualId(event.target.value)}
-              placeholder={t('finance.projectSelector.inputPlaceholder')}
-            />
-            <button type="submit">
-              {t('finance.projectSelector.submit')}
-            </button>
-          </div>
-        </form>
-        <div className="finance-project-selector__recent">
-          <div className="finance-project-selector__recent-header">
-            <label htmlFor="finance-recent-projects">
-              {t('finance.projectSelector.recentLabel')}
-            </label>
-            <button
-              type="button"
-              className="finance-project-selector__refresh"
-              onClick={onRefresh}
-            >
-              {t('finance.projectSelector.refresh')}
-            </button>
-          </div>
-          {recentOptions.length > 0 ? (
-            <select
-              id="finance-recent-projects"
-              value={selectedOptionValue}
-              onChange={(event) => handleOptionChange(event.target.value)}
-            >
-              <option value="">
-                {t('finance.projectSelector.pickPlaceholder')}
-              </option>
-              {recentOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <p className="finance-project-selector__empty">
-              {t('finance.projectSelector.empty')}
-            </p>
-          )}
-          <p className="finance-project-selector__hint">
-            {t('finance.projectSelector.hint')}
-          </p>
+        <div className="finance-project-selector__controls">
+            <span className="finance-project-selector__current">
+                {t('finance.projectSelector.current', { value: helperLabel })}
+            </span>
+            {!isExpanded ? (
+                 <select
+                    className="finance-project-selector__select"
+                    value={selectedOptionValue}
+                    onChange={(event) => handleOptionChange(event.target.value)}
+                  >
+                     <option value="" disabled>
+                        {t('finance.projectSelector.pickPlaceholder')}
+                     </option>
+                     {recentOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                           {option.label}
+                        </option>
+                     ))}
+                     <option value="manual">+ {t('finance.projectSelector.enterManualId')}</option>
+                  </select>
+            ) : null}
+            {onRefresh && (
+                <button
+                    type="button"
+                    className="finance-project-selector__refresh-icon"
+                    onClick={onRefresh}
+                    title={t('finance.projectSelector.refresh')}
+                >
+                    ↻
+                </button>
+            )}
         </div>
       </div>
+
+      {isExpanded ? (
+         <div className="finance-project-selector__body">
+            <form
+              className="finance-project-selector__form"
+              onSubmit={handleManualSubmit}
+            >
+              <label htmlFor="finance-project-id" className="sr-only">
+                {t('finance.projectSelector.inputLabel')}
+              </label>
+              <div className="finance-project-selector__input-row">
+                <input
+                  id="finance-project-id"
+                  value={manualId}
+                  onChange={(event) => setManualId(event.target.value)}
+                  placeholder={t('finance.projectSelector.inputPlaceholder')}
+                  autoFocus
+                />
+                <button type="submit">
+                  {t('finance.projectSelector.submit')}
+                </button>
+                <button type="button" onClick={() => setIsExpanded(false)}>
+                    {t('common.actions.cancel')}
+                </button>
+              </div>
+            </form>
+         </div>
+      ) : null}
     </section>
   )
 }

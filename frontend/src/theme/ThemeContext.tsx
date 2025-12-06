@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 
 export type ThemeMode = 'dark' | 'light';
@@ -8,7 +9,7 @@ interface ThemeContextValue {
     setMode: (mode: ThemeMode) => void;
 }
 
-const STORAGE_KEY = 'yosai-theme-mode';
+const STORAGE_KEY = 'ob-theme-mode';
 
 function getInitialMode(): ThemeMode {
     if (typeof window === 'undefined') return 'dark';

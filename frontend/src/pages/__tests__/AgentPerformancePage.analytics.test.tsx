@@ -1,8 +1,9 @@
-import assert from 'node:assert/strict'
-import { afterEach, beforeEach, describe, it } from 'node:test'
+import { afterEach, assert, beforeEach, describe, it } from 'vitest'
+import { ThemeModeProvider } from '../../theme/ThemeContext'
 
-import { JSDOM } from 'jsdom'
+
 import React from 'react'
+import { cleanup } from '@testing-library/react'
 
 import { TranslationProvider } from '../../i18n'
 
@@ -25,7 +26,7 @@ function makeMockResponse(body: unknown, status = 200): Response {
 }
 
 describe('AgentPerformancePage analytics', () => {
-  let dom: JSDOM
+
   let AgentPerformancePage: typeof import('../AgentPerformancePage').default
 
   const originalFetch = globalThis.fetch
@@ -33,24 +34,8 @@ describe('AgentPerformancePage analytics', () => {
     .ResizeObserver
 
   beforeEach(async () => {
-    dom = new JSDOM('<!doctype html><html><body></body></html>', {
-      url: 'http://localhost/agents/performance',
-    })
-
-    const globalWithDom = globalThis as typeof globalThis & {
-      window: Window & typeof globalThis
-      document: Document
-      navigator: Navigator
-      HTMLElement: typeof HTMLElement
-      Node: typeof Node
-      getComputedStyle: typeof window.getComputedStyle
-    }
-    globalWithDom.window = dom.window as Window & typeof globalThis
-    globalWithDom.document = dom.window.document
-    globalWithDom.navigator = dom.window.navigator
-    globalWithDom.HTMLElement = dom.window.HTMLElement
-    globalWithDom.Node = dom.window.Node
-    globalWithDom.getComputedStyle = dom.window.getComputedStyle.bind(dom.window)
+    cleanup()
+    window.history.replaceState(null, '', '/agents/performance')
 
     class MockResizeObserver {
       observe() {}
@@ -234,7 +219,6 @@ describe('AgentPerformancePage analytics', () => {
     if (rtlCleanup) {
       rtlCleanup()
     }
-    dom.window.close()
 
     globalThis.fetch = originalFetch
     if (originalResizeObserver) {
@@ -245,11 +229,15 @@ describe('AgentPerformancePage analytics', () => {
     }
   })
 
-  it('renders analytics metrics, charts, and benchmarks', async () => {
+
+
+  it('renders analytics dashboard with metrics and charts', async () => {
     rtlRender(
-      <TranslationProvider>
-        <AgentPerformancePage />
-      </TranslationProvider>,
+      <ThemeModeProvider>
+        <TranslationProvider>
+          <AgentPerformancePage />
+        </TranslationProvider>
+      </ThemeModeProvider>,
     )
 
     assert.ok(await rtlScreen.findByText(/Deals won/i))

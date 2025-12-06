@@ -233,6 +233,10 @@
 .advisory {
     display: grid;
     gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .advisory__panel {
@@ -311,6 +315,15 @@
 .advisory__feedback-meta {
     font-size: 0.85rem;
     color: #64748b;
+}
+
+.integrations {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .integrations__panel {

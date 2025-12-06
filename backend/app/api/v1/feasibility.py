@@ -8,13 +8,22 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from app.api.deps import require_viewer
+
 from app.schemas.feasibility import (
     FeasibilityAssessmentRequest,
     FeasibilityAssessmentResponse,
+    FeasibilityRulesResponse,
+    NewFeasibilityProjectInput,
 )
+from app.schemas.engineering import EngineeringDefaultsResponse
 from app.services.feasibility import (
+    generate_feasibility_rules,
     run_feasibility_assessment,
-    _normalise_assessment_payload,
+    get_engineering_defaults,
+)
+from app.services.feasibility.normalization import (
+    normalise_assessment_payload,
+    normalise_project_payload,
 )
 
 router = APIRouter(prefix="/feasibility", tags=["Feasibility"])
@@ -37,7 +46,7 @@ async def ws_feasibility(websocket: WebSocket):
                 # Normalise and validate
                 # Note: reusing internal helpers from service layer for consistency
                 # In a larger refactor, these should be exposed properly
-                normalised = _normalise_assessment_payload(data)
+                normalised = normalise_assessment_payload(data)
                 request = FeasibilityAssessmentRequest(**normalised)
 
                 # Run assessment (synchronous logic, but fast enough for MVP)
@@ -60,35 +69,23 @@ async def ws_feasibility(websocket: WebSocket):
         pass  # Normal disconnect
 
 
-def _normalise_project_payload(data: dict[str, Any]) -> dict[str, Any]:
-    def _normalise_envelope(payload: dict[str, Any] | None) -> dict[str, Any] | None:
-        if not isinstance(payload, dict):
-            return None
-        envelope_mapping = {
-            "siteAreaSqm": "site_area_sqm",
-            "allowablePlotRatio": "allowable_plot_ratio",
-            "maxBuildableGfaSqm": "max_buildable_gfa_sqm",
-            "currentGfaSqm": "current_gfa_sqm",
-            "additionalPotentialGfaSqm": "additional_potential_gfa_sqm",
-        }
-        normalised_envelope = {
-            envelope_mapping.get(key, key): value for key, value in payload.items()
-        }
-        return normalised_envelope
+@router.get("/defaults", response_model=EngineeringDefaultsResponse)
+async def get_defaults(
+    _: str = Depends(require_viewer),
+) -> EngineeringDefaultsResponse:
+    """Get global engineering defaults by jurisdiction."""
+    return get_engineering_defaults()
 
-    mapping = {
-        "siteAddress": "site_address",
-        "siteAreaSqm": "site_area_sqm",
-        "landUse": "land_use",
-        "targetGrossFloorAreaSqm": "target_gross_floor_area_sqm",
-        "buildingHeightMeters": "building_height_meters",
-    }
-    normalised = {mapping.get(key, key): value for key, value in data.items()}
-    if "buildEnvelope" in data:
-        normalised["build_envelope"] = _normalise_envelope(data.get("buildEnvelope"))
-    elif "build_envelope" in data:
-        normalised["build_envelope"] = _normalise_envelope(data.get("build_envelope"))
-    return normalised
+
+@router.post("/rules", response_model=FeasibilityRulesResponse)
+async def fetch_feasibility_rules(
+    payload: dict[str, Any],
+    _: str = Depends(require_viewer),
+) -> FeasibilityRulesResponse:
+    """Fetch applicable feasibility rules for the project."""
+    normalised = normalise_project_payload(payload)
+    project = NewFeasibilityProjectInput(**normalised)
+    return generate_feasibility_rules(project)
 
 
 @router.post("/assessment", response_model=FeasibilityAssessmentResponse)
@@ -97,8 +94,8 @@ async def submit_assessment(
     _: str = Depends(require_viewer),
 ) -> FeasibilityAssessmentResponse:
     """Evaluate the feasibility assessment for the selected rules."""
-
-    request = FeasibilityAssessmentRequest(**_normalise_assessment_payload(payload))
+    # Request model validation happens here via normaliser
+    request = FeasibilityAssessmentRequest(**normalise_assessment_payload(payload))
     return run_feasibility_assessment(request)
 
 

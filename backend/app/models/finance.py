@@ -98,6 +98,23 @@ class FinScenario(BaseModel):
         nullable=False,
     )
 
+    # Lineage & Audit
+    parent_scenario_id: Mapped[int | None] = mapped_column(
+        ForeignKey("fin_scenarios.id"), nullable=True, index=True
+    )
+    export_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    # Multi-Jurisdiction Financing
+    jurisdiction_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    ltv_limit_pct: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
+    absd_rate_pct: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
+    dscr_min: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
+    construction_loan_rate_pct: Mapped[Decimal | None] = mapped_column(Numeric(6, 4))
+
+    parent_scenario: Mapped[Optional["FinScenario"]] = relationship(
+        "FinScenario", remote_side="FinScenario.id", backref="derived_scenarios"
+    )
+
     fin_project: Mapped[FinProject] = relationship(
         "FinProject", back_populates="scenarios"
     )

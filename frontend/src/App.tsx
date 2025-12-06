@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { useTranslation } from './i18n'
 import { Link } from './router'
-import { YosaiShell } from './components/layout/YosaiShell'
+import { AppShell } from './components/layout/YosaiShell'
 
 export interface AppLayoutProps {
   title: string
@@ -18,9 +18,9 @@ export function AppLayout({
   children,
 }: AppLayoutProps) {
   return (
-    <YosaiShell title={title} subtitle={subtitle} actions={actions}>
+    <AppShell title={title} subtitle={subtitle} actions={actions}>
       {children}
-    </YosaiShell>
+    </AppShell>
   )
 }
 

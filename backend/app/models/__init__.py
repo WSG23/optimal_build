@@ -26,9 +26,14 @@ else:
     from . import agent_advisory  # Added: agent advisory feedback model
     from . import ai_agents  # Added: AI agents model
     from . import developer_condition  # Added: developer condition assessments
+    from . import development_phase  # Added: Phase 2D development phases
+    from . import hong_kong_property  # Added: Hong Kong property model
     from . import listing_integration  # Added: external listing integrations
+    from . import new_zealand_property  # Added: New Zealand property model
     from . import projects  # Added: development projects model
+    from . import seattle_property  # Added: Seattle property model
     from . import singapore_property  # Added: Singapore property model
+    from . import toronto_property  # Added: Toronto property model
     from . import users  # Added: user authentication model
     from . import (  # noqa: F401  pylint: disable=unused-import
         audit,
@@ -49,6 +54,10 @@ else:
         "agent_advisory": agent_advisory,  # Added: agent advisory feedback model
         "ai_agents": ai_agents,  # Added: AI agents model
         "developer_condition": developer_condition,
+        "development_phase": development_phase,  # Added: Phase 2D development phases
+        "hong_kong_property": hong_kong_property,  # Added: Hong Kong property model
+        "new_zealand_property": new_zealand_property,  # Added: New Zealand property model
+        "seattle_property": seattle_property,  # Added: Seattle property model
         "audit": audit,
         "business_performance": business_performance,
         "developer_checklists": developer_checklists,
@@ -63,6 +72,7 @@ else:
         "rkp": rkp,
         "rulesets": rulesets,
         "singapore_property": singapore_property,  # Added: Singapore property model
+        "toronto_property": toronto_property,  # Added: Toronto property model
         "users": users,  # Added: user authentication model
     }
 

@@ -1,0 +1,62 @@
+{
+  "SG": {
+    "structural_grid": "8.4m x 8.4m",
+    "core_size_percent": {
+      "office": 25.0,
+      "residential": 20.0,
+      "mixed_use": 22.0
+    },
+    "mep_allowance_mm": 450,
+    "wall_thickness_mm": 200,
+    "circulation_percent": 15.0,
+    "fire_stair_width_mm": 1200
+  },
+  "HK": {
+    "structural_grid": "8.0m x 8.0m",
+    "core_size_percent": {
+      "office": 28.0,
+      "residential": 22.0,
+      "mixed_use": 24.0
+    },
+    "mep_allowance_mm": 400,
+    "wall_thickness_mm": 200,
+    "circulation_percent": 18.0,
+    "fire_stair_width_mm": 1050
+  },
+  "NZ": {
+    "structural_grid": "7.5m x 7.5m",
+    "core_size_percent": {
+      "office": 22.0,
+      "residential": 18.0,
+      "mixed_use": 20.0
+    },
+    "mep_allowance_mm": 350,
+    "wall_thickness_mm": 180,
+    "circulation_percent": 14.0,
+    "fire_stair_width_mm": 1000
+  },
+  "SEA": {
+    "structural_grid": "9.1m x 9.1m",
+    "core_size_percent": {
+      "office": 24.0,
+      "residential": 19.0,
+      "mixed_use": 21.0
+    },
+    "mep_allowance_mm": 400,
+    "wall_thickness_mm": 150,
+    "circulation_percent": 15.0,
+    "fire_stair_width_mm": 1118
+  },
+  "TOR": {
+    "structural_grid": "9.0m x 9.0m",
+    "core_size_percent": {
+      "office": 26.0,
+      "residential": 20.0,
+      "mixed_use": 22.0
+    },
+    "mep_allowance_mm": 400,
+    "wall_thickness_mm": 200,
+    "circulation_percent": 16.0,
+    "fire_stair_width_mm": 1100
+  }
+}

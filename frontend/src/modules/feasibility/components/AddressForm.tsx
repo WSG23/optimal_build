@@ -9,6 +9,10 @@ interface AddressFormProps {
   onAddressChange: (event: ChangeEvent<HTMLInputElement>) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   t: (key: string) => string
+  siteAreaInput?: string
+  landUseInput?: string
+  onSiteAreaChange?: (event: ChangeEvent<HTMLInputElement>) => void
+  onLandUseChange?: (event: ChangeEvent<HTMLSelectElement>) => void
 }
 
 export function AddressForm({
@@ -18,6 +22,10 @@ export function AddressForm({
   onAddressChange,
   onSubmit,
   t,
+  siteAreaInput,
+  landUseInput,
+  onSiteAreaChange,
+  onLandUseChange,
 }: AddressFormProps) {
   return (
     <form className="feasibility-form" onSubmit={onSubmit} noValidate>
@@ -36,6 +44,44 @@ export function AddressForm({
         />
         {addressError && <p className="feasibility-form__error">{addressError}</p>}
       </div>
+
+      {siteAreaInput !== undefined && onSiteAreaChange && (
+        <div className="feasibility-form__field">
+          <label className="feasibility-form__label" htmlFor="site-area-input">
+            {t('wizard.form.siteAreaLabel') || 'Site Area (sqm)'}
+          </label>
+          <input
+            id="site-area-input"
+            name="siteArea"
+            type="number"
+            value={siteAreaInput}
+            onChange={onSiteAreaChange}
+            placeholder="e.g. 1000"
+            data-testid="site-area-input"
+          />
+        </div>
+      )}
+
+      {landUseInput !== undefined && onLandUseChange && (
+        <div className="feasibility-form__field">
+          <label className="feasibility-form__label" htmlFor="land-use-input">
+            {t('wizard.form.landUseLabel') || 'Land Use'}
+          </label>
+          <select
+            id="land-use-input"
+            name="landUse"
+            value={landUseInput}
+            onChange={onLandUseChange}
+            data-testid="land-use-input"
+          >
+            <option value="Residential">Residential</option>
+            <option value="Commercial">Commercial</option>
+            <option value="Mixed Use">Mixed Use</option>
+            <option value="Industrial">Industrial</option>
+          </select>
+        </div>
+      )}
+
       <div className="feasibility-form__actions">
         <button
           type="submit"

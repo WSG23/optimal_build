@@ -6,7 +6,13 @@
 .site-acquisition-template-manager {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--ob-spacing-500);
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    font-family: var(--ob-font-family-base);
+    color: var(--ob-color-text-primary);
 }
 
 .template-manager-header {
@@ -22,7 +28,7 @@
 }
 
 .template-manager-back {
-    color: #3366cc;
+    color: var(--ob-color-brand-primary);
     text-decoration: none;
     font-weight: 600;
 }
@@ -38,20 +44,20 @@
 }
 
 .template-manager-alert.error {
-    background: #ffeceb;
-    color: #a51616;
-    border: 1px solid #f5bbbb;
+    background: var(--ob-color-status-error-bg);
+    color: var(--ob-color-status-error-text);
+    border: 1px solid var(--ob-color-error-muted);
 }
 
 .template-manager-alert.success {
-    background: #edf9f0;
-    color: #146133;
-    border: 1px solid #b8e0c6;
+    background: var(--ob-color-status-success-bg);
+    color: var(--ob-color-status-success-text);
+    border: 1px solid var(--ob-color-success-strong);
 }
 
 .template-manager-section {
-    background: #ffffff;
-    border: 1px solid #d5d9e2;
+    background: var(--ob-color-surface-default);
+    border: 1px solid var(--ob-color-border-neutral);
     border-radius: 8px;
     padding: 1.5rem;
 }
@@ -76,8 +82,8 @@
 }
 
 .template-manager-controls button {
-    background: #f4f6fb;
-    border: 1px solid #d5d9e2;
+    background: var(--ob-color-surface-alt);
+    border: 1px solid var(--ob-color-border-neutral);
     border-radius: 6px;
     padding: 0.45rem 0.85rem;
     cursor: pointer;
@@ -91,12 +97,12 @@
 .template-manager-table th,
 .template-manager-table td {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #eceff5;
+    border-bottom: 1px solid var(--ob-color-border-neutral);
     text-align: left;
 }
 
 .template-manager-table th {
-    background: #f6f8fb;
+    background: var(--ob-color-surface-alt);
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
@@ -108,8 +114,8 @@
 }
 
 .template-manager-actions button {
-    border: 1px solid #cbd5e0;
-    background: #ffffff;
+    border: 1px solid var(--ob-color-border-neutral);
+    background: var(--ob-color-surface-default);
     padding: 0.35rem 0.6rem;
     border-radius: 4px;
     cursor: pointer;
@@ -117,8 +123,8 @@
 }
 
 .template-manager-actions button.danger {
-    border-color: #e09a9a;
-    color: #b81414;
+    border-color: var(--ob-color-error-strong);
+    color: var(--ob-color-error-strong);
 }
 
 .template-manager-form {
@@ -138,7 +144,7 @@
 .template-manager-form select,
 .template-manager-form textarea {
     padding: 0.5rem 0.6rem;
-    border: 1px solid #c6ccdd;
+    border: 1px solid var(--ob-color-border-neutral);
     border-radius: 6px;
     font-size: 0.95rem;
 }
@@ -163,8 +169,8 @@
 }
 
 .template-manager-form-actions button {
-    background: #1c64f2;
-    color: #ffffff;
+    background: var(--ob-color-brand-primary);
+    color: var(--ob-color-text-inverse);
     border: none;
     padding: 0.5rem 0.9rem;
     border-radius: 6px;
@@ -172,8 +178,8 @@
 }
 
 .template-manager-form-actions button.secondary {
-    background: #e5eaf4;
-    color: #314365;
+    background: var(--ob-color-border-neutral);
+    color: var(--ob-color-text-primary);
 }
 
 .template-manager-form-heading {
@@ -191,8 +197,8 @@
     align-items: center;
     gap: 0.3rem;
     border-radius: 999px;
-    background: #eef2ff;
-    color: #3730a3;
+    background: var(--ob-color-brand-soft);
+    color: var(--ob-color-brand-primary-emphasis);
     font-weight: 600;
     padding: 0.25rem 0.7rem;
     font-size: 0.8rem;
@@ -207,8 +213,8 @@
 }
 
 .template-manager-sample pre {
-    background: #0f172a;
-    color: #f8fafc;
+    background: var(--ob-color-surface-inverse);
+    color: var(--ob-color-border-neutral);
     padding: 0.75rem;
     border-radius: 6px;
     overflow-x: auto;

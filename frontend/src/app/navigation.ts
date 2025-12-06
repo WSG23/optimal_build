@@ -91,7 +91,6 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     path: '/app/phase-management',
     description: 'Multi-phase development and renovation sequencing.',
     workspace: 'developer',
-    comingSoon: true,
   },
   {
     key: 'teamCoordination',

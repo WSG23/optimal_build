@@ -1,0 +1,335 @@
+/* styles/visualizations.css
+   Visualization components (Engineering Layers, Clash Impact, etc.)
+   Uses page-layout.css foundation with visualization-specific extensions.
+*/
+
+/* -------------------------------------------------------------------------- */
+/* Engineering Layers Panel                                                    */
+/* -------------------------------------------------------------------------- */
+
+.engineering-layers {
+    width: 100%;
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-lg);
+    background-color: var(--ob-color-bg-surface);
+}
+
+.engineering-layers__header {
+    padding: var(--ob-spacing-300);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
+}
+
+.engineering-layers__title {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-spacing-150);
+    margin: 0;
+    font-size: var(--ob-font-size-lg);
+    font-weight: 600;
+    color: var(--ob-color-text-primary);
+}
+
+.engineering-layers__content {
+    padding: var(--ob-spacing-300);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-spacing-300);
+}
+
+.engineering-layers__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.engineering-layers__label-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-spacing-150);
+}
+
+.engineering-layers__icon {
+    font-size: var(--ob-font-size-base);
+}
+
+.engineering-layers__label {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-primary);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Toggle Switch                                                               */
+/* -------------------------------------------------------------------------- */
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 2.75rem;
+    height: 1.5rem;
+}
+
+.toggle-switch__input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch__track {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--ob-color-bg-muted);
+    transition: background-color 0.2s ease;
+    border-radius: 9999px;
+}
+
+.toggle-switch__track--active {
+    background-color: var(--ob-color-brand-primary);
+}
+
+.toggle-switch__knob {
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: left 0.2s ease;
+    border-radius: 50%;
+}
+
+.toggle-switch__knob--active {
+    left: 23px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Clash Impact Board                                                          */
+/* -------------------------------------------------------------------------- */
+
+.clash-impact {
+    width: 100%;
+}
+
+.clash-impact__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ob-spacing-400);
+}
+
+.clash-impact__title {
+    font-size: var(--ob-font-size-xl);
+    font-weight: 600;
+    color: var(--ob-color-text-primary);
+    margin: 0;
+}
+
+.clash-impact__subtitle {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    margin: var(--ob-spacing-100) 0 0;
+}
+
+.clash-impact__stats {
+    display: flex;
+    gap: var(--ob-spacing-400);
+}
+
+.clash-impact__stat {
+    text-align: center;
+}
+
+.clash-impact__stat-value {
+    font-size: var(--ob-font-size-2xl);
+    font-weight: 700;
+    color: var(--ob-color-text-primary);
+    font-family: var(--ob-font-family-mono);
+}
+
+.clash-impact__stat-value--critical {
+    color: var(--ob-error-500);
+}
+
+.clash-impact__stat-value--warning {
+    color: var(--ob-warning-500);
+}
+
+.clash-impact__stat-value--resolved {
+    color: var(--ob-success-500);
+}
+
+.clash-impact__stat-label {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.clash-impact__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-spacing-300);
+}
+
+.clash-impact__item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ob-spacing-300);
+    padding: var(--ob-spacing-300);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-lg);
+    background: var(--ob-color-bg-surface);
+}
+
+.clash-impact__item--critical {
+    border-left: 3px solid var(--ob-error-500);
+}
+
+.clash-impact__item--warning {
+    border-left: 3px solid var(--ob-warning-500);
+}
+
+.clash-impact__item--resolved {
+    border-left: 3px solid var(--ob-success-500);
+    opacity: 0.7;
+}
+
+.clash-impact__item-icon {
+    font-size: var(--ob-font-size-xl);
+    flex-shrink: 0;
+}
+
+.clash-impact__item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.clash-impact__item-title {
+    font-weight: 600;
+    color: var(--ob-color-text-primary);
+    margin: 0 0 var(--ob-spacing-100);
+}
+
+.clash-impact__item-description {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    margin: 0;
+}
+
+.clash-impact__item-meta {
+    display: flex;
+    gap: var(--ob-spacing-300);
+    margin-top: var(--ob-spacing-200);
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+}
+
+.clash-impact__empty {
+    text-align: center;
+    padding: var(--ob-spacing-600);
+    color: var(--ob-color-text-secondary);
+}
+
+.clash-impact__empty-icon {
+    font-size: var(--ob-font-size-3xl);
+    margin-bottom: var(--ob-spacing-200);
+}
+
+.clash-impact__empty-text {
+    font-size: var(--ob-font-size-sm);
+}
+
+.clash-impact__title-icon {
+    color: var(--ob-warning-500);
+}
+
+.clash-impact__summary {
+    display: flex;
+    gap: var(--ob-spacing-300);
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    margin-bottom: var(--ob-spacing-300);
+}
+
+.clash-impact__summary-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-spacing-100);
+}
+
+.clash-impact__dot {
+    font-size: var(--ob-font-size-xs);
+}
+
+.clash-impact__dot--critical {
+    color: var(--ob-error-500);
+}
+
+.clash-impact__dot--warning {
+    color: var(--ob-warning-500);
+}
+
+.clash-impact__dot--resolved {
+    color: var(--ob-success-500);
+}
+
+.clash-impact__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--ob-spacing-250);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-lg);
+    background: var(--ob-color-bg-muted);
+}
+
+.clash-impact__item-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-spacing-150);
+    margin-bottom: var(--ob-spacing-100);
+}
+
+.clash-impact__item-discipline {
+    font-weight: 600;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-primary);
+}
+
+.clash-impact__badge {
+    padding: var(--ob-spacing-50) var(--ob-spacing-150);
+    border-radius: 9999px;
+    font-size: var(--ob-font-size-xs);
+}
+
+.clash-impact__badge--critical {
+    background-color: var(--ob-error-muted);
+    color: var(--ob-error-500);
+}
+
+.clash-impact__badge--warning {
+    background-color: var(--ob-warning-muted);
+    color: var(--ob-warning-500);
+}
+
+.clash-impact__badge--resolved {
+    background-color: var(--ob-success-muted);
+    color: var(--ob-success-500);
+}
+
+.clash-impact__item-impact {
+    text-align: right;
+    font-size: var(--ob-font-size-sm);
+}
+
+.clash-impact__item-cost {
+    font-weight: 500;
+    color: var(--ob-error-500);
+}
+
+.clash-impact__item-area {
+    color: var(--ob-color-text-secondary);
+}

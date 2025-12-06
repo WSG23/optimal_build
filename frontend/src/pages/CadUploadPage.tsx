@@ -74,9 +74,13 @@ export function CadUploadPage() {
           intervalMs: 2500,
         })
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : t('common.errors.uploadFailed'),
-        )
+        console.error('CAD Upload Failed:', err)
+        const msg = err instanceof Error ? err.message : t('common.errors.uploadFailed')
+        setError(msg)
+        // Ensure error is visible even if just a console error initially
+        if (typeof window !== 'undefined') {
+            // alert(msg) // Optional: for immediate feedback if UI is unresponsive
+        }
       } finally {
         setIsUploading(false)
       }
@@ -132,9 +136,8 @@ export function CadUploadPage() {
           status={status}
           summary={job}
         />
+        <RulePackExplanationPanel rules={rules} loading={loading} />
       </div>
-
-      <RulePackExplanationPanel rules={rules} loading={loading} />
     </AppLayout>
   )
 }

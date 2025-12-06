@@ -633,156 +633,158 @@ export function CadDetectionPage() {
 
   return (
     <AppLayout title={t('detection.title')} subtitle={t('detection.subtitle')}>
-      <div className="cad-detection__toolbar">
-        <p>{t('detection.projectSummary', { id: projectId })}</p>
-        {loadingSuggestions && <span>{t('common.loading')}</span>}
-        {loadingImport && <span>{t('common.loading')}</span>}
-        <button
-          type="button"
-          className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
-          onClick={() => {
-            setActiveSeverities((current) => {
-              const isFocused = savedSeverities !== null
-              if (isFocused) {
-                const restore = savedSeverities ?? DEFAULT_VISIBLE_SEVERITIES
-                setSavedSeverities(null)
-                return [...restore]
-              }
-              setSavedSeverities(current)
-              return ['high', 'medium']
-            })
-          }}
-        >
-          {savedSeverities === null
-            ? t('detection.severitySummary.toolbar.focus')
-            : t('detection.severitySummary.toolbar.restore')}
-        </button>
-        <button
-          type="button"
-          className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
-          onClick={handleResetAllFilters}
-        >
-          {t('detection.filtersBanner.resetAll')}
-        </button>
-        <span
-          className="cad-detection__filters-pill"
-          title={severityFilterSummary}
-        >
-          {severityFilterSummary}
-        </span>
-        <button
-          type="button"
-          className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
-          onClick={() => {
-            setActiveLayers((current) => {
-              const pendingOnly = current.length === 1 && current[0] === 'pending'
-              const isAll =
-                current.length === ALL_LAYERS.length &&
-                ALL_LAYERS.every((status) => current.includes(status))
-              if (pendingOnly) {
+      <div className="cad-detection-page">
+        <div className="cad-detection__toolbar">
+          <p>{t('detection.projectSummary', { id: projectId })}</p>
+          {loadingSuggestions && <span>{t('common.loading')}</span>}
+          {loadingImport && <span>{t('common.loading')}</span>}
+          <button
+            type="button"
+            className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
+            onClick={() => {
+              setActiveSeverities((current) => {
+                const isFocused = savedSeverities !== null
+                if (isFocused) {
+                  const restore = savedSeverities ?? DEFAULT_VISIBLE_SEVERITIES
+                  setSavedSeverities(null)
+                  return [...restore]
+                }
+                setSavedSeverities(current)
+                return ['high', 'medium']
+              })
+            }}
+          >
+            {savedSeverities === null
+              ? t('detection.severitySummary.toolbar.focus')
+              : t('detection.severitySummary.toolbar.restore')}
+          </button>
+          <button
+            type="button"
+            className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
+            onClick={handleResetAllFilters}
+          >
+            {t('detection.filtersBanner.resetAll')}
+          </button>
+          <span
+            className="cad-detection__filters-pill"
+            title={severityFilterSummary}
+          >
+            {severityFilterSummary}
+          </span>
+          <button
+            type="button"
+            className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
+            onClick={() => {
+              setActiveLayers((current) => {
+                const pendingOnly = current.length === 1 && current[0] === 'pending'
+                const isAll =
+                  current.length === ALL_LAYERS.length &&
+                  ALL_LAYERS.every((status) => current.includes(status))
+                if (pendingOnly) {
+                  return [...ALL_LAYERS]
+                }
+                if (isAll) {
+                  return ['pending']
+                }
                 return [...ALL_LAYERS]
-              }
-              if (isAll) {
-                return ['pending']
-              }
-              return [...ALL_LAYERS]
-            })
-          }}
-        >
-          {statusFilterSummary}
-        </button>
-        <span className="cad-detection__shortcut-hint">
-          {t('detection.severitySummary.toolbar.shortcut')}
-        </span>
-      </div>
-
-      {filtersHideAll && (
-        <div className="cad-detection__filter-banner">
-          <strong>{t('detection.filtersBanner.title')}</strong>
-          <div className="cad-detection__filter-banner-text">
-            {hiddenByStatus && (
-              <span>{t('detection.filtersBanner.status')}</span>
-            )}
-            {hiddenBySeverity && (
-              <span>{t('detection.filtersBanner.severity')}</span>
-            )}
-          </div>
-          <div className="cad-detection__filter-banner-actions">
-            {hiddenByStatus && (
-              <button type="button" onClick={handleLayerReset}>
-                {t('detection.filtersBanner.resetStatus')}
-              </button>
-            )}
-            {hiddenBySeverity && (
-              <button type="button" onClick={handleSeverityReset}>
-                {t('detection.filtersBanner.resetSeverity')}
-              </button>
-            )}
-            <button type="button" onClick={handleResetAllFilters}>
-              {t('detection.filtersBanner.resetAll')}
-            </button>
-          </div>
+              })
+            }}
+          >
+            {statusFilterSummary}
+          </button>
+          <span className="cad-detection__shortcut-hint">
+            {t('detection.severitySummary.toolbar.shortcut')}
+          </span>
         </div>
-      )}
 
-      {error && <p className="cad-detection__error">{error}</p>}
+        {filtersHideAll && (
+          <div className="cad-detection__filter-banner">
+            <strong>{t('detection.filtersBanner.title')}</strong>
+            <div className="cad-detection__filter-banner-text">
+              {hiddenByStatus && (
+                <span>{t('detection.filtersBanner.status')}</span>
+              )}
+              {hiddenBySeverity && (
+                <span>{t('detection.filtersBanner.severity')}</span>
+              )}
+            </div>
+            <div className="cad-detection__filter-banner-actions">
+              {hiddenByStatus && (
+                <button type="button" onClick={handleLayerReset}>
+                  {t('detection.filtersBanner.resetStatus')}
+                </button>
+              )}
+              {hiddenBySeverity && (
+                <button type="button" onClick={handleSeverityReset}>
+                  {t('detection.filtersBanner.resetSeverity')}
+                </button>
+              )}
+              <button type="button" onClick={handleResetAllFilters}>
+                {t('detection.filtersBanner.resetAll')}
+              </button>
+            </div>
+          </div>
+        )}
 
-      <CadDetectionPreview
-        units={visibleUnits}
-        overlays={overlays}
-        hints={hints}
-        severitySummary={severitySummary}
-        severityPercentages={severityPercentages}
-        hiddenSeverityCounts={hiddenSeverityCounts}
-        statusCounts={statusCounts}
-        hiddenStatusCounts={hiddenStatusCounts}
-        activeStatuses={activeLayers}
-        activeSeverities={activeSeverities}
-        onToggleSeverity={handleSeverityToggle}
-        onResetSeverity={handleSeverityReset}
-        onSaveSeverityPreset={handleSaveSeverityPreset}
-        onApplySeverityPreset={handleApplySeverityPreset}
-        hasSeverityPreset={hasSeverityPreset}
-        canApplySeverityPreset={canApplySeverityPreset}
-        isSeverityFiltered={isSeverityFiltered}
-        hiddenPendingCount={hiddenPendingCount}
-        severityFilterSummary={severityFilterSummary}
-        zoneCode={importSummary?.zoneCode ?? null}
-        locked={locked}
-        onProvideMetric={handleProvideMetric}
-        provideMetricDisabled={mutationPending}
-      />
+        {error && <p className="cad-detection__error">{error}</p>}
 
-      <div className="cad-detection__grid">
-        <LayerTogglePanel
-          activeLayers={activeLayers}
-          onToggle={handleLayerToggle}
-          disabled={mutationPending}
-          hint={
-            hiddenStatusLabels.length > 0
-              ? t('detection.layerHint', {
-                  statuses: hiddenStatusLabels.join(statusListSeparator),
-                })
-              : undefined
-          }
+        <CadDetectionPreview
+          units={visibleUnits}
+          overlays={overlays}
+          hints={hints}
+          severitySummary={severitySummary}
+          severityPercentages={severityPercentages}
+          hiddenSeverityCounts={hiddenSeverityCounts}
+          statusCounts={statusCounts}
+          hiddenStatusCounts={hiddenStatusCounts}
+          activeStatuses={activeLayers}
+          activeSeverities={activeSeverities}
+          onToggleSeverity={handleSeverityToggle}
+          onResetSeverity={handleSeverityReset}
+          onSaveSeverityPreset={handleSaveSeverityPreset}
+          onApplySeverityPreset={handleApplySeverityPreset}
+          hasSeverityPreset={hasSeverityPreset}
+          canApplySeverityPreset={canApplySeverityPreset}
+          isSeverityFiltered={isSeverityFiltered}
+          hiddenPendingCount={hiddenPendingCount}
+          severityFilterSummary={severityFilterSummary}
+          zoneCode={importSummary?.zoneCode ?? null}
+          locked={locked}
+          onProvideMetric={handleProvideMetric}
+          provideMetricDisabled={mutationPending}
         />
-        <BulkReviewControls
-          pendingCount={pendingCount}
-          onApproveAll={handleApproveAll}
-          onRejectAll={handleRejectAll}
-          disabled={locked || mutationPending}
-        />
-        <ZoneLockControls locked={locked} onToggle={setLocked} />
-        <ExportDialog
-          onExport={(format) => {
-            void handleExport(format)
-          }}
-          disabled={pendingCount > 0 || exporting || mutationPending}
-          pendingCount={pendingCount}
-        />
+
+        <div className="cad-detection__grid">
+          <LayerTogglePanel
+            activeLayers={activeLayers}
+            onToggle={handleLayerToggle}
+            disabled={mutationPending}
+            hint={
+              hiddenStatusLabels.length > 0
+                ? t('detection.layerHint', {
+                    statuses: hiddenStatusLabels.join(statusListSeparator),
+                  })
+                : undefined
+            }
+          />
+          <BulkReviewControls
+            pendingCount={pendingCount}
+            onApproveAll={handleApproveAll}
+            onRejectAll={handleRejectAll}
+            disabled={locked || mutationPending}
+          />
+          <ZoneLockControls locked={locked} onToggle={setLocked} />
+          <ExportDialog
+            onExport={(format) => {
+              void handleExport(format)
+            }}
+            disabled={pendingCount > 0 || exporting || mutationPending}
+            pendingCount={pendingCount}
+          />
+        </div>
+
+        <AuditTimelinePanel events={auditEvents} loading={auditLoading} />
       </div>
-
-      <AuditTimelinePanel events={auditEvents} loading={auditLoading} />
     </AppLayout>
   )
 }

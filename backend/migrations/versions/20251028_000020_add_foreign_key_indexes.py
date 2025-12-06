@@ -20,6 +20,7 @@ branch_labels: Sequence[str] | None = None
 depends_on: Sequence[str] | None = None
 
 
+# These indexes are for columns that actually exist in the schema
 INDEXES = (
     (
         "developer_condition_assessments",
@@ -61,19 +62,10 @@ INDEXES = (
     ),
     (
         "agent_commission_records",
-        "ix_agent_commission_records_agent_deal_id",
-        ["agent_deal_id"],
-    ),
-    (
-        "agent_commission_records",
-        "ix_agent_commission_records_recorded_by",
-        ["recorded_by"],
+        "ix_agent_commission_records_deal_id",
+        ["deal_id"],
     ),
     ("agent_deal_documents", "ix_agent_deal_documents_uploaded_by", ["uploaded_by"]),
-    ("ai_agent_sessions", "ix_ai_agent_sessions_property_id", ["property_id"]),
-    ("ai_agent_sessions", "ix_ai_agent_sessions_user_id", ["user_id"]),
-    ("ai_agent_sessions", "ix_ai_agent_sessions_project_id", ["project_id"]),
-    ("ai_agent_sessions", "ix_ai_agent_sessions_agent_id", ["agent_id"]),
     (
         "agent_commission_adjustments",
         "ix_agent_commission_adjustments_recorded_by",
@@ -88,16 +80,30 @@ INDEXES = (
 
 
 def upgrade() -> None:
+    # Use PL/pgSQL to create indexes safely, skipping if table or column doesn't exist
     for table, index_name, columns in INDEXES:
-        op.create_index(index_name, table, columns)
+        cols = ", ".join(columns)
+        # Use IF NOT EXISTS and wrap in a DO block to handle missing tables gracefully
+        op.execute(
+            sa.text(
+                f"""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.tables
+                        WHERE table_name = '{table}'
+                    ) AND EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = '{table}' AND column_name = '{columns[0]}'
+                    ) THEN
+                        EXECUTE 'CREATE INDEX IF NOT EXISTS {index_name} ON {table} ({cols})';
+                    END IF;
+                END $$;
+                """
+            )
+        )
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    inspector = sa.inspect(bind)
-
     for table, index_name, _ in reversed(INDEXES):
-        # Check if index exists before dropping
-        existing_indexes = [idx["name"] for idx in inspector.get_indexes(table)]
-        if index_name in existing_indexes:
-            op.drop_index(index_name, table_name=table)
+        op.execute(sa.text(f"DROP INDEX IF EXISTS {index_name}"))

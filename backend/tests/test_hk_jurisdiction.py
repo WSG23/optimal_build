@@ -6,6 +6,8 @@ from app.services.jurisdictions import get_jurisdiction_config
 from app.api.v1.developers import (
     DeveloperAssetOptimization,
     DeveloperGPSLogRequest,
+)
+from app.api.v1.developers_gps import (
     _build_finance_asset_mix_inputs,
 )
 from backend.scripts import ingest_hk_zones as hk_ingest

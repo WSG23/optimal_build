@@ -20,47 +20,47 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Add asset_type ENUM type if it doesn't exist
+    # Add asset_type ENUM type if it doesn't exist using raw SQL
     op.execute(
-        "DO $$ BEGIN CREATE TYPE deal_asset_type AS ENUM ('office', 'retail', 'industrial', 'residential', 'mixed_use', 'hotel', 'warehouse', 'land', 'special_purpose', 'portfolio'); EXCEPTION WHEN duplicate_object THEN null; END $$;"
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'deal_asset_type') THEN
+                    CREATE TYPE deal_asset_type AS ENUM (
+                        'office', 'retail', 'industrial', 'residential', 'mixed_use',
+                        'hotel', 'warehouse', 'land', 'special_purpose', 'portfolio'
+                    );
+                END IF;
+            END $$;
+            """
+        )
     )
 
-    # Add asset_type column to agent_deals table with a default value
-    op.add_column(
-        "agent_deals",
-        sa.Column(
-            "asset_type",
-            sa.Enum(
-                "office",
-                "retail",
-                "industrial",
-                "residential",
-                "mixed_use",
-                "hotel",
-                "warehouse",
-                "land",
-                "special_purpose",
-                "portfolio",
-                name="deal_asset_type",
-                create_type=False,  # Type already created above
-            ),
-            nullable=False,
-            server_default="mixed_use",
-        ),
+    # Add asset_type column to agent_deals table using raw SQL
+    op.execute(
+        sa.text(
+            """
+            ALTER TABLE agent_deals
+            ADD COLUMN IF NOT EXISTS asset_type deal_asset_type NOT NULL DEFAULT 'mixed_use'
+            """
+        )
     )
 
     # Create index on asset_type
-    op.create_index(
-        op.f("ix_agent_deals_asset_type"), "agent_deals", ["asset_type"], unique=False
+    op.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS ix_agent_deals_asset_type ON agent_deals (asset_type)"
+        )
     )
 
 
 def downgrade() -> None:
     # Drop index (guarded)
-    op.execute("DROP INDEX IF EXISTS ix_agent_deals_asset_type")
+    op.execute(sa.text("DROP INDEX IF EXISTS ix_agent_deals_asset_type"))
 
     # Drop column (guarded)
-    op.execute("ALTER TABLE agent_deals DROP COLUMN IF EXISTS asset_type")
+    op.execute(sa.text("ALTER TABLE agent_deals DROP COLUMN IF EXISTS asset_type"))
 
     # Drop ENUM type (guarded)
-    op.execute("DROP TYPE IF EXISTS deal_asset_type")
+    op.execute(sa.text("DROP TYPE IF EXISTS deal_asset_type"))

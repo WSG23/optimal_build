@@ -18,71 +18,63 @@ down_revision = "20251020_000016"
 branch_labels = None
 depends_on = None
 
-PREVIEW_STATUS_ENUM = sa.Enum(
-    "queued",
-    "processing",
-    "ready",
-    "failed",
-    "expired",
-    name="preview_job_status",
-    create_type=False,
-)
-
 
 def upgrade() -> None:
-    PREVIEW_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
+    # Create ENUM using raw SQL to avoid SQLAlchemy auto-creation issues with asyncpg
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'preview_job_status') THEN
+                    CREATE TYPE preview_job_status AS ENUM (
+                        'queued',
+                        'processing',
+                        'ready',
+                        'failed',
+                        'expired'
+                    );
+                END IF;
+            END $$;
+            """
+        )
+    )
 
-    op.create_table(
-        "preview_jobs",
-        sa.Column(
-            "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
-            primary_key=True,
-        ),
-        sa.Column("property_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column(
-            "scenario", sa.String(length=80), nullable=False, server_default="base"
-        ),
-        sa.Column(
-            "status", PREVIEW_STATUS_ENUM, nullable=False, server_default="queued"
-        ),
-        sa.Column(
-            "requested_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-        ),
-        sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("asset_version", sa.String(length=64), nullable=True),
-        sa.Column("preview_url", sa.String(length=500), nullable=True),
-        sa.Column("thumbnail_url", sa.String(length=500), nullable=True),
-        sa.Column("payload_checksum", sa.String(length=128), nullable=True),
-        sa.Column("message", sa.String(length=500), nullable=True),
-        sa.Column(
-            "metadata",
-            sa.JSON().with_variant(postgresql.JSONB(), "postgresql"),
-            nullable=False,
-            server_default=sa.text("'{}'::jsonb"),
-        ),
-        sa.ForeignKeyConstraint(["property_id"], ["properties.id"], ondelete="CASCADE"),
+    # Create preview_jobs table using raw SQL
+    op.execute(
+        sa.text(
+            """
+            CREATE TABLE preview_jobs (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+                scenario VARCHAR(80) NOT NULL DEFAULT 'base',
+                status preview_job_status NOT NULL DEFAULT 'queued',
+                requested_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                started_at TIMESTAMP WITH TIME ZONE,
+                finished_at TIMESTAMP WITH TIME ZONE,
+                asset_version VARCHAR(64),
+                preview_url VARCHAR(500),
+                thumbnail_url VARCHAR(500),
+                payload_checksum VARCHAR(128),
+                message VARCHAR(500),
+                metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+            )
+            """
+        )
     )
-    op.create_index(
-        "ix_preview_jobs_property",
-        "preview_jobs",
-        ["property_id"],
+
+    # Create indexes
+    op.execute(
+        sa.text("CREATE INDEX ix_preview_jobs_property ON preview_jobs (property_id)")
     )
-    op.create_index(
-        "ix_preview_jobs_property_scenario",
-        "preview_jobs",
-        ["property_id", "scenario"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_preview_jobs_property_scenario ON preview_jobs (property_id, scenario)"
+        )
     )
 
 
 def downgrade() -> None:
-    """Downgrade not implemented for Phase 2B preview pipeline.
-
-    If downgrade is needed, manually drop the preview_jobs table and preview_job_status enum.
-    """
-    pass
+    """Drop preview_jobs table and enum."""
+    op.execute(sa.text("DROP TABLE IF EXISTS preview_jobs CASCADE"))
+    op.execute(sa.text("DROP TYPE IF EXISTS preview_job_status CASCADE"))

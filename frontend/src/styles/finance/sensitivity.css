@@ -205,11 +205,13 @@
     background: var(--ob-color-border-neutral);
 }
 
-.finance-sensitivity-summary__delta-pill--positive .finance-sensitivity-summary__delta-bar {
+.finance-sensitivity-summary__delta-pill--positive
+    .finance-sensitivity-summary__delta-bar {
     background: var(--ob-color-success-strong);
 }
 
-.finance-sensitivity-summary__delta-pill--negative .finance-sensitivity-summary__delta-bar {
+.finance-sensitivity-summary__delta-pill--negative
+    .finance-sensitivity-summary__delta-bar {
     background: var(--ob-color-critical-strong);
 }
 

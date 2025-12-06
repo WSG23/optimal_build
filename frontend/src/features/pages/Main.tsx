@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import logoSrc from '@/shared/media/yosai-logo';
+import logoSrc from '@/shared/media/yosai-logo'; // TODO: Replace with proper logo asset
 import { ViewportFrame } from '@/components/layout/ViewportFrame';
 import Panel from '@/components/layout/Panel';
 import { PanelBody } from '@/components/layout/PanelBody';
@@ -129,7 +129,7 @@ export default function Main() {
       <ViewportFrame className="flex h-full flex-col gap-6">
         <header className="mb-4 grid grid-cols-12 items-center gap-6">
           <div className="col-span-3 flex items-center gap-3">
-            <img src={logoSrc} alt="YŌSAI INTEL" className="h-7 select-none" />
+            <img src={logoSrc} alt="Optimal Build" className="h-7 select-none" />
           </div>
           <div className="col-span-6">
             <h1 className="text-center text-2xl font-semibold">Logged in as {facilityLabel}</h1>

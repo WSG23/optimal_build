@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+
 from collections.abc import Iterable, Sequence
+
+from pathlib import Path
+import json
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException
@@ -20,11 +24,20 @@ from app.schemas.feasibility import (
     NewFeasibilityProjectInput,
     RuleAssessmentResult,
 )
+from app.services.feasibility.normalization import (
+    normalise_assessment_payload,
+    normalise_project_payload,
+)
+from app.schemas.engineering import EngineeringDefaultsResponse
 from app.schemas.finance import AssetFinancialSummarySchema
 from app.services.asset_mix import (
     AssetOptimizationOutcome,
     build_asset_mix,
     format_asset_mix_summary,
+)
+
+ENGINEERING_DEFAULTS_PATH = (
+    Path(__file__).parent.parent / "core" / "constants" / "engineering_defaults.json"
 )
 
 _BASE_RULES: Sequence[dict[str, object]] = (
@@ -113,6 +126,31 @@ def _build_rules() -> list[FeasibilityRule]:
     return [FeasibilityRule.model_validate(item) for item in _BASE_RULES]
 
 
+def get_engineering_defaults() -> EngineeringDefaultsResponse:
+    """Load engineering defaults for all jurisdictions."""
+    if not ENGINEERING_DEFAULTS_PATH.exists():
+        return EngineeringDefaultsResponse(defaults={})
+    with open(ENGINEERING_DEFAULTS_PATH, "r") as f:
+        data = json.load(f)
+    return EngineeringDefaultsResponse(defaults=data)
+
+
+def _calculate_gfa_nia_accuracy_range(land_use: str) -> str:
+    """Return the GFA->NIA accuracy band based on asset type (features.md)."""
+    normalized = land_use.lower().strip()
+    if "residential" in normalized:
+        return "±10-12%"  # High-rise residential
+    elif "office" in normalized:
+        return "±5-8%"
+    elif "industrial" in normalized:
+        return "±5%"
+    elif "retail" in normalized:
+        return "±8-12%"
+    elif "mixed" in normalized:
+        return "±10-15%"
+    return "±8-12%"  # Default
+
+
 def generate_feasibility_rules(
     project: NewFeasibilityProjectInput,
 ) -> FeasibilityRulesResponse:
@@ -193,7 +231,10 @@ def _calculate_summary(
             "All checked parameters comply with the submitted envelope assumptions."
         )
     elif has_failure:
-        remarks = "Certain rules failed — adjust massing, access, or authority parameters and capture the design revisions."
+        remarks = (
+            "Certain rules failed — adjust massing, access, or authority parameters "
+            "and capture the design revisions."
+        )
     else:
         remarks = "Some rules returned warnings — review assumptions before proceeding."
 
@@ -203,6 +244,7 @@ def _calculate_summary(
         estimated_unit_count=estimated_units,
         site_coverage_percent=site_coverage,
         remarks=remarks,
+        accuracy_range=_calculate_gfa_nia_accuracy_range(project.land_use),
     )
 
 
@@ -440,7 +482,8 @@ def run_feasibility_assessment(
     optimizer_confidence = mix_outcome.confidence
     if optimizer_confidence is not None:
         recommendations.append(
-            f"Asset optimiser confidence score: {optimizer_confidence:.2f} (higher indicates more stable mix)."
+            f"Asset optimiser confidence score: {optimizer_confidence:.2f} "
+            "(higher indicates more stable mix)."
         )
 
     return FeasibilityAssessmentResponse(
@@ -458,4 +501,6 @@ def run_feasibility_assessment(
 __all__ = [
     "generate_feasibility_rules",
     "run_feasibility_assessment",
+    "normalise_project_payload",
+    "normalise_assessment_payload",
 ]

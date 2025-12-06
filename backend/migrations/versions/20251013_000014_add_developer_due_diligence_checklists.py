@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -20,210 +19,142 @@ branch_labels = None
 depends_on = None
 
 
-CHECKLIST_CATEGORY_ENUM = sa.Enum(
-    "title_verification",
-    "zoning_compliance",
-    "environmental_assessment",
-    "structural_survey",
-    "heritage_constraints",
-    "utility_capacity",
-    "access_rights",
-    name="checklist_category",
-    create_type=False,
-)
-
-CHECKLIST_STATUS_ENUM = sa.Enum(
-    "pending",
-    "in_progress",
-    "completed",
-    "not_applicable",
-    name="checklist_status",
-    create_type=False,
-)
-
-CHECKLIST_PRIORITY_ENUM = sa.Enum(
-    "critical",
-    "high",
-    "medium",
-    "low",
-    name="checklist_priority",
-    create_type=False,
-)
-
-
 def upgrade() -> None:
     """Create due diligence checklist tables."""
-    # Create ENUMs
-    CHECKLIST_CATEGORY_ENUM.create(op.get_bind(), checkfirst=True)
-    CHECKLIST_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
-    CHECKLIST_PRIORITY_ENUM.create(op.get_bind(), checkfirst=True)
+    # Create ENUMs using raw SQL to avoid SQLAlchemy auto-creation issues with asyncpg
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklist_category') THEN
+                    CREATE TYPE checklist_category AS ENUM (
+                        'title_verification',
+                        'zoning_compliance',
+                        'environmental_assessment',
+                        'structural_survey',
+                        'heritage_constraints',
+                        'utility_capacity',
+                        'access_rights'
+                    );
+                END IF;
+            END $$;
+            """
+        )
+    )
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklist_status') THEN
+                    CREATE TYPE checklist_status AS ENUM (
+                        'pending',
+                        'in_progress',
+                        'completed',
+                        'not_applicable'
+                    );
+                END IF;
+            END $$;
+            """
+        )
+    )
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklist_priority') THEN
+                    CREATE TYPE checklist_priority AS ENUM (
+                        'critical',
+                        'high',
+                        'medium',
+                        'low'
+                    );
+                END IF;
+            END $$;
+            """
+        )
+    )
 
-    # Checklist Templates table
-    # Stores predefined checklist items for each development scenario
-    op.create_table(
-        "developer_checklist_templates",
-        sa.Column(
-            "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
-            primary_key=True,
-        ),
-        sa.Column(
-            "development_scenario",
-            sa.String(length=50),
-            nullable=False,
-        ),
-        sa.Column("category", CHECKLIST_CATEGORY_ENUM, nullable=False),
-        sa.Column("item_title", sa.String(length=255), nullable=False),
-        sa.Column("item_description", sa.Text(), nullable=True),
-        sa.Column("priority", CHECKLIST_PRIORITY_ENUM, nullable=False),
-        sa.Column("typical_duration_days", sa.Integer, nullable=True),
-        sa.Column(
-            "requires_professional", sa.Boolean, nullable=False, server_default="false"
-        ),
-        sa.Column("professional_type", sa.String(length=100), nullable=True),
-        sa.Column("display_order", sa.Integer, nullable=False, server_default="0"),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-        ),
+    # Checklist Templates table using raw SQL
+    op.execute(
+        sa.text(
+            """
+            CREATE TABLE developer_checklist_templates (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                development_scenario VARCHAR(50) NOT NULL,
+                category checklist_category NOT NULL,
+                item_title VARCHAR(255) NOT NULL,
+                item_description TEXT,
+                priority checklist_priority NOT NULL,
+                typical_duration_days INTEGER,
+                requires_professional BOOLEAN NOT NULL DEFAULT false,
+                professional_type VARCHAR(100),
+                display_order INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+            )
+            """
+        )
     )
 
     # Create indexes for templates
-    op.create_index(
-        "ix_developer_checklist_templates_scenario_category",
-        "developer_checklist_templates",
-        ["development_scenario", "category"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_developer_checklist_templates_scenario_category ON developer_checklist_templates (development_scenario, category)"
+        )
     )
 
-    # Property Checklists table
-    # Stores checklist items for specific properties
-    op.create_table(
-        "developer_property_checklists",
-        sa.Column(
-            "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
-            primary_key=True,
-        ),
-        sa.Column(
-            "property_id",
-            postgresql.UUID(as_uuid=True),
-            nullable=False,
-        ),
-        sa.Column(
-            "template_id",
-            postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("developer_checklist_templates.id", ondelete="SET NULL"),
-            nullable=True,
-        ),
-        sa.Column(
-            "development_scenario",
-            sa.String(length=50),
-            nullable=False,
-        ),
-        sa.Column("category", CHECKLIST_CATEGORY_ENUM, nullable=False),
-        sa.Column("item_title", sa.String(length=255), nullable=False),
-        sa.Column("item_description", sa.Text(), nullable=True),
-        sa.Column("priority", CHECKLIST_PRIORITY_ENUM, nullable=False),
-        sa.Column(
-            "status", CHECKLIST_STATUS_ENUM, nullable=False, server_default="pending"
-        ),
-        sa.Column(
-            "assigned_to",
-            postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("users.id", ondelete="SET NULL"),
-            nullable=True,
-        ),
-        sa.Column("due_date", sa.Date(), nullable=True),
-        sa.Column("completed_date", sa.Date(), nullable=True),
-        sa.Column(
-            "completed_by",
-            postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("users.id", ondelete="SET NULL"),
-            nullable=True,
-        ),
-        sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column(
-            "metadata",
-            sa.JSON(),
-            nullable=False,
-            server_default=sa.text("'{}'::jsonb"),
-        ),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-        ),
+    # Property Checklists table using raw SQL
+    op.execute(
+        sa.text(
+            """
+            CREATE TABLE developer_property_checklists (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                property_id UUID NOT NULL,
+                template_id UUID REFERENCES developer_checklist_templates(id) ON DELETE SET NULL,
+                development_scenario VARCHAR(50) NOT NULL,
+                category checklist_category NOT NULL,
+                item_title VARCHAR(255) NOT NULL,
+                item_description TEXT,
+                priority checklist_priority NOT NULL,
+                status checklist_status NOT NULL DEFAULT 'pending',
+                assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+                due_date DATE,
+                completed_date DATE,
+                completed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+                notes TEXT,
+                metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+            )
+            """
+        )
     )
 
     # Create indexes for property checklists
-    op.create_index(
-        "ix_developer_property_checklists_property",
-        "developer_property_checklists",
-        ["property_id"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_developer_property_checklists_property ON developer_property_checklists (property_id)"
+        )
     )
-    op.create_index(
-        "ix_developer_property_checklists_status",
-        "developer_property_checklists",
-        ["status"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_developer_property_checklists_status ON developer_property_checklists (status)"
+        )
     )
-    op.create_index(
-        "ix_developer_property_checklists_property_scenario",
-        "developer_property_checklists",
-        ["property_id", "development_scenario"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_developer_property_checklists_property_scenario ON developer_property_checklists (property_id, development_scenario)"
+        )
     )
 
 
 def downgrade() -> None:
     """Drop due diligence checklist tables."""
-    bind = op.get_bind()
-    inspector = inspect(bind)
-
-    if "developer_property_checklists" in inspector.get_table_names():
-        op.drop_index(
-            "ix_developer_property_checklists_property_scenario",
-            table_name="developer_property_checklists",
-            if_exists=True,
-        )
-        op.drop_index(
-            "ix_developer_property_checklists_status",
-            table_name="developer_property_checklists",
-            if_exists=True,
-        )
-        op.drop_index(
-            "ix_developer_property_checklists_property",
-            table_name="developer_property_checklists",
-            if_exists=True,
-        )
-        op.drop_table("developer_property_checklists", if_exists=True)
-
-    if "developer_checklist_templates" in inspector.get_table_names():
-        op.drop_index(
-            "ix_developer_checklist_templates_scenario_category",
-            table_name="developer_checklist_templates",
-            if_exists=True,
-        )
-        op.drop_table("developer_checklist_templates", if_exists=True)
-
-    # Drop ENUMs
-    CHECKLIST_PRIORITY_ENUM.drop(op.get_bind(), checkfirst=True)
-    CHECKLIST_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)
-    CHECKLIST_CATEGORY_ENUM.drop(op.get_bind(), checkfirst=True)
+    op.execute(sa.text("DROP TABLE IF EXISTS developer_property_checklists CASCADE"))
+    op.execute(sa.text("DROP TABLE IF EXISTS developer_checklist_templates CASCADE"))
+    op.execute(sa.text("DROP TYPE IF EXISTS checklist_priority CASCADE"))
+    op.execute(sa.text("DROP TYPE IF EXISTS checklist_status CASCADE"))
+    op.execute(sa.text("DROP TYPE IF EXISTS checklist_category CASCADE"))

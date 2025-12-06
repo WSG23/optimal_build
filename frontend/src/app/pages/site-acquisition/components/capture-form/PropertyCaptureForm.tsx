@@ -5,17 +5,19 @@
  * - Jurisdiction dropdown
  * - Address input with geocoding buttons
  * - Latitude/longitude inputs
+ * - Interactive map for location selection
  * - Development scenario selection
  * - Capture button with loading state
  * - Error and success messages
  */
 
 import type React from 'react'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { DevelopmentScenario, SiteAcquisitionResult } from '../../../../../api/siteAcquisition'
 import { SCENARIO_OPTIONS, JURISDICTION_OPTIONS } from '../../constants'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
 import { VoiceNoteList } from './VoiceNoteList'
+import { PropertyLocationMap, type HeritageFeature, type NearbyAmenity } from '../map'
 
 // ============================================================================
 // Types
@@ -42,6 +44,8 @@ export interface PropertyCaptureFormProps {
   onForwardGeocode: () => void
   onReverseGeocode: () => void
   onToggleScenario: (scenario: DevelopmentScenario) => void
+  /** Optional callback when coordinates change from map interaction */
+  onCoordinatesChange?: (lat: string, lon: string) => void
 }
 
 // ============================================================================
@@ -66,6 +70,7 @@ export function PropertyCaptureForm({
   onForwardGeocode,
   onReverseGeocode,
   onToggleScenario,
+  onCoordinatesChange,
 }: PropertyCaptureFormProps) {
   // Track when a new voice note is uploaded to refresh the list
   const [voiceNoteRefreshTrigger, setVoiceNoteRefreshTrigger] = useState(0)
@@ -73,6 +78,93 @@ export function PropertyCaptureForm({
   const handleVoiceNoteUploaded = () => {
     setVoiceNoteRefreshTrigger((prev) => prev + 1)
   }
+
+  // Handle coordinate changes from map - update form fields and call parent callback
+  const handleMapCoordinatesChange = (lat: string, lon: string) => {
+    setLatitude(lat)
+    setLongitude(lon)
+    onCoordinatesChange?.(lat, lon)
+  }
+
+  // Transform nearby amenities for the map component (now includes coordinates)
+  const mapAmenities = useMemo(() => {
+    if (!capturedProperty?.nearbyAmenities) return undefined
+
+    const amenities = capturedProperty.nearbyAmenities
+    const hasCoordinates = (item: { latitude?: number; longitude?: number }) =>
+      typeof item.latitude === 'number' && typeof item.longitude === 'number'
+
+    return {
+      mrtStations: amenities.mrtStations
+        ?.filter(hasCoordinates)
+        .map((station) => ({
+          name: station.name,
+          type: 'mrt' as const,
+          latitude: station.latitude!,
+          longitude: station.longitude!,
+          distance_m: station.distanceM ?? undefined,
+        })) as NearbyAmenity[] | undefined,
+      busStops: amenities.busStops
+        ?.filter(hasCoordinates)
+        .map((stop) => ({
+          name: stop.name,
+          type: 'bus' as const,
+          latitude: stop.latitude!,
+          longitude: stop.longitude!,
+          distance_m: stop.distanceM ?? undefined,
+        })) as NearbyAmenity[] | undefined,
+      schools: amenities.schools
+        ?.filter(hasCoordinates)
+        .map((school) => ({
+          name: school.name,
+          type: 'school' as const,
+          latitude: school.latitude!,
+          longitude: school.longitude!,
+          distance_m: school.distanceM ?? undefined,
+        })) as NearbyAmenity[] | undefined,
+      malls: amenities.shoppingMalls
+        ?.filter(hasCoordinates)
+        .map((mall) => ({
+          name: mall.name,
+          type: 'mall' as const,
+          latitude: mall.latitude!,
+          longitude: mall.longitude!,
+          distance_m: mall.distanceM ?? undefined,
+        })) as NearbyAmenity[] | undefined,
+      parks: amenities.parks
+        ?.filter(hasCoordinates)
+        .map((park) => ({
+          name: park.name,
+          type: 'park' as const,
+          latitude: park.latitude!,
+          longitude: park.longitude!,
+          distance_m: park.distanceM ?? undefined,
+        })) as NearbyAmenity[] | undefined,
+    }
+  }, [capturedProperty?.nearbyAmenities])
+
+  // Check if any amenities have coordinates
+  const hasAmenityCoordinates = useMemo(() => {
+    if (!mapAmenities) return false
+    return Object.values(mapAmenities).some((arr) => arr && arr.length > 0)
+  }, [mapAmenities])
+
+  // Transform heritage context for the map (if heritage overlay data available)
+  const heritageFeatures = useMemo((): HeritageFeature[] | undefined => {
+    if (!capturedProperty?.heritageContext?.flag) return undefined
+    const heritage = capturedProperty.heritageContext
+    // If we have heritage context, create a marker at the property location
+    if (heritage.overlay?.name) {
+      return [{
+        name: heritage.overlay.name,
+        status: heritage.risk ?? undefined,
+        risk_level: heritage.risk === 'high' ? 'high' : heritage.risk === 'low' ? 'low' : 'medium',
+        latitude: parseFloat(latitude) || 1.3,
+        longitude: parseFloat(longitude) || 103.85,
+      }]
+    }
+    return undefined
+  }, [capturedProperty?.heritageContext, latitude, longitude])
 
   return (
     <section
@@ -317,6 +409,34 @@ export function PropertyCaptureForm({
               }}
             />
           </div>
+        </div>
+
+        {/* Interactive Map */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h3
+            style={{
+              fontSize: '1.125rem',
+              fontWeight: 600,
+              marginBottom: '1rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Location Map
+          </h3>
+          <PropertyLocationMap
+            latitude={latitude}
+            longitude={longitude}
+            onCoordinatesChange={handleMapCoordinatesChange}
+            address={capturedProperty?.address?.fullAddress}
+            district={capturedProperty?.address?.district}
+            zoningCode={capturedProperty?.uraZoning?.zoneCode ?? undefined}
+            nearbyAmenities={mapAmenities}
+            heritageFeatures={heritageFeatures}
+            interactive={!isCapturing}
+            height={350}
+            showAmenities={hasAmenityCoordinates}
+            showHeritage={!!capturedProperty?.heritageContext?.flag}
+          />
         </div>
 
         {/* Development Scenarios */}

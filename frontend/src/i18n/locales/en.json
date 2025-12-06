@@ -272,7 +272,12 @@
       "pickPlaceholder": "Select a capture…",
       "empty": "Capture a site from the Site Acquisition workspace to see it here.",
       "hint": "Use “Send to finance workspace” on Site Acquisition to prefill these values.",
-      "defaultLabel": "Project {{id}}"
+      "defaultLabel": "Project {{id}}",
+      "enterManualId": "Enter manual ID"
+    },
+    "warnings": {
+        "offlineMode": "Offline Mode",
+        "offlineModeDetail": "Calculations may be limited due to offline status."
     },
     "errors": {
       "generic": "Unable to load finance scenarios.",
@@ -486,7 +491,8 @@
         "nameRequired": "Enter a scenario name.",
         "assetRequired": "Add at least one asset before running feasibility.",
         "generic": "Unable to run finance feasibility."
-      }
+      },
+      "unallocated": "Unallocated"
     },
     "facilityEditor": {
       "title": "Construction loan facilities",
@@ -518,7 +524,6 @@
       }
     },
     "sensitivity": {
-      "title": "Sensitivity analysis",
       "controls": {
         "parameters": "Parameters",
         "selectAll": "Select all"

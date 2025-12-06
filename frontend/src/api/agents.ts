@@ -54,6 +54,10 @@ export interface PropertyInfoSummary {
 export interface AmenitySummary {
   name: string
   distanceM: number | null
+  /** Latitude coordinate for map display */
+  latitude?: number
+  /** Longitude coordinate for map display */
+  longitude?: number
 }
 
 export interface NearbyAmenitySummary {
@@ -238,10 +242,12 @@ function mapAmenityList(value: unknown): AmenitySummary[] {
       if (!item || typeof item !== 'object') {
         return null
       }
-      const data = item as RawAmenity
+      const data = item as RawAmenity & { latitude?: number; longitude?: number }
       const name = coerceString(data.name) ?? 'Unknown'
       const distance = coerceNumber(data.distance_m)
-      return { name, distanceM: distance }
+      const latitude = typeof data.latitude === 'number' ? data.latitude : undefined
+      const longitude = typeof data.longitude === 'number' ? data.longitude : undefined
+      return { name, distanceM: distance, latitude, longitude }
     })
     .filter((item): item is AmenitySummary => item !== null)
 }

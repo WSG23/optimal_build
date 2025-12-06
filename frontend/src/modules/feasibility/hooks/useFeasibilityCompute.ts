@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { fetchBuildable, type BuildableSummary } from '../../../api/buildable'
+import { type FeasibilityAssessmentRequest, submitFeasibilityAssessment } from '../../../api/feasibility'
+import { type BuildableSummary } from '../../../api/buildable'
 import type { PendingPayload, WizardStatus } from '../types'
 import { DEBOUNCE_MS } from '../types'
 import { anonymiseAddress } from '../utils/formatters'
@@ -63,6 +64,7 @@ export function useFeasibilityCompute({
     if (!payload) {
       return () => {}
     }
+    console.log('useFeasibilityCompute: Payload changed:', payload)
 
     if (debounceRef.current !== null) {
       clearTimeout(debounceRef.current)
@@ -78,8 +80,23 @@ export function useFeasibilityCompute({
       typeof performance !== 'undefined' ? performance.now() : Date.now()
 
     debounceRef.current = window.setTimeout(() => {
-      fetchBuildable(payload, { signal: controller.signal })
+      console.log('useFeasibilityCompute: Debounce fired. Submitting payload.')
+      // Map PendingPayload to FeasibilityAssessmentRequest
+      const requestPayload: FeasibilityAssessmentRequest = {
+        project: {
+          name: payload.name || 'Project',
+          siteAddress: payload.address,
+          siteAreaSqm: payload.siteAreaSqm,
+          landUse: payload.landUse,
+          typFloorToFloorM: payload.typFloorToFloorM,
+          efficiencyRatio: payload.efficiencyRatio,
+        },
+        selectedRuleIds: [], // Default to empty or select all
+      }
+
+      submitFeasibilityAssessment(requestPayload, controller.signal)
         .then((response) => {
+          console.log('useFeasibilityCompute: Success response received', response)
           const duration =
             (typeof performance !== 'undefined'
               ? performance.now()
@@ -88,31 +105,50 @@ export function useFeasibilityCompute({
           dispatchTelemetry(
             duration,
             'success',
-            response.zoneCode,
+            'URA-ZONING-TODO',
             payload.address,
           )
-          setResult(response)
 
-          if (!response.zoneCode) {
-            setStatus('empty')
-            setLiveAnnouncement(t('wizard.accessibility.noZone'))
-            return
+          // Map FeasibilityAssessmentResponse to BuildableSummary
+          const mappedBox: BuildableSummary = {
+            inputKind: 'address',
+            zoneCode: 'URA-ZONING-TODO',
+            overlays: [],
+            advisoryHints: response.recommendations || [],
+            metrics: {
+              gfaCapM2: response.summary.maxPermissibleGfaSqm,
+              floorsMax: 0,
+              footprintM2: 0,
+              nsaEstM2: response.summary.estimatedAchievableGfaSqm,
+            },
+            zoneSource: { kind: 'unknown' },
+            rules: response.rules.map((r, index) => ({
+              id: index,
+              authority: r.authority,
+              parameterKey: r.parameterKey,
+              operator: r.operator,
+              value: r.value,
+              unit: r.unit ?? undefined,
+              provenance: {
+                ruleId: index,
+                clauseRef: r.topic,
+              },
+            })),
           }
 
-          if (response.rules.length === 0) {
-            setStatus('partial')
-          } else {
-            setStatus('success')
-          }
+          setResult(mappedBox)
+
+          setStatus('success')
 
           setLiveAnnouncement(
             t('wizard.accessibility.updated', {
-              zone: response.zoneCode,
-              overlays: response.overlays.length,
+              zone: mappedBox.zoneCode,
+              overlays: mappedBox.overlays.length,
             }),
           )
         })
         .catch((error) => {
+          console.error('useFeasibilityCompute: Error caught', error)
           if (error instanceof DOMException && error.name === 'AbortError') {
             return
           }
@@ -129,6 +165,7 @@ export function useFeasibilityCompute({
         .finally(() => {
           debounceRef.current = null
         })
+
     }, DEBOUNCE_MS)
 
     return () => {

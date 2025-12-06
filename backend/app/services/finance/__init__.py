@@ -1,5 +1,16 @@
 """Finance related service helpers."""
 
+from .argus_export import (
+    ARGUSExportBundle,
+    ARGUSExportService,
+    ARGUSExpenseRecord,
+    ARGUSMarketRecord,
+    ARGUSPropertyRecord,
+    ARGUSRevenueRecord,
+    ARGUSTenantRecord,
+    ARGUSValuationRecord,
+    get_argus_export_service,
+)
 from .asset_models import (
     AssetFinanceInput,
     build_asset_financials,
@@ -22,6 +33,25 @@ from .re_metrics import (
     calculate_rental_yield,
     calculate_vacancy_loss,
     value_property_multiple_approaches,
+)
+from .scenario_lineage import (
+    LineageAction,
+    LineageDiff,
+    ScenarioLineage,
+    ScenarioLineageService,
+    ScenarioVersion,
+    get_scenario_lineage_service,
+)
+from .jurisdiction_financing import (
+    BorrowerType,
+    FinancingConstraints,
+    JurisdictionCode,
+    JurisdictionFinancingProfile,
+    JurisdictionFinancingService,
+    PropertyType,
+    StampDutyRates,
+    get_jurisdiction_financing_service,
+    JURISDICTION_PROFILES,
 )
 
 __all__ = [
@@ -51,4 +81,31 @@ __all__ = [
     "value_property_multiple_approaches",
     "PropertyValuation",
     "REFinancialMetrics",
+    # ARGUS export
+    "ARGUSExportService",
+    "ARGUSExportBundle",
+    "ARGUSPropertyRecord",
+    "ARGUSTenantRecord",
+    "ARGUSRevenueRecord",
+    "ARGUSExpenseRecord",
+    "ARGUSMarketRecord",
+    "ARGUSValuationRecord",
+    "get_argus_export_service",
+    # Scenario lineage
+    "ScenarioLineageService",
+    "ScenarioLineage",
+    "ScenarioVersion",
+    "LineageAction",
+    "LineageDiff",
+    "get_scenario_lineage_service",
+    # Multi-jurisdiction financing
+    "JurisdictionCode",
+    "PropertyType",
+    "BorrowerType",
+    "FinancingConstraints",
+    "StampDutyRates",
+    "JurisdictionFinancingProfile",
+    "JurisdictionFinancingService",
+    "get_jurisdiction_financing_service",
+    "JURISDICTION_PROFILES",
 ]

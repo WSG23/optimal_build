@@ -1,0 +1,466 @@
+/* styles/page-layout.css
+   Shared page layout patterns for consistent styling across all pages.
+   All pages should use these classes instead of inline styles.
+*/
+
+/* -------------------------------------------------------------------------- */
+/* Page Container                                                              */
+/* -------------------------------------------------------------------------- */
+
+.page {
+    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: var(--ob-font-family-base);
+    color: var(--ob-color-text-primary);
+}
+
+.page--wide {
+    max-width: 1400px;
+}
+
+.page--full {
+    max-width: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page Header                                                                 */
+/* -------------------------------------------------------------------------- */
+
+.page__header {
+    margin-bottom: var(--ob-spacing-600);
+}
+
+.page__title {
+    font-size: var(--ob-font-size-3xl);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 var(--ob-spacing-100);
+    line-height: 1.1;
+    color: var(--ob-color-text-primary);
+}
+
+.page__subtitle {
+    font-size: var(--ob-font-size-lg);
+    color: var(--ob-color-text-secondary);
+    font-weight: 400;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page Sections                                                               */
+/* -------------------------------------------------------------------------- */
+
+.page__section {
+    background: var(--ob-color-bg-surface);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-xl);
+    padding: var(--ob-spacing-500);
+    margin-bottom: var(--ob-spacing-500);
+}
+
+.page__section-title {
+    font-size: var(--ob-font-size-lg);
+    font-weight: 600;
+    margin: 0 0 var(--ob-spacing-400);
+    letter-spacing: -0.01em;
+    color: var(--ob-color-text-primary);
+}
+
+.page__section-subtitle {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    margin: 0 0 var(--ob-spacing-300);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Form Elements                                                               */
+/* -------------------------------------------------------------------------- */
+
+.page__form-group {
+    margin-bottom: var(--ob-spacing-400);
+}
+
+.page__form-row {
+    display: flex;
+    gap: var(--ob-spacing-300);
+    align-items: flex-end;
+}
+
+.page__form-row--wrap {
+    flex-wrap: wrap;
+}
+
+.page__label {
+    display: block;
+    font-size: var(--ob-font-size-sm);
+    font-weight: 500;
+    color: var(--ob-color-text-primary);
+    margin-bottom: var(--ob-spacing-100);
+    letter-spacing: -0.005em;
+}
+
+.page__input {
+    width: 100%;
+    padding: var(--ob-spacing-200) var(--ob-spacing-300);
+    font-size: var(--ob-font-size-base);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-lg);
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
+    font-family: inherit;
+}
+
+.page__input:focus {
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: 0 0 0 4px var(--ob-color-brand-primary-glow);
+}
+
+.page__input:disabled {
+    background: var(--ob-color-bg-muted);
+    cursor: not-allowed;
+}
+
+.page__input--mono {
+    font-family: var(--ob-font-family-mono);
+}
+
+.page__select {
+    width: 100%;
+    padding: var(--ob-spacing-200) var(--ob-spacing-300);
+    font-size: var(--ob-font-size-base);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-lg);
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.page__select:focus {
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: 0 0 0 4px var(--ob-color-brand-primary-glow);
+}
+
+.page__textarea {
+    width: 100%;
+    padding: var(--ob-spacing-200) var(--ob-spacing-300);
+    font-size: var(--ob-font-size-base);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-lg);
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.page__textarea:focus {
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: 0 0 0 4px var(--ob-color-brand-primary-glow);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Buttons                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.page__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ob-spacing-100);
+    padding: var(--ob-spacing-200) var(--ob-spacing-400);
+    font-size: var(--ob-font-size-base);
+    font-weight: 500;
+    border: none;
+    border-radius: var(--ob-radius-lg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.page__btn--primary {
+    background: var(--ob-color-brand-primary);
+    color: white;
+}
+
+.page__btn--primary:hover:not(:disabled) {
+    background: var(--ob-color-brand-primary-emphasis);
+}
+
+.page__btn--secondary {
+    background: var(--ob-color-bg-muted);
+    color: var(--ob-color-text-primary);
+    border: 1px solid var(--ob-color-border-subtle);
+}
+
+.page__btn--secondary:hover:not(:disabled) {
+    background: var(--ob-color-action-hover);
+    border-color: var(--ob-color-brand-primary);
+}
+
+.page__btn--ghost {
+    background: transparent;
+    color: var(--ob-color-text-secondary);
+}
+
+.page__btn--ghost:hover:not(:disabled) {
+    background: var(--ob-color-action-hover);
+    color: var(--ob-color-text-primary);
+}
+
+.page__btn:disabled {
+    background: var(--ob-color-bg-muted);
+    color: var(--ob-color-text-muted);
+    cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Alerts                                                                      */
+/* -------------------------------------------------------------------------- */
+
+.page__alert {
+    padding: var(--ob-spacing-200) var(--ob-spacing-300);
+    border-radius: var(--ob-radius-lg);
+    font-size: var(--ob-font-size-sm);
+    margin-top: var(--ob-spacing-300);
+}
+
+.page__alert--error {
+    background: var(--ob-error-muted);
+    border: 1px solid var(--ob-error-subtle);
+    color: var(--ob-error-400);
+}
+
+.page__alert--success {
+    background: var(--ob-success-muted);
+    border: 1px solid var(--ob-success-subtle);
+    color: var(--ob-success-400);
+}
+
+.page__alert--warning {
+    background: var(--ob-warning-muted);
+    border: 1px solid var(--ob-warning-subtle);
+    color: var(--ob-warning-500);
+}
+
+.page__alert--info {
+    background: var(--ob-info-muted);
+    border: 1px solid var(--ob-info-subtle);
+    color: var(--ob-info-400);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Grid Layouts                                                                */
+/* -------------------------------------------------------------------------- */
+
+.page__grid {
+    display: grid;
+    gap: var(--ob-spacing-400);
+}
+
+.page__grid--2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.page__grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.page__grid--4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.page__grid--auto {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (max-width: 1024px) {
+    .page__grid--3,
+    .page__grid--4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .page__grid--2,
+    .page__grid--3,
+    .page__grid--4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cards                                                                       */
+/* -------------------------------------------------------------------------- */
+
+.page__card {
+    background: var(--ob-color-bg-surface);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-xl);
+    padding: var(--ob-spacing-400);
+}
+
+.page__card--interactive {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page__card--interactive:hover {
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-md);
+    transform: translateY(-2px);
+}
+
+.page__card-title {
+    font-size: var(--ob-font-size-base);
+    font-weight: 600;
+    margin: 0 0 var(--ob-spacing-200);
+    color: var(--ob-color-text-primary);
+}
+
+.page__card-value {
+    font-size: var(--ob-font-size-2xl);
+    font-weight: 700;
+    color: var(--ob-color-text-primary);
+    margin: 0;
+}
+
+.page__card-description {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    margin: var(--ob-spacing-100) 0 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Metric Cards                                                                */
+/* -------------------------------------------------------------------------- */
+
+.page__metric {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-spacing-100);
+}
+
+.page__metric-label {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    font-weight: 500;
+}
+
+.page__metric-value {
+    font-size: var(--ob-font-size-xl);
+    font-weight: 600;
+    color: var(--ob-color-text-primary);
+    font-family: var(--ob-font-family-mono);
+}
+
+.page__metric-value--positive {
+    color: var(--ob-success-500);
+}
+
+.page__metric-value--negative {
+    color: var(--ob-error-500);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Loading States                                                              */
+/* -------------------------------------------------------------------------- */
+
+.page__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ob-spacing-600);
+    color: var(--ob-color-text-secondary);
+}
+
+.page__spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--ob-color-border-subtle);
+    border-top-color: var(--ob-color-brand-primary);
+    border-radius: 50%;
+    animation: page-spin 0.8s linear infinite;
+}
+
+@keyframes page-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Empty States                                                                */
+/* -------------------------------------------------------------------------- */
+
+.page__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ob-spacing-800);
+    text-align: center;
+    color: var(--ob-color-text-secondary);
+}
+
+.page__empty-title {
+    font-size: var(--ob-font-size-lg);
+    font-weight: 600;
+    margin: 0 0 var(--ob-spacing-200);
+    color: var(--ob-color-text-primary);
+}
+
+.page__empty-description {
+    font-size: var(--ob-font-size-sm);
+    max-width: 400px;
+    margin: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dividers                                                                    */
+/* -------------------------------------------------------------------------- */
+
+.page__divider {
+    height: 1px;
+    background: var(--ob-color-border-subtle);
+    margin: var(--ob-spacing-400) 0;
+}
+
+.page__divider--thick {
+    height: 2px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Two-column layout                                                           */
+/* -------------------------------------------------------------------------- */
+
+.page__two-col {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--ob-spacing-500);
+}
+
+.page__two-col--reverse {
+    grid-template-columns: 1fr 2fr;
+}
+
+@media (max-width: 1024px) {
+    .page__two-col,
+    .page__two-col--reverse {
+        grid-template-columns: 1fr;
+    }
+}

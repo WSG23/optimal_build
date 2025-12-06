@@ -1,0 +1,62 @@
+{
+  "SG": {
+    "structural_grid": "11m x 11m",
+    "core_size_percent": {
+      "office": 18,
+      "residential": 15,
+      "mixed_use": 20
+    },
+    "mep_allowance_mm": 450,
+    "wall_thickness_mm": 200,
+    "circulation_percent": 15,
+    "fire_stair_width_mm": 1200
+  },
+  "HK": {
+    "structural_grid": "10m x 10m",
+    "core_size_percent": {
+      "office": 22,
+      "residential": 18,
+      "mixed_use": 25
+    },
+    "mep_allowance_mm": 400,
+    "wall_thickness_mm": 150,
+    "circulation_percent": 18,
+    "fire_stair_width_mm": 1100
+  },
+  "NZ": {
+    "structural_grid": "8.4m x 8.4m",
+    "core_size_percent": {
+      "office": 15,
+      "residential": 12,
+      "mixed_use": 18
+    },
+    "mep_allowance_mm": 500,
+    "wall_thickness_mm": 250,
+    "circulation_percent": 12,
+    "fire_stair_width_mm": 1200
+  },
+  "Seattle": {
+    "structural_grid": "30ft x 30ft",
+    "core_size_percent": {
+      "office": 16,
+      "residential": 14,
+      "mixed_use": 18
+    },
+    "mep_allowance_mm": 550,
+    "wall_thickness_mm": 300,
+    "circulation_percent": 15,
+    "fire_stair_width_mm": 1120
+  },
+  "Toronto": {
+    "structural_grid": "9m x 9m",
+    "core_size_percent": {
+      "office": 17,
+      "residential": 15,
+      "mixed_use": 20
+    },
+    "mep_allowance_mm": 500,
+    "wall_thickness_mm": 250,
+    "circulation_percent": 15,
+    "fire_stair_width_mm": 1100
+  }
+}

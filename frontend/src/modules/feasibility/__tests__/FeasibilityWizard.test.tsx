@@ -1,10 +1,11 @@
-import assert from 'node:assert/strict'
-import { beforeEach, describe, it } from 'node:test'
+import { assert, beforeEach, describe, it } from 'vitest'
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { TranslationProvider } from '../../../i18n'
+import { ThemeModeProvider } from '../../../theme/ThemeContext'
+import { FeasibilityWizard } from '../FeasibilityWizard'
 
 describe('FeasibilityWizard marketing pack integration', () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe('FeasibilityWizard marketing pack integration', () => {
     let calls = 0
     let lastArgs: { propertyId: string; packType: string } | null = null
 
-    const { FeasibilityWizard } = await import('../FeasibilityWizard')
+
 
     const packStub = async (propertyId: string, packType: 'universal' | 'investment' | 'sales' | 'lease') => {
       calls += 1
@@ -28,13 +29,18 @@ describe('FeasibilityWizard marketing pack integration', () => {
         downloadUrl: 'https://example.com/pack.pdf',
         generatedAt: '2025-07-02T08:00:00Z',
         sizeBytes: 64_000,
+        isFallback: false,
       }
     }
 
+
+
     render(
-      <TranslationProvider>
-        <FeasibilityWizard generatePackFn={packStub} />
-      </TranslationProvider>,
+      <ThemeModeProvider>
+        <TranslationProvider>
+          <FeasibilityWizard generatePackFn={packStub} />
+        </TranslationProvider>
+      </ThemeModeProvider>,
     )
 
     const propertyInput = await screen.findByTestId('feasibility-pack-property')

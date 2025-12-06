@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
 
   const rawApiBase =
     env.VITE_API_BASE_URL?.trim() || env.VITE_API_BASE?.trim() || ''
-  const backendPort = env.BACKEND_PORT?.trim() || '9400'
+  const backendPort = env.BACKEND_PORT?.trim() || '8000'
   const resolvedApiBase =
     rawApiBase.length > 0 && rawApiBase !== '/'
       ? rawApiBase

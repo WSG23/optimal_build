@@ -234,39 +234,41 @@ export function AdvancedIntelligencePage({
         </button>
       }
     >
-      <section className="advanced-intelligence__section" aria-labelledby="advanced-intelligence-overview">
-        <h3 id="advanced-intelligence-overview">Workspace signals</h3>
-        {isLoading && (
-          <p data-testid="analytics-loading">Loading analytics for workspace {workspaceId}…</p>
-        )}
-        {!isLoading && predictive.status === 'ok' && (
-          <div className="advanced-intelligence__summary">
-            <p>
-              Current adoption likelihood across cohorts:{' '}
-              <strong>{formatPercent(derivedAdoptionRate)}</strong>
-            </p>
-            <p>
-              Average projected uplift across active cohorts:{' '}
-              <strong>{formatPercent(derivedAverageUplift, 1)}</strong>
-            </p>
-          </div>
-        )}
-      </section>
+      <div className="page">{/* Standard page container */}
+        <section className="advanced-intelligence__section" aria-labelledby="advanced-intelligence-overview">
+          <h3 id="advanced-intelligence-overview">Workspace signals</h3>
+          {isLoading && (
+            <p data-testid="analytics-loading">Loading analytics for workspace {workspaceId}…</p>
+          )}
+          {!isLoading && predictive.status === 'ok' && (
+            <div className="advanced-intelligence__summary">
+              <p>
+                Current adoption likelihood across cohorts:{' '}
+                <strong>{formatPercent(derivedAdoptionRate)}</strong>
+              </p>
+              <p>
+                Average projected uplift across active cohorts:{' '}
+                <strong>{formatPercent(derivedAverageUplift, 1)}</strong>
+              </p>
+            </div>
+          )}
+        </section>
 
-      <section className="advanced-intelligence__section" aria-labelledby="graph-intelligence">
-        <h3 id="graph-intelligence">Relationship intelligence</h3>
-        {renderGraphSection(graph)}
-      </section>
+        <section className="advanced-intelligence__section" aria-labelledby="graph-intelligence">
+          <h3 id="graph-intelligence">Relationship intelligence</h3>
+          {renderGraphSection(graph)}
+        </section>
 
-      <section className="advanced-intelligence__section" aria-labelledby="predictive-intelligence">
-        <h3 id="predictive-intelligence">Predictive intelligence</h3>
-        {renderPredictiveSection(predictive)}
-      </section>
+        <section className="advanced-intelligence__section" aria-labelledby="predictive-intelligence">
+          <h3 id="predictive-intelligence">Predictive intelligence</h3>
+          {renderPredictiveSection(predictive)}
+        </section>
 
-      <section className="advanced-intelligence__section" aria-labelledby="correlation-intelligence">
-        <h3 id="correlation-intelligence">Cross-correlation intelligence</h3>
-        {renderCorrelationSection(correlation)}
-      </section>
+        <section className="advanced-intelligence__section" aria-labelledby="correlation-intelligence">
+          <h3 id="correlation-intelligence">Cross-correlation intelligence</h3>
+          {renderCorrelationSection(correlation)}
+        </section>
+      </div>
     </AppLayout>
   )
 }

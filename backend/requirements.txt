@@ -6,7 +6,7 @@ fastapi==0.121.3
 starlette==0.49.1
 uvicorn[standard]==0.24.0
 # Updated for security: GHSA-2jv5-9r88-3w3p, GHSA-59g5-xgcq-4qw3 (min fix: 0.0.18)
-python-multipart==0.0.18
+python-multipart==0.0.20
 
 # Database
 sqlalchemy[asyncio,mypy]==2.0.23

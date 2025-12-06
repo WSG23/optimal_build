@@ -6,7 +6,7 @@
 /* ========== Feature Toggle Panel ========== */
 .feature-toggle-panel {
     margin-top: 1rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--ob-color-border-neutral);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -17,14 +17,14 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    background: #f8fafc;
+    background: var(--ob-color-surface-alt);
     border: none;
     cursor: pointer;
     text-align: left;
 }
 
 .feature-toggle-panel__header:hover {
-    background: #f1f5f9;
+    background: var(--ob-color-warning-soft);
 }
 
 .feature-toggle-panel__title {
@@ -32,7 +32,7 @@
     align-items: center;
     gap: 0.5rem;
     font-weight: 500;
-    color: #334155;
+    color: var(--ob-color-text-muted);
 }
 
 .feature-toggle-panel__icon {
@@ -42,8 +42,8 @@
 
 .feature-toggle-panel__badge {
     font-size: 0.75rem;
-    background: #3b82f6;
-    color: white;
+    background: var(--ob-color-brand-primary);
+    color: var(--ob-color-text-inverse);
     padding: 0.125rem 0.5rem;
     border-radius: 999px;
 }
@@ -55,7 +55,7 @@
 
 .feature-toggle-panel__content {
     padding: 1rem;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--ob-color-border-neutral);
 }
 
 .feature-toggle-panel__description {
@@ -75,19 +75,19 @@
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.75rem;
-    background: #f8fafc;
+    background: var(--ob-color-surface-alt);
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.15s;
 }
 
 .feature-toggle-option:hover:not(.feature-toggle-option--disabled) {
-    background: #f1f5f9;
+    background: var(--ob-color-warning-soft);
 }
 
 .feature-toggle-option--enabled {
     background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--ob-color-brand-soft);
 }
 
 .feature-toggle-option--disabled {
@@ -108,7 +108,7 @@
 
 .feature-toggle-option__label {
     font-weight: 500;
-    color: #1e293b;
+    color: var(--ob-color-text-primary);
 }
 
 .feature-toggle-option__description {
@@ -148,7 +148,7 @@
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--ob-color-text-primary);
 }
 
 .asset-optimization-summary__empty {
@@ -160,7 +160,7 @@
     display: flex;
     gap: 1.5rem;
     padding: 0.75rem;
-    background: #f8fafc;
+    background: var(--ob-color-surface-alt);
     border-radius: 6px;
 }
 
@@ -179,20 +179,20 @@
 .asset-optimization-summary__total-value {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--ob-color-text-primary);
 }
 
 .asset-optimization-summary__list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--ob-spacing-3);
 }
 
 .asset-optimization-item {
     padding: 0.75rem;
-    background: #fafafa;
+    background: var(--ob-color-surface-alt);
     border-radius: 6px;
-    border-left: 3px solid #e2e8f0;
+    border-left: 3px solid var(--ob-color-border-neutral);
 }
 
 .asset-optimization-item__header {
@@ -204,12 +204,12 @@
 
 .asset-optimization-item__type {
     font-weight: 500;
-    color: #334155;
+    color: var(--ob-color-text-muted);
 }
 
 .asset-optimization-item__allocation {
     font-size: 0.875rem;
-    color: #3b82f6;
+    color: var(--ob-color-brand-primary);
     font-weight: 500;
 }
 
@@ -229,18 +229,18 @@
 }
 
 .asset-optimization-item__risk--low {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--ob-color-status-success-bg);
+    color: var(--ob-color-status-success-text);
 }
 
 .asset-optimization-item__risk--medium {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--ob-color-status-warning-bg);
+    color: var(--ob-color-status-warning-text);
 }
 
 .asset-optimization-item__risk--high {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--ob-color-status-error-bg);
+    color: var(--ob-color-status-error-text);
 }
 
 .asset-optimization-item__notes {
@@ -261,7 +261,7 @@
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--ob-color-text-primary);
 }
 
 .financial-summary-card__empty {
@@ -291,7 +291,7 @@
 .financial-summary-card__metric-value {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--ob-color-text-primary);
 }
 
 .financial-summary-card__risk {
@@ -302,18 +302,18 @@
 }
 
 .financial-summary-card__risk--low {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--ob-color-status-success-bg);
+    color: var(--ob-color-status-success-text);
 }
 
 .financial-summary-card__risk--medium {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--ob-color-status-warning-bg);
+    color: var(--ob-color-status-warning-text);
 }
 
 .financial-summary-card__risk--high {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--ob-color-status-error-bg);
+    color: var(--ob-color-status-error-text);
 }
 
 .financial-summary-card__notes {
@@ -346,14 +346,14 @@
     gap: 0.75rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--ob-color-text-primary);
 }
 
 .heritage-context-card__flag {
     font-size: 0.75rem;
     padding: 0.125rem 0.5rem;
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--ob-color-status-warning-bg);
+    color: var(--ob-color-status-warning-text);
     border-radius: 4px;
 }
 
@@ -381,23 +381,23 @@
 }
 
 .heritage-context-card__risk--low {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--ob-color-status-success-bg);
+    color: var(--ob-color-status-success-text);
 }
 
 .heritage-context-card__risk--medium {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--ob-color-status-warning-bg);
+    color: var(--ob-color-status-warning-text);
 }
 
 .heritage-context-card__risk--high {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--ob-color-status-error-bg);
+    color: var(--ob-color-status-error-text);
 }
 
 .heritage-context-card__overlay {
     padding: 0.5rem 0.75rem;
-    background: #fefce8;
+    background: var(--ob-color-surface-default);
     border-radius: 6px;
     display: flex;
     flex-direction: column;
@@ -424,7 +424,7 @@
 .heritage-context-card__constraints-label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #334155;
+    color: var(--ob-color-text-muted);
 }
 
 .heritage-context-card__constraints-list {

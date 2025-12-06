@@ -39,6 +39,7 @@ from app.schemas.finance import (
     SensitivityBandInput,
 )
 from app.services.finance import calculator
+from app.services.finance.argus_export import get_argus_export_service
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
 
@@ -303,7 +304,8 @@ def evaluate_sensitivity_bands(
             )
             notes = list(band.notes or [])
             notes.append(
-                f"{label} case applies {delta_decimal:+g}% adjustment to {band.parameter}"
+                f"{label} case applies {delta_decimal:+g}% adjustment to "
+                f"{band.parameter}"
             )
             entry = FinanceSensitivityOutcomeSchema(
                 parameter=band.parameter,
@@ -399,7 +401,9 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
         if chunk:
             yield chunk
 
-        metadata: dict[str, Any] | None = result.metadata if isinstance(result.metadata, dict) else None  # type: ignore[assignment,has-type]
+        metadata: dict[str, Any] | None = (  # type: ignore[assignment,has-type]
+            result.metadata if isinstance(result.metadata, dict) else None
+        )
         if result.name == "dscr_timeline" and metadata:
             timeline = metadata.get("entries")
             if timeline:
@@ -1101,6 +1105,8 @@ async def export_finance_scenario(
             .options(
                 selectinload(FinScenario.results),
                 selectinload(FinScenario.fin_project),
+                selectinload(FinScenario.capital_stack),
+                selectinload(FinScenario.asset_breakdowns),
             )
             .limit(1)
         )
@@ -1163,6 +1169,56 @@ async def export_finance_scenario(
         metrics.FINANCE_EXPORT_DURATION_MS.observe(duration_ms)
 
     assert response is not None
+    return response
+
+
+@router.get("/export/argus")
+async def export_argus_scenario(
+    scenario_id: int = Query(...),
+    session: AsyncSession = Depends(get_session),
+    identity: RequestIdentity = Depends(require_reviewer),
+) -> StreamingResponse:
+    """Stream a ZIP bundle with ARGUS Enterprise compatible CSVs."""
+
+    if scenario_id < 1:
+        raise HTTPException(status_code=400, detail="scenario_id must be positive")
+
+    stmt = (
+        select(FinScenario)
+        .where(FinScenario.id == scenario_id)
+        .options(
+            selectinload(FinScenario.results),
+            selectinload(FinScenario.fin_project),
+        )
+        .limit(1)
+    )
+    result = await session.execute(stmt)
+    scenario = result.scalar_one_or_none()
+
+    if scenario is None:
+        raise HTTPException(status_code=404, detail="Finance scenario not found")
+
+    await _ensure_project_owner(session, project_uuid_from_scenario(scenario), identity)
+
+    # In a real impl, we would fetch/calculate property info relative to the scenario
+    # For now, we stub or partially populate from scenario
+    property_data = {
+        "id": f"PROP-{scenario.id}",
+        "name": scenario.name,
+        "gfa_sqft": 0,  # Should fetch from project
+        "year_built": datetime.utcnow().year,
+    }
+
+    service = get_argus_export_service()
+    bundle = service.build_bundle_from_scenario(scenario.assumptions, property_data)
+    zip_bytes = service.generate_export_zip(bundle)
+
+    filename = f"ARGUS_Export_{scenario.id}.zip"
+    response = StreamingResponse(
+        iter([zip_bytes]),
+        media_type="application/zip",
+    )
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 

@@ -1,0 +1,62 @@
+⚡ Running quick checks...
+🔍 Checking Python formatting with pre-commit hooks...
+black....................................................................Failed
+- hook id: black
+- files were modified by this hook
+
+reformatted scripts/check_ui_canon.py
+
+All done! ✨ 🍰 ✨
+1 file reformatted, 635 files left unchanged.
+
+ruff.....................................................................Failed
+- hook id: ruff
+- exit code: 1
+
+scripts/check_ui_canon.py:57:101: E501 Line too long (104 > 100)
+   |
+55 | EXCEPTIONS = {
+56 |     # MUI-heavy components that use sx prop (legitimate pattern)
+57 |     "frontend/src/app/pages/phase-management/": "Uses MUI components with sx prop - legitimate pattern",
+   |                                                                                                     ^^^^ E501
+58 |     # Components using dynamic styles from props (allowed with CSS variables)
+59 |     "frontend/src/pages/visualizations/EngineeringLayersPanel.tsx": "Uses dynamic CSS variable colors from props",
+   |
+
+scripts/check_ui_canon.py:59:101: E501 Line too long (114 > 100)
+   |
+57 |     "frontend/src/app/pages/phase-management/": "Uses MUI components with sx prop - legitimate pattern",
+58 |     # Components using dynamic styles from props (allowed with CSS variables)
+59 |     "frontend/src/pages/visualizations/EngineeringLayersPanel.tsx": "Uses dynamic CSS variable colors from props",
+   |                                                                                                     ^^^^^^^^^^^^^^ E501
+60 | }
+   |
+
+scripts/check_ui_canon.py:162:101: E501 Line too long (108 > 100)
+    |
+160 |                             line=line_num,
+161 |                             rule="no-inline-styles",
+162 |                             message="Inline styles detected. Use CSS classes from page-layout.css instead.",
+    |                                                                                                     ^^^^^^^^ E501
+163 |                             snippet=line.strip()[:80],
+164 |                         )
+    |
+
+scripts/check_ui_canon.py:198:101: E501 Line too long (109 > 100)
+    |
+196 |                             line=line_num,
+197 |                             rule="no-hardcoded-colors",
+198 |                             message=f"Hardcoded color '{match.group()}' detected. Use CSS variable instead.",
+    |                                                                                                     ^^^^^^^^^ E501
+199 |                             snippet=line.strip()[:80],
+200 |                         )
+    |
+
+Found 4 errors.
+
+
+> building-compliance-frontend@1.0.0 typecheck
+> tsc --noEmit
+
+src/modules/finance/components/FinanceScenarioCreator.tsx(295,67): error TS2345: Argument of type 'string' is not assignable to parameter of type 'TranslationOptions'.
+make: *** [quick-check] Error 2

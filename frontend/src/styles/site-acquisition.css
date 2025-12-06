@@ -1,0 +1,152 @@
+/* styles/site-acquisition.css
+   Site Acquisition page-specific styles.
+   Uses page-layout.css foundation with page-specific extensions.
+*/
+
+/* -------------------------------------------------------------------------- */
+/* Page-specific overrides                                                     */
+/* -------------------------------------------------------------------------- */
+
+.site-acquisition {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-spacing-500);
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    font-family: var(--ob-font-family-base);
+    color: var(--ob-color-text-primary);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Preview Section                                                             */
+/* -------------------------------------------------------------------------- */
+
+.site-acquisition__preview {
+    margin-top: var(--ob-spacing-500);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-spacing-200);
+}
+
+.site-acquisition__preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.site-acquisition__preview-title {
+    margin: 0;
+    font-size: var(--ob-font-size-lg);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ob-color-text-primary);
+}
+
+.site-acquisition__preview-status {
+    font-size: var(--ob-font-size-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--ob-color-text-secondary);
+    text-transform: uppercase;
+}
+
+.site-acquisition__preview-info {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Geometry Detail Controls                                                    */
+/* -------------------------------------------------------------------------- */
+
+.site-acquisition__controls {
+    margin-top: var(--ob-spacing-300);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ob-spacing-300);
+}
+
+.site-acquisition__control-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-spacing-100);
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+}
+
+.site-acquisition__control-label {
+    font-weight: 600;
+    color: var(--ob-color-text-primary);
+}
+
+.site-acquisition__control-select {
+    min-width: 15rem;
+    padding: var(--ob-spacing-150) var(--ob-spacing-200);
+    border-radius: var(--ob-radius-lg);
+    border: 1px solid var(--ob-color-border-subtle);
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
+    font-size: var(--ob-font-size-sm);
+}
+
+.site-acquisition__control-select:disabled {
+    background: var(--ob-color-bg-muted);
+    cursor: not-allowed;
+}
+
+.site-acquisition__control-hint {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Refresh Button                                                              */
+/* -------------------------------------------------------------------------- */
+
+.site-acquisition__btn-refresh {
+    padding: var(--ob-spacing-150) var(--ob-spacing-300);
+    border-radius: 9999px;
+    border: 1px solid var(--ob-color-brand-primary);
+    background: var(--ob-color-brand-primary);
+    color: white;
+    font-size: var(--ob-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.site-acquisition__btn-refresh:hover:not(:disabled) {
+    background: var(--ob-color-brand-primary-emphasis);
+}
+
+.site-acquisition__btn-refresh:disabled {
+    border-color: var(--ob-color-border-subtle);
+    background: var(--ob-color-bg-muted);
+    color: var(--ob-color-text-muted);
+    cursor: wait;
+}
+
+.site-acquisition__refresh-hint {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Section Spacing                                                             */
+/* -------------------------------------------------------------------------- */
+
+.site-acquisition__section-spacer {
+    margin-bottom: var(--ob-spacing-500);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Photo Documentation                                                         */
+/* -------------------------------------------------------------------------- */
+
+.site-acquisition__photos {
+    margin-top: var(--ob-spacing-500);
+}

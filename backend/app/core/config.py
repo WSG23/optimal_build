@@ -10,6 +10,7 @@ _DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:4400",
+    "http://localhost:4401",
 )
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 _DEFAULT_RATE_LIMIT = "10/minute"
@@ -176,6 +177,8 @@ class Settings:
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
     RQ_REDIS_URL: str
+    RATE_LIMIT_REDIS_URL: str
+    RATE_LIMIT_STORAGE_URI: str
 
     ODA_LICENSE_KEY: str
 
@@ -188,6 +191,7 @@ class Settings:
     S3_SECRET_KEY: str
     IMPORTS_BUCKET_NAME: str
     EXPORTS_BUCKET_NAME: str
+    DOCUMENTS_BUCKET_NAME: str
 
     FIRST_SUPERUSER: str
     FIRST_SUPERUSER_PASSWORD: str
@@ -223,7 +227,8 @@ class Settings:
                 secret = "test-secret-key"
             else:
                 raise RuntimeError(
-                    "SECRET_KEY environment variable is required; set it before starting the application."
+                    "SECRET_KEY environment variable is required; set it before "
+                    "starting the application."
                 )
         self.SECRET_KEY = secret
         self.ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
@@ -247,12 +252,20 @@ class Settings:
         default_celery_broker = _derive_redis_url(redis_base, 0)
         default_celery_backend = _derive_redis_url(redis_base, 1)
         default_rq_url = _derive_redis_url(redis_base, 2)
+        default_rate_limit_storage = _derive_redis_url(redis_base, 3)
 
         self.CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", default_celery_broker)
         self.CELERY_RESULT_BACKEND = os.getenv(
             "CELERY_RESULT_BACKEND", default_celery_backend
         )
         self.RQ_REDIS_URL = os.getenv("RQ_REDIS_URL", default_rq_url)
+        self.RATE_LIMIT_REDIS_URL = os.getenv(
+            "RATE_LIMIT_REDIS_URL", default_rate_limit_storage
+        )
+        self.RATE_LIMIT_STORAGE_URI = os.getenv(
+            "RATE_LIMIT_STORAGE_URI",
+            self.RATE_LIMIT_REDIS_URL or "memory://",
+        )
 
         self.ODA_LICENSE_KEY = os.getenv("ODA_LICENSE_KEY", "")
 
@@ -267,6 +280,7 @@ class Settings:
         self.S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "minioadmin")
         self.IMPORTS_BUCKET_NAME = os.getenv("IMPORTS_BUCKET_NAME", "cad-imports")
         self.EXPORTS_BUCKET_NAME = os.getenv("EXPORTS_BUCKET_NAME", "cad-exports")
+        self.DOCUMENTS_BUCKET_NAME = os.getenv("DOCUMENTS_BUCKET_NAME", "documents")
         # Backwards-compatible default used by legacy storage helpers
         self.S3_BUCKET = os.getenv("S3_BUCKET", self.IMPORTS_BUCKET_NAME)
 

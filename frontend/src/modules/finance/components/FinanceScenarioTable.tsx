@@ -132,7 +132,16 @@ export function FinanceScenarioTable({
   )
 
   if (rows.length === 0) {
-    return null
+    return (
+        <div className="finance-empty-state">
+           <div className="finance-empty-state__visual">
+             <div className="finance-empty-state__card-ghost" />
+             <div className="finance-empty-state__card-ghost" />
+             <div className="finance-empty-state__card-ghost" />
+           </div>
+           <p className="finance-empty-state__text">{t('finance.table.empty')}</p>
+        </div>
+    )
   }
 
   return (

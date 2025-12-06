@@ -60,15 +60,54 @@ class GeocodingService(AsyncClientService):
         )
 
     @staticmethod
-    def _mock_amenities() -> Dict[str, Any]:
-        """Return canned amenity data when external services are unavailable."""
+    def _mock_amenities(
+        latitude: float = 1.3, longitude: float = 103.85
+    ) -> Dict[str, Any]:
+        """Return canned amenity data when external services are unavailable.
 
+        Includes coordinates offset from the provided location for map display.
+        """
         return {
-            "mrt_stations": [{"name": "Mock MRT", "distance_m": 250}],
-            "bus_stops": [{"name": "Mock Bus Stop", "distance_m": 120}],
-            "schools": [{"name": "Mock Primary School", "distance_m": 480}],
-            "shopping_malls": [{"name": "Mock Mall", "distance_m": 650}],
-            "parks": [{"name": "Mock Park", "distance_m": 320}],
+            "mrt_stations": [
+                {
+                    "name": "Mock MRT",
+                    "distance_m": 250,
+                    "latitude": latitude + 0.002,
+                    "longitude": longitude + 0.001,
+                }
+            ],
+            "bus_stops": [
+                {
+                    "name": "Mock Bus Stop",
+                    "distance_m": 120,
+                    "latitude": latitude + 0.001,
+                    "longitude": longitude - 0.001,
+                }
+            ],
+            "schools": [
+                {
+                    "name": "Mock Primary School",
+                    "distance_m": 480,
+                    "latitude": latitude - 0.003,
+                    "longitude": longitude + 0.002,
+                }
+            ],
+            "shopping_malls": [
+                {
+                    "name": "Mock Mall",
+                    "distance_m": 650,
+                    "latitude": latitude + 0.004,
+                    "longitude": longitude - 0.003,
+                }
+            ],
+            "parks": [
+                {
+                    "name": "Mock Park",
+                    "distance_m": 320,
+                    "latitude": latitude - 0.002,
+                    "longitude": longitude + 0.003,
+                }
+            ],
         }
 
     async def reverse_geocode(
@@ -158,8 +197,11 @@ class GeocodingService(AsyncClientService):
     async def get_nearby_amenities(
         self, latitude: float, longitude: float, radius_m: int = 1000
     ) -> Dict[str, Any]:
-        """Get nearby amenities using OneMap themes."""
-        amenities = {
+        """Get nearby amenities using OneMap themes.
+
+        Returns amenities with name, distance_m, latitude, and longitude for map display.
+        """
+        amenities: Dict[str, Any] = {
             "mrt_stations": [],
             "bus_stops": [],
             "schools": [],
@@ -169,7 +211,7 @@ class GeocodingService(AsyncClientService):
 
         if self.client is None:
             logger.warning("Geocoding client unavailable; returning mock amenity list")
-            return self._mock_amenities()
+            return self._mock_amenities(latitude, longitude)
 
         # OneMap theme queries
         themes = {
@@ -194,17 +236,19 @@ class GeocodingService(AsyncClientService):
                     data = response.json()
                     if "SrchResults" in data and data["SrchResults"]:
                         for result in data["SrchResults"][1:]:  # Skip header row
+                            latlng = result.get("LatLng", "0,0").split(",")
+                            amenity_lat = float(latlng[0]) if len(latlng) > 0 else 0.0
+                            amenity_lon = float(latlng[1]) if len(latlng) > 1 else 0.0
                             distance = self._calculate_distance(
-                                latitude,
-                                longitude,
-                                float(result.get("LatLng", "0,0").split(",")[0]),
-                                float(result.get("LatLng", "0,0").split(",")[1]),
+                                latitude, longitude, amenity_lat, amenity_lon
                             )
                             if distance <= radius_m:
                                 amenities[amenity_type].append(
                                     {
                                         "name": result.get("NAME", "Unknown"),
-                                        "distance_m": distance,
+                                        "distance_m": round(distance),
+                                        "latitude": amenity_lat,
+                                        "longitude": amenity_lon,
                                     }
                                 )
             except Exception as e:
@@ -212,7 +256,7 @@ class GeocodingService(AsyncClientService):
 
         if any(amenities.values()):
             return amenities
-        return self._mock_amenities()
+        return self._mock_amenities(latitude, longitude)
 
     def _get_district_from_postal(self, postal_code: str) -> Optional[str]:
         """Map Singapore postal code to district."""

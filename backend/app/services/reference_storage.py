@@ -11,6 +11,8 @@ from pathlib import Path
 from dataclasses import dataclass
 from backend._compat.datetime import UTC
 
+from app.core.config import settings
+
 
 @dataclass(slots=True)
 class ReferenceStorageResult:
@@ -34,11 +36,13 @@ class ReferenceStorage:
     ) -> None:
         self.base_path = base_path or self._resolve_base_path()
         self.base_path.mkdir(parents=True, exist_ok=True)
-        self.bucket = (
-            bucket
-            if bucket is not None
-            else os.getenv("REF_STORAGE_BUCKET", os.getenv("STORAGE_BUCKET", ""))
-        )
+        if bucket is not None:
+            self.bucket = bucket
+        else:
+            env_bucket = os.getenv(
+                "REF_STORAGE_BUCKET", os.getenv("STORAGE_BUCKET", "")
+            )
+            self.bucket = env_bucket or settings.DOCUMENTS_BUCKET_NAME
         self.prefix = prefix.strip("/")
         self.endpoint_url = endpoint_url or os.getenv(
             "REF_STORAGE_ENDPOINT_URL", os.getenv("STORAGE_ENDPOINT_URL")

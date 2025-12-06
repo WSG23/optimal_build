@@ -47,6 +47,13 @@ repos:
       pass_filenames: false
       files: ^docs/.*\.md$
 
+    - id: check-ui-canon
+      name: UI canon enforcement (inline styles, hardcoded colors)
+      entry: python3 scripts/check_ui_canon.py
+      language: system
+      pass_filenames: false
+      files: ^frontend/src/.*\.(tsx|css)$
+
     - id: pip-audit
       name: Dependency vulnerability scan (pip-audit)
       # Ignored CVEs:

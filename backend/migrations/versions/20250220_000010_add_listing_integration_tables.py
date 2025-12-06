@@ -13,50 +13,18 @@ branch_labels = None
 depends_on = None
 
 
-LISTING_PROVIDER_ENUM = sa.Enum(
-    "propertyguru",
-    "edgeprop",
-    "zoho_crm",
-    name="listing_provider",
-    create_type=False,
-)
-
-ACCOUNT_STATUS_ENUM = sa.Enum(
-    "connected",
-    "disconnected",
-    "revoked",
-    name="listing_account_status",
-    create_type=False,
-)
-
-PUBLICATION_STATUS_ENUM = sa.Enum(
-    "draft",
-    "queued",
-    "published",
-    "failed",
-    "archived",
-    name="listing_publication_status",
-    create_type=False,
-)
-
-
 def upgrade() -> None:
-    # Recreate enums defensively so the migration is idempotent if partially applied.
+    # Create enums using raw SQL to avoid SQLAlchemy auto-creation issues
     op.execute(
         sa.text(
             """
             DO $$
             BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM pg_type t
-                    JOIN pg_namespace n ON n.oid = t.typnamespace
-                    WHERE t.typname = 'listing_provider'
-                      AND n.nspname = 'public'
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_type WHERE typname = 'listing_provider'
                 ) THEN
-                    DROP TYPE public.listing_provider CASCADE;
+                    CREATE TYPE public.listing_provider AS ENUM ('propertyguru', 'edgeprop', 'zoho_crm');
                 END IF;
-                CREATE TYPE public.listing_provider AS ENUM ('propertyguru', 'edgeprop', 'zoho_crm');
             END
             $$;
             """
@@ -67,16 +35,11 @@ def upgrade() -> None:
             """
             DO $$
             BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM pg_type t
-                    JOIN pg_namespace n ON n.oid = t.typnamespace
-                    WHERE t.typname = 'listing_account_status'
-                      AND n.nspname = 'public'
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_type WHERE typname = 'listing_account_status'
                 ) THEN
-                    DROP TYPE public.listing_account_status CASCADE;
+                    CREATE TYPE public.listing_account_status AS ENUM ('connected', 'disconnected', 'revoked');
                 END IF;
-                CREATE TYPE public.listing_account_status AS ENUM ('connected', 'disconnected', 'revoked');
             END
             $$;
             """
@@ -87,166 +50,90 @@ def upgrade() -> None:
             """
             DO $$
             BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM pg_type t
-                    JOIN pg_namespace n ON n.oid = t.typnamespace
-                    WHERE t.typname = 'listing_publication_status'
-                      AND n.nspname = 'public'
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_type WHERE typname = 'listing_publication_status'
                 ) THEN
-                    DROP TYPE public.listing_publication_status CASCADE;
+                    CREATE TYPE public.listing_publication_status AS ENUM (
+                        'draft', 'queued', 'published', 'failed', 'archived'
+                    );
                 END IF;
-                CREATE TYPE public.listing_publication_status AS ENUM (
-                    'draft', 'queued', 'published', 'failed', 'archived'
-                );
             END
             $$;
             """
         )
     )
 
-    op.create_table(
-        "listing_integration_accounts",
-        sa.Column(
-            "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
-            primary_key=True,
-        ),
-        sa.Column(
-            "user_id",
-            postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("users.id", ondelete="CASCADE"),
-            nullable=False,
-            index=True,
-        ),
-        sa.Column("provider", LISTING_PROVIDER_ENUM, nullable=False),
-        sa.Column(
-            "status",
-            ACCOUNT_STATUS_ENUM,
-            nullable=False,
-            server_default="connected",
-        ),
-        sa.Column("access_token", sa.Text(), nullable=True),
-        sa.Column("refresh_token", sa.Text(), nullable=True),
-        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "metadata",
-            sa.JSON(),
-            nullable=False,
-            server_default=sa.text("'{}'::jsonb"),
-        ),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-        ),
-        sa.UniqueConstraint(
-            "user_id", "provider", name="uq_listing_account_user_provider"
-        ),
+    # Create tables using raw SQL (separate statements for asyncpg)
+    op.execute(
+        sa.text(
+            """
+            CREATE TABLE listing_integration_accounts (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                provider listing_provider NOT NULL,
+                status listing_account_status NOT NULL DEFAULT 'connected',
+                access_token TEXT,
+                refresh_token TEXT,
+                expires_at TIMESTAMP WITH TIME ZONE,
+                metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                CONSTRAINT uq_listing_account_user_provider UNIQUE (user_id, provider)
+            )
+            """
+        )
     )
-    op.create_index(
-        "ix_listing_accounts_provider_status",
-        "listing_integration_accounts",
-        ["provider", "status"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_listing_accounts_user_id ON listing_integration_accounts(user_id)"
+        )
+    )
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_listing_accounts_provider_status ON listing_integration_accounts(provider, status)"
+        )
     )
 
-    op.create_table(
-        "listing_publications",
-        sa.Column(
-            "id",
-            postgresql.UUID(as_uuid=True),
-            server_default=sa.text("gen_random_uuid()"),
-            primary_key=True,
-        ),
-        sa.Column(
-            "property_id",
-            postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("properties.id", ondelete="CASCADE"),
-            nullable=False,
-            index=True,
-        ),
-        sa.Column(
-            "account_id",
-            postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("listing_integration_accounts.id", ondelete="CASCADE"),
-            nullable=False,
-        ),
-        sa.Column("provider_listing_id", sa.String(length=128), nullable=True),
-        sa.Column(
-            "status",
-            PUBLICATION_STATUS_ENUM,
-            nullable=False,
-            server_default="draft",
-        ),
-        sa.Column("last_error", sa.Text(), nullable=True),
-        sa.Column(
-            "payload",
-            sa.JSON(),
-            nullable=False,
-            server_default=sa.text("'{}'::jsonb"),
-        ),
-        sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("last_synced_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-        ),
-        sa.UniqueConstraint(
-            "account_id",
-            "provider_listing_id",
-            name="uq_listing_publication_provider_ref",
-        ),
+    op.execute(
+        sa.text(
+            """
+            CREATE TABLE listing_publications (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+                account_id UUID NOT NULL REFERENCES listing_integration_accounts(id) ON DELETE CASCADE,
+                provider_listing_id VARCHAR(128),
+                status listing_publication_status NOT NULL DEFAULT 'draft',
+                last_error TEXT,
+                payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+                published_at TIMESTAMP WITH TIME ZONE,
+                last_synced_at TIMESTAMP WITH TIME ZONE,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                CONSTRAINT uq_listing_publication_provider_ref UNIQUE (account_id, provider_listing_id)
+            )
+            """
+        )
     )
-    op.create_index(
-        "ix_listing_publications_status",
-        "listing_publications",
-        ["status"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_listing_publications_property_id ON listing_publications(property_id)"
+        )
     )
-    op.create_index(
-        "ix_listing_publications_account_id",
-        "listing_publications",
-        ["account_id"],
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_listing_publications_account_id ON listing_publications(account_id)"
+        )
+    )
+    op.execute(
+        sa.text(
+            "CREATE INDEX ix_listing_publications_status ON listing_publications(status)"
+        )
     )
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_listing_publications_status",
-        table_name="listing_publications",
-        if_exists=True,
-    )
-    op.drop_index(
-        "ix_listing_publications_account_id",
-        table_name="listing_publications",
-        if_exists=True,
-    )
-    op.drop_table("listing_publications", if_exists=True)
-
-    op.drop_index(
-        "ix_listing_accounts_provider_status",
-        table_name="listing_integration_accounts",
-        if_exists=True,
-    )
-    op.drop_table("listing_integration_accounts", if_exists=True)
-
-    PUBLICATION_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)
-    ACCOUNT_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)
-    LISTING_PROVIDER_ENUM.drop(op.get_bind(), checkfirst=True)
+    op.execute(sa.text("DROP TABLE IF EXISTS listing_publications CASCADE"))
+    op.execute(sa.text("DROP TABLE IF EXISTS listing_integration_accounts CASCADE"))
+    op.execute(sa.text("DROP TYPE IF EXISTS listing_publication_status CASCADE"))
+    op.execute(sa.text("DROP TYPE IF EXISTS listing_account_status CASCADE"))
+    op.execute(sa.text("DROP TYPE IF EXISTS listing_provider CASCADE"))

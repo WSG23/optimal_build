@@ -89,10 +89,10 @@ async def process_finance_sensitivity_job(
     context: Mapping[str, Any],
     session: AsyncSession | None = None,
 ) -> dict[str, Any]:
-    from app.api.v1.finance import (
-        _build_construction_interest_schedule,
-        _decimal_from_value,
-        _evaluate_sensitivity_bands,
+    from app.api.v1.finance_common import decimal_from_value
+    from app.api.v1.finance_export import (
+        build_construction_interest_schedule,
+        evaluate_sensitivity_bands,
     )
     from app.schemas.finance import (
         FinanceSensitivityOutcomeSchema,
@@ -157,10 +157,10 @@ async def process_finance_sensitivity_job(
                 drawdown_inputs.append(
                     {
                         "period": str(entry.get("period", "")),
-                        "equity_draw": _decimal_from_value(
+                        "equity_draw": decimal_from_value(
                             entry.get("equity_draw", "0")
                         ),
-                        "debt_draw": _decimal_from_value(entry.get("debt_draw", "0")),
+                        "debt_draw": decimal_from_value(entry.get("debt_draw", "0")),
                     }
                 )
             if drawdown_inputs:
@@ -180,7 +180,7 @@ async def process_finance_sensitivity_job(
 
         base_interest_schedule = None
         if schedule_summary is not None:
-            base_interest_schedule, _ = _build_construction_interest_schedule(
+            base_interest_schedule, _ = build_construction_interest_schedule(
                 schedule_summary,
                 currency=schedule_summary.currency,
                 base_interest_rate=base_interest_rate,
@@ -198,7 +198,7 @@ async def process_finance_sensitivity_job(
         except ValueError:
             base_irr = None
         interest_total = (
-            _decimal_from_value(base_interest_schedule.total_interest)
+            decimal_from_value(base_interest_schedule.total_interest)
             if (
                 base_interest_schedule
                 and base_interest_schedule.total_interest is not None
@@ -206,7 +206,7 @@ async def process_finance_sensitivity_job(
             else None
         )
 
-        sensitivity_results, sensitivity_metadata = _evaluate_sensitivity_bands(
+        sensitivity_results, sensitivity_metadata = evaluate_sensitivity_bands(
             band_inputs,
             base_npv=base_npv,
             base_irr=base_irr,

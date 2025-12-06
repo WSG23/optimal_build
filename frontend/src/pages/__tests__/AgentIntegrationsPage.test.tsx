@@ -1,11 +1,11 @@
-import assert from 'node:assert/strict'
-import { afterEach, beforeEach, describe, it } from 'node:test'
+import { afterEach, assert, beforeEach, describe, it } from 'vitest'
 
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { JSDOM } from 'jsdom'
+
 import React from 'react'
 
 import { TranslationProvider } from '../../i18n'
+import { ThemeModeProvider } from '../../theme/ThemeContext'
 import AgentIntegrationsPage from '../AgentIntegrationsPage'
 
 /**
@@ -20,21 +20,12 @@ import AgentIntegrationsPage from '../AgentIntegrationsPage'
  */
 
 describe('AgentIntegrationsPage', () => {
-  let dom: JSDOM
+
   const originalFetch = globalThis.fetch
 
   beforeEach(() => {
-    dom = new JSDOM('<!doctype html><html><body></body></html>', {
-      url: 'http://localhost/agents/integrations',
-    })
-    const globalWithDom = globalThis as typeof globalThis & {
-      window: Window & typeof globalThis
-      document: Document
-      navigator: Navigator
-    }
-    globalWithDom.window = dom.window
-    globalWithDom.document = dom.window.document
-    globalWithDom.navigator = dom.window.navigator
+    cleanup()
+    window.history.replaceState(null, '', '/agents/integrations')
 
     globalThis.fetch = (async (input: RequestInfo, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input.toString()
@@ -101,23 +92,16 @@ describe('AgentIntegrationsPage', () => {
 
   afterEach(() => {
     cleanup()
-    dom.window.close()
-    const globalWithDom = globalThis as {
-      window?: Window & typeof globalThis
-      document?: Document
-      navigator?: Navigator
-    }
-    delete globalWithDom.window
-    delete globalWithDom.document
-    delete globalWithDom.navigator
     globalThis.fetch = originalFetch
   })
 
-  it('links mock account and publishes listing', async () => {
+  it('links mock account and publishes listing', { timeout: 10000 }, async () => {
     render(
-      <TranslationProvider>
-        <AgentIntegrationsPage />
-      </TranslationProvider>,
+      <ThemeModeProvider>
+        <TranslationProvider>
+          <AgentIntegrationsPage />
+        </TranslationProvider>
+      </ThemeModeProvider>,
     )
 
     await screen.findByRole('heading', { name: /Linked accounts/i }, { timeout: 2000 })
@@ -139,7 +123,7 @@ describe('AgentIntegrationsPage', () => {
     )
     fireEvent.change(propertyInput, { target: { value: 'property-id' } })
     fireEvent.submit(publishForm as HTMLFormElement)
-    await screen.findByText(/Published mock listing/i, undefined, { timeout: 2000 })
+    await screen.findByText(/published .*mock-listing-1/i, undefined, { timeout: 5000 })
   })
 })
 

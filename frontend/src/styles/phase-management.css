@@ -1,0 +1,14 @@
+/* styles/phase-management.css
+   Phase Management page styles.
+*/
+
+.phase-management-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-spacing-500);
+    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: var(--ob-font-family-base);
+    color: var(--ob-color-text-primary);
+}

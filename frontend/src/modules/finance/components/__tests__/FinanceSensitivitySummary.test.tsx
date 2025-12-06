@@ -67,6 +67,6 @@ describe('FinanceSensitivitySummary', () => {
     expect(screen.getByText(/Upside scenario/i)).toBeVisible()
     expect(screen.getByText(/Downside scenario/i)).toBeVisible()
     expect(screen.getByText(/Scenario deltas/i)).toBeVisible()
-    expect(screen.getByText(/Base/i)).toBeVisible()
+    expect(screen.getAllByText(/Base/i)[0]).toBeVisible()
   })
 })

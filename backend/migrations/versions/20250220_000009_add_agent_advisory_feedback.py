@@ -2,6 +2,7 @@
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -14,9 +15,14 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "agent_advisory_feedback",
-        sa.Column("id", sa.String(length=36), primary_key=True),
-        sa.Column("property_id", sa.String(length=36), nullable=False, index=True),
-        sa.Column("submitted_by", sa.String(length=36), nullable=True),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
+        sa.Column("property_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("submitted_by", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("channel", sa.String(length=32), nullable=True),
         sa.Column("sentiment", sa.String(length=16), nullable=False),
         sa.Column("notes", sa.Text(), nullable=False),

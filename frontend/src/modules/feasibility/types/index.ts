@@ -40,7 +40,10 @@ export type WizardStatus =
   | 'error'
 
 export type PendingPayload = {
+  name: string
   address: string
+  siteAreaSqm: number
+  landUse: string
   typFloorToFloorM: number
   efficiencyRatio: number
 }

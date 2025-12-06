@@ -103,13 +103,13 @@ describe('FinanceScenarioTable', () => {
     expect(firstCells[0].textContent).toContain('SGD')
     expect(firstCells[1].textContent).toContain('SGD')
     expect(firstCells[2].textContent).toContain('%')
-    expect(firstCells[firstCells.length - 1].textContent).not.toEqual('')
+    expect(firstCells[firstCells.length - 2].textContent).not.toEqual('')
 
     const secondCells = within(rows[2]).getAllByRole('cell')
     expect(secondCells[0].textContent).toContain('SGD')
     expect(secondCells[1].textContent).toContain('SGD')
     expect(secondCells[2].textContent).toContain('%')
-    expect(secondCells[secondCells.length - 1].textContent).not.toEqual('')
+    expect(secondCells[secondCells.length - 2].textContent).not.toEqual('')
   })
 
   it('allows marking a scenario as primary', () => {
@@ -130,7 +130,7 @@ describe('FinanceScenarioTable', () => {
     )
 
     expect(
-      screen.getByText(i18n.t('finance.table.badges.primary')),
+      screen.getAllByText(i18n.t('finance.table.badges.primary'))[0],
     ).toBeVisible()
 
     const button = screen.getByRole('button', {

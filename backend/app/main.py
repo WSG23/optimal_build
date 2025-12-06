@@ -120,7 +120,31 @@ app.add_middleware(RequestSizeLimitMiddleware, max_size_bytes=10 * 1024 * 1024)
 # Correlation ID for request tracing (outermost for full coverage)
 app.add_middleware(CorrelationIdMiddleware)
 
-limiter = Limiter(key_func=get_remote_address, default_limits=[settings.API_RATE_LIMIT])
+
+def _build_rate_limiter() -> Limiter:
+    """Construct the rate limiter using Redis storage when available."""
+
+    try:
+        limiter_instance = Limiter(
+            key_func=get_remote_address,
+            default_limits=[settings.API_RATE_LIMIT],
+            storage_uri=settings.RATE_LIMIT_STORAGE_URI,
+        )
+        return limiter_instance
+    except Exception as exc:  # pragma: no cover - fallback for misconfigured Redis
+        log_event(
+            logger,
+            "rate_limiter_fallback_to_memory",
+            storage_uri=settings.RATE_LIMIT_STORAGE_URI,
+            error=str(exc),
+        )
+        return Limiter(
+            key_func=get_remote_address,
+            default_limits=[settings.API_RATE_LIMIT],
+        )
+
+
+limiter = _build_rate_limiter()
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 

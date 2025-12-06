@@ -1,0 +1,42 @@
+# UI Canon Exceptions
+# Files listed here are allowed to have inline styles or hardcoded colors temporarily.
+# Each exception must have a reason and a cleanup plan.
+
+exceptions:
+  # Pages with extensive inline styles - migration planned
+  inline_styles:
+    - path: frontend/src/app/pages/advisory/AdvisoryPage.tsx
+      reason: "Legacy page with inline styles"
+      cleanup: "Migrate to page-layout.css classes"
+
+    - path: frontend/src/app/pages/site-acquisition/SiteAcquisitionPage.tsx
+      reason: "Legacy page with inline styles"
+      cleanup: "Migrate to page-layout.css classes"
+
+    - path: frontend/src/pages/visualizations/EngineeringLayersPanel.tsx
+      reason: "New component, needs CSS file"
+      cleanup: "Create engineering-layers.css"
+
+    - path: frontend/src/pages/feasibility/ClashImpactBoard.tsx
+      reason: "New component, needs CSS file"
+      cleanup: "Create clash-impact.css"
+
+    - path: frontend/src/app/pages/phase-management/
+      reason: "New feature, needs CSS migration"
+      cleanup: "Create phase-management.css"
+
+  # Files with hardcoded colors that need migration
+  hardcoded_colors:
+    - path: frontend/src/modules/finance/
+      reason: "Finance module uses MUI theme colors"
+      cleanup: "Migrate to CSS variables where MUI doesn't apply"
+
+    - path: frontend/src/modules/feasibility/
+      reason: "Feasibility module uses mixed patterns"
+      cleanup: "Standardize on CSS variables"
+
+# When all exceptions are resolved, set enforce: true to fail builds on violations
+enforce: false
+
+# Last audit date
+last_audit: "2025-12-06"

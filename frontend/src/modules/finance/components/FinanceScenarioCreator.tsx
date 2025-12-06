@@ -1,4 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+
 
 import {
   runFinanceFeasibility,
@@ -140,6 +142,30 @@ export function FinanceScenarioCreator({
     return assets.reduce((acc, asset) => acc + Number(asset.allocationPct || 0), 0)
   }, [assets])
 
+  const chartData = useMemo(() => {
+    const data = assets
+      .filter(a => Number(a.allocationPct) > 0)
+      .map((asset, index) => ({
+        name: asset.assetType || `Asset ${index + 1}`,
+        value: Number(asset.allocationPct),
+        color: index % 2 === 0 ? 'var(--ob-color-brand-primary)' : 'var(--ob-color-brand-primary-emphasis)' // Basic alternation
+      }))
+
+    const allocated = data.reduce((acc, item) => acc + item.value, 0)
+    const unallocated = Math.max(0, 100 - allocated)
+
+    if (unallocated > 0) {
+        data.push({
+            name: 'Unallocated',
+            value: unallocated,
+            color: 'var(--ob-color-warning-soft)' // Use warning color/soft
+        })
+    }
+    return data
+  }, [assets])
+
+  const unallocated = Math.max(0, 100 - totalAllocation)
+
   const handleAssetChange = (
     id: string,
     key: keyof AssetFormRow,
@@ -234,11 +260,43 @@ export function FinanceScenarioCreator({
           <p>{t('finance.scenarioCreator.description')}</p>
         </div>
         <div className="finance-scenario-creator__metrics">
-          <span>
-            {t('finance.scenarioCreator.allocationTotal', {
-              value: totalAllocation.toFixed(1),
-            })}
-          </span>
+          <div className="finance-scenario-creator__chart-container">
+            <div style={{ width: 120, height: 120 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={chartData}
+                            dataKey="value"
+                            innerRadius={40}
+                            outerRadius={60}
+                            paddingAngle={2}
+                            stroke="none"
+                        >
+                            {chartData.map((entry) => (
+                                <Cell key={entry.name} fill={entry.color} />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            formatter={(value: number) => `${value.toFixed(1)}%`}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                        />
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+            <div className="finance-scenario-creator__chart-legend">
+                 <div className="finance-scenario-creator__total-allocation">
+                    {t('finance.scenarioCreator.allocationTotal', {
+                        value: totalAllocation.toFixed(1),
+                    })}
+                 </div>
+                 {unallocated > 0 && (
+                     <div className="finance-scenario-creator__chart-legend-item" style={{ color: 'var(--ob-color-warning-strong)' }}>
+                        <span className="finance-scenario-creator__legend-color" style={{ background: 'var(--ob-color-warning-strong)' }} />
+                        {t('finance.scenarioCreator.unallocated', { defaultValue: 'Unallocated' })} {unallocated.toFixed(1)}%
+                     </div>
+                 )}
+            </div>
+          </div>
         </div>
       </header>
       <form className="finance-scenario-creator__form" onSubmit={handleSubmit}>
@@ -270,14 +328,14 @@ export function FinanceScenarioCreator({
             <thead>
               <tr>
                 <th>{t('finance.scenarioCreator.assets.headers.assetType')}</th>
-                <th>{t('finance.scenarioCreator.fields.allocation')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.nia')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.rent')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.vacancy')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.opex')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.revenue')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.capex')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.absorption')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.fields.allocation')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.assets.headers.nia')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.assets.headers.rent')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.assets.headers.vacancy')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.assets.headers.opex')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.assets.headers.revenue')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.assets.headers.capex')}</th>
+                <th className="numeric">{t('finance.scenarioCreator.assets.headers.absorption')}</th>
                 <th>{t('finance.scenarioCreator.assets.headers.risk')}</th>
                 <th>{t('finance.scenarioCreator.assets.headers.notes')}</th>
                 <th aria-hidden />
@@ -296,7 +354,7 @@ export function FinanceScenarioCreator({
                       placeholder="office"
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.1"
@@ -306,7 +364,7 @@ export function FinanceScenarioCreator({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.01"
@@ -316,7 +374,7 @@ export function FinanceScenarioCreator({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.01"
@@ -326,7 +384,7 @@ export function FinanceScenarioCreator({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.1"
@@ -336,7 +394,7 @@ export function FinanceScenarioCreator({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.1"
@@ -346,7 +404,7 @@ export function FinanceScenarioCreator({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.01"
@@ -356,7 +414,7 @@ export function FinanceScenarioCreator({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.01"
@@ -366,7 +424,7 @@ export function FinanceScenarioCreator({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="numeric">
                     <input
                       type="number"
                       step="0.1"

@@ -31,7 +31,8 @@ const getInitialPath = () => {
   if (typeof window === 'undefined') {
     return '/'
   }
-  return window.location.pathname || '/'
+  const p = window.location.pathname || '/'
+  return p.endsWith('/') && p !== '/' ? p.slice(0, -1) : p
 }
 
 const getInitialSearch = () => {
@@ -98,7 +99,8 @@ export function RouterProvider({ router }: RouterProviderProps) {
     }
 
     const handlePopState = () => {
-      setPath(window.location.pathname || '/')
+      const p = window.location.pathname || '/'
+      setPath(p.endsWith('/') && p !== '/' ? p.slice(0, -1) : p)
       setSearch(window.location.search || '')
     }
 
@@ -147,6 +149,17 @@ export function RouterProvider({ router }: RouterProviderProps) {
     }
 
     return routes.find((route) => route.path === '/')?.element ?? null
+  }, [path, routes])
+
+  // Debug log for routing
+  useEffect(() => {
+    console.log('[Router] Current path:', path)
+    const exactMatch = routes.find((route) => route.path === path)
+    if (exactMatch) {
+      console.log('[Router] Exact match found for:', path)
+    } else {
+      console.log('[Router] No exact match. Checking params or fallback.')
+    }
   }, [path, routes])
 
   const contextValue = useMemo<RouterContextValue>(

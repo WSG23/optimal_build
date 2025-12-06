@@ -10,20 +10,20 @@
 .int-page {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
 }
 
 .mkt-card,
 .adv-card,
 .int-card {
-    background: rgba(248, 250, 252, 0.95);
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    border-radius: 1.2rem;
-    padding: 1.75rem;
+    background: rgb(var(--ob-color-surface-alt-rgb) / 0.95);
+    border: 1px solid rgb(var(--ob-color-border-neutral-rgb) / 0.3);
+    border-radius: var(--ob-radius-xl);
+    padding: var(--ob-space-175);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    color: #1f2937;
+    gap: var(--ob-space-100);
+    color: var(--ob-color-surface-inverse);
 }
 
 .mkt-card ul,
@@ -31,13 +31,13 @@
 .int-card ul {
     margin: 0;
     padding-left: 1.1rem;
-    color: #475569;
+    color: var(--ob-color-text-muted);
 }
 
 .mkt-card code,
 .adv-card code,
 .int-card code {
-    background: rgba(226, 232, 240, 0.4);
+    background: rgb(var(--ob-color-border-neutral-rgb) / 0.4);
     padding: 0.1rem 0.4rem;
     border-radius: 0.4rem;
     font-family: 'JetBrains Mono', monospace;
@@ -53,13 +53,13 @@
 
 .mkt-card__timestamp {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--ob-color-text-muted);
 }
 
 .mkt-generator {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.25rem;
+    gap: var(--ob-space-125);
 }
 
 .mkt-form {
@@ -71,17 +71,17 @@
 .mkt-form label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--ob-color-text-muted);
 }
 
 .mkt-form input,
 .mkt-form select,
 .mkt-notes textarea {
-    border-radius: 0.65rem;
-    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: var(--ob-radius-sm);
+    border: 1px solid rgb(var(--ob-color-border-neutral-rgb) / 0.35);
     padding: 0.55rem 0.75rem;
     font-size: 0.9rem;
-    background: #ffffff;
+    background: var(--ob-color-surface-default);
 }
 
 .mkt-modules ul {
@@ -92,7 +92,7 @@
     flex-direction: column;
     gap: 0.45rem;
     font-size: 0.85rem;
-    color: #334155;
+    color: var(--ob-color-text-muted);
 }
 
 .mkt-notes textarea {
@@ -108,10 +108,10 @@
 
 .mkt-actions button {
     padding: 0.75rem 1.4rem;
-    border-radius: 0.8rem;
+    border-radius: var(--ob-radius-md);
     border: none;
-    background: linear-gradient(135deg, #4c1d95, #6d28d9);
-    color: #f8fafc;
+    background: var(--ob-color-brand-primary);
+    color: var(--ob-color-text-inverse);
     font-weight: 600;
     cursor: pointer;
     transition:
@@ -126,16 +126,16 @@
 
 .mkt-actions button:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 12px 20px rgba(76, 29, 149, 0.25);
+    box-shadow: 0 12px 20px rgb(var(--ob-color-brand-primary-rgb) / 0.25);
 }
 
 .mkt-error {
-    color: #b91c1c;
+    color: var(--ob-color-status-error-text);
     font-size: 0.85rem;
 }
 
 .mkt-warning {
-    color: #92400e;
+    color: var(--ob-color-status-warning-text);
     font-size: 0.85rem;
 }
 
@@ -148,7 +148,7 @@
 .mkt-table th,
 .mkt-table td {
     padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    border-bottom: 1px solid rgb(var(--ob-color-border-neutral-rgb) / 0.6);
     text-align: left;
 }
 
@@ -156,8 +156,8 @@
     display: inline-block;
     padding: 0.25rem 0.6rem;
     border-radius: 999px;
-    background: rgba(129, 140, 248, 0.18);
-    color: #312e81;
+    background: rgb(var(--ob-color-brand-primary-rgb) / 0.18);
+    color: var(--ob-color-brand-primary-emphasis);
     text-transform: uppercase;
     font-size: 0.7rem;
     letter-spacing: 0.08rem;
@@ -167,8 +167,8 @@
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    background: rgba(17, 24, 39, 0.92);
-    color: #f8fafc;
+    background: rgb(var(--ob-color-surface-inverse-rgb) / 0.92);
+    color: var(--ob-color-text-inverse);
     padding: 0.85rem 1.1rem;
     border-radius: 0.9rem;
     box-shadow: 0 18px 32px rgba(15, 23, 42, 0.35);

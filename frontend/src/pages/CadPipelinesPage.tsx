@@ -192,67 +192,69 @@ export function CadPipelinesPage() {
 
   return (
     <AppLayout title={t('pipelines.title')} subtitle={t('pipelines.subtitle')}>
-      <div className="cad-pipelines__toolbar">
-        <label htmlFor={projectIdInputId}>
-          <span>{t('pipelines.projectLabel')}</span>
-          <input
-            id={projectIdInputId}
-            type="number"
-            min={1}
-            value={projectId}
-            onChange={(event) => {
-              setProjectId(Number(event.target.value) || DEFAULT_PROJECT_ID)
-            }}
-          />
-        </label>
-        {overlayCodes.length > 0 && (
-          <p className="cad-pipelines__context">
-            {t('detection.overlays')}: {overlayCodes.join(', ')}
-          </p>
-        )}
+      <div className="cad-pipelines-page">
+        <div className="cad-pipelines__toolbar">
+          <label htmlFor={projectIdInputId}>
+            <span>{t('pipelines.projectLabel')}</span>
+            <input
+              id={projectIdInputId}
+              type="number"
+              min={1}
+              value={projectId}
+              onChange={(event) => {
+                setProjectId(Number(event.target.value) || DEFAULT_PROJECT_ID)
+              }}
+            />
+          </label>
+          {overlayCodes.length > 0 && (
+            <p className="cad-pipelines__context">
+              {t('detection.overlays')}: {overlayCodes.join(', ')}
+            </p>
+          )}
+        </div>
+
+        {error && <p className="cad-pipelines__error">{error}</p>}
+
+        <section className="cad-pipelines">
+          <h2>{t('pipelines.suggestionHeading')}</h2>
+          {loading && <p>{t('common.loading')}</p>}
+          {!loading && suggestions.length === 0 && (
+            <p>{t('panels.rulePackEmpty')}</p>
+          )}
+          {!loading && suggestions.length > 0 && (
+            <ul>
+              {suggestions.map((suggestion) => (
+                <li key={suggestion.id} className="cad-pipelines__item">
+                  <h3>{suggestion.title}</h3>
+                  <p>{suggestion.description}</p>
+                  <dl>
+                    <div>
+                      <dt>{t('pipelines.pipelineFocus')}</dt>
+                      <dd>{suggestion.focus}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('pipelines.automationScore')}</dt>
+                      <dd>{Math.round(suggestion.automationScore * 100)}%</dd>
+                    </div>
+                    <div>
+                      <dt>{t('pipelines.reviewHours')}</dt>
+                      <dd>{suggestion.reviewHoursSaved}h</dd>
+                    </div>
+                    <div>
+                      <dt>{t('pipelines.savings')}</dt>
+                      <dd>{suggestion.estimatedSavingsPercent}%</dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <RoiSummary metrics={roiMetrics} />
+
+        <RulePackExplanationPanel rules={rules} loading={rulesLoading} />
       </div>
-
-      {error && <p className="cad-pipelines__error">{error}</p>}
-
-      <section className="cad-pipelines">
-        <h2>{t('pipelines.suggestionHeading')}</h2>
-        {loading && <p>{t('common.loading')}</p>}
-        {!loading && suggestions.length === 0 && (
-          <p>{t('panels.rulePackEmpty')}</p>
-        )}
-        {!loading && suggestions.length > 0 && (
-          <ul>
-            {suggestions.map((suggestion) => (
-              <li key={suggestion.id} className="cad-pipelines__item">
-                <h3>{suggestion.title}</h3>
-                <p>{suggestion.description}</p>
-                <dl>
-                  <div>
-                    <dt>{t('pipelines.pipelineFocus')}</dt>
-                    <dd>{suggestion.focus}</dd>
-                  </div>
-                  <div>
-                    <dt>{t('pipelines.automationScore')}</dt>
-                    <dd>{Math.round(suggestion.automationScore * 100)}%</dd>
-                  </div>
-                  <div>
-                    <dt>{t('pipelines.reviewHours')}</dt>
-                    <dd>{suggestion.reviewHoursSaved}h</dd>
-                  </div>
-                  <div>
-                    <dt>{t('pipelines.savings')}</dt>
-                    <dd>{suggestion.estimatedSavingsPercent}%</dd>
-                  </div>
-                </dl>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <RoiSummary metrics={roiMetrics} />
-
-      <RulePackExplanationPanel rules={rules} loading={rulesLoading} />
     </AppLayout>
   )
 }

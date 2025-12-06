@@ -10,7 +10,7 @@ import AgentsGpsCapturePage from './pages/AgentsGpsCapturePage'
 import { FeasibilityWizard } from './modules/feasibility/FeasibilityWizard'
 import { FinanceWorkspace } from './modules/finance'
 import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligence'
-import { YosaiThemeProvider } from './theme/YosaiThemeProvider'
+import { AppThemeProvider } from './theme/YosaiThemeProvider'
 import '@ob/tokens.css'
 import './styles/index.css'
 import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
@@ -25,6 +25,7 @@ import { IntegrationsPage } from './app/pages/integrations/IntegrationsPage'
 import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitionPage'
 import { ChecklistTemplateManager } from './app/pages/site-acquisition/ChecklistTemplateManager'
 import { DeveloperPreviewStandalone } from './app/pages/site-acquisition/DeveloperPreviewStandalone'
+import { PhaseManagementPage } from './app/pages/phase-management'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -122,13 +123,15 @@ const developerFeasibilityElement = (
   </AppShell>
 )
 
-const financialControlElement = (
+const financialControlElement = <FinanceWorkspace />
+
+const phaseManagementElement = (
   <AppShell
-    activeItem="financialControl"
-    title="Financial control"
-    description="Development economics and financing architecture."
+    activeItem="phaseManagement"
+    title="Phase management"
+    description="Multi-phase development scheduling, heritage tracking, and tenant coordination."
   >
-    <FinanceWorkspace />
+    <PhaseManagementPage />
   </AppShell>
 )
 
@@ -214,6 +217,14 @@ const router = createBrowserRouter([
     element: financialControlElement,
   },
   {
+    path: '/app/phase-management',
+    element: phaseManagementElement,
+  },
+  {
+    path: '/developers/phase-management',
+    element: phaseManagementElement,
+  },
+  {
     path: '/legacy/home',
     element: <HomeOverview />,
   },
@@ -230,8 +241,28 @@ const router = createBrowserRouter([
     element: <CadPipelinesPage />,
   },
   {
+    path: '/cad/pipelines',
+    element: <CadPipelinesPage />,
+  },
+  {
+    path: '/cad/upload',
+    element: <CadUploadPage />,
+  },
+  {
+    path: '/cad/detection',
+    element: <CadDetectionPage />,
+  },
+  {
     path: '/legacy/feasibility',
     element: developerFeasibilityElement,
+  },
+  {
+    path: '/feasibility',
+    element: developerFeasibilityElement,
+  },
+  {
+    path: '/finance',
+    element: financialControlElement,
   },
   {
     path: '/legacy/finance',
@@ -254,6 +285,10 @@ const router = createBrowserRouter([
     element: <AgentPerformancePage />,
   },
   {
+    path: '/visualizations/intelligence',
+    element: <AdvancedIntelligencePage />,
+  },
+  {
     path: '/legacy/visualizations/intelligence',
     element: <AdvancedIntelligencePage />,
   },
@@ -268,9 +303,9 @@ if (!container) {
 ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <TranslationProvider>
-      <YosaiThemeProvider>
+      <AppThemeProvider>
         <RouterProvider router={router} />
-      </YosaiThemeProvider>
+      </AppThemeProvider>
     </TranslationProvider>
   </React.StrictMode>,
 )

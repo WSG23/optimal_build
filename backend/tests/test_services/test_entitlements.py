@@ -676,20 +676,8 @@ async def test_create_roadmap_item_at_end(db_session: AsyncSession):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(
-    reason="Known issue: _reindex causes unique constraint violation during flush. "
-    "Service needs to handle reindexing with temporary sequence values or deferred constraints."
-)
 async def test_create_roadmap_item_at_beginning(db_session: AsyncSession):
-    """Test create_roadmap_item inserts at beginning and reindexes.
-
-    NOTE: This test currently fails due to unique constraint violation on
-    (project_id, sequence_order) when _reindex tries to update multiple items
-    simultaneously. The service would need to use a different strategy like:
-    1. Update to temporary negative sequence values first
-    2. Use deferred constraints
-    3. Delete and recreate items
-    """
+    """Test create_roadmap_item inserts at beginning and reindexes."""
     project_id = 1
 
     # Create existing items
@@ -727,15 +715,8 @@ async def test_create_roadmap_item_at_beginning(db_session: AsyncSession):
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(
-    reason="Known issue: _reindex causes unique constraint violation during flush. "
-    "Service needs to handle reindexing with temporary sequence values or deferred constraints."
-)
 async def test_create_roadmap_item_in_middle(db_session: AsyncSession):
-    """Test create_roadmap_item inserts in middle and reindexes.
-
-    NOTE: Same issue as test_create_roadmap_item_at_beginning.
-    """
+    """Test create_roadmap_item inserts in middle and reindexes."""
     project_id = 1
 
     # Create existing items
@@ -898,15 +879,8 @@ async def test_update_roadmap_item_same_status_preserves_timestamp(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(
-    reason="Known issue: _reindex causes unique constraint violation during flush. "
-    "Service needs to handle reindexing with temporary sequence values or deferred constraints."
-)
 async def test_update_roadmap_item_reorder_to_beginning(db_session: AsyncSession):
-    """Test update_roadmap_item reorders item to beginning.
-
-    NOTE: Same issue as test_create_roadmap_item_at_beginning.
-    """
+    """Test update_roadmap_item reorders item to beginning."""
     project_id = 1
 
     # Create items in order
@@ -938,15 +912,8 @@ async def test_update_roadmap_item_reorder_to_beginning(db_session: AsyncSession
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(
-    reason="Known issue: _reindex causes unique constraint violation during flush. "
-    "Service needs to handle reindexing with temporary sequence values or deferred constraints."
-)
 async def test_update_roadmap_item_reorder_to_end(db_session: AsyncSession):
-    """Test update_roadmap_item reorders item to end.
-
-    NOTE: Same issue as test_create_roadmap_item_at_beginning.
-    """
+    """Test update_roadmap_item reorders item to end."""
     project_id = 1
 
     # Create items

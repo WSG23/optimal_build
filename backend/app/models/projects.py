@@ -195,9 +195,25 @@ class Project(BaseModel):
     # Relationships
     properties = relationship(
         "SingaporeProperty", back_populates="project"
-    )  # One project can have multiple properties
+    )  # One project can have multiple properties (Singapore)
+    hk_properties = relationship(
+        "HongKongProperty", back_populates="project"
+    )  # One project can have multiple properties (Hong Kong)
+    nz_properties = relationship(
+        "NewZealandProperty", back_populates="project"
+    )  # One project can have multiple properties (New Zealand)
+    seattle_properties = relationship(
+        "SeattleProperty", back_populates="project"
+    )  # One project can have multiple properties (Seattle)
+    toronto_properties = relationship(
+        "TorontoProperty", back_populates="project"
+    )  # One project can have multiple properties (Toronto)
     owner = relationship("User", back_populates="projects")
     ai_sessions = relationship("AIAgentSession", back_populates="project")
+    # Phase 2D: Multi-phase development management
+    development_phases = relationship(
+        "DevelopmentPhase", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Project {self.project_name} ({self.project_code})>"

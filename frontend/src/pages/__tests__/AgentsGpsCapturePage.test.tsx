@@ -1,17 +1,17 @@
-import assert from 'node:assert/strict'
-import { afterEach, beforeEach, describe, it } from 'node:test'
+import { afterEach, assert, beforeEach, describe, it } from 'vitest'
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { TranslationProvider } from '../../i18n'
+import { ThemeModeProvider } from '../../theme/ThemeContext'
 import type { GpsCaptureSummary } from '../../api/agents'
 import { AgentsGpsCapturePage } from '../AgentsGpsCapturePage'
 
 describe('AgentsGpsCapturePage', () => {
   beforeEach(() => {
     cleanup()
-    window.history.replaceState(null, '', 'http://localhost/agents/site-capture')
+    window.history.replaceState(null, '', '/agents/site-capture')
   })
 
   afterEach(() => {
@@ -26,7 +26,9 @@ describe('AgentsGpsCapturePage', () => {
       },
       coordinates: { latitude: 1.3, longitude: 103.85 },
       existingUse: 'Office Building',
-      uraZoning: { zoneDescription: 'Commercial' },
+      jurisdictionCode: 'sg',
+      currencySymbol: 'S$',
+      uraZoning: { zoneDescription: 'Commercial', useGroups: [] },
       propertyInfo: null,
       nearbyAmenities: null,
       quickAnalysis: {
@@ -61,6 +63,7 @@ describe('AgentsGpsCapturePage', () => {
           comparables_analysis: { transaction_count: 3 },
           generated_at: '2025-07-01T00:00:00Z',
         },
+        isFallback: false,
       }
     }
 
@@ -76,17 +79,20 @@ describe('AgentsGpsCapturePage', () => {
         downloadUrl: 'https://example.com/pack.pdf',
         generatedAt: '2025-07-02T08:00:00Z',
         sizeBytes: 52_428,
+        isFallback: false,
       }
     }
 
     render(
-      <TranslationProvider>
-        <AgentsGpsCapturePage
-          logPropertyFn={captureStub}
-          fetchMarketIntelligenceFn={marketStub}
-          generatePackFn={packStub}
-        />
-      </TranslationProvider>,
+      <ThemeModeProvider>
+        <TranslationProvider>
+          <AgentsGpsCapturePage
+            logPropertyFn={captureStub}
+            fetchMarketIntelligenceFn={marketStub}
+            generatePackFn={packStub}
+          />
+        </TranslationProvider>
+      </ThemeModeProvider>,
     )
 
     fireEvent.change(screen.getByLabelText(/Latitude/i), {

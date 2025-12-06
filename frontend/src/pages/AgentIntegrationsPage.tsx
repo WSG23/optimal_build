@@ -139,113 +139,115 @@ export function AgentIntegrationsPage() {
       title="Listing integrations"
       subtitle="Link mock PropertyGuru and EdgeProp accounts while we wait for production credentials."
     >
-      {error && <div className="integrations__error">{error}</div>}
-      {message && <div className="integrations__message">{message}</div>}
+      <div className="integrations">
+        {error && <div className="integrations__error">{error}</div>}
+        {message && <div className="integrations__message">{message}</div>}
 
-      <section className="integrations__panel">
-        <h2>Linked accounts</h2>
-        {loading ? (
-          <p>Loading accounts…</p>
-        ) : accounts.length === 0 ? (
-          <p className="integrations__empty">No accounts linked yet.</p>
-        ) : (
-          <table className="integrations__table">
-            <thead>
-              <tr>
-                <th>Provider</th>
-                <th>Status</th>
-                <th>Connected</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.map((account) => (
-                <tr key={account.id}>
-                  <td>{account.provider}</td>
-                  <td>{account.status}</td>
-                  <td>{account.created_at ? new Date(account.created_at).toLocaleString() : '—'}</td>
+        <section className="integrations__panel">
+          <h2>Linked accounts</h2>
+          {loading ? (
+            <p>Loading accounts…</p>
+          ) : accounts.length === 0 ? (
+            <p className="integrations__empty">No accounts linked yet.</p>
+          ) : (
+            <table className="integrations__table">
+              <thead>
+                <tr>
+                  <th>Provider</th>
+                  <th>Status</th>
+                  <th>Connected</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+              </thead>
+              <tbody>
+                {accounts.map((account) => (
+                  <tr key={account.id}>
+                    <td>{account.provider}</td>
+                    <td>{account.status}</td>
+                    <td>{account.created_at ? new Date(account.created_at).toLocaleString() : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
 
-      {PROVIDERS.map((provider) => {
-        const account = accountByProvider.get(provider.key)
-        const connected = account?.status === 'connected'
-        const publishValues = publishState[provider.key]
-        return (
-          <section key={provider.key} className="integrations__panel">
-            <h2>{provider.label}</h2>
-            <form
-              className="integrations__form"
-              onSubmit={(event) => handleConnect(event, provider.key)}
-            >
-              <label>
-                Authorization code
-                <input
-                  value={codes[provider.key]}
-                  onChange={(event) =>
-                    setCodes((current) => ({
-                      ...current,
-                      [provider.key]: event.target.value,
-                    }))
-                  }
-                  placeholder="mock-code"
-                />
-              </label>
-              <button type="submit">Link account</button>
-            </form>
-            <button
-              type="button"
-              className="integrations__disconnect"
-              onClick={() => handleDisconnect(provider.key)}
-              disabled={!connected}
-            >
-              Disconnect account
-            </button>
+        {PROVIDERS.map((provider) => {
+          const account = accountByProvider.get(provider.key)
+          const connected = account?.status === 'connected'
+          const publishValues = publishState[provider.key]
+          return (
+            <section key={provider.key} className="integrations__panel">
+              <h2>{provider.label}</h2>
+              <form
+                className="integrations__form"
+                onSubmit={(event) => handleConnect(event, provider.key)}
+              >
+                <label>
+                  Authorization code
+                  <input
+                    value={codes[provider.key]}
+                    onChange={(event) =>
+                      setCodes((current) => ({
+                        ...current,
+                        [provider.key]: event.target.value,
+                      }))
+                    }
+                    placeholder="mock-code"
+                  />
+                </label>
+                <button type="submit">Link account</button>
+              </form>
+              <button
+                type="button"
+                className="integrations__disconnect"
+                onClick={() => handleDisconnect(provider.key)}
+                disabled={!connected}
+              >
+                Disconnect account
+              </button>
 
-            <form
-              className="integrations__form"
-              onSubmit={(event) => handlePublish(event, provider.key)}
-            >
-              <label>
-                Property ID
-                <input
-                  value={publishValues.propertyId}
-                  onChange={(event) =>
-                    setPublishState((current) => ({
-                      ...current,
-                      [provider.key]: {
-                        ...current[provider.key],
-                        propertyId: event.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="e.g. 4271b4aa-f33c-4fd7-ad23-d128a262842b"
-                />
-              </label>
-              <label>
-                External listing ID
-                <input
-                  value={publishValues.externalId}
-                  onChange={(event) =>
-                    setPublishState((current) => ({
-                      ...current,
-                      [provider.key]: {
-                        ...current[provider.key],
-                        externalId: event.target.value,
-                      },
-                    }))
-                  }
-                  placeholder={`${provider.key}-listing-1`}
-                />
-              </label>
-              <button type="submit">Publish mock listing</button>
-            </form>
-          </section>
-        )
-      })}
+              <form
+                className="integrations__form"
+                onSubmit={(event) => handlePublish(event, provider.key)}
+              >
+                <label>
+                  Property ID
+                  <input
+                    value={publishValues.propertyId}
+                    onChange={(event) =>
+                      setPublishState((current) => ({
+                        ...current,
+                        [provider.key]: {
+                          ...current[provider.key],
+                          propertyId: event.target.value,
+                        },
+                      }))
+                    }
+                    placeholder="e.g. 4271b4aa-f33c-4fd7-ad23-d128a262842b"
+                  />
+                </label>
+                <label>
+                  External listing ID
+                  <input
+                    value={publishValues.externalId}
+                    onChange={(event) =>
+                      setPublishState((current) => ({
+                        ...current,
+                        [provider.key]: {
+                          ...current[provider.key],
+                          externalId: event.target.value,
+                        },
+                      }))
+                    }
+                    placeholder={`${provider.key}-listing-1`}
+                  />
+                </label>
+                <button type="submit">Publish mock listing</button>
+              </form>
+            </section>
+          )
+        })}
+      </div>
     </AppLayout>
   )
 }

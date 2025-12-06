@@ -30,6 +30,52 @@
         "equity_debt_split_pct": [30.0, 70.0],
         "exit_cap_rate_pct": 4.25
       }
+    },
+    "engineering_defaults": {
+      "floor_to_floor_m": {
+        "residential": 3.2,
+        "office": 4.0,
+        "retail": 4.5,
+        "industrial": 6.0,
+        "hotel": 3.5,
+        "mixed_use": 3.8
+      },
+      "efficiency_ratio": {
+        "residential": 0.85,
+        "office": 0.82,
+        "retail": 0.88,
+        "industrial": 0.92,
+        "hotel": 0.72,
+        "mixed_use": 0.80
+      },
+      "gfa_to_nia_bands": {
+        "residential": {"low": 0.80, "mid": 0.85, "high": 0.88},
+        "office": {"low": 0.75, "mid": 0.82, "high": 0.85},
+        "retail": {"low": 0.82, "mid": 0.88, "high": 0.92},
+        "industrial": {"low": 0.88, "mid": 0.92, "high": 0.95},
+        "hotel": {"low": 0.65, "mid": 0.72, "high": 0.78},
+        "mixed_use": {"low": 0.75, "mid": 0.80, "high": 0.84}
+      },
+      "structural_grid_m": {
+        "residential": 8.1,
+        "office": 9.0,
+        "retail": 9.0,
+        "industrial": 12.0
+      },
+      "core_ratio_pct": {
+        "residential": 15.0,
+        "office": 18.0,
+        "retail": 12.0,
+        "industrial": 8.0,
+        "hotel": 28.0
+      },
+      "parking_ratio": {
+        "residential": 1.0,
+        "office": 0.5,
+        "retail": 1.5,
+        "industrial": 0.3
+      },
+      "basement_levels_typical": 2
     }
   },
   "HK": {
@@ -64,6 +110,52 @@
         "equity_debt_split_pct": [30.0, 70.0],
         "exit_cap_rate_pct": 4.5
       }
+    },
+    "engineering_defaults": {
+      "floor_to_floor_m": {
+        "residential": 3.0,
+        "office": 3.8,
+        "retail": 4.2,
+        "industrial": 5.5,
+        "hotel": 3.3,
+        "mixed_use": 3.5
+      },
+      "efficiency_ratio": {
+        "residential": 0.82,
+        "office": 0.78,
+        "retail": 0.85,
+        "industrial": 0.90,
+        "hotel": 0.70,
+        "mixed_use": 0.78
+      },
+      "gfa_to_nia_bands": {
+        "residential": {"low": 0.78, "mid": 0.82, "high": 0.86},
+        "office": {"low": 0.72, "mid": 0.78, "high": 0.82},
+        "retail": {"low": 0.80, "mid": 0.85, "high": 0.90},
+        "industrial": {"low": 0.85, "mid": 0.90, "high": 0.93},
+        "hotel": {"low": 0.62, "mid": 0.70, "high": 0.75},
+        "mixed_use": {"low": 0.72, "mid": 0.78, "high": 0.82}
+      },
+      "structural_grid_m": {
+        "residential": 7.5,
+        "office": 8.4,
+        "retail": 8.4,
+        "industrial": 10.0
+      },
+      "core_ratio_pct": {
+        "residential": 18.0,
+        "office": 22.0,
+        "retail": 15.0,
+        "industrial": 10.0,
+        "hotel": 30.0
+      },
+      "parking_ratio": {
+        "residential": 0.5,
+        "office": 0.3,
+        "retail": 1.0,
+        "industrial": 0.2
+      },
+      "basement_levels_typical": 3
     }
   },
   "NZ": {
@@ -98,6 +190,52 @@
         "equity_debt_split_pct": [30.0, 70.0],
         "exit_cap_rate_pct": 6.5
       }
+    },
+    "engineering_defaults": {
+      "floor_to_floor_m": {
+        "residential": 3.0,
+        "office": 3.8,
+        "retail": 4.2,
+        "industrial": 6.5,
+        "hotel": 3.3,
+        "mixed_use": 3.5
+      },
+      "efficiency_ratio": {
+        "residential": 0.87,
+        "office": 0.84,
+        "retail": 0.90,
+        "industrial": 0.93,
+        "hotel": 0.74,
+        "mixed_use": 0.82
+      },
+      "gfa_to_nia_bands": {
+        "residential": {"low": 0.82, "mid": 0.87, "high": 0.90},
+        "office": {"low": 0.78, "mid": 0.84, "high": 0.88},
+        "retail": {"low": 0.85, "mid": 0.90, "high": 0.93},
+        "industrial": {"low": 0.90, "mid": 0.93, "high": 0.96},
+        "hotel": {"low": 0.68, "mid": 0.74, "high": 0.80},
+        "mixed_use": {"low": 0.77, "mid": 0.82, "high": 0.86}
+      },
+      "structural_grid_m": {
+        "residential": 8.0,
+        "office": 9.0,
+        "retail": 9.0,
+        "industrial": 12.0
+      },
+      "core_ratio_pct": {
+        "residential": 13.0,
+        "office": 16.0,
+        "retail": 10.0,
+        "industrial": 7.0,
+        "hotel": 26.0
+      },
+      "parking_ratio": {
+        "residential": 1.5,
+        "office": 1.0,
+        "retail": 2.0,
+        "industrial": 0.5
+      },
+      "basement_levels_typical": 1
     }
   },
   "SEA": {
@@ -132,6 +270,52 @@
         "equity_debt_split_pct": [30.0, 70.0],
         "exit_cap_rate_pct": 5.05
       }
+    },
+    "engineering_defaults": {
+      "floor_to_floor_ft": {
+        "residential": 10.0,
+        "office": 13.5,
+        "retail": 15.0,
+        "industrial": 24.0,
+        "hotel": 11.0,
+        "mixed_use": 12.0
+      },
+      "efficiency_ratio": {
+        "residential": 0.88,
+        "office": 0.85,
+        "retail": 0.90,
+        "industrial": 0.94,
+        "hotel": 0.75,
+        "mixed_use": 0.83
+      },
+      "gfa_to_nia_bands": {
+        "residential": {"low": 0.83, "mid": 0.88, "high": 0.91},
+        "office": {"low": 0.80, "mid": 0.85, "high": 0.88},
+        "retail": {"low": 0.85, "mid": 0.90, "high": 0.93},
+        "industrial": {"low": 0.90, "mid": 0.94, "high": 0.96},
+        "hotel": {"low": 0.70, "mid": 0.75, "high": 0.80},
+        "mixed_use": {"low": 0.78, "mid": 0.83, "high": 0.87}
+      },
+      "structural_grid_ft": {
+        "residential": 26.0,
+        "office": 30.0,
+        "retail": 30.0,
+        "industrial": 40.0
+      },
+      "core_ratio_pct": {
+        "residential": 12.0,
+        "office": 15.0,
+        "retail": 10.0,
+        "industrial": 6.0,
+        "hotel": 25.0
+      },
+      "parking_ratio": {
+        "residential": 1.25,
+        "office": 2.0,
+        "retail": 4.0,
+        "industrial": 0.5
+      },
+      "basement_levels_typical": 2
     }
   },
   "TOR": {
@@ -166,6 +350,52 @@
         "equity_debt_split_pct": [30.0, 70.0],
         "exit_cap_rate_pct": 5.25
       }
+    },
+    "engineering_defaults": {
+      "floor_to_floor_ft": {
+        "residential": 9.5,
+        "office": 13.0,
+        "retail": 14.5,
+        "industrial": 22.0,
+        "hotel": 10.5,
+        "mixed_use": 11.5
+      },
+      "efficiency_ratio": {
+        "residential": 0.86,
+        "office": 0.83,
+        "retail": 0.89,
+        "industrial": 0.93,
+        "hotel": 0.73,
+        "mixed_use": 0.81
+      },
+      "gfa_to_nia_bands": {
+        "residential": {"low": 0.81, "mid": 0.86, "high": 0.89},
+        "office": {"low": 0.78, "mid": 0.83, "high": 0.86},
+        "retail": {"low": 0.84, "mid": 0.89, "high": 0.92},
+        "industrial": {"low": 0.89, "mid": 0.93, "high": 0.95},
+        "hotel": {"low": 0.68, "mid": 0.73, "high": 0.78},
+        "mixed_use": {"low": 0.76, "mid": 0.81, "high": 0.85}
+      },
+      "structural_grid_ft": {
+        "residential": 25.0,
+        "office": 28.0,
+        "retail": 28.0,
+        "industrial": 36.0
+      },
+      "core_ratio_pct": {
+        "residential": 14.0,
+        "office": 17.0,
+        "retail": 11.0,
+        "industrial": 7.0,
+        "hotel": 27.0
+      },
+      "parking_ratio": {
+        "residential": 1.0,
+        "office": 1.5,
+        "retail": 3.5,
+        "industrial": 0.4
+      },
+      "basement_levels_typical": 2
     }
   }
 }

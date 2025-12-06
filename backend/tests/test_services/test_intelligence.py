@@ -1,4 +1,7 @@
 import pytest
+
+langchain = pytest.importorskip("langchain")
+
 from unittest.mock import MagicMock, patch
 from app.services.intelligence import IntelligenceService
 

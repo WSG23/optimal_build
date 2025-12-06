@@ -47,7 +47,7 @@ endif
 # Run from repo root, add backend/ to import path, and import app.main:app
 # Use fully-qualified module path, force ASGI3
 # Configurable dev ports (avoid conflicts with 8000/5173 and anything in the 5100s)
-BACKEND_PORT ?= 9400
+BACKEND_PORT ?= 8000
 FRONTEND_PORT ?= 4400
 ADMIN_PORT ?= 4401
 
@@ -266,7 +266,7 @@ typecheck: ## Run TypeScript type checking (frontend only)
 
 typecheck-backend: ## Run Python type checking (mypy on critical paths)
 	@echo "🔍 Running Python type checks on critical paths (app/api/, app/schemas/)..."
-	@cd backend && $(MYPY) app/api/ app/schemas/ --config-file=../mypy.ini --no-error-summary
+	@$(MYPY) backend/app/api/ backend/app/schemas/ --config-file=mypy.ini --no-error-summary
 	@echo "✅ Python type checks passed"
 
 typecheck-all: ## Run both TypeScript and Python type checking
@@ -380,6 +380,10 @@ check-tool-versions: ## Verify formatter/linter versions match requirements.txt
 check-coding-rules: ## Verify compliance with CODING_RULES.md
 	@echo "Checking coding rules compliance..."
 	@$(PY) scripts/check_coding_rules.py
+
+check-ui-canon: ## Check frontend UI styling compliance (inline styles, hardcoded colors)
+	@echo "Checking UI canon compliance..."
+	@$(PY) scripts/check_ui_canon.py
 
 ai-preflight: ## Pre-flight check for AI agents before code generation
 	@echo "=========================================="

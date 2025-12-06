@@ -584,7 +584,11 @@ export function SiteAcquisitionPage() {
       error={assessmentHistoryError}
       latestEntry={latestAssessmentEntry}
       previousEntry={previousAssessmentEntry}
-      formatScenario={(scenario) => formatScenarioLabel(scenario as DevelopmentScenario | 'all' | null | undefined)}
+      formatScenario={(scenario) =>
+        formatScenarioLabel(
+          scenario as DevelopmentScenario | 'all' | null | undefined,
+        )
+      }
       formatTimestamp={formatRecordedTimestamp}
       onViewTimeline={() => setHistoryModalOpen(true)}
       onLogInspection={() => openAssessmentEditor('new')}
@@ -592,38 +596,11 @@ export function SiteAcquisitionPage() {
   )
 
   return (
-    <div
-      style={{
-        padding: '3rem 2rem',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
-        color: '#1d1d1f',
-      }}
-    >
+    <div className="page site-acquisition">
       {/* Header */}
-      <header style={{ marginBottom: '3rem' }}>
-        <h1
-          style={{
-            fontSize: '3rem',
-            fontWeight: 700,
-            letterSpacing: '-0.015em',
-            margin: '0 0 0.5rem',
-            lineHeight: 1.1,
-          }}
-        >
-          Site Acquisition
-        </h1>
-        <p
-          style={{
-            fontSize: '1.25rem',
-            color: '#6e6e73',
-            margin: 0,
-            lineHeight: 1.5,
-            letterSpacing: '-0.005em',
-          }}
-        >
+      <header className="page__header">
+        <h1 className="page__title">Site Acquisition</h1>
+        <p className="page__subtitle">
           Comprehensive property capture and development feasibility analysis
           for developers
         </p>
@@ -651,62 +628,16 @@ export function SiteAcquisitionPage() {
       />
 
       {capturedProperty && (
-        <section
-          style={{
-            background: 'white',
-            border: '1px solid #d2d2d7',
-            borderRadius: '18px',
-            padding: '2rem',
-            marginBottom: '2rem',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 600,
-              marginBottom: '1.5rem',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Property Overview
-          </h2>
+        <section className="page__section">
+          <h2 className="page__section-title">Property Overview</h2>
           <PropertyOverviewSection cards={propertyOverviewCards} />
           {previewJob && (
-            <div
-              style={{
-                marginTop: '2rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.75rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    letterSpacing: '-0.01em',
-                    color: '#111827',
-                  }}
-                >
+            <div className="site-acquisition__preview">
+              <div className="site-acquisition__preview-header">
+                <h3 className="site-acquisition__preview-title">
                   Development Preview
                 </h3>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    color: '#4b5563',
-                    textTransform: 'uppercase',
-                  }}
-                >
+                <span className="site-acquisition__preview-status">
                   {previewJob.status.toUpperCase()}
                 </span>
               </div>
@@ -718,7 +649,7 @@ export function SiteAcquisitionPage() {
                 layerVisibility={previewLayerVisibility}
                 focusLayerId={previewFocusLayerId}
               />
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+              <p className="site-acquisition__preview-info">
                 Geometry detail:{' '}
                 <strong>
                   {describeDetailLevel(previewJob.geometryDetailLevel)}
@@ -727,28 +658,13 @@ export function SiteAcquisitionPage() {
             </div>
           )}
           {previewJob && (
-            <div
-              style={{
-                marginTop: '1rem',
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'flex-end',
-                gap: '1rem',
-              }}
-            >
-              <label
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.4rem',
-                  fontSize: '0.85rem',
-                  color: '#374151',
-                }}
-              >
-                <span style={{ fontWeight: 600, color: '#111827' }}>
+            <div className="site-acquisition__controls">
+              <label className="site-acquisition__control-group">
+                <span className="site-acquisition__control-label">
                   Geometry detail
                 </span>
                 <select
+                  className="site-acquisition__control-select"
                   value={previewDetailLevel}
                   onChange={(event) =>
                     setPreviewDetailLevel(
@@ -756,14 +672,6 @@ export function SiteAcquisitionPage() {
                     )
                   }
                   disabled={isRefreshingPreview}
-                  style={{
-                    minWidth: '240px',
-                    padding: '0.45rem 0.65rem',
-                    borderRadius: '8px',
-                    border: '1px solid #d1d5db',
-                    background: isRefreshingPreview ? '#f3f4f6' : '#fff',
-                    color: '#111827',
-                  }}
                 >
                   {PREVIEW_DETAIL_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -771,7 +679,7 @@ export function SiteAcquisitionPage() {
                     </option>
                   ))}
                 </select>
-                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                <span className="site-acquisition__control-hint">
                   {previewDetailLevel === 'simple'
                     ? 'Fast render for smoke testing.'
                     : 'Detailed render with setbacks, podiums, and floor lines.'}
@@ -779,26 +687,15 @@ export function SiteAcquisitionPage() {
               </label>
               <button
                 type="button"
+                className="site-acquisition__btn-refresh"
                 onClick={handleRefreshPreview}
                 disabled={isRefreshingPreview}
-                style={{
-                  padding: '0.5rem 0.85rem',
-                  borderRadius: '9999px',
-                  border: '1px solid',
-                  borderColor: isRefreshingPreview ? '#cbd5f5' : '#6366f1',
-                  background: isRefreshingPreview ? '#eef2ff' : '#4f46e5',
-                  color: '#fff',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  cursor: isRefreshingPreview ? 'wait' : 'pointer',
-                  transition: 'background 0.2s ease',
-                }}
               >
                 {isRefreshingPreview
-                  ? 'Refreshing preview…'
+                  ? 'Refreshing preview...'
                   : 'Refresh preview render'}
               </button>
-              <span style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+              <span className="site-acquisition__refresh-hint">
                 Status updates automatically while processing.
               </span>
             </div>
@@ -846,7 +743,7 @@ export function SiteAcquisitionPage() {
       )}
 
       {capturedProperty && (
-        <div style={{ marginBottom: '2rem' }}>
+        <div className="site-acquisition__section-spacer">
           <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
         </div>
       )}
@@ -936,7 +833,7 @@ export function SiteAcquisitionPage() {
 
       {/* Photo Documentation Section - controlled by feature toggle */}
       {capturedProperty && preferences.photoDocumentation && (
-        <div style={{ marginTop: '2rem' }}>
+        <div className="site-acquisition__photos">
           <PhotoDocumentation
             propertyId={capturedProperty.propertyId}
             defaultPhase="acquisition"

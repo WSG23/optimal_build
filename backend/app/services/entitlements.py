@@ -200,9 +200,21 @@ class EntitlementsService:
 
         return await self._load_full_roadmap(project_id)
 
-    @staticmethod
-    def _reindex(items: Iterable[EntRoadmapItem]) -> None:
-        for index, item in enumerate(items, start=1):
+    async def _reindex(self, items: Iterable[EntRoadmapItem]) -> None:
+        """Reindex items with temporary negative values to avoid unique constraint violations.
+
+        SQLite and PostgreSQL enforce unique constraints on (project_id, sequence_order)
+        immediately during flush. To avoid conflicts when reordering, we first set all
+        items to temporary negative values and flush, then assign the final positive sequence.
+        """
+        items_list = list(items)
+        # First pass: set temporary negative values to avoid unique constraint violation
+        for index, item in enumerate(items_list):
+            item.sequence_order = -(index + 1)
+        # Flush to persist negative values before setting final sequence
+        await self.session.flush()
+        # Second pass: set final positive sequence values
+        for index, item in enumerate(items_list, start=1):
             item.sequence_order = index
 
     async def create_roadmap_item(
@@ -240,8 +252,8 @@ class EntitlementsService:
         )
 
         existing.insert(insert_index, item)
-        self._reindex(existing)
         self.session.add(item)
+        await self._reindex(existing)
         await self.session.flush()
         return item
 
@@ -285,7 +297,7 @@ class EntitlementsService:
                 items = [entry for entry in items if entry.id != target.id]
                 insert_index = min(sequence_order - 1, len(items))
                 items.insert(insert_index, target)
-                self._reindex(items)
+                await self._reindex(items)
 
         await self.session.flush()
         return target
@@ -300,7 +312,7 @@ class EntitlementsService:
         await self.session.flush()
 
         remaining = [entry for entry in items if entry.id != item_id]
-        self._reindex(remaining)
+        await self._reindex(remaining)
         await self.session.flush()
 
     async def list_studies(

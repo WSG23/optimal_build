@@ -5,7 +5,7 @@ import { useRouterPath, Link } from '../../router';
 import { LocaleSwitcher } from '../../i18n/LocaleSwitcher';
 import { ThemeToggle } from '../../theme/ThemeToggle';
 
-export interface YosaiShellProps {
+export interface AppShellProps {
     title: string;
     subtitle?: string;
     actions?: ReactNode;
@@ -13,11 +13,16 @@ export interface YosaiShellProps {
 }
 
 /**
- * YosaiShell
- * The "Fortress" layout: Dense sidebar, rigid structure.
- * Adapts to dark and light modes via Yōsai theme system.
+ * @deprecated Use AppShell from './AppShell' instead
  */
-export function YosaiShell({ title, subtitle, actions, children }: YosaiShellProps) {
+export type YosaiShellProps = AppShellProps;
+
+/**
+ * AppShell
+ * Main application layout with sidebar navigation and header.
+ * Supports dark and light modes via the theme system.
+ */
+export function AppShell({ title, subtitle, actions, children }: AppShellProps) {
     const { t } = useTranslation();
     const path = useRouterPath();
     const theme = useTheme();
@@ -55,7 +60,7 @@ export function YosaiShell({ title, subtitle, actions, children }: YosaiShellPro
                         OPTIMAL BUILD
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                        v2.0 • YŌSAI
+                        v2.0
                     </Typography>
                 </Box>
 
@@ -133,10 +138,15 @@ export function YosaiShell({ title, subtitle, actions, children }: YosaiShellPro
                 </Box>
 
                 {/* Content */}
-                <Box component="main" sx={{ flexGrow: 1, p: 4, overflow: 'auto' }}>
+                <Box component="main" sx={{ flexGrow: 1, p: 0, overflow: 'auto' }}>
                     {children}
                 </Box>
             </Box>
         </Box>
     );
 }
+
+/**
+ * @deprecated Use AppShell instead
+ */
+export const YosaiShell = AppShell;

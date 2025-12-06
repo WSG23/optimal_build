@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import structlog
+from structlog.stdlib import BoundLogger
+
 import json
 import logging
 from datetime import date, datetime
@@ -25,7 +28,7 @@ try:  # pragma: no cover - importlib.metadata available on Python 3.8+
     from importlib import metadata as _importlib_metadata_module
 except ImportError:  # pragma: no cover - runtime older than Python 3.8
     try:
-        import importlib_metadata as _importlib_metadata_backport  # type: ignore[import-not-found]
+        import importlib_metadata as _importlib_metadata_backport  # type: ignore
     except ModuleNotFoundError:  # pragma: no cover - no metadata helpers available
         importlib_metadata = None
     else:
@@ -43,9 +46,6 @@ if importlib_metadata is not None:
     PackageNotFoundError = importlib_metadata.PackageNotFoundError
 else:
     PackageNotFoundError = _PackageNotFoundError
-
-import structlog
-from structlog.stdlib import BoundLogger
 
 from app.core.config import settings
 

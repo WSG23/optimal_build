@@ -1,7 +1,5 @@
 /* styles/core.css
    Global resets, root variables, base typography, utility classes.
-   Also includes legacy .app-layout, .locale-switcher, .app-home patterns.
-   Extracted from src/index.css (lines 1–200).
 */
 
 *,
@@ -11,30 +9,32 @@
 }
 
 :root {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
+    font-family: var(--ob-font-family-base);
+    line-height: 1.6;
     font-weight: 400;
-    color-scheme: only light;
-    color: #0f172a;
-    background-color: #e2e8f0;
+
+    color-scheme: dark light; /* Prefer dark */
+    color: var(--ob-color-text-primary);
+    background-color: var(--ob-color-bg-root);
+
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
 }
 
 body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+    background: var(--ob-color-bg-root);
+    color: var(--ob-color-text-primary);
 }
 
 #root {
     width: 100%;
     min-height: 100vh;
     margin: 0;
-    padding: 1.5rem;
+    padding: 0; /* Remove padding as app-shell handles it now */
     display: flex;
     justify-content: center;
     align-items: stretch;
@@ -42,17 +42,26 @@ body {
 
 a {
     font-weight: 500;
-    color: #2563eb;
-    text-decoration: inherit;
+    color: var(--ob-color-brand-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
 }
 a:hover {
-    color: #1d4ed8;
+    color: var(--ob-color-brand-primary-emphasis);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
 }
 
 h1,
 h2,
-h3 {
-    line-height: 1.1;
+h3,
+h4,
+h5,
+h6 {
+    line-height: 1.2;
+    margin: 0 0 1rem 0;
+    color: var(--ob-color-text-primary);
 }
 
 .sr-only {
@@ -66,167 +75,82 @@ h3 {
     border: 0;
 }
 
-.app-layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    min-height: 100vh;
-    background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
-    border-radius: 1.5rem;
-    overflow: hidden;
-    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
-}
-
-.app-layout__nav {
-    background: #0f172a;
-    color: #e2e8f0;
-    padding: 2.5rem 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.app-layout__brand h1 {
-    margin: 0 0 0.5rem;
-    font-size: 1.75rem;
-    color: #ffffff;
-}
-
-.app-layout__brand p {
-    margin: 0;
-    color: rgba(226, 232, 240, 0.7);
-    font-size: 0.95rem;
-}
-
-.app-layout__nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.app-layout__nav-link {
-    display: block;
-    padding: 0.65rem 1rem;
-    border-radius: 0.75rem;
-    color: inherit;
-    background: rgba(148, 163, 184, 0.15);
-}
-
-.app-layout__nav-link--active {
-    background: #2563eb;
-    color: #ffffff;
-    font-weight: 600;
-}
-
-.app-layout__main {
-    padding: 2.5rem 3.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.app-layout__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 2rem;
-    background: #ffffff;
-    border-radius: 1.5rem;
-    padding: 1.75rem 2.5rem;
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-}
-
-.app-layout__header h2 {
-    margin: 0 0 0.35rem;
-    font-size: 2rem;
-}
-
-.app-layout__header p {
-    margin: 0;
-    color: #475569;
-    max-width: 540px;
-}
-
-.app-layout__toolbar {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.app-layout__locale select {
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
-    border: 1px solid #cbd5f5;
-    background: #f8fafc;
-    font-weight: 600;
-}
-
-.app-layout__content {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
+/* Home / Dashboard Grid */
 .app-home {
     display: grid;
     gap: 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(280px, 1fr)
+    ); /* Wider minimum */
+    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
+/* Premium Card Style */
 .app-home__card {
-    background: #ffffff;
-    padding: 1.75rem;
-    border-radius: 1.25rem;
-    box-shadow: 0 16px 24px rgba(15, 23, 42, 0.08);
+    background: var(--ob-color-bg-surface);
+    padding: 2rem;
+    border-radius: var(--ob-radius-xl);
+    border: 1px solid var(--ob-color-border-subtle);
+    box-shadow: var(--ob-shadow-sm);
+
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.25rem;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
 }
 
-.locale-switcher {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.locale-switcher__label {
-    font-weight: 600;
-}
-
-.locale-switcher__select {
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
-    border: 1px solid #cbd5f5;
-    background: #f8fafc;
-    font-weight: 600;
-}
-
-.locale-switcher__select:focus {
-    outline: 2px solid #2563eb;
-    border-color: #2563eb;
+.app-home__card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        var(--ob-shadow-lg),
+        0 0 0 1px var(--ob-color-brand-primary-glow);
+    border-color: var(--ob-color-brand-primary);
 }
 
 .app-home__card h3 {
     margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .app-home__card p {
     margin: 0;
-    color: #475569;
+    color: var(--ob-color-text-secondary);
     flex: 1;
+    line-height: 1.6;
 }
 
 .app-home__cta {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 999px;
-    background: #2563eb;
-    color: #ffffff;
+    background: var(--ob-color-brand-primary);
+    color: #ffffff; /* Always white text on brand button */
     font-weight: 600;
     width: fit-content;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+}
+
+.app-home__cta:hover {
+    background: var(--ob-color-brand-primary-emphasis);
+    box-shadow: 0 4px 12px var(--ob-color-brand-primary-glow);
+    transform: translateY(-1px);
+}
+
+/* Legacy Layout fallback (if still used anywhere) */
+.app-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+    background: var(--ob-color-bg-root);
 }

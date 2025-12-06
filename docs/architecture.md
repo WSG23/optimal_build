@@ -557,16 +557,16 @@ User (Developer Site Acquisition)
 **Password Hashing:** bcrypt (passlib)
 **Token Storage:** ⚙️ Documented as HTTP-only cookies (not verified in code)
 **RBAC:** ⚙️ Roles mentioned (admin/user/developer/consultant) but not fully verified
-**Auth Logic:** Split across `users_secure.py`, `users_db.py`, `core/jwt_auth.py`, `core/auth/policy.py`
+**Auth Logic:** Centralised in `app/core/auth/service.py` (legacy wrappers for compatibility)
 
 **Token Expiry:**
-- Access token: 24 hours
+- Access token: 30 minutes
 - Refresh token: 7 days
 
 ### API Security
 
 - **CORS:** ✅ Configured in main.py
-- **Rate Limiting:** ❌ Documented but **not implemented** in middleware
+- **Rate Limiting:** ✅ Implemented via SlowAPI with Redis storage (`RATE_LIMIT_STORAGE_URI`, defaults to Redis DB 3)
 - **Input Validation:** ✅ Pydantic schemas
 - **SQL Injection Prevention:** ✅ SQLAlchemy ORM
 

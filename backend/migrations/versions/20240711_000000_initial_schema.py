@@ -19,6 +19,50 @@ JSONB_TYPE = postgresql.JSONB(astext_type=sa.Text())
 def upgrade() -> None:
     """Apply the migration."""
 
+    # Create users table first as many other tables reference it
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userrole') THEN
+                    CREATE TYPE userrole AS ENUM (
+                        'admin', 'developer', 'investor', 'contractor',
+                        'consultant', 'regulatory_officer', 'viewer'
+                    );
+                END IF;
+            END $$;
+            """
+        )
+    )
+    op.execute(
+        sa.text(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                email VARCHAR(255) NOT NULL UNIQUE,
+                username VARCHAR(100) NOT NULL UNIQUE,
+                full_name VARCHAR(255) NOT NULL,
+                hashed_password VARCHAR(255) NOT NULL,
+                role userrole NOT NULL DEFAULT 'viewer',
+                company_name VARCHAR(255),
+                phone_number VARCHAR(50),
+                is_active BOOLEAN NOT NULL DEFAULT true,
+                is_verified BOOLEAN NOT NULL DEFAULT false,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+                last_login TIMESTAMP WITH TIME ZONE,
+                uen_number VARCHAR(50),
+                acra_registered BOOLEAN DEFAULT false
+            )
+            """
+        )
+    )
+    op.execute(sa.text("CREATE INDEX IF NOT EXISTS ix_users_email ON users(email)"))
+    op.execute(
+        sa.text("CREATE INDEX IF NOT EXISTS ix_users_username ON users(username)")
+    )
+
     op.create_table(
         "audit_logs",
         sa.Column("id", sa.Integer(), primary_key=True),

@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import { assert, describe, expect, it } from 'vitest'
 
 import type { BuildableRequest } from '../buildable'
 import { fetchBuildable } from '../buildable'
@@ -40,12 +39,10 @@ describe('buildable API fallback', () => {
       efficiencyRatio: 0.8,
     }
 
-    await assert.rejects(
-      () =>
-        fetchBuildable(request, {
-          transport: abortingTransport,
-        }),
-      abortError,
-    )
+    await expect(
+      fetchBuildable(request, {
+        transport: abortingTransport,
+      }),
+    ).rejects.toThrow(/Request aborted/)
   })
 })

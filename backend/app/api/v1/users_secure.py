@@ -2,8 +2,7 @@
 
 from typing import Any, Dict, Optional
 
-from backend._compat.datetime import utcnow
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, field_validator
 
 try:  # pragma: no cover - optional dependency
@@ -12,15 +11,21 @@ try:  # pragma: no cover - optional dependency
 except ImportError:  # pragma: no cover - fallback when validator missing
     EmailStr = str  # type: ignore
 
-from app.core.jwt_auth import TokenData, TokenResponse, create_tokens, get_current_user
+from app.core.auth import (
+    AuthService,
+    AuthUser,
+    InMemoryAuthRepository,
+    TokenData,
+    TokenResponse,
+    get_current_user,
+)
 from app.schemas.user import UserSignupBase
 from app.services.account_lockout import get_lockout_service
-from app.utils.security import hash_password, verify_password
 
 router = APIRouter(prefix="/secure-users", tags=["Secure Users"])
 
-# Temporary in-memory storage (will replace with database)
-users_db: Dict[str, dict] = {}
+auth_service = AuthService(lockout_service=get_lockout_service())
+memory_repo = InMemoryAuthRepository()
 
 
 class UserSignup(UserSignupBase):
@@ -53,6 +58,18 @@ class UserResponse(BaseModel):
     created_at: str
     is_active: bool
 
+    @classmethod
+    def from_auth_user(cls, user: AuthUser) -> "UserResponse":
+        return cls(
+            id=user.id,
+            email=user.email,
+            username=user.username,
+            full_name=user.full_name,
+            company_name=user.company_name,
+            created_at=user.created_at.isoformat(),
+            is_active=user.is_active,
+        )
+
 
 class LoginResponse(BaseModel):
     """Login response with JWT tokens."""
@@ -66,82 +83,26 @@ class LoginResponse(BaseModel):
 def signup(user_data: UserSignup) -> UserResponse:
     """Register a new user with validation and password hashing."""
 
-    # Check if email already exists
-    if user_data.email in users_db:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    # Check if username already exists
-    if any(u["username"] == user_data.username for u in users_db.values()):
-        raise HTTPException(status_code=400, detail="Username already taken")
-
-    # Create user with hashed password
-    user_id = f"user_{len(users_db) + 1}"
-    user = {
-        "id": user_id,
-        "email": user_data.email,
-        "username": user_data.username,
-        "full_name": user_data.full_name,
-        "company_name": user_data.company_name,
-        "hashed_password": hash_password(user_data.password),  # Hash the password!
-        "created_at": utcnow().isoformat(),
-        "is_active": True,
-    }
-
-    users_db[user_data.email] = user
-
-    # Return user without password
-    return UserResponse(**{k: v for k, v in user.items() if k != "hashed_password"})
+    user = auth_service.register_user(user_data, repo=memory_repo)
+    return UserResponse.from_auth_user(user)
 
 
 @router.post("/login", response_model=LoginResponse)
 def login(credentials: UserLogin) -> LoginResponse:
-    """Login with email and password, returns JWT tokens.
+    """Login with email and password, returns JWT tokens."""
 
-    Implements account lockout after 5 failed attempts within 5 minutes.
-    Lockout duration is 15 minutes.
-    """
     lockout_service = get_lockout_service()
-    email = credentials.email
-
-    # Check if account is locked
-    if lockout_service.is_locked(email):
-        remaining = lockout_service.get_lockout_remaining_seconds(email)
-        raise HTTPException(
-            status_code=429,
-            detail=f"Account temporarily locked due to too many failed attempts. Try again in {remaining} seconds.",
-        )
-
-    # Check if user exists
-    if credentials.email not in users_db:
-        # Record failed attempt even for non-existent users (prevent enumeration)
-        lockout_service.record_failed_attempt(email)
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    user = users_db[credentials.email]
-
-    # Verify password
-    if not verify_password(credentials.password, user["hashed_password"]):
-        is_locked = lockout_service.record_failed_attempt(email)
-        if is_locked:
-            remaining = lockout_service.get_lockout_remaining_seconds(email)
-            raise HTTPException(
-                status_code=429,
-                detail=f"Account locked due to too many failed attempts. Try again in {remaining} seconds.",
-            )
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    # Clear failed attempts on successful login
-    lockout_service.record_successful_login(email)
-
-    # Create JWT tokens
-    tokens = create_tokens(user)
-
-    # Create response
-    user_response = UserResponse(
-        **{k: v for k, v in user.items() if k != "hashed_password"}
+    result = auth_service.login(
+        email=credentials.email,
+        password=credentials.password,
+        repo=memory_repo,
+        lockout_service=lockout_service,
     )
-
-    return LoginResponse(message="Login successful", user=user_response, tokens=tokens)
+    return LoginResponse(
+        message="Login successful",
+        user=UserResponse.from_auth_user(result.user),
+        tokens=result.tokens,
+    )
 
 
 @router.get("/test")
@@ -163,19 +124,15 @@ def test() -> Dict[str, Any]:
 @router.get("/list")
 def list_users() -> Dict[str, Any]:
     """List all users (for testing - remove in production!)."""
-    safe_users = []
-    for _email, user in users_db.items():
-        safe_user = {k: v for k, v in user.items() if k != "hashed_password"}
-        safe_users.append(safe_user)
-
+    safe_users = [
+        UserResponse.from_auth_user(user) for user in memory_repo.list_users()
+    ]
     return {"users": safe_users, "total": len(safe_users)}
 
 
 @router.get("/me")
 async def get_me(current_user: TokenData = Depends(get_current_user)) -> UserResponse:
     """Get current user info from JWT token."""
-    if current_user.email not in users_db:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    user = users_db[current_user.email]
-    return UserResponse(**{k: v for k, v in user.items() if k != "hashed_password"})
+    user = auth_service.ensure_user_exists(current_user.email, repo=memory_repo)
+    return UserResponse.from_auth_user(user)

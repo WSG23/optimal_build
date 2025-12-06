@@ -1,0 +1,68 @@
+/* styles/glass.css
+   Utility classes for glassmorphism and modern UI effects.
+   Depends on tokens.css variables.
+*/
+
+/* --- Glass Surfaces --- */
+.glass-panel {
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--ob-border-glass);
+    box-shadow: var(--ob-shadow-glass);
+}
+
+.glass-panel-heavy {
+    background: var(--ob-surface-glass-2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--ob-border-glass-strong);
+    box-shadow: var(--ob-shadow-glass-lg);
+}
+
+/* --- Gradients --- */
+.text-gradient-gold {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+.text-gradient-brand {
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-brand-primary) 0%,
+        var(--ob-color-brand-accent) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+/* --- Glow Effects --- */
+.glow-primary {
+    box-shadow: 0 0 15px var(--ob-color-brand-primary-glow);
+}
+
+.glow-gold {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+/* --- Animations --- */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 5px var(--ob-color-brand-primary-glow);
+    }
+    50% {
+        box-shadow: 0 0 20px var(--ob-color-brand-primary-glow);
+    }
+    100% {
+        box-shadow: 0 0 5px var(--ob-color-brand-primary-glow);
+    }
+}
+
+.animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+}

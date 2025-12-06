@@ -26,6 +26,8 @@ export function FeasibilityWizard({
   // Address state
   const [addressInput, setAddressInput] = useState('')
   const [addressError, setAddressError] = useState<string | null>(null)
+  const [siteAreaInput, setSiteAreaInput] = useState('')
+  const [landUseInput, setLandUseInput] = useState('Mixed Use')
 
   // Copy state
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle')
@@ -132,24 +134,56 @@ export function FeasibilityWizard({
     [],
   )
 
+  const handleSiteAreaChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setSiteAreaInput(event.target.value)
+    },
+    [],
+  )
+
+  const handleLandUseChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      setLandUseInput(event.target.value)
+    },
+    [],
+  )
+
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
+      console.log('FeasibilityWizard: handleSubmit called')
+      console.log('FeasibilityWizard: Inputs -', {
+        addressInput,
+        siteAreaInput,
+        landUseInput,
+        assumptions: appliedAssumptions,
+      })
       const trimmed = addressInput.trim()
+      const siteArea = parseFloat(siteAreaInput)
       if (!trimmed) {
         setAddressError(t('wizard.form.errors.addressRequired'))
         setPayload(null)
         return
       }
 
+      if (isNaN(siteArea) || siteArea <= 0) {
+        setAddressError(t('wizard.form.errors.invalidSiteArea') || 'Invalid site area')
+        return
+      }
+
       setAddressError(null)
-      setPayload({
+      const newPayload: PendingPayload = {
+        name: `Project ${trimmed}`,
         address: trimmed,
+        siteAreaSqm: siteArea,
+        landUse: landUseInput,
         typFloorToFloorM: appliedAssumptions.typFloorToFloorM,
         efficiencyRatio: appliedAssumptions.efficiencyRatio,
-      })
+      }
+      console.log('FeasibilityWizard: handleSubmit setting payload:', newPayload)
+      setPayload(newPayload)
     },
-    [addressInput, appliedAssumptions, setPayload, t],
+    [addressInput, siteAreaInput, landUseInput, appliedAssumptions, setPayload, t],
   )
 
   const handleCopyRequest = useCallback(() => {
@@ -160,7 +194,10 @@ export function FeasibilityWizard({
       clearTimeout(copyResetRef.current)
     }
     const body: PendingPayload = {
+      name: payload.name,
       address: payload.address,
+      siteAreaSqm: payload.siteAreaSqm,
+      landUse: payload.landUse,
       typFloorToFloorM: payload.typFloorToFloorM,
       efficiencyRatio: payload.efficiencyRatio,
     }
@@ -245,6 +282,10 @@ export function FeasibilityWizard({
             onAddressChange={handleAddressChange}
             onSubmit={handleSubmit}
             t={t}
+            siteAreaInput={siteAreaInput}
+            landUseInput={landUseInput}
+            onSiteAreaChange={handleSiteAreaChange}
+            onLandUseChange={handleLandUseChange}
           />
 
           <AssumptionsPanel

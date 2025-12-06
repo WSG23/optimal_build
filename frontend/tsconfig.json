@@ -19,7 +19,8 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["./*"],
-      "@ob/tokens": ["../core/design-tokens/index.ts"]
+      "@ob/tokens": ["../../core/design-tokens/index.ts"],
+      "@ob/tokens.css": ["../../core/design-tokens/tokens.css"]
     }
   },
   "include": ["src", "../core/design-tokens"],

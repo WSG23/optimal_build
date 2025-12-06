@@ -1,7 +1,7 @@
-import { YosaiShell, YosaiShellProps } from '../../components/layout/YosaiShell'
+import { AppShell as BaseAppShell, AppShellProps as BaseAppShellProps } from '../../components/layout/YosaiShell'
 
-interface AppShellProps extends Omit<YosaiShellProps, 'subtitle'> {
-  activeItem?: string // Kept for backward compatibility, but YosaiShell uses router path
+interface AppShellProps extends Omit<BaseAppShellProps, 'subtitle'> {
+  activeItem?: string // Kept for backward compatibility
   description?: string
 }
 
@@ -12,8 +12,8 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <YosaiShell title={title} subtitle={description} actions={actions}>
+    <BaseAppShell title={title} subtitle={description} actions={actions}>
       {children}
-    </YosaiShell>
+    </BaseAppShell>
   )
 }

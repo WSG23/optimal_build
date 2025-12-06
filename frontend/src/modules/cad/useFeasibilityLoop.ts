@@ -13,7 +13,7 @@ const WS_URL = 'ws://localhost:8000/api/v1/feasibility/ws';
 
 export function useFeasibilityLoop(
     units: DetectedUnit[],
-    zoneCode: string | null
+    _zoneCode: string | null
 ): FeasibilityLoopResult {
     const [metrics, setMetrics] = useState<RoiMetrics | null>(null);
     const [loading, setLoading] = useState(false);

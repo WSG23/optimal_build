@@ -47,7 +47,14 @@ class MinIOService:
                 secret_key=self.secret_key,
                 secure=self.secure,
             )
-            self._ensure_bucket(settings.S3_BUCKET)
+            for bucket in {
+                settings.S3_BUCKET,
+                settings.IMPORTS_BUCKET_NAME,
+                settings.EXPORTS_BUCKET_NAME,
+                settings.DOCUMENTS_BUCKET_NAME,
+            }:
+                if bucket:
+                    self._ensure_bucket(bucket)
         else:  # pragma: no cover - warn in reduced environments
             logger.warning(
                 "MinIO client unavailable; storage operations will be no-ops"

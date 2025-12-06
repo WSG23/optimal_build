@@ -1,76 +1,352 @@
+/* =============================================================================
+   CANONICAL DESIGN TOKENS - Obsidian & Gold Theme
+   =============================================================================
+   This is the SINGLE SOURCE OF TRUTH for all design tokens in the application.
+
+   Naming Convention: --ob-[category]-[property]-[variant]
+
+   Categories:
+   - neutral-*        : Base grayscale palette
+   - brand-*          : Primary brand colors (blue)
+   - accent-*         : Accent colors (gold)
+   - success/warning/error/info-* : Status colors
+   - color-bg-*       : Background colors
+   - color-surface-*  : Surface/container colors
+   - color-text-*     : Text colors
+   - color-border-*   : Border colors
+   - color-brand-*    : Semantic brand colors
+   - font-family-*    : Font families
+   - font-size-*      : Font sizes
+   - font-weight-*    : Font weights
+   - space-*          : Spacing scale
+   - radius-*         : Border radii
+   - shadow-*         : Box shadows
+   ============================================================================= */
+
 :root {
-  /* Color tokens */
-  --ob-color-surface-default: #ffffff;
-  --ob-color-surface-default-rgb: 255 255 255;
-  --ob-color-surface-alt: #f8fafc;
-  --ob-color-surface-alt-rgb: 248 250 252;
-  --ob-color-surface-inverse: #0f172a;
-  --ob-color-surface-inverse-rgb: 15 23 42;
+    /* ===========================================================================
+     1. CORE PALETTE
+     =========================================================================== */
 
-  --ob-color-border-subtle: #cbd5f5;
-  --ob-color-border-subtle-rgb: 203 213 245;
-  --ob-color-border-neutral: #e2e8f0;
-  --ob-color-border-neutral-rgb: 226 232 240;
+    /* Neutrals: Deep Slate / Obsidian */
+    --ob-neutral-950: #020617; /* Deepest background */
+    --ob-neutral-900: #0f172a; /* Card background */
+    --ob-neutral-800: #1e293b; /* Hover states */
+    --ob-neutral-700: #334155; /* Borders */
+    --ob-neutral-600: #475569; /* Subtitles */
+    --ob-neutral-500: #64748b; /* Muted text */
+    --ob-neutral-400: #94a3b8;
+    --ob-neutral-300: #cbd5e1;
+    --ob-neutral-200: #e2e8f0; /* Primary text inverse */
+    --ob-neutral-100: #f1f5f9;
+    --ob-neutral-50: #f8fafc; /* White/Lightest */
 
-  --ob-color-text-primary: #1e293b;
-  --ob-color-text-primary-rgb: 30 41 59;
-  --ob-color-text-muted: #475569;
-  --ob-color-text-muted-rgb: 71 85 105;
-  --ob-color-text-inverse: #ffffff;
-  --ob-color-text-inverse-rgb: 255 255 255;
-  --ob-color-text-inverse-muted-rgb: 226 232 240;
+    /* Brand: Electric Blue */
+    --ob-brand-700: #1d4ed8;
+    --ob-brand-600: #2563eb; /* Primary Action */
+    --ob-brand-500: #3b82f6;
+    --ob-brand-400: #60a5fa;
+    --ob-brand-300: #93c5fd;
+    --ob-brand-200: #bfdbfe;
+    --ob-brand-100: #dbeafe;
+    --ob-brand-glow: rgba(59, 130, 246, 0.4);
 
-  --ob-color-brand-primary: #2563eb;
-  --ob-color-brand-primary-rgb: 37 99 235;
-  --ob-color-brand-primary-emphasis: #1d4ed8;
-  --ob-color-brand-primary-emphasis-rgb: 29 78 216;
-  --ob-color-brand-soft: #bfdbfe;
-  --ob-color-brand-soft-rgb: 191 219 254;
-  --ob-color-info-strong: #1e3a8a;
-  --ob-color-info-strong-rgb: 30 58 138;
-  --ob-color-success-strong: #15803d;
-  --ob-color-success-strong-rgb: 21 128 61;
-  --ob-color-warning-strong: #b45309;
-  --ob-color-warning-strong-rgb: 180 83 9;
-  --ob-color-error-strong: #b91c1c;
-  --ob-color-error-strong-rgb: 185 28 28;
-  --ob-color-error-muted: #991b1b;
-  --ob-color-error-muted-rgb: 153 27 27;
-  --ob-color-error-soft: #fee2e2;
-  --ob-color-error-soft-rgb: 254 226 226;
-  --ob-color-warning-soft: #f1f5f9;
+    /* Accent: Premium Gold */
+    --ob-accent-600: #d97706;
+    --ob-accent-500: #f59e0b; /* Highlights */
+    --ob-accent-400: #fbbf24;
+    --ob-accent-300: #fcd34d;
+    --ob-accent-200: #fde68a;
 
-  /* Spacing tokens */
-  --ob-space-025: 0.25rem;
-  --ob-space-035: 0.35rem;
-  --ob-space-050: 0.5rem;
-  --ob-space-065: 0.65rem;
-  --ob-space-075: 0.75rem;
-  --ob-space-085: 0.85rem;
-  --ob-space-090: 0.9rem;
-  --ob-space-095: 0.95rem;
-  --ob-space-100: 1rem;
-  --ob-space-125: 1.25rem;
-  --ob-space-130: 1.3rem;
-  --ob-space-150: 1.5rem;
-  --ob-space-175: 1.75rem;
-  --ob-space-200: 2rem;
-  --ob-space-250: 2.5rem;
-  --ob-space-300: 3rem;
-  --ob-space-400: 4rem;
+    /* Success */
+    --ob-success-700: #15803d;
+    --ob-success-600: #16a34a;
+    --ob-success-500: #22c55e;
+    --ob-success-400: #4ade80;
+    --ob-success-bg: rgba(34, 197, 94, 0.15);
+    --ob-success-text: #4ade80;
 
-  /* Radius tokens */
-  --ob-radius-sm: 0.65rem;
-  --ob-radius-md: 0.75rem;
-  --ob-radius-md-plus: 0.85rem;
-  --ob-radius-lg: 1rem;
-  --ob-radius-xl: 1.25rem;
-  --ob-radius-2xl: 1.5rem;
-  --ob-radius-pill: 9999px;
+    /* Warning */
+    --ob-warning-700: #b45309;
+    --ob-warning-600: #ca8a04;
+    --ob-warning-500: #eab308;
+    --ob-warning-400: #facc15;
+    --ob-warning-bg: rgba(234, 179, 8, 0.15);
+    --ob-warning-text: #facc15;
 
-  /* Typography tokens */
-  --ob-font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --ob-font-weight-regular: 400;
-  --ob-font-weight-semibold: 600;
-  --ob-font-weight-bold: 700;
+    /* Error / Danger */
+    --ob-error-700: #b91c1c;
+    --ob-error-600: #dc2626;
+    --ob-error-500: #ef4444;
+    --ob-error-400: #f87171;
+    --ob-error-bg: rgba(239, 68, 68, 0.15);
+    --ob-error-text: #f87171;
+
+    /* Info */
+    --ob-info-700: #1d4ed8;
+    --ob-info-600: #2563eb;
+    --ob-info-500: #3b82f6;
+    --ob-info-400: #60a5fa;
+    --ob-info-bg: rgba(59, 130, 246, 0.15);
+    --ob-info-text: #60a5fa;
+
+    /* ===========================================================================
+     2. SEMANTIC COLORS - Surfaces
+     =========================================================================== */
+
+    /* Background */
+    --ob-color-bg-root: var(--ob-neutral-950);
+    --ob-color-bg-surface: var(--ob-neutral-900);
+    --ob-color-bg-surface-elevated: var(--ob-neutral-800);
+
+    /* Glass Surfaces (Backdrop Filter required) */
+    --ob-surface-glass-1: rgba(15, 23, 42, 0.7);
+    --ob-surface-glass-2: rgba(30, 41, 59, 0.75);
+
+    /* Surface semantic aliases */
+    --ob-color-surface-default: var(--ob-color-bg-surface);
+    --ob-color-surface-alt: var(--ob-color-bg-root);
+    --ob-color-surface-alt-rgb: 2 6 23;
+    --ob-color-surface-subtle: var(--ob-neutral-850, #172033);
+    --ob-color-surface-strong: var(--ob-neutral-800);
+    --ob-color-surface-inverse: var(--ob-neutral-100);
+    --ob-color-surface-default-rgb: 15 23 42;
+    --ob-color-surface-inverse-rgb: 241 245 249;
+
+    /* ===========================================================================
+     3. SEMANTIC COLORS - Text
+     =========================================================================== */
+
+    --ob-color-text: var(--ob-neutral-100);
+    --ob-color-text-primary: var(--ob-neutral-100);
+    --ob-color-text-secondary: var(--ob-neutral-400);
+    --ob-color-text-muted: var(--ob-neutral-600);
+    --ob-color-text-subtle: var(--ob-neutral-500);
+    --ob-color-text-strong: var(--ob-neutral-50);
+    --ob-color-text-inverse: var(--ob-neutral-900);
+    --ob-color-text-accent: var(--ob-accent-400);
+
+    /* ===========================================================================
+     4. SEMANTIC COLORS - Borders
+     =========================================================================== */
+
+    --ob-color-border-subtle: rgba(148, 163, 184, 0.15);
+    --ob-color-border-faint: rgba(148, 163, 184, 0.08);
+    --ob-color-border-neutral: rgba(148, 163, 184, 0.3);
+    --ob-color-border-neutral-rgb: 148 163 184;
+    --ob-color-border-strong: var(--ob-neutral-600);
+    --ob-color-border-focus: var(--ob-brand-500);
+    --ob-color-border-brand: var(--ob-brand-500);
+    --ob-color-border-warning: var(--ob-warning-500);
+    --ob-color-border-error: var(--ob-error-500);
+    --ob-color-border-success: var(--ob-success-500);
+    --ob-border-glass: rgba(255, 255, 255, 0.1);
+    --ob-border-glass-strong: rgba(255, 255, 255, 0.15);
+
+    /* ===========================================================================
+     5. SEMANTIC COLORS - Brand & Actions
+     =========================================================================== */
+
+    --ob-color-brand-primary: var(--ob-brand-600);
+    --ob-color-brand-primary-emphasis: var(--ob-brand-500);
+    --ob-color-brand-primary-glow: var(--ob-brand-glow);
+    --ob-color-brand-primary-rgb: 37 99 235;
+    --ob-color-brand-primary-strong: var(--ob-brand-700);
+    --ob-color-brand-accent: var(--ob-accent-500);
+    --ob-color-brand-soft: rgba(37, 99, 235, 0.2);
+    --ob-color-brand-muted: rgba(59, 130, 246, 0.15);
+    --ob-color-brand-strong: var(--ob-brand-600);
+    --ob-color-action-hover: rgba(255, 255, 255, 0.05);
+
+    /* ===========================================================================
+     6. SEMANTIC COLORS - Status (Soft/Strong variants)
+     =========================================================================== */
+
+    /* Success */
+    --ob-color-success-soft: rgba(34, 197, 94, 0.15);
+    --ob-color-success-strong: var(--ob-success-700);
+    --ob-color-success-muted: var(--ob-success-600);
+    --ob-color-status-success-bg: var(--ob-success-bg);
+    --ob-color-status-success-text: var(--ob-success-text);
+    --ob-color-status-success-text-rgb: 74 222 128;
+
+    /* Warning */
+    --ob-color-warning-soft: rgba(234, 179, 8, 0.15);
+    --ob-color-warning-strong: var(--ob-warning-700);
+    --ob-color-warning-muted: var(--ob-warning-600);
+    --ob-color-status-warning-bg: var(--ob-warning-bg);
+    --ob-color-status-warning-text: var(--ob-warning-text);
+    --ob-color-status-warning-text-rgb: 250 204 21;
+
+    /* Error / Danger / Critical */
+    --ob-color-error-soft: rgba(239, 68, 68, 0.15);
+    --ob-color-error-strong: var(--ob-error-700);
+    --ob-color-error-muted: var(--ob-error-600);
+    --ob-color-danger-strong: var(--ob-error-600);
+    --ob-color-status-error-bg: var(--ob-error-bg);
+    --ob-color-status-error-text: var(--ob-error-text);
+    --ob-color-critical-strong: var(--ob-error-600);
+    --ob-color-critical-muted: var(--ob-error-500);
+
+    /* Info */
+    --ob-color-info-soft: rgba(59, 130, 246, 0.15);
+    --ob-color-info-strong: var(--ob-info-700);
+    --ob-color-info-muted: rgba(59, 130, 246, 0.25);
+    --ob-color-status-info-bg: var(--ob-info-bg);
+    --ob-color-status-info-text: var(--ob-info-text);
+    --ob-color-status-info-text-rgb: 96 165 250;
+
+    /* ===========================================================================
+     7. TYPOGRAPHY
+     =========================================================================== */
+
+    /* Font Families */
+    --ob-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+    --ob-font-family-mono: 'JetBrains Mono', monospace;
+
+    /* Font Sizes */
+    --ob-font-size-xs: 0.75rem; /* 12px */
+    --ob-font-size-sm: 0.875rem; /* 14px */
+    --ob-font-size-md: 0.9375rem; /* 15px - between sm and base */
+    --ob-font-size-base: 1rem; /* 16px */
+    --ob-font-size-lg: 1.125rem; /* 18px */
+    --ob-font-size-xl: 1.25rem; /* 20px */
+    --ob-font-size-2xl: 1.5rem; /* 24px */
+    --ob-font-size-3xl: 1.875rem; /* 30px */
+    --ob-font-size-4xl: 2.25rem; /* 36px */
+
+    /* Font Weights */
+    --ob-font-weight-regular: 400;
+    --ob-font-weight-medium: 500;
+    --ob-font-weight-semibold: 600;
+    --ob-font-weight-bold: 700;
+
+    /* Line Heights */
+    --ob-line-height-tight: 1.2;
+    --ob-line-height-normal: 1.5;
+    --ob-line-height-relaxed: 1.6;
+
+    /* ===========================================================================
+     8. SPACING SCALE
+     =========================================================================== */
+
+    --ob-space-025: 0.25rem; /* 4px */
+    --ob-space-035: 0.35rem; /* 5.6px */
+    --ob-space-050: 0.5rem; /* 8px */
+    --ob-space-065: 0.65rem; /* 10.4px */
+    --ob-space-075: 0.75rem; /* 12px */
+    --ob-space-085: 0.85rem; /* 13.6px */
+    --ob-space-100: 1rem; /* 16px */
+    --ob-space-120: 1.2rem; /* 19.2px */
+    --ob-space-125: 1.25rem; /* 20px */
+    --ob-space-150: 1.5rem; /* 24px */
+    --ob-space-175: 1.75rem; /* 28px */
+    --ob-space-200: 2rem; /* 32px */
+    --ob-space-250: 2.5rem; /* 40px */
+    --ob-space-300: 3rem; /* 48px */
+    --ob-space-400: 4rem; /* 64px */
+
+    /* Legacy spacing alias */
+    --ob-spacing-3: var(--ob-space-075);
+
+    /* ===========================================================================
+     9. BORDER RADIUS
+     =========================================================================== */
+
+    --ob-radius-sm: 0.375rem; /* 6px */
+    --ob-radius-md: 0.5rem; /* 8px */
+    --ob-radius-md-plus: 0.625rem; /* 10px - between md and lg */
+    --ob-radius-lg: 0.75rem; /* 12px */
+    --ob-radius-xl: 1rem; /* 16px */
+    --ob-radius-2xl: 1.5rem; /* 24px */
+    --ob-radius-pill: 9999px;
+
+    /* ===========================================================================
+     10. SHADOWS
+     =========================================================================== */
+
+    --ob-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --ob-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --ob-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    --ob-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    --ob-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    --ob-shadow-glass-lg: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+
+    /* ===========================================================================
+     11. Z-INDEX SCALE
+     =========================================================================== */
+
+    --ob-z-dropdown: 1000;
+    --ob-z-sticky: 1020;
+    --ob-z-fixed: 1030;
+    --ob-z-modal-backdrop: 1040;
+    --ob-z-modal: 1050;
+    --ob-z-popover: 1060;
+    --ob-z-tooltip: 1070;
+}
+
+/* =============================================================================
+   LIGHT THEME OVERRIDES
+   =============================================================================
+   Applied via data-theme="light" attribute on <html> element.
+   ThemeContext.tsx sets: document.documentElement.setAttribute('data-theme', mode)
+   ============================================================================= */
+
+html[data-theme='light'] {
+    /* Surfaces */
+    --ob-color-bg-root: #f8fafc;
+    --ob-color-bg-surface: #ffffff;
+    --ob-color-bg-surface-elevated: #f1f5f9;
+
+    /* Glass Surfaces */
+    --ob-surface-glass-1: rgba(255, 255, 255, 0.7);
+    --ob-surface-glass-2: rgba(255, 255, 255, 0.9);
+
+    /* Surface semantic */
+    --ob-color-surface-default: var(--ob-color-bg-surface);
+    --ob-color-surface-alt: var(--ob-color-bg-root);
+    --ob-color-surface-alt-rgb: 248 250 252;
+    --ob-color-surface-subtle: #f1f5f9;
+    --ob-color-surface-strong: #e2e8f0;
+    --ob-color-surface-inverse: var(--ob-neutral-900);
+    --ob-color-surface-default-rgb: 255 255 255;
+    --ob-color-surface-inverse-rgb: 15 23 42;
+
+    /* Text */
+    --ob-color-text: #0f172a;
+    --ob-color-text-primary: #0f172a;
+    --ob-color-text-secondary: #475569;
+    --ob-color-text-muted: #94a3b8;
+    --ob-color-text-subtle: #64748b;
+    --ob-color-text-strong: #020617;
+    --ob-color-text-inverse: #ffffff;
+
+    /* Borders */
+    --ob-color-border-subtle: #e2e8f0;
+    --ob-color-border-faint: #f1f5f9;
+    --ob-color-border-neutral: #cbd5e1;
+    --ob-color-border-neutral-rgb: 203 213 225;
+    --ob-color-border-strong: #94a3b8;
+    --ob-border-glass: rgba(0, 0, 0, 0.05);
+    --ob-border-glass-strong: rgba(0, 0, 0, 0.1);
+
+    /* Brand */
+    --ob-color-brand-soft: rgba(37, 99, 235, 0.1);
+    --ob-color-brand-muted: rgba(59, 130, 246, 0.1);
+    --ob-color-action-hover: rgba(0, 0, 0, 0.05);
+
+    /* Status soft backgrounds for light mode */
+    --ob-color-success-soft: #dcfce7;
+    --ob-color-warning-soft: #fef3c7;
+    --ob-color-error-soft: #fee2e2;
+    --ob-color-info-soft: #dbeafe;
+    --ob-color-info-muted: rgba(59, 130, 246, 0.15);
+
+    /* Shadows (lighter for light mode) */
+    --ob-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --ob-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --ob-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --ob-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --ob-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    --ob-shadow-glass-lg: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
 }

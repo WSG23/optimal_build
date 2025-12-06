@@ -240,7 +240,7 @@ export async function fetchBuildable(
     const payload = await transport(apiBaseUrl, request, { signal })
     return mapResponse(payload)
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw error
     }
     if (error instanceof TypeError) {
