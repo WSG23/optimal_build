@@ -138,7 +138,7 @@ export function AppShell({ title, subtitle, actions, children }: AppShellProps) 
                 </Box>
 
                 {/* Content */}
-                <Box component="main" sx={{ flexGrow: 1, p: 0, overflow: 'auto' }}>
+                <Box component="main" sx={{ flexGrow: 1, p: 0, overflow: 'auto', scrollbarGutter: 'stable' }}>
                     {children}
                 </Box>
             </Box>
