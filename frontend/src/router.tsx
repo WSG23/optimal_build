@@ -86,10 +86,12 @@ export function createBrowserRouter(routes: RouteDefinition[]): RouterInstance {
 
 interface RouterProviderProps {
   router: RouterInstance
+  layout?: React.ComponentType<{ children: ReactNode }>
 }
 
-export function RouterProvider({ router }: RouterProviderProps) {
+export function RouterProvider({ router, layout: Layout }: RouterProviderProps) {
   const [path, setPath] = useState<string>(() => getInitialPath())
+  // ... (keep state hooks)
   const [search, setSearch] = useState<string>(() => getInitialSearch())
   const routes = useMemo(() => router.routes, [router])
 
@@ -169,7 +171,7 @@ export function RouterProvider({ router }: RouterProviderProps) {
 
   return (
     <RouterContext.Provider value={contextValue}>
-      {activeElement}
+      {Layout ? <Layout>{activeElement}</Layout> : activeElement}
     </RouterContext.Provider>
   )
 }

@@ -17,6 +17,7 @@ import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
 import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
 import AgentPerformancePage from './pages/AgentPerformancePage'
 import { AppShell } from './app/layout/AppShell'
+import { BaseLayout } from './app/layout/BaseLayout'
 import { BusinessPerformancePage } from './app/pages/business-performance/BusinessPerformancePage'
 import { GpsCapturePage } from './app/pages/gps-capture/GpsCapturePage'
 import { MarketingPage } from './app/pages/marketing/MarketingPage'
@@ -38,6 +39,7 @@ const businessPerformanceElement = (
     activeItem="performance"
     title="Business performance"
     description="Track deal momentum, commissions, analytics, and automation ROI across your Singapore commercial pipeline."
+    hideSidebar
   >
     <BusinessPerformancePage />
   </AppShell>
@@ -48,6 +50,7 @@ const gpsCaptureElement = (
     activeItem="gpsCapture"
     title="GPS capture & quick analysis"
     description="Capture sites in the field, run instant scenario analysis, review market intelligence, and generate marketing packs."
+    hideSidebar
   >
     <GpsCapturePage />
   </AppShell>
@@ -58,6 +61,7 @@ const marketingElement = (
     activeItem="marketing"
     title="Marketing packs"
     description="Generate, track, and share professional marketing packs for developers and investors."
+    hideSidebar
   >
     <MarketingPage />
   </AppShell>
@@ -68,6 +72,7 @@ const advisoryElement = (
     activeItem="advisory"
     title="Advisory console"
     description="Review asset mix strategy, pricing guidance, absorption forecasts, and market feedback in one workspace."
+    hideSidebar
   >
     <AdvisoryPage />
   </AppShell>
@@ -78,6 +83,7 @@ const integrationsElement = (
     activeItem="integrations"
     title="Listing integrations"
     description="Connect PropertyGuru, EdgeProp, Zoho, and future portals to publish and monitor listings."
+    hideSidebar
   >
     <IntegrationsPage />
   </AppShell>
@@ -88,6 +94,7 @@ const siteAcquisitionElement = (
     activeItem="siteAcquisition"
     title="Site acquisition"
     description="Comprehensive property capture and development feasibility analysis for developers."
+    hideSidebar
   >
     <SiteAcquisitionPage />
   </AppShell>
@@ -98,6 +105,7 @@ const developerPreviewStandaloneElement = (
     activeItem="siteAcquisition"
     title="Developer preview"
     description="Standalone preview viewer for manual QA of Phase 2B renders."
+    hideSidebar
   >
     <DeveloperPreviewStandalone />
   </AppShell>
@@ -108,6 +116,7 @@ const checklistTemplateManagerElement = (
     activeItem="siteAcquisition"
     title="Checklist templates"
     description="Author and import scenario-specific due diligence checklists."
+    hideSidebar
   >
     <ChecklistTemplateManager />
   </AppShell>
@@ -118,6 +127,7 @@ const developerFeasibilityElement = (
     activeItem="assetFeasibility"
     title="Feasibility workspace"
     description="Run feasibility checks, document pack generation, and advisory workflows."
+    hideSidebar
   >
     <FeasibilityWizard withLayout={false} />
   </AppShell>
@@ -130,6 +140,7 @@ const phaseManagementElement = (
     activeItem="phaseManagement"
     title="Phase management"
     description="Multi-phase development scheduling, heritage tracking, and tenant coordination."
+    hideSidebar
   >
     <PhaseManagementPage />
   </AppShell>
@@ -304,7 +315,7 @@ ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <TranslationProvider>
       <AppThemeProvider>
-        <RouterProvider router={router} />
+        <RouterProvider router={router} layout={BaseLayout} />
       </AppThemeProvider>
     </TranslationProvider>
   </React.StrictMode>,
