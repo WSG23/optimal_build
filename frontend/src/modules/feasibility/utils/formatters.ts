@@ -1,4 +1,4 @@
-import { cssVar } from '../../../tokens'
+
 
 export function formatFileSize(bytes: number | null, locale: string): string {
   if (bytes == null || Number.isNaN(bytes)) {
@@ -30,9 +30,7 @@ export function anonymiseAddress(address: string): string {
   return `${prefix}…${suffix}`
 }
 
-export function readCssVar(token: string): string {
-  return String((cssVar as (name: string) => unknown)(token))
-}
+
 
 export function createNumberFormatter(locale: string, maxFractionDigits = 0): Intl.NumberFormat {
   return new Intl.NumberFormat(locale, {

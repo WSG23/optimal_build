@@ -28,22 +28,39 @@
     color: white;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-wizard__copy:hover:not(:disabled) {
     background: var(--ob-color-brand-primary-emphasis);
+    transform: translateY(-1px);
+    box-shadow: var(--ob-shadow-md);
+}
+
+.feasibility-wizard__copy:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .feasibility-wizard__copy:disabled {
     background: var(--ob-color-bg-muted);
     color: var(--ob-color-text-muted);
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 .feasibility-wizard__copy-status {
     font-size: var(--ob-font-size-sm);
-    color: var(--ob-color-brand-primary);
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.feasibility-wizard__copy-status--success {
+    color: var(--ob-color-success-strong);
+}
+
+.feasibility-wizard__copy-status--error {
+    color: var(--ob-color-error-strong);
 }
 
 .feasibility-wizard__layout {
@@ -59,15 +76,33 @@
     }
 }
 
-.feasibility-wizard__controls {
+/* Card Base Style */
+.feasibility-card {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-xl);
     padding: var(--ob-spacing-500);
+    box-shadow: var(--ob-shadow-md);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.feasibility-card:hover {
+    box-shadow: var(--ob-shadow-lg);
+    border-color: var(--ob-color-border-default);
+}
+
+.feasibility-wizard__controls {
+    /* Extending .feasibility-card behavior via duplicate properties since native CSS extend isn't improved */
+    background: var(--ob-color-bg-surface);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-xl);
+    padding: var(--ob-spacing-500);
+    box-shadow: var(--ob-shadow-md);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
     display: flex;
     flex-direction: column;
     gap: var(--ob-spacing-400);
-    box-shadow: var(--ob-shadow-md);
 }
 
 .feasibility-form {
@@ -95,6 +130,7 @@
     font-size: var(--ob-font-size-base);
     background: var(--ob-color-bg-surface);
     color: var(--ob-color-text-primary);
+    transition: all 0.2s ease;
 }
 
 .feasibility-form__field input:focus {
@@ -106,7 +142,7 @@
 .feasibility-form__error {
     margin: 0;
     font-size: var(--ob-font-size-sm);
-    color: var(--ob-error-400);
+    color: var(--ob-color-error-text);
 }
 
 .feasibility-form__actions {
@@ -121,11 +157,12 @@
     color: white;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .feasibility-form__submit:hover:not(:disabled) {
     background: var(--ob-color-brand-primary-emphasis);
+    transform: translateY(-1px);
 }
 
 .feasibility-form__submit:disabled {
@@ -170,6 +207,7 @@
     font-size: var(--ob-font-size-sm);
     background: var(--ob-color-bg-surface);
     color: var(--ob-color-text-primary);
+    transition: all 0.2s ease;
 }
 
 .feasibility-assumptions__grid input:focus {
@@ -187,7 +225,7 @@
 .feasibility-assumptions__error {
     margin: var(--ob-spacing-100) 0 0;
     font-size: var(--ob-font-size-xs);
-    color: var(--ob-error-400);
+    color: var(--ob-color-error-text);
 }
 
 .feasibility-assumptions__reset {
@@ -258,6 +296,7 @@
     font-size: var(--ob-font-size-sm);
     background: var(--ob-color-bg-surface);
     color: var(--ob-color-text-primary);
+    transition: all 0.2s ease;
 }
 
 .feasibility-pack__field input:focus,
@@ -295,9 +334,9 @@
 
 .feasibility-pack__error {
     margin: 0;
-    background: var(--ob-error-muted);
-    border: 1px solid var(--ob-error-subtle);
-    color: var(--ob-error-400);
+    background: var(--ob-color-error-bg);
+    border: 1px solid var(--ob-color-error-border);
+    color: var(--ob-color-error-text);
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
     border-radius: var(--ob-radius-lg);
     font-size: var(--ob-font-size-sm);
@@ -314,15 +353,15 @@
     align-self: flex-start;
     padding: var(--ob-spacing-150) var(--ob-spacing-300);
     border-radius: 9999px;
-    background: var(--ob-success-muted);
-    color: var(--ob-success-500);
+    background: var(--ob-color-success-bg);
+    color: var(--ob-color-success-text);
     font-weight: 600;
     text-decoration: none;
     transition: background 0.2s ease;
 }
 
 .feasibility-pack__download:hover {
-    background: var(--ob-success-subtle);
+    background: var(--ob-color-success-bg-hover);
 }
 
 .feasibility-results {
@@ -336,6 +375,11 @@
     gap: var(--ob-spacing-400);
     min-height: 320px;
     box-shadow: var(--ob-shadow-md);
+    transition: box-shadow 0.2s ease;
+}
+
+.feasibility-results:hover {
+    box-shadow: var(--ob-shadow-lg);
 }
 
 .feasibility-results__placeholder,
@@ -348,9 +392,9 @@
 
 .feasibility-results__error {
     margin: 0;
-    background: var(--ob-error-muted);
-    border: 1px solid var(--ob-error-subtle);
-    color: var(--ob-error-400);
+    background: var(--ob-color-error-bg);
+    border: 1px solid var(--ob-color-error-border);
+    color: var(--ob-color-error-text);
     padding: var(--ob-spacing-250) var(--ob-spacing-300);
     border-radius: var(--ob-radius-lg);
     font-size: var(--ob-font-size-sm);
@@ -360,6 +404,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--ob-spacing-400);
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .feasibility-results__header {
@@ -414,6 +464,12 @@
     background: var(--ob-color-bg-muted);
     padding: var(--ob-spacing-300);
     border-radius: var(--ob-radius-lg);
+    transition: transform 0.2s ease;
+}
+
+.feasibility-metrics__item:hover {
+    transform: translateY(-2px);
+    background: var(--ob-color-bg-subtle);
 }
 
 .feasibility-metrics__item dt {
@@ -583,6 +639,7 @@
 }
 
 .feasibility-form__submit--retry {
-    background: var(--ob-error-500) !important;
+    background: var(--ob-color-error-base) !important;
+    color: var(--ob-color-error-text-on-base) !important;
     animation: pulse-retry 2s infinite;
 }

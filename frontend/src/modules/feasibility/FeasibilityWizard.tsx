@@ -10,7 +10,7 @@ import { useRouterLocation } from '../../router'
 import { AddressForm, AssumptionsPanel, PackGenerationPanel, ResultsPanel } from './components'
 import { useAssumptions, useFeasibilityCompute, usePackGeneration } from './hooks'
 import type { PendingPayload } from './types'
-import { createDecimalFormatter, createNumberFormatter, readCssVar } from './utils/formatters'
+import { createDecimalFormatter, createNumberFormatter } from './utils/formatters'
 
 interface FeasibilityWizardProps {
   generatePackFn?: typeof generateProfessionalPack
@@ -99,15 +99,7 @@ export function FeasibilityWizard({
     [i18n.language],
   )
 
-  const copyStatusColor = useMemo<string>(() => {
-    if (copyState === 'copied') {
-      return readCssVar('color-success-strong')
-    }
-    if (copyState === 'error') {
-      return readCssVar('color-error-strong')
-    }
-    return readCssVar('color-brand-primary')
-  }, [copyState])
+
 
   // Sync assumptions with payload
   useEffect(() => {
@@ -253,18 +245,16 @@ export function FeasibilityWizard({
       </button>
       {copyState === 'copied' && (
         <span
-          className="feasibility-wizard__copy-status"
+          className="feasibility-wizard__copy-status feasibility-wizard__copy-status--success"
           role="status"
-          style={{ color: copyStatusColor }}
         >
           {t('wizard.form.copySuccess')}
         </span>
       )}
       {copyState === 'error' && (
         <span
-          className="feasibility-wizard__copy-status"
+          className="feasibility-wizard__copy-status feasibility-wizard__copy-status--error"
           role="status"
-          style={{ color: copyStatusColor }}
         >
           {t('wizard.form.copyError')}
         </span>
