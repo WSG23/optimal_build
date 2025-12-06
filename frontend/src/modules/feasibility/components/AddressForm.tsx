@@ -85,12 +85,14 @@ export function AddressForm({
       <div className="feasibility-form__actions">
         <button
           type="submit"
-          className="feasibility-form__submit"
+          className={`feasibility-form__submit ${status === 'error' ? 'feasibility-form__submit--retry' : ''}`}
           data-testid="compute-button"
         >
           {status === 'loading'
             ? t('wizard.form.submitLoading')
-            : t('wizard.form.submitLabel')}
+            : status === 'error'
+              ? 'Retry'
+              : t('wizard.form.submitLabel')}
         </button>
       </div>
     </form>

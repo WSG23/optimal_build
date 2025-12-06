@@ -28,67 +28,69 @@
      1. CORE PALETTE
      =========================================================================== */
 
-    /* Neutrals: Deep Slate / Obsidian */
-    --ob-neutral-950: #020617; /* Deepest background */
-    --ob-neutral-900: #0f172a; /* Card background */
-    --ob-neutral-800: #1e293b; /* Hover states */
-    --ob-neutral-700: #334155; /* Borders */
-    --ob-neutral-600: #475569; /* Subtitles */
-    --ob-neutral-500: #64748b; /* Muted text */
-    --ob-neutral-400: #94a3b8;
-    --ob-neutral-300: #cbd5e1;
-    --ob-neutral-200: #e2e8f0; /* Primary text inverse */
-    --ob-neutral-100: #f1f5f9;
-    --ob-neutral-50: #f8fafc; /* White/Lightest */
+    /* Neutrals: Charcoal / Dark Slate (World-Class Dark Mode) */
+    --ob-neutral-950: #121212; /* Deep Charcoal - Root Background */
+    --ob-neutral-900: #1E293B; /* Dark Slate - Card Background */
+    --ob-neutral-800: #334155; /* Surface Elevated */
+    --ob-neutral-700: #475569; /* Borders / Dividers */
+    --ob-neutral-600: #64748B; /* Muted Text */
+    --ob-neutral-500: #94A3B8; /* Subtle Text */
+    --ob-neutral-400: #CBD5E1; /* Secondary Text */
+    --ob-neutral-300: #E2E8F0;
+    --ob-neutral-200: #F1F5F9;
+    --ob-neutral-100: #F8FAFC; /* Primary Text */
+    --ob-neutral-50: #FFFFFF;
 
     /* Brand: Electric Blue */
-    --ob-brand-700: #1d4ed8;
-    --ob-brand-600: #2563eb; /* Primary Action */
-    --ob-brand-500: #3b82f6;
-    --ob-brand-400: #60a5fa;
-    --ob-brand-300: #93c5fd;
-    --ob-brand-200: #bfdbfe;
-    --ob-brand-100: #dbeafe;
-    --ob-brand-glow: rgba(59, 130, 246, 0.4);
+    --ob-brand-700: #1D4ED8;
+    --ob-brand-600: #2563EB;
+    --ob-brand-500: #3B82F6; /* Primary Action */
+    --ob-brand-400: #60A5FA;
+    --ob-brand-300: #93C5FD;
+    --ob-brand-200: #BFDBFE;
+    --ob-brand-100: #DBEAFE;
+    --ob-brand-glow: rgba(59, 130, 246, 0.5);
 
-    /* Accent: Premium Gold */
-    --ob-accent-600: #d97706;
-    --ob-accent-500: #f59e0b; /* Highlights */
-    --ob-accent-400: #fbbf24;
-    --ob-accent-300: #fcd34d;
-    --ob-accent-200: #fde68a;
+    /* Accent: Emerald Green (Growth/ROI) & Burnt Orange (Alerts) */
+    --ob-accent-600: #059669;
+    --ob-accent-500: #10B981; /* Momentum / Growth */
+    --ob-accent-400: #34D399;
+    --ob-accent-300: #6EE7B7;
+    --ob-accent-200: #D1FAE5;
 
-    /* Success */
-    --ob-success-700: #15803d;
-    --ob-success-600: #16a34a;
-    --ob-success-500: #22c55e;
-    --ob-success-400: #4ade80;
-    --ob-success-bg: rgba(34, 197, 94, 0.15);
-    --ob-success-text: #4ade80;
+    /* Semantic Status Colors */
 
-    /* Warning */
-    --ob-warning-700: #b45309;
-    --ob-warning-600: #ca8a04;
-    --ob-warning-500: #eab308;
-    --ob-warning-400: #facc15;
-    --ob-warning-bg: rgba(234, 179, 8, 0.15);
-    --ob-warning-text: #facc15;
+    /* Success (Emerald Green) */
+    --ob-success-700: #047857;
+    --ob-success-600: #059669;
+    --ob-success-500: #10B981; /* Primary Success */
+    --ob-success-400: #34D399;
+    --ob-success-bg: rgba(16, 185, 129, 0.15);
+    --ob-success-text: #34D399;
 
-    /* Error / Danger */
-    --ob-error-700: #b91c1c;
-    --ob-error-600: #dc2626;
-    --ob-error-500: #ef4444;
-    --ob-error-400: #f87171;
+    /* Warning (Burnt Orange) */
+    --ob-warning-700: #B45309;
+    --ob-warning-600: #D97706;
+    --ob-warning-500: #F59E0B; /* Primary Warning */
+    --ob-warning-400: #FBBF24;
+    --ob-warning-bg: rgba(245, 158, 11, 0.15);
+    --ob-warning-text: #FBBF24;
+
+    /* Error (Soft Red) */
+    --ob-error-700: #B91C1C;
+    --ob-error-600: #DC2626;
+    --ob-error-500: #EF4444; /* Primary Error */
+    --ob-error-400: #F87171;
     --ob-error-bg: rgba(239, 68, 68, 0.15);
-    --ob-error-text: #f87171;
+    --ob-error-text: #F87171;
 
-    /* Info */
-    --ob-info-700: #1d4ed8;
-    --ob-info-600: #2563eb;
-    --ob-info-500: #3b82f6;
-    --ob-info-400: #60a5fa;
+    /* Info (Electric Blue) */
+    --ob-info-700: #1D4ED8;
+    --ob-info-600: #2563EB;
+    --ob-info-500: #3B82F6;
+    --ob-info-400: #60A5FA;
     --ob-info-bg: rgba(59, 130, 246, 0.15);
-    --ob-info-text: #60a5fa;
+    --ob-info-text: #60A5FA;
 
     /* ===========================================================================
      2. SEMANTIC COLORS - Surfaces
@@ -100,18 +102,18 @@
     --ob-color-bg-surface-elevated: var(--ob-neutral-800);
 
     /* Glass Surfaces (Backdrop Filter required) */
-    --ob-surface-glass-1: rgba(15, 23, 42, 0.7);
-    --ob-surface-glass-2: rgba(30, 41, 59, 0.75);
+    --ob-surface-glass-1: rgba(30, 41, 59, 0.7);  /* Dark Slate glass */
+    --ob-surface-glass-2: rgba(51, 65, 85, 0.75);
 
     /* Surface semantic aliases */
     --ob-color-surface-default: var(--ob-color-bg-surface);
     --ob-color-surface-alt: var(--ob-color-bg-root);
-    --ob-color-surface-alt-rgb: 2 6 23;
-    --ob-color-surface-subtle: var(--ob-neutral-850, #172033);
+    --ob-color-surface-alt-rgb: 18 18 18;
+    --ob-color-surface-subtle: #172033;
     --ob-color-surface-strong: var(--ob-neutral-800);
     --ob-color-surface-inverse: var(--ob-neutral-100);
-    --ob-color-surface-default-rgb: 15 23 42;
-    --ob-color-surface-inverse-rgb: 241 245 249;
+    --ob-color-surface-default-rgb: 30 41 59;
+    --ob-color-surface-inverse-rgb: 248 250 252;
 
     /* ===========================================================================
      3. SEMANTIC COLORS - Text
@@ -119,43 +121,43 @@
 
     --ob-color-text: var(--ob-neutral-100);
     --ob-color-text-primary: var(--ob-neutral-100);
-    --ob-color-text-secondary: var(--ob-neutral-400);
+    --ob-color-text-secondary: var(--ob-neutral-400);    /* Lighter for readability on dark */
     --ob-color-text-muted: var(--ob-neutral-600);
     --ob-color-text-subtle: var(--ob-neutral-500);
     --ob-color-text-strong: var(--ob-neutral-50);
     --ob-color-text-inverse: var(--ob-neutral-900);
-    --ob-color-text-accent: var(--ob-accent-400);
+    --ob-color-text-accent: var(--ob-accent-500);
 
     /* ===========================================================================
      4. SEMANTIC COLORS - Borders
      =========================================================================== */
 
-    --ob-color-border-subtle: rgba(148, 163, 184, 0.15);
-    --ob-color-border-faint: rgba(148, 163, 184, 0.08);
-    --ob-color-border-neutral: rgba(148, 163, 184, 0.3);
-    --ob-color-border-neutral-rgb: 148 163 184;
+    --ob-color-border-subtle: rgba(148, 163, 184, 0.1);
+    --ob-color-border-faint: rgba(148, 163, 184, 0.05);
+    --ob-color-border-neutral: var(--ob-neutral-700);
+    --ob-color-border-neutral-rgb: 71 85 105;
     --ob-color-border-strong: var(--ob-neutral-600);
     --ob-color-border-focus: var(--ob-brand-500);
     --ob-color-border-brand: var(--ob-brand-500);
     --ob-color-border-warning: var(--ob-warning-500);
     --ob-color-border-error: var(--ob-error-500);
     --ob-color-border-success: var(--ob-success-500);
-    --ob-border-glass: rgba(255, 255, 255, 0.1);
-    --ob-border-glass-strong: rgba(255, 255, 255, 0.15);
+    --ob-border-glass: rgba(255, 255, 255, 0.08);
+    --ob-border-glass-strong: rgba(255, 255, 255, 0.12);
 
     /* ===========================================================================
      5. SEMANTIC COLORS - Brand & Actions
      =========================================================================== */
 
-    --ob-color-brand-primary: var(--ob-brand-600);
-    --ob-color-brand-primary-emphasis: var(--ob-brand-500);
+    --ob-color-brand-primary: var(--ob-brand-500); /* Fixed to Electric Blue */
+    --ob-color-brand-primary-emphasis: var(--ob-brand-400); /* Lighter on hover for dark mode */
     --ob-color-brand-primary-glow: var(--ob-brand-glow);
-    --ob-color-brand-primary-rgb: 37 99 235;
-    --ob-color-brand-primary-strong: var(--ob-brand-700);
+    --ob-color-brand-primary-rgb: 59 130 246;
+    --ob-color-brand-primary-strong: var(--ob-brand-600);
     --ob-color-brand-accent: var(--ob-accent-500);
-    --ob-color-brand-soft: rgba(37, 99, 235, 0.2);
-    --ob-color-brand-muted: rgba(59, 130, 246, 0.15);
-    --ob-color-brand-strong: var(--ob-brand-600);
+    --ob-color-brand-soft: rgba(59, 130, 246, 0.15);
+    --ob-color-brand-muted: rgba(59, 130, 246, 0.1);
+    --ob-color-brand-strong: var(--ob-brand-500);
     --ob-color-action-hover: rgba(255, 255, 255, 0.05);
 
     /* ===========================================================================
@@ -163,34 +165,34 @@
      =========================================================================== */
 
     /* Success */
-    --ob-color-success-soft: rgba(34, 197, 94, 0.15);
-    --ob-color-success-strong: var(--ob-success-700);
+    --ob-color-success-soft: rgba(16, 185, 129, 0.15);
+    --ob-color-success-strong: var(--ob-success-500);
     --ob-color-success-muted: var(--ob-success-600);
     --ob-color-status-success-bg: var(--ob-success-bg);
     --ob-color-status-success-text: var(--ob-success-text);
-    --ob-color-status-success-text-rgb: 74 222 128;
+    --ob-color-status-success-text-rgb: 52 211 153;
 
     /* Warning */
-    --ob-color-warning-soft: rgba(234, 179, 8, 0.15);
-    --ob-color-warning-strong: var(--ob-warning-700);
+    --ob-color-warning-soft: rgba(245, 158, 11, 0.15);
+    --ob-color-warning-strong: var(--ob-warning-500);
     --ob-color-warning-muted: var(--ob-warning-600);
     --ob-color-status-warning-bg: var(--ob-warning-bg);
     --ob-color-status-warning-text: var(--ob-warning-text);
-    --ob-color-status-warning-text-rgb: 250 204 21;
+    --ob-color-status-warning-text-rgb: 251 191 36;
 
     /* Error / Danger / Critical */
     --ob-color-error-soft: rgba(239, 68, 68, 0.15);
-    --ob-color-error-strong: var(--ob-error-700);
+    --ob-color-error-strong: var(--ob-error-500);
     --ob-color-error-muted: var(--ob-error-600);
     --ob-color-danger-strong: var(--ob-error-600);
     --ob-color-status-error-bg: var(--ob-error-bg);
     --ob-color-status-error-text: var(--ob-error-text);
-    --ob-color-critical-strong: var(--ob-error-600);
-    --ob-color-critical-muted: var(--ob-error-500);
+    --ob-color-critical-strong: var(--ob-error-500);
+    --ob-color-critical-muted: var(--ob-error-400);
 
     /* Info */
     --ob-color-info-soft: rgba(59, 130, 246, 0.15);
-    --ob-color-info-strong: var(--ob-info-700);
+    --ob-color-info-strong: var(--ob-info-500);
     --ob-color-info-muted: rgba(59, 130, 246, 0.25);
     --ob-color-status-info-bg: var(--ob-info-bg);
     --ob-color-status-info-text: var(--ob-info-text);
@@ -202,7 +204,7 @@
 
     /* Font Families */
     --ob-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
-    --ob-font-family-mono: 'JetBrains Mono', monospace;
+    --ob-font-family-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
 
     /* Font Sizes */
     --ob-font-size-xs: 0.75rem; /* 12px */
@@ -265,12 +267,12 @@
      10. SHADOWS
      =========================================================================== */
 
-    --ob-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --ob-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    --ob-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    --ob-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-    --ob-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-    --ob-shadow-glass-lg: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+    --ob-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --ob-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --ob-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --ob-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    --ob-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --ob-shadow-glass-lg: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
 
     /* ===========================================================================
      11. Z-INDEX SCALE

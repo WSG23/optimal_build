@@ -4,6 +4,7 @@ import type { BuildableSummary, WizardStatus, StoredAssetOptimization, Financial
 import { MetricsView } from './MetricsView'
 import { AssetMixView } from './AssetMixView'
 import { AdvisoryView } from './AdvisoryView'
+import { SkeletonLoader } from '../../../components/feedback/SkeletonLoader'
 
 interface ResultsPanelProps {
   status: WizardStatus
@@ -69,10 +70,7 @@ export function ResultsPanel({
 
       {status === 'loading' && (
         <div className="feasibility-results__skeleton" role="status">
-          <div className="skeleton skeleton--heading" />
-          <div className="skeleton skeleton--row" />
-          <div className="skeleton skeleton--row" />
-          <div className="skeleton skeleton--grid" />
+          <SkeletonLoader variant="card" count={1} />
         </div>
       )}
 

@@ -202,17 +202,17 @@ export type CssRgbTokenName =
  */
 export const colors = {
   neutral: {
-    950: '#020617',
-    900: '#0f172a',
-    800: '#1e293b',
-    700: '#334155',
-    600: '#475569',
-    500: '#64748b',
-    400: '#94a3b8',
-    300: '#cbd5e1',
-    200: '#e2e8f0',
-    100: '#f1f5f9',
-    50: '#f8fafc',
+    950: '#121212',
+    900: '#1e293b',
+    800: '#334155',
+    700: '#475569',
+    600: '#64748b',
+    500: '#94a3b8',
+    400: '#cbd5e1',
+    300: '#e2e8f0',
+    200: '#f1f5f9',
+    100: '#f8fafc',
+    50: '#ffffff',
   },
   brand: {
     700: '#1d4ed8',
@@ -224,23 +224,23 @@ export const colors = {
     100: '#dbeafe',
   },
   accent: {
-    600: '#d97706',
-    500: '#f59e0b',
-    400: '#fbbf24',
-    300: '#fcd34d',
-    200: '#fde68a',
+    600: '#059669',
+    500: '#10b981',
+    400: '#34d399',
+    300: '#6ee7b7',
+    200: '#d1fae5',
   },
   success: {
-    700: '#15803d',
-    600: '#16a34a',
-    500: '#22c55e',
-    400: '#4ade80',
+    700: '#047857',
+    600: '#059669',
+    500: '#10b981',
+    400: '#34d399',
   },
   warning: {
     700: '#b45309',
-    600: '#ca8a04',
-    500: '#eab308',
-    400: '#facc15',
+    600: '#d97706',
+    500: '#f59e0b',
+    400: '#fbbf24',
   },
   error: {
     700: '#b91c1c',
@@ -291,7 +291,7 @@ export const radii = {
 export const typography = {
   family: {
     base: "'Inter', system-ui, -apple-system, sans-serif",
-    mono: "'JetBrains Mono', monospace",
+    mono: "'JetBrains Mono', 'Roboto Mono', monospace",
   },
   size: {
     xs: '0.75rem',

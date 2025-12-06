@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Snackbar, Alert } from '@mui/material'
 
 import { AppLayout } from '../../App'
 import { generateProfessionalPack, type ProfessionalPackType } from '../../api/agents'
@@ -315,7 +316,7 @@ export function FeasibilityWizard({
         <ResultsPanel
           status={status}
           result={result}
-          errorMessage={errorMessage}
+          errorMessage={null} // Error handled by Toast
           capturedAssetMix={capturedAssetMix}
           capturedFinancialSummary={capturedFinancialSummary}
           numberFormatter={numberFormatter}
@@ -323,6 +324,16 @@ export function FeasibilityWizard({
           t={t}
         />
       </div>
+
+      <Snackbar
+        open={status === 'error'}
+        autoHideDuration={6000}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="error" variant="filled" sx={{ width: '100%' }}>
+          {errorMessage || t('wizard.errors.generic')}
+        </Alert>
+      </Snackbar>
 
       <div className="sr-only" aria-live="polite">
         {liveAnnouncement}

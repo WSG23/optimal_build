@@ -1,4 +1,4 @@
-.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset dev dev-local stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -95,8 +95,8 @@ help-dev: ## Show comprehensive development workflow guide
 	@echo ""
 	@echo "━━━ Getting Started ━━━"
 	@echo "  make install            Install all dependencies"
-	@echo "  make dev                Start all services (backend + frontend + admin)"
-	@echo "  make dev-local          Start local only (no Docker, SQLite)"
+	@echo "  make dev                Start local development (no Docker, SQLite)"
+	@echo "  make docker             Start all services with Docker"
 	@echo "  make status             Check service status"
 	@echo "  make stop               Stop all services"
 	@echo "  make ui-stop            Force kill UI servers on ports (if stuck)"
@@ -508,7 +508,7 @@ docker-clean: ## Remove stopped containers and unused Docker artifacts
 # 🚀 DEVELOPMENT WORKFLOW
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-dev: ## Start supporting services, the backend API, and frontends
+docker: ## Start supporting services with Docker, the backend API, and frontends
 	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
 	@echo "found 0 vulnerabilities"
 	@echo "✅ Dependencies installed successfully ..."
@@ -521,7 +521,7 @@ dev: ## Start supporting services, the backend API, and frontends
 	fi
 	@$(MAKE) _dev-services
 
-dev-local: ## Start local development (no Docker, SQLite only)
+dev: ## Start local development (no Docker, SQLite only)
 	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
 	@echo "🏠 Starting local development (no Docker)..."
 	@echo "🧹 Cleaning up any existing processes on ports..."
