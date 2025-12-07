@@ -757,7 +757,10 @@
       },
       "copyRequest": "Copy request JSON",
       "copySuccess": "Copied",
-      "copyError": "Copy failed"
+      "copyError": "Copy failed",
+      "siteAreaLabel": "Site Area (sqm)",
+      "landUseLabel": "Zoning / Land Use",
+      "invalidSiteArea": "Please enter a valid site area"
     },
     "assumptions": {
       "title": "Assumptions",

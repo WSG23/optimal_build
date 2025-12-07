@@ -64,7 +64,9 @@ export function ResultsPanel({
       aria-busy={status === 'loading'}
     >
       {status === 'idle' && (
-        <p className="feasibility-results__placeholder">{t('wizard.states.idle')}</p>
+        <div style={{ textAlign: 'center', padding: 'var(--ob-space-12) var(--ob-space-4)', color: 'var(--ob-color-text-muted)' }}>
+             <p>{t('wizard.states.idle')}</p>
+        </div>
       )}
 
       {status === 'loading' && (
@@ -84,23 +86,35 @@ export function ResultsPanel({
 
       {(status === 'success' || status === 'partial' || status === 'empty') &&
         result && (
-          <div className="feasibility-results__content">
-            <header className="feasibility-results__header">
+          <div className="feasibility-results__content" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ob-space-8)' }}>
+
+            {/* Header / Key Info */}
+            <header className="feasibility-results__header" style={{
+                background: 'white',
+                padding: 'var(--ob-space-5)',
+                borderRadius: 'var(--ob-radius-lg)',
+                border: '1px solid var(--ob-color-border-premium)',
+                boxShadow: 'var(--ob-depth-sm)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            }}>
               <div>
-                <span className="feasibility-results__label">
+                <span className="text-eyebrow" style={{ display: 'block', marginBottom: 'var(--ob-space-1)' }}>
                   {t('wizard.results.zone')}
                 </span>
-                <span className="feasibility-results__value" data-testid="zone-code">
+                <span className="text-display" data-testid="zone-code">
                   {result.zoneCode ?? t('wizard.results.zoneUnknown')}
                 </span>
               </div>
-              <div>
-                <span className="feasibility-results__label">
+              <div style={{ textAlign: 'right' }}>
+                <span className="text-eyebrow" style={{ display: 'block', marginBottom: 'var(--ob-space-1)' }}>
                   {t('wizard.results.overlays')}
                 </span>
                 <div
                   className="feasibility-results__overlays"
                   data-testid="overlay-badges"
+                  style={{ display: 'flex', gap: 'var(--ob-space-2)', justifyContent: 'flex-end', flexWrap: 'wrap' }}
                 >
                   {result.overlays.length === 0 && (
                     <span className="feasibility-results__badge">
@@ -108,7 +122,16 @@ export function ResultsPanel({
                     </span>
                   )}
                   {result.overlays.map((overlay) => (
-                    <span key={overlay} className="feasibility-results__badge">
+                    <span key={overlay}
+                          className="feasibility-results__badge"
+                          style={{
+                              background: 'var(--ob-color-accent-light)',
+                              color: 'var(--ob-color-accent)',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              padding: '4px 8px',
+                              borderRadius: '4px'
+                          }}>
                       {overlay}
                     </span>
                   ))}
@@ -116,6 +139,7 @@ export function ResultsPanel({
               </div>
             </header>
 
+            {/* Metrics Grid */}
             <MetricsView result={result} numberFormatter={numberFormatter} t={t} />
 
             <AssetMixView
@@ -140,19 +164,24 @@ export function ResultsPanel({
             {result.rules.length > 0 && (
               <section className="feasibility-citations" data-testid="citations">
                 <h3>{t('wizard.citations.title')}</h3>
-                <ul>
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ob-space-3)' }}>
                   {result.rules.map((rule) => (
-                    <li key={rule.id} className="feasibility-citation">
-                      <div className="feasibility-citation__meta">
-                        <span className="feasibility-citation__authority">
+                    <li key={rule.id} className="feasibility-citation" style={{
+                        padding: 'var(--ob-space-3)',
+                        borderLeft: '2px solid var(--ob-color-accent)',
+                        background: 'white',
+                        borderRadius: '0 var(--ob-radius-md) var(--ob-radius-md) 0'
+                    }}>
+                      <div className="feasibility-citation__meta" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--ob-space-1)' }}>
+                        <span className="feasibility-citation__authority" style={{ fontWeight: 600, fontSize: '0.75rem' }}>
                           {rule.authority}
                         </span>
-                        <span className="feasibility-citation__clause">
+                        <span className="feasibility-citation__clause" style={{ color: 'var(--ob-color-text-muted)', fontSize: '0.75rem' }}>
                           {rule.provenance.clauseRef ??
                             t('wizard.citations.unknownClause')}
                         </span>
                       </div>
-                      <p className="feasibility-citation__parameter">
+                      <p className="feasibility-citation__parameter" style={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>
                         {`${rule.parameterKey} ${rule.operator} ${rule.value}${
                           rule.unit ? ` ${rule.unit}` : ''
                         }`}

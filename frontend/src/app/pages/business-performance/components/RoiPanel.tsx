@@ -1,9 +1,12 @@
 import {
   Box,
+  Button, // Added Button
   Card,
   CardContent,
   Grid,
   Paper,
+  Skeleton, // Added Skeleton
+  Stack, // Added Stack
   Table,
   TableBody,
   TableCell,
@@ -12,6 +15,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
+import { PlayArrow } from '@mui/icons-material' // Added icon
 import type { RoiSummary } from '../types'
 
 interface RoiPanelProps {
@@ -21,19 +25,25 @@ interface RoiPanelProps {
 const ROI_NOT_AVAILABLE = 'Not available yet'
 
 export function RoiPanel({ summary }: RoiPanelProps) {
+  // Simple heuristic: if we have 0 projects but summary counts are null, it might be loading/fresh.
+  // For this "World Class" UI, we treat explicit nulls as "Connecting..." -> Skeleton,
+  // and explicit 0 count as "Empty State".
+
+  const isLoading = summary.projectCount === 0 && summary.totalReviewHoursSaved === null;
+
   return (
     <Paper elevation={0} className="bp-roi">
       <Box className="bp-roi__header">
         <Typography variant="h6">Automation ROI</Typography>
         <Typography variant="body2" color="text.secondary">
           Metrics derive from overlay workflows (automation score, hours saved,
-          payback period) and connect directly to the ROI analytics service.
+          payback period).
         </Typography>
       </Box>
 
       <Grid container spacing={2} className="bp-roi__grid">
         <Grid item xs={6} sm={4}>
-          <RoiStat label="Projects tracked" value={summary.projectCount} />
+          <RoiStat label="Projects tracked" value={summary.projectCount} loading={isLoading} />
         </Grid>
         <Grid item xs={6} sm={4}>
           <RoiStat
@@ -43,18 +53,20 @@ export function RoiPanel({ summary }: RoiPanelProps) {
                 ? `${summary.totalReviewHoursSaved.toFixed(1)}h`
                 : ROI_NOT_AVAILABLE
             }
+            loading={isLoading}
           />
         </Grid>
         <Grid item xs={6} sm={4}>
-          <RoiStat label="Avg automation" value={formatPercent(summary.averageAutomationScore)} />
+          <RoiStat label="Avg automation" value={formatPercent(summary.averageAutomationScore)} loading={isLoading} />
         </Grid>
         <Grid item xs={6} sm={4}>
-          <RoiStat label="Avg acceptance" value={formatPercent(summary.averageAcceptanceRate)} />
+          <RoiStat label="Avg acceptance" value={formatPercent(summary.averageAcceptanceRate)} loading={isLoading} />
         </Grid>
         <Grid item xs={6} sm={4}>
           <RoiStat
             label="Avg savings"
             value={formatPercent(summary.averageSavingsPercent, true)}
+            loading={isLoading}
           />
         </Grid>
         <Grid item xs={6} sm={4}>
@@ -65,18 +77,45 @@ export function RoiPanel({ summary }: RoiPanelProps) {
                 ? `${summary.bestPaybackWeeks} weeks`
                 : ROI_NOT_AVAILABLE
             }
+            loading={isLoading}
           />
         </Grid>
       </Grid>
 
-      <Box className="bp-roi__projects">
-        <Typography variant="subtitle1" gutterBottom>
+      <Box className="bp-roi__projects" sx={{ mt: 4 }}>
+        <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
           Project breakdown
         </Typography>
         {summary.projects.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">
-            No ROI records yet. Metrics populate after overlay runs complete.
-          </Typography>
+          <Paper
+            variant="outlined"
+            sx={{
+                p: 4,
+                textAlign: 'center',
+                background: 'rgba(255,255,255,0.02)',
+                borderStyle: 'dashed'
+            }}
+          >
+            <Stack spacing={2} alignItems="center">
+                <Box sx={{ p: 2, borderRadius: '50%', background: 'rgba(33, 150, 243, 0.1)', color: '#2196f3' }}>
+                    <PlayArrow fontSize="large" />
+                </Box>
+                <Typography variant="h6" color="text.primary">
+                    Start your first Automation Run
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400 }}>
+                    Connect your project data to the overlay engine to start tracking hours saved and efficiency gains.
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<PlayArrow />}
+                    sx={{ mt: 1 }}
+                >
+                    Launch Overlay Engine
+                </Button>
+            </Stack>
+          </Paper>
         ) : (
           <TableContainer component={Paper} variant="outlined">
             <Table size="small">
@@ -119,11 +158,13 @@ export function RoiPanel({ summary }: RoiPanelProps) {
 interface RoiStatProps {
   label: string
   value: string | number
+  loading?: boolean
 }
 
-function RoiStat({ label, value }: RoiStatProps) {
+function RoiStat({ label, value, loading }: RoiStatProps) {
   const displayValue = value
   const isPending = displayValue === ROI_NOT_AVAILABLE
+
   return (
     <Card
       variant="outlined"
@@ -133,12 +174,16 @@ function RoiStat({ label, value }: RoiStatProps) {
         <Typography variant="overline" color="text.secondary">
           {label}
         </Typography>
-        <Typography variant="h6" className="bp-roi__stat-value">
-          {displayValue}
-        </Typography>
-        {isPending && (
+        {loading ? (
+             <Skeleton width="60%" height={32} />
+        ) : (
+            <Typography variant="h6" className="bp-roi__stat-value">
+              {displayValue}
+            </Typography>
+        )}
+        {isPending && !loading && (
           <Typography variant="caption" color="text.secondary">
-            Metrics will appear after your first automation run.
+            Waiting for data...
           </Typography>
         )}
       </CardContent>

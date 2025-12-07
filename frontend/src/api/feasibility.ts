@@ -20,6 +20,8 @@ export interface NewFeasibilityProjectInput {
   buildEnvelope?: BuildEnvelopeSnapshot | null
   typFloorToFloorM?: number | null
   efficiencyRatio?: number | null
+  structureType?: string | null
+  mepLoadWpsm?: number | null
 }
 
 export type FeasibilityRuleSeverity = 'critical' | 'important' | 'informational'

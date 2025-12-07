@@ -19,15 +19,15 @@ function getModeColors(mode: ThemeMode) {
   if (mode === 'dark') {
     return {
       background: {
-        default: colors.neutral[950],
-        paper: colors.neutral[900],
+        default: '#121212', // User specific request "Darkest"
+        paper: '#1E1E1E', // User specific request "Lighter"
       },
       text: {
         primary: colors.neutral[100],
         secondary: colors.neutral[400],
         disabled: colors.neutral[600],
       },
-      divider: colors.neutral[700],
+      divider: '#333333', // User specific request "Subtle 1px borders"
       surface: {
         elevated: colors.neutral[800],
       },

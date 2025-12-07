@@ -120,6 +120,7 @@ export function useFeasibilityCompute({
               floorsMax: 0,
               footprintM2: 0,
               nsaEstM2: response.summary.estimatedAchievableGfaSqm,
+              accuracyRange: 0.25,
             },
             zoneSource: { kind: 'unknown' },
             rules: response.rules.map((r, index) => ({

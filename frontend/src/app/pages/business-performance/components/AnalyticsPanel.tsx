@@ -12,6 +12,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { BarChart } from '@mui/icons-material'
 import {
   Area,
   CartesianGrid,
@@ -84,11 +85,29 @@ export function AnalyticsPanel({
             Gross & weighted pipeline vs conversion + cycle time
           </Typography>
         </Stack>
-        <Box className="bp-analytics__chart">
+        <Box className="bp-analytics__chart" sx={{ position: 'relative' }}>
           {chartData.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              Trend data will appear once daily snapshots run.
-            </Typography>
+            <Stack
+                alignItems="center"
+                justifyContent="center"
+                spacing={2}
+                sx={{
+                    height: '100%',
+                    color: 'text.secondary',
+                    opacity: 0.6,
+                    background: 'rgba(255,255,255,0.02)',
+                    borderRadius: 2,
+                    border: '1px dashed rgba(255,255,255,0.1)'
+                }}
+            >
+               <BarChart sx={{ fontSize: 64, opacity: 0.5 }} />
+               <Box textAlign="center">
+                   <Typography variant="h6" color="text.primary">Connect data to see pipeline trends</Typography>
+                   <Typography variant="body2">
+                       Historical performance will populate here daily.
+                   </Typography>
+               </Box>
+            </Stack>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart

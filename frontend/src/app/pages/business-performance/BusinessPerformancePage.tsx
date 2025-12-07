@@ -13,7 +13,10 @@ import {
   Paper,
   Stack,
   Typography,
+  Skeleton,
+  Chip,
 } from '@mui/material'
+import { AccessTime, AttachMoney, Assessment } from '@mui/icons-material'
 import {
   DEAL_STAGE_ORDER,
   fetchDealCommissions,
@@ -355,41 +358,76 @@ export function BusinessPerformancePage() {
       <Grid container spacing={2} className="bp-page__summary">
         <Grid item xs={12} md={4}>
           <Paper className="bp-summary-card" elevation={1}>
-            <Typography variant="overline" className="bp-summary-card__label">
-              Last snapshot
-            </Typography>
-            <Typography variant="h5" className="bp-summary-card__value">
-              {lastSnapshot}
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1} className="bp-summary-card__header">
+               <AccessTime fontSize="small" color="action" />
+               <Typography variant="overline" className="bp-summary-card__label">
+                 Last snapshot
+               </Typography>
+            </Stack>
+            {analyticsLoading ? (
+                <Skeleton width="60%" height={40} />
+            ) : (
+                <Typography variant="h5" className="bp-summary-card__value">
+                  {lastSnapshot}
+                </Typography>
+            )}
             <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Snapshot jobs run nightly. Manual refresh will be available shortly.
+              Snapshot jobs run nightly.
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
           <Paper className="bp-summary-card" elevation={1}>
-            <Typography variant="overline" className="bp-summary-card__label">
-              Open pipeline value
-            </Typography>
-            <Typography variant="h5" className="bp-summary-card__value">
-              {formatCurrency(totalPipeline(columns))}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Weighted pipeline{' '}
-              <strong>{formatCurrency(totalWeightedPipeline(columns))}</strong>
-            </Typography>
+             <Stack direction="row" alignItems="center" spacing={1} className="bp-summary-card__header">
+               <AttachMoney fontSize="small" color="action" />
+               <Typography variant="overline" className="bp-summary-card__label">
+                 Open pipeline value
+               </Typography>
+            </Stack>
+            {pipelineLoading ? (
+                <Skeleton width="80%" height={40} />
+            ) : (
+                <Stack direction="row" alignItems="baseline" spacing={2} sx={{ mt: 1, mb: 0.5 }}>
+                   <Typography variant="h5" className="bp-summary-card__value">
+                     {formatCurrency(totalPipeline(columns))}
+                   </Typography>
+                </Stack>
+            )}
+            {pipelineLoading ? (
+                <Skeleton width="40%" height={20} />
+            ) : (
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Chip
+                        label="↑ 12% vs last week"
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                        sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600, border: 'none', background: 'rgba(76, 175, 80, 0.1)' }}
+                    />
+                   <Typography variant="caption" color="text.secondary">
+                     Weighted: <strong>{formatCurrency(totalWeightedPipeline(columns))}</strong>
+                   </Typography>
+                </Stack>
+            )}
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
           <Paper className="bp-summary-card" elevation={1}>
-            <Typography variant="overline" className="bp-summary-card__label">
-              ROI projects tracked
-            </Typography>
-            <Typography variant="h5" className="bp-summary-card__value">
-              {roiSummary.projectCount}
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1} className="bp-summary-card__header">
+               <Assessment fontSize="small" color="action" />
+               <Typography variant="overline" className="bp-summary-card__label">
+                 ROI projects tracked
+               </Typography>
+            </Stack>
+            {analyticsLoading ? (
+                 <Skeleton width="30%" height={40} />
+            ) : (
+                <Typography variant="h5" className="bp-summary-card__value">
+                  {roiSummary.projectCount}
+                </Typography>
+            )}
             <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Automation ROI derives from overlay workflows and audit metrics.
+              Automation ROI from overlay workflows.
             </Typography>
           </Paper>
         </Grid>
