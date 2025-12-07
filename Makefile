@@ -578,55 +578,55 @@ _dev-services: ## Internal target to start backend, frontend, and admin UI
 
 status: ## Show running status for dev services
 	@echo ""
-	@echo "┌────────────────────────────────────────────────────────────┐"
-	@echo "│          🏗️  Optimal Build Dev Services                    │"
-	@echo "├────────────────────────────────────────────────────────────┤"
-	@echo "│  SERVICE           STATUS         PID       PORT          │"
-	@echo "│  ───────────────   ────────────   ───────   ─────         │"
+	@echo "┌──────────────────────────────────────────────────────────┐"
+	@echo "│         🏗️  Optimal Build Dev Services                   │"
+	@echo "├──────────────────────────────────────────────────────────┤"
+	@echo "│  SERVICE            STATUS        PID       PORT        │"
+	@echo "│  ────────────────   ───────────   ───────   ─────       │"
 	@if [ -f $(DEV_BACKEND_PID) ]; then \
 		PID=$$(cat $(DEV_BACKEND_PID)); \
 		if kill -0 $$PID 2>/dev/null; then \
-			printf "│  🖥️  Backend API    ✅ running      %-7s   %-5s         │\n" "$$PID" "$(BACKEND_PORT)"; \
+			printf "│  🖥️  %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Backend API" "running" "$$PID" "$(BACKEND_PORT)"; \
 		else \
-			printf "│  🖥️  Backend API    ⚠️  stale        %-7s   %-5s         │\n" "$$PID" "-"; \
+			printf "│  🖥️  %-13s   ⚠️  %-8s   %-7s   %-5s       │\n" "Backend API" "stale" "$$PID" "-"; \
 		fi; \
 	else \
-		printf "│  🖥️  Backend API    ⏹️  stopped      %-7s   %-5s         │\n" "-" "-"; \
+		printf "│  🖥️  %-13s   ⏹️  %-8s   %-7s   %-5s       │\n" "Backend API" "stopped" "-" "-"; \
 	fi
 	@if [ -f $(DEV_FRONTEND_PID) ]; then \
 		PID=$$(cat $(DEV_FRONTEND_PID)); \
 		if kill -0 $$PID 2>/dev/null; then \
-			printf "│  🌐 Frontend       ✅ running      %-7s   %-5s         │\n" "$$PID" "$(FRONTEND_PORT)"; \
+			printf "│  🌐 %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Frontend" "running" "$$PID" "$(FRONTEND_PORT)"; \
 		else \
-			printf "│  🌐 Frontend       ⚠️  stale        %-7s   %-5s         │\n" "$$PID" "-"; \
+			printf "│  🌐 %-13s   ⚠️  %-8s   %-7s   %-5s       │\n" "Frontend" "stale" "$$PID" "-"; \
 		fi; \
 	else \
-		printf "│  🌐 Frontend       ⏹️  stopped      %-7s   %-5s         │\n" "-" "-"; \
+		printf "│  🌐 %-13s   ⏹️  %-8s   %-7s   %-5s       │\n" "Frontend" "stopped" "-" "-"; \
 	fi
 	@if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
 		if [ -f $(DEV_ADMIN_PID) ]; then \
 			PID=$$(cat $(DEV_ADMIN_PID)); \
 			if kill -0 $$PID 2>/dev/null; then \
-				printf "│  ⚙️  Admin UI       ✅ running      %-7s   %-5s         │\n" "$$PID" "$(ADMIN_PORT)"; \
+				printf "│  ⚙️  %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Admin UI" "running" "$$PID" "$(ADMIN_PORT)"; \
 			else \
-				printf "│  ⚙️  Admin UI       ⚠️  stale        %-7s   %-5s         │\n" "$$PID" "-"; \
+				printf "│  ⚙️  %-13s   ⚠️  %-8s   %-7s   %-5s       │\n" "Admin UI" "stale" "$$PID" "-"; \
 			fi; \
 		else \
-			printf "│  ⚙️  Admin UI       ⏹️  stopped      %-7s   %-5s         │\n" "-" "-"; \
+			printf "│  ⚙️  %-13s   ⏹️  %-8s   %-7s   %-5s       │\n" "Admin UI" "stopped" "-" "-"; \
 		fi; \
 	fi
-	@echo "├────────────────────────────────────────────────────────────┤"
-	@echo "│  🔗 URLS                                                   │"
+	@echo "├──────────────────────────────────────────────────────────┤"
+	@echo "│  🔗 URLS                                                 │"
 	@if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
-		printf "│     📚 API Docs:   %-37s │\n" "http://localhost:$(BACKEND_PORT)/docs"; \
+		printf "│     📚 API Docs:   %-35s │\n" "http://localhost:$(BACKEND_PORT)/docs"; \
 	fi
 	@if [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
-		printf "│     🌐 Frontend:   %-37s │\n" "http://localhost:$(FRONTEND_PORT)"; \
+		printf "│     🌐 Frontend:   %-35s │\n" "http://localhost:$(FRONTEND_PORT)"; \
 	fi
 	@if [ "$(INCLUDE_ADMIN)" != "0" ] && [ -f $(DEV_ADMIN_PID) ] && kill -0 $$(cat $(DEV_ADMIN_PID)) 2>/dev/null; then \
-		printf "│     ⚙️  Admin:      %-37s │\n" "http://localhost:$(ADMIN_PORT)"; \
+		printf "│     ⚙️  Admin:      %-35s │\n" "http://localhost:$(ADMIN_PORT)"; \
 	fi
-	@echo "└────────────────────────────────────────────────────────────┘"
+	@echo "└──────────────────────────────────────────────────────────┘"
 	@echo ""
 
 stop: ## Stop services started with dev (excluding docker-compose)
