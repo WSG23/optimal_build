@@ -166,8 +166,14 @@ export function YosaiSidebar() {
                             }
                           : {},
                         '@keyframes pulse': {
-                          '0%, 100%': { opacity: 1, transform: 'translateY(-50%) scale(1)' },
-                          '50%': { opacity: 0.6, transform: 'translateY(-50%) scale(0.8)' },
+                          '0%, 100%': {
+                            opacity: 1,
+                            transform: 'translateY(-50%) scale(1)',
+                          },
+                          '50%': {
+                            opacity: 0.6,
+                            transform: 'translateY(-50%) scale(0.8)',
+                          },
                         },
                         '&:hover': {
                           bgcolor: isActive

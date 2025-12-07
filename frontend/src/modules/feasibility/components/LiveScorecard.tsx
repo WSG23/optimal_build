@@ -34,7 +34,7 @@ export function LiveScorecard({
       unit: 'm²',
       icon: <SquareFootIcon sx={{ fontSize: 16 }} />,
       color: '#06b6d4',
-      change: '+' + Math.round((efficiencyRatio - 0.8) * 100) + '%',
+      change: `+${String(Math.round((efficiencyRatio - 0.8) * 100))}%`,
     },
     {
       label: 'Net Saleable',
@@ -134,7 +134,9 @@ export function LiveScorecard({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Box sx={{ color: metric.color, opacity: 0.8 }}>{metric.icon}</Box>
+              <Box sx={{ color: metric.color, opacity: 0.8 }}>
+                {metric.icon}
+              </Box>
               <Typography
                 sx={{
                   fontSize: '0.7rem',
@@ -169,12 +171,28 @@ export function LiveScorecard({
       </Box>
 
       {/* Efficiency indicator bar */}
-      <Box sx={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <Typography sx={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>
+      <Box
+        sx={{
+          marginTop: '12px',
+          paddingTop: '12px',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '4px',
+          }}
+        >
+          <Typography
+            sx={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}
+          >
             Efficiency Score
           </Typography>
-          <Typography sx={{ fontSize: '0.65rem', color: '#06b6d4', fontWeight: 600 }}>
+          <Typography
+            sx={{ fontSize: '0.65rem', color: '#06b6d4', fontWeight: 600 }}
+          >
             {Math.round(efficiencyRatio * 100)}%
           </Typography>
         </Box>
@@ -189,7 +207,7 @@ export function LiveScorecard({
           <Box
             sx={{
               height: '100%',
-              width: `${efficiencyRatio * 100}%`,
+              width: `${String(efficiencyRatio * 100)}%`,
               background: 'linear-gradient(90deg, #06b6d4, #3b82f6)',
               borderRadius: '2px',
               transition: 'width 0.3s ease-out',

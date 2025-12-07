@@ -125,7 +125,8 @@ export function ImmersiveMap({
               alignItems: 'center',
               gap: '24px',
               maxWidth: '500px',
-              animation: 'floatUp 4s ease-in-out infinite, pulseGlow 3s ease-in-out infinite',
+              animation:
+                'floatUp 4s ease-in-out infinite, pulseGlow 3s ease-in-out infinite',
               pointerEvents: 'auto',
             }}
           >
@@ -135,7 +136,8 @@ export function ImmersiveMap({
                 width: '80px',
                 height: '80px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
+                background:
+                  'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
                 border: '2px solid rgba(6, 182, 212, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
@@ -167,7 +169,8 @@ export function ImmersiveMap({
                 maxWidth: '380px',
               }}
             >
-              Enter an address to visualize development potential, zoning constraints, and GFA optimization
+              Enter an address to visualize development potential, zoning
+              constraints, and GFA optimization
             </Typography>
 
             {/* Search Input */}
@@ -219,24 +222,26 @@ export function ImmersiveMap({
                 justifyContent: 'center',
               }}
             >
-              {['Zoning Analysis', 'GFA Calculator', '3D Massing'].map((feature) => (
-                <Box
-                  key={feature}
-                  sx={{
-                    padding: '6px 12px',
-                    borderRadius: '20px',
-                    background: 'rgba(6, 182, 212, 0.1)',
-                    border: '1px solid rgba(6, 182, 212, 0.2)',
-                    color: 'rgba(6, 182, 212, 0.9)',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {feature}
-                </Box>
-              ))}
+              {['Zoning Analysis', 'GFA Calculator', '3D Massing'].map(
+                (feature) => (
+                  <Box
+                    key={feature}
+                    sx={{
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      background: 'rgba(6, 182, 212, 0.1)',
+                      border: '1px solid rgba(6, 182, 212, 0.2)',
+                      color: 'rgba(6, 182, 212, 0.9)',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {feature}
+                  </Box>
+                ),
+              )}
             </Box>
           </Box>
         </div>

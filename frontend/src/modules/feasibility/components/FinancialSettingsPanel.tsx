@@ -18,14 +18,12 @@ interface FinancialSettingsPanelProps {
   onFinancialChange: (
     key: keyof FinancialAssumptions,
   ) => (event: ChangeEvent<HTMLInputElement>) => void
-  t?: (key: string, options?: Record<string, unknown>) => string
 }
 
 export function FinancialSettingsPanel({
   financialInputs,
   financialErrors,
   onFinancialChange,
-  t: _t,
 }: FinancialSettingsPanelProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -49,7 +47,9 @@ export function FinancialSettingsPanel({
     <section className="feasibility-financials">
       <Accordion
         expanded={expanded}
-        onChange={() => setExpanded(!expanded)}
+        onChange={() => {
+          setExpanded(!expanded)
+        }}
         sx={{
           boxShadow: 'none',
           background: 'transparent',
@@ -65,9 +65,7 @@ export function FinancialSettingsPanel({
         }}
       >
         <AccordionSummary
-          expandIcon={
-            <ExpandMore sx={{ color: 'rgba(255,255,255,0.5)' }} />
-          }
+          expandIcon={<ExpandMore sx={{ color: 'rgba(255,255,255,0.5)' }} />}
           sx={{
             padding: 'var(--ob-space-4)',
             '& .MuiAccordionSummary-content': { margin: 0 },

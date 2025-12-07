@@ -63,7 +63,9 @@ export function AssumptionsPanel({
     <section className="feasibility-assumptions">
       <Accordion
         expanded={expanded}
-        onChange={() => setExpanded(!expanded)}
+        onChange={() => {
+          setExpanded(!expanded)
+        }}
         sx={{
           boxShadow: 'none',
           background: '#1A1A1A', // Darker card background as requested
@@ -280,10 +282,15 @@ export function AssumptionsPanel({
                 <div style={{ position: 'relative' }}>
                   <input
                     type="number"
-                    value={Math.round((Number(assumptionInputs.efficiencyRatio) || 0) * 100)}
+                    value={Math.round(
+                      (Number(assumptionInputs.efficiencyRatio) || 0) * 100,
+                    )}
                     onChange={(e) => {
                       const percentValue = parseFloat(e.target.value) || 0
-                      const decimalValue = Math.min(0.95, Math.max(0.5, percentValue / 100))
+                      const decimalValue = Math.min(
+                        0.95,
+                        Math.max(0.5, percentValue / 100),
+                      )
                       const syntheticEvent = {
                         target: { value: decimalValue.toString() },
                       } as ChangeEvent<HTMLInputElement>
