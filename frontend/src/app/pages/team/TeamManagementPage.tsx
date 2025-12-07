@@ -276,10 +276,10 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
         </Grid>
       )}
 
-      { }
+      {}
       {activeTab === 1 && <WorkflowDashboard projectId={projectId} />}
 
-      { }
+      {}
       <Dialog
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}

@@ -2,23 +2,30 @@
 
 import secrets
 from datetime import timedelta
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
 
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
-from app.models.users import UserRole
-
-# from app.services.base import BaseService # Removed
+from app.models.users import User, UserRole
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
+
+if TYPE_CHECKING:
+    from app.services.notification import NotificationService
 
 
 class TeamService:
     """Service for managing team members and invitations."""
 
-    def __init__(self, db_session):
+    def __init__(
+        self,
+        db_session,
+        notification_service: Optional["NotificationService"] = None,
+    ):
         self.db = db_session
+        self.notification_service = notification_service
 
     async def get_team_members(self, project_id: UUID) -> list[TeamMember]:
         """List all members of a project team."""
@@ -71,7 +78,11 @@ class TeamService:
     async def accept_invitation(self, token: str, user_id: UUID) -> TeamMember:
         """Accept an invitation and add user to the team."""
 
-        query = select(TeamInvitation).where(TeamInvitation.token == token)
+        query = (
+            select(TeamInvitation)
+            .options(joinedload(TeamInvitation.project))
+            .where(TeamInvitation.token == token)
+        )
         result = await self.db.execute(query)
         invitation = result.scalar_one_or_none()
 
@@ -81,9 +92,10 @@ class TeamService:
         if not invitation.is_valid():
             raise ValueError("Invitation is expired or invalid")
 
-        # Verify user matches email?
-        # Ideally yes, but user might register with the invite email.
-        # For now, we assume the user accepting has possession of the token.
+        # Get the user accepting the invitation
+        user_query = select(User).where(User.id == user_id)
+        user_result = await self.db.execute(user_query)
+        accepting_user = user_result.scalar_one_or_none()
 
         # Create membership
         member = TeamMember(
@@ -100,7 +112,43 @@ class TeamService:
 
         await self.db.commit()
         await self.db.refresh(member)
+
+        # Send notifications to existing team members about new member
+        if self.notification_service and accepting_user:
+            await self._notify_team_member_joined(
+                project_id=invitation.project_id,
+                project_name=(
+                    invitation.project.project_name
+                    if invitation.project
+                    else "Unknown Project"
+                ),
+                new_member_name=accepting_user.full_name,
+                new_member_id=user_id,
+            )
+
         return member
+
+    async def _notify_team_member_joined(
+        self,
+        project_id: UUID,
+        project_name: str,
+        new_member_name: str,
+        new_member_id: UUID,
+    ) -> None:
+        """Notify existing team members when a new member joins."""
+        if not self.notification_service:
+            return
+
+        # Get all active team members except the new one
+        members = await self.get_team_members(project_id)
+        for member in members:
+            if member.user_id != new_member_id:
+                await self.notification_service.notify_team_member_joined(
+                    user_id=member.user_id,
+                    project_id=project_id,
+                    project_name=project_name,
+                    new_member_name=new_member_name,
+                )
 
     async def remove_member(self, project_id: UUID, user_id: UUID) -> bool:
         """Remove a user from the project team."""

@@ -32,11 +32,11 @@ try:  # pragma: no cover - importlib.metadata available on Python 3.8+
     importlib_metadata = cast(_MetadataModule, _importlib_metadata_module)
 except ImportError:  # pragma: no cover - runtime older than Python 3.8
     try:
-        import importlib_metadata as _importlib_metadata_backport  # type: ignore[import-not-found]  # noqa: F401
+        import importlib_metadata as _backport  # noqa: F401
     except ModuleNotFoundError:  # pragma: no cover - no metadata helpers available
         importlib_metadata = None
     else:
-        importlib_metadata = cast(_MetadataModule, _importlib_metadata_backport)
+        importlib_metadata = cast(_MetadataModule, _backport)
 
 
 class _PackageNotFoundError(Exception):
@@ -84,6 +84,13 @@ def configure_logging() -> None:
     logging.basicConfig(level=log_level, format="%(message)s")
     structlog.configure(
         processors=[
+            structlog.processors.CallSiteParameterAdder(
+                {
+                    structlog.processors.CallSiteParameter.FILENAME,
+                    structlog.processors.CallSiteParameter.FUNC_NAME,
+                    structlog.processors.CallSiteParameter.LINENO,
+                }
+            ),
             structlog.processors.add_log_level,
             timestamper,
             structlog.processors.StackInfoRenderer(),

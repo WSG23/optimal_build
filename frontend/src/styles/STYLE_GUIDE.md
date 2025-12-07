@@ -31,6 +31,7 @@ styles/[feature].css             ← Feature-specific styles
 ### Approved Patterns
 
 #### Page Container
+
 ```tsx
 // ✅ CORRECT
 <div className="page">
@@ -49,6 +50,7 @@ styles/[feature].css             ← Feature-specific styles
 ```
 
 #### Forms
+
 ```tsx
 // ✅ CORRECT
 <div className="page__form-group">
@@ -62,6 +64,7 @@ styles/[feature].css             ← Feature-specific styles
 ```
 
 #### Cards and Sections
+
 ```tsx
 // ✅ CORRECT
 <div className="page__card">
@@ -74,15 +77,19 @@ styles/[feature].css             ← Feature-specific styles
 ```
 
 #### Alerts
+
 ```tsx
 // ✅ CORRECT
-{error && <div className="page__alert page__alert--error">{error}</div>}
+{
+    error && <div className="page__alert page__alert--error">{error}</div>
+}
 
 // ❌ WRONG - hardcoded colors
-<div style={{ background: '#fff5f5', color: '#d70015' }}>{error}</div>
+;<div style={{ background: '#fff5f5', color: '#d70015' }}>{error}</div>
 ```
 
 #### Grids
+
 ```tsx
 // ✅ CORRECT
 <div className="page__grid page__grid--3">

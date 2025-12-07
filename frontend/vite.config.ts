@@ -59,7 +59,13 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom'],
-            'vendor-mui': ['@mui/material', '@mui/icons-material', '@mui/lab', '@emotion/react', '@emotion/styled'],
+            'vendor-mui': [
+              '@mui/material',
+              '@mui/icons-material',
+              '@mui/lab',
+              '@emotion/react',
+              '@emotion/styled',
+            ],
             'vendor-maps': ['leaflet', 'mapbox-gl', 'react-leaflet'],
             'vendor-3d': ['three'],
             'vendor-charts': ['recharts'],

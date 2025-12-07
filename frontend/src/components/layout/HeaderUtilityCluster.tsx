@@ -19,6 +19,7 @@ import {
 import { useTranslation } from '../../i18n'
 import { useThemeMode } from '../../theme/ThemeContext'
 import { useDeveloperMode } from '../../contexts/DeveloperContext'
+import { NotificationBell } from '../notification'
 
 export function HeaderUtilityCluster() {
   const { i18n } = useTranslation()
@@ -159,6 +160,9 @@ export function HeaderUtilityCluster() {
           </MenuItem>
         ))}
       </Menu>
+
+      {/* Notifications */}
+      <NotificationBell />
 
       {/* Developer Mode Toggle */}
       <Tooltip title="Developer Mode">

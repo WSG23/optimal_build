@@ -67,11 +67,19 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
         "description": "Approval workflow and step management APIs.",
     },
     {
+        "name": "notifications",
+        "description": "In-app notification management APIs.",
+    },
+    {
         "name": "Development Phases",
         "description": (
             "Multi-phase development management APIs including Gantt chart generation, "
             "critical path analysis, heritage preservation tracking, and tenant coordination."
         ),
+    },
+    {
+        "name": "Construction",
+        "description": "Construction delivery management APIs (contractors, inspections, safety, drawdowns).",
     },
 ]
 
@@ -113,7 +121,9 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "developers",  # Developer workspace endpoints (site acquisition, checklists)
     "team",  # Team management endpoints (Phase 2E)
     "workflow",  # Approval workflow endpoints (Phase 2E)
+    "notification",  # Notification endpoints (Phase 2E)
     "regulatory",  # Regulatory navigation endpoints (Phase 2F)
+    "construction",  # Construction delivery endpoints (Phase 2G)
     "development_phases",  # Multi-phase development management (Phase 2D)
 )
 
