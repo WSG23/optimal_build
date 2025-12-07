@@ -11,7 +11,7 @@ from app.schemas.workflow import (
 )
 from app.services.team.workflow_service import WorkflowService
 
-router = APIRouter()
+router = APIRouter(prefix="/workflow", tags=["workflow"])
 
 
 @router.post("/", response_model=ApprovalWorkflowRead)
@@ -24,7 +24,19 @@ async def create_workflow(
     """
     Create a new approval workflow (e.g. for a design phase).
     """
-    workflow = await WorkflowService.create_workflow(db, project_id, workflow_in)
+    service = WorkflowService(db)
+    steps_data = [
+        {"name": step.name, "required_role": step.approver_role}
+        for step in workflow_in.steps
+    ]
+    workflow = await service.create_workflow(
+        project_id=project_id,
+        title=workflow_in.name,
+        workflow_type=workflow_in.workflow_type,
+        created_by_id=UUID(identity.user_id),
+        steps_data=steps_data,
+        description=workflow_in.description,
+    )
     return workflow
 
 
@@ -37,7 +49,8 @@ async def get_workflow(
     """
     Get workflow details including steps and status.
     """
-    workflow = await WorkflowService.get_workflow(db, workflow_id)
+    service = WorkflowService(db)
+    workflow = await service.get_workflow(workflow_id)
     if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
     return workflow
@@ -54,17 +67,17 @@ async def approve_step(
     Approve (or reject) a specific step in the workflow.
     Validates if the current user has the required role.
     """
-    # Logic to check if user has the role for this step would go here or in service
-    # For now, we assume if they can authenticate and hit this endpoint, we pass to service
-
-    workflow = await WorkflowService.approve_step(
-        db,
-        step_id,
-        approver_id=identity.user_id,
-        comments=approval_in.comments,
-        approved=approval_in.approved,
-    )
-    if not workflow:
-        raise HTTPException(status_code=400, detail="Unable to approve step")
-
-    return workflow
+    service = WorkflowService(db)
+    try:
+        step = await service.approve_step(
+            step_id=step_id,
+            user_id=UUID(identity.user_id),
+            comments=approval_in.comments,
+        )
+        # Return the updated workflow
+        workflow = await service.get_workflow(step.workflow_id)
+        if not workflow:
+            raise HTTPException(status_code=400, detail="Unable to approve step")
+        return workflow
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e

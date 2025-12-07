@@ -86,6 +86,10 @@ class TeamInvitation(BaseModel):
         """Check if invitation is valid (pending and not expired)."""
         if self.status != InvitationStatus.PENDING:
             return False
-        # Using simple datetime comparison. Ensure timezone awareness alignment in app.
+        # Handle both timezone-aware and timezone-naive datetimes
         now = utcnow()
-        return now < self.expires_at
+        expires = self.expires_at
+        # Strip timezone info from now if expires_at is timezone-naive
+        if expires.tzinfo is None and now.tzinfo is not None:
+            now = now.replace(tzinfo=None)
+        return now < expires

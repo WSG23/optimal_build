@@ -9,6 +9,7 @@ import {
 import { useState } from 'react'
 
 import type { ReactNode } from 'react'
+import { LiveScorecard } from './LiveScorecard'
 
 interface FeasibilityLayoutProps {
   /** Map component to render in the right panel */
@@ -17,12 +18,21 @@ interface FeasibilityLayoutProps {
   children: ReactNode
   /** Sticky footer content for the left panel */
   renderFooter?: () => ReactNode
+  /** Props for live scorecard */
+  scorecardProps?: {
+    siteArea?: number
+    efficiencyRatio?: number
+    floorToFloor?: number
+    plotRatio?: number
+    visible?: boolean
+  }
 }
 
 export function FeasibilityLayout({
   renderMap,
   children,
   renderFooter,
+  scorecardProps,
 }: FeasibilityLayoutProps) {
   const [layers, setLayers] = useState<string[]>(['zoning'])
 
@@ -117,6 +127,17 @@ export function FeasibilityLayout({
           </div>
         )}
       </aside>
+
+      {/* Live Feasibility Scorecard (Top Right, offset) */}
+      {scorecardProps && (
+        <LiveScorecard
+          siteArea={scorecardProps.siteArea}
+          efficiencyRatio={scorecardProps.efficiencyRatio}
+          floorToFloor={scorecardProps.floorToFloor}
+          plotRatio={scorecardProps.plotRatio}
+          visible={scorecardProps.visible}
+        />
+      )}
 
       {/* Floating Layer Controls (Top Right) */}
       <Box

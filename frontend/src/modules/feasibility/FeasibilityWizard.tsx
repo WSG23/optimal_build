@@ -755,6 +755,14 @@ export function FeasibilityWizard({
         latitude={1.285}
         longitude={103.854}
         onCoordinatesChange={(lat, lon) => console.log('Map coords:', lat, lon)}
+        showCentralCTA={status === 'idle' && !addressInput}
+        onAddressSearch={(address) => {
+          setAddressInput(address)
+          // Auto-trigger search when user enters address from central CTA
+          if (address.trim()) {
+            setAddressError(null)
+          }
+        }}
       />
     </div>
   )
@@ -782,6 +790,13 @@ export function FeasibilityWizard({
     >
       <FeasibilityLayout
         renderMap={renderMap}
+        scorecardProps={{
+          siteArea: parseFloat(siteAreaInput) || 0,
+          efficiencyRatio: appliedAssumptions.efficiencyRatio,
+          floorToFloor: appliedAssumptions.typFloorToFloorM,
+          plotRatio: 2.8, // Could be made dynamic based on zoning
+          visible: !!siteAreaInput && parseFloat(siteAreaInput) > 0,
+        }}
         renderFooter={() => (
           <div
             className="feasibility-actions"

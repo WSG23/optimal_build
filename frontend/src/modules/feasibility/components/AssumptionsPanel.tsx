@@ -179,6 +179,7 @@ export function AssumptionsPanel({
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: '8px',
                 }}
               >
@@ -192,15 +193,42 @@ export function AssumptionsPanel({
                 >
                   {t('wizard.assumptions.fields.typFloorToFloor.label')}
                 </label>
-                <span
-                  style={{
-                    fontFamily: 'monospace',
-                    color: '#06b6d4',
-                    fontWeight: 700,
-                  }}
-                >
-                  {assumptionInputs.typFloorToFloorM} m
-                </span>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="number"
+                    value={assumptionInputs.typFloorToFloorM}
+                    onChange={onAssumptionChange('typFloorToFloorM')}
+                    min={2.5}
+                    max={6.0}
+                    step={0.1}
+                    style={{
+                      width: '60px',
+                      padding: '4px 24px 4px 8px',
+                      background: 'rgba(6, 182, 212, 0.1)',
+                      border: '1px solid rgba(6, 182, 212, 0.3)',
+                      borderRadius: '6px',
+                      color: '#06b6d4',
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      fontSize: '0.875rem',
+                      textAlign: 'right',
+                      outline: 'none',
+                    }}
+                  />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'rgba(6, 182, 212, 0.7)',
+                      fontSize: '0.75rem',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    m
+                  </span>
+                </div>
               </div>
               <TunerSlider
                 value={Number(assumptionInputs.typFloorToFloorM) || 3.0}
@@ -210,7 +238,6 @@ export function AssumptionsPanel({
                 step={0.1}
                 sx={{
                   color: 'var(--ob-color-accent)',
-                  // Styles handled by TunerSlider internal styling
                 }}
               />
               <p
@@ -245,26 +272,54 @@ export function AssumptionsPanel({
                   style={{
                     fontWeight: 600,
                     fontSize: '0.875rem',
-                    color: 'var(--ob-color-text-body)',
+                    color: 'rgba(255,255,255,0.9)',
                   }}
                 >
                   {t('wizard.assumptions.fields.efficiency.label')}
                 </label>
-                <span
-                  style={{
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
-                    color: 'var(--ob-color-accent)',
-                    background: 'var(--ob-color-accent-light)',
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                  }}
-                >
-                  {Math.round(
-                    (Number(assumptionInputs.efficiencyRatio) || 0) * 100,
-                  )}
-                  %
-                </span>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="number"
+                    value={Math.round((Number(assumptionInputs.efficiencyRatio) || 0) * 100)}
+                    onChange={(e) => {
+                      const percentValue = parseFloat(e.target.value) || 0
+                      const decimalValue = Math.min(0.95, Math.max(0.5, percentValue / 100))
+                      const syntheticEvent = {
+                        target: { value: decimalValue.toString() },
+                      } as ChangeEvent<HTMLInputElement>
+                      onAssumptionChange('efficiencyRatio')(syntheticEvent)
+                    }}
+                    min={50}
+                    max={95}
+                    step={1}
+                    style={{
+                      width: '56px',
+                      padding: '4px 20px 4px 8px',
+                      background: 'rgba(6, 182, 212, 0.1)',
+                      border: '1px solid rgba(6, 182, 212, 0.3)',
+                      borderRadius: '6px',
+                      color: '#06b6d4',
+                      fontFamily: 'monospace',
+                      fontWeight: 700,
+                      fontSize: '0.8125rem',
+                      textAlign: 'right',
+                      outline: 'none',
+                    }}
+                  />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'rgba(6, 182, 212, 0.7)',
+                      fontSize: '0.75rem',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    %
+                  </span>
+                </div>
               </div>
 
               <TunerSlider
@@ -275,7 +330,6 @@ export function AssumptionsPanel({
                 step={0.01}
                 sx={{
                   color: 'var(--ob-color-accent)',
-                  // Styles handled by TunerSlider internal styling
                 }}
               />
 
@@ -341,19 +395,22 @@ export function AssumptionsPanel({
                 {[
                   {
                     value: 'rc',
-                    label: 'Reinforced Concrete',
+                    label: 'RC Structure',
+                    fullLabel: 'Reinforced Concrete',
                     icon: '🏢',
                     cost: '$$',
                   },
                   {
                     value: 'steel',
                     label: 'Steel Frame',
+                    fullLabel: 'Steel Frame Structure',
                     icon: '🏗️',
                     cost: '+15%',
                   },
                   {
                     value: 'mass_timber',
                     label: 'Mass Timber',
+                    fullLabel: 'Mass Timber Structure',
                     icon: '🌲',
                     cost: '+25%',
                   },
@@ -370,6 +427,7 @@ export function AssumptionsPanel({
                     label={option.label}
                     icon={option.icon}
                     costImpact={option.cost}
+                    title={option.fullLabel}
                   />
                 ))}
               </div>

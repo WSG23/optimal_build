@@ -18,14 +18,14 @@ interface FinancialSettingsPanelProps {
   onFinancialChange: (
     key: keyof FinancialAssumptions,
   ) => (event: ChangeEvent<HTMLInputElement>) => void
-  t: (key: string, options?: Record<string, unknown>) => string
+  t?: (key: string, options?: Record<string, unknown>) => string
 }
 
 export function FinancialSettingsPanel({
   financialInputs,
   financialErrors,
   onFinancialChange,
-  t,
+  t: _t,
 }: FinancialSettingsPanelProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -66,7 +66,7 @@ export function FinancialSettingsPanel({
       >
         <AccordionSummary
           expandIcon={
-            <ExpandMore sx={{ color: 'var(--ob-color-text-muted)' }} />
+            <ExpandMore sx={{ color: 'rgba(255,255,255,0.5)' }} />
           }
           sx={{
             padding: 'var(--ob-space-4)',
@@ -74,17 +74,27 @@ export function FinancialSettingsPanel({
           }}
         >
           <header>
-            <h2 className="text-heading" style={{ margin: 0 }}>
-              {t('wizard.financials.title') || 'Financial Modeling'}
+            <h2
+              style={{
+                margin: 0,
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.9)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              Financial Modeling
             </h2>
             <p
               style={{
                 margin: '4px 0 0',
-                fontSize: '0.875rem',
-                color: 'var(--ob-color-text-muted)',
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.5)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
               }}
             >
-              FINANCIAL PARAMETERS
+              Investment Parameters
             </p>
           </header>
         </AccordionSummary>
@@ -94,7 +104,7 @@ export function FinancialSettingsPanel({
         >
           <div className="feasibility-assumptions__grid">
             <TextField
-              label={t('wizard.financials.fields.capRate') || 'Cap Rate'}
+              label="Cap Rate (%)"
               value={financialInputs.capRatePercent}
               onChange={onFinancialChange('capRatePercent')}
               error={!!financialErrors.capRatePercent}
@@ -105,12 +115,21 @@ export function FinancialSettingsPanel({
               variant="outlined"
               size="small"
               fullWidth
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: 'rgba(255,255,255,0.9)',
+                  '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
+                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
+                },
+                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
+                '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
+              }}
             />
 
             <TextField
-              label={
-                t('wizard.financials.fields.interestRate') || 'Interest Rate'
-              }
+              label="Interest Rate (%)"
               value={financialInputs.interestRatePercent}
               onChange={onFinancialChange('interestRatePercent')}
               error={!!financialErrors.interestRatePercent}
@@ -121,14 +140,22 @@ export function FinancialSettingsPanel({
               variant="outlined"
               size="small"
               fullWidth
-              sx={{ mt: 2 }}
+              sx={{
+                mt: 2,
+                '& .MuiOutlinedInput-root': {
+                  color: 'rgba(255,255,255,0.9)',
+                  '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
+                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
+                },
+                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
+                '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
+              }}
             />
 
             <TextField
-              label={
-                t('wizard.financials.fields.targetMargin') ||
-                'Target Margin (CoC)'
-              }
+              label="Target Margin (CoC %)"
               value={financialInputs.targetMarginPercent}
               onChange={onFinancialChange('targetMarginPercent')}
               error={!!financialErrors.targetMarginPercent}
@@ -139,7 +166,18 @@ export function FinancialSettingsPanel({
               variant="outlined"
               size="small"
               fullWidth
-              sx={{ mt: 2 }}
+              sx={{
+                mt: 2,
+                '& .MuiOutlinedInput-root': {
+                  color: 'rgba(255,255,255,0.9)',
+                  '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
+                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
+                },
+                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
+                '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
+              }}
             />
           </div>
 

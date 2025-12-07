@@ -122,17 +122,18 @@ export function YosaiSidebar() {
                         justifyContent: 'flex-start',
                         color: isActive ? 'primary.main' : 'text.secondary',
                         bgcolor: isActive
-                          ? alpha(theme.palette.primary.main, 0.08)
+                          ? alpha(theme.palette.primary.main, 0.12)
                           : 'transparent',
-                        borderLeft: 3,
+                        borderLeft: 4,
                         borderColor: isActive ? 'primary.main' : 'transparent',
-                        borderRadius: '0 4px 4px 0',
+                        borderRadius: '0 8px 8px 0',
                         px: 3,
-                        py: 1,
+                        py: 1.25,
                         textAlign: 'left',
                         textTransform: 'none',
                         fontWeight: isActive ? 600 : 400,
-                        transition: 'all 0.2s ease-in-out',
+                        fontSize: isActive ? '0.875rem' : '0.85rem',
+                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                         position: 'relative',
                         overflow: 'hidden',
                         '&::before': isActive
@@ -140,16 +141,40 @@ export function YosaiSidebar() {
                               content: '""',
                               position: 'absolute',
                               left: 0,
-                              top: 0,
-                              bottom: 0,
-                              width: '3px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '4px',
+                              height: '70%',
+                              borderRadius: '0 4px 4px 0',
                               bgcolor: 'primary.main',
-                              boxShadow: `0 0 10px 1px ${theme.palette.primary.main}`,
+                              boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
                             }
                           : {},
+                        '&::after': isActive
+                          ? {
+                              content: '""',
+                              position: 'absolute',
+                              right: '8px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              bgcolor: 'primary.main',
+                              boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
+                              animation: 'pulse 2s ease-in-out infinite',
+                            }
+                          : {},
+                        '@keyframes pulse': {
+                          '0%, 100%': { opacity: 1, transform: 'translateY(-50%) scale(1)' },
+                          '50%': { opacity: 0.6, transform: 'translateY(-50%) scale(0.8)' },
+                        },
                         '&:hover': {
-                          bgcolor: alpha(theme.palette.text.primary, 0.04),
-                          color: 'text.primary',
+                          bgcolor: isActive
+                            ? alpha(theme.palette.primary.main, 0.15)
+                            : alpha(theme.palette.text.primary, 0.06),
+                          color: isActive ? 'primary.main' : 'text.primary',
+                          transform: 'translateX(4px)',
                         },
                       }}
                     >

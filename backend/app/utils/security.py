@@ -8,11 +8,13 @@ import secrets
 
 try:  # pragma: no cover - prefer passlib when available
     from passlib.context import CryptContext  # type: ignore[import-untyped]
+
+    _HAS_PASSLIB = True
 except ModuleNotFoundError:  # pragma: no cover - fallback implementation
-    CryptContext = None  # type: ignore[assignment]
+    _HAS_PASSLIB = False
 
 
-if CryptContext is not None:
+if _HAS_PASSLIB:
     pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 
     def hash_password(password: str) -> str:
