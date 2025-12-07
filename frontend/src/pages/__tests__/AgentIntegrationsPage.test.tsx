@@ -1,6 +1,12 @@
 import { afterEach, assert, beforeEach, describe, it } from 'vitest'
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 
 import React from 'react'
 
@@ -20,7 +26,6 @@ import AgentIntegrationsPage from '../AgentIntegrationsPage'
  */
 
 describe('AgentIntegrationsPage', () => {
-
   const originalFetch = globalThis.fetch
 
   beforeEach(() => {
@@ -95,36 +100,48 @@ describe('AgentIntegrationsPage', () => {
     globalThis.fetch = originalFetch
   })
 
-  it('links mock account and publishes listing', { timeout: 10000 }, async () => {
-    render(
-      <ThemeModeProvider>
-        <TranslationProvider>
-          <AgentIntegrationsPage />
-        </TranslationProvider>
-      </ThemeModeProvider>,
-    )
+  it(
+    'links mock account and publishes listing',
+    { timeout: 10000 },
+    async () => {
+      render(
+        <ThemeModeProvider>
+          <TranslationProvider>
+            <AgentIntegrationsPage />
+          </TranslationProvider>
+        </ThemeModeProvider>,
+      )
 
-    await screen.findByRole('heading', { name: /Linked accounts/i }, { timeout: 2000 })
+      await screen.findByRole(
+        'heading',
+        { name: /Linked accounts/i },
+        { timeout: 2000 },
+      )
 
-    const propertyGuruSection = screen.getByRole('heading', {
-      name: /PropertyGuru/i,
-    }).parentElement as HTMLElement
+      const propertyGuruSection = screen.getByRole('heading', {
+        name: /PropertyGuru/i,
+      }).parentElement as HTMLElement
 
-    fireEvent.submit(propertyGuruSection.querySelector('form') as HTMLFormElement)
-    await screen.findByText(/PropertyGuru .*account linked/i, undefined, {
-      timeout: 2000,
-    })
+      fireEvent.submit(
+        propertyGuruSection.querySelector('form') as HTMLFormElement,
+      )
+      await screen.findByText(/PropertyGuru .*account linked/i, undefined, {
+        timeout: 2000,
+      })
 
-    const publishForms = propertyGuruSection.querySelectorAll('form')
-    const publishForm = publishForms[publishForms.length - 1]
-    assert.ok(publishForm)
-    const propertyInput = within(publishForm as HTMLElement).getByPlaceholderText(
-      /e.g. 4271b4aa/i,
-    )
-    fireEvent.change(propertyInput, { target: { value: 'property-id' } })
-    fireEvent.submit(publishForm as HTMLFormElement)
-    await screen.findByText(/published .*mock-listing-1/i, undefined, { timeout: 5000 })
-  })
+      const publishForms = propertyGuruSection.querySelectorAll('form')
+      const publishForm = publishForms[publishForms.length - 1]
+      assert.ok(publishForm)
+      const propertyInput = within(
+        publishForm as HTMLElement,
+      ).getByPlaceholderText(/e.g. 4271b4aa/i)
+      fireEvent.change(propertyInput, { target: { value: 'property-id' } })
+      fireEvent.submit(publishForm as HTMLFormElement)
+      await screen.findByText(/published .*mock-listing-1/i, undefined, {
+        timeout: 5000,
+      })
+    },
+  )
 })
 
 function expectJsonBody(init?: RequestInit) {

@@ -31,9 +31,7 @@ export function TimelinePanel({
   stageLabelFor,
 }: TimelinePanelProps) {
   if (loading) {
-    return (
-      <p className="agent-performance__timeline-loading">{loadingText}</p>
-    )
+    return <p className="agent-performance__timeline-loading">{loadingText}</p>
   }
 
   if (events.length === 0) {

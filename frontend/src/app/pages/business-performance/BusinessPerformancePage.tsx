@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   Box,
@@ -89,53 +84,59 @@ export function BusinessPerformancePage() {
     [],
   )
 
-  const buildColumns = useCallback((entries: DealSummary[]): PipelineColumn[] => {
-    const stageMap = new Map<string, PipelineColumn>()
+  const buildColumns = useCallback(
+    (entries: DealSummary[]): PipelineColumn[] => {
+      const stageMap = new Map<string, PipelineColumn>()
 
-    DEAL_STAGE_ORDER.forEach((stage) => {
-      stageMap.set(stage, {
-        key: stage,
-        label: stage.replace('_', ' '),
-        deals: [],
-        totalCount: 0,
-        totalValue: 0,
-        weightedValue: 0,
+      DEAL_STAGE_ORDER.forEach((stage) => {
+        stageMap.set(stage, {
+          key: stage,
+          label: stage.replace('_', ' '),
+          deals: [],
+          totalCount: 0,
+          totalValue: 0,
+          weightedValue: 0,
+        })
       })
-    })
 
-    entries.forEach((deal) => {
-      const stage = stageMap.get(deal.pipelineStage) ?? stageMap.get('lead_captured')
-      if (!stage) {
-        return
-      }
-      const confidence = deal.confidence ?? 0
-      const estimated = deal.estimatedValueAmount ?? 0
+      entries.forEach((deal) => {
+        const stage =
+          stageMap.get(deal.pipelineStage) ?? stageMap.get('lead_captured')
+        if (!stage) {
+          return
+        }
+        const confidence = deal.confidence ?? 0
+        const estimated = deal.estimatedValueAmount ?? 0
 
-      const card = {
-        id: deal.id,
-        title: deal.title,
-        assetType: deal.assetType,
-        dealType: deal.dealType,
-        estimatedValue: deal.estimatedValueAmount,
-        currency: deal.estimatedValueCurrency,
-        confidence: deal.confidence,
-        latestActivity: formatRelativeDate(deal.updatedAt),
-        hasDispute: false,
-      }
+        const card = {
+          id: deal.id,
+          title: deal.title,
+          assetType: deal.assetType,
+          dealType: deal.dealType,
+          estimatedValue: deal.estimatedValueAmount,
+          currency: deal.estimatedValueCurrency,
+          confidence: deal.confidence,
+          latestActivity: formatRelativeDate(deal.updatedAt),
+          hasDispute: false,
+        }
 
-      stage.deals = [...stage.deals, card]
-      stage.totalCount += 1
-      stage.totalValue =
-        stage.totalValue !== null ? (stage.totalValue ?? 0) + estimated : estimated
-      const weightedContribution = estimated * confidence
-      stage.weightedValue =
-        stage.weightedValue !== null
-          ? (stage.weightedValue ?? 0) + weightedContribution
-          : weightedContribution
-    })
+        stage.deals = [...stage.deals, card]
+        stage.totalCount += 1
+        stage.totalValue =
+          stage.totalValue !== null
+            ? (stage.totalValue ?? 0) + estimated
+            : estimated
+        const weightedContribution = estimated * confidence
+        stage.weightedValue =
+          stage.weightedValue !== null
+            ? (stage.weightedValue ?? 0) + weightedContribution
+            : weightedContribution
+      })
 
-    return Array.from(stageMap.values())
-  }, [])
+      return Array.from(stageMap.values())
+    },
+    [],
+  )
 
   const loadPipeline = useCallback(
     async (controller?: AbortController) => {
@@ -156,7 +157,10 @@ export function BusinessPerformancePage() {
           setSelectedDealId(null)
         }
       } catch (error) {
-        if (signal?.aborted || (error as { name?: string }).name === 'AbortError') {
+        if (
+          signal?.aborted ||
+          (error as { name?: string }).name === 'AbortError'
+        ) {
           return
         }
         console.error('Failed to load pipeline', error)
@@ -345,7 +349,9 @@ export function BusinessPerformancePage() {
         console.error('Failed to change stage', error)
         setDeals(previousDeals)
         setColumns(buildColumns(previousDeals))
-        setStageUpdateError('Unable to update deal stage. Reverted to previous state.')
+        setStageUpdateError(
+          'Unable to update deal stage. Reverted to previous state.',
+        )
       } finally {
         setMovingDealId(null)
       }
@@ -359,44 +365,46 @@ export function BusinessPerformancePage() {
 
   return (
     <Box className="bp-page" sx={{ p: 3 }}>
-        <AnimatedPageHeader
-            title="Business Performance"
-            subtitle="Real-time insights into your pipeline, agent activity, and ROI."
-            breadcrumbs={[
-                { label: 'Dashboard', href: '/' },
-                { label: 'Business Performance' }
-            ]}
-        />
+      <AnimatedPageHeader
+        title="Business Performance"
+        subtitle="Real-time insights into your pipeline, agent activity, and ROI."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Business Performance' },
+        ]}
+      />
 
       <Grid container spacing={3} className="bp-page__summary" sx={{ mb: 4 }}>
         <Grid item xs={12} md={4}>
-            <HeroMetric
-                label="Last Snapshot"
-                value={analyticsLoading ? '-' : lastSnapshot}
-                icon={<AccessTime fontSize="small" />}
-                variant="glass"
-                delay={100}
-            />
+          <HeroMetric
+            label="Last Snapshot"
+            value={analyticsLoading ? '-' : lastSnapshot}
+            icon={<AccessTime fontSize="small" />}
+            variant="glass"
+            delay={100}
+          />
         </Grid>
         <Grid item xs={12} md={4}>
-            <HeroMetric
-                label="Open Pipeline Value"
-                value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
-                unit="SGD"
-                icon={<AttachMoney fontSize="small" />}
-                variant="primary"
-                delay={200}
-                trend={!pipelineLoading ? { value: 12, direction: 'up' } : undefined}
-            />
+          <HeroMetric
+            label="Open Pipeline Value"
+            value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
+            unit="SGD"
+            icon={<AttachMoney fontSize="small" />}
+            variant="primary"
+            delay={200}
+            trend={
+              !pipelineLoading ? { value: 12, direction: 'up' } : undefined
+            }
+          />
         </Grid>
         <Grid item xs={12} md={4}>
-             <HeroMetric
-                label="ROI Projects Tracked"
-                value={analyticsLoading ? '-' : roiSummary.projectCount}
-                icon={<Assessment fontSize="small" />}
-                variant="glass"
-                delay={300}
-            />
+          <HeroMetric
+            label="ROI Projects Tracked"
+            value={analyticsLoading ? '-' : roiSummary.projectCount}
+            icon={<Assessment fontSize="small" />}
+            variant="glass"
+            delay={300}
+          />
         </Grid>
       </Grid>
 
@@ -418,12 +426,17 @@ export function BusinessPerformancePage() {
             {pipelineError}
           </Alert>
         )}
-        {stageUpdateError && <Alert severity="warning">{stageUpdateError}</Alert>}
+        {stageUpdateError && (
+          <Alert severity="warning">{stageUpdateError}</Alert>
+        )}
       </Stack>
 
       <Grid container spacing={3} className="bp-page__layout">
         <Grid item xs={12} lg={8} className="bp-page__pipeline">
-          <GlassCard className="bp-pipeline-wrapper" sx={{ height: '100%', p: 2 }}>
+          <GlassCard
+            className="bp-pipeline-wrapper"
+            sx={{ height: '100%', p: 2 }}
+          >
             {pipelineLoading ? (
               <Stack alignItems="center" py={4} spacing={1}>
                 <CircularProgress size={28} />
@@ -449,7 +462,11 @@ export function BusinessPerformancePage() {
               timeline={timeline}
               commissions={commissions}
             />
-            <AnalyticsPanel metrics={metrics} trend={trend} benchmarks={benchmarks} />
+            <AnalyticsPanel
+              metrics={metrics}
+              trend={trend}
+              benchmarks={benchmarks}
+            />
             <RoiPanel summary={roiSummary} />
             {(dealLoading || analyticsLoading) && (
               <Stack alignItems="center" spacing={1} py={2}>
@@ -506,7 +523,11 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
     maximumFractionDigits: 0,
   })
   return [
-    { key: 'dealsOpen', label: 'Open deals', value: snapshot.dealsOpen.toString() },
+    {
+      key: 'dealsOpen',
+      label: 'Open deals',
+      value: snapshot.dealsOpen.toString(),
+    },
     {
       key: 'dealsWon',
       label: 'Deals won (30d)',
@@ -515,17 +536,19 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
     {
       key: 'grossPipeline',
       label: 'Gross pipeline',
-      value: snapshot.grossPipelineValue !== null
-        ? currencyFormatter.format(snapshot.grossPipelineValue)
-        : NOT_AVAILABLE_TEXT,
+      value:
+        snapshot.grossPipelineValue !== null
+          ? currencyFormatter.format(snapshot.grossPipelineValue)
+          : NOT_AVAILABLE_TEXT,
       helperText: 'All open opportunities, unweighted.',
     },
     {
       key: 'weightedPipeline',
       label: 'Weighted pipeline',
-      value: snapshot.weightedPipelineValue !== null
-        ? currencyFormatter.format(snapshot.weightedPipelineValue)
-        : NOT_AVAILABLE_TEXT,
+      value:
+        snapshot.weightedPipelineValue !== null
+          ? currencyFormatter.format(snapshot.weightedPipelineValue)
+          : NOT_AVAILABLE_TEXT,
       helperText: 'Weighted by confidence percentage.',
     },
     {
@@ -593,13 +616,14 @@ function buildBenchmarks(
     entries.push({
       key: 'conversion',
       label: 'Conversion rate',
-      actual: conversion[0].valueNumeric !== null
-        ? `${(conversion[0].valueNumeric * 100).toFixed(1)}%`
-        : conversion[0].valueText ?? NOT_AVAILABLE_TEXT,
+      actual:
+        conversion[0].valueNumeric !== null
+          ? `${(conversion[0].valueNumeric * 100).toFixed(1)}%`
+          : (conversion[0].valueText ?? NOT_AVAILABLE_TEXT),
       benchmark:
         conversion[1]?.valueNumeric !== null
           ? `${(conversion[1].valueNumeric * 100).toFixed(1)}%`
-          : conversion[1]?.valueText ?? null,
+          : (conversion[1]?.valueText ?? null),
       cohort: convertLabel(conversion[0].cohort),
       deltaText: null,
     })
@@ -611,11 +635,11 @@ function buildBenchmarks(
       actual:
         cycle[0].valueNumeric !== null
           ? `${cycle[0].valueNumeric.toFixed(0)} days`
-          : cycle[0].valueText ?? NOT_AVAILABLE_TEXT,
+          : (cycle[0].valueText ?? NOT_AVAILABLE_TEXT),
       benchmark:
         cycle[1]?.valueNumeric !== null
           ? `${cycle[1].valueNumeric.toFixed(0)} days`
-          : cycle[1]?.valueText ?? null,
+          : (cycle[1]?.valueText ?? null),
       cohort: convertLabel(cycle[0].cohort),
       deltaText: null,
     })
@@ -632,11 +656,11 @@ function buildBenchmarks(
       actual:
         pipeline[0].valueNumeric !== null
           ? currencyFormatter.format(pipeline[0].valueNumeric)
-          : pipeline[0].valueText ?? NOT_AVAILABLE_TEXT,
+          : (pipeline[0].valueText ?? NOT_AVAILABLE_TEXT),
       benchmark:
         pipeline[1]?.valueNumeric !== null
           ? currencyFormatter.format(pipeline[1].valueNumeric)
-          : pipeline[1]?.valueText ?? null,
+          : (pipeline[1]?.valueText ?? null),
       cohort: convertLabel(pipeline[0].cohort),
       deltaText: null,
     })

@@ -1,4 +1,7 @@
-import type { FinanceAnalyticsBucket, FinanceAnalyticsMetadata } from '../../../api/finance'
+import type {
+  FinanceAnalyticsBucket,
+  FinanceAnalyticsMetadata,
+} from '../../../api/finance'
 
 interface FinanceAnalyticsPanelProps {
   analytics: FinanceAnalyticsMetadata
@@ -110,7 +113,8 @@ export function FinanceAnalyticsPanel({
             Advanced analytics
           </h3>
           <p style={{ margin: 0, color: '#4b5563', fontSize: '0.95rem' }}>
-            MOIC, equity multiples, and DSCR health derived from the current scenario.
+            MOIC, equity multiples, and DSCR health derived from the current
+            scenario.
           </p>
         </div>
       </div>
@@ -129,8 +133,16 @@ export function FinanceAnalyticsPanel({
             background: '#fff',
           }}
         >
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>MOIC</p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '1.5rem', fontWeight: 700 }}>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
+            MOIC
+          </p>
+          <p
+            style={{
+              margin: '0.5rem 0 0',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+            }}
+          >
             {formatRatio(analytics.moic)}
           </p>
         </article>
@@ -145,7 +157,13 @@ export function FinanceAnalyticsPanel({
           <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
             Equity multiple
           </p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '1.5rem', fontWeight: 700 }}>
+          <p
+            style={{
+              margin: '0.5rem 0 0',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+            }}
+          >
             {formatRatio(analytics.equity_multiple)}
           </p>
         </article>
@@ -160,7 +178,13 @@ export function FinanceAnalyticsPanel({
           <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
             Equity invested
           </p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '1.2rem', fontWeight: 700 }}>
+          <p
+            style={{
+              margin: '0.5rem 0 0',
+              fontSize: '1.2rem',
+              fontWeight: 700,
+            }}
+          >
             {formatCurrencyValue(cashSummary.invested_equity, currency)}
           </p>
           <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
@@ -169,11 +193,15 @@ export function FinanceAnalyticsPanel({
         </article>
       </div>
       <div>
-        <h4 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#111827' }}>
+        <h4
+          style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#111827' }}
+        >
           DSCR heat map ({totalPeriods} periods)
         </h4>
         {buckets.length === 0 ? (
-          <p style={{ margin: 0, color: '#6b7280' }}>DSCR data not available.</p>
+          <p style={{ margin: 0, color: '#6b7280' }}>
+            DSCR data not available.
+          </p>
         ) : (
           <div>
             {buckets.map((bucket) => renderBucketBar(bucket, totalPeriods))}

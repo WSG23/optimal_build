@@ -143,7 +143,9 @@ export function useBenchmarks({
 
     const items: BenchmarkComparison[] = []
 
-    const conversionActualPercent = toPercentValue(latestSnapshot.conversionRate)
+    const conversionActualPercent = toPercentValue(
+      latestSnapshot.conversionRate,
+    )
     const conversionBenchmarkPercent = toPercentValue(
       benchmarks.conversion?.valueNumeric ?? null,
     )

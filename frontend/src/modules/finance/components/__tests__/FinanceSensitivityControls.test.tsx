@@ -61,9 +61,7 @@ describe('FinanceSensitivityControls', () => {
       target: { value: '5' },
     })
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /run sensitivity/i }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: /run sensitivity/i }))
 
     await waitFor(() => {
       expect(onRun).toHaveBeenCalledWith(
@@ -91,8 +89,12 @@ describe('FinanceSensitivityControls', () => {
     )
 
     // Component should render with a default parameter
-    expect(screen.getByRole('button', { name: /add parameter/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /run sensitivity/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /add parameter/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /run sensitivity/i }),
+    ).toBeInTheDocument()
 
     // Should have at least one parameter row (component may provide a default)
     const removeButtons = screen.queryAllByRole('button', { name: /remove/i })

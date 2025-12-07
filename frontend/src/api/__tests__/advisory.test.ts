@@ -73,7 +73,9 @@ describe('advisory API client', () => {
 
     globalThis.fetch = vi.fn(async (input, init) => {
       expect(init?.method).toBe('POST')
-      expect(init?.headers).toMatchObject({ 'content-type': 'application/json' })
+      expect(init?.headers).toMatchObject({
+        'content-type': 'application/json',
+      })
       const body = init?.body ? JSON.parse(String(init.body)) : null
       expect(body).toMatchObject({
         sentiment: 'positive',

@@ -58,7 +58,10 @@ export interface UseInvestigationAnalyticsResult {
   refetch: () => Promise<void>
 }
 
-const loadingGraphState: GraphIntelligenceState = { kind: 'graph', status: 'loading' }
+const loadingGraphState: GraphIntelligenceState = {
+  kind: 'graph',
+  status: 'loading',
+}
 const loadingPredictiveState: PredictiveIntelligenceState = {
   kind: 'predictive',
   status: 'loading',
@@ -72,25 +75,36 @@ function toGraphErrorState(reason: unknown): GraphIntelligenceResponse {
   return {
     kind: 'graph',
     status: 'error',
-    error: reason instanceof Error ? reason.message : 'Unknown graph intelligence error',
+    error:
+      reason instanceof Error
+        ? reason.message
+        : 'Unknown graph intelligence error',
   }
 }
 
-function toPredictiveErrorState(reason: unknown): PredictiveIntelligenceResponse {
+function toPredictiveErrorState(
+  reason: unknown,
+): PredictiveIntelligenceResponse {
   return {
     kind: 'predictive',
     status: 'error',
     error:
-      reason instanceof Error ? reason.message : 'Unknown predictive intelligence error',
+      reason instanceof Error
+        ? reason.message
+        : 'Unknown predictive intelligence error',
   }
 }
 
-function toCorrelationErrorState(reason: unknown): CrossCorrelationIntelligenceResponse {
+function toCorrelationErrorState(
+  reason: unknown,
+): CrossCorrelationIntelligenceResponse {
   return {
     kind: 'correlation',
     status: 'error',
     error:
-      reason instanceof Error ? reason.message : 'Unknown correlation intelligence error',
+      reason instanceof Error
+        ? reason.message
+        : 'Unknown correlation intelligence error',
   }
 }
 
@@ -158,11 +172,12 @@ export function useInvestigationAnalytics(
       setCorrelation(loadingCorrelationState)
 
       try {
-        const [graphResult, predictiveResult, correlationResult] = await Promise.allSettled([
-          services.fetchGraphIntelligence(workspaceId),
-          services.fetchPredictiveIntelligence(workspaceId),
-          services.fetchCrossCorrelationIntelligence(workspaceId),
-        ])
+        const [graphResult, predictiveResult, correlationResult] =
+          await Promise.allSettled([
+            services.fetchGraphIntelligence(workspaceId),
+            services.fetchPredictiveIntelligence(workspaceId),
+            services.fetchCrossCorrelationIntelligence(workspaceId),
+          ])
         debugLog('[useInvestigationAnalytics] All promises settled:', {
           graphResult,
           predictiveResult,
@@ -187,10 +202,16 @@ export function useInvestigationAnalytics(
           )
         } else {
           if (graphResult.status === 'fulfilled') {
-            debugLog('[useInvestigationAnalytics] Setting graph data:', graphResult.value)
+            debugLog(
+              '[useInvestigationAnalytics] Setting graph data:',
+              graphResult.value,
+            )
             nextGraph = graphResult.value
           } else {
-            debugError('[useInvestigationAnalytics] Graph request failed:', graphResult.reason)
+            debugError(
+              '[useInvestigationAnalytics] Graph request failed:',
+              graphResult.reason,
+            )
             nextGraph = toGraphErrorState(graphResult.reason)
           }
 

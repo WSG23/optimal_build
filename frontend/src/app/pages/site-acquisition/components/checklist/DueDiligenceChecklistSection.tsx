@@ -6,7 +6,10 @@
  */
 
 import { Link } from '../../../../../router'
-import type { ChecklistItem, DevelopmentScenario } from '../../../../../api/siteAcquisition'
+import type {
+  ChecklistItem,
+  DevelopmentScenario,
+} from '../../../../../api/siteAcquisition'
 import type { ScenarioOption } from '../../constants'
 import { formatCategoryName } from '../../utils'
 
@@ -102,8 +105,8 @@ export function DueDiligenceChecklistSection({
               {activeScenario === 'all'
                 ? 'Overall progress'
                 : `${activeScenarioDetails?.label ?? 'Scenario'}`}
-              : {displaySummary.completed} of {displaySummary.total} items completed (
-              {displaySummary.completionPercentage.toFixed(0)}%)
+              : {displaySummary.completed} of {displaySummary.total} items
+              completed ({displaySummary.completionPercentage.toFixed(0)}%)
             </p>
           )}
           {activeScenarioDetails?.description && (
@@ -198,7 +201,9 @@ export function DueDiligenceChecklistSection({
                   transition: 'all 0.2s ease',
                 }}
               >
-                {option?.icon ? <span style={{ fontSize: '1rem' }}>{option.icon}</span> : null}
+                {option?.icon ? (
+                  <span style={{ fontSize: '1rem' }}>{option.icon}</span>
+                ) : null}
                 <span>{option?.label ?? formatCategoryName(scenario)}</span>
               </button>
             )
@@ -257,7 +262,10 @@ export function DueDiligenceChecklistSection({
             borderRadius: '12px',
           }}
         >
-          <p>No checklist items for {activeScenarioDetails?.label ?? 'this scenario'} yet.</p>
+          <p>
+            No checklist items for{' '}
+            {activeScenarioDetails?.label ?? 'this scenario'} yet.
+          </p>
         </div>
       ) : (
         <>
@@ -276,7 +284,8 @@ export function DueDiligenceChecklistSection({
                 style={{
                   width: `${displaySummary.completionPercentage}%`,
                   height: '100%',
-                  background: 'linear-gradient(90deg, #0071e3 0%, #005bb5 100%)',
+                  background:
+                    'linear-gradient(90deg, #0071e3 0%, #005bb5 100%)',
                   transition: 'width 0.3s ease',
                 }}
               />
@@ -308,7 +317,11 @@ export function DueDiligenceChecklistSection({
             >
               <button
                 type="button"
-                onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                onClick={() =>
+                  setSelectedCategory(
+                    selectedCategory === category ? null : category,
+                  )
+                }
                 style={{
                   width: '100%',
                   padding: '1rem 1.25rem',
@@ -330,7 +343,8 @@ export function DueDiligenceChecklistSection({
                     color: '#6e6e73',
                   }}
                 >
-                  {items.filter((item) => item.status === 'completed').length}/{items.length}
+                  {items.filter((item) => item.status === 'completed').length}/
+                  {items.length}
                 </span>
               </button>
               {(selectedCategory === category || selectedCategory === null) && (

@@ -59,45 +59,60 @@ export function AnalyticsPanel({
 
   return (
     <Box className="bp-analytics">
-      <Grid container spacing={2} className="bp-analytics__metrics" sx={{ mb: 4 }}>
+      <Grid
+        container
+        spacing={2}
+        className="bp-analytics__metrics"
+        sx={{ mb: 4 }}
+      >
         {metrics.map((metric, index) => (
           <Grid item xs={12} sm={6} md={4} key={metric.key}>
             <HeroMetric
-                label={metric.label}
-                value={metric.value}
-                variant="glass"
-                delay={index * 50}
+              label={metric.label}
+              value={metric.value}
+              variant="glass"
+              delay={index * 50}
             />
           </Grid>
         ))}
       </Grid>
 
       <Box className="bp-analytics__trend">
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={1}
+        >
           <Typography variant="h6">30-day trend</Typography>
           <Typography variant="caption" color="text.secondary">
             Gross & weighted pipeline vs conversion + cycle time
           </Typography>
         </Stack>
-        <GlassCard className="bp-analytics__chart" sx={{ height: 300, position: 'relative', p: 2 }}>
+        <GlassCard
+          className="bp-analytics__chart"
+          sx={{ height: 300, position: 'relative', p: 2 }}
+        >
           {chartData.length === 0 ? (
             <Stack
-                alignItems="center"
-                justifyContent="center"
-                spacing={2}
-                sx={{
-                    height: '100%',
-                    color: 'text.secondary',
-                    opacity: 0.6,
-                }}
+              alignItems="center"
+              justifyContent="center"
+              spacing={2}
+              sx={{
+                height: '100%',
+                color: 'text.secondary',
+                opacity: 0.6,
+              }}
             >
-               <BarChart sx={{ fontSize: 64, opacity: 0.5 }} />
-               <Box textAlign="center">
-                   <Typography variant="h6" color="text.primary">Connect data to see pipeline trends</Typography>
-                   <Typography variant="body2">
-                       Historical performance will populate here daily.
-                   </Typography>
-               </Box>
+              <BarChart sx={{ fontSize: 64, opacity: 0.5 }} />
+              <Box textAlign="center">
+                <Typography variant="h6" color="text.primary">
+                  Connect data to see pipeline trends
+                </Typography>
+                <Typography variant="body2">
+                  Historical performance will populate here daily.
+                </Typography>
+              </Box>
             </Stack>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -105,9 +120,17 @@ export function AnalyticsPanel({
                 data={chartData}
                 margin={{ top: 16, right: 24, bottom: 0, left: 0 }}
               >
-                  {/* ... Chart Content Preserved ... */}
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#9CA3AF' }} minTickGap={32} />
+                {/* ... Chart Content Preserved ... */}
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="rgba(255,255,255,0.1)"
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  minTickGap={32}
+                />
                 <YAxis
                   yAxisId="left"
                   tickFormatter={(value: number) => `${value.toFixed(1)}m`}
@@ -117,7 +140,7 @@ export function AnalyticsPanel({
                     angle: -90,
                     position: 'insideLeft',
                     fill: '#9CA3AF',
-                    fontSize: 12
+                    fontSize: 12,
                   }}
                 />
                 <YAxis
@@ -130,13 +153,17 @@ export function AnalyticsPanel({
                     angle: 90,
                     position: 'insideRight',
                     fill: '#9CA3AF',
-                    fontSize: 12
+                    fontSize: 12,
                   }}
                 />
                 <RechartsTooltip
                   formatter={formatTooltipValue}
                   labelStyle={{ fontWeight: 600, color: '#111827' }}
-                  contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  }}
                 />
                 <Legend iconType="circle" />
                 <Area
@@ -157,15 +184,21 @@ export function AnalyticsPanel({
                   stroke="#10B981"
                   fillOpacity={1}
                 />
-                 <defs>
-                    <linearGradient id="colorGross" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorWeighted" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                    </linearGradient>
+                <defs>
+                  <linearGradient id="colorGross" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorWeighted"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                  </linearGradient>
                 </defs>
                 <Line
                   yAxisId="right"
@@ -243,9 +276,13 @@ export function AnalyticsPanel({
   )
 }
 
-const formatTooltipValue: Formatter<ValueType, NameType> = (rawValue, rawName) => {
+const formatTooltipValue: Formatter<ValueType, NameType> = (
+  rawValue,
+  rawName,
+) => {
   const label = typeof rawName === 'string' ? rawName : String(rawName ?? '')
-  const numericValue = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? NaN)
+  const numericValue =
+    typeof rawValue === 'number' ? rawValue : Number(rawValue ?? NaN)
 
   if (!Number.isFinite(numericValue)) {
     return ['Not available yet', label]

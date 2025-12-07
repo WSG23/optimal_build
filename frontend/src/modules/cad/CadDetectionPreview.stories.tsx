@@ -15,7 +15,12 @@ type SeverityKey = 'high' | 'medium' | 'low' | 'none'
 type StoryProps = Parameters<typeof CadDetectionPreview>[0]
 
 const ALL_SEVERITIES: SeverityKey[] = ['high', 'medium', 'low', 'none']
-const ALL_STATUSES: DetectionStatus[] = ['source', 'pending', 'approved', 'rejected']
+const ALL_STATUSES: DetectionStatus[] = [
+  'source',
+  'pending',
+  'approved',
+  'rejected',
+]
 
 const arraysEqual = <T,>(a: T[], b: T[]) =>
   a.length === b.length && a.every((value) => b.includes(value))
@@ -25,7 +30,8 @@ const computePercentages = (summary: StoryProps['severitySummary']) => {
   if (total === 0) {
     return { high: 0, medium: 0, low: 0, none: 0 }
   }
-  const toPercent = (value: number) => Math.round(((value / total) * 100) * 10) / 10
+  const toPercent = (value: number) =>
+    Math.round((value / total) * 100 * 10) / 10
   return {
     high: toPercent(summary.high),
     medium: toPercent(summary.medium),
@@ -56,7 +62,8 @@ const PreviewStoryWrapper = (
     activeStatuses = ALL_STATUSES,
     ...rest
   } = props
-  const severityPercentages = providedPercentages ?? computePercentages(severitySummary)
+  const severityPercentages =
+    providedPercentages ?? computePercentages(severitySummary)
 
   const hiddenSeverityCounts = ALL_SEVERITIES.reduce(
     (acc, severity) => {
@@ -65,7 +72,12 @@ const PreviewStoryWrapper = (
         : severitySummary[severity]
       return acc
     },
-    { high: 0, medium: 0, low: 0, none: 0 } as StoryProps['hiddenSeverityCounts'],
+    {
+      high: 0,
+      medium: 0,
+      low: 0,
+      none: 0,
+    } as StoryProps['hiddenSeverityCounts'],
   )
 
   const toggleSeverity = (severity: SeverityKey) => {

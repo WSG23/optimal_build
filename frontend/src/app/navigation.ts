@@ -52,7 +52,8 @@ export const AGENT_NAV_ITEMS: NavItem[] = [
     key: 'advisory',
     label: 'Advisory Console',
     path: '/app/advisory',
-    description: 'Asset mix strategy, pricing guidance, and absorption insights.',
+    description:
+      'Asset mix strategy, pricing guidance, and absorption insights.',
     workspace: 'agent',
   },
   {
@@ -145,7 +146,4 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
 
 // Combined navigation (temporary - will add workspace switcher later)
 // Shows both Agent and Developer tools for now
-export const NAV_ITEMS: NavItem[] = [
-  ...AGENT_NAV_ITEMS,
-  ...DEVELOPER_NAV_ITEMS,
-]
+export const NAV_ITEMS: NavItem[] = [...AGENT_NAV_ITEMS, ...DEVELOPER_NAV_ITEMS]

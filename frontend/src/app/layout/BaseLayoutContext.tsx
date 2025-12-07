@@ -1,15 +1,15 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react'
 
 interface BaseLayoutContextValue {
-    inBaseLayout: boolean;
+  inBaseLayout: boolean
 }
 
 const BaseLayoutContext = createContext<BaseLayoutContextValue>({
-    inBaseLayout: false,
-});
+  inBaseLayout: false,
+})
 
 export function useBaseLayoutContext() {
-    return useContext(BaseLayoutContext);
+  return useContext(BaseLayoutContext)
 }
 
-export const BaseLayoutProvider = BaseLayoutContext.Provider;
+export const BaseLayoutProvider = BaseLayoutContext.Provider

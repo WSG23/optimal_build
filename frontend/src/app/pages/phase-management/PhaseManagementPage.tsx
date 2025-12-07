@@ -3,8 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Divider,
   Grid,
@@ -38,6 +36,152 @@ import {
   type UpdatePhasePayload,
 } from '../../../api/development'
 
+// Custom Holographic Card Component
+function HolographicCard({
+  icon,
+  value,
+  label,
+  progress,
+  status,
+  color = '#fff',
+  suffix,
+}: {
+  icon?: React.ReactNode
+  value: number | string
+  label: string
+  progress?: number
+  status?: 'good' | 'alert'
+  color?: string
+  suffix?: string
+}) {
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        minWidth: 160,
+        flex: 1,
+        p: 2,
+        borderRadius: 3,
+        background: 'rgba(30, 30, 30, 0.6)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow:
+            '0 12px 40px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 243, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+        },
+      }}
+    >
+      {/* Progress Ring or Icon Container */}
+      <Box sx={{ position: 'relative', display: 'flex' }}>
+        {progress !== undefined ? (
+          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+            <CircularProgress
+              variant="determinate"
+              value={100}
+              size={52}
+              thickness={4}
+              sx={{ color: 'rgba(255, 255, 255, 0.1)' }}
+            />
+            <CircularProgress
+              variant="determinate"
+              value={progress}
+              size={52}
+              thickness={4}
+              sx={{
+                color: color,
+                position: 'absolute',
+                left: 0,
+                // Add a glow effect to the progress bar
+                filter: `drop-shadow(0 0 4px ${color})`,
+                '& .MuiCircularProgress-circle': { strokeLinecap: 'round' },
+              }}
+            />
+            <Box
+              sx={{
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                position: 'absolute',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {icon}
+            </Box>
+          </Box>
+        ) : (
+          icon && <Box sx={{ p: 1 }}>{icon}</Box>
+        )}
+      </Box>
+
+      <Box>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: '#fff',
+            textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+            fontSize: '1.75rem',
+            lineHeight: 1,
+            mb: 0.5,
+          }}
+        >
+          {value}
+          {suffix && (
+            <Typography
+              component="span"
+              variant="h6"
+              sx={{ ml: 0.5, opacity: 0.7 }}
+            >
+              {suffix}
+            </Typography>
+          )}
+        </Typography>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'rgba(255, 255, 255, 0.6)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontWeight: 500,
+              fontSize: '0.7rem',
+            }}
+          >
+            {label}
+          </Typography>
+          {status && (
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                bgcolor: status === 'good' ? '#00ff9d' : '#ff3366',
+                boxShadow: `0 0 8px ${status === 'good' ? '#00ff9d' : '#ff3366'}`,
+                animation: 'pulse 2s infinite',
+                '@keyframes pulse': {
+                  '0%': { opacity: 1, transform: 'scale(1)' },
+                  '50%': { opacity: 0.5, transform: 'scale(1.2)' },
+                  '100%': { opacity: 1, transform: 'scale(1)' },
+                },
+              }}
+            />
+          )}
+        </Stack>
+      </Box>
+    </Box>
+  )
+}
+
 interface TabPanelProps {
   children?: React.ReactNode
   value: number
@@ -68,14 +212,19 @@ export function PhaseManagementPage() {
 
   // Data states
   const [ganttData, setGanttData] = useState<GanttChartData | null>(null)
-  const [criticalPath, setCriticalPath] = useState<CriticalPathResult | null>(null)
+  const [criticalPath, setCriticalPath] = useState<CriticalPathResult | null>(
+    null,
+  )
   const [heritageData, setHeritageData] = useState<HeritageTracker | null>(null)
-  const [tenantData, setTenantData] = useState<TenantCoordinationSummary | null>(null)
+  const [tenantData, setTenantData] =
+    useState<TenantCoordinationSummary | null>(null)
 
   // UI states
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
-  const [editingPhase, setEditingPhase] = useState<DevelopmentPhase | null>(null)
+  const [editingPhase, setEditingPhase] = useState<DevelopmentPhase | null>(
+    null,
+  )
 
   // Load all data
   const loadData = useCallback(async (controller?: AbortController) => {
@@ -100,7 +249,9 @@ export function PhaseManagementPage() {
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError') return
       console.error('Failed to load phase data', err)
-      setError('Failed to load project phase data. The API may not be available yet.')
+      setError(
+        'Failed to load project phase data. The API may not be available yet.',
+      )
     } finally {
       if (!signal?.aborted) {
         setLoading(false)
@@ -114,9 +265,12 @@ export function PhaseManagementPage() {
     return () => controller.abort()
   }, [loadData])
 
-  const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue)
-  }, [])
+  const handleTabChange = useCallback(
+    (_: React.SyntheticEvent, newValue: number) => {
+      setActiveTab(newValue)
+    },
+    [],
+  )
 
   const handleTaskClick = useCallback((taskId: string) => {
     setSelectedTaskId(taskId)
@@ -132,7 +286,11 @@ export function PhaseManagementPage() {
       if (isNew) {
         await createPhase(DEMO_PROJECT_ID, data as CreatePhasePayload)
       } else if (editingPhase) {
-        await updatePhase(DEMO_PROJECT_ID, editingPhase.id, data as UpdatePhasePayload)
+        await updatePhase(
+          DEMO_PROJECT_ID,
+          editingPhase.id,
+          data as UpdatePhasePayload,
+        )
       }
       // Reload data after save
       await loadData()
@@ -162,7 +320,8 @@ export function PhaseManagementPage() {
       totalPhases: ganttData.tasks.length,
       criticalPhases: ganttData.tasks.filter((t) => t.isCritical).length,
       heritagePhases: ganttData.tasks.filter((t) => t.isHeritage).length,
-      tenantPhases: ganttData.tasks.filter((t) => t.hasTenantCoordination).length,
+      tenantPhases: ganttData.tasks.filter((t) => t.hasTenantCoordination)
+        .length,
       totalDuration: ganttData.totalDuration,
       criticalDuration: ganttData.criticalPathDuration,
     }
@@ -170,112 +329,130 @@ export function PhaseManagementPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 400,
+        }}
+      >
         <Stack alignItems="center" spacing={2}>
           <CircularProgress />
-          <Typography color="text.secondary">Loading project phases...</Typography>
+          <Typography color="text.secondary">
+            Loading project phases...
+          </Typography>
         </Stack>
       </Box>
     )
   }
 
   return (
-    <Box className="phase-management-page">
+    <Box
+      className="phase-management-page"
+      sx={{
+        backgroundColor: '#121212',
+        minHeight: '100vh',
+        p: 3,
+        color: '#fff',
+      }}
+    >
       {error && (
         <Alert severity="info" sx={{ mb: 3 }}>
           {error} Demo data is shown below.
         </Alert>
       )}
 
-      {/* Summary Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} md={2}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: 'center' }}>
-              <TimelineIcon sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                {stats.totalPhases}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Phases
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} md={2}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: 'center' }}>
-              <BarChartIcon sx={{ fontSize: 32, color: 'error.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                {stats.criticalPhases}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Critical Path
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} md={2}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: 'center' }}>
-              <AccountBalanceIcon sx={{ fontSize: 32, color: 'warning.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                {stats.heritagePhases}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Heritage Phases
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} md={2}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: 'center' }}>
-              <PeopleIcon sx={{ fontSize: 32, color: 'info.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                {stats.tenantPhases}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Tenant Coordination
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} md={2}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                {stats.totalDuration}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Days
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} md={2}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontWeight: 600, color: 'error.main' }}>
-                {stats.criticalDuration}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Critical Days
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <HolographicCard
+          icon={<TimelineIcon sx={{ fontSize: 28, color: '#00f3ff' }} />}
+          value={stats.totalPhases}
+          label="Total Phases"
+          progress={75} // Example progress
+          color="#00f3ff"
+        />
+        <HolographicCard
+          icon={
+            <BarChartIcon
+              sx={{
+                fontSize: 28,
+                color: stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d',
+              }}
+            />
+          }
+          value={stats.criticalPhases}
+          label="Critical Path"
+          status={stats.criticalPhases > 0 ? 'alert' : 'good'}
+          color={stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d'}
+        />
+        <HolographicCard
+          icon={<AccountBalanceIcon sx={{ fontSize: 28, color: '#f59e0b' }} />}
+          value={stats.heritagePhases}
+          label="Heritage Phases"
+          progress={45}
+          color="#f59e0b"
+        />
+        <HolographicCard
+          icon={<PeopleIcon sx={{ fontSize: 28, color: '#a855f7' }} />}
+          value={stats.tenantPhases}
+          label="Tenant Coord"
+          progress={60}
+          color="#a855f7"
+        />
+        <HolographicCard
+          value={stats.totalDuration}
+          label="Total Days"
+          suffix="d"
+          progress={35} // Just an example, ideally calculated (elapsed / total)
+          color="#fff"
+        />
+        <HolographicCard
+          value={stats.criticalDuration}
+          label="Critical Days"
+          suffix="d"
+          color="#ff3366"
+          status="alert"
+        />
+      </Box>
 
       {/* Main Content with Tabs */}
-      <Paper elevation={0} sx={{ border: '1px solid #e0e0e0' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          background: 'rgba(30, 30, 30, 0.4)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 3,
+          overflow: 'hidden',
+        }}
+      >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Tabs value={activeTab} onChange={handleTabChange}>
-              <Tab label="Gantt Chart" icon={<TimelineIcon />} iconPosition="start" />
-              <Tab label="Critical Path" icon={<BarChartIcon />} iconPosition="start" />
-              <Tab label="Heritage Tracking" icon={<AccountBalanceIcon />} iconPosition="start" />
-              <Tab label="Tenant Coordination" icon={<PeopleIcon />} iconPosition="start" />
+              <Tab
+                label="Gantt Chart"
+                icon={<TimelineIcon />}
+                iconPosition="start"
+              />
+              <Tab
+                label="Critical Path"
+                icon={<BarChartIcon />}
+                iconPosition="start"
+              />
+              <Tab
+                label="Heritage Tracking"
+                icon={<AccountBalanceIcon />}
+                iconPosition="start"
+              />
+              <Tab
+                label="Tenant Coordination"
+                icon={<PeopleIcon />}
+                iconPosition="start"
+              />
             </Tabs>
 
             <Button
@@ -299,7 +476,10 @@ export function PhaseManagementPage() {
                 selectedTaskId={selectedTaskId}
               />
             ) : (
-              <DemoGanttChart onTaskClick={handleTaskClick} selectedTaskId={selectedTaskId} />
+              <DemoGanttChart
+                onTaskClick={handleTaskClick}
+                selectedTaskId={selectedTaskId}
+              />
             )}
           </TabPanel>
 
@@ -466,7 +646,13 @@ function DemoGanttChart({
     criticalPathDuration: 257,
   }
 
-  return <GanttChart data={demoData} onTaskClick={onTaskClick} selectedTaskId={selectedTaskId} />
+  return (
+    <GanttChart
+      data={demoData}
+      onTaskClick={onTaskClick}
+      selectedTaskId={selectedTaskId}
+    />
+  )
 }
 
 function CriticalPathView({ data }: { data: CriticalPathResult }) {
@@ -480,15 +666,19 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
           Total Duration: <strong>{data.totalDuration} days</strong>
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          The critical path represents the longest sequence of dependent phases that determines the
-          minimum project duration. Any delay in critical phases will delay the entire project.
+          The critical path represents the longest sequence of dependent phases
+          that determines the minimum project duration. Any delay in critical
+          phases will delay the entire project.
         </Typography>
       </Paper>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'error.main' }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 600, mb: 2, color: 'error.main' }}
+            >
               Critical Phases ({data.criticalPhases.length})
             </Typography>
             <Stack spacing={1}>
@@ -514,7 +704,10 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
         </Grid>
         <Grid item xs={12} md={6}>
           <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'success.main' }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 600, mb: 2, color: 'success.main' }}
+            >
               Non-Critical Phases ({data.nonCriticalPhases.length})
             </Typography>
             <Stack spacing={1}>
@@ -549,10 +742,42 @@ function DemoCriticalPath() {
     criticalPath: ['1', '2', '4', '5'],
     totalDuration: 257,
     criticalPhases: [
-      { phaseId: 1, name: 'Site Preparation', earlyStart: 0, earlyFinish: 30, lateStart: 0, lateFinish: 30, float: 0 },
-      { phaseId: 2, name: 'Heritage Facade Restoration', earlyStart: 31, earlyFinish: 104, lateStart: 31, lateFinish: 104, float: 0 },
-      { phaseId: 4, name: 'Structure Reinforcement', earlyStart: 105, earlyFinish: 180, lateStart: 105, lateFinish: 180, float: 0 },
-      { phaseId: 5, name: 'MEP Installation', earlyStart: 181, earlyFinish: 257, lateStart: 181, lateFinish: 257, float: 0 },
+      {
+        phaseId: 1,
+        name: 'Site Preparation',
+        earlyStart: 0,
+        earlyFinish: 30,
+        lateStart: 0,
+        lateFinish: 30,
+        float: 0,
+      },
+      {
+        phaseId: 2,
+        name: 'Heritage Facade Restoration',
+        earlyStart: 31,
+        earlyFinish: 104,
+        lateStart: 31,
+        lateFinish: 104,
+        float: 0,
+      },
+      {
+        phaseId: 4,
+        name: 'Structure Reinforcement',
+        earlyStart: 105,
+        earlyFinish: 180,
+        lateStart: 105,
+        lateFinish: 180,
+        float: 0,
+      },
+      {
+        phaseId: 5,
+        name: 'MEP Installation',
+        earlyStart: 181,
+        earlyFinish: 257,
+        lateStart: 181,
+        lateFinish: 257,
+        float: 0,
+      },
     ],
     nonCriticalPhases: [
       { phaseId: 3, name: 'Tenant Relocation Phase 1', float: 30 },
@@ -566,7 +791,12 @@ function HeritageView({ data }: { data: HeritageTracker }) {
   return (
     <Stack spacing={3}>
       <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 2 }}
+        >
           <Typography variant="h6">Heritage Preservation Status</Typography>
           <Typography
             variant="body2"
@@ -586,7 +816,8 @@ function HeritageView({ data }: { data: HeritageTracker }) {
           </Typography>
         </Stack>
         <Typography variant="body2" color="text.secondary">
-          Classification: <strong>{data.heritageClassification.replace(/_/g, ' ')}</strong>
+          Classification:{' '}
+          <strong>{data.heritageClassification.replace(/_/g, ' ')}</strong>
         </Typography>
       </Paper>
 
@@ -607,7 +838,10 @@ function HeritageView({ data }: { data: HeritageTracker }) {
         </Grid>
         <Grid item xs={12} md={4}>
           <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: 'warning.main' }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, mb: 2, color: 'warning.main' }}
+            >
               Preservation Risks
             </Typography>
             <Stack spacing={1}>
@@ -621,7 +855,10 @@ function HeritageView({ data }: { data: HeritageTracker }) {
         </Grid>
         <Grid item xs={12} md={4}>
           <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: 'info.main' }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, mb: 2, color: 'info.main' }}
+            >
               Recommendations
             </Typography>
             <Stack spacing={1}>
@@ -669,7 +906,9 @@ function HeritageView({ data }: { data: HeritageTracker }) {
                     px: 1.5,
                     py: 0.5,
                     backgroundColor:
-                      phase.approvalStatus === 'approved' ? '#dcfce7' : '#fef3c7',
+                      phase.approvalStatus === 'approved'
+                        ? '#dcfce7'
+                        : '#fef3c7',
                     borderRadius: 1,
                   }}
                 >
@@ -696,7 +935,10 @@ function DemoHeritageView() {
         heritageClassification: 'conservation_building',
         approvalRequired: true,
         approvalStatus: 'approved',
-        specialConsiderations: ['Original materials must be preserved', 'Historical facade elements protected'],
+        specialConsiderations: [
+          'Original materials must be preserved',
+          'Historical facade elements protected',
+        ],
       },
       {
         phaseId: 4,
@@ -827,11 +1069,36 @@ function DemoTenantCoordination() {
     ],
     overdueNotifications: [],
     timeline: [
-      { date: '2025-02-19', event: 'Move completed', tenantName: 'XYZ Retail', status: 'relocated' },
-      { date: '2025-02-14', event: 'Move completed', tenantName: 'ABC Trading Co.', status: 'relocated' },
-      { date: '2025-02-01', event: 'Notification sent', tenantName: 'Design Studio', status: 'notified' },
-      { date: '2025-02-01', event: 'Notification sent', tenantName: 'Tech Startup Inc.', status: 'notified' },
-      { date: '2025-01-15', event: 'Notification sent', tenantName: 'Golden Restaurant', status: 'notified' },
+      {
+        date: '2025-02-19',
+        event: 'Move completed',
+        tenantName: 'XYZ Retail',
+        status: 'relocated',
+      },
+      {
+        date: '2025-02-14',
+        event: 'Move completed',
+        tenantName: 'ABC Trading Co.',
+        status: 'relocated',
+      },
+      {
+        date: '2025-02-01',
+        event: 'Notification sent',
+        tenantName: 'Design Studio',
+        status: 'notified',
+      },
+      {
+        date: '2025-02-01',
+        event: 'Notification sent',
+        tenantName: 'Tech Startup Inc.',
+        status: 'notified',
+      },
+      {
+        date: '2025-01-15',
+        event: 'Notification sent',
+        tenantName: 'Golden Restaurant',
+        status: 'notified',
+      },
     ],
     warnings: [],
   }

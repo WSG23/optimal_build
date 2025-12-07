@@ -10,7 +10,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "20251207_000027"
@@ -20,6 +19,48 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # Create Enums safely
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userrole') THEN
+                CREATE TYPE userrole AS ENUM ('admin', 'developer', 'investor', 'contractor', 'consultant', 'regulatory_officer', 'viewer');
+            END IF;
+        END$$;
+        """
+    )
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'invitationstatus') THEN
+                CREATE TYPE invitationstatus AS ENUM ('pending', 'accepted', 'expired', 'revoked');
+            END IF;
+        END$$;
+        """
+    )
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'workflowstatus') THEN
+                CREATE TYPE workflowstatus AS ENUM ('draft', 'in_progress', 'approved', 'rejected', 'cancelled');
+            END IF;
+        END$$;
+        """
+    )
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'stepstatus') THEN
+                CREATE TYPE stepstatus AS ENUM ('pending', 'in_review', 'approved', 'rejected', 'skipped');
+            END IF;
+        END$$;
+        """
+    )
+
     # team_members
     op.create_table(
         "team_members",
@@ -28,16 +69,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.CHAR(36), nullable=False),
         sa.Column(
             "role",
-            sa.Enum(
-                "admin",
-                "developer",
-                "investor",
-                "contractor",
-                "consultant",
-                "regulatory_officer",
-                "viewer",
-                name="userrole",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("is_active", sa.Boolean(), nullable=False),
@@ -62,24 +94,13 @@ def upgrade() -> None:
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column(
             "role",
-            sa.Enum(
-                "admin",
-                "developer",
-                "investor",
-                "contractor",
-                "consultant",
-                "regulatory_officer",
-                "viewer",
-                name="userrole",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("token", sa.String(length=100), nullable=False),
         sa.Column(
             "status",
-            sa.Enum(
-                "pending", "accepted", "expired", "revoked", name="invitationstatus"
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("invited_by_id", sa.CHAR(36), nullable=False),
@@ -113,14 +134,7 @@ def upgrade() -> None:
         sa.Column("workflow_type", sa.String(length=50), nullable=False),
         sa.Column(
             "status",
-            sa.Enum(
-                "draft",
-                "in_progress",
-                "approved",
-                "rejected",
-                "cancelled",
-                name="workflowstatus",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("created_by_id", sa.CHAR(36), nullable=False),
@@ -159,29 +173,13 @@ def upgrade() -> None:
         sa.Column("sequence_order", sa.Integer(), nullable=False),
         sa.Column(
             "required_role",
-            sa.Enum(
-                "admin",
-                "developer",
-                "investor",
-                "contractor",
-                "consultant",
-                "regulatory_officer",
-                "viewer",
-                name="userrole",
-            ),
+            sa.String(),
             nullable=True,
         ),
         sa.Column("required_user_id", sa.CHAR(36), nullable=True),
         sa.Column(
             "status",
-            sa.Enum(
-                "pending",
-                "in_review",
-                "approved",
-                "rejected",
-                "skipped",
-                name="stepstatus",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("approved_by_id", sa.CHAR(36), nullable=True),
@@ -201,26 +199,29 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_approval_steps_workflow_id"), table_name="approval_steps")
-    op.drop_table("approval_steps")
-    op.drop_index(
-        op.f("ix_approval_workflows_workflow_type"), table_name="approval_workflows"
-    )
-    op.drop_index(op.f("ix_approval_workflows_status"), table_name="approval_workflows")
-    op.drop_index(
-        op.f("ix_approval_workflows_project_id"), table_name="approval_workflows"
-    )
-    op.drop_table("approval_workflows")
-    op.drop_index(op.f("ix_team_invitations_token"), table_name="team_invitations")
-    op.drop_index(op.f("ix_team_invitations_project_id"), table_name="team_invitations")
-    op.drop_index(op.f("ix_team_invitations_email"), table_name="team_invitations")
-    op.drop_table("team_invitations")
-    op.drop_index(op.f("ix_team_members_user_id"), table_name="team_members")
-    op.drop_index(op.f("ix_team_members_project_id"), table_name="team_members")
-    op.drop_table("team_members")
+    # approval_steps
+    op.execute('DROP INDEX IF EXISTS "ix_approval_steps_workflow_id"')
+    op.execute("DROP TABLE IF EXISTS approval_steps")
+
+    # approval_workflows
+    op.execute('DROP INDEX IF EXISTS "ix_approval_workflows_workflow_type"')
+    op.execute('DROP INDEX IF EXISTS "ix_approval_workflows_status"')
+    op.execute('DROP INDEX IF EXISTS "ix_approval_workflows_project_id"')
+    op.execute("DROP TABLE IF EXISTS approval_workflows")
+
+    # team_invitations
+    op.execute('DROP INDEX IF EXISTS "ix_team_invitations_token"')
+    op.execute('DROP INDEX IF EXISTS "ix_team_invitations_project_id"')
+    op.execute('DROP INDEX IF EXISTS "ix_team_invitations_email"')
+    op.execute("DROP TABLE IF EXISTS team_invitations")
+
+    # team_members
+    op.execute('DROP INDEX IF EXISTS "ix_team_members_user_id"')
+    op.execute('DROP INDEX IF EXISTS "ix_team_members_project_id"')
+    op.execute("DROP TABLE IF EXISTS team_members")
 
     # Enums are usually not dropped automatically in Postgres, but if we created types we might need to drop them.
     # However, 'userrole' likely existed. 'invitationstatus', 'workflowstatus', 'stepstatus' are new.
-    # Since we use sa.Enum(.... name='xyz'), it creates the type in Postgres.
+    # Enums are usually not dropped automatically in Postgres.
     # To be safe in downgrade, we should try to drop them if we want a clean slate, but strict downgrade often leaves Enums.
     pass

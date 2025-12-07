@@ -1,173 +1,172 @@
 repos:
-- repo: local
-  hooks:
-    - id: audit-migrations
-      name: audit-migrations
-      entry: python3 scripts/audit_migrations.py
-      language: system
-      pass_filenames: false
+  - repo: local
+    hooks:
+      - id: audit-migrations
+        name: audit-migrations
+        entry: python3 scripts/audit_migrations.py
+        language: system
+        pass_filenames: false
 
-    - id: check-migration-enums
-      name: Check migration ENUM patterns
-      entry: python3 scripts/check_migration_enums.py
-      language: system
-      pass_filenames: false
-      files: ^(backend/)?migrations/versions/.*\.py$
+      - id: check-migration-enums
+        name: Check migration ENUM patterns
+        entry: python3 scripts/check_migration_enums.py
+        language: system
+        pass_filenames: false
+        files: ^(backend/)?migrations/versions/.*\.py$
 
-    - id: pdf-smoke-test
-      name: PDF generation smoke test
-      entry: python3 scripts/smoke_test_pdfs.py
-      language: system
-      pass_filenames: false
-      files: ^backend/app/(services/agents|api/v1/agents).*\.(py)$
+      - id: pdf-smoke-test
+        name: PDF generation smoke test
+        entry: python3 scripts/smoke_test_pdfs.py
+        language: system
+        pass_filenames: false
+        files: ^backend/app/(services/agents|api/v1/agents).*\.(py)$
 
-    - id: phase-gate
-      name: Phase 2D gate enforcement
-      entry: python3 scripts/check_phase_gate.py
-      language: system
-      pass_filenames: false
+      - id: phase-gate
+        name: Phase 2D gate enforcement
+        entry: python3 scripts/check_phase_gate.py
+        language: system
+        pass_filenames: false
 
-    - id: check-shadow-dirs
-      name: Check for shadow directories (Rule 14.1)
-      entry: python3 scripts/check_shadow_directories.py
-      language: system
-      pass_filenames: false
+      - id: check-shadow-dirs
+        name: Check for shadow directories (Rule 14.1)
+        entry: python3 scripts/check_shadow_directories.py
+        language: system
+        pass_filenames: false
 
-    - id: check-enum-patterns
-      name: Check SQLAlchemy enum patterns have values_callable
-      entry: python3 backend/scripts/check_enum_patterns.py
-      language: system
-      files: ^backend/app/models/.*\.py$
-      pass_filenames: true
+      - id: check-enum-patterns
+        name: Check SQLAlchemy enum patterns have values_callable
+        entry: python3 backend/scripts/check_enum_patterns.py
+        language: system
+        files: ^backend/app/models/.*\.py$
+        pass_filenames: true
 
-    - id: check-documentation-whitelist
-      name: Documentation whitelist enforcement (Rule 14.2)
-      entry: python3 scripts/check_documentation_whitelist.py
-      language: system
-      pass_filenames: false
-      files: ^docs/.*\.md$
+      - id: check-documentation-whitelist
+        name: Documentation whitelist enforcement (Rule 14.2)
+        entry: python3 scripts/check_documentation_whitelist.py
+        language: system
+        pass_filenames: false
+        files: ^docs/.*\.md$
 
-    - id: check-ui-canon
-      name: UI canon enforcement (inline styles, hardcoded colors)
-      entry: python3 scripts/check_ui_canon.py
-      language: system
-      pass_filenames: false
-      files: ^frontend/src/.*\.(tsx|css)$
+      - id: check-ui-canon
+        name: UI canon enforcement (inline styles, hardcoded colors)
+        entry: python3 scripts/check_ui_canon.py
+        language: system
+        pass_filenames: false
+        files: ^frontend/src/.*\.(tsx|css)$
 
-    - id: pip-audit
-      name: Dependency vulnerability scan (pip-audit)
-      # Ignored CVEs:
-      # - PYSEC-2022-43012: Old urllib3 issue, we require >=2.0.0
-      # - GHSA-4v9f-r55g-g6hc: Prefect 2.20.17 requires major upgrade (breaking changes)
-      # - GHSA-2c2j-9gv5-cj73: Starlette 0.47.2 incompatible with FastAPI 0.115.x
-      # - GHSA-7f5h-v6xp-fcq8: Starlette 0.49.1 incompatible with FastAPI 0.115.x
-      # - GHSA-wj6h-64fc-37mp: ecdsa issue in python-jose transitive deps (no fix available)
-      entry: bash -c 'cd backend && ../.venv/bin/pip-audit -r requirements.txt --ignore-vuln PYSEC-2022-43012 --ignore-vuln GHSA-4v9f-r55g-g6hc --ignore-vuln GHSA-2c2j-9gv5-cj73 --ignore-vuln GHSA-7f5h-v6xp-fcq8 --ignore-vuln GHSA-wj6h-64fc-37mp 2>/dev/null || echo "pip-audit check completed"'
-      language: system
-      pass_filenames: false
-      files: ^backend/requirements.*\.txt$
+      - id: pip-audit
+        name: Dependency vulnerability scan (pip-audit)
+        # Ignored CVEs:
+        # - PYSEC-2022-43012: Old urllib3 issue, we require >=2.0.0
+        # - GHSA-4v9f-r55g-g6hc: Prefect 2.20.17 requires major upgrade (breaking changes)
+        # - GHSA-2c2j-9gv5-cj73: Starlette 0.47.2 incompatible with FastAPI 0.115.x
+        # - GHSA-7f5h-v6xp-fcq8: Starlette 0.49.1 incompatible with FastAPI 0.115.x
+        # - GHSA-wj6h-64fc-37mp: ecdsa issue in python-jose transitive deps (no fix available)
+        entry: bash -c 'cd backend && ../.venv/bin/pip-audit -r requirements.txt --ignore-vuln PYSEC-2022-43012 --ignore-vuln GHSA-4v9f-r55g-g6hc --ignore-vuln GHSA-2c2j-9gv5-cj73 --ignore-vuln GHSA-7f5h-v6xp-fcq8 --ignore-vuln GHSA-wj6h-64fc-37mp 2>/dev/null || echo "pip-audit check completed"'
+        language: system
+        pass_filenames: false
+        files: ^backend/requirements.*\.txt$
 
-    - id: mypy-critical
-      name: mypy (critical paths - blocks on new errors)
-      entry: bash -c 'cd backend && ../.venv/bin/mypy app/api/ app/schemas/ --config-file=../mypy.ini --no-error-summary --exclude "(app/schemas/user\.py|app/api/v1/test_users\.py|app/schemas/buildable\.py|app/api/v1/users_secure\.py)"'
-      language: system
-      types: [python]
-      pass_filenames: false
-      files: ^backend/app/(api|schemas)/
-      exclude: ^backend/app/(schemas/user\.py|api/v1/test_users\.py|schemas/buildable\.py|api/v1/users_secure\.py)$
+      - id: mypy-critical
+        name: mypy (critical paths - blocks on new errors)
+        entry: bash -c 'cd backend && ../.venv/bin/mypy app/api/ app/schemas/ --config-file=../mypy.ini --no-error-summary --exclude "(app/schemas/user\.py|app/api/v1/test_users\.py|app/schemas/buildable\.py|app/api/v1/users_secure\.py)"'
+        language: system
+        types: [python]
+        pass_filenames: false
+        files: ^backend/app/(api|schemas)/
+        exclude: ^backend/app/(schemas/user\.py|api/v1/test_users\.py|schemas/buildable\.py|api/v1/users_secure\.py)$
 
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
-  hooks:
-    - id: end-of-file-fixer
-    - id: trailing-whitespace
-    - id: check-yaml
-    - id: check-merge-conflict
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-merge-conflict
 
-- repo: https://github.com/psf/black
-  rev: 24.8.0  # MUST match requirements.txt and requirements-dev.txt
-  hooks:
-    - id: black
-      args: ["--line-length=88"]
-      files: ^(backend|app|core|db|jurisdictions|scripts|tests|uvicorn_app|prefect|jobs|samples)/
+  - repo: https://github.com/psf/black
+    rev: 24.8.0 # MUST match requirements.txt and requirements-dev.txt
+    hooks:
+      - id: black
+        args: ['--line-length=88']
+        files: ^(backend|app|core|db|jurisdictions|scripts|tests|uvicorn_app|prefect|jobs|samples)/
 
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.6.9
-  hooks:
-    - id: ruff
-      args: ["--fix"]
-      files: ^(backend|app|core|db|jurisdictions|scripts|tests|uvicorn_app|prefect|jobs|samples)/
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: ['--fix']
+        files: ^(backend|app|core|db|jurisdictions|scripts|tests|uvicorn_app|prefect|jobs|samples)/
 
-- repo: https://github.com/PyCQA/flake8
-  rev: 7.1.1
-  hooks:
-    - id: flake8
-      additional_dependencies: [flake8-bugbear==24.8.19]
-      files: ^(backend/tests|tests)/
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear==24.8.19]
+        files: ^(backend/tests|tests)/
 
-- repo: https://github.com/PyCQA/bandit
-  rev: 1.7.10
-  hooks:
-    - id: bandit
-      args: ['-r', '-c', 'bandit.yaml']
-      files: ^backend/app/
-      exclude: ^backend/app/.*test.*\.py$
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        args: ['-r', '-c', 'bandit.yaml']
+        files: ^backend/app/
+        exclude: ^backend/app/.*test.*\.py$
 
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.7.1
-  hooks:
-    - id: mypy
-      name: mypy-backend
-      files: ^backend/
-      args: [--config-file=mypy.ini]
-      pass_filenames: false
-      additional_dependencies:
-        - fastapi==0.104.1
-        - uvicorn[standard]==0.24.0
-        - pydantic[email]==2.5.0
-        - pydantic==2.5.0
-        - sqlalchemy[asyncio]==2.0.23
-        - asyncpg==0.29.0
-        - alembic==1.13.0
-        - python-multipart==0.0.6
-        - python-jose[cryptography]==3.3.0
-        - passlib[bcrypt]==1.7.4
-        - httpx==0.25.2
-        - python-dateutil==2.8.2
-        - prefect==2.14.10
-        - structlog==23.2.0
-        - prometheus-client==0.19.0
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        name: mypy-backend
+        files: ^backend/
+        args: [--config-file=mypy.ini]
+        pass_filenames: false
+        additional_dependencies:
+          - fastapi==0.104.1
+          - uvicorn[standard]==0.24.0
+          - pydantic[email]==2.5.0
+          - pydantic==2.5.0
+          - sqlalchemy[asyncio]==2.0.23
+          - asyncpg==0.29.0
+          - alembic==1.13.0
+          - python-multipart==0.0.6
+          - python-jose[cryptography]==3.3.0
+          - passlib[bcrypt]==1.7.4
+          - httpx==0.25.2
+          - python-dateutil==2.8.2
+          - prefect==2.14.10
+          - structlog==23.2.0
+          - prometheus-client==0.19.0
 
-- repo: local
-  hooks:
-    - id: prettier
-      name: prettier
-      entry: bash -c 'cd frontend && npx prettier --check'
-      language: system
-      files: ^frontend/.*\.(js|jsx|ts|tsx|css|json|md)$
-      exclude: ^frontend/node_modules/
-    - id: prettier-admin
-      name: prettier-admin
-      entry: bash -c 'cd ui-admin && npx prettier --check'
-      language: system
-      files: ^ui-admin/.*\.(js|jsx|ts|tsx|css|json|md)$
-      exclude: ^ui-admin/node_modules/
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx --prefix frontend prettier --check
+        language: system
+        files: ^frontend/.*\.(js|jsx|ts|tsx|css|json|md)$
+        exclude: ^frontend/node_modules/
+      - id: prettier-admin
+        name: prettier-admin
+        entry: npx --prefix ui-admin prettier --check
+        language: system
+        files: ^ui-admin/.*\.(js|jsx|ts|tsx|css|json|md)$
+        exclude: ^ui-admin/node_modules/
 
-- repo: local
-  hooks:
-    - id: eslint
-      name: eslint
-      entry: bash -c 'cd frontend && npx eslint'
-      language: system
-      files: ^frontend/.*\.(js|jsx|ts|tsx)$
-      exclude: ^frontend/node_modules/
-    - id: eslint-admin
-      name: eslint-admin
-      entry: bash -c 'cd ui-admin && npx eslint'
-      language: system
-      files: ^ui-admin/.*\.(js|jsx|ts|tsx)$
-      exclude: ^ui-admin/node_modules/
-
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: npx --prefix frontend eslint
+        language: system
+        files: ^frontend/.*\.(js|jsx|ts|tsx)$
+        exclude: ^frontend/node_modules/
+      - id: eslint-admin
+        name: eslint-admin
+        entry: npx --prefix ui-admin eslint
+        language: system
+        files: ^ui-admin/.*\.(js|jsx|ts|tsx)$
+        exclude: ^ui-admin/node_modules/
 # Temporarily disabled due to SSL certificate issues
 # - repo: https://github.com/gitleaks/gitleaks
 #   rev: v8.18.4

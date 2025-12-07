@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { findResult, type FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
+import { CapitalStackMiniBar } from './CapitalStackMiniBar'
 
 interface FinanceScenarioTableProps {
   scenarios: FinanceScenarioSummary[]
-  onMarkPrimary?: (scenarioId: number) => void
-  updatingScenarioId?: number | null
+  onMarkPrimary?: (id: number) => void
   onDeleteScenario?: (scenario: FinanceScenarioSummary) => void
   deletingScenarioId?: number | null
+  updatingScenarioId?: number | null
 }
 
 function toNumber(value: string | null | undefined): number | null {
@@ -94,9 +95,9 @@ function formatDateTime(
 export function FinanceScenarioTable({
   scenarios,
   onMarkPrimary,
-  updatingScenarioId = null,
   onDeleteScenario,
   deletingScenarioId = null,
+  updatingScenarioId = null,
 }: FinanceScenarioTableProps) {
   const { t, i18n } = useTranslation()
   const fallback = t('common.fallback.dash')
@@ -133,95 +134,159 @@ export function FinanceScenarioTable({
 
   if (rows.length === 0) {
     return (
-        <div className="finance-empty-state">
-           <div className="finance-empty-state__visual">
-             <div className="finance-empty-state__card-ghost" />
-             <div className="finance-empty-state__card-ghost" />
-             <div className="finance-empty-state__card-ghost" />
-           </div>
-           <p className="finance-empty-state__text">{t('finance.table.empty')}</p>
+      <div className="finance-empty-state">
+        <div className="finance-empty-state__visual">
+          <div className="finance-empty-state__card-ghost" />
+          <div className="finance-empty-state__card-ghost" />
+          <div className="finance-empty-state__card-ghost" />
         </div>
+        <p className="finance-empty-state__text">{t('finance.table.empty')}</p>
+      </div>
     )
   }
 
   return (
-    <div className="finance-table__wrapper">
-      <table className="finance-table">
-        <caption className="finance-table__caption">
-          {t('finance.table.caption')}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">{t('finance.table.headers.scenario')}</th>
-            <th scope="col">{t('finance.table.headers.escalatedCost')}</th>
-            <th scope="col">{t('finance.table.headers.npv')}</th>
-            <th scope="col">{t('finance.table.headers.irr')}</th>
-            <th scope="col">{t('finance.table.headers.minDscr')}</th>
-            <th scope="col">{t('finance.table.headers.loanToCost')}</th>
-            <th scope="col">{t('finance.table.headers.lastRun')}</th>
-            <th scope="col">
-              <span className="sr-only">
-                {t('finance.table.headers.actions')}
+    <div className="finance-ticker-grid">
+      {rows.map((row) => (
+        <article
+          key={row.id}
+          className={`finance-ticker-card ${row.isPrimary ? 'finance-ticker-card--primary' : ''}`}
+        >
+          {/* Column 1: Header / Title */}
+          <div className="finance-ticker-card__header">
+            <h3 className="finance-ticker-card__title">{row.name}</h3>
+            <div className="finance-ticker-card__meta">
+              {row.isPrimary && (
+                <span className="finance-ticker-card__badge">
+                  {t('finance.table.badges.primary')}
+                </span>
+              )}
+              <span>{formatDateTime(row.updatedAt, locale, fallback)}</span>
+            </div>
+          </div>
+
+          {/* Column 2: Large Cost */}
+          <div className="finance-ticker-value">
+            <span className="finance-ticker-value__label">
+              {t('finance.table.headers.escalatedCost')}
+            </span>
+            <span className="finance-ticker-value__number finance-ticker-value__number--large">
+              {formatCurrency(
+                row.escalatedCost,
+                row.currency,
+                locale,
+                fallback,
+              )}
+            </span>
+          </div>
+
+          {/* Column 3: IRR (Conditional) */}
+          <div className="finance-ticker-value">
+            <span className="finance-ticker-value__label">
+              {t('finance.table.headers.irr')}
+            </span>
+            <span
+              className={`finance-ticker-value__number ${
+                (Number(row.irr) || 0) >= 0.15
+                  ? 'finance-ticker-value__number--positive'
+                  : (Number(row.irr) || 0) < 0.1
+                    ? 'finance-ticker-value__number--negative'
+                    : ''
+              }`}
+            >
+              {formatPercent(row.irr, locale, fallback)}
+            </span>
+          </div>
+
+          {/* Column 4: DSCR (Conditional) */}
+          <div className="finance-ticker-value">
+            <span className="finance-ticker-value__label">
+              {t('finance.table.headers.minDscr')}
+            </span>
+            <span
+              className={`finance-ticker-value__number ${
+                (Number(row.minDscr) || 0) >= 1.2
+                  ? 'finance-ticker-value__number--positive'
+                  : (Number(row.minDscr) || 0) < 1.0
+                    ? 'finance-ticker-value__number--negative'
+                    : ''
+              }`}
+            >
+              {formatDscr(row.minDscr, locale, fallback)}
+            </span>
+          </div>
+
+          {/* Column 5: NPV */}
+          <div className="finance-ticker-value">
+            <span className="finance-ticker-value__label">
+              {t('finance.table.headers.npv')}
+            </span>
+            <span className="finance-ticker-value__number">
+              {formatCurrency(row.npv, row.currency, locale, fallback)}
+            </span>
+          </div>
+
+          {/* Column 6: Capital Stack Visualization */}
+          <div className="finance-ticker-card__stack">
+            <span className="finance-ticker-value__label">Capital Stack</span>
+            {row.scenario.capitalStack ? (
+              <CapitalStackMiniBar stack={row.scenario.capitalStack} />
+            ) : (
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
+                No data
               </span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <th scope="row">
-                <div className="finance-table__scenario-cell">
-                  <span>{row.name}</span>
-                  {row.isPrimary ? (
-                    <span className="finance-table__badge">
-                      {t('finance.table.badges.primary')}
-                    </span>
-                  ) : null}
-                  {!row.isPrimary && onMarkPrimary ? (
-                    <button
-                      type="button"
-                      className="finance-table__primary-button"
-                      onClick={() => onMarkPrimary(row.id)}
-                      disabled={updatingScenarioId === row.id}
-                    >
-                      {updatingScenarioId === row.id
-                        ? t('finance.table.actions.makingPrimary')
-                        : t('finance.table.actions.makePrimary')}
-                    </button>
-                  ) : null}
-                </div>
-              </th>
-              <td>
-                {formatCurrency(
-                  row.escalatedCost,
-                  row.currency,
-                  locale,
-                  fallback,
-                )}
-              </td>
-              <td>{formatCurrency(row.npv, row.currency, locale, fallback)}</td>
-              <td>{formatPercent(row.irr, locale, fallback)}</td>
-              <td>{formatDscr(row.minDscr, locale, fallback)}</td>
-              <td>{formatPercent(row.loanToCost, locale, fallback)}</td>
-              <td>{formatDateTime(row.updatedAt, locale, fallback)}</td>
-              <td className="finance-table__actions-cell">
-                {onDeleteScenario ? (
-                  <FinanceScenarioActions
-                    disabled={deletingScenarioId === row.id}
-                    onDelete={() => onDeleteScenario(row.scenario)}
-                    menuLabel={t('finance.table.actions.openMenu')}
-                    deleteLabel={
-                      deletingScenarioId === row.id
-                        ? t('finance.table.actions.deleting')
-                        : t('finance.table.actions.delete')
-                    }
-                  />
-                ) : null}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            )}
+          </div>
+
+          {/* Column 7: Actions */}
+          <div className="finance-ticker-card__actions">
+            {/* Only show make primary if not already primary */}
+            {!row.isPrimary && onMarkPrimary && (
+              <button
+                type="button"
+                onClick={() => onMarkPrimary(row.id)}
+                disabled={updatingScenarioId === row.id}
+                className="finance-table__primary-button" // Reusing this class for now or make a simpler icon
+                style={{
+                  padding: '4px',
+                  minWidth: 'auto',
+                  border: 'none',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+                title={
+                  updatingScenarioId === row.id
+                    ? t('finance.table.actions.updating')
+                    : t('finance.table.actions.makePrimary')
+                }
+                aria-label={
+                  updatingScenarioId === row.id
+                    ? t('finance.table.actions.updating')
+                    : t('finance.table.actions.makePrimary')
+                }
+              >
+                {updatingScenarioId === row.id ? '⏳' : '⭐'}
+              </button>
+            )}
+            {onDeleteScenario && (
+              <FinanceScenarioActions
+                disabled={deletingScenarioId === row.id}
+                onDelete={() => onDeleteScenario(row.scenario)}
+                menuLabel={t('finance.table.actions.openMenu')}
+                deleteLabel={
+                  deletingScenarioId === row.id
+                    ? t('finance.table.actions.deleting')
+                    : t('finance.table.actions.delete')
+                }
+              />
+            )}
+          </div>
+        </article>
+      ))}
     </div>
   )
 }

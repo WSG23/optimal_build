@@ -36,10 +36,13 @@ export function usePackGeneration({
 }: UsePackGenerationOptions): UsePackGenerationResult {
   const [packPropertyId, setPackPropertyId] = useState<string>('')
   const [packType, setPackType] = useState<ProfessionalPackType>('universal')
-  const [packSummary, setPackSummary] = useState<ProfessionalPackSummary | null>(null)
+  const [packSummary, setPackSummary] =
+    useState<ProfessionalPackSummary | null>(null)
   const [packLoading, setPackLoading] = useState(false)
   const [packError, setPackError] = useState<string | null>(null)
-  const [capturedAssetMix, setCapturedAssetMix] = useState<StoredAssetOptimization[]>([])
+  const [capturedAssetMix, setCapturedAssetMix] = useState<
+    StoredAssetOptimization[]
+  >([])
   const [capturedFinancialSummary, setCapturedFinancialSummary] =
     useState<FinancialSummary | null>(null)
 
@@ -100,7 +103,10 @@ export function usePackGeneration({
   }, [propertyIdFromQuery])
 
   const selectedPackOption = useMemo(() => {
-    return PACK_OPTIONS.find((option) => option.value === packType) ?? PACK_OPTIONS[0]
+    return (
+      PACK_OPTIONS.find((option) => option.value === packType) ??
+      PACK_OPTIONS[0]
+    )
   }, [packType])
 
   const handlePackSubmit = useCallback(

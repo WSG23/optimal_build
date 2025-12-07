@@ -96,8 +96,10 @@ const HERITAGE_COLORS: Record<string, string> = {
 
 // Grayscale tile providers (free, no token required)
 // CartoDB Positron - clean grayscale style, great for UI
-const CARTO_POSITRON_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-const CARTO_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+const CARTO_POSITRON_URL =
+  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+const CARTO_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 // ============================================================================
 // Component
@@ -211,7 +213,10 @@ export function PropertyLocationMap({
   useEffect(() => {
     if (mainMarkerRef.current && mapInstanceRef.current) {
       const currentPos = mainMarkerRef.current.getLatLng()
-      if (Math.abs(currentPos.lat - lat) > 0.00001 || Math.abs(currentPos.lng - lon) > 0.00001) {
+      if (
+        Math.abs(currentPos.lat - lat) > 0.00001 ||
+        Math.abs(currentPos.lng - lon) > 0.00001
+      ) {
         mainMarkerRef.current.setLatLng([lat, lon])
         mapInstanceRef.current.flyTo([lat, lon], 15, { duration: 0.5 })
       }
@@ -222,7 +227,9 @@ export function PropertyLocationMap({
   useEffect(() => {
     if (mainMarkerRef.current && (address || district || zoningCode)) {
       mainMarkerRef.current.unbindPopup()
-      mainMarkerRef.current.bindPopup(buildPopupContent(address, district, zoningCode))
+      mainMarkerRef.current.bindPopup(
+        buildPopupContent(address, district, zoningCode),
+      )
     }
   }, [address, district, zoningCode])
 
@@ -250,8 +257,9 @@ export function PropertyLocationMap({
 
     allAmenities.forEach((amenity) => {
       const icon = createAmenityIcon(amenity.type)
-      const marker = L.marker([amenity.latitude, amenity.longitude], { icon })
-        .addTo(mapInstanceRef.current!)
+      const marker = L.marker([amenity.latitude, amenity.longitude], {
+        icon,
+      }).addTo(mapInstanceRef.current!)
 
       const distanceText = amenity.distance_m
         ? `${Math.round(amenity.distance_m)}m away`
@@ -283,17 +291,22 @@ export function PropertyLocationMap({
 
     heritageFeatures.forEach((feature) => {
       const icon = createHeritageIcon(feature.risk_level || 'medium')
-      const marker = L.marker([feature.latitude, feature.longitude], { icon })
-        .addTo(mapInstanceRef.current!)
+      const marker = L.marker([feature.latitude, feature.longitude], {
+        icon,
+      }).addTo(mapInstanceRef.current!)
 
       marker.bindPopup(`
         <div style="font-family: system-ui, sans-serif; padding: 4px;">
           <div style="font-weight: 600; font-size: 13px;">🏛️ ${feature.name}</div>
           ${feature.status ? `<div style="font-size: 11px; color: #666; margin-top: 2px;">Status: ${feature.status}</div>` : ''}
-          ${feature.risk_level ? `<div style="font-size: 11px; margin-top: 2px;">
+          ${
+            feature.risk_level
+              ? `<div style="font-size: 11px; margin-top: 2px;">
             <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${HERITAGE_COLORS[feature.risk_level]}; margin-right: 4px;"></span>
             ${feature.risk_level.charAt(0).toUpperCase() + feature.risk_level.slice(1)} risk
-          </div>` : ''}
+          </div>`
+              : ''
+          }
         </div>
       `)
 
@@ -371,13 +384,19 @@ export function PropertyLocationMap({
           <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Legend</div>
           {showAmenities && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
                 <span>🚇</span> MRT
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
                 <span>🚌</span> Bus
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
                 <span>🏫</span> School
               </div>
             </>
@@ -472,12 +491,14 @@ function createHeritageIcon(riskLevel: string): L.DivIcon {
 function buildPopupContent(
   address?: string,
   district?: string,
-  zoningCode?: string
+  zoningCode?: string,
 ): string {
   const parts: string[] = []
 
   if (address) {
-    parts.push(`<div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">${address}</div>`)
+    parts.push(
+      `<div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">${address}</div>`,
+    )
   }
 
   const details: string[] = []
@@ -485,7 +506,9 @@ function buildPopupContent(
   if (zoningCode) details.push(`Zoning: ${zoningCode}`)
 
   if (details.length > 0) {
-    parts.push(`<div style="font-size: 11px; color: #666;">${details.join(' • ')}</div>`)
+    parts.push(
+      `<div style="font-size: 11px; color: #666;">${details.join(' • ')}</div>`,
+    )
   }
 
   return `<div style="font-family: system-ui, sans-serif; padding: 4px;">${parts.join('')}</div>`

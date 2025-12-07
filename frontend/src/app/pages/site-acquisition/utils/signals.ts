@@ -56,8 +56,11 @@ function buildRawLandSignals(
   }
 
   if (capturedProperty?.buildEnvelope) {
-    const { maxBuildableGfaSqm, additionalPotentialGfaSqm, allowablePlotRatio } =
-      capturedProperty.buildEnvelope
+    const {
+      maxBuildableGfaSqm,
+      additionalPotentialGfaSqm,
+      allowablePlotRatio,
+    } = capturedProperty.buildEnvelope
     if (maxBuildableGfaSqm) {
       opportunities.push(
         `Zoning envelope supports ≈ ${formatNumber(maxBuildableGfaSqm, {
@@ -71,8 +74,13 @@ function buildRawLandSignals(
           maximumFractionDigits: 0,
         })} sqm available under current controls.`,
       )
-    } else if (additionalPotentialGfaSqm !== null && additionalPotentialGfaSqm !== undefined) {
-      risks.push('No additional GFA headroom — optimisation required before submission.')
+    } else if (
+      additionalPotentialGfaSqm !== null &&
+      additionalPotentialGfaSqm !== undefined
+    ) {
+      risks.push(
+        'No additional GFA headroom — optimisation required before submission.',
+      )
     }
     if (!plotRatio && allowablePlotRatio) {
       opportunities.push(
@@ -113,7 +121,9 @@ function buildExistingBuildingSignals(
   return { opportunities, risks }
 }
 
-function buildHeritagePropertySignals(entry: QuickAnalysisEntry): FeasibilitySignals {
+function buildHeritagePropertySignals(
+  entry: QuickAnalysisEntry,
+): FeasibilitySignals {
   const opportunities: string[] = []
   const risks: string[] = []
   const metrics = entry.metrics ?? {}
@@ -124,7 +134,9 @@ function buildHeritagePropertySignals(entry: QuickAnalysisEntry): FeasibilitySig
   } else if (heritageRisk === 'medium') {
     risks.push('Moderate heritage constraints — document mitigation plan.')
   } else {
-    opportunities.push('Heritage considerations manageable based on current data.')
+    opportunities.push(
+      'Heritage considerations manageable based on current data.',
+    )
   }
 
   return { opportunities, risks }
@@ -174,7 +186,9 @@ function buildMixedUseSignals(
     : []
 
   if (plotRatio && plotRatio > 0) {
-    opportunities.push(`Zoning plot ratio ${plotRatio} supports higher density.`)
+    opportunities.push(
+      `Zoning plot ratio ${plotRatio} supports higher density.`,
+    )
   }
   if (useGroups.length) {
     opportunities.push(`Permitted uses include: ${useGroups.join(', ')}.`)
@@ -213,7 +227,9 @@ function buildDefaultSignals(entry: QuickAnalysisEntry): FeasibilitySignals {
  * @param context - The analysis entry, optional captured property, and formatter
  * @returns Object containing opportunities and risks arrays
  */
-export function buildFeasibilitySignals(context: FeasibilitySignalsContext): FeasibilitySignals {
+export function buildFeasibilitySignals(
+  context: FeasibilitySignalsContext,
+): FeasibilitySignals {
   const { entry, capturedProperty, formatNumber } = context
 
   let signals: FeasibilitySignals
@@ -243,9 +259,12 @@ export function buildFeasibilitySignals(context: FeasibilitySignalsContext): Fea
     const lead = capturedProperty.optimizations[0]
     const mixLabel = lead.assetType.replace(/_/g, ' ')
     signals.opportunities.push(
-      `${mixLabel.charAt(0).toUpperCase()}${mixLabel.slice(1)} holds ${formatNumber(lead.allocationPct, {
-        maximumFractionDigits: 0,
-      })}% of the suggested programme, aligning with the current envelope.`,
+      `${mixLabel.charAt(0).toUpperCase()}${mixLabel.slice(1)} holds ${formatNumber(
+        lead.allocationPct,
+        {
+          maximumFractionDigits: 0,
+        },
+      )}% of the suggested programme, aligning with the current envelope.`,
     )
   }
 

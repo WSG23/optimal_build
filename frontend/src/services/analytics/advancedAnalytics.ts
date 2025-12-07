@@ -178,12 +178,18 @@ const correlationResponseSchema = z.discriminatedUnion('status', [
 ])
 
 export type GraphIntelligenceResponse = z.infer<typeof graphResponseSchema>
-export type PredictiveIntelligenceResponse = z.infer<typeof predictiveResponseSchema>
+export type PredictiveIntelligenceResponse = z.infer<
+  typeof predictiveResponseSchema
+>
 export type CrossCorrelationIntelligenceResponse = z.infer<
   typeof correlationResponseSchema
 >
 
-function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown, message: string): T {
+function parseOrThrow<T>(
+  schema: z.ZodType<T>,
+  data: unknown,
+  message: string,
+): T {
   const result = schema.safeParse(data)
   if (!result.success) {
     throw new IntelligenceValidationError(message, result.error.issues)
@@ -213,7 +219,11 @@ function ensureGraphEdgesWeighted(
 function normaliseGraphResponse(
   payload: GraphIntelligenceResponse,
 ): GraphIntelligenceResponse {
-  if (payload.status === 'ok' && payload.graph.nodes.length === 0 && payload.graph.edges.length === 0) {
+  if (
+    payload.status === 'ok' &&
+    payload.graph.nodes.length === 0 &&
+    payload.graph.edges.length === 0
+  ) {
     return {
       kind: 'graph',
       status: 'empty',
@@ -252,7 +262,10 @@ function normaliseCorrelationResponse(
 export async function fetchGraphIntelligence(
   workspaceId: string,
 ): Promise<GraphIntelligenceResponse> {
-  debugLog('[fetchGraphIntelligence] Calling API with workspaceId:', workspaceId)
+  debugLog(
+    '[fetchGraphIntelligence] Calling API with workspaceId:',
+    workspaceId,
+  )
   try {
     const response = await requestWithTimeout(
       (signal) =>
@@ -286,7 +299,10 @@ export async function fetchGraphIntelligence(
 export async function fetchPredictiveIntelligence(
   workspaceId: string,
 ): Promise<PredictiveIntelligenceResponse> {
-  debugLog('[fetchPredictiveIntelligence] Calling API for workspace:', workspaceId)
+  debugLog(
+    '[fetchPredictiveIntelligence] Calling API for workspace:',
+    workspaceId,
+  )
   try {
     const response = await requestWithTimeout(
       (signal) =>
@@ -319,14 +335,20 @@ export async function fetchPredictiveIntelligence(
 export async function fetchCrossCorrelationIntelligence(
   workspaceId: string,
 ): Promise<CrossCorrelationIntelligenceResponse> {
-  debugLog('[fetchCrossCorrelationIntelligence] Calling API for workspace:', workspaceId)
+  debugLog(
+    '[fetchCrossCorrelationIntelligence] Calling API for workspace:',
+    workspaceId,
+  )
   try {
     const response = await requestWithTimeout(
       (signal) =>
-        apiClient.get<unknown>('/api/v1/analytics/intelligence/cross-correlation', {
-          params: { workspaceId },
-          signal,
-        }),
+        apiClient.get<unknown>(
+          '/api/v1/analytics/intelligence/cross-correlation',
+          {
+            params: { workspaceId },
+            signal,
+          },
+        ),
       'Cross-correlation intelligence request timed out',
     )
     debugLog('[fetchCrossCorrelationIntelligence] Response:', response.data)

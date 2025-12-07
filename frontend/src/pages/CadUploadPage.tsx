@@ -75,11 +75,12 @@ export function CadUploadPage() {
         })
       } catch (err) {
         console.error('CAD Upload Failed:', err)
-        const msg = err instanceof Error ? err.message : t('common.errors.uploadFailed')
+        const msg =
+          err instanceof Error ? err.message : t('common.errors.uploadFailed')
         setError(msg)
         // Ensure error is visible even if just a console error initially
         if (typeof window !== 'undefined') {
-            // alert(msg) // Optional: for immediate feedback if UI is unresponsive
+          // alert(msg) // Optional: for immediate feedback if UI is unresponsive
         }
       } finally {
         setIsUploading(false)

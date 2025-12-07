@@ -40,9 +40,13 @@ export interface UsePreviewJobOptions {
 export interface UsePreviewJobResult {
   // Preview job state
   previewJob: DeveloperPreviewJob | null
-  setPreviewJob: React.Dispatch<React.SetStateAction<DeveloperPreviewJob | null>>
+  setPreviewJob: React.Dispatch<
+    React.SetStateAction<DeveloperPreviewJob | null>
+  >
   previewDetailLevel: GeometryDetailLevel
-  setPreviewDetailLevel: React.Dispatch<React.SetStateAction<GeometryDetailLevel>>
+  setPreviewDetailLevel: React.Dispatch<
+    React.SetStateAction<GeometryDetailLevel>
+  >
   isRefreshingPreview: boolean
 
   // Layer metadata
@@ -103,10 +107,11 @@ export function usePreviewJob({
   const [previewFocusLayerId, setPreviewFocusLayerId] = useState<string | null>(
     null,
   )
-  const [isPreviewMetadataLoading, setIsPreviewMetadataLoading] = useState(false)
-  const [previewMetadataError, setPreviewMetadataError] = useState<string | null>(
-    null,
-  )
+  const [isPreviewMetadataLoading, setIsPreviewMetadataLoading] =
+    useState(false)
+  const [previewMetadataError, setPreviewMetadataError] = useState<
+    string | null
+  >(null)
 
   // Legend state
   const [legendEntries, setLegendEntries] = useState<PreviewLegendEntry[]>([])
@@ -114,7 +119,9 @@ export function usePreviewJob({
 
   // Derived values
   const previewViewerMetadataUrl =
-    previewJob?.metadataUrl ?? capturedProperty?.visualization?.previewMetadataUrl ?? null
+    previewJob?.metadataUrl ??
+    capturedProperty?.visualization?.previewMetadataUrl ??
+    null
 
   const colorLegendEntries = useMemo(() => {
     if (legendEntries.length > 0) {
@@ -302,7 +309,10 @@ export function usePreviewJob({
       (entry) => ({ ...entry }),
     )
     setLegendEntries(savedLegend)
-  }, [capturedProperty?.propertyId, capturedProperty?.visualization?.colorLegend])
+  }, [
+    capturedProperty?.propertyId,
+    capturedProperty?.visualization?.colorLegend,
+  ])
 
   // Load preview metadata
   useEffect(() => {

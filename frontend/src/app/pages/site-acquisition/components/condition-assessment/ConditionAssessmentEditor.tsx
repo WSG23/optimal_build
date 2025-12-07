@@ -7,9 +7,16 @@
 
 import { createPortal } from 'react-dom'
 import type { DevelopmentScenario } from '../../../../../api/siteAcquisition'
-import type { AssessmentDraftSystem, ConditionAssessmentDraft } from '../../types'
+import type {
+  AssessmentDraftSystem,
+  ConditionAssessmentDraft,
+} from '../../types'
 import type { ScenarioOption } from '../../constants'
-import { SCENARIO_OPTIONS, CONDITION_RATINGS, CONDITION_RISK_LEVELS } from '../../constants'
+import {
+  SCENARIO_OPTIONS,
+  CONDITION_RATINGS,
+  CONDITION_RISK_LEVELS,
+} from '../../constants'
 
 // ============================================================================
 // Types
@@ -26,14 +33,20 @@ export interface ConditionAssessmentEditorProps {
   activeScenario: 'all' | DevelopmentScenario
   scenarioFocusOptions: Array<'all' | DevelopmentScenario>
   scenarioLookup: Map<DevelopmentScenario, ScenarioOption>
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
 
   // Handlers (stable callbacks from parent)
   onClose: () => void
   onReset: () => void
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>
   onFieldChange: (field: keyof ConditionAssessmentDraft, value: string) => void
-  onSystemChange: (index: number, field: keyof AssessmentDraftSystem, value: string) => void
+  onSystemChange: (
+    index: number,
+    field: keyof AssessmentDraftSystem,
+    value: string,
+  ) => void
   setActiveScenario: (scenario: 'all' | DevelopmentScenario) => void
 }
 
@@ -125,7 +138,14 @@ export function ConditionAssessmentEditor({
             marginBottom: '1.5rem',
           }}
         >
-          <div style={{ maxWidth: '540px', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          <div
+            style={{
+              maxWidth: '540px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.35rem',
+            }}
+          >
             <h2
               style={{
                 margin: 0,
@@ -134,9 +154,18 @@ export function ConditionAssessmentEditor({
                 letterSpacing: '-0.01em',
               }}
             >
-              {mode === 'new' ? 'Log manual inspection' : 'Edit latest inspection'}
+              {mode === 'new'
+                ? 'Log manual inspection'
+                : 'Edit latest inspection'}
             </h2>
-            <p style={{ margin: 0, fontSize: '0.95rem', color: '#4b5563', lineHeight: 1.6 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.95rem',
+                color: '#4b5563',
+                lineHeight: 1.6,
+              }}
+            >
               {mode === 'new'
                 ? 'Capture a manual inspection entry for the active scenario. All fields are required unless noted.'
                 : 'Update the most recent inspection. Saving will append a new entry to the inspection history.'}
@@ -154,7 +183,8 @@ export function ConditionAssessmentEditor({
                   const label =
                     option === 'all'
                       ? 'All scenarios'
-                      : scenarioLookup.get(option)?.label ?? formatScenarioLabel(option)
+                      : (scenarioLookup.get(option)?.label ??
+                        formatScenarioLabel(option))
                   return (
                     <button
                       key={`editor-filter-${option}`}
@@ -205,12 +235,23 @@ export function ConditionAssessmentEditor({
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             }}
           >
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario</span>
+            <label
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                Scenario
+              </span>
               <select
                 value={draft.scenario}
                 onChange={(e) =>
-                  onFieldChange('scenario', e.target.value as DevelopmentScenario | 'all')
+                  onFieldChange(
+                    'scenario',
+                    e.target.value as DevelopmentScenario | 'all',
+                  )
                 }
                 style={{
                   borderRadius: '8px',
@@ -227,8 +268,16 @@ export function ConditionAssessmentEditor({
                 ))}
               </select>
             </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall rating</span>
+            <label
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                Overall rating
+              </span>
               <select
                 value={draft.overallRating}
                 onChange={(e) => onFieldChange('overallRating', e.target.value)}
@@ -246,8 +295,16 @@ export function ConditionAssessmentEditor({
                 ))}
               </select>
             </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Overall score</span>
+            <label
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                Overall score
+              </span>
               <input
                 type="number"
                 min={0}
@@ -262,8 +319,16 @@ export function ConditionAssessmentEditor({
                 }}
               />
             </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Risk level</span>
+            <label
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                Risk level
+              </span>
               <select
                 value={draft.riskLevel}
                 onChange={(e) => onFieldChange('riskLevel', e.target.value)}
@@ -281,8 +346,16 @@ export function ConditionAssessmentEditor({
                 ))}
               </select>
             </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Inspector name</span>
+            <label
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                Inspector name
+              </span>
               <input
                 type="text"
                 value={draft.inspectorName}
@@ -296,14 +369,22 @@ export function ConditionAssessmentEditor({
                 }}
               />
             </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
               <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
                 Inspection date &amp; time
               </span>
               <input
                 type="datetime-local"
                 value={draft.recordedAtLocal}
-                onChange={(e) => onFieldChange('recordedAtLocal', e.target.value)}
+                onChange={(e) =>
+                  onFieldChange('recordedAtLocal', e.target.value)
+                }
                 style={{
                   borderRadius: '8px',
                   border: '1px solid #d2d2d7',
@@ -314,8 +395,12 @@ export function ConditionAssessmentEditor({
             </label>
           </div>
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Summary</span>
+          <label
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+          >
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              Summary
+            </span>
             <textarea
               value={draft.summary}
               onChange={(e) => onFieldChange('summary', e.target.value)}
@@ -329,8 +414,12 @@ export function ConditionAssessmentEditor({
             />
           </label>
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Scenario context</span>
+          <label
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+          >
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              Scenario context
+            </span>
             <textarea
               value={draft.scenarioContext}
               onChange={(e) => onFieldChange('scenarioContext', e.target.value)}
@@ -344,7 +433,9 @@ export function ConditionAssessmentEditor({
             />
           </label>
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <label
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+          >
             <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
               Attachments (one per line as &quot;Label | URL&quot;)
             </span>
@@ -383,12 +474,22 @@ export function ConditionAssessmentEditor({
                     gap: '0.5rem',
                   }}
                 >
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>System</span>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                      System
+                    </span>
                     <input
                       type="text"
                       value={system.name}
-                      onChange={(e) => onSystemChange(index, 'name', e.target.value)}
+                      onChange={(e) =>
+                        onSystemChange(index, 'name', e.target.value)
+                      }
                       style={{
                         borderRadius: '8px',
                         border: '1px solid #d2d2d7',
@@ -398,13 +499,25 @@ export function ConditionAssessmentEditor({
                       }}
                     />
                   </label>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Rating</span>
+                  <div
+                    style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
+                  >
+                    <label
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                        Rating
+                      </span>
                       <input
                         type="text"
                         value={system.rating}
-                        onChange={(e) => onSystemChange(index, 'rating', e.target.value)}
+                        onChange={(e) =>
+                          onSystemChange(index, 'rating', e.target.value)
+                        }
                         style={{
                           borderRadius: '8px',
                           border: '1px solid #d2d2d7',
@@ -414,14 +527,24 @@ export function ConditionAssessmentEditor({
                         }}
                       />
                     </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Score</span>
+                    <label
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                        Score
+                      </span>
                       <input
                         type="number"
                         min={0}
                         max={100}
                         value={system.score}
-                        onChange={(e) => onSystemChange(index, 'score', e.target.value)}
+                        onChange={(e) =>
+                          onSystemChange(index, 'score', e.target.value)
+                        }
                         style={{
                           borderRadius: '8px',
                           border: '1px solid #d2d2d7',
@@ -434,11 +557,21 @@ export function ConditionAssessmentEditor({
                   </div>
                 </div>
 
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Notes</span>
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                    Notes
+                  </span>
                   <textarea
                     value={system.notes}
-                    onChange={(e) => onSystemChange(index, 'notes', e.target.value)}
+                    onChange={(e) =>
+                      onSystemChange(index, 'notes', e.target.value)
+                    }
                     rows={2}
                     style={{
                       borderRadius: '8px',
@@ -449,13 +582,25 @@ export function ConditionAssessmentEditor({
                   />
                 </label>
 
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                  }}
+                >
                   <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
                     Recommended actions (one per line)
                   </span>
                   <textarea
                     value={system.recommendedActions}
-                    onChange={(e) => onSystemChange(index, 'recommendedActions', e.target.value)}
+                    onChange={(e) =>
+                      onSystemChange(
+                        index,
+                        'recommendedActions',
+                        e.target.value,
+                      )
+                    }
                     rows={2}
                     style={{
                       borderRadius: '8px',
@@ -469,13 +614,17 @@ export function ConditionAssessmentEditor({
             ))}
           </div>
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <label
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+          >
             <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
               Additional recommended actions
             </span>
             <textarea
               value={draft.recommendedActionsText}
-              onChange={(e) => onFieldChange('recommendedActionsText', e.target.value)}
+              onChange={(e) =>
+                onFieldChange('recommendedActionsText', e.target.value)
+              }
               rows={3}
               style={{
                 borderRadius: '8px',

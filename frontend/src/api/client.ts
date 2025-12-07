@@ -286,7 +286,6 @@ export class ApiClient {
         const trimmed = value.trim()
         return trimmed.length > 0 && trimmed !== '/'
       }) ?? 'http://localhost:9400'
-
   }
 
   private buildUrl(path: string) {
@@ -331,6 +330,65 @@ export class ApiClient {
     return (await response.json()) as T
   }
 
+  public async get<T>(
+    path: string,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    const url = new URL(this.buildUrl(path))
+    if (config?.params) {
+      Object.entries(config.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null)
+          url.searchParams.append(key, String(value))
+      })
+    }
+    const data = await this.request<T>(url.toString(), {
+      method: 'GET',
+      headers: config?.headers,
+    })
+    return { data }
+  }
+
+  public async post<T>(
+    path: string,
+    body?: unknown,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    const url = new URL(this.buildUrl(path))
+    if (config?.params) {
+      Object.entries(config.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null)
+          url.searchParams.append(key, String(value))
+      })
+    }
+    const data = await this.request<T>(url.toString(), {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        ...config?.headers,
+      },
+    })
+    return { data }
+  }
+
+  public async delete<T>(
+    path: string,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    const url = new URL(this.buildUrl(path))
+    if (config?.params) {
+      Object.entries(config.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null)
+          url.searchParams.append(key, String(value))
+      })
+    }
+    const data = await this.request<T>(url.toString(), {
+      method: 'DELETE',
+      headers: config?.headers,
+    })
+    return { data }
+  }
+
   private mapImportResult(payload: ImportResultResponse): CadImportSummary {
     const detectedFloorsSource = Array.isArray(payload.detected_floors)
       ? payload.detected_floors
@@ -356,8 +414,9 @@ export class ApiClient {
       overrides:
         payload.metric_overrides && typeof payload.metric_overrides === 'object'
           ? Object.fromEntries(
-              Object.entries(payload.metric_overrides).flatMap(([key, value]) =>
-                typeof value === 'number' ? [[key, value]] : [],
+              Object.entries(payload.metric_overrides).flatMap(
+                ([key, value]) =>
+                  typeof value === 'number' ? [[key, value]] : [],
               ),
             )
           : null,
@@ -428,7 +487,11 @@ export class ApiClient {
 
   async uploadCadDrawing(
     file: File | Blob,
-    options: { inferWalls?: boolean; projectId?: number; zoneCode?: string } = {},
+    options: {
+      inferWalls?: boolean
+      projectId?: number
+      zoneCode?: string
+    } = {},
   ): Promise<CadImportSummary> {
     const formData = new FormData()
     const derivedName =
@@ -441,7 +504,10 @@ export class ApiClient {
     if (options.inferWalls) {
       formData.append('infer_walls', 'true')
     }
-    if (typeof options.projectId === 'number' && !Number.isNaN(options.projectId)) {
+    if (
+      typeof options.projectId === 'number' &&
+      !Number.isNaN(options.projectId)
+    ) {
       formData.append('project_id', options.projectId.toString())
     }
     if (typeof options.zoneCode === 'string' && options.zoneCode.trim()) {

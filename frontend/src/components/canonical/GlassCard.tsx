@@ -20,7 +20,7 @@ export function GlassCard({
   opacity = 0.85,
   hoverEffect = false,
   sx = {},
-  onClick
+  onClick,
 }: GlassCardProps) {
   const theme = useTheme()
 
@@ -38,13 +38,13 @@ export function GlassCard({
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
         ...(hoverEffect && {
-            '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: theme.shadows[4],
-                borderColor: theme.palette.primary.main,
-            }
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: theme.shadows[4],
+            borderColor: theme.palette.primary.main,
+          },
         }),
-        ...sx
+        ...sx,
       }}
     >
       {children}

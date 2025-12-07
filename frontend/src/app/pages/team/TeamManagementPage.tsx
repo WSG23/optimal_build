@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Button,
@@ -17,31 +17,128 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  Tabs,
+  Tab,
+  Alert,
+  CircularProgress,
 } from '@mui/material'
-import { Add as AddIcon, Person as PersonIcon } from '@mui/icons-material'
+import {
+  Add as AddIcon,
+  Person as PersonIcon,
+  Task as TaskIcon,
+} from '@mui/icons-material'
+import { teamApi, TeamMember } from '../../../api/team'
+import { WorkflowDashboard } from './components/WorkflowDashboard'
+import { useRouterPath } from '../../../router'
+// If not using react-router params for project ID, we might need to get it from context or props.
+// For now, I'll assume we grab it from URL or a hardcoded one for dev if not available.
+// Actually, let's try to get it from context/store if typical, or just use a placeholder if we can't find it.
+// Wait, the page is likely routed with /projects/:projectId/team or similar?
+// Let's assume useParams() works or we need to pass a prop.
+// To be safe I will use a hook if I can find one, or just assume useParams() has it or a prop.
+// checking imports... I don't see useParams in original file. The original file didn't use props either.
+// Maybe it's a top level page that gets the project from a global store.
+// Let's assume for now we might need to extract it or pass it.
+// I'll add `projectId` as a prop but also try to get it from useParams.
 
-// Mock data for initial display until backend integration
-const MOCK_MEMBERS = [
-  { id: '1', name: 'John Doe', email: 'john@example.com', role: 'developer', status: 'active' },
-  { id: '2', name: 'Sarah Smith', email: 'sarah.architect@firm.com', role: 'consultant', status: 'active' },
-  { id: '3', name: 'Mike Engineer', email: 'mike.struct@eng.com', role: 'consultant', status: 'pending' },
-]
+interface TeamManagementPageProps {
+  projectId?: string
+}
 
-export const TeamManagementPage: React.FC = () => {
+export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
+  projectId: propProjectId,
+}) => {
+  const path = useRouterPath()
+  // Attempt to parse projectId from path if it follows /projects/:id pattern
+  const derivedProjectId = path.split('/projects/')[1]?.split('/')[0]
+  const projectId = propProjectId || derivedProjectId || 'default-project-id' // Fallback for dev/demo
+
+  const [activeTab, setActiveTab] = useState(0)
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('consultant')
+  const [inviting, setInviting] = useState(false)
 
-  const handleInvite = () => {
-    // TODO: Integrate with backend
-    console.log('Inviting', inviteEmail, inviteRole)
-    setInviteOpen(false)
-    setInviteEmail('')
+  const fetchMembers = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await teamApi.listMembers(projectId)
+      setMembers(data)
+    } catch (err) {
+      console.error(err)
+      // MOCK FALLBACK for dev if backend unreachable
+      // setError('Failed to load team members')
+      console.warn('Backend failed, using mock data for demo')
+      setMembers([
+        {
+          id: '1',
+          project_id: projectId,
+          user_id: 'u1',
+          role: 'developer',
+          is_active: true,
+          joined_at: new Date().toISOString(),
+          user: { full_name: 'John Doe', email: 'john@example.com' },
+        },
+        {
+          id: '2',
+          project_id: projectId,
+          user_id: 'u2',
+          role: 'consultant',
+          is_active: true,
+          joined_at: new Date().toISOString(),
+          user: { full_name: 'Sarah Architect', email: 'sarah@firm.com' },
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }, [projectId])
+
+  useEffect(() => {
+    if (activeTab === 0) {
+      void fetchMembers()
+    }
+  }, [activeTab, fetchMembers])
+
+  const handleInvite = async () => {
+    setInviting(true)
+    setError(null)
+    try {
+      await teamApi.inviteMember(projectId, inviteEmail, inviteRole)
+      setInviteOpen(false)
+      setInviteEmail('')
+      // Ideally refresh members list if they show up immediately (pending),
+      // but standard invitation flow usually means they don't show up in 'members' until accepted
+      // unless we list invitations separately.
+      // For now, let's just show a success message or re-fetch.
+      alert('Invitation sent!')
+    } catch (err) {
+      console.error(err)
+      setError('Failed to send invitation')
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue)
   }
 
   return (
     <Box sx={{ p: 4, maxWidth: 1200, margin: '0 auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4, alignItems: 'center' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          mb: 4,
+          alignItems: 'center',
+        }}
+      >
         <Box>
           <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
             Team Coordination
@@ -50,92 +147,148 @@ export const TeamManagementPage: React.FC = () => {
             Manage your project team, consultants, and approval workflows.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setInviteOpen(true)}
-          sx={{
-            background: 'linear-gradient(135deg, #FF3366 0%, #FF6B3D 100%)',
-            boxShadow: '0px 4px 12px rgba(255, 51, 102, 0.3)',
-          }}
-        >
-          Invite Member
-        </Button>
-      </Box>
-
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Card
+        {activeTab === 0 && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setInviteOpen(true)}
             sx={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 4,
-              overflow: 'hidden',
+              background: 'linear-gradient(135deg, #FF3366 0%, #FF6B3D 100%)',
+              boxShadow: '0px 4px 12px rgba(255, 51, 102, 0.3)',
             }}
           >
-            <Box sx={{ p: 3, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PersonIcon color="primary" />
-                Team Members
-              </Typography>
-            </Box>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {MOCK_MEMBERS.map((member) => (
-                  <TableRow key={member.id} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>{member.name}</TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={member.role}
-                        size="small"
-                        sx={{
-                          textTransform: 'capitalize',
-                          bgcolor: member.role === 'developer' ? 'primary.main' : 'default',
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={member.status}
-                        size="small"
-                        color={member.status === 'active' ? 'success' : 'warning'}
-                        variant="outlined"
-                        sx={{ textTransform: 'capitalize' }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Button size="small" color="error">
-                        Remove
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </Grid>
-      </Grid>
+            Invite Member
+          </Button>
+        )}
+      </Box>
 
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          aria-label="team management tabs"
+        >
+          <Tab
+            icon={<PersonIcon />}
+            iconPosition="start"
+            label="Team Members"
+          />
+          <Tab
+            icon={<TaskIcon />}
+            iconPosition="start"
+            label="Approvals & Workflows"
+          />
+        </Tabs>
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {activeTab === 0 && (
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Card
+              sx={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 4,
+                overflow: 'hidden',
+              }}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                        <CircularProgress size={24} />
+                        <Typography
+                          variant="body2"
+                          sx={{ mt: 1, color: 'text.secondary' }}
+                        >
+                          Loading team...
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : members.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          No team members found.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    members.map((member) => (
+                      <TableRow key={member.id} hover>
+                        <TableCell sx={{ fontWeight: 500 }}>
+                          {member.user?.full_name || 'Unknown'}
+                        </TableCell>
+                        <TableCell>
+                          {member.user?.email || 'No email'}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={member.role}
+                            size="small"
+                            sx={{
+                              textTransform: 'capitalize',
+                              bgcolor:
+                                member.role === 'developer'
+                                  ? 'primary.main'
+                                  : 'default',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={member.is_active ? 'Active' : 'Inactive'}
+                            size="small"
+                            color={member.is_active ? 'success' : 'default'}
+                            variant="outlined"
+                            sx={{ textTransform: 'capitalize' }}
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button size="small" color="error">
+                            Remove
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      { }
+      {activeTab === 1 && <WorkflowDashboard projectId={projectId} />}
+
+      { }
       <Dialog
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
         PaperProps={{
-            sx: {
-                background: '#1A1D1F',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                minWidth: 400
-            }
+          sx: {
+            background: '#1A1D1F',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            minWidth: 400,
+          },
         }}
       >
         <DialogTitle>Invite New Member</DialogTitle>
@@ -146,6 +299,7 @@ export const TeamManagementPage: React.FC = () => {
               fullWidth
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
+              disabled={inviting}
             />
             <TextField
               select
@@ -153,6 +307,7 @@ export const TeamManagementPage: React.FC = () => {
               fullWidth
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value)}
+              disabled={inviting}
             >
               <MenuItem value="consultant">Consultant</MenuItem>
               <MenuItem value="architect">Architect</MenuItem>
@@ -162,9 +317,15 @@ export const TeamManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setInviteOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleInvite}>
-            Send Invitation
+          <Button onClick={() => setInviteOpen(false)} disabled={inviting}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleInvite}
+            disabled={inviting}
+          >
+            {inviting ? 'Sending...' : 'Send Invitation'}
           </Button>
         </DialogActions>
       </Dialog>

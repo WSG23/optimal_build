@@ -32,7 +32,10 @@ interface PhaseEditorProps {
   phase?: DevelopmentPhase | null
   projectId: number
   onClose: () => void
-  onSave: (data: CreatePhasePayload | UpdatePhasePayload, isNew: boolean) => Promise<void>
+  onSave: (
+    data: CreatePhasePayload | UpdatePhasePayload,
+    isNew: boolean,
+  ) => Promise<void>
 }
 
 const PHASE_TYPES: { value: PhaseType; label: string }[] = [
@@ -62,7 +65,10 @@ const PHASE_STATUSES: { value: PhaseStatus; label: string }[] = [
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-const HERITAGE_CLASSIFICATIONS: { value: HeritageClassification; label: string }[] = [
+const HERITAGE_CLASSIFICATIONS: {
+  value: HeritageClassification
+  label: string
+}[] = [
   { value: 'none', label: 'None' },
   { value: 'national_monument', label: 'National Monument' },
   { value: 'conservation_building', label: 'Conservation Building' },
@@ -138,7 +144,12 @@ function getInitialState(phase?: DevelopmentPhase | null): FormState {
   }
 }
 
-export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) {
+export function PhaseEditor({
+  open,
+  phase,
+  onClose,
+  onSave,
+}: PhaseEditorProps) {
   const [form, setForm] = useState<FormState>(() => getInitialState(phase))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -170,7 +181,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
           sequenceOrder: form.sequenceOrder,
           plannedStartDate: form.plannedStartDate || null,
           plannedEndDate: form.plannedEndDate || null,
-          budgetAmount: form.budgetAmount ? parseFloat(form.budgetAmount) : null,
+          budgetAmount: form.budgetAmount
+            ? parseFloat(form.budgetAmount)
+            : null,
           description: form.description || null,
           heritageClassification: form.heritageClassification,
           heritageApprovalRequired: form.heritageApprovalRequired,
@@ -186,8 +199,12 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
           plannedEndDate: form.plannedEndDate || null,
           actualStartDate: form.actualStartDate || null,
           actualEndDate: form.actualEndDate || null,
-          budgetAmount: form.budgetAmount ? parseFloat(form.budgetAmount) : null,
-          actualCostAmount: form.actualCostAmount ? parseFloat(form.actualCostAmount) : null,
+          budgetAmount: form.budgetAmount
+            ? parseFloat(form.budgetAmount)
+            : null,
+          actualCostAmount: form.actualCostAmount
+            ? parseFloat(form.actualCostAmount)
+            : null,
           description: form.description || null,
           heritageApprovalStatus: form.heritageApprovalStatus || null,
         }
@@ -228,7 +245,10 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
           )}
 
           {/* Basic Info */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 600, color: 'text.secondary' }}
+          >
             Basic Information
           </Typography>
 
@@ -246,7 +266,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
               <Select
                 value={form.phaseType}
                 label="Phase Type"
-                onChange={(e) => handleChange('phaseType', e.target.value as PhaseType)}
+                onChange={(e) =>
+                  handleChange('phaseType', e.target.value as PhaseType)
+                }
                 disabled={!isNew}
               >
                 {PHASE_TYPES.map((type) => (
@@ -262,7 +284,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
               <Select
                 value={form.status}
                 label="Status"
-                onChange={(e) => handleChange('status', e.target.value as PhaseStatus)}
+                onChange={(e) =>
+                  handleChange('status', e.target.value as PhaseStatus)
+                }
               >
                 {PHASE_STATUSES.map((status) => (
                   <MenuItem key={status.value} value={status.value}>
@@ -278,7 +302,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
             label="Sequence Order"
             type="number"
             value={form.sequenceOrder}
-            onChange={(e) => handleChange('sequenceOrder', parseInt(e.target.value, 10) || 1)}
+            onChange={(e) =>
+              handleChange('sequenceOrder', parseInt(e.target.value, 10) || 1)
+            }
             inputProps={{ min: 1 }}
             disabled={!isNew}
           />
@@ -293,7 +319,10 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
           />
 
           {/* Schedule */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+          >
             Schedule
           </Typography>
 
@@ -324,7 +353,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
                 label="Actual Start Date"
                 type="date"
                 value={form.actualStartDate}
-                onChange={(e) => handleChange('actualStartDate', e.target.value)}
+                onChange={(e) =>
+                  handleChange('actualStartDate', e.target.value)
+                }
                 InputLabelProps={{ shrink: true }}
               />
 
@@ -340,7 +371,10 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
           )}
 
           {/* Budget */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+          >
             Budget
           </Typography>
 
@@ -352,7 +386,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
               value={form.budgetAmount}
               onChange={(e) => handleChange('budgetAmount', e.target.value)}
               InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
               }}
             />
 
@@ -362,16 +398,23 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
                 label="Actual Cost"
                 type="number"
                 value={form.actualCostAmount}
-                onChange={(e) => handleChange('actualCostAmount', e.target.value)}
+                onChange={(e) =>
+                  handleChange('actualCostAmount', e.target.value)
+                }
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  ),
                 }}
               />
             )}
           </Stack>
 
           {/* Heritage */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+          >
             Heritage & Conservation
           </Typography>
 
@@ -382,7 +425,10 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
                 value={form.heritageClassification}
                 label="Heritage Classification"
                 onChange={(e) =>
-                  handleChange('heritageClassification', e.target.value as HeritageClassification)
+                  handleChange(
+                    'heritageClassification',
+                    e.target.value as HeritageClassification,
+                  )
                 }
                 disabled={!isNew}
               >
@@ -399,7 +445,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
                 fullWidth
                 label="Heritage Approval Status"
                 value={form.heritageApprovalStatus}
-                onChange={(e) => handleChange('heritageApprovalStatus', e.target.value)}
+                onChange={(e) =>
+                  handleChange('heritageApprovalStatus', e.target.value)
+                }
               />
             )}
           </Stack>
@@ -409,7 +457,9 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
               control={
                 <Checkbox
                   checked={form.heritageApprovalRequired}
-                  onChange={(e) => handleChange('heritageApprovalRequired', e.target.checked)}
+                  onChange={(e) =>
+                    handleChange('heritageApprovalRequired', e.target.checked)
+                  }
                 />
               }
               label="Heritage approval required"
@@ -417,17 +467,29 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
           )}
 
           {/* Occupancy */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+          >
             Occupancy & Tenants
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems="center"
+          >
             <FormControl fullWidth>
               <InputLabel>Occupancy Status</InputLabel>
               <Select
                 value={form.occupancyStatus}
                 label="Occupancy Status"
-                onChange={(e) => handleChange('occupancyStatus', e.target.value as OccupancyStatus)}
+                onChange={(e) =>
+                  handleChange(
+                    'occupancyStatus',
+                    e.target.value as OccupancyStatus,
+                  )
+                }
                 disabled={!isNew}
               >
                 {OCCUPANCY_STATUSES.map((s) => (
@@ -444,7 +506,12 @@ export function PhaseEditor({ open, phase, onClose, onSave }: PhaseEditorProps) 
                   control={
                     <Checkbox
                       checked={form.tenantCoordinationRequired}
-                      onChange={(e) => handleChange('tenantCoordinationRequired', e.target.checked)}
+                      onChange={(e) =>
+                        handleChange(
+                          'tenantCoordinationRequired',
+                          e.target.checked,
+                        )
+                      }
                     />
                   }
                   label="Tenant coordination required"

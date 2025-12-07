@@ -91,41 +91,126 @@
     color: var(--ob-color-text-primary);
 }
 
-.finance-scenario-creator__table input {
-    border: none;
-    border-bottom: 1px solid transparent;
-    border-radius: 0;
+/* --- Ghost Inputs & Sliders --- */
+.finance-scenario-creator__table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.finance-scenario-creator__table th {
+    padding: var(--ob-space-100);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: var(--ob-color-text-muted);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
+}
+
+.finance-scenario-creator__ghost-input {
     background: transparent;
-    padding: var(--ob-space-025) var(--ob-space-050);
-    transition: all 0.2s ease;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle line */
+    color: var(--ob-color-text-primary);
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+    padding: 8px 4px;
+    width: 100%;
 }
 
-.finance-scenario-creator__table input:focus {
-    border-bottom-color: var(--ob-color-brand-primary);
-    background: rgb(var(--ob-color-surface-alt-rgb) / 0.5);
+.finance-scenario-creator__ghost-input:focus {
     outline: none;
+    border-bottom: 2px solid #00f3ff; /* Neon Cyan underline */
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(0, 243, 255, 0.05)
+    );
+    box-shadow: none;
 }
 
-.finance-scenario-creator__table th.numeric,
-.finance-scenario-creator__table td.numeric input {
+.finance-scenario-creator__ghost-input--numeric {
     text-align: right;
+    font-family: 'JetBrains Mono', monospace; /* Technical font for numbers */
+}
+
+/* Focused glow for active revenue field or similar important ones */
+.finance-scenario-creator__ghost-input--highlight:focus {
+    border-bottom-color: var(--ob-color-brand-primary);
+}
+
+.finance-scenario-creator__dual-input {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.finance-scenario-creator__mini-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    cursor: pointer;
+}
+
+.finance-scenario-creator__mini-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--ob-color-brand-primary);
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+    transition: transform 0.1s;
+}
+
+.finance-scenario-creator__mini-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Footer Row Live Math */
+.finance-scenario-creator__footer-row td {
+    padding-top: var(--ob-space-150);
+    border-top: 1px solid var(--ob-color-border-subtle);
+}
+
+.finance-scenario-creator__live-total {
+    color: var(--ob-color-success-400); /* Green for positive revenue */
+    text-shadow: 0 0 10px rgba(71, 230, 80, 0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    transition: color 0.3s ease;
 }
 
 .finance-scenario-creator__submit {
-    background: var(--ob-color-brand-primary);
-    color: var(--ob-color-text-inverse);
-    font-weight: var(--ob-font-weight-bold);
-    padding: var(--ob-space-075) var(--ob-space-200);
-    border-radius: var(--ob-radius-pill);
-    transition:
-        transform 0.1s ease,
-        box-shadow 0.2s ease;
-    box-shadow: 0 4px 6px rgb(var(--ob-color-brand-primary-rgb) / 0.2);
+    /* Full width gradient bar */
+    width: 100%;
+    background: linear-gradient(
+        90deg,
+        #2563eb 0%,
+        #7c3aed 100%
+    ); /* Blue to Purple */
+    color: white;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: var(--ob-space-150);
+    border-radius: var(--ob-radius-md);
+    border: none;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: var(--ob-space-200);
 }
 
 .finance-scenario-creator__submit:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 10px rgb(var(--ob-color-brand-primary-rgb) / 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
 }
 
 /* --- Empty States --- */
@@ -149,9 +234,222 @@
 }
 
 .finance-empty-state__card-ghost {
-    width: 8.75rem;
-    height: 6.25rem;
-    background: var(--ob-color-surface-default);
-    border-radius: var(--ob-radius-md);
-    box-shadow: 0 2px 4px rgb(0 0 0 / 0.05);
+    /* --- Ticker Cards (Scenario Results) --- */
+    .finance-ticker-grid {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ob-space-150);
+    }
+
+    .finance-ticker-card {
+        display: grid;
+        grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1.5fr 0.5fr; /* Custom grid for ticker layout */
+        align-items: center;
+        gap: var(--ob-space-200);
+        padding: var(--ob-space-200);
+        background: var(--ob-color-surface-default);
+        border: 1px solid var(--ob-color-border-subtle);
+        border-radius: var(--ob-radius-lg);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .finance-ticker-card:hover {
+        transform: translateX(4px);
+        border-color: var(--ob-color-brand-primary);
+        box-shadow: var(--ob-shadow-md);
+    }
+
+    .finance-ticker-card--primary {
+        border-left: 4px solid var(--ob-color-brand-primary);
+        background: linear-gradient(
+            90deg,
+            rgba(37, 99, 235, 0.05) 0%,
+            transparent 100%
+        );
+    }
+
+    .finance-ticker-card__header {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .finance-ticker-card__title {
+        font-weight: 600;
+        color: var(--ob-color-text-primary);
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .finance-ticker-card__meta {
+        font-size: 0.75rem;
+        color: var(--ob-color-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .finance-ticker-card__badge {
+        background: var(--ob-color-brand-soft);
+        color: var(--ob-color-brand-primary-strong);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+
+    .finance-ticker-value {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .finance-ticker-value__label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: var(--ob-color-text-muted);
+        letter-spacing: 0.05em;
+    }
+
+    .finance-ticker-value__number {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.1rem;
+        color: var(--ob-color-text-primary);
+        font-weight: 500;
+    }
+
+    .finance-ticker-value__number--large {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .finance-ticker-value__number--positive {
+        color: var(--ob-color-success-400);
+        text-shadow: 0 0 8px rgba(71, 230, 80, 0.2);
+    }
+
+    .finance-ticker-value__number--negative {
+        color: var(--ob-color-error-400);
+    }
+
+    .finance-ticker-card__stack {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+    }
+
+    /* --- Holographic Allocation Ring --- */
+    .allocation-ring {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .allocation-ring__svg {
+        transform: rotate(0deg); /* Initial state */
+        z-index: 2;
+    }
+
+    .allocation-ring__segment {
+        transition:
+            stroke-dasharray 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+            stroke 0.3s ease;
+        stroke-linecap: round;
+    }
+
+    .allocation-ring__segment--pulse {
+        animation: ring-pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes ring-pulse {
+        0%,
+        100% {
+            opacity: 0.6;
+            stroke-width: 8px;
+        }
+        50% {
+            opacity: 1;
+            stroke-width: 10px;
+        }
+    }
+
+    .allocation-ring__center {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 3;
+        text-shadow: 0 0 20px rgba(0, 243, 255, 0.3); /* Cyan glow */
+    }
+
+    .allocation-ring__value {
+        font-family:
+            'Inter', sans-serif; /* Fallback, prefer thinner font if avail */
+        font-weight: 300; /* Thin font */
+        font-size: 3rem;
+        color: var(--ob-color-text-primary);
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    .allocation-ring__sub {
+        font-size: 0.625rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        color: var(--ob-color-text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .allocation-ring__sub--warning {
+        color: var(--ob-color-warning-500);
+        animation: text-flicker 4s infinite alternate;
+    }
+
+    @keyframes text-flicker {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        95% {
+            opacity: 1;
+        }
+        96% {
+            opacity: 0.5;
+        }
+        97% {
+            opacity: 1;
+        }
+        98% {
+            opacity: 0.3;
+        }
+        99% {
+            opacity: 1;
+        }
+    }
+
+    /* 3D / Holographic Glow Container */
+    .allocation-ring__glow-effect {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        transform: translate(-50%, -50%) scale(0.9);
+        border-radius: 50%;
+        background: radial-gradient(
+            circle,
+            rgba(0, 243, 255, 0.1) 0%,
+            transparent 70%
+        );
+        pointer-events: none;
+        z-index: 1;
+        filter: blur(10px);
+    }
 }

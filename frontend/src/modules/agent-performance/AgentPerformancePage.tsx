@@ -1,10 +1,4 @@
-import {
-  Box,
-  Divider,
-  Grid,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
 import {
   CartesianGrid,
   Line,
@@ -14,7 +8,7 @@ import {
   XAxis,
   YAxis,
   Area,
-  AreaChart
+  AreaChart,
 } from 'recharts'
 
 import { AppLayout } from '../../App'
@@ -48,7 +42,11 @@ export default function AgentPerformancePage() {
     setSelectedDealId,
   } = useDeals({ t })
 
-  const { timeline, timelineLoading, timelineError: _timelineError } = useTimeline({
+  const {
+    timeline,
+    timelineLoading,
+    timelineError: _timelineError,
+  } = useTimeline({
     selectedDealId,
     t,
   })
@@ -92,73 +90,108 @@ export default function AgentPerformancePage() {
       title={t('agentPerformance.title')}
       subtitle={t('agentPerformance.subtitle')}
     >
-        <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3 }}>
         <AnimatedPageHeader
-            title={t('agentPerformance.title')}
-            subtitle={t('agentPerformance.subtitle')}
-            breadcrumbs={[
-                { label: 'Dashboard', href: '/' },
-                { label: 'Agent Performance' }
-            ]}
+          title={t('agentPerformance.title')}
+          subtitle={t('agentPerformance.subtitle')}
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Agent Performance' },
+          ]}
         />
 
-      <Grid container spacing={3}>
-        {/* Kanban Section */}
-        <Grid item xs={12} lg={8}>
-          <GlassCard sx={{ p: 2, height: '100%', minHeight: 400 }}>
-             <Stack direction="row" spacing={2} sx={{ overflowX: 'auto', pb: 2 }}>
-              {stageOrder.map((stage) => {
-                const items = groupedDeals[stage] ?? []
-                const label = t(STAGE_TRANSLATION_KEYS[stage]) ?? STAGE_TRANSLATION_KEYS[stage]
+        <Grid container spacing={3}>
+          {/* Kanban Section */}
+          <Grid item xs={12} lg={8}>
+            <GlassCard sx={{ p: 2, height: '100%', minHeight: 400 }}>
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{ overflowX: 'auto', pb: 2 }}
+              >
+                {stageOrder.map((stage) => {
+                  const items = groupedDeals[stage] ?? []
+                  const label =
+                    t(STAGE_TRANSLATION_KEYS[stage]) ??
+                    STAGE_TRANSLATION_KEYS[stage]
 
-                return (
-                  <Box key={stage} sx={{ minWidth: 280, flexShrink: 0 }}>
-                    <Box sx={{
-                        pb: 1,
-                        borderBottom: 2,
-                        borderColor: 'divider',
-                        mb: 2,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{label}</Typography>
-                        <Typography variant="caption" sx={{
+                  return (
+                    <Box key={stage} sx={{ minWidth: 280, flexShrink: 0 }}>
+                      <Box
+                        sx={{
+                          pb: 1,
+                          borderBottom: 2,
+                          borderColor: 'divider',
+                          mb: 2,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {label}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
                             background: 'rgba(0,0,0,0.05)',
                             px: 1,
-                            borderRadius: 1
-                        }}>{items.length}</Typography>
-                    </Box>
+                            borderRadius: 1,
+                          }}
+                        >
+                          {items.length}
+                        </Typography>
+                      </Box>
 
-                    <Stack spacing={1}>
+                      <Stack spacing={1}>
                         {items.map((deal) => (
-                            <GlassCard
-                                key={deal.id}
-                                hoverEffect
-                                sx={{
-                                    p: 1.5,
-                                    cursor: 'pointer',
-                                    border: selectedDealId === deal.id ? '1px solid #2196f3' : undefined,
-                                    background: selectedDealId === deal.id ? 'rgba(33, 150, 243, 0.05)' : undefined
-                                }}
-                                onClick={() => setSelectedDealId(deal.id)}
+                          <GlassCard
+                            key={deal.id}
+                            hoverEffect
+                            sx={{
+                              p: 1.5,
+                              cursor: 'pointer',
+                              border:
+                                selectedDealId === deal.id
+                                  ? '1px solid #2196f3'
+                                  : undefined,
+                              background:
+                                selectedDealId === deal.id
+                                  ? 'rgba(33, 150, 243, 0.05)'
+                                  : undefined,
+                            }}
+                            onClick={() => setSelectedDealId(deal.id)}
+                          >
+                            <Typography variant="subtitle2">
+                              {deal.title}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              display="block"
+                              color="text.secondary"
                             >
-                                <Typography variant="subtitle2">{deal.title}</Typography>
-                                <Typography variant="caption" display="block" color="text.secondary">
-                                    {deal.estimatedValueCurrency} {deal.estimatedValueAmount !== null ? deal.estimatedValueAmount.toLocaleString(locale) : '-'}
-                                </Typography>
-                            </GlassCard>
+                              {deal.estimatedValueCurrency}{' '}
+                              {deal.estimatedValueAmount !== null
+                                ? deal.estimatedValueAmount.toLocaleString(
+                                    locale,
+                                  )
+                                : '-'}
+                            </Typography>
+                          </GlassCard>
                         ))}
-                    </Stack>
-                  </Box>
-                )
-              })}
-             </Stack>
-          </GlassCard>
-        </Grid>
+                      </Stack>
+                    </Box>
+                  )
+                })}
+              </Stack>
+            </GlassCard>
+          </Grid>
 
-        {/* Timeline Sidebar */}
-        <Grid item xs={12} lg={4}>
+          {/* Timeline Sidebar */}
+          <Grid item xs={12} lg={4}>
             <TimelinePanel
               events={timeline}
               loading={timelineLoading}
@@ -171,97 +204,174 @@ export default function AgentPerformancePage() {
               noteLabel={t('agentPerformance.timeline.note')}
               hashLabel={t('agentPerformance.timeline.hash')}
               signatureLabel={t('agentPerformance.timeline.signature')}
-              stageLabelFor={(stage) => t(STAGE_TRANSLATION_KEYS[stage]) ?? stage}
+              stageLabelFor={(stage) =>
+                t(STAGE_TRANSLATION_KEYS[stage]) ?? stage
+              }
             />
-        </Grid>
+          </Grid>
 
-        {/* Analytics Section */}
-        {analyticsHasContent && (
+          {/* Analytics Section */}
+          {analyticsHasContent && (
             <Grid item xs={12}>
-                <Divider sx={{ my: 4 }} />
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-                    {t('agentPerformance.analytics.title')}
-                </Typography>
+              <Divider sx={{ my: 4 }} />
+              <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+                {t('agentPerformance.analytics.title')}
+              </Typography>
 
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                    {latestSnapshot && [
-                         {
-                            label: t('agentPerformance.analytics.metrics.openDeals'),
-                            value: latestSnapshot.dealsOpen.toLocaleString(locale),
-                            icon: <Assignment />
-                         },
-                         {
-                            label: t('agentPerformance.analytics.metrics.grossPipelineValue'),
-                            value: formatCurrency(latestSnapshot.grossPipelineValue, primaryCurrency, locale, fallbackText),
-                            icon: <AttachMoney />,
-                            variant: 'primary' as const
-                         },
-                         {
-                            label: t('agentPerformance.analytics.metrics.conversionRate'),
-                            value: formatPercent(latestSnapshot.conversionRate, fallbackText),
-                            icon: <TrendingUp />
-                         },
-                         {
-                            label: t('agentPerformance.analytics.metrics.avgCycleDays'),
-                            value: formatDays(latestSnapshot.avgCycleDays, fallbackText),
-                            icon: <Speed />
-                         }
-                    ].map((metric, idx) => (
-                        <Grid item xs={12} sm={6} md={3} key={idx}>
-                            <HeroMetric
-                                label={metric.label as string}
-                                value={metric.value as string}
-                                icon={metric.icon}
-                                variant={metric.variant || 'glass'}
-                                delay={idx * 100}
-                            />
-                        </Grid>
-                    ))}
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                {latestSnapshot &&
+                  [
+                    {
+                      label: t('agentPerformance.analytics.metrics.openDeals'),
+                      value: latestSnapshot.dealsOpen.toLocaleString(locale),
+                      icon: <Assignment />,
+                    },
+                    {
+                      label: t(
+                        'agentPerformance.analytics.metrics.grossPipelineValue',
+                      ),
+                      value: formatCurrency(
+                        latestSnapshot.grossPipelineValue,
+                        primaryCurrency,
+                        locale,
+                        fallbackText,
+                      ),
+                      icon: <AttachMoney />,
+                      variant: 'primary' as const,
+                    },
+                    {
+                      label: t(
+                        'agentPerformance.analytics.metrics.conversionRate',
+                      ),
+                      value: formatPercent(
+                        latestSnapshot.conversionRate,
+                        fallbackText,
+                      ),
+                      icon: <TrendingUp />,
+                    },
+                    {
+                      label: t(
+                        'agentPerformance.analytics.metrics.avgCycleDays',
+                      ),
+                      value: formatDays(
+                        latestSnapshot.avgCycleDays,
+                        fallbackText,
+                      ),
+                      icon: <Speed />,
+                    },
+                  ].map((metric, idx) => (
+                    <Grid item xs={12} sm={6} md={3} key={idx}>
+                      <HeroMetric
+                        label={metric.label as string}
+                        value={metric.value as string}
+                        icon={metric.icon}
+                        variant={metric.variant || 'glass'}
+                        delay={idx * 100}
+                      />
+                    </Grid>
+                  ))}
+              </Grid>
+
+              {trendData.length > 0 && (
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <GlassCard sx={{ p: 2, height: 320 }}>
+                      <Typography variant="h6" gutterBottom>
+                        {t('agentPerformance.analytics.trend.pipelineHeading')}
+                      </Typography>
+                      <ResponsiveContainer width="100%" height="90%">
+                        <AreaChart data={trendData}>
+                          <defs>
+                            <linearGradient
+                              id="colorGross"
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="1"
+                            >
+                              <stop
+                                offset="5%"
+                                stopColor="#3B82F6"
+                                stopOpacity={0.3}
+                              />
+                              <stop
+                                offset="95%"
+                                stopColor="#3B82F6"
+                                stopOpacity={0}
+                              />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                          <YAxis
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(val) =>
+                              formatShortCurrency(val, primaryCurrency, locale)
+                            }
+                          />
+                          <Tooltip />
+                          <Area
+                            type="monotone"
+                            dataKey="gross"
+                            stroke="#3B82F6"
+                            fillOpacity={1}
+                            fill="url(#colorGross)"
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="weighted"
+                            stroke="#10B981"
+                            fillOpacity={0}
+                            strokeDasharray="4 4"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </GlassCard>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <GlassCard sx={{ p: 2, height: 320 }}>
+                      <Typography variant="h6" gutterBottom>
+                        {t(
+                          'agentPerformance.analytics.trend.conversionHeading',
+                        )}
+                      </Typography>
+                      <ResponsiveContainer width="100%" height="90%">
+                        <LineChart data={trendData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                          <YAxis
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(val) => `${val}%`}
+                          />
+                          <Tooltip />
+                          <Line
+                            type="monotone"
+                            dataKey="conversion"
+                            stroke="#F59E0B"
+                            strokeWidth={2}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="cycle"
+                            stroke="#8B5CF6"
+                            strokeWidth={2}
+                            strokeDasharray="4 4"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </GlassCard>
+                  </Grid>
                 </Grid>
-
-                {trendData.length > 0 && (
-                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                        <GlassCard sx={{ p: 2, height: 320 }}>
-                            <Typography variant="h6" gutterBottom>{t('agentPerformance.analytics.trend.pipelineHeading')}</Typography>
-                             <ResponsiveContainer width="100%" height="90%">
-                                <AreaChart data={trendData}>
-                                    <defs>
-                                        <linearGradient id="colorGross" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => formatShortCurrency(val, primaryCurrency, locale)} />
-                                    <Tooltip />
-                                    <Area type="monotone" dataKey="gross" stroke="#3B82F6" fillOpacity={1} fill="url(#colorGross)" />
-                                    <Area type="monotone" dataKey="weighted" stroke="#10B981" fillOpacity={0} strokeDasharray="4 4" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </GlassCard>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                         <GlassCard sx={{ p: 2, height: 320 }}>
-                            <Typography variant="h6" gutterBottom>{t('agentPerformance.analytics.trend.conversionHeading')}</Typography>
-                            <ResponsiveContainer width="100%" height="90%">
-                                <LineChart data={trendData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `${val}%`} />
-                                    <Tooltip />
-                                    <Line type="monotone" dataKey="conversion" stroke="#F59E0B" strokeWidth={2} />
-                                    <Line type="monotone" dataKey="cycle" stroke="#8B5CF6" strokeWidth={2} strokeDasharray="4 4" />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </GlassCard>
-                    </Grid>
-                 </Grid>
-                )}
+              )}
             </Grid>
-        )}
-      </Grid>
+          )}
+        </Grid>
       </Box>
     </AppLayout>
   )

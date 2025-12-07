@@ -9,7 +9,9 @@ function resolveBaseUrl(): string {
     typeof window !== 'undefined' ? window.location.origin : undefined,
   ] as Array<string | undefined>
 
-  const resolved = candidates.find((value) => typeof value === 'string' && value.trim().length > 0)
+  const resolved = candidates.find(
+    (value) => typeof value === 'string' && value.trim().length > 0,
+  )
   return resolved ? resolved.trim() : 'http://localhost:8000'
 }
 
@@ -59,14 +61,17 @@ class ApiClient {
     )
   }
 
-  async get<TResponse>(url: string, config?: AxiosRequestConfig<unknown>): Promise<AxiosResponse<TResponse>> {
+  async get<TResponse>(
+    url: string,
+    config?: AxiosRequestConfig<unknown>,
+  ): Promise<AxiosResponse<TResponse>> {
     return this.client.get<TResponse>(url, config)
   }
 
   async post<TResponse, TData = unknown>(
     url: string,
     data?: TData,
-    config?: AxiosRequestConfig<TData>
+    config?: AxiosRequestConfig<TData>,
   ): Promise<AxiosResponse<TResponse>> {
     return this.client.post<TResponse>(url, data, config)
   }
@@ -74,19 +79,22 @@ class ApiClient {
   async put<TResponse, TData = unknown>(
     url: string,
     data?: TData,
-    config?: AxiosRequestConfig<TData>
+    config?: AxiosRequestConfig<TData>,
   ): Promise<AxiosResponse<TResponse>> {
     return this.client.put<TResponse>(url, data, config)
   }
 
-  async delete<TResponse>(url: string, config?: AxiosRequestConfig<unknown>): Promise<AxiosResponse<TResponse>> {
+  async delete<TResponse>(
+    url: string,
+    config?: AxiosRequestConfig<unknown>,
+  ): Promise<AxiosResponse<TResponse>> {
     return this.client.delete<TResponse>(url, config)
   }
 
   async patch<TResponse, TData = unknown>(
     url: string,
     data?: TData,
-    config?: AxiosRequestConfig<TData>
+    config?: AxiosRequestConfig<TData>,
   ): Promise<AxiosResponse<TResponse>> {
     return this.client.patch<TResponse>(url, data, config)
   }

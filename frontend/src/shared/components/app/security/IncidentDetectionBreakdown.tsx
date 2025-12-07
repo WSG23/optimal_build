@@ -1,16 +1,18 @@
-import type { FC } from 'react';
-import type { Ticket } from './types';
+import type { FC } from 'react'
+import type { Ticket } from './types'
 
 export interface IncidentDetectionBreakdownProps {
-  locationFilter: string | null;
-  selectedCategory: string | null;
-  onCategoryClick: (category: string) => void;
-  ticketId: string | null;
-  ticketLabel: string | null;
-  tickets?: Ticket[];
+  locationFilter: string | null
+  selectedCategory: string | null
+  onCategoryClick: (category: string) => void
+  ticketId: string | null
+  ticketLabel: string | null
+  tickets?: Ticket[]
 }
 
-export const IncidentDetectionBreakdown: FC<IncidentDetectionBreakdownProps> = ({
+export const IncidentDetectionBreakdown: FC<
+  IncidentDetectionBreakdownProps
+> = ({
   locationFilter,
   selectedCategory,
   onCategoryClick,
@@ -20,12 +22,15 @@ export const IncidentDetectionBreakdown: FC<IncidentDetectionBreakdownProps> = (
 }) => {
   const filteredTickets = locationFilter
     ? tickets.filter((ticket) => ticket.location === locationFilter)
-    : tickets;
-  const categoryCounts = filteredTickets.reduce<Record<string, number>>((acc, ticket) => {
-    acc[ticket.category] = (acc[ticket.category] ?? 0) + 1;
-    return acc;
-  }, {});
-  const categories = Object.entries(categoryCounts);
+    : tickets
+  const categoryCounts = filteredTickets.reduce<Record<string, number>>(
+    (acc, ticket) => {
+      acc[ticket.category] = (acc[ticket.category] ?? 0) + 1
+      return acc
+    },
+    {},
+  )
+  const categories = Object.entries(categoryCounts)
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -34,7 +39,7 @@ export const IncidentDetectionBreakdown: FC<IncidentDetectionBreakdownProps> = (
       </div>
       <ul className="space-y-2">
         {categories.map(([category, count]) => {
-          const active = selectedCategory === category;
+          const active = selectedCategory === category
           return (
             <li key={category}>
               <button
@@ -48,7 +53,7 @@ export const IncidentDetectionBreakdown: FC<IncidentDetectionBreakdownProps> = (
                 <span className="text-xs text-white/60">{count}</span>
               </button>
             </li>
-          );
+          )
         })}
       </ul>
       {ticketId ? (
@@ -57,7 +62,7 @@ export const IncidentDetectionBreakdown: FC<IncidentDetectionBreakdownProps> = (
         </div>
       ) : null}
     </div>
-  );
-};
+  )
+}
 
-export default IncidentDetectionBreakdown;
+export default IncidentDetectionBreakdown

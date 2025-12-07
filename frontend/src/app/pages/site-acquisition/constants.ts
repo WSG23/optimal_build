@@ -4,7 +4,10 @@
  * Pure data - no runtime dependencies.
  */
 
-import type { DevelopmentScenario, GeometryDetailLevel } from '../../../api/siteAcquisition'
+import type {
+  DevelopmentScenario,
+  GeometryDetailLevel,
+} from '../../../api/siteAcquisition'
 import type { InsightSeverity, OfflineChecklistTemplate } from './types'
 
 // ============================================================================
@@ -46,7 +49,8 @@ export const SCENARIO_OPTIONS: ScenarioOption[] = [
   {
     value: 'mixed_use_redevelopment',
     label: 'Mixed-Use Redevelopment',
-    description: 'Complex mixed-use project with residential, commercial, and retail components',
+    description:
+      'Complex mixed-use project with residential, commercial, and retail components',
     icon: '🏙️',
   },
 ]
@@ -63,11 +67,36 @@ export type JurisdictionOption = {
 }
 
 export const JURISDICTION_OPTIONS: readonly JurisdictionOption[] = [
-  { code: 'SG', label: 'Singapore', defaultLat: '1.3000', defaultLon: '103.8500' },
-  { code: 'HK', label: 'Hong Kong', defaultLat: '22.3193', defaultLon: '114.1694' },
-  { code: 'NZ', label: 'New Zealand', defaultLat: '-36.8485', defaultLon: '174.7633' },
-  { code: 'SEA', label: 'Seattle', defaultLat: '47.6062', defaultLon: '-122.3321' },
-  { code: 'TOR', label: 'Toronto', defaultLat: '43.6532', defaultLon: '-79.3832' },
+  {
+    code: 'SG',
+    label: 'Singapore',
+    defaultLat: '1.3000',
+    defaultLon: '103.8500',
+  },
+  {
+    code: 'HK',
+    label: 'Hong Kong',
+    defaultLat: '22.3193',
+    defaultLon: '114.1694',
+  },
+  {
+    code: 'NZ',
+    label: 'New Zealand',
+    defaultLat: '-36.8485',
+    defaultLon: '174.7633',
+  },
+  {
+    code: 'SEA',
+    label: 'Seattle',
+    defaultLat: '47.6062',
+    defaultLon: '-122.3321',
+  },
+  {
+    code: 'TOR',
+    label: 'Toronto',
+    defaultLat: '43.6532',
+    defaultLon: '-79.3832',
+  },
 ] as const
 
 // ============================================================================
@@ -75,7 +104,13 @@ export const JURISDICTION_OPTIONS: readonly JurisdictionOption[] = [
 // ============================================================================
 
 export const CONDITION_RATINGS = ['A', 'B', 'C', 'D', 'E'] as const
-export const CONDITION_RISK_LEVELS = ['low', 'moderate', 'elevated', 'high', 'critical'] as const
+export const CONDITION_RISK_LEVELS = [
+  'low',
+  'moderate',
+  'elevated',
+  'high',
+  'critical',
+] as const
 
 export const DEFAULT_CONDITION_SYSTEMS = [
   'Structural frame & envelope',
@@ -94,7 +129,10 @@ export const QUICK_ANALYSIS_HISTORY_LIMIT = 5
 // Preview Options
 // ============================================================================
 
-export const PREVIEW_DETAIL_OPTIONS: GeometryDetailLevel[] = ['medium', 'simple']
+export const PREVIEW_DETAIL_OPTIONS: GeometryDetailLevel[] = [
+  'medium',
+  'simple',
+]
 
 export const PREVIEW_DETAIL_LABELS: Record<GeometryDetailLevel, string> = {
   medium: 'Medium (octagonal, setbacks, floor lines)',

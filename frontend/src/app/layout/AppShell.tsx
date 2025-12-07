@@ -1,4 +1,7 @@
-import { AppShell as BaseAppShell, AppShellProps as BaseAppShellProps } from '../../components/layout/YosaiShell'
+import {
+  AppShell as BaseAppShell,
+  AppShellProps as BaseAppShellProps,
+} from '../../components/layout/YosaiShell'
 
 interface AppShellProps extends Omit<BaseAppShellProps, 'subtitle'> {
   activeItem?: string // Kept for backward compatibility

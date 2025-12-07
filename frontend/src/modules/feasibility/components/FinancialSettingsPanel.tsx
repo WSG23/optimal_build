@@ -32,9 +32,12 @@ export function FinancialSettingsPanel({
   const handleExportArgus = () => {
     // Stub for ARGUS export
     console.log('Exporting ARGUS XML...', financialInputs)
-    const blob = new Blob(['<ArgusExchange><Stub>Active</Stub></ArgusExchange>'], {
-      type: 'application/xml',
-    })
+    const blob = new Blob(
+      ['<ArgusExchange><Stub>Active</Stub></ArgusExchange>'],
+      {
+        type: 'application/xml',
+      },
+    )
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -62,7 +65,9 @@ export function FinancialSettingsPanel({
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMore sx={{ color: 'var(--ob-color-text-muted)' }} />}
+          expandIcon={
+            <ExpandMore sx={{ color: 'var(--ob-color-text-muted)' }} />
+          }
           sx={{
             padding: 'var(--ob-space-4)',
             '& .MuiAccordionSummary-content': { margin: 0 },
@@ -79,12 +84,14 @@ export function FinancialSettingsPanel({
                 color: 'var(--ob-color-text-muted)',
               }}
             >
-              {t('wizard.financials.subtitle') || 'Capital stack & return targets'}
+              FINANCIAL PARAMETERS
             </p>
           </header>
         </AccordionSummary>
 
-        <AccordionDetails sx={{ padding: '0 var(--ob-space-4) var(--ob-space-6)' }}>
+        <AccordionDetails
+          sx={{ padding: '0 var(--ob-space-4) var(--ob-space-6)' }}
+        >
           <div className="feasibility-assumptions__grid">
             <TextField
               label={t('wizard.financials.fields.capRate') || 'Cap Rate'}
@@ -101,7 +108,9 @@ export function FinancialSettingsPanel({
             />
 
             <TextField
-              label={t('wizard.financials.fields.interestRate') || 'Interest Rate'}
+              label={
+                t('wizard.financials.fields.interestRate') || 'Interest Rate'
+              }
               value={financialInputs.interestRatePercent}
               onChange={onFinancialChange('interestRatePercent')}
               error={!!financialErrors.interestRatePercent}
@@ -116,7 +125,10 @@ export function FinancialSettingsPanel({
             />
 
             <TextField
-              label={t('wizard.financials.fields.targetMargin') || 'Target Margin (CoC)'}
+              label={
+                t('wizard.financials.fields.targetMargin') ||
+                'Target Margin (CoC)'
+              }
               value={financialInputs.targetMarginPercent}
               onChange={onFinancialChange('targetMarginPercent')}
               error={!!financialErrors.targetMarginPercent}
@@ -131,7 +143,13 @@ export function FinancialSettingsPanel({
             />
           </div>
 
-          <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              marginTop: '1.5rem',
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
             <Button
               variant="outlined"
               startIcon={<FileDownload />}

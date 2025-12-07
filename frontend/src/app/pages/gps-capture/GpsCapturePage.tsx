@@ -1,13 +1,24 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   lazy,
   Suspense,
   type FormEvent,
 } from 'react'
+// Import MUI Icons
+import ConstructionIcon from '@mui/icons-material/Construction'
+import DomainIcon from '@mui/icons-material/Domain'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork'
+import LockIcon from '@mui/icons-material/Lock'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import DescriptionIcon from '@mui/icons-material/Description'
+import RadarIcon from '@mui/icons-material/Radar'
+import Tooltip from '@mui/material/Tooltip'
+
 import {
   DEFAULT_SCENARIO_ORDER,
   fetchPropertyMarketIntelligence,
@@ -37,6 +48,7 @@ import {
 } from '../../components/gps-capture'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import '../../../styles/gps-capture.css'
 
 // Lazy load the 3D preview viewer to avoid loading THREE.js unless needed
 const Preview3DViewer = lazy(() =>
@@ -44,6 +56,27 @@ const Preview3DViewer = lazy(() =>
     default: m.Preview3DViewer,
   })),
 )
+
+// Helper to get icon for scenario
+function getScenarioIcon(scenario: DevelopmentScenario) {
+  switch (scenario) {
+    case 'raw_land':
+      return <ConstructionIcon />
+    case 'existing_building':
+      return <DomainIcon />
+    case 'heritage_property':
+      return <AccountBalanceIcon />
+    case 'underused_asset':
+      return <TrendingUpIcon />
+    case 'mixed_use_redevelopment':
+      return <MapsHomeWorkIcon />
+    default:
+      return <DomainIcon />
+  }
+}
+
+// Exported for potential external use
+export { getScenarioIcon }
 
 export function GpsCapturePage() {
   const role: UserRole = 'agent'
@@ -62,6 +95,10 @@ export function GpsCapturePage() {
   const [developerFeatures, setDeveloperFeatures] =
     useState<DeveloperFeatureData | null>(null)
 
+  // Immersive Experience States
+  const [isScanning, setIsScanning] = useState(false)
+  const [showHud, setShowHud] = useState(false)
+
   // Feature preferences hook for optional developer features
   const {
     preferences: featurePreferences,
@@ -73,10 +110,10 @@ export function GpsCapturePage() {
   const [marketSummary, setMarketSummary] =
     useState<MarketIntelligenceSummary | null>(null)
   const [marketLoading, setMarketLoading] = useState(false)
-  const [marketError, setMarketError] = useState<string | null>(null)
+  const [_marketError, setMarketError] = useState<string | null>(null)
 
-  const [packs, setPacks] = useState<ProfessionalPackSummary[]>([])
-  const [packError, setPackError] = useState<string | null>(null)
+  const [_packs, setPacks] = useState<ProfessionalPackSummary[]>([])
+  const [_packError, setPackError] = useState<string | null>(null)
   const [packLoadingType, setPackLoadingType] =
     useState<ProfessionalPackType | null>(null)
 
@@ -95,11 +132,6 @@ export function GpsCapturePage() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<mapboxgl.Map | null>(null)
   const mapMarkerRef = useRef<mapboxgl.Marker | null>(null)
-
-  const today = useMemo(
-    () => new Date().toLocaleString(undefined, { dateStyle: 'medium' }),
-    [],
-  )
 
   const handleScenarioToggle = useCallback((scenario: DevelopmentScenario) => {
     setSelectedScenarios((prev) => {
@@ -191,11 +223,12 @@ export function GpsCapturePage() {
     mapboxgl.accessToken = token
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: 'mapbox://styles/mapbox/dark-v11', // Switch to dark map for immersion
       center: [Number(longitude) || 103.85, Number(latitude) || 1.3],
-      zoom: 12,
+      zoom: 16, // Closer zoom for immersion
+      pitch: 45, // Add pitch for 3D feel
     })
-    const marker = new mapboxgl.Marker({ draggable: true })
+    const marker = new mapboxgl.Marker({ draggable: true, color: '#3b82f6' }) // Blue marker
       .setLngLat([Number(longitude) || 103.85, Number(latitude) || 1.3])
       .addTo(map)
     marker.on('dragend', () => {
@@ -228,10 +261,15 @@ export function GpsCapturePage() {
 
       try {
         setCaptureLoading(true)
+        setIsScanning(true) // Start Animation
         setCaptureError(null)
         setMarketSummary(null)
         setMarketError(null)
         setDeveloperFeatures(null)
+        setShowHud(false) // Hide HUD momentarily or keep it locked
+
+        // Artificial delay for "Scanning" effect (1.5s) if user desires the "Wow" timing
+        await new Promise((resolve) => setTimeout(resolve, 1500))
 
         // Use hybrid API that routes to developer endpoint when features are enabled
         const summary = await logPropertyByGpsWithFeatures({
@@ -262,6 +300,8 @@ export function GpsCapturePage() {
           },
           ...prev,
         ])
+        setShowHud(true) // Unlock HUD
+
         setMarketLoading(true)
         try {
           const intelligence = await fetchPropertyMarketIntelligence(
@@ -281,6 +321,7 @@ export function GpsCapturePage() {
         )
       } finally {
         setCaptureLoading(false)
+        setIsScanning(false) // Stop Animation
       }
     },
     [
@@ -324,427 +365,483 @@ export function GpsCapturePage() {
 
   const quickAnalysis = captureSummary?.quickAnalysis ?? null
 
+  // Helper to get icon for scenario
+  const getScenarioIcon = (scenario: DevelopmentScenario) => {
+    switch (scenario) {
+      case 'raw_land':
+        return <ConstructionIcon />
+      case 'existing_building':
+        return <DomainIcon />
+      case 'heritage_property':
+        return <AccountBalanceIcon />
+      case 'underused_asset':
+        return <TrendingUpIcon />
+      case 'mixed_use_redevelopment':
+        return <MapsHomeWorkIcon />
+      default:
+        return <DomainIcon />
+    }
+  }
+
   return (
     <div className="gps-page">
-      <section className="gps-page__summary">
-        <div className="gps-card">
-          <h2>Capture a property</h2>
-          <p>
-            Enter GPS coordinates or drop a pin on the map to capture a site.
-            Add photos and field notes before sending to developers.
-          </p>
-          <form className="gps-form" onSubmit={handleCapture}>
-            <div className="gps-form__group">
-              <label htmlFor="address">Address (optional)</label>
-              <div className="gps-form__address-row">
-                <input
-                  id="address"
-                  name="address"
-                  value={address}
-                  onChange={(event) => setAddress(event.target.value)}
-                  placeholder="123 Main Street, Singapore"
-                />
-                <div className="gps-form__address-actions">
-                  <button type="button" onClick={handleForwardGeocode}>
-                    Geocode address
-                  </button>
-                  <button type="button" onClick={handleReverseGeocode}>
-                    Reverse geocode
-                  </button>
-                </div>
-              </div>
-              {geocodeError && <p className="gps-error">{geocodeError}</p>}
-            </div>
-            <div className="gps-form__group">
-              <label htmlFor="latitude">Latitude</label>
-              <input
-                id="latitude"
-                name="latitude"
-                value={latitude}
-                onChange={(event) => setLatitude(event.target.value)}
-                required
-              />
-            </div>
-            <div className="gps-form__group">
-              <label htmlFor="longitude">Longitude</label>
-              <input
-                id="longitude"
-                name="longitude"
-                value={longitude}
-                onChange={(event) => setLongitude(event.target.value)}
-                required
-              />
-            </div>
-            <div className="gps-form__group">
-              <label htmlFor="jurisdictionCode">Jurisdiction</label>
-              <select
-                id="jurisdictionCode"
-                name="jurisdictionCode"
-                value={jurisdictionCode}
-                onChange={(event) => setJurisdictionCode(event.target.value)}
-                required
-              >
-                <option value="SG">Singapore</option>
-                <option value="HK">Hong Kong</option>
-                <option value="NZ">New Zealand</option>
-                <option value="SEA">Seattle / King County</option>
-                <option value="TOR">Toronto</option>
-              </select>
-            </div>
-            <div className="gps-form__group">
-              <label>Development scenarios</label>
-              <div className="gps-form__scenarios">
-                {DEFAULT_SCENARIO_ORDER.map((scenario) => (
-                  <label key={scenario}>
-                    <input
-                      type="checkbox"
-                      checked={selectedScenarios.includes(scenario)}
-                      onChange={() => handleScenarioToggle(scenario)}
-                    />
-                    <span>{formatScenarioLabel(scenario)}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <FeatureTogglePanel
-              preferences={featurePreferences}
-              entitlements={featureEntitlements}
-              onToggle={toggleFeature}
-              onUnlock={unlockFeature}
-              disabled={captureLoading}
-            />
-            <button
-              type="submit"
-              className="gps-form__submit"
-              disabled={captureLoading}
-            >
-              {captureLoading ? 'Capturing…' : 'Capture site'}
-            </button>
-          </form>
-          {captureError && <p className="gps-error">{captureError}</p>}
-          {captureSummary && (
-            <div className="gps-capture-meta">
-              <p>
-                Last captured:{' '}
-                <strong>
-                  {new Date(captureSummary.timestamp).toLocaleString()}
-                </strong>
-              </p>
-              <p>
-                Address: <strong>{captureSummary.address.fullAddress}</strong>
-              </p>
-              {captureSummary.address.district && (
-                <p>
-                  District: <strong>{captureSummary.address.district}</strong>
-                </p>
-              )}
-              {captureSummary.uraZoning?.zoneCode && (
-                <p>
-                  Zoning: <strong>{captureSummary.uraZoning.zoneCode}</strong>
-                </p>
-              )}
-            </div>
-          )}
+      {/* Immersive Map Background */}
+      <div
+        className={`gps-background-map ${isScanning ? 'scanning' : ''}`}
+        ref={mapContainerRef}
+        aria-label="Interactive map background"
+      />
+      {mapError && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 20,
+            left: 20,
+            zIndex: 1000,
+            background: 'rgba(0,0,0,0.8)',
+            padding: 10,
+            borderRadius: 8,
+            color: 'red',
+          }}
+        >
+          {mapError}
         </div>
-        <div className="gps-card gps-card--map">
-          <h2>Site preview</h2>
-          {mapError ? (
-            <p className="gps-error">{mapError}</p>
-          ) : (
-            <div
-              className="gps-map"
-              ref={mapContainerRef}
-              aria-label="Map preview"
-              style={{
-                height: '320px',
-                borderRadius: '12px',
-                overflow: 'hidden',
-              }}
-            />
-          )}
-          <p className="gps-map__hint">
-            Click on the map or drag the marker to update coordinates. Geocoding
-            uses Google Maps; set <code>VITE_GOOGLE_MAPS_API_KEY</code> and
-            <code>VITE_MAPBOX_TOKEN</code> in your environment.
-          </p>
-        </div>
-      </section>
-
-      <section className="gps-page__panels">
-        <div className="gps-panel">
-          <h3>Quick analysis scenarios</h3>
-          <p className="gps-panel__timestamp">
-            {quickAnalysis
-              ? `Generated ${new Date(
-                  quickAnalysis.generatedAt,
-                ).toLocaleString()}`
-              : 'Capture a property to view quick analysis.'}
-          </p>
-          {quickAnalysis ? (
-            <ul className="gps-panel__list">
-              {quickAnalysis.scenarios.map((scenario) => {
-                // Extract accuracy_bands from metrics (if present)
-                const accuracyBands = scenario.metrics.accuracy_bands
-                // Filter out accuracy_bands key from display
-                const displayMetrics = Object.entries(scenario.metrics).filter(
-                  ([key]) => key !== 'accuracy_bands',
-                )
-                return (
-                  <li key={scenario.scenario}>
-                    <div className="gps-panel__headline">
-                      <strong>{formatScenarioLabel(scenario.scenario)}</strong>
-                      <span>{scenario.headline}</span>
-                    </div>
-                    {displayMetrics.length > 0 && (
-                      <dl className="gps-panel__metrics">
-                        {displayMetrics.map(([metricKey, metricValue]) => {
-                          const band = accuracyBands?.[metricKey]
-                          return (
-                            <div key={metricKey}>
-                              <dt>{humanizeMetricKey(metricKey)}</dt>
-                              <dd>
-                                {formatMetricValue(
-                                  metricValue,
-                                  metricKey,
-                                  captureSummary?.currencySymbol,
-                                )}
-                                {band && (
-                                  <span
-                                    className="gps-panel__accuracy-band"
-                                    title={`Accuracy band: ${band.source || 'estimated'}`}
-                                  >
-                                    {' '}
-                                    ({formatAccuracyBand(band)})
-                                  </span>
-                                )}
-                              </dd>
-                            </div>
-                          )
-                        })}
-                      </dl>
-                    )}
-                    {scenario.notes.length > 0 && (
-                      <ul className="gps-panel__notes">
-                        {scenario.notes.map((note, index) => (
-                          <li key={index}>{note}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          ) : (
-            <p>
-              See plot ratio, GFA potential, heritage considerations, and
-              repositioning opportunities once capture is complete.
-            </p>
-          )}
-        </div>
-        <div className="gps-panel">
-          <h3>Market intelligence</h3>
-          {marketLoading && <p>Loading market intelligence…</p>}
-          {marketError && <p className="gps-error">{marketError}</p>}
-          {marketSummary ? (
-            <>
-              <dl className="gps-panel__metrics">
-                <div>
-                  <dt>Property type</dt>
-                  <dd>
-                    {extractReportValue(marketSummary.report, 'property_type')}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Location</dt>
-                  <dd>
-                    {extractReportValue(marketSummary.report, 'location')}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Period analysed</dt>
-                  <dd>{extractPeriod(marketSummary.report)}</dd>
-                </div>
-                <div>
-                  <dt>Transactions</dt>
-                  <dd>{extractTransactions(marketSummary.report)}</dd>
-                </div>
-              </dl>
-              <p>
-                Additional insights: comparables, supply dynamics, absorption,
-                and yield benchmarks will be rendered from the full report.
-              </p>
-            </>
-          ) : (
-            <p>
-              This panel will display comparables, supply dynamics, yield
-              benchmarks, and absorption trends returned by the market
-              intelligence service after capture.
-            </p>
-          )}
-          <p>
-            Generated:{' '}
-            <strong>
-              {marketSummary
-                ? today
-                : captureSummary
-                  ? 'fetching…'
-                  : 'pending capture'}
-            </strong>
-          </p>
-        </div>
-        <div className="gps-panel">
-          <h3>Marketing packs</h3>
-          <p>
-            Generate professional packs for developers and investors. The UI
-            will integrate with the pack generator once APIs are finalised.
-          </p>
-          <div className="gps-pack-options">
-            {PACK_TYPES.map((packType) => (
-              <button
-                key={packType}
-                type="button"
-                disabled={packLoadingType === packType}
-                onClick={() => handleGeneratePack(packType)}
-              >
-                {packLoadingType === packType
-                  ? 'Generating…'
-                  : formatPackLabel(packType)}
-              </button>
-            ))}
-          </div>
-          <div className="gps-pack-history">
-            {packError && <p className="gps-error">{packError}</p>}
-            {packs.length === 0 ? (
-              <p>No packs generated yet.</p>
-            ) : (
-              <ul>
-                {packs.map((pack) => (
-                  <li
-                    key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}`}
-                  >
-                    <strong>{formatPackLabel(pack.packType)}</strong> •{' '}
-                    {new Date(pack.generatedAt).toLocaleString()} —{' '}
-                    {pack.downloadUrl ? (
-                      <a href={pack.downloadUrl}>Download</a>
-                    ) : pack.isFallback ? (
-                      <span
-                        title={pack.warning ?? 'Preview pack generated offline'}
-                      >
-                        Preview only
-                      </span>
-                    ) : (
-                      'Download link unavailable'
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Developer features section - shown when any feature is enabled and data exists */}
-      {developerFeatures && (
-        <section className="gps-page__developer-features">
-          {/* 3D Preview Viewer */}
-          {featurePreferences.preview3D && developerFeatures.visualization && (
-            <div className="gps-panel gps-panel--preview">
-              <h3>3D Preview</h3>
-              <Suspense
-                fallback={
-                  <div className="gps-panel__loading">Loading 3D viewer...</div>
-                }
-              >
-                <Preview3DViewer
-                  previewUrl={developerFeatures.visualization.conceptMeshUrl}
-                  metadataUrl={
-                    developerFeatures.visualization.previewMetadataUrl
-                  }
-                  status={developerFeatures.visualization.status}
-                  thumbnailUrl={developerFeatures.visualization.thumbnailUrl}
-                />
-              </Suspense>
-              {developerFeatures.visualization.notes.length > 0 && (
-                <ul className="gps-panel__notes">
-                  {developerFeatures.visualization.notes.map((note, index) => (
-                    <li key={index}>{note}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {/* Asset Optimization Summary */}
-          {featurePreferences.assetOptimization &&
-            developerFeatures.optimizations.length > 0 && (
-              <div className="gps-panel">
-                <AssetOptimizationSummary
-                  optimizations={developerFeatures.optimizations}
-                  currencySymbol={captureSummary?.currencySymbol}
-                />
-              </div>
-            )}
-
-          {/* Financial Summary */}
-          {featurePreferences.financialSummary &&
-            developerFeatures.financialSummary && (
-              <div className="gps-panel">
-                <FinancialSummaryCard
-                  summary={developerFeatures.financialSummary}
-                  currencySymbol={captureSummary?.currencySymbol}
-                />
-              </div>
-            )}
-
-          {/* Heritage Context */}
-          {featurePreferences.heritageContext &&
-            developerFeatures.heritageContext && (
-              <div className="gps-panel">
-                <HeritageContextCard
-                  context={developerFeatures.heritageContext}
-                />
-              </div>
-            )}
-        </section>
       )}
 
-      <section className="gps-page__captures">
-        <div className="gps-panel">
-          <h3>Recent captures</h3>
-          {capturedSites.length === 0 ? (
-            <p>Capture sites to build a running history.</p>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Property</th>
-                  <th>District</th>
-                  <th>Primary scenario</th>
-                  <th>Captured</th>
-                  <th>Pack status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {capturedSites.map((site) => (
-                  <tr key={`${site.propertyId}-${site.capturedAt}`}>
-                    <td>{site.address}</td>
-                    <td>{site.district ?? '—'}</td>
-                    <td>
-                      {site.scenario ? formatScenarioLabel(site.scenario) : '—'}
-                    </td>
-                    <td>{new Date(site.capturedAt).toLocaleString()}</td>
-                    <td>
-                      {packs.find((pack) => pack.propertyId === site.propertyId)
-                        ? 'Pack generated'
-                        : 'Pending'}
-                    </td>
-                  </tr>
+      {/* Content Overlay */}
+      <div className="gps-content-overlay">
+        <section className="gps-page__summary">
+          {/* LEFT PANEL: Glass Capture Card */}
+          <div className={`capture-card-glass ${isScanning ? 'dimmed' : ''}`}>
+            <div>
+              <h2>Capture a property</h2>
+              <p>Launch a new acquisition mission.</p>
+            </div>
+
+            <form className="gps-form" onSubmit={handleCapture}>
+              {/* Address Input (Floating Ghost) */}
+              <div className="gps-form__group" style={{ gridColumn: '1 / -1' }}>
+                <label htmlFor="address">Target Address / Location</label>
+                <div className="gps-form__address-row">
+                  <input
+                    id="address"
+                    name="address"
+                    className="gps-input-ghost"
+                    value={address}
+                    onChange={(event) => setAddress(event.target.value)}
+                    placeholder="Enter address or drop pin..."
+                    autoComplete="off"
+                  />
+                  <div className="gps-form__address-actions">
+                    <button
+                      type="button"
+                      onClick={handleForwardGeocode}
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        color: '#fff',
+                        border: 'none',
+                      }}
+                    >
+                      Geocode
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleReverseGeocode}
+                      style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        color: '#fff',
+                        border: 'none',
+                      }}
+                    >
+                      Reverse
+                    </button>
+                  </div>
+                </div>
+                {geocodeError && <p className="gps-error">{geocodeError}</p>}
+              </div>
+
+              {/* Coordinates (Ghost) */}
+              <div className="gps-form__group">
+                <label htmlFor="latitude">LAT</label>
+                <input
+                  id="latitude"
+                  name="latitude"
+                  className="gps-input-ghost"
+                  value={latitude}
+                  onChange={(event) => setLatitude(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="gps-form__group">
+                <label htmlFor="longitude">LONG</label>
+                <input
+                  id="longitude"
+                  name="longitude"
+                  className="gps-input-ghost"
+                  value={longitude}
+                  onChange={(event) => setLongitude(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="gps-form__group">
+                <label htmlFor="jurisdictionCode">JURISDICTION</label>
+                <select
+                  id="jurisdictionCode"
+                  name="jurisdictionCode"
+                  className="gps-input-ghost"
+                  value={jurisdictionCode}
+                  onChange={(event) => setJurisdictionCode(event.target.value)}
+                  required
+                  style={{ color: '#fff', background: 'transparent' }}
+                >
+                  <option value="SG" style={{ color: '#000' }}>
+                    Singapore
+                  </option>
+                  <option value="HK" style={{ color: '#000' }}>
+                    Hong Kong
+                  </option>
+                  <option value="NZ" style={{ color: '#000' }}>
+                    New Zealand
+                  </option>
+                  <option value="SEA" style={{ color: '#000' }}>
+                    Seattle / King County
+                  </option>
+                  <option value="TOR" style={{ color: '#000' }}>
+                    Toronto
+                  </option>
+                </select>
+              </div>
+
+              {/* Gamified Scenarios Tiles */}
+              <div className="gps-form__group" style={{ gridColumn: '1 / -1' }}>
+                <label>MISSION SCENARIO</label>
+                <div className="gps-scenarios-grid">
+                  {DEFAULT_SCENARIO_ORDER.map((scenario) => {
+                    const isSelected = selectedScenarios.includes(scenario)
+                    return (
+                      <div
+                        key={scenario}
+                        className={`gps-scenario-tile ${isSelected ? 'gps-scenario-tile--selected' : ''}`}
+                        onClick={() => handleScenarioToggle(scenario)}
+                      >
+                        {getScenarioIcon(scenario)}
+                        <span>{formatScenarioLabel(scenario)}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <FeatureTogglePanel
+                preferences={featurePreferences}
+                entitlements={featureEntitlements}
+                onToggle={toggleFeature}
+                onUnlock={unlockFeature}
+                disabled={captureLoading}
+              />
+
+              {/* Scan & Analyze Button */}
+              <button
+                type="submit"
+                className="gps-scan-button"
+                disabled={captureLoading}
+              >
+                {captureLoading ? (
+                  <>
+                    <div className="gps-spinner"></div>
+                    <span>Scanning Object...</span>
+                  </>
+                ) : (
+                  <>
+                    <RadarIcon />
+                    Scan & Analyze
+                  </>
+                )}
+              </button>
+            </form>
+
+            {captureError && <p className="gps-error">{captureError}</p>}
+            {captureSummary && (
+              <div
+                className="gps-capture-meta"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+              >
+                <p>
+                  Target Locked:{' '}
+                  <strong>{captureSummary.address.fullAddress}</strong>
+                </p>
+                <p>
+                  Captured:{' '}
+                  {new Date(captureSummary.timestamp).toLocaleTimeString()}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT PANEL: HUD Widgets */}
+          <div className="gps-hud-group">
+            {/* Widget 1: Quick Analysis */}
+            <div className={`gps-hud-card ${!quickAnalysis ? 'locked' : ''}`}>
+              <h3>
+                Quick Analysis
+                {!quickAnalysis && <LockIcon fontSize="small" />}
+              </h3>
+
+              {quickAnalysis ? (
+                <div className="gps-hud-content">
+                  <ul className="gps-panel__list">
+                    {quickAnalysis.scenarios.slice(0, 1).map((scenario) => {
+                      // Show only first scenario for compactness in HUD
+                      const displayMetrics = Object.entries(scenario.metrics)
+                        .filter(([key]) => key !== 'accuracy_bands')
+                        .slice(0, 3)
+                      return (
+                        <li key={scenario.scenario}>
+                          <div className="gps-panel__headline">
+                            <strong>
+                              {formatScenarioLabel(scenario.scenario)}
+                            </strong>
+                          </div>
+                          {displayMetrics.length > 0 && (
+                            <dl className="gps-panel__metrics">
+                              {displayMetrics.map(([k, v]) => (
+                                <div key={k}>
+                                  <dt>{humanizeMetricKey(k)}</dt>
+                                  <dd>
+                                    {formatMetricValue(
+                                      v,
+                                      k,
+                                      captureSummary?.currencySymbol,
+                                    )}
+                                  </dd>
+                                </div>
+                              ))}
+                            </dl>
+                          )}
+                        </li>
+                      )
+                    })}
+                    {quickAnalysis.scenarios.length > 1 && (
+                      <p
+                        style={{
+                          fontSize: '0.8rem',
+                          color: '#94a3b8',
+                          fontStyle: 'italic',
+                          marginTop: '0.5rem',
+                        }}
+                      >
+                        + {quickAnalysis.scenarios.length - 1} more scenarios
+                      </p>
+                    )}
+                  </ul>
+                </div>
+              ) : (
+                <div className="gps-hud-locked-overlay">
+                  <span>Awaiting Scan</span>
+                </div>
+              )}
+            </div>
+
+            {/* Widget 2: Market Intelligence */}
+            <div className={`gps-hud-card ${!marketSummary ? 'locked' : ''}`}>
+              <h3>
+                Market Intelligence
+                {!marketSummary && <LockIcon fontSize="small" />}
+              </h3>
+              {marketLoading ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: '#94a3b8',
+                    padding: '1rem',
+                  }}
+                >
+                  <div
+                    className="gps-spinner"
+                    style={{ width: 16, height: 16 }}
+                  ></div>
+                  Decrypting market data...
+                </div>
+              ) : marketSummary ? (
+                <div className="gps-hud-content">
+                  <dl className="gps-panel__metrics">
+                    <div>
+                      <dt>Type</dt>
+                      <dd>
+                        {extractReportValue(
+                          marketSummary.report,
+                          'property_type',
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Zone</dt>
+                      <dd>
+                        {extractReportValue(marketSummary.report, 'location')}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Trans</dt>
+                      <dd>
+                        {extractTransactions(marketSummary.report)} recent
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              ) : (
+                <div className="gps-hud-locked-overlay">
+                  <span>Downlink Offline</span>
+                </div>
+              )}
+            </div>
+
+            {/* Widget 3: Marketing Packs */}
+            <div className={`gps-hud-card ${!captureSummary ? 'locked' : ''}`}>
+              <h3>
+                Marketing Packs
+                {!captureSummary && <LockIcon fontSize="small" />}
+              </h3>
+              <div className="gps-pack-grid gps-hud-content">
+                {PACK_TYPES.map((packType) => (
+                  <button
+                    key={packType}
+                    type="button"
+                    className="gps-pack-btn"
+                    disabled={packLoadingType === packType || !captureSummary}
+                    onClick={() => handleGeneratePack(packType)}
+                  >
+                    {packLoadingType === packType ? (
+                      <div
+                        className="gps-spinner"
+                        style={{ width: 14, height: 14 }}
+                      ></div>
+                    ) : packType === 'investment' || packType === 'sales' ? (
+                      <PictureAsPdfIcon />
+                    ) : (
+                      <DescriptionIcon />
+                    )}
+                    <span>{formatPackLabel(packType).split(' ')[0]}</span>
+                  </button>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </section>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Developer features section */}
+        {developerFeatures && (
+          <section className="gps-page__developer-features">
+            {/* 3D Preview Viewer */}
+            {featurePreferences.preview3D &&
+              developerFeatures.visualization && (
+                <div className="gps-panel gps-panel--preview">
+                  <h3>3D Preview</h3>
+                  <Suspense
+                    fallback={
+                      <div className="gps-panel__loading">
+                        Loading 3D viewer...
+                      </div>
+                    }
+                  >
+                    <Preview3DViewer
+                      previewUrl={
+                        developerFeatures.visualization.conceptMeshUrl
+                      }
+                      metadataUrl={
+                        developerFeatures.visualization.previewMetadataUrl
+                      }
+                      status={developerFeatures.visualization.status}
+                      thumbnailUrl={
+                        developerFeatures.visualization.thumbnailUrl
+                      }
+                    />
+                  </Suspense>
+                  {developerFeatures.visualization.notes.length > 0 && (
+                    <ul className="gps-panel__notes">
+                      {developerFeatures.visualization.notes.map(
+                        (note, index) => (
+                          <li key={index}>{note}</li>
+                        ),
+                      )}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+            {/* Asset Optimization Summary */}
+            {featurePreferences.assetOptimization &&
+              developerFeatures.optimizations.length > 0 && (
+                <div className="gps-panel">
+                  <AssetOptimizationSummary
+                    optimizations={developerFeatures.optimizations}
+                    currencySymbol={captureSummary?.currencySymbol}
+                  />
+                </div>
+              )}
+
+            {/* Financial Summary */}
+            {featurePreferences.financialSummary &&
+              developerFeatures.financialSummary && (
+                <div className="gps-panel">
+                  <FinancialSummaryCard
+                    summary={developerFeatures.financialSummary}
+                    currencySymbol={captureSummary?.currencySymbol}
+                  />
+                </div>
+              )}
+
+            {/* Heritage Context */}
+            {featurePreferences.heritageContext &&
+              developerFeatures.heritageContext && (
+                <div className="gps-panel">
+                  <HeritageContextCard
+                    context={developerFeatures.heritageContext}
+                  />
+                </div>
+              )}
+          </section>
+        )}
+
+        {/* Recent Captures */}
+        <section className="gps-page__captures">
+          <div className="gps-panel">
+            <h3>Mission Log</h3>
+            {capturedSites.length === 0 ? (
+              <p style={{ fontStyle: 'italic', color: '#94a3b8' }}>
+                No prior missions.
+              </p>
+            ) : (
+              <table style={{ color: '#ccc' }}>
+                <thead>
+                  <tr>
+                    <th>Target</th>
+                    <th>District</th>
+                    <th>Scenario</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {capturedSites.map((site) => (
+                    <tr key={`${site.propertyId}-${site.capturedAt}`}>
+                      <td>{site.address}</td>
+                      <td>{site.district ?? '-'}</td>
+                      <td>
+                        {site.scenario
+                          ? formatScenarioLabel(site.scenario)
+                          : '-'}
+                      </td>
+                      <td>{new Date(site.capturedAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }
@@ -878,24 +975,6 @@ function extractTransactions(report: Record<string, unknown>) {
     if (typeof value === 'number') {
       return value.toLocaleString()
     }
-  }
-  return '—'
-}
-
-function extractPeriod(report: Record<string, unknown>) {
-  const period = report.period
-  if (
-    period &&
-    typeof period === 'object' &&
-    ('start' in period || 'end' in period)
-  ) {
-    const { start, end } = period as { start?: string; end?: string }
-    const formattedStart = start ? new Date(start).toLocaleDateString() : null
-    const formattedEnd = end ? new Date(end).toLocaleDateString() : null
-    if (formattedStart && formattedEnd) {
-      return `${formattedStart} – ${formattedEnd}`
-    }
-    return formattedStart ?? formattedEnd ?? '—'
   }
   return '—'
 }

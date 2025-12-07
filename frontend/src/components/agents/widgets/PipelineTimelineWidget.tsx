@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from 'react'
 import {
   Box,
   Paper,
@@ -6,8 +6,8 @@ import {
   Grid,
   Card,
   CardContent,
-  Chip
-} from '@mui/material';
+  Chip,
+} from '@mui/material'
 import {
   Timeline,
   TimelineItem,
@@ -15,29 +15,29 @@ import {
   TimelineConnector,
   TimelineContent,
   TimelineDot,
-  TimelineOppositeContent
-} from '@mui/lab';
-import type { TimelineDotProps } from '@mui/lab/TimelineDot';
-import BusinessIcon from '@mui/icons-material/Business';
-import ConstructionIcon from '@mui/icons-material/Construction';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import { format } from 'date-fns';
-import { SupplyDynamics, MajorDevelopment } from '../../../types/market';
-import { PropertyType } from '../../../types/property';
+  TimelineOppositeContent,
+} from '@mui/lab'
+import type { TimelineDotProps } from '@mui/lab/TimelineDot'
+import BusinessIcon from '@mui/icons-material/Business'
+import ConstructionIcon from '@mui/icons-material/Construction'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ScheduleIcon from '@mui/icons-material/Schedule'
+import { format } from 'date-fns'
+import { SupplyDynamics, MajorDevelopment } from '../../../types/market'
+import { PropertyType } from '../../../types/property'
 
 interface PipelineTimelineWidgetProps {
-  supplyDynamics?: SupplyDynamics | null;
-  propertyType: PropertyType;
+  supplyDynamics?: SupplyDynamics | null
+  propertyType: PropertyType
 }
 
 const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
   supplyDynamics,
-  propertyType
+  propertyType,
 }) => {
   const supplyByYear = useMemo(() => {
     if (!supplyDynamics) {
-      return [];
+      return []
     }
 
     return Object.entries(supplyDynamics.supply_by_year || {})
@@ -45,78 +45,85 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
         year: Number(year),
         totalGFA: entry.total_gfa,
         totalUnits: entry.total_units,
-        projectCount: entry.projects
+        projectCount: entry.projects,
       }))
-      .sort((a, b) => a.year - b.year);
-  }, [supplyDynamics]);
+      .sort((a, b) => a.year - b.year)
+  }, [supplyDynamics])
 
   const majorDevelopments = useMemo(() => {
     if (!supplyDynamics) {
-      return [] as MajorDevelopment[];
+      return [] as MajorDevelopment[]
     }
 
     return [...supplyDynamics.major_developments].sort((a, b) => {
-      if (!a.completion && !b.completion) return 0;
-      if (!a.completion) return 1;
-      if (!b.completion) return -1;
-      return new Date(a.completion).getTime() - new Date(b.completion).getTime();
-    });
-  }, [supplyDynamics]);
+      if (!a.completion && !b.completion) return 0
+      if (!a.completion) return 1
+      if (!b.completion) return -1
+      return new Date(a.completion).getTime() - new Date(b.completion).getTime()
+    })
+  }, [supplyDynamics])
 
   const formatGFA = (value?: number | null) => {
-    if (!value) return '0';
-    return new Intl.NumberFormat('en-SG', { maximumFractionDigits: 0 }).format(value);
-  };
+    if (!value) return '0'
+    return new Intl.NumberFormat('en-SG', { maximumFractionDigits: 0 }).format(
+      value,
+    )
+  }
 
   const statusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircleIcon />;
+        return <CheckCircleIcon />
       case 'under_construction':
-        return <ConstructionIcon />;
+        return <ConstructionIcon />
       case 'approved':
       case 'planned':
-        return <ScheduleIcon />;
+        return <ScheduleIcon />
       default:
-        return <BusinessIcon />;
+        return <BusinessIcon />
     }
-  };
+  }
 
-  type TimelineColor = NonNullable<TimelineDotProps['color']>;
+  type TimelineColor = NonNullable<TimelineDotProps['color']>
 
   const statusColorTimeline = (status: string): TimelineColor => {
     switch (status) {
       case 'completed':
-        return 'success';
+        return 'success'
       case 'under_construction':
-        return 'warning';
+        return 'warning'
       case 'approved':
-        return 'info';
+        return 'info'
       case 'planned':
-        return 'grey';
+        return 'grey'
       default:
-        return 'grey';
+        return 'grey'
     }
-  };
+  }
 
   const statusColorChip = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'success' as const;
+        return 'success' as const
       case 'under_construction':
-        return 'warning' as const;
+        return 'warning' as const
       case 'approved':
-        return 'info' as const;
+        return 'info' as const
       case 'planned':
-        return 'default' as const;
+        return 'default' as const
       default:
-        return 'default' as const;
+        return 'default' as const
     }
-  };
+  }
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Typography variant="h6">Supply Pipeline</Typography>
         <Typography variant="caption" color="textSecondary">
           {propertyType.replace(/_/g, ' ').toUpperCase()}
@@ -125,26 +132,40 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
 
       {supplyByYear.length > 0 ? (
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          {supplyByYear.slice(0, 3).map(({ year, totalGFA, totalUnits, projectCount }) => (
-            <Grid item xs={12} sm={4} key={year}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom variant="body2">
-                    {year} Supply
-                  </Typography>
-                  <Typography variant="h6" gutterBottom>
-                    {formatGFA(totalGFA)} sqm
-                  </Typography>
-                  <Box display="flex" gap={1} flexWrap="wrap">
-                    <Chip size="small" label={`${projectCount} projects`} variant="outlined" />
-                    {totalUnits > 0 && (
-                      <Chip size="small" label={`${formatGFA(totalUnits)} units`} variant="outlined" />
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          {supplyByYear
+            .slice(0, 3)
+            .map(({ year, totalGFA, totalUnits, projectCount }) => (
+              <Grid item xs={12} sm={4} key={year}>
+                <Card>
+                  <CardContent>
+                    <Typography
+                      color="textSecondary"
+                      gutterBottom
+                      variant="body2"
+                    >
+                      {year} Supply
+                    </Typography>
+                    <Typography variant="h6" gutterBottom>
+                      {formatGFA(totalGFA)} sqm
+                    </Typography>
+                    <Box display="flex" gap={1} flexWrap="wrap">
+                      <Chip
+                        size="small"
+                        label={`${projectCount} projects`}
+                        variant="outlined"
+                      />
+                      {totalUnits > 0 && (
+                        <Chip
+                          size="small"
+                          label={`${formatGFA(totalUnits)} units`}
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
         </Grid>
       ) : (
         <Paper sx={{ p: 3, mb: 3 }}>
@@ -160,13 +181,15 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
         </Typography>
 
         {majorDevelopments.length === 0 ? (
-          <Typography color="textSecondary">No development projects found.</Typography>
+          <Typography color="textSecondary">
+            No development projects found.
+          </Typography>
         ) : (
           <Timeline position="alternate">
             {majorDevelopments.map((project, index) => {
               const completionLabel = project.completion
                 ? format(new Date(project.completion), 'MMM yyyy')
-                : 'TBC';
+                : 'TBC'
 
               return (
                 <TimelineItem key={`${project.name}-${index}`}>
@@ -177,7 +200,9 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                     <TimelineDot color={statusColorTimeline(project.status)}>
                       {statusIcon(project.status)}
                     </TimelineDot>
-                    {index < majorDevelopments.length - 1 && <TimelineConnector />}
+                    {index < majorDevelopments.length - 1 && (
+                      <TimelineConnector />
+                    )}
                   </TimelineSeparator>
                   <TimelineContent>
                     <Card>
@@ -186,7 +211,11 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                           {project.name}
                         </Typography>
                         {project.developer && (
-                          <Typography variant="body2" color="textSecondary" gutterBottom>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            gutterBottom
+                          >
                             {project.developer}
                           </Typography>
                         )}
@@ -197,7 +226,11 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                             color={statusColorChip(project.status)}
                           />
                           {project.units ? (
-                            <Chip size="small" label={`${project.units} units`} variant="outlined" />
+                            <Chip
+                              size="small"
+                              label={`${project.units} units`}
+                              variant="outlined"
+                            />
                           ) : null}
                         </Box>
                         <Typography variant="body2">
@@ -207,13 +240,13 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                     </Card>
                   </TimelineContent>
                 </TimelineItem>
-              );
+              )
             })}
           </Timeline>
         )}
       </Paper>
     </Box>
-  );
-};
+  )
+}
 
-export default PipelineTimelineWidget;
+export default PipelineTimelineWidget

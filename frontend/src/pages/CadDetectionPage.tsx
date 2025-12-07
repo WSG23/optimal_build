@@ -428,7 +428,8 @@ export function CadDetectionPage() {
   }, [activeSeverities, customSeverityPreset])
 
   const statusFilterSummary = useMemo(() => {
-    const pendingOnly = activeLayers.length === 1 && activeLayers[0] === 'pending'
+    const pendingOnly =
+      activeLayers.length === 1 && activeLayers[0] === 'pending'
     const isAll =
       activeLayers.length === ALL_LAYERS.length &&
       ALL_LAYERS.every((status) => activeLayers.includes(status))
@@ -676,7 +677,8 @@ export function CadDetectionPage() {
             className="cad-detection__filters-pill cad-detection__filters-pill--clickable"
             onClick={() => {
               setActiveLayers((current) => {
-                const pendingOnly = current.length === 1 && current[0] === 'pending'
+                const pendingOnly =
+                  current.length === 1 && current[0] === 'pending'
                 const isAll =
                   current.length === ALL_LAYERS.length &&
                   ALL_LAYERS.every((status) => current.includes(status))

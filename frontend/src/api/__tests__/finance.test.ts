@@ -122,7 +122,9 @@ describe('finance API mapping', () => {
       expect(summary.capitalStack?.slices.length).toBe(2)
       expect(summary.capitalStack?.slices[0]?.category).toBe('equity')
       expect(summary.drawdownSchedule?.entries.length).toBe(2)
-      expect(summary.drawdownSchedule?.entries[1]?.outstandingDebt).toBe('300.00')
+      expect(summary.drawdownSchedule?.entries[1]?.outstandingDebt).toBe(
+        '300.00',
+      )
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -132,7 +134,9 @@ describe('finance API mapping', () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async (input) => {
       const url = typeof input === 'string' ? input : input.toString()
-      expect(url.includes('/api/v1/finance/scenarios?project_id=401')).toBe(true)
+      expect(url.includes('/api/v1/finance/scenarios?project_id=401')).toBe(
+        true,
+      )
       return {
         ok: true,
         status: 200,

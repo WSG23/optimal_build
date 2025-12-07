@@ -20,13 +20,34 @@ depends_on = None
 def upgrade():
     # Create Enums manually first to be safe
     op.execute(
-        "CREATE TYPE agencycode AS ENUM ('URA', 'BCA', 'SCDF', 'NEA', 'LTA', 'NPARKS', 'PUB', 'SLA')"
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agencycode') THEN
+                CREATE TYPE agencycode AS ENUM ('URA', 'BCA', 'SCDF', 'NEA', 'LTA', 'NPARKS', 'PUB', 'SLA');
+            END IF;
+        END$$;
+        """
     )
     op.execute(
-        "CREATE TYPE submissiontype AS ENUM ('DC', 'BP', 'TOP', 'CSC', 'WAIVER', 'CONSULTATION')"
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'submissiontype') THEN
+                CREATE TYPE submissiontype AS ENUM ('DC', 'BP', 'TOP', 'CSC', 'WAIVER', 'CONSULTATION');
+            END IF;
+        END$$;
+        """
     )
     op.execute(
-        "CREATE TYPE submissionstatus AS ENUM ('DRAFT', 'SUBMITTED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'RFI')"
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'submissionstatus') THEN
+                CREATE TYPE submissionstatus AS ENUM ('DRAFT', 'SUBMITTED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'RFI');
+            END IF;
+        END$$;
+        """
     )
 
     # Create regulatory_agencies table
@@ -35,17 +56,7 @@ def upgrade():
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column(
             "code",
-            sa.Enum(
-                "URA",
-                "BCA",
-                "SCDF",
-                "NEA",
-                "LTA",
-                "NPARKS",
-                "PUB",
-                "SLA",
-                name="agencycode",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
@@ -65,29 +76,13 @@ def upgrade():
         sa.Column("agency_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column(
             "submission_type",
-            sa.Enum(
-                "DC",
-                "BP",
-                "TOP",
-                "CSC",
-                "WAIVER",
-                "CONSULTATION",
-                name="submissiontype",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("submission_no", sa.String(), nullable=True),
         sa.Column(
             "status",
-            sa.Enum(
-                "DRAFT",
-                "SUBMITTED",
-                "IN_REVIEW",
-                "APPROVED",
-                "REJECTED",
-                "RFI",
-                name="submissionstatus",
-            ),
+            sa.String(),
             nullable=False,
         ),
         sa.Column("title", sa.String(), nullable=False),
@@ -122,14 +117,10 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_index(
-        op.f("ix_authority_submissions_agency_id"), table_name="authority_submissions"
-    )
-    op.drop_index(
-        op.f("ix_authority_submissions_project_id"), table_name="authority_submissions"
-    )
-    op.drop_table("authority_submissions")
-    op.drop_table("regulatory_agencies")
+    op.execute('DROP INDEX IF EXISTS "ix_authority_submissions_agency_id"')
+    op.execute('DROP INDEX IF EXISTS "ix_authority_submissions_project_id"')
+    op.execute("DROP TABLE IF EXISTS authority_submissions")
+    op.execute("DROP TABLE IF EXISTS regulatory_agencies")
 
     op.execute("DROP TYPE submissionstatus")
     op.execute("DROP TYPE submissiontype")

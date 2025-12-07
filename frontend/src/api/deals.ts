@@ -149,7 +149,9 @@ export interface DealStageChangePayload {
   occurredAt?: string | null
 }
 
-function mapDealWithTimeline(payload: Record<string, unknown>): DealWithTimeline {
+function mapDealWithTimeline(
+  payload: Record<string, unknown>,
+): DealWithTimeline {
   const deal = mapDeal(payload)
   const timelinePayload = Array.isArray(payload.timeline)
     ? (payload.timeline as Record<string, unknown>[])

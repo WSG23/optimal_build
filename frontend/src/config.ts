@@ -22,12 +22,14 @@ if (!parsedEnv.success) {
   console.error('❌ Invalid environment variables:', parsedEnv.error.format())
   // In production, we might want to throw to prevent startup with bad config
   if (import.meta.env.PROD) {
-      throw new Error('Invalid environment variables')
+    throw new Error('Invalid environment variables')
   }
 }
 
 export const config = {
-  apiBaseUrl: parsedEnv.success ? parsedEnv.data.VITE_API_BASE_URL : 'http://localhost:8000',
+  apiBaseUrl: parsedEnv.success
+    ? parsedEnv.data.VITE_API_BASE_URL
+    : 'http://localhost:8000',
   mode: parsedEnv.success ? parsedEnv.data.MODE : 'development',
   isProduction: import.meta.env.PROD,
   isDev: import.meta.env.DEV,

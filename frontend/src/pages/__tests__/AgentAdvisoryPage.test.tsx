@@ -77,12 +77,15 @@ const feedbackRecord = {
 }
 
 describe('AgentAdvisoryPage', () => {
-
   const originalFetch = globalThis.fetch
 
   beforeEach(() => {
     cleanup()
-    window.history.replaceState(null, '', '/agents/advisory?propertyId=test-property')
+    window.history.replaceState(
+      null,
+      '',
+      '/agents/advisory?propertyId=test-property',
+    )
 
     let _callCount = 0
     globalThis.fetch = (async (input: RequestInfo, init?: RequestInit) => {
@@ -148,7 +151,8 @@ describe('AgentAdvisoryPage', () => {
     // I will assume the ambiguity comes from 'PageMiniNav' having one (e.g. language).
     // The feedback form is likely the second one or main one.
 
-    fireEvent.change(selects[selects.length - 1], { // Usually form is main content
+    fireEvent.change(selects[selects.length - 1], {
+      // Usually form is main content
       target: { value: 'positive' },
     })
     fireEvent.change(screen.getByRole('textbox'), {

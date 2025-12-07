@@ -78,9 +78,16 @@ export function ManualInspectionControls({
           >
             Manual inspection capture
           </h3>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563', lineHeight: 1.5 }}>
-            Log a fresh site visit or update the latest inspection without waiting for
-            automated sync.
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.9rem',
+              color: '#4b5563',
+              lineHeight: 1.5,
+            }}
+          >
+            Log a fresh site visit or update the latest inspection without
+            waiting for automated sync.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -148,13 +155,16 @@ export function ManualInspectionControls({
               {statusItems.map((item, index) => (
                 <span key={item.label}>
                   {item.label}: <strong>{item.value}</strong>
-                  {index < statusItems.length - 1 && <span style={{ margin: '0 0.25rem' }}>•</span>}
+                  {index < statusItems.length - 1 && (
+                    <span style={{ margin: '0 0.25rem' }}>•</span>
+                  )}
                 </span>
               ))}
             </>
           ) : (
             <span>
-              No manual inspections logged yet - use &quot;Log inspection&quot; to create one.
+              No manual inspections logged yet - use &quot;Log inspection&quot;
+              to create one.
             </span>
           )}
         </div>

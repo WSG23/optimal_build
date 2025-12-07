@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Snackbar, Alert } from '@mui/material'
 
 import { AppLayout } from '../../App'
-import { generateProfessionalPack, type ProfessionalPackType } from '../../api/agents'
+import {
+  generateProfessionalPack,
+  type ProfessionalPackType,
+} from '../../api/agents'
 import { useTranslation } from '../../i18n'
 import { useRouterLocation } from '../../router'
 
@@ -14,13 +17,14 @@ import {
   PackGenerationPanel,
   ResultsPanel,
   FeasibilityLayout,
-  SmartSearchBar,
+  SmartIntelligenceField,
   PackGrid,
-  ScenarioFAB,
   ScenarioHistorySidebar,
   GenerativeDesignPanel,
   AIAssistantSidebar,
-  type HistoryItem
+  ImmersiveMap,
+  ScenarioSelector,
+  type HistoryItem,
 } from './components'
 
 // Import MUI Dialog components for the "Flipbook" preview
@@ -30,14 +34,28 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Typography
+  Typography,
 } from '@mui/material'
-import { Description as PdfIcon, Download as DownloadIcon, History as HistoryIcon, SmartToy } from '@mui/icons-material'
-import { useAssumptions, useFeasibilityCompute, usePackGeneration, useFinancials, useAIAssistant } from './hooks'
+import {
+  Description as PdfIcon,
+  Download as DownloadIcon,
+  History as HistoryIcon,
+  SmartToy,
+  Radar,
+} from '@mui/icons-material'
+import {
+  useAssumptions,
+  useFeasibilityCompute,
+  usePackGeneration,
+  useFinancials,
+  useAIAssistant,
+} from './hooks'
 import type { PendingPayload, GenerativeStrategy } from './types'
-import { createDecimalFormatter, createNumberFormatter } from './utils/formatters'
-
-import { PropertyLocationMap } from '@/app/pages/site-acquisition/components/map/PropertyLocationMap'
+import {
+  createDecimalFormatter,
+  createNumberFormatter,
+} from './utils/formatters'
+import '../../styles/feasibility.css'
 
 interface FeasibilityWizardProps {
   generatePackFn?: typeof generateProfessionalPack
@@ -58,7 +76,9 @@ export function FeasibilityWizard({
   const [landUseInput, setLandUseInput] = useState('Mixed Use')
 
   // Copy state
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>(
+    'idle',
+  )
   const copyResetRef = useRef<number | null>(null)
 
   // History State
@@ -70,7 +90,8 @@ export function FeasibilityWizard({
   const { messages, isTyping, sendMessage } = useAIAssistant()
 
   // Generative State
-  const [generativeStrategy, setGenerativeStrategy] = useState<GenerativeStrategy | null>(null)
+  const [generativeStrategy, setGenerativeStrategy] =
+    useState<GenerativeStrategy | null>(null)
 
   // Custom hooks
   const {
@@ -83,10 +104,10 @@ export function FeasibilityWizard({
 
   // Financial hooks
   const {
-      financialInputs,
-      financialErrors,
-      appliedFinancials,
-      handleFinancialChange,
+    financialInputs,
+    financialErrors,
+    appliedFinancials,
+    handleFinancialChange,
   } = useFinancials()
 
   const {
@@ -145,8 +166,6 @@ export function FeasibilityWizard({
     [i18n.language],
   )
 
-
-
   // State for Flipbook Preview Modal
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [packGenerating, setPackGenerating] = useState(false)
@@ -154,7 +173,7 @@ export function FeasibilityWizard({
   const handleGeneratePack = async () => {
     setPackGenerating(true)
     // Simulate generation delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
     setPackGenerating(false)
     setIsPreviewOpen(true)
   }
@@ -171,25 +190,26 @@ export function FeasibilityWizard({
   useEffect(() => {
     if (!generativeStrategy) return
 
-    const syntheticEvent = (val: string) => ({ target: { value: val } } as ChangeEvent<HTMLInputElement>)
+    const syntheticEvent = (val: string) =>
+      ({ target: { value: val } }) as ChangeEvent<HTMLInputElement>
 
     switch (generativeStrategy) {
-        case 'max_density':
-            handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.92'))
-            handleAssumptionChange('typFloorToFloorM')(syntheticEvent('3.2'))
-            break
-        case 'balanced':
-            handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.85'))
-            handleAssumptionChange('typFloorToFloorM')(syntheticEvent('3.5'))
-            break
-        case 'iconic':
-            handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.75'))
-            handleAssumptionChange('typFloorToFloorM')(syntheticEvent('4.0')) // Higher ceilings
-            break
-        case 'green_focus':
-            handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.70'))
-            // Maybe structureType = mass_timber if we could
-            break
+      case 'max_density':
+        handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.92'))
+        handleAssumptionChange('typFloorToFloorM')(syntheticEvent('3.2'))
+        break
+      case 'balanced':
+        handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.85'))
+        handleAssumptionChange('typFloorToFloorM')(syntheticEvent('3.5'))
+        break
+      case 'iconic':
+        handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.75'))
+        handleAssumptionChange('typFloorToFloorM')(syntheticEvent('4.0')) // Higher ceilings
+        break
+      case 'green_focus':
+        handleAssumptionChange('efficiencyRatio')(syntheticEvent('0.70'))
+        // Maybe structureType = mass_timber if we could
+        break
     }
     // Set to null to avoid infinite loops if user manually changes back,
     // or keep it selected to show active mode?
@@ -222,17 +242,17 @@ export function FeasibilityWizard({
 
   useEffect(() => {
     if (status === 'success' && result && payload) {
-      setHistory(prev => {
+      setHistory((prev) => {
         // Prevent duplicate saves for same payload
         const last = prev[0]
         if (last && JSON.stringify(last.payload) === JSON.stringify(payload)) {
           return prev
         }
         const newItem: HistoryItem = {
-           id: Date.now().toString(),
-           timestamp: new Date(),
-           payload: payload,
-           result: result
+          id: Date.now().toString(),
+          timestamp: new Date(),
+          payload: payload,
+          result: result,
         }
         return [newItem, ...prev]
       })
@@ -282,7 +302,9 @@ export function FeasibilityWizard({
       }
 
       if (isNaN(siteArea) || siteArea <= 0) {
-        setAddressError(t('wizard.form.errors.invalidSiteArea') || 'Invalid site area')
+        setAddressError(
+          t('wizard.form.errors.invalidSiteArea') || 'Invalid site area',
+        )
         return
       }
 
@@ -300,10 +322,21 @@ export function FeasibilityWizard({
         interestRatePercent: appliedFinancials.interestRatePercent,
         targetMarginPercent: appliedFinancials.targetMarginPercent,
       }
-      console.log('FeasibilityWizard: handleSubmit setting payload:', newPayload)
+      console.log(
+        'FeasibilityWizard: handleSubmit setting payload:',
+        newPayload,
+      )
       setPayload(newPayload)
     },
-    [addressInput, siteAreaInput, landUseInput, appliedAssumptions, appliedFinancials, setPayload, t],
+    [
+      addressInput,
+      siteAreaInput,
+      landUseInput,
+      appliedAssumptions,
+      appliedFinancials,
+      setPayload,
+      t,
+    ],
   )
 
   const handleCopyRequest = useCallback(() => {
@@ -324,7 +357,7 @@ export function FeasibilityWizard({
       mepLoadWpsm: payload.mepLoadWpsm,
       capRatePercent: payload.capRatePercent,
       interestRatePercent: payload.interestRatePercent,
-      targetMarginPercent: payload.targetMarginPercent
+      targetMarginPercent: payload.targetMarginPercent,
     }
     const text = `${JSON.stringify(body, null, 2)}\n`
 
@@ -364,7 +397,8 @@ export function FeasibilityWizard({
     [setPackType],
   )
 
-  const handleRestore = useCallback((item: HistoryItem) => {
+  const handleRestore = useCallback(
+    (item: HistoryItem) => {
       // 1. Restore Addresses
       setAddressInput(item.payload.address)
       setSiteAreaInput(item.payload.siteAreaSqm.toString())
@@ -374,28 +408,43 @@ export function FeasibilityWizard({
       // Since useAssumptions controls its own state, we need to manually reset its internal state
       // or just force the payload.
       // Ideally, the hooks should expose setters, but for now we set the inputs which drives the applied state.
-       const syntheticEvent = (val: string) => ({ target: { value: val } } as ChangeEvent<HTMLInputElement>)
-       handleAssumptionChange('typFloorToFloorM')(syntheticEvent(item.payload.typFloorToFloorM.toString()))
-       handleAssumptionChange('efficiencyRatio')(syntheticEvent(item.payload.efficiencyRatio.toString()))
+      const syntheticEvent = (val: string) =>
+        ({ target: { value: val } }) as ChangeEvent<HTMLInputElement>
+      handleAssumptionChange('typFloorToFloorM')(
+        syntheticEvent(item.payload.typFloorToFloorM.toString()),
+      )
+      handleAssumptionChange('efficiencyRatio')(
+        syntheticEvent(item.payload.efficiencyRatio.toString()),
+      )
 
-       // Engineering
-       if (item.payload.structureType) {
-          handleAssumptionChange('structureType')(syntheticEvent(item.payload.structureType))
-       }
-       if (item.payload.mepLoadWpsm) {
-           handleAssumptionChange('mepLoadWpsm')(syntheticEvent(item.payload.mepLoadWpsm.toString()))
-       }
+      // Engineering
+      if (item.payload.structureType) {
+        handleAssumptionChange('structureType')(
+          syntheticEvent(item.payload.structureType),
+        )
+      }
+      if (item.payload.mepLoadWpsm) {
+        handleAssumptionChange('mepLoadWpsm')(
+          syntheticEvent(item.payload.mepLoadWpsm.toString()),
+        )
+      }
 
-       // Financials
-       if (item.payload.capRatePercent) {
-           handleFinancialChange('capRatePercent')(syntheticEvent(item.payload.capRatePercent.toString()))
-       }
-       if (item.payload.interestRatePercent) {
-           handleFinancialChange('interestRatePercent')(syntheticEvent(item.payload.interestRatePercent.toString()))
-       }
-        if (item.payload.targetMarginPercent) {
-           handleFinancialChange('targetMarginPercent')(syntheticEvent(item.payload.targetMarginPercent.toString()))
-       }
+      // Financials
+      if (item.payload.capRatePercent) {
+        handleFinancialChange('capRatePercent')(
+          syntheticEvent(item.payload.capRatePercent.toString()),
+        )
+      }
+      if (item.payload.interestRatePercent) {
+        handleFinancialChange('interestRatePercent')(
+          syntheticEvent(item.payload.interestRatePercent.toString()),
+        )
+      }
+      if (item.payload.targetMarginPercent) {
+        handleFinancialChange('targetMarginPercent')(
+          syntheticEvent(item.payload.targetMarginPercent.toString()),
+        )
+      }
 
       // 3. Set Payload (triggers re-compute effectively, or just restore result if we want)
       // If we want to view the cached result immediately:
@@ -403,8 +452,9 @@ export function FeasibilityWizard({
       // So we just set payload to trigger re-run (or hit cache).
       setPayload(item.payload)
       setHistoryOpen(false)
-  }, [handleAssumptionChange, handleFinancialChange, setPayload])
-
+    },
+    [handleAssumptionChange, handleFinancialChange, setPayload],
+  )
 
   // Render
   const headerActions = (
@@ -413,7 +463,12 @@ export function FeasibilityWizard({
         type="button"
         onClick={() => setAiSidebarOpen(true)}
         className="feasibility-wizard__copy"
-        style={{ marginRight: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+        style={{
+          marginRight: '8px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+        }}
         title="AI Planner"
       >
         <SmartToy fontSize="small" /> AI Planner
@@ -459,7 +514,15 @@ export function FeasibilityWizard({
   const wizardBody = (
     <div className="feasibility-wizard" data-testid="feasibility-wizard">
       <div className="feasibility-wizard__layout">
-        <section className="feasibility-wizard__controls">
+        <section
+          className="feasibility-wizard__controls-transparent"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '32px',
+            color: 'rgba(255,255,255,0.9)',
+          }}
+        >
           <AddressForm
             addressInput={addressInput}
             addressError={addressError}
@@ -468,9 +531,9 @@ export function FeasibilityWizard({
             onSubmit={handleSubmit}
             t={t}
             siteAreaInput={siteAreaInput}
-            landUseInput={landUseInput}
             onSiteAreaChange={handleSiteAreaChange}
-            onLandUseChange={handleLandUseChange}
+            hideAddress={true}
+            hideSubmit={true}
           />
 
           <AssumptionsPanel
@@ -479,21 +542,23 @@ export function FeasibilityWizard({
             decimalFormatter={decimalFormatter}
             onAssumptionChange={handleAssumptionChange}
             onResetAssumptions={handleResetAssumptions}
+            landUseInput={landUseInput}
+            onLandUseChange={handleLandUseChange}
             t={t}
           />
 
           {/* New Financial Settings Panel */}
           <FinancialSettingsPanel
-             financialInputs={financialInputs}
-             financialErrors={financialErrors}
-             onFinancialChange={handleFinancialChange}
-             t={t}
+            financialInputs={financialInputs}
+            financialErrors={financialErrors}
+            onFinancialChange={handleFinancialChange}
+            t={t}
           />
 
           <GenerativeDesignPanel
-             selectedStrategy={generativeStrategy}
-             onSelectStrategy={setGenerativeStrategy}
-             loading={status === 'loading'}
+            selectedStrategy={generativeStrategy}
+            onSelectStrategy={setGenerativeStrategy}
+            loading={status === 'loading'}
           />
 
           <PackGenerationPanel
@@ -537,88 +602,159 @@ export function FeasibilityWizard({
         {liveAnnouncement}
       </div>
 
-       {/* Scenario History Sidebar */}
-       <ScenarioHistorySidebar
-          open={historyOpen}
-          onClose={() => setHistoryOpen(false)}
-          history={history}
-          onRestore={handleRestore}
-       />
+      {/* Scenario History Sidebar */}
+      <ScenarioHistorySidebar
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        history={history}
+        onRestore={handleRestore}
+      />
 
-       <AIAssistantSidebar
-          open={aiSidebarOpen}
-          onClose={() => setAiSidebarOpen(false)}
-          messages={messages}
-          onSendMessage={sendMessage}
-          isTyping={isTyping}
-       />
+      <AIAssistantSidebar
+        open={aiSidebarOpen}
+        onClose={() => setAiSidebarOpen(false)}
+        messages={messages}
+        onSendMessage={sendMessage}
+        isTyping={isTyping}
+      />
 
       {/* Flipbook Dialog ... */}
-             {/* Flipbook Preview Modal */}
-            <Dialog
-              open={isPreviewOpen}
-              onClose={() => setIsPreviewOpen(false)}
-              maxWidth="md"
-              fullWidth
-              PaperProps={{
-                sx: { borderRadius: 'var(--ob-radius-lg)', overflow: 'hidden' }
+      {/* Flipbook Preview Modal */}
+      <Dialog
+        open={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 'var(--ob-radius-lg)', overflow: 'hidden' },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            borderBottom: '1px solid var(--ob-color-border-light)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>
+            Pack Preview: {packType.charAt(0).toUpperCase() + packType.slice(1)}
+          </span>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            LIVE GENERATION
+          </Typography>
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            minHeight: '400px',
+            background: '#f5f5f7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+          }}
+        >
+          <div
+            style={{
+              width: '300px',
+              height: '420px',
+              background: 'white',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              position: 'relative',
+              transition: 'transform 0.3s',
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '180px',
+                background: 'var(--ob-color-bg-surface-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 'auto',
               }}
             >
-              <DialogTitle sx={{ borderBottom: '1px solid var(--ob-color-border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <span>Pack Preview: {packType.charAt(0).toUpperCase() + packType.slice(1)}</span>
-                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>LIVE GENERATION</Typography>
-              </DialogTitle>
-              <DialogContent sx={{ minHeight: '400px', background: '#f5f5f7', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
-                 <div style={{
-                   width: '300px',
-                   height: '420px',
-                   background: 'white',
-                   boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-                   display: 'flex',
-                   flexDirection: 'column',
-                   alignItems: 'center',
-                   justifyContent: 'center',
-                   borderRadius: '4px',
-                   position: 'relative',
-                   transition: 'transform 0.3s'
-                 }}>
-                    <div style={{ width: '100%', height: '180px', background: 'var(--ob-color-bg-surface-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'auto' }}>
-                       {/* Placeholder for Cover Image */}
-                       <span style={{ fontSize: '3rem' }}>🏢</span>
-                    </div>
-                    <div style={{ padding: '2rem', textAlign: 'center' }}>
-                       <Typography variant="h6" gutterBottom>{addressInput || 'Site Address'}</Typography>
-                       <Typography variant="body2" color="text.secondary">Optimal Build Professional Pack</Typography>
-                       <div style={{ marginTop: '1rem', height: '4px', width: '40px', background: 'var(--ob-color-brand-primary)', marginInline: 'auto' }} />
-                    </div>
-                    <div style={{ marginTop: 'auto', padding: '1rem', width: '100%', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ fontSize: '0.7rem', color: '#999' }}>GENERATED: {new Date().toLocaleDateString()}</span>
-                       <span style={{ fontSize: '0.7rem', color: '#999' }}>PAGE 1/12</span>
-                    </div>
-                 </div>
-              </DialogContent>
-              <DialogActions sx={{ padding: '1rem', borderTop: '1px solid var(--ob-color-border-light)' }}>
-                 <Button onClick={() => setIsPreviewOpen(false)} sx={{ color: 'text.secondary' }}>Close</Button>
-                 <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => generatePackFn?.(propertyIdFromQuery || 'demo', packType as ProfessionalPackType)}>
-                   Download PDF
-                 </Button>
-              </DialogActions>
-            </Dialog>
-
+              {/* Placeholder for Cover Image */}
+              <span style={{ fontSize: '3rem' }}>🏢</span>
+            </div>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                {addressInput || 'Site Address'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Optimal Build Professional Pack
+              </Typography>
+              <div
+                style={{
+                  marginTop: '1rem',
+                  height: '4px',
+                  width: '40px',
+                  background: 'var(--ob-color-brand-primary)',
+                  marginInline: 'auto',
+                }}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 'auto',
+                padding: '1rem',
+                width: '100%',
+                borderTop: '1px solid #eee',
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                GENERATED: {new Date().toLocaleDateString()}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                PAGE 1/12
+              </span>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            padding: '1rem',
+            borderTop: '1px solid var(--ob-color-border-light)',
+          }}
+        >
+          <Button
+            onClick={() => setIsPreviewOpen(false)}
+            sx={{ color: 'text.secondary' }}
+          >
+            Close
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={() =>
+              generatePackFn?.(
+                propertyIdFromQuery || 'demo',
+                packType as ProfessionalPackType,
+              )
+            }
+          >
+            Download PDF
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 
   // Render Maps
   const renderMap = () => (
     <div style={{ height: '100%', width: '100%' }}>
-      <PropertyLocationMap
-         latitude="1.285" // Default near Singapore CBD
-         longitude="103.854"
-         interactive
-         height={800} // Fill height
-         showAmenities={false}
-         showHeritage={false}
-         onCoordinatesChange={(lat, lon) => console.log('Map coords:', lat, lon)}
+      <ImmersiveMap
+        latitude={1.285}
+        longitude={103.854}
+        onCoordinatesChange={(lat, lon) => console.log('Map coords:', lat, lon)}
       />
     </div>
   )
@@ -646,187 +782,383 @@ export function FeasibilityWizard({
     >
       <FeasibilityLayout
         renderMap={renderMap}
-        renderAddressBar={() => (
-          <SmartSearchBar
-            value={addressInput}
-            onChange={handleAddressChange}
-            onSubmit={(e) => {
-               e.preventDefault()
-               handleSubmit(e)
-            }}
-            loading={status === 'loading'}
-            error={addressError}
-            onSuggestionSelect={(suggestion) => {
-                setAddressInput(suggestion.address)
-                setSiteAreaInput(suggestion.siteArea.toString())
-                setLandUseInput(suggestion.zoning)
-                // Clear any manual typing error since user selected a valid entry
-                setAddressError(null)
-            }}
-          />
-
-        )}
         renderFooter={() => (
-           <div className="feasibility-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <ScenarioFAB
-                label={status === 'loading' ? 'Calculating...' : (t('wizard.actions.compute') || 'Run Analysis')}
-                onClick={() => {
-                   // Trigger submit manually since FAB is outside form
-                   const syntheticEvent = { preventDefault: () => {} } as FormEvent<HTMLFormElement>
-                   handleSubmit(syntheticEvent)
+          <div
+            className="feasibility-actions"
+            style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+          >
+            <button
+              onClick={() => {
+                const syntheticEvent = {
+                  preventDefault: () => {},
+                } as FormEvent<HTMLFormElement>
+                handleSubmit(syntheticEvent)
+              }}
+              disabled={status === 'loading'}
+              style={{
+                background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', // Cyan to Blue
+                border: 'none',
+                borderRadius: 'var(--ob-radius-full)',
+                padding: '16px 32px',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                letterSpacing: '0.02em',
+                cursor: status === 'loading' ? 'wait' : 'pointer',
+                boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                width: '100%',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = 'translateY(-2px)')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = 'translateY(0)')
+              }
+            >
+              {status === 'loading' ? (
+                <>
+                  <span
+                    className="radar-spinner"
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      border: '2px solid white',
+                      borderTopColor: 'transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                    }}
+                  />
+                  <span>Scanning Site...</span>
+                </>
+              ) : (
+                <>
+                  <Radar sx={{ animation: 'pulse 2s infinite' }} />
+                  <span>RUN SIMULATION</span>
+                </>
+              )}
+
+              {/* Button Glow Effect */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background:
+                    'linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)',
+                  transform: 'skewX(-20deg) translateX(-150%)',
+                  animation: 'shimmer 3s infinite',
                 }}
-                loading={status === 'loading'}
               />
-           </div>
+              <style>{`
+                        @keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 20% { transform: translateX(150%) skewX(-20deg); } 100% { transform: translateX(150%); } }
+                        @keyframes pulse { 0% { opacity: 0.6; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.6; transform: scale(0.9); } }
+                     `}</style>
+            </button>
+          </div>
         )}
       >
         <div className="feasibility-wizard__sidebar-content">
-           {/* Section 1: Site Details (Hidden in favor of Smart Search mostly, but we keep extras) */}
-           <div className="feasibility-section">
-              <h3>{t('wizard.steps.siteDetails')}</h3>
-              <div className="feasibility-form__field">
-                 <label className="feasibility-form__label">{t('wizard.form.siteArea')}</label>
-                 <input
-                   type="number"
-                   value={siteAreaInput}
-                   onChange={handleSiteAreaChange}
-                   placeholder="e.g. 1000"
-                   data-testid="site-area-input"
-                 />
-              </div>
-              <div className="feasibility-form__field">
-                 <label className="feasibility-form__label">{t('wizard.form.landUse')}</label>
-                 <select value={landUseInput} onChange={handleLandUseChange} data-testid="land-use-input">
-                   <option value="Mixed Use">Mixed Use</option>
-                   <option value="Residential">Residential</option>
-                   <option value="Commercial">Commercial</option>
-                 </select>
-              </div>
-           </div>
+          {/* Section 0: Smart Intelligence Field (Merged Address/Area/Zoning) */}
+          <div style={{ marginBottom: '24px' }}>
+            <SmartIntelligenceField
+              value={addressInput}
+              siteArea={siteAreaInput ? Number(siteAreaInput) : undefined}
+              zoning={landUseInput}
+              onChange={handleAddressChange}
+              onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                e.preventDefault()
+                handleSubmit(e)
+              }}
+              loading={status === 'loading'}
+              error={addressError}
+              onSuggestionSelect={(suggestion: {
+                address: string
+                siteArea: number
+                zoning: string
+              }) => {
+                setAddressInput(suggestion.address)
+                setSiteAreaInput(suggestion.siteArea.toString())
+                setLandUseInput(suggestion.zoning)
+                setAddressError(null)
+              }}
+            />
+          </div>
+          {/* Section 1: Site Details (Hidden in favor of Smart Search mostly, but we keep extras) */}
+          <div className="feasibility-section">
+            <h3>{t('wizard.steps.siteDetails')}</h3>
+            <div className="feasibility-form__field">
+              <label className="feasibility-form__label">
+                {t('wizard.form.siteArea')}
+              </label>
+              <input
+                type="number"
+                value={siteAreaInput}
+                onChange={handleSiteAreaChange}
+                placeholder="e.g. 1000"
+                data-testid="site-area-input"
+              />
+            </div>
+            <div className="feasibility-form__field">
+              <label
+                className="feasibility-form__label"
+                style={{ marginBottom: '12px', display: 'block' }}
+              >
+                {t('wizard.form.landUse')}
+              </label>
+              <ScenarioSelector
+                value={landUseInput}
+                onChange={(val) => setLandUseInput(val)}
+              />
+            </div>
+          </div>
 
-           {/* Section 2: Assumptions (Accordion Style) */}
-           <div className="feasibility-section">
-             <AssumptionsPanel
-               assumptionInputs={assumptionInputs}
-               assumptionErrors={assumptionErrors}
-               decimalFormatter={decimalFormatter}
-               onAssumptionChange={handleAssumptionChange}
-               onResetAssumptions={handleResetAssumptions}
-               t={t}
-             />
-             <FinancialSettingsPanel
-                financialInputs={financialInputs}
-                financialErrors={financialErrors}
-                onFinancialChange={handleFinancialChange}
+          {/* Section 2: Assumptions (Accordion Style) */}
+          <div className="feasibility-section">
+            <AssumptionsPanel
+              assumptionInputs={assumptionInputs}
+              assumptionErrors={assumptionErrors}
+              decimalFormatter={decimalFormatter}
+              onAssumptionChange={handleAssumptionChange}
+              onResetAssumptions={handleResetAssumptions}
+              t={t}
+            />
+            <FinancialSettingsPanel
+              financialInputs={financialInputs}
+              financialErrors={financialErrors}
+              onFinancialChange={handleFinancialChange}
+              t={t}
+            />
+          </div>
+
+          {/* Section 3: Computing Action - MOVED TO STICKY FOOTER */}
+
+          {/* Section 4: Results (Dynamic) */}
+          {result && (
+            <div className="feasibility-section">
+              <ResultsPanel
+                status={status}
+                result={result}
+                errorMessage={null}
+                capturedAssetMix={capturedAssetMix}
+                capturedFinancialSummary={capturedFinancialSummary}
+                numberFormatter={numberFormatter}
+                oneDecimalFormatter={oneDecimalFormatter}
                 t={t}
-             />
-           </div>
+              />
+            </div>
+          )}
 
-           {/* Section 3: Computing Action - MOVED TO STICKY FOOTER */}
+          {/* Section 5: Packs */}
+          {result && (
+            <div className="feasibility-section">
+              <PackGrid
+                value={packType}
+                onChange={setPackType}
+                options={[
+                  {
+                    value: 'universal',
+                    label: 'Universal Pack',
+                    description: 'Site plan & zoning',
+                  },
+                  {
+                    value: 'investment',
+                    label: 'Investment Memo',
+                    description: 'Financial model & ROI',
+                  },
+                  {
+                    value: 'sales',
+                    label: 'Sales Brochure',
+                    description: 'Buyer-ready visuals',
+                  },
+                  {
+                    value: 'lease',
+                    label: 'Leasing Deck',
+                    description: 'Floor efficiency & tenant mix',
+                  },
+                ]}
+              />
+              <div
+                style={{
+                  marginTop: '1rem',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleGeneratePack}
+                  disabled={packGenerating}
+                  startIcon={
+                    packGenerating ? (
+                      <span
+                        className="scenario-fab__spinner"
+                        style={{
+                          width: 16,
+                          height: 16,
+                          border: '2px solid white',
+                          borderTopColor: 'transparent',
+                        }}
+                      />
+                    ) : (
+                      <PdfIcon />
+                    )
+                  }
+                  sx={{
+                    fontFamily: 'var(--ob-font-family-sans)',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    boxShadow: 'var(--ob-shadow-md)',
+                    background: 'var(--ob-color-brand-primary)',
+                    '&:hover': { background: 'var(--ob-color-brand-dark)' },
+                  }}
+                >
+                  {packGenerating
+                    ? 'Generating Preview...'
+                    : 'Preview & Generate Pack'}
+                </Button>
+              </div>
+            </div>
+          )}
 
-           {/* Section 4: Results (Dynamic) */}
-           {result && (
-             <div className="feasibility-section">
-                <ResultsPanel
-                  status={status}
-                  result={result}
-                  errorMessage={null}
-                  capturedAssetMix={capturedAssetMix}
-                  capturedFinancialSummary={capturedFinancialSummary}
-                  numberFormatter={numberFormatter}
-                  oneDecimalFormatter={oneDecimalFormatter}
-                  t={t}
-                />
-             </div>
-           )}
-
-           {/* Section 5: Packs */}
-           {result && (
-              <div className="feasibility-section">
-                  <PackGrid
-                     value={packType}
-                     onChange={setPackType}
-                     options={[
-                        { value: 'universal', label: 'Universal Pack', description: 'Site plan & zoning' },
-                        { value: 'investment', label: 'Investment Memo', description: 'Financial model & ROI' },
-                        { value: 'sales', label: 'Sales Brochure', description: 'Buyer-ready visuals' },
-                        { value: 'lease', label: 'Leasing Deck', description: 'Floor efficiency & tenant mix' }
-                     ]}
-                  />
-                  <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                     <Button
-                       variant="contained"
-                       color="primary"
-                       onClick={handleGeneratePack}
-                       disabled={packGenerating}
-                       startIcon={packGenerating ? <span className="scenario-fab__spinner" style={{width: 16, height: 16, border: '2px solid white', borderTopColor: 'transparent'}} /> : <PdfIcon />}
-                       sx={{
-                         fontFamily: 'var(--ob-font-family-sans)',
-                         textTransform: 'none',
-                         fontWeight: 600,
-                         boxShadow: 'var(--ob-shadow-md)',
-                         background: 'var(--ob-color-brand-primary)',
-                         '&:hover': { background: 'var(--ob-color-brand-dark)' }
-                       }}
-                     >
-                       {packGenerating ? 'Generating Preview...' : 'Preview & Generate Pack'}
-                     </Button>
-                  </div>
-               </div>
-            )}
-
-            {/* Flipbook Preview Modal */}
-            <Dialog
-              open={isPreviewOpen}
-              onClose={() => setIsPreviewOpen(false)}
-              maxWidth="md"
-              fullWidth
-              PaperProps={{
-                sx: { borderRadius: 'var(--ob-radius-lg)', overflow: 'hidden' }
+          {/* Flipbook Preview Modal */}
+          <Dialog
+            open={isPreviewOpen}
+            onClose={() => setIsPreviewOpen(false)}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{
+              sx: { borderRadius: 'var(--ob-radius-lg)', overflow: 'hidden' },
+            }}
+          >
+            <DialogTitle
+              sx={{
+                borderBottom: '1px solid var(--ob-color-border-light)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              <DialogTitle sx={{ borderBottom: '1px solid var(--ob-color-border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <span>Pack Preview: {packType.charAt(0).toUpperCase() + packType.slice(1)}</span>
-                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>LIVE GENERATION</Typography>
-              </DialogTitle>
-              <DialogContent sx={{ minHeight: '400px', background: '#f5f5f7', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
-                 <div style={{
-                   width: '300px',
-                   height: '420px',
-                   background: 'white',
-                   boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-                   display: 'flex',
-                   flexDirection: 'column',
-                   alignItems: 'center',
-                   justifyContent: 'center',
-                   borderRadius: '4px',
-                   position: 'relative',
-                   transition: 'transform 0.3s'
-                 }}>
-                    <div style={{ width: '100%', height: '180px', background: 'var(--ob-color-bg-surface-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'auto' }}>
-                       {/* Placeholder for Cover Image */}
-                       <span style={{ fontSize: '3rem' }}>🏢</span>
-                    </div>
-                    <div style={{ padding: '2rem', textAlign: 'center' }}>
-                       <Typography variant="h6" gutterBottom>{addressInput || 'Site Address'}</Typography>
-                       <Typography variant="body2" color="text.secondary">Optimal Build Professional Pack</Typography>
-                       <div style={{ marginTop: '1rem', height: '4px', width: '40px', background: 'var(--ob-color-brand-primary)', marginInline: 'auto' }} />
-                    </div>
-                    <div style={{ marginTop: 'auto', padding: '1rem', width: '100%', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ fontSize: '0.7rem', color: '#999' }}>GENERATED: {new Date().toLocaleDateString()}</span>
-                       <span style={{ fontSize: '0.7rem', color: '#999' }}>PAGE 1/12</span>
-                    </div>
-                 </div>
-              </DialogContent>
-              <DialogActions sx={{ padding: '1rem', borderTop: '1px solid var(--ob-color-border-light)' }}>
-                 <Button onClick={() => setIsPreviewOpen(false)} sx={{ color: 'text.secondary' }}>Close</Button>
-                 <Button variant="contained" startIcon={<DownloadIcon />} onClick={() => generatePackFn?.(propertyIdFromQuery || 'demo', packType as ProfessionalPackType)}>
-                   Download PDF
-                 </Button>
-              </DialogActions>
-            </Dialog>
-         </div>
-       </FeasibilityLayout>
+              <span>
+                Pack Preview:{' '}
+                {packType.charAt(0).toUpperCase() + packType.slice(1)}
+              </span>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                LIVE GENERATION
+              </Typography>
+            </DialogTitle>
+            <DialogContent
+              sx={{
+                minHeight: '400px',
+                background: '#f5f5f7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: '300px',
+                  height: '420px',
+                  background: 'white',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  position: 'relative',
+                  transition: 'transform 0.3s',
+                }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: '180px',
+                    background: 'var(--ob-color-bg-surface-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 'auto',
+                  }}
+                >
+                  {/* Placeholder for Cover Image */}
+                  <span style={{ fontSize: '3rem' }}>🏢</span>
+                </div>
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  <Typography variant="h6" gutterBottom>
+                    {addressInput || 'Site Address'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Optimal Build Professional Pack
+                  </Typography>
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      height: '4px',
+                      width: '40px',
+                      background: 'var(--ob-color-brand-primary)',
+                      marginInline: 'auto',
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    marginTop: 'auto',
+                    padding: '1rem',
+                    width: '100%',
+                    borderTop: '1px solid #eee',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                    GENERATED: {new Date().toLocaleDateString()}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                    PAGE 1/12
+                  </span>
+                </div>
+              </div>
+            </DialogContent>
+            <DialogActions
+              sx={{
+                padding: '1rem',
+                borderTop: '1px solid var(--ob-color-border-light)',
+              }}
+            >
+              <Button
+                onClick={() => setIsPreviewOpen(false)}
+                sx={{ color: 'text.secondary' }}
+              >
+                Close
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<DownloadIcon />}
+                onClick={() =>
+                  generatePackFn?.(
+                    propertyIdFromQuery || 'demo',
+                    packType as ProfessionalPackType,
+                  )
+                }
+              >
+                Download PDF
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      </FeasibilityLayout>
     </AppLayout>
   )
 }

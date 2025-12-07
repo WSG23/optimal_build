@@ -1,20 +1,23 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react'
 
-import logoSrc from '@/shared/media/yosai-logo'; // TODO: Replace with proper logo asset
-import { ViewportFrame } from '@/components/layout/ViewportFrame';
-import Panel from '@/components/layout/Panel';
-import { PanelBody } from '@/components/layout/PanelBody';
-import PageMiniNav from '@/components/layout/PageMiniNav';
-import ClockTicker from '@/shared/components/app/security/ClockTicker';
-import { useNoBodyScroll } from '@/shared/hooks/useNoBodyScroll';
-import { useFacilityLabel } from '@/shared/hooks/useFacilityLabel';
-import LiveFeedPanel from '@/shared/components/app/security/LiveFeedPanel';
-import LeftSidebar from '@/shared/components/app/security/LeftSidebar';
-import { IncidentMapView } from '@/shared/components/app/security/IncidentMapView';
-import { IncidentDetectionBreakdown } from '@/shared/components/app/security/IncidentDetectionBreakdown';
-import IncidentAlertsPanel from '@/shared/components/app/security/IncidentAlertsPanel';
-import IncidentResponsePanel from '@/shared/components/app/security/IncidentResponsePanel';
-import type { Ticket, TicketsByStatus } from '@/shared/components/app/security/types';
+import logoSrc from '@/shared/media/yosai-logo' // TODO: Replace with proper logo asset
+import { ViewportFrame } from '@/components/layout/ViewportFrame'
+import Panel from '@/components/layout/Panel'
+import { PanelBody } from '@/components/layout/PanelBody'
+import PageMiniNav from '@/components/layout/PageMiniNav'
+import ClockTicker from '@/shared/components/app/security/ClockTicker'
+import { useNoBodyScroll } from '@/shared/hooks/useNoBodyScroll'
+import { useFacilityLabel } from '@/shared/hooks/useFacilityLabel'
+import LiveFeedPanel from '@/shared/components/app/security/LiveFeedPanel'
+import LeftSidebar from '@/shared/components/app/security/LeftSidebar'
+import { IncidentMapView } from '@/shared/components/app/security/IncidentMapView'
+import { IncidentDetectionBreakdown } from '@/shared/components/app/security/IncidentDetectionBreakdown'
+import IncidentAlertsPanel from '@/shared/components/app/security/IncidentAlertsPanel'
+import IncidentResponsePanel from '@/shared/components/app/security/IncidentResponsePanel'
+import type {
+  Ticket,
+  TicketsByStatus,
+} from '@/shared/components/app/security/types'
 
 const initialTickets: Ticket[] = [
   {
@@ -57,13 +60,13 @@ const initialTickets: Ticket[] = [
     location: 'Operations Center',
     category: 'Network',
   },
-];
+]
 
 function computeTicketsByStatus(tickets: Ticket[]): TicketsByStatus {
   return tickets.reduce<TicketsByStatus>(
     (acc, ticket) => {
-      acc[ticket.status].push(ticket);
-      return acc;
+      acc[ticket.status].push(ticket)
+      return acc
     },
     {
       open: [],
@@ -73,66 +76,78 @@ function computeTicketsByStatus(tickets: Ticket[]): TicketsByStatus {
       resolved_normal: [],
       dismissed: [],
     },
-  );
+  )
 }
 
 export default function Main() {
-  useNoBodyScroll();
-  const facilityLabel = useFacilityLabel();
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  useNoBodyScroll()
+  const facilityLabel = useFacilityLabel()
+  const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
 
-  const ticketsByStatus = useMemo(() => computeTicketsByStatus(tickets), [tickets]);
-  const selectedTicket = tickets.find((ticket) => ticket.id === selectedTicketId) ?? null;
+  const ticketsByStatus = useMemo(
+    () => computeTicketsByStatus(tickets),
+    [tickets],
+  )
+  const selectedTicket =
+    tickets.find((ticket) => ticket.id === selectedTicketId) ?? null
 
   const handleSelectTicket = (ticket: Ticket) => {
-    setSelectedTicketId(ticket.id);
-    setSelectedLocation(ticket.location);
-    setSelectedCategory(ticket.category);
-  };
+    setSelectedTicketId(ticket.id)
+    setSelectedLocation(ticket.location)
+    setSelectedCategory(ticket.category)
+  }
 
   const handleResolve = (ticket: Ticket) => {
     setTickets((prev) =>
       prev.map((item) =>
         item.id === ticket.id ? { ...item, status: 'resolved_harmful' } : item,
       ),
-    );
-  };
+    )
+  }
 
   const handleDismiss = (ticket: Ticket) => {
     setTickets((prev) =>
-      prev.map((item) => (item.id === ticket.id ? { ...item, status: 'dismissed' } : item)),
-    );
-  };
+      prev.map((item) =>
+        item.id === ticket.id ? { ...item, status: 'dismissed' } : item,
+      ),
+    )
+  }
 
   const handleClose = () => {
-    setSelectedTicketId(null);
-  };
+    setSelectedTicketId(null)
+  }
 
   const handleLocationClick = (location: string) => {
-    setSelectedLocation((current) => (current === location ? null : location));
-  };
+    setSelectedLocation((current) => (current === location ? null : location))
+  }
 
   const handleCategoryClick = (category: string) => {
-    setSelectedCategory((current) => (current === category ? null : category));
-  };
+    setSelectedCategory((current) => (current === category ? null : category))
+  }
 
   const threatData = {
     entity_id: 'ENTITY-001',
     headline_score: 72,
-  };
+  }
 
   return (
     <div className="bg-neutral-950 text-white">
       <ViewportFrame className="flex h-full flex-col gap-6">
         <header className="mb-4 grid grid-cols-12 items-center gap-6">
           <div className="col-span-3 flex items-center gap-3">
-            <img src={logoSrc} alt="Optimal Build" className="h-7 select-none" />
+            <img
+              src={logoSrc}
+              alt="Optimal Build"
+              className="h-7 select-none"
+            />
           </div>
           <div className="col-span-6">
-            <h1 className="text-center text-2xl font-semibold">Logged in as {facilityLabel}</h1>
+            <h1 className="text-center text-2xl font-semibold">
+              Logged in as {facilityLabel}
+            </h1>
           </div>
           <div className="col-span-3 flex items-center justify-end gap-4">
             <PageMiniNav
@@ -151,9 +166,15 @@ export default function Main() {
 
         <div
           className="grid flex-1 min-h-0 gap-6"
-          style={{ gridTemplateColumns: '320px minmax(0,1fr) 420px', gridTemplateRows: 'minmax(0,1fr) 320px' }}
+          style={{
+            gridTemplateColumns: '320px minmax(0,1fr) 420px',
+            gridTemplateRows: 'minmax(0,1fr) 320px',
+          }}
         >
-          <div className="min-h-0" style={{ gridColumn: '1', gridRow: '1 / span 2' }}>
+          <div
+            className="min-h-0"
+            style={{ gridColumn: '1', gridRow: '1 / span 2' }}
+          >
             <LeftSidebar
               facilityLabel={facilityLabel}
               threatScore={threatData.headline_score}
@@ -161,7 +182,10 @@ export default function Main() {
             />
           </div>
 
-          <section className="min-h-0" style={{ gridColumn: '2', gridRow: '1' }}>
+          <section
+            className="min-h-0"
+            style={{ gridColumn: '2', gridRow: '1' }}
+          >
             <Panel title="Floorplan Activity" className="h-full">
               <PanelBody className="h-full p-0">
                 <IncidentMapView
@@ -174,7 +198,10 @@ export default function Main() {
             </Panel>
           </section>
 
-          <section className="min-h-0" style={{ gridColumn: '3', gridRow: '1' }}>
+          <section
+            className="min-h-0"
+            style={{ gridColumn: '3', gridRow: '1' }}
+          >
             <Panel title="Weak-Signal Live Feed" className="h-full">
               <PanelBody className="h-full overflow-y-auto p-3">
                 <LiveFeedPanel />
@@ -182,7 +209,10 @@ export default function Main() {
             </Panel>
           </section>
 
-          <section className="min-h-0" style={{ gridColumn: '2 / span 2', gridRow: '2' }}>
+          <section
+            className="min-h-0"
+            style={{ gridColumn: '2 / span 2', gridRow: '2' }}
+          >
             <div
               className="grid h-full gap-6"
               style={{ gridTemplateColumns: 'minmax(0,2.2fr) minmax(0,1.2fr)' }}
@@ -210,7 +240,9 @@ export default function Main() {
                       onClose={handleClose}
                     />
                   ) : (
-                    <div className="text-sm text-white/60">Select a ticket to coordinate a response.</div>
+                    <div className="text-sm text-white/60">
+                      Select a ticket to coordinate a response.
+                    </div>
                   )}
                 </PanelBody>
               </Panel>
@@ -234,13 +266,17 @@ export default function Main() {
           <div className="col-span-6">
             <Panel title="Threat Score Breakdown" className="h-full">
               <PanelBody className="h-full p-4">
-                <div className="text-5xl font-semibold text-white">{threatData.headline_score}</div>
-                <p className="mt-2 text-sm text-white/60">Entity {threatData.entity_id}</p>
+                <div className="text-5xl font-semibold text-white">
+                  {threatData.headline_score}
+                </div>
+                <p className="mt-2 text-sm text-white/60">
+                  Entity {threatData.entity_id}
+                </p>
               </PanelBody>
             </Panel>
           </div>
         </section>
       </ViewportFrame>
     </div>
-  );
+  )
 }

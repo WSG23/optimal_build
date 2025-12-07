@@ -59,9 +59,14 @@ export function DealInsightsPanel({
           <Typography variant="h6">{deal.title ?? deal.id}</Typography>
           <Stack direction="row" spacing={1} className="bp-deal-panel__meta">
             <Chip size="small" label={`Assigned to ${deal.agentName}`} />
-            {deal.leadSource && <Chip size="small" label={`Source ${deal.leadSource}`} />}
+            {deal.leadSource && (
+              <Chip size="small" label={`Source ${deal.leadSource}`} />
+            )}
             {deal.expectedCloseDate && (
-              <Chip size="small" label={`Expected close ${deal.expectedCloseDate}`} />
+              <Chip
+                size="small"
+                label={`Expected close ${deal.expectedCloseDate}`}
+              />
             )}
           </Stack>
         </Box>
@@ -86,11 +91,18 @@ export function DealInsightsPanel({
                   <Typography variant="caption">{event.recordedAt}</Typography>
                 </TimelineOppositeContent>
                 <TimelineSeparator>
-                  <TimelineDot color={index === timeline.length - 1 ? 'primary' : 'inherit'} />
+                  <TimelineDot
+                    color={
+                      index === timeline.length - 1 ? 'primary' : 'inherit'
+                    }
+                  />
                   {index < timeline.length - 1 && <TimelineConnector />}
                 </TimelineSeparator>
                 <TimelineContent>
-                  <Typography variant="body1" className="bp-deal-panel__timeline-stage">
+                  <Typography
+                    variant="body1"
+                    className="bp-deal-panel__timeline-stage"
+                  >
                     {event.toStage.replace('_', ' ')}
                   </Typography>
                   <Stack
@@ -108,11 +120,18 @@ export function DealInsightsPanel({
                         />
                       )}
                     {event.changedBy && (
-                      <Chip size="small" variant="outlined" label={`By ${event.changedBy}`} />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`By ${event.changedBy}`}
+                      />
                     )}
                   </Stack>
                   {event.note && (
-                    <Typography variant="body2" className="bp-deal-panel__timeline-note">
+                    <Typography
+                      variant="body2"
+                      className="bp-deal-panel__timeline-note"
+                    >
                       {event.note}
                     </Typography>
                   )}
@@ -125,7 +144,11 @@ export function DealInsightsPanel({
                         </span>
                       }
                     >
-                      <Chip size="small" color="secondary" label="Audit metadata" />
+                      <Chip
+                        size="small"
+                        color="secondary"
+                        label="Audit metadata"
+                      />
                     </Tooltip>
                   )}
                 </TimelineContent>
@@ -145,7 +168,11 @@ export function DealInsightsPanel({
         {commissions.length === 0 ? (
           <Alert severity="info">No commission records yet.</Alert>
         ) : (
-          <TableContainer component={Paper} variant="outlined" className="bp-commission-table">
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            className="bp-commission-table"
+          >
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -160,7 +187,11 @@ export function DealInsightsPanel({
                   <TableRow key={commission.id} hover>
                     <TableCell>{commission.type}</TableCell>
                     <TableCell>
-                      <Chip size="small" className={`bp-status bp-status--${commission.status}`} label={commission.status} />
+                      <Chip
+                        size="small"
+                        className={`bp-status bp-status--${commission.status}`}
+                        label={commission.status}
+                      />
                     </TableCell>
                     <TableCell align="right">
                       {commission.amount !== null

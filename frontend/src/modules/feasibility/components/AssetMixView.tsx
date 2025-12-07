@@ -19,13 +19,19 @@ export function AssetMixView({
     () => (plan: StoredAssetOptimization) => {
       const parts: string[] = [`${numberFormatter.format(plan.allocationPct)}%`]
       if (plan.allocatedGfaSqm != null) {
-        parts.push(`${numberFormatter.format(Math.round(plan.allocatedGfaSqm))} sqm`)
+        parts.push(
+          `${numberFormatter.format(Math.round(plan.allocatedGfaSqm))} sqm`,
+        )
       }
       if (plan.niaEfficiency != null) {
-        parts.push(`${oneDecimalFormatter.format(plan.niaEfficiency * 100)}% NIA`)
+        parts.push(
+          `${oneDecimalFormatter.format(plan.niaEfficiency * 100)}% NIA`,
+        )
       }
       if (plan.targetFloorHeightM != null) {
-        parts.push(`${oneDecimalFormatter.format(plan.targetFloorHeightM)} m floors`)
+        parts.push(
+          `${oneDecimalFormatter.format(plan.targetFloorHeightM)} m floors`,
+        )
       }
       if (plan.parkingRatioPer1000Sqm != null) {
         parts.push(
@@ -83,7 +89,8 @@ export function AssetMixView({
               Total revenue:{' '}
               {capturedFinancialSummary.totalEstimatedRevenueSgd != null
                 ? `$${oneDecimalFormatter.format(
-                    capturedFinancialSummary.totalEstimatedRevenueSgd / 1_000_000,
+                    capturedFinancialSummary.totalEstimatedRevenueSgd /
+                      1_000_000,
                   )}M`
                 : '—'}
             </li>
@@ -96,7 +103,8 @@ export function AssetMixView({
                 : '—'}
             </li>
             <li>
-              Dominant risk: {capturedFinancialSummary.dominantRiskProfile ?? '—'}
+              Dominant risk:{' '}
+              {capturedFinancialSummary.dominantRiskProfile ?? '—'}
             </li>
           </ul>
           {capturedFinancialSummary.notes.length > 0 && (

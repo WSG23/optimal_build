@@ -77,7 +77,13 @@ export function InspectionHistorySummary({
           >
             Inspection History
           </h3>
-          <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#6e6e73' }}>
+          <p
+            style={{
+              margin: '0.2rem 0 0',
+              fontSize: '0.85rem',
+              color: '#6e6e73',
+            }}
+          >
             Track developer inspections saved for this property.
           </p>
         </div>
@@ -163,7 +169,13 @@ export function InspectionHistorySummary({
               flexWrap: 'wrap',
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.25rem',
+              }}
+            >
               <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>
                 {formatScenario(latestEntry.scenario)}
               </span>
@@ -171,7 +183,13 @@ export function InspectionHistorySummary({
                 {formatTimestamp(latestEntry.recordedAt)}
               </span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.25rem',
+              }}
+            >
               <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
                 Rating: <strong>{latestEntry.overallRating}</strong>
               </span>
@@ -190,7 +208,13 @@ export function InspectionHistorySummary({
             {latestEntry.summary || 'No summary recorded.'}
           </p>
           {previousEntry && (
-            <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: '#6e6e73' }}>
+            <p
+              style={{
+                margin: '0.35rem 0 0',
+                fontSize: '0.75rem',
+                color: '#6e6e73',
+              }}
+            >
               Last change:{' '}
               <strong>
                 {formatScenario(previousEntry.scenario)} —{' '}
@@ -201,7 +225,8 @@ export function InspectionHistorySummary({
         </div>
       ) : (
         <p style={{ margin: 0, fontSize: '0.9rem', color: '#6e6e73' }}>
-          No developer inspections recorded yet. Save an inspection to begin the audit trail.
+          No developer inspections recorded yet. Save an inspection to begin the
+          audit trail.
         </p>
       )}
     </div>

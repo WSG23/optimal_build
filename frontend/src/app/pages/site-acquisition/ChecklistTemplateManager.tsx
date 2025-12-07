@@ -48,7 +48,12 @@ const CATEGORY_OPTIONS: ChecklistCategory[] = [
   'access_rights',
 ]
 
-const PRIORITY_OPTIONS: ChecklistPriority[] = ['critical', 'high', 'medium', 'low']
+const PRIORITY_OPTIONS: ChecklistPriority[] = [
+  'critical',
+  'high',
+  'medium',
+  'low',
+]
 const SCENARIO_SUGGESTIONS = [
   'raw_land',
   'existing_building',
@@ -81,23 +86,20 @@ function normaliseDraftFromRecord(
   const canonical: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(record)) {
     const headerKey = normaliseHeader(key)
-    canonical[headerKey] = typeof value === 'string' ? stripQuotes(value) : value
+    canonical[headerKey] =
+      typeof value === 'string' ? stripQuotes(value) : value
   }
 
-  const developmentScenario = String(
-    canonical.developmentScenario ?? '',
-  ).trim()
+  const developmentScenario = String(canonical.developmentScenario ?? '').trim()
   const category = String(canonical.category ?? 'title_verification')
     .trim()
     .toLowerCase() as ChecklistCategory
   const itemTitle = String(canonical.itemTitle ?? '').trim()
-  const itemDescriptionRaw =
-    canonical.itemDescription ?? ''
+  const itemDescriptionRaw = canonical.itemDescription ?? ''
   const priority = String(canonical.priority ?? 'medium')
     .trim()
     .toLowerCase() as ChecklistPriority
-  const typicalDurationRaw =
-    canonical.typicalDurationDays
+  const typicalDurationRaw = canonical.typicalDurationDays
   const requiresProfessionalRaw = canonical.requiresProfessional
   const professionalTypeRaw = canonical.professionalType ?? ''
   const displayOrderRaw = canonical.displayOrder
@@ -105,9 +107,10 @@ function normaliseDraftFromRecord(
   const typicalDuration =
     typeof typicalDurationRaw === 'number'
       ? typicalDurationRaw
-      : typeof typicalDurationRaw === 'string' && typicalDurationRaw.trim() !== ''
-      ? Number(typicalDurationRaw)
-      : undefined
+      : typeof typicalDurationRaw === 'string' &&
+          typicalDurationRaw.trim() !== ''
+        ? Number(typicalDurationRaw)
+        : undefined
 
   const requiresProfessional = Boolean(requiresProfessionalRaw)
   const professionalType = requiresProfessional
@@ -118,8 +121,8 @@ function normaliseDraftFromRecord(
     typeof displayOrderRaw === 'number'
       ? displayOrderRaw
       : typeof displayOrderRaw === 'string' && displayOrderRaw.trim() !== ''
-      ? Number(displayOrderRaw)
-      : undefined
+        ? Number(displayOrderRaw)
+        : undefined
 
   return {
     developmentScenario,
@@ -162,8 +165,7 @@ function parseImportInput(text: string): ChecklistTemplateDraft[] {
       Array.isArray((parsed as Record<string, unknown>).templates)
     ) {
       return (parsed as { templates: Record<string, unknown>[] }).templates.map(
-        (entry) =>
-          normaliseDraftFromRecord(entry as Record<string, unknown>),
+        (entry) => normaliseDraftFromRecord(entry as Record<string, unknown>),
       )
     }
     throw new Error(
@@ -235,9 +237,12 @@ export function ChecklistTemplateManager() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
-  const [importState, setImportState] = useState<ImportState>(INITIAL_IMPORT_STATE)
+  const [importState, setImportState] =
+    useState<ImportState>(INITIAL_IMPORT_STATE)
   const [selectedScenario, setSelectedScenario] = useState<string>('all')
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
+    null,
+  )
 
   async function loadTemplates() {
     setIsLoading(true)
@@ -377,7 +382,8 @@ export function ChecklistTemplateManager() {
       setImportState(INITIAL_IMPORT_STATE)
       await loadTemplates()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to parse input.'
+      const message =
+        err instanceof Error ? err.message : 'Failed to parse input.'
       setError(message)
     }
   }
@@ -616,13 +622,11 @@ export function ChecklistTemplateManager() {
           </label>
 
           <div className="template-manager-form-actions">
-            <button type="submit">{form.id ? 'Update template' : 'Create template'}</button>
+            <button type="submit">
+              {form.id ? 'Update template' : 'Create template'}
+            </button>
             {form.id && (
-              <button
-                type="button"
-                className="secondary"
-                onClick={resetForm}
-              >
+              <button type="button" className="secondary" onClick={resetForm}>
                 Cancel editing
               </button>
             )}

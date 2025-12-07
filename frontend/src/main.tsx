@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from './router'
 import { HomeOverview } from './App'
 import { TranslationProvider } from './i18n'
+import { DeveloperProvider } from './contexts/DeveloperContext'
 import { CadDetectionPage } from './pages/CadDetectionPage'
 import { CadPipelinesPage } from './pages/CadPipelinesPage'
 import { CadUploadPage } from './pages/CadUploadPage'
@@ -29,6 +30,7 @@ import { DeveloperPreviewStandalone } from './app/pages/site-acquisition/Develop
 import { PhaseManagementPage } from './app/pages/phase-management'
 import { TeamManagementPage } from './app/pages/team/TeamManagementPage'
 import { RegulatoryDashboardPage } from './app/pages/regulatory/RegulatoryDashboardPage'
+import { DeveloperControlPanel } from './app/pages/developer/DeveloperControlPanel'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -170,6 +172,16 @@ const regulatoryNavigationElement = (
   </AppShell>
 )
 
+const developerControlPanelElement = (
+  <AppShell
+    activeItem="performance"
+    title="Developer Console"
+    description="Internal tools and configuration."
+  >
+    <DeveloperControlPanel />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -272,6 +284,14 @@ const router = createBrowserRouter([
     element: regulatoryNavigationElement,
   },
   {
+    path: '/projects/:projectId/regulatory',
+    element: regulatoryNavigationElement,
+  },
+  {
+    path: '/developer',
+    element: developerControlPanelElement,
+  },
+  {
     path: '/legacy/home',
     element: <HomeOverview />,
   },
@@ -351,7 +371,9 @@ ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <TranslationProvider>
       <AppThemeProvider>
-        <RouterProvider router={router} layout={BaseLayout} />
+        <DeveloperProvider>
+          <RouterProvider router={router} layout={BaseLayout} />
+        </DeveloperProvider>
       </AppThemeProvider>
     </TranslationProvider>
   </React.StrictMode>,

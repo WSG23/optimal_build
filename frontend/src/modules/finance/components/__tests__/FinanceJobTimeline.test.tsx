@@ -20,9 +20,7 @@ describe('FinanceJobTimeline component', () => {
     )
 
     expect(screen.getByText(i18n.t('finance.jobs.title'))).toBeVisible()
-    expect(
-      screen.getByText(i18n.t('finance.jobs.empty')),
-    ).toBeVisible()
+    expect(screen.getByText(i18n.t('finance.jobs.empty'))).toBeVisible()
   })
 
   it('renders job entries with status, timestamp and meta', () => {
@@ -49,7 +47,9 @@ describe('FinanceJobTimeline component', () => {
 
     expect(screen.getByText(i18n.t('finance.jobs.title'))).toBeVisible()
     expect(
-      screen.getByText(i18n.t('finance.sensitivity.pendingNotice', { count: 1 })),
+      screen.getByText(
+        i18n.t('finance.sensitivity.pendingNotice', { count: 1 }),
+      ),
     ).toBeVisible()
     expect(
       screen.getByText(i18n.t('finance.jobs.task', { id: 'task-1' })),
@@ -58,11 +58,11 @@ describe('FinanceJobTimeline component', () => {
       screen.getByText(i18n.t('finance.jobs.task', { id: 'task-2' })),
     ).toBeVisible()
     expect(
-      screen.getAllByText(i18n.t('finance.jobs.backend', { backend: 'celery' }))[0],
+      screen.getAllByText(
+        i18n.t('finance.jobs.backend', { backend: 'celery' }),
+      )[0],
     ).toBeVisible()
-    expect(
-      screen.getByText(i18n.t('finance.jobs.status.queued')),
-    ).toBeVisible()
+    expect(screen.getByText(i18n.t('finance.jobs.status.queued'))).toBeVisible()
     expect(
       screen.getByText(i18n.t('finance.jobs.status.completed')),
     ).toBeVisible()

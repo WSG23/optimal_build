@@ -11,7 +11,10 @@ import type {
   DevelopmentScenario,
 } from '../../../../api/siteAcquisition'
 import type { AssessmentDraftSystem, ConditionAssessmentDraft } from '../types'
-import { DEFAULT_CONDITION_SYSTEMS, OFFLINE_CHECKLIST_TEMPLATES } from '../constants'
+import {
+  DEFAULT_CONDITION_SYSTEMS,
+  OFFLINE_CHECKLIST_TEMPLATES,
+} from '../constants'
 import { DEFAULT_SCENARIO_ORDER } from '../../../../api/siteAcquisition'
 import { formatDateTimeLocalInput } from './formatters'
 
@@ -51,10 +54,14 @@ export function buildAssessmentDraft(
       : '',
   }))
 
-  const recordedAtLocal = formatDateTimeLocalInput(assessment?.recordedAt ?? null)
+  const recordedAtLocal = formatDateTimeLocalInput(
+    assessment?.recordedAt ?? null,
+  )
   const attachmentsText = (assessment?.attachments ?? [])
     .map((attachment) =>
-      attachment.url ? `${attachment.label} | ${attachment.url}` : attachment.label,
+      attachment.url
+        ? `${attachment.label} | ${attachment.url}`
+        : attachment.label,
     )
     .join('\n')
 

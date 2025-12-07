@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { NavItem, NavItemKey } from '../navigation'
 import { AGENT_NAV_ITEMS, DEVELOPER_NAV_ITEMS } from '../navigation'
+import { useDeveloperMode } from '../../contexts/DeveloperContext'
 
 type Workspace = 'agent' | 'developer'
 
@@ -15,17 +16,20 @@ export function AppNavigation({
   onNavigate,
   currentPath,
 }: AppNavigationProps) {
+  const { isDeveloperMode } = useDeveloperMode()
   // Determine initial workspace based on active item
-  const initialWorkspace: Workspace = DEVELOPER_NAV_ITEMS.find(item => item.key === activeItem)
+  const initialWorkspace: Workspace = DEVELOPER_NAV_ITEMS.find(
+    (item) => item.key === activeItem,
+  )
     ? 'developer'
     : 'agent'
 
-  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace>(initialWorkspace)
+  const [selectedWorkspace, setSelectedWorkspace] =
+    useState<Workspace>(initialWorkspace)
 
   // Show items for selected workspace only
-  const navItems = (selectedWorkspace === 'agent'
-    ? AGENT_NAV_ITEMS
-    : DEVELOPER_NAV_ITEMS
+  const navItems = (
+    selectedWorkspace === 'agent' ? AGENT_NAV_ITEMS : DEVELOPER_NAV_ITEMS
   ).filter((item) => !item.comingSoon)
 
   const handleClick = (path: string, disabled: boolean | undefined) => {
@@ -38,7 +42,8 @@ export function AppNavigation({
   const handleWorkspaceSwitch = (workspace: Workspace) => {
     setSelectedWorkspace(workspace)
     // Navigate to first item of the selected workspace
-    const firstItem = workspace === 'agent' ? AGENT_NAV_ITEMS[0] : DEVELOPER_NAV_ITEMS[0]
+    const firstItem =
+      workspace === 'agent' ? AGENT_NAV_ITEMS[0] : DEVELOPER_NAV_ITEMS[0]
     onNavigate(firstItem.path)
   }
 
@@ -77,17 +82,21 @@ export function AppNavigation({
       <div className="app-nav__header">
         <span className="app-nav__product">Optimal Build Studio</span>
         <span className="app-nav__subheading">
-          {selectedWorkspace === 'agent' ? 'Agent workspace' : 'Developer workspace'}
+          {selectedWorkspace === 'agent'
+            ? 'Agent workspace'
+            : 'Developer workspace'}
         </span>
       </div>
 
       {/* Workspace Switcher */}
-      <div style={{
-        display: 'flex',
-        gap: '0.5rem',
-        padding: '0.75rem 1rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          padding: '0.75rem 1rem',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        }}
+      >
         <button
           type="button"
           onClick={() => handleWorkspaceSwitch('agent')}
@@ -96,8 +105,14 @@ export function AppNavigation({
             padding: '0.5rem',
             fontSize: '0.875rem',
             fontWeight: 500,
-            color: selectedWorkspace === 'agent' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-            background: selectedWorkspace === 'agent' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            color:
+              selectedWorkspace === 'agent'
+                ? '#fff'
+                : 'rgba(255, 255, 255, 0.6)',
+            background:
+              selectedWorkspace === 'agent'
+                ? 'rgba(255, 255, 255, 0.1)'
+                : 'transparent',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -114,8 +129,14 @@ export function AppNavigation({
             padding: '0.5rem',
             fontSize: '0.875rem',
             fontWeight: 500,
-            color: selectedWorkspace === 'developer' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-            background: selectedWorkspace === 'developer' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            color:
+              selectedWorkspace === 'developer'
+                ? '#fff'
+                : 'rgba(255, 255, 255, 0.6)',
+            background:
+              selectedWorkspace === 'developer'
+                ? 'rgba(255, 255, 255, 0.1)'
+                : 'transparent',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -126,7 +147,17 @@ export function AppNavigation({
         </button>
       </div>
 
-      <ul className="app-nav__list">{navItems.map(renderItem)}</ul>
+      <ul className="app-nav__list">
+        {navItems.map(renderItem)}
+        {isDeveloperMode &&
+          renderItem({
+            key: 'developer_console' as unknown as NavItemKey,
+            label: 'Developer Console',
+            path: '/developer',
+            description: 'Debug tools & experiments',
+            workspace: 'developer',
+          })}
+      </ul>
     </nav>
   )
 }

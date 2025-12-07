@@ -83,7 +83,9 @@ export interface ConditionAssessmentSectionProps {
 
   // Formatters (stable callbacks from parent)
   formatRecordedTimestamp: (timestamp?: string | null) => string
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
   describeRatingChange: (
     current: string,
     reference: string,
@@ -183,7 +185,8 @@ export function ConditionAssessmentSection({
             Capture a property to generate the developer condition assessment
           </p>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
-            Structural, M&amp;E, and compliance insights will appear here with targeted actions.
+            Structural, M&amp;E, and compliance insights will appear here with
+            targeted actions.
           </p>
         </div>
       ) : !conditionAssessment ? (
@@ -193,18 +196,21 @@ export function ConditionAssessmentSection({
             textAlign: 'center',
             color: '#6e6e73',
             background:
-              (capturedProperty as { propertyId?: string })?.propertyId === 'offline-property'
+              (capturedProperty as { propertyId?: string })?.propertyId ===
+              'offline-property'
                 ? '#f5f5f7'
                 : '#fff7ed',
             borderRadius: '12px',
             border:
-              (capturedProperty as { propertyId?: string })?.propertyId === 'offline-property'
+              (capturedProperty as { propertyId?: string })?.propertyId ===
+              'offline-property'
                 ? 'none'
                 : '1px solid #fed7aa',
           }}
         >
           <p style={{ margin: 0 }}>
-            {(capturedProperty as { propertyId?: string })?.propertyId === 'offline-property'
+            {(capturedProperty as { propertyId?: string })?.propertyId ===
+            'offline-property'
               ? 'Condition assessment not available in offline mode. Capture a real property to access inspection data.'
               : 'Unable to load condition assessment. Please retry after refreshing the capture.'}
           </p>
@@ -308,7 +314,9 @@ export function ConditionAssessmentSection({
                 >
                   Condition insights
                 </h3>
-                <span style={{ fontSize: '0.85rem', color: '#475569' }}>{insightSubtitle}</span>
+                <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                  {insightSubtitle}
+                </span>
               </div>
               <div
                 style={{
@@ -348,8 +356,13 @@ export function ConditionAssessmentSection({
                   : null
               const previousRating = comparison?.previous?.rating ?? null
               const previousScore =
-                typeof comparison?.previous?.score === 'number' ? comparison?.previous?.score : null
-              const systemSeverity = classifySystemSeverity(system.rating, delta)
+                typeof comparison?.previous?.score === 'number'
+                  ? comparison?.previous?.score
+                  : null
+              const systemSeverity = classifySystemSeverity(
+                system.rating,
+                delta,
+              )
 
               return (
                 <SystemRatingCard
@@ -380,11 +393,15 @@ export function ConditionAssessmentSection({
                 ? [
                     {
                       label: 'Last recorded',
-                      value: formatRecordedTimestamp(latestAssessmentEntry.recordedAt),
+                      value: formatRecordedTimestamp(
+                        latestAssessmentEntry.recordedAt,
+                      ),
                     },
                     {
                       label: 'Scenario',
-                      value: formatScenarioLabel(latestAssessmentEntry.scenario),
+                      value: formatScenarioLabel(
+                        latestAssessmentEntry.scenario,
+                      ),
                     },
                     {
                       label: 'Rating',
@@ -471,37 +488,43 @@ export function ConditionAssessmentSection({
                 >
                   {isExportingReport ? 'Preparing PDF…' : 'Download PDF'}
                 </button>
-                {scenarioOverrideEntries.length > 1 && baseScenarioAssessment && (
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      fontSize: '0.85rem',
-                      color: '#3a3a3c',
-                    }}
-                  >
-                    <span style={{ fontWeight: 600 }}>Baseline scenario</span>
-                    <select
-                      value={baseScenarioAssessment.scenario ?? ''}
-                      onChange={(event) =>
-                        setScenarioComparisonBase(event.target.value as DevelopmentScenario)
-                      }
+                {scenarioOverrideEntries.length > 1 &&
+                  baseScenarioAssessment && (
+                    <label
                       style={{
-                        borderRadius: '8px',
-                        border: '1px solid #d2d2d7',
-                        padding: '0.4rem 0.6rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
                         fontSize: '0.85rem',
+                        color: '#3a3a3c',
                       }}
                     >
-                      {scenarioOverrideEntries.map((entry) => (
-                        <option key={entry.scenario ?? 'all'} value={entry.scenario ?? ''}>
-                          {formatScenarioLabel(entry.scenario)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
+                      <span style={{ fontWeight: 600 }}>Baseline scenario</span>
+                      <select
+                        value={baseScenarioAssessment.scenario ?? ''}
+                        onChange={(event) =>
+                          setScenarioComparisonBase(
+                            event.target.value as DevelopmentScenario,
+                          )
+                        }
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #d2d2d7',
+                          padding: '0.4rem 0.6rem',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        {scenarioOverrideEntries.map((entry) => (
+                          <option
+                            key={entry.scenario ?? 'all'}
+                            value={entry.scenario ?? ''}
+                          >
+                            {formatScenarioLabel(entry.scenario)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
               </div>
             </div>
             {scenarioAssessmentsError ? (
@@ -524,7 +547,9 @@ export function ConditionAssessmentSection({
                   borderRadius: '10px',
                 }}
               >
-                <p style={{ margin: 0, fontSize: '0.9rem' }}>Loading scenario overrides...</p>
+                <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                  Loading scenario overrides...
+                </p>
               </div>
             ) : scenarioOverrideEntries.length === 0 ? (
               <div
@@ -537,12 +562,18 @@ export function ConditionAssessmentSection({
                 }}
               >
                 <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                  No scenario-specific overrides recorded yet. Save an inspection for a specific
-                  scenario to compare outcomes.
+                  No scenario-specific overrides recorded yet. Save an
+                  inspection for a specific scenario to compare outcomes.
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.25rem',
+                }}
+              >
                 {scenarioOverrideEntries.length > 0 && (
                   <div
                     style={{
@@ -573,7 +604,8 @@ export function ConditionAssessmentSection({
                         Compare against
                       </span>
                       <span style={{ fontSize: '0.95rem', color: '#1d1d1f' }}>
-                        Choose the baseline inspection to benchmark other scenarios.
+                        Choose the baseline inspection to benchmark other
+                        scenarios.
                       </span>
                     </div>
                     <label
@@ -589,7 +621,8 @@ export function ConditionAssessmentSection({
                       <select
                         value={baseScenarioAssessment?.scenario ?? ''}
                         onChange={(event) => {
-                          const selected = event.target.value as DevelopmentScenario
+                          const selected = event.target
+                            .value as DevelopmentScenario
                           if (selected) {
                             setScenarioComparisonBase(selected)
                           }
@@ -605,7 +638,10 @@ export function ConditionAssessmentSection({
                         }}
                       >
                         {scenarioOverrideEntries.map((assessment) => (
-                          <option key={assessment.scenario ?? 'all'} value={assessment.scenario ?? ''}>
+                          <option
+                            key={assessment.scenario ?? 'all'}
+                            value={assessment.scenario ?? ''}
+                          >
                             {formatScenarioLabel(assessment.scenario)}
                           </option>
                         ))}
@@ -651,7 +687,9 @@ export function ConditionAssessmentSection({
                       }}
                     >
                       <span>Rating {baseScenarioAssessment.overallRating}</span>
-                      <span>{baseScenarioAssessment.overallScore}/100 score</span>
+                      <span>
+                        {baseScenarioAssessment.overallScore}/100 score
+                      </span>
                       <span style={{ textTransform: 'capitalize' }}>
                         {baseScenarioAssessment.riskLevel} risk
                       </span>
@@ -689,9 +727,11 @@ export function ConditionAssessmentSection({
                             lineHeight: 1.4,
                           }}
                         >
-                          {baseScenarioAssessment.recommendedActions.map((action) => (
-                            <li key={action}>{action}</li>
-                          ))}
+                          {baseScenarioAssessment.recommendedActions.map(
+                            (action) => (
+                              <li key={action}>{action}</li>
+                            ),
+                          )}
                         </ul>
                       </div>
                     )}
@@ -708,14 +748,16 @@ export function ConditionAssessmentSection({
                       fontSize: '0.9rem',
                     }}
                   >
-                    Capture another scenario-specific override to compare with the baseline.
+                    Capture another scenario-specific override to compare with
+                    the baseline.
                   </div>
                 ) : (
                   <div
                     style={{
                       display: 'grid',
                       gap: '1rem',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                      gridTemplateColumns:
+                        'repeat(auto-fit, minmax(260px, 1fr))',
                     }}
                   >
                     {scenarioComparisonEntries.map((assessment) => {
@@ -723,7 +765,8 @@ export function ConditionAssessmentSection({
                         return null
                       }
                       const scoreDelta =
-                        assessment.overallScore - baseScenarioAssessment.overallScore
+                        assessment.overallScore -
+                        baseScenarioAssessment.overallScore
                       const ratingInfo = describeRatingChange(
                         assessment.overallRating,
                         baseScenarioAssessment.overallRating,
@@ -737,11 +780,17 @@ export function ConditionAssessmentSection({
                         <ScenarioComparisonCard
                           key={assessment.scenario ?? 'default'}
                           scenarioKey={assessment.scenario ?? 'default'}
-                          scenarioLabel={formatScenarioLabel(assessment.scenario)}
+                          scenarioLabel={formatScenarioLabel(
+                            assessment.scenario,
+                          )}
                           score={assessment.overallScore}
                           scoreDelta={scoreDelta}
-                          ratingChange={ratingInfo as { text: string; tone: ToneType }}
-                          riskChange={riskInfo as { text: string; tone: ToneType }}
+                          ratingChange={
+                            ratingInfo as { text: string; tone: ToneType }
+                          }
+                          riskChange={
+                            riskInfo as { text: string; tone: ToneType }
+                          }
                           summary={assessment.summary}
                           scenarioContext={assessment.scenarioContext ?? null}
                           recommendedActions={assessment.recommendedActions}

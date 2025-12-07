@@ -6,7 +6,9 @@ export interface GeocodeResult {
   formattedAddress: string
 }
 
-export async function forwardGeocodeAddress(address: string): Promise<GeocodeResult> {
+export async function forwardGeocodeAddress(
+  address: string,
+): Promise<GeocodeResult> {
   if (!GOOGLE_API_KEY) {
     throw new Error('Missing VITE_GOOGLE_MAPS_API_KEY')
   }

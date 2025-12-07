@@ -51,7 +51,17 @@ import { MultiScenarioComparisonSection } from './components/multi-scenario-comp
 import { PropertyCaptureForm } from './components/capture-form'
 
 // MUI & Canonical Components
-import { Box, Container, Stack, Typography, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
+import {
+  Box,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@mui/material'
 import { Refresh } from '@mui/icons-material'
 import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import { GlassCard } from '../../../components/canonical/GlassCard'
@@ -593,222 +603,273 @@ export function SiteAcquisitionPage() {
     <Box className="page site-acquisition" sx={{ pb: 8 }}>
       <Box sx={{ p: 3 }}>
         <AnimatedPageHeader
-            title="Site Acquisition"
-            subtitle="Comprehensive property capture and development feasibility analysis for developers"
-            breadcrumbs={[
-                { label: 'Dashboard', href: '/' },
-                { label: 'Site Acquisition' }
-            ]}
+          title="Site Acquisition"
+          subtitle="Comprehensive property capture and development feasibility analysis for developers"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Site Acquisition' },
+          ]}
         />
 
         <Container maxWidth="xl" sx={{ mt: 3 }}>
-            {/* Property Capture Form */}
-            <GlassCard sx={{ p: 3, mb: 4 }}>
-                <PropertyCaptureForm
-                    jurisdictionCode={jurisdictionCode}
-                    setJurisdictionCode={setJurisdictionCode}
-                    address={address}
-                    setAddress={setAddress}
-                    latitude={latitude}
-                    setLatitude={setLatitude}
-                    longitude={longitude}
-                    setLongitude={setLongitude}
-                    selectedScenarios={selectedScenarios}
-                    isCapturing={isCapturing}
-                    error={error}
-                    geocodeError={geocodeError}
-                    capturedProperty={capturedProperty}
-                    onCapture={handleCapture}
-                    onForwardGeocode={handleForwardGeocode}
-                    onReverseGeocode={handleReverseGeocode}
-                    onToggleScenario={toggleScenario}
+          {/* Property Capture Form */}
+          <GlassCard sx={{ p: 3, mb: 4 }}>
+            <PropertyCaptureForm
+              jurisdictionCode={jurisdictionCode}
+              setJurisdictionCode={setJurisdictionCode}
+              address={address}
+              setAddress={setAddress}
+              latitude={latitude}
+              setLatitude={setLatitude}
+              longitude={longitude}
+              setLongitude={setLongitude}
+              selectedScenarios={selectedScenarios}
+              isCapturing={isCapturing}
+              error={error}
+              geocodeError={geocodeError}
+              capturedProperty={capturedProperty}
+              onCapture={handleCapture}
+              onForwardGeocode={handleForwardGeocode}
+              onReverseGeocode={handleReverseGeocode}
+              onToggleScenario={toggleScenario}
+            />
+          </GlassCard>
+
+          {capturedProperty && (
+            <Stack spacing={4}>
+              <GlassCard sx={{ p: 3 }}>
+                <Typography variant="h5" fontWeight={600} gutterBottom>
+                  Property Overview
+                </Typography>
+                <PropertyOverviewSection cards={propertyOverviewCards} />
+
+                {previewJob && (
+                  <Box
+                    sx={{
+                      mt: 4,
+                      bgcolor: 'background.default',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        p: 2,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Typography variant="h6">Development Preview</Typography>
+                      <Typography
+                        variant="overline"
+                        sx={{
+                          px: 1,
+                          border: '1px solid',
+                          borderColor: 'secondary.main',
+                          borderRadius: 1,
+                        }}
+                      >
+                        {previewJob.status.toUpperCase()}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ height: 500, bgcolor: 'black' }}>
+                      <Preview3DViewer
+                        previewUrl={previewJob.previewUrl}
+                        metadataUrl={previewViewerMetadataUrl}
+                        status={previewJob.status}
+                        thumbnailUrl={previewJob.thumbnailUrl}
+                        layerVisibility={previewLayerVisibility}
+                        focusLayerId={previewFocusLayerId}
+                      />
+                    </Box>
+
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Stack direction="row" spacing={3} alignItems="center">
+                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                          <InputLabel>Geometry Detail</InputLabel>
+                          <Select
+                            value={previewDetailLevel}
+                            label="Geometry Detail"
+                            onChange={(e) =>
+                              setPreviewDetailLevel(
+                                e.target.value as GeometryDetailLevel,
+                              )
+                            }
+                            disabled={isRefreshingPreview}
+                          >
+                            {PREVIEW_DETAIL_OPTIONS.map((option) => (
+                              <MenuItem key={option} value={option}>
+                                {PREVIEW_DETAIL_LABELS[option]}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+
+                        <Button
+                          variant="outlined"
+                          startIcon={
+                            <Refresh
+                              className={isRefreshingPreview ? 'fa-spin' : ''}
+                            />
+                          }
+                          onClick={handleRefreshPreview}
+                          disabled={isRefreshingPreview}
+                        >
+                          {isRefreshingPreview
+                            ? 'Refreshing...'
+                            : 'Refresh Render'}
+                        </Button>
+
+                        <Typography variant="caption" color="text.secondary">
+                          Geometry detail:{' '}
+                          <strong>
+                            {describeDetailLevel(
+                              previewJob.geometryDetailLevel,
+                            )}
+                          </strong>
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Box>
+                )}
+
+                {previewJob && (
+                  <Box sx={{ mt: 2 }}>
+                    <PreviewLayersTable
+                      layers={previewLayerMetadata}
+                      visibility={previewLayerVisibility}
+                      focusLayerId={previewFocusLayerId}
+                      hiddenLayerCount={hiddenLayerCount}
+                      isLoading={isPreviewMetadataLoading}
+                      error={previewMetadataError}
+                      onLayerAction={handleLayerAction}
+                      onShowAll={handleShowAllLayers}
+                      onResetFocus={handleResetLayerFocus}
+                      formatNumber={formatNumberMetric}
+                    />
+                  </Box>
+                )}
+
+                <Box sx={{ mt: 2 }}>
+                  <ColorLegendEditor
+                    entries={colorLegendEntries}
+                    hasPendingChanges={legendHasPendingChanges}
+                    onChange={handleLegendEntryChange}
+                    onReset={handleLegendReset}
+                  />
+                </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <LayerBreakdownCards layers={layerBreakdown} />
+                </Box>
+              </GlassCard>
+
+              {scenarioFocusOptions.length > 0 && (
+                <GlassCard sx={{ p: 3 }}>
+                  <ScenarioFocusSection
+                    scenarioFocusOptions={scenarioFocusOptions}
+                    scenarioLookup={scenarioLookup}
+                    activeScenario={activeScenario}
+                    activeScenarioSummary={activeScenarioSummary}
+                    scenarioChecklistProgress={scenarioChecklistProgress}
+                    displaySummary={displaySummary}
+                    quickAnalysisHistoryCount={quickAnalysisHistory.length}
+                    scenarioComparisonVisible={scenarioComparisonVisible}
+                    setActiveScenario={setActiveScenario}
+                    onCompareScenarios={handleScenarioComparisonScroll}
+                    onOpenQuickAnalysisHistory={() =>
+                      setQuickAnalysisHistoryOpen(true)
+                    }
+                    onOpenInspectionHistory={() => setHistoryModalOpen(true)}
+                    formatScenarioLabel={formatScenarioLabel}
+                  />
+                </GlassCard>
+              )}
+
+              <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
+
+              <GlassCard sx={{ p: 3 }}>
+                <DueDiligenceChecklistSection
+                  capturedProperty={capturedProperty}
+                  checklistItems={checklistItems}
+                  filteredChecklistItems={filteredChecklistItems}
+                  availableChecklistScenarios={availableChecklistScenarios}
+                  scenarioLookup={scenarioLookup}
+                  displaySummary={displaySummary}
+                  activeScenario={activeScenario}
+                  activeScenarioDetails={activeScenarioDetails}
+                  selectedCategory={selectedCategory}
+                  isLoadingChecklist={isLoadingChecklist}
+                  setActiveScenario={setActiveScenario}
+                  setSelectedCategory={setSelectedCategory}
+                  handleChecklistUpdate={handleChecklistUpdate}
                 />
-            </GlassCard>
+              </GlassCard>
 
-            {capturedProperty && (
-                <Stack spacing={4}>
-                    <GlassCard sx={{ p: 3 }}>
-                        <Typography variant="h5" fontWeight={600} gutterBottom>Property Overview</Typography>
-                        <PropertyOverviewSection cards={propertyOverviewCards} />
+              <GlassCard sx={{ p: 3 }}>
+                <MultiScenarioComparisonSection
+                  capturedProperty={capturedProperty}
+                  quickAnalysisScenariosCount={quickAnalysisScenarios.length}
+                  scenarioComparisonData={scenarioComparisonData}
+                  feasibilitySignals={feasibilitySignals}
+                  comparisonScenariosCount={comparisonScenarios.length}
+                  activeScenario={activeScenario}
+                  scenarioLookup={scenarioLookup}
+                  propertyId={capturedProperty?.propertyId ?? null}
+                  isExportingReport={isExportingReport}
+                  reportExportMessage={reportExportMessage}
+                  setActiveScenario={setActiveScenario}
+                  handleReportExport={handleReportExport}
+                  formatRecordedTimestamp={formatRecordedTimestamp}
+                />
+              </GlassCard>
 
-                        {previewJob && (
-                        <Box sx={{ mt: 4, bgcolor: 'background.default', borderRadius: 2, overflow: 'hidden' }}>
-                            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
-                                <Typography variant="h6">Development Preview</Typography>
-                                <Typography variant="overline" sx={{ px: 1, border: '1px solid', borderColor: 'secondary.main', borderRadius: 1 }}>
-                                    {previewJob.status.toUpperCase()}
-                                </Typography>
-                            </Box>
-
-                            <Box sx={{ height: 500, bgcolor: 'black' }}>
-                                <Preview3DViewer
-                                    previewUrl={previewJob.previewUrl}
-                                    metadataUrl={previewViewerMetadataUrl}
-                                    status={previewJob.status}
-                                    thumbnailUrl={previewJob.thumbnailUrl}
-                                    layerVisibility={previewLayerVisibility}
-                                    focusLayerId={previewFocusLayerId}
-                                />
-                            </Box>
-
-                            <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                                <Stack direction="row" spacing={3} alignItems="center">
-                                    <FormControl size="small" sx={{ minWidth: 200 }}>
-                                        <InputLabel>Geometry Detail</InputLabel>
-                                        <Select
-                                            value={previewDetailLevel}
-                                            label="Geometry Detail"
-                                            onChange={(e) => setPreviewDetailLevel(e.target.value as GeometryDetailLevel)}
-                                            disabled={isRefreshingPreview}
-                                        >
-                                             {PREVIEW_DETAIL_OPTIONS.map((option) => (
-                                                <MenuItem key={option} value={option}>
-                                                {PREVIEW_DETAIL_LABELS[option]}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-
-                                     <Button
-                                        variant="outlined"
-                                        startIcon={<Refresh className={isRefreshingPreview ? "fa-spin" : ""} />}
-                                        onClick={handleRefreshPreview}
-                                        disabled={isRefreshingPreview}
-                                    >
-                                        {isRefreshingPreview ? 'Refreshing...' : 'Refresh Render'}
-                                    </Button>
-
-                                    <Typography variant="caption" color="text.secondary">
-                                        Geometry detail: <strong>{describeDetailLevel(previewJob.geometryDetailLevel)}</strong>
-                                    </Typography>
-                                </Stack>
-                            </Box>
-                        </Box>
-                        )}
-
-                        {previewJob && (
-                            <Box sx={{ mt: 2 }}>
-                                <PreviewLayersTable
-                                layers={previewLayerMetadata}
-                                visibility={previewLayerVisibility}
-                                focusLayerId={previewFocusLayerId}
-                                hiddenLayerCount={hiddenLayerCount}
-                                isLoading={isPreviewMetadataLoading}
-                                error={previewMetadataError}
-                                onLayerAction={handleLayerAction}
-                                onShowAll={handleShowAllLayers}
-                                onResetFocus={handleResetLayerFocus}
-                                formatNumber={formatNumberMetric}
-                                />
-                            </Box>
-                        )}
-
-                        <Box sx={{ mt: 2 }}>
-                             <ColorLegendEditor
-                                entries={colorLegendEntries}
-                                hasPendingChanges={legendHasPendingChanges}
-                                onChange={handleLegendEntryChange}
-                                onReset={handleLegendReset}
-                            />
-                        </Box>
-
-                        <Box sx={{ mt: 2 }}>
-                             <LayerBreakdownCards layers={layerBreakdown} />
-                        </Box>
-                    </GlassCard>
-
-                    {scenarioFocusOptions.length > 0 && (
-                        <GlassCard sx={{ p: 3 }}>
-                            <ScenarioFocusSection
-                            scenarioFocusOptions={scenarioFocusOptions}
-                            scenarioLookup={scenarioLookup}
-                            activeScenario={activeScenario}
-                            activeScenarioSummary={activeScenarioSummary}
-                            scenarioChecklistProgress={scenarioChecklistProgress}
-                            displaySummary={displaySummary}
-                            quickAnalysisHistoryCount={quickAnalysisHistory.length}
-                            scenarioComparisonVisible={scenarioComparisonVisible}
-                            setActiveScenario={setActiveScenario}
-                            onCompareScenarios={handleScenarioComparisonScroll}
-                            onOpenQuickAnalysisHistory={() => setQuickAnalysisHistoryOpen(true)}
-                            onOpenInspectionHistory={() => setHistoryModalOpen(true)}
-                            formatScenarioLabel={formatScenarioLabel}
-                            />
-                        </GlassCard>
-                    )}
-
-                    <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
-
-                    <GlassCard sx={{ p: 3 }}>
-                        <DueDiligenceChecklistSection
-                            capturedProperty={capturedProperty}
-                            checklistItems={checklistItems}
-                            filteredChecklistItems={filteredChecklistItems}
-                            availableChecklistScenarios={availableChecklistScenarios}
-                            scenarioLookup={scenarioLookup}
-                            displaySummary={displaySummary}
-                            activeScenario={activeScenario}
-                            activeScenarioDetails={activeScenarioDetails}
-                            selectedCategory={selectedCategory}
-                            isLoadingChecklist={isLoadingChecklist}
-                            setActiveScenario={setActiveScenario}
-                            setSelectedCategory={setSelectedCategory}
-                            handleChecklistUpdate={handleChecklistUpdate}
-                        />
-                    </GlassCard>
-
-                    <GlassCard sx={{ p: 3 }}>
-                        <MultiScenarioComparisonSection
-                            capturedProperty={capturedProperty}
-                            quickAnalysisScenariosCount={quickAnalysisScenarios.length}
-                            scenarioComparisonData={scenarioComparisonData}
-                            feasibilitySignals={feasibilitySignals}
-                            comparisonScenariosCount={comparisonScenarios.length}
-                            activeScenario={activeScenario}
-                            scenarioLookup={scenarioLookup}
-                            propertyId={capturedProperty?.propertyId ?? null}
-                            isExportingReport={isExportingReport}
-                            reportExportMessage={reportExportMessage}
-                            setActiveScenario={setActiveScenario}
-                            handleReportExport={handleReportExport}
-                            formatRecordedTimestamp={formatRecordedTimestamp}
-                        />
-                    </GlassCard>
-
-                    <GlassCard sx={{ p: 3 }}>
-                        <ConditionAssessmentSection
-                            capturedProperty={capturedProperty}
-                            conditionAssessment={conditionAssessment}
-                            isLoadingCondition={isLoadingCondition}
-                            latestAssessmentEntry={latestAssessmentEntry}
-                            previousAssessmentEntry={previousAssessmentEntry}
-                            assessmentHistoryError={assessmentHistoryError}
-                            isLoadingAssessmentHistory={isLoadingAssessmentHistory}
-                            assessmentSaveMessage={assessmentSaveMessage}
-                            scenarioAssessments={scenarioAssessments}
-                            isLoadingScenarioAssessments={isLoadingScenarioAssessments}
-                            scenarioAssessmentsError={scenarioAssessmentsError}
-                            scenarioOverrideEntries={scenarioOverrideEntries}
-                            baseScenarioAssessment={baseScenarioAssessment}
-                            scenarioComparisonEntries={scenarioComparisonEntries}
-                            combinedConditionInsights={combinedConditionInsights}
-                            insightSubtitle={insightSubtitle}
-                            systemComparisonMap={systemComparisonMap}
-                            isExportingReport={isExportingReport}
-                            scenarioLookup={scenarioLookup}
-                            formatRecordedTimestamp={formatRecordedTimestamp}
-                            formatScenarioLabel={formatScenarioLabel}
-                            describeRatingChange={describeRatingChange}
-                            describeRiskChange={describeRiskChange}
-                            openAssessmentEditor={openAssessmentEditor}
-                            setScenarioComparisonBase={setScenarioComparisonBase}
-                            handleReportExport={handleReportExport}
-                            setHistoryModalOpen={setHistoryModalOpen}
-                            InlineInspectionHistorySummary={InlineInspectionHistorySummary}
-                        />
-                    </GlassCard>
-                </Stack>
-            )}
+              <GlassCard sx={{ p: 3 }}>
+                <ConditionAssessmentSection
+                  capturedProperty={capturedProperty}
+                  conditionAssessment={conditionAssessment}
+                  isLoadingCondition={isLoadingCondition}
+                  latestAssessmentEntry={latestAssessmentEntry}
+                  previousAssessmentEntry={previousAssessmentEntry}
+                  assessmentHistoryError={assessmentHistoryError}
+                  isLoadingAssessmentHistory={isLoadingAssessmentHistory}
+                  assessmentSaveMessage={assessmentSaveMessage}
+                  scenarioAssessments={scenarioAssessments}
+                  isLoadingScenarioAssessments={isLoadingScenarioAssessments}
+                  scenarioAssessmentsError={scenarioAssessmentsError}
+                  scenarioOverrideEntries={scenarioOverrideEntries}
+                  baseScenarioAssessment={baseScenarioAssessment}
+                  scenarioComparisonEntries={scenarioComparisonEntries}
+                  combinedConditionInsights={combinedConditionInsights}
+                  insightSubtitle={insightSubtitle}
+                  systemComparisonMap={systemComparisonMap}
+                  isExportingReport={isExportingReport}
+                  scenarioLookup={scenarioLookup}
+                  formatRecordedTimestamp={formatRecordedTimestamp}
+                  formatScenarioLabel={formatScenarioLabel}
+                  describeRatingChange={describeRatingChange}
+                  describeRiskChange={describeRiskChange}
+                  openAssessmentEditor={openAssessmentEditor}
+                  setScenarioComparisonBase={setScenarioComparisonBase}
+                  handleReportExport={handleReportExport}
+                  setHistoryModalOpen={setHistoryModalOpen}
+                  InlineInspectionHistorySummary={
+                    InlineInspectionHistorySummary
+                  }
+                />
+              </GlassCard>
+            </Stack>
+          )}
         </Container>
       </Box>
     </Box>

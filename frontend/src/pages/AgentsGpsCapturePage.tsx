@@ -24,10 +24,7 @@ import {
   fetchPropertyMarketIntelligence,
   generateProfessionalPack,
 } from '../api/agents'
-import {
-  forwardGeocodeAddress,
-  reverseGeocodeCoords,
-} from '../api/geocoding'
+import { forwardGeocodeAddress, reverseGeocodeCoords } from '../api/geocoding'
 import { useTranslation } from '../i18n'
 import { Link } from '../router'
 
@@ -118,7 +115,8 @@ function renderMarketReport(
   locale: string,
 ) {
   const report = summary.report ?? {}
-  const comparables = (report.comparables_analysis as Record<string, unknown>) ?? {}
+  const comparables =
+    (report.comparables_analysis as Record<string, unknown>) ?? {}
   const transactions =
     typeof comparables.transaction_count === 'number'
       ? comparables.transaction_count
@@ -150,7 +148,7 @@ function renderMarketReport(
       value:
         periodStart && periodEnd
           ? `${periodStart} – ${periodEnd}`
-          : periodStart ?? periodEnd ?? '—',
+          : (periodStart ?? periodEnd ?? '—'),
     },
     {
       key: 'transactions',
@@ -174,7 +172,9 @@ function renderMarketReport(
       </dl>
       {generatedAt && (
         <p className="agents-capture__status">
-          {translate('agentsCapture.market.generatedAt', { timestamp: generatedAt })}
+          {translate('agentsCapture.market.generatedAt', {
+            timestamp: generatedAt,
+          })}
         </p>
       )}
     </>
@@ -227,7 +227,10 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
   return <div ref={containerRef} className="agents-capture__map-canvas" />
 }
 
-function formatMetricLabel(key: string, translate: ReturnType<typeof useTranslation>['t']): string {
+function formatMetricLabel(
+  key: string,
+  translate: ReturnType<typeof useTranslation>['t'],
+): string {
   const lookup: Record<string, string> = {
     site_area_sqm: translate('agentsCapture.metrics.siteArea'),
     plot_ratio: translate('agentsCapture.metrics.plotRatio'),
@@ -247,9 +250,7 @@ function formatMetricLabel(key: string, translate: ReturnType<typeof useTranslat
       'agentsCapture.metrics.recentTransactionCount',
     ),
     average_psf_price: translate('agentsCapture.metrics.averagePsfPrice'),
-    average_monthly_rent: translate(
-      'agentsCapture.metrics.averageMonthlyRent',
-    ),
+    average_monthly_rent: translate('agentsCapture.metrics.averageMonthlyRent'),
     rental_comparable_count: translate(
       'agentsCapture.metrics.rentalComparableCount',
     ),
@@ -265,7 +266,10 @@ function formatMetricLabel(key: string, translate: ReturnType<typeof useTranslat
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
 }
 
-function formatMetricValue(value: MetricValue | undefined, locale: string): string {
+function formatMetricValue(
+  value: MetricValue | undefined,
+  locale: string,
+): string {
   if (value === null || value === undefined) {
     return '—'
   }
@@ -403,9 +407,8 @@ export function AgentsGpsCapturePage({
   const [marketLoading, setMarketLoading] = useState(false)
   const [marketError, setMarketError] = useState<string | null>(null)
   const [packType, setPackType] = useState<ProfessionalPackType>('universal')
-  const [packSummary, setPackSummary] = useState<ProfessionalPackSummary | null>(
-    null,
-  )
+  const [packSummary, setPackSummary] =
+    useState<ProfessionalPackSummary | null>(null)
   const [packLoading, setPackLoading] = useState(false)
   const [packError, setPackError] = useState<string | null>(null)
   const [packNotice, setPackNotice] = useState<string | null>(null)
@@ -480,7 +483,9 @@ export function AgentsGpsCapturePage({
   }, [scenarioKeys, t])
 
   const selectedPackOption = useMemo(
-    () => PACK_OPTIONS.find((option) => option.value === packType) ?? PACK_OPTIONS[0],
+    () =>
+      PACK_OPTIONS.find((option) => option.value === packType) ??
+      PACK_OPTIONS[0],
     [packType],
   )
 
@@ -548,7 +553,9 @@ export function AgentsGpsCapturePage({
       setPackNotice(summary.warning ?? null)
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : t('agentsCapture.pack.errorFallback')
+        err instanceof Error
+          ? err.message
+          : t('agentsCapture.pack.errorFallback')
       setPackError(message)
       setPackNotice(null)
       setPackSummary(null)
@@ -583,13 +590,17 @@ export function AgentsGpsCapturePage({
                         return
                       }
                       try {
-                        const result = await forwardGeocodeAddress(address.trim())
+                        const result = await forwardGeocodeAddress(
+                          address.trim(),
+                        )
                         setLatitude(result.latitude.toString())
                         setLongitude(result.longitude.toString())
                         setGeocodeError(null)
                       } catch (err) {
                         const message =
-                          err instanceof Error ? err.message : 'Geocoding failed.'
+                          err instanceof Error
+                            ? err.message
+                            : 'Geocoding failed.'
                         setGeocodeError(message)
                       }
                     }}
@@ -603,7 +614,9 @@ export function AgentsGpsCapturePage({
                       const lat = Number.parseFloat(latitude)
                       const lon = Number.parseFloat(longitude)
                       if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-                        setGeocodeError('Enter valid coordinates to reverse geocode.')
+                        setGeocodeError(
+                          'Enter valid coordinates to reverse geocode.',
+                        )
                         return
                       }
                       try {
@@ -612,7 +625,9 @@ export function AgentsGpsCapturePage({
                         setGeocodeError(null)
                       } catch (err) {
                         const message =
-                          err instanceof Error ? err.message : 'Reverse geocoding failed.'
+                          err instanceof Error
+                            ? err.message
+                            : 'Reverse geocoding failed.'
                         setGeocodeError(message)
                       }
                     }}
@@ -624,7 +639,9 @@ export function AgentsGpsCapturePage({
               </div>
             </label>
           </div>
-          {geocodeError && <p className="agents-capture__error">{geocodeError}</p>}
+          {geocodeError && (
+            <p className="agents-capture__error">{geocodeError}</p>
+          )}
           <div className="agents-capture__grid">
             <label className="agents-capture__field">
               <span>{t('agentsCapture.form.latitude')}</span>
@@ -654,7 +671,10 @@ export function AgentsGpsCapturePage({
               {SCENARIO_OPTIONS.map((option) => {
                 const checked = selectedScenarios.has(option.value)
                 return (
-                  <label key={option.value} className="agents-capture__scenario-option">
+                  <label
+                    key={option.value}
+                    className="agents-capture__scenario-option"
+                  >
                     <input
                       type="checkbox"
                       checked={checked}
@@ -680,7 +700,9 @@ export function AgentsGpsCapturePage({
               : t('agentsCapture.form.submit')}
           </button>
 
-          <p className="agents-capture__note">{t('agentsCapture.form.helper')}</p>
+          <p className="agents-capture__note">
+            {t('agentsCapture.form.helper')}
+          </p>
         </form>
 
         {error && (
@@ -765,9 +787,9 @@ export function AgentsGpsCapturePage({
             <footer className="agents-capture__footer">
               <p>
                 {t('agentsCapture.results.generatedAt', {
-                  timestamp: new Date(result.quickAnalysis.generatedAt).toLocaleString(
-                    locale,
-                  ),
+                  timestamp: new Date(
+                    result.quickAnalysis.generatedAt,
+                  ).toLocaleString(locale),
                 })}
               </p>
               {disclaimers.map((message, index) => (
@@ -791,30 +813,28 @@ export function AgentsGpsCapturePage({
               <aside className="agents-capture__amenities">
                 <h4>{t('agentsCapture.context.amenitiesTitle')}</h4>
                 <ul>
-                  {(
-                    [
-                      {
-                        key: 'mrtStations' as const,
-                        label: t('agentsCapture.context.amenities.mrt'),
-                      },
-                      {
-                        key: 'busStops' as const,
-                        label: t('agentsCapture.context.amenities.bus'),
-                      },
-                      {
-                        key: 'schools' as const,
-                        label: t('agentsCapture.context.amenities.schools'),
-                      },
-                      {
-                        key: 'shoppingMalls' as const,
-                        label: t('agentsCapture.context.amenities.malls'),
-                      },
-                      {
-                        key: 'parks' as const,
-                        label: t('agentsCapture.context.amenities.parks'),
-                      },
-                    ]
-                  ).map(({ key, label }) => {
+                  {[
+                    {
+                      key: 'mrtStations' as const,
+                      label: t('agentsCapture.context.amenities.mrt'),
+                    },
+                    {
+                      key: 'busStops' as const,
+                      label: t('agentsCapture.context.amenities.bus'),
+                    },
+                    {
+                      key: 'schools' as const,
+                      label: t('agentsCapture.context.amenities.schools'),
+                    },
+                    {
+                      key: 'shoppingMalls' as const,
+                      label: t('agentsCapture.context.amenities.malls'),
+                    },
+                    {
+                      key: 'parks' as const,
+                      label: t('agentsCapture.context.amenities.parks'),
+                    },
+                  ].map(({ key, label }) => {
                     const items = result.nearbyAmenities?.[key] ?? []
                     if (!items.length) {
                       return null
@@ -824,12 +844,15 @@ export function AgentsGpsCapturePage({
                       <li key={key}>
                         <strong>{label}</strong>
                         {nearest.distanceM != null
-                          ? t('agentsCapture.context.amenities.itemWithDistance', {
-                              name: nearest.name,
-                              distance: new Intl.NumberFormat(locale, {
-                                maximumFractionDigits: 0,
-                              }).format(nearest.distanceM),
-                            })
+                          ? t(
+                              'agentsCapture.context.amenities.itemWithDistance',
+                              {
+                                name: nearest.name,
+                                distance: new Intl.NumberFormat(locale, {
+                                  maximumFractionDigits: 0,
+                                }).format(nearest.distanceM),
+                              },
+                            )
                           : t('agentsCapture.context.amenities.item', {
                               name: nearest.name,
                             })}
@@ -858,7 +881,10 @@ export function AgentsGpsCapturePage({
               <p className="agents-capture__status">
                 {t('agentsCapture.pack.subtitle')}
               </p>
-              <form className="agents-capture__pack-form" onSubmit={handlePackSubmit}>
+              <form
+                className="agents-capture__pack-form"
+                onSubmit={handlePackSubmit}
+              >
                 <label className="agents-capture__pack-field">
                   <span>{t('agentsCapture.pack.selectLabel')}</span>
                   <select
@@ -896,9 +922,9 @@ export function AgentsGpsCapturePage({
                 <div className="agents-capture__pack-result">
                   <p className="agents-capture__status">
                     {t('agentsCapture.pack.generatedAt', {
-                      timestamp: new Date(packSummary.generatedAt).toLocaleString(
-                        locale,
-                      ),
+                      timestamp: new Date(
+                        packSummary.generatedAt,
+                      ).toLocaleString(locale),
                     })}
                   </p>
                   <p className="agents-capture__status">

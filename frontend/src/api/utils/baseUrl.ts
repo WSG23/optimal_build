@@ -62,7 +62,10 @@ export function buildUrl(path: string, base: string = apiBaseUrl): string {
  * Builds a URL with simple path joining (no URL parsing).
  * Useful when base URL may be relative.
  */
-export function buildSimpleUrl(path: string, base: string = apiBaseUrl): string {
+export function buildSimpleUrl(
+  path: string,
+  base: string = apiBaseUrl,
+): string {
   const normalised = base.endsWith('/') ? base.slice(0, -1) : base
   if (path.startsWith('/')) {
     return `${normalised}${path}`

@@ -1,4 +1,7 @@
-import type { ProfessionalPackType, ProfessionalPackSummary } from '../../../api/agents'
+import type {
+  ProfessionalPackType,
+  ProfessionalPackSummary,
+} from '../../../api/agents'
 import type { BuildableSummary } from '../../../api/buildable'
 
 export type { ProfessionalPackType, ProfessionalPackSummary, BuildableSummary }
@@ -92,7 +95,11 @@ export const DEFAULT_ASSUMPTIONS = {
 
 export const DEBOUNCE_MS = 300
 
-export type GenerativeStrategy = 'max_density' | 'balanced' | 'iconic' | 'green_focus'
+export type GenerativeStrategy =
+  | 'max_density'
+  | 'balanced'
+  | 'iconic'
+  | 'green_focus'
 
 export interface GenerativeOption {
   value: GenerativeStrategy

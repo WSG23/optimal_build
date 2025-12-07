@@ -66,6 +66,13 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
         "name": "workflow",
         "description": "Approval workflow and step management APIs.",
     },
+    {
+        "name": "Development Phases",
+        "description": (
+            "Multi-phase development management APIs including Gantt chart generation, "
+            "critical path analysis, heritage preservation tracking, and tenant coordination."
+        ),
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -107,6 +114,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "team",  # Team management endpoints (Phase 2E)
     "workflow",  # Approval workflow endpoints (Phase 2E)
     "regulatory",  # Regulatory navigation endpoints (Phase 2F)
+    "development_phases",  # Multi-phase development management (Phase 2D)
 )
 
 

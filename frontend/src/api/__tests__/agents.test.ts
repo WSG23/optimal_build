@@ -120,10 +120,7 @@ describe('agents API mapping', () => {
     const originalFetch = globalThis.fetch
 
     let requestedUrl: string | null = null
-    globalThis.fetch = (async (
-      input: RequestInfo,
-      _init?: RequestInit,
-    ) => {
+    globalThis.fetch = (async (input: RequestInfo, _init?: RequestInit) => {
       requestedUrl = typeof input === 'string' ? input : String(input)
       return {
         ok: true,
@@ -183,10 +180,7 @@ describe('agents API mapping', () => {
     let requestedUrl: string | null = null
     let requestedMethod: string | undefined
 
-    globalThis.fetch = (async (
-      input: RequestInfo,
-      init?: RequestInit,
-    ) => {
+    globalThis.fetch = (async (input: RequestInfo, init?: RequestInit) => {
       requestedUrl = typeof input === 'string' ? input : String(input)
       requestedMethod = init?.method
       return {

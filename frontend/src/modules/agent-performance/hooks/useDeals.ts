@@ -1,16 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { DEAL_STAGE_ORDER, fetchDeals, type DealStage, type DealSummary } from '../../../api/deals'
+import {
+  DEAL_STAGE_ORDER,
+  fetchDeals,
+  type DealStage,
+  type DealSummary,
+} from '../../../api/deals'
 import { isAbortError } from '../utils/formatters'
 
-function groupDealsByStage(deals: DealSummary[]): Record<DealStage, DealSummary[]> {
-  return deals.reduce<Record<DealStage, DealSummary[]>>((acc, deal) => {
-    const stage = deal.pipelineStage
-    const bucket = acc[stage] ?? []
-    bucket.push(deal)
-    acc[stage] = bucket
-    return acc
-  }, {} as Record<DealStage, DealSummary[]>)
+function groupDealsByStage(
+  deals: DealSummary[],
+): Record<DealStage, DealSummary[]> {
+  return deals.reduce<Record<DealStage, DealSummary[]>>(
+    (acc, deal) => {
+      const stage = deal.pipelineStage
+      const bucket = acc[stage] ?? []
+      bucket.push(deal)
+      acc[stage] = bucket
+      return acc
+    },
+    {} as Record<DealStage, DealSummary[]>,
+  )
 }
 
 interface UseDealsOptions {

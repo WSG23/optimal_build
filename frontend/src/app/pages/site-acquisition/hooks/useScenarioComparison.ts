@@ -42,7 +42,12 @@ import {
   normaliseInsightSeverity,
   systemSpecialistHint,
 } from '../utils/insights'
-import { formatCategoryName, formatScoreDelta, safeNumber, slugify } from '../utils/formatters'
+import {
+  formatCategoryName,
+  formatScoreDelta,
+  safeNumber,
+  slugify,
+} from '../utils/formatters'
 
 // ============================================================================
 // Types
@@ -60,7 +65,10 @@ export interface UseScenarioComparisonOptions {
   /** Scenario-specific assessments */
   scenarioAssessments: ConditionAssessment[]
   /** Checklist progress by scenario */
-  scenarioChecklistProgress: Record<string, { total: number; completed: number }>
+  scenarioChecklistProgress: Record<
+    string,
+    { total: number; completed: number }
+  >
   /** Display summary for checklist */
   displaySummary: ChecklistSummary | null
   /** Currency symbol for formatting */
@@ -71,7 +79,9 @@ export interface UseScenarioComparisonResult {
   // Scenario data
   quickAnalysisScenarios: QuickAnalysisEntry[]
   comparisonScenarios: QuickAnalysisEntry[]
-  scenarioOverrideEntries: (ConditionAssessment & { scenario: DevelopmentScenario })[]
+  scenarioOverrideEntries: (ConditionAssessment & {
+    scenario: DevelopmentScenario
+  })[]
   scenarioAssessmentsMap: Map<DevelopmentScenario, ConditionAssessment>
 
   // Comparison data
@@ -87,7 +97,9 @@ export interface UseScenarioComparisonResult {
   // Scenario assessments comparison
   baseScenarioAssessment: ConditionAssessment | null
   scenarioComparisonBase: DevelopmentScenario | null
-  setScenarioComparisonBase: React.Dispatch<React.SetStateAction<DevelopmentScenario | null>>
+  setScenarioComparisonBase: React.Dispatch<
+    React.SetStateAction<DevelopmentScenario | null>
+  >
   scenarioComparisonEntries: ConditionAssessment[]
 
   // System comparisons
@@ -112,7 +124,9 @@ export interface UseScenarioComparisonResult {
 
   // Quick analysis history
   quickAnalysisHistory: QuickAnalysisSnapshot[]
-  setQuickAnalysisHistory: React.Dispatch<React.SetStateAction<QuickAnalysisSnapshot[]>>
+  setQuickAnalysisHistory: React.Dispatch<
+    React.SetStateAction<QuickAnalysisSnapshot[]>
+  >
 
   // Derived values from assessment history
   latestAssessmentEntry: ConditionAssessment | null
@@ -152,9 +166,9 @@ export function useScenarioComparison({
   // State
   const [scenarioComparisonBase, setScenarioComparisonBase] =
     useState<DevelopmentScenario | null>(null)
-  const [quickAnalysisHistory, setQuickAnalysisHistory] = useState<QuickAnalysisSnapshot[]>(
-    [],
-  )
+  const [quickAnalysisHistory, setQuickAnalysisHistory] = useState<
+    QuickAnalysisSnapshot[]
+  >([])
   const comparisonSnapshotSignatureRef = useRef<string | null>(null)
 
   // Scenario lookup
@@ -240,7 +254,9 @@ export function useScenarioComparison({
   )
 
   const summariseScenarioMetrics = useCallback(
-    (metrics: Record<string, unknown> | null | undefined): ScenarioComparisonMetric[] => {
+    (
+      metrics: Record<string, unknown> | null | undefined,
+    ): ScenarioComparisonMetric[] => {
       if (!metrics) {
         return []
       }
@@ -293,7 +309,9 @@ export function useScenarioComparison({
   )
 
   const convertAssessmentInsights = useCallback(
-    (assessment: ConditionAssessment | null | undefined): ConditionInsightView[] => {
+    (
+      assessment: ConditionAssessment | null | undefined,
+    ): ConditionInsightView[] => {
       if (!assessment?.insights) {
         return []
       }
@@ -393,9 +411,12 @@ export function useScenarioComparison({
     })
     return Array.from(names).map((name) => {
       const latestSystem =
-        latestAssessmentEntry?.systems.find((system) => system.name === name) ?? null
+        latestAssessmentEntry?.systems.find((system) => system.name === name) ??
+        null
       const previousSystem =
-        previousAssessmentEntry?.systems.find((system) => system.name === name) ?? null
+        previousAssessmentEntry?.systems.find(
+          (system) => system.name === name,
+        ) ?? null
       const scoreDelta =
         latestSystem && previousSystem
           ? latestSystem.score - previousSystem.score
@@ -428,7 +449,8 @@ export function useScenarioComparison({
           return null
         }
         const delta =
-          typeof entry.scoreDelta === 'number' && Number.isFinite(entry.scoreDelta)
+          typeof entry.scoreDelta === 'number' &&
+          Number.isFinite(entry.scoreDelta)
             ? entry.scoreDelta
             : null
         const severity = classifySystemSeverity(entry.latest.rating, delta)
@@ -437,9 +459,16 @@ export function useScenarioComparison({
         }
         const previousRating = entry.previous?.rating ?? null
         const previousScore =
-          typeof entry.previous?.score === 'number' ? entry.previous.score : null
+          typeof entry.previous?.score === 'number'
+            ? entry.previous.score
+            : null
         let detail: string
-        if (delta !== null && delta !== 0 && previousRating && previousScore !== null) {
+        if (
+          delta !== null &&
+          delta !== 0 &&
+          previousRating &&
+          previousScore !== null
+        ) {
           const deltaLabel = formatScoreDelta(delta)
           detail = `${entry.name} ${deltaLabel} vs last inspection (${previousRating} · ${previousScore}/100 → ${entry.latest.rating} · ${entry.latest.score}/100).`
         } else if (delta !== null && delta !== 0) {
@@ -453,7 +482,11 @@ export function useScenarioComparison({
         return {
           id: `trend-${slugify(entry.name)}`,
           severity: severity as InsightSeverity,
-          title: buildSystemInsightTitle(entry.name, severity as InsightSeverity, delta),
+          title: buildSystemInsightTitle(
+            entry.name,
+            severity as InsightSeverity,
+            delta,
+          ),
           detail,
           specialist: systemSpecialistHint(entry.name),
         }
@@ -552,7 +585,11 @@ export function useScenarioComparison({
     return scenarioOverrideEntries.filter(
       (assessment) => assessment !== baseScenarioAssessment,
     )
-  }, [scenarioOverrideEntries, baseScenarioAssessment, quickAnalysisScenarios.length])
+  }, [
+    scenarioOverrideEntries,
+    baseScenarioAssessment,
+    quickAnalysisScenarios.length,
+  ])
 
   // ============================================================================
   // Scenario Comparison Data
@@ -591,8 +628,9 @@ export function useScenarioComparison({
         : null
       const label = isAll
         ? 'All scenarios'
-        : option?.label ?? formatScenarioLabel(scenarioKey as DevelopmentScenario)
-      const icon = isAll ? '🌐' : option?.icon ?? '🏗️'
+        : (option?.label ??
+          formatScenarioLabel(scenarioKey as DevelopmentScenario))
+      const icon = isAll ? '🌐' : (option?.icon ?? '🏗️')
 
       let quickHeadline: string | null = null
       let quickMetrics: ScenarioComparisonMetric[] = []
@@ -625,7 +663,9 @@ export function useScenarioComparison({
         ? displaySummary
         : scenarioChecklistProgress[scenarioKey as DevelopmentScenario]
       const checklistCompleted =
-        typeof checklistEntry?.completed === 'number' ? checklistEntry.completed : null
+        typeof checklistEntry?.completed === 'number'
+          ? checklistEntry.completed
+          : null
       const checklistTotal =
         typeof checklistEntry?.total === 'number' ? checklistEntry.total : null
       const checklistPercent =
@@ -637,12 +677,15 @@ export function useScenarioComparison({
       if (isAll) {
         if (
           conditionAssessment &&
-          (!conditionAssessment.scenario || conditionAssessment.scenario === 'all')
+          (!conditionAssessment.scenario ||
+            conditionAssessment.scenario === 'all')
         ) {
           conditionEntry = conditionAssessment
         }
       } else {
-        const mapped = scenarioAssessmentsMap.get(scenarioKey as DevelopmentScenario)
+        const mapped = scenarioAssessmentsMap.get(
+          scenarioKey as DevelopmentScenario,
+        )
         if (mapped) {
           conditionEntry = mapped
         } else if (conditionAssessment?.scenario === scenarioKey) {
@@ -672,14 +715,14 @@ export function useScenarioComparison({
             : null
       const riskLevel = conditionEntry?.riskLevel ?? null
       const recommendedAction = isAll
-        ? conditionAssessment?.recommendedActions?.[0] ?? null
-        : conditionEntry?.recommendedActions?.[0] ?? null
+        ? (conditionAssessment?.recommendedActions?.[0] ?? null)
+        : (conditionEntry?.recommendedActions?.[0] ?? null)
       const inspectorName =
         conditionEntry?.inspectorName ??
-        (isAll ? conditionAssessment?.inspectorName ?? null : null)
+        (isAll ? (conditionAssessment?.inspectorName ?? null) : null)
       const recordedAt =
         conditionEntry?.recordedAt ??
-        (isAll ? conditionAssessment?.recordedAt ?? null : null)
+        (isAll ? (conditionAssessment?.recordedAt ?? null) : null)
       const source: 'manual' | 'heuristic' =
         conditionEntry && conditionEntry.recordedAt ? 'manual' : 'heuristic'
 
@@ -759,9 +802,9 @@ export function useScenarioComparison({
           row.conditionRating ?? '',
           row.conditionScore ?? '',
           row.riskLevel ?? '',
-          row.quickMetrics.map((metric) => `${metric.label}:${metric.value ?? ''}`).join(
-            ',',
-          ),
+          row.quickMetrics
+            .map((metric) => `${metric.label}:${metric.value ?? ''}`)
+            .join(','),
           row.primaryInsight?.id ?? '',
           row.recommendedAction ?? '',
         ].join('#'),
@@ -787,7 +830,10 @@ export function useScenarioComparison({
       const withoutTimestamp = sameProperty.filter(
         (entry) => entry.generatedAt !== snapshot.generatedAt,
       )
-      return [snapshot, ...withoutTimestamp].slice(0, QUICK_ANALYSIS_HISTORY_LIMIT)
+      return [snapshot, ...withoutTimestamp].slice(
+        0,
+        QUICK_ANALYSIS_HISTORY_LIMIT,
+      )
     })
   }, [capturedProperty, scenarioComparisonData])
 
@@ -800,7 +846,9 @@ export function useScenarioComparison({
     quickAnalysisScenarios.forEach((scenario) =>
       collected.add(scenario.scenario as DevelopmentScenario),
     )
-    return ['all', ...Array.from(collected)] as Array<'all' | DevelopmentScenario>
+    return ['all', ...Array.from(collected)] as Array<
+      'all' | DevelopmentScenario
+    >
   }, [quickAnalysisScenarios])
 
   const activeScenarioSummary = useMemo(() => {
@@ -810,7 +858,10 @@ export function useScenarioComparison({
     if (!row) {
       const scenarioCount = Math.max(scenarioFocusOptions.length - 1, 0)
       return {
-        label: targetKey === 'all' ? 'All scenarios' : formatScenarioLabel(targetKey),
+        label:
+          targetKey === 'all'
+            ? 'All scenarios'
+            : formatScenarioLabel(targetKey),
         headline:
           scenarioCount > 0
             ? `${scenarioCount} tracked scenarios`
@@ -827,14 +878,21 @@ export function useScenarioComparison({
           }`
         : 'Scenario summary unavailable')
     const detailMetric = row.quickMetrics[0]
-    const detail = detailMetric ? `${detailMetric.label}: ${detailMetric.value}` : null
+    const detail = detailMetric
+      ? `${detailMetric.label}: ${detailMetric.value}`
+      : null
 
     return {
       label: row.label,
       headline,
       detail,
     }
-  }, [activeScenario, scenarioComparisonData, scenarioFocusOptions.length, formatScenarioLabel])
+  }, [
+    activeScenario,
+    scenarioComparisonData,
+    scenarioFocusOptions.length,
+    formatScenarioLabel,
+  ])
 
   // ============================================================================
   // Assessment Comparison Summary
@@ -846,7 +904,9 @@ export function useScenarioComparison({
     }
     const latestSet = new Set(latestAssessmentEntry.recommendedActions)
     const previousSet = new Set(previousAssessmentEntry.recommendedActions)
-    const newActions = Array.from(latestSet).filter((action) => !previousSet.has(action))
+    const newActions = Array.from(latestSet).filter(
+      (action) => !previousSet.has(action),
+    )
     const clearedActions = Array.from(previousSet).filter(
       (action) => !latestSet.has(action),
     )
@@ -862,9 +922,9 @@ export function useScenarioComparison({
     const latestRatingIndex = (CONDITION_RATINGS as readonly string[]).indexOf(
       latestAssessmentEntry.overallRating,
     )
-    const previousRatingIndex = (CONDITION_RATINGS as readonly string[]).indexOf(
-      previousAssessmentEntry.overallRating,
-    )
+    const previousRatingIndex = (
+      CONDITION_RATINGS as readonly string[]
+    ).indexOf(previousAssessmentEntry.overallRating)
     let ratingTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'
     if (latestRatingIndex !== -1 && previousRatingIndex !== -1) {
       if (latestRatingIndex < previousRatingIndex) {
@@ -875,16 +935,17 @@ export function useScenarioComparison({
         ratingTrend = 'same'
       }
     } else if (
-      latestAssessmentEntry.overallRating !== previousAssessmentEntry.overallRating
+      latestAssessmentEntry.overallRating !==
+      previousAssessmentEntry.overallRating
     ) {
       ratingTrend = 'changed'
     }
-    const latestRiskIndex = (CONDITION_RISK_LEVELS as readonly string[]).indexOf(
-      latestAssessmentEntry.riskLevel,
-    )
-    const previousRiskIndex = (CONDITION_RISK_LEVELS as readonly string[]).indexOf(
-      previousAssessmentEntry.riskLevel,
-    )
+    const latestRiskIndex = (
+      CONDITION_RISK_LEVELS as readonly string[]
+    ).indexOf(latestAssessmentEntry.riskLevel)
+    const previousRiskIndex = (
+      CONDITION_RISK_LEVELS as readonly string[]
+    ).indexOf(previousAssessmentEntry.riskLevel)
     let riskTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'
     if (latestRiskIndex !== -1 && previousRiskIndex !== -1) {
       if (latestRiskIndex < previousRiskIndex) {
@@ -894,7 +955,9 @@ export function useScenarioComparison({
       } else {
         riskTrend = 'same'
       }
-    } else if (latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel) {
+    } else if (
+      latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel
+    ) {
       riskTrend = 'changed'
     }
     return {
@@ -902,8 +965,10 @@ export function useScenarioComparison({
       ratingTrend,
       riskTrend,
       ratingChanged:
-        latestAssessmentEntry.overallRating !== previousAssessmentEntry.overallRating,
-      riskChanged: latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel,
+        latestAssessmentEntry.overallRating !==
+        previousAssessmentEntry.overallRating,
+      riskChanged:
+        latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel,
     }
   }, [latestAssessmentEntry, previousAssessmentEntry])
 

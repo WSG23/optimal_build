@@ -21,10 +21,7 @@ export type {
 } from './useScenarioComparison'
 
 export { useGeocoding } from './useGeocoding'
-export type {
-  UseGeocodingOptions,
-  UseGeocodingReturn,
-} from './useGeocoding'
+export type { UseGeocodingOptions, UseGeocodingReturn } from './useGeocoding'
 
 export { usePropertyCapture } from './usePropertyCapture'
 export type {

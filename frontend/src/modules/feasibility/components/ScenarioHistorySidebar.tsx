@@ -7,7 +7,7 @@ import {
   ListItemText,
   Typography,
   IconButton,
-  Tooltip
+  Tooltip,
 } from '@mui/material'
 import type { PendingPayload } from '../types'
 import type { BuildableSummary } from '../../../api/buildable'
@@ -38,48 +38,81 @@ export function ScenarioHistorySidebar({
       open={open}
       onClose={onClose}
       PaperProps={{
-        sx: { width: 320, padding: 'var(--ob-space-4)' }
+        sx: { width: 320, padding: 'var(--ob-space-4)' },
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--ob-space-4)', paddingBottom: 'var(--ob-space-2)', borderBottom: '1px solid var(--ob-color-border-light)' }}>
-          <History sx={{ marginRight: 1, color: 'var(--ob-color-text-muted)' }} />
-          <Typography variant="h6" className="text-heading">Scenario History</Typography>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: 'var(--ob-space-4)',
+          paddingBottom: 'var(--ob-space-2)',
+          borderBottom: '1px solid var(--ob-color-border-light)',
+        }}
+      >
+        <History sx={{ marginRight: 1, color: 'var(--ob-color-text-muted)' }} />
+        <Typography variant="h6" className="text-heading">
+          Scenario History
+        </Typography>
       </div>
 
       {history.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--ob-color-text-muted)' }}>
-              <Typography variant="body2">No scenarios run yet.</Typography>
-          </div>
+        <div
+          style={{
+            padding: '2rem',
+            textAlign: 'center',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        >
+          <Typography variant="body2">No scenarios run yet.</Typography>
+        </div>
       ) : (
-          <List>
-              {history.map((item) => (
-                  <ListItem key={item.id} disablePadding sx={{ marginBottom: 1, background: 'var(--ob-color-bg-surface-secondary)', borderRadius: 'var(--ob-radius-md)' }}>
-                      <ListItemButton onClick={() => onRestore(item)}>
-                          <ListItemText
-                              primary={item.payload.address}
-                              primaryTypographyProps={{ variant: 'subtitle2', noWrap: true }}
-                              secondary={
-                                  <>
-                                      <Typography variant="caption" display="block">
-                                          {item.timestamp.toLocaleTimeString()}
-                                      </Typography>
-                                      {item.result && (
-                                          <Typography variant="caption" sx={{ color: 'var(--ob-color-accent)' }}>
-                                              {Math.round(item.result.metrics.nsaEstM2).toLocaleString()} sqm NSA
-                                          </Typography>
-                                      )}
-                                  </>
-                              }
-                          />
-                          <Tooltip title="Restore this scenario">
-                            <IconButton edge="end" size="small">
-                                <Restore fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                      </ListItemButton>
-                  </ListItem>
-              ))}
-          </List>
+        <List>
+          {history.map((item) => (
+            <ListItem
+              key={item.id}
+              disablePadding
+              sx={{
+                marginBottom: 1,
+                background: 'var(--ob-color-bg-surface-secondary)',
+                borderRadius: 'var(--ob-radius-md)',
+              }}
+            >
+              <ListItemButton onClick={() => onRestore(item)}>
+                <ListItemText
+                  primary={item.payload.address}
+                  primaryTypographyProps={{
+                    variant: 'subtitle2',
+                    noWrap: true,
+                  }}
+                  secondary={
+                    <>
+                      <Typography variant="caption" display="block">
+                        {item.timestamp.toLocaleTimeString()}
+                      </Typography>
+                      {item.result && (
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'var(--ob-color-accent)' }}
+                        >
+                          {Math.round(
+                            item.result.metrics.nsaEstM2,
+                          ).toLocaleString()}{' '}
+                          sqm NSA
+                        </Typography>
+                      )}
+                    </>
+                  }
+                />
+                <Tooltip title="Restore this scenario">
+                  <IconButton edge="end" size="small">
+                    <Restore fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
       )}
     </Drawer>
   )

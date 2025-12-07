@@ -1,12 +1,12 @@
-import { Box, Typography, alpha, useTheme } from '@mui/material';
+import { Box, Typography, alpha, useTheme } from '@mui/material'
 
 interface StructureSelectionCardProps {
-  value: string;
-  label: string;
-  icon: string | React.ReactNode;
-  selected: boolean;
-  onClick: () => void;
-  costEstimate?: string; // e.g. "$1,200/sqm"
+  value: string
+  label: string
+  icon: string | React.ReactNode
+  selected: boolean
+  onClick: () => void
+  costEstimate?: string // e.g. "$1,200/sqm"
 }
 
 export function StructureSelectionCard({
@@ -15,9 +15,9 @@ export function StructureSelectionCard({
   icon,
   selected,
   onClick,
-  costEstimate
+  costEstimate,
 }: StructureSelectionCardProps) {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <Box
@@ -42,13 +42,16 @@ export function StructureSelectionCard({
           : '0 2px 4px rgba(0,0,0,0.02)',
         transform: selected ? 'translateY(-2px)' : 'none',
         '&:hover': {
-           borderColor: theme.palette.primary.main,
-           boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
-           transform: 'translateY(-2px)'
-        }
+          borderColor: theme.palette.primary.main,
+          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
+          transform: 'translateY(-2px)',
+        },
       }}
     >
-      <Typography variant="h3" sx={{ fontSize: '2rem', lineHeight: 1, mb: 0.5 }}>
+      <Typography
+        variant="h3"
+        sx={{ fontSize: '2rem', lineHeight: 1, mb: 0.5 }}
+      >
         {icon}
       </Typography>
 
@@ -57,7 +60,7 @@ export function StructureSelectionCard({
         sx={{
           fontWeight: 600,
           textAlign: 'center',
-          color: selected ? 'primary.main' : 'text.primary'
+          color: selected ? 'primary.main' : 'text.primary',
         }}
       >
         {label}
@@ -65,7 +68,8 @@ export function StructureSelectionCard({
 
       {/* Cost Badge */}
       {costEstimate && (
-        <Box sx={{
+        <Box
+          sx={{
             mt: 1,
             px: 1,
             py: 0.25,
@@ -74,23 +78,26 @@ export function StructureSelectionCard({
             color: 'success.dark',
             fontSize: '0.65rem',
             fontWeight: 700,
-            letterSpacing: '0.02em'
-        }}>
-            {costEstimate}
+            letterSpacing: '0.02em',
+          }}
+        >
+          {costEstimate}
         </Box>
       )}
 
       {/* Selection Ring (Optional 3D effect enhancement) */}
       {selected && (
-        <Box sx={{
+        <Box
+          sx={{
             position: 'absolute',
             inset: -1,
             borderRadius: 'inherit',
             border: `2px solid ${theme.palette.primary.main}`,
             pointerEvents: 'none',
-            zIndex: 1
-        }} />
+            zIndex: 1,
+          }}
+        />
       )}
     </Box>
-  );
+  )
 }

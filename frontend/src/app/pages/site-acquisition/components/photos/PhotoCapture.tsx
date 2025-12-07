@@ -11,7 +11,10 @@ import type { PropertyPhase } from '../../../../../api/siteAcquisition'
 export interface PhotoCaptureProps {
   propertyId: string
   phase: PropertyPhase
-  onUpload: (file: File, options: { notes?: string; tags?: string[]; phase: PropertyPhase }) => Promise<void>
+  onUpload: (
+    file: File,
+    options: { notes?: string; tags?: string[]; phase: PropertyPhase },
+  ) => Promise<void>
   disabled?: boolean
 }
 
@@ -208,7 +211,8 @@ export function PhotoCapture({
                 color: '#9ca3af',
               }}
             >
-              Photos will be watermarked for {phase === 'acquisition' ? 'Acquisition' : 'Sales'} phase
+              Photos will be watermarked for{' '}
+              {phase === 'acquisition' ? 'Acquisition' : 'Sales'} phase
             </p>
           </>
         )}

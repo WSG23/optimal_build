@@ -55,9 +55,7 @@ function hasAmount(value: string | null | undefined): boolean {
   return Number.isFinite(parsed)
 }
 
-export function FinanceLoanInterest({
-  schedule,
-}: FinanceLoanInterestProps) {
+export function FinanceLoanInterest({ schedule }: FinanceLoanInterestProps) {
   const { t, i18n } = useTranslation()
   if (!schedule) {
     return null

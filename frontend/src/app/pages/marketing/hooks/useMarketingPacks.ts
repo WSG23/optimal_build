@@ -28,7 +28,10 @@ const initialState: MarketingPackState = {
   error: null,
 }
 
-function reducer(state: MarketingPackState, action: Action): MarketingPackState {
+function reducer(
+  state: MarketingPackState,
+  action: Action,
+): MarketingPackState {
   switch (action.type) {
     case 'GENERATE_START':
       return {

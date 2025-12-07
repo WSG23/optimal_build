@@ -168,7 +168,10 @@ function buildEnvelopeCard(
 
   return {
     title: 'Build envelope',
-    subtitle: envelope.zoneDescription ?? envelope.zoneCode ?? 'Zoning envelope preview',
+    subtitle:
+      envelope.zoneDescription ??
+      envelope.zoneCode ??
+      'Zoning envelope preview',
     items: [
       { label: 'Zone code', value: envelope.zoneCode ?? '—' },
       {
@@ -255,7 +258,9 @@ function buildPreviewJobCard(
     { label: 'Scenario', value: previewJob.scenario },
     {
       label: 'Requested',
-      value: previewJob.requestedAt ? formatTimestamp(previewJob.requestedAt) : '—',
+      value: previewJob.requestedAt
+        ? formatTimestamp(previewJob.requestedAt)
+        : '—',
     },
   ]
   if (previewJob.startedAt) {
@@ -280,7 +285,10 @@ function buildPreviewJobCard(
     previewItems.push({ label: 'Thumbnail', value: previewJob.thumbnailUrl })
   }
   if (previewJob.assetVersion) {
-    previewItems.push({ label: 'Asset version', value: previewJob.assetVersion })
+    previewItems.push({
+      label: 'Asset version',
+      value: previewJob.assetVersion,
+    })
   }
   if (previewJob.message) {
     previewItems.push({ label: 'Notes', value: previewJob.message })
@@ -356,16 +364,22 @@ function buildAssetMixCard(
     }
     if (plan.estimatedRevenueSgd != null && plan.estimatedRevenueSgd > 0) {
       segments.push(
-        `Rev ≈ ${currencySymbol}${formatNumber(plan.estimatedRevenueSgd / 1_000_000, {
-          maximumFractionDigits: 1,
-        })}M`,
+        `Rev ≈ ${currencySymbol}${formatNumber(
+          plan.estimatedRevenueSgd / 1_000_000,
+          {
+            maximumFractionDigits: 1,
+          },
+        )}M`,
       )
     }
     if (plan.estimatedCapexSgd != null && plan.estimatedCapexSgd > 0) {
       segments.push(
-        `CAPEX ≈ ${currencySymbol}${formatNumber(plan.estimatedCapexSgd / 1_000_000, {
-          maximumFractionDigits: 1,
-        })}M`,
+        `CAPEX ≈ ${currencySymbol}${formatNumber(
+          plan.estimatedCapexSgd / 1_000_000,
+          {
+            maximumFractionDigits: 1,
+          },
+        )}M`,
       )
     }
     if (plan.riskLevel) {
@@ -428,18 +442,18 @@ function buildFinancialCard(
     },
     {
       label: 'Dominant risk',
-      value:
-        financialSummary.dominantRiskProfile
-          ? financialSummary.dominantRiskProfile.replace('_', ' ')
-          : '—',
+      value: financialSummary.dominantRiskProfile
+        ? financialSummary.dominantRiskProfile.replace('_', ' ')
+        : '—',
     },
   ]
 
   const financeBlueprint = financialSummary.financeBlueprint
   if (financeBlueprint?.capitalStructure.length) {
     const baseScenario =
-      financeBlueprint.capitalStructure.find((entry) => entry.scenario === 'Base Case') ??
-      financeBlueprint.capitalStructure[0]
+      financeBlueprint.capitalStructure.find(
+        (entry) => entry.scenario === 'Base Case',
+      ) ?? financeBlueprint.capitalStructure[0]
     financialItems.push({
       label: 'Capital stack (base)',
       value: `${formatNumber(baseScenario.debtPct, {
@@ -450,8 +464,8 @@ function buildFinancialCard(
     })
   }
   if (financeBlueprint?.debtFacilities.length) {
-    const constructionLoan = financeBlueprint.debtFacilities.find(
-      (facility) => facility.facilityType.toLowerCase().includes('construction'),
+    const constructionLoan = financeBlueprint.debtFacilities.find((facility) =>
+      facility.facilityType.toLowerCase().includes('construction'),
     )
     if (constructionLoan) {
       financialItems.push({
@@ -497,7 +511,9 @@ function buildVisualizationCard(
     },
     {
       label: 'Status flag',
-      value: visualization.status ? visualization.status.replace(/_/g, ' ') : 'Pending',
+      value: visualization.status
+        ? visualization.status.replace(/_/g, ' ')
+        : 'Pending',
     },
     {
       label: 'Concept mesh',
@@ -545,7 +561,9 @@ function buildVisualizationCard(
 
   return {
     title: 'Visualization readiness',
-    subtitle: visualization.previewAvailable ? 'Preview ready' : 'Preview in progress',
+    subtitle: visualization.previewAvailable
+      ? 'Preview ready'
+      : 'Preview in progress',
     items: visualizationItems,
     note: visualization.notes?.length ? visualization.notes[0] : null,
   }
@@ -586,7 +604,9 @@ function buildZoningCard(
   return {
     title: 'Zoning & planning',
     subtitle:
-      zoning?.zoneDescription ?? zoning?.zoneCode ?? 'Zoning details unavailable',
+      zoning?.zoneDescription ??
+      zoning?.zoneCode ??
+      'Zoning details unavailable',
     items: [
       {
         label: 'Building height limit',
@@ -615,7 +635,8 @@ function buildMarketCard(
 ): PropertyOverviewCard {
   const info = capturedProperty.propertyInfo
   const formatDistance = createDistanceFormatter(formatNumber)
-  const nearestMrtStation = capturedProperty.nearbyAmenities?.mrtStations?.[0] ?? null
+  const nearestMrtStation =
+    capturedProperty.nearbyAmenities?.mrtStations?.[0] ?? null
   const nearestBusStop = capturedProperty.nearbyAmenities?.busStops?.[0] ?? null
 
   return {

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { type FeasibilityAssessmentRequest, submitFeasibilityAssessment } from '../../../api/feasibility'
+import {
+  type FeasibilityAssessmentRequest,
+  submitFeasibilityAssessment,
+} from '../../../api/feasibility'
 import { type BuildableSummary } from '../../../api/buildable'
 import type { PendingPayload, WizardStatus } from '../types'
 import { DEBOUNCE_MS } from '../types'
@@ -17,7 +20,10 @@ interface UseFeasibilityComputeResult {
   liveAnnouncement: string
   payload: PendingPayload | null
   setPayload: (payload: PendingPayload | null) => void
-  updatePayloadAssumptions: (typFloorToFloorM: number, efficiencyRatio: number) => void
+  updatePayloadAssumptions: (
+    typFloorToFloorM: number,
+    efficiencyRatio: number,
+  ) => void
 }
 
 export function useFeasibilityCompute({
@@ -96,7 +102,10 @@ export function useFeasibilityCompute({
 
       submitFeasibilityAssessment(requestPayload, controller.signal)
         .then((response) => {
-          console.log('useFeasibilityCompute: Success response received', response)
+          console.log(
+            'useFeasibilityCompute: Success response received',
+            response,
+          )
           const duration =
             (typeof performance !== 'undefined'
               ? performance.now()
@@ -166,7 +175,6 @@ export function useFeasibilityCompute({
         .finally(() => {
           debounceRef.current = null
         })
-
     }, DEBOUNCE_MS)
 
     return () => {

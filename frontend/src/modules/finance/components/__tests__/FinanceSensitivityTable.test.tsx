@@ -78,9 +78,7 @@ describe('FinanceSensitivityTable', () => {
       </TranslationProvider>,
     )
 
-    expect(
-      screen.getByText(i18n.t('finance.sensitivity.title')),
-    ).toBeTruthy()
+    expect(screen.getByText(i18n.t('finance.sensitivity.title'))).toBeTruthy()
     const rentCheckbox = screen.getByLabelText('Rent')
     fireEvent.click(rentCheckbox)
     expect(toggledParameter).toBe('Rent')
@@ -128,8 +126,6 @@ describe('FinanceSensitivityTable', () => {
       </TranslationProvider>,
     )
 
-    expect(
-      screen.getByText(i18n.t('finance.sensitivity.empty')),
-    ).toBeTruthy()
+    expect(screen.getByText(i18n.t('finance.sensitivity.empty'))).toBeTruthy()
   })
 })

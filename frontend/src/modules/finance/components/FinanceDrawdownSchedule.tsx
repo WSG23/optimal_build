@@ -55,7 +55,9 @@ export function FinanceDrawdownSchedule({
           drawdown: scenario.drawdownSchedule,
         }))
         .filter(
-          (entry): entry is typeof entry & {
+          (
+            entry,
+          ): entry is typeof entry & {
             drawdown: NonNullable<FinanceScenarioSummary['drawdownSchedule']>
           } => Boolean(entry.drawdown),
         ),
@@ -121,10 +123,16 @@ export function FinanceDrawdownSchedule({
                   </caption>
                   <thead>
                     <tr>
-                      <th scope="col">{t('finance.drawdown.headers.period')}</th>
-                      <th scope="col">{t('finance.drawdown.headers.equity')}</th>
+                      <th scope="col">
+                        {t('finance.drawdown.headers.period')}
+                      </th>
+                      <th scope="col">
+                        {t('finance.drawdown.headers.equity')}
+                      </th>
                       <th scope="col">{t('finance.drawdown.headers.debt')}</th>
-                      <th scope="col">{t('finance.drawdown.headers.outstanding')}</th>
+                      <th scope="col">
+                        {t('finance.drawdown.headers.outstanding')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Grid,
@@ -14,29 +14,29 @@ import {
   Paper,
   IconButton,
   Tooltip,
-  LinearProgress
-} from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import DownloadIcon from '@mui/icons-material/Download';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import { PropertyType } from '../../types/property';
-import { useMarketData } from '../../hooks/useMarketData';
-import ComparablesWidget from './widgets/ComparablesWidget';
-import PipelineTimelineWidget from './widgets/PipelineTimelineWidget';
-import YieldBenchmarkChart from './widgets/YieldBenchmarkChart';
-import AbsorptionTrendsChart from './widgets/AbsorptionTrendsChart';
-import MarketHeatmap from './widgets/MarketHeatmap';
-import MarketCycleIndicator from './widgets/MarketCycleIndicator';
-import QuickInsights from './widgets/QuickInsights';
+  LinearProgress,
+} from '@mui/material'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import DownloadIcon from '@mui/icons-material/Download'
+import FilterListIcon from '@mui/icons-material/FilterList'
+import { PropertyType } from '../../types/property'
+import { useMarketData } from '../../hooks/useMarketData'
+import ComparablesWidget from './widgets/ComparablesWidget'
+import PipelineTimelineWidget from './widgets/PipelineTimelineWidget'
+import YieldBenchmarkChart from './widgets/YieldBenchmarkChart'
+import AbsorptionTrendsChart from './widgets/AbsorptionTrendsChart'
+import MarketHeatmap from './widgets/MarketHeatmap'
+import MarketCycleIndicator from './widgets/MarketCycleIndicator'
+import QuickInsights from './widgets/QuickInsights'
 
 interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+  children?: React.ReactNode
+  index: number
+  value: number
 }
 
 function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, ...other } = props
 
   return (
     <div
@@ -48,15 +48,17 @@ function TabPanel(props: TabPanelProps) {
     >
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
-  );
+  )
 }
 
 const MarketIntelligenceDashboard: React.FC = () => {
-  const [propertyType, setPropertyType] = useState<PropertyType>(PropertyType.OFFICE);
-  const [location, setLocation] = useState<string>('all');
-  const [periodMonths, setPeriodMonths] = useState<number>(12);
-  const [tabValue, setTabValue] = useState(0);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [propertyType, setPropertyType] = useState<PropertyType>(
+    PropertyType.OFFICE,
+  )
+  const [location, setLocation] = useState<string>('all')
+  const [periodMonths, setPeriodMonths] = useState<number>(12)
+  const [tabValue, setTabValue] = useState(0)
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 
   const {
     marketReport,
@@ -68,51 +70,55 @@ const MarketIntelligenceDashboard: React.FC = () => {
     marketCycle,
     loading,
     error,
-    refresh
-  } = useMarketData(propertyType, location, periodMonths);
+    refresh,
+  } = useMarketData(propertyType, location, periodMonths)
 
   useEffect(() => {
     if (marketReport) {
-      setLastRefresh(new Date(marketReport.generated_at));
+      setLastRefresh(new Date(marketReport.generated_at))
     }
-  }, [marketReport]);
+  }, [marketReport])
 
   const handleRefresh = async () => {
-    await refresh();
-    setLastRefresh(new Date());
-  };
+    await refresh()
+    setLastRefresh(new Date())
+  }
 
   const handleExportReport = () => {
-    if (!marketReport) return;
+    if (!marketReport) return
 
-    const dataStr = JSON.stringify(marketReport, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataStr = JSON.stringify(marketReport, null, 2)
+    const dataUri =
+      'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
 
-    const exportFileDefaultName = `market-report-${propertyType}-${new Date().toISOString().split('T')[0]}.json`;
+    const exportFileDefaultName = `market-report-${propertyType}-${new Date().toISOString().split('T')[0]}.json`
 
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+    setTabValue(newValue)
+  }
 
   if (loading && !marketReport) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="400px"
+      >
         <CircularProgress />
       </Box>
-    );
+    )
   }
 
   return (
     <Box sx={{ p: 3 }}>
-      {loading && (
-        <LinearProgress sx={{ mb: 2 }} />
-      )}
+      {loading && <LinearProgress sx={{ mb: 2 }} />}
 
       {error && (
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -121,7 +127,12 @@ const MarketIntelligenceDashboard: React.FC = () => {
       )}
 
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
         <Typography variant="h4" component="h1">
           Market Intelligence Dashboard
         </Typography>
@@ -151,12 +162,16 @@ const MarketIntelligenceDashboard: React.FC = () => {
               <Select
                 value={propertyType}
                 label="Property Type"
-                onChange={(e) => setPropertyType(e.target.value as PropertyType)}
+                onChange={(e) =>
+                  setPropertyType(e.target.value as PropertyType)
+                }
               >
                 <MenuItem value={PropertyType.OFFICE}>Office</MenuItem>
                 <MenuItem value={PropertyType.RETAIL}>Retail</MenuItem>
                 <MenuItem value={PropertyType.INDUSTRIAL}>Industrial</MenuItem>
-                <MenuItem value={PropertyType.RESIDENTIAL}>Residential</MenuItem>
+                <MenuItem value={PropertyType.RESIDENTIAL}>
+                  Residential
+                </MenuItem>
                 <MenuItem value={PropertyType.MIXED_USE}>Mixed Use</MenuItem>
                 <MenuItem value={PropertyType.HOTEL}>Hotel</MenuItem>
                 <MenuItem value={PropertyType.WAREHOUSE}>Warehouse</MenuItem>
@@ -220,7 +235,11 @@ const MarketIntelligenceDashboard: React.FC = () => {
       {/* Main Content Tabs */}
       <Paper sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="market intelligence tabs">
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="market intelligence tabs"
+          >
             <Tab label="Overview" />
             <Tab label="Comparables" />
             <Tab label="Supply Pipeline" />
@@ -277,7 +296,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
         </TabPanel>
       </Paper>
     </Box>
-  );
-};
+  )
+}
 
-export default MarketIntelligenceDashboard;
+export default MarketIntelligenceDashboard

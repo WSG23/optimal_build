@@ -8,8 +8,14 @@
 
 import type React from 'react'
 import type { RefObject } from 'react'
-import type { ConditionAssessment, DevelopmentScenario } from '../../../../../api/siteAcquisition'
-import type { ScenarioComparisonDatum, SystemComparisonEntry } from '../../types'
+import type {
+  ConditionAssessment,
+  DevelopmentScenario,
+} from '../../../../../api/siteAcquisition'
+import type {
+  ScenarioComparisonDatum,
+  SystemComparisonEntry,
+} from '../../types'
 
 // ============================================================================
 // Types
@@ -45,7 +51,9 @@ export interface HistoryCompareViewProps {
   scenarioAssessments: ConditionAssessment[]
 
   // Formatters (stable callbacks)
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
   formatRecordedTimestamp: (timestamp: string | null | undefined) => string
 }
 
@@ -57,7 +65,9 @@ interface InspectionCardProps {
   entry: ConditionAssessment
   label: 'Current inspection' | 'Previous inspection'
   isCurrent: boolean
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
   formatRecordedTimestamp: (timestamp: string | null | undefined) => string
 }
 
@@ -114,7 +124,8 @@ function InspectionCard({
 
       {/* Rating / Score / Risk */}
       <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
-        Rating {entry.overallRating} · {entry.overallScore}/100 · {entry.riskLevel} risk
+        Rating {entry.overallRating} · {entry.overallScore}/100 ·{' '}
+        {entry.riskLevel} risk
       </span>
 
       {/* Summary */}
@@ -142,7 +153,8 @@ function InspectionCard({
         }}
       >
         <span>
-          Inspector: <strong>{entry.inspectorName?.trim() || 'Not recorded'}</strong>
+          Inspector:{' '}
+          <strong>{entry.inspectorName?.trim() || 'Not recorded'}</strong>
         </span>
         <span
           style={{
@@ -154,7 +166,9 @@ function InspectionCard({
             fontWeight: 600,
             letterSpacing: '0.05em',
             textTransform: 'uppercase',
-            background: entry.recordedAt ? '#dcfce7' : 'rgba(37, 99, 235, 0.12)',
+            background: entry.recordedAt
+              ? '#dcfce7'
+              : 'rgba(37, 99, 235, 0.12)',
             color: entry.recordedAt ? '#166534' : '#1d4ed8',
           }}
         >
@@ -306,7 +320,9 @@ export function HistoryCompareView({
                         >
                           <span style={{ fontWeight: 600 }}>{row.label}</span>
                           {row.recordedAt && (
-                            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                            <span
+                              style={{ fontSize: '0.75rem', color: '#6b7280' }}
+                            >
                               {formatRecordedTimestamp(row.recordedAt)}
                             </span>
                           )}
@@ -362,10 +378,18 @@ export function HistoryCompareView({
                         }}
                       >
                         {row.conditionRating ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.2rem',
+                            }}
+                          >
                             <strong>{row.conditionRating}</strong>
                             <span>
-                              {row.conditionScore !== null ? `${row.conditionScore}/100` : '—'}{' '}
+                              {row.conditionScore !== null
+                                ? `${row.conditionScore}/100`
+                                : '—'}{' '}
                               {row.riskLevel ? `· ${row.riskLevel} risk` : ''}
                             </span>
                           </div>
@@ -382,9 +406,12 @@ export function HistoryCompareView({
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {row.checklistCompleted !== null && row.checklistTotal !== null
+                        {row.checklistCompleted !== null &&
+                        row.checklistTotal !== null
                           ? `${row.checklistCompleted}/${row.checklistTotal}` +
-                            (row.checklistPercent !== null ? ` (${row.checklistPercent}%)` : '')
+                            (row.checklistPercent !== null
+                              ? ` (${row.checklistPercent}%)`
+                              : '')
                           : '—'}
                       </td>
                       <td
@@ -438,7 +465,9 @@ export function HistoryCompareView({
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {row.source === 'manual' ? 'Manual inspection' : 'Automated baseline'}
+                        {row.source === 'manual'
+                          ? 'Manual inspection'
+                          : 'Automated baseline'}
                       </td>
                     </tr>
                   ))}
@@ -499,7 +528,9 @@ export function HistoryCompareView({
                 <span style={{ fontSize: '2rem', fontWeight: 700 }}>
                   {latestAssessmentEntry.overallScore}
                 </span>
-                <span style={{ fontSize: '0.85rem', color: '#1d1d1f' }}>/100</span>
+                <span style={{ fontSize: '0.85rem', color: '#1d1d1f' }}>
+                  /100
+                </span>
                 <span
                   style={{
                     fontSize: '0.875rem',
@@ -591,7 +622,8 @@ export function HistoryCompareView({
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
+                  gridTemplateColumns:
+                    'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   textTransform: 'uppercase',
@@ -614,7 +646,8 @@ export function HistoryCompareView({
                     key={entry.name}
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
+                      gridTemplateColumns:
+                        'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
                       gap: '0.4rem',
                       alignItems: 'center',
                       fontSize: '0.85rem',
@@ -789,29 +822,36 @@ export function HistoryCompareView({
                 >
                   <thead>
                     <tr>
-                      {['Scenario', 'Recorded', 'Rating', 'Score', 'Risk', 'Inspector'].map(
-                        (header) => (
-                          <th
-                            key={header}
-                            style={{
-                              textAlign: 'left',
-                              padding: '0.75rem 1rem',
-                              borderBottom: '1px solid #e5e5e7',
-                              fontWeight: 600,
-                              fontSize: '0.8rem',
-                              letterSpacing: '0.04em',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {header}
-                          </th>
-                        ),
-                      )}
+                      {[
+                        'Scenario',
+                        'Recorded',
+                        'Rating',
+                        'Score',
+                        'Risk',
+                        'Inspector',
+                      ].map((header) => (
+                        <th
+                          key={header}
+                          style={{
+                            textAlign: 'left',
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid #e5e5e7',
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {header}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {scenarioAssessments.map((assessment, index) => (
-                      <tr key={`scenario-assessment-${assessment.scenario ?? index}`}>
+                      <tr
+                        key={`scenario-assessment-${assessment.scenario ?? index}`}
+                      >
                         <td
                           style={{
                             padding: '0.75rem 1rem',

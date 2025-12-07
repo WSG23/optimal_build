@@ -13,17 +13,19 @@ export function MetricsView({ result, numberFormatter, t }: MetricsViewProps) {
   const accuracyPercent = Math.round(accuracy * 100)
 
   // Color coding: <10% = Good (Green), 10-20% = Medium (Blue), >20% = Low (Orange)
-  const accuracyColor = accuracy <= 0.1
+  const accuracyColor =
+    accuracy <= 0.1
       ? 'var(--ob-color-success-text)'
       : accuracy <= 0.2
-          ? 'var(--ob-color-accent)'
-          : 'var(--ob-color-warning-text)'
+        ? 'var(--ob-color-accent)'
+        : 'var(--ob-color-warning-text)'
 
-  const accuracyBg = accuracy <= 0.1
+  const accuracyBg =
+    accuracy <= 0.1
       ? 'var(--ob-color-success-bg)'
       : accuracy <= 0.2
-          ? 'var(--ob-color-accent-light)'
-          : 'var(--ob-color-warning-bg)'
+        ? 'var(--ob-color-accent-light)'
+        : 'var(--ob-color-warning-bg)'
 
   const metrics = useMemo(
     () => [
@@ -62,22 +64,24 @@ export function MetricsView({ result, numberFormatter, t }: MetricsViewProps) {
       {metrics.map((metric) => (
         <div key={metric.key} className="feasibility-metrics__item">
           <dt>
-              {metric.label}
-              {metric.showAccuracy && (
-                  <span style={{
-                      display: 'inline-block',
-                      marginLeft: '8px',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: accuracyColor,
-                      background: accuracyBg,
-                      padding: '1px 6px',
-                      borderRadius: '999px',
-                      verticalAlign: 'middle'
-                  }}>
-                      ±{accuracyPercent}%
-                  </span>
-              )}
+            {metric.label}
+            {metric.showAccuracy && (
+              <span
+                style={{
+                  display: 'inline-block',
+                  marginLeft: '8px',
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  color: accuracyColor,
+                  background: accuracyBg,
+                  padding: '1px 6px',
+                  borderRadius: '999px',
+                  verticalAlign: 'middle',
+                }}
+              >
+                ±{accuracyPercent}%
+              </span>
+            )}
           </dt>
           <dd data-testid={metric.testId}>{metric.value}</dd>
         </div>

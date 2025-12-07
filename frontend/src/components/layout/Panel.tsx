@@ -1,8 +1,8 @@
-import type { PropsWithChildren, ReactNode } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react'
 
 export interface PanelProps extends PropsWithChildren {
-  title?: ReactNode;
-  className?: string;
+  title?: ReactNode
+  className?: string
 }
 
 export default function Panel({ title, className, children }: PanelProps) {
@@ -17,5 +17,5 @@ export default function Panel({ title, className, children }: PanelProps) {
       ) : null}
       {children}
     </section>
-  );
+  )
 }

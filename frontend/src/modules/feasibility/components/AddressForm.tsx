@@ -13,6 +13,8 @@ interface AddressFormProps {
   landUseInput?: string
   onSiteAreaChange?: (event: ChangeEvent<HTMLInputElement>) => void
   onLandUseChange?: (event: ChangeEvent<HTMLSelectElement>) => void
+  hideAddress?: boolean
+  hideSubmit?: boolean
 }
 
 export function AddressForm({
@@ -23,31 +25,64 @@ export function AddressForm({
   onSubmit,
   t,
   siteAreaInput,
-  landUseInput,
   onSiteAreaChange,
-  onLandUseChange,
+  hideAddress = false,
+  hideSubmit = true, // Default to true as we have the FAB footer now
 }: AddressFormProps) {
+  // Shared Input Styles for Dark/Glass Theme
+  const inputStyle = {
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    color: 'white',
+    borderRadius: '8px',
+    padding: '10px 12px',
+    fontSize: '0.9rem',
+    width: '100%',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  }
+
+  const labelStyle = {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: '0.8rem',
+    fontWeight: 500,
+    marginBottom: '6px',
+    display: 'block',
+  }
+
   return (
-    <form className="feasibility-form" onSubmit={onSubmit} noValidate>
-      <label className="feasibility-form__label" htmlFor="address-input">
-        {t('wizard.form.addressLabel')}
-      </label>
-      <div className="feasibility-form__field">
-        <input
-          id="address-input"
-          name="address"
-          type="text"
-          value={addressInput}
-          onChange={onAddressChange}
-          placeholder={t('wizard.form.addressPlaceholder')}
-          data-testid="address-input"
-        />
-        {addressError && <p className="feasibility-form__error">{addressError}</p>}
-      </div>
+    <form
+      className="feasibility-form"
+      onSubmit={onSubmit}
+      noValidate
+      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+    >
+      {!hideAddress && (
+        <div className="feasibility-form__field">
+          <label style={labelStyle} htmlFor="address-input">
+            {t('wizard.form.addressLabel')}
+          </label>
+          <input
+            id="address-input"
+            name="address"
+            type="text"
+            value={addressInput}
+            onChange={onAddressChange}
+            placeholder={t('wizard.form.addressPlaceholder')}
+            data-testid="address-input"
+            style={inputStyle}
+          />
+          {addressError && (
+            <p className="feasibility-form__error" style={{ color: '#f87171' }}>
+              {addressError}
+            </p>
+          )}
+        </div>
+      )}
 
       {siteAreaInput !== undefined && onSiteAreaChange && (
         <div className="feasibility-form__field">
-          <label className="feasibility-form__label" htmlFor="site-area-input">
+          <label style={labelStyle} htmlFor="site-area-input">
             {t('wizard.form.siteAreaLabel') || 'Site Area (sqm)'}
           </label>
           <input
@@ -58,41 +93,24 @@ export function AddressForm({
             onChange={onSiteAreaChange}
             placeholder="e.g. 1000"
             data-testid="site-area-input"
+            style={inputStyle}
           />
         </div>
       )}
 
-      {landUseInput !== undefined && onLandUseChange && (
-        <div className="feasibility-form__field">
-          <label className="feasibility-form__label" htmlFor="land-use-input">
-            {t('wizard.form.landUseLabel') || 'Land Use'}
-          </label>
-          <select
-            id="land-use-input"
-            name="landUse"
-            value={landUseInput}
-            onChange={onLandUseChange}
-            data-testid="land-use-input"
+      {!hideSubmit && (
+        <div className="feasibility-form__actions">
+          <button
+            type="submit"
+            className="feasibility-form__submit"
+            data-testid="compute-button"
           >
-            <option value="Residential">Residential</option>
-            <option value="Commercial">Commercial</option>
-            <option value="Mixed Use">Mixed Use</option>
-            <option value="Industrial">Industrial</option>
-          </select>
+            {status === 'loading'
+              ? t('wizard.form.submitLoading')
+              : t('wizard.form.submitLabel')}
+          </button>
         </div>
       )}
-
-      <div className="feasibility-form__actions">
-        <button
-          type="submit"
-          className="feasibility-form__submit"
-          data-testid="compute-button"
-        >
-          {status === 'loading'
-            ? t('wizard.form.submitLoading')
-            : t('wizard.form.submitLabel')}
-        </button>
-      </div>
     </form>
   )
 }

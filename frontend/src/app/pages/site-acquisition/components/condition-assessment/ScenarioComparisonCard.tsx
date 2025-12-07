@@ -67,7 +67,9 @@ export function ScenarioComparisonCard({
         background: '#ffffff',
       }}
     >
-      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>{scenarioLabel}</strong>
+      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+        {scenarioLabel}
+      </strong>
       <div
         style={{
           display: 'flex',

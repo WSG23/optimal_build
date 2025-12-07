@@ -1,6 +1,10 @@
 import type { DealStage } from '../../../api/deals'
 
-export type { DealStage, DealSummary, DealTimelineEvent } from '../../../api/deals'
+export type {
+  DealStage,
+  DealSummary,
+  DealTimelineEvent,
+} from '../../../api/deals'
 export type {
   PerformanceBenchmarkEntry,
   PerformanceSnapshot,
@@ -38,7 +42,9 @@ export interface TrendDataPoint {
 }
 
 export interface BenchmarkSet {
-  conversion: import('../../../api/performance').PerformanceBenchmarkEntry | null
+  conversion:
+    | import('../../../api/performance').PerformanceBenchmarkEntry
+    | null
   cycle: import('../../../api/performance').PerformanceBenchmarkEntry | null
   pipeline: import('../../../api/performance').PerformanceBenchmarkEntry | null
 }

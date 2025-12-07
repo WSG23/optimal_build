@@ -130,9 +130,7 @@ export function FinanceAssetBreakdown({
   if (!hasSummary && !hasBreakdowns) {
     return (
       <section className="finance-assets">
-        <h2 className="finance-assets__title">
-          {t('finance.assets.title')}
-        </h2>
+        <h2 className="finance-assets__title">{t('finance.assets.title')}</h2>
         <p className="finance-assets__empty">{t('finance.assets.empty')}</p>
       </section>
     )
@@ -219,21 +217,11 @@ export function FinanceAssetBreakdown({
                 <th scope="col">
                   {t('finance.assets.table.headers.allocation')}
                 </th>
-                <th scope="col">
-                  {t('finance.assets.table.headers.nia')}
-                </th>
-                <th scope="col">
-                  {t('finance.assets.table.headers.rent')}
-                </th>
-                <th scope="col">
-                  {t('finance.assets.table.headers.noi')}
-                </th>
-                <th scope="col">
-                  {t('finance.assets.table.headers.capex')}
-                </th>
-                <th scope="col">
-                  {t('finance.assets.table.headers.payback')}
-                </th>
+                <th scope="col">{t('finance.assets.table.headers.nia')}</th>
+                <th scope="col">{t('finance.assets.table.headers.rent')}</th>
+                <th scope="col">{t('finance.assets.table.headers.noi')}</th>
+                <th scope="col">{t('finance.assets.table.headers.capex')}</th>
+                <th scope="col">{t('finance.assets.table.headers.payback')}</th>
                 <th scope="col">
                   {t('finance.assets.table.headers.absorption')}
                 </th>
@@ -244,13 +232,15 @@ export function FinanceAssetBreakdown({
               {breakdowns.map((entry, index) => (
                 <tr key={`${entry.assetType}-${index}`}>
                   <th scope="row">{entry.assetType}</th>
-                  <td>{formatPercent(entry.allocationPct ?? null, locale, fallback)}</td>
                   <td>
-                    {formatNumber(
-                      entry.niaSqm ?? null,
+                    {formatPercent(
+                      entry.allocationPct ?? null,
                       locale,
                       fallback,
                     )}
+                  </td>
+                  <td>
+                    {formatNumber(entry.niaSqm ?? null, locale, fallback)}
                   </td>
                   <td>
                     {formatCurrency(
@@ -288,9 +278,7 @@ export function FinanceAssetBreakdown({
                   </td>
                   <td>{entry.riskLevel ?? fallback}</td>
                   <td>
-                    {entry.notes?.length
-                      ? entry.notes.join('; ')
-                      : fallback}
+                    {entry.notes?.length ? entry.notes.join('; ') : fallback}
                   </td>
                 </tr>
               ))}

@@ -7,10 +7,20 @@
  */
 
 import type { RefObject } from 'react'
-import type { ConditionAssessment, DevelopmentScenario } from '../../../../../api/siteAcquisition'
-import type { ScenarioComparisonDatum, SystemComparisonEntry } from '../../types'
+import type {
+  ConditionAssessment,
+  DevelopmentScenario,
+} from '../../../../../api/siteAcquisition'
+import type {
+  ScenarioComparisonDatum,
+  SystemComparisonEntry,
+} from '../../types'
 import { HistoryTimelineView } from './HistoryTimelineView'
-import { HistoryCompareView, type ComparisonSummary, type RecommendedActionDiff } from './HistoryCompareView'
+import {
+  HistoryCompareView,
+  type ComparisonSummary,
+  type RecommendedActionDiff,
+} from './HistoryCompareView'
 
 // ============================================================================
 // Types
@@ -41,7 +51,9 @@ export interface InspectionHistoryContentProps {
   scenarioAssessments: ConditionAssessment[]
 
   // Formatters (stable callbacks)
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
   formatRecordedTimestamp: (timestamp: string | null | undefined) => string
 }
 
@@ -98,8 +110,8 @@ export function InspectionHistoryContent({
               maxWidth: '480px',
             }}
           >
-            Review the developer inspection timeline or compare the two most recent
-            assessments side-by-side.
+            Review the developer inspection timeline or compare the two most
+            recent assessments side-by-side.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
@@ -159,7 +171,9 @@ export function InspectionHistoryContent({
             borderRadius: '10px',
           }}
         >
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>Loading inspection history...</p>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            Loading inspection history...
+          </p>
         </div>
       ) : assessmentHistory.length === 0 ? (
         <div

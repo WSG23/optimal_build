@@ -85,8 +85,15 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
           >
             Sales Velocity Model
           </h3>
-          <p style={{ margin: '0.25rem 0 0', color: '#6b7280', fontSize: '0.95rem' }}>
-            Forecast launch cadence using market defaults and optional overrides.
+          <p
+            style={{
+              margin: '0.25rem 0 0',
+              color: '#6b7280',
+              fontSize: '0.95rem',
+            }}
+          >
+            Forecast launch cadence using market defaults and optional
+            overrides.
           </p>
         </div>
         <button
@@ -147,9 +154,7 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
           label="Units planned"
           type="number"
           value={unitsPlanned === null ? '' : String(unitsPlanned)}
-          onChange={(val) =>
-            setUnitsPlanned(val === '' ? null : Number(val))
-          }
+          onChange={(val) => setUnitsPlanned(val === '' ? null : Number(val))}
           min={0}
         />
         <InputField
@@ -192,7 +197,9 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
       )}
 
       {result && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}
+        >
           <div
             style={{
               display: 'grid',
@@ -255,10 +262,18 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
 
           {result.recommendations.length > 0 && (
             <div>
-              <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 600 }}>
+              <h4
+                style={{
+                  margin: '0 0 0.35rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                }}
+              >
                 Recommendations
               </h4>
-              <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#4b5563' }}>
+              <ul
+                style={{ margin: 0, paddingLeft: '1.25rem', color: '#4b5563' }}
+              >
                 {result.recommendations.map((rec, idx) => (
                   <li key={idx} style={{ marginBottom: '0.2rem' }}>
                     {rec}
@@ -269,7 +284,13 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
           )}
 
           <div>
-            <h4 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 600 }}>
+            <h4
+              style={{
+                margin: '0 0 0.35rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+              }}
+            >
               Benchmarks
             </h4>
             <div
@@ -279,7 +300,11 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
                 gap: '0.6rem',
               }}
             >
-              <Benchmark label="Inventory" value={result.benchmarks.inventory_months} suffix="months" />
+              <Benchmark
+                label="Inventory"
+                value={result.benchmarks.inventory_months}
+                suffix="months"
+              />
               <Benchmark
                 label="Velocity p25 / p50 / p75"
                 value={[
@@ -291,7 +316,10 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
                   .join(' / ')}
                 suffix="units/mo"
               />
-              <Benchmark label="Median PSF" value={result.benchmarks.median_psf} />
+              <Benchmark
+                label="Median PSF"
+                value={result.benchmarks.median_psf}
+              />
             </div>
           </div>
         </div>
@@ -348,7 +376,13 @@ type SelectFieldProps = {
   readOnly?: boolean
 }
 
-function SelectField({ label, value, onChange, options, readOnly }: SelectFieldProps) {
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  readOnly,
+}: SelectFieldProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
       <label style={{ fontSize: '0.85rem', color: '#374151' }}>{label}</label>
@@ -378,8 +412,16 @@ type StatCardProps = { label: string; value: string }
 
 function StatCard({ label, value }: StatCardProps) {
   return (
-    <div style={{ padding: '1rem', background: '#f5f5f7', borderRadius: '12px' }}>
-      <div style={{ fontSize: '0.875rem', color: '#6e6e73', marginBottom: '0.35rem' }}>
+    <div
+      style={{ padding: '1rem', background: '#f5f5f7', borderRadius: '12px' }}
+    >
+      <div
+        style={{
+          fontSize: '0.875rem',
+          color: '#6e6e73',
+          marginBottom: '0.35rem',
+        }}
+      >
         {label}
       </div>
       <div style={{ fontSize: '1.35rem', fontWeight: 700 }}>{value}</div>
@@ -387,13 +429,23 @@ function StatCard({ label, value }: StatCardProps) {
   )
 }
 
-type BenchmarkProps = { label: string; value: string | number | null; suffix?: string }
+type BenchmarkProps = {
+  label: string
+  value: string | number | null
+  suffix?: string
+}
 
 function Benchmark({ label, value, suffix }: BenchmarkProps) {
   const display =
-    value == null || value === '' ? '—' : suffix ? `${value} ${suffix}` : String(value)
+    value == null || value === ''
+      ? '—'
+      : suffix
+        ? `${value} ${suffix}`
+        : String(value)
   return (
-    <div style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '10px' }}>
+    <div
+      style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '10px' }}
+    >
       <div style={{ fontSize: '0.85rem', color: '#6e6e73' }}>{label}</div>
       <div style={{ fontWeight: 600 }}>{display}</div>
     </div>

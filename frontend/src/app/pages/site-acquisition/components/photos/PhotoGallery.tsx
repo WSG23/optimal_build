@@ -139,9 +139,7 @@ export function PhotoGallery({
               fontWeight: 500,
               cursor: 'pointer',
               boxShadow:
-                viewMode === 'original'
-                  ? '0 1px 3px rgba(0,0,0,0.1)'
-                  : 'none',
+                viewMode === 'original' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -160,9 +158,7 @@ export function PhotoGallery({
               fontWeight: 500,
               cursor: 'pointer',
               boxShadow:
-                viewMode === 'marketing'
-                  ? '0 1px 3px rgba(0,0,0,0.1)'
-                  : 'none',
+                viewMode === 'marketing' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               transition: 'all 0.15s ease',
             }}
           >

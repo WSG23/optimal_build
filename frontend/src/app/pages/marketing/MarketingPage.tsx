@@ -79,50 +79,61 @@ export function MarketingPage() {
   }
 
   return (
-    <div style={{
-      padding: '3rem 2rem',
-      maxWidth: '980px',
-      margin: '0 auto',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
-      color: '#1d1d1f',
-    }}>
+    <div
+      style={{
+        padding: '3rem 2rem',
+        maxWidth: '980px',
+        margin: '0 auto',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
+        color: '#1d1d1f',
+      }}
+    >
       {/* Header */}
       <header style={{ marginBottom: '3rem' }}>
-        <h1 style={{
-          fontSize: '3rem',
-          fontWeight: 700,
-          letterSpacing: '-0.015em',
-          margin: '0 0 0.5rem',
-          lineHeight: 1.1,
-        }}>
+        <h1
+          style={{
+            fontSize: '3rem',
+            fontWeight: 700,
+            letterSpacing: '-0.015em',
+            margin: '0 0 0.5rem',
+            lineHeight: 1.1,
+          }}
+        >
           Marketing Packs
         </h1>
-        <p style={{
-          fontSize: '1.25rem',
-          color: '#6e6e73',
-          fontWeight: 400,
-          margin: 0,
-          letterSpacing: '-0.01em',
-        }}>
+        <p
+          style={{
+            fontSize: '1.25rem',
+            color: '#6e6e73',
+            fontWeight: 400,
+            margin: 0,
+            letterSpacing: '-0.01em',
+          }}
+        >
           Professional materials for investors and stakeholders
         </p>
       </header>
 
       {/* Pack Type Selector */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{
-          fontSize: '1.75rem',
-          fontWeight: 600,
-          letterSpacing: '-0.01em',
-          margin: '0 0 1.5rem',
-        }}>
+        <h2
+          style={{
+            fontSize: '1.75rem',
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
+            margin: '0 0 1.5rem',
+          }}
+        >
           Choose a template
         </h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '1rem',
-        }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '1rem',
+          }}
+        >
           {PACK_TYPES.map((pack) => {
             const isSelected = selectedPackType === pack.type
             return (
@@ -146,7 +157,8 @@ export function MarketingPage() {
                 onMouseEnter={(e) => {
                   if (!isGenerating) {
                     e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)'
+                    e.currentTarget.style.boxShadow =
+                      '0 8px 24px rgba(0, 0, 0, 0.08)'
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -155,55 +167,65 @@ export function MarketingPage() {
                 }}
               >
                 {isSelected && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    background: '#1d1d1f',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px',
-                    color: 'white',
-                  }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '1rem',
+                      right: '1rem',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      background: '#1d1d1f',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      color: 'white',
+                    }}
+                  >
                     ✓
                   </div>
                 )}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  marginBottom: '0.5rem',
-                }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    marginBottom: '0.5rem',
+                  }}
+                >
                   <span style={{ fontSize: '1.5rem' }}>{pack.icon}</span>
-                  <div style={{
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: '#1d1d1f',
-                    letterSpacing: '-0.01em',
-                  }}>
+                  <div
+                    style={{
+                      fontSize: '1.125rem',
+                      fontWeight: 600,
+                      color: '#1d1d1f',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
                     {pack.label}
                   </div>
                 </div>
-                <div style={{
-                  fontSize: '0.9375rem',
-                  color: '#6e6e73',
-                  lineHeight: 1.5,
-                  letterSpacing: '-0.005em',
-                  marginBottom: '0.75rem',
-                }}>
+                <div
+                  style={{
+                    fontSize: '0.9375rem',
+                    color: '#6e6e73',
+                    lineHeight: 1.5,
+                    letterSpacing: '-0.005em',
+                    marginBottom: '0.75rem',
+                  }}
+                >
                   {pack.description}
                 </div>
-                <div style={{
-                  display: 'flex',
-                  gap: '1rem',
-                  fontSize: '0.8125rem',
-                  color: '#86868b',
-                  letterSpacing: '-0.005em',
-                }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '1rem',
+                    fontSize: '0.8125rem',
+                    color: '#86868b',
+                    letterSpacing: '-0.005em',
+                  }}
+                >
                   <span>⏱️ {pack.estimatedTime}</span>
                   <span>📦 {pack.estimatedSize}</span>
                 </div>
@@ -214,19 +236,23 @@ export function MarketingPage() {
       </section>
 
       {/* Generation Form */}
-      <section style={{
-        background: 'white',
-        border: '1px solid #d2d2d7',
-        borderRadius: '18px',
-        padding: '2rem',
-        marginBottom: '3rem',
-      }}>
-        <h3 style={{
-          fontSize: '1.25rem',
-          fontWeight: 600,
-          margin: '0 0 1.5rem',
-          letterSpacing: '-0.01em',
-        }}>
+      <section
+        style={{
+          background: 'white',
+          border: '1px solid #d2d2d7',
+          borderRadius: '18px',
+          padding: '2rem',
+          marginBottom: '3rem',
+        }}
+      >
+        <h3
+          style={{
+            fontSize: '1.25rem',
+            fontWeight: 600,
+            margin: '0 0 1.5rem',
+            letterSpacing: '-0.01em',
+          }}
+        >
           Generate {selectedPackInfo?.label}
         </h3>
 
@@ -260,7 +286,8 @@ export function MarketingPage() {
               outline: 'none',
               transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
               background: isGenerating ? '#f5f5f7' : 'white',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+              fontFamily:
+                'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
               letterSpacing: '-0.005em',
             }}
             onFocus={(e) => {
@@ -284,10 +311,12 @@ export function MarketingPage() {
             fontSize: '1.0625rem',
             fontWeight: 500,
             color: 'white',
-            background: isGenerating || !propertyId.trim() ? '#d2d2d7' : '#1d1d1f',
+            background:
+              isGenerating || !propertyId.trim() ? '#d2d2d7' : '#1d1d1f',
             border: 'none',
             borderRadius: '12px',
-            cursor: isGenerating || !propertyId.trim() ? 'not-allowed' : 'pointer',
+            cursor:
+              isGenerating || !propertyId.trim() ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
             letterSpacing: '-0.005em',
           }}
@@ -310,30 +339,34 @@ export function MarketingPage() {
         </button>
 
         {error && (
-          <div style={{
-            marginTop: '1rem',
-            padding: '0.875rem 1rem',
-            background: '#fff5f5',
-            border: '1px solid #ffe0e0',
-            borderRadius: '12px',
-            color: '#d70015',
-            fontSize: '0.9375rem',
-            letterSpacing: '-0.005em',
-          }}>
+          <div
+            style={{
+              marginTop: '1rem',
+              padding: '0.875rem 1rem',
+              background: '#fff5f5',
+              border: '1px solid #ffe0e0',
+              borderRadius: '12px',
+              color: '#d70015',
+              fontSize: '0.9375rem',
+              letterSpacing: '-0.005em',
+            }}
+          >
             {error}
           </div>
         )}
         {notice && (
-          <div style={{
-            marginTop: '1rem',
-            padding: '0.875rem 1rem',
-            background: '#fff9e6',
-            border: '1px solid #ffe8b3',
-            borderRadius: '12px',
-            color: '#996600',
-            fontSize: '0.9375rem',
-            letterSpacing: '-0.005em',
-          }}>
+          <div
+            style={{
+              marginTop: '1rem',
+              padding: '0.875rem 1rem',
+              background: '#fff9e6',
+              border: '1px solid #ffe8b3',
+              borderRadius: '12px',
+              color: '#996600',
+              fontSize: '0.9375rem',
+              letterSpacing: '-0.005em',
+            }}
+          >
             {notice}
           </div>
         )}
@@ -341,70 +374,86 @@ export function MarketingPage() {
 
       {/* Generated Packs List */}
       <section>
-        <div style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          marginBottom: '1.5rem',
-        }}>
-          <h2 style={{
-            fontSize: '1.75rem',
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            margin: 0,
-          }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 600,
+              letterSpacing: '-0.01em',
+              margin: 0,
+            }}
+          >
             Library
           </h2>
-          <span style={{
-            fontSize: '0.9375rem',
-            color: '#6e6e73',
-            fontWeight: 400,
-          }}>
+          <span
+            style={{
+              fontSize: '0.9375rem',
+              color: '#6e6e73',
+              fontWeight: 400,
+            }}
+          >
             {packs.length} {packs.length === 1 ? 'pack' : 'packs'}
           </span>
         </div>
 
         {packs.length === 0 ? (
-          <div style={{
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            background: 'white',
-            border: '1px solid #d2d2d7',
-            borderRadius: '18px',
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              margin: '0 auto 1.5rem',
-              background: '#f5f5f7',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-            }}>
+          <div
+            style={{
+              padding: '4rem 2rem',
+              textAlign: 'center',
+              background: 'white',
+              border: '1px solid #d2d2d7',
+              borderRadius: '18px',
+            }}
+          >
+            <div
+              style={{
+                width: '60px',
+                height: '60px',
+                margin: '0 auto 1.5rem',
+                background: '#f5f5f7',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+              }}
+            >
               📄
             </div>
-            <p style={{
-              fontSize: '1.125rem',
-              fontWeight: 500,
-              color: '#1d1d1f',
-              marginBottom: '0.5rem',
-              letterSpacing: '-0.01em',
-            }}>
+            <p
+              style={{
+                fontSize: '1.125rem',
+                fontWeight: 500,
+                color: '#1d1d1f',
+                marginBottom: '0.5rem',
+                letterSpacing: '-0.01em',
+              }}
+            >
               No packs yet
             </p>
-            <p style={{
-              fontSize: '0.9375rem',
-              color: '#6e6e73',
-              margin: 0,
-              letterSpacing: '-0.005em',
-            }}>
+            <p
+              style={{
+                fontSize: '0.9375rem',
+                color: '#6e6e73',
+                margin: 0,
+                letterSpacing: '-0.005em',
+              }}
+            >
               Generated materials will appear here
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+          >
             {packs.map((pack, index) => (
               <div
                 key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}-${index}`}
@@ -429,27 +478,34 @@ export function MarketingPage() {
               >
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: '1.0625rem',
-                    fontWeight: 500,
-                    color: '#1d1d1f',
-                    marginBottom: '0.25rem',
-                    letterSpacing: '-0.005em',
-                  }}>
+                  <div
+                    style={{
+                      fontSize: '1.0625rem',
+                      fontWeight: 500,
+                      color: '#1d1d1f',
+                      marginBottom: '0.25rem',
+                      letterSpacing: '-0.005em',
+                    }}
+                  >
                     {formatPackLabel(pack.packType)}
                   </div>
-                  <div style={{
-                    fontSize: '0.875rem',
-                    color: '#6e6e73',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    letterSpacing: '-0.005em',
-                  }}>
-                    <span style={{
-                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
-                      fontSize: '0.8125rem',
-                    }}>
+                  <div
+                    style={{
+                      fontSize: '0.875rem',
+                      color: '#6e6e73',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      letterSpacing: '-0.005em',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+                        fontSize: '0.8125rem',
+                      }}
+                    >
                       {pack.propertyId.length > 20
                         ? `${pack.propertyId.substring(0, 20)}...`
                         : pack.propertyId}

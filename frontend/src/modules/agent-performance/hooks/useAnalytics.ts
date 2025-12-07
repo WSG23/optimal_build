@@ -27,10 +27,11 @@ export function useAnalytics({
   locale,
   t,
 }: UseAnalyticsOptions): UseAnalyticsResult {
-  const [latestSnapshot, setLatestSnapshot] = useState<PerformanceSnapshot | null>(
-    null,
+  const [latestSnapshot, setLatestSnapshot] =
+    useState<PerformanceSnapshot | null>(null)
+  const [snapshotHistory, setSnapshotHistory] = useState<PerformanceSnapshot[]>(
+    [],
   )
-  const [snapshotHistory, setSnapshotHistory] = useState<PerformanceSnapshot[]>([])
   const [analyticsLoading, setAnalyticsLoading] = useState<boolean>(false)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
 

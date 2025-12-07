@@ -13,22 +13,73 @@ export function buildSampleGraphIntelligence(): GraphIntelligenceResponse {
   return {
     kind: 'graph',
     status: 'ok',
-    summary: 'Sample relationship graph highlighting the busiest compliance touch points.',
+    summary:
+      'Sample relationship graph highlighting the busiest compliance touch points.',
     generatedAt,
     graph: {
       nodes: [
-        { id: 'lead_ops', label: 'Lead Operations', category: 'team', score: 0.92 },
-        { id: 'capital_stack', label: 'Capital Stack Review', category: 'workflow', score: 0.87 },
-        { id: 'feasibility', label: 'Feasibility Analysis', category: 'workflow', score: 0.81 },
-        { id: 'legal', label: 'Legal Counsel', category: 'partner', score: 0.76 },
-        { id: 'compliance', label: 'Compliance Ops', category: 'team', score: 0.7 },
+        {
+          id: 'lead_ops',
+          label: 'Lead Operations',
+          category: 'team',
+          score: 0.92,
+        },
+        {
+          id: 'capital_stack',
+          label: 'Capital Stack Review',
+          category: 'workflow',
+          score: 0.87,
+        },
+        {
+          id: 'feasibility',
+          label: 'Feasibility Analysis',
+          category: 'workflow',
+          score: 0.81,
+        },
+        {
+          id: 'legal',
+          label: 'Legal Counsel',
+          category: 'partner',
+          score: 0.76,
+        },
+        {
+          id: 'compliance',
+          label: 'Compliance Ops',
+          category: 'team',
+          score: 0.7,
+        },
       ],
       edges: [
-        { id: 'lead_ops-capital_stack', source: 'lead_ops', target: 'capital_stack', weight: 0.8 },
-        { id: 'lead_ops-feasibility', source: 'lead_ops', target: 'feasibility', weight: 0.7 },
-        { id: 'capital_stack-legal', source: 'capital_stack', target: 'legal', weight: 0.6 },
-        { id: 'feasibility-compliance', source: 'feasibility', target: 'compliance', weight: 0.5 },
-        { id: 'legal-compliance', source: 'legal', target: 'compliance', weight: 0.4 },
+        {
+          id: 'lead_ops-capital_stack',
+          source: 'lead_ops',
+          target: 'capital_stack',
+          weight: 0.8,
+        },
+        {
+          id: 'lead_ops-feasibility',
+          source: 'lead_ops',
+          target: 'feasibility',
+          weight: 0.7,
+        },
+        {
+          id: 'capital_stack-legal',
+          source: 'capital_stack',
+          target: 'legal',
+          weight: 0.6,
+        },
+        {
+          id: 'feasibility-compliance',
+          source: 'feasibility',
+          target: 'compliance',
+          weight: 0.5,
+        },
+        {
+          id: 'legal-compliance',
+          source: 'legal',
+          target: 'compliance',
+          weight: 0.4,
+        },
       ],
     },
   }

@@ -6,8 +6,15 @@
  */
 
 import { Link } from '../../../../../router'
-import type { DevelopmentScenario, CapturedProperty } from '../../../../../api/siteAcquisition'
-import type { ScenarioComparisonDatum, FeasibilitySignalEntry, ScenarioOption } from '../../types'
+import type {
+  DevelopmentScenario,
+  CapturedProperty,
+} from '../../../../../api/siteAcquisition'
+import type {
+  ScenarioComparisonDatum,
+  FeasibilitySignalEntry,
+  ScenarioOption,
+} from '../../types'
 import { getSeverityVisuals } from '../../utils/insights'
 import { formatCategoryName } from '../../utils/formatters'
 
@@ -87,10 +94,12 @@ export function MultiScenarioComparisonSection({
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
           <p style={{ margin: 0, fontSize: '1.0625rem' }}>
-            Capture a property to review scenario economics and development posture
+            Capture a property to review scenario economics and development
+            posture
           </p>
           <p style={{ margin: '0.5rem 0 0', fontSize: '0.9375rem' }}>
-            Financial and planning metrics for each developer scenario appear here.
+            Financial and planning metrics for each developer scenario appear
+            here.
           </p>
         </div>
       ) : quickAnalysisScenariosCount === 0 ? (
@@ -104,12 +113,14 @@ export function MultiScenarioComparisonSection({
           }}
         >
           <p style={{ margin: 0 }}>
-            Quick analysis metrics unavailable for this capture. Try regenerating the
-            scenarios.
+            Quick analysis metrics unavailable for this capture. Try
+            regenerating the scenarios.
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+        >
           {/* Scenario Comparison Cards */}
           <div
             style={{
@@ -165,7 +176,13 @@ export function MultiScenarioComparisonSection({
                       }}
                     >
                       <span style={{ fontSize: '1.5rem' }}>{row.icon}</span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.2rem',
+                        }}
+                      >
                         <span
                           style={{
                             fontSize: '0.75rem',
@@ -207,7 +224,9 @@ export function MultiScenarioComparisonSection({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => setActiveScenario(row.key as DevelopmentScenario)}
+                          onClick={() =>
+                            setActiveScenario(row.key as DevelopmentScenario)
+                          }
                           style={{
                             border: '1px solid #1d1d1f',
                             background: 'white',
@@ -253,10 +272,14 @@ export function MultiScenarioComparisonSection({
                   >
                     <span>
                       Inspector:{' '}
-                      <strong>{row.inspectorName?.trim() || 'Not recorded'}</strong>
+                      <strong>
+                        {row.inspectorName?.trim() || 'Not recorded'}
+                      </strong>
                     </span>
                     {row.recordedAt && (
-                      <span>Logged {formatRecordedTimestamp(row.recordedAt)}</span>
+                      <span>
+                        Logged {formatRecordedTimestamp(row.recordedAt)}
+                      </span>
                     )}
                     <span
                       style={{
@@ -269,11 +292,15 @@ export function MultiScenarioComparisonSection({
                         letterSpacing: '0.05em',
                         textTransform: 'uppercase',
                         background:
-                          row.source === 'manual' ? '#dcfce7' : 'rgba(37, 99, 235, 0.12)',
+                          row.source === 'manual'
+                            ? '#dcfce7'
+                            : 'rgba(37, 99, 235, 0.12)',
                         color: row.source === 'manual' ? '#166534' : '#1d4ed8',
                       }}
                     >
-                      {row.source === 'manual' ? 'Manual inspection' : 'Automated baseline'}
+                      {row.source === 'manual'
+                        ? 'Manual inspection'
+                        : 'Automated baseline'}
                     </span>
                   </div>
 
@@ -300,13 +327,18 @@ export function MultiScenarioComparisonSection({
                         listStyle: 'none',
                         display: 'grid',
                         gap: '0.45rem',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                        gridTemplateColumns:
+                          'repeat(auto-fit, minmax(120px, 1fr))',
                       }}
                     >
                       {row.quickMetrics.map((metric) => (
                         <li
                           key={`${row.key}-${metric.label}`}
-                          style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.15rem',
+                          }}
                         >
                           <span
                             style={{
@@ -318,7 +350,9 @@ export function MultiScenarioComparisonSection({
                           >
                             {metric.label}
                           </span>
-                          <strong style={{ fontSize: '0.95rem', color: '#111827' }}>
+                          <strong
+                            style={{ fontSize: '0.95rem', color: '#111827' }}
+                          >
                             {metric.value}
                           </strong>
                         </li>
@@ -331,10 +365,17 @@ export function MultiScenarioComparisonSection({
                     style={{
                       display: 'grid',
                       gap: '0.75rem',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                      gridTemplateColumns:
+                        'repeat(auto-fit, minmax(160px, 1fr))',
                     }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.25rem',
+                      }}
+                    >
                       <span
                         style={{
                           fontSize: '0.75rem',
@@ -345,7 +386,13 @@ export function MultiScenarioComparisonSection({
                       >
                         Condition
                       </span>
-                      <span style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
+                      <span
+                        style={{
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                          color: '#111827',
+                        }}
+                      >
                         {row.conditionRating ? row.conditionRating : '—'}
                       </span>
                       <span style={{ fontSize: '0.85rem', color: '#475569' }}>
@@ -355,7 +402,13 @@ export function MultiScenarioComparisonSection({
                         {row.riskLevel ? `· ${row.riskLevel} risk` : ''}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.25rem',
+                      }}
+                    >
                       <span
                         style={{
                           fontSize: '0.75rem',
@@ -385,9 +438,13 @@ export function MultiScenarioComparisonSection({
                               }}
                             />
                           </div>
-                          <span style={{ fontSize: '0.85rem', color: '#334155' }}>
+                          <span
+                            style={{ fontSize: '0.85rem', color: '#334155' }}
+                          >
                             {progressLabel}
-                            {progressPercent !== null ? ` (${progressPercent}%)` : ''}
+                            {progressPercent !== null
+                              ? ` (${progressPercent}%)`
+                              : ''}
                           </span>
                         </>
                       ) : (
@@ -433,13 +490,22 @@ export function MultiScenarioComparisonSection({
                         />
                         {primaryVisuals.label}
                       </span>
-                      <strong style={{ fontSize: '0.95rem' }}>{row.primaryInsight.title}</strong>
-                      <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
+                      <strong style={{ fontSize: '0.95rem' }}>
+                        {row.primaryInsight.title}
+                      </strong>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.85rem',
+                          lineHeight: 1.45,
+                        }}
+                      >
                         {row.primaryInsight.detail}
                       </p>
                       {row.primaryInsight.specialist && (
                         <span style={{ fontSize: '0.78rem', opacity: 0.85 }}>
-                          Specialist: <strong>{row.primaryInsight.specialist}</strong>
+                          Specialist:{' '}
+                          <strong>{row.primaryInsight.specialist}</strong>
                         </span>
                       )}
                     </div>
@@ -522,8 +588,8 @@ export function MultiScenarioComparisonSection({
                   color: '#334155',
                 }}
               >
-                Highlights derived from quick analysis. Prioritise these before handing
-                off to the feasibility team.
+                Highlights derived from quick analysis. Prioritise these before
+                handing off to the feasibility team.
               </p>
               {capturedProperty && (
                 <div
@@ -675,18 +741,19 @@ export function MultiScenarioComparisonSection({
                         </ul>
                       </div>
                     )}
-                    {entry.opportunities.length === 0 && entry.risks.length === 0 && (
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '0.85rem',
-                          color: '#475569',
-                        }}
-                      >
-                        No automated guidance produced. Review the scenario notes for
-                        additional context.
-                      </p>
-                    )}
+                    {entry.opportunities.length === 0 &&
+                      entry.risks.length === 0 && (
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '0.85rem',
+                            color: '#475569',
+                          }}
+                        >
+                          No automated guidance produced. Review the scenario
+                          notes for additional context.
+                        </p>
+                      )}
                   </div>
                 ))}
               </div>
@@ -706,7 +773,8 @@ export function MultiScenarioComparisonSection({
               <strong>Scenario focus:</strong> Viewing{' '}
               {scenarioLookup.get(activeScenario)?.label ??
                 formatCategoryName(activeScenario)}{' '}
-              metrics. Switch back to "All scenarios" to compare options side-by-side.
+              metrics. Switch back to "All scenarios" to compare options
+              side-by-side.
             </div>
           )}
         </div>

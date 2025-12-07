@@ -650,7 +650,9 @@ function toConstructionLoanPayload(
   return {
     interest_rate: toOptionalString(input.interestRate),
     periods_per_year:
-      typeof input.periodsPerYear === 'number' ? input.periodsPerYear : undefined,
+      typeof input.periodsPerYear === 'number'
+        ? input.periodsPerYear
+        : undefined,
     capitalise_interest:
       typeof input.capitaliseInterest === 'boolean'
         ? input.capitaliseInterest
@@ -706,7 +708,9 @@ function toPayload(
             amount: slice.amount,
             rate: slice.rate ?? undefined,
             tranche_order:
-              typeof slice.trancheOrder === 'number' ? slice.trancheOrder : undefined,
+              typeof slice.trancheOrder === 'number'
+                ? slice.trancheOrder
+                : undefined,
             metadata: slice.metadata ?? undefined,
           }))
         : undefined,
@@ -894,8 +898,7 @@ function mapConstructionLoanConfig(
         amount: facility.amount ?? null,
         interestRate: facility.interest_rate ?? null,
         periodsPerYear: facility.periods_per_year ?? null,
-        capitaliseInterest:
-          facility.capitalise_interest ?? true,
+        capitaliseInterest: facility.capitalise_interest ?? true,
         upfrontFeePct: facility.upfront_fee_pct ?? null,
         exitFeePct: facility.exit_fee_pct ?? null,
         reserveMonths: facility.reserve_months ?? null,
@@ -1328,8 +1331,7 @@ function createFinanceFallbackSummary(
   if (typeof request.finProjectId === 'number') {
     fallback.finProjectId = request.finProjectId
   }
-  fallback.scenarioName =
-    request.scenario.name?.trim() || fallback.scenarioName
+  fallback.scenarioName = request.scenario.name?.trim() || fallback.scenarioName
   const currency = request.scenario.currency?.trim() || fallback.currency
   fallback.currency = currency
   fallback.costIndex = {
@@ -1494,14 +1496,13 @@ export async function listFinanceScenarios(
         error,
       )
       const fallbackRequest: FinanceFeasibilityRequest = {
-        projectId:
-          params.projectId ?? FINANCE_FALLBACK_SUMMARY.projectId,
+        projectId: params.projectId ?? FINANCE_FALLBACK_SUMMARY.projectId,
         finProjectId:
           typeof params.finProjectId === 'number'
             ? params.finProjectId
             : typeof FINANCE_FALLBACK_SUMMARY.finProjectId === 'number'
-            ? FINANCE_FALLBACK_SUMMARY.finProjectId
-            : undefined,
+              ? FINANCE_FALLBACK_SUMMARY.finProjectId
+              : undefined,
         projectName: 'Offline Project',
         scenario: {
           name: 'Offline Feasibility Scenario',
@@ -1588,13 +1589,13 @@ export async function updateFinanceScenario(
   })
   const body: Record<string, unknown> = {}
   if (input.scenarioName !== undefined) {
-    body["scenario_name"] = input.scenarioName
+    body['scenario_name'] = input.scenarioName
   }
   if (input.description !== undefined) {
-    body["description"] = input.description
+    body['description'] = input.description
   }
   if (input.isPrimary !== undefined) {
-    body["is_primary"] = input.isPrimary
+    body['is_primary'] = input.isPrimary
   }
   const response = await fetch(
     buildUrl(`api/v1/finance/scenarios/${scenarioId}`, apiBaseUrl),
@@ -1608,7 +1609,8 @@ export async function updateFinanceScenario(
   if (!response.ok) {
     const message = await response.text()
     throw new Error(
-      message || `Finance scenario update failed with status ${response.status}`,
+      message ||
+        `Finance scenario update failed with status ${response.status}`,
     )
   }
   const payload = (await response.json()) as FinanceFeasibilityResponsePayload
@@ -1636,7 +1638,8 @@ export async function deleteFinanceScenario(
   if (!response.ok) {
     const message = await response.text()
     throw new Error(
-      message || `Finance scenario delete failed with status ${response.status}`,
+      message ||
+        `Finance scenario delete failed with status ${response.status}`,
     )
   }
 }
@@ -1661,7 +1664,8 @@ export async function exportFinanceScenarioCsv(
   if (!response.ok) {
     const message = await response.text()
     throw new Error(
-      message || `Finance scenario export failed with status ${response.status}`,
+      message ||
+        `Finance scenario export failed with status ${response.status}`,
     )
   }
   return await response.blob()
@@ -1688,10 +1692,7 @@ export async function runScenarioSensitivity(
   }
 
   const response = await fetch(
-    buildUrl(
-      `api/v1/finance/scenarios/${scenarioId}/sensitivity`,
-      apiBaseUrl,
-    ),
+    buildUrl(`api/v1/finance/scenarios/${scenarioId}/sensitivity`, apiBaseUrl),
     {
       method: 'POST',
       headers,
@@ -1703,8 +1704,7 @@ export async function runScenarioSensitivity(
   if (!response.ok) {
     const message = await response.text()
     throw new Error(
-      message ||
-        `Sensitivity rerun failed with status ${response.status}`,
+      message || `Sensitivity rerun failed with status ${response.status}`,
     )
   }
 

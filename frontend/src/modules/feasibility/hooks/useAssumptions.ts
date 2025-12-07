@@ -3,16 +3,19 @@ import { useCallback, useEffect, useState } from 'react'
 
 import type { AssumptionInputs, AssumptionErrors } from '../types'
 import { DEFAULT_ASSUMPTIONS } from '../types'
-import { getEngineeringDefaults, type EngineeringDefaults } from '../../../api/feasibility'
+import {
+  getEngineeringDefaults,
+  type EngineeringDefaults,
+} from '../../../api/feasibility'
 
 interface UseAssumptionsResult {
   assumptionInputs: AssumptionInputs
   assumptionErrors: AssumptionErrors
   appliedAssumptions: {
-      typFloorToFloorM: number;
-      efficiencyRatio: number;
-      structureType: 'rc' | 'steel' | 'mass_timber'; // New
-      mepLoadWpsm: number; // New
+    typFloorToFloorM: number
+    efficiencyRatio: number
+    structureType: 'rc' | 'steel' | 'mass_timber' // New
+    mepLoadWpsm: number // New
   }
   handleAssumptionChange: (
     key: keyof AssumptionInputs,
@@ -44,18 +47,24 @@ export function useAssumptions(): UseAssumptionsResult {
     getEngineeringDefaults(controller.signal)
       .then((defaults: EngineeringDefaults) => {
         if (!defaults || typeof defaults.typFloorToFloorM !== 'number') {
-           console.warn('Invalid defaults received:', defaults)
-           return
+          console.warn('Invalid defaults received:', defaults)
+          return
         }
         setAssumptionInputs({
-          typFloorToFloorM: (defaults.typFloorToFloorM || DEFAULT_ASSUMPTIONS.typFloorToFloorM).toString(),
-          efficiencyRatio: (defaults.efficiencyRatio || DEFAULT_ASSUMPTIONS.efficiencyRatio).toString(),
+          typFloorToFloorM: (
+            defaults.typFloorToFloorM || DEFAULT_ASSUMPTIONS.typFloorToFloorM
+          ).toString(),
+          efficiencyRatio: (
+            defaults.efficiencyRatio || DEFAULT_ASSUMPTIONS.efficiencyRatio
+          ).toString(),
           structureType: DEFAULT_ASSUMPTIONS.structureType, // Keep default for now as API might not support it yet
           mepLoadWpsm: DEFAULT_ASSUMPTIONS.mepLoadWpsm.toString(),
         })
         setAppliedAssumptions({
-          typFloorToFloorM: defaults.typFloorToFloorM || DEFAULT_ASSUMPTIONS.typFloorToFloorM,
-          efficiencyRatio: defaults.efficiencyRatio || DEFAULT_ASSUMPTIONS.efficiencyRatio,
+          typFloorToFloorM:
+            defaults.typFloorToFloorM || DEFAULT_ASSUMPTIONS.typFloorToFloorM,
+          efficiencyRatio:
+            defaults.efficiencyRatio || DEFAULT_ASSUMPTIONS.efficiencyRatio,
           structureType: DEFAULT_ASSUMPTIONS.structureType,
           mepLoadWpsm: DEFAULT_ASSUMPTIONS.mepLoadWpsm,
         })
@@ -73,9 +82,12 @@ export function useAssumptions(): UseAssumptionsResult {
       setAssumptionErrors((previous) => ({ ...previous, [key]: undefined }))
 
       if (key === 'structureType') {
-          // No validation needed for select/enum
-          setAppliedAssumptions((prev) => ({ ...prev, [key]: value as 'rc' | 'steel' | 'mass_timber' }))
-          return
+        // No validation needed for select/enum
+        setAppliedAssumptions((prev) => ({
+          ...prev,
+          [key]: value as 'rc' | 'steel' | 'mass_timber',
+        }))
+        return
       }
 
       if (!value.trim()) {
@@ -94,9 +106,10 @@ export function useAssumptions(): UseAssumptionsResult {
         return
       }
 
-      if (key === 'mepLoadWpsm' && (numeric < 50 || numeric > 500)) { // Simple bounds check for MEP load
-          setAssumptionErrors((previous) => ({ ...previous, [key]: 'range' }))
-          return
+      if (key === 'mepLoadWpsm' && (numeric < 50 || numeric > 500)) {
+        // Simple bounds check for MEP load
+        setAssumptionErrors((previous) => ({ ...previous, [key]: 'range' }))
+        return
       }
 
       setAppliedAssumptions((previous) => {

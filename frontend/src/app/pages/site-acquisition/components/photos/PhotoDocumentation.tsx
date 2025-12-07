@@ -228,11 +228,7 @@ export function PhotoDocumentation({
       </div>
 
       {/* Gallery */}
-      <PhotoGallery
-        photos={photos}
-        onDelete={handleDelete}
-        loading={loading}
-      />
+      <PhotoGallery photos={photos} onDelete={handleDelete} loading={loading} />
 
       {/* Watermark info */}
       <div
@@ -262,8 +258,8 @@ export function PhotoDocumentation({
           }}
         >
           <p style={{ margin: '0 0 0.5rem' }}>
-            <strong>Original:</strong> No watermark - for internal team use only.
-            Do not share externally.
+            <strong>Original:</strong> No watermark - for internal team use
+            only. Do not share externally.
           </p>
           <p style={{ margin: '0 0 0.5rem' }}>
             <strong>Marketing:</strong> Diagonal watermark applied - safe for

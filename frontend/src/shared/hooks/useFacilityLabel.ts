@@ -1,3 +1,3 @@
 export function useFacilityLabel(): string {
-  return 'Central Operations Facility';
+  return 'Central Operations Facility'
 }

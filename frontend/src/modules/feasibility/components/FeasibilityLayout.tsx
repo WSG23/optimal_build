@@ -1,15 +1,18 @@
 import { Layers, GridOn, Plumbing } from '@mui/icons-material'
-import { ToggleButton, ToggleButtonGroup, Tooltip, Paper } from '@mui/material'
+import {
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Paper,
+  Box,
+} from '@mui/material'
 import { useState } from 'react'
 
-// ... existing imports
 import type { ReactNode } from 'react'
 
 interface FeasibilityLayoutProps {
   /** Map component to render in the right panel */
   renderMap: () => ReactNode
-  /** Address bar to render (usually floating over map) */
-  renderAddressBar: () => ReactNode
   /** Content for the left control panel */
   children: ReactNode
   /** Sticky footer content for the left panel */
@@ -18,135 +21,168 @@ interface FeasibilityLayoutProps {
 
 export function FeasibilityLayout({
   renderMap,
-  renderAddressBar,
   children,
-  renderFooter
+  renderFooter,
 }: FeasibilityLayoutProps) {
   const [layers, setLayers] = useState<string[]>(['zoning'])
 
   const handleLayerChange = (
-    _event: React.MouseEvent<HTMLElement>, // Prefix with _ to suppress unused warning
+    _event: React.MouseEvent<HTMLElement>,
     newLayers: string[],
   ) => {
     setLayers(newLayers)
-    // In a real app, this would propagate to the map component via context or props
     console.log('Active Layers:', newLayers)
   }
 
   return (
-    <div className="feasibility-split-layout" style={{
-        display: 'flex',
-        width: '100%',
-        height: '100%',
+    <div
+      className="feasibility-split-layout"
+      style={{
+        position: 'relative',
+        width: '100vw',
+        height: '100vh', // Full viewport (minus header usually, handled by AppLayout)
         overflow: 'hidden',
-        position: 'relative'
-    }}>
-      {/* Left Panel: Control Center (35% or 420px min) */}
-      <aside
-        className="feasibility-split-layout__controls"
+        display: 'flex',
+      }}
+    >
+      {/*
+        Full Screen Map Backdrop
+        The map takes up the entire container. The sidebar floats on top.
+      */}
+      <div
+        className="feasibility-split-layout__map-backdrop"
         style={{
-            flex: '0 0 420px', // Fixed width for stability or 35%
-            maxWidth: '35%',
-            minWidth: '350px',
-            height: '100%',
-            overflowY: 'auto', // Moved from inner div
-            background: 'rgba(255, 255, 255, 0.85)', // Glassmorphic background
-            backdropFilter: 'blur(20px)',
-            borderRight: '1px solid rgba(0,0,0,0.08)',
-            position: 'relative',
-            zIndex: 10,
-            boxShadow: '4px 0 24px rgba(0,0,0,0.05)',
-            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)', // Smooth ease-out
-            transform: 'translateX(0)', // Placeholder for potentially hiding/showing
-            display: 'flex',
-            flexDirection: 'column'
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1,
+        }}
+      >
+        {renderMap()}
+      </div>
+
+      {/*
+        Floating Glass Sidebar
+        Positioned on the left with margin.
+      */}
+      <aside
+        className="feasibility-split-layout__sidebar"
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '420px',
+          height: 'calc(100% - 32px)', // Top/Bottom margin
+          margin: '16px 0 16px 24px', // Floating margin
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0',
+          borderRadius: '16px', // Rounded corners for floating feel
+          background: 'rgba(20, 20, 25, 0.65)', // Darker glass for "Command Center"
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          overflow: 'hidden',
         }}
         data-testid="feasibility-controls"
       >
-        <div className="feasibility-split-layout__scroll-container" style={{
-            flex: 1, // Take available height
-            backdropFilter: 'blur(12px)',
-            borderRight: '1px solid var(--ob-color-border-light)',
-            padding: 'var(--ob-space-4)',
-        }}>
+        {/* Scrollable Content Area */}
+        <div
+          className="feasibility-split-layout__scroll-content"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '24px',
+            scrollbarWidth: 'thin',
+          }}
+        >
           {children}
         </div>
 
-        {/* Sticky Footer */}
+        {/* Sticky Footer for "Run Simulation" */}
         {renderFooter && (
-            <div className="feasibility-split-layout__footer" style={{
-                flex: '0 0 auto',
-                background: 'var(--ob-color-bg-surface-main, #ffffff)',
-                borderTop: '1px solid var(--ob-color-border-light)',
-                borderRight: '1px solid var(--ob-color-border-light)',
-                padding: 'var(--ob-space-4)',
-                zIndex: 20
-            }}>
-                {renderFooter()}
-            </div>
+          <div
+            className="feasibility-split-layout__footer"
+            style={{
+              flex: '0 0 auto',
+              padding: '16px 24px 24px',
+              background:
+                'linear-gradient(to top, rgba(20, 20, 25, 0.95), rgba(20, 20, 25, 0.0))', // Fade in
+              zIndex: 20,
+            }}
+          >
+            {renderFooter()}
+          </div>
         )}
       </aside>
 
-      {/* Right Panel: Context Map (Remaining) */}
-      <main className="feasibility-split-layout__map" style={{
-          flex: 1,
-          position: 'relative',
-          height: '100%',
-          overflow: 'hidden'
-      }}>
-        {renderMap()}
-
-        {/* Floating Search Bar container */}
-        <div className="feasibility-split-layout__search-overlay" style={{
-            position: 'absolute',
-            top: '24px',
-            left: '24px',
-            right: '24px',
-            maxWidth: '600px',
-            zIndex: 20
-        }}>
-          {renderAddressBar()}
-        </div>
-
-        {/* Floating Layer Controls */}
+      {/* Floating Layer Controls (Top Right) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '24px',
+          right: '24px',
+          zIndex: 20,
+        }}
+      >
         <Paper
-            elevation={3}
-            sx={{
-                position: 'absolute',
-                top: '24px',
-                right: '24px',
-                zIndex: 20,
-                borderRadius: '8px',
-                overflow: 'hidden',
-                background: 'rgba(255, 255, 255, 0.9)',
-                backdropFilter: 'blur(8px)'
-            }}
+          elevation={0}
+          sx={{
+            borderRadius: '8px',
+            overflow: 'hidden',
+            background: 'rgba(20, 20, 30, 0.7)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'white',
+          }}
         >
-            <ToggleButtonGroup
-                value={layers}
-                onChange={handleLayerChange}
-                aria-label="map layers"
-                orientation="vertical"
-                size="small"
-            >
-                <Tooltip title="Zoning Envelope" placement="left">
-                    <ToggleButton value="zoning" aria-label="zoning envelope">
-                        <Layers fontSize="small" />
-                    </ToggleButton>
-                </Tooltip>
-                <Tooltip title="Structural Grid" placement="left">
-                    <ToggleButton value="structure" aria-label="structural grid">
-                        <GridOn fontSize="small" />
-                    </ToggleButton>
-                </Tooltip>
-                <Tooltip title="MEP Risers" placement="left">
-                    <ToggleButton value="mep" aria-label="mep risers">
-                        <Plumbing fontSize="small" />
-                    </ToggleButton>
-                </Tooltip>
-            </ToggleButtonGroup>
+          <ToggleButtonGroup
+            value={layers}
+            onChange={handleLayerChange}
+            aria-label="map layers"
+            orientation="vertical"
+            size="small"
+            sx={{
+              '& .MuiToggleButton-root': {
+                color: 'rgba(255,255,255,0.7)',
+                border: 'none',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                '&.Mui-selected': {
+                  color: '#06b6d4', // Cyan
+                  background: 'rgba(6, 182, 212, 0.15)',
+                  '&:hover': {
+                    background: 'rgba(6, 182, 212, 0.25)',
+                  },
+                },
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.1)',
+                },
+                '&:last-child': {
+                  borderBottom: 'none',
+                },
+              },
+            }}
+          >
+            <Tooltip title="Zoning Envelope" placement="left">
+              <ToggleButton value="zoning" aria-label="zoning envelope">
+                <Layers fontSize="small" />
+              </ToggleButton>
+            </Tooltip>
+            <Tooltip title="Structural Grid" placement="left">
+              <ToggleButton value="structure" aria-label="structural grid">
+                <GridOn fontSize="small" />
+              </ToggleButton>
+            </Tooltip>
+            <Tooltip title="MEP Risers" placement="left">
+              <ToggleButton value="mep" aria-label="mep risers">
+                <Plumbing fontSize="small" />
+              </ToggleButton>
+            </Tooltip>
+          </ToggleButtonGroup>
         </Paper>
-      </main>
+      </Box>
     </div>
   )
 }

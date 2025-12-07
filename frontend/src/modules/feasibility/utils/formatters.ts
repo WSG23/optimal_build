@@ -34,7 +34,10 @@ export function readCssVar(token: string): string {
   return String((cssVar as (name: string) => unknown)(token))
 }
 
-export function createNumberFormatter(locale: string, maxFractionDigits = 0): Intl.NumberFormat {
+export function createNumberFormatter(
+  locale: string,
+  maxFractionDigits = 0,
+): Intl.NumberFormat {
   return new Intl.NumberFormat(locale, {
     maximumFractionDigits: maxFractionDigits,
   })

@@ -6,7 +6,10 @@
  */
 
 import { useCallback, useState } from 'react'
-import { forwardGeocodeAddress, reverseGeocodeCoords } from '../../../../api/geocoding'
+import {
+  forwardGeocodeAddress,
+  reverseGeocodeCoords,
+} from '../../../../api/geocoding'
 import { JURISDICTION_OPTIONS } from '../constants'
 
 // ============================================================================
@@ -41,7 +44,9 @@ export interface UseGeocodingReturn {
 // Hook Implementation
 // ============================================================================
 
-export function useGeocoding(options: UseGeocodingOptions = {}): UseGeocodingReturn {
+export function useGeocoding(
+  options: UseGeocodingOptions = {},
+): UseGeocodingReturn {
   const {
     initialJurisdiction = 'SG',
     initialLatitude = '1.3000',

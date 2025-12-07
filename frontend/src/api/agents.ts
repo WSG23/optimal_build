@@ -242,11 +242,16 @@ function mapAmenityList(value: unknown): AmenitySummary[] {
       if (!item || typeof item !== 'object') {
         return null
       }
-      const data = item as RawAmenity & { latitude?: number; longitude?: number }
+      const data = item as RawAmenity & {
+        latitude?: number
+        longitude?: number
+      }
       const name = coerceString(data.name) ?? 'Unknown'
       const distance = coerceNumber(data.distance_m)
-      const latitude = typeof data.latitude === 'number' ? data.latitude : undefined
-      const longitude = typeof data.longitude === 'number' ? data.longitude : undefined
+      const latitude =
+        typeof data.latitude === 'number' ? data.latitude : undefined
+      const longitude =
+        typeof data.longitude === 'number' ? data.longitude : undefined
       return { name, distanceM: distance, latitude, longitude }
     })
     .filter((item): item is AmenitySummary => item !== null)

@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import React from 'react'
 
 import type { FinanceScenarioSummary } from '../../../../api/finance'
@@ -7,7 +13,9 @@ import i18n from '../../../../i18n'
 import { TranslationProvider } from '../../../../i18n'
 import { FinanceScenarioTable } from '../FinanceScenarioTable'
 
-function buildScenario(overrides: Partial<FinanceScenarioSummary> = {}): FinanceScenarioSummary {
+function buildScenario(
+  overrides: Partial<FinanceScenarioSummary> = {},
+): FinanceScenarioSummary {
   const base: FinanceScenarioSummary = {
     scenarioId: 1,
     projectId: 401,
@@ -30,7 +38,13 @@ function buildScenario(overrides: Partial<FinanceScenarioSummary> = {}): Finance
       { name: 'irr', value: '0.12', unit: 'ratio', metadata: {} },
     ],
     dscrTimeline: [
-      { period: 'Year 1', noi: '500000.00', debtService: '400000.00', dscr: '1.25', currency: 'SGD' },
+      {
+        period: 'Year 1',
+        noi: '500000.00',
+        debtService: '400000.00',
+        dscr: '1.25',
+        currency: 'SGD',
+      },
     ],
     capitalStack: {
       currency: 'SGD',
@@ -75,7 +89,13 @@ describe('FinanceScenarioTable', () => {
           { name: 'irr', value: '0.09', unit: 'ratio', metadata: {} },
         ],
         dscrTimeline: [
-          { period: 'Year 1', noi: '450000.00', debtService: '400000.00', dscr: '1.12', currency: 'SGD' },
+          {
+            period: 'Year 1',
+            noi: '450000.00',
+            debtService: '400000.00',
+            dscr: '1.12',
+            currency: 'SGD',
+          },
         ],
       }),
     ]
@@ -87,13 +107,19 @@ describe('FinanceScenarioTable', () => {
     )
 
     expect(
-      screen.getByRole('columnheader', { name: i18n.t('finance.table.headers.scenario') }),
+      screen.getByRole('columnheader', {
+        name: i18n.t('finance.table.headers.scenario'),
+      }),
     ).toBeVisible()
     expect(
-      screen.getByRole('columnheader', { name: i18n.t('finance.table.headers.escalatedCost') }),
+      screen.getByRole('columnheader', {
+        name: i18n.t('finance.table.headers.escalatedCost'),
+      }),
     ).toBeVisible()
     expect(
-      screen.getByRole('columnheader', { name: i18n.t('finance.table.headers.lastRun') }),
+      screen.getByRole('columnheader', {
+        name: i18n.t('finance.table.headers.lastRun'),
+      }),
     ).toBeVisible()
 
     const rows = screen.getAllByRole('row')
@@ -115,8 +141,16 @@ describe('FinanceScenarioTable', () => {
   it('allows marking a scenario as primary', () => {
     const onMarkPrimary = vi.fn()
     const scenarios: FinanceScenarioSummary[] = [
-      buildScenario({ scenarioId: 1, scenarioName: 'Primary', isPrimary: true }),
-      buildScenario({ scenarioId: 2, scenarioName: 'Secondary', isPrimary: false }),
+      buildScenario({
+        scenarioId: 1,
+        scenarioName: 'Primary',
+        isPrimary: true,
+      }),
+      buildScenario({
+        scenarioId: 2,
+        scenarioName: 'Secondary',
+        isPrimary: false,
+      }),
     ]
 
     render(

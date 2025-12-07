@@ -15,7 +15,9 @@ export function FinancePrivacyNotice({
       <strong>{t('finance.privacy.privateTitle')}</strong>
       <p>
         {t('finance.privacy.privateBody', {
-          project: projectName ?? t('finance.projectSelector.defaultLabel', { id: '' }),
+          project:
+            projectName ??
+            t('finance.projectSelector.defaultLabel', { id: '' }),
         })}
       </p>
     </div>
@@ -36,7 +38,10 @@ function useDemoIdentitySetter(): {
     }
     try {
       window.localStorage.setItem('app:api-role', 'developer')
-      window.localStorage.setItem('app:api-user-email', 'demo-owner@example.com')
+      window.localStorage.setItem(
+        'app:api-user-email',
+        'demo-owner@example.com',
+      )
       window.localStorage.setItem('app:api-user-id', 'developer-owner-401')
       setStatus('success')
     } catch (error) {
@@ -52,7 +57,9 @@ interface FinanceIdentityHelperProps {
   compact?: boolean
 }
 
-export function FinanceIdentityHelper({ compact = false }: FinanceIdentityHelperProps) {
+export function FinanceIdentityHelper({
+  compact = false,
+}: FinanceIdentityHelperProps) {
   const { t } = useTranslation()
   const { status, apply } = useDemoIdentitySetter()
   return (
