@@ -21,8 +21,11 @@ exceptions:
     # Jurisdiction code column - simple drop operations without guards (acceptable for single column)
     - backend/migrations/versions/20251118_000025_add_property_jurisdiction.py
     # Regstack migrations - different schema
-    - db/versions/20250216000000_init_regstack.py
     - db/versions/20250217000100_add_provenance_checksum.py
+    # Notifications tables - formatted by black
+    - backend/migrations/versions/20251207_000037_add_notifications_table.py
+    # Construction tables - drop tables in downgrade
+    - backend/migrations/versions/20251207_000038_add_construction_tables.py
   rule_2_async:
     # ✅ PARTIALLY RESOLVED 2025-11-23: singapore_property_api.py converted to async
     # ⚠️ PENDING: users_db.py and projects_api.py still use sync patterns (low priority)
@@ -51,9 +54,9 @@ exceptions:
     #
     # Testing: All unit tests passing (19 passed, 1 skipped)
   # rule_4_dependency_pinning:
-    # RESOLVED 2025-11-21: All 7 dependencies now pinned with ==
-    # asyncpg==0.30.0, shapely==2.0.6, pandas==2.2.3, numpy==1.26.4,
-    # statsmodels==0.14.1, scikit-learn==1.5.0, reportlab==4.0.8
+  # RESOLVED 2025-11-21: All 7 dependencies now pinned with ==
+  # asyncpg==0.30.0, shapely==2.0.6, pandas==2.2.3, numpy==1.26.4,
+  # statsmodels==0.14.1, scikit-learn==1.5.0, reportlab==4.0.8
   rule_5_singapore:
     # Test failures due to DB setup issues, not compliance violations
     - backend/app/models/singapore_property.py

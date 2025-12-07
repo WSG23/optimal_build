@@ -1,42 +1,37 @@
-/**
- * Change of Use Wizard - Multi-step workflow for adaptive reuse applications.
- * Guides users through the URA change of use application process.
- */
-
-import React, { useState, useCallback } from 'react'
+import React, { useState } from 'react'
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  Chip,
-  CircularProgress,
   Dialog,
-  DialogActions,
-  DialogContent,
   DialogTitle,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  SelectChangeEvent,
+  DialogContent,
+  DialogActions,
+  Button,
+  Stepper,
   Step,
   StepLabel,
-  Stepper,
-  TextField,
+  Box,
   Typography,
+  Grid,
+  Card,
+  CardActionArea,
+  CardContent,
+  TextField,
+  Alert,
+  Chip,
+  CircularProgress,
+  Stack,
 } from '@mui/material'
 import {
-  ArrowBack as BackIcon,
-  ArrowForward as ForwardIcon,
-  Check as CheckIcon,
-  SwapHoriz as SwapIcon,
+  Business as OfficeIcon,
+  Store as RetailIcon,
+  Home as ResidentialIcon,
+  Factory as IndustrialIcon,
+  AccountBalance as HeritageIcon,
+  Apartment as MixedUseIcon,
+  Hotel as HospitalityIcon,
+  ArrowForward as ArrowIcon,
+  CheckCircle as CheckIcon,
+  Warning as WarningIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material'
 import {
   regulatoryApi,
@@ -48,111 +43,60 @@ interface ChangeOfUseWizardProps {
   open: boolean
   onClose: () => void
   projectId: string
-  onSuccess?: (application: ChangeOfUseApplication) => void
+  onSuccess: (application: ChangeOfUseApplication) => void
 }
 
-const STEPS = [
-  'Current Use',
-  'Proposed Use',
-  'Requirements Analysis',
-  'Justification',
-  'Review & Submit',
-]
-
-const ASSET_TYPE_OPTIONS: {
+const ASSET_TYPES: Array<{
   value: AssetType
   label: string
-  description: string
-}[] = [
-  { value: 'office', label: 'Office', description: 'Commercial office space' },
-  { value: 'retail', label: 'Retail', description: 'Shopping, F&B, services' },
+  icon: React.ReactNode
+  color: string
+}> = [
+  {
+    value: 'office',
+    label: 'Office',
+    icon: <OfficeIcon />,
+    color: '#2563eb',
+  },
+  {
+    value: 'retail',
+    label: 'Retail',
+    icon: <RetailIcon />,
+    color: '#059669',
+  },
   {
     value: 'residential',
     label: 'Residential',
-    description: 'Housing, apartments',
+    icon: <ResidentialIcon />,
+    color: '#7c3aed',
   },
   {
     value: 'industrial',
     label: 'Industrial',
-    description: 'Manufacturing, warehouse',
-  },
-  {
-    value: 'hospitality',
-    label: 'Hospitality',
-    description: 'Hotels, serviced apartments',
-  },
-  {
-    value: 'mixed_use',
-    label: 'Mixed Use',
-    description: 'Combination of uses',
+    icon: <IndustrialIcon />,
+    color: '#ca8a04',
   },
   {
     value: 'heritage',
     label: 'Heritage',
-    description: 'Conservation building',
+    icon: <HeritageIcon />,
+    color: '#be185d',
+  },
+  {
+    value: 'mixed_use',
+    label: 'Mixed-Use',
+    icon: <MixedUseIcon />,
+    color: '#ea580c',
+  },
+  {
+    value: 'hospitality',
+    label: 'Hospitality',
+    icon: <HospitalityIcon />,
+    color: '#0891b2',
   },
 ]
 
-// Determines if DC amendment is required based on use changes
-function requiresDCAmendment(
-  currentUse: AssetType,
-  proposedUse: AssetType,
-): boolean {
-  // Simplified logic - in reality this would be more complex
-  return currentUse !== proposedUse
-}
-
-// Determines if planning permission is needed
-function requiresPlanningPermission(proposedUse: AssetType): boolean {
-  return ['residential', 'hospitality'].includes(proposedUse)
-}
-
-// Get applicable regulatory requirements
-function getRequirements(
-  currentUse: AssetType,
-  proposedUse: AssetType,
-): { label: string; required: boolean; agency: string }[] {
-  const requirements = [
-    {
-      label: 'URA Development Application',
-      required: requiresDCAmendment(currentUse, proposedUse),
-      agency: 'URA',
-    },
-    {
-      label: 'Planning Permission',
-      required: requiresPlanningPermission(proposedUse),
-      agency: 'URA',
-    },
-    {
-      label: 'Building Plan Approval',
-      required: true,
-      agency: 'BCA',
-    },
-    {
-      label: 'Fire Safety Certificate',
-      required: proposedUse !== 'industrial',
-      agency: 'SCDF',
-    },
-  ]
-
-  if (proposedUse === 'residential' || proposedUse === 'hospitality') {
-    requirements.push({
-      label: 'Environmental Health License',
-      required: true,
-      agency: 'NEA',
-    })
-  }
-
-  if (currentUse === 'heritage' || proposedUse === 'heritage') {
-    requirements.push({
-      label: 'Heritage Conservation Approval',
-      required: true,
-      agency: 'URA/NHB',
-    })
-  }
-
-  return requirements
-}
+const STEPS = ['Current Use', 'Proposed Use', 'Justification', 'Review']
 
 export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
   open,
@@ -161,106 +105,69 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
   onSuccess,
 }) => {
   const [activeStep, setActiveStep] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [currentUse, setCurrentUse] = useState<AssetType | null>(null)
+  const [proposedUse, setProposedUse] = useState<AssetType | null>(null)
+  const [justification, setJustification] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Form data
-  const [currentUse, setCurrentUse] = useState<AssetType | ''>('')
-  const [proposedUse, setProposedUse] = useState<AssetType | ''>('')
-  const [justification, setJustification] = useState('')
-  const [acknowledgements, setAcknowledgements] = useState({
-    dcAmendment: false,
-    planningPermission: false,
-    buildingPlan: false,
-    timeline: false,
-  })
+  const handleNext = () => setActiveStep((prev) => prev + 1)
+  const handleBack = () => setActiveStep((prev) => prev - 1)
 
-  const requirements =
-    currentUse && proposedUse
-      ? getRequirements(currentUse as AssetType, proposedUse as AssetType)
-      : []
-
-  const requiresDC =
-    currentUse && proposedUse
-      ? requiresDCAmendment(currentUse as AssetType, proposedUse as AssetType)
-      : false
-
-  const requiresPlanning = proposedUse
-    ? requiresPlanningPermission(proposedUse as AssetType)
-    : false
-
-  const handleNext = () => {
-    setActiveStep((prev) => Math.min(prev + 1, STEPS.length - 1))
-  }
-
-  const handleBack = () => {
-    setActiveStep((prev) => Math.max(prev - 1, 0))
-  }
-
-  const handleCurrentUseChange = (event: SelectChangeEvent) => {
-    setCurrentUse(event.target.value as AssetType)
-    // Reset proposed use if it would be the same
-    if (event.target.value === proposedUse) {
-      setProposedUse('')
-    }
-  }
-
-  const handleProposedUseChange = (event: SelectChangeEvent) => {
-    setProposedUse(event.target.value as AssetType)
-  }
-
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     if (!currentUse || !proposedUse) return
 
-    setLoading(true)
+    setSubmitting(true)
     setError(null)
 
     try {
       const application = await regulatoryApi.createChangeOfUse({
         project_id: projectId,
-        current_use: currentUse as AssetType,
-        proposed_use: proposedUse as AssetType,
+        current_use: currentUse,
+        proposed_use: proposedUse,
         justification: justification || undefined,
       })
-      onSuccess?.(application)
-      onClose()
-      // Reset form
-      setActiveStep(0)
-      setCurrentUse('')
-      setProposedUse('')
-      setJustification('')
-      setAcknowledgements({
-        dcAmendment: false,
-        planningPermission: false,
-        buildingPlan: false,
-        timeline: false,
-      })
+      onSuccess(application)
+      handleReset()
     } catch (err) {
-      console.error('Failed to create change of use application:', err)
-      setError('Failed to create application. Please try again.')
+      console.error('Failed to create change of use application', err)
+      setError('Failed to submit application. Please try again.')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
-  }, [currentUse, proposedUse, justification, projectId, onSuccess, onClose])
+  }
+
+  const handleReset = () => {
+    setActiveStep(0)
+    setCurrentUse(null)
+    setProposedUse(null)
+    setJustification('')
+    setError(null)
+  }
+
+  const handleClose = () => {
+    handleReset()
+    onClose()
+  }
+
+  const getAssetInfo = (type: AssetType | null) => {
+    return ASSET_TYPES.find((a) => a.value === type)
+  }
+
+  const requiresDCAmendment = currentUse !== proposedUse
+  const requiresPlanningPermission =
+    proposedUse === 'residential' || proposedUse === 'hospitality'
 
   const canProceed = () => {
     switch (activeStep) {
       case 0:
-        return !!currentUse
+        return currentUse !== null
       case 1:
-        return !!proposedUse && proposedUse !== currentUse
+        return proposedUse !== null && proposedUse !== currentUse
       case 2:
-        return true // Requirements are informational
-      case 3:
-        return justification.length >= 50 // Minimum justification length
-      case 4:
-        return (
-          acknowledgements.dcAmendment &&
-          acknowledgements.buildingPlan &&
-          acknowledgements.timeline
-        )
+        return true // Justification is optional
       default:
-        return false
+        return true
     }
   }
 
@@ -269,105 +176,110 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
       case 0:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom>
-              What is the current use of the property?
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Select the <strong>current</strong> use of the property:
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Select the existing approved land use for this site.
-            </Typography>
-
-            <FormControl fullWidth>
-              <InputLabel>Current Use</InputLabel>
-              <Select
-                value={currentUse}
-                label="Current Use"
-                onChange={handleCurrentUseChange}
-              >
-                {ASSET_TYPE_OPTIONS.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    <Box>
-                      <Typography variant="body1">{opt.label}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {opt.description}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Grid container spacing={2}>
+              {ASSET_TYPES.map((type) => (
+                <Grid item xs={6} sm={4} key={type.value}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      borderColor:
+                        currentUse === type.value ? type.color : 'divider',
+                      borderWidth: currentUse === type.value ? 2 : 1,
+                      bgcolor:
+                        currentUse === type.value
+                          ? `${type.color}10`
+                          : 'background.paper',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <CardActionArea
+                      onClick={() => setCurrentUse(type.value)}
+                      sx={{ height: '100%' }}
+                    >
+                      <CardContent
+                        sx={{ textAlign: 'center', py: 2, minHeight: 100 }}
+                      >
+                        <Box sx={{ color: type.color, mb: 1 }}>{type.icon}</Box>
+                        <Typography variant="body2" fontWeight={500}>
+                          {type.label}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
           </Box>
         )
 
       case 1:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom>
-              What is the proposed new use?
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Select the <strong>proposed</strong> use for the property:
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Select the intended use after conversion. This determines the
-              regulatory requirements.
-            </Typography>
-
-            <FormControl fullWidth>
-              <InputLabel>Proposed Use</InputLabel>
-              <Select
-                value={proposedUse}
-                label="Proposed Use"
-                onChange={handleProposedUseChange}
-              >
-                {ASSET_TYPE_OPTIONS.filter(
-                  (opt) => opt.value !== currentUse,
-                ).map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    <Box>
-                      <Typography variant="body1">{opt.label}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {opt.description}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {currentUse && proposedUse && (
-              <Card
-                sx={{
-                  mt: 3,
-                  bgcolor: 'rgba(25, 118, 210, 0.1)',
-                  border: '1px solid rgba(25, 118, 210, 0.3)',
-                }}
-              >
-                <CardContent>
-                  <Box
+            <Grid container spacing={2}>
+              {ASSET_TYPES.filter((t) => t.value !== currentUse).map((type) => (
+                <Grid item xs={6} sm={4} key={type.value}>
+                  <Card
+                    variant="outlined"
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      justifyContent: 'center',
+                      borderColor:
+                        proposedUse === type.value ? type.color : 'divider',
+                      borderWidth: proposedUse === type.value ? 2 : 1,
+                      bgcolor:
+                        proposedUse === type.value
+                          ? `${type.color}10`
+                          : 'background.paper',
+                      transition: 'all 0.2s ease',
                     }}
                   >
-                    <Chip
-                      label={
-                        ASSET_TYPE_OPTIONS.find((o) => o.value === currentUse)
-                          ?.label
-                      }
-                      color="default"
-                      sx={{ fontSize: '1rem', py: 2.5 }}
-                    />
-                    <SwapIcon color="primary" />
-                    <Chip
-                      label={
-                        ASSET_TYPE_OPTIONS.find((o) => o.value === proposedUse)
-                          ?.label
-                      }
-                      color="primary"
-                      sx={{ fontSize: '1rem', py: 2.5 }}
-                    />
-                  </Box>
-                </CardContent>
-              </Card>
+                    <CardActionArea
+                      onClick={() => setProposedUse(type.value)}
+                      sx={{ height: '100%' }}
+                    >
+                      <CardContent
+                        sx={{ textAlign: 'center', py: 2, minHeight: 100 }}
+                      >
+                        <Box sx={{ color: type.color, mb: 1 }}>{type.icon}</Box>
+                        <Typography variant="body2" fontWeight={500}>
+                          {type.label}
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+
+            {proposedUse && (
+              <Alert severity="info" icon={<InfoIcon />} sx={{ mt: 3 }}>
+                <Typography variant="body2">
+                  Changing from{' '}
+                  <strong>{getAssetInfo(currentUse)?.label}</strong> to{' '}
+                  <strong>{getAssetInfo(proposedUse)?.label}</strong> will
+                  require:
+                </Typography>
+                <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                  {requiresDCAmendment && (
+                    <li>
+                      <Typography variant="body2">
+                        Development Control (DC) Amendment from URA
+                      </Typography>
+                    </li>
+                  )}
+                  {requiresPlanningPermission && (
+                    <li>
+                      <Typography variant="body2">
+                        Planning Permission Application
+                      </Typography>
+                    </li>
+                  )}
+                </Box>
+              </Alert>
             )}
           </Box>
         )
@@ -375,79 +287,28 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
       case 2:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom>
-              Regulatory Requirements Analysis
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Provide justification for the change of use (optional but
+              recommended):
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Based on your change of use, the following approvals will be
-              required:
+            <TextField
+              fullWidth
+              multiline
+              rows={6}
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              placeholder="Explain why this change of use is being requested. Include market demand, site suitability, and alignment with planning objectives..."
+              variant="outlined"
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 1, display: 'block' }}
+            >
+              A strong justification improves approval chances. Consider
+              including: market analysis, compatibility with surroundings, and
+              benefits to the community.
             </Typography>
-
-            {requiresDC && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                <Typography variant="subtitle2">
-                  DC Amendment Required
-                </Typography>
-                <Typography variant="body2">
-                  Changing from {currentUse} to {proposedUse} requires a
-                  Development Control (DC) amendment application to URA.
-                </Typography>
-              </Alert>
-            )}
-
-            {requiresPlanning && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Typography variant="subtitle2">
-                  Planning Permission Required
-                </Typography>
-                <Typography variant="body2">
-                  {proposedUse === 'residential'
-                    ? 'Residential'
-                    : 'Hospitality'}{' '}
-                  use requires additional planning permission approval.
-                </Typography>
-              </Alert>
-            )}
-
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              {requirements.map((req, index) => (
-                <Grid item xs={12} sm={6} key={index}>
-                  <Paper
-                    sx={{
-                      p: 2,
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      bgcolor: req.required
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.2)',
-                      opacity: req.required ? 1 : 0.6,
-                    }}
-                  >
-                    {req.required ? (
-                      <CheckIcon color="success" />
-                    ) : (
-                      <Box sx={{ width: 24 }} />
-                    )}
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="body2" fontWeight={500}>
-                        {req.label}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {req.agency}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={req.required ? 'Required' : 'N/A'}
-                      size="small"
-                      color={req.required ? 'success' : 'default'}
-                      variant="outlined"
-                    />
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
           </Box>
         )
 
@@ -455,173 +316,108 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              Justification for Change of Use
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Provide a clear justification for why this change of use is
-              necessary and beneficial. URA considers market demand, urban
-              planning objectives, and community impact.
+              Application Summary
             </Typography>
 
-            <TextField
-              fullWidth
-              multiline
-              rows={6}
-              label="Justification"
-              placeholder="Explain the rationale for the proposed change of use, including:
-- Market demand and feasibility
-- Benefits to the surrounding area
-- Alignment with urban planning objectives
-- Impact on existing infrastructure"
-              value={justification}
-              onChange={(e) => setJustification(e.target.value)}
-              helperText={`${justification.length}/50 characters minimum`}
-              error={justification.length > 0 && justification.length < 50}
-            />
+            {/* Visual Change Flow */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                my: 4,
+                p: 3,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+              }}
+            >
+              <Box sx={{ textAlign: 'center' }}>
+                <Box
+                  sx={{
+                    color: getAssetInfo(currentUse)?.color,
+                    mb: 1,
+                    '& .MuiSvgIcon-root': { fontSize: 48 },
+                  }}
+                >
+                  {getAssetInfo(currentUse)?.icon}
+                </Box>
+                <Typography variant="body2" fontWeight={500}>
+                  {getAssetInfo(currentUse)?.label}
+                </Typography>
+                <Chip label="Current" size="small" sx={{ mt: 0.5 }} />
+              </Box>
 
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Tips for a Strong Justification:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                <Typography
-                  component="li"
-                  variant="body2"
-                  color="text.secondary"
+              <ArrowIcon sx={{ fontSize: 32, color: 'text.secondary' }} />
+
+              <Box sx={{ textAlign: 'center' }}>
+                <Box
+                  sx={{
+                    color: getAssetInfo(proposedUse)?.color,
+                    mb: 1,
+                    '& .MuiSvgIcon-root': { fontSize: 48 },
+                  }}
                 >
-                  Reference the URA Master Plan and zoning guidelines
+                  {getAssetInfo(proposedUse)?.icon}
+                </Box>
+                <Typography variant="body2" fontWeight={500}>
+                  {getAssetInfo(proposedUse)?.label}
                 </Typography>
-                <Typography
-                  component="li"
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Highlight positive community impact
-                </Typography>
-                <Typography
-                  component="li"
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Address potential concerns proactively
-                </Typography>
-                <Typography
-                  component="li"
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Include market research or feasibility studies if available
-                </Typography>
+                <Chip
+                  label="Proposed"
+                  size="small"
+                  color="primary"
+                  sx={{ mt: 0.5 }}
+                />
               </Box>
             </Box>
-          </Box>
-        )
 
-      case 4:
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Review & Confirm
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Please review your application details and confirm the
-              acknowledgements below.
-            </Typography>
-
-            <Card sx={{ mb: 3, bgcolor: 'rgba(255, 255, 255, 0.03)' }}>
-              <CardContent>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      Current Use
-                    </Typography>
-                    <Typography variant="body1" fontWeight={500}>
-                      {
-                        ASSET_TYPE_OPTIONS.find((o) => o.value === currentUse)
-                          ?.label
-                      }
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      Proposed Use
-                    </Typography>
-                    <Typography variant="body1" fontWeight={500}>
-                      {
-                        ASSET_TYPE_OPTIONS.find((o) => o.value === proposedUse)
-                          ?.label
-                      }
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 1 }} />
-                    <Typography variant="caption" color="text.secondary">
-                      Justification Summary
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        mt: 0.5,
-                        maxHeight: 100,
-                        overflow: 'auto',
-                        whiteSpace: 'pre-wrap',
-                      }}
-                    >
-                      {justification || '(No justification provided)'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-
-            <Typography variant="subtitle2" gutterBottom>
-              Required Acknowledgements:
-            </Typography>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={acknowledgements.dcAmendment}
-                    onChange={(e) =>
-                      setAcknowledgements({
-                        ...acknowledgements,
-                        dcAmendment: e.target.checked,
-                      })
-                    }
-                  />
+            {/* Requirements */}
+            <Stack spacing={2}>
+              <Alert
+                severity={requiresDCAmendment ? 'warning' : 'success'}
+                icon={requiresDCAmendment ? <WarningIcon /> : <CheckIcon />}
+              >
+                DC Amendment:{' '}
+                {requiresDCAmendment ? 'Required' : 'Not Required'}
+              </Alert>
+              <Alert
+                severity={requiresPlanningPermission ? 'warning' : 'success'}
+                icon={
+                  requiresPlanningPermission ? <WarningIcon /> : <CheckIcon />
                 }
-                label="I understand that a DC amendment application may be required"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={acknowledgements.buildingPlan}
-                    onChange={(e) =>
-                      setAcknowledgements({
-                        ...acknowledgements,
-                        buildingPlan: e.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="I will submit building plan amendments as required"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={acknowledgements.timeline}
-                    onChange={(e) =>
-                      setAcknowledgements({
-                        ...acknowledgements,
-                        timeline: e.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="I understand the approval process may take 3-6 months"
-              />
-            </Box>
+              >
+                Planning Permission:{' '}
+                {requiresPlanningPermission ? 'Required' : 'Not Required'}
+              </Alert>
+            </Stack>
+
+            {justification && (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Justification:
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    p: 2,
+                    bgcolor: 'rgba(255,255,255,0.03)',
+                    borderRadius: 1,
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {justification}
+                </Typography>
+              </Box>
+            )}
+
+            <Alert severity="info" sx={{ mt: 3 }}>
+              <Typography variant="body2">
+                This application will be submitted to URA for review. Typical
+                processing time is 4-8 weeks depending on complexity.
+              </Typography>
+            </Alert>
           </Box>
         )
 
@@ -633,30 +429,22 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          minHeight: '70vh',
-          bgcolor: 'background.paper',
-        },
-      }}
+      PaperProps={{ sx: { bgcolor: '#1A1D1F', minHeight: 500 } }}
     >
-      <DialogTitle
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        }}
-      >
-        <SwapIcon color="primary" />
-        Change of Use Application
+      <DialogTitle>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Change of Use Application
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Apply for URA approval to change the permitted use of your property
+        </Typography>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 3 }}>
-        <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+      <DialogContent>
+        <Stepper activeStep={activeStep} sx={{ pt: 2, pb: 4 }}>
           {STEPS.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -665,59 +453,48 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
         </Stepper>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
-        <Box sx={{ minHeight: 300 }}>{renderStepContent()}</Box>
+        {renderStepContent()}
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          px: 3,
-          py: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        }}
-      >
-        <Button onClick={onClose} color="inherit">
+      <DialogActions sx={{ p: 3 }}>
+        <Button onClick={handleClose} disabled={submitting}>
           Cancel
         </Button>
-        <Box sx={{ flex: 1 }} />
-        <Button
-          onClick={handleBack}
-          disabled={activeStep === 0}
-          startIcon={<BackIcon />}
-        >
-          Back
-        </Button>
+        <Box sx={{ flex: '1 1 auto' }} />
+        {activeStep > 0 && (
+          <Button onClick={handleBack} disabled={submitting}>
+            Back
+          </Button>
+        )}
         {activeStep === STEPS.length - 1 ? (
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={!canProceed() || loading}
+            disabled={submitting || !canProceed()}
             startIcon={
-              loading ? (
+              submitting ? (
                 <CircularProgress size={20} color="inherit" />
               ) : (
                 <CheckIcon />
               )
             }
             sx={{
-              background:
-                'linear-gradient(135deg, var(--ob-brand-600) 0%, var(--ob-brand-400) 100%)',
-              color: 'var(--ob-color-text-inverse)',
-              fontWeight: 'var(--ob-font-weight-bold)',
+              background: 'linear-gradient(135deg, #00C853 0%, #B2FF59 100%)',
+              color: '#000',
             }}
           >
-            {loading ? 'Submitting...' : 'Submit Application'}
+            {submitting ? 'Submitting...' : 'Submit Application'}
           </Button>
         ) : (
           <Button
             variant="contained"
             onClick={handleNext}
             disabled={!canProceed()}
-            endIcon={<ForwardIcon />}
           >
             Next
           </Button>
@@ -726,5 +503,3 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
     </Dialog>
   )
 }
-
-export default ChangeOfUseWizard

@@ -95,14 +95,14 @@
 
 ### ⚠️ In Progress Phases
 
-**[Phase 2E: Comprehensive Team Coordination](#phase-2e-comprehensive-team-coordination)** ⚠️ IN PROGRESS
-- **Backend:** 100% | **UI:** 0%
-- Team management API, invitation system, approval workflows (backend complete)
+**[Phase 2E: Comprehensive Team Coordination](#phase-2e-comprehensive-team-coordination)** ⚠️ 85% COMPLETE
+- **Backend:** 100% | **UI:** 80%
+- Team management, invitations, workflow approvals (needs notification system)
 - [Jump to details ↓](#phase-2e-comprehensive-team-coordination)
 
-**[Phase 2F: Singapore Regulatory Navigation](#phase-2f-singapore-regulatory-navigation)** ⚠️ IN PROGRESS
-- **Backend:** 100% | **UI:** 0%
-- 14 API endpoints, multi-authority support, mock CORENET integration
+**[Phase 2F: Singapore Regulatory Navigation](#phase-2f-singapore-regulatory-navigation)** ⚠️ 90% COMPLETE
+- **Backend:** 100% | **UI:** 85%
+- Regulatory dashboard, submission wizard, agency tracking (needs compliance path viz)
 - [Jump to details ↓](#phase-2f-singapore-regulatory-navigation)
 
 ### ❌ Not Started Phases

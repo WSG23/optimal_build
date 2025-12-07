@@ -1,5 +1,6 @@
 """Service for managing approval workflows."""
 
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
@@ -10,17 +11,23 @@ from app.models.workflow import (
     StepStatus,
     WorkflowStatus,
 )
-
-# from app.services.base import BaseService # Removed
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
+
+if TYPE_CHECKING:
+    from app.services.notification import NotificationService
 
 
 class WorkflowService:
     """Service for managing approval workflows."""
 
-    def __init__(self, db_session):
+    def __init__(
+        self,
+        db_session,
+        notification_service: Optional["NotificationService"] = None,
+    ):
         self.db = db_session
+        self.notification_service = notification_service
 
     async def create_workflow(
         self,

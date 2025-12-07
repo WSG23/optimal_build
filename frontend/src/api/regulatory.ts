@@ -31,34 +31,20 @@ export interface CreateSubmissionRequest {
   submission_type: string
 }
 
-// Asset types for compliance paths
 export type AssetType =
   | 'office'
   | 'retail'
   | 'residential'
   | 'industrial'
-  | 'hospitality'
-  | 'mixed_use'
   | 'heritage'
+  | 'mixed_use'
+  | 'hospitality'
 
-export type SubmissionType =
-  | 'planning_permission'
-  | 'development_control'
-  | 'building_plan'
-  | 'structural_plan'
-  | 'fire_safety'
-  | 'environmental'
-  | 'heritage_conservation'
-  | 'change_of_use'
-  | 'csc_application'
-  | 'top_application'
-
-// Compliance path for regulatory timeline
 export interface AssetCompliancePath {
   id: string
   asset_type: AssetType
-  submission_type: SubmissionType
   agency_id: string
+  submission_type: string
   sequence_order: number
   is_mandatory: boolean
   description?: string
@@ -66,14 +52,13 @@ export interface AssetCompliancePath {
   created_at: string
 }
 
-// Change of use application
 export interface ChangeOfUseApplication {
   id: string
   project_id: string
   current_use: AssetType
   proposed_use: AssetType
+  status: 'draft' | 'submitted' | 'in_review' | 'approved' | 'rejected' | 'rfi'
   justification?: string
-  status: 'draft' | 'submitted' | 'in_review' | 'approved' | 'rejected'
   ura_reference?: string
   requires_dc_amendment: boolean
   requires_planning_permission: boolean
@@ -83,30 +68,22 @@ export interface ChangeOfUseApplication {
   updated_at: string
 }
 
-export interface ChangeOfUseCreateRequest {
+export interface CreateChangeOfUseRequest {
   project_id: string
   current_use: AssetType
   proposed_use: AssetType
   justification?: string
 }
 
-export interface ChangeOfUseUpdateRequest {
-  status?: string
-  justification?: string
-  ura_reference?: string
-  requires_dc_amendment?: boolean
-}
-
-// Heritage submission
 export interface HeritageSubmission {
   id: string
   project_id: string
   conservation_status: string
+  stb_reference?: string
+  status: 'draft' | 'submitted' | 'in_review' | 'approved' | 'rejected' | 'rfi'
   original_construction_year?: number
   heritage_elements?: string
   proposed_interventions?: string
-  status: 'draft' | 'submitted' | 'in_review' | 'approved' | 'rejected'
-  stb_reference?: string
   conservation_plan_attached: boolean
   submitted_at?: string
   approved_at?: string
@@ -114,7 +91,7 @@ export interface HeritageSubmission {
   updated_at: string
 }
 
-export interface HeritageSubmissionCreateRequest {
+export interface CreateHeritageSubmissionRequest {
   project_id: string
   conservation_status: string
   original_construction_year?: number
@@ -122,16 +99,14 @@ export interface HeritageSubmissionCreateRequest {
   proposed_interventions?: string
 }
 
-export interface HeritageSubmissionUpdateRequest {
-  status?: string
-  stb_reference?: string
-  heritage_elements?: string
-  proposed_interventions?: string
-  conservation_plan_attached?: boolean
+export interface RegulatoryAgency {
+  id: string
+  code: string
+  name: string
+  description?: string
 }
 
 export const regulatoryApi = {
-  // Submissions
   createSubmission: async (
     request: CreateSubmissionRequest,
   ): Promise<AuthoritySubmission> => {
@@ -160,8 +135,16 @@ export const regulatoryApi = {
     return data
   },
 
-  // Compliance Paths
-  getCompliancePaths: async (
+  // Agency endpoints
+  listAgencies: async (): Promise<RegulatoryAgency[]> => {
+    const { data } = await apiClient.get<RegulatoryAgency[]>(
+      '/regulatory/agencies',
+    )
+    return data
+  },
+
+  // Compliance path endpoints
+  getCompliancePathsForAsset: async (
     assetType: AssetType,
   ): Promise<AssetCompliancePath[]> => {
     const { data } = await apiClient.get<AssetCompliancePath[]>(
@@ -177,9 +160,9 @@ export const regulatoryApi = {
     return data
   },
 
-  // Change of Use
+  // Change of use endpoints
   createChangeOfUse: async (
-    request: ChangeOfUseCreateRequest,
+    request: CreateChangeOfUseRequest,
   ): Promise<ChangeOfUseApplication> => {
     const { data } = await apiClient.post<ChangeOfUseApplication>(
       '/regulatory/change-of-use',
@@ -197,20 +180,9 @@ export const regulatoryApi = {
     return data
   },
 
-  updateChangeOfUse: async (
-    applicationId: string,
-    request: ChangeOfUseUpdateRequest,
-  ): Promise<ChangeOfUseApplication> => {
-    const { data } = await apiClient.patch<ChangeOfUseApplication>(
-      `/regulatory/change-of-use/${applicationId}`,
-      request,
-    )
-    return data
-  },
-
-  // Heritage Submissions
+  // Heritage submission endpoints
   createHeritageSubmission: async (
-    request: HeritageSubmissionCreateRequest,
+    request: CreateHeritageSubmissionRequest,
   ): Promise<HeritageSubmission> => {
     const { data } = await apiClient.post<HeritageSubmission>(
       '/regulatory/heritage',
@@ -237,18 +209,9 @@ export const regulatoryApi = {
     return data
   },
 
-  updateHeritageSubmission: async (
+  submitHeritageToSTB: async (
     submissionId: string,
-    request: HeritageSubmissionUpdateRequest,
   ): Promise<HeritageSubmission> => {
-    const { data } = await apiClient.patch<HeritageSubmission>(
-      `/regulatory/heritage/${submissionId}`,
-      request,
-    )
-    return data
-  },
-
-  submitToSTB: async (submissionId: string): Promise<HeritageSubmission> => {
     const { data } = await apiClient.post<HeritageSubmission>(
       `/regulatory/heritage/${submissionId}/submit`,
       {},

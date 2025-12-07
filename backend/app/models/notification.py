@@ -1,4 +1,4 @@
-"""Notification models for in-app and email notifications."""
+"""Notification models for team coordination."""
 
 import uuid
 from enum import Enum
@@ -6,36 +6,44 @@ from enum import Enum
 from backend._compat.datetime import utcnow
 
 from app.models.base import UUID, BaseModel
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
-from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum as SQLEnum,
+    ForeignKey,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 
 class NotificationType(str, Enum):
     """Types of notifications."""
 
-    # Team notifications
-    TEAM_INVITE = "team_invite"
-    TEAM_INVITE_ACCEPTED = "team_invite_accepted"
+    # Team-related
+    TEAM_INVITATION = "team_invitation"
     TEAM_MEMBER_JOINED = "team_member_joined"
-    TEAM_MEMBER_LEFT = "team_member_left"
+    TEAM_MEMBER_REMOVED = "team_member_removed"
 
-    # Workflow notifications
+    # Workflow-related
     WORKFLOW_CREATED = "workflow_created"
-    WORKFLOW_APPROVAL_PENDING = "workflow_approval_pending"
-    WORKFLOW_APPROVED = "workflow_approved"
-    WORKFLOW_REJECTED = "workflow_rejected"
+    WORKFLOW_STEP_ASSIGNED = "workflow_step_assigned"
     WORKFLOW_STEP_COMPLETED = "workflow_step_completed"
+    WORKFLOW_COMPLETED = "workflow_completed"
+    WORKFLOW_APPROVAL_NEEDED = "workflow_approval_needed"
+    WORKFLOW_REJECTED = "workflow_rejected"
 
-    # Regulatory notifications
-    SUBMISSION_STATUS_CHANGED = "submission_status_changed"
-    SUBMISSION_APPROVED = "submission_approved"
-    SUBMISSION_REJECTED = "submission_rejected"
-    SUBMISSION_RFI = "submission_rfi"
+    # Project-related
+    PROJECT_UPDATE = "project_update"
+    PROJECT_MILESTONE = "project_milestone"
 
-    # General
-    SYSTEM = "system"
-    REMINDER = "reminder"
+    # Regulatory-related
+    REGULATORY_STATUS_CHANGE = "regulatory_status_change"
+    REGULATORY_RFI = "regulatory_rfi"
+
+    # System
+    SYSTEM_ANNOUNCEMENT = "system_announcement"
 
 
 class NotificationPriority(str, Enum):
@@ -48,17 +56,20 @@ class NotificationPriority(str, Enum):
 
 
 class Notification(BaseModel):
-    """In-app notification for users."""
+    """Notification model for in-app notifications."""
 
     __tablename__ = "notifications"
 
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+
+    # Recipient
     user_id = Column(UUID(), ForeignKey("users.id"), nullable=False, index=True)
 
     # Notification content
     notification_type = Column(
         SQLEnum(NotificationType, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
+        index=True,
     )
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
@@ -68,26 +79,24 @@ class Notification(BaseModel):
         nullable=False,
     )
 
-    # Related entity for deep linking
+    # Context links (optional - for navigation)
+    project_id = Column(UUID(), ForeignKey("projects.id"), nullable=True, index=True)
     related_entity_type = Column(
         String(50), nullable=True
-    )  # e.g., 'project', 'workflow', 'submission'
+    )  # e.g., "workflow", "team_invitation"
     related_entity_id = Column(UUID(), nullable=True)
 
-    # Action URL for one-click navigation
-    action_url = Column(String(500), nullable=True)
-
-    # Status tracking
-    is_read = Column(Boolean, default=False, nullable=False)
-    is_dismissed = Column(Boolean, default=False, nullable=False)
+    # Status
+    is_read = Column(Boolean, default=False, nullable=False, index=True)
+    read_at = Column(DateTime, nullable=True)
 
     # Timestamps
     created_at = Column(DateTime, default=utcnow, nullable=False, index=True)
-    read_at = Column(DateTime, nullable=True)
-    dismissed_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)  # Optional expiration
 
     # Relationships
     user = relationship("User", backref="notifications")
+    project = relationship("Project", backref="notifications")
 
     def mark_as_read(self) -> None:
         """Mark the notification as read."""
@@ -95,35 +104,16 @@ class Notification(BaseModel):
             self.is_read = True
             self.read_at = utcnow()
 
-    def dismiss(self) -> None:
-        """Dismiss the notification."""
-        if not self.is_dismissed:
-            self.is_dismissed = True
-            self.dismissed_at = utcnow()
+    def is_expired(self) -> bool:
+        """Check if notification has expired."""
+        if self.expires_at is None:
+            return False
+        now = utcnow()
+        expires = self.expires_at
+        # Handle timezone differences
+        if expires.tzinfo is None and now.tzinfo is not None:
+            now = now.replace(tzinfo=None)
+        return now > expires
 
-
-class EmailLog(BaseModel):
-    """Log of sent emails for audit and debugging."""
-
-    __tablename__ = "email_logs"
-
-    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    recipient_email = Column(String(255), nullable=False, index=True)
-    subject = Column(String(500), nullable=False)
-    template_name = Column(String(100), nullable=True)
-
-    # Status
-    status = Column(
-        String(50), default="pending", nullable=False
-    )  # pending, sent, failed
-    error_message = Column(Text, nullable=True)
-
-    # Related notification
-    notification_id = Column(UUID(), ForeignKey("notifications.id"), nullable=True)
-
-    # Timestamps
-    created_at = Column(DateTime, default=utcnow, nullable=False)
-    sent_at = Column(DateTime, nullable=True)
-
-    # Relationships
-    notification = relationship("Notification", backref="email_logs")
+    def __repr__(self) -> str:
+        return f"<Notification {self.id} type={self.notification_type} user={self.user_id}>"

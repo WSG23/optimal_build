@@ -179,9 +179,13 @@ function mapPhase(payload: Record<string, unknown>): DevelopmentPhase {
   return {
     id: Number(payload.id ?? 0),
     projectId: Number(payload.project_id ?? 0),
-    name: String(payload.name ?? ''),
-    phaseType: String(payload.phase_type ?? 'site_preparation') as PhaseType,
-    status: String(payload.status ?? 'not_started') as PhaseStatus,
+    name: typeof payload.name === 'string' ? payload.name : '',
+    phaseType: (typeof payload.phase_type === 'string'
+      ? payload.phase_type
+      : 'site_preparation') as PhaseType,
+    status: (typeof payload.status === 'string'
+      ? payload.status
+      : 'not_started') as PhaseStatus,
     sequenceOrder: Number(payload.sequence_order ?? 0),
     plannedStartDate:
       typeof payload.planned_start_date === 'string'
@@ -203,40 +207,44 @@ function mapPhase(payload: Record<string, unknown>): DevelopmentPhase {
     actualCostAmount: toNumberOrNull(payload.actual_cost_amount),
     description:
       typeof payload.description === 'string' ? payload.description : null,
-    heritageClassification: String(
-      payload.heritage_classification ?? 'none',
-    ) as HeritageClassification,
+    heritageClassification: (typeof payload.heritage_classification === 'string'
+      ? payload.heritage_classification
+      : 'none') as HeritageClassification,
     heritageApprovalRequired: Boolean(payload.heritage_approval_required),
     heritageApprovalStatus:
       typeof payload.heritage_approval_status === 'string'
         ? payload.heritage_approval_status
         : null,
-    occupancyStatus: String(
-      payload.occupancy_status ?? 'vacant',
-    ) as OccupancyStatus,
+    occupancyStatus: (typeof payload.occupancy_status === 'string'
+      ? payload.occupancy_status
+      : 'vacant') as OccupancyStatus,
     tenantCoordinationRequired: Boolean(payload.tenant_coordination_required),
-    createdAt: String(payload.created_at ?? ''),
-    updatedAt: String(payload.updated_at ?? ''),
+    createdAt: typeof payload.created_at === 'string' ? payload.created_at : '',
+    updatedAt: typeof payload.updated_at === 'string' ? payload.updated_at : '',
   }
 }
 
 function mapGanttTask(payload: Record<string, unknown>): GanttTask {
   return {
-    id: String(payload.id ?? ''),
-    name: String(payload.name ?? ''),
-    phaseType: String(payload.phase_type ?? 'site_preparation') as PhaseType,
-    status: String(payload.status ?? 'not_started') as PhaseStatus,
-    startDate: String(payload.start_date ?? ''),
-    endDate: String(payload.end_date ?? ''),
+    id: typeof payload.id === 'string' ? payload.id : String(payload.id ?? ''),
+    name: typeof payload.name === 'string' ? payload.name : '',
+    phaseType: (typeof payload.phase_type === 'string'
+      ? payload.phase_type
+      : 'site_preparation') as PhaseType,
+    status: (typeof payload.status === 'string'
+      ? payload.status
+      : 'not_started') as PhaseStatus,
+    startDate: typeof payload.start_date === 'string' ? payload.start_date : '',
+    endDate: typeof payload.end_date === 'string' ? payload.end_date : '',
     duration: Number(payload.duration ?? 0),
     progress: Number(payload.progress ?? 0),
     dependencies: Array.isArray(payload.dependencies)
-      ? payload.dependencies.map(String)
+      ? payload.dependencies.map((d) => String(d))
       : [],
     isCritical: Boolean(payload.is_critical),
     isHeritage: Boolean(payload.is_heritage),
     hasTenantCoordination: Boolean(payload.has_tenant_coordination),
-    color: String(payload.color ?? '#3b82f6'),
+    color: typeof payload.color === 'string' ? payload.color : '#3b82f6',
     budgetAmount: toNumberOrNull(payload.budget_amount),
     actualCostAmount: toNumberOrNull(payload.actual_cost_amount),
   }

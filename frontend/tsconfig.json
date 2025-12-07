@@ -15,7 +15,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom"],
+    "types": [
+      "vite/client",
+      "node",
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ],
     "baseUrl": "./src",
     "paths": {
       "@/*": ["./*"],

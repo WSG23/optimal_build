@@ -1,6 +1,5 @@
-"""Notification services package."""
+"""Notification service package."""
 
-from app.services.notification.notification_service import NotificationService
-from app.services.notification.email_service import EmailService
+from .notification_service import NotificationService
 
-__all__ = ["NotificationService", "EmailService"]
+__all__ = ["NotificationService"]

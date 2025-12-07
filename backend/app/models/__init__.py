@@ -37,6 +37,8 @@ else:
     from . import users  # Added: user authentication model
     from . import team  # Added: Phase 2E team management
     from . import workflow  # Added: Phase 2E approval workflows
+    from . import notification  # Added: Phase 2E notifications
+    from . import construction  # Added: Phase 2G Construction
     from . import (  # noqa: F401  pylint: disable=unused-import
         audit,
         business_performance,
@@ -79,7 +81,9 @@ else:
         "users": users,  # Added: user authentication model
         "team": team,  # Added: Phase 2E team management
         "workflow": workflow,  # Added: Phase 2E approval workflows
+        "notification": notification,  # Added: Phase 2E notifications
         "regulatory": regulatory,
+        "construction": construction,  # Added: Phase 2G Construction
     }
 
     for _name, _module in _SUBMODULES.items():
