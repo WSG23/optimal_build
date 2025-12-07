@@ -10,6 +10,7 @@ export type NavItemKey =
   | 'phaseManagement'
   | 'teamCoordination'
   | 'regulatory'
+  | 'regulatoryNavigation' // Added
   | 'construction'
   | 'revenueOptimization'
   | 'documentation'
@@ -19,6 +20,7 @@ export interface NavItem {
   label: string
   path: string
   description?: string
+  icon?: string
   comingSoon?: boolean
   workspace?: 'agent' | 'developer'
 }
@@ -95,10 +97,17 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
   {
     key: 'teamCoordination',
     label: 'Team Coordination',
-    path: '/app/team-coordination',
+    path: '/developers/team-coordination', // Path updated
     description: 'Consultant network and approval workflows.',
     workspace: 'developer',
-    comingSoon: true,
+  },
+  {
+    key: 'regulatoryNavigation', // New item added
+    label: 'Regulatory Navigation',
+    icon: 'Gavel',
+    path: '/developers/regulatory',
+    description: 'Authority submissions (URA, BCA) and compliance.',
+    workspace: 'developer',
   },
   {
     key: 'regulatory',

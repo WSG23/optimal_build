@@ -88,55 +88,84 @@ export function ResultsPanel({
         result && (
           <div className="feasibility-results__content" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ob-space-8)' }}>
 
-            {/* Header / Key Info */}
+            {/* Header / Hero Stats */}
             <header className="feasibility-results__header" style={{
-                background: 'white',
-                padding: 'var(--ob-space-5)',
-                borderRadius: 'var(--ob-radius-lg)',
-                border: '1px solid var(--ob-color-border-premium)',
-                boxShadow: 'var(--ob-depth-sm)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                marginBottom: 'var(--ob-space-4)',
+                animation: 'slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                opacity: 0,
+                transform: 'translateY(20px)'
             }}>
-              <div>
-                <span className="text-eyebrow" style={{ display: 'block', marginBottom: 'var(--ob-space-1)' }}>
-                  {t('wizard.results.zone')}
-                </span>
-                <span className="text-display" data-testid="zone-code">
-                  {result.zoneCode ?? t('wizard.results.zoneUnknown')}
-                </span>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span className="text-eyebrow" style={{ display: 'block', marginBottom: 'var(--ob-space-1)' }}>
-                  {t('wizard.results.overlays')}
-                </span>
-                <div
-                  className="feasibility-results__overlays"
-                  data-testid="overlay-badges"
-                  style={{ display: 'flex', gap: 'var(--ob-space-2)', justifyContent: 'flex-end', flexWrap: 'wrap' }}
-                >
-                  {result.overlays.length === 0 && (
-                    <span className="feasibility-results__badge">
-                      {t('wizard.results.none')}
-                    </span>
-                  )}
-                  {result.overlays.map((overlay) => (
-                    <span key={overlay}
-                          className="feasibility-results__badge"
-                          style={{
-                              background: 'var(--ob-color-accent-light)',
-                              color: 'var(--ob-color-accent)',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              padding: '4px 8px',
-                              borderRadius: '4px'
-                          }}>
-                      {overlay}
-                    </span>
-                  ))}
-                </div>
-              </div>
+                <style>
+                    {`
+                        @keyframes slideUpFade {
+                            from { opacity: 0; transform: translateY(20px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                    `}
+                </style>
+               <div style={{
+                   display: 'grid',
+                   gridTemplateColumns: '1fr auto',
+                   gap: 'var(--ob-space-4)',
+                   alignItems: 'start'
+               }}>
+                  {/* Zone & Title */}
+                  <div style={{
+                      background: 'white',
+                      padding: 'var(--ob-space-5)',
+                      borderRadius: 'var(--ob-radius-lg)',
+                      border: '1px solid var(--ob-color-border-premium)',
+                      boxShadow: 'var(--ob-depth-md)'
+                  }}>
+                      <span className="text-eyebrow" style={{ display: 'block', marginBottom: '4px' }}>
+                          OPTIMIZED FOR
+                      </span>
+                      <h2 style={{
+                          fontSize: '2rem',
+                          fontWeight: 700,
+                          margin: 0,
+                          letterSpacing: '-0.02em',
+                          background: 'linear-gradient(45deg, #111827, #374151)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent'
+                      }}>
+                          {result.zoneCode ?? t('wizard.results.zoneUnknown')}
+                      </h2>
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+                          {result.overlays.map((overlay) => (
+                              <span key={overlay} style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 600,
+                                  padding: '2px 8px',
+                                  borderRadius: '12px',
+                                  background: '#EFF6FF',
+                                  color: '#2563EB',
+                                  border: '1px solid #BFDBFE'
+                              }}>
+                                  {overlay}
+                              </span>
+                          ))}
+                      </div>
+                  </div>
+
+                  {/* Summary Metric Card (e.g. Total GFA) */}
+                  <div style={{
+                      background: '#1F2937',
+                      color: 'white',
+                      padding: 'var(--ob-space-5)',
+                      borderRadius: 'var(--ob-radius-lg)',
+                      minWidth: '200px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                  }}>
+                      <span style={{ fontSize: '0.75rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Max GFA Potential
+                      </span>
+                      <div style={{ fontSize: '2.25rem', fontWeight: 700, lineHeight: 1.1, marginTop: '4px' }}>
+                          {numberFormatter.format(result.metrics.gfaCapM2)}
+                          <span style={{ fontSize: '1rem', fontWeight: 400, opacity: 0.6, marginLeft: '4px' }}>m²</span>
+                      </div>
+                  </div>
+               </div>
             </header>
 
             {/* Metrics Grid */}

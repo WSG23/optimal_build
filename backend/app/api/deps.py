@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, AsyncGenerator
 
 from dataclasses import dataclass
 from fastapi import Depends, Header, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.async_db import AsyncSessionLocal
 
 Role = Literal["viewer", "developer", "reviewer", "admin"]
 
@@ -87,6 +89,12 @@ async def require_reviewer(
     return identity
 
 
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency for getting async database session."""
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
 __all__ = [
     "RequestIdentity",
     "Role",
@@ -94,4 +102,5 @@ __all__ = [
     "get_request_role",
     "require_reviewer",
     "require_viewer",
+    "get_db",
 ]

@@ -762,26 +762,35 @@
       "landUseLabel": "Zoning / Land Use",
       "invalidSiteArea": "Please enter a valid site area"
     },
-    "assumptions": {
-      "title": "Assumptions",
-      "subtitle": "Tweak the inputs the engine uses to derive height limits and net saleable area.",
-      "fields": {
-        "typFloorToFloor": {
-          "label": "Typical floor-to-floor (m)",
-          "hint": "Default {{value}} m"
+      "assumptions": {
+        "title": "ASSUMPTIONS",
+        "subtitle": "Tweak the inputs the engine uses to derive height limits and net saleable area.",
+        "engineering": {
+            "title": "ENGINEERING CONSTRAINTS"
         },
-        "efficiency": {
-          "label": "Efficiency ratio",
-          "hint": "Default {{value}}"
-        }
+        "fields": {
+          "structure": {
+              "label": "STRUCTURAL SYSTEM"
+          },
+          "typFloorToFloor": {
+            "label": "Typical floor-to-floor (m)",
+            "hint": "Default {{value}} m"
+          },
+          "efficiency": {
+            "label": "Efficiency ratio",
+            "hint": "Default {{value}}"
+          }
+        },
+        "errors": {
+          "required": "Enter a value to update the estimate.",
+          "invalid": "Enter a number greater than zero.",
+          "range": "Efficiency must be between 0 and 1."
+        },
+        "reset": "Reset to defaults"
       },
-      "errors": {
-        "required": "Enter a value to update the estimate.",
-        "invalid": "Enter a number greater than zero.",
-        "range": "Efficiency must be between 0 and 1."
+      "financials": {
+          "title": "FINANCIAL MODELING"
       },
-      "reset": "Reset to defaults"
-    },
     "pack": {
       "title": "Professional marketing packs",
       "subtitle": "Generate agent-ready documentation directly from this feasibility screening.",

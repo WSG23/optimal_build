@@ -35,6 +35,8 @@ else:
     from . import singapore_property  # Added: Singapore property model
     from . import toronto_property  # Added: Toronto property model
     from . import users  # Added: user authentication model
+    from . import team  # Added: Phase 2E team management
+    from . import workflow  # Added: Phase 2E approval workflows
     from . import (  # noqa: F401  pylint: disable=unused-import
         audit,
         business_performance,
@@ -47,6 +49,7 @@ else:
         property as property_model,
         rkp,
         rulesets,
+        regulatory,
     )
     from .base import Base  # noqa: F401
 
@@ -74,6 +77,9 @@ else:
         "singapore_property": singapore_property,  # Added: Singapore property model
         "toronto_property": toronto_property,  # Added: Toronto property model
         "users": users,  # Added: user authentication model
+        "team": team,  # Added: Phase 2E team management
+        "workflow": workflow,  # Added: Phase 2E approval workflows
+        "regulatory": regulatory,
     }
 
     for _name, _module in _SUBMODULES.items():

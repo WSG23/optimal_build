@@ -214,6 +214,17 @@ class Project(BaseModel):
     development_phases = relationship(
         "DevelopmentPhase", back_populates="project", cascade="all, delete-orphan"
     )
+    # Phase 2E: Team Coordination
+    team_members = relationship(
+        "TeamMember", back_populates="project", cascade="all, delete-orphan"
+    )
+    # Phase 2E: Approval Workflows
+    approval_workflows = relationship(
+        "ApprovalWorkflow", back_populates="project", cascade="all, delete-orphan"
+    )
+    invitations = relationship(
+        "TeamInvitation", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Project {self.project_name} ({self.project_code})>"

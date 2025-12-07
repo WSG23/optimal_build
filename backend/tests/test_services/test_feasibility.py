@@ -41,7 +41,7 @@ sys.modules.setdefault("app.schemas", _schema_package)
 sys.modules["app.schemas.feasibility"] = _schema_module
 
 _service_module = _load_module(
-    "feasibility_service_stub", "backend/app/services/feasibility.py"
+    "feasibility_service_stub", "backend/app/services/feasibility/__init__.py"
 )
 
 FeasibilityAssessmentRequest = _schema_module.FeasibilityAssessmentRequest

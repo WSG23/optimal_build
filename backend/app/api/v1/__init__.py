@@ -58,6 +58,14 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
             "due diligence checklists, and development feasibility management."
         ),
     },
+    {
+        "name": "team",
+        "description": "Team management and invitation APIs.",
+    },
+    {
+        "name": "workflow",
+        "description": "Approval workflow and step management APIs.",
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -96,6 +104,9 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "advanced_intelligence",  # Investigation analytics stubs
     "listings",
     "developers",  # Developer workspace endpoints (site acquisition, checklists)
+    "team",  # Team management endpoints (Phase 2E)
+    "workflow",  # Approval workflow endpoints (Phase 2E)
+    "regulatory",  # Regulatory navigation endpoints (Phase 2F)
 )
 
 

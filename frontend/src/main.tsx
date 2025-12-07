@@ -27,6 +27,8 @@ import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitio
 import { ChecklistTemplateManager } from './app/pages/site-acquisition/ChecklistTemplateManager'
 import { DeveloperPreviewStandalone } from './app/pages/site-acquisition/DeveloperPreviewStandalone'
 import { PhaseManagementPage } from './app/pages/phase-management'
+import { TeamManagementPage } from './app/pages/team/TeamManagementPage'
+import { RegulatoryDashboardPage } from './app/pages/regulatory/RegulatoryDashboardPage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -146,6 +148,28 @@ const phaseManagementElement = (
   </AppShell>
 )
 
+const teamCoordinationElement = (
+  <AppShell
+    activeItem="teamCoordination"
+    title="Team coordination"
+    description="Manage project team, consultants, and approval workflows."
+    hideSidebar
+  >
+    <TeamManagementPage />
+  </AppShell>
+)
+
+const regulatoryNavigationElement = (
+  <AppShell
+    activeItem="regulatoryNavigation"
+    title="Regulatory Navigation"
+    description="Singapore authority submissions and compliance tracking."
+    hideSidebar
+  >
+    <RegulatoryDashboardPage />
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -232,8 +256,20 @@ const router = createBrowserRouter([
     element: phaseManagementElement,
   },
   {
-    path: '/developers/phase-management',
-    element: phaseManagementElement,
+    path: '/app/team-coordination',
+    element: teamCoordinationElement,
+  },
+  {
+    path: '/developers/team-coordination',
+    element: teamCoordinationElement,
+  },
+  {
+    path: '/app/regulatory',
+    element: regulatoryNavigationElement,
+  },
+  {
+    path: '/developers/regulatory',
+    element: regulatoryNavigationElement,
   },
   {
     path: '/legacy/home',

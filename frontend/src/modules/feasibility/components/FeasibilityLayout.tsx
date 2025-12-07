@@ -49,17 +49,22 @@ export function FeasibilityLayout({
             maxWidth: '35%',
             minWidth: '350px',
             height: '100%',
+            overflowY: 'auto', // Moved from inner div
+            background: 'rgba(255, 255, 255, 0.85)', // Glassmorphic background
+            backdropFilter: 'blur(20px)',
+            borderRight: '1px solid rgba(0,0,0,0.08)',
             position: 'relative',
             zIndex: 10,
-            transition: 'width 0.3s ease',
+            boxShadow: '4px 0 24px rgba(0,0,0,0.05)',
+            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)', // Smooth ease-out
+            transform: 'translateX(0)', // Placeholder for potentially hiding/showing
             display: 'flex',
             flexDirection: 'column'
         }}
+        data-testid="feasibility-controls"
       >
         <div className="feasibility-split-layout__scroll-container" style={{
             flex: 1, // Take available height
-            overflowY: 'auto',
-            background: 'var(--ob-color-bg-surface-glass-strong, rgba(255, 255, 255, 0.9))', // Fallback
             backdropFilter: 'blur(12px)',
             borderRight: '1px solid var(--ob-color-border-light)',
             padding: 'var(--ob-space-4)',

@@ -49,9 +49,10 @@ export function GenerativeDesignPanel({
                     transition: 'all 0.2s ease',
                     '&:hover': {
                         borderColor: 'var(--ob-color-brand-primary)',
-                        transform: 'translateY(-2px)',
-                        boxShadow: 'var(--ob-shadow-md)'
-                    }
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 12px 24px -10px rgba(59, 130, 246, 0.4)' // Blue glow shadow
+                    },
+                    boxShadow: isSelected ? '0 0 0 2px var(--ob-color-brand-primary), 0 8px 16px -4px rgba(59, 130, 246, 0.2)' : 'none'
                 }}
               >
                 <CardActionArea

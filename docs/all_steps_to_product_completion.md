@@ -66,7 +66,7 @@
 - [Jump to details ↓](#phase-2a-universal-gps-site-acquisition)
 
 **[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ✅ COMPLETE (v1 + v2 Core)
-- **Backend:** 100% | **UI:** 95%
+- **Backend:** 100% | **UI:** 100%
 - Asset optimizer, heritage overlays, finance integration, Level 1 3D
 - **v2 Done:** ✅ Global Engineering Defaults, ✅ GFA→NIA accuracy bands
 - **v2 Deferred:** Engineering Layers visualization, Clash & Impact Board (advanced tooling)

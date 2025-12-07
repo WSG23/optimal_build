@@ -34,10 +34,7 @@ import { useConditionAssessment } from './hooks/useConditionAssessment'
 import { useScenarioComparison } from './hooks/useScenarioComparison'
 import { DueDiligenceChecklistSection } from './components/checklist/DueDiligenceChecklistSection'
 import { InspectionHistorySummary } from './components/InspectionHistorySummary'
-import {
-  ConditionAssessmentSection,
-  ConditionAssessmentEditor,
-} from './components/condition-assessment'
+import { ConditionAssessmentSection } from './components/condition-assessment'
 import { SalesVelocityCard } from './components/advisory/SalesVelocityCard'
 // InspectionHistoryContent is used by InspectionHistoryModal component
 import {
@@ -49,18 +46,15 @@ import {
 } from './components/property-overview'
 import { ScenarioFocusSection } from './components/scenario-focus'
 import { MultiScenarioComparisonSection } from './components/multi-scenario-comparison'
-import {
-  QuickAnalysisHistoryModal,
-  InspectionHistoryModal,
-} from './components/modals'
+// Modals not yet used but planned for future integration
+// import { QuickAnalysisHistoryModal, InspectionHistoryModal } from './components/modals'
 import { PropertyCaptureForm } from './components/capture-form'
-import { PhotoDocumentation } from './components/photos'
 
-// Note: Constants, types, and utility functions are now imported from:
-// - ./types - Page-specific types
-// - ./constants - All constants (SCENARIO_OPTIONS, JURISDICTION_OPTIONS, etc.)
-// - ./utils - Utility functions (formatters, insights, draftBuilders)
-// - ./hooks - Custom hooks (usePreviewJob, useChecklist, useConditionAssessment, useScenarioComparison)
+// MUI & Canonical Components
+import { Box, Container, Stack, Typography, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
+import { Refresh } from '@mui/icons-material'
+import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
+import { GlassCard } from '../../../components/canonical/GlassCard'
 
 export function SiteAcquisitionPage() {
   const [jurisdictionCode, setJurisdictionCode] = useState('SG')
@@ -78,7 +72,7 @@ export function SiteAcquisitionPage() {
 
   // Feature preferences for toggling optional features
   // Using 'developer' role by default for Site Acquisition page
-  const { preferences } = useFeaturePreferences('developer')
+  const { preferences: _preferences } = useFeaturePreferences('developer')
 
   // Preview job state - managed by usePreviewJob hook
   const {
@@ -130,15 +124,15 @@ export function SiteAcquisitionPage() {
     conditionAssessment,
     isLoadingCondition,
     isEditingAssessment,
-    assessmentEditorMode,
-    assessmentDraft,
-    isSavingAssessment,
+    assessmentEditorMode: _assessmentEditorMode,
+    assessmentDraft: _assessmentDraft,
+    isSavingAssessment: _isSavingAssessment,
     assessmentSaveMessage,
     assessmentHistory,
     isLoadingAssessmentHistory,
     assessmentHistoryError,
-    historyViewMode,
-    setHistoryViewMode,
+    historyViewMode: _historyViewMode,
+    setHistoryViewMode: _setHistoryViewMode,
     scenarioAssessments,
     isLoadingScenarioAssessments,
     scenarioAssessmentsError,
@@ -148,10 +142,10 @@ export function SiteAcquisitionPage() {
     previousAssessmentEntry,
     openAssessmentEditor,
     closeAssessmentEditor,
-    handleAssessmentFieldChange,
-    handleAssessmentSystemChange,
-    handleAssessmentSubmit,
-    resetAssessmentDraft,
+    handleAssessmentFieldChange: _handleAssessmentFieldChange,
+    handleAssessmentSystemChange: _handleAssessmentSystemChange,
+    handleAssessmentSubmit: _handleAssessmentSubmit,
+    resetAssessmentDraft: _resetAssessmentDraft,
     handleReportExport,
   } = useConditionAssessment({ capturedProperty, activeScenario })
 
@@ -164,21 +158,21 @@ export function SiteAcquisitionPage() {
     comparisonScenarios,
     scenarioOverrideEntries,
     scenarioComparisonData,
-    scenarioComparisonTableRows,
+    scenarioComparisonTableRows: _scenarioComparisonTableRows,
     scenarioComparisonVisible,
     activeScenarioSummary,
     baseScenarioAssessment,
     setScenarioComparisonBase,
     scenarioComparisonEntries,
-    systemComparisons,
+    systemComparisons: _systemComparisons,
     systemComparisonMap,
     combinedConditionInsights,
     insightSubtitle,
-    recommendedActionDiff,
-    comparisonSummary,
+    recommendedActionDiff: _recommendedActionDiff,
+    comparisonSummary: _comparisonSummary,
     quickAnalysisHistory,
-    formatScenarioMetricValue,
-    summariseScenarioMetrics,
+    formatScenarioMetricValue: _formatScenarioMetricValue,
+    summariseScenarioMetrics: _summariseScenarioMetrics,
     formatScenarioLabel,
     formatNumberMetric,
     formatCurrency,
@@ -596,282 +590,227 @@ export function SiteAcquisitionPage() {
   )
 
   return (
-    <div className="page site-acquisition">
-      {/* Header */}
-      <header className="page__header">
-        <h1 className="page__title">Site Acquisition</h1>
-        <p className="page__subtitle">
-          Comprehensive property capture and development feasibility analysis
-          for developers
-        </p>
-      </header>
-
-      {/* Property Capture Form */}
-      <PropertyCaptureForm
-        jurisdictionCode={jurisdictionCode}
-        setJurisdictionCode={setJurisdictionCode}
-        address={address}
-        setAddress={setAddress}
-        latitude={latitude}
-        setLatitude={setLatitude}
-        longitude={longitude}
-        setLongitude={setLongitude}
-        selectedScenarios={selectedScenarios}
-        isCapturing={isCapturing}
-        error={error}
-        geocodeError={geocodeError}
-        capturedProperty={capturedProperty}
-        onCapture={handleCapture}
-        onForwardGeocode={handleForwardGeocode}
-        onReverseGeocode={handleReverseGeocode}
-        onToggleScenario={toggleScenario}
-      />
-
-      {capturedProperty && (
-        <section className="page__section">
-          <h2 className="page__section-title">Property Overview</h2>
-          <PropertyOverviewSection cards={propertyOverviewCards} />
-          {previewJob && (
-            <div className="site-acquisition__preview">
-              <div className="site-acquisition__preview-header">
-                <h3 className="site-acquisition__preview-title">
-                  Development Preview
-                </h3>
-                <span className="site-acquisition__preview-status">
-                  {previewJob.status.toUpperCase()}
-                </span>
-              </div>
-              <Preview3DViewer
-                previewUrl={previewJob.previewUrl}
-                metadataUrl={previewViewerMetadataUrl}
-                status={previewJob.status}
-                thumbnailUrl={previewJob.thumbnailUrl}
-                layerVisibility={previewLayerVisibility}
-                focusLayerId={previewFocusLayerId}
-              />
-              <p className="site-acquisition__preview-info">
-                Geometry detail:{' '}
-                <strong>
-                  {describeDetailLevel(previewJob.geometryDetailLevel)}
-                </strong>
-              </p>
-            </div>
-          )}
-          {previewJob && (
-            <div className="site-acquisition__controls">
-              <label className="site-acquisition__control-group">
-                <span className="site-acquisition__control-label">
-                  Geometry detail
-                </span>
-                <select
-                  className="site-acquisition__control-select"
-                  value={previewDetailLevel}
-                  onChange={(event) =>
-                    setPreviewDetailLevel(
-                      event.target.value as GeometryDetailLevel,
-                    )
-                  }
-                  disabled={isRefreshingPreview}
-                >
-                  {PREVIEW_DETAIL_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {PREVIEW_DETAIL_LABELS[option]}
-                    </option>
-                  ))}
-                </select>
-                <span className="site-acquisition__control-hint">
-                  {previewDetailLevel === 'simple'
-                    ? 'Fast render for smoke testing.'
-                    : 'Detailed render with setbacks, podiums, and floor lines.'}
-                </span>
-              </label>
-              <button
-                type="button"
-                className="site-acquisition__btn-refresh"
-                onClick={handleRefreshPreview}
-                disabled={isRefreshingPreview}
-              >
-                {isRefreshingPreview
-                  ? 'Refreshing preview...'
-                  : 'Refresh preview render'}
-              </button>
-              <span className="site-acquisition__refresh-hint">
-                Status updates automatically while processing.
-              </span>
-            </div>
-          )}
-          {previewJob && (
-            <PreviewLayersTable
-              layers={previewLayerMetadata}
-              visibility={previewLayerVisibility}
-              focusLayerId={previewFocusLayerId}
-              hiddenLayerCount={hiddenLayerCount}
-              isLoading={isPreviewMetadataLoading}
-              error={previewMetadataError}
-              onLayerAction={handleLayerAction}
-              onShowAll={handleShowAllLayers}
-              onResetFocus={handleResetLayerFocus}
-              formatNumber={formatNumberMetric}
-            />
-          )}
-          <ColorLegendEditor
-            entries={colorLegendEntries}
-            hasPendingChanges={legendHasPendingChanges}
-            onChange={handleLegendEntryChange}
-            onReset={handleLegendReset}
-          />
-          <LayerBreakdownCards layers={layerBreakdown} />
-        </section>
-      )}
-
-      {capturedProperty && scenarioFocusOptions.length > 0 && (
-        <ScenarioFocusSection
-          scenarioFocusOptions={scenarioFocusOptions}
-          scenarioLookup={scenarioLookup}
-          activeScenario={activeScenario}
-          activeScenarioSummary={activeScenarioSummary}
-          scenarioChecklistProgress={scenarioChecklistProgress}
-          displaySummary={displaySummary}
-          quickAnalysisHistoryCount={quickAnalysisHistory.length}
-          scenarioComparisonVisible={scenarioComparisonVisible}
-          setActiveScenario={setActiveScenario}
-          onCompareScenarios={handleScenarioComparisonScroll}
-          onOpenQuickAnalysisHistory={() => setQuickAnalysisHistoryOpen(true)}
-          onOpenInspectionHistory={() => setHistoryModalOpen(true)}
-          formatScenarioLabel={formatScenarioLabel}
+    <Box className="page site-acquisition" sx={{ pb: 8 }}>
+      <Box sx={{ p: 3 }}>
+        <AnimatedPageHeader
+            title="Site Acquisition"
+            subtitle="Comprehensive property capture and development feasibility analysis for developers"
+            breadcrumbs={[
+                { label: 'Dashboard', href: '/' },
+                { label: 'Site Acquisition' }
+            ]}
         />
-      )}
 
-      {capturedProperty && (
-        <div className="site-acquisition__section-spacer">
-          <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
-        </div>
-      )}
+        <Container maxWidth="xl" sx={{ mt: 3 }}>
+            {/* Property Capture Form */}
+            <GlassCard sx={{ p: 3, mb: 4 }}>
+                <PropertyCaptureForm
+                    jurisdictionCode={jurisdictionCode}
+                    setJurisdictionCode={setJurisdictionCode}
+                    address={address}
+                    setAddress={setAddress}
+                    latitude={latitude}
+                    setLatitude={setLatitude}
+                    longitude={longitude}
+                    setLongitude={setLongitude}
+                    selectedScenarios={selectedScenarios}
+                    isCapturing={isCapturing}
+                    error={error}
+                    geocodeError={geocodeError}
+                    capturedProperty={capturedProperty}
+                    onCapture={handleCapture}
+                    onForwardGeocode={handleForwardGeocode}
+                    onReverseGeocode={handleReverseGeocode}
+                    onToggleScenario={toggleScenario}
+                />
+            </GlassCard>
 
-      {/* Due Diligence Checklist */}
-      <DueDiligenceChecklistSection
-        capturedProperty={capturedProperty}
-        checklistItems={checklistItems}
-        filteredChecklistItems={filteredChecklistItems}
-        availableChecklistScenarios={availableChecklistScenarios}
-        scenarioLookup={scenarioLookup}
-        displaySummary={displaySummary}
-        activeScenario={activeScenario}
-        activeScenarioDetails={activeScenarioDetails}
-        selectedCategory={selectedCategory}
-        isLoadingChecklist={isLoadingChecklist}
-        setActiveScenario={setActiveScenario}
-        setSelectedCategory={setSelectedCategory}
-        handleChecklistUpdate={handleChecklistUpdate}
-      />
+            {capturedProperty && (
+                <Stack spacing={4}>
+                    <GlassCard sx={{ p: 3 }}>
+                        <Typography variant="h5" fontWeight={600} gutterBottom>Property Overview</Typography>
+                        <PropertyOverviewSection cards={propertyOverviewCards} />
 
-      <MultiScenarioComparisonSection
-        capturedProperty={capturedProperty}
-        quickAnalysisScenariosCount={quickAnalysisScenarios.length}
-        scenarioComparisonData={scenarioComparisonData}
-        feasibilitySignals={feasibilitySignals}
-        comparisonScenariosCount={comparisonScenarios.length}
-        activeScenario={activeScenario}
-        scenarioLookup={scenarioLookup}
-        propertyId={capturedProperty?.propertyId ?? null}
-        isExportingReport={isExportingReport}
-        reportExportMessage={reportExportMessage}
-        setActiveScenario={setActiveScenario}
-        handleReportExport={handleReportExport}
-        formatRecordedTimestamp={formatRecordedTimestamp}
-      />
+                        {previewJob && (
+                        <Box sx={{ mt: 4, bgcolor: 'background.default', borderRadius: 2, overflow: 'hidden' }}>
+                            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+                                <Typography variant="h6">Development Preview</Typography>
+                                <Typography variant="overline" sx={{ px: 1, border: '1px solid', borderColor: 'secondary.main', borderRadius: 1 }}>
+                                    {previewJob.status.toUpperCase()}
+                                </Typography>
+                            </Box>
 
-      {/* Property Condition Assessment Section */}
-      <ConditionAssessmentSection
-        capturedProperty={capturedProperty}
-        conditionAssessment={conditionAssessment}
-        isLoadingCondition={isLoadingCondition}
-        latestAssessmentEntry={latestAssessmentEntry}
-        previousAssessmentEntry={previousAssessmentEntry}
-        assessmentHistoryError={assessmentHistoryError}
-        isLoadingAssessmentHistory={isLoadingAssessmentHistory}
-        assessmentSaveMessage={assessmentSaveMessage}
-        scenarioAssessments={scenarioAssessments}
-        isLoadingScenarioAssessments={isLoadingScenarioAssessments}
-        scenarioAssessmentsError={scenarioAssessmentsError}
-        scenarioOverrideEntries={scenarioOverrideEntries}
-        baseScenarioAssessment={baseScenarioAssessment}
-        scenarioComparisonEntries={scenarioComparisonEntries}
-        combinedConditionInsights={combinedConditionInsights}
-        insightSubtitle={insightSubtitle}
-        systemComparisonMap={systemComparisonMap}
-        isExportingReport={isExportingReport}
-        scenarioLookup={scenarioLookup}
-        formatRecordedTimestamp={formatRecordedTimestamp}
-        formatScenarioLabel={formatScenarioLabel}
-        describeRatingChange={describeRatingChange}
-        describeRiskChange={describeRiskChange}
-        openAssessmentEditor={openAssessmentEditor}
-        setScenarioComparisonBase={setScenarioComparisonBase}
-        handleReportExport={handleReportExport}
-        setHistoryModalOpen={setHistoryModalOpen}
-        InlineInspectionHistorySummary={InlineInspectionHistorySummary}
-      />
+                            <Box sx={{ height: 500, bgcolor: 'black' }}>
+                                <Preview3DViewer
+                                    previewUrl={previewJob.previewUrl}
+                                    metadataUrl={previewViewerMetadataUrl}
+                                    status={previewJob.status}
+                                    thumbnailUrl={previewJob.thumbnailUrl}
+                                    layerVisibility={previewLayerVisibility}
+                                    focusLayerId={previewFocusLayerId}
+                                />
+                            </Box>
 
-      {/* Condition Assessment Editor Modal */}
-      <ConditionAssessmentEditor
-        isOpen={isEditingAssessment}
-        mode={assessmentEditorMode}
-        draft={assessmentDraft}
-        isSaving={isSavingAssessment}
-        activeScenario={activeScenario}
-        scenarioFocusOptions={scenarioFocusOptions}
-        scenarioLookup={scenarioLookup}
-        formatScenarioLabel={formatScenarioLabel}
-        onClose={closeAssessmentEditor}
-        onReset={resetAssessmentDraft}
-        onSubmit={handleAssessmentSubmit}
-        onFieldChange={handleAssessmentFieldChange}
-        onSystemChange={handleAssessmentSystemChange}
-        setActiveScenario={setActiveScenario}
-      />
+                            <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                                <Stack direction="row" spacing={3} alignItems="center">
+                                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                                        <InputLabel>Geometry Detail</InputLabel>
+                                        <Select
+                                            value={previewDetailLevel}
+                                            label="Geometry Detail"
+                                            onChange={(e) => setPreviewDetailLevel(e.target.value as GeometryDetailLevel)}
+                                            disabled={isRefreshingPreview}
+                                        >
+                                             {PREVIEW_DETAIL_OPTIONS.map((option) => (
+                                                <MenuItem key={option} value={option}>
+                                                {PREVIEW_DETAIL_LABELS[option]}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
 
-      {/* Photo Documentation Section - controlled by feature toggle */}
-      {capturedProperty && preferences.photoDocumentation && (
-        <div className="site-acquisition__photos">
-          <PhotoDocumentation
-            propertyId={capturedProperty.propertyId}
-            defaultPhase="acquisition"
-          />
-        </div>
-      )}
+                                     <Button
+                                        variant="outlined"
+                                        startIcon={<Refresh className={isRefreshingPreview ? "fa-spin" : ""} />}
+                                        onClick={handleRefreshPreview}
+                                        disabled={isRefreshingPreview}
+                                    >
+                                        {isRefreshingPreview ? 'Refreshing...' : 'Refresh Render'}
+                                    </Button>
 
-      <QuickAnalysisHistoryModal
-        isOpen={isQuickAnalysisHistoryOpen}
-        onClose={() => setQuickAnalysisHistoryOpen(false)}
-        quickAnalysisHistory={quickAnalysisHistory}
-        scenarioLookup={scenarioLookup}
-        formatScenarioLabel={formatScenarioLabel}
-        summariseScenarioMetrics={summariseScenarioMetrics}
-        formatScenarioMetricValue={formatScenarioMetricValue}
-      />
+                                    <Typography variant="caption" color="text.secondary">
+                                        Geometry detail: <strong>{describeDetailLevel(previewJob.geometryDetailLevel)}</strong>
+                                    </Typography>
+                                </Stack>
+                            </Box>
+                        </Box>
+                        )}
 
-      <InspectionHistoryModal
-        isOpen={isHistoryModalOpen}
-        onClose={() => setHistoryModalOpen(false)}
-        historyViewMode={historyViewMode}
-        setHistoryViewMode={setHistoryViewMode}
-        assessmentHistoryError={assessmentHistoryError}
-        isLoadingAssessmentHistory={isLoadingAssessmentHistory}
-        assessmentHistory={assessmentHistory}
-        activeScenario={activeScenario}
-        latestAssessmentEntry={latestAssessmentEntry}
-        previousAssessmentEntry={previousAssessmentEntry}
-        comparisonSummary={comparisonSummary}
-        systemComparisons={systemComparisons}
-        recommendedActionDiff={recommendedActionDiff}
-        scenarioComparisonVisible={scenarioComparisonVisible}
-        scenarioComparisonRef={scenarioComparisonRef}
-        scenarioComparisonTableRows={scenarioComparisonTableRows}
-        scenarioAssessments={scenarioAssessments}
-        formatScenarioLabel={formatScenarioLabel}
-        formatRecordedTimestamp={formatRecordedTimestamp}
-      />
-    </div>
+                        {previewJob && (
+                            <Box sx={{ mt: 2 }}>
+                                <PreviewLayersTable
+                                layers={previewLayerMetadata}
+                                visibility={previewLayerVisibility}
+                                focusLayerId={previewFocusLayerId}
+                                hiddenLayerCount={hiddenLayerCount}
+                                isLoading={isPreviewMetadataLoading}
+                                error={previewMetadataError}
+                                onLayerAction={handleLayerAction}
+                                onShowAll={handleShowAllLayers}
+                                onResetFocus={handleResetLayerFocus}
+                                formatNumber={formatNumberMetric}
+                                />
+                            </Box>
+                        )}
+
+                        <Box sx={{ mt: 2 }}>
+                             <ColorLegendEditor
+                                entries={colorLegendEntries}
+                                hasPendingChanges={legendHasPendingChanges}
+                                onChange={handleLegendEntryChange}
+                                onReset={handleLegendReset}
+                            />
+                        </Box>
+
+                        <Box sx={{ mt: 2 }}>
+                             <LayerBreakdownCards layers={layerBreakdown} />
+                        </Box>
+                    </GlassCard>
+
+                    {scenarioFocusOptions.length > 0 && (
+                        <GlassCard sx={{ p: 3 }}>
+                            <ScenarioFocusSection
+                            scenarioFocusOptions={scenarioFocusOptions}
+                            scenarioLookup={scenarioLookup}
+                            activeScenario={activeScenario}
+                            activeScenarioSummary={activeScenarioSummary}
+                            scenarioChecklistProgress={scenarioChecklistProgress}
+                            displaySummary={displaySummary}
+                            quickAnalysisHistoryCount={quickAnalysisHistory.length}
+                            scenarioComparisonVisible={scenarioComparisonVisible}
+                            setActiveScenario={setActiveScenario}
+                            onCompareScenarios={handleScenarioComparisonScroll}
+                            onOpenQuickAnalysisHistory={() => setQuickAnalysisHistoryOpen(true)}
+                            onOpenInspectionHistory={() => setHistoryModalOpen(true)}
+                            formatScenarioLabel={formatScenarioLabel}
+                            />
+                        </GlassCard>
+                    )}
+
+                    <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
+
+                    <GlassCard sx={{ p: 3 }}>
+                        <DueDiligenceChecklistSection
+                            capturedProperty={capturedProperty}
+                            checklistItems={checklistItems}
+                            filteredChecklistItems={filteredChecklistItems}
+                            availableChecklistScenarios={availableChecklistScenarios}
+                            scenarioLookup={scenarioLookup}
+                            displaySummary={displaySummary}
+                            activeScenario={activeScenario}
+                            activeScenarioDetails={activeScenarioDetails}
+                            selectedCategory={selectedCategory}
+                            isLoadingChecklist={isLoadingChecklist}
+                            setActiveScenario={setActiveScenario}
+                            setSelectedCategory={setSelectedCategory}
+                            handleChecklistUpdate={handleChecklistUpdate}
+                        />
+                    </GlassCard>
+
+                    <GlassCard sx={{ p: 3 }}>
+                        <MultiScenarioComparisonSection
+                            capturedProperty={capturedProperty}
+                            quickAnalysisScenariosCount={quickAnalysisScenarios.length}
+                            scenarioComparisonData={scenarioComparisonData}
+                            feasibilitySignals={feasibilitySignals}
+                            comparisonScenariosCount={comparisonScenarios.length}
+                            activeScenario={activeScenario}
+                            scenarioLookup={scenarioLookup}
+                            propertyId={capturedProperty?.propertyId ?? null}
+                            isExportingReport={isExportingReport}
+                            reportExportMessage={reportExportMessage}
+                            setActiveScenario={setActiveScenario}
+                            handleReportExport={handleReportExport}
+                            formatRecordedTimestamp={formatRecordedTimestamp}
+                        />
+                    </GlassCard>
+
+                    <GlassCard sx={{ p: 3 }}>
+                        <ConditionAssessmentSection
+                            capturedProperty={capturedProperty}
+                            conditionAssessment={conditionAssessment}
+                            isLoadingCondition={isLoadingCondition}
+                            latestAssessmentEntry={latestAssessmentEntry}
+                            previousAssessmentEntry={previousAssessmentEntry}
+                            assessmentHistoryError={assessmentHistoryError}
+                            isLoadingAssessmentHistory={isLoadingAssessmentHistory}
+                            assessmentSaveMessage={assessmentSaveMessage}
+                            scenarioAssessments={scenarioAssessments}
+                            isLoadingScenarioAssessments={isLoadingScenarioAssessments}
+                            scenarioAssessmentsError={scenarioAssessmentsError}
+                            scenarioOverrideEntries={scenarioOverrideEntries}
+                            baseScenarioAssessment={baseScenarioAssessment}
+                            scenarioComparisonEntries={scenarioComparisonEntries}
+                            combinedConditionInsights={combinedConditionInsights}
+                            insightSubtitle={insightSubtitle}
+                            systemComparisonMap={systemComparisonMap}
+                            isExportingReport={isExportingReport}
+                            scenarioLookup={scenarioLookup}
+                            formatRecordedTimestamp={formatRecordedTimestamp}
+                            formatScenarioLabel={formatScenarioLabel}
+                            describeRatingChange={describeRatingChange}
+                            describeRiskChange={describeRiskChange}
+                            openAssessmentEditor={openAssessmentEditor}
+                            setScenarioComparisonBase={setScenarioComparisonBase}
+                            handleReportExport={handleReportExport}
+                            setHistoryModalOpen={setHistoryModalOpen}
+                            InlineInspectionHistorySummary={InlineInspectionHistorySummary}
+                        />
+                    </GlassCard>
+                </Stack>
+            )}
+        </Container>
+      </Box>
+    </Box>
   )
 }

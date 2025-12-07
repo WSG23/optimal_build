@@ -65,7 +65,7 @@ export function AssumptionsPanel({
         onChange={() => setExpanded(!expanded)}
         sx={{
           boxShadow: 'none',
-          background: 'transparent',
+          background: '#1A1A1A', // Darker card background as requested
           '&:before': { display: 'none' },
           border: '1px solid var(--ob-color-border-premium)',
           borderRadius: 'var(--ob-radius-lg) !important',

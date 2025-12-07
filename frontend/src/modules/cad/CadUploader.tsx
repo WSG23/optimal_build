@@ -1,4 +1,25 @@
 import { ChangeEvent, DragEvent, useRef, useState } from 'react'
+import {
+  Box,
+  Card,
+  Typography,
+  Stack,
+  Stepper,
+  Step,
+  StepLabel,
+  Skeleton,
+  Grid,
+  Paper,
+  Divider,
+  useTheme,
+  alpha
+} from '@mui/material'
+import {
+  CloudUpload,
+  Error as ErrorIcon,
+  InsertDriveFile,
+  Engineering,
+} from '@mui/icons-material'
 
 import type { CadImportSummary, ParseStatusUpdate } from '../../api/client'
 import { useTranslation } from '../../i18n'
@@ -8,6 +29,9 @@ interface CadUploaderProps {
   isUploading?: boolean
   status?: ParseStatusUpdate | null
   summary?: CadImportSummary | null
+  // Allowing for Project Details to be passed in or handled here if extended
+  projectId?: string
+  zoning?: string
 }
 
 export function CadUploader({
@@ -15,15 +39,16 @@ export function CadUploader({
   isUploading = false,
   status,
   summary,
+  projectId = "PROJ-2024-001", // Mock default or prop
+  zoning = "Commercial" // Mock default or prop
 }: CadUploaderProps) {
   const { t } = useTranslation()
+  const theme = useTheme()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   const handleFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) {
-      return
-    }
+    if (!files || files.length === 0) return
     onUpload(files[0])
   }
 
@@ -51,82 +76,191 @@ export function CadUploader({
     handleFiles(event.target.files)
   }
 
-  const latestStatus = (() => {
-    switch (status?.status) {
-      case 'completed':
-        return t('uploader.ready')
-      case 'failed':
-        return t('uploader.error')
-      case 'queued':
-      case 'running':
-      case 'pending':
-        return t('uploader.parsing')
-      default:
-        return null
-    }
-  })()
+  // Determine active step for Stepper
+  const getActiveStep = () => {
+      if (status?.status === 'completed') return 3
+      if (status?.status === 'failed') return 1 // Error state
+      if (isUploading || status?.status === 'pending' || status?.status === 'queued') return 0
+      if (status?.status === 'running') return 1
+      return -1 // Idle
+  }
+  const activeStep = getActiveStep()
 
-  const fallbackDash = t('common.fallback.dash')
   const detectedFloors = status?.detectedFloors ?? summary?.detectedFloors ?? []
   const detectedUnits = status?.detectedUnits ?? summary?.detectedUnits ?? []
 
-  return (
-    <div className="cad-uploader">
-      <div
-        className={`cad-uploader__dropzone${
-          isDragging ? ' cad-uploader__dropzone--dragging' : ''
-        }`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        role="presentation"
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".dxf,.ifc,.json,.pdf,.svg,.jpg,.jpeg,.png"
-          className="cad-uploader__input"
-          onChange={handleChange}
-          disabled={isUploading}
-        />
-        <p className="cad-uploader__hint">{t('uploader.dropHint')}</p>
-        <button
-          type="button"
-          className="cad-uploader__browse"
-          onClick={handleBrowse}
-          disabled={isUploading}
-        >
-          {t('uploader.browseLabel')}
-        </button>
-      </div>
+  const steps = [
+      'Uploading',
+      'Processing Layers',
+      'Detecting Units'
+  ]
 
-      <aside className="cad-uploader__status">
-        <h3>{t('uploader.latestStatus')}</h3>
-        {summary && (
-          <p className="cad-uploader__filename">{summary.fileName}</p>
-        )}
-        {latestStatus ? <p>{latestStatus}</p> : <p>{t('uploader.parsing')}</p>}
-        {status?.error && (
-          <p className="cad-uploader__message">{status.error}</p>
-        )}
-        <dl className="cad-uploader__meta">
-          <div>
-            <dt>{t('uploader.floors')}</dt>
-            <dd>
-              {detectedFloors.length
-                ? detectedFloors.map((floor) => floor.name).join(', ')
-                : fallbackDash}
-            </dd>
-          </div>
-          <div>
-            <dt>{t('uploader.units')}</dt>
-            <dd>
-              {detectedUnits.length > 0 ? detectedUnits.length : fallbackDash}
-            </dd>
-          </div>
-        </dl>
-      </aside>
-    </div>
+  return (
+    <Box className="cad-uploader" sx={{ maxWidth: 1200, margin: '0 auto', p: 2 }}>
+
+      {/* Project Details Header */}
+      <Paper
+        elevation={0}
+        sx={{
+            p: 3,
+            mb: 4,
+            background: alpha(theme.palette.background.paper, 0.6),
+            border: `1px solid ${theme.palette.divider}`,
+            backdropFilter: 'blur(10px)'
+        }}
+      >
+          <Grid container spacing={4} alignItems="center">
+              <Grid item xs={12} md={6}>
+                  <Box>
+                      <Typography variant="overline" color="text.secondary" fontWeight={600}>Project ID</Typography>
+                      <Typography variant="h6" fontWeight={600}>{projectId}</Typography>
+                  </Box>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                  <Box>
+                      <Typography variant="overline" color="text.secondary" fontWeight={600}>Zoning</Typography>
+                       <Stack direction="row" alignItems="center" spacing={1}>
+                          <Engineering fontSize="small" color="primary" />
+                          <Typography variant="h6">{zoning}</Typography>
+                       </Stack>
+                  </Box>
+              </Grid>
+          </Grid>
+      </Paper>
+
+      <Grid container spacing={4}>
+        {/* Left Col: Hero Drop Zone */}
+        <Grid item xs={12} lg={7}>
+             <Card
+                elevation={0}
+                sx={{
+                    height: 400,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `2px dashed ${isDragging ? theme.palette.primary.main : theme.palette.divider}`,
+                    backgroundColor: isDragging ? alpha(theme.palette.primary.main, 0.05) : '#1E1E1E',
+                    cursor: isUploading ? 'default' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                        borderColor: !isUploading ? theme.palette.primary.main : undefined,
+                        backgroundColor: !isUploading ? alpha(theme.palette.primary.main, 0.02) : undefined
+                    }
+                }}
+                onClick={!isUploading ? handleBrowse : undefined}
+                onDrop={!isUploading ? handleDrop : undefined}
+                onDragOver={!isUploading ? handleDragOver : undefined}
+                onDragLeave={!isUploading ? handleDragLeave : undefined}
+             >
+                <input
+                    ref={inputRef}
+                    type="file"
+                    accept=".dxf,.ifc,.json,.pdf,.svg,.jpg,.jpeg,.png"
+                    style={{ display: 'none' }}
+                    onChange={handleChange}
+                    disabled={isUploading}
+                />
+                <Stack spacing={3} alignItems="center" textAlign="center">
+                    <Box
+                        sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: '50%',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: theme.palette.primary.main
+                        }}
+                    >
+                         {isUploading ? (
+                             <Box className="dot-flashing" sx={{ transform: 'scale(1.5)' }} />
+                         ) : (
+                             <CloudUpload sx={{ fontSize: 40 }} />
+                         )}
+                    </Box>
+                    <Box>
+                        <Typography variant="h5" fontWeight={600} gutterBottom>
+                            {isUploading ? 'Uploading & Processing...' : 'Upload CAD File'}
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            {isUploading ? 'Please wait while we analyze your file.' : 'Drag & drop or click to browse'}
+                        </Typography>
+                    </Box>
+                    {!isUploading && (
+                        <Typography variant="caption" color="text.disabled">
+                            Supports .dxf, .ifc, .pdf, .png
+                        </Typography>
+                    )}
+                </Stack>
+             </Card>
+        </Grid>
+
+        {/* Right Col: Status & Explanation */}
+        <Grid item xs={12} lg={5}>
+            <Stack spacing={3}>
+                {/* Stepper Status */}
+                <Paper sx={{ p: 3, backgroundColor: 'transparent', border: `1px solid ${theme.palette.divider}` }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom sx={{ mb: 3 }}>
+                        {t('uploader.latestStatus') || 'Processing Status'}
+                    </Typography>
+
+                    <Stepper activeStep={activeStep} orientation="vertical">
+                        {steps.map((label) => (
+                            <Step key={label}>
+                                <StepLabel
+                                    StepIconProps={{
+                                        sx: {
+                                            '&.Mui-active': { color: theme.palette.primary.main },
+                                            '&.Mui-completed': { color: theme.palette.success.main },
+                                        }
+                                    }}
+                                >
+                                    {label}
+                                </StepLabel>
+                            </Step>
+                        ))}
+                    </Stepper>
+
+                    {status?.error && (
+                        <Box sx={{ mt: 2, p: 2, borderRadius: 1, backgroundColor: alpha(theme.palette.error.main, 0.1), color: theme.palette.error.main, display: 'flex', gap: 2 }}>
+                            <ErrorIcon />
+                            <Typography variant="body2">{status.error}</Typography>
+                        </Box>
+                    )}
+                </Paper>
+
+                {/* Meta Data (Floors/Units) */}
+                <Paper sx={{ p: 3, backgroundColor: '#1E1E1E' }}>
+                     <Stack spacing={2}>
+                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                             <Stack direction="row" spacing={1} alignItems="center">
+                                 <InsertDriveFile color="action" />
+                                 <Typography variant="body2" color="text.secondary">File Name</Typography>
+                             </Stack>
+                             <Typography variant="body2" fontWeight={500}>
+                                 {summary?.fileName || (isUploading ? <Skeleton width={100} /> : '-')}
+                             </Typography>
+                         </Box>
+                         <Divider />
+                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                             <Typography variant="body2" color="text.secondary">Floors Detected</Typography>
+                             <Typography variant="body2" fontWeight={600} color="white">
+                                 {detectedFloors.length > 0 ? detectedFloors.length : (isUploading ? <Skeleton width={40} /> : '-')}
+                             </Typography>
+                         </Box>
+                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                             <Typography variant="body2" color="text.secondary">Units Count</Typography>
+                             <Typography variant="body2" fontWeight={600} color="white">
+                                 {detectedUnits.length > 0 ? detectedUnits.length : (isUploading ? <Skeleton width={40} /> : '-')}
+                             </Typography>
+                         </Box>
+                     </Stack>
+                </Paper>
+            </Stack>
+        </Grid>
+      </Grid>
+    </Box>
   )
 }
 

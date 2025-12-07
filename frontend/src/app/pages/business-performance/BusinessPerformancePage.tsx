@@ -10,11 +10,8 @@ import {
   Button,
   CircularProgress,
   Grid,
-  Paper,
   Stack,
   Typography,
-  Skeleton,
-  Chip,
 } from '@mui/material'
 import { AccessTime, AttachMoney, Assessment } from '@mui/icons-material'
 import {
@@ -38,6 +35,9 @@ import { PipelineBoard } from './components/PipelineBoard'
 import { DealInsightsPanel } from './components/DealInsightsPanel'
 import { AnalyticsPanel } from './components/AnalyticsPanel'
 import { RoiPanel } from './components/RoiPanel'
+import { HeroMetric } from '../../../components/canonical/HeroMetric'
+import { GlassCard } from '../../../components/canonical/GlassCard'
+import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import type {
   AnalyticsMetric,
   BenchmarkEntry,
@@ -353,87 +353,54 @@ export function BusinessPerformancePage() {
     [buildColumns, deals, selectedDealId],
   )
 
+  const totalPipelineValue = useMemo(() => totalPipeline(columns), [columns])
+  // Reserved for weighted pipeline display (future feature)
+  // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
+
   return (
-    <Box className="bp-page">
-      <Grid container spacing={2} className="bp-page__summary">
+    <Box className="bp-page" sx={{ p: 3 }}>
+        <AnimatedPageHeader
+            title="Business Performance"
+            subtitle="Real-time insights into your pipeline, agent activity, and ROI."
+            breadcrumbs={[
+                { label: 'Dashboard', href: '/' },
+                { label: 'Business Performance' }
+            ]}
+        />
+
+      <Grid container spacing={3} className="bp-page__summary" sx={{ mb: 4 }}>
         <Grid item xs={12} md={4}>
-          <Paper className="bp-summary-card" elevation={1}>
-            <Stack direction="row" alignItems="center" spacing={1} className="bp-summary-card__header">
-               <AccessTime fontSize="small" color="action" />
-               <Typography variant="overline" className="bp-summary-card__label">
-                 Last snapshot
-               </Typography>
-            </Stack>
-            {analyticsLoading ? (
-                <Skeleton width="60%" height={40} />
-            ) : (
-                <Typography variant="h5" className="bp-summary-card__value">
-                  {lastSnapshot}
-                </Typography>
-            )}
-            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Snapshot jobs run nightly.
-            </Typography>
-          </Paper>
+            <HeroMetric
+                label="Last Snapshot"
+                value={analyticsLoading ? '-' : lastSnapshot}
+                icon={<AccessTime fontSize="small" />}
+                variant="glass"
+                delay={100}
+            />
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper className="bp-summary-card" elevation={1}>
-             <Stack direction="row" alignItems="center" spacing={1} className="bp-summary-card__header">
-               <AttachMoney fontSize="small" color="action" />
-               <Typography variant="overline" className="bp-summary-card__label">
-                 Open pipeline value
-               </Typography>
-            </Stack>
-            {pipelineLoading ? (
-                <Skeleton width="80%" height={40} />
-            ) : (
-                <Stack direction="row" alignItems="baseline" spacing={2} sx={{ mt: 1, mb: 0.5 }}>
-                   <Typography variant="h5" className="bp-summary-card__value">
-                     {formatCurrency(totalPipeline(columns))}
-                   </Typography>
-                </Stack>
-            )}
-            {pipelineLoading ? (
-                <Skeleton width="40%" height={20} />
-            ) : (
-                <Stack direction="row" alignItems="center" spacing={1}>
-                    <Chip
-                        label="↑ 12% vs last week"
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                        sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600, border: 'none', background: 'rgba(76, 175, 80, 0.1)' }}
-                    />
-                   <Typography variant="caption" color="text.secondary">
-                     Weighted: <strong>{formatCurrency(totalWeightedPipeline(columns))}</strong>
-                   </Typography>
-                </Stack>
-            )}
-          </Paper>
+            <HeroMetric
+                label="Open Pipeline Value"
+                value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
+                unit="SGD"
+                icon={<AttachMoney fontSize="small" />}
+                variant="primary"
+                delay={200}
+                trend={!pipelineLoading ? { value: 12, direction: 'up' } : undefined}
+            />
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper className="bp-summary-card" elevation={1}>
-            <Stack direction="row" alignItems="center" spacing={1} className="bp-summary-card__header">
-               <Assessment fontSize="small" color="action" />
-               <Typography variant="overline" className="bp-summary-card__label">
-                 ROI projects tracked
-               </Typography>
-            </Stack>
-            {analyticsLoading ? (
-                 <Skeleton width="30%" height={40} />
-            ) : (
-                <Typography variant="h5" className="bp-summary-card__value">
-                  {roiSummary.projectCount}
-                </Typography>
-            )}
-            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Automation ROI from overlay workflows.
-            </Typography>
-          </Paper>
+             <HeroMetric
+                label="ROI Projects Tracked"
+                value={analyticsLoading ? '-' : roiSummary.projectCount}
+                icon={<Assessment fontSize="small" />}
+                variant="glass"
+                delay={300}
+            />
         </Grid>
       </Grid>
 
-      <Stack spacing={2} className="bp-page__alerts">
+      <Stack spacing={2} className="bp-page__alerts" sx={{ mb: 3 }}>
         {pipelineError && (
           <Alert
             severity="error"
@@ -456,7 +423,7 @@ export function BusinessPerformancePage() {
 
       <Grid container spacing={3} className="bp-page__layout">
         <Grid item xs={12} lg={8} className="bp-page__pipeline">
-          <Paper elevation={0} className="bp-pipeline-wrapper">
+          <GlassCard className="bp-pipeline-wrapper" sx={{ height: '100%', p: 2 }}>
             {pipelineLoading ? (
               <Stack alignItems="center" py={4} spacing={1}>
                 <CircularProgress size={28} />
@@ -473,10 +440,10 @@ export function BusinessPerformancePage() {
                 movingDealId={movingDealId}
               />
             )}
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} lg={4} className="bp-page__sidebar">
-          <Stack spacing={2}>
+          <Stack spacing={3}>
             <DealInsightsPanel
               deal={selectedDeal}
               timeline={timeline}
@@ -715,13 +682,14 @@ function totalPipeline(columns: PipelineColumn[]): number | null {
   return total === 0 ? null : total
 }
 
-function totalWeightedPipeline(columns: PipelineColumn[]): number | null {
-  const total = columns.reduce(
-    (sum, column) => sum + (column.weightedValue ?? 0),
-    0,
-  )
-  return total === 0 ? null : total
-}
+// Reserved for weighted pipeline display (future feature)
+// function totalWeightedPipeline(columns: PipelineColumn[]): number | null {
+//   const total = columns.reduce(
+//     (sum, column) => sum + (column.weightedValue ?? 0),
+//     0,
+//   )
+//   return total === 0 ? null : total
+// }
 
 function formatCurrency(value: number | null) {
   if (value === null) {
