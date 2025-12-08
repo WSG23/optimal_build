@@ -1,0 +1,692 @@
+/**
+ * Compliance Path Timeline - Gantt-style visualization for regulatory compliance paths.
+ * Shows the sequence of regulatory submissions required for different asset types.
+ */
+
+import React, { useState, useEffect, useMemo } from 'react'
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  FormControl,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Paper,
+  Select,
+  SelectChangeEvent,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import {
+  CheckCircle as CheckCircleIcon,
+  HourglassEmpty as HourglassIcon,
+  Schedule as ScheduleIcon,
+  Warning as WarningIcon,
+  Business as AgencyIcon,
+  AccountBalance as HeritageIcon,
+  Gavel as RegulatoryIcon,
+} from '@mui/icons-material'
+import {
+  regulatoryApi,
+  AssetCompliancePath,
+  AssetType,
+} from '../../../../api/regulatory'
+
+interface CompliancePathTimelineProps {
+  projectId?: string
+  initialAssetType?: AssetType
+  onStepClick?: (step: AssetCompliancePath) => void
+}
+
+// Agency display info (available for future use in tooltips/detailed views)
+const _AGENCY_INFO: Record<string, { name: string; color: string }> = {
+  URA: { name: 'Urban Redevelopment Authority', color: '#1976d2' },
+  BCA: { name: 'Building & Construction Authority', color: '#388e3c' },
+  SCDF: { name: 'Singapore Civil Defence Force', color: '#d32f2f' },
+  NEA: { name: 'National Environment Agency', color: '#7b1fa2' },
+  LTA: { name: 'Land Transport Authority', color: '#f57c00' },
+  STB: { name: 'Singapore Tourism Board', color: '#00796b' },
+  JTC: { name: 'JTC Corporation', color: '#455a64' },
+}
+void _AGENCY_INFO // Suppress unused warning - available for future tooltip enhancement
+
+// Submission type display names
+const SUBMISSION_TYPE_LABELS: Record<string, string> = {
+  planning_permission: 'Planning Permission',
+  development_control: 'Development Control',
+  building_plan: 'Building Plan Approval',
+  structural_plan: 'Structural Plan',
+  fire_safety: 'Fire Safety Certificate',
+  environmental: 'Environmental Clearance',
+  heritage_conservation: 'Heritage Conservation',
+  change_of_use: 'Change of Use',
+  csc_application: 'CSC Application',
+  top_application: 'TOP Application',
+}
+
+const ASSET_TYPE_OPTIONS: { value: AssetType; label: string }[] = [
+  { value: 'office', label: 'Office' },
+  { value: 'retail', label: 'Retail' },
+  { value: 'residential', label: 'Residential' },
+  { value: 'industrial', label: 'Industrial' },
+  { value: 'hospitality', label: 'Hospitality' },
+  { value: 'mixed_use', label: 'Mixed Use' },
+  { value: 'heritage', label: 'Heritage / Conservation' },
+]
+
+// Mock progress data for demonstration
+const getMockProgress = (step: AssetCompliancePath): number => {
+  // In production, this would come from actual submission status
+  if (step.sequence_order <= 2) return 100
+  if (step.sequence_order === 3) return 60
+  return 0
+}
+
+const getMockStatus = (
+  step: AssetCompliancePath,
+): 'completed' | 'in_progress' | 'pending' | 'delayed' => {
+  const progress = getMockProgress(step)
+  if (progress === 100) return 'completed'
+  if (progress > 0) return 'in_progress'
+  return 'pending'
+}
+
+const STATUS_COLORS = {
+  completed: '#10b981',
+  in_progress: '#f59e0b',
+  pending: '#94a3b8',
+  delayed: '#ef4444',
+}
+
+const BAR_GRADIENTS = {
+  completed: 'linear-gradient(90deg, #059669 0%, #34d399 100%)',
+  in_progress: 'linear-gradient(90deg, #ea580c 0%, #fbbf24 100%)',
+  pending: 'linear-gradient(90deg, #64748b 0%, #94a3b8 100%)',
+  delayed: 'linear-gradient(90deg, #dc2626 0%, #ef4444 100%)',
+}
+
+const DAY_WIDTH = 8
+const ROW_HEIGHT = 56
+const LEFT_PANEL_WIDTH = 320
+
+function getStatusIcon(status: string) {
+  switch (status) {
+    case 'completed':
+      return <CheckCircleIcon sx={{ color: STATUS_COLORS.completed }} />
+    case 'in_progress':
+      return <HourglassIcon sx={{ color: STATUS_COLORS.in_progress }} />
+    case 'delayed':
+      return <WarningIcon sx={{ color: STATUS_COLORS.delayed }} />
+    default:
+      return <ScheduleIcon sx={{ color: STATUS_COLORS.pending }} />
+  }
+}
+
+interface TimelineBarProps {
+  step: AssetCompliancePath
+  startOffset: number
+  isSelected: boolean
+  onClick: () => void
+}
+
+function TimelineBar({
+  step,
+  startOffset,
+  isSelected,
+  onClick,
+}: TimelineBarProps) {
+  const duration = step.typical_duration_days || 14
+  const width = Math.max(duration * DAY_WIDTH, 60)
+  const left = startOffset * DAY_WIDTH
+  const status = getMockStatus(step)
+  const progress = getMockProgress(step)
+
+  const tooltipContent = (
+    <Box sx={{ p: 1 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        {SUBMISSION_TYPE_LABELS[step.submission_type] || step.submission_type}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 0.5 }}>
+        Duration: {duration} days
+      </Typography>
+      <Typography variant="body2">Progress: {progress}%</Typography>
+      {step.is_mandatory && (
+        <Chip
+          label="Mandatory"
+          size="small"
+          color="error"
+          variant="outlined"
+          sx={{ mt: 1 }}
+        />
+      )}
+    </Box>
+  )
+
+  return (
+    <Tooltip title={tooltipContent} arrow placement="top">
+      <Box
+        onClick={onClick}
+        sx={{
+          position: 'absolute',
+          left: `${left}px`,
+          top: '8px',
+          width: `${width}px`,
+          height: `${ROW_HEIGHT - 16}px`,
+          borderRadius: '8px',
+          cursor: 'pointer',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          background: BAR_GRADIENTS[status],
+          border: isSelected
+            ? '2px solid #00f3ff'
+            : '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: isSelected
+            ? '0 0 15px rgba(0, 243, 255, 0.3)'
+            : '0 2px 4px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          '&:hover': {
+            filter: 'brightness(1.2)',
+            transform: 'scaleY(1.05)',
+            zIndex: 10,
+          },
+        }}
+      >
+        {/* Progress overlay */}
+        <Box
+          sx={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${progress}%`,
+            background:
+              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 100%)',
+            borderRight:
+              progress > 0 && progress < 100
+                ? '2px solid rgba(255,255,255,0.5)'
+                : 'none',
+          }}
+        />
+
+        {/* Label */}
+        <Typography
+          variant="caption"
+          sx={{
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: '0.7rem',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            position: 'relative',
+            zIndex: 1,
+            px: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {SUBMISSION_TYPE_LABELS[step.submission_type]?.split(' ')[0] ||
+            step.submission_type}
+        </Typography>
+      </Box>
+    </Tooltip>
+  )
+}
+
+export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
+  initialAssetType = 'office',
+  onStepClick,
+}) => {
+  const [assetType, setAssetType] = useState<AssetType>(initialAssetType)
+  const [compliancePaths, setCompliancePaths] = useState<AssetCompliancePath[]>(
+    [],
+  )
+  const [loading, setLoading] = useState(true)
+  const [selectedStep, setSelectedStep] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPaths = async () => {
+      setLoading(true)
+      try {
+        const paths = await regulatoryApi.getCompliancePaths(assetType)
+        setCompliancePaths(paths)
+      } catch {
+        // Use mock data for demonstration if API fails
+        setCompliancePaths(getMockCompliancePaths(assetType))
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPaths()
+  }, [assetType])
+
+  const handleAssetTypeChange = (event: SelectChangeEvent) => {
+    setAssetType(event.target.value as AssetType)
+    setSelectedStep(null)
+  }
+
+  const handleStepClick = (step: AssetCompliancePath) => {
+    setSelectedStep(step.id)
+    onStepClick?.(step)
+  }
+
+  // Calculate timeline dimensions
+  const totalDuration = useMemo(() => {
+    if (compliancePaths.length === 0) return 180
+    let currentOffset = 0
+    compliancePaths.forEach((p) => {
+      currentOffset += p.typical_duration_days || 14
+    })
+    return currentOffset + 30 // Add buffer
+  }, [compliancePaths])
+
+  // Calculate cumulative offsets for each step
+  const stepOffsets = useMemo(() => {
+    const offsets: Record<string, number> = {}
+    let currentOffset = 0
+    compliancePaths.forEach((step) => {
+      offsets[step.id] = currentOffset
+      currentOffset += step.typical_duration_days || 14
+    })
+    return offsets
+  }, [compliancePaths])
+
+  // Calculate overall progress
+  const overallProgress = useMemo(() => {
+    if (compliancePaths.length === 0) return 0
+    const totalProgress = compliancePaths.reduce(
+      (acc, step) => acc + getMockProgress(step),
+      0,
+    )
+    return Math.round(totalProgress / compliancePaths.length)
+  }, [compliancePaths])
+
+  const completedSteps = compliancePaths.filter(
+    (s) => getMockStatus(s) === 'completed',
+  ).length
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography>Loading compliance path...</Typography>
+        <LinearProgress sx={{ mt: 2, maxWidth: 300, mx: 'auto' }} />
+      </Box>
+    )
+  }
+
+  return (
+    <Box>
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography
+            variant="h6"
+            fontWeight="bold"
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
+            <RegulatoryIcon color="primary" />
+            Compliance Path Timeline
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Regulatory submission sequence for Singapore developments
+          </Typography>
+        </Box>
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Asset Type</InputLabel>
+          <Select
+            value={assetType}
+            label="Asset Type"
+            onChange={handleAssetTypeChange}
+          >
+            {ASSET_TYPE_OPTIONS.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Summary Cards */}
+      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+        <Card
+          sx={{
+            flex: 1,
+            background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+            color: 'white',
+          }}
+        >
+          <CardContent sx={{ py: 2 }}>
+            <Typography variant="caption">Overall Progress</Typography>
+            <Typography variant="h4" fontWeight="bold">
+              {overallProgress}%
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={overallProgress}
+              sx={{
+                mt: 1,
+                bgcolor: 'rgba(255,255,255,0.3)',
+                '& .MuiLinearProgress-bar': { bgcolor: 'white' },
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            flex: 1,
+            background: 'linear-gradient(135deg, #388e3c 0%, #66bb6a 100%)',
+            color: 'white',
+          }}
+        >
+          <CardContent sx={{ py: 2 }}>
+            <Typography variant="caption">Completed Steps</Typography>
+            <Typography variant="h4" fontWeight="bold">
+              {completedSteps}/{compliancePaths.length}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card
+          sx={{
+            flex: 1,
+            background: 'linear-gradient(135deg, #7b1fa2 0%, #ba68c8 100%)',
+            color: 'white',
+          }}
+        >
+          <CardContent sx={{ py: 2 }}>
+            <Typography variant="caption">Est. Total Duration</Typography>
+            <Typography variant="h4" fontWeight="bold">
+              {totalDuration - 30} days
+            </Typography>
+          </CardContent>
+        </Card>
+      </Stack>
+
+      {/* Timeline */}
+      <Paper
+        elevation={1}
+        sx={{
+          overflow: 'auto',
+          maxHeight: 'calc(100vh - 450px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'transparent',
+        }}
+      >
+        <Box
+          sx={{
+            minWidth: `${LEFT_PANEL_WIDTH + totalDuration * DAY_WIDTH + 50}px`,
+            position: 'relative',
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              height: '50px',
+              display: 'flex',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              backgroundColor: 'rgba(30,30,30,0.9)',
+              backdropFilter: 'blur(10px)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 20,
+            }}
+          >
+            <Box
+              sx={{
+                width: `${LEFT_PANEL_WIDTH}px`,
+                minWidth: `${LEFT_PANEL_WIDTH}px`,
+                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                px: 2,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, color: '#fff' }}
+              >
+                SUBMISSION STEP
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                px: 2,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{ color: 'rgba(255,255,255,0.5)' }}
+              >
+                Timeline (Days from project start)
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Rows */}
+          {compliancePaths.map((step) => {
+            const status = getMockStatus(step)
+            return (
+              <Box
+                key={step.id}
+                sx={{
+                  display: 'flex',
+                  height: `${ROW_HEIGHT}px`,
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  backgroundColor:
+                    selectedStep === step.id
+                      ? 'rgba(0, 243, 255, 0.05)'
+                      : 'transparent',
+                  '&:hover': {
+                    backgroundColor:
+                      selectedStep === step.id
+                        ? 'rgba(0, 243, 255, 0.05)'
+                        : 'rgba(255, 255, 255, 0.02)',
+                  },
+                }}
+              >
+                {/* Left panel - step info */}
+                <Box
+                  sx={{
+                    width: `${LEFT_PANEL_WIDTH}px`,
+                    minWidth: `${LEFT_PANEL_WIDTH}px`,
+                    borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    px: 2,
+                    gap: 1.5,
+                    bgcolor: 'rgba(30,30,30,0.3)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
+                  {getStatusIcon(status)}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        color: '#fff',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {SUBMISSION_TYPE_LABELS[step.submission_type] ||
+                        step.submission_type}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'rgba(255,255,255,0.5)' }}
+                    >
+                      {step.typical_duration_days || 14} days
+                      {step.is_mandatory && ' • Mandatory'}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={step.sequence_order}
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      fontWeight: 600,
+                      minWidth: 28,
+                    }}
+                  />
+                </Box>
+
+                {/* Right panel - timeline bars */}
+                <Box sx={{ flex: 1, position: 'relative' }}>
+                  <TimelineBar
+                    step={step}
+                    startOffset={stepOffsets[step.id] || 0}
+                    isSelected={selectedStep === step.id}
+                    onClick={() => handleStepClick(step)}
+                  />
+                </Box>
+              </Box>
+            )
+          })}
+        </Box>
+
+        {/* Legend */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 3,
+            p: 2,
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'rgba(20, 20, 20, 0.95)',
+            flexWrap: 'wrap',
+            color: '#fff',
+          }}
+        >
+          {Object.entries(STATUS_COLORS).map(([status, color]) => (
+            <Stack
+              key={status}
+              direction="row"
+              spacing={0.5}
+              alignItems="center"
+            >
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: color,
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{ textTransform: 'capitalize' }}
+              >
+                {status.replace('_', ' ')}
+              </Typography>
+            </Stack>
+          ))}
+          <Box sx={{ display: 'flex', gap: 2, ml: 'auto' }}>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <AgencyIcon sx={{ fontSize: 16, color: '#666' }} />
+              <Typography variant="caption">Regulatory Agency</Typography>
+            </Stack>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <HeritageIcon sx={{ fontSize: 16, color: '#666' }} />
+              <Typography variant="caption">Heritage/Conservation</Typography>
+            </Stack>
+          </Box>
+        </Box>
+      </Paper>
+    </Box>
+  )
+}
+
+// Mock data generator for demonstration
+function getMockCompliancePaths(assetType: AssetType): AssetCompliancePath[] {
+  const baseSteps = [
+    {
+      id: '1',
+      submission_type: 'planning_permission' as const,
+      typical_duration_days: 21,
+      is_mandatory: true,
+    },
+    {
+      id: '2',
+      submission_type: 'development_control' as const,
+      typical_duration_days: 14,
+      is_mandatory: true,
+    },
+    {
+      id: '3',
+      submission_type: 'building_plan' as const,
+      typical_duration_days: 28,
+      is_mandatory: true,
+    },
+    {
+      id: '4',
+      submission_type: 'structural_plan' as const,
+      typical_duration_days: 21,
+      is_mandatory: true,
+    },
+    {
+      id: '5',
+      submission_type: 'fire_safety' as const,
+      typical_duration_days: 14,
+      is_mandatory: true,
+    },
+    {
+      id: '6',
+      submission_type: 'environmental' as const,
+      typical_duration_days: 14,
+      is_mandatory: assetType === 'industrial',
+    },
+  ]
+
+  if (assetType === 'heritage') {
+    baseSteps.splice(1, 0, {
+      id: '1b',
+      submission_type: 'heritage_conservation' as const,
+      typical_duration_days: 35,
+      is_mandatory: true,
+    })
+  }
+
+  baseSteps.push(
+    {
+      id: '7',
+      submission_type: 'csc_application' as const,
+      typical_duration_days: 7,
+      is_mandatory: true,
+    },
+    {
+      id: '8',
+      submission_type: 'top_application' as const,
+      typical_duration_days: 14,
+      is_mandatory: true,
+    },
+  )
+
+  return baseSteps.map((step, index) => ({
+    ...step,
+    asset_type: assetType,
+    agency_id: 'mock-agency-id',
+    sequence_order: index + 1,
+    created_at: new Date().toISOString(),
+  }))
+}
+
+export default CompliancePathTimeline
