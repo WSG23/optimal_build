@@ -11,7 +11,7 @@ import CadUploader from '../modules/cad/CadUploader'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
 
-const DEFAULT_PROJECT_ID = 5821
+const DEFAULT_PROJECT_ID = 1
 const DEFAULT_ZONE_CODE = 'SG:residential'
 
 const ZONE_OPTIONS: Array<{ value: string; labelKey: string }> = [

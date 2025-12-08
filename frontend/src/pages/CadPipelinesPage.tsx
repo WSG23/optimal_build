@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type {
   OverlaySuggestion,
@@ -29,7 +29,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import CloudOffIcon from '@mui/icons-material/CloudOff'
 
-const DEFAULT_PROJECT_ID = 5821
+const DEFAULT_PROJECT_ID = 1
 const OVERLAY_RUN_POLL_INTERVAL_MS = 2500
 const OVERLAY_RUN_POLL_TIMEOUT_MS = 60000
 
@@ -50,7 +50,7 @@ export function CadPipelinesPage() {
   )
 
   // Fetch logic is largely the same, but we will wrap it to handle re-tries nicely
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     // Logic copied from original 'load' function
     setLoading(true)
     setError(null)
@@ -104,7 +104,7 @@ export function CadPipelinesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiClient, projectId, t])
 
   useEffect(() => {
     if (processedProjectRef.current.id !== projectId) {
@@ -114,7 +114,7 @@ export function CadPipelinesPage() {
 
     processedProjectRef.current.processed = true
     fetchData()
-  }, [projectId]) // Dependencies simplified for cleaner effect
+  }, [projectId, fetchData])
 
   const overlayCodes = useMemo(
     () => overlaySuggestions.map((item) => item.code),
@@ -176,9 +176,9 @@ export function CadPipelinesPage() {
               variant="outlined"
               size="small"
               value={projectId}
-              onChange={(e) =>
+              onChange={(e) => {
                 setProjectId(Number(e.target.value) || DEFAULT_PROJECT_ID)
-              }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
