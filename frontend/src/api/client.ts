@@ -327,7 +327,17 @@ export class ApiClient {
     if (response.status === 204) {
       return undefined as T
     }
-    return (await response.json()) as T
+    const text = await response.text()
+    if (!text || text.trim() === '') {
+      return undefined as T
+    }
+    try {
+      return JSON.parse(text) as T
+    } catch {
+      throw new Error(
+        `Invalid JSON response from ${path}: ${text.slice(0, 100)}`,
+      )
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
