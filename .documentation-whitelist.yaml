@@ -29,6 +29,9 @@ allowed_files:
   - docs/development/testing/known-issues.md
   - docs/development/testing/summary.md
 
+  # Security documentation
+  - docs/SECURITY.md
+
   # Planning and status
   - docs/planning/features.md
   - docs/planning/ui-status.md

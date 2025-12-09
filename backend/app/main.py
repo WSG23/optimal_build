@@ -106,12 +106,25 @@ app = FastAPI(
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)
+# CORS configuration - restrict headers in production
+_ALLOWED_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+    "X-Role",  # Development role header
+    "X-User-Id",  # Development user ID header
+    "X-User-Email",  # Development email header
+    "X-Correlation-ID",  # Request tracing
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=_ALLOWED_HEADERS,
 )
 app.add_middleware(ApiErrorLoggingMiddleware, logger=logger)
 app.add_middleware(RequestMetricsMiddleware)
