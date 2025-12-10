@@ -22,6 +22,10 @@ allowed_files:
   # Agent decision guides
   - docs/ai-agents/next_steps.md
   - docs/ai-agents/README.md
+  - docs/ai-agents/_TEMPLATE.md
+  - docs/ai-agents/data_scientist.md
+  - docs/ai-agents/documentation_specialist.md
+  - docs/ai-agents/domain_expert.md
   - docs/ai-agents/accessibility_specialist.md
   - docs/ai-agents/architect.md
   - docs/ai-agents/cost_optimization_engineer.md

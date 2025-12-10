@@ -21,6 +21,7 @@ Extended persona playbooks for `optimal_build`. These provide deeper guidance be
 | Tech Lead | [tech_lead.md](./tech_lead.md) | Code quality, refactoring, standards |
 | QA Engineer | [qa_engineer.md](./qa_engineer.md) | Testing, edge cases, coverage |
 | UI/UX Designer | [ui_ux_designer.md](./ui_ux_designer.md) | User interfaces, flows, aesthetics |
+| Documentation Specialist | [documentation_specialist.md](./documentation_specialist.md) | Docs, ADRs, examples |
 
 ### Security & Compliance
 
@@ -80,9 +81,14 @@ Each playbook follows this structure:
 **Entry:** [Prerequisites]
 **Exit:** [Deliverables]
 
+**Auto-summon triggers:** [Change types that must pull this persona in]
+**Blockers:** [Conditions that block shipping, tied to MCP Quality → Testing → Security → User value]
+
 **Do:** [Best practices]
 **Anti-patterns:** [Mistakes to avoid]
 **Required artifacts/tests:** [Deliverables]
+**Workflows & tests to trigger:** [Feature, bug, migration, UI, external I/O]
+**Artifacts/evidence to attach (PR/ADR):** [Test runs, metrics, citations, screenshots, rollback/flags]
 **Collaborates with:** [Related personas]
 **Example tasks:** [Concrete examples]
 **Domain-specific notes:** [optimal_build context]
@@ -96,9 +102,17 @@ Each playbook follows this structure:
 4. Add persona to [MCP.md](../../MCP.md) Section 2
 5. Update [AGENTS.md](../../AGENTS.md) if needed
 
+## Persona coverage checklist (for PRs/CI)
+
+- Auto-summon personas by change type: Security (new external I/O, auth/logging changes), Performance (large payloads, render loops), Release Manager (migrations), Accessibility (UI changes), QA (all behavior changes), Documentation Specialist (user-facing/API changes).
+- Tests attached per persona guidance: regression IDs, integration/contract tests, a11y checks, perf benchmarks, schema validation/migration guards.
+- Evidence linked in PR: test runs, metrics/benchmarks, citations/assumptions, UI/a11y screenshots, rollout/rollback notes.
+- Docs/acceptance updated when user-facing or contract changes occur (see `MCP.md`, `CODING_RULES.md`, `docs/all_steps_to_product_completion.md`).
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | 2025-12-10 | Added coverage checklist, expanded structure (auto-summon, blockers, evidence), and finished remaining persona docs |
 | 1.1 | 2025-12-10 | Added cross-references, enhanced all playbooks, added 3 new personas |
 | 1.0 | Initial | Basic playbook structure |
