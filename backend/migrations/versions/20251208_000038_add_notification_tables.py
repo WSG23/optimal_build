@@ -8,6 +8,7 @@ Create Date: 2025-12-08
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import inspect
 
 revision = "20251208_000038"
 down_revision = "20251207_000037"
@@ -138,16 +139,21 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop email_logs
-    op.drop_index("ix_email_logs_notification_id", table_name="email_logs")
-    op.drop_index("ix_email_logs_recipient_email", table_name="email_logs")
-    op.drop_table("email_logs")
+    bind = op.get_bind()
+    inspector = inspect(bind)
 
-    # Drop notifications
-    op.drop_index("ix_notifications_user_id_is_read", table_name="notifications")
-    op.drop_index("ix_notifications_created_at", table_name="notifications")
-    op.drop_index("ix_notifications_user_id", table_name="notifications")
-    op.drop_table("notifications")
+    table_names = set(inspector.get_table_names())
+
+    if "email_logs" in table_names:
+        op.execute('DROP INDEX IF EXISTS "ix_email_logs_notification_id"')
+        op.execute('DROP INDEX IF EXISTS "ix_email_logs_recipient_email"')
+        op.execute("DROP TABLE IF EXISTS email_logs")
+
+    if "notifications" in table_names:
+        op.execute('DROP INDEX IF EXISTS "ix_notifications_user_id_is_read"')
+        op.execute('DROP INDEX IF EXISTS "ix_notifications_created_at"')
+        op.execute('DROP INDEX IF EXISTS "ix_notifications_user_id"')
+        op.execute("DROP TABLE IF EXISTS notifications")
 
     # Drop enums (optional - enums are usually kept)
     op.execute("DROP TYPE IF EXISTS notificationpriority")
