@@ -13,12 +13,12 @@ const pulse = keyframes`
 const StatCard = styled(Paper, {
   shouldForwardProp: (prop) => prop !== 'glass',
 })<{ glass?: boolean }>(({ theme, glass }) => ({
-  background: glass ? 'rgba(30, 30, 30, 0.4)' : '#1E1E1E', // Glass vs Solid
+  background: glass ? 'var(--ob-surface-glass-1)' : 'var(--ob-neutral-900)', // Glass vs Solid
   backdropFilter: glass ? 'blur(12px)' : 'none',
   border: glass
-    ? '1px solid rgba(255, 255, 255, 0.1)'
-    : '1px solid rgba(255, 255, 255, 0.08)',
-  borderRadius: '4px',
+    ? '1px solid var(--ob-border-fine)'
+    : '1px solid var(--ob-border-fine)',
+  borderRadius: 'var(--ob-radius-sm)',
   padding: theme.spacing(2, 3), // Slightly tighter padding for HUD feel
   display: 'flex',
   flexDirection: 'column',
@@ -30,8 +30,8 @@ const StatCard = styled(Paper, {
   transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 12px 24px rgba(0,0,0,0.4)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    boxShadow: 'var(--ob-shadow-lg)',
+    borderColor: 'var(--ob-neutral-700)',
   },
 }))
 

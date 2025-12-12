@@ -11,8 +11,6 @@ import {
   Grid,
   Paper,
   Divider,
-  useTheme,
-  alpha,
 } from '@mui/material'
 import {
   CloudUpload,
@@ -43,7 +41,6 @@ export function CadUploader({
   zoning = 'Commercial', // Mock default or prop
 }: CadUploaderProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -97,19 +94,17 @@ export function CadUploader({
   const steps = ['Uploading', 'Processing Layers', 'Detecting Units']
 
   return (
-    <Box
-      className="cad-uploader"
-      sx={{ maxWidth: 1200, margin: '0 auto', p: 2 }}
-    >
+    <Box className="cad-uploader" sx={{ maxWidth: 1400, margin: '0 auto' }}>
       {/* Project Details Header */}
       <Paper
         elevation={0}
         sx={{
           p: 3,
           mb: 4,
-          background: alpha(theme.palette.background.paper, 0.6),
-          border: `1px solid ${theme.palette.divider}`,
+          background: 'var(--ob-surface-glass-1)',
+          border: '1px solid var(--ob-color-border-subtle)',
           backdropFilter: 'blur(10px)',
+          borderRadius: 'var(--ob-radius-sm)',
         }}
       >
         <Grid container spacing={4} alignItems="center">
@@ -155,18 +150,19 @@ export function CadUploader({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: `2px dashed ${isDragging ? theme.palette.primary.main : theme.palette.divider}`,
+              border: isDragging
+                ? '2px dashed var(--ob-brand-500)'
+                : '2px dashed var(--ob-color-border-subtle)',
               backgroundColor: isDragging
-                ? alpha(theme.palette.primary.main, 0.05)
-                : '#1E1E1E',
+                ? 'var(--ob-brand-50)'
+                : 'var(--ob-neutral-900)',
               cursor: isUploading ? 'default' : 'pointer',
               transition: 'all 0.2s ease',
+              borderRadius: 'var(--ob-radius-sm)',
               '&:hover': {
-                borderColor: !isUploading
-                  ? theme.palette.primary.main
-                  : undefined,
+                borderColor: !isUploading ? 'var(--ob-brand-500)' : undefined,
                 backgroundColor: !isUploading
-                  ? alpha(theme.palette.primary.main, 0.02)
+                  ? 'var(--ob-brand-50)'
                   : undefined,
               },
             }}
@@ -189,11 +185,11 @@ export function CadUploader({
                   width: 80,
                   height: 80,
                   borderRadius: '50%',
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  backgroundColor: 'var(--ob-brand-100)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: theme.palette.primary.main,
+                  color: 'var(--ob-brand-500)',
                 }}
               >
                 {isUploading ? (
@@ -234,7 +230,8 @@ export function CadUploader({
               sx={{
                 p: 3,
                 backgroundColor: 'transparent',
-                border: `1px solid ${theme.palette.divider}`,
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             >
               <Typography
@@ -252,9 +249,9 @@ export function CadUploader({
                     <StepLabel
                       StepIconProps={{
                         sx: {
-                          '&.Mui-active': { color: theme.palette.primary.main },
+                          '&.Mui-active': { color: 'var(--ob-brand-500)' },
                           '&.Mui-completed': {
-                            color: theme.palette.success.main,
+                            color: 'var(--ob-success-500)',
                           },
                         },
                       }}
@@ -270,9 +267,9 @@ export function CadUploader({
                   sx={{
                     mt: 2,
                     p: 2,
-                    borderRadius: 1,
-                    backgroundColor: alpha(theme.palette.error.main, 0.1),
-                    color: theme.palette.error.main,
+                    borderRadius: 'var(--ob-radius-sm)',
+                    backgroundColor: 'var(--ob-error-muted)',
+                    color: 'var(--ob-error-600)',
                     display: 'flex',
                     gap: 2,
                   }}
@@ -284,7 +281,13 @@ export function CadUploader({
             </Paper>
 
             {/* Meta Data (Floors/Units) */}
-            <Paper sx={{ p: 3, backgroundColor: '#1E1E1E' }}>
+            <Paper
+              sx={{
+                p: 3,
+                backgroundColor: 'var(--ob-neutral-900)',
+                borderRadius: 'var(--ob-radius-sm)',
+              }}
+            >
               <Stack spacing={2}>
                 <Box
                   sx={{
