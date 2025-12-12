@@ -9,6 +9,7 @@ export interface AppLayoutProps {
   subtitle?: string
   actions?: ReactNode
   children: ReactNode
+  hideHeader?: boolean
 }
 
 export function AppLayout({
@@ -16,9 +17,15 @@ export function AppLayout({
   subtitle,
   actions,
   children,
+  hideHeader,
 }: AppLayoutProps) {
   return (
-    <AppShell title={title} subtitle={subtitle} actions={actions}>
+    <AppShell
+      title={title}
+      subtitle={subtitle}
+      actions={actions}
+      hideHeader={hideHeader}
+    >
       {children}
     </AppShell>
   )

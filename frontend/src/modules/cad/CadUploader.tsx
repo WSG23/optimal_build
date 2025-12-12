@@ -19,6 +19,7 @@ import {
 import type { CadImportSummary, ParseStatusUpdate } from '../../api/client'
 import { useTranslation } from '../../i18n'
 import { GlassCard } from '../../components/canonical/GlassCard'
+import { StatusChip } from '../../components/canonical/StatusChip'
 
 interface CadUploaderProps {
   onUpload: (file: File) => void
@@ -92,9 +93,9 @@ export function CadUploader({
 
   return (
     <Box className="cad-uploader" sx={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Grid container spacing={4}>
+      <Grid container spacing={3}>
         {/* Left Col: Hero Drop Zone */}
-        <Grid item xs={12} lg={7}>
+        <Grid item xs={12} lg={8}>
           <GlassCard
             className="cad-drop-zone"
             onClick={!isUploading ? handleBrowse : undefined}
@@ -102,7 +103,7 @@ export function CadUploader({
             onDragOver={!isUploading ? handleDragOver : undefined}
             onDragLeave={!isUploading ? handleDragLeave : undefined}
             sx={{
-              height: 400,
+              height: 280, // Reduced from 400px for better proportion
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -129,11 +130,17 @@ export function CadUploader({
               onChange={handleChange}
               disabled={isUploading}
             />
-            <Stack spacing={3} alignItems="center" textAlign="center">
+            <Stack
+              sx={{
+                gap: 'var(--ob-space-200)',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}
+            >
               <Box
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: 64, // Reduced from 80
+                  height: 64,
                   borderRadius: '50%',
                   backgroundColor: 'var(--ob-brand-100)',
                   display: 'flex',
@@ -145,19 +152,19 @@ export function CadUploader({
                 {isUploading ? (
                   <Box
                     className="dot-flashing"
-                    sx={{ transform: 'scale(1.5)' }}
+                    sx={{ transform: 'scale(1.2)' }}
                   />
                 ) : (
-                  <CloudUpload sx={{ fontSize: 40 }} />
+                  <CloudUpload sx={{ fontSize: 32 }} />
                 )}
               </Box>
               <Box>
-                <Typography variant="h5" fontWeight={600} gutterBottom>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
                   {isUploading
                     ? t('uploader.uploadingTitle', 'Uploading & Processing...')
                     : t('uploader.dropTitle', 'Upload CAD File')}
                 </Typography>
-                <Typography variant="body1" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   {isUploading
                     ? t(
                         'uploader.uploadingHint',
@@ -179,15 +186,22 @@ export function CadUploader({
         </Grid>
 
         {/* Right Col: Status & Explanation */}
-        <Grid item xs={12} lg={5}>
-          <Stack spacing={3}>
+        <Grid item xs={12} lg={4}>
+          <Stack sx={{ height: '100%', gap: 'var(--ob-space-300)' }}>
             {/* Stepper Status */}
-            <GlassCard sx={{ p: 3 }}>
+            <GlassCard
+              sx={{
+                p: 'var(--ob-space-300)',
+                flex: 1,
+                maxHeight: 280,
+                overflow: 'auto',
+              }}
+            >
               <Typography
-                variant="h6"
+                variant="subtitle1"
                 fontWeight={600}
                 gutterBottom
-                sx={{ mb: 3 }}
+                sx={{ mb: 'var(--ob-space-200)' }}
               >
                 {t('uploader.latestStatus', 'Processing Status')}
               </Typography>
@@ -198,11 +212,16 @@ export function CadUploader({
                     <StepLabel
                       StepIconProps={{
                         sx: {
+                          width: 20,
+                          height: 20,
                           '&.Mui-active': { color: 'var(--ob-brand-500)' },
                           '&.Mui-completed': {
                             color: 'var(--ob-success-500)',
                           },
                         },
+                      }}
+                      sx={{
+                        '& .MuiStepLabel-label': { fontSize: '0.875rem' },
                       }}
                     >
                       {label}
@@ -214,24 +233,34 @@ export function CadUploader({
               {status?.error && (
                 <Box
                   sx={{
-                    mt: 2,
-                    p: 2,
+                    mt: 'var(--ob-space-200)',
+                    p: 'var(--ob-space-150)',
                     borderRadius: 'var(--ob-radius-sm)',
                     backgroundColor: 'var(--ob-error-muted)',
                     color: 'var(--ob-error-600)',
                     display: 'flex',
-                    gap: 2,
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-150)',
                   }}
                 >
-                  <ErrorIcon />
-                  <Typography variant="body2">{status.error}</Typography>
+                  <ErrorIcon fontSize="small" />
+                  <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
+                    {status.error}
+                  </Typography>
                 </Box>
               )}
             </GlassCard>
 
-            {/* Meta Data (Floors/Units) */}
-            <GlassCard sx={{ p: 3 }}>
-              <Stack spacing={2}>
+            {/* Stats removed from here? No, let's keep it but maybe below or merged if we want compactness.
+                Wait, previous implementation had "Meta Data" separate.
+                If I reduce height to 280, grid item matching height might mean the status card is also 280.
+                Splitting into two cards (Status + Meta) in the right col might be tight for 280px total?
+                Let's combine them or putting the Meta data BELOW the dropzones in a full width?
+                No, horizontal split is better.
+                Let's keep the Meta Data card but make it compact.
+            */}
+            <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+              <Stack sx={{ gap: 'var(--ob-space-150)' }}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -239,15 +268,18 @@ export function CadUploader({
                     alignItems: 'center',
                   }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <InsertDriveFile color="action" />
-                    <Typography variant="body2" color="text.secondary">
+                  <Stack
+                    direction="row"
+                    sx={{ gap: 'var(--ob-space-100)', alignItems: 'center' }}
+                  >
+                    <InsertDriveFile color="action" fontSize="small" />
+                    <Typography variant="caption" color="text.secondary">
                       {t('uploader.fileName', 'File Name')}
                     </Typography>
                   </Stack>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant="caption" fontWeight={500}>
                     {summary?.fileName ||
-                      (isUploading ? <Skeleton width={100} /> : '-')}
+                      (isUploading ? <Skeleton width={80} /> : '-')}
                   </Typography>
                 </Box>
                 <Divider
@@ -260,18 +292,22 @@ export function CadUploader({
                     alignItems: 'center',
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary">
                     {t('uploader.floorsDetected', 'Floors Detected')}
                   </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {detectedFloors.length > 0 ? (
-                      detectedFloors.length
-                    ) : isUploading ? (
-                      <Skeleton width={40} />
-                    ) : (
-                      '-'
-                    )}
-                  </Typography>
+                  {detectedFloors.length > 0 ? (
+                    <StatusChip
+                      label={`${detectedFloors.length}`}
+                      size="small"
+                      status="success"
+                    />
+                  ) : isUploading ? (
+                    <Skeleton width={30} />
+                  ) : (
+                    <Typography variant="caption" color="text.disabled">
+                      -
+                    </Typography>
+                  )}
                 </Box>
                 <Box
                   sx={{
@@ -280,18 +316,22 @@ export function CadUploader({
                     alignItems: 'center',
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary">
                     {t('uploader.unitsCount', 'Units Count')}
                   </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {detectedUnits.length > 0 ? (
-                      detectedUnits.length
-                    ) : isUploading ? (
-                      <Skeleton width={40} />
-                    ) : (
-                      '-'
-                    )}
-                  </Typography>
+                  {detectedUnits.length > 0 ? (
+                    <StatusChip
+                      label={`${detectedUnits.length}`}
+                      size="small"
+                      status="success"
+                    />
+                  ) : isUploading ? (
+                    <Skeleton width={30} />
+                  ) : (
+                    <Typography variant="caption" color="text.disabled">
+                      -
+                    </Typography>
+                  )}
                 </Box>
               </Stack>
             </GlassCard>

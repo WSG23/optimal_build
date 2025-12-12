@@ -10,6 +10,7 @@ export interface AppShellProps {
   actions?: ReactNode
   children: ReactNode
   hideSidebar?: boolean
+  hideHeader?: boolean
 }
 
 /**
@@ -28,6 +29,7 @@ export function AppShell({
   actions,
   children,
   hideSidebar,
+  hideHeader = false,
 }: AppShellProps) {
   const theme = useTheme()
   const { inBaseLayout } = useBaseLayoutContext()
@@ -59,41 +61,43 @@ export function AppShell({
         }}
       >
         {/* Header */}
-        <Box
-          component="header"
-          sx={{
-            py: 3,
-            px: 4,
-            borderBottom: 1,
-            borderColor: 'divider',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            bgcolor: alpha(theme.palette.background.default, 0.8),
-            backdropFilter: 'blur(12px)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-          }}
-        >
-          <Box>
-            <Typography variant="h2" sx={{ color: 'text.primary' }}>
-              {title}
-            </Typography>
-            {subtitle && (
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', mt: 0.5 }}
-              >
-                {subtitle}
+        {!hideHeader && (
+          <Box
+            component="header"
+            sx={{
+              py: 3,
+              px: 4,
+              borderBottom: 1,
+              borderColor: 'divider',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              bgcolor: alpha(theme.palette.background.default, 0.8),
+              backdropFilter: 'blur(12px)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+            }}
+          >
+            <Box>
+              <Typography variant="h2" sx={{ color: 'text.primary' }}>
+                {title}
               </Typography>
-            )}
+              {subtitle && (
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', mt: 0.5 }}
+                >
+                  {subtitle}
+                </Typography>
+              )}
+            </Box>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <HeaderUtilityCluster />
+              {actions}
+            </Stack>
           </Box>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <HeaderUtilityCluster />
-            {actions}
-          </Stack>
-        </Box>
+        )}
 
         {/* Content */}
         <Box

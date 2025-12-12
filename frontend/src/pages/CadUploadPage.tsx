@@ -12,7 +12,6 @@ import CadUploader from '../modules/cad/CadUploader'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
 import { Input } from '../components/canonical/Input'
-import { AnimatedPageHeader } from '../components/canonical/AnimatedPageHeader'
 import { GlassCard } from '../components/canonical/GlassCard'
 
 const DEFAULT_PROJECT_ID = 1
@@ -128,62 +127,49 @@ export function CadUploadPage() {
   )
 
   return (
-    <AppLayout hideHeader>
-      <Box sx={{ pb: 8 }}>
-        <Box sx={{ px: 3, pt: 2 }}>
-          <AnimatedPageHeader
-            title={t('uploader.title')}
-            subtitle={t('uploader.subtitle')}
-            breadcrumbs={[
-              { label: t('nav.home', 'Dashboard'), href: '/' },
-              { label: t('uploader.title') },
-            ]}
-          />
-        </Box>
+    <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
+      <Box className="cad-upload" sx={{ pb: 8 }}>
+        <Stack spacing={3}>
+          {/* Context Bar */}
+          <GlassCard
+            sx={{
+              p: 'var(--ob-space-100)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+            }}
+          >
+            {Controls}
+          </GlassCard>
 
-        <Box className="cad-upload" sx={{ px: 3 }}>
-          <Stack spacing={3}>
-            {/* Context Bar */}
-            <GlassCard
+          {/* Error Banner */}
+          {error && (
+            <Box
               sx={{
-                p: 'var(--ob-space-100)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-100)',
+                p: 2,
+                border: '1px solid var(--ob-error-500)',
+                borderRadius: 'var(--ob-radius-sm)',
+                bgcolor: 'var(--ob-error-muted)',
+                color: 'var(--ob-error-icon)',
               }}
             >
-              {Controls}
-            </GlassCard>
+              {error}
+            </Box>
+          )}
 
-            {/* Error Banner */}
-            {error && (
-              <Box
-                sx={{
-                  p: 2,
-                  border: '1px solid var(--ob-error-500)',
-                  borderRadius: 'var(--ob-radius-sm)',
-                  bgcolor: 'var(--ob-error-muted)',
-                  color: 'var(--ob-error-icon)',
-                }}
-              >
-                {error}
-              </Box>
-            )}
+          {/* CAD Uploader */}
+          <CadUploader
+            onUpload={(file) => {
+              void handleUpload(file)
+            }}
+            isUploading={isUploading}
+            status={status}
+            summary={job}
+          />
 
-            {/* CAD Uploader */}
-            <CadUploader
-              onUpload={(file) => {
-                void handleUpload(file)
-              }}
-              isUploading={isUploading}
-              status={status}
-              summary={job}
-            />
-
-            {/* Rules Panel */}
-            <RulePackExplanationPanel rules={rules} loading={loading} />
-          </Stack>
-        </Box>
+          {/* Rules Panel */}
+          <RulePackExplanationPanel rules={rules} loading={loading} />
+        </Stack>
       </Box>
     </AppLayout>
   )
