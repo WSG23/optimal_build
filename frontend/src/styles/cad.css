@@ -12,7 +12,7 @@
 
 .cad-uploader__dropzone {
     border: 2px dashed var(--ob-color-border-neutral);
-    border-radius: 1.5rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: 3rem;
     text-align: center;
     background: var(--ob-color-bg-surface-elevated);
@@ -39,7 +39,7 @@
 .cad-uploader__browse {
     align-self: center;
     padding: 0.65rem 1.5rem;
-    border-radius: 999px;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     border: none;
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse);
@@ -50,7 +50,7 @@
 .cad-uploader__status {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: 2rem;
     box-shadow: var(--ob-shadow-md);
 }
@@ -87,7 +87,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -109,7 +109,7 @@
 .cad-upload__label select,
 .cad-upload__label input {
     padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
+    border-radius: 6px; /* Square Cyber-Minimalism: md for inputs */
     border: 1px solid var(--ob-color-border-subtle);
 }
 
@@ -127,7 +127,7 @@
 .cad-preview {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: var(--ob-spacing-500);
     box-shadow: var(--ob-shadow-md);
     display: flex;
@@ -190,7 +190,7 @@
 .cad-preview__panel {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: var(--ob-spacing-400);
 }
 
@@ -362,7 +362,7 @@
 .cad-overlay-info-banner {
     margin: 0.5rem 0 0.75rem;
     padding: 0.6rem 0.8rem;
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     background: #e0f2fe;
     color: var(--ob-color-surface-inverse);
     font-size: 0.8rem;
@@ -398,7 +398,7 @@
     gap: 0.5rem;
     padding: 0.75rem 1rem;
     background: var(--ob-color-surface-alt);
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     color: var(--ob-color-text-muted);
 }
 
@@ -424,7 +424,7 @@
 
 .cad-overlay-item {
     background: var(--ob-color-bg-surface-elevated);
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
     padding: 0.75rem 1rem;
     box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
     display: flex;
@@ -505,7 +505,7 @@
     width: 100%;
     border-collapse: collapse;
     background: var(--ob-color-bg-surface);
-    border-radius: 1rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     overflow: hidden;
 }
 
@@ -658,7 +658,7 @@
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
     padding: var(--ob-spacing-400);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     box-shadow: var(--ob-shadow-md);
     display: flex;
     flex-direction: column;
@@ -719,7 +719,7 @@
 .cad-export button,
 .cad-pipelines__toolbar select {
     padding: 0.5rem 1rem;
-    border-radius: 0.75rem;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     border: 1px solid var(--ob-color-border-subtle);
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse);
@@ -742,7 +742,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -790,7 +790,7 @@
     align-items: center;
     background: var(--ob-color-status-warning-bg);
     color: var(--ob-color-status-warning-text);
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for banners */
     padding: 0.6rem 0.9rem;
     margin-bottom: 1rem;
 }
@@ -847,7 +847,7 @@
 .cad-rulepack > li {
     background: #f8fafc;
     padding: 1rem;
-    border-radius: 1rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
 }
 
 .cad-rulepack__overlay {
@@ -885,7 +885,7 @@
     gap: 0.75rem;
     margin: 0.75rem 0 0;
     padding: 0.75rem 1rem;
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     background: var(--ob-color-error-soft);
     color: #991b1b;
     font-weight: 600;
@@ -957,7 +957,7 @@
 .cad-pipelines__item {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: var(--ob-spacing-400);
     box-shadow: var(--ob-shadow-md);
 }

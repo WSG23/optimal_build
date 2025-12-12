@@ -43,6 +43,7 @@ export function AppShell({
         minHeight: '100vh',
         bgcolor: 'background.default',
         color: 'text.primary',
+        gap: shouldHideSidebar ? 0 : 2, // Consistent gap between sidebar and content
       }}
     >
       {/* "The Wall" - Sidebar */}
@@ -99,7 +100,7 @@ export function AppShell({
           component="main"
           sx={{
             flexGrow: 1,
-            p: 0,
+            padding: 'var(--ob-space-100)', // 16px - canonical layout padding (matches nav button spacing)
             overflow: 'auto',
             scrollbarGutter: 'stable',
           }}

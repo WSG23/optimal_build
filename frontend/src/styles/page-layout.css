@@ -8,7 +8,7 @@
 /* -------------------------------------------------------------------------- */
 
 .page {
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     max-width: 1400px;
     margin: 0 auto;
     font-family: var(--ob-font-family-base);
@@ -55,7 +55,7 @@
 .page__section {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     padding: var(--ob-spacing-500);
     margin-bottom: var(--ob-spacing-500);
 }
@@ -106,7 +106,7 @@
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
     font-size: var(--ob-font-size-base);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     outline: none;
     transition:
         border-color 0.2s ease,
@@ -135,7 +135,7 @@
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
     font-size: var(--ob-font-size-base);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     outline: none;
     transition:
         border-color 0.2s ease,
@@ -156,7 +156,7 @@
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
     font-size: var(--ob-font-size-base);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     outline: none;
     transition:
         border-color 0.2s ease,
@@ -186,7 +186,7 @@
     font-size: var(--ob-font-size-base);
     font-weight: 500;
     border: none;
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: inherit;
@@ -234,7 +234,7 @@
 
 .page__alert {
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     font-size: var(--ob-font-size-sm);
     margin-top: var(--ob-spacing-300);
 }
@@ -310,7 +310,7 @@
 .page__card {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     padding: var(--ob-spacing-400);
 }
 

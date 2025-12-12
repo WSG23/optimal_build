@@ -13,9 +13,15 @@ export function AppShell({
   description,
   actions,
   children,
+  hideSidebar,
 }: AppShellProps) {
   return (
-    <BaseAppShell title={title} subtitle={description} actions={actions}>
+    <BaseAppShell
+      title={title}
+      subtitle={description}
+      actions={actions}
+      hideSidebar={hideSidebar}
+    >
       {children}
     </BaseAppShell>
   )

@@ -246,20 +246,55 @@
     --ob-space-300: 3rem; /* 48px */
     --ob-space-400: 4rem; /* 64px */
 
-    /* Legacy spacing alias */
+    /* Legacy spacing aliases (map spacing-N00 to space-* scale) */
     --ob-spacing-3: var(--ob-space-075);
+    --ob-spacing-100: var(--ob-space-050);   /* 8px */
+    --ob-spacing-200: var(--ob-space-100);   /* 16px */
+    --ob-spacing-300: var(--ob-space-150);   /* 24px */
+    --ob-spacing-400: var(--ob-space-200);   /* 32px */
+    --ob-spacing-500: var(--ob-space-250);   /* 40px */
+    --ob-spacing-600: var(--ob-space-300);   /* 48px */
 
     /* ===========================================================================
-     9. BORDER RADIUS
+     9. BORDER RADIUS - Square Cyber-Minimalism
      =========================================================================== */
 
-    --ob-radius-sm: 0.375rem; /* 6px */
-    --ob-radius-md: 0.5rem; /* 8px */
-    --ob-radius-md-plus: 0.625rem; /* 10px - between md and lg */
-    --ob-radius-lg: 0.75rem; /* 12px */
-    --ob-radius-xl: 1rem; /* 16px */
-    --ob-radius-2xl: 1.5rem; /* 24px */
-    --ob-radius-pill: 9999px;
+    /* Primary scale - sharp, geometric aesthetic */
+    --ob-radius-none: 0;              /* 0px - tables, data grids */
+    --ob-radius-xs: 0.125rem;         /* 2px - buttons, tags, chips */
+    --ob-radius-sm: 0.25rem;          /* 4px - cards, panels, tiles */
+    --ob-radius-md: 0.375rem;         /* 6px - inputs, select boxes */
+    --ob-radius-lg: 0.5rem;           /* 8px - modals, windows ONLY */
+    --ob-radius-pill: 9999px;         /* Avatars, circular icons ONLY */
+
+    /* DEPRECATED - keep for backward compatibility during migration */
+    --ob-radius-xl: var(--ob-radius-lg);
+    --ob-radius-2xl: var(--ob-radius-lg);
+    --ob-radius-md-plus: var(--ob-radius-sm);
+
+    /* ===========================================================================
+     9.1 ELEGANT FINE LINES - Low opacity for sophistication
+     =========================================================================== */
+
+    --ob-border-fine: 1px solid rgba(255, 255, 255, 0.08);
+    --ob-border-fine-strong: 1px solid rgba(255, 255, 255, 0.12);
+    --ob-border-fine-hover: 1px solid rgba(255, 255, 255, 0.18);
+
+    /* Dividers */
+    --ob-divider: 1px solid rgba(255, 255, 255, 0.06);
+    --ob-divider-strong: 1px solid rgba(255, 255, 255, 0.10);
+
+    /* ===========================================================================
+     9.2 GLOW EFFECTS - Consistent across components
+     =========================================================================== */
+
+    --ob-glow-brand-subtle: 0 0 8px rgba(59, 130, 246, 0.15);
+    --ob-glow-brand-medium: 0 0 12px rgba(59, 130, 246, 0.25);
+    --ob-glow-brand-strong: 0 0 20px rgba(59, 130, 246, 0.4);
+    --ob-glow-gold: 0 0 12px rgba(245, 158, 11, 0.25);
+    --ob-glow-success: 0 0 10px rgba(34, 197, 94, 0.2);
+    --ob-glow-error: 0 0 10px rgba(239, 68, 68, 0.2);
+    --ob-glow-warning: 0 0 10px rgba(234, 179, 8, 0.2);
 
     /* ===========================================================================
      10. SHADOWS
@@ -349,4 +384,11 @@ html[data-theme='light'] {
     --ob-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     --ob-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
     --ob-shadow-glass-lg: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
+
+    /* Elegant fine lines (light mode) */
+    --ob-border-fine: 1px solid rgba(0, 0, 0, 0.06);
+    --ob-border-fine-strong: 1px solid rgba(0, 0, 0, 0.10);
+    --ob-border-fine-hover: 1px solid rgba(0, 0, 0, 0.15);
+    --ob-divider: 1px solid rgba(0, 0, 0, 0.05);
+    --ob-divider-strong: 1px solid rgba(0, 0, 0, 0.08);
 }

@@ -79,7 +79,7 @@
     position: relative;
     z-index: 10;
     pointer-events: none; /* Let clicks pass through to map where no content exists */
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     display: flex;
     flex-direction: column;
     gap: var(--ob-spacing-500);
@@ -108,7 +108,7 @@
     background: rgba(20, 20, 20, 0.75); /* Darker, high-contrast cockpit feel */
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: 2rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     display: flex;
@@ -158,7 +158,7 @@
     background: rgba(20, 20, 20, 0.6);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
     padding: 1rem 1.25rem;
     color: #fff;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -249,7 +249,7 @@
     padding: 1rem 0.5rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for tiles */
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
@@ -281,7 +281,7 @@
     width: 100%;
     padding: 1.25rem;
     border: none;
-    border-radius: 12px;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     background: linear-gradient(135deg, #2563eb, #7c3aed);
     color: #fff;
     font-weight: 700;
@@ -325,7 +325,7 @@
     padding: 0.75rem;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     color: #fff;
     font-size: 0.8rem;
     cursor: pointer;

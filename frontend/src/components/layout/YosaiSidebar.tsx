@@ -126,8 +126,8 @@ export function YosaiSidebar() {
                           : 'transparent',
                         borderLeft: 4,
                         borderColor: isActive ? 'primary.main' : 'transparent',
-                        borderRadius: '0 8px 8px 0',
-                        px: 3,
+                        borderRadius: '0 4px 4px 0', // Square Cyber-Minimalism: sm
+                        px: 2, // 16px - consistent with layout gaps
                         py: 1.25,
                         textAlign: 'left',
                         textTransform: 'none',
