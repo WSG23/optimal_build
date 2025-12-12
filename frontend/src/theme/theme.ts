@@ -138,13 +138,13 @@ function createAppTheme(mode: ThemeMode): Theme {
       },
     },
     shape: {
-      borderRadius: 6, // Matches --ob-radius-sm (0.375rem = 6px)
+      borderRadius: 4, // Square Cyber-Minimalism: --ob-radius-sm (4px)
     },
     components: {
       MuiButton: {
         styleOverrides: {
           root: {
-            borderRadius: radii.md,
+            borderRadius: radii.xs, // 2px - Square Cyber-Minimalism
             boxShadow: 'none',
             padding: `${spacing['075']} ${spacing['150']}`,
             '&:hover': {
@@ -169,7 +169,7 @@ function createAppTheme(mode: ThemeMode): Theme {
             backgroundImage: 'none',
             backgroundColor: modeColors.background.paper,
             border: `1px solid ${modeColors.divider}`,
-            borderRadius: radii.lg,
+            borderRadius: radii.sm, // 4px - Square Cyber-Minimalism
           },
         },
       },
@@ -243,7 +243,261 @@ function createAppTheme(mode: ThemeMode): Theme {
       MuiChip: {
         styleOverrides: {
           root: {
-            borderRadius: radii.md,
+            borderRadius: radii.xs, // 2px - Square Cyber-Minimalism (tags/chips)
+          },
+        },
+      },
+      // =========================================================================
+      // SQUARE CYBER-MINIMALISM: Enforce sharp geometry across ALL MUI components
+      // Radius scale: xs=2px (buttons/chips), sm=4px (cards/panels), md=6px (inputs), lg=8px (modals ONLY)
+      // =========================================================================
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+            borderRadius: radii.sm, // 4px - panels/cards
+          },
+          rounded: {
+            borderRadius: radii.sm, // 4px
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: radii.lg, // 8px - modals/dialogs get lg
+          },
+        },
+      },
+      MuiDialogTitle: {
+        styleOverrides: {
+          root: {
+            borderRadius: 0,
+          },
+        },
+      },
+      MuiMenu: {
+        styleOverrides: {
+          paper: {
+            borderRadius: radii.sm, // 4px
+          },
+        },
+      },
+      MuiPopover: {
+        styleOverrides: {
+          paper: {
+            borderRadius: radii.sm, // 4px
+          },
+        },
+      },
+      MuiAlert: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.sm, // 4px
+          },
+        },
+      },
+      MuiSnackbarContent: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.sm, // 4px
+          },
+        },
+      },
+      MuiTabs: {
+        styleOverrides: {
+          root: {
+            borderRadius: 0, // Tabs container - no radius
+          },
+        },
+      },
+      MuiTab: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.xs, // 2px - tab items
+          },
+        },
+      },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.xs, // 2px
+          },
+        },
+      },
+      MuiToggleButtonGroup: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.xs, // 2px
+          },
+        },
+      },
+      MuiAccordion: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.sm, // 4px
+            '&:first-of-type': {
+              borderTopLeftRadius: radii.sm,
+              borderTopRightRadius: radii.sm,
+            },
+            '&:last-of-type': {
+              borderBottomLeftRadius: radii.sm,
+              borderBottomRightRadius: radii.sm,
+            },
+          },
+        },
+      },
+      MuiSelect: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.md, // 6px - inputs
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.md, // 6px - inputs
+          },
+          notchedOutline: {
+            borderRadius: radii.md, // 6px
+          },
+        },
+      },
+      MuiFilledInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: `${radii.md} ${radii.md} 0 0`, // 6px top only
+          },
+        },
+      },
+      MuiInputBase: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.md, // 6px - inputs
+          },
+        },
+      },
+      MuiAutocomplete: {
+        styleOverrides: {
+          paper: {
+            borderRadius: radii.sm, // 4px - dropdown
+          },
+          inputRoot: {
+            borderRadius: radii.md, // 6px - input
+          },
+        },
+      },
+      MuiSlider: {
+        styleOverrides: {
+          thumb: {
+            borderRadius: radii.xs, // 2px - square thumb
+          },
+          track: {
+            borderRadius: radii.xs, // 2px
+          },
+          rail: {
+            borderRadius: radii.xs, // 2px
+          },
+        },
+      },
+      MuiSwitch: {
+        styleOverrides: {
+          track: {
+            borderRadius: radii.sm, // 4px - more square track
+          },
+        },
+      },
+      MuiAvatar: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.sm, // 4px - square avatars (use pill for circular)
+          },
+          circular: {
+            borderRadius: radii.pill, // Keep circular option
+          },
+        },
+      },
+      MuiBadge: {
+        styleOverrides: {
+          badge: {
+            borderRadius: radii.xs, // 2px
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.xs, // 2px
+          },
+        },
+      },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.xs, // 2px
+          },
+        },
+      },
+      MuiSkeleton: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.sm, // 4px
+          },
+          rectangular: {
+            borderRadius: radii.sm, // 4px
+          },
+        },
+      },
+      MuiLinearProgress: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.xs, // 2px
+          },
+          bar: {
+            borderRadius: radii.xs, // 2px
+          },
+        },
+      },
+      MuiFab: {
+        styleOverrides: {
+          root: {
+            borderRadius: radii.sm, // 4px - square FAB
+          },
+        },
+      },
+      MuiSpeedDial: {
+        styleOverrides: {
+          fab: {
+            borderRadius: radii.sm, // 4px
+          },
+        },
+      },
+      MuiImageListItemBar: {
+        styleOverrides: {
+          root: {
+            borderRadius: 0,
+          },
+        },
+      },
+      MuiBottomNavigation: {
+        styleOverrides: {
+          root: {
+            borderRadius: 0,
+          },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            borderRadius: 0,
+          },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 0, // Drawers - no radius
           },
         },
       },

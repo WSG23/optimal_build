@@ -52,12 +52,22 @@ module.exports = {
                     soft: withOpacityValue('--ob-color-error-soft-rgb'),
                 },
             },
+            /**
+             * Border Radius - Square Cyber-Minimalism Scale
+             * Sharp, geometric aesthetic for architect/designer appeal
+             */
             borderRadius: {
-                md: 'var(--ob-radius-md)',
-                lg: 'var(--ob-radius-lg)',
-                xl: 'var(--ob-radius-xl)',
-                '2xl': 'var(--ob-radius-2xl)',
-                pill: 'var(--ob-radius-pill)',
+                none: 'var(--ob-radius-none)',    // 0px - tables, data grids
+                xs: 'var(--ob-radius-xs)',        // 2px - buttons, tags, chips
+                sm: 'var(--ob-radius-sm)',        // 4px - cards, panels, tiles
+                DEFAULT: 'var(--ob-radius-sm)',   // 4px - default for rounded
+                md: 'var(--ob-radius-md)',        // 6px - inputs, selects
+                lg: 'var(--ob-radius-lg)',        // 8px - windows/modals ONLY
+                // DEPRECATED - kept for backward compatibility
+                xl: 'var(--ob-radius-lg)',        // Maps to lg (8px)
+                '2xl': 'var(--ob-radius-lg)',     // Maps to lg (8px)
+                full: 'var(--ob-radius-pill)',    // Avatars ONLY
+                pill: 'var(--ob-radius-pill)',    // Avatars ONLY
             },
             fontWeight: {
                 regular: 'var(--ob-font-weight-regular)',
