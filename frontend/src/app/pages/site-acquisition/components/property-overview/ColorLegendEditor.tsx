@@ -46,7 +46,7 @@ export function ColorLegendEditor({
       style={{
         marginTop: '1.25rem',
         border: '1px solid #e5e7eb',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '1.25rem',
         background: '#ffffff',
         display: 'flex',
@@ -104,7 +104,7 @@ export function ColorLegendEditor({
             key={entry.assetType}
             style={{
               border: '1px solid #e5e7eb',
-              borderRadius: '12px',
+              borderRadius: '4px',
               padding: '0.9rem',
               background: '#f9fafb',
               display: 'flex',
@@ -153,7 +153,7 @@ export function ColorLegendEditor({
                 }
                 style={{
                   padding: '0.4rem 0.55rem',
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d1d5db',
                   fontSize: '0.9rem',
                 }}
@@ -179,7 +179,7 @@ export function ColorLegendEditor({
                   resize: 'vertical',
                   minHeight: '56px',
                   padding: '0.4rem 0.55rem',
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d1d5db',
                   fontSize: '0.9rem',
                 }}

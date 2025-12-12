@@ -35,7 +35,7 @@ import { CompliancePathTimeline } from './components/CompliancePathTimeline'
 import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
 import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
 import { useRouterPath } from '../../../router'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import {
   getSectionHeaderSx,
@@ -225,9 +225,10 @@ export const RegulatoryDashboardPage: React.FC = () => {
         {/* Quick Actions */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={4}>
-            <GlassCard
+            <Card
+              variant="glass"
+              hover="lift"
               onClick={() => setChangeOfUseOpen(true)}
-              hoverEffect
               sx={{ p: 2, cursor: 'pointer' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -241,12 +242,13 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-            </GlassCard>
+            </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <GlassCard
+            <Card
+              variant="glass"
+              hover="lift"
               onClick={() => setHeritageFormOpen(true)}
-              hoverEffect
               sx={{ p: 2, cursor: 'pointer' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -260,12 +262,13 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-            </GlassCard>
+            </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <GlassCard
+            <Card
+              variant="glass"
+              hover="lift"
               onClick={() => setTabValue(1)}
-              hoverEffect
               sx={{ p: 2, cursor: 'pointer' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -279,7 +282,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-            </GlassCard>
+            </Card>
           </Grid>
         </Grid>
 
@@ -312,7 +315,8 @@ export const RegulatoryDashboardPage: React.FC = () => {
           <Grid container spacing={2} sx={{ mb: 4 }}>
             {AGENCIES_INFO.map((agency) => (
               <Grid item xs={12} sm={6} md={3} key={agency.code}>
-                <GlassCard
+                <Card
+                  variant="glass"
                   sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}
                 >
                   <AgencyIcon color="primary" fontSize="large" />
@@ -324,7 +328,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                       {agency.name}
                     </Typography>
                   </Box>
-                </GlassCard>
+                </Card>
               </Grid>
             ))}
           </Grid>
@@ -335,7 +339,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
               <CircularProgress />
             </Box>
           ) : (
-            <GlassCard sx={{ overflow: 'hidden' }}>
+            <Card variant="glass" sx={{ overflow: 'hidden' }}>
               <Box sx={{ p: 2, borderBottom: `1px solid ${borderColor}` }}>
                 <Typography variant="h6" sx={sectionHeaderSx}>
                   Active Submissions
@@ -421,7 +425,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </TableBody>
                 </Table>
               )}
-            </GlassCard>
+            </Card>
           )}
         </TabPanel>
 

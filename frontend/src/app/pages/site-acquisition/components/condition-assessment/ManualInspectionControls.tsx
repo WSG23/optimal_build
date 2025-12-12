@@ -45,7 +45,7 @@ export function ManualInspectionControls({
     <div
       style={{
         border: '1px solid #e5e5e7',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',

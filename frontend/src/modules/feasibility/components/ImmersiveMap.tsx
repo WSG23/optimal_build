@@ -118,7 +118,7 @@ export function ImmersiveMap({
               background: 'rgba(15, 23, 42, 0.85)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(6, 182, 212, 0.3)',
-              borderRadius: '24px',
+              borderRadius: '4px',
               padding: '48px 64px',
               display: 'flex',
               flexDirection: 'column',
@@ -193,7 +193,7 @@ export function ImmersiveMap({
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '12px',
+                  borderRadius: '6px',
                   color: 'white',
                   fontSize: '1rem',
                   '& fieldset': {
@@ -228,7 +228,7 @@ export function ImmersiveMap({
                     key={feature}
                     sx={{
                       padding: '6px 12px',
-                      borderRadius: '20px',
+                      borderRadius: '4px',
                       background: 'rgba(6, 182, 212, 0.1)',
                       border: '1px solid rgba(6, 182, 212, 0.2)',
                       color: 'rgba(6, 182, 212, 0.9)',

@@ -64,7 +64,7 @@ import {
 } from '@mui/material'
 import { Refresh } from '@mui/icons-material'
 import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 
 export function SiteAcquisitionPage() {
   const [jurisdictionCode, setJurisdictionCode] = useState('SG')
@@ -613,7 +613,7 @@ export function SiteAcquisitionPage() {
 
         <Container maxWidth="xl" sx={{ mt: 3 }}>
           {/* Property Capture Form */}
-          <GlassCard sx={{ p: 3, mb: 4 }}>
+          <Card variant="glass" sx={{ p: 3, mb: 4 }}>
             <PropertyCaptureForm
               jurisdictionCode={jurisdictionCode}
               setJurisdictionCode={setJurisdictionCode}
@@ -633,11 +633,11 @@ export function SiteAcquisitionPage() {
               onReverseGeocode={handleReverseGeocode}
               onToggleScenario={toggleScenario}
             />
-          </GlassCard>
+          </Card>
 
           {capturedProperty && (
             <Stack spacing={4}>
-              <GlassCard sx={{ p: 3 }}>
+              <Card variant="glass" sx={{ p: 3 }}>
                 <Typography variant="h5" fontWeight={600} gutterBottom>
                   Property Overview
                 </Typography>
@@ -772,10 +772,10 @@ export function SiteAcquisitionPage() {
                 <Box sx={{ mt: 2 }}>
                   <LayerBreakdownCards layers={layerBreakdown} />
                 </Box>
-              </GlassCard>
+              </Card>
 
               {scenarioFocusOptions.length > 0 && (
-                <GlassCard sx={{ p: 3 }}>
+                <Card variant="glass" sx={{ p: 3 }}>
                   <ScenarioFocusSection
                     scenarioFocusOptions={scenarioFocusOptions}
                     scenarioLookup={scenarioLookup}
@@ -793,12 +793,12 @@ export function SiteAcquisitionPage() {
                     onOpenInspectionHistory={() => setHistoryModalOpen(true)}
                     formatScenarioLabel={formatScenarioLabel}
                   />
-                </GlassCard>
+                </Card>
               )}
 
               <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
 
-              <GlassCard sx={{ p: 3 }}>
+              <Card variant="glass" sx={{ p: 3 }}>
                 <DueDiligenceChecklistSection
                   capturedProperty={capturedProperty}
                   checklistItems={checklistItems}
@@ -814,9 +814,9 @@ export function SiteAcquisitionPage() {
                   setSelectedCategory={setSelectedCategory}
                   handleChecklistUpdate={handleChecklistUpdate}
                 />
-              </GlassCard>
+              </Card>
 
-              <GlassCard sx={{ p: 3 }}>
+              <Card variant="glass" sx={{ p: 3 }}>
                 <MultiScenarioComparisonSection
                   capturedProperty={capturedProperty}
                   quickAnalysisScenariosCount={quickAnalysisScenarios.length}
@@ -832,9 +832,9 @@ export function SiteAcquisitionPage() {
                   handleReportExport={handleReportExport}
                   formatRecordedTimestamp={formatRecordedTimestamp}
                 />
-              </GlassCard>
+              </Card>
 
-              <GlassCard sx={{ p: 3 }}>
+              <Card variant="glass" sx={{ p: 3 }}>
                 <ConditionAssessmentSection
                   capturedProperty={capturedProperty}
                   conditionAssessment={conditionAssessment}
@@ -867,7 +867,7 @@ export function SiteAcquisitionPage() {
                     InlineInspectionHistorySummary
                   }
                 />
-              </GlassCard>
+              </Card>
             </Stack>
           )}
         </Container>

@@ -113,7 +113,7 @@ export function PhotoDocumentation({
       style={{
         background: '#fff',
         border: '1px solid #e5e7eb',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '1.5rem',
       }}
     >
@@ -169,7 +169,7 @@ export function PhotoDocumentation({
             onChange={(e) => setPhase(e.target.value as PropertyPhase)}
             style={{
               padding: '0.375rem 0.75rem',
-              borderRadius: '8px',
+              borderRadius: '6px',
               border: '1px solid #d1d5db',
               fontSize: '0.875rem',
               background: '#fff',
@@ -189,7 +189,7 @@ export function PhotoDocumentation({
             padding: '0.75rem 1rem',
             background: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: '#dc2626',
             fontSize: '0.875rem',
             marginBottom: '1rem',
@@ -206,7 +206,7 @@ export function PhotoDocumentation({
             padding: '0.75rem 1rem',
             background: '#fffbeb',
             border: '1px solid #fcd34d',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: '#92400e',
             fontSize: '0.875rem',
             marginBottom: '1rem',
@@ -236,7 +236,7 @@ export function PhotoDocumentation({
           marginTop: '1.5rem',
           padding: '1rem',
           background: '#f9fafb',
-          borderRadius: '8px',
+          borderRadius: '4px',
           border: '1px solid #e5e7eb',
         }}
       >

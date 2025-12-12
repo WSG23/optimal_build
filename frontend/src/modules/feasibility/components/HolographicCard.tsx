@@ -13,7 +13,7 @@ const CardButton = styled('button')<{ selected?: boolean }>(({ selected }) => ({
     ? 'linear-gradient(135deg, rgba(6,182,212,0.15) 0%, rgba(59,130,246,0.15) 100%)'
     : 'rgba(255, 255, 255, 0.03)',
   border: selected ? '1px solid #06b6d4' : '1px solid rgba(255, 255, 255, 0.1)',
-  borderRadius: '12px',
+  borderRadius: '4px',
   cursor: 'pointer',
   transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
   backdropFilter: 'blur(10px)',

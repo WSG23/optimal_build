@@ -67,7 +67,7 @@ export function MultiScenarioComparisonSection({
       style={{
         background: 'white',
         border: '1px solid #d2d2d7',
-        borderRadius: '18px',
+        borderRadius: '4px',
         padding: '2rem',
         marginBottom: '2rem',
       }}
@@ -89,7 +89,7 @@ export function MultiScenarioComparisonSection({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '12px',
+            borderRadius: '4px',
           }}
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
@@ -109,7 +109,7 @@ export function MultiScenarioComparisonSection({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '12px',
+            borderRadius: '4px',
           }}
         >
           <p style={{ margin: 0 }}>
@@ -149,7 +149,7 @@ export function MultiScenarioComparisonSection({
                   key={row.key}
                   style={{
                     border: `2px solid ${isActive ? '#1d1d1f' : '#e5e5e7'}`,
-                    borderRadius: '14px',
+                    borderRadius: '4px',
                     padding: '1.35rem',
                     background: isActive ? '#ffffff' : '#f5f5f7',
                     display: 'flex',
@@ -462,7 +462,7 @@ export function MultiScenarioComparisonSection({
                         border: `1px solid ${primaryVisuals.border}`,
                         background: primaryVisuals.background,
                         color: primaryVisuals.text,
-                        borderRadius: '12px',
+                        borderRadius: '4px',
                         padding: '1rem',
                         display: 'flex',
                         flexDirection: 'column',
@@ -533,7 +533,7 @@ export function MultiScenarioComparisonSection({
             <div
               style={{
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '4px',
                 padding: '1.5rem',
                 background: '#f8fafc',
                 display: 'flex',
@@ -665,7 +665,7 @@ export function MultiScenarioComparisonSection({
                     key={entry.scenario}
                     style={{
                       background: 'white',
-                      borderRadius: '10px',
+                      borderRadius: '4px',
                       border: '1px solid #e2e8f0',
                       padding: '1.1rem',
                       display: 'flex',
@@ -766,7 +766,7 @@ export function MultiScenarioComparisonSection({
               style={{
                 padding: '1.25rem',
                 background: '#f0f9ff',
-                borderRadius: '12px',
+                borderRadius: '4px',
                 border: '1px solid #bae6fd',
               }}
             >

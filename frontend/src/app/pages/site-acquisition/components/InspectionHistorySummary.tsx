@@ -51,7 +51,7 @@ export function InspectionHistorySummary({
     <div
       style={{
         border: '1px solid #e5e5e7',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -141,7 +141,7 @@ export function InspectionHistorySummary({
         <div
           style={{
             border: '1px solid #e5e5e7',
-            borderRadius: '10px',
+            borderRadius: '4px',
             padding: '1rem 1.1rem',
             background: '#f5f5f7',
             display: 'flex',

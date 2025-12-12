@@ -49,8 +49,8 @@ export function FeasibilityLayout({
       className="feasibility-split-layout"
       style={{
         position: 'relative',
-        width: '100vw',
-        height: '100vh', // Full viewport (minus header usually, handled by AppLayout)
+        width: '100%',
+        height: 'calc(100vh - 140px)', // Account for AppShell header
         overflow: 'hidden',
         display: 'flex',
       }}
@@ -88,7 +88,7 @@ export function FeasibilityLayout({
           display: 'flex',
           flexDirection: 'column',
           gap: '0',
-          borderRadius: '16px', // Rounded corners for floating feel
+          borderRadius: '4px', // Rounded corners for floating feel
           background: 'rgba(20, 20, 25, 0.65)', // Darker glass for "Command Center"
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
@@ -151,7 +151,7 @@ export function FeasibilityLayout({
         <Paper
           elevation={0}
           sx={{
-            borderRadius: '8px',
+            borderRadius: '4px',
             overflow: 'hidden',
             background: 'rgba(20, 20, 30, 0.7)',
             backdropFilter: 'blur(12px)',

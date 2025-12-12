@@ -52,7 +52,7 @@ export function FeasibilityInteractiveLayout({
           m: 3,
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: 4,
+          borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           bgcolor: alpha(theme.palette.background.paper, 0.65), // Semi-transparent
           backdropFilter: 'blur(20px)',

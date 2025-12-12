@@ -128,7 +128,7 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           top: '6px',
           width: `${width}px`,
           height: `${ROW_HEIGHT - 12}px`,
-          borderRadius: '12px',
+          borderRadius: '4px',
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           border: isSelected
@@ -563,7 +563,7 @@ export function GanttChart({
                   fontSize: '0.65rem',
                   fontWeight: 'bold',
                   padding: '2px 6px',
-                  borderRadius: '10px',
+                  borderRadius: '4px',
                   boxShadow: '0 0 10px #00f3ff',
                   whiteSpace: 'nowrap',
                 }}

@@ -91,7 +91,7 @@ export function FinanceAnalyticsPanel({
     <section
       style={{
         marginTop: '1.5rem',
-        borderRadius: '20px',
+        borderRadius: '4px',
         border: '1px solid #d1d5db',
         padding: '1.5rem',
         background: '#f9fafb',
@@ -127,7 +127,7 @@ export function FinanceAnalyticsPanel({
       >
         <article
           style={{
-            borderRadius: '16px',
+            borderRadius: '4px',
             border: '1px solid #d1d5db',
             padding: '1rem',
             background: '#fff',
@@ -148,7 +148,7 @@ export function FinanceAnalyticsPanel({
         </article>
         <article
           style={{
-            borderRadius: '16px',
+            borderRadius: '4px',
             border: '1px solid #d1d5db',
             padding: '1rem',
             background: '#fff',
@@ -169,7 +169,7 @@ export function FinanceAnalyticsPanel({
         </article>
         <article
           style={{
-            borderRadius: '16px',
+            borderRadius: '4px',
             border: '1px solid #d1d5db',
             padding: '1rem',
             background: '#fff',

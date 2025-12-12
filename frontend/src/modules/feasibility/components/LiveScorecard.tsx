@@ -69,7 +69,7 @@ export function LiveScorecard({
         background: 'rgba(15, 23, 42, 0.9)',
         backdropFilter: 'blur(16px)',
         border: '1px solid rgba(6, 182, 212, 0.2)',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '16px',
         minWidth: '200px',
         animation: 'slideInRight 0.4s ease-out',

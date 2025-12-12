@@ -30,7 +30,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
       style={{
         marginTop: '2rem',
         border: '1px solid #e5e7eb',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '1.5rem',
         background: '#ffffff',
         display: 'flex',
@@ -79,7 +79,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
             key={layer.id}
             style={{
               border: '1px solid #e5e7eb',
-              borderRadius: '12px',
+              borderRadius: '4px',
               padding: '1rem',
               display: 'flex',
               flexDirection: 'column',

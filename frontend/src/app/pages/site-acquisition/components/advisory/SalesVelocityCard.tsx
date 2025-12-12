@@ -58,7 +58,7 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
       style={{
         background: 'white',
         border: '1px solid #e5e7eb',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -188,7 +188,7 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
             border: '1px solid #fecdd3',
             color: '#b91c1c',
             padding: '0.9rem 1rem',
-            borderRadius: '10px',
+            borderRadius: '4px',
             fontSize: '0.95rem',
           }}
         >
@@ -360,7 +360,7 @@ function InputField({
         style={{
           width: '100%',
           padding: '0.75rem',
-          borderRadius: '10px',
+          borderRadius: '6px',
           border: '1px solid #d2d2d7',
         }}
       />
@@ -393,7 +393,7 @@ function SelectField({
         style={{
           width: '100%',
           padding: '0.75rem',
-          borderRadius: '10px',
+          borderRadius: '6px',
           border: '1px solid #d2d2d7',
           background: readOnly ? '#f9fafb' : 'white',
         }}
@@ -413,7 +413,7 @@ type StatCardProps = { label: string; value: string }
 function StatCard({ label, value }: StatCardProps) {
   return (
     <div
-      style={{ padding: '1rem', background: '#f5f5f7', borderRadius: '12px' }}
+      style={{ padding: '1rem', background: '#f5f5f7', borderRadius: '4px' }}
     >
       <div
         style={{
@@ -444,7 +444,7 @@ function Benchmark({ label, value, suffix }: BenchmarkProps) {
         : String(value)
   return (
     <div
-      style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '10px' }}
+      style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '4px' }}
     >
       <div style={{ fontSize: '0.85rem', color: '#6e6e73' }}>{label}</div>
       <div style={{ fontWeight: 600 }}>{display}</div>

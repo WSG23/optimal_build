@@ -45,7 +45,7 @@ export function PropertyOverviewSection({
           key={`${card.title}-${index}`}
           style={{
             border: '1px solid #e5e7eb',
-            borderRadius: '16px',
+            borderRadius: '4px',
             padding: '1.25rem',
             background: '#f9fafb',
             display: 'flex',

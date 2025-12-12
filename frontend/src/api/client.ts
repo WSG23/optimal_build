@@ -340,7 +340,6 @@ export class ApiClient {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   public async get<T>(
     path: string,
     config?: RequestInit & { params?: Record<string, string> },
@@ -358,7 +357,6 @@ export class ApiClient {
     return { data }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   public async post<T>(
     path: string,
     body?: unknown,
@@ -382,7 +380,6 @@ export class ApiClient {
     return { data }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   public async delete<T>(
     path: string,
     config?: RequestInit & { params?: Record<string, string> },

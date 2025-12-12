@@ -73,7 +73,7 @@ export function QuickAnalysisHistoryModal({
         onClick={(event) => event.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: '8px',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '85vh',
@@ -131,7 +131,7 @@ export function QuickAnalysisHistoryModal({
                 key={`${snapshot.propertyId}-${snapshot.generatedAt}`}
                 style={{
                   border: '1px solid #e5e7eb',
-                  borderRadius: '14px',
+                  borderRadius: '4px',
                   padding: '1.5rem',
                   display: 'flex',
                   flexDirection: 'column',
@@ -185,7 +185,7 @@ export function QuickAnalysisHistoryModal({
                         key={`${snapshot.generatedAt}-${scenarioKey}`}
                         style={{
                           border: '1px solid #e5e7eb',
-                          borderRadius: '12px',
+                          borderRadius: '4px',
                           padding: '1rem',
                           background: 'white',
                           display: 'flex',

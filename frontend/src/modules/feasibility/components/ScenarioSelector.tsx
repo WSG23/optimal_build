@@ -54,7 +54,7 @@ export function ScenarioSelector({ value, onChange }: ScenarioSelectorProps) {
                 ? 'rgba(255, 255, 255, 0.1)'
                 : 'rgba(255, 255, 255, 0.03)',
               border: `1px solid ${isSelected ? option.color : 'rgba(255, 255, 255, 0.1)'}`,
-              borderRadius: '12px',
+              borderRadius: '4px',
               padding: '16px',
               display: 'flex',
               flexDirection: 'column',

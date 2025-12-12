@@ -125,9 +125,7 @@ export function AIAssistantSidebar({
                   style={{
                     maxWidth: '85%',
                     padding: '12px 16px',
-                    borderRadius: isBot
-                      ? '12px 12px 12px 2px'
-                      : '12px 12px 2px 12px',
+                    borderRadius: isBot ? '4px 4px 4px 2px' : '4px 4px 2px 4px',
                     background: isBot
                       ? 'white'
                       : 'var(--ob-color-brand-primary)',
@@ -148,7 +146,7 @@ export function AIAssistantSidebar({
               <div
                 style={{
                   padding: '12px 16px',
-                  borderRadius: '12px 12px 12px 2px',
+                  borderRadius: '4px 4px 4px 2px',
                   background: 'white',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                 }}
@@ -222,7 +220,7 @@ export function AIAssistantSidebar({
                   <Send />
                 </IconButton>
               ),
-              sx: { borderRadius: '24px' },
+              sx: { borderRadius: '6px' },
             }}
           />
         </div>

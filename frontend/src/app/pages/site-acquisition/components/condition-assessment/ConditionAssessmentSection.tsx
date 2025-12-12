@@ -144,7 +144,7 @@ export function ConditionAssessmentSection({
       style={{
         background: 'white',
         border: '1px solid #d2d2d7',
-        borderRadius: '18px',
+        borderRadius: '4px',
         padding: '2rem',
       }}
     >
@@ -165,7 +165,7 @@ export function ConditionAssessmentSection({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '12px',
+            borderRadius: '4px',
           }}
         >
           <p style={{ margin: 0 }}>Analysing building condition...</p>
@@ -177,7 +177,7 @@ export function ConditionAssessmentSection({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '12px',
+            borderRadius: '4px',
           }}
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
@@ -200,7 +200,7 @@ export function ConditionAssessmentSection({
               'offline-property'
                 ? '#f5f5f7'
                 : '#fff7ed',
-            borderRadius: '12px',
+            borderRadius: '4px',
             border:
               (capturedProperty as { propertyId?: string })?.propertyId ===
               'offline-property'
@@ -253,7 +253,7 @@ export function ConditionAssessmentSection({
               style={{
                 flex: '1 1 280px',
                 background: '#f5f5f7',
-                borderRadius: '12px',
+                borderRadius: '4px',
                 padding: '1.5rem',
               }}
             >
@@ -287,7 +287,7 @@ export function ConditionAssessmentSection({
             <div
               style={{
                 border: '1px solid #e5e5e7',
-                borderRadius: '12px',
+                borderRadius: '4px',
                 padding: '1.5rem',
                 background: '#f8fafc',
                 display: 'flex',
@@ -421,7 +421,7 @@ export function ConditionAssessmentSection({
           <div
             style={{
               border: '1px solid #e5e5e7',
-              borderRadius: '12px',
+              borderRadius: '4px',
               padding: '1.5rem',
               display: 'flex',
               flexDirection: 'column',
@@ -508,7 +508,7 @@ export function ConditionAssessmentSection({
                           )
                         }
                         style={{
-                          borderRadius: '8px',
+                          borderRadius: '6px',
                           border: '1px solid #d2d2d7',
                           padding: '0.4rem 0.6rem',
                           fontSize: '0.85rem',
@@ -544,7 +544,7 @@ export function ConditionAssessmentSection({
                   textAlign: 'center',
                   color: '#6e6e73',
                   background: '#f5f5f7',
-                  borderRadius: '10px',
+                  borderRadius: '4px',
                 }}
               >
                 <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -558,7 +558,7 @@ export function ConditionAssessmentSection({
                   textAlign: 'center',
                   color: '#6e6e73',
                   background: '#f5f5f7',
-                  borderRadius: '10px',
+                  borderRadius: '4px',
                 }}
               >
                 <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -654,7 +654,7 @@ export function ConditionAssessmentSection({
                   <div
                     style={{
                       border: '1px solid #d2d2d7',
-                      borderRadius: '12px',
+                      borderRadius: '4px',
                       padding: '1.25rem',
                       background: '#f5f5f7',
                       display: 'flex',
@@ -742,7 +742,7 @@ export function ConditionAssessmentSection({
                     style={{
                       padding: '1.25rem',
                       border: '1px solid #d2d2d7',
-                      borderRadius: '12px',
+                      borderRadius: '4px',
                       background: '#ffffff',
                       color: '#6e6e73',
                       fontSize: '0.9rem',

@@ -177,7 +177,7 @@ export function PropertyCaptureForm({
       style={{
         background: 'white',
         border: '1px solid #d2d2d7',
-        borderRadius: '18px',
+        borderRadius: '4px',
         padding: '2rem',
         marginBottom: '2rem',
       }}
@@ -227,7 +227,7 @@ export function PropertyCaptureForm({
               padding: '0.875rem 1rem',
               fontSize: '1rem',
               border: '1px solid #d2d2d7',
-              borderRadius: '12px',
+              borderRadius: '6px',
               outline: 'none',
               background: 'white',
               cursor: 'pointer',
@@ -268,7 +268,7 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 outline: 'none',
                 transition: 'all 0.2s ease',
               }}
@@ -292,7 +292,7 @@ export function PropertyCaptureForm({
                 fontWeight: 500,
                 background: '#f5f5f7',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 whiteSpace: 'nowrap',
@@ -310,7 +310,7 @@ export function PropertyCaptureForm({
                 fontWeight: 500,
                 background: '#f5f5f7',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 whiteSpace: 'nowrap',
@@ -364,7 +364,7 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 outline: 'none',
                 fontFamily:
                   'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
@@ -405,7 +405,7 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 outline: 'none',
                 fontFamily:
                   'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
@@ -482,7 +482,7 @@ export function PropertyCaptureForm({
                 style={{
                   background: isSelected ? '#f5f5f7' : 'white',
                   border: `1px solid ${isSelected ? '#1d1d1f' : '#d2d2d7'}`,
-                  borderRadius: '12px',
+                  borderRadius: '4px',
                   padding: '1.25rem',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -569,7 +569,7 @@ export function PropertyCaptureForm({
                 ? '#d2d2d7'
                 : '#1d1d1f',
             border: 'none',
-            borderRadius: '12px',
+            borderRadius: '6px',
             cursor:
               isCapturing || selectedScenarios.length === 0
                 ? 'not-allowed'
@@ -599,7 +599,7 @@ export function PropertyCaptureForm({
               padding: '1rem',
               background: '#fff5f5',
               border: '1px solid #fed7d7',
-              borderRadius: '12px',
+              borderRadius: '4px',
               color: '#c53030',
               fontSize: '0.9375rem',
             }}
@@ -616,7 +616,7 @@ export function PropertyCaptureForm({
               padding: '1rem',
               background: '#f0fdf4',
               border: '1px solid #bbf7d0',
-              borderRadius: '12px',
+              borderRadius: '4px',
               color: '#15803d',
               fontSize: '0.9375rem',
             }}

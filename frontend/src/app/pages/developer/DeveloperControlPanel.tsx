@@ -16,7 +16,7 @@ import {
 import { FeatureTogglePanel } from '../../components/gps-capture/FeatureTogglePanel'
 import { useFeaturePreferences } from '../../../hooks/useFeaturePreferences'
 import { useRouterController } from '../../../router'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 
 export function DeveloperControlPanel() {
@@ -41,7 +41,7 @@ export function DeveloperControlPanel() {
       <Grid container spacing={4} sx={{ mt: 2 }}>
         {/* Feature Flags Section */}
         <Grid item xs={12} md={6}>
-          <GlassCard>
+          <Card variant="glass">
             <Box sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <ScienceIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -55,12 +55,12 @@ export function DeveloperControlPanel() {
                 onUnlock={unlockFeature}
               />
             </Box>
-          </GlassCard>
+          </Card>
         </Grid>
 
         {/* Tools Section */}
         <Grid item xs={12} md={6}>
-          <GlassCard>
+          <Card variant="glass">
             <Box sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <ViewInArIcon sx={{ mr: 1, color: 'secondary.main' }} />
@@ -88,10 +88,10 @@ export function DeveloperControlPanel() {
                 </Button>
               </Box>
             </Box>
-          </GlassCard>
+          </Card>
 
           <Box sx={{ mt: 3 }}>
-            <GlassCard>
+            <Card variant="glass">
               <Box sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <BugReportIcon sx={{ mr: 1, color: 'error.main' }} />
@@ -106,7 +106,7 @@ export function DeveloperControlPanel() {
                   User Role: Developer (Simulated)
                 </Typography>
               </Box>
-            </GlassCard>
+            </Card>
           </Box>
         </Grid>
       </Grid>

@@ -105,7 +105,7 @@ export function InspectionHistoryModal({
         onClick={(event) => event.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: '8px',
           width: 'min(1200px, 95vw)',
           maxHeight: '85vh',
           overflowY: 'auto',

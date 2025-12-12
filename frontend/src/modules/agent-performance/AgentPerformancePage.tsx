@@ -24,8 +24,8 @@ import {
   formatShortCurrency,
 } from './utils/formatters'
 import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
-import { HeroMetric } from '../../components/canonical/HeroMetric'
-import { GlassCard } from '../../components/canonical/GlassCard'
+import { MetricTile } from '../../components/canonical/MetricTile'
+import { Card } from '../../components/canonical/Card'
 import { AttachMoney, TrendingUp, Speed, Assignment } from '@mui/icons-material'
 
 export default function AgentPerformancePage() {
@@ -103,7 +103,7 @@ export default function AgentPerformancePage() {
         <Grid container spacing={3}>
           {/* Kanban Section */}
           <Grid item xs={12} lg={8}>
-            <GlassCard sx={{ p: 2, height: '100%', minHeight: 400 }}>
+            <Card variant="glass" sx={{ p: 2, height: '100%', minHeight: 400 }}>
               <Stack
                 direction="row"
                 spacing={2}
@@ -139,7 +139,7 @@ export default function AgentPerformancePage() {
                           sx={{
                             background: 'rgba(0,0,0,0.05)',
                             px: 1,
-                            borderRadius: 1,
+                            borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
                           }}
                         >
                           {items.length}
@@ -148,7 +148,8 @@ export default function AgentPerformancePage() {
 
                       <Stack spacing={1}>
                         {items.map((deal) => (
-                          <GlassCard
+                          <Card
+                            variant="glass"
                             key={deal.id}
                             hoverEffect
                             sx={{
@@ -180,14 +181,14 @@ export default function AgentPerformancePage() {
                                   )
                                 : '-'}
                             </Typography>
-                          </GlassCard>
+                          </Card>
                         ))}
                       </Stack>
                     </Box>
                   )
                 })}
               </Stack>
-            </GlassCard>
+            </Card>
           </Grid>
 
           {/* Timeline Sidebar */}
@@ -261,7 +262,7 @@ export default function AgentPerformancePage() {
                     },
                   ].map((metric, idx) => (
                     <Grid item xs={12} sm={6} md={3} key={idx}>
-                      <HeroMetric
+                      <MetricTile
                         label={metric.label as string}
                         value={metric.value as string}
                         icon={metric.icon}
@@ -275,7 +276,7 @@ export default function AgentPerformancePage() {
               {trendData.length > 0 && (
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
-                    <GlassCard sx={{ p: 2, height: 320 }}>
+                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
                       <Typography variant="h6" gutterBottom>
                         {t('agentPerformance.analytics.trend.pipelineHeading')}
                       </Typography>
@@ -329,10 +330,10 @@ export default function AgentPerformancePage() {
                           />
                         </AreaChart>
                       </ResponsiveContainer>
-                    </GlassCard>
+                    </Card>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <GlassCard sx={{ p: 2, height: 320 }}>
+                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
                       <Typography variant="h6" gutterBottom>
                         {t(
                           'agentPerformance.analytics.trend.conversionHeading',
@@ -365,7 +366,7 @@ export default function AgentPerformancePage() {
                           />
                         </LineChart>
                       </ResponsiveContainer>
-                    </GlassCard>
+                    </Card>
                   </Grid>
                 </Grid>
               )}

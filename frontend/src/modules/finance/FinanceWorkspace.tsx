@@ -56,7 +56,7 @@ import { Refresh, Download, Warning } from '@mui/icons-material'
 
 // Canonical Components
 import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
-import { GlassCard } from '../../components/canonical/GlassCard'
+import { Card } from '../../components/canonical/Card'
 
 // Align with seeded Phase 2B finance demo data (see backend/scripts/seed_finance_demo.py)
 const FINANCE_PROJECT_ID = '401'
@@ -745,7 +745,7 @@ export function FinanceWorkspace() {
             <Typography variant="h6" gutterBottom>
               Project Selection
             </Typography>
-            <GlassCard sx={{ p: 3 }}>
+            <Card variant="glass" sx={{ p: 3 }}>
               <FinanceProjectSelector
                 selectedProjectId={effectiveProjectId}
                 selectedProjectName={effectiveProjectName ?? null}
@@ -753,7 +753,7 @@ export function FinanceWorkspace() {
                 onProjectChange={handleProjectChange}
                 onRefresh={refreshCapturedProjects}
               />
-            </GlassCard>
+            </Card>
           </Box>
 
           {!hasAccess ? (
@@ -771,11 +771,12 @@ export function FinanceWorkspace() {
               )}
 
               {loading && (
-                <GlassCard
+                <Card
+                  variant="glass"
                   sx={{ p: 4, display: 'flex', justifyContent: 'center' }}
                 >
                   <CircularProgress />
-                </GlassCard>
+                </Card>
               )}
 
               {scenarioError && (
@@ -820,11 +821,11 @@ export function FinanceWorkspace() {
               ) : null}
 
               {showEmptyState && (
-                <GlassCard sx={{ p: 6, textAlign: 'center' }}>
+                <Card variant="glass" sx={{ p: 6, textAlign: 'center' }}>
                   <Typography variant="h5" gutterBottom>
                     {t('finance.table.empty')}
                   </Typography>
-                </GlassCard>
+                </Card>
               )}
 
               {primaryScenario?.scenarioId === 0 && (
@@ -840,7 +841,7 @@ export function FinanceWorkspace() {
               {scenarios.length > 0 && (
                 <Stack spacing={4}>
                   {/* Scenario Management */}
-                  <GlassCard sx={{ p: 3 }}>
+                  <Card variant="glass" sx={{ p: 3 }}>
                     <Typography variant="h5" fontWeight={600} gutterBottom>
                       Scenarios
                     </Typography>
@@ -851,7 +852,7 @@ export function FinanceWorkspace() {
                       onDeleteScenario={handleRequestDeleteScenario}
                       deletingScenarioId={deletingScenarioId}
                     />
-                  </GlassCard>
+                  </Card>
 
                   {/* Reports Tabs */}
                   <Box>
@@ -870,7 +871,7 @@ export function FinanceWorkspace() {
                       <Tab label="Sensitivity" />
                     </Tabs>
 
-                    <GlassCard sx={{ p: 3, minHeight: 400 }}>
+                    <Card variant="glass" sx={{ p: 3, minHeight: 400 }}>
                       <div role="tabpanel" hidden={activeTab !== 0}>
                         {activeTab === 0 && (
                           <FinanceCapitalStack scenarios={scenarios} />
@@ -967,7 +968,7 @@ export function FinanceWorkspace() {
                           </Box>
                         )}
                       </div>
-                    </GlassCard>
+                    </Card>
                   </Box>
                 </Stack>
               )}

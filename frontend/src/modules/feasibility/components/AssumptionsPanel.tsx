@@ -136,7 +136,7 @@ export function AssumptionsPanel({
                       padding: '10px 12px',
                       background: 'rgba(255, 255, 255, 0.05)',
                       border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '8px',
+                      borderRadius: '6px',
                       color: 'white',
                       fontSize: '0.9rem',
                       outline: 'none',

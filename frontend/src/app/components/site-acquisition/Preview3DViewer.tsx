@@ -370,7 +370,7 @@ export function Preview3DViewer({
       <div
         style={{
           border: '1px dashed #d1d5db',
-          borderRadius: '12px',
+          borderRadius: '4px',
           padding: '1.5rem',
           textAlign: 'center',
           background: '#f9fafb',
@@ -388,7 +388,7 @@ export function Preview3DViewer({
     <div
       style={{
         border: '1px solid #e5e7eb',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1rem',
         background: '#ffffff',
       }}
@@ -398,7 +398,7 @@ export function Preview3DViewer({
         style={{
           width: '100%',
           height: `${FALLBACK_HEIGHT}px`,
-          borderRadius: '8px',
+          borderRadius: '4px',
           overflow: 'hidden',
         }}
       />
@@ -441,7 +441,7 @@ export function Preview3DViewer({
             style={{
               width: '64px',
               height: '64px',
-              borderRadius: '8px',
+              borderRadius: '4px',
               objectFit: 'cover',
             }}
           />

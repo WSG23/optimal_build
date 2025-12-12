@@ -161,7 +161,7 @@ export function CadPipelinesPage() {
             backgroundColor: 'rgba(30, 30, 30, 0.6)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.05)',
-            borderRadius: '12px',
+            borderRadius: '4px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -298,7 +298,7 @@ export function CadPipelinesPage() {
               elevation={0}
               sx={{
                 p: 6,
-                borderRadius: '16px',
+                borderRadius: '4px',
                 backgroundColor: 'rgba(30, 30, 30, 0.3)',
                 border: '1px dashed rgba(255,255,255,0.1)',
                 display: 'flex',
@@ -399,7 +399,7 @@ export function CadPipelinesPage() {
                   key={suggestion.id}
                   sx={{
                     p: 3,
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     backgroundColor: '#1E1E1E',
                     border: '1px solid rgba(255,255,255,0.08)',
                     transition: 'all 0.2s',

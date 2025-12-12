@@ -328,7 +328,7 @@ export function VoiceNoteRecorder({
     <div
       style={{
         background: '#f9fafb',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.25rem',
         marginTop: '1.5rem',
       }}
@@ -369,7 +369,7 @@ export function VoiceNoteRecorder({
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.75rem 1.25rem',
-              borderRadius: '8px',
+              borderRadius: '4px',
               border: 'none',
               background: canRecord ? '#dc2626' : '#d1d5db',
               color: 'white',
@@ -399,7 +399,7 @@ export function VoiceNoteRecorder({
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 border: '1px solid #d1d5db',
                 background: 'white',
                 color: '#374151',
@@ -419,7 +419,7 @@ export function VoiceNoteRecorder({
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 border: 'none',
                 background: '#1d1d1f',
                 color: 'white',
@@ -490,7 +490,7 @@ export function VoiceNoteRecorder({
             padding: '0.75rem',
             background: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: '#dc2626',
             fontSize: '0.875rem',
             marginBottom: '1rem',
@@ -527,7 +527,7 @@ export function VoiceNoteRecorder({
                   padding: '0.75rem',
                   background: 'white',
                   border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                 }}
               >
                 {/* Play button / Audio element */}

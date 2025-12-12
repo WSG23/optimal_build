@@ -35,8 +35,8 @@ interface AnalyticsPanelProps {
   benchmarks: BenchmarkEntry[]
 }
 
-import { HeroMetric } from '../../../../components/canonical/HeroMetric'
-import { GlassCard } from '../../../../components/canonical/GlassCard'
+import { MetricTile } from '../../../../components/canonical/MetricTile'
+import { Card } from '../../../../components/canonical/Card'
 
 // ... existing imports ... (Assuming they are preserved or I need to handle them carefully if I'm replacing a chunk)
 
@@ -67,7 +67,7 @@ export function AnalyticsPanel({
       >
         {metrics.map((metric, index) => (
           <Grid item xs={12} sm={6} md={4} key={metric.key}>
-            <HeroMetric
+            <MetricTile
               label={metric.label}
               value={metric.value}
               variant="glass"
@@ -89,7 +89,8 @@ export function AnalyticsPanel({
             Gross & weighted pipeline vs conversion + cycle time
           </Typography>
         </Stack>
-        <GlassCard
+        <Card
+          variant="glass"
           className="bp-analytics__chart"
           sx={{ height: 300, position: 'relative', p: 2 }}
         >
@@ -160,7 +161,7 @@ export function AnalyticsPanel({
                   formatter={formatTooltipValue}
                   labelStyle={{ fontWeight: 600, color: '#111827' }}
                   contentStyle={{
-                    borderRadius: 8,
+                    borderRadius: 4, // Square Cyber-Minimalism: sm for tooltips
                     border: 'none',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   }}
@@ -222,7 +223,7 @@ export function AnalyticsPanel({
               </ComposedChart>
             </ResponsiveContainer>
           )}
-        </GlassCard>
+        </Card>
       </Box>
 
       <Divider sx={{ my: 2 }} />

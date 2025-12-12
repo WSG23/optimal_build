@@ -182,7 +182,7 @@ export function AdvancedIntelligencePage({
                       alignItems: 'center',
                       justifyContent: 'center',
                       border: '1px dashed grey',
-                      borderRadius: 4,
+                      borderRadius: '4px', // Square Cyber-Minimalism: sm
                     }}
                   >
                     <Typography color="text.secondary">
@@ -204,7 +204,7 @@ export function AdvancedIntelligencePage({
                 <Box
                   sx={{
                     p: 3,
-                    borderRadius: 4,
+                    borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
                     bgcolor: alpha(theme.palette.background.paper, 0.4),
                     backdropFilter: 'blur(10px)',
                     border: '1px solid',

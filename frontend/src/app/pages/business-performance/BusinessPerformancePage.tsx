@@ -30,8 +30,8 @@ import { PipelineBoard } from './components/PipelineBoard'
 import { DealInsightsPanel } from './components/DealInsightsPanel'
 import { AnalyticsPanel } from './components/AnalyticsPanel'
 import { RoiPanel } from './components/RoiPanel'
-import { HeroMetric } from '../../../components/canonical/HeroMetric'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { MetricTile } from '../../../components/canonical/MetricTile'
+import { Card } from '../../../components/canonical/Card'
 import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import type {
   AnalyticsMetric,
@@ -376,34 +376,29 @@ export function BusinessPerformancePage() {
 
       <Grid container spacing={3} className="bp-page__summary" sx={{ mb: 4 }}>
         <Grid item xs={12} md={4}>
-          <HeroMetric
+          <MetricTile
             label="Last Snapshot"
             value={analyticsLoading ? '-' : lastSnapshot}
             icon={<AccessTime fontSize="small" />}
-            variant="glass"
-            delay={100}
+            variant="default"
           />
         </Grid>
         <Grid item xs={12} md={4}>
-          <HeroMetric
+          <MetricTile
             label="Open Pipeline Value"
             value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
             unit="SGD"
             icon={<AttachMoney fontSize="small" />}
             variant="primary"
-            delay={200}
-            trend={
-              !pipelineLoading ? { value: 12, direction: 'up' } : undefined
-            }
+            trend={!pipelineLoading ? '+12%' : undefined}
           />
         </Grid>
         <Grid item xs={12} md={4}>
-          <HeroMetric
+          <MetricTile
             label="ROI Projects Tracked"
             value={analyticsLoading ? '-' : roiSummary.projectCount}
             icon={<Assessment fontSize="small" />}
-            variant="glass"
-            delay={300}
+            variant="default"
           />
         </Grid>
       </Grid>
@@ -433,7 +428,8 @@ export function BusinessPerformancePage() {
 
       <Grid container spacing={3} className="bp-page__layout">
         <Grid item xs={12} lg={8} className="bp-page__pipeline">
-          <GlassCard
+          <Card
+            variant="glass"
             className="bp-pipeline-wrapper"
             sx={{ height: '100%', p: 2 }}
           >
@@ -453,7 +449,7 @@ export function BusinessPerformancePage() {
                 movingDealId={movingDealId}
               />
             )}
-          </GlassCard>
+          </Card>
         </Grid>
         <Grid item xs={12} lg={4} className="bp-page__sidebar">
           <Stack spacing={3}>

@@ -196,7 +196,7 @@ export function CadDetectionPreview({
         sx={{
           position: 'relative',
           width: '100%',
-          borderRadius: '24px',
+          borderRadius: '4px',
           overflow: 'hidden',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           background: '#09090b',
@@ -438,7 +438,7 @@ export function CadDetectionPreview({
         {/* Unit Table */}
         <Paper
           variant="outlined"
-          sx={{ p: 0, overflow: 'hidden', borderRadius: '12px' }}
+          sx={{ p: 0, overflow: 'hidden', borderRadius: '4px' }}
         >
           <table
             className="cad-preview__table"
@@ -655,7 +655,7 @@ export function CadDetectionPreview({
         {/* Advisory / Hints Panel */}
         <Paper
           variant="outlined"
-          sx={{ p: 3, borderRadius: '12px', height: 'fit-content' }}
+          sx={{ p: 3, borderRadius: '4px', height: 'fit-content' }}
         >
           <Typography variant="h6" gutterBottom>
             {t('detection.advisory')}

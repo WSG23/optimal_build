@@ -70,7 +70,7 @@ export function ScenarioFocusSection({
       style={{
         background: '#f5f5f7',
         border: '1px solid #e5e5e7',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '1.5rem',
         marginBottom: '2rem',
       }}

@@ -100,7 +100,7 @@ export function ConditionAssessmentEditor({
         onClick={(event) => event.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: '4px',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '85vh',
@@ -254,7 +254,7 @@ export function ConditionAssessmentEditor({
                   )
                 }
                 style={{
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d2d2d7',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
@@ -282,7 +282,7 @@ export function ConditionAssessmentEditor({
                 value={draft.overallRating}
                 onChange={(e) => onFieldChange('overallRating', e.target.value)}
                 style={{
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d2d2d7',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
@@ -312,7 +312,7 @@ export function ConditionAssessmentEditor({
                 value={draft.overallScore}
                 onChange={(e) => onFieldChange('overallScore', e.target.value)}
                 style={{
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d2d2d7',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
@@ -333,7 +333,7 @@ export function ConditionAssessmentEditor({
                 value={draft.riskLevel}
                 onChange={(e) => onFieldChange('riskLevel', e.target.value)}
                 style={{
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d2d2d7',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
@@ -362,7 +362,7 @@ export function ConditionAssessmentEditor({
                 onChange={(e) => onFieldChange('inspectorName', e.target.value)}
                 placeholder="e.g. Jane Tan"
                 style={{
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d2d2d7',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
@@ -386,7 +386,7 @@ export function ConditionAssessmentEditor({
                   onFieldChange('recordedAtLocal', e.target.value)
                 }
                 style={{
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   border: '1px solid #d2d2d7',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
@@ -406,7 +406,7 @@ export function ConditionAssessmentEditor({
               onChange={(e) => onFieldChange('summary', e.target.value)}
               rows={3}
               style={{
-                borderRadius: '8px',
+                borderRadius: '6px',
                 border: '1px solid #d2d2d7',
                 padding: '0.75rem',
                 fontSize: '0.9rem',
@@ -425,7 +425,7 @@ export function ConditionAssessmentEditor({
               onChange={(e) => onFieldChange('scenarioContext', e.target.value)}
               rows={2}
               style={{
-                borderRadius: '8px',
+                borderRadius: '6px',
                 border: '1px solid #d2d2d7',
                 padding: '0.75rem',
                 fontSize: '0.9rem',
@@ -445,7 +445,7 @@ export function ConditionAssessmentEditor({
               rows={3}
               placeholder="Site photo | https://example.com/photo.jpg"
               style={{
-                borderRadius: '8px',
+                borderRadius: '6px',
                 border: '1px solid #d2d2d7',
                 padding: '0.75rem',
                 fontSize: '0.9rem',
@@ -459,7 +459,7 @@ export function ConditionAssessmentEditor({
                 key={`${system.name}-${index}`}
                 style={{
                   border: '1px solid #e5e5e7',
-                  borderRadius: '12px',
+                  borderRadius: '4px',
                   padding: '1rem',
                   display: 'grid',
                   gap: '0.75rem',
@@ -491,7 +491,7 @@ export function ConditionAssessmentEditor({
                         onSystemChange(index, 'name', e.target.value)
                       }
                       style={{
-                        borderRadius: '8px',
+                        borderRadius: '6px',
                         border: '1px solid #d2d2d7',
                         padding: '0.55rem 0.75rem',
                         fontSize: '0.9rem',
@@ -519,7 +519,7 @@ export function ConditionAssessmentEditor({
                           onSystemChange(index, 'rating', e.target.value)
                         }
                         style={{
-                          borderRadius: '8px',
+                          borderRadius: '6px',
                           border: '1px solid #d2d2d7',
                           padding: '0.55rem 0.75rem',
                           fontSize: '0.9rem',
@@ -546,7 +546,7 @@ export function ConditionAssessmentEditor({
                           onSystemChange(index, 'score', e.target.value)
                         }
                         style={{
-                          borderRadius: '8px',
+                          borderRadius: '6px',
                           border: '1px solid #d2d2d7',
                           padding: '0.55rem 0.75rem',
                           fontSize: '0.9rem',
@@ -574,7 +574,7 @@ export function ConditionAssessmentEditor({
                     }
                     rows={2}
                     style={{
-                      borderRadius: '8px',
+                      borderRadius: '6px',
                       border: '1px solid #d2d2d7',
                       padding: '0.7rem',
                       fontSize: '0.9rem',
@@ -603,7 +603,7 @@ export function ConditionAssessmentEditor({
                     }
                     rows={2}
                     style={{
-                      borderRadius: '8px',
+                      borderRadius: '6px',
                       border: '1px solid #d2d2d7',
                       padding: '0.7rem',
                       fontSize: '0.9rem',
@@ -627,7 +627,7 @@ export function ConditionAssessmentEditor({
               }
               rows={3}
               style={{
-                borderRadius: '8px',
+                borderRadius: '6px',
                 border: '1px solid #d2d2d7',
                 padding: '0.75rem',
                 fontSize: '0.9rem',

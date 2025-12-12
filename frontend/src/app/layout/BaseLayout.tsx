@@ -22,7 +22,7 @@ export function BaseLayout({ children }: { children: ReactNode }) {
         <Box
           sx={{
             flexGrow: 1,
-            marginLeft: '280px',
+            marginLeft: '296px', // 280px sidebar + 16px gap
             minWidth: 0,
             display: 'flex',
             flexDirection: 'column',

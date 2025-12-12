@@ -328,7 +328,7 @@ export function PropertyLocationMap({
         style={{
           width: '100%',
           height: `${height}px`,
-          borderRadius: '12px',
+          borderRadius: '4px',
           overflow: 'hidden',
           background: '#f5f5f7',
         }}
@@ -355,7 +355,7 @@ export function PropertyLocationMap({
             fontWeight: 500,
             background: 'white',
             border: '1px solid #d2d2d7',
-            borderRadius: '8px',
+            borderRadius: '4px',
             cursor: 'pointer',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           }}
@@ -373,7 +373,7 @@ export function PropertyLocationMap({
             top: '0.5rem',
             left: '0.5rem',
             background: 'white',
-            borderRadius: '8px',
+            borderRadius: '4px',
             padding: '0.5rem 0.75rem',
             fontSize: '0.7rem',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',

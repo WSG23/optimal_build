@@ -400,7 +400,7 @@ export function GpsCapturePage() {
             zIndex: 1000,
             background: 'rgba(0,0,0,0.8)',
             padding: 10,
-            borderRadius: 8,
+            borderRadius: 4, // Square Cyber-Minimalism: sm
             color: 'red',
           }}
         >

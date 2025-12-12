@@ -18,7 +18,7 @@ const StatCard = styled(Paper, {
   border: glass
     ? '1px solid rgba(255, 255, 255, 0.1)'
     : '1px solid rgba(255, 255, 255, 0.08)',
-  borderRadius: '16px',
+  borderRadius: '4px',
   padding: theme.spacing(2, 3), // Slightly tighter padding for HUD feel
   display: 'flex',
   flexDirection: 'column',

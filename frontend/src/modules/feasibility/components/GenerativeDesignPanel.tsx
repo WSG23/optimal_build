@@ -241,7 +241,7 @@ export function GenerativeDesignPanel({
           sx={{
             width: '32px',
             height: '32px',
-            borderRadius: '8px',
+            borderRadius: '4px',
             background:
               'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
             display: 'flex',
@@ -289,7 +289,7 @@ export function GenerativeDesignPanel({
                   borderColor: isSelected
                     ? '#06b6d4'
                     : 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
+                  borderRadius: '4px',
                   transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
                   '&:hover': {
                     borderColor: '#06b6d4',

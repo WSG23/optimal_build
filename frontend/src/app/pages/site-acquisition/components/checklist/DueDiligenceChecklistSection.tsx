@@ -69,7 +69,7 @@ export function DueDiligenceChecklistSection({
       style={{
         background: 'white',
         border: '1px solid #d2d2d7',
-        borderRadius: '18px',
+        borderRadius: '4px',
         padding: '2rem',
         marginBottom: '2rem',
       }}
@@ -229,7 +229,7 @@ export function DueDiligenceChecklistSection({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '12px',
+            borderRadius: '4px',
           }}
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
@@ -247,7 +247,7 @@ export function DueDiligenceChecklistSection({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '12px',
+            borderRadius: '4px',
           }}
         >
           <p>No checklist items found for this property.</p>
@@ -259,7 +259,7 @@ export function DueDiligenceChecklistSection({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '12px',
+            borderRadius: '4px',
           }}
         >
           <p>
@@ -275,7 +275,7 @@ export function DueDiligenceChecklistSection({
               style={{
                 marginBottom: '1.5rem',
                 background: '#f5f5f7',
-                borderRadius: '12px',
+                borderRadius: '4px',
                 height: '8px',
                 overflow: 'hidden',
               }}
@@ -311,7 +311,7 @@ export function DueDiligenceChecklistSection({
               style={{
                 marginBottom: '1.5rem',
                 border: '1px solid #e5e5e7',
-                borderRadius: '12px',
+                borderRadius: '4px',
                 overflow: 'hidden',
               }}
             >
@@ -375,7 +375,7 @@ export function DueDiligenceChecklistSection({
                         style={{
                           padding: '0.5rem',
                           border: '1px solid #d2d2d7',
-                          borderRadius: '8px',
+                          borderRadius: '6px',
                           fontSize: '0.875rem',
                           background: 'white',
                           cursor: 'pointer',

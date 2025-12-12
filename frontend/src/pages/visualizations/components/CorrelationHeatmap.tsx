@@ -69,7 +69,7 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
                 width: 60,
                 height: 60,
                 bgcolor: getColor(item.coefficient),
-                borderRadius: 1,
+                borderRadius: '2px', // Square Cyber-Minimalism: xs for small elements
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
                 border:
@@ -106,7 +106,7 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
             sx={{
               width: 300,
               p: 3,
-              borderRadius: 4,
+              borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
               bgcolor: alpha(theme.palette.background.paper, 0.8),
               backdropFilter: 'blur(20px)',
               borderLeft: `4px solid ${getColor(selectedCorrelation.coefficient)}`,
@@ -159,7 +159,7 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
                 mt: 2,
                 p: 1.5,
                 bgcolor: alpha(theme.palette.action.hover, 0.05),
-                borderRadius: 2,
+                borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
               }}
             >
               {selectedCorrelation.coefficient > 0

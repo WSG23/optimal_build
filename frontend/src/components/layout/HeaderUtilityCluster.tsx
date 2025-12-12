@@ -61,7 +61,7 @@ export function HeaderUtilityCluster() {
   const buttonStyle = {
     color: 'text.primary',
     borderColor: alpha(theme.palette.divider, 0.2),
-    borderRadius: '20px', // Pill shape
+    borderRadius: '2px', // Square Cyber-Minimalism: xs for buttons
     padding: '6px 16px',
     height: '40px',
     textTransform: 'none' as const,
@@ -139,7 +139,7 @@ export function HeaderUtilityCluster() {
           elevation: 8,
           sx: {
             mt: 1,
-            borderRadius: '12px',
+            borderRadius: '4px', // Square Cyber-Minimalism: sm for menus/panels
             minWidth: '160px',
             border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           },

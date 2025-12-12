@@ -84,7 +84,7 @@ function InspectionCard({
     <div
       style={{
         border: '1px solid #e5e5e7',
-        borderRadius: '10px',
+        borderRadius: '4px',
         padding: '1.25rem',
         display: 'grid',
         gap: '0.6rem',
@@ -245,7 +245,7 @@ export function HistoryCompareView({
             open
             style={{
               border: '1px solid #e5e5e7',
-              borderRadius: '14px',
+              borderRadius: '4px',
               background: 'white',
               overflow: 'hidden',
             }}
@@ -486,7 +486,7 @@ export function HistoryCompareView({
             <div
               style={{
                 border: '1px solid #e5e5e7',
-                borderRadius: '12px',
+                borderRadius: '4px',
                 padding: '1.5rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -607,7 +607,7 @@ export function HistoryCompareView({
           <div
             style={{
               border: '1px solid #e5e5e7',
-              borderRadius: '10px',
+              borderRadius: '4px',
               padding: '1.25rem',
               display: 'flex',
               flexDirection: 'column',
@@ -694,7 +694,7 @@ export function HistoryCompareView({
           <div
             style={{
               border: '1px solid #e5e5e7',
-              borderRadius: '10px',
+              borderRadius: '4px',
               padding: '1.25rem',
               display: 'flex',
               flexDirection: 'column',
@@ -796,7 +796,7 @@ export function HistoryCompareView({
             <div
               style={{
                 border: '1px solid #e5e5e7',
-                borderRadius: '10px',
+                borderRadius: '4px',
                 overflow: 'hidden',
               }}
             >

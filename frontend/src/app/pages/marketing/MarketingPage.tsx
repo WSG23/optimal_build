@@ -145,7 +145,7 @@ export function MarketingPage() {
                 style={{
                   background: isSelected ? '#f5f5f7' : 'white',
                   border: `1px solid ${isSelected ? '#1d1d1f' : '#d2d2d7'}`,
-                  borderRadius: '18px',
+                  borderRadius: '4px',
                   padding: '1.5rem',
                   cursor: isGenerating ? 'not-allowed' : 'pointer',
                   textAlign: 'left',
@@ -240,7 +240,7 @@ export function MarketingPage() {
         style={{
           background: 'white',
           border: '1px solid #d2d2d7',
-          borderRadius: '18px',
+          borderRadius: '4px',
           padding: '2rem',
           marginBottom: '3rem',
         }}
@@ -282,7 +282,7 @@ export function MarketingPage() {
               padding: '0.875rem 1rem',
               fontSize: '1rem',
               border: '1px solid #d2d2d7',
-              borderRadius: '12px',
+              borderRadius: '4px',
               outline: 'none',
               transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
               background: isGenerating ? '#f5f5f7' : 'white',
@@ -314,7 +314,7 @@ export function MarketingPage() {
             background:
               isGenerating || !propertyId.trim() ? '#d2d2d7' : '#1d1d1f',
             border: 'none',
-            borderRadius: '12px',
+            borderRadius: '4px',
             cursor:
               isGenerating || !propertyId.trim() ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease',
@@ -345,7 +345,7 @@ export function MarketingPage() {
               padding: '0.875rem 1rem',
               background: '#fff5f5',
               border: '1px solid #ffe0e0',
-              borderRadius: '12px',
+              borderRadius: '4px',
               color: '#d70015',
               fontSize: '0.9375rem',
               letterSpacing: '-0.005em',
@@ -361,7 +361,7 @@ export function MarketingPage() {
               padding: '0.875rem 1rem',
               background: '#fff9e6',
               border: '1px solid #ffe8b3',
-              borderRadius: '12px',
+              borderRadius: '4px',
               color: '#996600',
               fontSize: '0.9375rem',
               letterSpacing: '-0.005em',
@@ -410,7 +410,7 @@ export function MarketingPage() {
               textAlign: 'center',
               background: 'white',
               border: '1px solid #d2d2d7',
-              borderRadius: '18px',
+              borderRadius: '4px',
             }}
           >
             <div
@@ -464,7 +464,7 @@ export function MarketingPage() {
                   padding: '1.25rem 1.5rem',
                   background: 'white',
                   border: '1px solid #d2d2d7',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
@@ -528,7 +528,7 @@ export function MarketingPage() {
                         color: '#1d1d1f',
                         background: 'transparent',
                         border: '1px solid #d2d2d7',
-                        borderRadius: '10px',
+                        borderRadius: '4px',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         whiteSpace: 'nowrap',

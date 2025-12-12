@@ -42,7 +42,7 @@ export function ConfidenceGauge({
             height: 8,
             width: '100%',
             bgcolor: alpha(theme.palette.text.disabled, 0.1),
-            borderRadius: 4,
+            borderRadius: '4px', // Square Cyber-Minimalism: sm for containers
             overflow: 'hidden',
             position: 'relative',
           }}
@@ -68,7 +68,7 @@ export function ConfidenceGauge({
               height: '100%',
               width: `${value}%`,
               bgcolor: color,
-              borderRadius: 4,
+              borderRadius: '4px', // Square Cyber-Minimalism: sm for containers
               transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               zIndex: 2,

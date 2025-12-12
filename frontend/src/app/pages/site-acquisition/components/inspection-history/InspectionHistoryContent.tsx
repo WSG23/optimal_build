@@ -168,7 +168,7 @@ export function InspectionHistoryContent({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '10px',
+            borderRadius: '4px',
           }}
         >
           <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -182,7 +182,7 @@ export function InspectionHistoryContent({
             textAlign: 'center',
             color: '#6e6e73',
             background: '#f5f5f7',
-            borderRadius: '10px',
+            borderRadius: '4px',
           }}
         >
           <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -209,7 +209,7 @@ export function InspectionHistoryContent({
               textAlign: 'center',
               color: '#6e6e73',
               background: '#f5f5f7',
-              borderRadius: '10px',
+              borderRadius: '4px',
             }}
           >
             <p style={{ margin: 0, fontSize: '0.9rem' }}>

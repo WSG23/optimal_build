@@ -187,7 +187,7 @@ export function IntegrationsPage() {
               textAlign: 'center',
               background: 'white',
               border: '1px solid #d2d2d7',
-              borderRadius: '18px',
+              borderRadius: '4px',
               color: '#6e6e73',
             }}
           >
@@ -200,7 +200,7 @@ export function IntegrationsPage() {
               textAlign: 'center',
               background: 'white',
               border: '1px solid #d2d2d7',
-              borderRadius: '18px',
+              borderRadius: '4px',
             }}
           >
             <div
@@ -259,7 +259,7 @@ export function IntegrationsPage() {
                   style={{
                     background: 'white',
                     border: `2px solid ${connected ? provider.color : '#d2d2d7'}`,
-                    borderRadius: '18px',
+                    borderRadius: '4px',
                     padding: '2rem',
                     transition: 'all 0.2s ease',
                   }}
@@ -268,7 +268,7 @@ export function IntegrationsPage() {
                     style={{
                       width: '48px',
                       height: '48px',
-                      borderRadius: '12px',
+                      borderRadius: '4px',
                       background: provider.color,
                       marginBottom: '1rem',
                       display: 'flex',
@@ -309,7 +309,7 @@ export function IntegrationsPage() {
                       style={{
                         padding: '0.75rem 1rem',
                         background: '#f5f5f7',
-                        borderRadius: '10px',
+                        borderRadius: '4px',
                         marginBottom: '1rem',
                         fontSize: '0.875rem',
                         color: '#6e6e73',
@@ -347,7 +347,7 @@ export function IntegrationsPage() {
                             color: 'white',
                             background: provider.color,
                             border: 'none',
-                            borderRadius: '10px',
+                            borderRadius: '4px',
                             cursor: 'pointer',
                             transition: 'opacity 0.2s ease',
                             letterSpacing: '-0.005em',
@@ -371,7 +371,7 @@ export function IntegrationsPage() {
                             color: '#1d1d1f',
                             background: 'transparent',
                             border: '1px solid #d2d2d7',
-                            borderRadius: '10px',
+                            borderRadius: '4px',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             letterSpacing: '-0.005em',
@@ -399,7 +399,7 @@ export function IntegrationsPage() {
                           color: connecting ? '#6e6e73' : 'white',
                           background: connecting ? '#f5f5f7' : provider.color,
                           border: 'none',
-                          borderRadius: '10px',
+                          borderRadius: '4px',
                           cursor: connecting ? 'not-allowed' : 'pointer',
                           transition: 'opacity 0.2s ease',
                           letterSpacing: '-0.005em',
@@ -443,7 +443,7 @@ export function IntegrationsPage() {
           <div
             style={{
               background: 'white',
-              borderRadius: '18px',
+              borderRadius: '4px',
               padding: '2rem',
               maxWidth: '500px',
               width: '90%',
@@ -492,7 +492,7 @@ export function IntegrationsPage() {
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     outline: 'none',
                     fontFamily:
                       'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
@@ -526,7 +526,7 @@ export function IntegrationsPage() {
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     outline: 'none',
                   }}
                 />
@@ -558,7 +558,7 @@ export function IntegrationsPage() {
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     outline: 'none',
                   }}
                 />
@@ -576,7 +576,7 @@ export function IntegrationsPage() {
                     color: '#1d1d1f',
                     background: 'transparent',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     cursor: 'pointer',
                   }}
                 >
@@ -597,7 +597,7 @@ export function IntegrationsPage() {
                         : PROVIDERS.find((p) => p.id === publishForm.provider)
                             ?.color || '#1d1d1f',
                     border: 'none',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     cursor:
                       publishingProvider === publishForm.provider
                         ? 'not-allowed'
@@ -619,7 +619,7 @@ export function IntegrationsPage() {
         style={{
           background: 'white',
           border: '1px solid #d2d2d7',
-          borderRadius: '18px',
+          borderRadius: '4px',
           padding: '2rem',
         }}
       >

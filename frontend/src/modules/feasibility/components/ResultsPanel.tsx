@@ -79,7 +79,7 @@ export function ResultsPanel({
             height: '100%',
             minHeight: '600px',
             overflow: 'hidden',
-            borderRadius: '16px',
+            borderRadius: '4px',
           }}
         >
           {/* The Blurred Content (Teaser) */}
@@ -97,7 +97,7 @@ export function ResultsPanel({
               style={{
                 height: '120px',
                 background: '#e5e7eb',
-                borderRadius: '16px',
+                borderRadius: '4px',
               }}
             />
 
@@ -113,14 +113,14 @@ export function ResultsPanel({
                 style={{
                   height: '200px',
                   background: '#e5e7eb',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                 }}
               />
               <div
                 style={{
                   height: '200px',
                   background: '#e5e7eb',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                 }}
               />
             </div>
@@ -129,7 +129,7 @@ export function ResultsPanel({
               style={{
                 height: '300px',
                 background: '#e5e7eb',
-                borderRadius: '16px',
+                borderRadius: '4px',
               }}
             />
           </div>
@@ -196,7 +196,7 @@ export function ResultsPanel({
                   backdropFilter: 'blur(12px)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   padding: '24px 32px',
-                  borderRadius: '24px',
+                  borderRadius: '4px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '16px',
@@ -348,7 +348,7 @@ export function ResultsPanel({
                           fontSize: '0.7rem',
                           fontWeight: 600,
                           padding: '2px 8px',
-                          borderRadius: '12px',
+                          borderRadius: '4px',
                           background: '#EFF6FF',
                           color: '#2563EB',
                           border: '1px solid #BFDBFE',

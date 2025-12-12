@@ -142,7 +142,7 @@ export function VoiceNoteList({
       <div
         style={{
           background: '#f0f9ff',
-          borderRadius: '12px',
+          borderRadius: '4px',
           padding: '1.25rem',
           marginTop: '1.5rem',
         }}
@@ -178,7 +178,7 @@ export function VoiceNoteList({
     <div
       style={{
         background: '#f0f9ff',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.25rem',
         marginTop: '1.5rem',
       }}
@@ -206,7 +206,7 @@ export function VoiceNoteList({
             padding: '0.75rem',
             background: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: '#dc2626',
             fontSize: '0.875rem',
             marginBottom: '1rem',
@@ -223,7 +223,7 @@ export function VoiceNoteList({
             style={{
               background: 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '8px',
+              borderRadius: '4px',
               overflow: 'hidden',
             }}
           >

@@ -59,7 +59,7 @@ export function InsightCard({
         border: `1px solid ${visuals.border}`,
         background: visuals.background,
         color: visuals.text,
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.2rem',
         display: 'flex',
         flexDirection: 'column',

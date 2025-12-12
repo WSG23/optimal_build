@@ -44,7 +44,7 @@ export function ScenarioFAB({
           fontSize: '1rem',
           textTransform: 'none',
           py: 1.5,
-          borderRadius: 8,
+          borderRadius: '2px', // Square Cyber-Minimalism: xs for buttons
           boxShadow: '0 4px 15px rgba(0, 114, 255, 0.4)',
           position: 'relative',
           overflow: 'hidden',

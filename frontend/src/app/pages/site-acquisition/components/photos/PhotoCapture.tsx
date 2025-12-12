@@ -120,7 +120,7 @@ export function PhotoCapture({
           style={{
             width: '100%',
             padding: '0.5rem 0.75rem',
-            borderRadius: '8px',
+            borderRadius: '6px',
             border: '1px solid #d1d5db',
             fontSize: '0.875rem',
             outline: 'none',
@@ -140,7 +140,7 @@ export function PhotoCapture({
         onDrop={handleDrop}
         style={{
           border: `2px dashed ${dragActive ? '#3b82f6' : '#d1d5db'}`,
-          borderRadius: '12px',
+          borderRadius: '4px',
           padding: '2rem',
           textAlign: 'center',
           background: dragActive ? '#eff6ff' : disabled ? '#f9fafb' : '#fff',

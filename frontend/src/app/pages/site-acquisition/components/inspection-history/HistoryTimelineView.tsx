@@ -60,7 +60,7 @@ export function HistoryTimelineView({
                     ? '#34c759'
                     : '#d2d2d7'
               }`,
-              borderRadius: '10px',
+              borderRadius: '4px',
               padding: '1rem 1.25rem',
               background: index === 0 ? '#f0f9ff' : '#ffffff',
               display: 'flex',

@@ -60,7 +60,7 @@ export function SmartIntelligenceField({
           alignItems: 'center',
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(12px)',
-          borderRadius: '50px', // Pill shape
+          borderRadius: '6px', // Input shape
           padding: '8px 16px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -125,7 +125,7 @@ export function SmartIntelligenceField({
                   background: 'linear-gradient(135deg, #e0f2fe, #dbeafe)',
                   color: '#0284c7',
                   padding: '4px 8px',
-                  borderRadius: '12px',
+                  borderRadius: '4px',
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   border: '1px solid #bfdbfe',
@@ -140,7 +140,7 @@ export function SmartIntelligenceField({
                   background: '#f3f4f6',
                   color: '#4b5563',
                   padding: '4px 8px',
-                  borderRadius: '12px',
+                  borderRadius: '4px',
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   border: '1px solid #e5e7eb',
@@ -178,7 +178,7 @@ export function SmartIntelligenceField({
             background: '#fee2e2',
             color: '#dc2626',
             padding: '4px 12px',
-            borderRadius: '8px',
+            borderRadius: '6px',
             fontSize: '0.875rem',
             fontWeight: 500,
           }}
@@ -198,7 +198,7 @@ export function SmartIntelligenceField({
             right: 0,
             marginTop: '8px',
             background: 'white',
-            borderRadius: '16px',
+            borderRadius: '4px',
             boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
             padding: '8px',
             zIndex: 100,
@@ -222,7 +222,7 @@ export function SmartIntelligenceField({
               key={i}
               style={{
                 padding: '12px',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 cursor: 'pointer',
                 display: 'flex',
                 justifyContent: 'space-between',
