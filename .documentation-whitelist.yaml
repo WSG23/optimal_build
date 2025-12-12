@@ -56,6 +56,11 @@ allowed_files:
   # Development guides
   - docs/development/testing/known-issues.md
   - docs/development/testing/summary.md
+  # Square Cyber-Minimalism design system typography guide
+  - docs/development/typography-standards.md
+
+  # Design system - Token inventory and standardization audit
+  - docs/design-system/design-token-audit.md
 
   # Security documentation
   - docs/SECURITY.md
