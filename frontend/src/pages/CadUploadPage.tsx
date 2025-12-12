@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { Box, Stack, MenuItem } from '@mui/material'
 
 import {
   type CadImportSummary,
@@ -10,6 +11,9 @@ import { useTranslation } from '../i18n'
 import CadUploader from '../modules/cad/CadUploader'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
+import { Input } from '../components/canonical/Input'
+import { AnimatedPageHeader } from '../components/canonical/AnimatedPageHeader'
+import { GlassCard } from '../components/canonical/GlassCard'
 
 const DEFAULT_PROJECT_ID = 1
 const DEFAULT_ZONE_CODE = 'SG:residential'
@@ -78,10 +82,6 @@ export function CadUploadPage() {
         const msg =
           err instanceof Error ? err.message : t('common.errors.uploadFailed')
         setError(msg)
-        // Ensure error is visible even if just a console error initially
-        if (typeof window !== 'undefined') {
-          // alert(msg) // Optional: for immediate feedback if UI is unresponsive
-        }
       } finally {
         setIsUploading(false)
       }
@@ -89,56 +89,102 @@ export function CadUploadPage() {
     [apiClient, projectId, t, zoneCode],
   )
 
+  const Controls = (
+    <Stack direction="row" spacing={2} sx={{ minWidth: 400 }}>
+      <Input
+        id={projectIdInputId}
+        label={t('uploader.projectLabel')}
+        type="number"
+        value={projectId}
+        onChange={(event) => {
+          const value = Number(event.target.value)
+          if (Number.isNaN(value) || value <= 0) {
+            setProjectId(DEFAULT_PROJECT_ID)
+            return
+          }
+          setProjectId(Math.trunc(value))
+        }}
+        size="small"
+        sx={{ flex: 1 }}
+      />
+      <Input
+        id={zoneInputId}
+        select
+        label={t('uploader.zoneLabel')}
+        value={zoneCode}
+        onChange={(event) => {
+          setZoneCode(event.target.value)
+        }}
+        size="small"
+        sx={{ flex: 1.5 }}
+      >
+        {ZONE_OPTIONS.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {t(`uploader.zoneOptions.${option.labelKey}`)}
+          </MenuItem>
+        ))}
+      </Input>
+    </Stack>
+  )
+
   return (
-    <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
-      <div className="cad-upload">
-        <div className="cad-upload__controls">
-          <label className="cad-upload__label" htmlFor={projectIdInputId}>
-            <span>{t('uploader.projectLabel')}</span>
-            <input
-              id={projectIdInputId}
-              type="number"
-              min={1}
-              value={projectId}
-              onChange={(event) => {
-                const value = Number(event.target.value)
-                if (Number.isNaN(value) || value <= 0) {
-                  setProjectId(DEFAULT_PROJECT_ID)
-                  return
-                }
-                setProjectId(Math.trunc(value))
-              }}
-            />
-          </label>
-          <label className="cad-upload__label" htmlFor={zoneInputId}>
-            <span>{t('uploader.zoneLabel')}</span>
-            <select
-              id={zoneInputId}
-              value={zoneCode}
-              onChange={(event) => {
-                setZoneCode(event.target.value)
+    <AppLayout hideHeader>
+      <Box sx={{ pb: 8 }}>
+        <Box sx={{ px: 3, pt: 2 }}>
+          <AnimatedPageHeader
+            title={t('uploader.title')}
+            subtitle={t('uploader.subtitle')}
+            breadcrumbs={[
+              { label: t('nav.home', 'Dashboard'), href: '/' },
+              { label: t('uploader.title') },
+            ]}
+          />
+        </Box>
+
+        <Box className="cad-upload" sx={{ px: 3 }}>
+          <Stack spacing={3}>
+            {/* Context Bar */}
+            <GlassCard
+              sx={{
+                p: 'var(--ob-space-100)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
               }}
             >
-              {ZONE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(`uploader.zoneOptions.${option.labelKey}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        {error && <p className="cad-upload__error">{error}</p>}
+              {Controls}
+            </GlassCard>
 
-        <CadUploader
-          onUpload={(file) => {
-            void handleUpload(file)
-          }}
-          isUploading={isUploading}
-          status={status}
-          summary={job}
-        />
-        <RulePackExplanationPanel rules={rules} loading={loading} />
-      </div>
+            {/* Error Banner */}
+            {error && (
+              <Box
+                sx={{
+                  p: 2,
+                  border: '1px solid var(--ob-error-500)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  bgcolor: 'var(--ob-error-muted)',
+                  color: 'var(--ob-error-icon)',
+                }}
+              >
+                {error}
+              </Box>
+            )}
+
+            {/* CAD Uploader */}
+            <CadUploader
+              onUpload={(file) => {
+                void handleUpload(file)
+              }}
+              isUploading={isUploading}
+              status={status}
+              summary={job}
+            />
+
+            {/* Rules Panel */}
+            <RulePackExplanationPanel rules={rules} loading={loading} />
+          </Stack>
+        </Box>
+      </Box>
     </AppLayout>
   )
 }

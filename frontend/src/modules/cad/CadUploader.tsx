@@ -1,7 +1,6 @@
 import { ChangeEvent, DragEvent, useRef, useState } from 'react'
 import {
   Box,
-  Card,
   Typography,
   Stack,
   Stepper,
@@ -9,27 +8,23 @@ import {
   StepLabel,
   Skeleton,
   Grid,
-  Paper,
   Divider,
 } from '@mui/material'
 import {
   CloudUpload,
   Error as ErrorIcon,
   InsertDriveFile,
-  Engineering,
 } from '@mui/icons-material'
 
 import type { CadImportSummary, ParseStatusUpdate } from '../../api/client'
 import { useTranslation } from '../../i18n'
+import { GlassCard } from '../../components/canonical/GlassCard'
 
 interface CadUploaderProps {
   onUpload: (file: File) => void
   isUploading?: boolean
   status?: ParseStatusUpdate | null
   summary?: CadImportSummary | null
-  // Allowing for Project Details to be passed in or handled here if extended
-  projectId?: string
-  zoning?: string
 }
 
 export function CadUploader({
@@ -37,8 +32,6 @@ export function CadUploader({
   isUploading = false,
   status,
   summary,
-  projectId = 'PROJ-2024-001', // Mock default or prop
-  zoning = 'Commercial', // Mock default or prop
 }: CadUploaderProps) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -76,7 +69,7 @@ export function CadUploader({
   // Determine active step for Stepper
   const getActiveStep = () => {
     if (status?.status === 'completed') return 3
-    if (status?.status === 'failed') return 1 // Error state
+    if (status?.status === 'failed') return 1
     if (
       isUploading ||
       status?.status === 'pending' ||
@@ -84,81 +77,42 @@ export function CadUploader({
     )
       return 0
     if (status?.status === 'running') return 1
-    return -1 // Idle
+    return -1
   }
   const activeStep = getActiveStep()
 
   const detectedFloors = status?.detectedFloors ?? summary?.detectedFloors ?? []
   const detectedUnits = status?.detectedUnits ?? summary?.detectedUnits ?? []
 
-  const steps = ['Uploading', 'Processing Layers', 'Detecting Units']
+  const steps = [
+    t('uploader.steps.uploading', 'Uploading'),
+    t('uploader.steps.processing', 'Processing Layers'),
+    t('uploader.steps.detecting', 'Detecting Units'),
+  ]
 
   return (
     <Box className="cad-uploader" sx={{ maxWidth: 1400, margin: '0 auto' }}>
-      {/* Project Details Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          mb: 4,
-          background: 'var(--ob-surface-glass-1)',
-          border: '1px solid var(--ob-color-border-subtle)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: 'var(--ob-radius-sm)',
-        }}
-      >
-        <Grid container spacing={4} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <Box>
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Project ID
-              </Typography>
-              <Typography variant="h6" fontWeight={600}>
-                {projectId}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box>
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Zoning
-              </Typography>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Engineering fontSize="small" color="primary" />
-                <Typography variant="h6">{zoning}</Typography>
-              </Stack>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
       <Grid container spacing={4}>
         {/* Left Col: Hero Drop Zone */}
         <Grid item xs={12} lg={7}>
-          <Card
-            elevation={0}
+          <GlassCard
+            className="cad-drop-zone"
+            onClick={!isUploading ? handleBrowse : undefined}
+            onDrop={!isUploading ? handleDrop : undefined}
+            onDragOver={!isUploading ? handleDragOver : undefined}
+            onDragLeave={!isUploading ? handleDragLeave : undefined}
             sx={{
               height: 400,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: isDragging
-                ? '2px dashed var(--ob-brand-500)'
-                : '2px dashed var(--ob-color-border-subtle)',
-              backgroundColor: isDragging
-                ? 'var(--ob-brand-50)'
-                : 'var(--ob-neutral-900)',
+              border: '2px dashed',
+              borderColor: isDragging
+                ? 'var(--ob-brand-500)'
+                : 'var(--ob-color-border-subtle)',
+              backgroundColor: isDragging ? 'var(--ob-brand-50)' : undefined,
               cursor: isUploading ? 'default' : 'pointer',
               transition: 'all 0.2s ease',
-              borderRadius: 'var(--ob-radius-sm)',
               '&:hover': {
                 borderColor: !isUploading ? 'var(--ob-brand-500)' : undefined,
                 backgroundColor: !isUploading
@@ -166,10 +120,6 @@ export function CadUploader({
                   : undefined,
               },
             }}
-            onClick={!isUploading ? handleBrowse : undefined}
-            onDrop={!isUploading ? handleDrop : undefined}
-            onDragOver={!isUploading ? handleDragOver : undefined}
-            onDragLeave={!isUploading ? handleDragLeave : undefined}
           >
             <input
               ref={inputRef}
@@ -204,43 +154,42 @@ export function CadUploader({
               <Box>
                 <Typography variant="h5" fontWeight={600} gutterBottom>
                   {isUploading
-                    ? 'Uploading & Processing...'
-                    : 'Upload CAD File'}
+                    ? t('uploader.uploadingTitle', 'Uploading & Processing...')
+                    : t('uploader.dropTitle', 'Upload CAD File')}
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
                   {isUploading
-                    ? 'Please wait while we analyze your file.'
-                    : 'Drag & drop or click to browse'}
+                    ? t(
+                        'uploader.uploadingHint',
+                        'Please wait while we analyze your file.',
+                      )
+                    : t('uploader.dropHint', 'Drag & drop or click to browse')}
                 </Typography>
               </Box>
               {!isUploading && (
                 <Typography variant="caption" color="text.disabled">
-                  Supports .dxf, .ifc, .pdf, .png
+                  {t(
+                    'uploader.supportedFormats',
+                    'Supports .dxf, .ifc, .pdf, .png',
+                  )}
                 </Typography>
               )}
             </Stack>
-          </Card>
+          </GlassCard>
         </Grid>
 
         {/* Right Col: Status & Explanation */}
         <Grid item xs={12} lg={5}>
           <Stack spacing={3}>
             {/* Stepper Status */}
-            <Paper
-              sx={{
-                p: 3,
-                backgroundColor: 'transparent',
-                border: '1px solid var(--ob-color-border-subtle)',
-                borderRadius: 'var(--ob-radius-sm)',
-              }}
-            >
+            <GlassCard sx={{ p: 3 }}>
               <Typography
                 variant="h6"
                 fontWeight={600}
                 gutterBottom
                 sx={{ mb: 3 }}
               >
-                {t('uploader.latestStatus') || 'Processing Status'}
+                {t('uploader.latestStatus', 'Processing Status')}
               </Typography>
 
               <Stepper activeStep={activeStep} orientation="vertical">
@@ -278,16 +227,10 @@ export function CadUploader({
                   <Typography variant="body2">{status.error}</Typography>
                 </Box>
               )}
-            </Paper>
+            </GlassCard>
 
             {/* Meta Data (Floors/Units) */}
-            <Paper
-              sx={{
-                p: 3,
-                backgroundColor: 'var(--ob-neutral-900)',
-                borderRadius: 'var(--ob-radius-sm)',
-              }}
-            >
+            <GlassCard sx={{ p: 3 }}>
               <Stack spacing={2}>
                 <Box
                   sx={{
@@ -299,7 +242,7 @@ export function CadUploader({
                   <Stack direction="row" spacing={1} alignItems="center">
                     <InsertDriveFile color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      File Name
+                      {t('uploader.fileName', 'File Name')}
                     </Typography>
                   </Stack>
                   <Typography variant="body2" fontWeight={500}>
@@ -307,7 +250,9 @@ export function CadUploader({
                       (isUploading ? <Skeleton width={100} /> : '-')}
                   </Typography>
                 </Box>
-                <Divider />
+                <Divider
+                  sx={{ borderColor: 'var(--ob-color-border-subtle)' }}
+                />
                 <Box
                   sx={{
                     display: 'flex',
@@ -316,9 +261,9 @@ export function CadUploader({
                   }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    Floors Detected
+                    {t('uploader.floorsDetected', 'Floors Detected')}
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} color="white">
+                  <Typography variant="body2" fontWeight={600}>
                     {detectedFloors.length > 0 ? (
                       detectedFloors.length
                     ) : isUploading ? (
@@ -336,9 +281,9 @@ export function CadUploader({
                   }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    Units Count
+                    {t('uploader.unitsCount', 'Units Count')}
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} color="white">
+                  <Typography variant="body2" fontWeight={600}>
                     {detectedUnits.length > 0 ? (
                       detectedUnits.length
                     ) : isUploading ? (
@@ -349,7 +294,7 @@ export function CadUploader({
                   </Typography>
                 </Box>
               </Stack>
-            </Paper>
+            </GlassCard>
           </Stack>
         </Grid>
       </Grid>
