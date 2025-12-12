@@ -11,8 +11,9 @@ from __future__ import annotations
 import sys
 from importlib import machinery, util
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from typing import Any, Callable, Dict, Iterable, List, Tuple
+from datetime import datetime
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -74,7 +75,21 @@ if _runtime_module is not None:
     _reexport(_runtime_module)
 else:
 
-    __all__ = ["BaseModel", "ConfigDict", "model_validator", "field_validator", "Field"]
+    __all__ = [
+        "BaseModel",
+        "ConfigDict",
+        "model_validator",
+        "field_validator",
+        "field_serializer",
+        "computed_field",
+        "Field",
+        "ValidationError",
+        "AliasChoices",
+        "EmailStr",
+        "HttpUrl",
+        "confloat",
+        "conint",
+    ]
 
     class ConfigDict(dict):
         """Minimal representation of :class:`pydantic.ConfigDict`.
@@ -114,6 +129,87 @@ else:
 
         return decorator
 
+    def field_serializer(
+        *_fields: str, **_kwargs: Any
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Stub ``field_serializer`` decorator that leaves the function unchanged."""
+
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            return func
+
+        return decorator
+
+    def computed_field(*_args: Any, **_kwargs: Any) -> Callable[[Callable[..., Any]], property]:
+        """Stub ``computed_field`` decorator producing a property."""
+
+        def decorator(func: Callable[..., Any]) -> property:
+            return property(func)
+
+        return decorator
+
+    class ValidationError(Exception):
+        """Lightweight ValidationError stub exposing ``errors``."""
+
+        def __init__(self, errors: Iterable[dict[str, Any]] | None = None):
+            super().__init__("Validation error")
+            self._errors = list(errors or [])
+
+        def errors(self) -> list[dict[str, Any]]:
+            return list(self._errors)
+
+    def _to_camel(string: str) -> str:
+        parts = string.split("_")
+        return parts[0] + "".join(part.title() for part in parts[1:])
+
+    alias_generators = ModuleType("pydantic.alias_generators")
+    alias_generators.to_camel = _to_camel
+    sys.modules.setdefault("pydantic.alias_generators", alias_generators)
+
+    class AliasChoices:
+        """Stub for :class:`pydantic.AliasChoices` accepting any values."""
+
+        def __init__(self, *choices: str) -> None:
+            self.choices = choices
+
+    class EmailStr(str):
+        """Very small substitute for :class:`pydantic.EmailStr`."""
+
+        @classmethod
+        def validate(cls, value: str) -> "EmailStr":
+            return cls(value)
+
+    class HttpUrl(str):
+        """Simplified URL type used only for validation placeholders."""
+
+        @classmethod
+        def validate(cls, value: str) -> "HttpUrl":
+            return cls(value)
+
+    def confloat(**_kwargs: Any) -> type:
+        """Return a constrained float subtype placeholder."""
+
+        class _ConstrainedFloat(float):
+            pass
+
+        return _ConstrainedFloat
+
+    def conint(**_kwargs: Any) -> type:
+        """Return a constrained int subtype placeholder."""
+
+        class _ConstrainedInt(int):
+            pass
+
+        return _ConstrainedInt
+
+    class AttrDict(dict):
+        """Dict that also provides attribute-style access."""
+
+        def __getattr__(self, key: str) -> Any:
+            try:
+                return self[key]
+            except KeyError as exc:  # pragma: no cover - attribute missing
+                raise AttributeError(key) from exc
+
     class _ModelMeta(type):
         def __new__(
             mcls, name: str, bases: Tuple[type, ...], namespace: Dict[str, Any]
@@ -138,12 +234,17 @@ else:
                     value = data.pop(name)
                 else:
                     value = getattr(self.__class__, name, None)
+                if isinstance(value, dict):
+                    value = AttrDict(value)
                 setattr(self, name, value)
             for key, value in data.items():
+                if isinstance(value, dict):
+                    value = AttrDict(value)
                 setattr(self, key, value)
             for mode, validator in getattr(self, "_model_validators", []):
+                func = validator.__func__ if isinstance(validator, classmethod) else validator
                 if mode == "after":
-                    result = validator(self.__class__, self)
+                    result = func(self.__class__, self)
                     if result is not None and result is not self:
                         if isinstance(result, BaseModel):
                             for key, value in result.__dict__.items():
@@ -151,11 +252,31 @@ else:
                         else:
                             raise TypeError("Validators must return the model instance")
                 else:
-                    validator(self.__class__, self)
+                    func(self.__class__, self)
 
         def model_dump(self, *, mode: str | None = None) -> Dict[str, Any]:
-            return dict(self.__dict__)
+            def _convert(value: Any) -> Any:
+                if isinstance(value, BaseModel):
+                    return value.model_dump()
+                if isinstance(value, AttrDict):
+                    return {k: _convert(v) for k, v in value.items()}
+                if isinstance(value, (list, tuple)):
+                    return [_convert(v) for v in value]
+                if isinstance(value, datetime):
+                    return value.isoformat()
+                return value
+
+            return {k: _convert(v) for k, v in self.__dict__.items()}
 
         @classmethod
-        def model_validate(cls, data: Dict[str, Any]) -> "BaseModel":
+        def model_validate(cls, data: Dict[str, Any], **_kwargs: Any) -> "BaseModel":
+            if not isinstance(data, dict):
+                try:
+                    data = dict(data.__dict__)
+                except Exception:
+                    data = {key: getattr(data, key) for key in dir(data) if not key.startswith("_")}
             return cls(**data)
+
+        @classmethod
+        def model_rebuild(cls, *args: Any, **kwargs: Any) -> None:
+            return None

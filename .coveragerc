@@ -3,8 +3,7 @@ branch = True
 source =
     backend/app
 omit =
-    # API endpoints (require FastAPI stub completion)
-    backend/app/api/v1/*
+    # API dependency glue (routers covered directly)
     backend/app/api/deps.py
 
     # Models requiring complex DB setup
