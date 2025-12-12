@@ -6,9 +6,7 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Skeleton,
   Grid,
-  Divider,
 } from '@mui/material'
 import {
   CloudUpload,
@@ -92,252 +90,213 @@ export function CadUploader({
   ]
 
   return (
-    <Box className="cad-uploader" sx={{ maxWidth: 1400, margin: '0 auto' }}>
-      <Grid container spacing={3}>
-        {/* Left Col: Hero Drop Zone */}
-        <Grid item xs={12} lg={8}>
-          <GlassCard
-            className="cad-drop-zone"
-            onClick={!isUploading ? handleBrowse : undefined}
-            onDrop={!isUploading ? handleDrop : undefined}
-            onDragOver={!isUploading ? handleDragOver : undefined}
-            onDragLeave={!isUploading ? handleDragLeave : undefined}
+    <Box className="cad-uploader" sx={{ maxWidth: 1000, margin: '0 auto' }}>
+      <Stack sx={{ gap: 'var(--ob-space-200)' }}>
+        {/* Top: Compact Hero Drop Zone */}
+        <GlassCard
+          className="cad-drop-zone"
+          onClick={!isUploading ? handleBrowse : undefined}
+          onDrop={!isUploading ? handleDrop : undefined}
+          onDragOver={!isUploading ? handleDragOver : undefined}
+          onDragLeave={!isUploading ? handleDragLeave : undefined}
+          sx={{
+            minHeight: 120, // Reduced from 180
+            p: 'var(--ob-space-300)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px dashed',
+            borderColor: isDragging
+              ? 'var(--ob-brand-500)'
+              : 'var(--ob-color-border-subtle)',
+            backgroundColor: isDragging ? 'var(--ob-brand-50)' : undefined,
+            cursor: isUploading ? 'default' : 'pointer',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              borderColor: !isUploading ? 'var(--ob-brand-500)' : undefined,
+              backgroundColor: !isUploading ? 'var(--ob-brand-50)' : undefined,
+            },
+          }}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".dxf,.ifc,.json,.pdf,.svg,.jpg,.jpeg,.png"
+            style={{ display: 'none' }}
+            onChange={handleChange}
+            disabled={isUploading}
+          />
+          <Stack
+            direction="row"
             sx={{
-              height: 280, // Reduced from 400px for better proportion
-              display: 'flex',
+              gap: 'var(--ob-space-200)',
               alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px dashed',
-              borderColor: isDragging
-                ? 'var(--ob-brand-500)'
-                : 'var(--ob-color-border-subtle)',
-              backgroundColor: isDragging ? 'var(--ob-brand-50)' : undefined,
-              cursor: isUploading ? 'default' : 'pointer',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                borderColor: !isUploading ? 'var(--ob-brand-500)' : undefined,
-                backgroundColor: !isUploading
-                  ? 'var(--ob-brand-50)'
-                  : undefined,
-              },
+              textAlign: 'left',
             }}
           >
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".dxf,.ifc,.json,.pdf,.svg,.jpg,.jpeg,.png"
-              style={{ display: 'none' }}
-              onChange={handleChange}
-              disabled={isUploading}
-            />
-            <Stack
+            <Box
               sx={{
-                gap: 'var(--ob-space-200)',
+                width: 48, // Reduced from 64
+                height: 48,
+                borderRadius: '50%',
+                backgroundColor: 'var(--ob-brand-100)',
+                display: 'flex',
                 alignItems: 'center',
-                textAlign: 'center',
+                justifyContent: 'center',
+                color: 'var(--ob-brand-500)',
+                flexShrink: 0,
               }}
             >
-              <Box
-                sx={{
-                  width: 64, // Reduced from 80
-                  height: 64,
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--ob-brand-100)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--ob-brand-500)',
-                }}
-              >
-                {isUploading ? (
-                  <Box
-                    className="dot-flashing"
-                    sx={{ transform: 'scale(1.2)' }}
-                  />
-                ) : (
-                  <CloudUpload sx={{ fontSize: 32 }} />
-                )}
-              </Box>
-              <Box>
-                <Typography variant="h6" fontWeight={600} gutterBottom>
-                  {isUploading
-                    ? t('uploader.uploadingTitle', 'Uploading & Processing...')
-                    : t('uploader.dropTitle', 'Upload CAD File')}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {isUploading
-                    ? t(
-                        'uploader.uploadingHint',
-                        'Please wait while we analyze your file.',
-                      )
-                    : t('uploader.dropHint', 'Drag & drop or click to browse')}
-                </Typography>
-              </Box>
-              {!isUploading && (
-                <Typography variant="caption" color="text.disabled">
-                  {t(
-                    'uploader.supportedFormats',
-                    'Supports .dxf, .ifc, .pdf, .png',
-                  )}
-                </Typography>
+              {isUploading ? (
+                <Box
+                  className="dot-flashing"
+                  sx={{ transform: 'scale(1.0)' }}
+                />
+              ) : (
+                <CloudUpload sx={{ fontSize: 24 }} />
               )}
-            </Stack>
-          </GlassCard>
-        </Grid>
-
-        {/* Right Col: Status & Explanation */}
-        <Grid item xs={12} lg={4}>
-          <Stack sx={{ height: '100%', gap: 'var(--ob-space-300)' }}>
-            {/* Stepper Status */}
-            <GlassCard
-              sx={{
-                p: 'var(--ob-space-300)',
-                flex: 1,
-                maxHeight: 280,
-                overflow: 'auto',
-              }}
-            >
+            </Box>
+            <Box>
               <Typography
                 variant="subtitle1"
                 fontWeight={600}
-                gutterBottom
-                sx={{ mb: 'var(--ob-space-200)' }}
+                gutterBottom={false}
               >
-                {t('uploader.latestStatus', 'Processing Status')}
+                {isUploading
+                  ? t('uploader.uploadingTitle', 'Uploading...')
+                  : t('uploader.dropTitle', 'Upload CAD File')}
               </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {isUploading
+                  ? t('uploader.uploadingHint', 'Please wait...')
+                  : t('uploader.dropHint', 'Drag & drop or click to browse')}
+              </Typography>
+            </Box>
+            {!isUploading && (
+              <Box
+                sx={{
+                  ml: 'var(--ob-space-200)',
+                  borderLeft: '1px solid var(--ob-color-border-subtle)',
+                  pl: 'var(--ob-space-200)',
+                }}
+              >
+                <Typography variant="caption" color="text.disabled">
+                  {t('uploader.supportedFormats', '.dxf, .ifc, .pdf')}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        </GlassCard>
 
-              <Stepper activeStep={activeStep} orientation="vertical">
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel
-                      StepIconProps={{
-                        sx: {
-                          width: 20,
-                          height: 20,
-                          '&.Mui-active': { color: 'var(--ob-brand-500)' },
-                          '&.Mui-completed': {
-                            color: 'var(--ob-success-500)',
-                          },
-                        },
-                      }}
-                      sx={{
-                        '& .MuiStepLabel-label': { fontSize: '0.875rem' },
-                      }}
-                    >
-                      {label}
-                    </StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-
-              {status?.error && (
-                <Box
-                  sx={{
-                    mt: 'var(--ob-space-200)',
-                    p: 'var(--ob-space-150)',
-                    borderRadius: 'var(--ob-radius-sm)',
-                    backgroundColor: 'var(--ob-error-muted)',
-                    color: 'var(--ob-error-600)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ob-space-150)',
-                  }}
+        {/* Bottom: Active Job Strip - Compact Row */}
+        {(isUploading || status || summary) && (
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+            <Grid container spacing={2} alignItems="center">
+              {/* File Info */}
+              <Grid item xs={12} md={3}>
+                <Stack
+                  direction="row"
+                  sx={{ gap: 'var(--ob-space-150)', alignItems: 'center' }}
                 >
-                  <ErrorIcon fontSize="small" />
-                  <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
-                    {status.error}
-                  </Typography>
-                </Box>
-              )}
-            </GlassCard>
-
-            {/* Stats removed from here? No, let's keep it but maybe below or merged if we want compactness.
-                Wait, previous implementation had "Meta Data" separate.
-                If I reduce height to 280, grid item matching height might mean the status card is also 280.
-                Splitting into two cards (Status + Meta) in the right col might be tight for 280px total?
-                Let's combine them or putting the Meta data BELOW the dropzones in a full width?
-                No, horizontal split is better.
-                Let's keep the Meta Data card but make it compact.
-            */}
-            <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
-              <Stack sx={{ gap: 'var(--ob-space-150)' }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    sx={{ gap: 'var(--ob-space-100)', alignItems: 'center' }}
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 'var(--ob-radius-sm)',
+                      bgcolor: 'action.hover',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
                   >
                     <InsertDriveFile color="action" fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      {t('uploader.fileName', 'File Name')}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" noWrap fontWeight={600}>
+                      {summary?.fileName ||
+                        (isUploading ? 'Uploading...' : 'Pending')}
                     </Typography>
-                  </Stack>
-                  <Typography variant="caption" fontWeight={500}>
-                    {summary?.fileName ||
-                      (isUploading ? <Skeleton width={80} /> : '-')}
-                  </Typography>
-                </Box>
-                <Divider
-                  sx={{ borderColor: 'var(--ob-color-border-subtle)' }}
-                />
-                <Box
+                  </Box>
+                </Stack>
+              </Grid>
+
+              {/* Progress Stepper - Compact */}
+              <Grid item xs={12} md={6}>
+                <Stepper
+                  activeStep={activeStep}
+                  alternativeLabel
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    '& .MuiStepLabel-label': {
+                      marginTop: '4px !important',
+                      fontSize: '0.75rem',
+                    },
+                    '& .MuiStepIcon-root': { fontSize: '1.25rem' },
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary">
-                    {t('uploader.floorsDetected', 'Floors Detected')}
-                  </Typography>
-                  {detectedFloors.length > 0 ? (
-                    <StatusChip
-                      label={`${detectedFloors.length}`}
-                      size="small"
-                      status="success"
-                    />
-                  ) : isUploading ? (
-                    <Skeleton width={30} />
-                  ) : (
-                    <Typography variant="caption" color="text.disabled">
-                      -
-                    </Typography>
-                  )}
-                </Box>
-                <Box
+                  {steps.map((label) => (
+                    <Step key={label}>
+                      <StepLabel
+                        StepIconProps={{
+                          sx: {
+                            '&.Mui-active': { color: 'var(--ob-brand-500)' },
+                            '&.Mui-completed': {
+                              color: 'var(--ob-success-500)',
+                            },
+                          },
+                        }}
+                      >
+                        {label}
+                      </StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+              </Grid>
+
+              {/* Specs / Status */}
+              <Grid item xs={12} md={3}>
+                <Stack
+                  direction="row"
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    gap: 'var(--ob-space-100)',
+                    justifyContent: 'flex-end',
+                    flexWrap: 'wrap',
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary">
-                    {t('uploader.unitsCount', 'Units Count')}
-                  </Typography>
-                  {detectedUnits.length > 0 ? (
-                    <StatusChip
-                      label={`${detectedUnits.length}`}
-                      size="small"
-                      status="success"
-                    />
-                  ) : isUploading ? (
-                    <Skeleton width={30} />
-                  ) : (
-                    <Typography variant="caption" color="text.disabled">
-                      -
-                    </Typography>
+                  {detectedFloors.length > 0 && (
+                    <StatusChip size="sm" status="success">
+                      {`${String(detectedFloors.length)} Flrs`}
+                    </StatusChip>
                   )}
-                </Box>
-              </Stack>
-            </GlassCard>
-          </Stack>
-        </Grid>
-      </Grid>
+                  {detectedUnits.length > 0 && (
+                    <StatusChip size="sm" status="success">
+                      {`${String(detectedUnits.length)} Units`}
+                    </StatusChip>
+                  )}
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* Error Message Row */}
+            {status?.error && (
+              <Box
+                sx={{
+                  mt: 'var(--ob-space-150)',
+                  p: 'var(--ob-space-100)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  backgroundColor: 'var(--ob-error-muted)',
+                  color: 'var(--ob-error-600)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-100)',
+                }}
+              >
+                <ErrorIcon fontSize="small" />
+                <Typography variant="caption">{status.error}</Typography>
+              </Box>
+            )}
+          </GlassCard>
+        )}
+      </Stack>
     </Box>
   )
 }
