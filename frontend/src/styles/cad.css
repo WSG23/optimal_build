@@ -256,7 +256,7 @@
 }
 
 .cad-overlay-status-summary__muted {
-    color: #94a3b8;
+    color: var(--ob-neutral-400);
 }
 
 .cad-overlay-summary__reset {
@@ -272,7 +272,7 @@
 }
 
 .cad-overlay-summary__reset:disabled {
-    color: #94a3b8;
+    color: var(--ob-neutral-400);
     cursor: default;
 }
 
@@ -291,7 +291,7 @@
 
 .cad-overlay-summary__preset:disabled {
     background: var(--ob-color-border-neutral);
-    color: #94a3b8;
+    color: var(--ob-neutral-400);
     cursor: not-allowed;
 }
 
@@ -362,10 +362,10 @@
 .cad-overlay-info-banner {
     margin: 0.5rem 0 0.75rem;
     padding: 0.6rem 0.8rem;
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
-    background: #e0f2fe;
+    border-radius: var(--ob-radius-sm);
+    background: var(--ob-brand-50);
     color: var(--ob-color-surface-inverse);
-    font-size: 0.8rem;
+    font-size: var(--ob-font-size-sm);
     line-height: 1.4;
     display: flex;
     flex-wrap: wrap;
@@ -388,7 +388,7 @@
 
 .cad-overlay-info-banner__action:hover,
 .cad-overlay-info-banner__action:focus-visible {
-    background: #1d4ed8;
+    background: var(--ob-brand-700);
     outline: none;
 }
 
@@ -418,7 +418,7 @@
 
 .cad-overlay-empty button:hover,
 .cad-overlay-empty button:focus-visible {
-    background: #1d4ed8;
+    background: var(--ob-brand-700);
     outline: none;
 }
 
@@ -623,7 +623,7 @@
 }
 
 .cad-status--source {
-    color: #334155;
+    color: var(--ob-neutral-700);
 }
 
 .cad-status--pending {
@@ -641,11 +641,11 @@
 .cad-preview__metric-button {
     margin-left: 0.5rem;
     padding: 0.25rem 0.75rem;
-    border-radius: 0.5rem;
+    border-radius: var(--ob-radius-sm);
     border: 1px solid var(--ob-color-brand-primary);
-    background: #eff6ff;
+    background: var(--ob-brand-50);
     color: var(--ob-color-brand-primary-emphasis);
-    font-size: 0.75rem;
+    font-size: var(--ob-font-size-xs);
     cursor: pointer;
 }
 
@@ -730,7 +730,7 @@
 .cad-panel button:disabled,
 .cad-export button:disabled {
     background: var(--ob-color-border-subtle);
-    color: #64748b;
+    color: var(--ob-neutral-500);
     cursor: not-allowed;
 }
 
@@ -807,8 +807,8 @@
 .cad-detection__filter-banner-actions button {
     border: none;
     background: var(--ob-color-warning-strong);
-    color: #ffffff;
-    font-size: 0.75rem;
+    color: var(--ob-color-text-inverse);
+    font-size: var(--ob-font-size-xs);
     font-weight: 600;
     padding: 0.3rem 0.75rem;
     border-radius: 999px;
@@ -819,7 +819,7 @@
 
 .cad-detection__filter-banner-actions button:hover,
 .cad-detection__filter-banner-actions button:focus-visible {
-    background: #ea580c;
+    background: var(--ob-warning-600);
     outline: none;
 }
 
@@ -845,16 +845,16 @@
 }
 
 .cad-rulepack > li {
-    background: #f8fafc;
+    background: var(--ob-neutral-50);
     padding: 1rem;
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
+    border-radius: var(--ob-radius-sm);
 }
 
 .cad-rulepack__overlay {
     display: inline-block;
     margin-left: 0.5rem;
-    font-size: 0.85rem;
-    color: #2563eb;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-brand-600);
 }
 
 .cad-timeline {
@@ -867,7 +867,7 @@
 
 .cad-timeline__baseline {
     margin: 0;
-    color: #475569;
+    color: var(--ob-neutral-600);
 }
 
 .cad-export {
@@ -885,9 +885,9 @@
     gap: 0.75rem;
     margin: 0.75rem 0 0;
     padding: 0.75rem 1rem;
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
+    border-radius: var(--ob-radius-sm);
     background: var(--ob-color-error-soft);
-    color: #991b1b;
+    color: var(--ob-error-800);
     font-weight: 600;
 }
 
@@ -899,8 +899,8 @@
     flex: 0 0 auto;
     border: none;
     border-radius: 999px;
-    background: #991b1b;
-    color: #ffffff;
+    background: var(--ob-error-800);
+    color: var(--ob-color-text-inverse);
     width: 1.75rem;
     height: 1.75rem;
     font-size: 1rem;
@@ -909,7 +909,7 @@
 }
 
 .cad-export__pending-info:focus-visible {
-    outline: 2px solid #1d4ed8;
+    outline: 2px solid var(--ob-brand-700);
     outline-offset: 2px;
 }
 
@@ -930,8 +930,8 @@
 
 .cad-roi dd {
     margin: 0.25rem 0 0;
-    font-size: 1.35rem;
-    color: #1d4ed8;
+    font-size: var(--ob-font-size-xl);
+    color: var(--ob-brand-700);
     font-weight: 600;
 }
 
@@ -943,7 +943,7 @@
 
 .cad-pipelines__context {
     margin: 0;
-    color: #475569;
+    color: var(--ob-neutral-600);
 }
 
 .cad-pipelines ul {

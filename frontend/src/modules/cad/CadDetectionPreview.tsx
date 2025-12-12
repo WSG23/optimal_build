@@ -708,8 +708,8 @@ export function CadDetectionPreview({
                   key={hint.key}
                   style={{
                     marginBottom: '8px',
-                    fontSize: '0.875rem',
-                    color: '#4b5563',
+                    fontSize: 'var(--ob-font-size-sm)',
+                    color: 'var(--ob-neutral-600)',
                   }}
                 >
                   {hint.text}

@@ -42,16 +42,16 @@ const NeonText = styled(Typography, {
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
   fontWeight: 800,
-  fontSize: '2rem', // Slightly smaller for HUD balance
+  fontSize: 'var(--ob-font-size-3xl)',
   lineHeight: 1.1,
   letterSpacing: '-0.02em',
-  filter: 'drop-shadow(0 0 15px rgba(0,0,0,0.5))',
+  filter: 'drop-shadow(0 0 15px var(--ob-neutral-950))',
 }))
 
 // Circular Progress Custom Implementation
 const CircleBackground = styled('circle')({
   fill: 'none',
-  stroke: 'rgba(255,255,255,0.1)',
+  stroke: 'var(--ob-neutral-800)',
 })
 
 const CircleProgress = styled('circle')<{ color: string }>(({ color }) => ({
@@ -142,12 +142,12 @@ export function RoiSummary({
   const { t } = useTranslation()
   const isGlass = variant === 'glass'
 
-  // Colors
-  const scoreColor = '#10B981' // Emerald
-  const savingsColorStart = '#06b6d4' // Cyan
-  const savingsColorEnd = '#3b82f6' // Blue
-  const hoursColorStart = '#f59e0b' // Amber
-  const hoursColorEnd = '#d946ef' // Fuchsia
+  // Colors - using design tokens
+  const scoreColor = 'var(--ob-success-500)' // Emerald
+  const savingsColorStart = 'var(--ob-brand-400)' // Cyan-ish brand
+  const savingsColorEnd = 'var(--ob-brand-500)' // Blue
+  const hoursColorStart = 'var(--ob-warning-500)' // Amber
+  const hoursColorEnd = 'var(--ob-brand-600)' // Purple-ish brand
 
   if (loading) {
     return (
@@ -164,7 +164,10 @@ export function RoiSummary({
             key={i}
             variant="rectangular"
             height={isGlass ? 120 : 160}
-            sx={{ borderRadius: 4, bgcolor: 'rgba(255,255,255,0.05)' }}
+            sx={{
+              borderRadius: 'var(--ob-radius-sm)',
+              bgcolor: 'var(--ob-neutral-800)',
+            }}
           />
         ))}
       </Box>
@@ -181,13 +184,13 @@ export function RoiSummary({
           {isLive && (
             <Box
               sx={{
-                background: 'rgba(16, 185, 129, 0.2)',
-                color: '#34D399',
-                border: '1px solid #059669',
+                background: 'var(--ob-success-muted)',
+                color: 'var(--ob-success-400)',
+                border: '1px solid var(--ob-success-600)',
                 px: 1,
                 py: 0.25,
-                borderRadius: '4px',
-                fontSize: '0.7rem',
+                borderRadius: 'var(--ob-radius-xs)',
+                fontSize: 'var(--ob-font-size-xs)',
                 fontWeight: 'bold',
                 letterSpacing: '0.05em',
                 animation: `${pulse} 2s infinite`,
@@ -339,8 +342,8 @@ export function RoiSummary({
                 {metrics.paybackWeeks}
                 <span
                   style={{
-                    fontSize: '0.8rem',
-                    color: '#999',
+                    fontSize: 'var(--ob-font-size-sm)',
+                    color: 'var(--ob-neutral-400)',
                     fontWeight: 'normal',
                     marginLeft: '2px',
                   }}
@@ -354,8 +357,8 @@ export function RoiSummary({
             <Box
               sx={{
                 height: 4,
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: 3,
+                background: 'var(--ob-neutral-800)',
+                borderRadius: 'var(--ob-radius-xs)',
                 overflow: 'hidden',
               }}
             >
@@ -363,8 +366,9 @@ export function RoiSummary({
                 sx={{
                   width: `${Math.min(100, Math.max(10, (1 - metrics.paybackWeeks / 26) * 100))}%`,
                   height: '100%',
-                  background: 'linear-gradient(90deg, #F59E0B, #10B981)',
-                  borderRadius: 3,
+                  background:
+                    'linear-gradient(90deg, var(--ob-warning-500), var(--ob-success-500))',
+                  borderRadius: 'var(--ob-radius-xs)',
                 }}
               />
             </Box>
