@@ -4,6 +4,8 @@
 
 This document defines the authoritative styling patterns for the Optimal Build frontend.
 
+> **For complete design token values and usage examples, see [UI_STANDARDS.md](../UI_STANDARDS.md)**
+
 ### Token Hierarchy (Source of Truth)
 
 ```
@@ -22,15 +24,18 @@ styles/[feature].css             ← Feature-specific styles
 
 ### Rules
 
+> **See [UI_STANDARDS.md](../UI_STANDARDS.md) for token values and examples**
+
 1. **Never use inline styles** - All styling must use CSS classes
-2. **Never hardcode colors** - Use `var(--ob-color-*)` tokens
-3. **Never hardcode spacing** - Use `var(--ob-spacing-*)` tokens
+2. **Never hardcode colors** - Use `var(--ob-color-*)` or `var(--ob-brand-*)` tokens
+3. **Never hardcode spacing** - Use `var(--ob-space-*)` tokens
 4. **Never hardcode fonts** - Use `var(--ob-font-*)` tokens
-5. **Never hardcode radii** - Use `var(--ob-radius-*)` tokens
+5. **Never hardcode radii** - Use `var(--ob-radius-*)` tokens (Square Cyber-Minimalism: 2-8px max)
 
 ### Approved Patterns
 
 #### Page Container
+
 ```tsx
 // ✅ CORRECT
 <div className="page">
@@ -49,6 +54,7 @@ styles/[feature].css             ← Feature-specific styles
 ```
 
 #### Forms
+
 ```tsx
 // ✅ CORRECT
 <div className="page__form-group">
@@ -62,6 +68,7 @@ styles/[feature].css             ← Feature-specific styles
 ```
 
 #### Cards and Sections
+
 ```tsx
 // ✅ CORRECT
 <div className="page__card">
@@ -74,15 +81,19 @@ styles/[feature].css             ← Feature-specific styles
 ```
 
 #### Alerts
+
 ```tsx
 // ✅ CORRECT
-{error && <div className="page__alert page__alert--error">{error}</div>}
+{
+    error && <div className="page__alert page__alert--error">{error}</div>
+}
 
 // ❌ WRONG - hardcoded colors
-<div style={{ background: '#fff5f5', color: '#d70015' }}>{error}</div>
+;<div style={{ background: '#fff5f5', color: '#d70015' }}>{error}</div>
 ```
 
 #### Grids
+
 ```tsx
 // ✅ CORRECT
 <div className="page__grid page__grid--3">
