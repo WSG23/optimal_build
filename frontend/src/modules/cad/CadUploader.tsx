@@ -90,7 +90,10 @@ export function CadUploader({
   ]
 
   return (
-    <Box className="cad-uploader" sx={{ maxWidth: 1000, margin: '0 auto' }}>
+    <Box
+      className="cad-uploader"
+      sx={{ maxWidth: 'var(--ob-max-width-content)', margin: '0 auto' }}
+    >
       <Stack sx={{ gap: 'var(--ob-space-200)' }}>
         {/* Top: Compact Hero Drop Zone */}
         <GlassCard
@@ -100,7 +103,7 @@ export function CadUploader({
           onDragOver={!isUploading ? handleDragOver : undefined}
           onDragLeave={!isUploading ? handleDragLeave : undefined}
           sx={{
-            minHeight: 120, // Reduced from 180
+            minHeight: 'var(--ob-size-drop-zone)',
             p: 'var(--ob-space-300)',
             display: 'flex',
             alignItems: 'center',
@@ -136,8 +139,8 @@ export function CadUploader({
           >
             <Box
               sx={{
-                width: 48, // Reduced from 64
-                height: 48,
+                width: 'var(--ob-size-icon-lg)',
+                height: 'var(--ob-size-icon-lg)',
                 borderRadius: '50%',
                 backgroundColor: 'var(--ob-brand-100)',
                 display: 'flex',
@@ -153,7 +156,7 @@ export function CadUploader({
                   sx={{ transform: 'scale(1.0)' }}
                 />
               ) : (
-                <CloudUpload sx={{ fontSize: 24 }} />
+                <CloudUpload sx={{ fontSize: 'var(--ob-font-size-xl)' }} />
               )}
             </Box>
             <Box>
@@ -191,7 +194,7 @@ export function CadUploader({
         {/* Bottom: Active Job Strip - Compact Row */}
         {(isUploading || status || summary) && (
           <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
-            <Grid container spacing={2} alignItems="center">
+            <Grid container spacing="var(--ob-space-200)" alignItems="center">
               {/* File Info */}
               <Grid item xs={12} md={3}>
                 <Stack
@@ -200,8 +203,8 @@ export function CadUploader({
                 >
                   <Box
                     sx={{
-                      width: 32,
-                      height: 32,
+                      width: 'var(--ob-size-icon-md)',
+                      height: 'var(--ob-size-icon-md)',
                       borderRadius: 'var(--ob-radius-sm)',
                       bgcolor: 'action.hover',
                       display: 'flex',
@@ -227,10 +230,12 @@ export function CadUploader({
                   alternativeLabel
                   sx={{
                     '& .MuiStepLabel-label': {
-                      marginTop: '4px !important',
-                      fontSize: '0.75rem',
+                      marginTop: 'var(--ob-space-050) !important',
+                      fontSize: 'var(--ob-font-size-xs)',
                     },
-                    '& .MuiStepIcon-root': { fontSize: '1.25rem' },
+                    '& .MuiStepIcon-root': {
+                      fontSize: 'var(--ob-font-size-lg)',
+                    },
                   }}
                 >
                   {steps.map((label) => (

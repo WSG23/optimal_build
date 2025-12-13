@@ -45,7 +45,7 @@ export function AppShell({
         minHeight: '100vh',
         bgcolor: 'background.default',
         color: 'text.primary',
-        gap: shouldHideSidebar ? 0 : 2, // Consistent gap between sidebar and content
+        gap: shouldHideSidebar ? 0 : 'var(--ob-space-200)', // Consistent gap between sidebar and content
       }}
     >
       {/* "The Wall" - Sidebar */}
@@ -65,18 +65,18 @@ export function AppShell({
           <Box
             component="header"
             sx={{
-              py: 3,
-              px: 4,
+              py: 'var(--ob-space-300)',
+              px: 'var(--ob-space-400)',
               borderBottom: 1,
               borderColor: 'divider',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               bgcolor: alpha(theme.palette.background.default, 0.8),
-              backdropFilter: 'blur(12px)',
+              backdropFilter: 'blur(var(--ob-blur-md))',
               position: 'sticky',
               top: 0,
-              zIndex: 10,
+              zIndex: 'var(--ob-z-sticky)',
             }}
           >
             <Box>
@@ -86,13 +86,17 @@ export function AppShell({
               {subtitle && (
                 <Typography
                   variant="body2"
-                  sx={{ color: 'text.secondary', mt: 0.5 }}
+                  sx={{ color: 'text.secondary', mt: 'var(--ob-space-050)' }}
                 >
                   {subtitle}
                 </Typography>
               )}
             </Box>
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-200)"
+              alignItems="center"
+            >
               <HeaderUtilityCluster />
               {actions}
             </Stack>

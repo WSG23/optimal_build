@@ -89,7 +89,11 @@ export function CadUploadPage() {
   )
 
   const Controls = (
-    <Stack direction="row" spacing={2} sx={{ minWidth: 400 }}>
+    <Stack
+      direction="row"
+      spacing="var(--ob-space-200)"
+      sx={{ minWidth: 'var(--ob-size-controls-min)' }}
+    >
       <Input
         id={projectIdInputId}
         label={t('uploader.projectLabel')}
@@ -128,8 +132,8 @@ export function CadUploadPage() {
 
   return (
     <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
-      <Box className="cad-upload" sx={{ pb: 8 }}>
-        <Stack spacing={3}>
+      <Box className="cad-upload" sx={{ pb: 'var(--ob-space-800)' }}>
+        <Stack spacing="var(--ob-space-300)">
           {/* Context Bar */}
           <GlassCard
             sx={{
@@ -146,7 +150,7 @@ export function CadUploadPage() {
           {error && (
             <Box
               sx={{
-                p: 2,
+                p: 'var(--ob-space-200)',
                 border: '1px solid var(--ob-error-500)',
                 borderRadius: 'var(--ob-radius-sm)',
                 bgcolor: 'var(--ob-error-muted)',

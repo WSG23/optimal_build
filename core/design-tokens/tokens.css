@@ -248,24 +248,24 @@
 
     /* Legacy spacing aliases (map spacing-N00 to space-* scale) */
     --ob-spacing-3: var(--ob-space-075);
-    --ob-spacing-100: var(--ob-space-050);   /* 8px */
-    --ob-spacing-200: var(--ob-space-100);   /* 16px */
-    --ob-spacing-300: var(--ob-space-150);   /* 24px */
-    --ob-spacing-400: var(--ob-space-200);   /* 32px */
-    --ob-spacing-500: var(--ob-space-250);   /* 40px */
-    --ob-spacing-600: var(--ob-space-300);   /* 48px */
+    --ob-spacing-100: var(--ob-space-050); /* 8px */
+    --ob-spacing-200: var(--ob-space-100); /* 16px */
+    --ob-spacing-300: var(--ob-space-150); /* 24px */
+    --ob-spacing-400: var(--ob-space-200); /* 32px */
+    --ob-spacing-500: var(--ob-space-250); /* 40px */
+    --ob-spacing-600: var(--ob-space-300); /* 48px */
 
     /* ===========================================================================
      9. BORDER RADIUS - Square Cyber-Minimalism
      =========================================================================== */
 
     /* Primary scale - sharp, geometric aesthetic */
-    --ob-radius-none: 0;              /* 0px - tables, data grids */
-    --ob-radius-xs: 0.125rem;         /* 2px - buttons, tags, chips */
-    --ob-radius-sm: 0.25rem;          /* 4px - cards, panels, tiles */
-    --ob-radius-md: 0.375rem;         /* 6px - inputs, select boxes */
-    --ob-radius-lg: 0.5rem;           /* 8px - modals, windows ONLY */
-    --ob-radius-pill: 9999px;         /* Avatars, circular icons ONLY */
+    --ob-radius-none: 0; /* 0px - tables, data grids */
+    --ob-radius-xs: 0.125rem; /* 2px - buttons, tags, chips */
+    --ob-radius-sm: 0.25rem; /* 4px - cards, panels, tiles */
+    --ob-radius-md: 0.375rem; /* 6px - inputs, select boxes */
+    --ob-radius-lg: 0.5rem; /* 8px - modals, windows ONLY */
+    --ob-radius-pill: 9999px; /* Avatars, circular icons ONLY */
 
     /* DEPRECATED - keep for backward compatibility during migration */
     --ob-radius-xl: var(--ob-radius-lg);
@@ -282,7 +282,7 @@
 
     /* Dividers */
     --ob-divider: 1px solid rgba(255, 255, 255, 0.06);
-    --ob-divider-strong: 1px solid rgba(255, 255, 255, 0.10);
+    --ob-divider-strong: 1px solid rgba(255, 255, 255, 0.1);
 
     /* ===========================================================================
      9.2 GLOW EFFECTS - Consistent across components
@@ -318,6 +318,27 @@
     --ob-z-modal: 1050;
     --ob-z-popover: 1060;
     --ob-z-tooltip: 1070;
+
+    /* ===========================================================================
+     12. BLUR VALUES
+     =========================================================================== */
+
+    --ob-blur-sm: 4px;
+    --ob-blur-md: 12px;
+    --ob-blur-lg: 24px;
+
+    /* ===========================================================================
+     13. SIZE TOKENS
+     =========================================================================== */
+
+    --ob-size-icon-sm: 24px;
+    --ob-size-icon-md: 32px;
+    --ob-size-icon-lg: 48px;
+    --ob-size-icon-xl: 64px;
+    --ob-size-drop-zone: 120px;
+    --ob-size-controls-min: 400px;
+    --ob-max-width-content: 1000px;
+    --ob-max-width-page: 1400px;
 }
 
 /* =============================================================================
@@ -387,7 +408,7 @@ html[data-theme='light'] {
 
     /* Elegant fine lines (light mode) */
     --ob-border-fine: 1px solid rgba(0, 0, 0, 0.06);
-    --ob-border-fine-strong: 1px solid rgba(0, 0, 0, 0.10);
+    --ob-border-fine-strong: 1px solid rgba(0, 0, 0, 0.1);
     --ob-border-fine-hover: 1px solid rgba(0, 0, 0, 0.15);
     --ob-divider: 1px solid rgba(0, 0, 0, 0.05);
     --ob-divider-strong: 1px solid rgba(0, 0, 0, 0.08);
