@@ -33,7 +33,7 @@ export function GlassCard({
         background: alpha(theme.palette.background.paper, opacity),
         backdropFilter: `blur(${blur}px)`,
         border: `1px solid ${theme.palette.divider}`,
-        borderRadius: 4, // var(--ob-radius-lg)
+        borderRadius: 'var(--ob-radius-sm)', // 4px - cards, panels, tiles
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',

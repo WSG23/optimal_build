@@ -39,8 +39,8 @@ const StyledButton = styled(Button, {
   }
 
   const radiusMap = {
-    pill: '9999px',
-    rounded: 'var(--ob-radius-md)',
+    pill: 'var(--ob-radius-pill)',
+    rounded: 'var(--ob-radius-xs)', // 2px - buttons, tags, chips
   }
 
   // Common base styles

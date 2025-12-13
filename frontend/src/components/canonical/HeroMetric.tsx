@@ -45,10 +45,11 @@ export function HeroMetric({
     <Box
       sx={{
         background: getBackground(),
-        backdropFilter: variant === 'glass' ? 'blur(12px)' : 'none',
+        backdropFilter:
+          variant === 'glass' ? 'blur(var(--ob-blur-md))' : 'none',
         border: `1px solid ${variant === 'primary' ? 'transparent' : theme.palette.divider}`,
-        borderRadius: 4, // var(--ob-radius-lg) which is usually 16px
-        padding: 3,
+        borderRadius: 'var(--ob-radius-sm)', // 4px - cards, panels, tiles
+        padding: 'var(--ob-space-300)',
         boxShadow:
           variant === 'glass'
             ? '0 8px 32px rgba(0,0,0,0.05)'
