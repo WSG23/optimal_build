@@ -150,17 +150,25 @@ Read these documents IN ORDER before writing any code:
     - Must follow in ALL code
     - ~45 min read
 
-5. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Workflow and tooling
+5. **[frontend/UI_STANDARDS.md](frontend/UI_STANDARDS.md)** - UI Design Token Standards (CRITICAL for UI work)
+
+    - Design token usage for spacing, radius, colors, typography
+    - Square Cyber-Minimalism border-radius standards
+    - Canonical component requirements
+    - MUST READ before any frontend UI changes
+    - ~10 min read
+
+6. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Workflow and tooling
     - Setup, testing, linting
     - Code review checklist
     - ~15 min read
 
 ### Priority 3: Context Documents (REFERENCE)
 
-6. **[README.md](README.md)** - Project overview
-7. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
-8. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
-9. **[docs/development/testing/summary.md](docs/development/testing/summary.md)** - Test suites
+7. **[README.md](README.md)** - Project overview
+8. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
+9. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
+10. **[docs/development/testing/summary.md](docs/development/testing/summary.md)** - Test suites
 
 ### Verification Checkpoint
 
@@ -1704,6 +1712,20 @@ git commit -m "Add finance scenario privacy feature"
 -   [ ] Ran `make hooks` and pre-commit passes ✅
 -   [ ] Tests written and passing ✅
 -   [ ] **Provided test instructions to user (Rule 8)** - backend, frontend, and UI manual tests
+
+### Before Committing UI/Frontend Code (ADDITIONAL)
+
+-   [ ] Read [frontend/UI_STANDARDS.md](frontend/UI_STANDARDS.md) before making UI changes
+-   [ ] No hardcoded pixel values (use `--ob-space-*` or `--ob-size-*` tokens)
+-   [ ] No MUI spacing numbers like `spacing={2}` (use `spacing="var(--ob-space-200)"`)
+-   [ ] No hardcoded border-radius (use `--ob-radius-*` tokens)
+-   [ ] Cards/panels use `--ob-radius-sm` (4px), NOT larger radii
+-   [ ] Buttons use `--ob-radius-xs` (2px)
+-   [ ] Modals/dialogs use `--ob-radius-lg` (8px)
+-   [ ] No hardcoded colors (use theme palette or design tokens)
+-   [ ] Using canonical components from `src/components/canonical/` where available
+-   [ ] Font sizes use `--ob-font-size-*` tokens
+-   [ ] Ran `cd frontend && npm run lint` and passes ✅
 
 ### Before Marking Phase Complete
 
