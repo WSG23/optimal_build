@@ -72,7 +72,7 @@ export function AppShell({
             zIndex: (theme) => theme.zIndex.drawer + 1,
             bgcolor: 'background.paper',
             borderBottom: `1px solid ${theme.palette.divider}`,
-            backdropFilter: 'blur(20px)',
+            backdropFilter: 'blur(var(--ob-blur-lg))',
             background: `linear-gradient(to right, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(
               theme.palette.background.paper,
               0.8,
@@ -213,7 +213,7 @@ export function AppShell({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 bgcolor: alpha(theme.palette.background.default, 0.8),
-                backdropFilter: 'blur(12px)',
+                backdropFilter: 'blur(var(--ob-blur-md))',
                 position: 'sticky',
                 top: 0,
                 zIndex: 10,

@@ -119,7 +119,7 @@ export function GlassWindow({
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
-        backdropFilter: 'blur(4px)', // Extra blurred backdrop for focus
+        backdropFilter: 'blur(var(--ob-blur-sm))', // Extra blurred backdrop for focus
       }}
     >
       {/* Modal wrapper primarily for positioning, content handles the look */}

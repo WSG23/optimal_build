@@ -266,7 +266,7 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
         display: 'flex',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         backgroundColor: 'rgba(30,30,30,0.9)',
-        backdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
         position: 'sticky',
         top: 0,
         zIndex: 20,
@@ -476,7 +476,7 @@ export function GanttChart({
                 px: 2,
                 gap: 1,
                 bgcolor: 'rgba(30,30,30,0.3)',
-                backdropFilter: 'blur(4px)',
+                backdropFilter: 'blur(var(--ob-blur-sm))',
               }}
             >
               <Box

@@ -257,7 +257,9 @@ Follow ALL rules in CODING_RULES.md:
 -   Run `make verify` before committing
 -   Pre-commit hooks auto-format code
 
-**Rule 6: Import Ordering**
+**Import Ordering (Python)**
+
+Import ordering is enforced for Python via Ruff/isort (see `CODING_RULES.md` “Python Import Ordering and Formatting”).
 
 ```python
 # 1. Standard library

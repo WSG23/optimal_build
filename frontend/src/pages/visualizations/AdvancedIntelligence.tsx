@@ -206,7 +206,7 @@ export function AdvancedIntelligencePage({
                     p: 3,
                     borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
                     bgcolor: alpha(theme.palette.background.paper, 0.4),
-                    backdropFilter: 'blur(10px)',
+                    backdropFilter: 'blur(var(--ob-blur-md))',
                     border: '1px solid',
                     borderColor: alpha(theme.palette.divider, 0.1),
                   }}

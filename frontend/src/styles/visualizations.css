@@ -10,7 +10,7 @@
 .engineering-layers {
     width: 100%;
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm);
     background-color: var(--ob-color-bg-surface);
 }
 
@@ -25,7 +25,7 @@
     gap: var(--ob-spacing-150);
     margin: 0;
     font-size: var(--ob-font-size-lg);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
 
@@ -50,6 +50,22 @@
 
 .engineering-layers__icon {
     font-size: var(--ob-font-size-base);
+}
+
+.engineering-layers__icon[data-layer='structural'] {
+    color: var(--ob-info-500);
+}
+
+.engineering-layers__icon[data-layer='mep'] {
+    color: var(--ob-warning-500);
+}
+
+.engineering-layers__icon[data-layer='plenum'] {
+    color: var(--ob-color-text-muted);
+}
+
+.engineering-layers__icon[data-layer='facade'] {
+    color: var(--ob-success-500);
 }
 
 .engineering-layers__label {
@@ -96,7 +112,7 @@
     width: 18px;
     left: 3px;
     bottom: 3px;
-    background-color: white;
+    background-color: var(--ob-color-bg-surface);
     transition: left 0.2s ease;
     border-radius: 50%;
 }
@@ -165,7 +181,7 @@
     font-size: var(--ob-font-size-xs);
     color: var(--ob-color-text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: var(--ob-letter-spacing-widest);
 }
 
 .clash-impact__list {
@@ -180,7 +196,7 @@
     gap: var(--ob-spacing-300);
     padding: var(--ob-spacing-300);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm);
     background: var(--ob-color-bg-surface);
 }
 
@@ -282,7 +298,7 @@
     align-items: flex-start;
     padding: var(--ob-spacing-250);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm);
     background: var(--ob-color-bg-muted);
 }
 
@@ -294,7 +310,7 @@
 }
 
 .clash-impact__item-discipline {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-text-primary);
 }

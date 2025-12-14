@@ -32,44 +32,44 @@ const SourcesPage = () => {
     <div>
       <Header title={t('sources.title')} />
       {loading && (
-        <p className="text-sm text-slate-400">{t('sources.loading')}</p>
+        <p className="text-sm text-text-muted">{t('sources.loading')}</p>
       )}
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-error-muted">{error}</p>}
       {!loading && !error && (
-        <div className="overflow-hidden rounded-lg border border-slate-800">
-          <table className="min-w-full divide-y divide-slate-800">
-            <thead className="bg-slate-900">
+        <div className="overflow-hidden rounded border border-border-subtle bg-surface">
+          <table className="min-w-full divide-y divide-border-subtle">
+            <thead className="bg-surface-alt">
               <tr>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase text-text-muted"
                 >
                   {t('sources.columns.authority')}
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase text-text-muted"
                 >
                   {t('sources.columns.topic')}
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-400"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase text-text-muted"
                 >
                   {t('sources.columns.document')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-border-subtle">
               {sources.map((source) => (
-                <tr key={source.id} className="hover:bg-slate-900/70">
-                  <td className="px-4 py-3 text-sm text-slate-200">
+                <tr key={source.id} className="hover:bg-surface-alt/70">
+                  <td className="px-4 py-3 text-sm text-text-primary">
                     <div className="font-semibold">{source.authority}</div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-text-muted">
                       {source.jurisdiction}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-300">
+                  <td className="px-4 py-3 text-sm text-text-secondary">
                     {source.topic}
                   </td>
                   <td className="px-4 py-3 text-sm">
@@ -77,7 +77,7 @@ const SourcesPage = () => {
                       href={source.landing_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-emerald-400 hover:text-emerald-300"
+                      className="text-success-strong hover:text-success-strong/80"
                     >
                       {source.doc_title}
                     </a>
@@ -88,7 +88,7 @@ const SourcesPage = () => {
                 <tr>
                   <td
                     colSpan={3}
-                    className="px-4 py-6 text-center text-sm text-slate-400"
+                    className="px-4 py-6 text-center text-sm text-text-muted"
                   >
                     {t('sources.empty')}
                   </td>

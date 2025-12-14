@@ -57,7 +57,7 @@
     min-width: 400px;
     max-width: 480px;
     background: rgba(255, 255, 255, 0.85); /* Proper glass */
-    backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(var(--ob-blur-lg)) saturate(180%);
     border-right: 1px solid rgba(0, 0, 0, 0.04);
     display: flex;
     flex-direction: column;

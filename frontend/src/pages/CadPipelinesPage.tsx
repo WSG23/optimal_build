@@ -159,7 +159,7 @@ export function CadPipelinesPage() {
             p: 2,
             mb: 4,
             backgroundColor: 'rgba(30, 30, 30, 0.6)',
-            backdropFilter: 'blur(10px)',
+            backdropFilter: 'blur(var(--ob-blur-md))',
             border: '1px solid rgba(255,255,255,0.05)',
             borderRadius: '4px',
             display: 'flex',
@@ -230,11 +230,13 @@ export function CadPipelinesPage() {
                   sx={{
                     px: 1,
                     py: 0.5,
-                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                    border: '1px solid rgba(6, 182, 212, 0.3)',
-                    borderRadius: '4px',
-                    color: '#06b6d4',
-                    fontSize: '0.75rem',
+                    backgroundColor:
+                      'rgba(var(--ob-color-brand-primary-emphasis-rgb) / 0.1)',
+                    border:
+                      '1px solid rgba(var(--ob-color-brand-primary-emphasis-rgb) / 0.3)',
+                    borderRadius: 'var(--ob-radius-sm)',
+                    color: 'var(--ob-color-brand-primary-emphasis)',
+                    fontSize: 'var(--ob-font-size-xs)',
                   }}
                 >
                   {code}
@@ -256,11 +258,11 @@ export function CadPipelinesPage() {
             variant="outlined"
             sx={{
               mb: 4,
-              backgroundColor: 'rgba(211, 47, 47, 0.05)',
-              color: '#ef5350',
-              border: '1px solid rgba(239, 83, 80, 0.3)',
+              backgroundColor: 'rgba(var(--ob-color-error-muted-rgb) / 0.06)',
+              color: 'var(--ob-color-error-muted)',
+              border: '1px solid rgba(var(--ob-color-error-muted-rgb) / 0.3)',
               alignItems: 'center',
-              '& .MuiAlert-icon': { color: '#ef5350' },
+              '& .MuiAlert-icon': { color: 'var(--ob-color-error-muted)' },
             }}
             action={
               <Button color="inherit" size="small" onClick={handleRetry}>
@@ -284,7 +286,7 @@ export function CadPipelinesPage() {
         <Box sx={{ mb: 6 }}>
           <Typography
             variant="h5"
-            sx={{ fontWeight: 700, color: 'white', mb: 2 }}
+            sx={{ fontWeight: 700, color: 'text.primary', mb: 2 }}
           >
             {t('pipelines.suggestionHeading')}
           </Typography>
@@ -298,14 +300,14 @@ export function CadPipelinesPage() {
               elevation={0}
               sx={{
                 p: 6,
-                borderRadius: '4px',
-                backgroundColor: 'rgba(30, 30, 30, 0.3)',
-                border: '1px dashed rgba(255,255,255,0.1)',
+                borderRadius: 'var(--ob-radius-sm)',
+                backgroundColor: 'var(--ob-surface-glass-1)',
+                border: '1px dashed var(--ob-color-border-faint)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 backgroundImage:
-                  'radial-gradient(circle at center, rgba(6, 182, 212, 0.05) 0%, transparent 70%)',
+                  'radial-gradient(circle at center, rgba(var(--ob-color-brand-primary-emphasis-rgb) / 0.08) 0%, transparent 70%)',
                 position: 'relative',
                 overflow: 'hidden',
               }}
@@ -320,7 +322,7 @@ export function CadPipelinesPage() {
                   height: '400px',
                   opacity: 0.03,
                   fill: 'none',
-                  stroke: 'white',
+                  stroke: 'var(--ob-color-text-primary)',
                   strokeWidth: 1,
                   top: '50%',
                   left: '50%',
@@ -372,12 +374,14 @@ export function CadPipelinesPage() {
                 disabled={loading}
                 startIcon={<RefreshIcon />}
                 sx={{
-                  color: '#06b6d4',
-                  borderColor: 'rgba(6, 182, 212, 0.5)',
+                  color: 'var(--ob-color-brand-primary-emphasis)',
+                  borderColor:
+                    'rgba(var(--ob-color-brand-primary-emphasis-rgb) / 0.5)',
                   zIndex: 1,
                   '&:hover': {
-                    borderColor: '#06b6d4',
-                    backgroundColor: 'rgba(6,182,212,0.05)',
+                    borderColor: 'var(--ob-color-border-brand)',
+                    backgroundColor:
+                      'rgba(var(--ob-color-brand-primary-emphasis-rgb) / 0.05)',
                   },
                 }}
               >
@@ -399,12 +403,12 @@ export function CadPipelinesPage() {
                   key={suggestion.id}
                   sx={{
                     p: 3,
-                    borderRadius: '4px',
-                    backgroundColor: '#1E1E1E',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 'var(--ob-radius-sm)',
+                    backgroundColor: 'background.paper',
+                    border: '1px solid var(--ob-color-border-faint)',
                     transition: 'all 0.2s',
                     '&:hover': {
-                      borderColor: '#06b6d4',
+                      borderColor: 'var(--ob-color-border-brand)',
                       transform: 'translateY(-2px)',
                     },
                   }}
@@ -420,9 +424,9 @@ export function CadPipelinesPage() {
                     <Typography
                       variant="h6"
                       sx={{
-                        color: 'white',
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
+                        color: 'text.primary',
+                        fontSize: 'var(--ob-font-size-lg)',
+                        fontWeight: 'var(--ob-font-weight-semibold)',
                       }}
                     >
                       {suggestion.title}
@@ -431,14 +435,17 @@ export function CadPipelinesPage() {
                       sx={{
                         px: 1,
                         py: 0.5,
-                        borderRadius: '4px',
-                        backgroundColor: `rgba(${suggestion.automationScore > 0.8 ? '16, 185, 129' : '245, 158, 11'}, 0.1)`,
+                        borderRadius: 'var(--ob-radius-sm)',
+                        backgroundColor:
+                          suggestion.automationScore > 0.8
+                            ? 'rgba(var(--ob-color-success-strong-rgb) / 0.12)'
+                            : 'rgba(var(--ob-color-warning-strong-rgb) / 0.12)',
                         color:
                           suggestion.automationScore > 0.8
-                            ? '#34D399'
-                            : '#FBBF24',
-                        fontWeight: 'bold',
-                        fontSize: '0.75rem',
+                            ? 'var(--ob-color-status-success-text)'
+                            : 'var(--ob-color-status-warning-text)',
+                        fontWeight: 'var(--ob-font-weight-bold)',
+                        fontSize: 'var(--ob-font-size-xs)',
                       }}
                     >
                       {Math.round(suggestion.automationScore * 100)}% AUTO
@@ -460,7 +467,7 @@ export function CadPipelinesPage() {
 
                   <Box
                     sx={{
-                      borderTop: '1px solid rgba(255,255,255,0.05)',
+                      borderTop: '1px solid var(--ob-color-border-faint)',
                       pt: 2,
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -473,7 +480,10 @@ export function CadPipelinesPage() {
                       >
                         {t('pipelines.savings')}
                       </Typography>
-                      <Typography variant="subtitle2" sx={{ color: '#06b6d4' }}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ color: 'var(--ob-color-brand-primary-emphasis)' }}
+                      >
                         {suggestion.estimatedSavingsPercent}%
                       </Typography>
                     </Box>

@@ -14,7 +14,7 @@ const StatCard = styled(Paper, {
   shouldForwardProp: (prop) => prop !== 'glass',
 })<{ glass?: boolean }>(({ theme, glass }) => ({
   background: glass ? 'var(--ob-surface-glass-1)' : 'var(--ob-neutral-900)', // Glass vs Solid
-  backdropFilter: glass ? 'blur(12px)' : 'none',
+  backdropFilter: glass ? 'blur(var(--ob-blur-md))' : 'none',
   border: glass
     ? '1px solid var(--ob-border-fine)'
     : '1px solid var(--ob-border-fine)',

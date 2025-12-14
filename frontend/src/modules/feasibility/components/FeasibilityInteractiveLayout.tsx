@@ -55,7 +55,7 @@ export function FeasibilityInteractiveLayout({
           borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           bgcolor: alpha(theme.palette.background.paper, 0.65), // Semi-transparent
-          backdropFilter: 'blur(20px)',
+          backdropFilter: 'blur(var(--ob-blur-lg))',
           boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
           overflow: 'hidden',
         }}

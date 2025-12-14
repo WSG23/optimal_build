@@ -704,9 +704,10 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
               )
             }
             sx={{
-              background: 'linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%)',
-              color: '#000',
-              fontWeight: 'bold',
+              background:
+                'linear-gradient(135deg, var(--ob-brand-600) 0%, var(--ob-brand-400) 100%)',
+              color: 'var(--ob-color-text-inverse)',
+              fontWeight: 'var(--ob-font-weight-bold)',
             }}
           >
             {loading ? 'Submitting...' : 'Submit Application'}

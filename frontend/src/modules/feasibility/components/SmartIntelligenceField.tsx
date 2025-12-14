@@ -59,7 +59,7 @@ export function SmartIntelligenceField({
           display: 'flex',
           alignItems: 'center',
           background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(12px)',
+          backdropFilter: 'blur(var(--ob-blur-md))',
           borderRadius: '6px', // Input shape
           padding: '8px 16px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',

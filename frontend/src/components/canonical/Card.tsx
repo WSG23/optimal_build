@@ -68,8 +68,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       },
       glass: {
         background: 'var(--ob-surface-glass-1)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
+        WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
       },
       ghost: {
         background: 'transparent',

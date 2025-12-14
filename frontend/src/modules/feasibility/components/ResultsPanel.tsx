@@ -85,7 +85,7 @@ export function ResultsPanel({
           {/* The Blurred Content (Teaser) */}
           <div
             style={{
-              filter: 'blur(8px)',
+              filter: 'blur(var(--ob-blur-xs))',
               opacity: 0.5,
               pointerEvents: 'none',
               display: 'grid',
@@ -146,7 +146,7 @@ export function ResultsPanel({
               paddingBottom: '48px',
               // FIXED: Semi-transparent black with blur
               background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(4px)',
+              backdropFilter: 'blur(var(--ob-blur-sm))',
               zIndex: 10,
             }}
           >
@@ -193,7 +193,7 @@ export function ResultsPanel({
                 className="glass-panel"
                 style={{
                   background: 'rgba(30, 30, 30, 0.6)', // Glassmorphic dark
-                  backdropFilter: 'blur(12px)',
+                  backdropFilter: 'blur(var(--ob-blur-md))',
                   border: '1px solid rgba(255,255,255,0.1)',
                   padding: '24px 32px',
                   borderRadius: '4px',

@@ -142,7 +142,7 @@ repos:
     hooks:
       - id: prettier
         name: prettier
-        entry: npx --prefix frontend prettier --check
+        entry: npx --prefix ui-admin prettier --check
         language: system
         files: ^frontend/.*\.(js|jsx|ts|tsx|css|json|md)$
         exclude: ^frontend/node_modules/
@@ -157,8 +157,9 @@ repos:
     hooks:
       - id: eslint
         name: eslint
-        entry: npx --prefix frontend eslint
+        entry: npm --prefix frontend run lint
         language: system
+        pass_filenames: false
         files: ^frontend/.*\.(js|jsx|ts|tsx)$
         exclude: ^frontend/node_modules/
       - id: eslint-admin

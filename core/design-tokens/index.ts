@@ -340,14 +340,18 @@ export const typography = {
     mono: "'JetBrains Mono', monospace",
   },
   size: {
+    '2xs': '0.6875rem',
     xs: '0.75rem',
+    'sm-minus': '0.8125rem',
     sm: '0.875rem',
+    md: '0.9375rem',
     base: '1rem',
     lg: '1.125rem',
     xl: '1.25rem',
     '2xl': '1.5rem',
     '3xl': '1.875rem',
     '4xl': '2.25rem',
+    '5xl': '3rem',
   },
   weight: {
     regular: 400,
@@ -356,9 +360,21 @@ export const typography = {
     bold: 700,
   },
   lineHeight: {
+    none: 1,
     tight: 1.2,
+    snug: 1.4,
     normal: 1.5,
     relaxed: 1.6,
+    loose: 1.75,
+  },
+  letterSpacing: {
+    tighter: '-0.02em',
+    tight: '-0.01em',
+    normal: '0',
+    wide: '0.01em',
+    wider: '0.02em',
+    widest: '0.05em',
+    caps: '0.1em',
   },
 } as const
 

@@ -106,7 +106,7 @@
     flex: 1;
     max-width: 480px;
     background: rgba(20, 20, 20, 0.75); /* Darker, high-contrast cockpit feel */
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(var(--ob-blur-xl));
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: 2rem;
@@ -156,7 +156,7 @@
 .gps-hud-card {
     width: 100%;
     background: rgba(20, 20, 20, 0.6);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--ob-blur-md));
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
     padding: 1rem 1.25rem;
@@ -206,7 +206,7 @@
 
 .gps-hud-card.locked .gps-hud-content {
     opacity: 0.1; /* Show faint ghost of content behind lock */
-    filter: blur(4px);
+    filter: blur(var(--ob-blur-sm));
     pointer-events: none;
 }
 

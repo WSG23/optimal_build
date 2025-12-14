@@ -11,8 +11,8 @@
 
 .glass-panel {
     background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     border: var(--ob-border-fine); /* Updated: fine line at low opacity */
     border-radius: var(--ob-radius-sm); /* 4px - ENFORCED */
     box-shadow: var(--ob-shadow-glass);
@@ -20,8 +20,8 @@
 
 .glass-panel-heavy {
     background: var(--ob-surface-glass-2);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
     border: var(--ob-border-fine-strong); /* Updated: fine line strong */
     border-radius: var(--ob-radius-sm); /* 4px - ENFORCED */
     box-shadow: var(--ob-shadow-glass-lg);
@@ -30,8 +30,8 @@
 /* Glass card variant - matches Card component */
 .glass-card {
     background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     border: var(--ob-border-fine);
     border-radius: var(--ob-radius-sm); /* 4px */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -44,8 +44,8 @@
 /* Glass window variant - matches Window component (only lg radius) */
 .glass-window {
     background: var(--ob-surface-glass-2);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
     border: var(--ob-border-fine-strong);
     border-radius: var(--ob-radius-lg); /* 8px - Windows ONLY */
     box-shadow: var(--ob-shadow-glass-lg);
@@ -56,7 +56,11 @@
    ============================================================================= */
 
 .text-gradient-gold {
-    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    background: linear-gradient(
+        135deg,
+        var(--ob-accent-400) 0%,
+        var(--ob-accent-600) 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

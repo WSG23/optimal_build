@@ -34,7 +34,7 @@ export function KPITickerCard({
         borderRadius: '4px', // Square Cyber-Minimalism: sm for cards
         overflow: 'hidden',
         bgcolor: alpha(theme.palette.background.paper, 0.6), // Glassmorphic base
-        backdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(var(--ob-blur-lg))',
         border: '1px solid',
         borderColor: active
           ? theme.palette.primary.main

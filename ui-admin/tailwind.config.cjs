@@ -13,13 +13,15 @@ module.exports = {
         extend: {
             colors: {
                 surface: {
-                    DEFAULT: 'var(--ob-color-surface-default)',
-                    alt: 'var(--ob-color-surface-alt)',
+                    DEFAULT: withOpacityValue('--ob-color-surface-default-rgb'),
+                    alt: withOpacityValue('--ob-color-surface-alt-rgb'),
                     inverse: withOpacityValue('--ob-color-surface-inverse-rgb'),
                 },
                 text: {
                     primary: withOpacityValue('--ob-color-text-primary-rgb'),
+                    secondary: withOpacityValue('--ob-color-text-secondary-rgb'),
                     muted: withOpacityValue('--ob-color-text-muted-rgb'),
+                    subtle: withOpacityValue('--ob-color-text-subtle-rgb'),
                     inverse: withOpacityValue('--ob-color-text-inverse-rgb'),
                     'inverse-muted': withOpacityValue(
                         '--ob-color-text-inverse-muted-rgb',

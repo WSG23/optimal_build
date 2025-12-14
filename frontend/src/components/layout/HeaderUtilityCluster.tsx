@@ -68,7 +68,7 @@ export function HeaderUtilityCluster() {
     fontSize: '0.875rem',
     fontWeight: 500,
     background: alpha(theme.palette.background.paper, 0.05),
-    backdropFilter: 'blur(4px)',
+    backdropFilter: 'blur(var(--ob-blur-sm))',
     '&:hover': {
       background: alpha(theme.palette.text.primary, 0.05),
       borderColor: alpha(theme.palette.text.primary, 0.2),
@@ -82,7 +82,7 @@ export function HeaderUtilityCluster() {
     width: '40px',
     height: '40px',
     background: alpha(theme.palette.background.paper, 0.05),
-    backdropFilter: 'blur(4px)',
+    backdropFilter: 'blur(var(--ob-blur-sm))',
     '&:hover': {
       color: 'text.primary',
       background: alpha(theme.palette.text.primary, 0.05),

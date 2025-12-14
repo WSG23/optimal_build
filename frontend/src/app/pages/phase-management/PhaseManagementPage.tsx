@@ -63,7 +63,7 @@ function HolographicCard({
         p: 2,
         borderRadius: 3,
         background: 'rgba(30, 30, 30, 0.6)',
-        backdropFilter: 'blur(12px)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
         display: 'flex',
@@ -420,7 +420,7 @@ export function PhaseManagementPage() {
         elevation={0}
         sx={{
           background: 'rgba(30, 30, 30, 0.4)',
-          backdropFilter: 'blur(10px)',
+          backdropFilter: 'blur(var(--ob-blur-md))',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: 3,
           overflow: 'hidden',

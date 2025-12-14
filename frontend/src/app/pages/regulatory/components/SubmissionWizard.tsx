@@ -218,7 +218,7 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { bgcolor: '#1A1D1F' } }}
+      PaperProps={{ sx: { bgcolor: 'background.paper' } }}
     >
       <DialogTitle>New Regulatory Submission</DialogTitle>
       <DialogContent>
@@ -258,8 +258,9 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
               )
             }
             sx={{
-              background: 'linear-gradient(135deg, #00C853 0%, #B2FF59 100%)',
-              color: '#000',
+              background:
+                'linear-gradient(135deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
+              color: 'var(--ob-color-text-inverse)',
             }}
           >
             {submitting ? 'Submitting...' : 'Submit'}

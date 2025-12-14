@@ -116,7 +116,7 @@ export function ImmersiveMap({
           <Box
             sx={{
               background: 'rgba(15, 23, 42, 0.85)',
-              backdropFilter: 'blur(20px)',
+              backdropFilter: 'blur(var(--ob-blur-lg))',
               border: '1px solid rgba(6, 182, 212, 0.3)',
               borderRadius: '4px',
               padding: '48px 64px',

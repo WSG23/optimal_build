@@ -61,7 +61,7 @@ const ClausesPage = () => {
         title="Clauses"
         actions={
           <select
-            className="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm"
+            className="rounded-md border border-border-neutral bg-surface px-3 py-2 text-sm text-text-primary"
             value={selectedDocument ?? ''}
             onChange={handleDocumentChange}
           >
@@ -74,37 +74,37 @@ const ClausesPage = () => {
           </select>
         }
       />
-      {loading && <p className="text-sm text-slate-400">Loading clauses…</p>}
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {loading && <p className="text-sm text-text-muted">Loading clauses…</p>}
+      {error && <p className="text-sm text-error-muted">{error}</p>}
       {!loading && !error && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div className="space-y-3">
             {clauses.map((clause) => (
               <article
                 key={clause.id}
-                className="border border-slate-800 rounded p-4 bg-slate-900/40"
+                className="rounded border border-border-subtle bg-surface/40 p-4"
               >
-                <h3 className="text-sm font-semibold text-slate-200">
+                <h3 className="text-sm font-semibold text-text-primary">
                   {clause.clause_ref || 'Unnamed clause'}
                 </h3>
                 {clause.section_heading && (
-                  <p className="text-xs text-slate-400 mb-2">
+                  <p className="mb-2 text-xs text-text-muted">
                     {clause.section_heading}
                   </p>
                 )}
-                <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-line">
+                <p className="whitespace-pre-line text-sm leading-relaxed text-text-secondary">
                   {clause.text_span}
                 </p>
               </article>
             ))}
             {clauses.length === 0 && (
-              <div className="border border-slate-800 rounded p-6 text-center text-sm text-slate-400">
+              <div className="rounded border border-border-subtle p-6 text-center text-sm text-text-muted">
                 No clauses available for the selected document.
               </div>
             )}
           </div>
-          <div className="border border-slate-800 rounded p-4 bg-slate-900/40">
-            <h3 className="text-sm font-semibold text-slate-200 mb-3">
+          <div className="rounded border border-border-subtle bg-surface/40 p-4">
+            <h3 className="mb-3 text-sm font-semibold text-text-primary">
               Document Preview
             </h3>
             <PDFViewer url={previewDoc?.storage_path} />

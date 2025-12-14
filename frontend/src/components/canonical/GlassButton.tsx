@@ -1,20 +1,17 @@
-import { Button, ButtonProps, styled, alpha } from '@mui/material'
+import { Button, type ButtonProps, styled } from '@mui/material'
 import { forwardRef } from 'react'
 
-export interface GlassButtonProps extends ButtonProps {
+type ObVariant = 'primary' | 'secondary' | 'ghost'
+type GlassButtonVariant = ButtonProps['variant'] | ObVariant
+
+export interface GlassButtonProps extends Omit<ButtonProps, 'variant'> {
   /**
    * Variant of the button:
    * - 'primary': Strong gradient background with glass/glow effect
    * - 'secondary': Glass surface with border
    * - 'ghost': Transparent with hover effect
    */
-  variant?:
-    | 'text'
-    | 'outlined'
-    | 'contained'
-    | 'primary'
-    | 'secondary'
-    | 'ghost'
+  variant?: GlassButtonVariant
   /**
    * Size of the button
    * - 'sm': 32px height
@@ -28,9 +25,14 @@ export interface GlassButtonProps extends ButtonProps {
   shape?: 'pill' | 'rounded'
 }
 
+type StyledGlassButtonProps = ButtonProps & {
+  obVariant?: GlassButtonVariant
+  shape?: 'pill' | 'rounded'
+}
+
 const StyledButton = styled(Button, {
-  shouldForwardProp: (prop) => prop !== 'variant' && prop !== 'shape',
-})<GlassButtonProps>(({ theme, variant, size, shape }) => {
+  shouldForwardProp: (prop) => prop !== 'obVariant' && prop !== 'shape',
+})<StyledGlassButtonProps>(({ obVariant, size, shape }) => {
   // Map custom sizes to fixed heights
   const heightMap = {
     small: '32px',
@@ -65,6 +67,7 @@ const StyledButton = styled(Button, {
   }
 
   // Variants
+  const variant = obVariant
   if (variant === 'primary' || variant === 'contained') {
     return {
       ...common,
@@ -103,7 +106,7 @@ const StyledButton = styled(Button, {
       background: 'var(--ob-surface-glass-1)',
       color: 'var(--ob-color-text-primary)',
       border: '1px solid var(--ob-border-glass-strong)',
-      backdropFilter: 'blur(8px)',
+      backdropFilter: 'blur(var(--ob-blur-xs))',
       '&:hover': {
         background: 'var(--ob-surface-glass-2)',
         borderColor: 'var(--ob-color-text-primary)',
@@ -146,10 +149,20 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
     },
     ref,
   ) => {
+    const muiVariant: ButtonProps['variant'] =
+      variant === 'primary'
+        ? 'contained'
+        : variant === 'secondary'
+          ? 'outlined'
+          : variant === 'ghost'
+            ? 'text'
+            : variant
+
     return (
       <StyledButton
         ref={ref}
-        variant={variant as any} // MUI types compatibility
+        variant={muiVariant}
+        obVariant={variant}
         size={size}
         shape={shape}
         disableElevation

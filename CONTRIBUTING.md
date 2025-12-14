@@ -67,7 +67,7 @@ All AI agents (Claude, Codex, etc.) MUST follow this workflow:
 1. Follow all 7 rules in CODING_RULES.md
 2. Never edit existing migration files (Rule 1)
 3. Use async/await for all database/API operations (Rule 2)
-4. Follow import ordering conventions (Rule 6)
+4. Follow import ordering conventions (Python; see `CODING_RULES.md` “Python Import Ordering and Formatting”)
 5. Avoid unused variables and use proper exception chaining (Rule 7)
 
 **AFTER writing code (MANDATORY):**

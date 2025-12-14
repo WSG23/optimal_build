@@ -720,5 +720,5 @@
     );
     pointer-events: none;
     z-index: 1;
-    filter: blur(10px);
+    filter: blur(var(--ob-blur-md));
 }

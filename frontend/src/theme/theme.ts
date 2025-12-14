@@ -55,6 +55,15 @@ function createAppTheme(mode: ThemeMode): Theme {
   const modeColors = getModeColors(mode)
 
   const themeOptions: ThemeOptions = {
+    /**
+     * Tokenized spacing:
+     * - MUI calls `theme.spacing(n)` for `sx` shorthands (p/m/gap) and Grid spacing.
+     * - We map 1 unit to `--ob-space-050` (8px) so numeric spacing remains token-based.
+     */
+    spacing: (factor: number) => {
+      if (factor === 0) return '0px'
+      return `calc(${factor} * ${spacing['050']})`
+    },
     palette: {
       mode,
       background: modeColors.background,
@@ -170,13 +179,6 @@ function createAppTheme(mode: ThemeMode): Theme {
             backgroundColor: modeColors.background.paper,
             border: `1px solid ${modeColors.divider}`,
             borderRadius: radii.sm, // 4px - Square Cyber-Minimalism
-          },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            backgroundImage: 'none',
           },
         },
       },

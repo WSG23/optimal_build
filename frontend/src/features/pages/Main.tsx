@@ -164,17 +164,8 @@ export default function Main() {
           </div>
         </header>
 
-        <div
-          className="grid flex-1 min-h-0 gap-6"
-          style={{
-            gridTemplateColumns: '320px minmax(0,1fr) 420px',
-            gridTemplateRows: 'minmax(0,1fr) 320px',
-          }}
-        >
-          <div
-            className="min-h-0"
-            style={{ gridColumn: '1', gridRow: '1 / span 2' }}
-          >
+        <div className="grid flex-1 min-h-0 gap-6 grid-cols-[320px_minmax(0,1fr)_420px] grid-rows-[minmax(0,1fr)_320px]">
+          <div className="min-h-0 col-start-1 row-start-1 row-span-2">
             <LeftSidebar
               facilityLabel={facilityLabel}
               threatScore={threatData.headline_score}
@@ -182,10 +173,7 @@ export default function Main() {
             />
           </div>
 
-          <section
-            className="min-h-0"
-            style={{ gridColumn: '2', gridRow: '1' }}
-          >
+          <section className="min-h-0 col-start-2 row-start-1">
             <Panel title="Floorplan Activity" className="h-full">
               <PanelBody className="h-full p-0">
                 <IncidentMapView
@@ -198,10 +186,7 @@ export default function Main() {
             </Panel>
           </section>
 
-          <section
-            className="min-h-0"
-            style={{ gridColumn: '3', gridRow: '1' }}
-          >
+          <section className="min-h-0 col-start-3 row-start-1">
             <Panel title="Weak-Signal Live Feed" className="h-full">
               <PanelBody className="h-full overflow-y-auto p-3">
                 <LiveFeedPanel />
@@ -209,14 +194,8 @@ export default function Main() {
             </Panel>
           </section>
 
-          <section
-            className="min-h-0"
-            style={{ gridColumn: '2 / span 2', gridRow: '2' }}
-          >
-            <div
-              className="grid h-full gap-6"
-              style={{ gridTemplateColumns: 'minmax(0,2.2fr) minmax(0,1.2fr)' }}
-            >
+          <section className="min-h-0 col-start-2 col-span-2 row-start-2">
+            <div className="grid h-full gap-6 grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)]">
               <Panel title="Incident Detection Breakdown" className="h-full">
                 <PanelBody className="h-full overflow-y-auto p-4">
                   <IncidentDetectionBreakdown

@@ -95,8 +95,8 @@ export function Window({
         borderRadius: 'var(--ob-radius-lg)', // 8px - Windows get larger radius
         border: 'var(--ob-border-fine-strong)',
         background: 'var(--ob-surface-glass-2)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(var(--ob-blur-lg))',
+        WebkitBackdropFilter: 'blur(var(--ob-blur-lg))',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: inline ? 'none' : '90vh',
@@ -207,7 +207,7 @@ export function Window({
         alignItems: 'center',
         justifyContent: 'center',
         p: 'var(--ob-space-100)',
-        backdropFilter: 'blur(4px)',
+        backdropFilter: 'blur(var(--ob-blur-sm))',
       }}
     >
       <Box

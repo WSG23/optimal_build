@@ -305,7 +305,8 @@ export const ProjectProgressDashboard: React.FC<
           <Grid item xs={12} sm={6} md={3}>
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                background:
+                  'linear-gradient(135deg, var(--ob-brand-700) 0%, var(--ob-brand-400) 100%)',
                 color: 'white',
               }}
             >
@@ -333,7 +334,8 @@ export const ProjectProgressDashboard: React.FC<
           <Grid item xs={12} sm={6} md={3}>
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #388e3c 0%, #66bb6a 100%)',
+                background:
+                  'linear-gradient(135deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
                 color: 'white',
               }}
             >
@@ -352,7 +354,8 @@ export const ProjectProgressDashboard: React.FC<
           <Grid item xs={12} sm={6} md={3}>
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #f57c00 0%, #ffb74d 100%)',
+                background:
+                  'linear-gradient(135deg, var(--ob-warning-700) 0%, var(--ob-warning-400) 100%)',
                 color: 'white',
               }}
             >
@@ -371,7 +374,8 @@ export const ProjectProgressDashboard: React.FC<
           <Grid item xs={12} sm={6} md={3}>
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #7b1fa2 0%, #ba68c8 100%)',
+                background:
+                  'linear-gradient(135deg, var(--ob-info-700) 0%, var(--ob-info-400) 100%)',
                 color: 'white',
               }}
             >

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 
 import mapboxgl from 'mapbox-gl'
+import { colors } from '@ob/tokens'
 
 const isNodeTestEnv =
   typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
@@ -205,7 +206,7 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
     })
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }))
-    new mapboxgl.Marker({ color: '#2563eb' })
+    new mapboxgl.Marker({ color: colors.brand[600] })
       .setLngLat([coordinates.longitude, coordinates.latitude])
       .addTo(map)
 

@@ -89,7 +89,10 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
               <Typography
                 variant="caption"
                 fontWeight="bold"
-                sx={{ color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
+                sx={{
+                  color: 'var(--ob-color-text-inverse)',
+                  textShadow: '0 1px 2px rgba(0 0 0 / 0.8)',
+                }}
               >
                 {item.coefficient.toFixed(1)}
               </Typography>
@@ -108,7 +111,7 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
               p: 3,
               borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
               bgcolor: alpha(theme.palette.background.paper, 0.8),
-              backdropFilter: 'blur(20px)',
+              backdropFilter: 'blur(var(--ob-blur-lg))',
               borderLeft: `4px solid ${getColor(selectedCorrelation.coefficient)}`,
             }}
           >

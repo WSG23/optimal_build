@@ -234,8 +234,8 @@ export function CadDetectionPreview({
               }
               label={zoneCode ? `ZONE ${zoneCode}` : 'NO ZONE DETECTED'}
               sx={{
-                background: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(10px)',
+                background: 'rgba(var(--ob-color-surface-alt-rgb), 0.6)',
+                backdropFilter: 'blur(var(--ob-blur-md))',
                 color: 'var(--ob-color-text-inverse)',
                 fontWeight: 700,
                 border: '1px solid var(--ob-border-fine)',
@@ -247,7 +247,8 @@ export function CadDetectionPreview({
               sx={{
                 color: 'var(--ob-color-text-inverse)',
                 fontWeight: 800,
-                textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+                textShadow:
+                  '0 2px 10px rgba(var(--ob-color-surface-alt-rgb), 0.5)',
                 letterSpacing: '-0.02em',
               }}
             >
@@ -295,7 +296,7 @@ export function CadDetectionPreview({
                 pr: 2,
                 borderRadius: '999px',
                 background: 'var(--ob-surface-glass-1)',
-                backdropFilter: 'blur(16px)',
+                backdropFilter: 'blur(var(--ob-blur-xl))',
                 border: '1px solid var(--ob-border-fine)',
                 boxShadow: 'var(--ob-shadow-lg)',
               }}

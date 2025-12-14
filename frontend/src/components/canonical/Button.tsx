@@ -105,7 +105,7 @@ const StyledButton = styled(MuiButton, {
       background: 'var(--ob-surface-glass-1)',
       color: 'var(--ob-color-text-primary)',
       border: 'var(--ob-border-fine-strong)',
-      backdropFilter: 'blur(8px)',
+      backdropFilter: 'blur(var(--ob-blur-xs))',
       '&:hover': {
         background: 'var(--ob-surface-glass-2)',
         border: 'var(--ob-border-fine-hover)',

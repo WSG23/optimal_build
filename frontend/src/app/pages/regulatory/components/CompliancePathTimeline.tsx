@@ -34,6 +34,7 @@ import {
   AssetCompliancePath,
   AssetType,
 } from '../../../../api/regulatory'
+import { colors } from '@ob/tokens'
 
 interface CompliancePathTimelineProps {
   projectId?: string
@@ -41,15 +42,23 @@ interface CompliancePathTimelineProps {
   onStepClick?: (step: AssetCompliancePath) => void
 }
 
+type ComplianceStepDraft = Omit<
+  AssetCompliancePath,
+  'asset_type' | 'agency_id' | 'sequence_order' | 'created_at'
+>
+
 // Agency display info (available for future use in tooltips/detailed views)
 const _AGENCY_INFO: Record<string, { name: string; color: string }> = {
-  URA: { name: 'Urban Redevelopment Authority', color: '#1976d2' },
-  BCA: { name: 'Building & Construction Authority', color: '#388e3c' },
-  SCDF: { name: 'Singapore Civil Defence Force', color: '#d32f2f' },
-  NEA: { name: 'National Environment Agency', color: '#7b1fa2' },
-  LTA: { name: 'Land Transport Authority', color: '#f57c00' },
-  STB: { name: 'Singapore Tourism Board', color: '#00796b' },
-  JTC: { name: 'JTC Corporation', color: '#455a64' },
+  URA: { name: 'Urban Redevelopment Authority', color: colors.brand[600] },
+  BCA: {
+    name: 'Building & Construction Authority',
+    color: colors.success[700],
+  },
+  SCDF: { name: 'Singapore Civil Defence Force', color: colors.error[600] },
+  NEA: { name: 'National Environment Agency', color: colors.info[600] },
+  LTA: { name: 'Land Transport Authority', color: colors.warning[600] },
+  STB: { name: 'Singapore Tourism Board', color: colors.accent[500] },
+  JTC: { name: 'JTC Corporation', color: colors.neutral[600] },
 }
 void _AGENCY_INFO // Suppress unused warning - available for future tooltip enhancement
 
@@ -95,17 +104,21 @@ const getMockStatus = (
 }
 
 const STATUS_COLORS = {
-  completed: '#10b981',
-  in_progress: '#f59e0b',
-  pending: '#94a3b8',
-  delayed: '#ef4444',
+  completed: colors.success[500],
+  in_progress: colors.warning[500],
+  pending: colors.neutral[400],
+  delayed: colors.error[500],
 }
 
 const BAR_GRADIENTS = {
-  completed: 'linear-gradient(90deg, #059669 0%, #34d399 100%)',
-  in_progress: 'linear-gradient(90deg, #ea580c 0%, #fbbf24 100%)',
-  pending: 'linear-gradient(90deg, #64748b 0%, #94a3b8 100%)',
-  delayed: 'linear-gradient(90deg, #dc2626 0%, #ef4444 100%)',
+  completed:
+    'linear-gradient(90deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
+  in_progress:
+    'linear-gradient(90deg, var(--ob-warning-700) 0%, var(--ob-warning-400) 100%)',
+  pending:
+    'linear-gradient(90deg, var(--ob-neutral-600) 0%, var(--ob-neutral-400) 100%)',
+  delayed:
+    'linear-gradient(90deg, var(--ob-error-600) 0%, var(--ob-error-400) 100%)',
 }
 
 const DAY_WIDTH = 8
@@ -175,16 +188,16 @@ function TimelineBar({
           top: '8px',
           width: `${width}px`,
           height: `${ROW_HEIGHT - 16}px`,
-          borderRadius: '8px',
+          borderRadius: 'var(--ob-radius-sm)',
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           background: BAR_GRADIENTS[status],
           border: isSelected
-            ? '2px solid #00f3ff'
-            : '1px solid rgba(255, 255, 255, 0.1)',
+            ? '2px solid var(--ob-color-border-brand)'
+            : '1px solid var(--ob-border-glass)',
           boxShadow: isSelected
-            ? '0 0 15px rgba(0, 243, 255, 0.3)'
-            : '0 2px 4px rgba(0,0,0,0.2)',
+            ? 'var(--ob-glow-brand-strong)'
+            : 'var(--ob-shadow-sm)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -205,10 +218,10 @@ function TimelineBar({
             bottom: 0,
             width: `${progress}%`,
             background:
-              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 100%)',
+              'linear-gradient(90deg, rgba(var(--ob-color-text-primary-rgb) / 0) 0%, rgba(var(--ob-color-text-primary-rgb) / 0.2) 100%)',
             borderRight:
               progress > 0 && progress < 100
-                ? '2px solid rgba(255,255,255,0.5)'
+                ? '2px solid rgba(var(--ob-color-text-primary-rgb) / 0.5)'
                 : 'none',
           }}
         />
@@ -217,9 +230,9 @@ function TimelineBar({
         <Typography
           variant="caption"
           sx={{
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: '0.7rem',
+            color: 'var(--ob-neutral-50)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+            fontSize: 'var(--ob-font-size-2xs)',
             textShadow: '0 1px 2px rgba(0,0,0,0.5)',
             position: 'relative',
             zIndex: 1,
@@ -364,8 +377,9 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         <Card
           sx={{
             flex: 1,
-            background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-            color: 'white',
+            background:
+              'linear-gradient(135deg, var(--ob-brand-700) 0%, var(--ob-brand-400) 100%)',
+            color: 'var(--ob-neutral-50)',
           }}
         >
           <CardContent sx={{ py: 2 }}>
@@ -378,8 +392,10 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
               value={overallProgress}
               sx={{
                 mt: 1,
-                bgcolor: 'rgba(255,255,255,0.3)',
-                '& .MuiLinearProgress-bar': { bgcolor: 'white' },
+                bgcolor: 'rgba(255 255 255 / 0.3)',
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: 'var(--ob-neutral-50)',
+                },
               }}
             />
           </CardContent>
@@ -388,8 +404,9 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         <Card
           sx={{
             flex: 1,
-            background: 'linear-gradient(135deg, #388e3c 0%, #66bb6a 100%)',
-            color: 'white',
+            background:
+              'linear-gradient(135deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
+            color: 'var(--ob-neutral-50)',
           }}
         >
           <CardContent sx={{ py: 2 }}>
@@ -403,8 +420,9 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         <Card
           sx={{
             flex: 1,
-            background: 'linear-gradient(135deg, #7b1fa2 0%, #ba68c8 100%)',
-            color: 'white',
+            background:
+              'linear-gradient(135deg, var(--ob-info-700) 0%, var(--ob-info-400) 100%)',
+            color: 'var(--ob-neutral-50)',
           }}
         >
           <CardContent sx={{ py: 2 }}>
@@ -422,7 +440,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         sx={{
           overflow: 'auto',
           maxHeight: 'calc(100vh - 450px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: '1px solid var(--ob-border-glass)',
           background: 'transparent',
         }}
       >
@@ -437,9 +455,10 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             sx={{
               height: '50px',
               display: 'flex',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-              backgroundColor: 'rgba(30,30,30,0.9)',
-              backdropFilter: 'blur(10px)',
+              borderBottom: '1px solid var(--ob-border-glass)',
+              backgroundColor:
+                'rgba(var(--ob-color-surface-default-rgb) / 0.9)',
+              backdropFilter: 'blur(var(--ob-blur-md))',
               position: 'sticky',
               top: 0,
               zIndex: 20,
@@ -449,7 +468,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
               sx={{
                 width: `${LEFT_PANEL_WIDTH}px`,
                 minWidth: `${LEFT_PANEL_WIDTH}px`,
-                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRight: '1px solid var(--ob-border-glass)',
                 display: 'flex',
                 alignItems: 'center',
                 px: 2,
@@ -457,7 +476,10 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             >
               <Typography
                 variant="subtitle2"
-                sx={{ fontWeight: 600, color: '#fff' }}
+                sx={{
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  color: 'var(--ob-neutral-50)',
+                }}
               >
                 SUBMISSION STEP
               </Typography>
@@ -470,10 +492,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 px: 2,
               }}
             >
-              <Typography
-                variant="caption"
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-              >
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Timeline (Days from project start)
               </Typography>
             </Box>
@@ -506,13 +525,13 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                   sx={{
                     width: `${LEFT_PANEL_WIDTH}px`,
                     minWidth: `${LEFT_PANEL_WIDTH}px`,
-                    borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRight: '1px solid var(--ob-border-glass)',
                     display: 'flex',
                     alignItems: 'center',
                     px: 2,
                     gap: 1.5,
-                    bgcolor: 'rgba(30,30,30,0.3)',
-                    backdropFilter: 'blur(4px)',
+                    bgcolor: 'rgba(var(--ob-color-surface-default-rgb) / 0.3)',
+                    backdropFilter: 'blur(var(--ob-blur-sm))',
                   }}
                 >
                   {getStatusIcon(status)}
@@ -521,7 +540,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                       variant="body2"
                       sx={{
                         fontWeight: 500,
-                        color: '#fff',
+                        color: 'var(--ob-neutral-50)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -532,7 +551,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                     </Typography>
                     <Typography
                       variant="caption"
-                      sx={{ color: 'rgba(255,255,255,0.5)' }}
+                      sx={{ color: 'text.secondary' }}
                     >
                       {step.typical_duration_days || 14} days
                       {step.is_mandatory && ' • Mandatory'}
@@ -542,9 +561,9 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                     label={step.sequence_order}
                     size="small"
                     sx={{
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                      color: '#fff',
-                      fontWeight: 600,
+                      bgcolor: 'rgba(var(--ob-color-text-primary-rgb) / 0.12)',
+                      color: 'var(--ob-neutral-50)',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
                       minWidth: 28,
                     }}
                   />
@@ -570,10 +589,10 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             display: 'flex',
             gap: 3,
             p: 2,
-            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'rgba(20, 20, 20, 0.95)',
+            borderTop: '1px solid var(--ob-border-glass)',
+            background: 'rgba(var(--ob-color-surface-default-rgb) / 0.95)',
             flexWrap: 'wrap',
-            color: '#fff',
+            color: 'var(--ob-neutral-50)',
           }}
         >
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
@@ -601,11 +620,15 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
           ))}
           <Box sx={{ display: 'flex', gap: 2, ml: 'auto' }}>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <AgencyIcon sx={{ fontSize: 16, color: '#666' }} />
+              <AgencyIcon
+                sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
+              />
               <Typography variant="caption">Regulatory Agency</Typography>
             </Stack>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <HeritageIcon sx={{ fontSize: 16, color: '#666' }} />
+              <HeritageIcon
+                sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
+              />
               <Typography variant="caption">Heritage/Conservation</Typography>
             </Stack>
           </Box>
@@ -617,7 +640,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
 
 // Mock data generator for demonstration
 function getMockCompliancePaths(assetType: AssetType): AssetCompliancePath[] {
-  const baseSteps = [
+  const baseSteps: ComplianceStepDraft[] = [
     {
       id: '1',
       submission_type: 'planning_permission' as const,

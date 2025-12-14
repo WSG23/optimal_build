@@ -27,7 +27,7 @@ export const getGlassCardSx = (dark: boolean): SxProps<Theme> =>
   dark
     ? {
         bgcolor: 'var(--ob-surface-glass-1)',
-        backdropFilter: 'blur(16px) saturate(180%)',
+        backdropFilter: 'blur(var(--ob-blur-xl)) saturate(180%)',
         borderColor: 'var(--ob-border-glass)',
         color: 'var(--ob-color-text-primary)',
         boxShadow: 'var(--ob-shadow-glass)',
@@ -35,10 +35,10 @@ export const getGlassCardSx = (dark: boolean): SxProps<Theme> =>
       }
     : {
         // Light mode: premium glass surface
-        bgcolor: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(16px)',
-        borderColor: 'rgba(255, 255, 255, 0.6)',
-        boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+        bgcolor: 'var(--ob-surface-glass-1)',
+        backdropFilter: 'blur(var(--ob-blur-xl))',
+        borderColor: 'var(--ob-border-glass-strong)',
+        boxShadow: 'var(--ob-shadow-glass)',
         p: 3,
       }
 
@@ -80,7 +80,7 @@ export const getInputSx = (dark: boolean): SxProps<Theme> =>
     ? {
         '& .MuiOutlinedInput-root': {
           color: 'var(--ob-color-text-primary)',
-          backgroundColor: 'rgba(255,255,255,0.04)',
+          backgroundColor: 'rgba(var(--ob-color-text-primary-rgb), 0.04)',
           '& fieldset': { borderColor: 'var(--ob-border-glass)' },
           '&:hover fieldset': { borderColor: 'var(--ob-border-glass-strong)' },
           '&.Mui-focused fieldset': {
@@ -106,7 +106,7 @@ export const getTableSx = (dark: boolean): SxProps<Theme> =>
         '& .MuiTableCell-head': {
           backgroundColor: 'var(--ob-color-bg-surface-elevated)',
           color: 'var(--ob-color-text-primary)',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
         },
         '& .MuiTableRow-root:hover': {
           backgroundColor: 'var(--ob-color-action-hover)',
@@ -134,8 +134,8 @@ export const getCardHoverSx = (dark: boolean): SxProps<Theme> => ({
 export const getPrimaryButtonSx = (): SxProps<Theme> => ({
   background:
     'linear-gradient(135deg, var(--ob-brand-600), var(--ob-brand-500))',
-  color: '#fff',
-  fontWeight: 600,
+  color: 'var(--ob-neutral-50)',
+  fontWeight: 'var(--ob-font-weight-semibold)',
   px: 3,
   py: 1.5,
   borderRadius: 'var(--ob-radius-xs)', // 2px - Square Cyber-Minimalism
@@ -216,7 +216,7 @@ export const getStickyHeaderSx = (dark: boolean): SxProps<Theme> => ({
   backgroundColor: dark
     ? 'var(--ob-color-bg-root)'
     : 'var(--ob-color-bg-surface)',
-  backdropFilter: 'blur(8px)',
+  backdropFilter: 'blur(var(--ob-blur-xs))',
   borderBottom: `1px solid ${dark ? 'var(--ob-border-glass)' : 'var(--ob-color-border-subtle)'}`,
   py: 2,
   px: 3,
@@ -236,7 +236,7 @@ export const getPageBackgroundSx = (dark: boolean): SxProps<Theme> =>
           position: 'fixed',
           inset: 0,
           background:
-            'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))',
+            'linear-gradient(to bottom, rgba(var(--ob-color-text-inverse-rgb), 0.3), rgba(var(--ob-color-text-inverse-rgb), 0.7))',
           pointerEvents: 'none',
           zIndex: 0,
         },

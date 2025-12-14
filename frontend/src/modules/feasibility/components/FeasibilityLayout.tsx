@@ -90,8 +90,8 @@ export function FeasibilityLayout({
           gap: '0',
           borderRadius: '4px', // Rounded corners for floating feel
           background: 'rgba(20, 20, 25, 0.65)', // Darker glass for "Command Center"
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          backdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
+          WebkitBackdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
           boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           overflow: 'hidden',
@@ -154,7 +154,7 @@ export function FeasibilityLayout({
             borderRadius: '4px',
             overflow: 'hidden',
             background: 'rgba(20, 20, 30, 0.7)',
-            backdropFilter: 'blur(12px)',
+            backdropFilter: 'blur(var(--ob-blur-md))',
             border: '1px solid rgba(255,255,255,0.1)',
             color: 'white',
           }}
