@@ -1,6 +1,7 @@
-# UI Audit Report (Design Tokens + Canonicalization)
+# UI Audit Report (Design Tokens + Canonicalization; Pages-Only; Superseded)
 
 **Date:** 2025-12-14
+**Status:** Superseded (historical snapshot)
 **Scope:** Heuristic static scan of UI “page” TSX files (excluding `__tests__`) in:
 - `frontend/src/app/pages/**`
 - `frontend/src/pages/**`
