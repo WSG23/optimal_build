@@ -337,6 +337,84 @@
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Map Error Toast */
+.gps-map-error {
+    position: absolute;
+    top: var(--ob-space-200);
+    left: var(--ob-space-200);
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.8);
+    padding: var(--ob-space-100);
+    border-radius: var(--ob-radius-sm);
+    color: var(--ob-color-error-500);
+    font-size: var(--ob-font-size-sm);
+}
+
+/* Geocode action buttons */
+.gps-geocode-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: none;
+    padding: var(--ob-space-050) var(--ob-space-100);
+    border-radius: var(--ob-radius-xs);
+    font-size: var(--ob-font-size-sm);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.gps-geocode-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Select ghost styling for dark option text */
+.gps-select-ghost {
+    color: #fff;
+    background: transparent;
+}
+
+.gps-select-ghost option {
+    background: var(--ob-color-surface-default);
+    color: var(--ob-color-text-primary);
+}
+
+/* Full-width form group */
+.gps-form__group--full-width {
+    grid-column: 1 / -1;
+}
+
+/* Capture meta styling */
+.gps-capture-meta {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* HUD helper text */
+.gps-hud-more-scenarios {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+    font-style: italic;
+    margin-top: var(--ob-space-050);
+}
+
+/* HUD loading state */
+.gps-hud-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    color: var(--ob-color-text-muted);
+    padding: var(--ob-space-100);
+}
+
+/* Spinner size variants */
+.gps-spinner--sm {
+    width: 16px;
+    height: 16px;
+}
+
+.gps-spinner--xs {
+    width: 14px;
+    height: 14px;
+}
+
 /* Mobile Responsive */
 @media (max-width: 1024px) {
     .gps-page__summary {

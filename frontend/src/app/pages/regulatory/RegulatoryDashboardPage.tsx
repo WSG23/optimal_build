@@ -65,7 +65,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
       hidden={value !== index}
       id={`regulatory-tabpanel-${index}`}
       aria-labelledby={`regulatory-tab-${index}`}
-      sx={{ pt: 3 }}
+      sx={{ pt: 'var(--ob-space-300)' }}
     >
       {value === index && children}
     </Box>
@@ -180,10 +180,8 @@ export const RegulatoryDashboardPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: isDarkMode
-          ? 'var(--ob-color-bg-root)'
-          : 'var(--ob-color-bg-root)',
-        p: 3,
+        bgcolor: 'var(--ob-color-bg-root)',
+        p: 'var(--ob-space-300)',
       }}
     >
       <Box sx={{ maxWidth: 1400, margin: '0 auto' }}>
@@ -195,7 +193,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             { label: 'Regulatory Compliance' },
           ]}
           action={
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 'var(--ob-space-200)' }}>
               <Button
                 variant="outlined"
                 startIcon={<RefreshIcon />}
@@ -217,21 +215,31 @@ export const RegulatoryDashboardPage: React.FC = () => {
         />
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 'var(--ob-space-300)' }}>
             {error}
           </Alert>
         )}
 
         {/* Quick Actions */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid
+          container
+          spacing="var(--ob-space-200)"
+          sx={{ mb: 'var(--ob-space-300)' }}
+        >
           <Grid item xs={12} sm={4}>
             <Card
               variant="glass"
               hover="lift"
               onClick={() => setChangeOfUseOpen(true)}
-              sx={{ p: 2, cursor: 'pointer' }}
+              sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-200)',
+                }}
+              >
                 <SwapIcon color="primary" fontSize="large" />
                 <Box>
                   <Typography variant="subtitle1" fontWeight="bold">
@@ -249,9 +257,15 @@ export const RegulatoryDashboardPage: React.FC = () => {
               variant="glass"
               hover="lift"
               onClick={() => setHeritageFormOpen(true)}
-              sx={{ p: 2, cursor: 'pointer' }}
+              sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-200)',
+                }}
+              >
                 <HeritageIcon color="primary" fontSize="large" />
                 <Box>
                   <Typography variant="subtitle1" fontWeight="bold">
@@ -269,9 +283,15 @@ export const RegulatoryDashboardPage: React.FC = () => {
               variant="glass"
               hover="lift"
               onClick={() => setTabValue(1)}
-              sx={{ p: 2, cursor: 'pointer' }}
+              sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-200)',
+                }}
+              >
                 <TimelineIcon color="primary" fontSize="large" />
                 <Box>
                   <Typography variant="subtitle1" fontWeight="bold">
@@ -308,16 +328,25 @@ export const RegulatoryDashboardPage: React.FC = () => {
           <Typography
             variant="h6"
             gutterBottom
-            sx={{ mb: 2, ...sectionHeaderSx }}
+            sx={{ mb: 'var(--ob-space-200)', ...sectionHeaderSx }}
           >
             Connected Agencies
           </Typography>
-          <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid
+            container
+            spacing="var(--ob-space-200)"
+            sx={{ mb: 'var(--ob-space-400)' }}
+          >
             {AGENCIES_INFO.map((agency) => (
               <Grid item xs={12} sm={6} md={3} key={agency.code}>
                 <Card
                   variant="glass"
-                  sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}
+                  sx={{
+                    p: 'var(--ob-space-200)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-200)',
+                  }}
                 >
                   <AgencyIcon color="primary" fontSize="large" />
                   <Box>
@@ -335,18 +364,29 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
           {/* Submissions Table */}
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                p: 'var(--ob-space-800)',
+              }}
+            >
               <CircularProgress />
             </Box>
           ) : (
             <Card variant="glass" sx={{ overflow: 'hidden' }}>
-              <Box sx={{ p: 2, borderBottom: `1px solid ${borderColor}` }}>
+              <Box
+                sx={{
+                  p: 'var(--ob-space-200)',
+                  borderBottom: `1px solid ${borderColor}`,
+                }}
+              >
                 <Typography variant="h6" sx={sectionHeaderSx}>
                   Active Submissions
                 </Typography>
               </Box>
               {submissions.length === 0 ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Box sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
                   <Typography color="text.secondary">
                     No submissions found for this project.
                   </Typography>

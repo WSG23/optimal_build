@@ -130,17 +130,21 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   }
 
   return (
-    <Box sx={{ p: 4, maxWidth: 1200, margin: '0 auto' }}>
+    <Box sx={{ p: 'var(--ob-space-400)', maxWidth: 1200, margin: '0 auto' }}>
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          mb: 4,
+          mb: 'var(--ob-space-400)',
           alignItems: 'center',
         }}
       >
         <Box>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+          >
             Team Coordination
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -152,17 +156,20 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setInviteOpen(true)}
-            sx={{
-              background: 'linear-gradient(135deg, #FF3366 0%, #FF6B3D 100%)',
-              boxShadow: '0px 4px 12px rgba(255, 51, 102, 0.3)',
-            }}
+            className="team-invite-btn"
           >
             Invite Member
           </Button>
         )}
       </Box>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          mb: 'var(--ob-space-300)',
+        }}
+      >
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
@@ -182,23 +189,19 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert
+          severity="error"
+          sx={{ mb: 'var(--ob-space-300)' }}
+          onClose={() => setError(null)}
+        >
           {error}
         </Alert>
       )}
 
       {activeTab === 0 && (
-        <Grid container spacing={3}>
+        <Grid container spacing="var(--ob-space-300)">
           <Grid item xs={12}>
-            <Card
-              sx={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 4,
-                overflow: 'hidden',
-              }}
-            >
+            <Card className="team-members-card">
               <Table>
                 <TableHead>
                   <TableRow>
@@ -276,24 +279,25 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
         </Grid>
       )}
 
-      { }
+      {}
       {activeTab === 1 && <WorkflowDashboard projectId={projectId} />}
 
-      { }
+      {}
       <Dialog
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
-        PaperProps={{
-          sx: {
-            background: '#1A1D1F',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            minWidth: 400,
-          },
-        }}
+        PaperProps={{ className: 'team-invite-dialog' }}
       >
         <DialogTitle>Invite New Member</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-200)',
+              mt: 'var(--ob-space-100)',
+            }}
+          >
             <TextField
               label="Email Address"
               fullWidth
@@ -316,7 +320,7 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
             </TextField>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ p: 'var(--ob-space-200)' }}>
           <Button onClick={() => setInviteOpen(false)} disabled={inviting}>
             Cancel
           </Button>

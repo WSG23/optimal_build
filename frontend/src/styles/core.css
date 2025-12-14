@@ -257,3 +257,35 @@ h6 {
     min-height: 100vh;
     background: var(--ob-color-bg-root);
 }
+
+/* =============================================================================
+   Team Management Page Styles
+   ============================================================================= */
+.team-invite-btn {
+    background: linear-gradient(
+        135deg,
+        var(--ob-brand-500) 0%,
+        var(--ob-brand-400) 100%
+    ) !important;
+    box-shadow: var(--ob-glow-brand-subtle) !important;
+    border-radius: var(--ob-radius-xs) !important;
+}
+
+.team-invite-btn:hover {
+    box-shadow: var(--ob-glow-brand-medium) !important;
+}
+
+.team-members-card {
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-lg, 20px));
+    border: var(--ob-border-fine-subtle);
+    border-radius: var(--ob-radius-sm) !important;
+    overflow: hidden;
+}
+
+.team-invite-dialog {
+    background: var(--ob-color-surface-elevated) !important;
+    border: var(--ob-border-fine-subtle) !important;
+    border-radius: var(--ob-radius-lg) !important;
+    min-width: 400px;
+}
