@@ -44,7 +44,6 @@ import '../../styles/finance/polish.css'
 // Material UI Imports
 import {
   Box,
-  Button,
   Stack,
   Typography,
   Alert,
@@ -55,7 +54,7 @@ import {
 import { Refresh, Download, Warning } from '@mui/icons-material'
 
 // Canonical Components
-import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
+import { Button } from '../../components/canonical/Button'
 import { Card } from '../../components/canonical/Card'
 
 // Align with seeded Phase 2B finance demo data (see backend/scripts/seed_finance_demo.py)
@@ -705,63 +704,63 @@ export function FinanceWorkspace() {
 
   return (
     <AppLayout title={t('finance.title')} subtitle={t('finance.subtitle')}>
-      <Box className="finance-workspace" sx={{ pb: 8 }}>
-        <Box sx={{ p: 3 }}>
-          <AnimatedPageHeader
-            title={t('finance.title')}
-            subtitle={t('finance.subtitle')}
-            breadcrumbs={[
-              { label: 'Dashboard', href: '/' },
-              { label: 'Finance' },
-            ]}
-            actions={
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={
-                    loading ? <CircularProgress size={16} /> : <Refresh />
-                  }
-                  onClick={refresh}
-                  disabled={loading}
-                >
-                  {t('finance.actions.refresh')}
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Download />}
-                  onClick={handleExportCsv}
-                  disabled={!primaryScenario || exportingScenario}
-                >
-                  {exportingScenario
-                    ? 'Exporting...'
-                    : t('finance.actions.exportCsv')}
-                </Button>
-              </Stack>
-            }
-          />
+      <Box className="finance-workspace" sx={{ pb: 'var(--ob-space-400)' }}>
+        <Box sx={{ p: 'var(--ob-space-150)' }}>
+          {/* Glass Toolbar - Consolidated Controls */}
+          <Card
+            variant="glass"
+            sx={{
+              p: 'var(--ob-space-150)',
+              mb: 'var(--ob-space-250)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 'var(--ob-space-150)',
+              flexWrap: 'wrap',
+            }}
+          >
+            <FinanceProjectSelector
+              selectedProjectId={effectiveProjectId}
+              selectedProjectName={effectiveProjectName ?? null}
+              options={capturedProjects}
+              onProjectChange={handleProjectChange}
+              onRefresh={refreshCapturedProjects}
+            />
 
-          {/* Project Selector - Wrapped in GlassCard */}
-          <Box sx={{ mt: 3, mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Project Selection
-            </Typography>
-            <Card variant="glass" sx={{ p: 3 }}>
-              <FinanceProjectSelector
-                selectedProjectId={effectiveProjectId}
-                selectedProjectName={effectiveProjectName ?? null}
-                options={capturedProjects}
-                onProjectChange={handleProjectChange}
-                onRefresh={refreshCapturedProjects}
-              />
-            </Card>
-          </Box>
+            <Stack direction="row" spacing="var(--ob-space-100)">
+              <Button variant="secondary" onClick={refresh} disabled={loading}>
+                {loading ? (
+                  <CircularProgress
+                    size={16}
+                    sx={{ mr: 'var(--ob-space-050)', color: 'inherit' }}
+                  />
+                ) : (
+                  <Refresh
+                    fontSize="small"
+                    sx={{ mr: 'var(--ob-space-050)' }}
+                  />
+                )}
+                {t('finance.actions.refresh')}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleExportCsv}
+                disabled={!primaryScenario || exportingScenario}
+              >
+                <Download fontSize="small" sx={{ mr: 'var(--ob-space-050)' }} />
+                {exportingScenario
+                  ? t('finance.actions.exporting')
+                  : t('finance.actions.exportCsv')}
+              </Button>
+            </Stack>
+          </Card>
 
           {!hasAccess ? (
             <FinanceAccessGate role={normalizedRole} />
           ) : (
             <>
               {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
+                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
                   <strong>{t('finance.errors.generic')}</strong>
                   <Box component="span" sx={{ display: 'block' }}>
                     {error}
@@ -773,14 +772,18 @@ export function FinanceWorkspace() {
               {loading && (
                 <Card
                   variant="glass"
-                  sx={{ p: 4, display: 'flex', justifyContent: 'center' }}
+                  sx={{
+                    p: 'var(--ob-space-200)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
                 >
                   <CircularProgress />
                 </Card>
               )}
 
               {scenarioError && (
-                <Alert severity="error" sx={{ mb: 3 }}>
+                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
                   {scenarioError}
                   {needsScenarioCreateIdentity && (
                     <FinanceIdentityHelper compact />
@@ -788,12 +791,12 @@ export function FinanceWorkspace() {
                 </Alert>
               )}
               {scenarioMessage && (
-                <Alert severity="success" sx={{ mb: 3 }}>
+                <Alert severity="success" sx={{ mb: 'var(--ob-space-150)' }}>
                   {scenarioMessage}
                 </Alert>
               )}
 
-              <Box sx={{ mb: 4 }}>
+              <Box sx={{ mb: 'var(--ob-space-200)' }}>
                 <FinanceScenarioCreator
                   projectId={effectiveProjectId}
                   projectName={projectDisplayName}
@@ -821,7 +824,10 @@ export function FinanceWorkspace() {
               ) : null}
 
               {showEmptyState && (
-                <Card variant="glass" sx={{ p: 6, textAlign: 'center' }}>
+                <Card
+                  variant="glass"
+                  sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}
+                >
                   <Typography variant="h5" gutterBottom>
                     {t('finance.table.empty')}
                   </Typography>
@@ -829,7 +835,11 @@ export function FinanceWorkspace() {
               )}
 
               {primaryScenario?.scenarioId === 0 && (
-                <Alert severity="warning" sx={{ mb: 4 }} icon={<Warning />}>
+                <Alert
+                  severity="warning"
+                  sx={{ mb: 'var(--ob-space-200)' }}
+                  icon={<Warning />}
+                >
                   <strong>{t('finance.warnings.offlineMode')}</strong>
                   <Typography variant="body2">
                     {t('finance.warnings.offlineModeDetail') ||
@@ -839,11 +849,11 @@ export function FinanceWorkspace() {
               )}
 
               {scenarios.length > 0 && (
-                <Stack spacing={4}>
+                <Stack spacing="var(--ob-space-200)">
                   {/* Scenario Management */}
-                  <Card variant="glass" sx={{ p: 3 }}>
+                  <Card variant="glass" sx={{ p: 'var(--ob-space-150)' }}>
                     <Typography variant="h5" fontWeight={600} gutterBottom>
-                      Scenarios
+                      {t('finance.sections.scenarios')}
                     </Typography>
                     <FinanceScenarioTable
                       scenarios={scenarios}
@@ -859,19 +869,22 @@ export function FinanceWorkspace() {
                     <Tabs
                       value={activeTab}
                       onChange={(_, v) => setActiveTab(v)}
-                      sx={{ mb: 2 }}
+                      sx={{ mb: 'var(--ob-space-100)' }}
                     >
-                      <Tab label="Capital Stack" />
-                      <Tab label="Drawdown Schedule" />
-                      <Tab label="Asset Breakdown" />
-                      <Tab label="Facility Editor" />
-                      <Tab label="Job Timeline" />
-                      <Tab label="Loan Interest" />
-                      <Tab label="Analytics" />
-                      <Tab label="Sensitivity" />
+                      <Tab label={t('finance.tabs.capitalStack')} />
+                      <Tab label={t('finance.tabs.drawdownSchedule')} />
+                      <Tab label={t('finance.tabs.assetBreakdown')} />
+                      <Tab label={t('finance.tabs.facilityEditor')} />
+                      <Tab label={t('finance.tabs.jobTimeline')} />
+                      <Tab label={t('finance.tabs.loanInterest')} />
+                      <Tab label={t('finance.tabs.analytics')} />
+                      <Tab label={t('finance.tabs.sensitivity')} />
                     </Tabs>
 
-                    <Card variant="glass" sx={{ p: 3, minHeight: 400 }}>
+                    <Card
+                      variant="glass"
+                      sx={{ p: 'var(--ob-space-150)', minHeight: 400 }}
+                    >
                       <div role="tabpanel" hidden={activeTab !== 0}>
                         {activeTab === 0 && (
                           <FinanceCapitalStack scenarios={scenarios} />
@@ -923,7 +936,7 @@ export function FinanceWorkspace() {
                               analytics={analyticsMetadata}
                               currency={primaryScenario?.currency ?? 'SGD'}
                             />
-                            <Box mt={2}>
+                            <Box sx={{ mt: 'var(--ob-space-100)' }}>
                               {primaryScenario && (
                                 <FinanceSensitivityControls
                                   scenario={primaryScenario}
@@ -944,7 +957,7 @@ export function FinanceWorkspace() {
                               summaries={sensitivitySummaries}
                               currency={primaryScenario?.currency ?? 'SGD'}
                             />
-                            <Box my={2}>
+                            <Box sx={{ my: 'var(--ob-space-100)' }}>
                               {primaryScenario && (
                                 <FinanceSensitivityControls
                                   scenario={primaryScenario}

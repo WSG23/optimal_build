@@ -77,6 +77,11 @@ export function AppShell({
               position: 'sticky',
               top: 0,
               zIndex: 'var(--ob-z-sticky)',
+              animation: 'slideDownFade 0.5s ease-out forwards',
+              '@keyframes slideDownFade': {
+                from: { opacity: 0, transform: 'translateY(-20px)' },
+                to: { opacity: 1, transform: 'translateY(0)' },
+              },
             }}
           >
             <Box>

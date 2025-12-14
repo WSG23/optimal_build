@@ -102,8 +102,8 @@
     "upload": "Upload CAD",
     "detection": "Floor & unit detection",
     "pipelines": "Default pipelines",
-    "feasibility": "Feasibility wizard",
-    "finance": "Finance workspace",
+    "feasibility": "Feasibility",
+    "finance": "Finance",
     "intelligence": "Advanced intelligence",
     "agentCapture": "Agent GPS capture",
     "agentPerformance": "Agent performance"
@@ -263,7 +263,7 @@
     "projectLabel": "Project ID"
   },
   "finance": {
-    "title": "Finance feasibility",
+    "title": "Create finance scenario",
     "subtitle": "Compare escalated cost, NPV, IRR and DSCR metrics across seeded scenarios.",
     "actions": {
       "refresh": "Recompute scenarios",
@@ -271,6 +271,19 @@
       "exportCsv": "Export CSV",
       "exporting": "Exporting…",
       "exportSuccess": "Finance CSV downloaded."
+    },
+    "sections": {
+      "scenarios": "Scenarios"
+    },
+    "tabs": {
+      "capitalStack": "Capital Stack",
+      "drawdownSchedule": "Drawdown Schedule",
+      "assetBreakdown": "Asset Breakdown",
+      "facilityEditor": "Facility Editor",
+      "jobTimeline": "Job Timeline",
+      "loanInterest": "Loan Interest",
+      "analytics": "Analytics",
+      "sensitivity": "Sensitivity"
     },
     "projectSelector": {
       "title": "Project selection",
@@ -498,6 +511,7 @@
         "saving": "Running…"
       },
       "allocationTotal": "Total allocation: {{value}}%",
+      "totalAnnualRevenue": "Total Annual Revenue",
       "success": "Scenario \"{{name}}\" queued successfully.",
       "errors": {
         "nameRequired": "Enter a scenario name.",
@@ -536,10 +550,6 @@
       }
     },
     "sensitivity": {
-      "controls": {
-        "parameters": "Parameters",
-        "selectAll": "Select all"
-      },
       "actions": {
         "downloadCsv": "Download CSV",
         "downloadJson": "Download JSON"
@@ -571,6 +581,8 @@
         }
       },
       "controls": {
+        "parameters": "Parameters",
+        "selectAll": "Select all",
         "title": "Sensitivity bands",
         "description": "Adjust parameter deltas and rerun the analysis for the selected scenario.",
         "parameter": "Parameter",

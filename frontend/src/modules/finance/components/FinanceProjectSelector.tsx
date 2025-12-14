@@ -1,5 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
+import { Box, Typography } from '@mui/material'
+import { Refresh } from '@mui/icons-material'
+
+import { Button } from '../../../components/canonical/Button'
 import { useTranslation } from '../../../i18n'
 
 export interface FinanceProjectOption {
@@ -15,6 +19,7 @@ interface FinanceProjectSelectorProps {
   options: FinanceProjectOption[]
   onProjectChange: (projectId: string, projectName?: string | null) => void
   onRefresh?: () => void
+  className?: string
 }
 
 export function FinanceProjectSelector({
@@ -23,6 +28,7 @@ export function FinanceProjectSelector({
   options,
   onProjectChange,
   onRefresh,
+  className,
 }: FinanceProjectSelectorProps) {
   const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -82,75 +88,89 @@ export function FinanceProjectSelector({
       id: selectedProjectId,
     })
 
+  if (isExpanded) {
+    return (
+      <Box className={className} sx={{ display: 'flex', alignItems: 'center' }}>
+        <form
+          onSubmit={handleManualSubmit}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-100)',
+          }}
+        >
+          <input
+            value={manualId}
+            onChange={(event) => setManualId(event.target.value)}
+            placeholder={t('finance.projectSelector.inputPlaceholder')}
+            autoFocus
+            className="finance-project-selector__manual-input"
+          />
+          <Button type="submit" size="sm" variant="primary">
+            {t('finance.projectSelector.submit')}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsExpanded(false)}
+          >
+            {t('common.actions.cancel')}
+          </Button>
+        </form>
+      </Box>
+    )
+  }
+
   return (
-    <section className="finance-project-selector" aria-live="polite">
-      <div className="finance-project-selector__header">
-        <div>
-          <h2>{t('finance.projectSelector.title')}</h2>
-        </div>
-        <div className="finance-project-selector__controls">
-          <span className="finance-project-selector__current">
-            {t('finance.projectSelector.current', { value: helperLabel })}
-          </span>
-          {!isExpanded ? (
-            <select
-              className="finance-project-selector__select"
-              value={selectedOptionValue}
-              onChange={(event) => handleOptionChange(event.target.value)}
-            >
-              <option value="" disabled>
-                {t('finance.projectSelector.pickPlaceholder')}
-              </option>
-              {recentOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-              <option value="manual">
-                + {t('finance.projectSelector.enterManualId')}
-              </option>
-            </select>
-          ) : null}
-          {onRefresh && (
-            <button
-              type="button"
-              className="finance-project-selector__refresh-icon"
-              onClick={onRefresh}
-              title={t('finance.projectSelector.refresh')}
-            >
-              ↻
-            </button>
-          )}
-        </div>
+    <Box
+      className={className}
+      sx={{ display: 'flex', alignItems: 'center', gap: 'var(--ob-space-150)' }}
+    >
+      {/* Framed Label */}
+      <div className="finance-project-selector__label-frame">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}
+        >
+          {t('finance.projectSelector.current', { value: helperLabel })}
+        </Typography>
       </div>
 
-      {isExpanded ? (
-        <div className="finance-project-selector__body">
-          <form
-            className="finance-project-selector__form"
-            onSubmit={handleManualSubmit}
-          >
-            <label htmlFor="finance-project-id" className="sr-only">
-              {t('finance.projectSelector.inputLabel')}
-            </label>
-            <div className="finance-project-selector__input-row">
-              <input
-                id="finance-project-id"
-                value={manualId}
-                onChange={(event) => setManualId(event.target.value)}
-                placeholder={t('finance.projectSelector.inputPlaceholder')}
-                autoFocus
-              />
-              <button type="submit">
-                {t('finance.projectSelector.submit')}
-              </button>
-              <button type="button" onClick={() => setIsExpanded(false)}>
-                {t('common.actions.cancel')}
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
-    </section>
+      {/* Framed Dropdown */}
+      <div className="finance-project-selector__dropdown-wrapper">
+        <select
+          className="finance-project-selector__dropdown"
+          value={selectedOptionValue}
+          onChange={(event) => handleOptionChange(event.target.value)}
+        >
+          <option value="" disabled>
+            {t('finance.projectSelector.pickPlaceholder')}
+          </option>
+          {recentOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+          <option value="manual">
+            + {t('finance.projectSelector.enterManualId')}
+          </option>
+        </select>
+        <span className="finance-project-selector__dropdown-arrow">▼</span>
+      </div>
+
+      {onRefresh && (
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={onRefresh}
+          className="finance-project-selector__refresh-btn"
+          title={t('finance.projectSelector.refresh')}
+        >
+          <Refresh fontSize="small" />
+        </Button>
+      )}
+    </Box>
   )
 }

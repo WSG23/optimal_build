@@ -129,7 +129,7 @@ const checklistTemplateManagerElement = (
 const developerFeasibilityElement = (
   <AppShell
     activeItem="assetFeasibility"
-    title="Feasibility workspace"
+    title="Feasibility"
     description="Run feasibility checks, document pack generation, and advisory workflows."
     hideSidebar
   >

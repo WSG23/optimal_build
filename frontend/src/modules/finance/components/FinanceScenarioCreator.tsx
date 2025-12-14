@@ -1,13 +1,15 @@
 import { FormEvent, useMemo, useState } from 'react'
 
-import { AllocationRing } from './AllocationRing'
+import { Box, Typography } from '@mui/material'
 
-import {
-  runFinanceFeasibility,
-  type FinanceScenarioSummary,
-  type FinanceFeasibilityRequest,
+import { runFinanceFeasibility } from '../../../api/finance'
+import type {
+  FinanceScenarioSummary,
+  FinanceFeasibilityRequest,
 } from '../../../api/finance'
+import { Button } from '../../../components/canonical/Button'
 import { useTranslation } from '../../../i18n'
+import { AllocationRing } from './AllocationRing'
 
 type AssetFormRow = {
   id: string
@@ -305,24 +307,36 @@ export function FinanceScenarioCreator({
   return (
     <section className="finance-scenario-creator">
       <header className="finance-scenario-creator__header">
-        <div>
-          <h2>{t('finance.scenarioCreator.title')}</h2>
-          <p>{t('finance.scenarioCreator.description')}</p>
-        </div>
+        <Box>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ maxWidth: '600px', mb: 'var(--ob-space-050)' }}
+          >
+            {t('finance.scenarioCreator.description')}
+          </Typography>
+        </Box>
         <div className="finance-scenario-creator__metrics">
-          <div className="finance-scenario-creator__chart-container">
+          <div
+            className="finance-scenario-creator__chart-container"
+            style={{ flexDirection: 'column', alignItems: 'center' }}
+          >
             <AllocationRing
               data={chartData}
               totalAllocation={totalAllocation}
               size={180}
             />
-            {/* Legend removed as Ring has center label, but we can keep a simplified list if needed.
-                User request implies the Ring IS the main visual.
-                Let's keep the legend but simplify or style it to be less intrusive if needed.
-                Actually, the mock shows "80%" inside. The legend might still be useful for color context.
-            */}
-            <div className="finance-scenario-creator__chart-legend">
-              {/* Legend items can remain or be refactored. Leaving them for context but removing the old total text since it's in the ring now. */}
+            {/* Legend below ring chart for better integration */}
+            <div
+              className="finance-scenario-creator__chart-legend"
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: 'var(--ob-space-150)',
+                marginTop: 'var(--ob-space-100)',
+              }}
+            >
               {chartData.map(
                 (item) =>
                   item.name !== 'Unallocated' && (
@@ -359,25 +373,18 @@ export function FinanceScenarioCreator({
       </header>
       <form className="finance-scenario-creator__form" onSubmit={handleSubmit}>
         <div className="finance-scenario-creator__grid">
-          <label className="finance-scenario-creator__field">
-            <span>{t('finance.scenarioCreator.fields.name')}</span>
+          <label className="finance-scenario-creator__field finance-scenario-creator__field--column">
+            <span className="finance-scenario-creator__field-label">
+              {t('finance.scenarioCreator.fields.name')}
+            </span>
             <input
               type="text"
+              className="finance-scenario-creator__main-input"
               value={scenarioName}
               onChange={(event) => setScenarioName(event.target.value)}
               placeholder={t('finance.scenarioCreator.placeholders.name')}
             />
           </label>
-          <label className="finance-scenario-creator__field">
-            <span>{t('finance.scenarioCreator.fields.projectId')}</span>
-            <input value={projectId} readOnly />
-          </label>
-          {projectName ? (
-            <label className="finance-scenario-creator__field">
-              <span>{t('finance.scenarioCreator.fields.projectName')}</span>
-              <input value={projectName} readOnly />
-            </label>
-          ) : null}
         </div>
 
         <div className="finance-scenario-creator__assets">
@@ -617,14 +624,15 @@ export function FinanceScenarioCreator({
                     />
                   </td>
                   <td>
-                    <button
+                    <Button
                       type="button"
-                      className="finance-scenario-creator__remove"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleRemoveAsset(asset.id)}
                       disabled={assets.length <= 1}
                     >
                       {t('finance.scenarioCreator.actions.remove')}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -633,13 +641,9 @@ export function FinanceScenarioCreator({
               <tr className="finance-scenario-creator__footer-row">
                 <td
                   colSpan={6}
-                  style={{
-                    textAlign: 'right',
-                    fontWeight: 'bold',
-                    paddingRight: '1rem',
-                  }}
+                  className="finance-scenario-creator__footer-label"
                 >
-                  Total Annual Revenue
+                  {t('finance.scenarioCreator.totalAnnualRevenue')}
                 </td>
                 <td className="numeric" style={{ fontWeight: 'bold' }}>
                   <span className="finance-scenario-creator__live-total">
@@ -654,33 +658,47 @@ export function FinanceScenarioCreator({
               </tr>
             </tfoot>
           </table>
-          <button
-            type="button"
-            className="finance-scenario-creator__add"
-            onClick={handleAddAsset}
+          {/* Action buttons - inline layout */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+              marginTop: 'var(--ob-space-100)',
+            }}
           >
-            {t('finance.scenarioCreator.actions.addAsset')}
-          </button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleAddAsset}
+            >
+              {t('finance.scenarioCreator.actions.addAsset')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              disabled={saving}
+            >
+              {t('finance.scenarioCreator.actions.reset')}
+            </Button>
+          </div>
         </div>
 
         <div className="finance-scenario-creator__actions">
-          <button
-            type="button"
-            className="finance-scenario-creator__reset"
-            onClick={handleReset}
-            disabled={saving}
-          >
-            {t('finance.scenarioCreator.actions.reset')}
-          </button>
-          <button
+          <Button
             type="submit"
-            className="finance-scenario-creator__submit"
+            variant="primary"
+            size="lg"
+            fullWidth
             disabled={saving}
           >
             {saving
               ? t('finance.scenarioCreator.actions.saving')
               : t('finance.scenarioCreator.actions.submit')}
-          </button>
+          </Button>
         </div>
       </form>
     </section>
