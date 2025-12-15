@@ -48,7 +48,7 @@ reportlab==4.0.8
 minio==7.2.0
 
 # Development
-pytest==7.4.3
+pytest==9.0.1
 pytest-asyncio==0.21.1
 # Updated for security: GHSA-4v9f-r55g-g6hc (min: 2.20.17), GHSA-4hh5-2678-83fx (min: 2.16.5)
 # Upgraded 2025-11-23: CVE-2024-8183 CORS misconfiguration fix
