@@ -59,7 +59,7 @@ export function ScenarioComparisonCard({
       key={scenarioKey}
       style={{
         border: '1px solid #e5e5e7',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.25rem',
         display: 'flex',
         flexDirection: 'column',
@@ -67,7 +67,9 @@ export function ScenarioComparisonCard({
         background: '#ffffff',
       }}
     >
-      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>{scenarioLabel}</strong>
+      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+        {scenarioLabel}
+      </strong>
       <div
         style={{
           display: 'flex',

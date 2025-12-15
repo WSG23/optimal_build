@@ -54,6 +54,7 @@ export type BuildableResponse = {
     floors_max: number
     footprint_m2: number
     nsa_est_m2: number
+    accuracy_range?: number
   }
   zone_source: ZoneSource
   rules: RuleItem[]
@@ -70,6 +71,7 @@ export interface BuildableMetrics {
   floorsMax: number
   footprintM2: number
   nsaEstM2: number
+  accuracyRange: number
 }
 
 export interface BuildableRuleProvenance {
@@ -171,6 +173,7 @@ function mapResponse(payload: BuildableResponse): BuildableSummary {
       floorsMax: payload.metrics.floors_max,
       footprintM2: payload.metrics.footprint_m2,
       nsaEstM2: payload.metrics.nsa_est_m2,
+      accuracyRange: payload.metrics.accuracy_range ?? 0.25, // Default to 25% if missing (sketch level)
     },
     zoneSource: {
       kind: payload.zone_source.kind,

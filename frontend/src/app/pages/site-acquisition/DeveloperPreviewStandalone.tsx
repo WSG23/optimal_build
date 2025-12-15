@@ -20,7 +20,9 @@ const DETAIL_LABELS: Record<'simple' | 'medium', string> = {
   simple: 'Simple (fast box geometry)',
 }
 
-function renderDetailLabel(level: DeveloperPreviewJob['geometryDetailLevel']): string {
+function renderDetailLabel(
+  level: DeveloperPreviewJob['geometryDetailLevel'],
+): string {
   if (level && DETAIL_LABELS[level]) {
     return DETAIL_LABELS[level]
   }
@@ -31,7 +33,9 @@ function toTitleCase(value: string): string {
   return value
     .split(/[\s_-]+/)
     .filter(Boolean)
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .map(
+      (token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase(),
+    )
     .join(' ')
 }
 
@@ -45,9 +49,13 @@ export function DeveloperPreviewStandalone() {
   const [metadataLoading, setMetadataLoading] = useState(false)
   const [metadataError, setMetadataError] = useState<string | null>(null)
   const [layerMetadata, setLayerMetadata] = useState<PreviewLayerMetadata[]>([])
-  const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>({})
+  const [layerVisibility, setLayerVisibility] = useState<
+    Record<string, boolean>
+  >({})
   const [focusLayerId, setFocusLayerId] = useState<string | null>(null)
-  const [inspectionLayerId, setInspectionLayerId] = useState<string | null>(null)
+  const [inspectionLayerId, setInspectionLayerId] = useState<string | null>(
+    null,
+  )
   const [legendEntries, setLegendEntries] = useState<PreviewLegendEntry[]>([])
 
   useEffect(() => {
@@ -69,7 +77,9 @@ export function DeveloperPreviewStandalone() {
         }
 
         const readyJob =
-          jobs.find((job) => job.status.toLowerCase() === 'ready') ?? jobs[0] ?? null
+          jobs.find((job) => job.status.toLowerCase() === 'ready') ??
+          jobs[0] ??
+          null
 
         if (!readyJob) {
           setError('No preview jobs are available for this property yet.')
@@ -146,10 +156,13 @@ export function DeveloperPreviewStandalone() {
               .filter((entry): entry is PreviewLegendEntry => entry !== null)
           : []
         setLegendEntries(legend)
-        const nextVisibility = layers.reduce<Record<string, boolean>>((acc, layer) => {
-          acc[layer.id] = true
-          return acc
-        }, {})
+        const nextVisibility = layers.reduce<Record<string, boolean>>(
+          (acc, layer) => {
+            acc[layer.id] = true
+            return acc
+          },
+          {},
+        )
         setLayerVisibility(nextVisibility)
         setFocusLayerId(null)
       } catch (metaError) {
@@ -158,7 +171,9 @@ export function DeveloperPreviewStandalone() {
         }
         console.error('Failed to load preview metadata:', metaError)
         setMetadataError(
-          metaError instanceof Error ? metaError.message : 'Unable to load preview metadata.',
+          metaError instanceof Error
+            ? metaError.message
+            : 'Unable to load preview metadata.',
         )
         setLayerMetadata([])
         setLegendEntries([])
@@ -210,7 +225,9 @@ export function DeveloperPreviewStandalone() {
       return 'Preview render has been queued and will begin shortly.'
     }
     if (status === 'failed') {
-      return previewJob.message ?? 'Preview render failed. Try re-running the job.'
+      return (
+        previewJob.message ?? 'Preview render failed. Try re-running the job.'
+      )
     }
     if (status === 'expired') {
       return 'Preview render has expired. Trigger a new preview from the Site Acquisition page.'
@@ -220,7 +237,8 @@ export function DeveloperPreviewStandalone() {
 
   const hiddenLayerCount = useMemo(
     () =>
-      layerMetadata.filter((layer) => layerVisibility[layer.id] === false).length,
+      layerMetadata.filter((layer) => layerVisibility[layer.id] === false)
+        .length,
     [layerMetadata, layerVisibility],
   )
   const hasHiddenLayers = hiddenLayerCount > 0
@@ -274,7 +292,8 @@ export function DeveloperPreviewStandalone() {
       <div className="developer-preview-standalone">
         <h1>Developer preview</h1>
         <p className="developer-preview-standalone__error">
-          Missing property identifier in the URL. Provide a valid property id and reload.
+          Missing property identifier in the URL. Provide a valid property id
+          and reload.
         </p>
       </div>
     )
@@ -288,21 +307,24 @@ export function DeveloperPreviewStandalone() {
           Property ID: <code>{propertyId}</code>
         </p>
         <p className="developer-preview-standalone__help">
-          This route is intended for manual QA of the Phase 2B 3D viewer. To refresh the render,
-          use the “Refresh preview render” action on the Site Acquisition page.
+          This route is intended for manual QA of the Phase 2B 3D viewer. To
+          refresh the render, use the “Refresh preview render” action on the
+          Site Acquisition page.
         </p>
       </header>
 
       {isLoading && (
-        <div className="developer-preview-standalone__status">Loading preview job…</div>
+        <div className="developer-preview-standalone__status">
+          Loading preview job…
+        </div>
       )}
 
       {!isLoading && error && (
         <div className="developer-preview-standalone__error">
           {error}
           <div className="developer-preview-standalone__hint">
-            Confirm that preview jobs exist for this property (via Site Acquisition or the preview
-            CLI) before using this route.
+            Confirm that preview jobs exist for this property (via Site
+            Acquisition or the preview CLI) before using this route.
           </div>
         </div>
       )}
@@ -310,14 +332,18 @@ export function DeveloperPreviewStandalone() {
       {!isLoading && !error && previewJob && (
         <section className="developer-preview-standalone__viewer">
           <div className="developer-preview-standalone__status-row">
-            <span className={`developer-preview-standalone__status-pill status-${previewJob.status.toLowerCase()}`}>
+            <span
+              className={`developer-preview-standalone__status-pill status-${previewJob.status.toLowerCase()}`}
+            >
               {previewJob.status.toUpperCase()}
             </span>
             {statusNotice && (
-              <span className="developer-preview-standalone__status-note">{statusNotice}</span>
+              <span className="developer-preview-standalone__status-note">
+                {statusNotice}
+              </span>
             )}
           </div>
-         <Preview3DViewer
+          <Preview3DViewer
             previewUrl={previewJob.previewUrl}
             metadataUrl={previewJob.metadataUrl}
             status={previewJob.status}
@@ -343,17 +369,29 @@ export function DeveloperPreviewStandalone() {
             </div>
             <div>
               <dt>Requested at</dt>
-              <dd>{previewJob.requestedAt ? new Date(previewJob.requestedAt).toLocaleString() : '—'}</dd>
+              <dd>
+                {previewJob.requestedAt
+                  ? new Date(previewJob.requestedAt).toLocaleString()
+                  : '—'}
+              </dd>
             </div>
             <div>
               <dt>Finished at</dt>
-              <dd>{previewJob.finishedAt ? new Date(previewJob.finishedAt).toLocaleString() : '—'}</dd>
+              <dd>
+                {previewJob.finishedAt
+                  ? new Date(previewJob.finishedAt).toLocaleString()
+                  : '—'}
+              </dd>
             </div>
             <div>
               <dt>Preview asset</dt>
               <dd>
                 {previewJob.previewUrl ? (
-                  <a href={previewJob.previewUrl} target="_blank" rel="noreferrer">
+                  <a
+                    href={previewJob.previewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     {previewJob.previewUrl}
                   </a>
                 ) : (
@@ -365,7 +403,11 @@ export function DeveloperPreviewStandalone() {
               <dt>Metadata</dt>
               <dd>
                 {previewJob.metadataUrl ? (
-                  <a href={previewJob.metadataUrl} target="_blank" rel="noreferrer">
+                  <a
+                    href={previewJob.metadataUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     {previewJob.metadataUrl}
                   </a>
                 ) : (
@@ -377,7 +419,11 @@ export function DeveloperPreviewStandalone() {
               <dt>Thumbnail</dt>
               <dd>
                 {previewJob.thumbnailUrl ? (
-                  <a href={previewJob.thumbnailUrl} target="_blank" rel="noreferrer">
+                  <a
+                    href={previewJob.thumbnailUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     {previewJob.thumbnailUrl}
                   </a>
                 ) : (
@@ -392,8 +438,8 @@ export function DeveloperPreviewStandalone() {
               <div>
                 <h2>Layer breakdown</h2>
                 <p>
-                  Visual detail for the rendered massing. Each layer combines asset allocation,
-                  estimated floors, and colour legend entries.
+                  Visual detail for the rendered massing. Each layer combines
+                  asset allocation, estimated floors, and colour legend entries.
                 </p>
               </div>
               <span className="developer-preview-standalone__layers-count">
@@ -419,16 +465,23 @@ export function DeveloperPreviewStandalone() {
               </button>
             </div>
             {metadataLoading && (
-              <p className="developer-preview-standalone__layers-status">Loading preview metadata…</p>
-            )}
-            {!metadataLoading && metadataError && (
-              <p className="developer-preview-standalone__layers-error">{metadataError}</p>
-            )}
-            {!metadataLoading && !metadataError && layerMetadata.length === 0 && (
-              <p className="developer-preview-standalone__layers-empty">
-                Layer metrics will appear once the preview metadata is available.
+              <p className="developer-preview-standalone__layers-status">
+                Loading preview metadata…
               </p>
             )}
+            {!metadataLoading && metadataError && (
+              <p className="developer-preview-standalone__layers-error">
+                {metadataError}
+              </p>
+            )}
+            {!metadataLoading &&
+              !metadataError &&
+              layerMetadata.length === 0 && (
+                <p className="developer-preview-standalone__layers-empty">
+                  Layer metrics will appear once the preview metadata is
+                  available.
+                </p>
+              )}
             {layerMetadata.length > 0 && (
               <div className="developer-preview-standalone__layers-table-wrapper">
                 <table className="developer-preview-standalone__layers-table">
@@ -467,9 +520,13 @@ export function DeveloperPreviewStandalone() {
                           <button
                             type="button"
                             className="developer-preview-standalone__layer-action"
-                            onClick={() => handleToggleLayerVisibility(layer.id)}
+                            onClick={() =>
+                              handleToggleLayerVisibility(layer.id)
+                            }
                           >
-                            {layerVisibility[layer.id] === false ? 'Show' : 'Hide'}
+                            {layerVisibility[layer.id] === false
+                              ? 'Show'
+                              : 'Hide'}
                           </button>
                           <button
                             type="button"
@@ -514,7 +571,9 @@ export function DeveloperPreviewStandalone() {
                       aria-hidden="true"
                     />
                     <div>
-                      <p className="developer-preview-standalone__inspection-label">Inspecting</p>
+                      <p className="developer-preview-standalone__inspection-label">
+                        Inspecting
+                      </p>
                       <h3>{toTitleCase(inspectedLayer.name)}</h3>
                     </div>
                   </div>
@@ -522,7 +581,9 @@ export function DeveloperPreviewStandalone() {
                     <span>Layer</span>
                     <select
                       value={inspectionLayerId ?? ''}
-                      onChange={(event) => handleInspectLayer(event.target.value)}
+                      onChange={(event) =>
+                        handleInspectLayer(event.target.value)
+                      }
                     >
                       {layerMetadata.map((layer) => (
                         <option key={layer.id} value={layer.id}>
@@ -539,15 +600,21 @@ export function DeveloperPreviewStandalone() {
                   </div>
                   <div>
                     <dt>Base elevation</dt>
-                    <dd>{formatMeters(inspectedLayer.geometry?.baseElevationM)}</dd>
+                    <dd>
+                      {formatMeters(inspectedLayer.geometry?.baseElevationM)}
+                    </dd>
                   </div>
                   <div>
                     <dt>Top elevation</dt>
-                    <dd>{formatMeters(inspectedLayer.geometry?.topElevationM)}</dd>
+                    <dd>
+                      {formatMeters(inspectedLayer.geometry?.topElevationM)}
+                    </dd>
                   </div>
                   <div>
                     <dt>Preview height</dt>
-                    <dd>{formatMeters(inspectedLayer.geometry?.previewHeightM)}</dd>
+                    <dd>
+                      {formatMeters(inspectedLayer.geometry?.previewHeightM)}
+                    </dd>
                   </div>
                   <div>
                     <dt>Floors (est.)</dt>
@@ -555,7 +622,9 @@ export function DeveloperPreviewStandalone() {
                   </div>
                   <div>
                     <dt>Allocation</dt>
-                    <dd>{formatPercent(inspectedLayer.metrics.allocationPct)}</dd>
+                    <dd>
+                      {formatPercent(inspectedLayer.metrics.allocationPct)}
+                    </dd>
                   </div>
                 </div>
                 <div className="developer-preview-standalone__inspection-footprint">
@@ -563,19 +632,33 @@ export function DeveloperPreviewStandalone() {
                   <div className="developer-preview-standalone__inspection-grid">
                     <div>
                       <dt>Base area</dt>
-                      <dd>{formatArea(inspectedLayer.geometry?.footprintAreaSqm)}</dd>
+                      <dd>
+                        {formatArea(inspectedLayer.geometry?.footprintAreaSqm)}
+                      </dd>
                     </div>
                     <div>
                       <dt>Base perimeter</dt>
-                      <dd>{formatMeters(inspectedLayer.geometry?.footprintPerimeterM)}</dd>
+                      <dd>
+                        {formatMeters(
+                          inspectedLayer.geometry?.footprintPerimeterM,
+                        )}
+                      </dd>
                     </div>
                     <div>
                       <dt>Top area</dt>
-                      <dd>{formatArea(inspectedLayer.geometry?.topFootprintAreaSqm)}</dd>
+                      <dd>
+                        {formatArea(
+                          inspectedLayer.geometry?.topFootprintAreaSqm,
+                        )}
+                      </dd>
                     </div>
                     <div>
                       <dt>Top perimeter</dt>
-                      <dd>{formatMeters(inspectedLayer.geometry?.topFootprintPerimeterM)}</dd>
+                      <dd>
+                        {formatMeters(
+                          inspectedLayer.geometry?.topFootprintPerimeterM,
+                        )}
+                      </dd>
                     </div>
                   </div>
                 </div>
@@ -583,7 +666,9 @@ export function DeveloperPreviewStandalone() {
                   <div className="developer-preview-standalone__inspection-floorlines">
                     <h4>Floor line heights</h4>
                     <p>
-                      {summariseFloorLines(inspectedLayer.geometry.floorLineHeights)}
+                      {summariseFloorLines(
+                        inspectedLayer.geometry.floorLineHeights,
+                      )}
                     </p>
                   </div>
                 ) : null}
@@ -602,7 +687,9 @@ export function DeveloperPreviewStandalone() {
                       focusLayerId === inspectedLayer.id ? ' is-active' : ''
                     }`}
                   >
-                    {focusLayerId === inspectedLayer.id ? 'Focused' : 'Zoom to layer'}
+                    {focusLayerId === inspectedLayer.id
+                      ? 'Focused'
+                      : 'Zoom to layer'}
                   </button>
                 </div>
               </div>
@@ -612,14 +699,19 @@ export function DeveloperPreviewStandalone() {
                 <h3>Colour legend</h3>
                 <div className="developer-preview-standalone__legend-grid">
                   {legendEntries.map((entry) => (
-                    <div key={entry.assetType} className="developer-preview-standalone__legend-item">
+                    <div
+                      key={entry.assetType}
+                      className="developer-preview-standalone__legend-item"
+                    >
                       <span
                         className="developer-preview-standalone__legend-swatch"
                         style={{ background: entry.color }}
                         aria-hidden="true"
                       />
                       <div>
-                        <p className="developer-preview-standalone__legend-label">{entry.label}</p>
+                        <p className="developer-preview-standalone__legend-label">
+                          {entry.label}
+                        </p>
                         {entry.description ? (
                           <p className="developer-preview-standalone__legend-description">
                             {entry.description}
@@ -650,7 +742,10 @@ function formatPercent(value: number | null | undefined): string {
   return `${value.toFixed(1)}%`
 }
 
-function formatNumber(value: number | null | undefined, fractionDigits = 1): string {
+function formatNumber(
+  value: number | null | undefined,
+  fractionDigits = 1,
+): string {
   if (value === null || value === undefined) {
     return '—'
   }
@@ -660,7 +755,10 @@ function formatNumber(value: number | null | undefined, fractionDigits = 1): str
   }).format(value)
 }
 
-function formatMeters(value: number | null | undefined, fractionDigits = 1): string {
+function formatMeters(
+  value: number | null | undefined,
+  fractionDigits = 1,
+): string {
   if (value === null || value === undefined) {
     return '—'
   }
@@ -681,7 +779,9 @@ function summariseFloorLines(heights: number[]): string {
     return 'No floor lines provided.'
   }
   const sorted = [...heights].sort((a, b) => a - b)
-  const preview = sorted.slice(0, FLOOR_LINE_PREVIEW_COUNT).map((height) => formatMeters(height))
+  const preview = sorted
+    .slice(0, FLOOR_LINE_PREVIEW_COUNT)
+    .map((height) => formatMeters(height))
   const remaining = sorted.length - preview.length
   return remaining > 0
     ? `${preview.join(', ')} … (+${remaining} more)`

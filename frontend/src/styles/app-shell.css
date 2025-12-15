@@ -47,8 +47,8 @@
 .app-shell__sidebar {
     /* Glassmorphism sidebar */
     background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
     border-right: 1px solid var(--ob-border-glass);
 
     color: var(--ob-color-text-secondary);

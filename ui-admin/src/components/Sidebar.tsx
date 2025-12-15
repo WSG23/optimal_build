@@ -19,10 +19,10 @@ const Sidebar = () => {
   )
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800">
-      <div className="px-6 py-4 border-b border-slate-800">
+    <aside className="w-64 border-r border-border-subtle bg-surface">
+      <div className="border-b border-border-subtle px-6 py-4">
         <h1 className="text-lg font-semibold">{t('sidebar.title')}</h1>
-        <p className="text-xs text-slate-400">{t('sidebar.description')}</p>
+        <p className="text-xs text-text-muted">{t('sidebar.description')}</p>
       </div>
       <nav className="flex flex-col px-2 py-4 space-y-2">
         {navItems.map((item) => (
@@ -33,8 +33,8 @@ const Sidebar = () => {
             className={({ isActive }) =>
               `px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                 isActive
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-300 hover:bg-slate-800'
+                  ? 'bg-surface-alt text-text-primary'
+                  : 'text-text-secondary hover:bg-surface-alt/70'
               }`
             }
           >

@@ -44,30 +44,36 @@ All UI elements should feel clean, technical, and modern - NOT rounded or "soft"
 
 ## Spacing Standards (MANDATORY)
 
-NEVER use hardcoded pixel values or MUI spacing numbers. Use design tokens:
+NEVER use hardcoded pixel/rem values. Prefer design tokens.
+If you use MUI numeric spacing (e.g. `spacing={2}` or `sx={{ p: 2 }}`), it MUST remain token-based via the app theme's `theme.spacing()` mapping (so you still get tokenized spacing, not arbitrary pixels).
 
-| Token            | Value | Use Cases                 |
-| ---------------- | ----- | ------------------------- |
-| `--ob-space-025` | 2px   | Micro adjustments         |
-| `--ob-space-050` | 4px   | Tight spacing, icon gaps  |
-| `--ob-space-100` | 8px   | Default component padding |
-| `--ob-space-150` | 12px  | Medium spacing            |
-| `--ob-space-200` | 16px  | Standard gaps, padding    |
-| `--ob-space-300` | 24px  | Section spacing           |
-| `--ob-space-400` | 32px  | Large section gaps        |
-| `--ob-space-500` | 40px  | Page section dividers     |
-| `--ob-space-600` | 48px  | Major sections            |
-| `--ob-space-800` | 64px  | Page-level spacing        |
+| Token            | Value | Use Cases                          |
+| ---------------- | ----- | ---------------------------------- |
+| `--ob-space-025` | 4px   | Micro adjustments                  |
+| `--ob-space-050` | 8px   | Tight spacing, icon gaps           |
+| `--ob-space-075` | 12px  | Medium-tight spacing               |
+| `--ob-space-100` | 16px  | Default component padding          |
+| `--ob-space-150` | 24px  | Standard gaps, section spacing     |
+| `--ob-space-200` | 32px  | Large gaps, page sections          |
+| `--ob-space-250` | 40px  | Large section dividers             |
+| `--ob-space-300` | 48px  | Major sections                     |
+| `--ob-space-400` | 64px  | Page-level spacing                 |
+| `--ob-space-500` | 40px  | Back-compat alias (maps to `-250`) |
+| `--ob-space-600` | 48px  | Back-compat alias (maps to `-300`) |
+| `--ob-space-800` | 64px  | Back-compat alias (maps to `-400`) |
 
 ### Examples
 
 ```tsx
 // ✅ CORRECT - Token-based spacing
-<Stack spacing="var(--ob-space-200)">
-<Box sx={{ p: 'var(--ob-space-300)', gap: 'var(--ob-space-100)' }}>
+<Stack spacing="var(--ob-space-100)">
+<Box sx={{ p: 'var(--ob-space-150)', gap: 'var(--ob-space-050)' }}>
 
-// ❌ WRONG - Hardcoded pixel values
-<Stack spacing={2}>        // MUI number
+// ✅ ALSO OK - tokenized MUI spacing numbers (mapped via theme.spacing)
+<Stack spacing={2}>
+<Box sx={{ p: 3, gap: 1 }}>
+
+// ❌ WRONG - Hardcoded values
 <Box sx={{ p: '24px' }}>   // Hardcoded px
 <Box sx={{ gap: 16 }}>     // Hardcoded number
 ```
@@ -103,14 +109,20 @@ NEVER use hardcoded pixel values or MUI spacing numbers. Use design tokens:
 
 ## Typography Standards (MANDATORY)
 
-| Token                | Value    | Use Cases        |
-| -------------------- | -------- | ---------------- |
-| `--ob-font-size-xs`  | 0.75rem  | Labels, captions |
-| `--ob-font-size-sm`  | 0.875rem | Secondary text   |
-| `--ob-font-size-md`  | 1rem     | Body text        |
-| `--ob-font-size-lg`  | 1.125rem | Subtitles        |
-| `--ob-font-size-xl`  | 1.25rem  | Headings         |
-| `--ob-font-size-2xl` | 1.5rem   | Large headings   |
+| Token                     | Value     | Use Cases                             |
+| ------------------------- | --------- | ------------------------------------- |
+| `--ob-font-size-2xs`      | 0.6875rem | Smallest readable, timestamps, badges |
+| `--ob-font-size-xs`       | 0.75rem   | Captions, labels, meta text           |
+| `--ob-font-size-sm-minus` | 0.8125rem | Small body text, compact UI           |
+| `--ob-font-size-sm`       | 0.875rem  | Secondary text, descriptions          |
+| `--ob-font-size-md`       | 0.9375rem | Enhanced body text                    |
+| `--ob-font-size-base`     | 1rem      | Primary body text                     |
+| `--ob-font-size-lg`       | 1.125rem  | Section headings, lead text           |
+| `--ob-font-size-xl`       | 1.25rem   | Page subtitles                        |
+| `--ob-font-size-2xl`      | 1.5rem    | Page titles                           |
+| `--ob-font-size-3xl`      | 1.875rem  | Hero headings                         |
+| `--ob-font-size-4xl`      | 2.25rem   | Display headings                      |
+| `--ob-font-size-5xl`      | 3rem      | Large display                         |
 
 ### Examples
 
@@ -130,7 +142,9 @@ NEVER use hardcoded pixel values or MUI spacing numbers. Use design tokens:
 | Token          | Value | Use Cases             |
 | -------------- | ----- | --------------------- |
 | `--ob-blur-sm` | 4px   | Subtle blur           |
+| `--ob-blur-xs` | 8px   | Light glass surfaces  |
 | `--ob-blur-md` | 12px  | Standard glass effect |
+| `--ob-blur-xl` | 16px  | Strong glass surfaces |
 | `--ob-blur-lg` | 24px  | Heavy blur            |
 
 ### Examples
@@ -147,13 +161,16 @@ NEVER use hardcoded pixel values or MUI spacing numbers. Use design tokens:
 
 ## Z-Index Standards
 
-| Token             | Value | Use Cases      |
-| ----------------- | ----- | -------------- |
-| `--ob-z-base`     | 0     | Default        |
-| `--ob-z-dropdown` | 100   | Dropdowns      |
-| `--ob-z-sticky`   | 200   | Sticky headers |
-| `--ob-z-modal`    | 300   | Modals         |
-| `--ob-z-tooltip`  | 400   | Tooltips       |
+| Token                   | Value | Use Cases             |
+| ----------------------- | ----- | --------------------- |
+| `--ob-z-base`           | 0     | Default               |
+| `--ob-z-dropdown`       | 1000  | Dropdowns             |
+| `--ob-z-sticky`         | 1020  | Sticky headers        |
+| `--ob-z-fixed`          | 1030  | Fixed headers/footers |
+| `--ob-z-modal-backdrop` | 1040  | Modal backdrop        |
+| `--ob-z-modal`          | 1050  | Modals                |
+| `--ob-z-popover`        | 1060  | Popovers              |
+| `--ob-z-tooltip`        | 1070  | Tooltips              |
 
 ---
 
@@ -194,12 +211,12 @@ cd frontend && npm run lint
 ## Quick Reference Card
 
 ```
-SPACING:    var(--ob-space-XXX)     where XXX = 025|050|100|150|200|300|400|500|600|800
+SPACING:    var(--ob-space-XXX)     where XXX = 025|050|075|100|125|150|175|200|250|300|400|500|600|800
 RADIUS:     var(--ob-radius-XXX)    where XXX = none|xs|sm|md|lg|pill
-FONT SIZE:  var(--ob-font-size-XXX) where XXX = xs|sm|md|lg|xl|2xl
+FONT SIZE:  var(--ob-font-size-XXX) where XXX = 2xs|xs|sm-minus|sm|md|base|lg|xl|2xl|3xl|4xl|5xl
 ICON SIZE:  var(--ob-size-icon-XXX) where XXX = sm|md|lg|xl
-BLUR:       var(--ob-blur-XXX)      where XXX = sm|md|lg
-Z-INDEX:    var(--ob-z-XXX)         where XXX = base|dropdown|sticky|modal|tooltip
+BLUR:       var(--ob-blur-XXX)      where XXX = sm|xs|md|xl|lg
+Z-INDEX:    var(--ob-z-XXX)         where XXX = base|dropdown|sticky|fixed|modal-backdrop|modal|popover|tooltip
 ```
 
 ---
@@ -209,7 +226,7 @@ Z-INDEX:    var(--ob-z-XXX)         where XXX = base|dropdown|sticky|modal|toolt
 Before submitting UI code changes, verify:
 
 - [ ] No hardcoded pixel values (use `--ob-space-*` or `--ob-size-*`)
-- [ ] No MUI spacing numbers like `spacing={2}` (use `spacing="var(--ob-space-200)"`)
+- [ ] No hardcoded spacing (`px`/`rem`); prefer `--ob-space-*` or tokenized MUI spacing numbers
 - [ ] No hardcoded border-radius (use `--ob-radius-*`)
 - [ ] Cards/panels use `--ob-radius-sm` (4px), NOT `--ob-radius-lg`
 - [ ] Buttons use `--ob-radius-xs` (2px)

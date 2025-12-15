@@ -4,20 +4,20 @@ export type TicketStatus =
   | 'resolved_harmful'
   | 'resolved_malfunction'
   | 'resolved_normal'
-  | 'dismissed';
+  | 'dismissed'
 
 export interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: TicketStatus;
-  location: string;
-  category: string;
+  id: string
+  title: string
+  description: string
+  status: TicketStatus
+  location: string
+  category: string
 }
 
-export type TicketsByStatus = Record<TicketStatus, Ticket[]>;
+export type TicketsByStatus = Record<TicketStatus, Ticket[]>
 
 export interface ThreatData {
-  entity_id: string;
-  headline_score: number;
+  entity_id: string
+  headline_score: number
 }

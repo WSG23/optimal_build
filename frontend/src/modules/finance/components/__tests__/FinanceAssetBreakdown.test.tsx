@@ -57,7 +57,9 @@ describe('FinanceAssetBreakdown component', () => {
     )
 
     expect(screen.getByText(i18n.t('finance.assets.title'))).toBeTruthy()
-    expect(screen.getByText(i18n.t('finance.assets.totals.revenue'))).toBeTruthy()
+    expect(
+      screen.getByText(i18n.t('finance.assets.totals.revenue')),
+    ).toBeTruthy()
     expect(screen.getAllByText('Office').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Retail').length).toBeGreaterThan(0)
     expect(
@@ -73,9 +75,7 @@ describe('FinanceAssetBreakdown component', () => {
     )
 
     expect(screen.getByText(i18n.t('finance.assets.title'))).toBeTruthy()
-    expect(
-      screen.getByText(i18n.t('finance.assets.empty')),
-    ).toBeTruthy()
+    expect(screen.getByText(i18n.t('finance.assets.empty'))).toBeTruthy()
   })
   it('renders allocation legend segments', () => {
     render(

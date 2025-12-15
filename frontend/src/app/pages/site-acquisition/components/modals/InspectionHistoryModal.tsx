@@ -8,9 +8,19 @@
 import type React from 'react'
 import { createPortal } from 'react-dom'
 import type { RefObject } from 'react'
-import type { ConditionAssessment, DevelopmentScenario } from '../../../../../api/siteAcquisition'
-import type { ScenarioComparisonDatum, SystemComparisonEntry } from '../../types'
-import { InspectionHistoryContent, type ComparisonSummary, type RecommendedActionDiff } from '../inspection-history'
+import type {
+  ConditionAssessment,
+  DevelopmentScenario,
+} from '../../../../../api/siteAcquisition'
+import type {
+  ScenarioComparisonDatum,
+  SystemComparisonEntry,
+} from '../../types'
+import {
+  InspectionHistoryContent,
+  type ComparisonSummary,
+  type RecommendedActionDiff,
+} from '../inspection-history'
 
 // ============================================================================
 // Types
@@ -36,7 +46,9 @@ export interface InspectionHistoryModalProps {
   scenarioComparisonRef: RefObject<HTMLDivElement | null>
   scenarioComparisonTableRows: ScenarioComparisonDatum[]
   scenarioAssessments: ConditionAssessment[]
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
   formatRecordedTimestamp: (timestamp: string | null | undefined) => string
 }
 
@@ -93,7 +105,7 @@ export function InspectionHistoryModal({
         onClick={(event) => event.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: '8px',
           width: 'min(1200px, 95vw)',
           maxHeight: '85vh',
           overflowY: 'auto',
@@ -132,7 +144,9 @@ export function InspectionHistoryModal({
           systemComparisons={systemComparisons}
           recommendedActionDiff={recommendedActionDiff}
           scenarioComparisonVisible={scenarioComparisonVisible}
-          scenarioComparisonRef={scenarioComparisonRef as React.RefObject<HTMLDivElement>}
+          scenarioComparisonRef={
+            scenarioComparisonRef as React.RefObject<HTMLDivElement>
+          }
           scenarioComparisonTableRows={scenarioComparisonTableRows}
           scenarioAssessments={scenarioAssessments}
           formatScenarioLabel={formatScenarioLabel}

@@ -57,7 +57,7 @@ export function SystemRatingCard({
     <div
       style={{
         border: '1px solid #e5e5e7',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.25rem',
         display: 'flex',
         flexDirection: 'column',

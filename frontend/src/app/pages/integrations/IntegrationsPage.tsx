@@ -11,7 +11,7 @@ const PROVIDERS = [
   {
     id: 'propertyguru',
     name: 'PropertyGuru',
-    description: 'Singapore\'s leading property portal',
+    description: "Singapore's leading property portal",
     color: '#00aaff',
   },
   {
@@ -56,9 +56,13 @@ export function IntegrationsPage() {
       const data = await fetchListingAccounts()
       setAccounts(data)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load accounts'
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load accounts'
       // Handle 401 gracefully - user not logged in
-      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+      if (
+        errorMessage.includes('401') ||
+        errorMessage.includes('Unauthorized')
+      ) {
         setError('Login required to view integrations')
       } else {
         setError(errorMessage)
@@ -74,7 +78,10 @@ export function IntegrationsPage() {
       // Mock OAuth: generate a fake auth code
       const mockCode = `mock_${provider}_${Date.now()}`
       const newAccount = await connectMockAccount(provider, mockCode)
-      setAccounts([...accounts.filter((a) => a.provider !== provider), newAccount])
+      setAccounts([
+        ...accounts.filter((a) => a.provider !== provider),
+        newAccount,
+      ])
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Connection failed')
     } finally {
@@ -118,7 +125,9 @@ export function IntegrationsPage() {
   }
 
   function isConnected(providerId: string) {
-    return accounts.some((a) => a.provider === providerId && a.status === 'active')
+    return accounts.some(
+      (a) => a.provider === providerId && a.status === 'active',
+    )
   }
 
   return (
@@ -178,7 +187,7 @@ export function IntegrationsPage() {
               textAlign: 'center',
               background: 'white',
               border: '1px solid #d2d2d7',
-              borderRadius: '18px',
+              borderRadius: '4px',
               color: '#6e6e73',
             }}
           >
@@ -191,7 +200,7 @@ export function IntegrationsPage() {
               textAlign: 'center',
               background: 'white',
               border: '1px solid #d2d2d7',
-              borderRadius: '18px',
+              borderRadius: '4px',
             }}
           >
             <div
@@ -250,7 +259,7 @@ export function IntegrationsPage() {
                   style={{
                     background: 'white',
                     border: `2px solid ${connected ? provider.color : '#d2d2d7'}`,
-                    borderRadius: '18px',
+                    borderRadius: '4px',
                     padding: '2rem',
                     transition: 'all 0.2s ease',
                   }}
@@ -259,7 +268,7 @@ export function IntegrationsPage() {
                     style={{
                       width: '48px',
                       height: '48px',
-                      borderRadius: '12px',
+                      borderRadius: '4px',
                       background: provider.color,
                       marginBottom: '1rem',
                       display: 'flex',
@@ -300,17 +309,19 @@ export function IntegrationsPage() {
                       style={{
                         padding: '0.75rem 1rem',
                         background: '#f5f5f7',
-                        borderRadius: '10px',
+                        borderRadius: '4px',
                         marginBottom: '1rem',
                         fontSize: '0.875rem',
                         color: '#6e6e73',
                       }}
                     >
                       <div style={{ marginBottom: '0.25rem' }}>
-                        <strong style={{ color: '#1d1d1f' }}>Status:</strong> {account.status}
+                        <strong style={{ color: '#1d1d1f' }}>Status:</strong>{' '}
+                        {account.status}
                       </div>
                       <div style={{ fontSize: '0.8125rem' }}>
-                        Connected {new Date(account.created_at).toLocaleDateString()}
+                        Connected{' '}
+                        {new Date(account.created_at).toLocaleDateString()}
                       </div>
                     </div>
                   )}
@@ -320,12 +331,14 @@ export function IntegrationsPage() {
                       <>
                         <button
                           type="button"
-                          onClick={() => setPublishForm({
-                            provider: provider.id,
-                            propertyId: '',
-                            title: '',
-                            price: '',
-                          })}
+                          onClick={() =>
+                            setPublishForm({
+                              provider: provider.id,
+                              propertyId: '',
+                              title: '',
+                              price: '',
+                            })
+                          }
                           style={{
                             flex: 1,
                             padding: '0.75rem 1.25rem',
@@ -334,7 +347,7 @@ export function IntegrationsPage() {
                             color: 'white',
                             background: provider.color,
                             border: 'none',
-                            borderRadius: '10px',
+                            borderRadius: '4px',
                             cursor: 'pointer',
                             transition: 'opacity 0.2s ease',
                             letterSpacing: '-0.005em',
@@ -358,7 +371,7 @@ export function IntegrationsPage() {
                             color: '#1d1d1f',
                             background: 'transparent',
                             border: '1px solid #d2d2d7',
-                            borderRadius: '10px',
+                            borderRadius: '4px',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             letterSpacing: '-0.005em',
@@ -386,13 +399,14 @@ export function IntegrationsPage() {
                           color: connecting ? '#6e6e73' : 'white',
                           background: connecting ? '#f5f5f7' : provider.color,
                           border: 'none',
-                          borderRadius: '10px',
+                          borderRadius: '4px',
                           cursor: connecting ? 'not-allowed' : 'pointer',
                           transition: 'opacity 0.2s ease',
                           letterSpacing: '-0.005em',
                         }}
                         onMouseEnter={(e) => {
-                          if (!connecting) e.currentTarget.style.opacity = '0.85'
+                          if (!connecting)
+                            e.currentTarget.style.opacity = '0.85'
                         }}
                         onMouseLeave={(e) => {
                           if (!connecting) e.currentTarget.style.opacity = '1'
@@ -429,7 +443,7 @@ export function IntegrationsPage() {
           <div
             style={{
               background: 'white',
-              borderRadius: '18px',
+              borderRadius: '4px',
               padding: '2rem',
               maxWidth: '500px',
               width: '90%',
@@ -444,7 +458,8 @@ export function IntegrationsPage() {
                 letterSpacing: '-0.01em',
               }}
             >
-              Publish to {PROVIDERS.find((p) => p.id === publishForm.provider)?.name}
+              Publish to{' '}
+              {PROVIDERS.find((p) => p.id === publishForm.provider)?.name}
             </h3>
 
             <form onSubmit={handlePublish}>
@@ -464,7 +479,12 @@ export function IntegrationsPage() {
                 <input
                   type="text"
                   value={publishForm.propertyId}
-                  onChange={(e) => setPublishForm({ ...publishForm, propertyId: e.target.value })}
+                  onChange={(e) =>
+                    setPublishForm({
+                      ...publishForm,
+                      propertyId: e.target.value,
+                    })
+                  }
                   placeholder="e.g. d47174ee-bb6f-4f3f-8baa-141d7c5d9051"
                   required
                   style={{
@@ -472,9 +492,10 @@ export function IntegrationsPage() {
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     outline: 'none',
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+                    fontFamily:
+                      'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
                   }}
                 />
               </div>
@@ -495,7 +516,9 @@ export function IntegrationsPage() {
                 <input
                   type="text"
                   value={publishForm.title}
-                  onChange={(e) => setPublishForm({ ...publishForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setPublishForm({ ...publishForm, title: e.target.value })
+                  }
                   placeholder="e.g. Prime CBD Office Tower"
                   required
                   style={{
@@ -503,7 +526,7 @@ export function IntegrationsPage() {
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     outline: 'none',
                   }}
                 />
@@ -525,7 +548,9 @@ export function IntegrationsPage() {
                 <input
                   type="number"
                   value={publishForm.price}
-                  onChange={(e) => setPublishForm({ ...publishForm, price: e.target.value })}
+                  onChange={(e) =>
+                    setPublishForm({ ...publishForm, price: e.target.value })
+                  }
                   placeholder="e.g. 5000000"
                   required
                   style={{
@@ -533,7 +558,7 @@ export function IntegrationsPage() {
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     outline: 'none',
                   }}
                 />
@@ -551,7 +576,7 @@ export function IntegrationsPage() {
                     color: '#1d1d1f',
                     background: 'transparent',
                     border: '1px solid #d2d2d7',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     cursor: 'pointer',
                   }}
                 >
@@ -569,16 +594,19 @@ export function IntegrationsPage() {
                     background:
                       publishingProvider === publishForm.provider
                         ? '#d2d2d7'
-                        : PROVIDERS.find((p) => p.id === publishForm.provider)?.color || '#1d1d1f',
+                        : PROVIDERS.find((p) => p.id === publishForm.provider)
+                            ?.color || '#1d1d1f',
                     border: 'none',
-                    borderRadius: '12px',
+                    borderRadius: '4px',
                     cursor:
                       publishingProvider === publishForm.provider
                         ? 'not-allowed'
                         : 'pointer',
                   }}
                 >
-                  {publishingProvider === publishForm.provider ? 'Publishing...' : 'Publish Listing'}
+                  {publishingProvider === publishForm.provider
+                    ? 'Publishing...'
+                    : 'Publish Listing'}
                 </button>
               </div>
             </form>
@@ -591,7 +619,7 @@ export function IntegrationsPage() {
         style={{
           background: 'white',
           border: '1px solid #d2d2d7',
-          borderRadius: '18px',
+          borderRadius: '4px',
           padding: '2rem',
         }}
       >
@@ -614,8 +642,9 @@ export function IntegrationsPage() {
             letterSpacing: '-0.005em',
           }}
         >
-          Connect your property listing accounts to publish directly from the platform. Mock OAuth
-          flow simulates real provider authentication for development purposes.
+          Connect your property listing accounts to publish directly from the
+          platform. Mock OAuth flow simulates real provider authentication for
+          development purposes.
         </p>
         <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
           <li
@@ -627,8 +656,8 @@ export function IntegrationsPage() {
               letterSpacing: '-0.005em',
             }}
           >
-            <strong style={{ color: '#1d1d1f' }}>PropertyGuru:</strong> Singapore's largest property
-            portal with wide reach
+            <strong style={{ color: '#1d1d1f' }}>PropertyGuru:</strong>{' '}
+            Singapore's largest property portal with wide reach
           </li>
           <li
             style={{
@@ -639,8 +668,8 @@ export function IntegrationsPage() {
               letterSpacing: '-0.005em',
             }}
           >
-            <strong style={{ color: '#1d1d1f' }}>EdgeProp:</strong> Premium property insights and
-            listings
+            <strong style={{ color: '#1d1d1f' }}>EdgeProp:</strong> Premium
+            property insights and listings
           </li>
           <li
             style={{
@@ -650,8 +679,8 @@ export function IntegrationsPage() {
               letterSpacing: '-0.005em',
             }}
           >
-            <strong style={{ color: '#1d1d1f' }}>Zoho CRM:</strong> Lead management and client
-            tracking
+            <strong style={{ color: '#1d1d1f' }}>Zoho CRM:</strong> Lead
+            management and client tracking
           </li>
         </ul>
       </section>

@@ -1,5 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
-import type { AnchorHTMLAttributes, MouseEventHandler, ReactNode, Ref } from 'react'
+import type {
+  AnchorHTMLAttributes,
+  MouseEventHandler,
+  ReactNode,
+  Ref,
+} from 'react'
 import {
   createContext,
   forwardRef,
@@ -89,7 +94,10 @@ interface RouterProviderProps {
   layout?: React.ComponentType<{ children: ReactNode }>
 }
 
-export function RouterProvider({ router, layout: Layout }: RouterProviderProps) {
+export function RouterProvider({
+  router,
+  layout: Layout,
+}: RouterProviderProps) {
   const [path, setPath] = useState<string>(() => getInitialPath())
   // ... (keep state hooks)
   const [search, setSearch] = useState<string>(() => getInitialSearch())

@@ -1,6 +1,12 @@
 import { afterEach, assert, beforeEach, describe, it } from 'vitest'
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import React from 'react'
 
 import { TranslationProvider } from '../../i18n'
@@ -69,7 +75,10 @@ describe('AgentsGpsCapturePage', () => {
 
     let packCalls = 0
     let lastPackType: string | null = null
-    const packStub = async (_propertyId: string, packType: 'universal' | 'investment' | 'sales' | 'lease') => {
+    const packStub = async (
+      _propertyId: string,
+      packType: 'universal' | 'investment' | 'sales' | 'lease',
+    ) => {
       packCalls += 1
       lastPackType = packType
       return {
@@ -113,9 +122,7 @@ describe('AgentsGpsCapturePage', () => {
       assert.equal(marketCalls, 1)
     })
 
-    assert.ok(
-      screen.getByRole('heading', { name: /Raw land potential/i })
-    )
+    assert.ok(screen.getByRole('heading', { name: /Raw land potential/i }))
     assert.ok(screen.getByText(/Max GFA 20,000 sqm/i))
     assert.ok(screen.getByRole('heading', { name: /Market intelligence/i }))
     assert.ok(screen.getByText(/Transactions/i))
@@ -134,8 +141,6 @@ describe('AgentsGpsCapturePage', () => {
       assert.equal(lastPackType, 'sales')
     })
 
-    assert.ok(
-      screen.getByRole('link', { name: /Download sales_pack\.pdf/i }),
-    )
+    assert.ok(screen.getByRole('link', { name: /Download sales_pack\.pdf/i }))
   })
 })

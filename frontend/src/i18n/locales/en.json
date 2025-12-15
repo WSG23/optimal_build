@@ -102,8 +102,8 @@
     "upload": "Upload CAD",
     "detection": "Floor & unit detection",
     "pipelines": "Default pipelines",
-    "feasibility": "Feasibility wizard",
-    "finance": "Finance workspace",
+    "feasibility": "Feasibility",
+    "finance": "Finance",
     "intelligence": "Advanced intelligence",
     "agentCapture": "Agent GPS capture",
     "agentPerformance": "Agent performance"
@@ -138,7 +138,19 @@
       "industrial": "Industrial",
       "mixedUse": "Mixed use",
       "businessPark": "Business park"
-    }
+    },
+    "dropTitle": "Upload CAD File",
+    "uploadingTitle": "Uploading & Processing...",
+    "uploadingHint": "Please wait while we analyze your file.",
+    "supportedFormats": "Supports .dxf, .ifc, .pdf, .png",
+    "steps": {
+      "uploading": "Uploading",
+      "processing": "Processing Layers",
+      "detecting": "Detecting Units"
+    },
+    "fileName": "File Name",
+    "floorsDetected": "Floors Detected",
+    "unitsCount": "Units Count"
   },
   "detection": {
     "title": "Floor and unit detection preview",
@@ -251,7 +263,7 @@
     "projectLabel": "Project ID"
   },
   "finance": {
-    "title": "Finance feasibility",
+    "title": "Create finance scenario",
     "subtitle": "Compare escalated cost, NPV, IRR and DSCR metrics across seeded scenarios.",
     "actions": {
       "refresh": "Recompute scenarios",
@@ -259,6 +271,19 @@
       "exportCsv": "Export CSV",
       "exporting": "Exporting…",
       "exportSuccess": "Finance CSV downloaded."
+    },
+    "sections": {
+      "scenarios": "Scenarios"
+    },
+    "tabs": {
+      "capitalStack": "Capital Stack",
+      "drawdownSchedule": "Drawdown Schedule",
+      "assetBreakdown": "Asset Breakdown",
+      "facilityEditor": "Facility Editor",
+      "jobTimeline": "Job Timeline",
+      "loanInterest": "Loan Interest",
+      "analytics": "Analytics",
+      "sensitivity": "Sensitivity"
     },
     "projectSelector": {
       "title": "Project selection",
@@ -276,8 +301,8 @@
       "enterManualId": "Enter manual ID"
     },
     "warnings": {
-        "offlineMode": "Offline Mode",
-        "offlineModeDetail": "Calculations may be limited due to offline status."
+      "offlineMode": "Offline Mode",
+      "offlineModeDetail": "Calculations may be limited due to offline status."
     },
     "errors": {
       "generic": "Unable to load finance scenarios.",
@@ -442,15 +467,15 @@
       }
     },
     "privacy": {
-    "restrictedTitle": "Developer-only workspace",
-    "restrictedBody": "Finance modelling data is restricted to developer or admin roles. Update your API role (X-Role header) to \"developer\" before continuing.",
-    "roleHint": "Current role: {{role}}",
-    "applyDemoIdentity": "Use demo developer identity",
-    "applyDemoIdentityHint": "Demo finance headers stored. Reload if the data does not appear immediately.",
-    "applyDemoIdentityError": "Unable to store credentials in this browser. Please update localStorage manually.",
-    "privateTitle": "Private finance scenario",
-    "privateBody": "This scenario is marked as private for the developer team. Share these outputs only with authorised project members."
-  },
+      "restrictedTitle": "Developer-only workspace",
+      "restrictedBody": "Finance modelling data is restricted to developer or admin roles. Update your API role (X-Role header) to \"developer\" before continuing.",
+      "roleHint": "Current role: {{role}}",
+      "applyDemoIdentity": "Use demo developer identity",
+      "applyDemoIdentityHint": "Demo finance headers stored. Reload if the data does not appear immediately.",
+      "applyDemoIdentityError": "Unable to store credentials in this browser. Please update localStorage manually.",
+      "privateTitle": "Private finance scenario",
+      "privateBody": "This scenario is marked as private for the developer team. Share these outputs only with authorised project members."
+    },
     "scenarioCreator": {
       "title": "Create finance scenario",
       "description": "Enter asset mix assumptions to generate a fresh Phase 2C feasibility run.",
@@ -486,6 +511,7 @@
         "saving": "Running…"
       },
       "allocationTotal": "Total allocation: {{value}}%",
+      "totalAnnualRevenue": "Total Annual Revenue",
       "success": "Scenario \"{{name}}\" queued successfully.",
       "errors": {
         "nameRequired": "Enter a scenario name.",
@@ -524,10 +550,6 @@
       }
     },
     "sensitivity": {
-      "controls": {
-        "parameters": "Parameters",
-        "selectAll": "Select all"
-      },
       "actions": {
         "downloadCsv": "Download CSV",
         "downloadJson": "Download JSON"
@@ -559,6 +581,8 @@
         }
       },
       "controls": {
+        "parameters": "Parameters",
+        "selectAll": "Select all",
         "title": "Sensitivity bands",
         "description": "Adjust parameter deltas and rerun the analysis for the selected scenario.",
         "parameter": "Parameter",
@@ -757,12 +781,21 @@
       },
       "copyRequest": "Copy request JSON",
       "copySuccess": "Copied",
-      "copyError": "Copy failed"
+      "copyError": "Copy failed",
+      "siteAreaLabel": "Site Area (sqm)",
+      "landUseLabel": "Zoning / Land Use",
+      "invalidSiteArea": "Please enter a valid site area"
     },
     "assumptions": {
-      "title": "Assumptions",
+      "title": "ASSUMPTIONS",
       "subtitle": "Tweak the inputs the engine uses to derive height limits and net saleable area.",
+      "engineering": {
+        "title": "ENGINEERING CONSTRAINTS"
+      },
       "fields": {
+        "structure": {
+          "label": "STRUCTURAL SYSTEM"
+        },
         "typFloorToFloor": {
           "label": "Typical floor-to-floor (m)",
           "hint": "Default {{value}} m"
@@ -778,6 +811,9 @@
         "range": "Efficiency must be between 0 and 1."
       },
       "reset": "Reset to defaults"
+    },
+    "financials": {
+      "title": "FINANCIAL MODELING"
     },
     "pack": {
       "title": "Professional marketing packs",

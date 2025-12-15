@@ -7,7 +7,11 @@
 
 import { createPortal } from 'react-dom'
 import type { DevelopmentScenario } from '../../../../../api/siteAcquisition'
-import type { QuickAnalysisSnapshot, ScenarioOption, ScenarioComparisonMetric } from '../../types'
+import type {
+  QuickAnalysisSnapshot,
+  ScenarioOption,
+  ScenarioComparisonMetric,
+} from '../../types'
 import { formatTimestamp } from '../../utils/formatters'
 
 // ============================================================================
@@ -19,8 +23,12 @@ export interface QuickAnalysisHistoryModalProps {
   onClose: () => void
   quickAnalysisHistory: QuickAnalysisSnapshot[]
   scenarioLookup: Map<DevelopmentScenario, ScenarioOption>
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
-  summariseScenarioMetrics: (metrics: Record<string, unknown>) => ScenarioComparisonMetric[]
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
+  summariseScenarioMetrics: (
+    metrics: Record<string, unknown>,
+  ) => ScenarioComparisonMetric[]
   formatScenarioMetricValue: (key: string, value: unknown) => string
 }
 
@@ -65,7 +73,7 @@ export function QuickAnalysisHistoryModal({
         onClick={(event) => event.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: '8px',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '85vh',
@@ -92,8 +100,12 @@ export function QuickAnalysisHistoryModal({
         >
           ×
         </button>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+        >
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}
+          >
             <h2
               style={{
                 margin: 0,
@@ -105,8 +117,8 @@ export function QuickAnalysisHistoryModal({
               Quick analysis history
             </h2>
             <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
-              Review the last {quickAnalysisHistory.length} generated snapshots of
-              multi-scenario feasibility metrics.
+              Review the last {quickAnalysisHistory.length} generated snapshots
+              of multi-scenario feasibility metrics.
             </p>
           </div>
           {quickAnalysisHistory.length === 0 ? (
@@ -119,7 +131,7 @@ export function QuickAnalysisHistoryModal({
                 key={`${snapshot.propertyId}-${snapshot.generatedAt}`}
                 style={{
                   border: '1px solid #e5e7eb',
-                  borderRadius: '14px',
+                  borderRadius: '4px',
                   padding: '1.5rem',
                   display: 'flex',
                   flexDirection: 'column',
@@ -173,7 +185,7 @@ export function QuickAnalysisHistoryModal({
                         key={`${snapshot.generatedAt}-${scenarioKey}`}
                         style={{
                           border: '1px solid #e5e7eb',
-                          borderRadius: '12px',
+                          borderRadius: '4px',
                           padding: '1rem',
                           background: 'white',
                           display: 'flex',
@@ -181,20 +193,40 @@ export function QuickAnalysisHistoryModal({
                           gap: '0.6rem',
                         }}
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.25rem',
+                          }}
+                        >
                           <span
-                            style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}
+                            style={{
+                              fontSize: '0.75rem',
+                              color: '#6b7280',
+                              textTransform: 'uppercase',
+                            }}
                           >
                             Scenario
                           </span>
                           <span
-                            style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}
+                            style={{
+                              fontSize: '1rem',
+                              fontWeight: 600,
+                              color: '#111827',
+                            }}
                           >
                             {label}
                           </span>
                         </div>
                         {scenario.headline && (
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#374151' }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: '0.85rem',
+                              color: '#374151',
+                            }}
+                          >
                             {scenario.headline}
                           </p>
                         )}
@@ -223,16 +255,30 @@ export function QuickAnalysisHistoryModal({
                                   {metric.label}
                                 </span>
                                 <span
-                                  style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1f2937' }}
+                                  style={{
+                                    fontSize: '0.9rem',
+                                    fontWeight: 600,
+                                    color: '#1f2937',
+                                  }}
                                 >
-                                  {formatScenarioMetricValue(metric.key, metric.value)}
+                                  {formatScenarioMetricValue(
+                                    metric.key,
+                                    metric.value,
+                                  )}
                                 </span>
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
-                            No quantitative metrics captured for this scenario run.
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: '0.8rem',
+                              color: '#6b7280',
+                            }}
+                          >
+                            No quantitative metrics captured for this scenario
+                            run.
                           </p>
                         )}
                       </section>

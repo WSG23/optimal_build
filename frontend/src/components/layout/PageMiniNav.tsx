@@ -1,12 +1,12 @@
-import type { FC } from 'react';
+import type { FC } from 'react'
 
 export interface PageMiniNavItem {
-  label: string;
-  to: string;
+  label: string
+  to: string
 }
 
 export interface PageMiniNavProps {
-  items: PageMiniNavItem[];
+  items: PageMiniNavItem[]
 }
 
 export const PageMiniNav: FC<PageMiniNavProps> = ({ items }) => {
@@ -22,7 +22,7 @@ export const PageMiniNav: FC<PageMiniNavProps> = ({ items }) => {
         </a>
       ))}
     </nav>
-  );
-};
+  )
+}
 
-export default PageMiniNav;
+export default PageMiniNav

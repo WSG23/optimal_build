@@ -12,7 +12,7 @@
 
 .cad-uploader__dropzone {
     border: 2px dashed var(--ob-color-border-neutral);
-    border-radius: 1.5rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: 3rem;
     text-align: center;
     background: var(--ob-color-bg-surface-elevated);
@@ -39,7 +39,7 @@
 .cad-uploader__browse {
     align-self: center;
     padding: 0.65rem 1.5rem;
-    border-radius: 999px;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     border: none;
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse);
@@ -50,7 +50,7 @@
 .cad-uploader__status {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: 2rem;
     box-shadow: var(--ob-shadow-md);
 }
@@ -87,7 +87,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -109,7 +109,7 @@
 .cad-upload__label select,
 .cad-upload__label input {
     padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
+    border-radius: 6px; /* Square Cyber-Minimalism: md for inputs */
     border: 1px solid var(--ob-color-border-subtle);
 }
 
@@ -127,7 +127,7 @@
 .cad-preview {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: var(--ob-spacing-500);
     box-shadow: var(--ob-shadow-md);
     display: flex;
@@ -190,7 +190,7 @@
 .cad-preview__panel {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: var(--ob-spacing-400);
 }
 
@@ -256,7 +256,7 @@
 }
 
 .cad-overlay-status-summary__muted {
-    color: #94a3b8;
+    color: var(--ob-neutral-400);
 }
 
 .cad-overlay-summary__reset {
@@ -272,7 +272,7 @@
 }
 
 .cad-overlay-summary__reset:disabled {
-    color: #94a3b8;
+    color: var(--ob-neutral-400);
     cursor: default;
 }
 
@@ -291,7 +291,7 @@
 
 .cad-overlay-summary__preset:disabled {
     background: var(--ob-color-border-neutral);
-    color: #94a3b8;
+    color: var(--ob-neutral-400);
     cursor: not-allowed;
 }
 
@@ -362,10 +362,10 @@
 .cad-overlay-info-banner {
     margin: 0.5rem 0 0.75rem;
     padding: 0.6rem 0.8rem;
-    border-radius: 0.75rem;
-    background: #e0f2fe;
+    border-radius: var(--ob-radius-sm);
+    background: var(--ob-brand-50);
     color: var(--ob-color-surface-inverse);
-    font-size: 0.8rem;
+    font-size: var(--ob-font-size-sm);
     line-height: 1.4;
     display: flex;
     flex-wrap: wrap;
@@ -388,7 +388,7 @@
 
 .cad-overlay-info-banner__action:hover,
 .cad-overlay-info-banner__action:focus-visible {
-    background: #1d4ed8;
+    background: var(--ob-brand-700);
     outline: none;
 }
 
@@ -398,7 +398,7 @@
     gap: 0.5rem;
     padding: 0.75rem 1rem;
     background: var(--ob-color-surface-alt);
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     color: var(--ob-color-text-muted);
 }
 
@@ -418,13 +418,13 @@
 
 .cad-overlay-empty button:hover,
 .cad-overlay-empty button:focus-visible {
-    background: #1d4ed8;
+    background: var(--ob-brand-700);
     outline: none;
 }
 
 .cad-overlay-item {
     background: var(--ob-color-bg-surface-elevated);
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
     padding: 0.75rem 1rem;
     box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
     display: flex;
@@ -505,7 +505,7 @@
     width: 100%;
     border-collapse: collapse;
     background: var(--ob-color-bg-surface);
-    border-radius: 1rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     overflow: hidden;
 }
 
@@ -623,7 +623,7 @@
 }
 
 .cad-status--source {
-    color: #334155;
+    color: var(--ob-neutral-700);
 }
 
 .cad-status--pending {
@@ -641,11 +641,11 @@
 .cad-preview__metric-button {
     margin-left: 0.5rem;
     padding: 0.25rem 0.75rem;
-    border-radius: 0.5rem;
+    border-radius: var(--ob-radius-sm);
     border: 1px solid var(--ob-color-brand-primary);
-    background: #eff6ff;
+    background: var(--ob-brand-50);
     color: var(--ob-color-brand-primary-emphasis);
-    font-size: 0.75rem;
+    font-size: var(--ob-font-size-xs);
     cursor: pointer;
 }
 
@@ -658,7 +658,7 @@
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
     padding: var(--ob-spacing-400);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     box-shadow: var(--ob-shadow-md);
     display: flex;
     flex-direction: column;
@@ -719,7 +719,7 @@
 .cad-export button,
 .cad-pipelines__toolbar select {
     padding: 0.5rem 1rem;
-    border-radius: 0.75rem;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     border: 1px solid var(--ob-color-border-subtle);
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse);
@@ -730,7 +730,7 @@
 .cad-panel button:disabled,
 .cad-export button:disabled {
     background: var(--ob-color-border-subtle);
-    color: #64748b;
+    color: var(--ob-neutral-500);
     cursor: not-allowed;
 }
 
@@ -742,7 +742,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -790,7 +790,7 @@
     align-items: center;
     background: var(--ob-color-status-warning-bg);
     color: var(--ob-color-status-warning-text);
-    border-radius: 0.75rem;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for banners */
     padding: 0.6rem 0.9rem;
     margin-bottom: 1rem;
 }
@@ -807,8 +807,8 @@
 .cad-detection__filter-banner-actions button {
     border: none;
     background: var(--ob-color-warning-strong);
-    color: #ffffff;
-    font-size: 0.75rem;
+    color: var(--ob-color-text-inverse);
+    font-size: var(--ob-font-size-xs);
     font-weight: 600;
     padding: 0.3rem 0.75rem;
     border-radius: 999px;
@@ -819,7 +819,7 @@
 
 .cad-detection__filter-banner-actions button:hover,
 .cad-detection__filter-banner-actions button:focus-visible {
-    background: #ea580c;
+    background: var(--ob-warning-600);
     outline: none;
 }
 
@@ -845,16 +845,16 @@
 }
 
 .cad-rulepack > li {
-    background: #f8fafc;
+    background: var(--ob-neutral-50);
     padding: 1rem;
-    border-radius: 1rem;
+    border-radius: var(--ob-radius-sm);
 }
 
 .cad-rulepack__overlay {
     display: inline-block;
     margin-left: 0.5rem;
-    font-size: 0.85rem;
-    color: #2563eb;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-brand-600);
 }
 
 .cad-timeline {
@@ -867,7 +867,7 @@
 
 .cad-timeline__baseline {
     margin: 0;
-    color: #475569;
+    color: var(--ob-neutral-600);
 }
 
 .cad-export {
@@ -885,9 +885,9 @@
     gap: 0.75rem;
     margin: 0.75rem 0 0;
     padding: 0.75rem 1rem;
-    border-radius: 0.75rem;
+    border-radius: var(--ob-radius-sm);
     background: var(--ob-color-error-soft);
-    color: #991b1b;
+    color: var(--ob-error-800);
     font-weight: 600;
 }
 
@@ -899,8 +899,8 @@
     flex: 0 0 auto;
     border: none;
     border-radius: 999px;
-    background: #991b1b;
-    color: #ffffff;
+    background: var(--ob-error-800);
+    color: var(--ob-color-text-inverse);
     width: 1.75rem;
     height: 1.75rem;
     font-size: 1rem;
@@ -909,7 +909,7 @@
 }
 
 .cad-export__pending-info:focus-visible {
-    outline: 2px solid #1d4ed8;
+    outline: 2px solid var(--ob-brand-700);
     outline-offset: 2px;
 }
 
@@ -930,8 +930,8 @@
 
 .cad-roi dd {
     margin: 0.25rem 0 0;
-    font-size: 1.35rem;
-    color: #1d4ed8;
+    font-size: var(--ob-font-size-xl);
+    color: var(--ob-brand-700);
     font-weight: 600;
 }
 
@@ -943,7 +943,7 @@
 
 .cad-pipelines__context {
     margin: 0;
-    color: #475569;
+    color: var(--ob-neutral-600);
 }
 
 .cad-pipelines ul {
@@ -957,7 +957,7 @@
 .cad-pipelines__item {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: var(--ob-spacing-400);
     box-shadow: var(--ob-shadow-md);
 }

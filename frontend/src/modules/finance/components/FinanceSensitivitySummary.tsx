@@ -50,7 +50,10 @@ export function FinanceSensitivitySummary({
           const maxAbsDelta = summary.maxMagnitude
           const bestWidth =
             summary.bestDelta && maxAbsDelta
-              ? Math.min(100, (Math.abs(summary.bestDelta.delta) / maxAbsDelta) * 100)
+              ? Math.min(
+                  100,
+                  (Math.abs(summary.bestDelta.delta) / maxAbsDelta) * 100,
+                )
               : 0
           const worstWidth =
             summary.worstDelta && maxAbsDelta
@@ -68,7 +71,12 @@ export function FinanceSensitivitySummary({
                 <h3>{summary.parameter}</h3>
                 <span>
                   {summary.baseValue !== null
-                    ? formatCurrencyDelta(summary.baseValue, currency, locale, fallback)
+                    ? formatCurrencyDelta(
+                        summary.baseValue,
+                        currency,
+                        locale,
+                        fallback,
+                      )
                     : fallback}
                 </span>
               </header>
@@ -90,7 +98,9 @@ export function FinanceSensitivitySummary({
                       fallback,
                     )}
                     <span className="finance-sensitivity-summary__scenario">
-                      {summary.bestDelta?.label || summary.bestDelta?.scenario || ''}
+                      {summary.bestDelta?.label ||
+                        summary.bestDelta?.scenario ||
+                        ''}
                     </span>
                   </dd>
                   <div className="finance-sensitivity-summary__spark">
@@ -110,7 +120,9 @@ export function FinanceSensitivitySummary({
                       fallback,
                     )}
                     <span className="finance-sensitivity-summary__scenario">
-                      {summary.worstDelta?.label || summary.worstDelta?.scenario || ''}
+                      {summary.worstDelta?.label ||
+                        summary.worstDelta?.scenario ||
+                        ''}
                     </span>
                   </dd>
                   <div className="finance-sensitivity-summary__spark">
@@ -132,7 +144,8 @@ export function FinanceSensitivitySummary({
                         summary.maxMagnitude > 0
                           ? Math.min(
                               100,
-                              (Math.abs(delta.delta) / summary.maxMagnitude) * 100,
+                              (Math.abs(delta.delta) / summary.maxMagnitude) *
+                                100,
                             )
                           : 0
                       const polarity =
@@ -145,7 +158,9 @@ export function FinanceSensitivitySummary({
                         <li
                           key={`${summary.parameter}-${delta.scenario}`}
                           className={`finance-sensitivity-summary__delta-pill finance-sensitivity-summary__delta-pill--${polarity}${
-                            delta.isBase ? ' finance-sensitivity-summary__delta-pill--base' : ''
+                            delta.isBase
+                              ? ' finance-sensitivity-summary__delta-pill--base'
+                              : ''
                           }`}
                         >
                           <div className="finance-sensitivity-summary__delta-pill-text">
@@ -154,7 +169,9 @@ export function FinanceSensitivitySummary({
                             </span>
                             <span className="finance-sensitivity-summary__delta-value">
                               {delta.isBase
-                                ? t('finance.sensitivity.summary.labels.baseShort')
+                                ? t(
+                                    'finance.sensitivity.summary.labels.baseShort',
+                                  )
                                 : formatCurrencyDelta(
                                     delta.delta,
                                     currency,

@@ -113,7 +113,9 @@ export function VoiceNoteList({
     try {
       const success = await deleteVoiceNote(propertyId, voiceNoteId)
       if (success) {
-        setVoiceNotes((prev) => prev.filter((n) => n.voiceNoteId !== voiceNoteId))
+        setVoiceNotes((prev) =>
+          prev.filter((n) => n.voiceNoteId !== voiceNoteId),
+        )
         onVoiceNoteDeleted?.(voiceNoteId)
       } else {
         setError('Failed to delete voice note')
@@ -140,7 +142,7 @@ export function VoiceNoteList({
       <div
         style={{
           background: '#f0f9ff',
-          borderRadius: '12px',
+          borderRadius: '4px',
           padding: '1.25rem',
           marginTop: '1.5rem',
         }}
@@ -176,7 +178,7 @@ export function VoiceNoteList({
     <div
       style={{
         background: '#f0f9ff',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.25rem',
         marginTop: '1.5rem',
       }}
@@ -204,7 +206,7 @@ export function VoiceNoteList({
             padding: '0.75rem',
             background: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: '#dc2626',
             fontSize: '0.875rem',
             marginBottom: '1rem',
@@ -221,7 +223,7 @@ export function VoiceNoteList({
             style={{
               background: 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '8px',
+              borderRadius: '4px',
               overflow: 'hidden',
             }}
           >
@@ -292,7 +294,11 @@ export function VoiceNoteList({
                   fontSize: '0.75rem',
                   cursor: 'pointer',
                 }}
-                title={expandedNoteId === note.voiceNoteId ? 'Hide details' : 'Show details'}
+                title={
+                  expandedNoteId === note.voiceNoteId
+                    ? 'Hide details'
+                    : 'Show details'
+                }
               >
                 {expandedNoteId === note.voiceNoteId ? '▲' : '▼'}
               </button>
@@ -307,8 +313,10 @@ export function VoiceNoteList({
                   borderRadius: '4px',
                   border: 'none',
                   background: 'transparent',
-                  color: deletingId === note.voiceNoteId ? '#d1d5db' : '#ef4444',
-                  cursor: deletingId === note.voiceNoteId ? 'not-allowed' : 'pointer',
+                  color:
+                    deletingId === note.voiceNoteId ? '#d1d5db' : '#ef4444',
+                  cursor:
+                    deletingId === note.voiceNoteId ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
                 }}
                 title="Delete voice note"
@@ -344,14 +352,16 @@ export function VoiceNoteList({
                   <span style={{ fontWeight: 500 }}>Format:</span>
                   <span>{note.mimeType}</span>
 
-                  {note.location && (note.location.latitude || note.location.longitude) && (
-                    <>
-                      <span style={{ fontWeight: 500 }}>Location:</span>
-                      <span>
-                        {note.location.latitude?.toFixed(6)}, {note.location.longitude?.toFixed(6)}
-                      </span>
-                    </>
-                  )}
+                  {note.location &&
+                    (note.location.latitude || note.location.longitude) && (
+                      <>
+                        <span style={{ fontWeight: 500 }}>Location:</span>
+                        <span>
+                          {note.location.latitude?.toFixed(6)},{' '}
+                          {note.location.longitude?.toFixed(6)}
+                        </span>
+                      </>
+                    )}
 
                   {note.tags.length > 0 && (
                     <>
@@ -363,7 +373,9 @@ export function VoiceNoteList({
                   {note.transcript && (
                     <>
                       <span style={{ fontWeight: 500 }}>Transcript:</span>
-                      <span style={{ fontStyle: 'italic' }}>{note.transcript}</span>
+                      <span style={{ fontStyle: 'italic' }}>
+                        {note.transcript}
+                      </span>
                     </>
                   )}
                 </div>

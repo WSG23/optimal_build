@@ -10,6 +10,7 @@ export type NavItemKey =
   | 'phaseManagement'
   | 'teamCoordination'
   | 'regulatory'
+  | 'regulatoryNavigation' // Added
   | 'construction'
   | 'revenueOptimization'
   | 'documentation'
@@ -19,6 +20,7 @@ export interface NavItem {
   label: string
   path: string
   description?: string
+  icon?: string
   comingSoon?: boolean
   workspace?: 'agent' | 'developer'
 }
@@ -50,7 +52,8 @@ export const AGENT_NAV_ITEMS: NavItem[] = [
     key: 'advisory',
     label: 'Advisory Console',
     path: '/app/advisory',
-    description: 'Asset mix strategy, pricing guidance, and absorption insights.',
+    description:
+      'Asset mix strategy, pricing guidance, and absorption insights.',
     workspace: 'agent',
   },
   {
@@ -95,10 +98,17 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
   {
     key: 'teamCoordination',
     label: 'Team Coordination',
-    path: '/app/team-coordination',
+    path: '/developers/team-coordination', // Path updated
     description: 'Consultant network and approval workflows.',
     workspace: 'developer',
-    comingSoon: true,
+  },
+  {
+    key: 'regulatoryNavigation', // New item added
+    label: 'Regulatory Navigation',
+    icon: 'Gavel',
+    path: '/developers/regulatory',
+    description: 'Authority submissions (URA, BCA) and compliance.',
+    workspace: 'developer',
   },
   {
     key: 'regulatory',
@@ -136,7 +146,4 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
 
 // Combined navigation (temporary - will add workspace switcher later)
 // Shows both Agent and Developer tools for now
-export const NAV_ITEMS: NavItem[] = [
-  ...AGENT_NAV_ITEMS,
-  ...DEVELOPER_NAV_ITEMS,
-]
+export const NAV_ITEMS: NavItem[] = [...AGENT_NAV_ITEMS, ...DEVELOPER_NAV_ITEMS]

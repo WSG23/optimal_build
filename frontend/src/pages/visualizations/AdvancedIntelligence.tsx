@@ -1,13 +1,22 @@
 import { useCallback, useMemo } from 'react'
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  useTheme,
+  alpha,
+} from '@mui/material'
 
 import { AppLayout } from '../../App'
 import {
-  type CrossCorrelationIntelligenceState,
-  type GraphIntelligenceState,
   type InvestigationAnalyticsServices,
-  type PredictiveIntelligenceState,
   useInvestigationAnalytics,
 } from '../../hooks/useInvestigationAnalytics'
+import { KPITickerCard } from './components/KPITickerCard'
+import { RelationshipGraph } from './components/RelationshipGraph'
+import { ConfidenceGauge } from './components/ConfidenceGauge'
+import { CorrelationHeatmap } from './components/CorrelationHeatmap'
 
 export interface AdvancedIntelligencePageProps {
   workspaceId?: string
@@ -16,190 +25,13 @@ export interface AdvancedIntelligencePageProps {
 
 const DEFAULT_WORKSPACE_ID = 'default-investigation'
 
-function formatPercent(value: number | null | undefined, fractionDigits = 0) {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return '–'
-  }
-  return `${value.toFixed(fractionDigits)}%`
-}
-
-function renderGraphSection(state: GraphIntelligenceState) {
-  if (state.status === 'loading') {
-    return <p>Loading relationship intelligence…</p>
-  }
-
-  if (state.status === 'error') {
-    return (
-      <p role="alert" className="advanced-intelligence__error">
-        Unable to load relationship intelligence: {state.error}
-      </p>
-    )
-  }
-
-  if (state.status === 'empty') {
-    return (
-      <p className="advanced-intelligence__empty">
-        No relationship intelligence is available for this workspace yet.
-      </p>
-    )
-  }
-
-  const nodeCount = state.graph.nodes.length
-  const edgeCount = state.graph.edges.length
-  const topNodes = [...state.graph.nodes]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 4)
-
-  return (
-    <div className="advanced-intelligence__panel">
-      <p>{state.summary}</p>
-      <p>
-        Graph density:{' '}
-        <strong>
-          {nodeCount} nodes / {edgeCount} edges
-        </strong>
-      </p>
-      <ul className="advanced-intelligence__list">
-        {topNodes.map((node) => (
-          <li key={node.id}>
-            <strong>{node.label}</strong> — {node.category} ({Math.round(node.score * 100) / 100})
-          </li>
-        ))}
-      </ul>
-      <p className="advanced-intelligence__meta">Generated at {state.generatedAt}</p>
-    </div>
-  )
-}
-
-function deriveAdoptionRate(state: PredictiveIntelligenceState): number | null {
-  if (state.status !== 'ok') {
-    return null
-  }
-  if (state.segments.length === 0) {
-    return 0
-  }
-  const sumProbability = state.segments.reduce(
-    (sum, segment) => sum + segment.probability,
-    0,
-  )
-  return (sumProbability / state.segments.length) * 100
-}
-
-function deriveAverageUplift(state: PredictiveIntelligenceState): number | null {
-  if (state.status !== 'ok') {
-    return null
-  }
-  let contributingSegments = 0
-  const cumulativeUplift = state.segments.reduce((sum, segment) => {
-    if (segment.baseline === 0) {
-      return sum
-    }
-    contributingSegments += 1
-    return sum + ((segment.projection - segment.baseline) / segment.baseline) * 100
-  }, 0)
-
-  if (contributingSegments === 0) {
-    return 0
-  }
-
-  return cumulativeUplift / contributingSegments
-}
-
-function renderPredictiveSection(state: PredictiveIntelligenceState) {
-  if (state.status === 'loading') {
-    return <p>Running predictive models…</p>
-  }
-
-  if (state.status === 'error') {
-    return (
-      <p role="alert" className="advanced-intelligence__error">
-        Unable to load predictive intelligence: {state.error}
-      </p>
-    )
-  }
-
-  if (state.status === 'empty') {
-    return (
-      <p className="advanced-intelligence__empty">
-        Predictive models have not produced any actionable signals for this workspace.
-      </p>
-    )
-  }
-
-  const adoptionRate = deriveAdoptionRate(state)
-  const averageUplift = deriveAverageUplift(state)
-  const momentumSegments = state.segments
-    .filter((segment) => segment.projection > segment.baseline)
-    .sort((a, b) => b.probability - a.probability)
-    .slice(0, 3)
-
-  return (
-    <div className="advanced-intelligence__panel">
-      <p>{state.summary}</p>
-      <p>
-        Average adoption likelihood:{' '}
-        <strong>{formatPercent(adoptionRate)}</strong>
-      </p>
-      <p>
-        Average projected uplift:{' '}
-        <strong>{formatPercent(averageUplift, 1)}</strong>
-      </p>
-      <p>
-        Forecast horizon:{' '}
-        <strong>{state.horizonMonths} months</strong>
-      </p>
-      <ul className="advanced-intelligence__list">
-        {momentumSegments.map((segment) => (
-          <li key={segment.segmentId}>
-            <strong>{segment.segmentName}</strong> —
-            {` ${(segment.probability * 100).toFixed(0)}% likelihood, projection ${segment.projection.toLocaleString()}`}
-          </li>
-        ))}
-      </ul>
-      <p className="advanced-intelligence__meta">Generated at {state.generatedAt}</p>
-    </div>
-  )
-}
-
-function renderCorrelationSection(state: CrossCorrelationIntelligenceState) {
-  if (state.status === 'loading') {
-    return <p>Analysing cross correlations…</p>
-  }
-
-  if (state.status === 'error') {
-    return (
-      <p role="alert" className="advanced-intelligence__error">
-        Unable to load cross-correlation intelligence: {state.error}
-      </p>
-    )
-  }
-
-  if (state.status === 'empty') {
-    return (
-      <p className="advanced-intelligence__empty">
-        There are no significant cross correlations detected for this workspace.
-      </p>
-    )
-  }
-
-  const rankedRelationships = [...state.relationships]
-    .sort((a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient))
-    .slice(0, 4)
-
-  return (
-    <div className="advanced-intelligence__panel">
-      <p>{state.summary}</p>
-      <ul className="advanced-intelligence__list">
-        {rankedRelationships.map((relationship) => (
-          <li key={relationship.pairId}>
-            <strong>{relationship.driver}</strong> → {relationship.outcome}{' '}
-            ({relationship.coefficient.toFixed(2)} ρ, p={relationship.pValue.toFixed(3)})
-          </li>
-        ))}
-      </ul>
-      <p className="advanced-intelligence__meta">Updated at {state.updatedAt}</p>
-    </div>
-  )
+// --- Mock Data Generators (until API provides trends) ---
+function generateSparkline(seedValue: number, length = 20): number[] {
+  let current = seedValue
+  return Array.from({ length }, () => {
+    current = current * (1 + (Math.random() - 0.5) * 0.1)
+    return current
+  })
 }
 
 export function AdvancedIntelligencePage({
@@ -208,67 +40,220 @@ export function AdvancedIntelligencePage({
 }: AdvancedIntelligencePageProps) {
   const { graph, predictive, correlation, isLoading, refetch } =
     useInvestigationAnalytics(workspaceId, services)
+  const theme = useTheme()
 
   const handleRefresh = useCallback(() => {
     return refetch()
   }, [refetch])
 
-  const derivedAdoptionRate = useMemo(() => deriveAdoptionRate(predictive), [predictive])
-  const derivedAverageUplift = useMemo(
-    () => deriveAverageUplift(predictive),
-    [predictive],
-  )
+  // --- Derived Metrics ---
+  const adoptionRate = useMemo(() => {
+    if (predictive.status !== 'ok') return 0
+    if (predictive.segments.length === 0) return 0
+    const sum = predictive.segments.reduce((acc, s) => acc + s.probability, 0)
+    return (sum / predictive.segments.length) * 100
+  }, [predictive])
+
+  const uplift = useMemo(() => {
+    if (predictive.status !== 'ok') return 0
+    let count = 0
+    const sum = predictive.segments.reduce((acc, s) => {
+      if (s.baseline === 0) return acc
+      count++
+      return acc + ((s.projection - s.baseline) / s.baseline) * 100
+    }, 0)
+    return count === 0 ? 0 : sum / count
+  }, [predictive])
+
+  // Mock trends for the Hero Cards
+  const adoptionTrend = 12.5 // Fixed mock for demo
+  const upliftTrend = 44.7
 
   return (
     <AppLayout
       title="Advanced Intelligence"
-      subtitle="Investigation analytics workspace"
+      subtitle="Command Center"
       actions={
         <button
           type="button"
           className="advanced-intelligence__refresh"
           onClick={handleRefresh}
           disabled={isLoading}
+          style={{
+            background: 'transparent',
+            border: `1px solid ${theme.palette.primary.main}`,
+            color: theme.palette.primary.main,
+            padding: '8px 16px',
+            borderRadius: '4px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.5 : 1,
+          }}
         >
-          {isLoading ? 'Refreshing…' : 'Refresh analytics'}
+          {isLoading ? 'SYNCING...' : 'SYNC WORKSPACE'}
         </button>
       }
     >
-      <div className="page">{/* Standard page container */}
-        <section className="advanced-intelligence__section" aria-labelledby="advanced-intelligence-overview">
-          <h3 id="advanced-intelligence-overview">Workspace signals</h3>
-          {isLoading && (
-            <p data-testid="analytics-loading">Loading analytics for workspace {workspaceId}…</p>
-          )}
-          {!isLoading && predictive.status === 'ok' && (
-            <div className="advanced-intelligence__summary">
-              <p>
-                Current adoption likelihood across cohorts:{' '}
-                <strong>{formatPercent(derivedAdoptionRate)}</strong>
-              </p>
-              <p>
-                Average projected uplift across active cohorts:{' '}
-                <strong>{formatPercent(derivedAverageUplift, 1)}</strong>
-              </p>
-            </div>
-          )}
-        </section>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          pb: 8,
+          backgroundImage: `radial-gradient(circle at 50% 0%, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 50%)`,
+        }}
+      >
+        <Container maxWidth="xl" sx={{ pt: 4 }}>
+          {/* 1. Hero Section: Workspace Signals */}
+          <Box mb={4}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+              }}
+            >
+              Workspace Signals
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Adoption Likelihood"
+                  value={`${adoptionRate.toFixed(1)}%`}
+                  trend={adoptionTrend}
+                  data={generateSparkline(adoptionRate)}
+                  active={true}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Projected Uplift"
+                  value={`${uplift.toFixed(1)}%`}
+                  trend={upliftTrend}
+                  data={generateSparkline(uplift)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Active Experiments"
+                  value="12"
+                  trend={8.2}
+                  data={generateSparkline(12)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Intelligence Score"
+                  value="94"
+                  trend={-2.4}
+                  data={generateSparkline(94)}
+                />
+              </Grid>
+            </Grid>
+          </Box>
 
-        <section className="advanced-intelligence__section" aria-labelledby="graph-intelligence">
-          <h3 id="graph-intelligence">Relationship intelligence</h3>
-          {renderGraphSection(graph)}
-        </section>
+          <Grid container spacing={4}>
+            {/* 2. Relationship Intelligence (Main Centerpiece) */}
+            <Grid item xs={12} lg={8}>
+              <Box sx={{ height: '100%', minHeight: 500 }}>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                  Relationship Intelligence
+                </Typography>
+                {graph.status === 'ok' ? (
+                  <RelationshipGraph
+                    nodes={graph.graph.nodes.map((n) => ({
+                      id: n.id,
+                      label: n.label,
+                      category: n.category as 'Team' | 'Workflow',
+                      weight: n.score,
+                    }))}
+                    links={graph.graph.edges.map((e) => ({
+                      source: e.source,
+                      target: e.target,
+                      strength: e.weight ?? 1,
+                    }))}
+                    height={600}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      height: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px dashed grey',
+                      borderRadius: '4px', // Square Cyber-Minimalism: sm
+                    }}
+                  >
+                    <Typography color="text.secondary">
+                      {graph.status === 'loading'
+                        ? 'Mapping organization network...'
+                        : 'No relationship data available'}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Grid>
 
-        <section className="advanced-intelligence__section" aria-labelledby="predictive-intelligence">
-          <h3 id="predictive-intelligence">Predictive intelligence</h3>
-          {renderPredictiveSection(predictive)}
-        </section>
+            {/* 3. Predictive & Correlation (Side Panel) */}
+            <Grid item xs={12} lg={4}>
+              <Box mb={4}>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                  Predictive Forecast
+                </Typography>
+                <Box
+                  sx={{
+                    p: 3,
+                    borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
+                    bgcolor: alpha(theme.palette.background.paper, 0.4),
+                    backdropFilter: 'blur(var(--ob-blur-md))',
+                    border: '1px solid',
+                    borderColor: alpha(theme.palette.divider, 0.1),
+                  }}
+                >
+                  {predictive.status === 'ok' ? (
+                    predictive.segments
+                      .slice(0, 5)
+                      .map((segment) => (
+                        <ConfidenceGauge
+                          key={segment.segmentId}
+                          label={segment.segmentName}
+                          value={Math.round(segment.probability * 100)}
+                          projection={`Projection: ${segment.projection}`}
+                        />
+                      ))
+                  ) : (
+                    <Typography color="text.secondary">
+                      Loading forecasts...
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
 
-        <section className="advanced-intelligence__section" aria-labelledby="correlation-intelligence">
-          <h3 id="correlation-intelligence">Cross-correlation intelligence</h3>
-          {renderCorrelationSection(correlation)}
-        </section>
-      </div>
+              <Box>
+                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                  Cross-Correlation
+                </Typography>
+                {correlation.status === 'ok' ? (
+                  <CorrelationHeatmap
+                    data={correlation.relationships.map((r) => ({
+                      id: r.pairId,
+                      driver: r.driver,
+                      outcome: r.outcome,
+                      coefficient: r.coefficient,
+                      pValue: r.pValue,
+                    }))}
+                  />
+                ) : (
+                  <Typography color="text.secondary">
+                    Analyzing correlations...
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
     </AppLayout>
   )
 }

@@ -19,7 +19,10 @@ type ProviderKey = (typeof PROVIDERS)[number]['key']
 
 type ProviderState = Record<ProviderKey, string>
 
-type PublishState = Record<ProviderKey, { propertyId: string; externalId: string }>
+type PublishState = Record<
+  ProviderKey,
+  { propertyId: string; externalId: string }
+>
 
 const PROVIDER_LABEL: Record<ProviderKey, string> = PROVIDERS.reduce(
   (acc, provider) => ({
@@ -52,8 +55,8 @@ export function AgentIntegrationsPage() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [codes, setCodes] = useState<ProviderState>(() => createDefaultCodes())
-  const [publishState, setPublishState] = useState<PublishState>(
-    () => createDefaultPublishState(),
+  const [publishState, setPublishState] = useState<PublishState>(() =>
+    createDefaultPublishState(),
   )
 
   useEffect(() => {
@@ -87,7 +90,10 @@ export function AgentIntegrationsPage() {
     event.preventDefault()
     setError(null)
     try {
-      const account = await connectMockAccount(provider, codes[provider] || 'mock-code')
+      const account = await connectMockAccount(
+        provider,
+        codes[provider] || 'mock-code',
+      )
       setAccounts((current) => {
         const filtered = current.filter((row) => row.id !== account.id)
         return [...filtered, account]
@@ -130,7 +136,9 @@ export function AgentIntegrationsPage() {
       )
       setMessage(`${PROVIDER_LABEL[provider]} account disconnected.`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to disconnect account')
+      setError(
+        err instanceof Error ? err.message : 'Failed to disconnect account',
+      )
     }
   }
 
@@ -163,7 +171,11 @@ export function AgentIntegrationsPage() {
                   <tr key={account.id}>
                     <td>{account.provider}</td>
                     <td>{account.status}</td>
-                    <td>{account.created_at ? new Date(account.created_at).toLocaleString() : '—'}</td>
+                    <td>
+                      {account.created_at
+                        ? new Date(account.created_at).toLocaleString()
+                        : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

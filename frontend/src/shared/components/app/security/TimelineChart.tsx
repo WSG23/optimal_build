@@ -4,7 +4,7 @@ export function TimelineChart() {
       <div className="h-32 w-full rounded-lg border border-dashed border-white/10" />
       <p>Temporal Activity Timeline placeholder</p>
     </div>
-  );
+  )
 }
 
-export default TimelineChart;
+export default TimelineChart

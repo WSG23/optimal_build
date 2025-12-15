@@ -6,6 +6,8 @@ Welcome to the **optimal_build** AI team. This codebase is maintained by a colla
 
 When working with AI agents in this repository, you should be aware of the "Persona" system defined in **[MCP.md](./MCP.md)**.
 
+For extended persona playbooks, see **[docs/ai-agents/](./docs/ai-agents/)**.
+
 ### How to direct an Agent
 
 You can explicitly ask an agent to adopt a persona to get better results:

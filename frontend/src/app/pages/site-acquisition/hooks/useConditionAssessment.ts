@@ -23,7 +23,11 @@ import {
 } from '../../../../api/siteAcquisition'
 import type { AssessmentDraftSystem, ConditionAssessmentDraft } from '../types'
 import { buildAssessmentDraft } from '../utils'
-import { formatDateTimeLocalInput, convertLocalToISO, parseAttachmentsText } from '../utils'
+import {
+  formatDateTimeLocalInput,
+  convertLocalToISO,
+  parseAttachmentsText,
+} from '../utils'
 
 // ============================================================================
 // Constants
@@ -51,7 +55,9 @@ export interface UseConditionAssessmentResult {
   isEditingAssessment: boolean
   assessmentEditorMode: 'new' | 'edit'
   assessmentDraft: ConditionAssessmentDraft
-  setAssessmentDraft: React.Dispatch<React.SetStateAction<ConditionAssessmentDraft>>
+  setAssessmentDraft: React.Dispatch<
+    React.SetStateAction<ConditionAssessmentDraft>
+  >
   isSavingAssessment: boolean
   assessmentSaveMessage: string | null
 
@@ -60,7 +66,9 @@ export interface UseConditionAssessmentResult {
   isLoadingAssessmentHistory: boolean
   assessmentHistoryError: string | null
   historyViewMode: 'timeline' | 'compare'
-  setHistoryViewMode: React.Dispatch<React.SetStateAction<'timeline' | 'compare'>>
+  setHistoryViewMode: React.Dispatch<
+    React.SetStateAction<'timeline' | 'compare'>
+  >
 
   // Scenario assessments
   scenarioAssessments: ConditionAssessment[]
@@ -78,13 +86,18 @@ export interface UseConditionAssessmentResult {
   // Actions
   openAssessmentEditor: (mode: 'new' | 'edit') => void
   closeAssessmentEditor: () => void
-  handleAssessmentFieldChange: (field: keyof ConditionAssessmentDraft, value: string) => void
+  handleAssessmentFieldChange: (
+    field: keyof ConditionAssessmentDraft,
+    value: string,
+  ) => void
   handleAssessmentSystemChange: (
     index: number,
     field: keyof AssessmentDraftSystem,
     value: string,
   ) => void
-  handleAssessmentSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>
+  handleAssessmentSubmit: (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => Promise<void>
   resetAssessmentDraft: () => void
   loadAssessmentHistory: (options?: { silent?: boolean }) => Promise<void>
   loadScenarioAssessments: (options?: { silent?: boolean }) => Promise<void>
@@ -108,31 +121,46 @@ export function useConditionAssessment({
 
   // Editor state
   const [isEditingAssessment, setIsEditingAssessment] = useState(false)
-  const [assessmentEditorMode, setAssessmentEditorMode] = useState<'new' | 'edit'>('edit')
-  const [assessmentDraft, setAssessmentDraft] = useState<ConditionAssessmentDraft>(() =>
-    buildAssessmentDraft(null, 'all'),
-  )
+  const [assessmentEditorMode, setAssessmentEditorMode] = useState<
+    'new' | 'edit'
+  >('edit')
+  const [assessmentDraft, setAssessmentDraft] =
+    useState<ConditionAssessmentDraft>(() => buildAssessmentDraft(null, 'all'))
   const [isSavingAssessment, setIsSavingAssessment] = useState(false)
-  const [assessmentSaveMessage, setAssessmentSaveMessage] = useState<string | null>(null)
+  const [assessmentSaveMessage, setAssessmentSaveMessage] = useState<
+    string | null
+  >(null)
 
   // History state
-  const [assessmentHistory, setAssessmentHistory] = useState<ConditionAssessment[]>([])
-  const [isLoadingAssessmentHistory, setIsLoadingAssessmentHistory] = useState(false)
-  const [assessmentHistoryError, setAssessmentHistoryError] = useState<string | null>(null)
-  const [historyViewMode, setHistoryViewMode] = useState<'timeline' | 'compare'>('timeline')
+  const [assessmentHistory, setAssessmentHistory] = useState<
+    ConditionAssessment[]
+  >([])
+  const [isLoadingAssessmentHistory, setIsLoadingAssessmentHistory] =
+    useState(false)
+  const [assessmentHistoryError, setAssessmentHistoryError] = useState<
+    string | null
+  >(null)
+  const [historyViewMode, setHistoryViewMode] = useState<
+    'timeline' | 'compare'
+  >('timeline')
   const historyRequestIdRef = useRef(0)
 
   // Scenario assessments state
-  const [scenarioAssessments, setScenarioAssessments] = useState<ConditionAssessment[]>([])
-  const [isLoadingScenarioAssessments, setIsLoadingScenarioAssessments] = useState(false)
-  const [scenarioAssessmentsError, setScenarioAssessmentsError] = useState<string | null>(
-    null,
-  )
+  const [scenarioAssessments, setScenarioAssessments] = useState<
+    ConditionAssessment[]
+  >([])
+  const [isLoadingScenarioAssessments, setIsLoadingScenarioAssessments] =
+    useState(false)
+  const [scenarioAssessmentsError, setScenarioAssessmentsError] = useState<
+    string | null
+  >(null)
   const scenarioAssessmentsRequestIdRef = useRef(0)
 
   // Report export state
   const [isExportingReport, setIsExportingReport] = useState(false)
-  const [reportExportMessage, setReportExportMessage] = useState<string | null>(null)
+  const [reportExportMessage, setReportExportMessage] = useState<string | null>(
+    null,
+  )
 
   // ============================================================================
   // Derived Values
@@ -299,7 +327,10 @@ export function useConditionAssessment({
     }
 
     if (!isEditingAssessment) {
-      const baseDraft = buildAssessmentDraft(conditionAssessment, activeScenario)
+      const baseDraft = buildAssessmentDraft(
+        conditionAssessment,
+        activeScenario,
+      )
       const nowLocal = formatDateTimeLocalInput(new Date().toISOString())
       setAssessmentDraft({
         ...baseDraft,
@@ -342,9 +373,14 @@ export function useConditionAssessment({
           sourceAssessment = conditionAssessment
         }
         const scenarioForDraft: DevelopmentScenario | 'all' =
-          (sourceAssessment?.scenario as DevelopmentScenario | null | undefined) ??
-          (activeScenario as DevelopmentScenario | 'all')
-        const baseDraft = buildAssessmentDraft(sourceAssessment, scenarioForDraft)
+          (sourceAssessment?.scenario as
+            | DevelopmentScenario
+            | null
+            | undefined) ?? (activeScenario as DevelopmentScenario | 'all')
+        const baseDraft = buildAssessmentDraft(
+          sourceAssessment,
+          scenarioForDraft,
+        )
         setAssessmentDraft({
           ...baseDraft,
           recordedAtLocal: nowLocal,
@@ -354,7 +390,12 @@ export function useConditionAssessment({
       setAssessmentSaveMessage(null)
       setIsEditingAssessment(true)
     },
-    [capturedProperty, activeScenario, latestAssessmentEntry, conditionAssessment],
+    [
+      capturedProperty,
+      activeScenario,
+      latestAssessmentEntry,
+      conditionAssessment,
+    ],
   )
 
   const closeAssessmentEditor = useCallback(() => {
@@ -452,7 +493,9 @@ export function useConditionAssessment({
 
         const inspectorNameValue = assessmentDraft.inspectorName.trim()
         const recordedAtIso = convertLocalToISO(assessmentDraft.recordedAtLocal)
-        const attachmentsPayload = parseAttachmentsText(assessmentDraft.attachmentsText)
+        const attachmentsPayload = parseAttachmentsText(
+          assessmentDraft.attachmentsText,
+        )
 
         const payload: ConditionAssessmentUpsertRequest = {
           scenario: assessmentDraft.scenario,
@@ -496,11 +539,15 @@ export function useConditionAssessment({
           setAssessmentSaveMessage('Inspection saved successfully.')
           closeAssessmentEditor()
         } else {
-          setAssessmentSaveMessage('Unable to save inspection data. Please try again.')
+          setAssessmentSaveMessage(
+            'Unable to save inspection data. Please try again.',
+          )
         }
       } catch (error) {
         console.error('Failed to save inspection assessment:', error)
-        setAssessmentSaveMessage('Unable to save inspection data. Please try again.')
+        setAssessmentSaveMessage(
+          'Unable to save inspection data. Please try again.',
+        )
       } finally {
         setIsSavingAssessment(false)
       }
@@ -527,7 +574,10 @@ export function useConditionAssessment({
       try {
         setIsExportingReport(true)
         setReportExportMessage(null)
-        const { blob, filename } = await exportConditionReport(propertyId, format)
+        const { blob, filename } = await exportConditionReport(
+          propertyId,
+          format,
+        )
         const downloadUrl = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = downloadUrl

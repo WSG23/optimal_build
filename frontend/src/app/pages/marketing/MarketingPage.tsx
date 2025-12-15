@@ -1,6 +1,14 @@
 import { useState } from 'react'
+import { Box, Grid, Stack, Typography } from '@mui/material'
+import { Check } from '@mui/icons-material'
+
 import type { ProfessionalPackType } from '../../../api/agents'
 import { useMarketingPacks } from './hooks/useMarketingPacks'
+import { AlertBlock } from '../../../components/canonical/AlertBlock'
+import { Button } from '../../../components/canonical/Button'
+import { Card } from '../../../components/canonical/Card'
+import { EmptyState } from '../../../components/canonical/EmptyState'
+import { Input } from '../../../components/canonical/Input'
 
 const PACK_TYPES: Array<{
   type: ProfessionalPackType
@@ -79,437 +87,209 @@ export function MarketingPage() {
   }
 
   return (
-    <div style={{
-      padding: '3rem 2rem',
-      maxWidth: '980px',
-      margin: '0 auto',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
-      color: '#1d1d1f',
-    }}>
-      {/* Header */}
-      <header style={{ marginBottom: '3rem' }}>
-        <h1 style={{
-          fontSize: '3rem',
-          fontWeight: 700,
-          letterSpacing: '-0.015em',
-          margin: '0 0 0.5rem',
-          lineHeight: 1.1,
-        }}>
-          Marketing Packs
-        </h1>
-        <p style={{
-          fontSize: '1.25rem',
-          color: '#6e6e73',
-          fontWeight: 400,
-          margin: 0,
-          letterSpacing: '-0.01em',
-        }}>
+    <Box sx={{ p: 4, maxWidth: 'var(--ob-max-width-content)', mx: 'auto' }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h1">Marketing Packs</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
           Professional materials for investors and stakeholders
-        </p>
-      </header>
+        </Typography>
+      </Box>
 
-      {/* Pack Type Selector */}
-      <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{
-          fontSize: '1.75rem',
-          fontWeight: 600,
-          letterSpacing: '-0.01em',
-          margin: '0 0 1.5rem',
-        }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h2" sx={{ mb: 2 }}>
           Choose a template
-        </h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '1rem',
-        }}>
+        </Typography>
+        <Grid container spacing={2}>
           {PACK_TYPES.map((pack) => {
             const isSelected = selectedPackType === pack.type
+            const isDisabled = isGenerating
             return (
-              <button
-                key={pack.type}
-                type="button"
-                onClick={() => setSelectedPackType(pack.type)}
-                disabled={isGenerating}
-                style={{
-                  background: isSelected ? '#f5f5f7' : 'white',
-                  border: `1px solid ${isSelected ? '#1d1d1f' : '#d2d2d7'}`,
-                  borderRadius: '18px',
-                  padding: '1.5rem',
-                  cursor: isGenerating ? 'not-allowed' : 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  opacity: isGenerating ? 0.4 : 1,
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isGenerating) {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.08)'
+              <Grid item xs={12} md={6} key={pack.type}>
+                <Card
+                  variant={isSelected ? 'default' : 'ghost'}
+                  hover={isDisabled ? 'none' : 'lift'}
+                  onClick={
+                    isDisabled
+                      ? undefined
+                      : () => setSelectedPackType(pack.type)
                   }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-              >
-                {isSelected && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    background: '#1d1d1f',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px',
-                    color: 'white',
-                  }}>
-                    ✓
-                  </div>
-                )}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  marginBottom: '0.5rem',
-                }}>
-                  <span style={{ fontSize: '1.5rem' }}>{pack.icon}</span>
-                  <div style={{
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: '#1d1d1f',
-                    letterSpacing: '-0.01em',
-                  }}>
-                    {pack.label}
-                  </div>
-                </div>
-                <div style={{
-                  fontSize: '0.9375rem',
-                  color: '#6e6e73',
-                  lineHeight: 1.5,
-                  letterSpacing: '-0.005em',
-                  marginBottom: '0.75rem',
-                }}>
-                  {pack.description}
-                </div>
-                <div style={{
-                  display: 'flex',
-                  gap: '1rem',
-                  fontSize: '0.8125rem',
-                  color: '#86868b',
-                  letterSpacing: '-0.005em',
-                }}>
-                  <span>⏱️ {pack.estimatedTime}</span>
-                  <span>📦 {pack.estimatedSize}</span>
-                </div>
-              </button>
+                  sx={{
+                    opacity: isDisabled ? 0.6 : 1,
+                    position: 'relative',
+                    p: 'var(--ob-space-150)',
+                    border: isSelected
+                      ? '1px solid var(--ob-color-border-strong)'
+                      : undefined,
+                  }}
+                >
+                  {isSelected && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 'var(--ob-space-100)',
+                        right: 'var(--ob-space-100)',
+                        width: 'var(--ob-size-icon-sm)',
+                        height: 'var(--ob-size-icon-sm)',
+                        borderRadius: 'var(--ob-radius-pill)',
+                        background: 'var(--ob-color-text-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--ob-color-text-inverse)',
+                        '& svg': { fontSize: 16 },
+                      }}
+                    >
+                      <Check />
+                    </Box>
+                  )}
+
+                  <Stack spacing={1}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Box
+                        component="span"
+                        sx={{ fontSize: 'var(--ob-font-size-2xl)' }}
+                      >
+                        {pack.icon}
+                      </Box>
+                      <Typography variant="h3">{pack.label}</Typography>
+                    </Stack>
+
+                    <Typography variant="body2" color="text.secondary">
+                      {pack.description}
+                    </Typography>
+
+                    <Stack direction="row" spacing={2}>
+                      <Typography variant="caption" color="text.secondary">
+                        ⏱️ {pack.estimatedTime}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        📦 {pack.estimatedSize}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </Card>
+              </Grid>
             )
           })}
-        </div>
-      </section>
+        </Grid>
+      </Box>
 
-      {/* Generation Form */}
-      <section style={{
-        background: 'white',
-        border: '1px solid #d2d2d7',
-        borderRadius: '18px',
-        padding: '2rem',
-        marginBottom: '3rem',
-      }}>
-        <h3 style={{
-          fontSize: '1.25rem',
-          fontWeight: 600,
-          margin: '0 0 1.5rem',
-          letterSpacing: '-0.01em',
-        }}>
+      <Card variant="default" sx={{ p: 'var(--ob-space-200)', mb: 4 }}>
+        <Typography variant="h3" sx={{ mb: 2 }}>
           Generate {selectedPackInfo?.label}
-        </h3>
+        </Typography>
 
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label
-            htmlFor="property-id"
-            style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#1d1d1f',
-              marginBottom: '0.5rem',
-              letterSpacing: '-0.005em',
-            }}
-          >
-            Property ID
-          </label>
-          <input
-            id="property-id"
-            type="text"
+        <Stack spacing={2}>
+          <Input
+            label="Property ID"
             placeholder="Enter property identifier"
             value={propertyId}
             onChange={(event) => setPropertyId(event.target.value)}
             disabled={isGenerating}
-            style={{
-              width: '100%',
-              padding: '0.875rem 1rem',
-              fontSize: '1rem',
-              border: '1px solid #d2d2d7',
-              borderRadius: '12px',
-              outline: 'none',
-              transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-              background: isGenerating ? '#f5f5f7' : 'white',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
-              letterSpacing: '-0.005em',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#1d1d1f'
-              e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.04)'
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#d2d2d7'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+            inputProps={{ inputMode: 'text' }}
           />
-        </div>
 
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={isGenerating || propertyId.trim() === ''}
-          style={{
-            width: '100%',
-            padding: '0.875rem 1.5rem',
-            fontSize: '1.0625rem',
-            fontWeight: 500,
-            color: 'white',
-            background: isGenerating || !propertyId.trim() ? '#d2d2d7' : '#1d1d1f',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: isGenerating || !propertyId.trim() ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s ease',
-            letterSpacing: '-0.005em',
-          }}
-          onMouseEnter={(e) => {
-            if (!isGenerating && propertyId.trim()) {
-              e.currentTarget.style.background = '#424245'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isGenerating && propertyId.trim()) {
-              e.currentTarget.style.background = '#1d1d1f'
-            }
-          }}
-        >
-          {isGenerating && generatingType
-            ? `Generating... (${selectedPackInfo?.estimatedTime})`
-            : isGenerating
-              ? 'Generating...'
-              : 'Generate'}
-        </button>
+          <Button
+            variant="primary"
+            onClick={handleGenerate}
+            disabled={isGenerating || propertyId.trim() === ''}
+            fullWidth
+          >
+            {isGenerating && generatingType
+              ? `Generating... (${selectedPackInfo?.estimatedTime})`
+              : isGenerating
+                ? 'Generating...'
+                : 'Generate'}
+          </Button>
 
-        {error && (
-          <div style={{
-            marginTop: '1rem',
-            padding: '0.875rem 1rem',
-            background: '#fff5f5',
-            border: '1px solid #ffe0e0',
-            borderRadius: '12px',
-            color: '#d70015',
-            fontSize: '0.9375rem',
-            letterSpacing: '-0.005em',
-          }}>
-            {error}
-          </div>
-        )}
-        {notice && (
-          <div style={{
-            marginTop: '1rem',
-            padding: '0.875rem 1rem',
-            background: '#fff9e6',
-            border: '1px solid #ffe8b3',
-            borderRadius: '12px',
-            color: '#996600',
-            fontSize: '0.9375rem',
-            letterSpacing: '-0.005em',
-          }}>
-            {notice}
-          </div>
-        )}
-      </section>
+          {error && (
+            <AlertBlock type="error" onDismiss={clearError}>
+              {error}
+            </AlertBlock>
+          )}
+          {notice && <AlertBlock type="warning">{notice}</AlertBlock>}
+        </Stack>
+      </Card>
 
-      {/* Generated Packs List */}
-      <section>
-        <div style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          marginBottom: '1.5rem',
-        }}>
-          <h2 style={{
-            fontSize: '1.75rem',
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            margin: 0,
-          }}>
-            Library
-          </h2>
-          <span style={{
-            fontSize: '0.9375rem',
-            color: '#6e6e73',
-            fontWeight: 400,
-          }}>
-            {packs.length} {packs.length === 1 ? 'pack' : 'packs'}
-          </span>
-        </div>
+      <Stack
+        direction="row"
+        alignItems="baseline"
+        justifyContent="space-between"
+        sx={{ mb: 2 }}
+      >
+        <Typography variant="h2">Library</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {packs.length} {packs.length === 1 ? 'pack' : 'packs'}
+        </Typography>
+      </Stack>
 
-        {packs.length === 0 ? (
-          <div style={{
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            background: 'white',
-            border: '1px solid #d2d2d7',
-            borderRadius: '18px',
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              margin: '0 auto 1.5rem',
-              background: '#f5f5f7',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-            }}>
-              📄
-            </div>
-            <p style={{
-              fontSize: '1.125rem',
-              fontWeight: 500,
-              color: '#1d1d1f',
-              marginBottom: '0.5rem',
-              letterSpacing: '-0.01em',
-            }}>
-              No packs yet
-            </p>
-            <p style={{
-              fontSize: '0.9375rem',
-              color: '#6e6e73',
-              margin: 0,
-              letterSpacing: '-0.005em',
-            }}>
-              Generated materials will appear here
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {packs.map((pack, index) => (
-              <div
-                key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}-${index}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1.5rem',
-                  padding: '1.25rem 1.5rem',
-                  background: 'white',
-                  border: '1px solid #d2d2d7',
-                  borderRadius: '16px',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f5f5f7'
-                  e.currentTarget.style.borderColor = '#b8b8bd'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white'
-                  e.currentTarget.style.borderColor = '#d2d2d7'
-                }}
-              >
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: '1.0625rem',
-                    fontWeight: 500,
-                    color: '#1d1d1f',
-                    marginBottom: '0.25rem',
-                    letterSpacing: '-0.005em',
-                  }}>
-                    {formatPackLabel(pack.packType)}
-                  </div>
-                  <div style={{
-                    fontSize: '0.875rem',
-                    color: '#6e6e73',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    letterSpacing: '-0.005em',
-                  }}>
-                    <span style={{
-                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
-                      fontSize: '0.8125rem',
-                    }}>
-                      {pack.propertyId.length > 20
-                        ? `${pack.propertyId.substring(0, 20)}...`
-                        : pack.propertyId}
-                    </span>
-                    <span style={{ color: '#d2d2d7' }}>·</span>
-                    <span>{formatSize(pack.sizeBytes)}</span>
-                  </div>
-                </div>
+      {packs.length === 0 ? (
+        <EmptyState
+          icon={<span>📄</span>}
+          title="No packs yet"
+          description="Generated materials will appear here."
+          size="md"
+        />
+      ) : (
+        <Stack spacing={1}>
+          {packs.map((pack, index) => (
+            <Card
+              key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}-${index}`}
+              variant="default"
+              hover="subtle"
+              sx={{
+                p: 'var(--ob-space-150)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 'var(--ob-space-150)',
+              }}
+            >
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                >
+                  {formatPackLabel(pack.packType)}
+                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography
+                    variant="caption"
+                    sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
+                  >
+                    {pack.propertyId.length > 20
+                      ? `${pack.propertyId.substring(0, 20)}...`
+                      : pack.propertyId}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    ·
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatSize(pack.sizeBytes)}
+                  </Typography>
+                </Stack>
+              </Box>
 
-                {/* Action */}
-                <div style={{ flexShrink: 0 }}>
-                  {pack.downloadUrl ? (
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(pack.downloadUrl!)}
-                      style={{
-                        padding: '0.5rem 1.25rem',
-                        fontSize: '0.9375rem',
-                        fontWeight: 500,
-                        color: '#1d1d1f',
-                        background: 'transparent',
-                        border: '1px solid #d2d2d7',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: '-0.005em',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#1d1d1f'
-                        e.currentTarget.style.color = 'white'
-                        e.currentTarget.style.borderColor = '#1d1d1f'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent'
-                        e.currentTarget.style.color = '#1d1d1f'
-                        e.currentTarget.style.borderColor = '#d2d2d7'
-                      }}
-                    >
-                      Download
-                    </button>
-                  ) : (
-                    <span
-                      style={{
-                        padding: '0.5rem 1.25rem',
-                        fontSize: '0.9375rem',
-                        color: '#86868b',
-                        letterSpacing: '-0.005em',
-                      }}
-                    >
-                      {pack.isFallback ? 'Preview' : 'Processing'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+              <Box sx={{ flexShrink: 0 }}>
+                {pack.downloadUrl ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleDownload(pack.downloadUrl!)}
+                  >
+                    Download
+                  </Button>
+                ) : (
+                  <Typography variant="caption" color="text.secondary">
+                    {pack.isFallback ? 'Preview' : 'Processing'}
+                  </Typography>
+                )}
+              </Box>
+            </Card>
+          ))}
+        </Stack>
+      )}
+    </Box>
   )
 }
 

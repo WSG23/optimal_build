@@ -52,7 +52,7 @@ export function OverallAssessmentCard({
       style={{
         flex: '1 1 260px',
         background: '#f5f5f7',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',

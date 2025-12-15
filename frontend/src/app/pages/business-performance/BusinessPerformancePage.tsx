@@ -1,19 +1,14 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
   Grid,
-  Paper,
   Stack,
   Typography,
 } from '@mui/material'
+import { AccessTime, AttachMoney, Assessment } from '@mui/icons-material'
 import {
   DEAL_STAGE_ORDER,
   fetchDealCommissions,
@@ -35,6 +30,9 @@ import { PipelineBoard } from './components/PipelineBoard'
 import { DealInsightsPanel } from './components/DealInsightsPanel'
 import { AnalyticsPanel } from './components/AnalyticsPanel'
 import { RoiPanel } from './components/RoiPanel'
+import { MetricTile } from '../../../components/canonical/MetricTile'
+import { Card } from '../../../components/canonical/Card'
+import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import type {
   AnalyticsMetric,
   BenchmarkEntry,
@@ -86,53 +84,59 @@ export function BusinessPerformancePage() {
     [],
   )
 
-  const buildColumns = useCallback((entries: DealSummary[]): PipelineColumn[] => {
-    const stageMap = new Map<string, PipelineColumn>()
+  const buildColumns = useCallback(
+    (entries: DealSummary[]): PipelineColumn[] => {
+      const stageMap = new Map<string, PipelineColumn>()
 
-    DEAL_STAGE_ORDER.forEach((stage) => {
-      stageMap.set(stage, {
-        key: stage,
-        label: stage.replace('_', ' '),
-        deals: [],
-        totalCount: 0,
-        totalValue: 0,
-        weightedValue: 0,
+      DEAL_STAGE_ORDER.forEach((stage) => {
+        stageMap.set(stage, {
+          key: stage,
+          label: stage.replace('_', ' '),
+          deals: [],
+          totalCount: 0,
+          totalValue: 0,
+          weightedValue: 0,
+        })
       })
-    })
 
-    entries.forEach((deal) => {
-      const stage = stageMap.get(deal.pipelineStage) ?? stageMap.get('lead_captured')
-      if (!stage) {
-        return
-      }
-      const confidence = deal.confidence ?? 0
-      const estimated = deal.estimatedValueAmount ?? 0
+      entries.forEach((deal) => {
+        const stage =
+          stageMap.get(deal.pipelineStage) ?? stageMap.get('lead_captured')
+        if (!stage) {
+          return
+        }
+        const confidence = deal.confidence ?? 0
+        const estimated = deal.estimatedValueAmount ?? 0
 
-      const card = {
-        id: deal.id,
-        title: deal.title,
-        assetType: deal.assetType,
-        dealType: deal.dealType,
-        estimatedValue: deal.estimatedValueAmount,
-        currency: deal.estimatedValueCurrency,
-        confidence: deal.confidence,
-        latestActivity: formatRelativeDate(deal.updatedAt),
-        hasDispute: false,
-      }
+        const card = {
+          id: deal.id,
+          title: deal.title,
+          assetType: deal.assetType,
+          dealType: deal.dealType,
+          estimatedValue: deal.estimatedValueAmount,
+          currency: deal.estimatedValueCurrency,
+          confidence: deal.confidence,
+          latestActivity: formatRelativeDate(deal.updatedAt),
+          hasDispute: false,
+        }
 
-      stage.deals = [...stage.deals, card]
-      stage.totalCount += 1
-      stage.totalValue =
-        stage.totalValue !== null ? (stage.totalValue ?? 0) + estimated : estimated
-      const weightedContribution = estimated * confidence
-      stage.weightedValue =
-        stage.weightedValue !== null
-          ? (stage.weightedValue ?? 0) + weightedContribution
-          : weightedContribution
-    })
+        stage.deals = [...stage.deals, card]
+        stage.totalCount += 1
+        stage.totalValue =
+          stage.totalValue !== null
+            ? (stage.totalValue ?? 0) + estimated
+            : estimated
+        const weightedContribution = estimated * confidence
+        stage.weightedValue =
+          stage.weightedValue !== null
+            ? (stage.weightedValue ?? 0) + weightedContribution
+            : weightedContribution
+      })
 
-    return Array.from(stageMap.values())
-  }, [])
+      return Array.from(stageMap.values())
+    },
+    [],
+  )
 
   const loadPipeline = useCallback(
     async (controller?: AbortController) => {
@@ -153,7 +157,10 @@ export function BusinessPerformancePage() {
           setSelectedDealId(null)
         }
       } catch (error) {
-        if (signal?.aborted || (error as { name?: string }).name === 'AbortError') {
+        if (
+          signal?.aborted ||
+          (error as { name?: string }).name === 'AbortError'
+        ) {
           return
         }
         console.error('Failed to load pipeline', error)
@@ -342,7 +349,9 @@ export function BusinessPerformancePage() {
         console.error('Failed to change stage', error)
         setDeals(previousDeals)
         setColumns(buildColumns(previousDeals))
-        setStageUpdateError('Unable to update deal stage. Reverted to previous state.')
+        setStageUpdateError(
+          'Unable to update deal stage. Reverted to previous state.',
+        )
       } finally {
         setMovingDealId(null)
       }
@@ -350,52 +359,60 @@ export function BusinessPerformancePage() {
     [buildColumns, deals, selectedDealId],
   )
 
+  const totalPipelineValue = useMemo(() => totalPipeline(columns), [columns])
+  // Reserved for weighted pipeline display (future feature)
+  // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
+
   return (
-    <Box className="bp-page">
-      <Grid container spacing={2} className="bp-page__summary">
+    <Box className="bp-page" sx={{ p: 'var(--ob-space-300)' }}>
+      <AnimatedPageHeader
+        title="Business Performance"
+        subtitle="Real-time insights into your pipeline, agent activity, and ROI."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Business Performance' },
+        ]}
+      />
+
+      <Grid
+        container
+        spacing="var(--ob-space-300)"
+        className="bp-page__summary"
+        sx={{ mb: 'var(--ob-space-400)' }}
+      >
         <Grid item xs={12} md={4}>
-          <Paper className="bp-summary-card" elevation={1}>
-            <Typography variant="overline" className="bp-summary-card__label">
-              Last snapshot
-            </Typography>
-            <Typography variant="h5" className="bp-summary-card__value">
-              {lastSnapshot}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Snapshot jobs run nightly. Manual refresh will be available shortly.
-            </Typography>
-          </Paper>
+          <MetricTile
+            label="Last Snapshot"
+            value={analyticsLoading ? '-' : lastSnapshot}
+            icon={<AccessTime fontSize="small" />}
+            variant="default"
+          />
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper className="bp-summary-card" elevation={1}>
-            <Typography variant="overline" className="bp-summary-card__label">
-              Open pipeline value
-            </Typography>
-            <Typography variant="h5" className="bp-summary-card__value">
-              {formatCurrency(totalPipeline(columns))}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Weighted pipeline{' '}
-              <strong>{formatCurrency(totalWeightedPipeline(columns))}</strong>
-            </Typography>
-          </Paper>
+          <MetricTile
+            label="Open Pipeline Value"
+            value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
+            unit="SGD"
+            icon={<AttachMoney fontSize="small" />}
+            variant="primary"
+            trend={!pipelineLoading ? '+12%' : undefined}
+          />
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper className="bp-summary-card" elevation={1}>
-            <Typography variant="overline" className="bp-summary-card__label">
-              ROI projects tracked
-            </Typography>
-            <Typography variant="h5" className="bp-summary-card__value">
-              {roiSummary.projectCount}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" className="bp-summary-card__meta">
-              Automation ROI derives from overlay workflows and audit metrics.
-            </Typography>
-          </Paper>
+          <MetricTile
+            label="ROI Projects Tracked"
+            value={analyticsLoading ? '-' : roiSummary.projectCount}
+            icon={<Assessment fontSize="small" />}
+            variant="default"
+          />
         </Grid>
       </Grid>
 
-      <Stack spacing={2} className="bp-page__alerts">
+      <Stack
+        spacing="var(--ob-space-200)"
+        className="bp-page__alerts"
+        sx={{ mb: 'var(--ob-space-300)' }}
+      >
         {pipelineError && (
           <Alert
             severity="error"
@@ -413,14 +430,24 @@ export function BusinessPerformancePage() {
             {pipelineError}
           </Alert>
         )}
-        {stageUpdateError && <Alert severity="warning">{stageUpdateError}</Alert>}
+        {stageUpdateError && (
+          <Alert severity="warning">{stageUpdateError}</Alert>
+        )}
       </Stack>
 
-      <Grid container spacing={3} className="bp-page__layout">
+      <Grid container spacing="var(--ob-space-300)" className="bp-page__layout">
         <Grid item xs={12} lg={8} className="bp-page__pipeline">
-          <Paper elevation={0} className="bp-pipeline-wrapper">
+          <Card
+            variant="glass"
+            className="bp-pipeline-wrapper"
+            sx={{ height: '100%', p: 'var(--ob-space-200)' }}
+          >
             {pipelineLoading ? (
-              <Stack alignItems="center" py={4} spacing={1}>
+              <Stack
+                alignItems="center"
+                py="var(--ob-space-400)"
+                spacing="var(--ob-space-100)"
+              >
                 <CircularProgress size={28} />
                 <Typography variant="body2" color="text.secondary">
                   Loading pipeline…
@@ -435,19 +462,27 @@ export function BusinessPerformancePage() {
                 movingDealId={movingDealId}
               />
             )}
-          </Paper>
+          </Card>
         </Grid>
         <Grid item xs={12} lg={4} className="bp-page__sidebar">
-          <Stack spacing={2}>
+          <Stack spacing="var(--ob-space-300)">
             <DealInsightsPanel
               deal={selectedDeal}
               timeline={timeline}
               commissions={commissions}
             />
-            <AnalyticsPanel metrics={metrics} trend={trend} benchmarks={benchmarks} />
+            <AnalyticsPanel
+              metrics={metrics}
+              trend={trend}
+              benchmarks={benchmarks}
+            />
             <RoiPanel summary={roiSummary} />
             {(dealLoading || analyticsLoading) && (
-              <Stack alignItems="center" spacing={1} py={2}>
+              <Stack
+                alignItems="center"
+                spacing="var(--ob-space-100)"
+                py="var(--ob-space-200)"
+              >
                 <CircularProgress size={24} />
                 <Typography variant="body2" color="text.secondary">
                   Loading insights…
@@ -501,7 +536,11 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
     maximumFractionDigits: 0,
   })
   return [
-    { key: 'dealsOpen', label: 'Open deals', value: snapshot.dealsOpen.toString() },
+    {
+      key: 'dealsOpen',
+      label: 'Open deals',
+      value: snapshot.dealsOpen.toString(),
+    },
     {
       key: 'dealsWon',
       label: 'Deals won (30d)',
@@ -510,17 +549,19 @@ function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
     {
       key: 'grossPipeline',
       label: 'Gross pipeline',
-      value: snapshot.grossPipelineValue !== null
-        ? currencyFormatter.format(snapshot.grossPipelineValue)
-        : NOT_AVAILABLE_TEXT,
+      value:
+        snapshot.grossPipelineValue !== null
+          ? currencyFormatter.format(snapshot.grossPipelineValue)
+          : NOT_AVAILABLE_TEXT,
       helperText: 'All open opportunities, unweighted.',
     },
     {
       key: 'weightedPipeline',
       label: 'Weighted pipeline',
-      value: snapshot.weightedPipelineValue !== null
-        ? currencyFormatter.format(snapshot.weightedPipelineValue)
-        : NOT_AVAILABLE_TEXT,
+      value:
+        snapshot.weightedPipelineValue !== null
+          ? currencyFormatter.format(snapshot.weightedPipelineValue)
+          : NOT_AVAILABLE_TEXT,
       helperText: 'Weighted by confidence percentage.',
     },
     {
@@ -588,13 +629,14 @@ function buildBenchmarks(
     entries.push({
       key: 'conversion',
       label: 'Conversion rate',
-      actual: conversion[0].valueNumeric !== null
-        ? `${(conversion[0].valueNumeric * 100).toFixed(1)}%`
-        : conversion[0].valueText ?? NOT_AVAILABLE_TEXT,
+      actual:
+        conversion[0].valueNumeric !== null
+          ? `${(conversion[0].valueNumeric * 100).toFixed(1)}%`
+          : (conversion[0].valueText ?? NOT_AVAILABLE_TEXT),
       benchmark:
         conversion[1]?.valueNumeric !== null
           ? `${(conversion[1].valueNumeric * 100).toFixed(1)}%`
-          : conversion[1]?.valueText ?? null,
+          : (conversion[1]?.valueText ?? null),
       cohort: convertLabel(conversion[0].cohort),
       deltaText: null,
     })
@@ -606,11 +648,11 @@ function buildBenchmarks(
       actual:
         cycle[0].valueNumeric !== null
           ? `${cycle[0].valueNumeric.toFixed(0)} days`
-          : cycle[0].valueText ?? NOT_AVAILABLE_TEXT,
+          : (cycle[0].valueText ?? NOT_AVAILABLE_TEXT),
       benchmark:
         cycle[1]?.valueNumeric !== null
           ? `${cycle[1].valueNumeric.toFixed(0)} days`
-          : cycle[1]?.valueText ?? null,
+          : (cycle[1]?.valueText ?? null),
       cohort: convertLabel(cycle[0].cohort),
       deltaText: null,
     })
@@ -627,11 +669,11 @@ function buildBenchmarks(
       actual:
         pipeline[0].valueNumeric !== null
           ? currencyFormatter.format(pipeline[0].valueNumeric)
-          : pipeline[0].valueText ?? NOT_AVAILABLE_TEXT,
+          : (pipeline[0].valueText ?? NOT_AVAILABLE_TEXT),
       benchmark:
         pipeline[1]?.valueNumeric !== null
           ? currencyFormatter.format(pipeline[1].valueNumeric)
-          : pipeline[1]?.valueText ?? null,
+          : (pipeline[1]?.valueText ?? null),
       cohort: convertLabel(pipeline[0].cohort),
       deltaText: null,
     })
@@ -677,13 +719,14 @@ function totalPipeline(columns: PipelineColumn[]): number | null {
   return total === 0 ? null : total
 }
 
-function totalWeightedPipeline(columns: PipelineColumn[]): number | null {
-  const total = columns.reduce(
-    (sum, column) => sum + (column.weightedValue ?? 0),
-    0,
-  )
-  return total === 0 ? null : total
-}
+// Reserved for weighted pipeline display (future feature)
+// function totalWeightedPipeline(columns: PipelineColumn[]): number | null {
+//   const total = columns.reduce(
+//     (sum, column) => sum + (column.weightedValue ?? 0),
+//     0,
+//   )
+//   return total === 0 ? null : total
+// }
 
 function formatCurrency(value: number | null) {
   if (value === null) {

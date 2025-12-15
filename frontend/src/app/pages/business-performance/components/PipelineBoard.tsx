@@ -48,9 +48,8 @@ export function PipelineBoard({
     id: string
     stage: PipelineStageKey
   } | null>(null)
-  const [activeDropStage, setActiveDropStage] = useState<PipelineStageKey | null>(
-    null,
-  )
+  const [activeDropStage, setActiveDropStage] =
+    useState<PipelineStageKey | null>(null)
 
   const stageOrder = useMemo(
     () => columns.map((column) => column.key),
@@ -85,7 +84,8 @@ export function PipelineBoard({
       .join(' ')
 
     const stageIndex = stageOrder.indexOf(stageKey)
-    const progress = stageIndex >= 0 ? ((stageIndex + 1) / stageOrder.length) * 100 : 0
+    const progress =
+      stageIndex >= 0 ? ((stageIndex + 1) / stageOrder.length) * 100 : 0
     const isMoving = movingDealId === deal.id
 
     return (
@@ -102,14 +102,27 @@ export function PipelineBoard({
           aria-grabbed={draggedDeal?.id === deal.id}
           focusRipple
         >
-          <Paper elevation={isSelected ? 6 : 1} className="bp-pipeline__deal-surface">
+          <Paper
+            elevation={isSelected ? 6 : 1}
+            className="bp-pipeline__deal-surface"
+          >
             <Stack direction="row" spacing={1} alignItems="center">
-              <DragIndicatorIcon fontSize="small" className="bp-pipeline__deal-handle" />
-              <Typography variant="subtitle1" className="bp-pipeline__deal-title">
+              <DragIndicatorIcon
+                fontSize="small"
+                className="bp-pipeline__deal-handle"
+              />
+              <Typography
+                variant="subtitle1"
+                className="bp-pipeline__deal-title"
+              >
                 {deal.title}
               </Typography>
             </Stack>
-            <Typography variant="body2" color="text.secondary" className="bp-pipeline__deal-meta">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              className="bp-pipeline__deal-meta"
+            >
               {deal.assetType} • {deal.dealType}
             </Typography>
             {deal.estimatedValue !== null && (
@@ -120,7 +133,11 @@ export function PipelineBoard({
                 })}
               </Typography>
             )}
-            <Stack direction="row" spacing={1} className="bp-pipeline__deal-tags">
+            <Stack
+              direction="row"
+              spacing={1}
+              className="bp-pipeline__deal-tags"
+            >
               {deal.confidence !== null && (
                 <Chip
                   size="small"
@@ -135,9 +152,14 @@ export function PipelineBoard({
                   label={`Updated ${deal.latestActivity}`}
                 />
               )}
-              {deal.hasDispute && <Chip size="small" color="error" label="Dispute" />}
+              {deal.hasDispute && (
+                <Chip size="small" color="error" label="Dispute" />
+              )}
             </Stack>
-            <Tooltip title={`Progress ${(progress || 0).toFixed(0)}%`} placement="top">
+            <Tooltip
+              title={`Progress ${(progress || 0).toFixed(0)}%`}
+              placement="top"
+            >
               <LinearProgress
                 variant={progress ? 'determinate' : 'indeterminate'}
                 value={progress || undefined}
@@ -145,7 +167,10 @@ export function PipelineBoard({
               />
             </Tooltip>
             {isMoving && (
-              <Typography variant="caption" className="bp-pipeline__deal-moving">
+              <Typography
+                variant="caption"
+                className="bp-pipeline__deal-moving"
+              >
                 Updating stage…
               </Typography>
             )}

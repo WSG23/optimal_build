@@ -26,7 +26,10 @@ export interface ScenarioFocusSectionProps {
     headline: string
     detail?: string | null
   }
-  scenarioChecklistProgress: Record<string, { total: number; completed: number }>
+  scenarioChecklistProgress: Record<
+    string,
+    { total: number; completed: number }
+  >
   displaySummary: ProgressStats
 
   // History state
@@ -38,7 +41,9 @@ export interface ScenarioFocusSectionProps {
   onCompareScenarios: () => void
   onOpenQuickAnalysisHistory: () => void
   onOpenInspectionHistory: () => void
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
 }
 
 // ============================================================================
@@ -65,7 +70,7 @@ export function ScenarioFocusSection({
       style={{
         background: '#f5f5f7',
         border: '1px solid #e5e5e7',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '1.5rem',
         marginBottom: '2rem',
       }}
@@ -80,7 +85,9 @@ export function ScenarioFocusSection({
           marginBottom: '1rem',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}
+        >
           <span
             style={{
               fontSize: '0.8125rem',
@@ -93,8 +100,8 @@ export function ScenarioFocusSection({
             Scenario focus
           </span>
           <span style={{ fontSize: '0.95rem', color: '#3a3a3c' }}>
-            Switch context to see checklist, feasibility, and inspections for the
-            selected development path.
+            Switch context to see checklist, feasibility, and inspections for
+            the selected development path.
           </span>
         </div>
         <div
@@ -161,12 +168,14 @@ export function ScenarioFocusSection({
               style={{
                 borderRadius: '9999px',
                 border: '1px solid #d2d2d7',
-                background: quickAnalysisHistoryCount === 0 ? '#f5f5f7' : 'white',
+                background:
+                  quickAnalysisHistoryCount === 0 ? '#f5f5f7' : 'white',
                 color: quickAnalysisHistoryCount === 0 ? '#a1a1aa' : '#1d1d1f',
                 padding: '0.45rem 0.95rem',
                 fontSize: '0.78rem',
                 fontWeight: 600,
-                cursor: quickAnalysisHistoryCount === 0 ? 'not-allowed' : 'pointer',
+                cursor:
+                  quickAnalysisHistoryCount === 0 ? 'not-allowed' : 'pointer',
               }}
             >
               Quick analysis history ({quickAnalysisHistoryCount})
@@ -203,8 +212,8 @@ export function ScenarioFocusSection({
           const label =
             scenarioKey === 'all'
               ? 'All scenarios'
-              : option?.label ?? formatScenarioLabel(scenarioKey)
-          const icon = scenarioKey === 'all' ? '🌐' : option?.icon ?? '🏗️'
+              : (option?.label ?? formatScenarioLabel(scenarioKey))
+          const icon = scenarioKey === 'all' ? '🌐' : (option?.icon ?? '🏗️')
           const isActive = activeScenario === scenarioKey
           const progressStats =
             scenarioKey === 'all'
@@ -215,7 +224,9 @@ export function ScenarioFocusSection({
             : null
           const progressPercent =
             progressStats && progressStats.total > 0
-              ? Math.round((progressStats.completed / progressStats.total) * 100)
+              ? Math.round(
+                  (progressStats.completed / progressStats.total) * 100,
+                )
               : null
 
           return (

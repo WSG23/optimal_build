@@ -7,7 +7,9 @@ interface FinanceCapitalStackProps {
   scenarios: FinanceScenarioSummary[]
 }
 
-type CapitalStackSlice = NonNullable<FinanceScenarioSummary['capitalStack']>['slices'][number]
+type CapitalStackSlice = NonNullable<
+  FinanceScenarioSummary['capitalStack']
+>['slices'][number]
 
 function toNumber(value: string | null | undefined): number | null {
   if (typeof value !== 'string') {
@@ -66,9 +68,7 @@ function formatPercent(
   }).format(numeric)
 }
 
-export function FinanceCapitalStack({
-  scenarios,
-}: FinanceCapitalStackProps) {
+export function FinanceCapitalStack({ scenarios }: FinanceCapitalStackProps) {
   const { t, i18n } = useTranslation()
   const fallback = t('common.fallback.dash')
   const locale = i18n.language
@@ -83,7 +83,9 @@ export function FinanceCapitalStack({
           capitalStack: scenario.capitalStack,
         }))
         .filter(
-          (entry): entry is typeof entry & {
+          (
+            entry,
+          ): entry is typeof entry & {
             capitalStack: NonNullable<FinanceScenarioSummary['capitalStack']>
           } => Boolean(entry.capitalStack),
         ),
@@ -110,7 +112,12 @@ export function FinanceCapitalStack({
               <header className="finance-capital__card-header">
                 <h3 className="finance-capital__card-title">{card.name}</h3>
                 <p className="finance-capital__total">
-                  {formatCurrency(capitalStack.total, card.currency, locale, fallback)}
+                  {formatCurrency(
+                    capitalStack.total,
+                    card.currency,
+                    locale,
+                    fallback,
+                  )}
                 </p>
               </header>
               <div className="finance-capital__bar" aria-hidden="true">
@@ -132,15 +139,21 @@ export function FinanceCapitalStack({
               <dl className="finance-capital__ratios">
                 <div>
                   <dt>{t('finance.capitalStack.labels.equity')}</dt>
-                  <dd>{formatPercent(capitalStack.equityRatio, locale, fallback)}</dd>
+                  <dd>
+                    {formatPercent(capitalStack.equityRatio, locale, fallback)}
+                  </dd>
                 </div>
                 <div>
                   <dt>{t('finance.capitalStack.labels.debt')}</dt>
-                  <dd>{formatPercent(capitalStack.debtRatio, locale, fallback)}</dd>
+                  <dd>
+                    {formatPercent(capitalStack.debtRatio, locale, fallback)}
+                  </dd>
                 </div>
                 <div>
                   <dt>{t('finance.capitalStack.labels.loanToCost')}</dt>
-                  <dd>{formatPercent(capitalStack.loanToCost, locale, fallback)}</dd>
+                  <dd>
+                    {formatPercent(capitalStack.loanToCost, locale, fallback)}
+                  </dd>
                 </div>
                 <div>
                   <dt>{t('finance.capitalStack.labels.weightedDebtRate')}</dt>
@@ -157,19 +170,29 @@ export function FinanceCapitalStack({
                 {capitalStack.slices.map((slice) => (
                   <li key={`${card.id}-${slice.name}`}>
                     <div className="finance-capital__slice-header">
-                      <span className="finance-capital__slice-name">{slice.name}</span>
+                      <span className="finance-capital__slice-name">
+                        {slice.name}
+                      </span>
                       <span className="finance-capital__slice-share">
                         {formatPercent(slice.share, locale, fallback)}
                       </span>
                     </div>
                     <div className="finance-capital__slice-meta">
                       <span>
-                        {formatCurrency(slice.amount, card.currency, locale, fallback)}
+                        {formatCurrency(
+                          slice.amount,
+                          card.currency,
+                          locale,
+                          fallback,
+                        )}
                       </span>
                       <span className="finance-capital__slice-category">
-                        {t(`finance.capitalStack.categories.${slice.category}`, {
-                          defaultValue: slice.category,
-                        })}
+                        {t(
+                          `finance.capitalStack.categories.${slice.category}`,
+                          {
+                            defaultValue: slice.category,
+                          },
+                        )}
                       </span>
                     </div>
                   </li>
@@ -246,13 +269,27 @@ function CapitalStackTrancheTable({
       <table className="finance-capital__tranche-table">
         <thead>
           <tr>
-            <th scope="col">{t('finance.capitalStack.tranches.headers.name')}</th>
-            <th scope="col">{t('finance.capitalStack.tranches.headers.type')}</th>
-            <th scope="col">{t('finance.capitalStack.tranches.headers.amount')}</th>
-            <th scope="col">{t('finance.capitalStack.tranches.headers.share')}</th>
-            <th scope="col">{t('finance.capitalStack.tranches.headers.rate')}</th>
-            <th scope="col">{t('finance.capitalStack.tranches.headers.periods')}</th>
-            <th scope="col">{t('finance.capitalStack.tranches.headers.capitalised')}</th>
+            <th scope="col">
+              {t('finance.capitalStack.tranches.headers.name')}
+            </th>
+            <th scope="col">
+              {t('finance.capitalStack.tranches.headers.type')}
+            </th>
+            <th scope="col">
+              {t('finance.capitalStack.tranches.headers.amount')}
+            </th>
+            <th scope="col">
+              {t('finance.capitalStack.tranches.headers.share')}
+            </th>
+            <th scope="col">
+              {t('finance.capitalStack.tranches.headers.rate')}
+            </th>
+            <th scope="col">
+              {t('finance.capitalStack.tranches.headers.periods')}
+            </th>
+            <th scope="col">
+              {t('finance.capitalStack.tranches.headers.capitalised')}
+            </th>
             <th
               scope="col"
               title={t('finance.capitalStack.tranches.tooltips.upfront')}
@@ -284,16 +321,15 @@ function CapitalStackTrancheTable({
             const metadata = slice.metadata as SliceMetadata | undefined
             const facilityMeta = extractFacilityMetadata(metadata)
             const upfront =
-              facilityMeta.upfront_fee_pct ??
-              facilityMeta.upfrontFeePct ??
-              null
+              facilityMeta.upfront_fee_pct ?? facilityMeta.upfrontFeePct ?? null
             const exitFee =
               facilityMeta.exit_fee_pct ?? facilityMeta.exitFeePct ?? null
             const reserveMonths = normaliseNumber(
               facilityMeta.reserve_months ?? facilityMeta.reserveMonths,
             )
             const amortMonths = normaliseNumber(
-              facilityMeta.amortisation_months ?? facilityMeta.amortisationMonths,
+              facilityMeta.amortisation_months ??
+                facilityMeta.amortisationMonths,
             )
             const periodsPerYear = normaliseNumber(
               facilityMeta.periods_per_year ?? facilityMeta.periodsPerYear,

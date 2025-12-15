@@ -21,19 +21,19 @@ const tabs: Array<{ key: TabKey; label: string }> = [
 ]
 
 const statusStyles: Record<string, string> = {
-  planned: 'bg-slate-700 text-slate-200',
-  in_progress: 'bg-blue-600 text-white',
-  submitted: 'bg-amber-400 text-slate-900',
-  approved: 'bg-emerald-500 text-slate-900',
-  accepted: 'bg-emerald-500 text-slate-900',
-  rejected: 'bg-red-500 text-white',
-  blocked: 'bg-orange-500 text-white',
-  complete: 'bg-emerald-600 text-white',
-  active: 'bg-blue-500 text-white',
-  completed: 'bg-emerald-500 text-slate-900',
-  in_review: 'bg-purple-500 text-white',
-  executed: 'bg-emerald-600 text-white',
-  expired: 'bg-slate-500 text-white',
+  planned: 'bg-surface-alt text-text-secondary',
+  in_progress: 'bg-brand-primary text-text-inverse',
+  submitted: 'bg-warning-soft text-warning-strong',
+  approved: 'bg-success-soft text-success-strong',
+  accepted: 'bg-success-soft text-success-strong',
+  rejected: 'bg-error-soft text-error-strong',
+  blocked: 'bg-error-soft text-error-strong',
+  complete: 'bg-success-strong text-text-inverse',
+  active: 'bg-brand-primary-emphasis text-text-inverse',
+  completed: 'bg-success-soft text-success-strong',
+  in_review: 'bg-info-soft text-info-strong',
+  executed: 'bg-success-strong text-text-inverse',
+  expired: 'bg-surface-alt text-text-muted',
 }
 
 const studyTypes = [
@@ -148,10 +148,10 @@ function formatDate(value: string | null): string {
 }
 
 function StatusPill({ status }: { status: string }) {
-  const classes = statusStyles[status] ?? 'bg-slate-700 text-slate-100'
+  const classes = statusStyles[status] ?? 'bg-surface-alt text-text-secondary'
   const label = status.replace(/_/g, ' ')
   return (
-    <span className={`px-2 py-1 text-xs rounded-full font-semibold ${classes}`}>
+    <span className={`px-2 py-1 text-xs rounded-xs font-semibold ${classes}`}>
       {label}
     </span>
   )
@@ -300,14 +300,14 @@ const EntitlementsPage = () => {
       {roadmap.map((item) => (
         <div
           key={item.id}
-          className="rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+          className="rounded border border-border-subtle bg-surface/60 p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-text-muted">
                 {`Sequence #${item.sequence_order.toString()}`}
               </p>
-              <p className="text-lg font-semibold text-slate-100">
+              <p className="text-lg font-semibold text-text-primary">
                 {`Approval #${
                   item.approval_type_id === null
                     ? 'Unassigned'
@@ -322,7 +322,7 @@ const EntitlementsPage = () => {
                 onChange={(event) => {
                   void handleRoadmapStatusChange(item, event.target.value)
                 }}
-                className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-100 focus:outline-none focus:ring focus:ring-emerald-500"
+                className="rounded-md border border-border-neutral bg-surface/80 px-2 py-1 text-xs text-text-primary focus:outline-none focus:ring focus:ring-success-strong"
               >
                 {statusOptions.roadmap.map((status) => (
                   <option key={status} value={status}>
@@ -332,39 +332,39 @@ const EntitlementsPage = () => {
               </select>
             </div>
           </div>
-          <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-slate-300">
+          <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-text-secondary">
             <div>
-              <dt className="text-xs uppercase text-slate-500">
+              <dt className="text-xs uppercase text-text-subtle">
                 Target Submission
               </dt>
               <dd>{formatDate(item.target_submission_date)}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-500">
+              <dt className="text-xs uppercase text-text-subtle">
                 Target Decision
               </dt>
               <dd>{formatDate(item.target_decision_date)}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-500">
+              <dt className="text-xs uppercase text-text-subtle">
                 Actual Submission
               </dt>
               <dd>{formatDate(item.actual_submission_date)}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-500">
+              <dt className="text-xs uppercase text-text-subtle">
                 Actual Decision
               </dt>
               <dd>{formatDate(item.actual_decision_date)}</dd>
             </div>
           </dl>
           {item.notes && (
-            <p className="mt-3 text-sm text-slate-300">{item.notes}</p>
+            <p className="mt-3 text-sm text-text-secondary">{item.notes}</p>
           )}
         </div>
       ))}
       {roadmap.length === 0 && !loading && (
-        <p className="text-sm text-slate-400">No roadmap items seeded yet.</p>
+        <p className="text-sm text-text-muted">No roadmap items seeded yet.</p>
       )}
     </div>
   )
@@ -375,11 +375,11 @@ const EntitlementsPage = () => {
         onSubmit={(event) => {
           void handleStudySubmit(event)
         }}
-        className="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
+        className="rounded border border-border-subtle bg-surface/70 p-4"
       >
-        <h3 className="text-sm font-semibold text-slate-200">Add study</h3>
+        <h3 className="text-sm font-semibold text-text-primary">Add study</h3>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Name
             <input
               required
@@ -387,10 +387,10 @@ const EntitlementsPage = () => {
               onChange={(event) => {
                 setStudyForm((prev) => ({ ...prev, name: event.target.value }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring focus:ring-emerald-500"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring focus:ring-success-strong"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Study Type
             <select
               value={studyForm.study_type}
@@ -400,7 +400,7 @@ const EntitlementsPage = () => {
                   study_type: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             >
               {studyTypes.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -409,7 +409,7 @@ const EntitlementsPage = () => {
               ))}
             </select>
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Status
             <select
               value={studyForm.status}
@@ -419,7 +419,7 @@ const EntitlementsPage = () => {
                   status: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             >
               {studyStatuses.map((status) => (
                 <option key={status} value={status}>
@@ -428,7 +428,7 @@ const EntitlementsPage = () => {
               ))}
             </select>
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Consultant
             <input
               value={studyForm.consultant}
@@ -438,10 +438,10 @@ const EntitlementsPage = () => {
                   consultant: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Due Date
             <input
               type="date"
@@ -452,10 +452,10 @@ const EntitlementsPage = () => {
                   due_date: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Report URL
             <input
               type="url"
@@ -467,13 +467,13 @@ const EntitlementsPage = () => {
                 }))
               }}
               placeholder="https://"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
         </div>
         <button
           type="submit"
-          className="mt-4 rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+          className="mt-4 rounded-md bg-success-strong px-4 py-2 text-sm font-semibold text-text-inverse hover:bg-success-strong/80"
         >
           Add study
         </button>
@@ -483,34 +483,38 @@ const EntitlementsPage = () => {
         {studies.map((study) => (
           <div
             key={study.id}
-            className="rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+            className="rounded border border-border-subtle bg-surface/60 p-4"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-lg font-semibold text-slate-100">
+                <h4 className="text-lg font-semibold text-text-primary">
                   {study.name}
                 </h4>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-text-muted">
                   {study.study_type.replace(/_/g, ' ')}
                 </p>
               </div>
               <StatusPill status={study.status} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-slate-300">
+            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-text-secondary">
               <div>
-                <dt className="text-xs uppercase text-slate-500">Consultant</dt>
+                <dt className="text-xs uppercase text-text-subtle">
+                  Consultant
+                </dt>
                 <dd>{study.consultant || '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Due Date</dt>
+                <dt className="text-xs uppercase text-text-subtle">Due Date</dt>
                 <dd>{formatDate(study.due_date)}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Completed</dt>
+                <dt className="text-xs uppercase text-text-subtle">
+                  Completed
+                </dt>
                 <dd>{formatDate(study.completed_at)}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">
+                <dt className="text-xs uppercase text-text-subtle">
                   Attachments
                 </dt>
                 <dd>
@@ -524,12 +528,14 @@ const EntitlementsPage = () => {
               </div>
             </dl>
             {study.summary && (
-              <p className="mt-3 text-sm text-slate-300">{study.summary}</p>
+              <p className="mt-3 text-sm text-text-secondary">
+                {study.summary}
+              </p>
             )}
           </div>
         ))}
         {studies.length === 0 && !loading && (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-muted">
             No studies recorded for this project.
           </p>
         )}
@@ -543,13 +549,13 @@ const EntitlementsPage = () => {
         onSubmit={(event) => {
           void handleEngagementSubmit(event)
         }}
-        className="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
+        className="rounded border border-border-subtle bg-surface/70 p-4"
       >
-        <h3 className="text-sm font-semibold text-slate-200">
+        <h3 className="text-sm font-semibold text-text-primary">
           Add stakeholder
         </h3>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Name
             <input
               required
@@ -560,10 +566,10 @@ const EntitlementsPage = () => {
                   name: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Organisation
             <input
               value={engagementForm.organisation}
@@ -573,10 +579,10 @@ const EntitlementsPage = () => {
                   organisation: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Engagement Type
             <select
               value={engagementForm.engagement_type}
@@ -586,7 +592,7 @@ const EntitlementsPage = () => {
                   engagement_type: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             >
               {engagementTypes.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -595,7 +601,7 @@ const EntitlementsPage = () => {
               ))}
             </select>
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Status
             <select
               value={engagementForm.status}
@@ -605,7 +611,7 @@ const EntitlementsPage = () => {
                   status: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             >
               {engagementStatuses.map((status) => (
                 <option key={status} value={status}>
@@ -614,7 +620,7 @@ const EntitlementsPage = () => {
               ))}
             </select>
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Contact Email
             <input
               type="email"
@@ -625,10 +631,10 @@ const EntitlementsPage = () => {
                   contact_email: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Contact Phone
             <input
               value={engagementForm.contact_phone}
@@ -638,11 +644,11 @@ const EntitlementsPage = () => {
                   contact_phone: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
         </div>
-        <label className="mt-3 block text-xs uppercase text-slate-400">
+        <label className="mt-3 block text-xs uppercase text-text-muted">
           Notes
           <textarea
             value={engagementForm.notes}
@@ -652,13 +658,13 @@ const EntitlementsPage = () => {
                 notes: event.target.value,
               }))
             }}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+            className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             rows={3}
           />
         </label>
         <button
           type="submit"
-          className="mt-4 rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+          className="mt-4 rounded-md bg-success-strong px-4 py-2 text-sm font-semibold text-text-inverse hover:bg-success-strong/80"
         >
           Add stakeholder
         </button>
@@ -668,36 +674,36 @@ const EntitlementsPage = () => {
         {stakeholders.map((record) => (
           <div
             key={record.id}
-            className="rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+            className="rounded border border-border-subtle bg-surface/60 p-4"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-lg font-semibold text-slate-100">
+                <h4 className="text-lg font-semibold text-text-primary">
                   {record.name}
                 </h4>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-text-muted">
                   {record.organisation || 'Unspecified organisation'}
                 </p>
               </div>
               <StatusPill status={record.status} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-slate-300">
+            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-text-secondary">
               <div>
-                <dt className="text-xs uppercase text-slate-500">Type</dt>
+                <dt className="text-xs uppercase text-text-subtle">Type</dt>
                 <dd>{record.engagement_type.replace(/_/g, ' ')}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Contact</dt>
+                <dt className="text-xs uppercase text-text-subtle">Contact</dt>
                 <dd>{record.contact_email || record.contact_phone || '—'}</dd>
               </div>
             </dl>
             {record.notes && (
-              <p className="mt-3 text-sm text-slate-300">{record.notes}</p>
+              <p className="mt-3 text-sm text-text-secondary">{record.notes}</p>
             )}
           </div>
         ))}
         {stakeholders.length === 0 && !loading && (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-muted">
             No stakeholder engagements recorded.
           </p>
         )}
@@ -711,13 +717,13 @@ const EntitlementsPage = () => {
         onSubmit={(event) => {
           void handleLegalSubmit(event)
         }}
-        className="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
+        className="rounded border border-border-subtle bg-surface/70 p-4"
       >
-        <h3 className="text-sm font-semibold text-slate-200">
+        <h3 className="text-sm font-semibold text-text-primary">
           Add legal instrument
         </h3>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Name
             <input
               required
@@ -725,10 +731,10 @@ const EntitlementsPage = () => {
               onChange={(event) => {
                 setLegalForm((prev) => ({ ...prev, name: event.target.value }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Instrument Type
             <select
               value={legalForm.instrument_type}
@@ -738,7 +744,7 @@ const EntitlementsPage = () => {
                   instrument_type: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             >
               {legalTypes.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -747,7 +753,7 @@ const EntitlementsPage = () => {
               ))}
             </select>
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Status
             <select
               value={legalForm.status}
@@ -757,7 +763,7 @@ const EntitlementsPage = () => {
                   status: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             >
               {legalStatuses.map((status) => (
                 <option key={status} value={status}>
@@ -766,7 +772,7 @@ const EntitlementsPage = () => {
               ))}
             </select>
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Reference Code
             <input
               value={legalForm.reference_code}
@@ -776,10 +782,10 @@ const EntitlementsPage = () => {
                   reference_code: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Effective Date
             <input
               type="date"
@@ -790,10 +796,10 @@ const EntitlementsPage = () => {
                   effective_date: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Expiry Date
             <input
               type="date"
@@ -804,10 +810,10 @@ const EntitlementsPage = () => {
                   expiry_date: event.target.value,
                 }))
               }}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
-          <label className="text-xs uppercase text-slate-400">
+          <label className="text-xs uppercase text-text-muted">
             Attachment URL
             <input
               type="url"
@@ -819,13 +825,13 @@ const EntitlementsPage = () => {
                 }))
               }}
               placeholder="https://"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-md border border-border-neutral bg-surface/80 px-3 py-2 text-sm text-text-primary"
             />
           </label>
         </div>
         <button
           type="submit"
-          className="mt-4 rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+          className="mt-4 rounded-md bg-success-strong px-4 py-2 text-sm font-semibold text-text-inverse hover:bg-success-strong/80"
         >
           Add legal instrument
         </button>
@@ -835,34 +841,38 @@ const EntitlementsPage = () => {
         {legal.map((record) => (
           <div
             key={record.id}
-            className="rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+            className="rounded border border-border-subtle bg-surface/60 p-4"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-lg font-semibold text-slate-100">
+                <h4 className="text-lg font-semibold text-text-primary">
                   {record.name}
                 </h4>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-text-muted">
                   {record.instrument_type.replace(/_/g, ' ')}
                 </p>
               </div>
               <StatusPill status={record.status} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-slate-300">
+            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm text-text-secondary">
               <div>
-                <dt className="text-xs uppercase text-slate-500">Reference</dt>
+                <dt className="text-xs uppercase text-text-subtle">
+                  Reference
+                </dt>
                 <dd>{record.reference_code || '—'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Effective</dt>
+                <dt className="text-xs uppercase text-text-subtle">
+                  Effective
+                </dt>
                 <dd>{formatDate(record.effective_date)}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">Expiry</dt>
+                <dt className="text-xs uppercase text-text-subtle">Expiry</dt>
                 <dd>{formatDate(record.expiry_date)}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase text-slate-500">
+                <dt className="text-xs uppercase text-text-subtle">
                   Attachments
                 </dt>
                 <dd>
@@ -878,7 +888,7 @@ const EntitlementsPage = () => {
           </div>
         ))}
         {legal.length === 0 && !loading && (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-muted">
             No legal instruments recorded.
           </p>
         )}
@@ -889,11 +899,11 @@ const EntitlementsPage = () => {
   return (
     <div>
       <Header title="Entitlements" />
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-text-muted">
         Monitor entitlement authorities, studies, stakeholder engagement, and
         legal commitments for project #{PROJECT_ID.toString()}.
       </p>
-      <div className="mt-6 flex space-x-3 border-b border-slate-800">
+      <div className="mt-6 flex space-x-3 border-b border-border-subtle">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -902,8 +912,8 @@ const EntitlementsPage = () => {
             }}
             className={`px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? 'border-b-2 border-emerald-400 text-emerald-300'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'border-b-2 border-brand-primary text-brand-primary'
+                : 'text-text-muted hover:text-text-primary'
             }`}
             type="button"
           >
@@ -912,9 +922,9 @@ const EntitlementsPage = () => {
         ))}
       </div>
 
-      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-4 text-sm text-error-muted">{error}</p>}
       {loading && !error && (
-        <p className="mt-4 text-sm text-slate-400">Loading entitlements…</p>
+        <p className="mt-4 text-sm text-text-muted">Loading entitlements…</p>
       )}
 
       <div className="mt-6">

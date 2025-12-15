@@ -118,7 +118,10 @@ export function FinanceSensitivityControls({
         high: row.high || undefined,
       }))
       .filter(
-        (row) => row.low !== undefined || row.base !== undefined || row.high !== undefined,
+        (row) =>
+          row.low !== undefined ||
+          row.base !== undefined ||
+          row.high !== undefined,
       )
   }, [rows])
 
@@ -128,9 +131,7 @@ export function FinanceSensitivityControls({
       return
     }
     if (preparedBands.length === 0) {
-      setLocalError(
-        t('finance.sensitivity.controls.errors.parameterRequired'),
-      )
+      setLocalError(t('finance.sensitivity.controls.errors.parameterRequired'))
       return
     }
     setLocalError(null)

@@ -1,182 +1,198 @@
-import { useState } from 'react';
-import {
-    Box,
-    Typography,
-    Stack,
-    Button,
-    IconButton,
-    Tooltip,
-    useTheme,
-    alpha
-} from '@mui/material';
-import {
-    Home as HomeIcon,
-    UploadFile as UploadIcon,
-    Search as DetectionIcon,
-    AccountTree as PipelineIcon,
-    Engineering as FeasibilityIcon,
-    AttachMoney as FinanceIcon,
-    GpsFixed as CaptureIcon,
-    Speed as PerformanceIcon,
-    Psychology as IntelligenceIcon,
-    ViewTimeline as PhaseIcon,
-    ChevronLeft as ChevronLeftIcon,
-    ChevronRight as ChevronRightIcon,
-} from '@mui/icons-material';
-import { useTranslation } from '../../i18n';
-import { useRouterPath, Link } from '../../router';
+import { Box, Typography, Stack, Button, useTheme, alpha } from '@mui/material'
+import { useTranslation } from '../../i18n'
+import { useRouterPath, Link } from '../../router'
+
+type NavGroup = {
+  title: string
+  items: Array<{ path: string; label: string }>
+}
 
 export function YosaiSidebar() {
-    const { t } = useTranslation();
-    const path = useRouterPath();
-    const theme = useTheme();
-    const [isCollapsed, setIsCollapsed] = useState(false);
+  const { t } = useTranslation()
+  const path = useRouterPath()
+  const theme = useTheme()
 
-    const navGroups = [
-        {
-            id: 'ops',
-            title: 'OPERATIONS',
-            items: [
-                { path: '/', label: t('nav.home'), icon: <HomeIcon fontSize="small" /> },
-                { path: '/cad/upload', label: t('nav.upload'), icon: <UploadIcon fontSize="small" /> },
-                { path: '/cad/detection', label: t('nav.detection'), icon: <DetectionIcon fontSize="small" /> },
-                { path: '/cad/pipelines', label: t('nav.pipelines'), icon: <PipelineIcon fontSize="small" /> },
-                { path: '/feasibility', label: t('nav.feasibility'), icon: <FeasibilityIcon fontSize="small" /> },
-                { path: '/agents/site-capture', label: t('nav.agentCapture'), icon: <CaptureIcon fontSize="small" /> },
-                { path: '/app/phase-management', label: 'Phase Management', icon: <PhaseIcon fontSize="small" /> },
-            ]
-        },
-        {
-            id: 'biz',
-            title: 'BUSINESS',
-            items: [
-                { path: '/finance', label: t('nav.finance'), icon: <FinanceIcon fontSize="small" /> },
-                { path: '/visualizations/intelligence', label: t('nav.intelligence'), icon: <IntelligenceIcon fontSize="small" /> },
-                { path: '/agents/performance', label: t('nav.agentPerformance'), icon: <PerformanceIcon fontSize="small" /> },
-            ]
-        }
-    ];
+  const navGroups: NavGroup[] = [
+    {
+      title: 'Build',
+      items: [
+        { path: '/cad/upload', label: t('nav.upload') },
+        { path: '/cad/detection', label: t('nav.detection') },
+        { path: '/cad/pipelines', label: t('nav.pipelines') },
+      ],
+    },
+    {
+      title: 'Analyze',
+      items: [
+        { path: '/visualizations/intelligence', label: t('nav.intelligence') },
+        { path: '/feasibility', label: t('nav.feasibility') },
+        { path: '/finance', label: t('nav.finance') },
+      ],
+    },
+    {
+      title: 'Manage',
+      items: [
+        { path: '/agents/site-capture', label: t('nav.agentCapture') },
+        { path: '/app/phase-management', label: 'Phase Management' },
+      ],
+    },
+  ]
 
-    return (
-        <Box
-            component="aside"
-            sx={{
-                width: isCollapsed ? '80px' : '280px',
-                height: '100vh',
-                flexShrink: 0,
-                borderRight: 1,
-                borderColor: 'divider',
-                bgcolor: 'background.default',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: theme.transitions.create('width', {
-                    easing: theme.transitions.easing.sharp,
-                    duration: theme.transitions.duration.leavingScreen,
-                }),
-                overflowX: 'hidden',
-                zIndex: 20
-            }}
+  return (
+    <Box
+      component="aside"
+      sx={{
+        width: '280px',
+        height: '100vh',
+        flexShrink: 0,
+        borderRight: 1,
+        borderColor: 'divider',
+        bgcolor: 'background.default',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
+      }}
+    >
+      {/* Brand */}
+      <Box sx={{ p: 4, mb: 1 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'primary.main',
+            fontWeight: 'bold',
+            letterSpacing: '0.05em',
+          }}
         >
-            {/* Brand Header */}
-            <Box
-                sx={{
-                    p: isCollapsed ? 2 : 4,
-                    height: '88px',
-                    display: 'flex',
-                    flexDirection: isCollapsed ? 'column' : 'row',
-                    alignItems: isCollapsed ? 'center' : 'flex-start',
-                    justifyContent: isCollapsed ? 'center' : 'space-between',
-                    mb: 2
-                }}
-            >
-                {isCollapsed ? (
-                    <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 'bold' }}>OB</Typography>
-                ) : (
-                    <Box>
-                        <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 'bold', letterSpacing: '0.05em' }}>
-                            OPTIMAL BUILD
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                            v2.0
-                        </Typography>
-                    </Box>
-                )}
-            </Box>
+          OPTIMAL BUILD
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
+        >
+          v2.0 Command Center
+        </Typography>
+      </Box>
 
-            {/* Navigation Groups */}
-            <Box component="nav" sx={{ flexGrow: 1, px: 2, pb: 2, overflowY: 'auto' }}>
-                <Stack spacing={4}>
-                    {navGroups.map((group) => (
-                        <Box key={group.id}>
-                            {!isCollapsed && (
-                                <Typography
-                                    variant="caption"
-                                    sx={{
-                                        px: 2,
-                                        mb: 1,
-                                        display: 'block',
-                                        color: 'text.secondary',
-                                        fontWeight: 600,
-                                        letterSpacing: '0.1em'
-                                    }}
-                                >
-                                    {group.title}
-                                </Typography>
-                            )}
-                            <Stack spacing={0.5}>
-                                {group.items.map((item) => {
-                                    const isActive = item.path === '/' ? path === '/' : path.startsWith(item.path);
-
-                                    const ButtonContent = (
-                                        <Button
-                                            component={Link}
-                                            to={item.path}
-                                            variant="text"
-                                            fullWidth
-                                            sx={{
-                                                justifyContent: isCollapsed ? 'center' : 'flex-start',
-                                                minWidth: isCollapsed ? '48px' : 'auto',
-                                                color: isActive ? 'primary.main' : 'text.secondary',
-                                                bgcolor: isActive ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
-                                                borderLeft: isCollapsed ? 0 : 2,
-                                                borderColor: isActive ? 'primary.main' : 'transparent',
-                                                borderRadius: isCollapsed ? 2 : 0,
-                                                px: isCollapsed ? 1 : 3,
-                                                py: 1.5,
-                                                textTransform: 'none',
-                                                fontWeight: isActive ? 600 : 400,
-                                                gap: isCollapsed ? 0 : 2,
-                                                '&:hover': {
-                                                    bgcolor: alpha(theme.palette.text.primary, 0.04),
-                                                    color: 'text.primary',
-                                                },
-                                            }}
-                                        >
-                                            {item.icon}
-                                            {!isCollapsed && <Box component="span">{item.label}</Box>}
-                                        </Button>
-                                    );
-
-                                    return isCollapsed ? (
-                                        <Tooltip key={item.path} title={item.label} placement="right" arrow>
-                                            <Box>{ButtonContent}</Box>
-                                        </Tooltip>
-                                    ) : (
-                                        <Box key={item.path}>{ButtonContent}</Box>
-                                    );
-                                })}
-                            </Stack>
-                        </Box>
-                    ))}
-                </Stack>
-            </Box>
-
-            {/* Collapse Toggle */}
-            <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', justifyContent: isCollapsed ? 'center' : 'flex-end' }}>
-                <IconButton onClick={() => setIsCollapsed(!isCollapsed)} size="small">
-                    {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-                </IconButton>
-            </Box>
+      {/* Nav */}
+      <Box component="nav" sx={{ flexGrow: 1, px: 2, pb: 4 }}>
+        <Box sx={{ mb: 2 }}>
+          <Button
+            component={Link}
+            to="/"
+            fullWidth
+            sx={{
+              justifyContent: 'flex-start',
+              color: path === '/' ? 'primary.main' : 'text.secondary',
+              px: 2,
+              mb: 2,
+            }}
+          >
+            {t('nav.home')}
+          </Button>
         </Box>
-    );
+
+        <Stack spacing={3}>
+          {navGroups.map((group) => (
+            <Box key={group.title}>
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 2,
+                  mb: 1,
+                  display: 'block',
+                  fontWeight: 700,
+                  color: 'text.disabled',
+                  textTransform: 'uppercase',
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                {group.title}
+              </Typography>
+              <Stack spacing={0.5}>
+                {group.items.map((item) => {
+                  const isActive = path.startsWith(item.path)
+                  return (
+                    <Button
+                      key={item.path}
+                      component={Link}
+                      to={item.path}
+                      variant="text"
+                      sx={{
+                        justifyContent: 'flex-start',
+                        color: isActive ? 'primary.main' : 'text.secondary',
+                        bgcolor: isActive
+                          ? alpha(theme.palette.primary.main, 0.12)
+                          : 'transparent',
+                        borderLeft: 4,
+                        borderColor: isActive ? 'primary.main' : 'transparent',
+                        borderRadius: '0 4px 4px 0', // Square Cyber-Minimalism: sm
+                        px: 2, // 16px - consistent with layout gaps
+                        py: 1.25,
+                        textAlign: 'left',
+                        textTransform: 'none',
+                        fontWeight: isActive ? 600 : 400,
+                        fontSize: isActive ? '0.875rem' : '0.85rem',
+                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': isActive
+                          ? {
+                              content: '""',
+                              position: 'absolute',
+                              left: 0,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '4px',
+                              height: '70%',
+                              borderRadius: '0 4px 4px 0',
+                              bgcolor: 'primary.main',
+                              boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
+                            }
+                          : {},
+                        '&::after': isActive
+                          ? {
+                              content: '""',
+                              position: 'absolute',
+                              right: '8px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              bgcolor: 'primary.main',
+                              boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
+                              animation: 'pulse 2s ease-in-out infinite',
+                            }
+                          : {},
+                        '@keyframes pulse': {
+                          '0%, 100%': {
+                            opacity: 1,
+                            transform: 'translateY(-50%) scale(1)',
+                          },
+                          '50%': {
+                            opacity: 0.6,
+                            transform: 'translateY(-50%) scale(0.8)',
+                          },
+                        },
+                        '&:hover': {
+                          bgcolor: isActive
+                            ? alpha(theme.palette.primary.main, 0.15)
+                            : alpha(theme.palette.text.primary, 0.06),
+                          color: isActive ? 'primary.main' : 'text.primary',
+                          transform: 'translateX(4px)',
+                        },
+                      }}
+                    >
+                      {item.label}
+                    </Button>
+                  )
+                })}
+              </Stack>
+            </Box>
+          ))}
+        </Stack>
+      </Box>
+    </Box>
+  )
 }

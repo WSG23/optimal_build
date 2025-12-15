@@ -4,7 +4,10 @@
  * These functions have no side effects and no runtime dependencies on React.
  */
 
-import type { ConditionAttachment, GeometryDetailLevel } from '../../../../api/siteAcquisition'
+import type {
+  ConditionAttachment,
+  GeometryDetailLevel,
+} from '../../../../api/siteAcquisition'
 import { PREVIEW_DETAIL_LABELS } from '../constants'
 
 // ============================================================================
@@ -28,7 +31,9 @@ export function formatTimestamp(isoValue: string | null | undefined): string {
 /**
  * Convert ISO timestamp to HTML datetime-local input format (YYYY-MM-DDTHH:MM)
  */
-export function formatDateTimeLocalInput(isoValue: string | null | undefined): string {
+export function formatDateTimeLocalInput(
+  isoValue: string | null | undefined,
+): string {
   if (!isoValue) {
     return ''
   }
@@ -69,7 +74,9 @@ export function toTitleCase(value: string): string {
   return value
     .split(/[\s_-]+/)
     .filter(Boolean)
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .map(
+      (token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase(),
+    )
     .join(' ')
 }
 
@@ -176,7 +183,9 @@ export function parseAttachmentsText(value: string): ConditionAttachment[] {
 /**
  * Convert attachment objects back to multi-line text format
  */
-export function formatAttachmentsText(attachments: ConditionAttachment[]): string {
+export function formatAttachmentsText(
+  attachments: ConditionAttachment[],
+): string {
   return attachments
     .map((attachment) => {
       if (attachment.url) {
@@ -194,7 +203,9 @@ export function formatAttachmentsText(attachments: ConditionAttachment[]): strin
 /**
  * Get a human-readable description of a geometry detail level
  */
-export function describeDetailLevel(level: GeometryDetailLevel | null | undefined): string {
+export function describeDetailLevel(
+  level: GeometryDetailLevel | null | undefined,
+): string {
   if (level && PREVIEW_DETAIL_LABELS[level]) {
     return PREVIEW_DETAIL_LABELS[level]
   }

@@ -21,7 +21,10 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import PendingIcon from '@mui/icons-material/Pending'
 import EventIcon from '@mui/icons-material/Event'
-import type { TenantCoordinationSummary, TenantRelocation } from '../../../../api/development'
+import type {
+  TenantCoordinationSummary,
+  TenantRelocation,
+} from '../../../../api/development'
 
 interface TenantRelocationDashboardProps {
   data: TenantCoordinationSummary
@@ -30,7 +33,17 @@ interface TenantRelocationDashboardProps {
 
 const STATUS_CONFIG: Record<
   string,
-  { color: 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info'; label: string }
+  {
+    color:
+      | 'default'
+      | 'primary'
+      | 'secondary'
+      | 'error'
+      | 'warning'
+      | 'success'
+      | 'info'
+    label: string
+  }
 > = {
   pending_notification: { color: 'warning', label: 'Pending Notification' },
   notified: { color: 'info', label: 'Notified' },
@@ -70,7 +83,12 @@ interface StatusSummaryCardProps {
   color: string
 }
 
-function StatusSummaryCard({ title, count, total, color }: StatusSummaryCardProps) {
+function StatusSummaryCard({
+  title,
+  count,
+  total,
+  color,
+}: StatusSummaryCardProps) {
   const percentage = total > 0 ? (count / total) * 100 : 0
 
   return (
@@ -111,7 +129,12 @@ interface RelocationTableProps {
   onRowClick?: (id: number) => void
 }
 
-function RelocationTable({ relocations, title, emptyMessage, onRowClick }: RelocationTableProps) {
+function RelocationTable({
+  relocations,
+  title,
+  emptyMessage,
+  onRowClick,
+}: RelocationTableProps) {
   if (relocations.length === 0) {
     return (
       <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
@@ -173,7 +196,9 @@ function RelocationTable({ relocations, title, emptyMessage, onRowClick }: Reloc
                     ? formatDate(relocation.actualMoveDate)
                     : formatDate(relocation.plannedMoveDate)}
                 </TableCell>
-                <TableCell align="right">{formatCurrency(relocation.compensationAmount)}</TableCell>
+                <TableCell align="right">
+                  {formatCurrency(relocation.compensationAmount)}
+                </TableCell>
               </TableRow>
             )
           })}
@@ -192,7 +217,13 @@ interface TimelineEventProps {
   isLast: boolean
 }
 
-function TimelineEvent({ date, tenantName, event, status, isLast }: TimelineEventProps) {
+function TimelineEvent({
+  date,
+  tenantName,
+  event,
+  status,
+  isLast,
+}: TimelineEventProps) {
   const isCompleted = status === 'relocated' || status === 'returned'
   const isPending = status === 'pending_notification' || status === 'notified'
 
@@ -210,7 +241,14 @@ function TimelineEvent({ date, tenantName, event, status, isLast }: TimelineEven
       </Typography>
 
       {/* Middle - dot and line */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', px: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          px: 1,
+        }}
+      >
         <Box
           sx={{
             width: 28,
@@ -258,11 +296,23 @@ function TimelineEvent({ date, tenantName, event, status, isLast }: TimelineEven
   )
 }
 
-export function TenantRelocationDashboard({ data, onTenantClick }: TenantRelocationDashboardProps) {
-  const { totalTenants, statusBreakdown, relocations, upcomingMoves, overdueNotifications, timeline, warnings } = data
+export function TenantRelocationDashboard({
+  data,
+  onTenantClick,
+}: TenantRelocationDashboardProps) {
+  const {
+    totalTenants,
+    statusBreakdown,
+    relocations,
+    upcomingMoves,
+    overdueNotifications,
+    timeline,
+    warnings,
+  } = data
 
   // Calculate summary counts
-  const relocated = (statusBreakdown['relocated'] ?? 0) + (statusBreakdown['returned'] ?? 0)
+  const relocated =
+    (statusBreakdown['relocated'] ?? 0) + (statusBreakdown['returned'] ?? 0)
   const inProgress = statusBreakdown['in_progress'] ?? 0
   const pending =
     (statusBreakdown['pending_notification'] ?? 0) +
@@ -377,7 +427,10 @@ export function TenantRelocationDashboard({ data, onTenantClick }: TenantRelocat
             </Typography>
 
             {timeline.length === 0 ? (
-              <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+              <Typography
+                color="text.secondary"
+                sx={{ textAlign: 'center', py: 3 }}
+              >
                 No activity recorded yet
               </Typography>
             ) : (
@@ -411,7 +464,10 @@ export function TenantRelocationDashboard({ data, onTenantClick }: TenantRelocat
             </Typography>
             <Stack spacing={1}>
               {Object.entries(statusBreakdown).map(([status, count]) => {
-                const config = STATUS_CONFIG[status] || { color: 'default' as const, label: status }
+                const config = STATUS_CONFIG[status] || {
+                  color: 'default' as const,
+                  label: status,
+                }
                 return (
                   <Box
                     key={status}
@@ -421,7 +477,12 @@ export function TenantRelocationDashboard({ data, onTenantClick }: TenantRelocat
                       alignItems: 'center',
                     }}
                   >
-                    <Chip size="small" label={config.label} color={config.color} variant="outlined" />
+                    <Chip
+                      size="small"
+                      label={config.label}
+                      color={config.color}
+                      variant="outlined"
+                    />
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       {count}
                     </Typography>

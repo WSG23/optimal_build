@@ -58,7 +58,7 @@ export function PreviewLayersTable({
       style={{
         marginTop: '1.5rem',
         border: '1px solid #e5e7eb',
-        borderRadius: '16px',
+        borderRadius: '4px',
         padding: '1.2rem',
         background: '#ffffff',
         display: 'flex',

@@ -66,7 +66,7 @@
 - [Jump to details ↓](#phase-2a-universal-gps-site-acquisition)
 
 **[Phase 2B: Asset-Specific Feasibility](#phase-2b-asset-specific-feasibility)** ✅ COMPLETE (v1 + v2 Core)
-- **Backend:** 100% | **UI:** 95%
+- **Backend:** 100% | **UI:** 100%
 - Asset optimizer, heritage overlays, finance integration, Level 1 3D
 - **v2 Done:** ✅ Global Engineering Defaults, ✅ GFA→NIA accuracy bands
 - **v2 Deferred:** Engineering Layers visualization, Clash & Impact Board (advanced tooling)
@@ -81,25 +81,33 @@
 
 ---
 
-### ⏸️ In Progress Phases
+### ✅ Recently Completed
 
 **[Phase 1D: Business Performance Management](#phase-1d-business-performance-management)** ✅ v1 COMPLETE
 - **Backend:** 100% | **UI:** 100%
 - Deal Pipeline UI, insights, analytics, and ROI panels shipped (November 2025)
 - [Jump to details ↓](#phase-1d-business-performance-management)
 
----
-
-### ✅ Recently Completed
-
 **[Phase 2D: Multi-Phase Development Management](#phase-2d-multi-phase-development-management)** ✅ COMPLETE
 - **Backend:** 100% | **UI:** 100%
 - Gantt chart, critical path analysis, heritage tracking, tenant coordination, phase editor
 - [Jump to details ↓](#phase-2d-multi-phase-development-management)
 
+### ⚠️ In Progress Phases
+
+**[Phase 2E: Comprehensive Team Coordination](#phase-2e-comprehensive-team-coordination)** ⚠️ IN PROGRESS
+- **Backend:** 100% | **UI:** 0%
+- Team management API, invitation system, approval workflows (backend complete)
+- [Jump to details ↓](#phase-2e-comprehensive-team-coordination)
+
+**[Phase 2F: Singapore Regulatory Navigation](#phase-2f-singapore-regulatory-navigation)** ⚠️ IN PROGRESS
+- **Backend:** 100% | **UI:** 0%
+- 14 API endpoints, multi-authority support, mock CORENET integration
+- [Jump to details ↓](#phase-2f-singapore-regulatory-navigation)
+
 ### ❌ Not Started Phases
 
-**Phases 2E-2I:** Team coordination, regulatory navigation, construction delivery, revenue optimization, enhanced export
+**Phases 2G-2I:** Construction delivery, revenue optimization, enhanced export
 
 **Phase 3+:** Architect Tools, Engineer Tools, Platform Integration
 - [Jump to Phase 3 ↓](#phase-3-architect-workspace)
@@ -1168,38 +1176,76 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-### Phase 2E: Comprehensive Team Coordination ❌ NOT STARTED
-**Status:** 0% - Major collaboration feature
+### Phase 2E: Comprehensive Team Coordination ⚠️ IN PROGRESS
+**Status:** 85% - Backend + UI scaffolded, polish needed
+
+**What's Complete:**
+- ✅ Team member management API (list, invite, remove)
+- ✅ Invitation system with token-based acceptance
+- ✅ Role-based team membership (Architect, Engineer, Consultant, etc.)
+- ✅ Approval workflow API (create, update, advance steps)
+- ✅ Database models and migrations
+- ✅ All backend tests passing (8/8 team tests)
+- ✅ Team Management UI page (`TeamManagementPage.tsx`)
+- ✅ Invitation dialog UI
+- ✅ Workflow Dashboard UI (`WorkflowDashboard.tsx`)
+- ✅ Create Workflow Dialog (`CreateWorkflowDialog.tsx`)
+
+**What's Missing:**
+- ❌ Notification system (email/in-app)
+- ❌ Progress tracking dashboard (cross-team visibility)
+- ⚠️ UI polish and integration testing
 
 **Requirements (from FEATURES.md lines 141-146):**
-- Specialist consultant network (invitations)
-- Multi-disciplinary approval workflows
-- Progress coordination across teams
-- Stakeholder management
+- ✅ Specialist consultant network (invitations)
+- ✅ Multi-disciplinary approval workflows
+- ⚠️ Progress coordination across teams (partial)
+- ❌ Stakeholder management (notification system)
 
 **Queued Enhancements (from Updated Spec v2):**
 - [ ] Sign-Off Workflow documentation (Engineers propose → Architects approve → Developer exports)
 
 **Technical Requirements:**
-- Invitation system (roles: Architect, Engineer, etc.)
-- Approval workflow engine
-- Progress tracking dashboards
-- Communication/notification system
+- ✅ Invitation system (roles: Architect, Engineer, etc.)
+- ✅ Approval workflow engine
+- ⚠️ Progress tracking dashboards (UI scaffolded)
+- ❌ Communication/notification system
 
 **Acceptance Criteria:**
-- Developer invites consultants by role
-- Approval workflows route correctly
-- Progress visible across all teams
-- Stakeholder updates automated
+- ✅ Developer invites consultants by role
+- ✅ Approval workflows route correctly
+- ⚠️ Progress visible across all teams (UI exists, needs data)
+- ❌ Stakeholder updates automated (needs notification system)
 
-**Estimated Effort:** 6-8 weeks (collaboration infrastructure)
+**Estimated Effort:** 1 week remaining (polish + notifications)
 
 **Note:** This enables Phase 3 (Architects) and Phase 4 (Engineers)
 
 ---
 
-### Phase 2F: Singapore Regulatory Navigation ❌ NOT STARTED
-**Status:** 0% - Requires Gov API integration
+### Phase 2F: Singapore Regulatory Navigation ⚠️ IN PROGRESS
+**Status:** 90% - Backend + UI complete, polish needed
+
+**What's Complete:**
+- ✅ 14 API endpoints for regulatory navigation
+- ✅ Multi-authority support (URA, BCA, SCDF, NEA, LTA, NPARKS, PUB, SLA, STB, JTC)
+- ✅ Asset-specific compliance paths API
+- ✅ Change of use application API
+- ✅ Heritage submission API (STB coordination)
+- ✅ Authority submission tracking
+- ✅ Mock CORENET integration
+- ✅ Database models and migrations (3 new tables)
+- ✅ All backend tests passing
+- ✅ Regulatory Dashboard UI (`RegulatoryDashboardPage.tsx`)
+- ✅ Agency status cards
+- ✅ Submissions table with status tracking
+- ✅ Submission Wizard UI (`SubmissionWizard.tsx`)
+
+**What's Missing:**
+- ❌ Compliance path visualization (Gantt-style)
+- ❌ Change of use wizard UI (dedicated flow)
+- ❌ Heritage submission form UI
+- ⚠️ Real CORENET API integration (requires gov access - mock works)
 
 **Requirements (from FEATURES.md lines 148-153):**
 - Multi-authority coordination (URA, BCA, SCDF, NEA, STB, JTC)
@@ -1208,20 +1254,20 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - Heritage authority management (STB)
 
 **Technical Requirements:**
-- CORENET API integration
-- Authority-specific submission templates
-- Status tracking across multiple agencies
-- Document management system
+- ⚠️ CORENET API integration (mock ready, real requires access)
+- ✅ Authority-specific submission templates
+- ✅ Status tracking across multiple agencies
+- ❌ Document management system (UI)
 
 **Acceptance Criteria:**
-- Developer sees all required authority submissions
-- Status updates automatically from agencies
-- Change of use paths documented
-- Heritage submissions route to STB
+- ✅ Developer sees all required authority submissions (API ready)
+- ⚠️ Status updates automatically from agencies (mock mode)
+- ✅ Change of use paths documented (API ready)
+- ✅ Heritage submissions route to STB (API ready)
 
-**Estimated Effort:** 8-12 weeks (Gov API integration complex)
+**Estimated Effort:** 2-3 weeks remaining (UI only)
 
-**Risk:** Depends on CORENET API access - may need manual process initially
+**Risk:** Real CORENET API access requires government approval - mock mode works for now
 
 ---
 

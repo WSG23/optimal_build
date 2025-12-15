@@ -82,7 +82,7 @@ export function PhotoGallery({
           textAlign: 'center',
           color: '#6b7280',
           background: '#f9fafb',
-          borderRadius: '12px',
+          borderRadius: '4px',
           border: '1px dashed #d1d5db',
         }}
       >
@@ -139,9 +139,7 @@ export function PhotoGallery({
               fontWeight: 500,
               cursor: 'pointer',
               boxShadow:
-                viewMode === 'original'
-                  ? '0 1px 3px rgba(0,0,0,0.1)'
-                  : 'none',
+                viewMode === 'original' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -160,9 +158,7 @@ export function PhotoGallery({
               fontWeight: 500,
               cursor: 'pointer',
               boxShadow:
-                viewMode === 'marketing'
-                  ? '0 1px 3px rgba(0,0,0,0.1)'
-                  : 'none',
+                viewMode === 'marketing' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -203,7 +199,7 @@ export function PhotoGallery({
               style={{
                 position: 'relative',
                 aspectRatio: '1',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 overflow: 'hidden',
                 background: '#f3f4f6',
                 cursor: 'pointer',
@@ -406,7 +402,7 @@ export function PhotoGallery({
                 onClick={() => setSelectedPhoto(null)}
                 style={{
                   padding: '0.5rem 1rem',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   border: 'none',
                   background: 'rgba(255,255,255,0.1)',
                   color: '#fff',
@@ -438,7 +434,7 @@ export function PhotoGallery({
                   maxWidth: '100%',
                   maxHeight: '100%',
                   objectFit: 'contain',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                 }}
               />
             ) : (

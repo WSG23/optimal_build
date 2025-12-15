@@ -39,6 +39,23 @@ import {
   FinancePrivacyNotice,
 } from './components/FinancePrivacyNotice'
 import { useFinanceScenarios } from './hooks/useFinanceScenarios'
+import '../../styles/finance/polish.css'
+
+// Material UI Imports
+import {
+  Box,
+  Stack,
+  Typography,
+  Alert,
+  CircularProgress,
+  Tabs,
+  Tab,
+} from '@mui/material'
+import { Refresh, Download, Warning } from '@mui/icons-material'
+
+// Canonical Components
+import { Button } from '../../components/canonical/Button'
+import { Card } from '../../components/canonical/Card'
 
 // Align with seeded Phase 2B finance demo data (see backend/scripts/seed_finance_demo.py)
 const FINANCE_PROJECT_ID = '401'
@@ -112,9 +129,10 @@ function shortenProjectId(value: string): string {
   return `${value.slice(0, 6)}…${value.slice(-4)}`
 }
 
-function readLastProjectSelection():
-  | { projectId: string; projectName?: string | null }
-  | null {
+function readLastProjectSelection(): {
+  projectId: string
+  projectName?: string | null
+} | null {
   if (typeof window === 'undefined') {
     return null
   }
@@ -164,7 +182,8 @@ function parseProjectParams(search: string) {
     const params = new URLSearchParams(search)
     const projectId = params.get('projectId')
     const projectName = params.get('projectName')
-    const finProjectParam = params.get('finProjectId') ?? params.get('fin_project_id')
+    const finProjectParam =
+      params.get('finProjectId') ?? params.get('fin_project_id')
     const parsedFinProject =
       finProjectParam && !Number.isNaN(Number(finProjectParam))
         ? Number(finProjectParam)
@@ -237,7 +256,9 @@ export function FinanceWorkspace() {
   const initialProjectId =
     projectParams.projectId ?? lastProject?.projectId ?? FINANCE_PROJECT_ID
   const initialProjectName =
-    projectParams.projectName ?? lastProject?.projectName ?? FINANCE_PROJECT_NAME
+    projectParams.projectName ??
+    lastProject?.projectName ??
+    FINANCE_PROJECT_NAME
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId)
   const [selectedProjectName, setSelectedProjectName] = useState<string | null>(
     initialProjectName,
@@ -246,14 +267,19 @@ export function FinanceWorkspace() {
     projectParams.finProjectId ?? undefined,
   )
   const [storageVersion, setStorageVersion] = useState(0)
-  const [capturedProjects, setCapturedProjects] = useState<FinanceProjectOption[]>(() =>
-    readCapturedProjectsFromStorage(),
-  )
+  const [capturedProjects, setCapturedProjects] = useState<
+    FinanceProjectOption[]
+  >(() => readCapturedProjectsFromStorage())
+  const [activeTab, setActiveTab] = useState(0)
+
   useEffect(() => {
     setCapturedProjects(readCapturedProjectsFromStorage())
   }, [storageVersion])
   useEffect(() => {
-    if (projectParams.projectId && projectParams.projectId !== selectedProjectId) {
+    if (
+      projectParams.projectId &&
+      projectParams.projectId !== selectedProjectId
+    ) {
       setSelectedProjectId(projectParams.projectId)
     }
     if (projectParams.projectName !== selectedProjectName) {
@@ -270,10 +296,11 @@ export function FinanceWorkspace() {
   const effectiveProjectId = selectedProjectId || FINANCE_PROJECT_ID
   const effectiveProjectName =
     selectedProjectName ?? (selectedProjectId ? null : FINANCE_PROJECT_NAME)
-  const { scenarios, loading, error, refresh, addScenario } = useFinanceScenarios({
-    projectId: effectiveProjectId,
-    finProjectId: finProjectFilter,
-  })
+  const { scenarios, loading, error, refresh, addScenario } =
+    useFinanceScenarios({
+      projectId: effectiveProjectId,
+      finProjectId: finProjectFilter,
+    })
   const role = resolveDefaultRole()
   const normalizedRole = role ? role.toLowerCase() : null
   const hasAccess = normalizedRole
@@ -308,22 +335,25 @@ export function FinanceWorkspace() {
     [navigate, path, search],
   )
   const [savingLoan, setSavingLoan] = useState(false)
-  const [loanError, setLoanError] = useState<string | null>(null)
+  const [_loanError, setLoanError] = useState<string | null>(null)
   const [scenarioMessage, setScenarioMessage] = useState<string | null>(null)
   const [scenarioError, setScenarioError] = useState<string | null>(null)
-  const [promotingScenarioId, setPromotingScenarioId] = useState<number | null>(null)
+  const [promotingScenarioId, setPromotingScenarioId] = useState<number | null>(
+    null,
+  )
   const [runningSensitivity, setRunningSensitivity] = useState(false)
   const [sensitivityError, setSensitivityError] = useState<string | null>(null)
   const [scenarioPendingDelete, setScenarioPendingDelete] =
     useState<FinanceScenarioSummary | null>(null)
-  const [deletingScenarioId, setDeletingScenarioId] = useState<number | null>(null)
+  const [deletingScenarioId, setDeletingScenarioId] = useState<number | null>(
+    null,
+  )
   const [exportingScenario, setExportingScenario] = useState(false)
   const identityErrorRegex = /restricted/i
   const needsScenarioIdentity =
     typeof error === 'string' && identityErrorRegex.test(error)
   const needsScenarioCreateIdentity =
-    typeof scenarioError === 'string' &&
-    identityErrorRegex.test(scenarioError)
+    typeof scenarioError === 'string' && identityErrorRegex.test(scenarioError)
 
   useEffect(() => {
     if (!scenarioMessage) {
@@ -448,9 +478,8 @@ export function FinanceWorkspace() {
   }, [primaryScenario])
 
   const pendingCount = primaryScenario
-    ? primaryScenario.sensitivityJobs.filter((job) =>
-        isJobPending(job.status),
-      ).length
+    ? primaryScenario.sensitivityJobs.filter((job) => isJobPending(job.status))
+        .length
     : 0
 
   const timelineJobs = useMemo(
@@ -513,11 +542,7 @@ export function FinanceWorkspace() {
     if (!primaryScenario) {
       return
     }
-    const content = JSON.stringify(
-      primaryScenario.sensitivityResults,
-      null,
-      2,
-    )
+    const content = JSON.stringify(primaryScenario.sensitivityResults, null, 2)
     downloadFile(
       content,
       'finance_sensitivity.json',
@@ -678,205 +703,302 @@ export function FinanceWorkspace() {
   )
 
   return (
-    <AppLayout
-      title={t('finance.title')}
-      subtitle={t('finance.subtitle')}
-      actions={
-        <div className="finance-workspace__actions">
-          <button
-            type="button"
-            className="finance-workspace__refresh"
-            onClick={refresh}
-            disabled={loading}
+    <AppLayout title={t('finance.title')} subtitle={t('finance.subtitle')}>
+      <Box className="finance-workspace" sx={{ pb: 'var(--ob-space-400)' }}>
+        <Box sx={{ p: 'var(--ob-space-150)' }}>
+          {/* Glass Toolbar - Consolidated Controls */}
+          <Card
+            variant="glass"
+            sx={{
+              p: 'var(--ob-space-150)',
+              mb: 'var(--ob-space-250)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 'var(--ob-space-150)',
+              flexWrap: 'wrap',
+            }}
           >
-            {loading
-              ? t('finance.actions.refreshing')
-              : t('finance.actions.refresh')}
-          </button>
-          <button
-            type="button"
-            className="finance-workspace__export"
-            onClick={handleExportCsv}
-            disabled={!primaryScenario || exportingScenario}
-          >
-            {exportingScenario
-              ? t('finance.actions.exporting')
-              : t('finance.actions.exportCsv')}
-          </button>
-        </div>
-      }
-    >
-      <section className="finance-workspace">
-        <FinanceProjectSelector
-          selectedProjectId={effectiveProjectId}
-          selectedProjectName={effectiveProjectName ?? null}
-          options={capturedProjects}
-          onProjectChange={handleProjectChange}
-          onRefresh={refreshCapturedProjects}
-        />
-        {!hasAccess ? (
-          <FinanceAccessGate role={normalizedRole} />
-        ) : (
-          <>
-            {error && (
-              <div className="finance-workspace__error" role="alert">
-                <strong>{t('finance.errors.generic')}</strong>
-                <span className="finance-workspace__error-detail">{error}</span>
-                {needsScenarioIdentity && (
-                  <FinanceIdentityHelper compact />
-                )}
-              </div>
-            )}
-            {loading && (
-              <p className="finance-workspace__status">{t('common.loading')}</p>
-            )}
-            {scenarioError && (
-              <div className="finance-workspace__error" role="alert">
-                {scenarioError}
-                {needsScenarioCreateIdentity && (
-                  <FinanceIdentityHelper compact />
-                )}
-              </div>
-            )}
-            {scenarioMessage && (
-              <p className="finance-workspace__status" role="status">
-                {scenarioMessage}
-              </p>
-            )}
-            <FinanceScenarioCreator
-              projectId={effectiveProjectId}
-              projectName={projectDisplayName}
-              onCreated={(summary) => {
-                setScenarioMessage(
-                  t('finance.scenarioCreator.success', {
-                    name: summary.scenarioName,
-                  }),
-                )
-                setScenarioError(null)
-                addScenario(summary)
-              }}
-              onError={(message) => {
-                setScenarioError(message)
-                setScenarioMessage(null)
-              }}
-              onRefresh={() => {
-                refresh()
-              }}
+            <FinanceProjectSelector
+              selectedProjectId={effectiveProjectId}
+              selectedProjectName={effectiveProjectName ?? null}
+              options={capturedProjects}
+              onProjectChange={handleProjectChange}
+              onRefresh={refreshCapturedProjects}
             />
-            {primaryScenario?.isPrivate ? (
-              <FinancePrivacyNotice projectName={projectDisplayName} />
-            ) : null}
-            {showEmptyState && (
-              <p className="finance-workspace__empty">
-                {t('finance.table.empty')}
-              </p>
-            )}
-            {primaryScenario?.scenarioId === 0 && (
-                <div className="finance-workspace__warning" role="alert" style={{
-                    backgroundColor: 'var(--color-warning-subtle)',
-                    color: 'var(--color-warning-strong)',
-                    padding: 'var(--space-4)',
-                    borderRadius: 'var(--radius-md)',
-                    marginBottom: 'var(--space-6)',
-                    border: '1px solid var(--color-warning-border)'
-                }}>
-                    <strong>{t('finance.warnings.offlineMode')}</strong>
-                    <p style={{ margin: 0 }}>
-                        {t('finance.warnings.offlineModeDetail') || 'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
-                    </p>
-                </div>
-            )}
-            {scenarios.length > 0 && (
-              <>
-                <div className="finance-workspace__sections">
-                  <FinanceScenarioTable
-                    scenarios={scenarios}
-                    onMarkPrimary={handleMarkPrimary}
-                    updatingScenarioId={promotingScenarioId}
-                    onDeleteScenario={handleRequestDeleteScenario}
-                    deletingScenarioId={deletingScenarioId}
+
+            <Stack direction="row" spacing="var(--ob-space-100)">
+              <Button variant="secondary" onClick={refresh} disabled={loading}>
+                {loading ? (
+                  <CircularProgress
+                    size={16}
+                    sx={{ mr: 'var(--ob-space-050)', color: 'inherit' }}
                   />
-                  <FinanceCapitalStack scenarios={scenarios} />
-                  <FinanceDrawdownSchedule scenarios={scenarios} />
-                </div>
-                {primaryScenario ? (
-                  <>
-                    {analyticsMetadata ? (
-                      <FinanceAnalyticsPanel
-                        analytics={analyticsMetadata}
-                        currency={primaryScenario.currency}
-                      />
-                    ) : null}
-                    <div className="finance-workspace__sections finance-workspace__sections--details">
-                      <FinanceAssetBreakdown
-                        summary={primaryScenario.assetMixSummary}
-                        breakdowns={primaryScenario.assetBreakdowns}
-                        currency={primaryScenario.currency}
-                      />
-                      <FinanceLoanInterest
-                        schedule={primaryScenario.constructionLoanInterest}
-                      />
-                      <div className="finance-workspace__facility-editor">
-                        <FinanceFacilityEditor
-                          scenario={primaryScenario}
-                          saving={savingLoan}
-                          onSave={handleSaveLoan}
-                        />
-                        {loanError ? (
-                          <p
-                            className="finance-workspace__error finance-workspace__error--inline"
-                            role="alert"
-                          >
-                            {loanError}
-                          </p>
-                        ) : null}
+                ) : (
+                  <Refresh
+                    fontSize="small"
+                    sx={{ mr: 'var(--ob-space-050)' }}
+                  />
+                )}
+                {t('finance.actions.refresh')}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleExportCsv}
+                disabled={!primaryScenario || exportingScenario}
+              >
+                <Download fontSize="small" sx={{ mr: 'var(--ob-space-050)' }} />
+                {exportingScenario
+                  ? t('finance.actions.exporting')
+                  : t('finance.actions.exportCsv')}
+              </Button>
+            </Stack>
+          </Card>
+
+          {!hasAccess ? (
+            <FinanceAccessGate role={normalizedRole} />
+          ) : (
+            <>
+              {error && (
+                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+                  <strong>{t('finance.errors.generic')}</strong>
+                  <Box component="span" sx={{ display: 'block' }}>
+                    {error}
+                  </Box>
+                  {needsScenarioIdentity && <FinanceIdentityHelper compact />}
+                </Alert>
+              )}
+
+              {loading && (
+                <Card
+                  variant="glass"
+                  sx={{
+                    p: 'var(--ob-space-200)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CircularProgress />
+                </Card>
+              )}
+
+              {scenarioError && (
+                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+                  {scenarioError}
+                  {needsScenarioCreateIdentity && (
+                    <FinanceIdentityHelper compact />
+                  )}
+                </Alert>
+              )}
+              {scenarioMessage && (
+                <Alert severity="success" sx={{ mb: 'var(--ob-space-150)' }}>
+                  {scenarioMessage}
+                </Alert>
+              )}
+
+              <Box sx={{ mb: 'var(--ob-space-200)' }}>
+                <FinanceScenarioCreator
+                  projectId={effectiveProjectId}
+                  projectName={projectDisplayName}
+                  onCreated={(summary) => {
+                    setScenarioMessage(
+                      t('finance.scenarioCreator.success', {
+                        name: summary.scenarioName,
+                      }),
+                    )
+                    setScenarioError(null)
+                    addScenario(summary)
+                  }}
+                  onError={(message) => {
+                    setScenarioError(message)
+                    setScenarioMessage(null)
+                  }}
+                  onRefresh={() => {
+                    refresh()
+                  }}
+                />
+              </Box>
+
+              {primaryScenario?.isPrivate ? (
+                <FinancePrivacyNotice projectName={projectDisplayName} />
+              ) : null}
+
+              {showEmptyState && (
+                <Card
+                  variant="glass"
+                  sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}
+                >
+                  <Typography variant="h5" gutterBottom>
+                    {t('finance.table.empty')}
+                  </Typography>
+                </Card>
+              )}
+
+              {primaryScenario?.scenarioId === 0 && (
+                <Alert
+                  severity="warning"
+                  sx={{ mb: 'var(--ob-space-200)' }}
+                  icon={<Warning />}
+                >
+                  <strong>{t('finance.warnings.offlineMode')}</strong>
+                  <Typography variant="body2">
+                    {t('finance.warnings.offlineModeDetail') ||
+                      'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
+                  </Typography>
+                </Alert>
+              )}
+
+              {scenarios.length > 0 && (
+                <Stack spacing="var(--ob-space-200)">
+                  {/* Scenario Management */}
+                  <Card variant="glass" sx={{ p: 'var(--ob-space-150)' }}>
+                    <Typography variant="h5" fontWeight={600} gutterBottom>
+                      {t('finance.sections.scenarios')}
+                    </Typography>
+                    <FinanceScenarioTable
+                      scenarios={scenarios}
+                      onMarkPrimary={handleMarkPrimary}
+                      updatingScenarioId={promotingScenarioId}
+                      onDeleteScenario={handleRequestDeleteScenario}
+                      deletingScenarioId={deletingScenarioId}
+                    />
+                  </Card>
+
+                  {/* Reports Tabs */}
+                  <Box>
+                    <Tabs
+                      value={activeTab}
+                      onChange={(_, v) => setActiveTab(v)}
+                      sx={{ mb: 'var(--ob-space-100)' }}
+                    >
+                      <Tab label={t('finance.tabs.capitalStack')} />
+                      <Tab label={t('finance.tabs.drawdownSchedule')} />
+                      <Tab label={t('finance.tabs.assetBreakdown')} />
+                      <Tab label={t('finance.tabs.facilityEditor')} />
+                      <Tab label={t('finance.tabs.jobTimeline')} />
+                      <Tab label={t('finance.tabs.loanInterest')} />
+                      <Tab label={t('finance.tabs.analytics')} />
+                      <Tab label={t('finance.tabs.sensitivity')} />
+                    </Tabs>
+
+                    <Card
+                      variant="glass"
+                      sx={{ p: 'var(--ob-space-150)', minHeight: 400 }}
+                    >
+                      <div role="tabpanel" hidden={activeTab !== 0}>
+                        {activeTab === 0 && (
+                          <FinanceCapitalStack scenarios={scenarios} />
+                        )}
                       </div>
-                    </div>
-                    <FinanceSensitivityTable
-                      outcomes={filteredSensitivity}
-                      currency={primaryScenario.currency}
-                      parameters={parameters}
-                      selectedParameters={selectedParameters}
-                      onToggleParameter={handleToggleParameter}
-                      onSelectAll={handleSelectAll}
-                      onDownloadCsv={handleDownloadCsv}
-                      onDownloadJson={handleDownloadJson}
-                    />
-                    <FinanceSensitivityControls
-                      scenario={primaryScenario}
-                      pendingJobs={pendingCount}
-                      disabled={runningSensitivity || pendingCount > 0}
-                      error={sensitivityError}
-                      onRun={handleRunSensitivity}
-                    />
-                    <FinanceSensitivitySummary
-                      summaries={sensitivitySummaries}
-                      currency={primaryScenario.currency}
-                    />
-                    <FinanceJobTimeline
-                      jobs={timelineJobs}
-                      pendingCount={pendingCount}
-                    />
-                  </>
-                ) : null}
-              </>
-            )}
-            <FinanceScenarioDeleteDialog
-              open={Boolean(scenarioPendingDelete)}
-              scenarioName={scenarioPendingDelete?.scenarioName ?? ''}
-              pending={
-                Boolean(
-                  scenarioPendingDelete &&
-                    deletingScenarioId === scenarioPendingDelete.scenarioId,
-                )
-              }
-              onCancel={handleCancelDelete}
-              onConfirm={handleConfirmDelete}
-            />
-          </>
-        )}
-      </section>
+                      <div role="tabpanel" hidden={activeTab !== 1}>
+                        {activeTab === 1 && (
+                          <FinanceDrawdownSchedule scenarios={scenarios} />
+                        )}
+                      </div>
+                      <div role="tabpanel" hidden={activeTab !== 2}>
+                        {activeTab === 2 && primaryScenario && (
+                          <FinanceAssetBreakdown
+                            summary={primaryScenario.assetMixSummary ?? null}
+                            breakdowns={primaryScenario.assetBreakdowns ?? []}
+                          />
+                        )}
+                      </div>
+                      <div role="tabpanel" hidden={activeTab !== 3}>
+                        {activeTab === 3 && (
+                          <FinanceFacilityEditor
+                            scenario={primaryScenario ?? null}
+                            onSave={handleSaveLoan}
+                            saving={savingLoan}
+                          />
+                        )}
+                      </div>
+                      <div role="tabpanel" hidden={activeTab !== 4}>
+                        {activeTab === 4 && (
+                          <FinanceJobTimeline
+                            jobs={timelineJobs}
+                            pendingCount={pendingCount}
+                          />
+                        )}
+                      </div>
+                      <div role="tabpanel" hidden={activeTab !== 5}>
+                        {activeTab === 5 && (
+                          <FinanceLoanInterest
+                            schedule={
+                              primaryScenario?.constructionLoanInterest ?? null
+                            }
+                          />
+                        )}
+                      </div>
+                      <div role="tabpanel" hidden={activeTab !== 6}>
+                        {activeTab === 6 && analyticsMetadata && (
+                          <Box>
+                            <FinanceAnalyticsPanel
+                              analytics={analyticsMetadata}
+                              currency={primaryScenario?.currency ?? 'SGD'}
+                            />
+                            <Box sx={{ mt: 'var(--ob-space-100)' }}>
+                              {primaryScenario && (
+                                <FinanceSensitivityControls
+                                  scenario={primaryScenario}
+                                  pendingJobs={pendingCount}
+                                  disabled={runningSensitivity}
+                                  error={sensitivityError}
+                                  onRun={handleRunSensitivity}
+                                />
+                              )}
+                            </Box>
+                          </Box>
+                        )}
+                      </div>
+                      <div role="tabpanel" hidden={activeTab !== 7}>
+                        {activeTab === 7 && (
+                          <Box>
+                            <FinanceSensitivitySummary
+                              summaries={sensitivitySummaries}
+                              currency={primaryScenario?.currency ?? 'SGD'}
+                            />
+                            <Box sx={{ my: 'var(--ob-space-100)' }}>
+                              {primaryScenario && (
+                                <FinanceSensitivityControls
+                                  scenario={primaryScenario}
+                                  pendingJobs={pendingCount}
+                                  disabled={runningSensitivity}
+                                  error={sensitivityError}
+                                  onRun={handleRunSensitivity}
+                                />
+                              )}
+                            </Box>
+                            <FinanceSensitivityTable
+                              outcomes={filteredSensitivity}
+                              currency={primaryScenario?.currency ?? 'SGD'}
+                              parameters={parameters}
+                              selectedParameters={selectedParameters}
+                              onSelectAll={handleSelectAll}
+                              onToggleParameter={handleToggleParameter}
+                              onDownloadCsv={handleDownloadCsv}
+                              onDownloadJson={handleDownloadJson}
+                            />
+                          </Box>
+                        )}
+                      </div>
+                    </Card>
+                  </Box>
+                </Stack>
+              )}
+
+              <FinanceScenarioDeleteDialog
+                open={scenarioPendingDelete !== null}
+                scenarioName={scenarioPendingDelete?.scenarioName ?? ''}
+                pending={
+                  deletingScenarioId === scenarioPendingDelete?.scenarioId
+                }
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+              />
+            </>
+          )}
+        </Box>
+      </Box>
     </AppLayout>
   )
 }
-export default FinanceWorkspace

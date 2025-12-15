@@ -1,5 +1,3 @@
-
-
 export function formatFileSize(bytes: number | null, locale: string): string {
   if (bytes == null || Number.isNaN(bytes)) {
     return '—'
@@ -30,9 +28,10 @@ export function anonymiseAddress(address: string): string {
   return `${prefix}…${suffix}`
 }
 
-
-
-export function createNumberFormatter(locale: string, maxFractionDigits = 0): Intl.NumberFormat {
+export function createNumberFormatter(
+  locale: string,
+  maxFractionDigits = 0,
+): Intl.NumberFormat {
   return new Intl.NumberFormat(locale, {
     maximumFractionDigits: maxFractionDigits,
   })

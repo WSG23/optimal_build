@@ -87,14 +87,21 @@ export function Preview3DViewer({
               })
               .catch((err) => {
                 if (!cancelled) {
-                  setMetadataWarning(err instanceof Error ? err.message : 'Unable to load preview metadata.')
+                  setMetadataWarning(
+                    err instanceof Error
+                      ? err.message
+                      : 'Unable to load preview metadata.',
+                  )
                 }
                 return null
               })
           : Promise.resolve(null)
 
         const loader = new GLTFLoader()
-        const [metadata, gltf] = await Promise.all([metadataPromise, loader.loadAsync(previewUrl)])
+        const [metadata, gltf] = await Promise.all([
+          metadataPromise,
+          loader.loadAsync(previewUrl),
+        ])
         if (cancelled) {
           return
         }
@@ -131,8 +138,16 @@ export function Preview3DViewer({
         scene.background = new THREE.Color('#f5f5f7')
         sceneRef.current = scene
 
-        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000)
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          width / height,
+          0.1,
+          5000,
+        )
+        const renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+        })
         renderer.shadowMap.enabled = true
         renderer.setPixelRatio(window.devicePixelRatio)
         renderer.setSize(width, height)
@@ -159,12 +174,16 @@ export function Preview3DViewer({
               })
             } else if (material) {
               material.transparent = true
-              if (typeof material.opacity !== 'number' || material.opacity === 1) {
+              if (
+                typeof material.opacity !== 'number' ||
+                material.opacity === 1
+              ) {
                 material.opacity = 0.94
               }
             }
             const layerId =
-              (typeof child.userData?.layer_id === 'string' && child.userData.layer_id) ||
+              (typeof child.userData?.layer_id === 'string' &&
+                child.userData.layer_id) ||
               (typeof child.name === 'string' && child.name.trim()) ||
               null
             if (layerId) {
@@ -175,8 +194,14 @@ export function Preview3DViewer({
           }
         })
         scene.add(root)
-        updateMeshVisibility(layerObjectsRef.current, layerVisibilityRef.current)
-        updateMeshHighlight(layerObjectsRef.current, focusLayerIdRef.current ?? null)
+        updateMeshVisibility(
+          layerObjectsRef.current,
+          layerVisibilityRef.current,
+        )
+        updateMeshHighlight(
+          layerObjectsRef.current,
+          focusLayerIdRef.current ?? null,
+        )
 
         const bounds = new THREE.Box3().setFromObject(root)
         const size = bounds.getSize(new THREE.Vector3())
@@ -204,17 +229,29 @@ export function Preview3DViewer({
         ground.receiveShadow = true
         scene.add(ground)
 
-        const orbitHint = metadata?.camera_orbit_hint ?? metadata?.cameraOrbitHint ?? {}
+        const orbitHint =
+          metadata?.camera_orbit_hint ?? metadata?.cameraOrbitHint ?? {}
         const radius =
           typeof orbitHint.radius === 'number' && orbitHint.radius > 0
             ? orbitHint.radius
             : Math.max(size.x, size.y, size.z) * 1.6 || 40
-        const theta = ((typeof orbitHint.theta === 'number' ? orbitHint.theta : 45) * Math.PI) / 180
-        const phi = ((typeof orbitHint.phi === 'number' ? orbitHint.phi : 45) * Math.PI) / 180
+        const theta =
+          ((typeof orbitHint.theta === 'number' ? orbitHint.theta : 45) *
+            Math.PI) /
+          180
+        const phi =
+          ((typeof orbitHint.phi === 'number' ? orbitHint.phi : 45) * Math.PI) /
+          180
         const target = new THREE.Vector3(
-          typeof orbitHint.target_x === 'number' ? orbitHint.target_x : center.x,
-          typeof orbitHint.target_z === 'number' ? orbitHint.target_z : center.y,
-          typeof orbitHint.target_y === 'number' ? orbitHint.target_y : center.z,
+          typeof orbitHint.target_x === 'number'
+            ? orbitHint.target_x
+            : center.x,
+          typeof orbitHint.target_z === 'number'
+            ? orbitHint.target_z
+            : center.y,
+          typeof orbitHint.target_y === 'number'
+            ? orbitHint.target_y
+            : center.z,
         )
 
         const orbitX = target.x + radius * Math.sin(phi) * Math.cos(theta)
@@ -297,7 +334,10 @@ export function Preview3DViewer({
 
   useEffect(() => {
     console.log('[Preview3DViewer] Layer visibility changed:', layerVisibility)
-    console.log('[Preview3DViewer] Available layers:', Array.from(layerObjectsRef.current.keys()))
+    console.log(
+      '[Preview3DViewer] Available layers:',
+      Array.from(layerObjectsRef.current.keys()),
+    )
     updateMeshVisibility(layerObjectsRef.current, layerVisibility)
     // Re-render scene after visibility changes
     if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -307,7 +347,10 @@ export function Preview3DViewer({
 
   useEffect(() => {
     console.log('[Preview3DViewer] Focus layer changed:', focusLayerId)
-    console.log('[Preview3DViewer] Available layers:', Array.from(layerObjectsRef.current.keys()))
+    console.log(
+      '[Preview3DViewer] Available layers:',
+      Array.from(layerObjectsRef.current.keys()),
+    )
     updateMeshHighlight(layerObjectsRef.current, focusLayerId)
     focusCameraOnLayer(
       focusLayerId,
@@ -327,14 +370,15 @@ export function Preview3DViewer({
       <div
         style={{
           border: '1px dashed #d1d5db',
-          borderRadius: '12px',
+          borderRadius: '4px',
           padding: '1.5rem',
           textAlign: 'center',
           background: '#f9fafb',
         }}
       >
         <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>
-          Preview assets are not ready yet. Status: <strong>{status.toUpperCase()}</strong>
+          Preview assets are not ready yet. Status:{' '}
+          <strong>{status.toUpperCase()}</strong>
         </p>
       </div>
     )
@@ -344,37 +388,62 @@ export function Preview3DViewer({
     <div
       style={{
         border: '1px solid #e5e7eb',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1rem',
         background: '#ffffff',
       }}
     >
       <div
         ref={containerRef}
-        style={{ width: '100%', height: `${FALLBACK_HEIGHT}px`, borderRadius: '8px', overflow: 'hidden' }}
+        style={{
+          width: '100%',
+          height: `${FALLBACK_HEIGHT}px`,
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}
       />
       {isLoading && (
-        <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#6b7280' }}>
+        <p
+          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#6b7280' }}
+        >
           Loading preview assets…
         </p>
       )}
       {metadataWarning && !error && (
-        <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#b45309' }}>
+        <p
+          style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#b45309' }}
+        >
           {metadataWarning}
         </p>
       )}
       {error && (
-        <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#b91c1c' }}>
+        <p
+          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#b91c1c' }}
+        >
           Failed to load preview: {error}
         </p>
       )}
       {!error && !isLoading && thumbnailUrl && (
-        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>Thumbnail:</span>
+        <div
+          style={{
+            marginTop: '0.75rem',
+            display: 'flex',
+            gap: '0.5rem',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+            Thumbnail:
+          </span>
           <img
             src={thumbnailUrl}
             alt="Preview thumbnail"
-            style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'cover' }}
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '4px',
+              objectFit: 'cover',
+            }}
           />
         </div>
       )}
@@ -438,7 +507,9 @@ function updateMeshHighlight(map: LayerObjectMap, focusLayerId: string | null) {
               __baseOpacity: baseOpacity,
             }
             material.transparent = true
-            material.opacity = isFocus ? baseOpacity : Math.min(baseOpacity * 0.35, 0.5)
+            material.opacity = isFocus
+              ? baseOpacity
+              : Math.min(baseOpacity * 0.35, 0.5)
             material.needsUpdate = true
           })
         }

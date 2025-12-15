@@ -51,14 +51,18 @@ function loadState(role: UserRole): StoredFeatureState {
       return {
         preferences: {
           ...DEFAULT_PREFERENCES,
-          ...(role === 'developer' ? DEFAULT_ENTITLEMENTS_BY_ROLE.developer : {}),
+          ...(role === 'developer'
+            ? DEFAULT_ENTITLEMENTS_BY_ROLE.developer
+            : {}),
         },
         entitlements: DEFAULT_ENTITLEMENTS_BY_ROLE[role],
       }
     }
     const parsed = JSON.parse(stored) as Partial<StoredFeatureState>
-    const preferences = parsed.preferences ?? ({} as Partial<FeaturePreferences>)
-    const entitlements = parsed.entitlements ?? ({} as Partial<FeatureEntitlements>)
+    const preferences =
+      parsed.preferences ?? ({} as Partial<FeaturePreferences>)
+    const entitlements =
+      parsed.entitlements ?? ({} as Partial<FeatureEntitlements>)
     const defaultsForRole = DEFAULT_ENTITLEMENTS_BY_ROLE[role]
     return {
       preferences: {
@@ -118,7 +122,9 @@ function saveState(state: StoredFeatureState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
-    console.warn('[useFeaturePreferences] Failed to save preferences to localStorage')
+    console.warn(
+      '[useFeaturePreferences] Failed to save preferences to localStorage',
+    )
   }
 }
 

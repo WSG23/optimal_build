@@ -85,18 +85,14 @@ export function FinanceJobTimeline({
         <h2 className="finance-job-timeline__title">
           {t('finance.jobs.title')}
         </h2>
-        <p className="finance-job-timeline__empty">
-          {t('finance.jobs.empty')}
-        </p>
+        <p className="finance-job-timeline__empty">{t('finance.jobs.empty')}</p>
       </section>
     )
   }
 
   return (
     <section className="finance-job-timeline">
-      <h2 className="finance-job-timeline__title">
-        {t('finance.jobs.title')}
-      </h2>
+      <h2 className="finance-job-timeline__title">{t('finance.jobs.title')}</h2>
       {pendingCount > 0 ? (
         <p className="finance-job-timeline__pending">
           {t('finance.sensitivity.pendingNotice', { count: pendingCount })}
@@ -105,8 +101,7 @@ export function FinanceJobTimeline({
       <ol className="finance-job-timeline__list">
         {sortedJobs.map((job, index) => {
           const statusKey = (job.status || '').toLowerCase()
-          const statusLabel =
-            statusLabels[statusKey] ?? job.status ?? fallback
+          const statusLabel = statusLabels[statusKey] ?? job.status ?? fallback
           const formattedTime =
             formatTimestamp(job.queuedAt, locale) ?? fallback
           const backendLabel = job.backend

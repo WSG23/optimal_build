@@ -3,7 +3,10 @@ import { Box, Paper, Tooltip, Typography, Chip, Stack } from '@mui/material'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import PeopleIcon from '@mui/icons-material/People'
-import type { GanttChart as GanttChartData, GanttTask } from '../../../../api/development'
+import type {
+  GanttChart as GanttChartData,
+  GanttTask,
+} from '../../../../api/development'
 
 interface GanttChartProps {
   data: GanttChartData
@@ -13,11 +16,20 @@ interface GanttChartProps {
 
 const STATUS_COLORS: Record<string, string> = {
   not_started: '#94a3b8',
-  planning: '#60a5fa',
-  in_progress: '#22c55e',
-  on_hold: '#f59e0b',
+  planning: '#3b82f6',
+  in_progress: '#f59e0b', // Changed to orange for gradient
+  on_hold: '#ef4444',
   completed: '#10b981',
-  cancelled: '#ef4444',
+  cancelled: '#64748b',
+}
+
+const BAR_GRADIENTS: Record<string, string> = {
+  not_started: 'linear-gradient(90deg, #64748b 0%, #94a3b8 100%)',
+  planning: 'linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)',
+  in_progress: 'linear-gradient(90deg, #ea580c 0%, #fbbf24 100%)',
+  on_hold: 'linear-gradient(90deg, #dc2626 0%, #ef4444 100%)',
+  completed: 'linear-gradient(90deg, #059669 0%, #34d399 100%)',
+  cancelled: 'linear-gradient(90deg, #475569 0%, #64748b 100%)',
 }
 
 const DAY_WIDTH = 24 // pixels per day
@@ -67,20 +79,44 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
         {formatDate(task.startDate)} - {formatDate(task.endDate)}
       </Typography>
       <Typography variant="body2">Duration: {task.duration} days</Typography>
-      <Typography variant="body2">Progress: {Math.round(task.progress * 100)}%</Typography>
+      <Typography variant="body2">
+        Progress: {Math.round(task.progress * 100)}%
+      </Typography>
       {task.budgetAmount !== null && (
-        <Typography variant="body2">Budget: {formatCurrency(task.budgetAmount)}</Typography>
+        <Typography variant="body2">
+          Budget: {formatCurrency(task.budgetAmount)}
+        </Typography>
       )}
       {task.isCritical && (
-        <Chip
-          size="small"
-          label="Critical Path"
-          color="error"
-          sx={{ mt: 1 }}
-        />
+        <Chip size="small" label="Critical Path" color="error" sx={{ mt: 1 }} />
       )}
     </Box>
   )
+
+  const gradient = BAR_GRADIENTS[task.status] || BAR_GRADIENTS.not_started
+
+  // Striped animation for in-progress
+  const stripeStyle =
+    task.status === 'in_progress'
+      ? {
+          backgroundImage: `
+      repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.1) 10px,
+        transparent 10px,
+        transparent 20px
+      ),
+      ${gradient}
+    `,
+          backgroundSize: '200% 100%',
+          animation: 'progress-stripes 20s linear infinite',
+          '@keyframes progress-stripes': {
+            '0%': { backgroundPosition: '100% 0' },
+            '100%': { backgroundPosition: '0 0' },
+          },
+        }
+      : { background: gradient }
 
   return (
     <Tooltip title={tooltipContent} arrow placement="top">
@@ -89,26 +125,35 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
         sx={{
           position: 'absolute',
           left: `${left}px`,
-          top: '4px',
+          top: '6px',
           width: `${width}px`,
-          height: `${ROW_HEIGHT - 8}px`,
-          backgroundColor: task.color,
+          height: `${ROW_HEIGHT - 12}px`,
           borderRadius: '4px',
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          border: isSelected ? '2px solid #1976d2' : task.isCritical ? '2px solid #ef4444' : '1px solid transparent',
-          boxShadow: isSelected ? '0 2px 8px rgba(25, 118, 210, 0.4)' : 'none',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          border: isSelected
+            ? '2px solid #00f3ff'
+            : task.isCritical
+              ? '1px solid rgba(255, 51, 102, 0.5)'
+              : '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: isSelected
+            ? '0 0 15px rgba(0, 243, 255, 0.3)'
+            : task.isCritical
+              ? '0 2px 8px rgba(255, 51, 102, 0.2)'
+              : '0 2px 4px rgba(0,0,0,0.2)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
+          ...stripeStyle,
           '&:hover': {
-            filter: 'brightness(1.1)',
-            transform: 'scaleY(1.05)',
+            filter: 'brightness(1.2)',
+            transform: 'scaleY(1.1)',
+            zIndex: 10,
           },
         }}
       >
-        {/* Progress bar */}
+        {/* Progress bar overlay (darker) */}
         <Box
           sx={{
             position: 'absolute',
@@ -116,20 +161,55 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             top: 0,
             bottom: 0,
             width: `${task.progress * 100}%`,
-            backgroundColor: 'rgba(255, 255, 255, 0.3)',
-            borderRadius: '4px 0 0 4px',
+            background:
+              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 100%)',
+            borderRight: '1px solid rgba(255,255,255,0.4)',
           }}
         />
+
         {/* Icons */}
-        <Stack direction="row" spacing={0.5} sx={{ position: 'relative', zIndex: 1 }}>
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{ position: 'relative', zIndex: 1, px: 1 }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            }}
+          >
+            {task.name}
+          </Typography>
           {task.isCritical && (
-            <WarningAmberIcon sx={{ fontSize: 14, color: 'white' }} />
+            <WarningAmberIcon
+              sx={{
+                fontSize: 14,
+                color: '#fff',
+                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+              }}
+            />
           )}
           {task.isHeritage && (
-            <AccountBalanceIcon sx={{ fontSize: 14, color: 'white' }} />
+            <AccountBalanceIcon
+              sx={{
+                fontSize: 14,
+                color: '#fff',
+                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+              }}
+            />
           )}
           {task.hasTenantCoordination && (
-            <PeopleIcon sx={{ fontSize: 14, color: 'white' }} />
+            <PeopleIcon
+              sx={{
+                fontSize: 14,
+                color: '#fff',
+                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+              }}
+            />
           )}
         </Stack>
       </Box>
@@ -150,7 +230,10 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
 
     while (dayCounter < totalDays) {
       const monthStart = dayCounter
-      const monthLabel = currentDate.toLocaleDateString('en-SG', { month: 'short', year: '2-digit' })
+      const monthLabel = currentDate.toLocaleDateString('en-SG', {
+        month: 'short',
+        year: '2-digit',
+      })
 
       // Find days until end of month
       const monthDays: number[] = []
@@ -181,11 +264,12 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
       sx={{
         height: `${HEADER_HEIGHT}px`,
         display: 'flex',
-        borderBottom: '1px solid #e0e0e0',
-        backgroundColor: '#f5f5f5',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(30,30,30,0.9)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
         position: 'sticky',
         top: 0,
-        zIndex: 2,
+        zIndex: 20,
       }}
     >
       {/* Left panel header */}
@@ -193,14 +277,14 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
         sx={{
           width: `${LEFT_PANEL_WIDTH}px`,
           minWidth: `${LEFT_PANEL_WIDTH}px`,
-          borderRight: '1px solid #e0e0e0',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
           alignItems: 'center',
           px: 2,
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          Phase
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#fff' }}>
+          PHASE
         </Typography>
       </Box>
 
@@ -212,12 +296,19 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
               key={idx}
               sx={{
                 width: `${month.days * DAY_WIDTH}px`,
-                borderRight: '1px solid #e0e0e0',
+                borderRight: '1px solid rgba(255, 255, 255, 0.05)',
                 textAlign: 'center',
                 py: 1,
               }}
             >
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.7)',
+                  textTransform: 'uppercase',
+                }}
+              >
                 {month.label}
               </Typography>
             </Box>
@@ -228,7 +319,11 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
   )
 }
 
-export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProps) {
+export function GanttChart({
+  data,
+  onTaskClick,
+  selectedTaskId,
+}: GanttChartProps) {
   const { tasks, projectStartDate, totalDuration } = data
 
   const chartStartDate = useMemo(() => {
@@ -264,11 +359,91 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
       sx={{
         overflow: 'auto',
         maxHeight: 'calc(100vh - 300px)',
-        border: '1px solid #e0e0e0',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: 'transparent',
       }}
     >
-      <Box sx={{ minWidth: `${LEFT_PANEL_WIDTH + totalDuration * DAY_WIDTH + 100}px` }}>
+      <Box
+        sx={{
+          minWidth: `${LEFT_PANEL_WIDTH + totalDuration * DAY_WIDTH + 100}px`,
+          position: 'relative',
+        }}
+      >
         <TimeHeader startDate={chartStartDate} totalDays={totalDuration} />
+
+        {/* Dependency Lines Layer */}
+        <svg
+          style={{
+            position: 'absolute',
+            top: HEADER_HEIGHT,
+            left: 0,
+            width: '100%',
+            height: tasks.length * ROW_HEIGHT,
+            pointerEvents: 'none',
+            zIndex: 1, // Below task bars (which have zIndex 10 on hover) but above background
+          }}
+        >
+          <defs>
+            <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+          {tasks.map((task, taskIndex) => {
+            if (!task.dependencies || task.dependencies.length === 0)
+              return null
+
+            return task.dependencies.map((depId) => {
+              const depTask = tasks.find((t) => t.id === depId)
+              const depIndex = tasks.findIndex((t) => t.id === depId)
+
+              if (!depTask || depIndex === -1) return null
+
+              const depEndOffset = getTaskOffset(depTask) + depTask.duration
+              const currentStartOffset = getTaskOffset(task)
+
+              const startX = LEFT_PANEL_WIDTH + depEndOffset * DAY_WIDTH
+              const startY = depIndex * ROW_HEIGHT + ROW_HEIGHT / 2
+
+              const endX = LEFT_PANEL_WIDTH + currentStartOffset * DAY_WIDTH
+              const endY = taskIndex * ROW_HEIGHT + ROW_HEIGHT / 2
+
+              // Bezier Curve Logic
+              const controlPointX1 = startX + 40
+              const controlPointX2 = endX - 40
+
+              const pathData = `M ${startX} ${startY} C ${controlPointX1} ${startY}, ${controlPointX2} ${endY}, ${endX} ${endY}`
+
+              const isHighlighted =
+                selectedTaskId &&
+                (selectedTaskId === task.id || selectedTaskId === depId)
+
+              // Highlight if this is a critical link
+              const isCriticalLink = task.isCritical && depTask.isCritical
+
+              return (
+                <path
+                  key={`${task.id}-${depId}`}
+                  d={pathData}
+                  fill="none"
+                  stroke={
+                    selectedTaskId &&
+                    (task.id === selectedTaskId || depId === selectedTaskId)
+                      ? '#00f3ff'
+                      : isCriticalLink
+                        ? 'rgba(239, 68, 68, 0.4)'
+                        : 'rgba(255, 255, 255, 0.1)'
+                  }
+                  strokeWidth={isCriticalLink || isHighlighted ? 2 : 1}
+                  style={{
+                    transition: 'all 0.3s ease',
+                    filter: isHighlighted ? 'url(#glow-red)' : 'none',
+                  }}
+                />
+              )
+            })
+          })}
+        </svg>
 
         {/* Task rows */}
         {tasks.map((task) => (
@@ -277,10 +452,16 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
             sx={{
               display: 'flex',
               height: `${ROW_HEIGHT}px`,
-              borderBottom: '1px solid #f0f0f0',
-              backgroundColor: selectedTaskId === task.id ? '#e3f2fd' : 'white',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+              backgroundColor:
+                selectedTaskId === task.id
+                  ? 'rgba(0, 243, 255, 0.05)'
+                  : 'transparent',
               '&:hover': {
-                backgroundColor: selectedTaskId === task.id ? '#e3f2fd' : '#fafafa',
+                backgroundColor:
+                  selectedTaskId === task.id
+                    ? 'rgba(0, 243, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.02)',
               },
             }}
           >
@@ -289,11 +470,13 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
               sx={{
                 width: `${LEFT_PANEL_WIDTH}px`,
                 minWidth: `${LEFT_PANEL_WIDTH}px`,
-                borderRight: '1px solid #e0e0e0',
+                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 px: 2,
                 gap: 1,
+                bgcolor: 'rgba(30,30,30,0.3)',
+                backdropFilter: 'blur(var(--ob-blur-sm))',
               }}
             >
               <Box
@@ -301,7 +484,8 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  backgroundColor: STATUS_COLORS[task.status] || '#94a3b8',
+                  background: STATUS_COLORS[task.status] || '#94a3b8',
+                  boxShadow: `0 0 8px ${STATUS_COLORS[task.status] || '#94a3b8'}`,
                   flexShrink: 0,
                 }}
               />
@@ -312,11 +496,15 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  color: '#fff',
                 }}
               >
                 {task.name}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{ color: 'rgba(255,255,255,0.5)' }}
+              >
                 {getStatusLabel(task.status)}
               </Typography>
             </Box>
@@ -326,7 +514,9 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
               sx={{
                 flex: 1,
                 position: 'relative',
-                backgroundColor: task.isCritical ? 'rgba(239, 68, 68, 0.05)' : 'transparent',
+                backgroundColor: task.isCritical
+                  ? 'rgba(239, 68, 68, 0.05)'
+                  : 'transparent',
               }}
             >
               <TaskBar
@@ -342,15 +532,60 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
         ))}
       </Box>
 
+      {/* Now Line */}
+      {(() => {
+        const now = new Date()
+        const diffTime = now.getTime() - chartStartDate.getTime()
+        const dayOffset = diffTime / (1000 * 60 * 60 * 24)
+        if (dayOffset >= 0 && dayOffset <= totalDuration) {
+          return (
+            <Box
+              sx={{
+                position: 'absolute',
+                left: `${LEFT_PANEL_WIDTH + dayOffset * DAY_WIDTH}px`,
+                top: HEADER_HEIGHT,
+                bottom: 60, // Leave room for legend
+                width: '2px',
+                background: '#00f3ff',
+                boxShadow: '0 0 10px #00f3ff',
+                zIndex: 15,
+                pointerEvents: 'none',
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '-24px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#00f3ff',
+                  color: '#000',
+                  fontSize: '0.65rem',
+                  fontWeight: 'bold',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  boxShadow: '0 0 10px #00f3ff',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                TODAY
+              </Box>
+            </Box>
+          )
+        }
+        return null
+      })()}
+
       {/* Legend */}
       <Box
         sx={{
           display: 'flex',
           gap: 3,
           p: 2,
-          borderTop: '1px solid #e0e0e0',
-          backgroundColor: '#fafafa',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'rgba(20, 20, 20, 0.95)',
           flexWrap: 'wrap',
+          color: '#fff',
         }}
       >
         <Stack direction="row" spacing={0.5} alignItems="center">
@@ -367,7 +602,12 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
-            <Stack key={status} direction="row" spacing={0.5} alignItems="center">
+            <Stack
+              key={status}
+              direction="row"
+              spacing={0.5}
+              alignItems="center"
+            >
               <Box
                 sx={{
                   width: 10,
@@ -376,7 +616,9 @@ export function GanttChart({ data, onTaskClick, selectedTaskId }: GanttChartProp
                   backgroundColor: color,
                 }}
               />
-              <Typography variant="caption">{getStatusLabel(status)}</Typography>
+              <Typography variant="caption">
+                {getStatusLabel(status)}
+              </Typography>
             </Stack>
           ))}
         </Box>

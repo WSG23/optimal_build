@@ -21,6 +21,34 @@ allowed_files:
 
   # Agent decision guides
   - docs/ai-agents/next_steps.md
+  - docs/ai-agents/README.md
+  - docs/ai-agents/_TEMPLATE.md
+  - docs/ai-agents/data_scientist.md
+  - docs/ai-agents/documentation_specialist.md
+  - docs/ai-agents/domain_expert.md
+  - docs/ai-agents/accessibility_specialist.md
+  - docs/ai-agents/architect.md
+  - docs/ai-agents/cost_optimization_engineer.md
+  - docs/ai-agents/data_governance_steward.md
+  - docs/ai-agents/data_quality_analyst.md
+  - docs/ai-agents/devops_engineer.md
+  - docs/ai-agents/finance_underwriting_specialist.md
+  - docs/ai-agents/geospatial_specialist.md
+  - docs/ai-agents/incident_commander.md
+  - docs/ai-agents/legal_regulatory_analyst.md
+  - docs/ai-agents/localization_content_strategist.md
+  - docs/ai-agents/observability_sre_engineer.md
+  - docs/ai-agents/performance_engineer.md
+  - docs/ai-agents/privacy_compliance_officer.md
+  - docs/ai-agents/product_owner.md
+  - docs/ai-agents/qa_engineer.md
+  - docs/ai-agents/release_manager.md
+  - docs/ai-agents/security_engineer.md
+  - docs/ai-agents/support_success_advocate.md
+  - docs/ai-agents/sustainability_esg_analyst.md
+  - docs/ai-agents/tech_lead.md
+  - docs/ai-agents/training_enablement_lead.md
+  - docs/ai-agents/ui_ux_designer.md
 
   # Infrastructure and audits
   - docs/audits/PRE-PHASE-2D-AUDIT.MD
@@ -28,6 +56,14 @@ allowed_files:
   # Development guides
   - docs/development/testing/known-issues.md
   - docs/development/testing/summary.md
+  # Square Cyber-Minimalism design system typography guide
+  - docs/development/typography-standards.md
+
+  # Design system - Token inventory and standardization audit
+  - docs/design-system/design-token-audit.md
+
+  # Security documentation
+  - docs/SECURITY.md
 
   # Planning and status
   - docs/planning/features.md

@@ -1,3 +1,5 @@
-export { useAssumptions } from './useAssumptions'
-export { useFeasibilityCompute } from './useFeasibilityCompute'
-export { usePackGeneration } from './usePackGeneration'
+export * from './useAssumptions'
+export * from './useFeasibilityCompute'
+export * from './usePackGeneration'
+export * from './useFinancials'
+export * from './useAIAssistant' // Added

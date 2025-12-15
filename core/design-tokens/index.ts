@@ -165,13 +165,30 @@ export type CssTokenName =
   | 'space-250'
   | 'space-300'
   | 'space-400'
-  // Border Radius
+  // Border Radius - Square Cyber-Minimalism
+  | 'radius-none'
+  | 'radius-xs'
   | 'radius-sm'
   | 'radius-md'
   | 'radius-lg'
-  | 'radius-xl'
-  | 'radius-2xl'
+  | 'radius-xl'      // DEPRECATED - maps to lg
+  | 'radius-2xl'     // DEPRECATED - maps to lg
+  | 'radius-md-plus' // DEPRECATED - maps to sm
   | 'radius-pill'
+  // Elegant Fine Lines
+  | 'border-fine'
+  | 'border-fine-strong'
+  | 'border-fine-hover'
+  | 'divider'
+  | 'divider-strong'
+  // Glow Effects
+  | 'glow-brand-subtle'
+  | 'glow-brand-medium'
+  | 'glow-brand-strong'
+  | 'glow-gold'
+  | 'glow-success'
+  | 'glow-error'
+  | 'glow-warning'
   // Shadows
   | 'shadow-sm'
   | 'shadow-md'
@@ -274,15 +291,44 @@ export const spacing = {
 } as const
 
 /**
- * Border radius values - mirrors tokens.css
+ * Border radius values - Square Cyber-Minimalism scale
+ * Sharp, geometric aesthetic for architect/designer appeal
  */
 export const radii = {
-  sm: '0.375rem',
-  md: '0.5rem',
-  lg: '0.75rem',
-  xl: '1rem',
-  '2xl': '1.5rem',
-  pill: '9999px',
+  none: '0',           // 0px - tables, data grids
+  xs: '0.125rem',      // 2px - buttons, tags, chips
+  sm: '0.25rem',       // 4px - cards, panels, tiles
+  md: '0.375rem',      // 6px - inputs, select boxes
+  lg: '0.5rem',        // 8px - modals, windows ONLY
+  pill: '9999px',      // Avatars, circular icons ONLY
+  // DEPRECATED - kept for backward compatibility
+  xl: '0.5rem',        // Maps to lg
+  '2xl': '0.5rem',     // Maps to lg
+  'md-plus': '0.25rem', // Maps to sm
+} as const
+
+/**
+ * Elegant fine line borders - low opacity for sophistication
+ */
+export const borders = {
+  fine: '1px solid rgba(255, 255, 255, 0.08)',
+  fineStrong: '1px solid rgba(255, 255, 255, 0.12)',
+  fineHover: '1px solid rgba(255, 255, 255, 0.18)',
+  divider: '1px solid rgba(255, 255, 255, 0.06)',
+  dividerStrong: '1px solid rgba(255, 255, 255, 0.10)',
+} as const
+
+/**
+ * Glow effects - consistent across components
+ */
+export const glows = {
+  brandSubtle: '0 0 8px rgba(59, 130, 246, 0.15)',
+  brandMedium: '0 0 12px rgba(59, 130, 246, 0.25)',
+  brandStrong: '0 0 20px rgba(59, 130, 246, 0.4)',
+  gold: '0 0 12px rgba(245, 158, 11, 0.25)',
+  success: '0 0 10px rgba(34, 197, 94, 0.2)',
+  error: '0 0 10px rgba(239, 68, 68, 0.2)',
+  warning: '0 0 10px rgba(234, 179, 8, 0.2)',
 } as const
 
 /**
@@ -294,14 +340,18 @@ export const typography = {
     mono: "'JetBrains Mono', 'Roboto Mono', monospace",
   },
   size: {
+    '2xs': '0.6875rem',
     xs: '0.75rem',
+    'sm-minus': '0.8125rem',
     sm: '0.875rem',
+    md: '0.9375rem',
     base: '1rem',
     lg: '1.125rem',
     xl: '1.25rem',
     '2xl': '1.5rem',
     '3xl': '1.875rem',
     '4xl': '2.25rem',
+    '5xl': '3rem',
   },
   weight: {
     regular: 400,
@@ -310,9 +360,21 @@ export const typography = {
     bold: 700,
   },
   lineHeight: {
+    none: 1,
     tight: 1.2,
+    snug: 1.4,
     normal: 1.5,
     relaxed: 1.6,
+    loose: 1.75,
+  },
+  letterSpacing: {
+    tighter: '-0.02em',
+    tight: '-0.01em',
+    normal: '0',
+    wide: '0.01em',
+    wider: '0.02em',
+    widest: '0.05em',
+    caps: '0.1em',
   },
 } as const
 
@@ -349,6 +411,8 @@ export type TokenExports = {
   colors: typeof colors
   spacing: typeof spacing
   radii: typeof radii
+  borders: typeof borders
+  glows: typeof glows
   typography: typeof typography
   shadows: typeof shadows
   zIndex: typeof zIndex
@@ -358,6 +422,8 @@ export const tokens: TokenExports = {
   colors,
   spacing,
   radii,
+  borders,
+  glows,
   typography,
   shadows,
   zIndex,

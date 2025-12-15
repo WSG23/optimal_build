@@ -254,11 +254,19 @@ export interface ConditionAssessmentUpsertRequest {
 export type ChecklistTemplate = AgentsChecklistTemplate
 export type ChecklistTemplateDraft = AgentsChecklistTemplateDraft
 export type ChecklistTemplateUpdate = AgentsChecklistTemplateUpdate
-export type ChecklistTemplateImportResult =
-  AgentsChecklistTemplateImportResult
+export type ChecklistTemplateImportResult = AgentsChecklistTemplateImportResult
 
 // Re-export types from agents.ts
-export type { ChecklistItem, ChecklistSummary, ChecklistCategory, ChecklistPriority, DevelopmentScenario, ChecklistStatus, GpsCaptureSummary, UpdateChecklistRequest }
+export type {
+  ChecklistItem,
+  ChecklistSummary,
+  ChecklistCategory,
+  ChecklistPriority,
+  DevelopmentScenario,
+  ChecklistStatus,
+  GpsCaptureSummary,
+  UpdateChecklistRequest,
+}
 
 // Type aliases for backward compatibility
 export type ConditionAssessmentEntry = ConditionAssessment
@@ -285,25 +293,30 @@ function mapConditionAssessmentPayload(
 
   const insights = Array.isArray(payload.insights)
     ? payload.insights
-        .map((entry: Record<string, unknown>, index: number): ConditionInsight => {
-          const rawSeverity = String(entry.severity ?? 'warning').toLowerCase()
-          const severity: ConditionInsight['severity'] = (
-            ['critical', 'warning', 'positive', 'info'].includes(rawSeverity)
-              ? rawSeverity
-              : 'warning'
-          ) as ConditionInsight['severity']
-          const specialistValue =
-            typeof entry.specialist === 'string' && entry.specialist.trim() !== ''
-              ? entry.specialist
-              : null
-          return {
-            id: String(entry.id ?? `insight-${index}`),
-            severity,
-            title: String(entry.title ?? 'Condition insight'),
-            detail: String(entry.detail ?? ''),
-            specialist: specialistValue,
-          }
-        })
+        .map(
+          (entry: Record<string, unknown>, index: number): ConditionInsight => {
+            const rawSeverity = String(
+              entry.severity ?? 'warning',
+            ).toLowerCase()
+            const severity: ConditionInsight['severity'] = (
+              ['critical', 'warning', 'positive', 'info'].includes(rawSeverity)
+                ? rawSeverity
+                : 'warning'
+            ) as ConditionInsight['severity']
+            const specialistValue =
+              typeof entry.specialist === 'string' &&
+              entry.specialist.trim() !== ''
+                ? entry.specialist
+                : null
+            return {
+              id: String(entry.id ?? `insight-${index}`),
+              severity,
+              title: String(entry.title ?? 'Condition insight'),
+              detail: String(entry.detail ?? ''),
+              specialist: specialistValue,
+            }
+          },
+        )
         .filter((insight) => insight.detail !== '')
     : []
 
@@ -331,43 +344,47 @@ function mapConditionAssessmentPayload(
     scenario:
       typeof payload.scenario === 'string'
         ? (payload.scenario as DevelopmentScenario)
-        : typeof payload.scenario === 'undefined' && typeof payload['scenario'] === 'string'
-        ? (payload['scenario'] as DevelopmentScenario)
-        : (payload.scenario as DevelopmentScenario | null | undefined) ?? null,
+        : typeof payload.scenario === 'undefined' &&
+            typeof payload['scenario'] === 'string'
+          ? (payload['scenario'] as DevelopmentScenario)
+          : ((payload.scenario as DevelopmentScenario | null | undefined) ??
+            null),
     overallScore: Number(payload.overall_score ?? payload.overallScore ?? 0),
-    overallRating: String(payload.overall_rating ?? payload.overallRating ?? 'C'),
+    overallRating: String(
+      payload.overall_rating ?? payload.overallRating ?? 'C',
+    ),
     riskLevel: String(payload.risk_level ?? payload.riskLevel ?? 'moderate'),
     summary: String(payload.summary ?? ''),
     scenarioContext:
       typeof payload.scenario_context === 'string'
         ? payload.scenario_context
         : typeof payload.scenarioContext === 'string'
-        ? payload.scenarioContext
-        : null,
+          ? payload.scenarioContext
+          : null,
     systems,
     recommendedActions: Array.isArray(payload.recommended_actions)
       ? (payload.recommended_actions as string[])
       : Array.isArray(payload.recommendedActions)
-      ? (payload.recommendedActions as string[])
-      : [],
+        ? (payload.recommendedActions as string[])
+        : [],
     inspectorName:
       typeof payload.inspector_name === 'string'
         ? payload.inspector_name
         : typeof payload.inspectorName === 'string'
-        ? payload.inspectorName
-        : null,
+          ? payload.inspectorName
+          : null,
     recordedBy:
       typeof payload.recorded_by === 'string'
         ? payload.recorded_by
         : typeof payload.recordedBy === 'string'
-        ? payload.recordedBy
-        : null,
+          ? payload.recordedBy
+          : null,
     recordedAt:
       typeof payload.recorded_at === 'string'
         ? payload.recorded_at
         : typeof payload.recordedAt === 'string'
-        ? payload.recordedAt
-        : null,
+          ? payload.recordedAt
+          : null,
     attachments,
     insights,
   }
@@ -475,8 +492,7 @@ function mapDeveloperEnvelope(
     coerceString(payload?.zone_description) ??
     coerceString(payload?.zoneDescription)
   const siteArea =
-    coerceNumeric(payload?.site_area_sqm) ??
-    coerceNumeric(payload?.siteAreaSqm)
+    coerceNumeric(payload?.site_area_sqm) ?? coerceNumeric(payload?.siteAreaSqm)
   const plotRatio =
     coerceNumeric(payload?.allowable_plot_ratio) ??
     coerceNumeric(payload?.allowablePlotRatio)
@@ -516,25 +532,33 @@ function mapDeveloperVisualization(
     typeof payload?.preview_available === 'boolean'
       ? payload.preview_available
       : typeof payload?.previewAvailable === 'boolean'
-      ? payload.previewAvailable
-      : false
+        ? payload.previewAvailable
+        : false
   const conceptMeshUrl =
-    coerceString(payload?.concept_mesh_url) ?? coerceString(payload?.conceptMeshUrl) ?? null
+    coerceString(payload?.concept_mesh_url) ??
+    coerceString(payload?.conceptMeshUrl) ??
+    null
   const previewMetadataUrl =
     coerceString(payload?.preview_metadata_url) ??
     coerceString(payload?.previewMetadataUrl) ??
     null
   const thumbnailUrl =
-    coerceString(payload?.thumbnail_url) ?? coerceString(payload?.thumbnailUrl) ?? null
+    coerceString(payload?.thumbnail_url) ??
+    coerceString(payload?.thumbnailUrl) ??
+    null
   const cameraOrbitHint =
     typeof payload?.camera_orbit_hint === 'object' && payload?.camera_orbit_hint
       ? (payload?.camera_orbit_hint as Record<string, number>)
       : typeof payload?.cameraOrbitHint === 'object' && payload?.cameraOrbitHint
-      ? (payload?.cameraOrbitHint as Record<string, number>)
-      : null
-  const previewSeed = coerceNumeric(payload?.preview_seed ?? payload?.previewSeed)
+        ? (payload?.cameraOrbitHint as Record<string, number>)
+        : null
+  const previewSeed = coerceNumeric(
+    payload?.preview_seed ?? payload?.previewSeed,
+  )
   const previewJobId =
-    coerceString(payload?.preview_job_id) ?? coerceString(payload?.previewJobId) ?? null
+    coerceString(payload?.preview_job_id) ??
+    coerceString(payload?.previewJobId) ??
+    null
   const notes = Array.isArray(payload?.notes)
     ? payload.notes
         .map((note) => coerceString(note) ?? '')
@@ -543,8 +567,8 @@ function mapDeveloperVisualization(
   const rawMassing = Array.isArray(payload?.massing_layers)
     ? payload.massing_layers
     : Array.isArray(payload?.massingLayers)
-    ? payload.massingLayers
-    : []
+      ? payload.massingLayers
+      : []
   const massingLayers = Array.isArray(rawMassing)
     ? rawMassing
         .map((entry) => {
@@ -555,7 +579,8 @@ function mapDeveloperVisualization(
           const assetType =
             coerceString(item.asset_type) ?? coerceString(item.assetType)
           const allocationPct =
-            coerceNumeric(item.allocation_pct) ?? coerceNumeric(item.allocationPct)
+            coerceNumeric(item.allocation_pct) ??
+            coerceNumeric(item.allocationPct)
           const gfaSqm =
             coerceNumeric(item.gfa_sqm) ?? coerceNumeric(item.gfaSqm) ?? null
           const niaSqm =
@@ -583,8 +608,8 @@ function mapDeveloperVisualization(
   const rawLegend = Array.isArray(payload?.color_legend)
     ? payload.color_legend
     : Array.isArray(payload?.colorLegend)
-    ? payload.colorLegend
-    : []
+      ? payload.colorLegend
+      : []
   const colorLegend = Array.isArray(rawLegend)
     ? rawLegend
         .map((entry) => {
@@ -641,13 +666,17 @@ function mapDeveloperOptimizations(
   }
   return payload
     .map((entry) => {
-      const assetType = coerceString(entry.asset_type) ?? coerceString(entry.assetType)
+      const assetType =
+        coerceString(entry.asset_type) ?? coerceString(entry.assetType)
       const allocation =
-        coerceNumeric(entry.allocation_pct) ?? coerceNumeric(entry.allocationPct)
+        coerceNumeric(entry.allocation_pct) ??
+        coerceNumeric(entry.allocationPct)
       const efficiency =
-        coerceNumeric(entry.nia_efficiency) ?? coerceNumeric(entry.niaEfficiency)
+        coerceNumeric(entry.nia_efficiency) ??
+        coerceNumeric(entry.niaEfficiency)
       const allocated =
-        coerceNumeric(entry.allocated_gfa_sqm) ?? coerceNumeric(entry.allocatedGfaSqm)
+        coerceNumeric(entry.allocated_gfa_sqm) ??
+        coerceNumeric(entry.allocatedGfaSqm)
       const floorHeight =
         coerceNumeric(entry.target_floor_height_m) ??
         coerceNumeric(entry.targetFloorHeightM)
@@ -669,11 +698,13 @@ function mapDeveloperOptimizations(
         coerceNumeric(entry.estimated_capex_sgd) ??
         coerceNumeric(entry.estimatedCapexSgd)
       const fitout =
-        coerceNumeric(entry.fitout_cost_psm) ?? coerceNumeric(entry.fitoutCostPsm)
+        coerceNumeric(entry.fitout_cost_psm) ??
+        coerceNumeric(entry.fitoutCostPsm)
       const absorption =
         coerceNumeric(entry.absorption_months) ??
         coerceNumeric(entry.absorptionMonths)
-      const riskLevel = coerceString(entry.risk_level) ?? coerceString(entry.riskLevel)
+      const riskLevel =
+        coerceString(entry.risk_level) ?? coerceString(entry.riskLevel)
       const heritagePremium =
         coerceNumeric(entry.heritage_premium_pct) ??
         coerceNumeric(entry.heritagePremiumPct)
@@ -733,7 +764,9 @@ function mapHeritageContext(payload: unknown): DeveloperHeritageContext | null {
       name: coerceString(raw.name) ?? coerceString(raw.overlayName) ?? null,
       source: coerceString(raw.source) ?? null,
       heritagePremiumPct:
-        coerceNumeric(raw.heritage_premium_pct) ?? coerceNumeric(raw.heritagePremiumPct) ?? null,
+        coerceNumeric(raw.heritage_premium_pct) ??
+        coerceNumeric(raw.heritagePremiumPct) ??
+        null,
     }
   }
 
@@ -750,7 +783,9 @@ function mapHeritageContext(payload: unknown): DeveloperHeritageContext | null {
   }
 }
 
-function normaliseGeometryDetailLevel(value: unknown): GeometryDetailLevel | null {
+function normaliseGeometryDetailLevel(
+  value: unknown,
+): GeometryDetailLevel | null {
   const text = coerceString(value)?.toLowerCase()
   if (text === 'simple' || text === 'medium') {
     return text
@@ -770,7 +805,8 @@ function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
       }
       const item = entry as Record<string, unknown>
       const id = coerceString(item.id) ?? coerceString(item.preview_job_id)
-      const propertyId = coerceString(item.property_id) ?? coerceString(item.propertyId)
+      const propertyId =
+        coerceString(item.property_id) ?? coerceString(item.propertyId)
       const scenario = coerceString(item.scenario)
       const status = coerceString(item.status)
       if (!id || !propertyId || !scenario || !status) {
@@ -781,15 +817,32 @@ function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
         propertyId,
         scenario,
         status,
-        previewUrl: coerceString(item.preview_url) ?? coerceString(item.previewUrl) ?? null,
+        previewUrl:
+          coerceString(item.preview_url) ??
+          coerceString(item.previewUrl) ??
+          null,
         metadataUrl:
-          coerceString(item.metadata_url) ?? coerceString(item.metadataUrl) ?? null,
-        thumbnailUrl: coerceString(item.thumbnail_url) ?? coerceString(item.thumbnailUrl) ?? null,
+          coerceString(item.metadata_url) ??
+          coerceString(item.metadataUrl) ??
+          null,
+        thumbnailUrl:
+          coerceString(item.thumbnail_url) ??
+          coerceString(item.thumbnailUrl) ??
+          null,
         assetVersion:
-          coerceString(item.asset_version) ?? coerceString(item.assetVersion) ?? null,
-        requestedAt: coerceString(item.requested_at) ?? coerceString(item.requestedAt) ?? '',
-        startedAt: coerceString(item.started_at) ?? coerceString(item.startedAt) ?? null,
-        finishedAt: coerceString(item.finished_at) ?? coerceString(item.finishedAt) ?? null,
+          coerceString(item.asset_version) ??
+          coerceString(item.assetVersion) ??
+          null,
+        requestedAt:
+          coerceString(item.requested_at) ??
+          coerceString(item.requestedAt) ??
+          '',
+        startedAt:
+          coerceString(item.started_at) ?? coerceString(item.startedAt) ?? null,
+        finishedAt:
+          coerceString(item.finished_at) ??
+          coerceString(item.finishedAt) ??
+          null,
         message: coerceString(item.message) ?? null,
         geometryDetailLevel: normaliseGeometryDetailLevel(
           item.geometry_detail_level ?? item.geometryDetailLevel,
@@ -799,7 +852,9 @@ function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
     .filter((entry): entry is DeveloperPreviewJob => entry !== null)
 }
 
-function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null {
+function mapFinanceBlueprint(
+  payload: unknown,
+): DeveloperFinanceBlueprint | null {
   if (!payload || typeof payload !== 'object') {
     return null
   }
@@ -813,10 +868,12 @@ function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null
             return null
           }
           const item = entry as Record<string, unknown>
-          const scenario = coerceString(item.scenario) ?? coerceString(item.scenarioName)
+          const scenario =
+            coerceString(item.scenario) ?? coerceString(item.scenarioName)
           const equity =
             coerceNumeric(item.equity_pct) ?? coerceNumeric(item.equityPct)
-          const debt = coerceNumeric(item.debt_pct) ?? coerceNumeric(item.debtPct)
+          const debt =
+            coerceNumeric(item.debt_pct) ?? coerceNumeric(item.debtPct)
           const pref =
             coerceNumeric(item.preferred_equity_pct) ??
             coerceNumeric(item.preferredEquityPct)
@@ -848,7 +905,9 @@ function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null
             comments: coerceString(item.comments) ?? null,
           }
         })
-        .filter((entry): entry is DeveloperCapitalStructureScenario => entry !== null)
+        .filter(
+          (entry): entry is DeveloperCapitalStructureScenario => entry !== null,
+        )
     : []
 
   const debtFacilities = Array.isArray(source.debt_facilities)
@@ -918,7 +977,9 @@ function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null
         coerceNumeric(item.preferred_return_pct) ??
         coerceNumeric(item.preferredReturnPct),
       catchUpNotes:
-        coerceString(item.catch_up_notes) ?? coerceString(item.catchUpNotes) ?? null,
+        coerceString(item.catch_up_notes) ??
+        coerceString(item.catchUpNotes) ??
+        null,
     }
   }
 
@@ -955,12 +1016,14 @@ function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null
     const exitCapRates: Record<string, number> = {}
     const rawRates = item.exit_cap_rates ?? item.exitCapRates
     if (rawRates && typeof rawRates === 'object') {
-      Object.entries(rawRates as Record<string, unknown>).forEach(([key, value]) => {
-        const numeric = coerceNumeric(value)
-        if (numeric !== null) {
-          exitCapRates[key] = numeric
-        }
-      })
+      Object.entries(rawRates as Record<string, unknown>).forEach(
+        ([key, value]) => {
+          const numeric = coerceNumeric(value)
+          if (numeric !== null) {
+            exitCapRates[key] = numeric
+          }
+        },
+      )
     }
     const saleCostsPct =
       coerceNumeric(item.sale_costs_pct) ?? coerceNumeric(item.saleCostsPct)
@@ -987,7 +1050,8 @@ function mapFinanceBlueprint(payload: unknown): DeveloperFinanceBlueprint | null
             return null
           }
           const item = entry as Record<string, unknown>
-          const parameter = coerceString(item.parameter) ?? coerceString(item.name)
+          const parameter =
+            coerceString(item.parameter) ?? coerceString(item.name)
           const low = coerceNumeric(item.low) ?? coerceNumeric(item.min)
           const base = coerceNumeric(item.base) ?? coerceNumeric(item.mid)
           const high = coerceNumeric(item.high) ?? coerceNumeric(item.max)
@@ -1025,8 +1089,8 @@ function deriveEnvelopeFromSummary(
   const currentGfa =
     coerceNumeric(summary.propertyInfo?.gfaApproved ?? null) ??
     coerceNumeric(
-      (summary.propertyInfo as Record<string, unknown> | null)?.grossFloorAreaSqm ??
-        null,
+      (summary.propertyInfo as Record<string, unknown> | null)
+        ?.grossFloorAreaSqm ?? null,
     )
 
   const maxBuildable =
@@ -1326,7 +1390,9 @@ export async function capturePropertyForDevelopment(
             developerPayload.financial_summary.total_estimated_capex_sgd,
           ) ?? null,
         dominantRiskProfile:
-          coerceString(developerPayload.financial_summary.dominant_risk_profile) ?? null,
+          coerceString(
+            developerPayload.financial_summary.dominant_risk_profile,
+          ) ?? null,
         notes: Array.isArray(developerPayload.financial_summary.notes)
           ? (developerPayload.financial_summary.notes as unknown[])
               .map((entry) => coerceString(entry) ?? '')
@@ -1349,7 +1415,8 @@ export async function capturePropertyForDevelopment(
   const heritageContext = developerPayload
     ? mapHeritageContext(
         developerPayload.heritage_context ??
-          (developerPayload as unknown as Record<string, unknown>).heritageContext,
+          (developerPayload as unknown as Record<string, unknown>)
+            .heritageContext,
       )
     : null
 
@@ -1376,7 +1443,11 @@ export async function fetchPropertyChecklist(
   developmentScenario?: DevelopmentScenario,
   status?: ChecklistStatus,
 ): Promise<ChecklistItem[]> {
-  return fetchPropertyChecklistFromAgents(propertyId, developmentScenario, status)
+  return fetchPropertyChecklistFromAgents(
+    propertyId,
+    developmentScenario,
+    status,
+  )
 }
 
 /**
@@ -1402,10 +1473,13 @@ export async function fetchPreviewJob(
   jobId: string,
   signal?: AbortSignal,
 ): Promise<DeveloperPreviewJob | null> {
-  const response = await fetch(buildUrl(`api/v1/developers/preview-jobs/${jobId}`), {
-    method: 'GET',
-    signal,
-  })
+  const response = await fetch(
+    buildUrl(`api/v1/developers/preview-jobs/${jobId}`),
+    {
+      method: 'GET',
+      signal,
+    },
+  )
   if (!response.ok) {
     return null
   }
@@ -1448,7 +1522,9 @@ export async function refreshPreviewJob(
   return job ?? null
 }
 
-export async function listPreviewJobs(propertyId: string): Promise<DeveloperPreviewJob[]> {
+export async function listPreviewJobs(
+  propertyId: string,
+): Promise<DeveloperPreviewJob[]> {
   const response = await fetch(
     buildUrl(`api/v1/developers/properties/${propertyId}/preview-jobs`),
     { method: 'GET' },
@@ -1536,7 +1612,10 @@ export async function fetchConditionAssessmentHistory(
   )
   const response = await fetch(url)
   if (!response.ok) {
-    console.error('Failed to fetch condition assessment history:', response.statusText)
+    console.error(
+      'Failed to fetch condition assessment history:',
+      response.statusText,
+    )
     return []
   }
 
@@ -1645,7 +1724,9 @@ export async function exportConditionReport(
     propertyId: String(raw.propertyId ?? raw.property_id ?? propertyId),
     propertyName: raw.propertyName ?? raw.property_name ?? null,
     address: raw.address ?? null,
-    generatedAt: String(raw.generatedAt ?? raw.generated_at ?? new Date().toISOString()),
+    generatedAt: String(
+      raw.generatedAt ?? raw.generated_at ?? new Date().toISOString(),
+    ),
     scenarioAssessments: Array.isArray(raw.scenarioAssessments)
       ? raw.scenarioAssessments.map((entry: Record<string, unknown>) =>
           mapConditionAssessmentPayload(entry, propertyId),
@@ -1660,69 +1741,68 @@ export async function exportConditionReport(
     scenarioComparison: Array.isArray(raw.scenarioComparison)
       ? raw.scenarioComparison.map((entry: Record<string, unknown>) => ({
           scenario: typeof entry.scenario === 'string' ? entry.scenario : null,
-          label: String(entry.label ?? (entry.scenario ?? 'Scenario')),
+          label: String(entry.label ?? entry.scenario ?? 'Scenario'),
           recordedAt:
             typeof entry.recordedAt === 'string'
               ? entry.recordedAt
               : typeof entry.recorded_at === 'string'
-              ? entry.recorded_at
-              : null,
+                ? entry.recorded_at
+                : null,
           overallScore:
             typeof entry.overallScore === 'number'
               ? entry.overallScore
               : typeof entry.overall_score === 'number'
-              ? entry.overall_score
-              : null,
+                ? entry.overall_score
+                : null,
           overallRating:
             typeof entry.overallRating === 'string'
               ? entry.overallRating
               : typeof entry.overall_rating === 'string'
-              ? entry.overall_rating
-              : null,
+                ? entry.overall_rating
+                : null,
           riskLevel:
             typeof entry.riskLevel === 'string'
               ? entry.riskLevel
               : typeof entry.risk_level === 'string'
-              ? entry.risk_level
-              : null,
+                ? entry.risk_level
+                : null,
           checklistCompleted:
             typeof entry.checklistCompleted === 'number'
               ? entry.checklistCompleted
               : typeof entry.checklist_completed === 'number'
-              ? entry.checklist_completed
-              : null,
+                ? entry.checklist_completed
+                : null,
           checklistTotal:
             typeof entry.checklistTotal === 'number'
               ? entry.checklistTotal
               : typeof entry.checklist_total === 'number'
-              ? entry.checklist_total
-              : null,
+                ? entry.checklist_total
+                : null,
           checklistPercent:
             typeof entry.checklistPercent === 'number'
               ? entry.checklistPercent
               : typeof entry.checklist_percent === 'number'
-              ? entry.checklist_percent
-              : null,
-          primaryInsight:
-            entry.primaryInsight
-              ? mapConditionAssessmentPayload(
-                  { insights: [entry.primaryInsight] },
-                  propertyId,
-                ).insights[0] ?? null
-              : null,
+                ? entry.checklist_percent
+                : null,
+          primaryInsight: entry.primaryInsight
+            ? (mapConditionAssessmentPayload(
+                { insights: [entry.primaryInsight] },
+                propertyId,
+              ).insights[0] ?? null)
+            : null,
           insightCount: Number(entry.insightCount ?? entry.insight_count ?? 0),
           recommendedAction:
             typeof entry.recommendedAction === 'string'
               ? entry.recommendedAction
               : typeof entry.recommended_action === 'string'
-              ? entry.recommended_action
-              : null,
+                ? entry.recommended_action
+                : null,
           inspectorName:
             typeof entry.inspectorName === 'string'
               ? entry.inspectorName
               : typeof entry.inspector_name === 'string'
-              ? entry.inspector_name
-              : null,
+                ? entry.inspector_name
+                : null,
           source:
             entry.source === 'manual' || entry.source === 'heuristic'
               ? (entry.source as 'manual' | 'heuristic')
@@ -1788,8 +1868,7 @@ function mapVoiceNote(payload: Record<string, unknown>): PropertyVoiceNote {
         : typeof payload.captureDate === 'string'
           ? payload.captureDate
           : null,
-    title:
-      typeof payload.title === 'string' ? payload.title : null,
+    title: typeof payload.title === 'string' ? payload.title : null,
     tags: Array.isArray(payload.tags) ? payload.tags : [],
     transcript:
       typeof payload.transcript === 'string' ? payload.transcript : null,
@@ -1803,12 +1882,16 @@ function mapVoiceNote(payload: Record<string, unknown>): PropertyVoiceNote {
     location: payload.location
       ? {
           latitude:
-            typeof (payload.location as Record<string, unknown>).latitude === 'number'
-              ? (payload.location as Record<string, unknown>).latitude as number
+            typeof (payload.location as Record<string, unknown>).latitude ===
+            'number'
+              ? ((payload.location as Record<string, unknown>)
+                  .latitude as number)
               : null,
           longitude:
-            typeof (payload.location as Record<string, unknown>).longitude === 'number'
-              ? (payload.location as Record<string, unknown>).longitude as number
+            typeof (payload.location as Record<string, unknown>).longitude ===
+            'number'
+              ? ((payload.location as Record<string, unknown>)
+                  .longitude as number)
               : null,
         }
       : null,
@@ -1904,7 +1987,8 @@ function mapPropertyPhoto(payload: Record<string, unknown>): PropertyPhoto {
     if (typeof v.thumbnail === 'string') versions.thumbnail = v.thumbnail
     if (typeof v.medium === 'string') versions.medium = v.medium
     if (typeof v.web === 'string') versions.web = v.web
-    if (typeof v.web_watermarked === 'string') versions.web_watermarked = v.web_watermarked
+    if (typeof v.web_watermarked === 'string')
+      versions.web_watermarked = v.web_watermarked
     if (typeof v.marketing === 'string') versions.marketing = v.marketing
   }
   // Fall back to public_url if versions not provided
@@ -1938,17 +2022,20 @@ function mapPropertyPhoto(payload: Record<string, unknown>): PropertyPhoto {
     location: payload.location
       ? {
           latitude:
-            typeof (payload.location as Record<string, unknown>).latitude === 'number'
-              ? ((payload.location as Record<string, unknown>).latitude as number)
+            typeof (payload.location as Record<string, unknown>).latitude ===
+            'number'
+              ? ((payload.location as Record<string, unknown>)
+                  .latitude as number)
               : null,
           longitude:
-            typeof (payload.location as Record<string, unknown>).longitude === 'number'
-              ? ((payload.location as Record<string, unknown>).longitude as number)
+            typeof (payload.location as Record<string, unknown>).longitude ===
+            'number'
+              ? ((payload.location as Record<string, unknown>)
+                  .longitude as number)
               : null,
         }
       : null,
-    notes:
-      typeof payload.notes === 'string' ? payload.notes : null,
+    notes: typeof payload.notes === 'string' ? payload.notes : null,
     tags: Array.isArray(payload.tags) ? payload.tags : [],
     versions,
   }
@@ -1964,7 +2051,9 @@ export async function fetchPropertyPhotos(
     return []
   }
 
-  const url = buildUrl(`api/v1/agents/commercial-property/properties/${propertyId}/photos`)
+  const url = buildUrl(
+    `api/v1/agents/commercial-property/properties/${propertyId}/photos`,
+  )
   const response = await fetch(url)
   if (!response.ok) {
     console.error('Failed to fetch photos:', response.statusText)
@@ -2003,7 +2092,9 @@ export async function uploadPropertyPhoto(
     formData.append('phase', options.phase)
   }
 
-  const url = buildUrl(`api/v1/agents/commercial-property/properties/${propertyId}/photos`)
+  const url = buildUrl(
+    `api/v1/agents/commercial-property/properties/${propertyId}/photos`,
+  )
   const response = await fetch(url, {
     method: 'POST',
     body: formData,
@@ -2025,7 +2116,9 @@ export async function deletePropertyPhoto(
   propertyId: string,
   photoId: string,
 ): Promise<boolean> {
-  const url = buildUrl(`api/v1/agents/commercial-property/properties/${propertyId}/photos/${photoId}`)
+  const url = buildUrl(
+    `api/v1/agents/commercial-property/properties/${propertyId}/photos/${photoId}`,
+  )
   const response = await fetch(url, { method: 'DELETE' })
   return response.ok
 }

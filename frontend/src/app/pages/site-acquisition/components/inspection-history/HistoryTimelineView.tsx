@@ -6,7 +6,10 @@
  * recommended actions preview, and attachments.
  */
 
-import type { ConditionAssessment, DevelopmentScenario } from '../../../../../api/siteAcquisition'
+import type {
+  ConditionAssessment,
+  DevelopmentScenario,
+} from '../../../../../api/siteAcquisition'
 
 // ============================================================================
 // Types
@@ -17,7 +20,9 @@ export interface HistoryTimelineViewProps {
   activeScenario: 'all' | DevelopmentScenario
 
   // Formatters (stable callbacks from parent)
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null | undefined) => string
+  formatScenarioLabel: (
+    scenario: DevelopmentScenario | 'all' | null | undefined,
+  ) => string
   formatRecordedTimestamp: (timestamp: string | null | undefined) => string
 }
 
@@ -49,9 +54,13 @@ export function HistoryTimelineView({
             style={{
               border: '1px solid #e5e5e7',
               borderLeft: `4px solid ${
-                index === 0 ? '#0a84ff' : matchesScenario ? '#34c759' : '#d2d2d7'
+                index === 0
+                  ? '#0a84ff'
+                  : matchesScenario
+                    ? '#34c759'
+                    : '#d2d2d7'
               }`,
-              borderRadius: '10px',
+              borderRadius: '4px',
               padding: '1rem 1.25rem',
               background: index === 0 ? '#f0f9ff' : '#ffffff',
               display: 'flex',
@@ -70,7 +79,11 @@ export function HistoryTimelineView({
               }}
             >
               <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.25rem',
+                }}
               >
                 <span
                   style={{
@@ -81,7 +94,9 @@ export function HistoryTimelineView({
                     color: '#6e6e73',
                   }}
                 >
-                  {index === 0 ? 'Most recent inspection' : `Inspection ${index + 1}`}
+                  {index === 0
+                    ? 'Most recent inspection'
+                    : `Inspection ${index + 1}`}
                 </span>
                 <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>
                   {formatScenarioLabel(entry.scenario)}
@@ -100,7 +115,9 @@ export function HistoryTimelineView({
                 </span>
                 <span style={{ fontSize: '0.78rem', color: '#6e6e73' }}>
                   Inspector:{' '}
-                  <strong>{entry.inspectorName?.trim() || 'Not recorded'}</strong>
+                  <strong>
+                    {entry.inspectorName?.trim() || 'Not recorded'}
+                  </strong>
                 </span>
               </div>
             </div>
@@ -128,7 +145,9 @@ export function HistoryTimelineView({
               </span>
               <span>
                 Risk level:{' '}
-                <strong style={{ textTransform: 'capitalize' }}>{entry.riskLevel}</strong>
+                <strong style={{ textTransform: 'capitalize' }}>
+                  {entry.riskLevel}
+                </strong>
               </span>
             </div>
 
@@ -148,14 +167,24 @@ export function HistoryTimelineView({
                 </span>
                 <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1rem' }}>
                   {recommendedPreview.map((action, actionIndex) => (
-                    <li key={`${key}-action-${actionIndex}`} style={{ fontSize: '0.85rem' }}>
+                    <li
+                      key={`${key}-action-${actionIndex}`}
+                      style={{ fontSize: '0.85rem' }}
+                    >
                       {action}
                     </li>
                   ))}
                 </ul>
                 {remainingActions > 0 && (
-                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: '#6e6e73' }}>
-                    +{remainingActions} more actions recorded in this inspection.
+                  <p
+                    style={{
+                      margin: '0.35rem 0 0',
+                      fontSize: '0.75rem',
+                      color: '#6e6e73',
+                    }}
+                  >
+                    +{remainingActions} more actions recorded in this
+                    inspection.
                   </p>
                 )}
               </div>
@@ -177,7 +206,10 @@ export function HistoryTimelineView({
                 </span>
                 <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1rem' }}>
                   {entry.attachments.map((attachment, attachmentIndex) => (
-                    <li key={`${key}-attachment-${attachmentIndex}`} style={{ fontSize: '0.85rem' }}>
+                    <li
+                      key={`${key}-attachment-${attachmentIndex}`}
+                      style={{ fontSize: '0.85rem' }}
+                    >
                       {attachment.url ? (
                         <a
                           href={attachment.url}

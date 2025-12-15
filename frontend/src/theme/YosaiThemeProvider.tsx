@@ -1,30 +1,30 @@
 /* eslint-disable react-refresh/only-export-components */
-import { ReactNode } from 'react';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { getTheme } from './theme';
-import { ThemeModeProvider, useThemeMode } from './ThemeContext';
+import { ReactNode } from 'react'
+import { ThemeProvider } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+import { getTheme } from './theme'
+import { ThemeModeProvider, useThemeMode } from './ThemeContext'
 
 interface AppThemeProviderProps {
-    children: ReactNode;
+  children: ReactNode
 }
 
 /** @deprecated Use AppThemeProviderProps instead */
-export type YosaiThemeProviderProps = AppThemeProviderProps;
+export type YosaiThemeProviderProps = AppThemeProviderProps
 
 /**
  * Inner component that uses the theme mode context
  */
 function ThemeProviderInner({ children }: AppThemeProviderProps) {
-    const { mode } = useThemeMode();
-    const theme = getTheme(mode);
+  const { mode } = useThemeMode()
+  const theme = getTheme(mode)
 
-    return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-        </ThemeProvider>
-    );
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  )
 }
 
 /**
@@ -33,18 +33,16 @@ function ThemeProviderInner({ children }: AppThemeProviderProps) {
  * Supports dark and light modes with persistence.
  */
 export function AppThemeProvider({ children }: AppThemeProviderProps) {
-    return (
-        <ThemeModeProvider>
-            <ThemeProviderInner>
-                {children}
-            </ThemeProviderInner>
-        </ThemeModeProvider>
-    );
+  return (
+    <ThemeModeProvider>
+      <ThemeProviderInner>{children}</ThemeProviderInner>
+    </ThemeModeProvider>
+  )
 }
 
 /** @deprecated Use AppThemeProvider instead */
-export const YosaiThemeProvider = AppThemeProvider;
+export const YosaiThemeProvider = AppThemeProvider
 
 // Re-export for convenience
-export { useThemeMode } from './ThemeContext';
-export type { ThemeMode } from './ThemeContext';
+export { useThemeMode } from './ThemeContext'
+export type { ThemeMode } from './ThemeContext'

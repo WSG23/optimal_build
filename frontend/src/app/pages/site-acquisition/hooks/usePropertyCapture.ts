@@ -61,25 +61,24 @@ export function usePropertyCapture(
 ): UsePropertyCaptureReturn {
   const { previewDetailLevel, onPreviewJobReceived } = options
 
-  const [selectedScenarios, setSelectedScenarios] = useState<DevelopmentScenario[]>([])
+  const [selectedScenarios, setSelectedScenarios] = useState<
+    DevelopmentScenario[]
+  >([])
   const [isCapturing, setIsCapturing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [capturedProperty, setCapturedProperty] = useState<SiteAcquisitionResult | null>(null)
+  const [capturedProperty, setCapturedProperty] =
+    useState<SiteAcquisitionResult | null>(null)
 
   const toggleScenario = useCallback((scenario: DevelopmentScenario) => {
     setSelectedScenarios((prev) =>
       prev.includes(scenario)
         ? prev.filter((s) => s !== scenario)
-        : [...prev, scenario]
+        : [...prev, scenario],
     )
   }, [])
 
   const handleCapture = useCallback(
-    async (
-      latitude: string,
-      longitude: string,
-      jurisdictionCode: string,
-    ) => {
+    async (latitude: string, longitude: string, jurisdictionCode: string) => {
       const lat = parseFloat(latitude)
       const lon = parseFloat(longitude)
 
@@ -140,7 +139,9 @@ export function usePropertyCapture(
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to capture property')
+        setError(
+          err instanceof Error ? err.message : 'Failed to capture property',
+        )
       } finally {
         setIsCapturing(false)
       }

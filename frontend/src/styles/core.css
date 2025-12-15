@@ -8,6 +8,109 @@
     box-sizing: border-box;
 }
 
+/* =============================================================================
+   SQUARE CYBER-MINIMALISM: Border Radius Enforcement
+   =============================================================================
+   Enforces sharp, geometric aesthetic across ALL components.
+   This uses attribute selectors to override inline styles.
+   Radius scale:
+   - 2px (xs): buttons, tags, chips
+   - 4px (sm): cards, panels, tiles
+   - 6px (md): inputs, selects
+   - 8px (lg): modals/dialogs ONLY
+   ============================================================================= */
+
+/* Universal override for any element with inline border-radius > 8px */
+/* Uses [style] selector with !important to override inline styles */
+[style*='border-radius: 10'],
+[style*='border-radius: 11'],
+[style*='border-radius: 12'],
+[style*='border-radius: 13'],
+[style*='border-radius: 14'],
+[style*='border-radius: 15'],
+[style*='border-radius: 16'],
+[style*='border-radius: 17'],
+[style*='border-radius: 18'],
+[style*='border-radius: 19'],
+[style*='border-radius: 20'],
+[style*='border-radius: 24'],
+[style*='border-radius: 28'],
+[style*='border-radius: 32'],
+[style*='borderRadius: 10'],
+[style*='borderRadius: 11'],
+[style*='borderRadius: 12'],
+[style*='borderRadius: 13'],
+[style*='borderRadius: 14'],
+[style*='borderRadius: 15'],
+[style*='borderRadius: 16'],
+[style*='borderRadius: 17'],
+[style*='borderRadius: 18'],
+[style*='borderRadius: 19'],
+[style*='borderRadius: 20'],
+[style*='borderRadius: 24'],
+[style*='borderRadius: 28'],
+[style*='borderRadius: 32'],
+[style*='border-radius:10'],
+[style*='border-radius:12'],
+[style*='border-radius:16'],
+[style*='border-radius:20'],
+[style*='border-radius:24'] {
+    border-radius: var(--ob-radius-sm, 4px) !important;
+}
+
+/* MUI Box and generic divs with card-like appearance */
+.MuiBox-root[style*='borderRadius'],
+div[style*='borderRadius'],
+div[style*='border-radius'] {
+    border-radius: var(--ob-radius-sm, 4px) !important;
+}
+
+/* MUI Component Overrides - High specificity with !important */
+.MuiCard-root,
+.MuiPaper-root:not(.MuiDialog-paper):not(.MuiDrawer-paper),
+.MuiAccordion-root,
+.MuiAlert-root {
+    border-radius: var(--ob-radius-sm, 4px) !important;
+}
+
+.MuiButton-root,
+.MuiChip-root,
+.MuiTab-root,
+.MuiToggleButton-root {
+    border-radius: var(--ob-radius-xs, 2px) !important;
+}
+
+.MuiOutlinedInput-root,
+.MuiFilledInput-root,
+.MuiInputBase-root,
+.MuiSelect-root {
+    border-radius: var(--ob-radius-md, 6px) !important;
+}
+
+.MuiDialog-paper {
+    border-radius: var(--ob-radius-lg, 8px) !important;
+}
+
+.MuiMenu-paper,
+.MuiPopover-paper,
+.MuiAutocomplete-paper,
+.MuiTooltip-tooltip {
+    border-radius: var(--ob-radius-sm, 4px) !important;
+}
+
+.MuiDrawer-paper,
+.MuiAppBar-root {
+    border-radius: 0 !important;
+}
+
+/* Preserve circular elements */
+.MuiAvatar-circular,
+[style*='border-radius: 50%'],
+[style*='border-radius:50%'],
+[style*='borderRadius: 50%'] {
+    border-radius: 50% !important;
+}
+
 :root {
     font-family: var(--ob-font-family-base);
     line-height: 1.6;
@@ -83,7 +186,7 @@ h6 {
         auto-fit,
         minmax(280px, 1fr)
     ); /* Wider minimum */
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -92,7 +195,7 @@ h6 {
 .app-home__card {
     background: var(--ob-color-bg-surface);
     padding: 2rem;
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     border: 1px solid var(--ob-color-border-subtle);
     box-shadow: var(--ob-shadow-sm);
 
@@ -132,7 +235,7 @@ h6 {
     align-items: center;
     justify-content: center;
     padding: 0.75rem 1.5rem;
-    border-radius: 999px;
+    border-radius: var(--ob-radius-xs); /* 2px - Square Cyber-Minimalism */
     background: var(--ob-color-brand-primary);
     color: #ffffff; /* Always white text on brand button */
     font-weight: 600;
@@ -153,4 +256,36 @@ h6 {
     grid-template-columns: 280px 1fr;
     min-height: 100vh;
     background: var(--ob-color-bg-root);
+}
+
+/* =============================================================================
+   Team Management Page Styles
+   ============================================================================= */
+.team-invite-btn {
+    background: linear-gradient(
+        135deg,
+        var(--ob-brand-500) 0%,
+        var(--ob-brand-400) 100%
+    ) !important;
+    box-shadow: var(--ob-glow-brand-subtle) !important;
+    border-radius: var(--ob-radius-xs) !important;
+}
+
+.team-invite-btn:hover {
+    box-shadow: var(--ob-glow-brand-medium) !important;
+}
+
+.team-members-card {
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-lg, 20px));
+    border: var(--ob-border-fine-subtle);
+    border-radius: var(--ob-radius-sm) !important;
+    overflow: hidden;
+}
+
+.team-invite-dialog {
+    background: var(--ob-color-surface-elevated) !important;
+    border: var(--ob-border-fine-subtle) !important;
+    border-radius: var(--ob-radius-lg) !important;
+    min-width: 400px;
 }

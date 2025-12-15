@@ -44,7 +44,9 @@ export function buildSensitivitySummaries(
     }
 
     const baseEntry =
-      parsed.find((entry) => entry.deltaValue === '0' || /base/i.test(entry.scenario)) ??
+      parsed.find(
+        (entry) => entry.deltaValue === '0' || /base/i.test(entry.scenario),
+      ) ??
       parsed.find((entry) => entry.deltaLabel && /base/i.test(entry.deltaLabel))
 
     const baseValue = baseEntry?.npvValue ?? null

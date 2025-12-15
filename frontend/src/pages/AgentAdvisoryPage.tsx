@@ -94,7 +94,9 @@ export function AgentAdvisoryPage() {
 
       {error && <div className="advisory__error">{error}</div>}
 
-      {loading && <div className="advisory__loading">Loading advisory insights…</div>}
+      {loading && (
+        <div className="advisory__loading">Loading advisory insights…</div>
+      )}
 
       {summary && (
         <div className="advisory">
@@ -145,25 +147,29 @@ export function AgentAdvisoryPage() {
             <div className="advisory__pricing">
               <strong>Pricing guidance</strong>
               <ul>
-                {Object.entries(summary.market_positioning.pricing_guidance).map(
-                  ([key, range]) => (
-                    <li key={key}>
-                      {key}: {range.target_min.toLocaleString()} –{' '}
-                      {range.target_max.toLocaleString()}
-                    </li>
-                  ),
-                )}
+                {Object.entries(
+                  summary.market_positioning.pricing_guidance,
+                ).map(([key, range]) => (
+                  <li key={key}>
+                    {key}: {range.target_min.toLocaleString()} –{' '}
+                    {range.target_max.toLocaleString()}
+                  </li>
+                ))}
               </ul>
             </div>
             <div className="advisory__segments">
               <strong>Target segments</strong>
               <ul>
-                {summary.market_positioning.target_segments.map((segment, index) => (
-                  <li key={`segment-${index}`}>
-                    {String(segment.segment || 'Segment')} –{' '}
-                    {segment.weight_pct != null ? `${segment.weight_pct}%` : ''}
-                  </li>
-                ))}
+                {summary.market_positioning.target_segments.map(
+                  (segment, index) => (
+                    <li key={`segment-${index}`}>
+                      {String(segment.segment || 'Segment')} –{' '}
+                      {segment.weight_pct != null
+                        ? `${segment.weight_pct}%`
+                        : ''}
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
             <ul className="advisory__messaging">
@@ -177,9 +183,10 @@ export function AgentAdvisoryPage() {
             <h2>Absorption forecast</h2>
             <p>
               Expected stabilisation in{' '}
-              {summary.absorption_forecast.expected_months_to_stabilize} months at a
-              target velocity of {summary.absorption_forecast.monthly_velocity_target}{' '}
-              units per month.
+              {summary.absorption_forecast.expected_months_to_stabilize} months
+              at a target velocity of{' '}
+              {summary.absorption_forecast.monthly_velocity_target} units per
+              month.
             </p>
             <table className="advisory__table">
               <thead>
@@ -190,13 +197,15 @@ export function AgentAdvisoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {summary.absorption_forecast.timeline.map((milestone, index) => (
-                  <tr key={`timeline-${index}`}>
-                    <td>{milestone.milestone}</td>
-                    <td>{milestone.month}</td>
-                    <td>{milestone.expected_absorption_pct}%</td>
-                  </tr>
-                ))}
+                {summary.absorption_forecast.timeline.map(
+                  (milestone, index) => (
+                    <tr key={`timeline-${index}`}>
+                      <td>{milestone.milestone}</td>
+                      <td>{milestone.month}</td>
+                      <td>{milestone.expected_absorption_pct}%</td>
+                    </tr>
+                  ),
+                )}
               </tbody>
             </table>
           </section>
@@ -225,7 +234,10 @@ export function AgentAdvisoryPage() {
                   rows={3}
                 />
               </label>
-              <button type="submit" disabled={isSubmitting || feedbackNotes.trim() === ''}>
+              <button
+                type="submit"
+                disabled={isSubmitting || feedbackNotes.trim() === ''}
+              >
                 {isSubmitting ? 'Submitting…' : 'Record feedback'}
               </button>
             </form>

@@ -50,7 +50,9 @@ export interface PerformanceBenchmarkEntry {
   effectiveDate: string | null
 }
 
-function mapSnapshot(payload: Record<string, unknown>): PerformanceSnapshotSummary {
+function mapSnapshot(
+  payload: Record<string, unknown>,
+): PerformanceSnapshotSummary {
   return {
     id: String(payload.id ?? ''),
     agentId: String(payload.agent_id ?? ''),
@@ -62,50 +64,53 @@ function mapSnapshot(payload: Record<string, unknown>): PerformanceSnapshotSumma
       typeof payload.gross_pipeline_value === 'number'
         ? payload.gross_pipeline_value
         : payload.gross_pipeline_value !== null
-        ? Number(payload.gross_pipeline_value)
-        : null,
+          ? Number(payload.gross_pipeline_value)
+          : null,
     weightedPipelineValue:
       typeof payload.weighted_pipeline_value === 'number'
         ? payload.weighted_pipeline_value
         : payload.weighted_pipeline_value !== null
-        ? Number(payload.weighted_pipeline_value)
-        : null,
+          ? Number(payload.weighted_pipeline_value)
+          : null,
     confirmedCommissionAmount:
       typeof payload.confirmed_commission_amount === 'number'
         ? payload.confirmed_commission_amount
         : payload.confirmed_commission_amount !== null
-        ? Number(payload.confirmed_commission_amount)
-        : null,
+          ? Number(payload.confirmed_commission_amount)
+          : null,
     disputedCommissionAmount:
       typeof payload.disputed_commission_amount === 'number'
         ? payload.disputed_commission_amount
         : payload.disputed_commission_amount !== null
-        ? Number(payload.disputed_commission_amount)
-        : null,
+          ? Number(payload.disputed_commission_amount)
+          : null,
     avgCycleDays:
       typeof payload.avg_cycle_days === 'number'
         ? payload.avg_cycle_days
         : payload.avg_cycle_days !== null
-        ? Number(payload.avg_cycle_days)
-        : null,
+          ? Number(payload.avg_cycle_days)
+          : null,
     conversionRate:
       typeof payload.conversion_rate === 'number'
         ? payload.conversion_rate
         : payload.conversion_rate !== null
-        ? Number(payload.conversion_rate)
-        : null,
+          ? Number(payload.conversion_rate)
+          : null,
     roiMetrics:
       typeof payload.roi_metrics === 'object' && payload.roi_metrics !== null
         ? (payload.roi_metrics as Record<string, unknown>)
         : {},
     snapshotContext:
-      typeof payload.snapshot_context === 'object' && payload.snapshot_context !== null
+      typeof payload.snapshot_context === 'object' &&
+      payload.snapshot_context !== null
         ? (payload.snapshot_context as Record<string, unknown>)
         : {},
   }
 }
 
-function mapBenchmark(payload: Record<string, unknown>): PerformanceBenchmarkEntry {
+function mapBenchmark(
+  payload: Record<string, unknown>,
+): PerformanceBenchmarkEntry {
   return {
     id: String(payload.id ?? ''),
     metricKey: String(payload.metric_key ?? ''),
@@ -122,8 +127,8 @@ function mapBenchmark(payload: Record<string, unknown>): PerformanceBenchmarkEnt
       typeof payload.value_numeric === 'number'
         ? payload.value_numeric
         : payload.value_numeric !== null
-        ? Number(payload.value_numeric)
-        : null,
+          ? Number(payload.value_numeric)
+          : null,
     valueText:
       typeof payload.value_text === 'string' || payload.value_text === null
         ? (payload.value_text as string | null)
@@ -133,13 +138,17 @@ function mapBenchmark(payload: Record<string, unknown>): PerformanceBenchmarkEnt
         ? (payload.source as string | null)
         : null,
     effectiveDate:
-      typeof payload.effective_date === 'string' || payload.effective_date === null
+      typeof payload.effective_date === 'string' ||
+      payload.effective_date === null
         ? (payload.effective_date as string | null)
         : null,
   }
 }
 
-export async function fetchLatestSnapshot(agentId: string, signal?: AbortSignal) {
+export async function fetchLatestSnapshot(
+  agentId: string,
+  signal?: AbortSignal,
+) {
   const response = await fetch(
     buildUrl(`/api/v1/performance/snapshots?agent_id=${agentId}&limit=1`),
     { signal },
@@ -158,7 +167,9 @@ export async function fetchSnapshotsHistory(
   signal?: AbortSignal,
 ) {
   const response = await fetch(
-    buildUrl(`/api/v1/performance/snapshots?agent_id=${agentId}&limit=${limit}`),
+    buildUrl(
+      `/api/v1/performance/snapshots?agent_id=${agentId}&limit=${limit}`,
+    ),
     { signal },
   )
   if (!response.ok) {

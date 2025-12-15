@@ -1,5 +1,11 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import React from 'react'
 import { TranslationProvider } from '../../../i18n'
 import { ThemeModeProvider } from '../../../theme/ThemeContext'

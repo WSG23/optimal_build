@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react'
 
-import type { BuildableSummary, WizardStatus, StoredAssetOptimization, FinancialSummary } from '../types'
+import type {
+  BuildableSummary,
+  WizardStatus,
+  StoredAssetOptimization,
+  FinancialSummary,
+} from '../types'
 import { MetricsView } from './MetricsView'
 import { AssetMixView } from './AssetMixView'
 import { AdvisoryView } from './AdvisoryView'
-import { SkeletonLoader } from '../../../components/feedback/SkeletonLoader'
 
 interface ResultsPanelProps {
   status: WizardStatus
@@ -21,7 +25,11 @@ function renderProvenanceBadge(
   provenance: BuildableSummary['rules'][number]['provenance'],
   t: (key: string, options?: Record<string, unknown>) => string,
 ): ReactNode {
-  if (provenance.documentId && provenance.pages && provenance.pages.length > 0) {
+  if (
+    provenance.documentId &&
+    provenance.pages &&
+    provenance.pages.length > 0
+  ) {
     return (
       <span className="feasibility-citation__badge">
         {t('wizard.citations.documentWithPages', {
@@ -64,13 +72,197 @@ export function ResultsPanel({
       aria-live="polite"
       aria-busy={status === 'loading'}
     >
-      {status === 'idle' && (
-        <p className="feasibility-results__placeholder">{t('wizard.states.idle')}</p>
-      )}
+      {(status === 'idle' || status === 'loading') && (
+        <div
+          style={{
+            position: 'relative',
+            height: '100%',
+            minHeight: '600px',
+            overflow: 'hidden',
+            borderRadius: '4px',
+          }}
+        >
+          {/* The Blurred Content (Teaser) */}
+          <div
+            style={{
+              filter: 'blur(var(--ob-blur-xs))',
+              opacity: 0.5,
+              pointerEvents: 'none',
+              display: 'grid',
+              gap: '24px',
+            }}
+          >
+            {/* Fake Header */}
+            <div
+              style={{
+                height: '120px',
+                background: '#e5e7eb',
+                borderRadius: '4px',
+              }}
+            />
 
-      {status === 'loading' && (
-        <div className="feasibility-results__skeleton" role="status">
-          <SkeletonLoader variant="card" count={1} />
+            {/* Fake Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '24px',
+              }}
+            >
+              <div
+                style={{
+                  height: '200px',
+                  background: '#e5e7eb',
+                  borderRadius: '4px',
+                }}
+              />
+              <div
+                style={{
+                  height: '200px',
+                  background: '#e5e7eb',
+                  borderRadius: '4px',
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                height: '300px',
+                background: '#e5e7eb',
+                borderRadius: '4px',
+              }}
+            />
+          </div>
+
+          {/* The Lock Overlay */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-end', // Align to bottom for floating CTA
+              paddingBottom: '48px',
+              // FIXED: Semi-transparent black with blur
+              background: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(var(--ob-blur-sm))',
+              zIndex: 10,
+            }}
+          >
+            {status === 'loading' ? (
+              // Scanning Animation
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  marginBottom: 'auto',
+                  marginTop: 'auto',
+                }}
+              >
+                <div
+                  className="radar-spinner"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    border: '4px solid #3b82f6',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                <h3
+                  style={{
+                    marginTop: '24px',
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    color: 'white',
+                  }}
+                >
+                  Analyzing Site Potential...
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  Querying zoning, GFA caps, and market data.
+                </p>
+              </div>
+            ) : (
+              // Idle "Floating CTA" State
+              <div
+                className="glass-panel"
+                style={{
+                  background: 'rgba(30, 30, 30, 0.6)', // Glassmorphic dark
+                  backdropFilter: 'blur(var(--ob-blur-md))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  padding: '24px 32px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                  transform: 'translateY(0)',
+                  animation: 'float 6s ease-in-out infinite',
+                }}
+              >
+                <style>{`
+                            @keyframes float {
+                                0% { transform: translateY(0px); }
+                                50% { transform: translateY(-10px); }
+                                100% { transform: translateY(0px); }
+                            }
+                        `}</style>
+                <div
+                  style={{
+                    background: 'white',
+                    borderRadius: '50%',
+                    width: '48px',
+                    height: '48px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {/* Small Lock Icon */}
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="black"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      margin: '0 0 4px 0',
+                      color: 'white',
+                    }}
+                  >
+                    Unlock Site Intelligence
+                  </h3>
+                  <p
+                    style={{
+                      margin: '0',
+                      color: 'rgba(255,255,255,0.7)',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    Enter an address to visualize potential.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -82,39 +274,144 @@ export function ResultsPanel({
 
       {(status === 'success' || status === 'partial' || status === 'empty') &&
         result && (
-          <div className="feasibility-results__content">
-            <header className="feasibility-results__header">
-              <div>
-                <span className="feasibility-results__label">
-                  {t('wizard.results.zone')}
-                </span>
-                <span className="feasibility-results__value" data-testid="zone-code">
-                  {result.zoneCode ?? t('wizard.results.zoneUnknown')}
-                </span>
-              </div>
-              <div>
-                <span className="feasibility-results__label">
-                  {t('wizard.results.overlays')}
-                </span>
+          <div
+            className="feasibility-results__content"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-8)',
+            }}
+          >
+            {/* Header / Hero Stats */}
+            <header
+              className="feasibility-results__header"
+              style={{
+                marginBottom: 'var(--ob-space-4)',
+                animation:
+                  'slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                opacity: 0,
+                transform: 'translateY(20px)',
+              }}
+            >
+              <style>
+                {`
+                        @keyframes slideUpFade {
+                            from { opacity: 0; transform: translateY(20px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                    `}
+              </style>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto',
+                  gap: 'var(--ob-space-4)',
+                  alignItems: 'start',
+                }}
+              >
+                {/* Zone & Title */}
                 <div
-                  className="feasibility-results__overlays"
-                  data-testid="overlay-badges"
+                  style={{
+                    background: 'white',
+                    padding: 'var(--ob-space-5)',
+                    borderRadius: 'var(--ob-radius-lg)',
+                    border: '1px solid var(--ob-color-border-premium)',
+                    boxShadow: 'var(--ob-depth-md)',
+                  }}
                 >
-                  {result.overlays.length === 0 && (
-                    <span className="feasibility-results__badge">
-                      {t('wizard.results.none')}
+                  <span
+                    className="text-eyebrow"
+                    style={{ display: 'block', marginBottom: '4px' }}
+                  >
+                    OPTIMIZED FOR
+                  </span>
+                  <h2
+                    style={{
+                      fontSize: '2rem',
+                      fontWeight: 700,
+                      margin: 0,
+                      letterSpacing: '-0.02em',
+                      background: 'linear-gradient(45deg, #111827, #374151)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}
+                  >
+                    {result.zoneCode ?? t('wizard.results.zoneUnknown')}
+                  </h2>
+                  <div
+                    style={{ marginTop: '8px', display: 'flex', gap: '8px' }}
+                  >
+                    {result.overlays.map((overlay) => (
+                      <span
+                        key={overlay}
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: '#EFF6FF',
+                          color: '#2563EB',
+                          border: '1px solid #BFDBFE',
+                        }}
+                      >
+                        {overlay}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary Metric Card (e.g. Total GFA) */}
+                <div
+                  style={{
+                    background: '#1F2937',
+                    color: 'white',
+                    padding: 'var(--ob-space-5)',
+                    borderRadius: 'var(--ob-radius-lg)',
+                    minWidth: '200px',
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      opacity: 0.8,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    Max GFA Potential
+                  </span>
+                  <div
+                    style={{
+                      fontSize: '2.25rem',
+                      fontWeight: 700,
+                      lineHeight: 1.1,
+                      marginTop: '4px',
+                    }}
+                  >
+                    {numberFormatter.format(result.metrics.gfaCapM2)}
+                    <span
+                      style={{
+                        fontSize: '1rem',
+                        fontWeight: 400,
+                        opacity: 0.6,
+                        marginLeft: '4px',
+                      }}
+                    >
+                      m²
                     </span>
-                  )}
-                  {result.overlays.map((overlay) => (
-                    <span key={overlay} className="feasibility-results__badge">
-                      {overlay}
-                    </span>
-                  ))}
+                  </div>
                 </div>
               </div>
             </header>
 
-            <MetricsView result={result} numberFormatter={numberFormatter} t={t} />
+            {/* Metrics Grid */}
+            <MetricsView
+              result={result}
+              numberFormatter={numberFormatter}
+              t={t}
+            />
 
             <AssetMixView
               capturedAssetMix={capturedAssetMix}
@@ -126,7 +423,9 @@ export function ResultsPanel({
             <AdvisoryView hints={result.advisoryHints ?? []} t={t} />
 
             {status === 'empty' && (
-              <p className="feasibility-results__empty">{t('wizard.states.empty')}</p>
+              <p className="feasibility-results__empty">
+                {t('wizard.states.empty')}
+              </p>
             )}
 
             {status === 'partial' && result.zoneCode && (
@@ -136,21 +435,62 @@ export function ResultsPanel({
             )}
 
             {result.rules.length > 0 && (
-              <section className="feasibility-citations" data-testid="citations">
+              <section
+                className="feasibility-citations"
+                data-testid="citations"
+              >
                 <h3>{t('wizard.citations.title')}</h3>
-                <ul>
+                <ul
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 'var(--ob-space-3)',
+                  }}
+                >
                   {result.rules.map((rule) => (
-                    <li key={rule.id} className="feasibility-citation">
-                      <div className="feasibility-citation__meta">
-                        <span className="feasibility-citation__authority">
+                    <li
+                      key={rule.id}
+                      className="feasibility-citation"
+                      style={{
+                        padding: 'var(--ob-space-3)',
+                        borderLeft: '2px solid var(--ob-color-accent)',
+                        background: 'white',
+                        borderRadius:
+                          '0 var(--ob-radius-md) var(--ob-radius-md) 0',
+                      }}
+                    >
+                      <div
+                        className="feasibility-citation__meta"
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: 'var(--ob-space-1)',
+                        }}
+                      >
+                        <span
+                          className="feasibility-citation__authority"
+                          style={{ fontWeight: 600, fontSize: '0.75rem' }}
+                        >
                           {rule.authority}
                         </span>
-                        <span className="feasibility-citation__clause">
+                        <span
+                          className="feasibility-citation__clause"
+                          style={{
+                            color: 'var(--ob-color-text-muted)',
+                            fontSize: '0.75rem',
+                          }}
+                        >
                           {rule.provenance.clauseRef ??
                             t('wizard.citations.unknownClause')}
                         </span>
                       </div>
-                      <p className="feasibility-citation__parameter">
+                      <p
+                        className="feasibility-citation__parameter"
+                        style={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.8125rem',
+                        }}
+                      >
                         {`${rule.parameterKey} ${rule.operator} ${rule.value}${
                           rule.unit ? ` ${rule.unit}` : ''
                         }`}

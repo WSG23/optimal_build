@@ -1,32 +1,69 @@
 /* styles/glass.css
-   Utility classes for glassmorphism and modern UI effects.
-   Depends on tokens.css variables.
+   Square Cyber-Minimalism - Glassmorphism & Effects
+   =============================================================================
+   Utility classes for glass effects, glows, and animations.
+   All components use 4px (sm) or 2px (xs) border radius per design system.
 */
 
-/* --- Glass Surfaces --- */
+/* =============================================================================
+   GLASS SURFACES
+   ============================================================================= */
+
 .glass-panel {
     background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--ob-border-glass);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: var(--ob-border-fine); /* Updated: fine line at low opacity */
+    border-radius: var(--ob-radius-sm); /* 4px - ENFORCED */
     box-shadow: var(--ob-shadow-glass);
 }
 
 .glass-panel-heavy {
     background: var(--ob-surface-glass-2);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--ob-border-glass-strong);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
+    border: var(--ob-border-fine-strong); /* Updated: fine line strong */
+    border-radius: var(--ob-radius-sm); /* 4px - ENFORCED */
     box-shadow: var(--ob-shadow-glass-lg);
 }
 
-/* --- Gradients --- */
+/* Glass card variant - matches Card component */
+.glass-card {
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm); /* 4px */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    border: var(--ob-border-fine-hover);
+}
+
+/* Glass window variant - matches Window component (only lg radius) */
+.glass-window {
+    background: var(--ob-surface-glass-2);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
+    border: var(--ob-border-fine-strong);
+    border-radius: var(--ob-radius-lg); /* 8px - Windows ONLY */
+    box-shadow: var(--ob-shadow-glass-lg);
+}
+
+/* =============================================================================
+   TEXT GRADIENTS
+   ============================================================================= */
+
 .text-gradient-gold {
-    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    background: linear-gradient(
+        135deg,
+        var(--ob-accent-400) 0%,
+        var(--ob-accent-600) 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-fill-color: transparent;
 }
 
 .text-gradient-brand {
@@ -38,31 +75,141 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-fill-color: transparent;
 }
 
-/* --- Glow Effects --- */
+/* =============================================================================
+   GLOW EFFECTS - Using standardized tokens
+   ============================================================================= */
+
 .glow-primary {
-    box-shadow: 0 0 15px var(--ob-color-brand-primary-glow);
+    box-shadow: var(--ob-glow-brand-medium);
+}
+
+.glow-primary-subtle {
+    box-shadow: var(--ob-glow-brand-subtle);
+}
+
+.glow-primary-strong {
+    box-shadow: var(--ob-glow-brand-strong);
 }
 
 .glow-gold {
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    box-shadow: var(--ob-glow-gold);
 }
 
-/* --- Animations --- */
+.glow-success {
+    box-shadow: var(--ob-glow-success);
+}
+
+.glow-error {
+    box-shadow: var(--ob-glow-error);
+}
+
+.glow-warning {
+    box-shadow: var(--ob-glow-warning);
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
+/* Pulse glow animation */
 @keyframes pulse-glow {
-    0% {
-        box-shadow: 0 0 5px var(--ob-color-brand-primary-glow);
+    0%,
+    100% {
+        box-shadow: var(--ob-glow-brand-subtle);
     }
     50% {
-        box-shadow: 0 0 20px var(--ob-color-brand-primary-glow);
-    }
-    100% {
-        box-shadow: 0 0 5px var(--ob-color-brand-primary-glow);
+        box-shadow: var(--ob-glow-brand-strong);
     }
 }
 
 .animate-pulse-glow {
     animation: pulse-glow 2s infinite;
+}
+
+/* Entrance animation - used by Card, Panel, Window */
+@keyframes entrance {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-entrance {
+    animation: entrance 0.4s ease-out;
+}
+
+/* Shimmer animation - used by Button */
+@keyframes shimmer {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 200%;
+    }
+}
+
+/* Lift hover effect */
+.hover-lift {
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ob-shadow-md);
+}
+
+/* =============================================================================
+   BORDER UTILITIES - Fine elegant lines
+   ============================================================================= */
+
+.border-fine {
+    border: var(--ob-border-fine);
+}
+
+.border-fine-strong {
+    border: var(--ob-border-fine-strong);
+}
+
+.border-fine-hover:hover {
+    border: var(--ob-border-fine-hover);
+}
+
+.divider {
+    border-bottom: var(--ob-divider);
+}
+
+.divider-strong {
+    border-bottom: var(--ob-divider-strong);
+}
+
+/* =============================================================================
+   RADIUS UTILITIES - Square Cyber-Minimalism
+   ============================================================================= */
+
+.radius-none {
+    border-radius: var(--ob-radius-none); /* 0px - tables */
+}
+
+.radius-xs {
+    border-radius: var(--ob-radius-xs); /* 2px - buttons, tags */
+}
+
+.radius-sm {
+    border-radius: var(--ob-radius-sm); /* 4px - cards, panels */
+}
+
+.radius-md {
+    border-radius: var(--ob-radius-md); /* 6px - inputs */
+}
+
+.radius-lg {
+    border-radius: var(--ob-radius-lg); /* 8px - windows only */
 }

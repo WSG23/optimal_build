@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
 export function useNoBodyScroll() {
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = previous;
-    };
-  }, []);
+      document.body.style.overflow = previous
+    }
+  }, [])
 }

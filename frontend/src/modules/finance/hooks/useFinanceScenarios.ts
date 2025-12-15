@@ -73,17 +73,14 @@ export function useFinanceScenarios(
     void fetchScenarios()
   }, [fetchScenarios])
 
-  const addScenario = useCallback(
-    (scenario: FinanceScenarioSummary) => {
-      setScenarios((prev) => {
-        const filtered = prev.filter(
-          (entry) => entry.scenarioId !== scenario.scenarioId,
-        )
-        return [scenario, ...filtered]
-      })
-    },
-    [],
-  )
+  const addScenario = useCallback((scenario: FinanceScenarioSummary) => {
+    setScenarios((prev) => {
+      const filtered = prev.filter(
+        (entry) => entry.scenarioId !== scenario.scenarioId,
+      )
+      return [scenario, ...filtered]
+    })
+  }, [])
 
   return {
     scenarios,

@@ -56,15 +56,15 @@ const DiffViewer = ({ baseline, updated }: DiffViewerProps) => {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded border border-slate-800 bg-slate-950 p-4 text-sm text-slate-300">
+      <div className="rounded border border-border-subtle bg-surface-alt p-4 text-sm text-text-secondary">
         No differences detected.
       </div>
     )
   }
 
   return (
-    <div className="overflow-hidden rounded border border-slate-800 bg-slate-950 text-xs font-mono text-slate-200 shadow-inner">
-      <div className="grid grid-cols-[60px_60px_1fr] bg-slate-900/60 px-3 py-2 text-[0.7rem] uppercase tracking-wide text-slate-400">
+    <div className="overflow-hidden rounded border border-border-subtle bg-surface-alt text-xs font-mono text-text-primary shadow-inner">
+      <div className="grid grid-cols-[60px_60px_1fr] bg-surface/60 px-3 py-2 text-[0.7rem] uppercase tracking-wide text-text-muted">
         <span className="text-right">Old</span>
         <span className="text-right">New</span>
         <span>Change</span>
@@ -75,10 +75,10 @@ const DiffViewer = ({ baseline, updated }: DiffViewerProps) => {
             'grid grid-cols-[60px_60px_1fr] px-3 py-1 whitespace-pre-wrap'
           const tone =
             row.type === 'added'
-              ? 'bg-emerald-900/30 text-emerald-200'
+              ? 'bg-success-strong/15 text-success-strong'
               : row.type === 'removed'
-                ? 'bg-rose-900/30 text-rose-200'
-                : 'bg-slate-950 text-slate-200'
+                ? 'bg-error-strong/15 text-error-strong'
+                : 'bg-surface-alt text-text-primary'
 
           const rowKey = [
             row.type,
@@ -89,10 +89,10 @@ const DiffViewer = ({ baseline, updated }: DiffViewerProps) => {
 
           return (
             <div className={`${baseClasses} ${tone}`} key={rowKey}>
-              <span className="text-right text-slate-400">
+              <span className="text-right text-text-muted">
                 {row.oldNumber !== null ? row.oldNumber : ''}
               </span>
-              <span className="text-right text-slate-400">
+              <span className="text-right text-text-muted">
                 {row.newNumber !== null ? row.newNumber : ''}
               </span>
               <span>{`${

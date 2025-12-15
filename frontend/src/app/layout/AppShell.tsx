@@ -1,4 +1,7 @@
-import { AppShell as BaseAppShell, AppShellProps as BaseAppShellProps } from '../../components/layout/YosaiShell'
+import {
+  AppShell as BaseAppShell,
+  AppShellProps as BaseAppShellProps,
+} from '../../components/layout/YosaiShell'
 
 interface AppShellProps extends Omit<BaseAppShellProps, 'subtitle'> {
   activeItem?: string // Kept for backward compatibility
@@ -10,9 +13,15 @@ export function AppShell({
   description,
   actions,
   children,
+  hideSidebar,
 }: AppShellProps) {
   return (
-    <BaseAppShell title={title} subtitle={description} actions={actions}>
+    <BaseAppShell
+      title={title}
+      subtitle={description}
+      actions={actions}
+      hideSidebar={hideSidebar}
+    >
       {children}
     </BaseAppShell>
   )

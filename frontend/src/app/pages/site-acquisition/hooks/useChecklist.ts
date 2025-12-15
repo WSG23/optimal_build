@@ -42,7 +42,9 @@ export interface UseChecklistResult {
   selectedCategory: string | null
   setSelectedCategory: React.Dispatch<React.SetStateAction<string | null>>
   activeScenario: DevelopmentScenario | 'all'
-  setActiveScenario: React.Dispatch<React.SetStateAction<DevelopmentScenario | 'all'>>
+  setActiveScenario: React.Dispatch<
+    React.SetStateAction<DevelopmentScenario | 'all'>
+  >
   availableChecklistScenarios: DevelopmentScenario[]
 
   // Derived values
@@ -51,7 +53,10 @@ export interface UseChecklistResult {
   activeScenarioDetails: (typeof SCENARIO_OPTIONS)[number] | null
   scenarioFilterOptions: DevelopmentScenario[]
   scenarioFocusOptions: Array<'all' | DevelopmentScenario>
-  scenarioChecklistProgress: Record<string, { total: number; completed: number }>
+  scenarioChecklistProgress: Record<
+    string,
+    { total: number; completed: number }
+  >
   scenarioLookup: Map<DevelopmentScenario, (typeof SCENARIO_OPTIONS)[number]>
 
   // Actions
@@ -70,15 +75,17 @@ export function useChecklist({
 }: UseChecklistOptions): UseChecklistResult {
   // Checklist state
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([])
-  const [checklistSummary, setChecklistSummary] = useState<ChecklistSummary | null>(null)
+  const [checklistSummary, setChecklistSummary] =
+    useState<ChecklistSummary | null>(null)
   const [isLoadingChecklist, setIsLoadingChecklist] = useState(false)
 
   // Filter state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [activeScenario, setActiveScenario] = useState<DevelopmentScenario | 'all'>('all')
-  const [availableChecklistScenarios, setAvailableChecklistScenarios] = useState<
-    DevelopmentScenario[]
-  >([])
+  const [activeScenario, setActiveScenario] = useState<
+    DevelopmentScenario | 'all'
+  >('all')
+  const [availableChecklistScenarios, setAvailableChecklistScenarios] =
+    useState<DevelopmentScenario[]>([])
 
   // Scenario lookup
   const scenarioLookup = useMemo(
@@ -123,7 +130,9 @@ export function useChecklist({
             new Set(sortedOffline.map((item) => item.developmentScenario)),
           )
           setAvailableChecklistScenarios(offlineScenarios)
-          setActiveScenario(offlineScenarios.length === 1 ? offlineScenarios[0] : 'all')
+          setActiveScenario(
+            offlineScenarios.length === 1 ? offlineScenarios[0] : 'all',
+          )
           setChecklistSummary(
             computeChecklistSummary(sortedOffline, capturedProperty.propertyId),
           )
@@ -162,7 +171,10 @@ export function useChecklist({
             })
             setChecklistItems(sortedFallback)
             setChecklistSummary(
-              computeChecklistSummary(sortedFallback, capturedProperty.propertyId),
+              computeChecklistSummary(
+                sortedFallback,
+                capturedProperty.propertyId,
+              ),
             )
             const fallbackScenarios = Array.from(
               new Set(sortedFallback.map((item) => item.developmentScenario)),
@@ -228,11 +240,22 @@ export function useChecklist({
     if (activeScenario === 'all' && checklistSummary) {
       return checklistSummary
     }
-    return computeChecklistSummary(filteredChecklistItems, capturedProperty.propertyId)
-  }, [activeScenario, capturedProperty, checklistSummary, filteredChecklistItems])
+    return computeChecklistSummary(
+      filteredChecklistItems,
+      capturedProperty.propertyId,
+    )
+  }, [
+    activeScenario,
+    capturedProperty,
+    checklistSummary,
+    filteredChecklistItems,
+  ])
 
   const activeScenarioDetails = useMemo(
-    () => (activeScenario === 'all' ? null : scenarioLookup.get(activeScenario) ?? null),
+    () =>
+      activeScenario === 'all'
+        ? null
+        : (scenarioLookup.get(activeScenario) ?? null),
     [activeScenario, scenarioLookup],
   )
 
@@ -269,7 +292,9 @@ export function useChecklist({
 
         // Reload summary
         if (capturedProperty) {
-          const summary = await fetchChecklistSummary(capturedProperty.propertyId)
+          const summary = await fetchChecklistSummary(
+            capturedProperty.propertyId,
+          )
           setChecklistSummary(summary)
         }
       }

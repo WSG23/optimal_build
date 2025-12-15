@@ -286,7 +286,6 @@ export class ApiClient {
         const trimmed = value.trim()
         return trimmed.length > 0 && trimmed !== '/'
       }) ?? 'http://localhost:9400'
-
   }
 
   private buildUrl(path: string) {
@@ -322,13 +321,80 @@ export class ApiClient {
     if (!response.ok) {
       const message = await response.text()
       throw new Error(
-        message || `Request to ${path} failed with ${response.status}`,
+        message || `Request to ${path} failed with ${String(response.status)}`,
       )
     }
     if (response.status === 204) {
       return undefined as T
     }
-    return (await response.json()) as T
+    const text = await response.text()
+    if (!text || text.trim() === '') {
+      return undefined as T
+    }
+    try {
+      return JSON.parse(text) as T
+    } catch {
+      throw new Error(
+        `Invalid JSON response from ${path}: ${text.slice(0, 100)}`,
+      )
+    }
+  }
+
+  public async get<T>(
+    path: string,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    let finalUrl = this.buildUrl(path)
+    if (config?.params) {
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
+    }
+    const data = await this.request<T>(finalUrl, {
+      method: 'GET',
+      headers: config?.headers,
+    })
+    return { data }
+  }
+
+  public async post<T>(
+    path: string,
+    body?: unknown,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    let finalUrl = this.buildUrl(path)
+    if (config?.params) {
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
+    }
+    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    if (config?.headers) {
+      Object.assign(headers, config.headers)
+    }
+    const data = await this.request<T>(finalUrl, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers,
+    })
+    return { data }
+  }
+
+  public async delete<T>(
+    path: string,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    let finalUrl = this.buildUrl(path)
+    if (config?.params) {
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
+    }
+    const data = await this.request<T>(finalUrl, {
+      method: 'DELETE',
+      headers: config?.headers,
+    })
+    return { data }
   }
 
   private mapImportResult(payload: ImportResultResponse): CadImportSummary {
@@ -356,8 +422,9 @@ export class ApiClient {
       overrides:
         payload.metric_overrides && typeof payload.metric_overrides === 'object'
           ? Object.fromEntries(
-              Object.entries(payload.metric_overrides).flatMap(([key, value]) =>
-                typeof value === 'number' ? [[key, value]] : [],
+              Object.entries(payload.metric_overrides).flatMap(
+                ([key, value]) =>
+                  typeof value === 'number' ? [[key, value]] : [],
               ),
             )
           : null,
@@ -428,7 +495,11 @@ export class ApiClient {
 
   async uploadCadDrawing(
     file: File | Blob,
-    options: { inferWalls?: boolean; projectId?: number; zoneCode?: string } = {},
+    options: {
+      inferWalls?: boolean
+      projectId?: number
+      zoneCode?: string
+    } = {},
   ): Promise<CadImportSummary> {
     const formData = new FormData()
     const derivedName =
@@ -441,7 +512,10 @@ export class ApiClient {
     if (options.inferWalls) {
       formData.append('infer_walls', 'true')
     }
-    if (typeof options.projectId === 'number' && !Number.isNaN(options.projectId)) {
+    if (
+      typeof options.projectId === 'number' &&
+      !Number.isNaN(options.projectId)
+    ) {
       formData.append('project_id', options.projectId.toString())
     }
     if (typeof options.zoneCode === 'string' && options.zoneCode.trim()) {
@@ -554,7 +628,7 @@ export class ApiClient {
     projectId: number,
   ): Promise<OverlaySuggestion[]> {
     const payload = await this.request<OverlayListingResponse>(
-      `api/v1/overlay/${projectId}`,
+      `api/v1/overlay/${String(projectId)}`,
     )
     return payload.items.map((item) => this.mapOverlaySuggestion(item))
   }
@@ -568,7 +642,7 @@ export class ApiClient {
     evaluated?: number
   }> {
     const payload = await this.request<OverlayRunResponse>(
-      `api/v1/overlay/${projectId}/run`,
+      `api/v1/overlay/${String(projectId)}/run`,
       {
         method: 'POST',
       },
@@ -586,7 +660,7 @@ export class ApiClient {
   async getLatestImport(projectId: number): Promise<CadImportSummary | null> {
     try {
       const payload = await this.request<ImportResultResponse>(
-        `api/v1/import/latest?project_id=${projectId}`,
+        `api/v1/import/latest?project_id=${String(projectId)}`,
       )
       return this.mapImportResult(payload)
     } catch (error) {
@@ -622,7 +696,7 @@ export class ApiClient {
     },
   ): Promise<OverlaySuggestion> {
     const payload = await this.request<OverlayDecisionResponse>(
-      `api/v1/overlay/${projectId}/decision`,
+      `api/v1/overlay/${String(projectId)}/decision`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -646,8 +720,8 @@ export class ApiClient {
       searchParams.set('event_type', options.eventType)
     }
     const path = searchParams.size
-      ? `api/v1/audit/${projectId}?${searchParams.toString()}`
-      : `api/v1/audit/${projectId}`
+      ? `api/v1/audit/${String(projectId)}?${searchParams.toString()}`
+      : `api/v1/audit/${String(projectId)}`
     const payload = await this.request<AuditResponse>(path)
     return payload.items.map((item) => ({
       id: item.id,
@@ -666,7 +740,9 @@ export class ApiClient {
   }
 
   async getProjectRoi(projectId: number): Promise<ProjectRoiMetrics> {
-    const payload = await this.request<RoiResponse>(`api/v1/roi/${projectId}`)
+    const payload = await this.request<RoiResponse>(
+      `api/v1/roi/${String(projectId)}`,
+    )
     return {
       projectId: payload.project_id,
       iterations: payload.iterations,
@@ -712,16 +788,20 @@ export class ApiClient {
     const headers = new Headers({ 'Content-Type': 'application/json' })
     ensureIdentityHeaders(headers)
 
-    const response = await fetch(this.buildUrl(`api/v1/export/${projectId}`), {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    })
+    const response = await fetch(
+      this.buildUrl(`api/v1/export/${String(projectId)}`),
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      },
+    )
 
     if (!response.ok) {
       const message = await response.text()
       throw new Error(
-        message || `Export request failed with status ${response.status}`,
+        message ||
+          `Export request failed with status ${String(response.status)}`,
       )
     }
 
@@ -781,7 +861,7 @@ export class ApiClient {
         title: `${topic} fast-track`,
         description:
           related.length > 0
-            ? `Prioritise ${related.length} overlays-triggered checks within the ${topic} rules.`
+            ? `Prioritise ${String(related.length)} overlays-triggered checks within the ${topic} rules.`
             : `Establish defaults for ${topic} checks before overlays arrive.`,
         focus: topic,
         automationScore,

@@ -63,7 +63,9 @@ export function classifySystemSeverity(
 /**
  * Normalize a severity string from backend to a valid InsightSeverity
  */
-export function normaliseInsightSeverity(value: string | undefined): InsightSeverity {
+export function normaliseInsightSeverity(
+  value: string | undefined,
+): InsightSeverity {
   const severity = (value ?? 'warning').toLowerCase()
   if (
     severity === 'critical' ||
@@ -149,7 +151,9 @@ export type SeverityVisuals = {
 /**
  * Get visual styling (colors) for a given severity level
  */
-export function getSeverityVisuals(severity: InsightSeverity | 'neutral'): SeverityVisuals {
+export function getSeverityVisuals(
+  severity: InsightSeverity | 'neutral',
+): SeverityVisuals {
   switch (severity) {
     case 'critical':
       return {

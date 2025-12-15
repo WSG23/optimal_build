@@ -66,7 +66,9 @@ function useVoiceRecorder() {
       animationFrameRef.current = null
     }
     if (mediaRecorderRef.current?.stream) {
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
+      mediaRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop())
     }
     mediaRecorderRef.current = null
     analyserRef.current = null
@@ -114,7 +116,9 @@ function useVoiceRecorder() {
       // Audio level visualization
       const updateAudioLevel = () => {
         if (analyserRef.current && isRecording) {
-          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
+          const dataArray = new Uint8Array(
+            analyserRef.current.frequencyBinCount,
+          )
           analyserRef.current.getByteFrequencyData(dataArray)
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length
           setAudioLevel(average / 255) // Normalize to 0-1
@@ -138,7 +142,9 @@ function useVoiceRecorder() {
       }
 
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: 'audio/webm',
+        })
         cleanup()
         setIsRecording(false)
         setIsPaused(false)
@@ -273,7 +279,11 @@ export function VoiceNoteRecorder({
 
     try {
       const formData = new FormData()
-      formData.append('file', note.blob, `${note.title.replace(/\s+/g, '_')}.webm`)
+      formData.append(
+        'file',
+        note.blob,
+        `${note.title.replace(/\s+/g, '_')}.webm`,
+      )
       formData.append('duration_seconds', note.duration.toString())
       formData.append('title', note.title)
 
@@ -318,7 +328,7 @@ export function VoiceNoteRecorder({
     <div
       style={{
         background: '#f9fafb',
-        borderRadius: '12px',
+        borderRadius: '4px',
         padding: '1.25rem',
         marginTop: '1.5rem',
       }}
@@ -359,7 +369,7 @@ export function VoiceNoteRecorder({
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.75rem 1.25rem',
-              borderRadius: '8px',
+              borderRadius: '4px',
               border: 'none',
               background: canRecord ? '#dc2626' : '#d1d5db',
               color: 'white',
@@ -389,7 +399,7 @@ export function VoiceNoteRecorder({
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 border: '1px solid #d1d5db',
                 background: 'white',
                 color: '#374151',
@@ -409,7 +419,7 @@ export function VoiceNoteRecorder({
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 border: 'none',
                 background: '#1d1d1f',
                 color: 'white',
@@ -480,7 +490,7 @@ export function VoiceNoteRecorder({
             padding: '0.75rem',
             background: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: '#dc2626',
             fontSize: '0.875rem',
             marginBottom: '1rem',
@@ -504,7 +514,9 @@ export function VoiceNoteRecorder({
             Recorded Notes ({voiceNotes.length})
           </h5>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+          >
             {voiceNotes.map((note) => (
               <div
                 key={note.id}
@@ -515,7 +527,7 @@ export function VoiceNoteRecorder({
                   padding: '0.75rem',
                   background: 'white',
                   border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                 }}
               >
                 {/* Play button / Audio element */}
@@ -596,7 +608,11 @@ export function VoiceNoteRecorder({
                       fontWeight: 500,
                       cursor: propertyId ? 'pointer' : 'not-allowed',
                     }}
-                    title={!propertyId ? 'Capture property first' : 'Upload to server'}
+                    title={
+                      !propertyId
+                        ? 'Capture property first'
+                        : 'Upload to server'
+                    }
                   >
                     {isUploading ? 'Uploading...' : 'Upload'}
                   </button>

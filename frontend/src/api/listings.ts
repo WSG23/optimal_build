@@ -37,9 +37,12 @@ export interface PublishResult {
 }
 
 export async function fetchListingAccounts(signal?: AbortSignal) {
-  const response = await fetch(buildUrl('/api/v1/integrations/listings/accounts'), {
-    signal,
-  })
+  const response = await fetch(
+    buildUrl('/api/v1/integrations/listings/accounts'),
+    {
+      signal,
+    },
+  )
   if (!response.ok) {
     throw new Error('Failed to load listing accounts')
   }

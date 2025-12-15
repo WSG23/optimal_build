@@ -7,13 +7,21 @@ import hmac
 import secrets
 
 try:  # pragma: no cover - prefer passlib when available
-    from passlib.context import CryptContext  # type: ignore
+    from passlib.context import CryptContext  # type: ignore[import-untyped]
+
+    _HAS_PASSLIB = True
 except ModuleNotFoundError:  # pragma: no cover - fallback implementation
-    CryptContext = None
+    _HAS_PASSLIB = False
 
 
-if CryptContext is not None:
-    pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
+if _HAS_PASSLIB:
+    # Use bcrypt as primary scheme (more secure than sha256_crypt)
+    # Keep sha256_crypt as deprecated for backward compatibility with existing hashes
+    pwd_context = CryptContext(
+        schemes=["bcrypt", "sha256_crypt"],
+        default="bcrypt",
+        deprecated=["sha256_crypt"],
+    )
 
     def hash_password(password: str) -> str:
         """Hash a password for storing using passlib."""

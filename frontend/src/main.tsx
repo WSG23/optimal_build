@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from './router'
 import { HomeOverview } from './App'
 import { TranslationProvider } from './i18n'
+import { DeveloperProvider } from './contexts/DeveloperContext'
 import { CadDetectionPage } from './pages/CadDetectionPage'
 import { CadPipelinesPage } from './pages/CadPipelinesPage'
 import { CadUploadPage } from './pages/CadUploadPage'
@@ -27,6 +28,9 @@ import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitio
 import { ChecklistTemplateManager } from './app/pages/site-acquisition/ChecklistTemplateManager'
 import { DeveloperPreviewStandalone } from './app/pages/site-acquisition/DeveloperPreviewStandalone'
 import { PhaseManagementPage } from './app/pages/phase-management'
+import { TeamManagementPage } from './app/pages/team/TeamManagementPage'
+import { RegulatoryDashboardPage } from './app/pages/regulatory/RegulatoryDashboardPage'
+import { DeveloperControlPanel } from './app/pages/developer/DeveloperControlPanel'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -125,7 +129,7 @@ const checklistTemplateManagerElement = (
 const developerFeasibilityElement = (
   <AppShell
     activeItem="assetFeasibility"
-    title="Feasibility workspace"
+    title="Feasibility"
     description="Run feasibility checks, document pack generation, and advisory workflows."
     hideSidebar
   >
@@ -143,6 +147,38 @@ const phaseManagementElement = (
     hideSidebar
   >
     <PhaseManagementPage />
+  </AppShell>
+)
+
+const teamCoordinationElement = (
+  <AppShell
+    activeItem="teamCoordination"
+    title="Team coordination"
+    description="Manage project team, consultants, and approval workflows."
+    hideSidebar
+  >
+    <TeamManagementPage />
+  </AppShell>
+)
+
+const regulatoryNavigationElement = (
+  <AppShell
+    activeItem="regulatoryNavigation"
+    title="Regulatory Navigation"
+    description="Singapore authority submissions and compliance tracking."
+    hideSidebar
+  >
+    <RegulatoryDashboardPage />
+  </AppShell>
+)
+
+const developerControlPanelElement = (
+  <AppShell
+    activeItem="performance"
+    title="Developer Console"
+    description="Internal tools and configuration."
+  >
+    <DeveloperControlPanel />
   </AppShell>
 )
 
@@ -232,8 +268,28 @@ const router = createBrowserRouter([
     element: phaseManagementElement,
   },
   {
-    path: '/developers/phase-management',
-    element: phaseManagementElement,
+    path: '/app/team-coordination',
+    element: teamCoordinationElement,
+  },
+  {
+    path: '/developers/team-coordination',
+    element: teamCoordinationElement,
+  },
+  {
+    path: '/app/regulatory',
+    element: regulatoryNavigationElement,
+  },
+  {
+    path: '/developers/regulatory',
+    element: regulatoryNavigationElement,
+  },
+  {
+    path: '/projects/:projectId/regulatory',
+    element: regulatoryNavigationElement,
+  },
+  {
+    path: '/developer',
+    element: developerControlPanelElement,
   },
   {
     path: '/legacy/home',
@@ -315,7 +371,9 @@ ReactDOM.createRoot(container).render(
   <React.StrictMode>
     <TranslationProvider>
       <AppThemeProvider>
-        <RouterProvider router={router} layout={BaseLayout} />
+        <DeveloperProvider>
+          <RouterProvider router={router} layout={BaseLayout} />
+        </DeveloperProvider>
       </AppThemeProvider>
     </TranslationProvider>
   </React.StrictMode>,

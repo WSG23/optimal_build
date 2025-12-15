@@ -1,4 +1,25 @@
 import { useState } from 'react'
+import {
+  Box,
+  Button,
+  Chip,
+  Container,
+  Divider,
+  Grid,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import {
+  Assignment,
+  Business,
+  Speed,
+  Timeline,
+  Feedback,
+  Send,
+} from '@mui/icons-material'
+
 import type {
   AdvisorySummary,
   AdvisoryFeedbackPayload,
@@ -9,6 +30,11 @@ import {
   submitAdvisoryFeedback,
   computeSalesVelocity,
 } from '../../../api/advisory'
+
+// Canonical Components
+import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
+import { Card } from '../../../components/canonical/Card'
+import { MetricTile } from '../../../components/canonical/MetricTile'
 
 export function AdvisoryPage() {
   const [propertyId, setPropertyId] = useState('')
@@ -23,13 +49,13 @@ export function AdvisoryPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [velocityInput, setVelocityInput] = useState<{
-    jurisdiction: string;
-    asset_type: string;
-    price_band: string;
-    units_planned: number | null;
-    launch_window: string;
-    inventory_months: string;
-    recent_absorption: string;
+    jurisdiction: string
+    asset_type: string
+    price_band: string
+    units_planned: number | null
+    launch_window: string
+    inventory_months: string
+    recent_absorption: string
   }>({
     jurisdiction: 'SG',
     asset_type: 'residential',
@@ -39,7 +65,8 @@ export function AdvisoryPage() {
     inventory_months: '',
     recent_absorption: '',
   })
-  const [velocityResult, setVelocityResult] = useState<SalesVelocityResponse | null>(null)
+  const [velocityResult, setVelocityResult] =
+    useState<SalesVelocityResponse | null>(null)
   const [velocityError, setVelocityError] = useState<string | null>(null)
   const [velocityLoading, setVelocityLoading] = useState(false)
 
@@ -59,7 +86,9 @@ export function AdvisoryPage() {
       const data = await fetchAdvisorySummary(propertyId.trim())
       setSummary(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load advisory data')
+      setError(
+        err instanceof Error ? err.message : 'Failed to load advisory data',
+      )
       setSummary(null)
     } finally {
       setLoading(false)
@@ -72,7 +101,10 @@ export function AdvisoryPage() {
 
     setSubmitting(true)
     try {
-      const newFeedback = await submitAdvisoryFeedback(propertyId.trim(), feedbackForm)
+      const newFeedback = await submitAdvisoryFeedback(
+        propertyId.trim(),
+        feedbackForm,
+      )
       if (summary) {
         setSummary({
           ...summary,
@@ -114,480 +146,566 @@ export function AdvisoryPage() {
   }
 
   return (
-    <div className="page">
-      {/* Header */}
-      <header className="page__header">
-        <h1 className="page__title">Advisory Services</h1>
-        <p className="page__subtitle">
-          Development strategy insights and market positioning
-        </p>
-      </header>
+    <Box sx={{ pb: 8 }}>
+      <Box sx={{ p: 3 }}>
+        <AnimatedPageHeader
+          title="Advisory Services"
+          subtitle="Development strategy insights and market positioning"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Advisory' },
+          ]}
+        />
 
-      {/* Property ID Input */}
-      <section className="page__section">
-        <h2 className="page__section-title">Load property analysis</h2>
-        <div className="page__form-row">
-          <div className="page__form-group" style={{ flex: 1, marginBottom: 0 }}>
-            <label htmlFor="property-id" className="page__label">
-              Property ID
-            </label>
-            <input
-              id="property-id"
-              type="text"
-              className="page__input page__input--mono"
-              placeholder="Enter property identifier"
-              value={propertyId}
-              onChange={(e) => setPropertyId(e.target.value)}
-              disabled={loading}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleLoad()
-              }}
-            />
-          </div>
-          <button
-            type="button"
-            className="page__btn page__btn--primary"
-            onClick={handleLoad}
-            disabled={loading || !propertyId.trim()}
-          >
-            {loading ? 'Loading...' : 'Load'}
-          </button>
-        </div>
-
-        {error && (
-          <div className="page__alert page__alert--error">{error}</div>
-        )}
-      </section>
-
-      {/* Advisory Content */}
-      {summary && (
-        <>
-          {/* Asset Mix Strategy */}
-          <section className="page__section">
-            <h2 className="page__section-title">Asset Mix Strategy</h2>
-            {summary.asset_mix.total_programmable_gfa_sqm && (
-              <div className="advisory__gfa-info">
-                Total programmable GFA:{' '}
-                <span className="advisory__gfa-value">
-                  {summary.asset_mix.total_programmable_gfa_sqm.toLocaleString()} m²
-                </span>
-              </div>
+        <Container maxWidth="xl" sx={{ mt: 3 }}>
+          {/* Search Section */}
+          <Card variant="glass" sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Load property analysis
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Enter property identifier"
+                value={propertyId}
+                onChange={(e) => setPropertyId(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleLoad()
+                }}
+                disabled={loading}
+                size="small"
+                InputProps={{
+                  sx: { fontFamily: 'monospace' },
+                }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleLoad}
+                disabled={loading || !propertyId.trim()}
+                startIcon={
+                  loading ? <Speed className="fa-spin" /> : <Assignment />
+                }
+              >
+                {loading ? 'Loading...' : 'Load'}
+              </Button>
+            </Stack>
+            {error && (
+              <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                {error}
+              </Typography>
             )}
-            <div className="page__grid page__grid--auto">
-              {summary.asset_mix.mix_recommendations.map((segment, idx) => (
-                <div key={idx} className="advisory__segment">
-                  <div className="advisory__segment-header">
-                    <h3 className="advisory__segment-title">{segment.use}</h3>
-                    <span className="advisory__segment-value">
-                      {(segment.allocation_pct * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  {segment.target_gfa_sqm && (
-                    <div className="advisory__segment-meta">
-                      Target GFA: {segment.target_gfa_sqm.toLocaleString()} m²
-                    </div>
+          </Card>
+
+          {summary && (
+            <Stack spacing={4}>
+              {/* Asset Mix Strategy */}
+              <Box>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
+                  <Typography variant="h5" fontWeight={600}>
+                    Asset Mix Strategy
+                  </Typography>
+                  {summary.asset_mix.total_programmable_gfa_sqm && (
+                    <Chip
+                      label={`Total Programmable GFA: ${summary.asset_mix.total_programmable_gfa_sqm.toLocaleString()} m²`}
+                      variant="outlined"
+                      color="primary"
+                    />
                   )}
-                  <p className="advisory__segment-rationale">{segment.rationale}</p>
-                </div>
-              ))}
-            </div>
-            {summary.asset_mix.notes.length > 0 && (
-              <div className="advisory__notes">
-                <ul>
-                  {summary.asset_mix.notes.map((note, idx) => (
-                    <li key={idx}>{note}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
+                </Stack>
 
-          {/* Market Positioning */}
-          <section className="page__section">
-            <h2 className="page__section-title">Market Positioning</h2>
-            <div className="advisory__tier-badge">
-              Market Tier: {summary.market_positioning.market_tier}
-            </div>
-
-            <h3 className="page__section-title">Pricing Guidance</h3>
-            <div className="page__grid page__grid--auto">
-              {Object.entries(summary.market_positioning.pricing_guidance).map(
-                ([useType, pricing]) => (
-                  <div key={useType} className="advisory__pricing-card">
-                    <div className="advisory__pricing-title">{useType}</div>
-                    {Object.entries(pricing).map(([key, value]) => (
-                      <div key={key} className="advisory__pricing-row">
-                        <span>{key.replace('_', ' ')}:</span>
-                        <span>${value.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                ),
-              )}
-            </div>
-
-            {summary.market_positioning.messaging.length > 0 && (
-              <>
-                <h3 className="page__section-title" style={{ marginTop: 'var(--ob-spacing-400)' }}>
-                  Key Messages
-                </h3>
-                <ul className="advisory__messages">
-                  {summary.market_positioning.messaging.map((msg, idx) => (
-                    <li key={idx}>{msg}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </section>
-
-          {/* Absorption Forecast */}
-          <section className="page__section">
-            <h2 className="page__section-title">Absorption Forecast</h2>
-            <div className="advisory__metrics">
-              <div className="advisory__metric-card">
-                <div className="advisory__metric-label">Time to Stabilize</div>
-                <div className="advisory__metric-value">
-                  {summary.absorption_forecast.expected_months_to_stabilize}
-                  <span className="advisory__metric-unit">months</span>
-                </div>
-              </div>
-              <div className="advisory__metric-card">
-                <div className="advisory__metric-label">Monthly Velocity</div>
-                <div className="advisory__metric-value">
-                  {summary.absorption_forecast.monthly_velocity_target}
-                  <span className="advisory__metric-unit">units</span>
-                </div>
-              </div>
-              <div className="advisory__metric-card">
-                <div className="advisory__metric-label">Confidence</div>
-                <div className="advisory__metric-value" style={{ textTransform: 'capitalize' }}>
-                  {summary.absorption_forecast.confidence}
-                </div>
-              </div>
-            </div>
-
-            <h3 className="page__section-title">Timeline</h3>
-            <div className="advisory__timeline">
-              {summary.absorption_forecast.timeline.map((milestone, idx) => (
-                <div key={idx} className="advisory__timeline-item">
-                  <div className="advisory__timeline-badge">M{milestone.month}</div>
-                  <div className="advisory__timeline-content">
-                    <div className="advisory__timeline-title">{milestone.milestone}</div>
-                    <div className="advisory__timeline-meta">
-                      {(milestone.expected_absorption_pct * 100).toFixed(0)}% absorbed
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Sales Velocity Model */}
-          <section className="page__section">
-            <div className="advisory__section-header">
-              <div>
-                <h2 className="page__section-title" style={{ marginBottom: 0 }}>
-                  Sales Velocity Model
-                </h2>
-                <p className="advisory__section-description">
-                  Forecast launch cadence with inventory and velocity benchmarks.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="page__btn page__btn--primary"
-                onClick={handleComputeVelocity}
-                disabled={velocityLoading}
-              >
-                {velocityLoading ? 'Computing...' : 'Run forecast'}
-              </button>
-            </div>
-
-            <div className="page__grid page__grid--auto">
-              <div className="page__form-group">
-                <label className="page__label">Jurisdiction</label>
-                <select
-                  className="page__select"
-                  value={velocityInput.jurisdiction}
-                  onChange={(e) =>
-                    setVelocityInput((prev) => ({ ...prev, jurisdiction: e.target.value }))
-                  }
-                >
-                  <option value="SG">Singapore</option>
-                  <option value="SEA">Seattle</option>
-                  <option value="TOR">Toronto</option>
-                  <option value="NZ">New Zealand</option>
-                  <option value="HK">Hong Kong</option>
-                </select>
-              </div>
-              <div className="page__form-group">
-                <label className="page__label">Asset type</label>
-                <select
-                  className="page__select"
-                  value={velocityInput.asset_type}
-                  onChange={(e) =>
-                    setVelocityInput((prev) => ({ ...prev, asset_type: e.target.value }))
-                  }
-                >
-                  <option value="residential">Residential</option>
-                  <option value="office">Office</option>
-                  <option value="retail">Retail</option>
-                  <option value="mixed_use">Mixed-use</option>
-                  <option value="industrial">Industrial</option>
-                </select>
-              </div>
-              <div className="page__form-group">
-                <label className="page__label">Price band</label>
-                <input
-                  type="text"
-                  className="page__input"
-                  value={velocityInput.price_band}
-                  onChange={(e) =>
-                    setVelocityInput((prev) => ({ ...prev, price_band: e.target.value }))
-                  }
-                  placeholder="e.g. 1800-2200_psf"
-                />
-              </div>
-              <div className="page__form-group">
-                <label className="page__label">Units planned</label>
-                <input
-                  type="number"
-                  className="page__input"
-                  value={velocityInput.units_planned ?? ''}
-                  onChange={(e) =>
-                    setVelocityInput((prev) => ({
-                      ...prev,
-                      units_planned: e.target.value === '' ? null : Number(e.target.value),
-                    }))
-                  }
-                  min={0}
-                />
-              </div>
-              <div className="page__form-group">
-                <label className="page__label">Launch window</label>
-                <input
-                  type="text"
-                  className="page__input"
-                  value={velocityInput.launch_window}
-                  onChange={(e) =>
-                    setVelocityInput((prev) => ({ ...prev, launch_window: e.target.value }))
-                  }
-                  placeholder="e.g. 2025-Q2"
-                />
-              </div>
-              <div className="page__form-group">
-                <label className="page__label">Inventory (months, optional)</label>
-                <input
-                  type="number"
-                  className="page__input"
-                  value={velocityInput.inventory_months}
-                  onChange={(e) =>
-                    setVelocityInput((prev) => ({ ...prev, inventory_months: e.target.value }))
-                  }
-                  min={0}
-                  step="0.1"
-                />
-              </div>
-              <div className="page__form-group">
-                <label className="page__label">Recent absorption (units/mo, optional)</label>
-                <input
-                  type="number"
-                  className="page__input"
-                  value={velocityInput.recent_absorption}
-                  onChange={(e) =>
-                    setVelocityInput((prev) => ({ ...prev, recent_absorption: e.target.value }))
-                  }
-                  min={0}
-                  step="0.1"
-                />
-              </div>
-            </div>
-
-            {velocityError && (
-              <div className="page__alert page__alert--error">{velocityError}</div>
-            )}
-
-            {velocityResult && (
-              <div className="advisory__velocity-results">
-                <div className="advisory__metrics">
-                  <div className="advisory__metric-card">
-                    <div className="advisory__metric-label">Velocity</div>
-                    <div className="advisory__metric-value">
-                      {velocityResult.forecast.velocity_units_per_month ?? '—'}
-                      <span className="advisory__metric-unit">units/mo</span>
-                    </div>
-                  </div>
-                  <div className="advisory__metric-card">
-                    <div className="advisory__metric-label">Absorption</div>
-                    <div className="advisory__metric-value">
-                      {velocityResult.forecast.absorption_months ?? '—'}
-                      <span className="advisory__metric-unit">months</span>
-                    </div>
-                  </div>
-                  <div className="advisory__metric-card">
-                    <div className="advisory__metric-label">Confidence</div>
-                    <div className="advisory__metric-value">
-                      {(velocityResult.forecast.confidence * 100).toFixed(0)}%
-                    </div>
-                  </div>
-                </div>
-
-                {velocityResult.risks.length > 0 && (
-                  <div className="advisory__risk-tags">
-                    {velocityResult.risks.map((risk, idx) => (
-                      <span
-                        key={idx}
-                        className={`advisory__risk-tag advisory__risk-tag--${risk.level}`}
+                <Grid container spacing={3}>
+                  {summary.asset_mix.mix_recommendations.map((segment, idx) => (
+                    <Grid item xs={12} md={4} key={idx}>
+                      <Card
+                        variant="glass"
+                        sx={{ height: '100%', p: 3 }}
+                        hoverEffect
                       >
-                        {risk.label} ({risk.level})
-                      </span>
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          mb={2}
+                        >
+                          <Typography variant="h6">{segment.use}</Typography>
+                          <Typography variant="h4" color="primary.main">
+                            {(segment.allocation_pct * 100).toFixed(0)}%
+                          </Typography>
+                        </Stack>
+                        {segment.target_gfa_sqm && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            gutterBottom
+                          >
+                            Target GFA:{' '}
+                            {segment.target_gfa_sqm.toLocaleString()} m²
+                          </Typography>
+                        )}
+                        <Typography variant="body1" sx={{ mt: 2 }}>
+                          {segment.rationale}
+                        </Typography>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+
+              {/* Market Positioning */}
+              <Box>
+                <Typography variant="h5" fontWeight={600} gutterBottom>
+                  Market Positioning
+                </Typography>
+                <Card variant="glass" sx={{ p: 3 }}>
+                  <Stack direction="row" spacing={2} mb={3}>
+                    <Chip
+                      label={`Market Tier: ${summary.market_positioning.market_tier}`}
+                      color="secondary"
+                      icon={<Business />}
+                    />
+                  </Stack>
+
+                  <Typography variant="h6" gutterBottom>
+                    Pricing Guidance
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {Object.entries(
+                      summary.market_positioning.pricing_guidance,
+                    ).map(([useType, pricing]) => (
+                      <Grid item xs={12} sm={6} md={3} key={useType}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={600}
+                            gutterBottom
+                            textTransform="capitalize"
+                          >
+                            {useType}
+                          </Typography>
+                          {Object.entries(pricing).map(([key, value]) => (
+                            <Stack
+                              key={key}
+                              direction="row"
+                              justifyContent="space-between"
+                              mb={0.5}
+                            >
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                textTransform="capitalize"
+                              >
+                                {key.replace('_', ' ')}
+                              </Typography>
+                              <Typography variant="caption" fontWeight={600}>
+                                ${value.toLocaleString()}
+                              </Typography>
+                            </Stack>
+                          ))}
+                        </Box>
+                      </Grid>
                     ))}
-                  </div>
-                )}
+                  </Grid>
+                </Card>
+              </Box>
 
-                {velocityResult.recommendations.length > 0 && (
-                  <div>
-                    <h3 className="page__section-title">Recommendations</h3>
-                    <ul className="advisory__recommendations">
-                      {velocityResult.recommendations.map((rec, idx) => (
-                        <li key={idx}>{rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div>
-                  <h3 className="page__section-title">Benchmarks</h3>
-                  <div className="advisory__benchmarks">
-                    <div className="advisory__benchmark-card">
-                      <div className="advisory__benchmark-label">Inventory</div>
-                      <div className="advisory__benchmark-value">
-                        {velocityResult.benchmarks.inventory_months ?? '—'} months
-                      </div>
-                    </div>
-                    <div className="advisory__benchmark-card">
-                      <div className="advisory__benchmark-label">Velocity p25 / p50 / p75</div>
-                      <div className="advisory__benchmark-value">
-                        {[velocityResult.benchmarks.velocity_p25, velocityResult.benchmarks.velocity_median, velocityResult.benchmarks.velocity_p75]
-                          .map((v) => (v == null ? '—' : v))
-                          .join(' / ')}{' '}
-                        units/mo
-                      </div>
-                    </div>
-                    <div className="advisory__benchmark-card">
-                      <div className="advisory__benchmark-label">Median PSF</div>
-                      <div className="advisory__benchmark-value">
-                        {velocityResult.benchmarks.median_psf ?? '—'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* Feedback Loop */}
-          <section className="page__section">
-            <div className="advisory__section-header">
-              <h2 className="page__section-title" style={{ marginBottom: 0 }}>
-                Market Feedback
-              </h2>
-              <button
-                type="button"
-                className="page__btn page__btn--secondary"
-                onClick={() => setFeedbackOpen(!feedbackOpen)}
-              >
-                {feedbackOpen ? 'Cancel' : 'Add Feedback'}
-              </button>
-            </div>
-
-            {feedbackOpen && (
-              <form onSubmit={handleSubmitFeedback}>
-                <div className="page__form-group">
-                  <label className="page__label">Sentiment</label>
-                  <select
-                    className="page__select"
-                    value={feedbackForm.sentiment}
-                    onChange={(e) => setFeedbackForm({ ...feedbackForm, sentiment: e.target.value })}
-                  >
-                    <option value="positive">Positive</option>
-                    <option value="neutral">Neutral</option>
-                    <option value="negative">Negative</option>
-                  </select>
-                </div>
-                <div className="page__form-group">
-                  <label className="page__label">Notes</label>
-                  <textarea
-                    className="page__textarea"
-                    value={feedbackForm.notes}
-                    onChange={(e) => setFeedbackForm({ ...feedbackForm, notes: e.target.value })}
-                    placeholder="Enter your feedback..."
-                    rows={4}
-                  />
-                </div>
-                <div className="page__form-group">
-                  <label className="page__label">Channel (optional)</label>
-                  <input
-                    type="text"
-                    className="page__input"
-                    value={feedbackForm.channel}
-                    onChange={(e) => setFeedbackForm({ ...feedbackForm, channel: e.target.value })}
-                    placeholder="e.g., phone call, site visit"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="page__btn page__btn--primary"
-                  disabled={submitting || !feedbackForm.notes.trim()}
-                >
-                  {submitting ? 'Submitting...' : 'Submit Feedback'}
-                </button>
-              </form>
-            )}
-
-            <div className="page__divider" />
-
-            {summary.feedback.length === 0 ? (
-              <div className="page__empty">
-                <p className="page__empty-description">No feedback recorded yet</p>
-              </div>
-            ) : (
-              <div className="advisory__feedback-list">
-                {summary.feedback.map((item) => (
-                  <div key={item.id} className="advisory__feedback-item">
-                    <div className="advisory__feedback-header">
-                      <span className={`advisory__sentiment advisory__sentiment--${item.sentiment}`}>
-                        {item.sentiment}
-                      </span>
-                      {item.channel && (
-                        <span className="advisory__feedback-channel">via {item.channel}</span>
+              {/* Absorption Forecast */}
+              <Box>
+                <Typography variant="h5" fontWeight={600} gutterBottom>
+                  Absorption Forecast
+                </Typography>
+                <Grid container spacing={3} mb={3}>
+                  <Grid item xs={12} sm={4}>
+                    <MetricTile
+                      label="Time to Stabilize"
+                      value={String(
+                        summary.absorption_forecast
+                          .expected_months_to_stabilize,
                       )}
-                    </div>
-                    <p className="advisory__feedback-notes">{item.notes}</p>
-                    <div className="advisory__feedback-meta">
-                      {item.submitted_by && <span>{item.submitted_by} · </span>}
-                      {new Date(item.created_at).toLocaleString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </>
-      )}
+                      variant="glass"
+                      delay={100}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <MetricTile
+                      label="Monthly Velocity"
+                      value={String(
+                        summary.absorption_forecast.monthly_velocity_target,
+                      )}
+                      variant="glass"
+                      delay={200}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <MetricTile
+                      label="Confidence"
+                      value={summary.absorption_forecast.confidence}
+                      variant="glass"
+                      delay={300}
+                    />
+                  </Grid>
+                </Grid>
 
-      {/* Empty State */}
-      {!summary && !loading && (
-        <section className="page__section">
-          <div className="page__empty">
-            <div className="advisory__empty-icon">📊</div>
-            <h3 className="page__empty-title">No advisory data loaded</h3>
-            <p className="page__empty-description">
-              Enter a property ID above to view development insights
-            </p>
-          </div>
-        </section>
-      )}
-    </div>
+                <Card variant="glass" sx={{ p: 3, overflowX: 'auto' }}>
+                  <Stack direction="row" spacing={4} sx={{ minWidth: 600 }}>
+                    {summary.absorption_forecast.timeline.map(
+                      (milestone, idx) => (
+                        <Box
+                          key={idx}
+                          sx={{
+                            position: 'relative',
+                            minWidth: 120,
+                            textAlign: 'center',
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            color="text.secondary"
+                            mb={1}
+                          >
+                            M{milestone.month}
+                          </Typography>
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              bgcolor: 'primary.main',
+                              mx: 'auto',
+                              mb: 1,
+                            }}
+                          />
+                          <Typography variant="subtitle2" gutterBottom>
+                            {milestone.milestone}
+                          </Typography>
+                          <Typography variant="caption" color="success.main">
+                            {(milestone.expected_absorption_pct * 100).toFixed(
+                              0,
+                            )}
+                            % absorbed
+                          </Typography>
+                        </Box>
+                      ),
+                    )}
+                  </Stack>
+                </Card>
+              </Box>
+
+              {/* Sales Velocity Model (Calculator) */}
+              <Box>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
+                  <Box>
+                    <Typography variant="h5" fontWeight={600}>
+                      Sales Velocity Model
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Forecast launch cadence with inventory and velocity
+                      benchmarks.
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    onClick={handleComputeVelocity}
+                    disabled={velocityLoading}
+                    startIcon={
+                      velocityLoading ? (
+                        <Speed className="fa-spin" />
+                      ) : (
+                        <Timeline />
+                      )
+                    }
+                  >
+                    {velocityLoading ? 'Computing...' : 'Run forecast'}
+                  </Button>
+                </Stack>
+
+                <Card variant="glass" sx={{ p: 3 }}>
+                  <Grid container spacing={3}>
+                    {/* Inputs */}
+                    <Grid item xs={12} md={3}>
+                      <Stack spacing={2}>
+                        <TextField
+                          select
+                          label="Jurisdiction"
+                          value={velocityInput.jurisdiction}
+                          onChange={(e) =>
+                            setVelocityInput({
+                              ...velocityInput,
+                              jurisdiction: e.target.value,
+                            })
+                          }
+                          fullWidth
+                          size="small"
+                        >
+                          <MenuItem value="SG">Singapore</MenuItem>
+                          <MenuItem value="SEA">Seattle</MenuItem>
+                        </TextField>
+                        <TextField
+                          select
+                          label="Asset Type"
+                          value={velocityInput.asset_type}
+                          onChange={(e) =>
+                            setVelocityInput({
+                              ...velocityInput,
+                              asset_type: e.target.value,
+                            })
+                          }
+                          fullWidth
+                          size="small"
+                        >
+                          <MenuItem value="residential">Residential</MenuItem>
+                          <MenuItem value="mixed_use">Mixed-use</MenuItem>
+                        </TextField>
+                        <TextField
+                          label="Price Band"
+                          value={velocityInput.price_band}
+                          onChange={(e) =>
+                            setVelocityInput({
+                              ...velocityInput,
+                              price_band: e.target.value,
+                            })
+                          }
+                          fullWidth
+                          size="small"
+                        />
+                        <TextField
+                          label="Units Planned"
+                          type="number"
+                          value={velocityInput.units_planned ?? ''}
+                          onChange={(e) =>
+                            setVelocityInput({
+                              ...velocityInput,
+                              units_planned: Number(e.target.value),
+                            })
+                          }
+                          fullWidth
+                          size="small"
+                        />
+                      </Stack>
+                    </Grid>
+
+                    {/* Results Area */}
+                    <Grid item xs={12} md={9}>
+                      {velocityError && (
+                        <Typography color="error">{velocityError}</Typography>
+                      )}
+                      {velocityResult ? (
+                        <Stack spacing={3}>
+                          <Grid container spacing={2}>
+                            <Grid item xs={4}>
+                              <MetricTile
+                                label="Velocity"
+                                value={`${velocityResult.forecast.velocity_units_per_month ?? '—'} units/mo`}
+                                variant="glass"
+                              />
+                            </Grid>
+                            <Grid item xs={4}>
+                              <MetricTile
+                                label="Absorption"
+                                value={`${velocityResult.forecast.absorption_months ?? '—'} months`}
+                                variant="glass"
+                              />
+                            </Grid>
+                            <Grid item xs={4}>
+                              <MetricTile
+                                label="Confidence"
+                                value={`${(velocityResult.forecast.confidence * 100).toFixed(0)}%`}
+                                variant="glass"
+                              />
+                            </Grid>
+                          </Grid>
+
+                          {velocityResult.risks.length > 0 && (
+                            <Stack direction="row" spacing={1}>
+                              {velocityResult.risks.map((risk, idx) => (
+                                <Chip
+                                  key={idx}
+                                  label={`${risk.label} (${risk.level})`}
+                                  color={
+                                    risk.level === 'high' ? 'error' : 'warning'
+                                  }
+                                  variant="outlined"
+                                />
+                              ))}
+                            </Stack>
+                          )}
+                        </Stack>
+                      ) : (
+                        <Box
+                          sx={{
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.5,
+                          }}
+                        >
+                          <Typography>
+                            Run forecast to see predictions
+                          </Typography>
+                        </Box>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Card>
+              </Box>
+
+              {/* Feedback Loop */}
+              <Box>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
+                  <Typography variant="h5" fontWeight={600}>
+                    Market Feedback
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Feedback />}
+                    onClick={() => setFeedbackOpen(!feedbackOpen)}
+                  >
+                    {feedbackOpen ? 'Cancel' : 'Add Feedback'}
+                  </Button>
+                </Stack>
+
+                {feedbackOpen && (
+                  <Card
+                    variant="glass"
+                    sx={{
+                      p: 3,
+                      mb: 3,
+                      border: '1px solid',
+                      borderColor: 'primary.main',
+                    }}
+                  >
+                    <form onSubmit={handleSubmitFeedback}>
+                      <Stack spacing={2}>
+                        <TextField
+                          select
+                          label="Sentiment"
+                          value={feedbackForm.sentiment}
+                          onChange={(e) =>
+                            setFeedbackForm({
+                              ...feedbackForm,
+                              sentiment: e.target.value as
+                                | 'positive'
+                                | 'neutral'
+                                | 'negative',
+                            })
+                          }
+                          fullWidth
+                        >
+                          <MenuItem value="positive">Positive</MenuItem>
+                          <MenuItem value="neutral">Neutral</MenuItem>
+                          <MenuItem value="negative">Negative</MenuItem>
+                        </TextField>
+                        <TextField
+                          multiline
+                          rows={4}
+                          label="Notes"
+                          value={feedbackForm.notes}
+                          onChange={(e) =>
+                            setFeedbackForm({
+                              ...feedbackForm,
+                              notes: e.target.value,
+                            })
+                          }
+                          fullWidth
+                          placeholder="Enter feedback..."
+                        />
+                        <Button
+                          type="submit"
+                          variant="contained"
+                          disabled={submitting || !feedbackForm.notes.trim()}
+                          startIcon={<Send />}
+                        >
+                          Submit Feedback
+                        </Button>
+                      </Stack>
+                    </form>
+                  </Card>
+                )}
+
+                <Card variant="glass" sx={{ p: 0 }}>
+                  {summary.feedback.length === 0 ? (
+                    <Box p={4} textAlign="center">
+                      <Typography color="text.secondary">
+                        No feedback recorded yet
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Stack divider={<Divider />}>
+                      {summary.feedback.map((item) => (
+                        <Box key={item.id} p={2}>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            mb={1}
+                          >
+                            <Chip
+                              label={item.sentiment}
+                              size="small"
+                              color={
+                                item.sentiment === 'positive'
+                                  ? 'success'
+                                  : item.sentiment === 'negative'
+                                    ? 'error'
+                                    : 'default'
+                              }
+                            />
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {new Date(item.created_at).toLocaleString()}
+                            </Typography>
+                          </Stack>
+                          <Typography variant="body2">{item.notes}</Typography>
+                        </Box>
+                      ))}
+                    </Stack>
+                  )}
+                </Card>
+              </Box>
+            </Stack>
+          )}
+
+          {/* Empty State */}
+          {!summary && !loading && (
+            <Card variant="glass" sx={{ p: 8, textAlign: 'center', mt: 4 }}>
+              <Typography variant="h1" sx={{ mb: 2 }}>
+                📊
+              </Typography>
+              <Typography variant="h5" gutterBottom>
+                No advisory data loaded
+              </Typography>
+              <Typography color="text.secondary">
+                Enter a property ID above to view development insights
+              </Typography>
+            </Card>
+          )}
+        </Container>
+      </Box>
+    </Box>
   )
 }

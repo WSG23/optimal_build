@@ -50,5 +50,22 @@ export default defineConfig(({ mode }) => {
         ),
       },
     },
+    build: {
+      target: 'esnext',
+      minify: 'esbuild',
+      sourcemap: false,
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-mui': ['@mui/material', '@mui/icons-material', '@mui/lab', '@emotion/react', '@emotion/styled'],
+            'vendor-maps': ['leaflet', 'mapbox-gl', 'react-leaflet'],
+            'vendor-3d': ['three'],
+            'vendor-charts': ['recharts'],
+          },
+        },
+      },
+    },
   }
 })

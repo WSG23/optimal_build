@@ -25,7 +25,9 @@ export interface PropertyOverviewSectionProps {
 // Component
 // ============================================================================
 
-export function PropertyOverviewSection({ cards }: PropertyOverviewSectionProps) {
+export function PropertyOverviewSection({
+  cards,
+}: PropertyOverviewSectionProps) {
   if (cards.length === 0) {
     return null
   }
@@ -43,7 +45,7 @@ export function PropertyOverviewSection({ cards }: PropertyOverviewSectionProps)
           key={`${card.title}-${index}`}
           style={{
             border: '1px solid #e5e7eb',
-            borderRadius: '16px',
+            borderRadius: '4px',
             padding: '1.25rem',
             background: '#f9fafb',
             display: 'flex',
@@ -53,7 +55,9 @@ export function PropertyOverviewSection({ cards }: PropertyOverviewSectionProps)
           }}
         >
           {/* Card header */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}
+          >
             <span
               style={{
                 fontSize: '0.75rem',

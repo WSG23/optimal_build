@@ -1,7 +1,6 @@
 import { afterEach, assert, beforeEach, describe, it } from 'vitest'
 import { ThemeModeProvider } from '../../theme/ThemeContext'
 
-
 import React from 'react'
 import { cleanup } from '@testing-library/react'
 
@@ -26,7 +25,6 @@ function makeMockResponse(body: unknown, status = 200): Response {
 }
 
 describe('AgentPerformancePage analytics', () => {
-
   let AgentPerformancePage: typeof import('../AgentPerformancePage').default
 
   const originalFetch = globalThis.fetch
@@ -185,8 +183,8 @@ describe('AgentPerformancePage analytics', () => {
         typeof input === 'string'
           ? input
           : 'url' in input
-          ? input.url
-          : String(input)
+            ? input.url
+            : String(input)
       const url = new URL(href, 'http://localhost')
       const { pathname, searchParams } = url
       const method = init?.method ?? 'GET'
@@ -228,8 +226,6 @@ describe('AgentPerformancePage analytics', () => {
       delete (globalThis as { ResizeObserver?: unknown }).ResizeObserver
     }
   })
-
-
 
   it('renders analytics dashboard with metrics and charts', async () => {
     rtlRender(

@@ -1,11 +1,11 @@
-import type { FC } from 'react';
-import type { Ticket } from './types';
+import type { FC } from 'react'
+import type { Ticket } from './types'
 
 export interface IncidentMapViewProps {
-  tickets: Ticket[];
-  selectedTicket: Ticket | null;
-  onLocationClick: (location: string) => void;
-  selectedLocation: string | null;
+  tickets: Ticket[]
+  selectedTicket: Ticket | null
+  onLocationClick: (location: string) => void
+  selectedLocation: string | null
 }
 
 export const IncidentMapView: FC<IncidentMapViewProps> = ({
@@ -14,13 +14,15 @@ export const IncidentMapView: FC<IncidentMapViewProps> = ({
   onLocationClick,
   selectedLocation,
 }) => {
-  const locations = Array.from(new Set(tickets.map((ticket) => ticket.location)));
+  const locations = Array.from(
+    new Set(tickets.map((ticket) => ticket.location)),
+  )
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <div className="flex flex-wrap gap-2">
         {locations.map((location) => {
-          const active = selectedLocation === location;
+          const active = selectedLocation === location
           return (
             <button
               key={location}
@@ -32,13 +34,15 @@ export const IncidentMapView: FC<IncidentMapViewProps> = ({
             >
               {location}
             </button>
-          );
+          )
         })}
       </div>
       <div className="flex-1 overflow-y-auto rounded-lg border border-white/10 bg-neutral-900/50 p-4 text-sm text-white/70">
         {selectedTicket ? (
           <div>
-            <div className="text-lg font-semibold text-white">{selectedTicket.title}</div>
+            <div className="text-lg font-semibold text-white">
+              {selectedTicket.title}
+            </div>
             <p className="mt-1">{selectedTicket.description}</p>
             <p className="mt-2 text-xs uppercase tracking-wide text-white/40">
               {selectedTicket.location}
@@ -49,7 +53,7 @@ export const IncidentMapView: FC<IncidentMapViewProps> = ({
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default IncidentMapView;
+export default IncidentMapView

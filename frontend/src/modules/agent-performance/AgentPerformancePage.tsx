@@ -1,12 +1,14 @@
+import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
+  Area,
+  AreaChart,
 } from 'recharts'
 
 import { AppLayout } from '../../App'
@@ -21,14 +23,18 @@ import {
   formatPercent,
   formatShortCurrency,
 } from './utils/formatters'
+import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
+import { MetricTile } from '../../components/canonical/MetricTile'
+import { Card } from '../../components/canonical/Card'
+import { AttachMoney, TrendingUp, Speed, Assignment } from '@mui/icons-material'
 
 export default function AgentPerformancePage() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
 
   const {
-    loadingDeals,
-    dealError,
+    loadingDeals: _loadingDeals,
+    dealError: _dealError,
     selectedDealId,
     selectedDeal,
     groupedDeals,
@@ -36,7 +42,11 @@ export default function AgentPerformancePage() {
     setSelectedDealId,
   } = useDeals({ t })
 
-  const { timeline, timelineLoading, timelineError } = useTimeline({
+  const {
+    timeline,
+    timelineLoading,
+    timelineError: _timelineError,
+  } = useTimeline({
     selectedDealId,
     t,
   })
@@ -54,9 +64,9 @@ export default function AgentPerformancePage() {
   const fallbackText = t('agentPerformance.common.fallback')
 
   const {
-    benchmarksLoading,
-    benchmarksError,
-    benchmarkComparisons,
+    benchmarksLoading: _benchmarksLoading,
+    benchmarksError: _benchmarksError,
+    benchmarkComparisons: _benchmarkComparisons,
     benchmarksHasContent,
   } = useBenchmarks({
     selectedDeal,
@@ -67,8 +77,6 @@ export default function AgentPerformancePage() {
   })
 
   const loadingText = t('common.loading')
-  const analyticsLoadingText = t('agentPerformance.analytics.loading')
-  const benchmarksLoadingText = t('agentPerformance.analytics.benchmarksLoading')
 
   const analyticsHasContent =
     Boolean(latestSnapshot) ||
@@ -82,70 +90,109 @@ export default function AgentPerformancePage() {
       title={t('agentPerformance.title')}
       subtitle={t('agentPerformance.subtitle')}
     >
-      <div className="agent-performance">
-        <section className="agent-performance__kanban">
-          {dealError && (
-            <p className="agent-performance__error agent-performance__error--inline">
-              {dealError}
-            </p>
-          )}
-          {stageOrder.map((stage) => {
-            const items = groupedDeals[stage] ?? []
-            const label =
-              t(STAGE_TRANSLATION_KEYS[stage]) ?? STAGE_TRANSLATION_KEYS[stage]
-            return (
-              <article key={stage} className="agent-performance__column">
-                <header>
-                  <h3>{label}</h3>
-                  <span className="agent-performance__count">{items.length}</span>
-                </header>
-                {loadingDeals && (
-                  <p className="agent-performance__column-placeholder">
-                    {t('common.loading')}
-                  </p>
-                )}
-                {!loadingDeals && items.length === 0 && (
-                  <p className="agent-performance__column-placeholder">
-                    {fallbackText}
-                  </p>
-                )}
-                <ul>
-                  {items.map((deal) => {
-                    const isSelected = selectedDealId === deal.id
-                    return (
-                      <li key={deal.id}>
-                        <button
-                          type="button"
-                          className={`agent-performance__deal${
-                            isSelected ? ' agent-performance__deal--selected' : ''
-                          }`}
-                          onClick={() => setSelectedDealId(deal.id)}
+      <Box sx={{ p: 3 }}>
+        <AnimatedPageHeader
+          title={t('agentPerformance.title')}
+          subtitle={t('agentPerformance.subtitle')}
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Agent Performance' },
+          ]}
+        />
+
+        <Grid container spacing={3}>
+          {/* Kanban Section */}
+          <Grid item xs={12} lg={8}>
+            <Card variant="glass" sx={{ p: 2, height: '100%', minHeight: 400 }}>
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{ overflowX: 'auto', pb: 2 }}
+              >
+                {stageOrder.map((stage) => {
+                  const items = groupedDeals[stage] ?? []
+                  const label =
+                    t(STAGE_TRANSLATION_KEYS[stage]) ??
+                    STAGE_TRANSLATION_KEYS[stage]
+
+                  return (
+                    <Box key={stage} sx={{ minWidth: 280, flexShrink: 0 }}>
+                      <Box
+                        sx={{
+                          pb: 1,
+                          borderBottom: 2,
+                          borderColor: 'divider',
+                          mb: 2,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 600 }}
                         >
-                          <strong>{deal.title}</strong>
-                          {deal.leadSource && <span>{deal.leadSource}</span>}
-                          {deal.estimatedValueAmount !== null && (
-                            <span>
+                          {label}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            background: 'rgba(0,0,0,0.05)',
+                            px: 1,
+                            borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
+                          }}
+                        >
+                          {items.length}
+                        </Typography>
+                      </Box>
+
+                      <Stack spacing={1}>
+                        {items.map((deal) => (
+                          <Card
+                            variant="glass"
+                            key={deal.id}
+                            hoverEffect
+                            sx={{
+                              p: 1.5,
+                              cursor: 'pointer',
+                              border:
+                                selectedDealId === deal.id
+                                  ? '1px solid #2196f3'
+                                  : undefined,
+                              background:
+                                selectedDealId === deal.id
+                                  ? 'rgba(33, 150, 243, 0.05)'
+                                  : undefined,
+                            }}
+                            onClick={() => setSelectedDealId(deal.id)}
+                          >
+                            <Typography variant="subtitle2">
+                              {deal.title}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              display="block"
+                              color="text.secondary"
+                            >
                               {deal.estimatedValueCurrency}{' '}
-                              {deal.estimatedValueAmount.toLocaleString(locale)}
-                            </span>
-                          )}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </article>
-            )
-          })}
-        </section>
-        <aside className="agent-performance__timeline">
-          {dealError && (
-            <p className="agent-performance__error">{dealError}</p>
-          )}
-          {timelineError && !timelineLoading && (
-            <p className="agent-performance__error">{timelineError}</p>
-          )}
-          {!dealError && (
+                              {deal.estimatedValueAmount !== null
+                                ? deal.estimatedValueAmount.toLocaleString(
+                                    locale,
+                                  )
+                                : '-'}
+                            </Typography>
+                          </Card>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )
+                })}
+              </Stack>
+            </Card>
+          </Grid>
+
+          {/* Timeline Sidebar */}
+          <Grid item xs={12} lg={4}>
             <TimelinePanel
               events={timeline}
               loading={timelineLoading}
@@ -162,343 +209,171 @@ export default function AgentPerformancePage() {
                 t(STAGE_TRANSLATION_KEYS[stage]) ?? stage
               }
             />
-          )}
-        </aside>
-      </div>
-      {analyticsHasContent && (
-        <section className="agent-performance__analytics">
-          <header className="agent-performance__analytics-header">
-            <h3>{t('agentPerformance.analytics.title')}</h3>
-            {selectedAgentId && (
-              <span className="agent-performance__analytics-agent">
-                {t('agentPerformance.analytics.agentLabel', {
-                  id: selectedAgentId,
-                })}
-              </span>
-            )}
-          </header>
-          {analyticsError && (
-            <p className="agent-performance__error">{analyticsError}</p>
-          )}
-          {analyticsLoading && !analyticsError && (
-            <p className="agent-performance__analytics-loading">
-              {analyticsLoadingText}
-            </p>
-          )}
-          {latestSnapshot && (
-            <div className="agent-performance__metrics-grid">
-              {[
-                {
-                  key: 'open',
-                  label: t('agentPerformance.analytics.metrics.openDeals'),
-                  value: latestSnapshot.dealsOpen.toLocaleString(locale),
-                },
-                {
-                  key: 'won',
-                  label: t('agentPerformance.analytics.metrics.closedWon'),
-                  value: latestSnapshot.dealsClosedWon.toLocaleString(locale),
-                },
-                {
-                  key: 'gross',
-                  label: t(
-                    'agentPerformance.analytics.metrics.grossPipelineValue',
-                  ),
-                  value: formatCurrency(
-                    latestSnapshot.grossPipelineValue,
-                    primaryCurrency,
-                    locale,
-                    fallbackText,
-                  ),
-                },
-                {
-                  key: 'weighted',
-                  label: t(
-                    'agentPerformance.analytics.metrics.weightedPipelineValue',
-                  ),
-                  value: formatCurrency(
-                    latestSnapshot.weightedPipelineValue,
-                    primaryCurrency,
-                    locale,
-                    fallbackText,
-                  ),
-                },
-                {
-                  key: 'conversion',
-                  label: t('agentPerformance.analytics.metrics.conversionRate'),
-                  value: formatPercent(latestSnapshot.conversionRate, fallbackText),
-                },
-                {
-                  key: 'cycle',
-                  label: t('agentPerformance.analytics.metrics.avgCycleDays'),
-                  value: formatDays(latestSnapshot.avgCycleDays, fallbackText),
-                },
-              ]
-                .concat(
-                  latestSnapshot.confirmedCommissionAmount !== null
-                    ? [
-                        {
-                          key: 'confirmed',
-                          label: t(
-                            'agentPerformance.analytics.metrics.confirmedCommission',
-                          ),
-                          value: formatCurrency(
-                            Number(latestSnapshot.confirmedCommissionAmount),
-                            primaryCurrency,
-                            locale,
-                            fallbackText,
-                          ),
-                        },
-                      ]
-                    : [],
-                )
-                .concat(
-                  latestSnapshot.disputedCommissionAmount !== null
-                    ? [
-                        {
-                          key: 'disputed',
-                          label: t(
-                            'agentPerformance.analytics.metrics.disputedCommission',
-                          ),
-                          value: formatCurrency(
-                            Number(latestSnapshot.disputedCommissionAmount),
-                            primaryCurrency,
-                            locale,
-                            fallbackText,
-                          ),
-                        },
-                      ]
-                    : [],
-                )
-                .map((metric) => (
-                  <article
-                    key={metric.key}
-                    className="agent-performance__metric-card"
-                  >
-                    <h4>{metric.label}</h4>
-                    <strong>{metric.value}</strong>
-                  </article>
-                ))}
-            </div>
-          )}
-          {trendData.length > 0 && (
-            <div className="agent-performance__charts">
-              <div className="agent-performance__chart-card">
-                <h4>
-                  {t('agentPerformance.analytics.trend.pipelineHeading')}
-                </h4>
-                <ResponsiveContainer width="100%" height={260}>
-                  <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="label" />
-                    <YAxis
-                      tickFormatter={(value) => {
-                        const numeric =
-                          typeof value === 'number'
-                            ? value
-                            : Number.parseFloat(String(value))
-                        if (Number.isNaN(numeric)) {
-                          return ''
-                        }
-                        return formatShortCurrency(numeric, primaryCurrency, locale)
-                      }}
-                    />
-                    <Tooltip
-                      formatter={(value: number | string, name: string) => {
-                        const numeric =
-                          typeof value === 'number'
-                            ? value
-                            : Number.parseFloat(String(value))
-                        if (name === 'gross' || name === 'weighted') {
-                          return [
-                            formatCurrency(
-                              Number.isNaN(numeric) ? null : numeric,
-                              primaryCurrency,
-                              locale,
-                              fallbackText,
-                            ),
-                            t(
-                              name === 'gross'
-                                ? 'agentPerformance.analytics.trend.grossLabel'
-                                : 'agentPerformance.analytics.trend.weightedLabel',
-                            ),
-                          ]
-                        }
-                        return [value, name]
-                      }}
-                    />
-                    <Legend
-                      formatter={(value: string) =>
-                        t(
-                          value === 'gross'
-                            ? 'agentPerformance.analytics.trend.grossLabel'
-                            : 'agentPerformance.analytics.trend.weightedLabel',
-                        )
-                      }
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="gross"
-                      stroke="#2563eb"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="weighted"
-                      stroke="#7c3aed"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="agent-performance__chart-card">
-                <h4>
-                  {t('agentPerformance.analytics.trend.conversionHeading')}
-                </h4>
-                <ResponsiveContainer width="100%" height={260}>
-                  <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="label" />
-                    <YAxis
-                      yAxisId="rate"
-                      tickFormatter={(value) => {
-                        const numeric =
-                          typeof value === 'number'
-                            ? value
-                            : Number.parseFloat(String(value))
-                        if (Number.isNaN(numeric)) {
-                          return ''
-                        }
-                        return `${numeric.toFixed(0)}%`
-                      }}
-                    />
-                    <YAxis
-                      yAxisId="cycle"
-                      orientation="right"
-                      tickFormatter={(value) => {
-                        const numeric =
-                          typeof value === 'number'
-                            ? value
-                            : Number.parseFloat(String(value))
-                        if (Number.isNaN(numeric)) {
-                          return ''
-                        }
-                        return formatDays(numeric, fallbackText)
-                      }}
-                    />
-                    <Tooltip
-                      formatter={(value: number | string, name: string) => {
-                        const numeric =
-                          typeof value === 'number'
-                            ? value
-                            : Number.parseFloat(String(value))
-                        if (name === 'conversion') {
-                          return [
-                            Number.isNaN(numeric)
-                              ? fallbackText
-                              : `${numeric.toFixed(1)}%`,
-                            t(
-                              'agentPerformance.analytics.trend.conversionSeriesLabel',
-                            ),
-                          ]
-                        }
-                        if (name === 'cycle') {
-                          return [
-                            Number.isNaN(numeric)
-                              ? fallbackText
-                              : formatDays(numeric, fallbackText),
-                            t(
-                              'agentPerformance.analytics.trend.cycleSeriesLabel',
-                            ),
-                          ]
-                        }
-                        return [value, name]
-                      }}
-                    />
-                    <Legend
-                      formatter={(value: string) =>
-                        t(
-                          value === 'conversion'
-                            ? 'agentPerformance.analytics.trend.conversionSeriesLabel'
-                            : 'agentPerformance.analytics.trend.cycleSeriesLabel',
-                        )
-                      }
-                    />
-                    <Line
-                      yAxisId="rate"
-                      type="monotone"
-                      dataKey="conversion"
-                      stroke="#16a34a"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      yAxisId="cycle"
-                      type="monotone"
-                      dataKey="cycle"
-                      stroke="#9333ea"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-          {benchmarksHasContent && (
-            <div className="agent-performance__benchmarks">
-              <h4>{t('agentPerformance.analytics.benchmarks.title')}</h4>
-              {benchmarksError && (
-                <p className="agent-performance__error">{benchmarksError}</p>
-              )}
-              {benchmarksLoading && !benchmarksError && (
-                <p className="agent-performance__analytics-loading">
-                  {benchmarksLoadingText}
-                </p>
-              )}
-              {benchmarkComparisons.length > 0 && (
-                <ul className="agent-performance__benchmark-list">
-                  {benchmarkComparisons.map((item) => (
-                    <li key={item.key}>
-                      <header>
-                        <span>{item.label}</span>
-                        <strong>{item.actual}</strong>
-                      </header>
-                      {(item.benchmark || item.deltaText) && (
-                        <p>
-                          {item.benchmark && item.cohort && (
-                            <span>
-                              {t(
-                                'agentPerformance.analytics.benchmarks.versus',
-                                {
-                                  cohort: item.cohort,
-                                  value: item.benchmark,
-                                },
-                              )}
-                            </span>
-                          )}
-                          {item.deltaText && item.deltaText !== '' && (
-                            <span
-                              className={`agent-performance__benchmark-delta${
-                                item.deltaPositive
-                                  ? ' agent-performance__benchmark-delta--positive'
-                                  : ' agent-performance__benchmark-delta--negative'
-                              }`}
-                            >
-                              {item.deltaText}
-                            </span>
-                          )}
-                        </p>
-                      )}
-                    </li>
+          </Grid>
+
+          {/* Analytics Section */}
+          {analyticsHasContent && (
+            <Grid item xs={12}>
+              <Divider sx={{ my: 4 }} />
+              <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+                {t('agentPerformance.analytics.title')}
+              </Typography>
+
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                {latestSnapshot &&
+                  [
+                    {
+                      label: t('agentPerformance.analytics.metrics.openDeals'),
+                      value: latestSnapshot.dealsOpen.toLocaleString(locale),
+                      icon: <Assignment />,
+                    },
+                    {
+                      label: t(
+                        'agentPerformance.analytics.metrics.grossPipelineValue',
+                      ),
+                      value: formatCurrency(
+                        latestSnapshot.grossPipelineValue,
+                        primaryCurrency,
+                        locale,
+                        fallbackText,
+                      ),
+                      icon: <AttachMoney />,
+                      variant: 'primary' as const,
+                    },
+                    {
+                      label: t(
+                        'agentPerformance.analytics.metrics.conversionRate',
+                      ),
+                      value: formatPercent(
+                        latestSnapshot.conversionRate,
+                        fallbackText,
+                      ),
+                      icon: <TrendingUp />,
+                    },
+                    {
+                      label: t(
+                        'agentPerformance.analytics.metrics.avgCycleDays',
+                      ),
+                      value: formatDays(
+                        latestSnapshot.avgCycleDays,
+                        fallbackText,
+                      ),
+                      icon: <Speed />,
+                    },
+                  ].map((metric, idx) => (
+                    <Grid item xs={12} sm={6} md={3} key={idx}>
+                      <MetricTile
+                        label={metric.label as string}
+                        value={metric.value as string}
+                        icon={metric.icon}
+                        variant={metric.variant || 'glass'}
+                        delay={idx * 100}
+                      />
+                    </Grid>
                   ))}
-                </ul>
+              </Grid>
+
+              {trendData.length > 0 && (
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
+                      <Typography variant="h6" gutterBottom>
+                        {t('agentPerformance.analytics.trend.pipelineHeading')}
+                      </Typography>
+                      <ResponsiveContainer width="100%" height="90%">
+                        <AreaChart data={trendData}>
+                          <defs>
+                            <linearGradient
+                              id="colorGross"
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="1"
+                            >
+                              <stop
+                                offset="5%"
+                                stopColor="#3B82F6"
+                                stopOpacity={0.3}
+                              />
+                              <stop
+                                offset="95%"
+                                stopColor="#3B82F6"
+                                stopOpacity={0}
+                              />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                          <YAxis
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(val) =>
+                              formatShortCurrency(val, primaryCurrency, locale)
+                            }
+                          />
+                          <Tooltip />
+                          <Area
+                            type="monotone"
+                            dataKey="gross"
+                            stroke="#3B82F6"
+                            fillOpacity={1}
+                            fill="url(#colorGross)"
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="weighted"
+                            stroke="#10B981"
+                            fillOpacity={0}
+                            strokeDasharray="4 4"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
+                      <Typography variant="h6" gutterBottom>
+                        {t(
+                          'agentPerformance.analytics.trend.conversionHeading',
+                        )}
+                      </Typography>
+                      <ResponsiveContainer width="100%" height="90%">
+                        <LineChart data={trendData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                          <YAxis
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(val) => `${val}%`}
+                          />
+                          <Tooltip />
+                          <Line
+                            type="monotone"
+                            dataKey="conversion"
+                            stroke="#F59E0B"
+                            strokeWidth={2}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="cycle"
+                            stroke="#8B5CF6"
+                            strokeWidth={2}
+                            strokeDasharray="4 4"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Card>
+                  </Grid>
+                </Grid>
               )}
-            </div>
+            </Grid>
           )}
-        </section>
-      )}
+        </Grid>
+      </Box>
     </AppLayout>
   )
 }

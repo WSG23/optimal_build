@@ -123,7 +123,11 @@ describe('FinanceFacilityEditor', () => {
   it('disables save when required fields are missing', () => {
     render(
       <TranslationProvider>
-        <FinanceFacilityEditor scenario={null} saving={false} onSave={vi.fn()} />
+        <FinanceFacilityEditor
+          scenario={null}
+          saving={false}
+          onSave={vi.fn()}
+        />
       </TranslationProvider>,
     )
 

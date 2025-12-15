@@ -13,11 +13,18 @@
 
 import type React from 'react'
 import { useState, useMemo } from 'react'
-import type { DevelopmentScenario, SiteAcquisitionResult } from '../../../../../api/siteAcquisition'
+import type {
+  DevelopmentScenario,
+  SiteAcquisitionResult,
+} from '../../../../../api/siteAcquisition'
 import { SCENARIO_OPTIONS, JURISDICTION_OPTIONS } from '../../constants'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
 import { VoiceNoteList } from './VoiceNoteList'
-import { PropertyLocationMap, type HeritageFeature, type NearbyAmenity } from '../map'
+import {
+  PropertyLocationMap,
+  type HeritageFeature,
+  type NearbyAmenity,
+} from '../map'
 
 // ============================================================================
 // Types
@@ -104,42 +111,34 @@ export function PropertyCaptureForm({
           longitude: station.longitude!,
           distance_m: station.distanceM ?? undefined,
         })) as NearbyAmenity[] | undefined,
-      busStops: amenities.busStops
-        ?.filter(hasCoordinates)
-        .map((stop) => ({
-          name: stop.name,
-          type: 'bus' as const,
-          latitude: stop.latitude!,
-          longitude: stop.longitude!,
-          distance_m: stop.distanceM ?? undefined,
-        })) as NearbyAmenity[] | undefined,
-      schools: amenities.schools
-        ?.filter(hasCoordinates)
-        .map((school) => ({
-          name: school.name,
-          type: 'school' as const,
-          latitude: school.latitude!,
-          longitude: school.longitude!,
-          distance_m: school.distanceM ?? undefined,
-        })) as NearbyAmenity[] | undefined,
-      malls: amenities.shoppingMalls
-        ?.filter(hasCoordinates)
-        .map((mall) => ({
-          name: mall.name,
-          type: 'mall' as const,
-          latitude: mall.latitude!,
-          longitude: mall.longitude!,
-          distance_m: mall.distanceM ?? undefined,
-        })) as NearbyAmenity[] | undefined,
-      parks: amenities.parks
-        ?.filter(hasCoordinates)
-        .map((park) => ({
-          name: park.name,
-          type: 'park' as const,
-          latitude: park.latitude!,
-          longitude: park.longitude!,
-          distance_m: park.distanceM ?? undefined,
-        })) as NearbyAmenity[] | undefined,
+      busStops: amenities.busStops?.filter(hasCoordinates).map((stop) => ({
+        name: stop.name,
+        type: 'bus' as const,
+        latitude: stop.latitude!,
+        longitude: stop.longitude!,
+        distance_m: stop.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
+      schools: amenities.schools?.filter(hasCoordinates).map((school) => ({
+        name: school.name,
+        type: 'school' as const,
+        latitude: school.latitude!,
+        longitude: school.longitude!,
+        distance_m: school.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
+      malls: amenities.shoppingMalls?.filter(hasCoordinates).map((mall) => ({
+        name: mall.name,
+        type: 'mall' as const,
+        latitude: mall.latitude!,
+        longitude: mall.longitude!,
+        distance_m: mall.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
+      parks: amenities.parks?.filter(hasCoordinates).map((park) => ({
+        name: park.name,
+        type: 'park' as const,
+        latitude: park.latitude!,
+        longitude: park.longitude!,
+        distance_m: park.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
     }
   }, [capturedProperty?.nearbyAmenities])
 
@@ -155,13 +154,20 @@ export function PropertyCaptureForm({
     const heritage = capturedProperty.heritageContext
     // If we have heritage context, create a marker at the property location
     if (heritage.overlay?.name) {
-      return [{
-        name: heritage.overlay.name,
-        status: heritage.risk ?? undefined,
-        risk_level: heritage.risk === 'high' ? 'high' : heritage.risk === 'low' ? 'low' : 'medium',
-        latitude: parseFloat(latitude) || 1.3,
-        longitude: parseFloat(longitude) || 103.85,
-      }]
+      return [
+        {
+          name: heritage.overlay.name,
+          status: heritage.risk ?? undefined,
+          risk_level:
+            heritage.risk === 'high'
+              ? 'high'
+              : heritage.risk === 'low'
+                ? 'low'
+                : 'medium',
+          latitude: parseFloat(latitude) || 1.3,
+          longitude: parseFloat(longitude) || 103.85,
+        },
+      ]
     }
     return undefined
   }, [capturedProperty?.heritageContext, latitude, longitude])
@@ -171,7 +177,7 @@ export function PropertyCaptureForm({
       style={{
         background: 'white',
         border: '1px solid #d2d2d7',
-        borderRadius: '18px',
+        borderRadius: '4px',
         padding: '2rem',
         marginBottom: '2rem',
       }}
@@ -208,7 +214,9 @@ export function PropertyCaptureForm({
             onChange={(e) => {
               const newCode = e.target.value
               setJurisdictionCode(newCode)
-              const jurisdiction = JURISDICTION_OPTIONS.find((j) => j.code === newCode)
+              const jurisdiction = JURISDICTION_OPTIONS.find(
+                (j) => j.code === newCode,
+              )
               if (jurisdiction) {
                 setLatitude(jurisdiction.defaultLat)
                 setLongitude(jurisdiction.defaultLon)
@@ -219,7 +227,7 @@ export function PropertyCaptureForm({
               padding: '0.875rem 1rem',
               fontSize: '1rem',
               border: '1px solid #d2d2d7',
-              borderRadius: '12px',
+              borderRadius: '6px',
               outline: 'none',
               background: 'white',
               cursor: 'pointer',
@@ -260,13 +268,14 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 outline: 'none',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = '#1d1d1f'
-                e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.04)'
+                e.currentTarget.style.boxShadow =
+                  '0 0 0 4px rgba(0, 0, 0, 0.04)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = '#d2d2d7'
@@ -283,7 +292,7 @@ export function PropertyCaptureForm({
                 fontWeight: 500,
                 background: '#f5f5f7',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 whiteSpace: 'nowrap',
@@ -301,7 +310,7 @@ export function PropertyCaptureForm({
                 fontWeight: 500,
                 background: '#f5f5f7',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 whiteSpace: 'nowrap',
@@ -355,14 +364,16 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 outline: 'none',
-                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = '#1d1d1f'
-                e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.04)'
+                e.currentTarget.style.boxShadow =
+                  '0 0 0 4px rgba(0, 0, 0, 0.04)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = '#d2d2d7'
@@ -394,14 +405,16 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
                 border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                borderRadius: '6px',
                 outline: 'none',
-                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = '#1d1d1f'
-                e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.04)'
+                e.currentTarget.style.boxShadow =
+                  '0 0 0 4px rgba(0, 0, 0, 0.04)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = '#d2d2d7'
@@ -469,7 +482,7 @@ export function PropertyCaptureForm({
                 style={{
                   background: isSelected ? '#f5f5f7' : 'white',
                   border: `1px solid ${isSelected ? '#1d1d1f' : '#d2d2d7'}`,
-                  borderRadius: '12px',
+                  borderRadius: '4px',
                   padding: '1.25rem',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -478,7 +491,8 @@ export function PropertyCaptureForm({
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.08)'
+                  e.currentTarget.style.boxShadow =
+                    '0 8px 16px rgba(0, 0, 0, 0.08)'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
@@ -551,11 +565,15 @@ export function PropertyCaptureForm({
             fontWeight: 500,
             color: 'white',
             background:
-              isCapturing || selectedScenarios.length === 0 ? '#d2d2d7' : '#1d1d1f',
+              isCapturing || selectedScenarios.length === 0
+                ? '#d2d2d7'
+                : '#1d1d1f',
             border: 'none',
-            borderRadius: '12px',
+            borderRadius: '6px',
             cursor:
-              isCapturing || selectedScenarios.length === 0 ? 'not-allowed' : 'pointer',
+              isCapturing || selectedScenarios.length === 0
+                ? 'not-allowed'
+                : 'pointer',
             transition: 'all 0.2s ease',
             letterSpacing: '-0.005em',
           }}
@@ -581,7 +599,7 @@ export function PropertyCaptureForm({
               padding: '1rem',
               background: '#fff5f5',
               border: '1px solid #fed7d7',
-              borderRadius: '12px',
+              borderRadius: '4px',
               color: '#c53030',
               fontSize: '0.9375rem',
             }}
@@ -598,14 +616,15 @@ export function PropertyCaptureForm({
               padding: '1rem',
               background: '#f0fdf4',
               border: '1px solid #bbf7d0',
-              borderRadius: '12px',
+              borderRadius: '4px',
               color: '#15803d',
               fontSize: '0.9375rem',
             }}
           >
             <strong>Property captured successfully</strong>
             <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-              {capturedProperty.address.fullAddress} • {capturedProperty.address.district}
+              {capturedProperty.address.fullAddress} •{' '}
+              {capturedProperty.address.district}
             </div>
           </div>
         )}

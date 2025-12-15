@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
 import {
   Box,
-  Card,
-  CardContent,
   Chip,
   Divider,
   Grid,
@@ -12,6 +10,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { BarChart } from '@mui/icons-material'
 import {
   Area,
   CartesianGrid,
@@ -36,6 +35,11 @@ interface AnalyticsPanelProps {
   benchmarks: BenchmarkEntry[]
 }
 
+import { MetricTile } from '../../../../components/canonical/MetricTile'
+import { Card } from '../../../../components/canonical/Card'
+
+// ... existing imports ... (Assuming they are preserved or I need to handle them carefully if I'm replacing a chunk)
+
 export function AnalyticsPanel({
   metrics,
   trend,
@@ -55,96 +59,154 @@ export function AnalyticsPanel({
 
   return (
     <Box className="bp-analytics">
-      <Grid container spacing={2} className="bp-analytics__metrics">
-        {metrics.map((metric) => (
+      <Grid
+        container
+        spacing={2}
+        className="bp-analytics__metrics"
+        sx={{ mb: 4 }}
+      >
+        {metrics.map((metric, index) => (
           <Grid item xs={12} sm={6} md={4} key={metric.key}>
-            <Card variant="outlined" className="bp-metric-card">
-              <CardContent>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {metric.label}
-                </Typography>
-                <Typography variant="h5" className="bp-metric-card__value">
-                  {metric.value}
-                </Typography>
-                {metric.helperText && (
-                  <Typography variant="body2" color="text.secondary">
-                    {metric.helperText}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
+            <MetricTile
+              label={metric.label}
+              value={metric.value}
+              variant="glass"
+              delay={index * 50}
+            />
           </Grid>
         ))}
       </Grid>
 
       <Box className="bp-analytics__trend">
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={1}
+        >
           <Typography variant="h6">30-day trend</Typography>
           <Typography variant="caption" color="text.secondary">
             Gross & weighted pipeline vs conversion + cycle time
           </Typography>
         </Stack>
-        <Box className="bp-analytics__chart">
+        <Card
+          variant="glass"
+          className="bp-analytics__chart"
+          sx={{ height: 300, position: 'relative', p: 2 }}
+        >
           {chartData.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              Trend data will appear once daily snapshots run.
-            </Typography>
+            <Stack
+              alignItems="center"
+              justifyContent="center"
+              spacing={2}
+              sx={{
+                height: '100%',
+                color: 'text.secondary',
+                opacity: 0.6,
+              }}
+            >
+              <BarChart sx={{ fontSize: 64, opacity: 0.5 }} />
+              <Box textAlign="center">
+                <Typography variant="h6" color="text.primary">
+                  Connect data to see pipeline trends
+                </Typography>
+                <Typography variant="body2">
+                  Historical performance will populate here daily.
+                </Typography>
+              </Box>
+            </Stack>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={chartData}
                 margin={{ top: 16, right: 24, bottom: 0, left: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} minTickGap={32} />
+                {/* ... Chart Content Preserved ... */}
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="rgba(255,255,255,0.1)"
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  minTickGap={32}
+                />
                 <YAxis
                   yAxisId="left"
                   tickFormatter={(value: number) => `${value.toFixed(1)}m`}
+                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
                   label={{
                     value: 'Pipeline (SGD millions)',
                     angle: -90,
                     position: 'insideLeft',
+                    fill: '#9CA3AF',
+                    fontSize: 12,
                   }}
                 />
                 <YAxis
                   yAxisId="right"
                   orientation="right"
                   tickFormatter={(value: number) => `${value.toFixed(0)}`}
+                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
                   label={{
                     value: 'Conversion % / Cycle days',
                     angle: 90,
                     position: 'insideRight',
+                    fill: '#9CA3AF',
+                    fontSize: 12,
                   }}
                 />
                 <RechartsTooltip
                   formatter={formatTooltipValue}
-                  labelStyle={{ fontWeight: 600 }}
+                  labelStyle={{ fontWeight: 600, color: '#111827' }}
+                  contentStyle={{
+                    borderRadius: 4, // Square Cyber-Minimalism: sm for tooltips
+                    border: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  }}
                 />
-                <Legend />
+                <Legend iconType="circle" />
                 <Area
                   yAxisId="left"
                   type="monotone"
                   dataKey="gross"
                   name="Gross pipeline"
-                  fill="#90caf9"
-                  stroke="#42a5f5"
-                  fillOpacity={0.3}
+                  fill="url(#colorGross)"
+                  stroke="#3B82F6"
+                  fillOpacity={1}
                 />
                 <Area
                   yAxisId="left"
                   type="monotone"
                   dataKey="weighted"
                   name="Weighted pipeline"
-                  fill="#a5d6a7"
-                  stroke="#66bb6a"
-                  fillOpacity={0.3}
+                  fill="url(#colorWeighted)"
+                  stroke="#10B981"
+                  fillOpacity={1}
                 />
+                <defs>
+                  <linearGradient id="colorGross" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorWeighted"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <Line
                   yAxisId="right"
                   type="monotone"
                   dataKey="conversion"
                   name="Conversion rate"
-                  stroke="#ff7043"
+                  stroke="#F59E0B"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -153,7 +215,7 @@ export function AnalyticsPanel({
                   type="monotone"
                   dataKey="cycle"
                   name="Cycle time (days)"
-                  stroke="#ab47bc"
+                  stroke="#8B5CF6"
                   strokeDasharray="4 2"
                   strokeWidth={2}
                   dot={false}
@@ -161,7 +223,7 @@ export function AnalyticsPanel({
               </ComposedChart>
             </ResponsiveContainer>
           )}
-        </Box>
+        </Card>
       </Box>
 
       <Divider sx={{ my: 2 }} />
@@ -215,9 +277,13 @@ export function AnalyticsPanel({
   )
 }
 
-const formatTooltipValue: Formatter<ValueType, NameType> = (rawValue, rawName) => {
+const formatTooltipValue: Formatter<ValueType, NameType> = (
+  rawValue,
+  rawName,
+) => {
   const label = typeof rawName === 'string' ? rawName : String(rawName ?? '')
-  const numericValue = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? NaN)
+  const numericValue =
+    typeof rawValue === 'number' ? rawValue : Number(rawValue ?? NaN)
 
   if (!Number.isFinite(numericValue)) {
     return ['Not available yet', label]

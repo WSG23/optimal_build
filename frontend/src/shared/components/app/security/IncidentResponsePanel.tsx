@@ -1,11 +1,11 @@
-import type { FC } from 'react';
-import type { Ticket } from './types';
+import type { FC } from 'react'
+import type { Ticket } from './types'
 
 export interface IncidentResponsePanelProps {
-  ticket: Ticket;
-  onResolve: (ticket: Ticket) => void;
-  onDismiss: (ticket: Ticket) => void;
-  onClose: (ticket: Ticket) => void;
+  ticket: Ticket
+  onResolve: (ticket: Ticket) => void
+  onDismiss: (ticket: Ticket) => void
+  onClose: (ticket: Ticket) => void
 }
 
 export const IncidentResponsePanel: FC<IncidentResponsePanelProps> = ({
@@ -19,7 +19,9 @@ export const IncidentResponsePanel: FC<IncidentResponsePanelProps> = ({
       <div>
         <div className="text-base font-semibold text-white">{ticket.title}</div>
         <p className="mt-1 text-sm text-white/70">{ticket.description}</p>
-        <p className="mt-1 text-xs uppercase tracking-wide text-white/40">{ticket.location}</p>
+        <p className="mt-1 text-xs uppercase tracking-wide text-white/40">
+          {ticket.location}
+        </p>
       </div>
       <div className="mt-auto flex flex-wrap gap-2 text-sm">
         <button
@@ -45,7 +47,7 @@ export const IncidentResponsePanel: FC<IncidentResponsePanelProps> = ({
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default IncidentResponsePanel;
+export default IncidentResponsePanel

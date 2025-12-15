@@ -19,12 +19,12 @@ import {
 // because the rendered text doesn't match expected patterns in the test environment.
 // See docs/all_steps_to_product_completion.md#-known-testing-issues
 describe.skip('AdvancedIntelligencePage', () => {
-
   it('renders derived workspace metrics when fetchers succeed', async () => {
     const graphSuccess: GraphIntelligenceResponse = {
       kind: 'graph',
       status: 'ok',
-      summary: 'Two core actors are tightly connected to the permitting office.',
+      summary:
+        'Two core actors are tightly connected to the permitting office.',
       generatedAt: '2025-05-01T12:00:00Z',
       graph: {
         nodes: [
@@ -62,7 +62,8 @@ describe.skip('AdvancedIntelligencePage', () => {
     const correlationSuccess: CrossCorrelationIntelligenceResponse = {
       kind: 'correlation',
       status: 'ok',
-      summary: 'Training programmes continue to correlate with faster approvals.',
+      summary:
+        'Training programmes continue to correlate with faster approvals.',
       updatedAt: '2025-05-01T12:00:00Z',
       relationships: [
         {
@@ -82,8 +83,6 @@ describe.skip('AdvancedIntelligencePage', () => {
       ],
     }
 
-
-
     render(
       <ThemeModeProvider>
         <TranslationProvider>
@@ -99,9 +98,7 @@ describe.skip('AdvancedIntelligencePage', () => {
       </ThemeModeProvider>,
     )
 
-    await screen.findByText(
-      'Current adoption likelihood across cohorts: 60%',
-    )
+    await screen.findByText('Current adoption likelihood across cohorts: 60%')
 
     expect(
       screen.getByText(/Graph density:\s+2 nodes \/ 1 edges/),
@@ -142,7 +139,10 @@ describe.skip('AdvancedIntelligencePage', () => {
             services={{
               fetchGraphIntelligence: async () => graphSuccess,
               fetchPredictiveIntelligence: async () => {
-                throw new IntelligenceValidationError('segments missing probability', [])
+                throw new IntelligenceValidationError(
+                  'segments missing probability',
+                  [],
+                )
               },
               fetchCrossCorrelationIntelligence: async () => correlationSuccess,
             }}

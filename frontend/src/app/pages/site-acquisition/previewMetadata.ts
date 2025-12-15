@@ -39,12 +39,12 @@ export function normalisePreviewLayer(
   raw: Record<string, unknown>,
 ): PreviewLayerMetadata | null {
   const id = typeof raw.id === 'string' && raw.id.trim() ? raw.id : undefined
-  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name : undefined
+  const name =
+    typeof raw.name === 'string' && raw.name.trim() ? raw.name : undefined
   if (!id || !name) {
     return null
   }
-  const color =
-    (typeof raw.color === 'string' && raw.color.trim()) || '#1c7ed6'
+  const color = (typeof raw.color === 'string' && raw.color.trim()) || '#1c7ed6'
   const metrics: Record<string, unknown> =
     raw.metrics && typeof raw.metrics === 'object'
       ? (raw.metrics as Record<string, unknown>)
@@ -77,11 +77,11 @@ export function normaliseLegendEntry(
   const label =
     (typeof raw.label === 'string' && raw.label.trim()) ||
     assetType.replace(/[_-]/g, ' ')
-  const color =
-    (typeof raw.color === 'string' && raw.color.trim()) || '#4f46e5'
+  const color = (typeof raw.color === 'string' && raw.color.trim()) || '#4f46e5'
   const description =
     (typeof raw.description === 'string' && raw.description.trim()) ||
-    (typeof raw.legendDescription === 'string' && raw.legendDescription.trim()) ||
+    (typeof raw.legendDescription === 'string' &&
+      raw.legendDescription.trim()) ||
     null
   return {
     assetType,
@@ -114,13 +114,16 @@ function normaliseGeometry(raw: unknown): PreviewLayerGeometry | null {
   }
   const data = raw as Record<string, unknown>
   const baseElevation = coerceNumber(data, 'base_elevation')
-  const previewHeight = coerceNumber(data, 'preview_height') ?? coerceNumber(data, 'height')
+  const previewHeight =
+    coerceNumber(data, 'preview_height') ?? coerceNumber(data, 'height')
   const detail =
     (typeof data.detail_level === 'string' && data.detail_level) ||
     (typeof data.detailLevel === 'string' && data.detailLevel) ||
     null
   const footprint = extractPolygonRing(data.footprint)
-  const topFootprint = extractPolygonRing(data.top_footprint ?? data.topFootprint)
+  const topFootprint = extractPolygonRing(
+    data.top_footprint ?? data.topFootprint,
+  )
   const rawFloorLines = data.floor_lines ?? data.floorLines
   const floorLines = Array.isArray(rawFloorLines)
     ? (rawFloorLines as unknown[])
@@ -146,9 +149,7 @@ function normaliseGeometry(raw: unknown): PreviewLayerGeometry | null {
   }
 }
 
-function extractPolygonRing(
-  polygon: unknown,
-): number[][] | null {
+function extractPolygonRing(polygon: unknown): number[][] | null {
   if (
     polygon &&
     typeof polygon === 'object' &&

@@ -26,7 +26,7 @@ styles/[feature].css             ← Feature-specific styles
 
 > **See [UI_STANDARDS.md](../UI_STANDARDS.md) for token values and examples**
 
-1. **Never use inline styles** - All styling must use CSS classes
+1. **Avoid React `style={{...}}` for design** - Use CSS classes for DOM elements; use MUI `sx` with tokens/theme for MUI components
 2. **Never hardcode colors** - Use `var(--ob-color-*)` or `var(--ob-brand-*)` tokens
 3. **Never hardcode spacing** - Use `var(--ob-space-*)` tokens
 4. **Never hardcode fonts** - Use `var(--ob-font-*)` tokens
@@ -114,7 +114,7 @@ When using MUI components, use theme values:
 // ✅ CORRECT - uses theme
 <Box sx={{ bgcolor: 'background.paper', color: 'text.primary' }}>
 
-// ❌ WRONG - hardcoded colors
+// ❌ WRONG - hardcoded colors (prefer theme or tokens)
 <Box sx={{ bgcolor: '#ffffff', color: '#1d1d1f' }}>
 ```
 
@@ -128,8 +128,12 @@ When using MUI components, use theme values:
 
 The following patterns are flagged by the style linter:
 
-- `style={{` in TSX files (inline styles)
+- `style={{` on DOM elements for design properties (colors/spacing/typography/radius/blur)
 - Hardcoded hex colors (`#ffffff`, `#1d1d1f`, etc.)
 - Hardcoded pixel values for spacing
 - Hardcoded font families
 - Direct `px` values for border-radius
+
+**Allowed exceptions (rare):**
+
+- `style={{...}}` for third-party visualisation/canvas/SVG libraries where MUI `sx`/CSS classes are not practical, and only for non-tokenizable dynamic values.

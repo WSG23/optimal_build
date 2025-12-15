@@ -338,3 +338,4 @@ data/nz/*
 data/toronto/*
 !data/toronto/README.md
 data/nz/*.geojson
+backend/coverage.json

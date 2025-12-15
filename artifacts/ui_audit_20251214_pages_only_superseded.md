@@ -1,0 +1,227 @@
+# UI Audit Report (Design Tokens + Canonicalization; Pages-Only; Superseded)
+
+**Date:** 2025-12-14
+**Status:** Superseded (historical snapshot)
+**Scope:** Heuristic static scan of UI “page” TSX files (excluding `__tests__`) in:
+- `frontend/src/app/pages/**`
+- `frontend/src/pages/**`
+- `frontend/src/features/pages/**`
+- `ui-admin/src/pages/**`
+
+This report is intended for quick triage. It flags **potential** violations based on string/regex matches; it does not replace manual UI review.
+
+## Update (Post-Remediation Notes)
+
+This report was generated before a remediation pass that:
+
+- Aligned `frontend/UI_STANDARDS.md` and `frontend/src/styles/STYLE_GUIDE.md` with `core/design-tokens/tokens.css` as the single source of truth.
+- Clarified that **MUI numeric spacing** (e.g. `spacing={2}`, `sx={{ p: 3 }}`) is acceptable **only** when it remains token-based via the app theme’s `theme.spacing()` mapping.
+- Tokenized blur usage across the codebase (no remaining `blur(Npx)` occurrences in `frontend/src` / `ui-admin/src`).
+- Removed the remaining inline `style={{ color: ... }}` from the Engineering Layers icon by moving it into CSS.
+
+The findings table below is still useful for identifying historically-problematic areas, but individual per-file codes may now be stale.
+
+---
+
+## Standards Reviewed (Source Docs)
+
+- `frontend/UI_STANDARDS.md` (design tokens + “Square Cyber‑Minimalism”, canonical components guidance)
+- `frontend/src/styles/STYLE_GUIDE.md` (CSS architecture + “no inline styles” guidance)
+- `docs/development/typography-standards.md` (typography tokenization guidance)
+- `docs/design-system/design-token-audit.md` (historical; explicitly marked “superseded”, but notes remaining `ui-admin` legacy palette usage)
+- `CODING_RULES.md` (frontend module size guidance: refactor beyond ~600 lines; avoid new single-file pages >800 lines)
+
+---
+
+## Key Enforceable Rules (Extracted)
+
+From `frontend/UI_STANDARDS.md`:
+- **No hardcoded spacing**: avoid raw `px`/`rem`; prefer `var(--ob-space-*)`. MUI spacing numbers are allowed only if `theme.spacing()` is token-mapped.
+- **No hardcoded radii**: use `var(--ob-radius-*)` (sm=4px cards, xs=2px buttons, lg=8px dialogs only).
+- **No hardcoded sizes**: use `var(--ob-size-*)` / `var(--ob-max-width-*)`.
+- **No hardcoded font sizes**: use `var(--ob-font-size-*)`.
+- **No hardcoded colors**: use theme palette or `var(--ob-...)` tokens.
+- Prefer canonical components from `frontend/src/components/canonical/**` where available.
+
+From `docs/development/typography-standards.md`:
+- Prefer typography tokens (`--ob-font-size-*`, `--ob-font-weight-*`, etc.) over raw numbers/strings.
+
+From `CODING_RULES.md`:
+- Frontend files should generally stay **<500 lines**, refactor around **~600**, and avoid introducing new single-file pages **>800**.
+
+---
+
+## Doc Conflicts / Ambiguities (Worth Resolving)
+
+- Resolved: `STYLE_GUIDE.md` now discourages React `style={{...}}` for design while explicitly allowing MUI `sx` when token/theme-based.
+- Resolved: typography scale in `UI_STANDARDS.md` is aligned to include `--ob-font-size-2xs..5xl` (matching the broader typography docs).
+
+---
+
+## Missing From Audit (Claim Review)
+
+- **Import ordering violations (Rule 6)**: “Rule 6” import ordering is described in agent playbooks and `CLAUDE.md`, but `CODING_RULES.md` defines **Python** import ordering as Rule 7. The audit script/report does not check TS/TSX import ordering, and the current frontend ESLint config does not include an import-ordering rule for TS. Recommendation: if you want this enforced for TS/TSX, add an ESLint import ordering rule (requires adding the relevant plugin/deps) or introduce a dedicated check script.
+- **Files that use `@mui/x-data-grid` with hardcoded styles**: repo-wide search found no `@mui/x-data-grid` / `DataGrid` usage, so there were no such files to report.
+- **Component files in `src/components/` and `src/modules/` (only scanned pages)**: correct for the original table scope. A broader scan across `frontend/src/**` finds many additional offenders (especially in feasibility and site-acquisition modules).
+
+## Audit Summary
+
+- **TSX “page” files scanned:** 80
+- **Files with ≥1 match:** 67
+- **Pages with no matches (heuristic):**
+  - `frontend/src/pages/AgentAdvisoryPage.tsx`
+  - `frontend/src/pages/AgentIntegrationsPage.tsx`
+  - `frontend/src/pages/AgentPerformancePage.tsx`
+  - `frontend/src/pages/CadUploadPage.tsx`
+  - `frontend/src/pages/feasibility/ClashImpactBoard.tsx`
+  - `ui-admin/src/pages/DiffsPage.tsx`
+  - `ui-admin/src/pages/DocumentsPage.tsx`
+  - `ui-admin/src/pages/RulesReviewPage.tsx`
+
+---
+
+## Findings Table (Per Page File)
+
+**Codes**
+- `IS`: React inline style attr `style={{`
+- `HEX`: Hardcoded hex colors
+- `SP`: MUI `spacing={N}`
+- `SPP`: MUI spacing props like `mb={2}`
+- `SPSX`: MUI `sx` spacing numbers like `p: 2`
+- `RFZ`: `borderRadius|fontSize|zIndex` literals (numbers or `'4px'`)
+- `REM`: Hardcoded `rem` values in TSX
+- `BLUR`: Hardcoded blur px (`blur(10px)` etc.)
+- `SIZE`: Hardcoded numeric sizes (`width: 24`, etc.)
+- `FW`: Hardcoded numeric `fontWeight`
+- `TW`: Tailwind legacy palette classes (ui-admin) like `text-slate-400`
+- `L600`: File >600 lines (CODING_RULES.md guidance)
+- `L800`: File >800 lines (CODING_RULES.md hard limit for new pages)
+
+| File | Lines | Codes |
+|---|---:|---|
+| `frontend/src/app/pages/phase-management/PhaseManagementPage.tsx` | 1107 | BLUR FW HEX L800 REM RFZ SIZE SP SPSX |
+| `frontend/src/app/pages/site-acquisition/components/inspection-history/HistoryCompareView.tsx` | 921 | FW HEX IS L800 REM RFZ |
+| `frontend/src/app/pages/regulatory/components/HeritageSubmissionForm.tsx` | 893 | HEX L800 RFZ SIZE SP SPSX |
+| `frontend/src/app/pages/site-acquisition/components/condition-assessment/ConditionAssessmentSection.tsx` | 810 | FW HEX IS L800 REM RFZ |
+| `frontend/src/app/pages/site-acquisition/SiteAcquisitionPage.tsx` | 878 | L800 RFZ SIZE SP SPSX |
+| `frontend/src/app/pages/gps-capture/GpsCapturePage.tsx` | 923 | HEX IS L800 |
+| `frontend/src/pages/AgentsGpsCapturePage.tsx` | 965 | HEX L800 |
+| `ui-admin/src/pages/EntitlementsPage.tsx` | 931 | L800 TW |
+| `frontend/src/app/pages/regulatory/components/CompliancePathTimeline.tsx` | 693 | BLUR FW HEX L600 REM RFZ SIZE SP SPSX |
+| `frontend/src/app/pages/phase-management/components/GanttChart.tsx` | 629 | BLUR FW HEX IS L600 REM RFZ SIZE SPSX |
+| `frontend/src/app/pages/team/components/ProjectProgressDashboard.tsx` | 627 | HEX L600 REM RFZ SIZE SP SPSX |
+| `frontend/src/app/pages/site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection.tsx` | 785 | FW HEX IS L600 REM RFZ |
+| `frontend/src/app/pages/regulatory/components/ChangeOfUseWizard.tsx` | 730 | HEX L600 REM SIZE SP SPSX |
+| `frontend/src/app/pages/advisory/AdvisoryPage.tsx` | 712 | L600 RFZ SIZE SP SPP SPSX |
+| `frontend/src/app/pages/integrations/IntegrationsPage.tsx` | 690 | FW HEX IS L600 REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/condition-assessment/ConditionAssessmentEditor.tsx` | 686 | FW HEX IS L600 REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/capture-form/VoiceNoteRecorder.tsx` | 668 | FW HEX IS L600 REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/capture-form/PropertyCaptureForm.tsx` | 650 | FW HEX IS L600 REM RFZ |
+| `frontend/src/app/pages/site-acquisition/DeveloperPreviewStandalone.tsx` | 790 | IS L600 |
+| `frontend/src/pages/CadDetectionPage.tsx` | 795 | L600 |
+| `frontend/src/app/pages/business-performance/BusinessPerformancePage.tsx` | 779 | L600 |
+| `frontend/src/app/pages/site-acquisition/ChecklistTemplateManager.tsx` | 735 | L600 |
+| `frontend/src/pages/visualizations/AdvancedIntelligence.tsx` | 262 | BLUR FW IS RFZ SIZE SP SPP SPSX |
+| `frontend/src/pages/visualizations/components/KPITickerCard.tsx` | 137 | BLUR FW REM RFZ SIZE SP SPP SPSX |
+| `frontend/src/app/pages/business-performance/components/AnalyticsPanel.tsx` | 302 | FW HEX RFZ SIZE SP SPP SPSX |
+| `frontend/src/pages/visualizations/components/CorrelationHeatmap.tsx` | 175 | BLUR HEX REM RFZ SIZE SPP SPSX |
+| `frontend/src/app/pages/marketing/MarketingPage.tsx` | 599 | FW HEX IS REM RFZ SIZE |
+| `frontend/src/pages/CadPipelinesPage.tsx` | 505 | BLUR FW HEX REM RFZ SPSX |
+| `frontend/src/app/pages/phase-management/components/TenantRelocationDashboard.tsx` | 499 | FW HEX RFZ SIZE SP SPSX |
+| `frontend/src/app/pages/site-acquisition/components/capture-form/VoiceNoteList.tsx` | 412 | FW HEX IS REM RFZ SIZE |
+| `frontend/src/app/pages/site-acquisition/components/map/PropertyLocationMap.tsx` | 518 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/checklist/DueDiligenceChecklistSection.tsx` | 482 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/photos/PhotoGallery.tsx` | 478 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/advisory/SalesVelocityCard.tsx` | 454 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/property-overview/PreviewLayersTable.tsx` | 368 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/modals/QuickAnalysisHistoryModal.tsx` | 297 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/scenario-focus/ScenarioFocusSection.tsx` | 287 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/photos/PhotoDocumentation.tsx` | 279 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/inspection-history/InspectionHistoryContent.tsx` | 238 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/inspection-history/HistoryTimelineView.tsx` | 236 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/InspectionHistorySummary.tsx` | 235 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/photos/PhotoCapture.tsx` | 232 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/property-overview/ColorLegendEditor.tsx` | 225 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/property-overview/LayerBreakdownCards.tsx` | 183 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/condition-assessment/ManualInspectionControls.tsx` | 179 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/condition-assessment/SystemRatingCard.tsx` | 178 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/property-overview/PropertyOverviewSection.tsx` | 176 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/condition-assessment/OverallAssessmentCard.tsx` | 158 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/condition-assessment/ScenarioComparisonCard.tsx` | 152 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/site-acquisition/components/condition-assessment/InsightCard.tsx` | 130 | FW HEX IS REM RFZ |
+| `frontend/src/app/pages/phase-management/components/PhaseEditor.tsx` | 536 | FW SIZE SP SPSX |
+| `frontend/src/app/pages/regulatory/components/SubmissionWizard.tsx` | 280 | HEX RFZ SP SPSX |
+| `frontend/src/app/pages/team/components/WorkflowDashboard.tsx` | 270 | HEX REM SP SPSX |
+| `frontend/src/app/pages/business-performance/components/RoiPanel.tsx` | 238 | FW RFZ SP SPSX |
+| `frontend/src/app/pages/site-acquisition/components/modals/InspectionHistoryModal.tsx` | 160 | HEX IS REM RFZ |
+| `frontend/src/app/pages/team/TeamManagementPage.tsx` | 339 | FW SIZE SPSX |
+| `frontend/src/pages/visualizations/components/RelationshipGraph.tsx` | 291 | BLUR IS RFZ |
+| `frontend/src/app/pages/business-performance/components/DealInsightsPanel.tsx` | 214 | SP SPP SPSX |
+| `frontend/src/app/pages/team/components/CreateWorkflowDialog.tsx` | 195 | HEX SIZE SPSX |
+| `frontend/src/pages/visualizations/components/ConfidenceGauge.tsx` | 83 | RFZ SIZE SPSX |
+| `frontend/src/app/pages/regulatory/RegulatoryDashboardPage.tsx` | 508 | FW SIZE |
+| `frontend/src/app/pages/developer/DeveloperControlPanel.tsx` | 116 | SP SPSX |
+| `frontend/src/features/pages/Main.tsx` | 283 | IS |
+| `frontend/src/app/pages/business-performance/components/PipelineBoard.tsx` | 261 | SP |
+| `ui-admin/src/pages/ClausesPage.tsx` | 119 | TW |
+| `frontend/src/pages/visualizations/EngineeringLayersPanel.tsx` | 111 | IS |
+| `ui-admin/src/pages/SourcesPage.tsx` | 106 | TW |
+
+---
+
+## Canonical Component Adoption (Heuristic)
+
+`frontend/UI_STANDARDS.md` asks to prefer canonical components from `frontend/src/components/canonical/**`.
+
+The table below flags page files that import common MUI primitives that have canonical alternatives (e.g. `GlassButton`/`Button`, `StatusChip`/`Chip`, `Input`/`TextField`, `GlassCard`/`Paper`/`Card`).
+
+| File | Imports from `@mui/material` | Also imports `components/canonical` |
+|---|---|---|
+| `frontend/src/app/pages/advisory/AdvisoryPage.tsx` | Button, Chip, TextField | yes |
+| `frontend/src/app/pages/business-performance/BusinessPerformancePage.tsx` | Button | yes |
+| `frontend/src/app/pages/business-performance/components/AnalyticsPanel.tsx` | Chip | yes |
+| `frontend/src/app/pages/business-performance/components/DealInsightsPanel.tsx` | Chip, Paper | no |
+| `frontend/src/app/pages/business-performance/components/PipelineBoard.tsx` | Chip, Paper | no |
+| `frontend/src/app/pages/business-performance/components/RoiPanel.tsx` | Button, Paper | no |
+| `frontend/src/app/pages/developer/DeveloperControlPanel.tsx` | Button, TextField | yes |
+| `frontend/src/app/pages/phase-management/PhaseManagementPage.tsx` | Button, Paper | no |
+| `frontend/src/app/pages/phase-management/components/GanttChart.tsx` | Chip, Paper | no |
+| `frontend/src/app/pages/phase-management/components/PhaseEditor.tsx` | Button, TextField | no |
+| `frontend/src/app/pages/phase-management/components/TenantRelocationDashboard.tsx` | Card, Chip, Paper | no |
+| `frontend/src/app/pages/regulatory/RegulatoryDashboardPage.tsx` | Button, Chip | yes |
+| `frontend/src/app/pages/regulatory/components/ChangeOfUseWizard.tsx` | Button, Card, Chip, Paper, TextField | no |
+| `frontend/src/app/pages/regulatory/components/CompliancePathTimeline.tsx` | Card, Chip, Paper | no |
+| `frontend/src/app/pages/regulatory/components/HeritageSubmissionForm.tsx` | Button, Card, Chip, Paper, TextField | no |
+| `frontend/src/app/pages/regulatory/components/SubmissionWizard.tsx` | Button, Card | no |
+| `frontend/src/app/pages/site-acquisition/SiteAcquisitionPage.tsx` | Button | yes |
+| `frontend/src/app/pages/team/TeamManagementPage.tsx` | Button, Card, Chip, TextField | no |
+| `frontend/src/app/pages/team/components/CreateWorkflowDialog.tsx` | Button, TextField | no |
+| `frontend/src/app/pages/team/components/ProjectProgressDashboard.tsx` | Card, Chip, Paper | no |
+| `frontend/src/app/pages/team/components/WorkflowDashboard.tsx` | Button, Card, Chip | no |
+| `frontend/src/pages/CadPipelinesPage.tsx` | Button, Paper, TextField | no |
+| `frontend/src/pages/visualizations/components/CorrelationHeatmap.tsx` | Paper | no |
+
+---
+
+## How To Jump to Matches Quickly
+
+Pick a file from the table and run the corresponding ripgrep filter:
+
+```bash
+# Inline styles (React)
+rg -n \"style=\\{\\{\" path/to/File.tsx
+
+# Hex colors
+rg -n \"#[0-9a-fA-F]{3,8}\\b\" path/to/File.tsx
+
+# MUI spacing numbers
+rg -n \"\\bspacing=\\{\\s*\\d+\\s*\\}\" path/to/File.tsx
+rg -n \"\\b(p|px|py|pt|pr|pb|pl|m|mx|my|mt|mr|mb|ml|gap)=\\{\\s*\\d+\\s*\\}\" path/to/File.tsx
+rg -n \"\\b(p|px|py|pt|pr|pb|pl|m|mx|my|mt|mr|mb|ml|gap)\\s*:\\s*\\d+\\b\" path/to/File.tsx
+
+# Radius/fontSize/zIndex literals
+rg -n \"\\b(borderRadius|fontSize|zIndex)\\s*:\\s*(\\d+|'\\d+px'|\\\"\\d+px\\\")\" path/to/File.tsx
+
+# Blur literals
+rg -n \"\\b(backdropFilter|filter)\\s*:\\s*'blur\\(\\d+px\\)'\" path/to/File.tsx
+```

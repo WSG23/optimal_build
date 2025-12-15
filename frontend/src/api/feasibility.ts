@@ -20,6 +20,8 @@ export interface NewFeasibilityProjectInput {
   buildEnvelope?: BuildEnvelopeSnapshot | null
   typFloorToFloorM?: number | null
   efficiencyRatio?: number | null
+  structureType?: string | null
+  mepLoadWpsm?: number | null
 }
 
 export type FeasibilityRuleSeverity = 'critical' | 'important' | 'informational'
@@ -135,7 +137,8 @@ export async function runFeasibilityAssessment(
   if (!response.ok) {
     const detail = await response.text()
     throw new Error(
-      detail || `Request to ${API_PREFIX}/assessment failed with ${response.status}`,
+      detail ||
+        `Request to ${API_PREFIX}/assessment failed with ${response.status}`,
     )
   }
 
@@ -159,7 +162,8 @@ export async function getEngineeringDefaults(
   if (!response.ok) {
     const detail = await response.text()
     throw new Error(
-      detail || `Request to ${API_PREFIX}/defaults failed with ${response.status}`,
+      detail ||
+        `Request to ${API_PREFIX}/defaults failed with ${response.status}`,
     )
   }
 

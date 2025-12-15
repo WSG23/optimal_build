@@ -4,5 +4,5 @@ export default function AccessPatternHeatmap() {
       <div className="h-32 w-full rounded-lg border border-dashed border-white/10" />
       <p>Access Pattern Heatmap placeholder</p>
     </div>
-  );
+  )
 }

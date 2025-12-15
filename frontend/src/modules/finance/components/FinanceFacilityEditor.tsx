@@ -229,9 +229,7 @@ export function FinanceFacilityEditor({
           amount: facility.amount.trim(),
           interestRate:
             facility.interestRate.trim() || form.interestRate.trim(),
-          periodsPerYear: facilityPeriods
-            ? Number(facilityPeriods)
-            : undefined,
+          periodsPerYear: facilityPeriods ? Number(facilityPeriods) : undefined,
           capitaliseInterest: facility.capitaliseInterest,
           upfrontFeePct: facility.upfrontFeePct.trim()
             ? facility.upfrontFeePct.trim()
@@ -334,9 +332,7 @@ export function FinanceFacilityEditor({
             <tbody>
               {form.facilities.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>
-                    {t('finance.facilityEditor.empty')}
-                  </td>
+                  <td colSpan={8}>{t('finance.facilityEditor.empty')}</td>
                 </tr>
               ) : (
                 form.facilities.map((facility) => (

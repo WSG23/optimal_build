@@ -13,6 +13,8 @@ from enum import Enum
 from typing import Any, Protocol, cast
 from uuid import UUID
 
+from app.core.config import settings
+
 
 class _MetadataModule(Protocol):
     """Minimal protocol for importlib metadata providers."""
@@ -26,15 +28,15 @@ importlib_metadata: _MetadataModule | None
 
 try:  # pragma: no cover - importlib.metadata available on Python 3.8+
     from importlib import metadata as _importlib_metadata_module
+
+    importlib_metadata = cast(_MetadataModule, _importlib_metadata_module)
 except ImportError:  # pragma: no cover - runtime older than Python 3.8
     try:
-        import importlib_metadata as _importlib_metadata_backport  # type: ignore
+        import importlib_metadata as _importlib_metadata_backport  # type: ignore[import-not-found]  # noqa: F401
     except ModuleNotFoundError:  # pragma: no cover - no metadata helpers available
         importlib_metadata = None
     else:
         importlib_metadata = cast(_MetadataModule, _importlib_metadata_backport)
-else:
-    importlib_metadata = cast(_MetadataModule, _importlib_metadata_module)
 
 
 class _PackageNotFoundError(Exception):
@@ -46,8 +48,6 @@ if importlib_metadata is not None:
     PackageNotFoundError = importlib_metadata.PackageNotFoundError
 else:
     PackageNotFoundError = _PackageNotFoundError
-
-from app.core.config import settings
 
 
 def _structlog_distribution_present() -> bool:

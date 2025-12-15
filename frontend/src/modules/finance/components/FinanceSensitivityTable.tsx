@@ -154,9 +154,15 @@ export function FinanceSensitivityTable({
             </caption>
             <thead>
               <tr>
-                <th scope="col">{t('finance.sensitivity.table.headers.delta')}</th>
-                <th scope="col">{t('finance.sensitivity.table.headers.npv')}</th>
-                <th scope="col">{t('finance.sensitivity.table.headers.irr')}</th>
+                <th scope="col">
+                  {t('finance.sensitivity.table.headers.delta')}
+                </th>
+                <th scope="col">
+                  {t('finance.sensitivity.table.headers.npv')}
+                </th>
+                <th scope="col">
+                  {t('finance.sensitivity.table.headers.irr')}
+                </th>
                 <th scope="col">
                   {t('finance.sensitivity.table.headers.escalatedCost')}
                 </th>
@@ -170,7 +176,12 @@ export function FinanceSensitivityTable({
                 <tr key={`${entry.scenario}-${index}`}>
                   <th scope="row">{entry.deltaLabel || entry.deltaValue}</th>
                   <td>
-                    {formatCurrency(entry.npv ?? null, currency, locale, fallback)}
+                    {formatCurrency(
+                      entry.npv ?? null,
+                      currency,
+                      locale,
+                      fallback,
+                    )}
                   </td>
                   <td>{formatPercent(entry.irr ?? null, locale, fallback)}</td>
                   <td>

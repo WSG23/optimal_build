@@ -1,4 +1,7 @@
-export function formatDuration(seconds: number | null, fallback: string): string {
+export function formatDuration(
+  seconds: number | null,
+  fallback: string,
+): string {
   if (seconds === null || Number.isNaN(seconds)) {
     return fallback
   }
