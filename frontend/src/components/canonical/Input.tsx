@@ -21,7 +21,9 @@ export interface InputProps extends Omit<TextFieldProps, 'variant'> {
   endAdornment?: ReactNode
 }
 
-const StyledTextField = styled(TextField)<{
+const StyledTextField = styled(TextField, {
+  shouldForwardProp: (prop) => prop !== 'inputVariant',
+})<{
   inputVariant?: 'default' | 'filled'
 }>(({ inputVariant }) => ({
   '& .MuiOutlinedInput-root': {
