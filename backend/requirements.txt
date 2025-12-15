@@ -53,7 +53,7 @@ pytest-asyncio==0.21.1
 # Updated for security: GHSA-4v9f-r55g-g6hc (min: 2.20.17), GHSA-4hh5-2678-83fx (min: 2.16.5)
 # Upgraded 2025-11-23: CVE-2024-8183 CORS misconfiguration fix
 prefect==2.20.17
-structlog==23.2.0
+structlog==25.5.0
 prometheus-client==0.19.0
 black==24.8.0
 isort==5.12.0
