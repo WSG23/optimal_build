@@ -32,7 +32,7 @@ export function AppShell({
   hideHeader = false,
 }: AppShellProps) {
   const theme = useTheme()
-  const { inBaseLayout } = useBaseLayoutContext()
+  const { inBaseLayout, topOffset } = useBaseLayoutContext()
 
   // Default to hiding sidebar if inside BaseLayout, unless explicitly forced.
   const shouldHideSidebar =
@@ -75,7 +75,7 @@ export function AppShell({
               bgcolor: alpha(theme.palette.background.default, 0.8),
               backdropFilter: 'blur(var(--ob-blur-md))',
               position: 'sticky',
-              top: 0,
+              top: inBaseLayout ? topOffset : 0,
               zIndex: 'var(--ob-z-sticky)',
               animation: 'slideDownFade 0.5s ease-out forwards',
               '@keyframes slideDownFade': {

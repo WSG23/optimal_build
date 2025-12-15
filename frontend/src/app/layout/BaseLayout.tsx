@@ -1,28 +1,28 @@
 import { ReactNode } from 'react'
-import { YosaiSidebar } from '../../components/layout/YosaiSidebar'
 import { Box } from '@mui/material'
 import { BaseLayoutProvider } from './BaseLayoutContext'
+import { YosaiTopNav } from '../../components/layout/YosaiTopNav'
 
 export function BaseLayout({ children }: { children: ReactNode }) {
+  const TOP_NAV_HEIGHT = 56
+
   return (
-    <BaseLayoutProvider value={{ inBaseLayout: true }}>
+    <BaseLayoutProvider
+      value={{ inBaseLayout: true, topOffset: TOP_NAV_HEIGHT }}
+    >
       <Box
         sx={{
           display: 'flex',
+          flexDirection: 'column',
           minHeight: '100vh',
           bgcolor: 'background.default',
           color: 'text.primary',
         }}
       >
-        <Box
-          sx={{ position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 1200 }}
-        >
-          <YosaiSidebar />
-        </Box>
+        <YosaiTopNav height={TOP_NAV_HEIGHT} />
         <Box
           sx={{
             flexGrow: 1,
-            marginLeft: '296px', // 280px sidebar + 16px gap
             minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
