@@ -17,6 +17,8 @@ class UserRole(str, Enum):
     DEVELOPER = "developer"
     INVESTOR = "investor"
     CONTRACTOR = "contractor"
+    ARCHITECT = "architect"
+    ENGINEER = "engineer"
     CONSULTANT = "consultant"
     REGULATORY_OFFICER = "regulatory_officer"
     VIEWER = "viewer"

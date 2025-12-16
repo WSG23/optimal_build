@@ -6,6 +6,8 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
+import socket
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -137,13 +139,43 @@ app.add_middleware(CorrelationIdMiddleware)
 def _build_rate_limiter() -> Limiter:
     """Construct the rate limiter using Redis storage when available."""
 
+    def _redis_storage_available(storage_uri: str) -> bool:
+        try:
+            parsed = urlparse(storage_uri)
+        except Exception:
+            return False
+
+        if parsed.scheme not in {"redis", "rediss"}:
+            return True
+
+        host = parsed.hostname
+        port = parsed.port or 6379
+        if not host:
+            return False
+
+        try:
+            with socket.create_connection((host, port), timeout=0.2):
+                return True
+        except OSError:
+            return False
+
     try:
-        limiter_instance = Limiter(
-            key_func=get_remote_address,
-            default_limits=[settings.API_RATE_LIMIT],
-            storage_uri=settings.RATE_LIMIT_STORAGE_URI,
-        )
-        return limiter_instance
+        storage_uri = settings.RATE_LIMIT_STORAGE_URI
+        limiter_kwargs: dict[str, Any] = {
+            "key_func": get_remote_address,
+            "default_limits": [settings.API_RATE_LIMIT],
+        }
+        if storage_uri and _redis_storage_available(storage_uri):
+            limiter_kwargs["storage_uri"] = storage_uri
+        else:
+            log_event(
+                logger,
+                "rate_limiter_fallback_to_memory",
+                storage_uri=storage_uri,
+                error="redis_unavailable",
+            )
+
+        return Limiter(**limiter_kwargs)
     except Exception as exc:  # pragma: no cover - fallback for misconfigured Redis
         log_event(
             logger,

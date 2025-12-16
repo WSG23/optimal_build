@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -16,19 +16,25 @@ from backend._compat.datetime import utcnow
 from app.api import deps
 from app.main import app
 from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.notification import EmailLog, Notification, NotificationType
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
 from app.models.users import User, UserRole
 from httpx import AsyncClient
+from sqlalchemy import select
 
 
 pytestmark = pytest.mark.asyncio
+
+VIEWER_ID = "00000000-0000-0000-0000-000000000001"
+REVIEWER_ID = "00000000-0000-0000-0000-000000000002"
+USER_ID = "00000000-0000-0000-0000-000000000003"
 
 
 async def mock_viewer_identity():
     """Mock identity for viewer role."""
     return deps.RequestIdentity(
         role="viewer",
-        user_id="00000000-0000-0000-0000-000000000001",
+        user_id=VIEWER_ID,
         email="viewer@example.com",
     )
 
@@ -37,7 +43,7 @@ async def mock_reviewer_identity():
     """Mock identity for reviewer role."""
     return deps.RequestIdentity(
         role="reviewer",
-        user_id="00000000-0000-0000-0000-000000000002",
+        user_id=REVIEWER_ID,
         email="reviewer@example.com",
     )
 
@@ -46,7 +52,7 @@ async def mock_user_identity():
     """Mock identity for authenticated user."""
     return deps.RequestIdentity(
         role="developer",
-        user_id="00000000-0000-0000-0000-000000000003",
+        user_id=USER_ID,
         email="user@example.com",
     )
 
@@ -139,7 +145,7 @@ async def test_invite_member_success(client: AsyncClient, db_session) -> None:
 
     # Create inviter user with the mock reviewer identity
     inviter = User(
-        id=uuid4(),
+        id=UUID(REVIEWER_ID),
         email="reviewer@example.com",
         username="reviewer_" + str(uuid4())[:8],
         full_name="Reviewer User",
@@ -147,6 +153,16 @@ async def test_invite_member_success(client: AsyncClient, db_session) -> None:
         is_active=True,
     )
     db_session.add(inviter)
+
+    invitee = User(
+        id=uuid4(),
+        email="newmember@example.com",
+        username="invitee_" + str(uuid4())[:8],
+        full_name="Invitee User",
+        hashed_password="hashed",
+        is_active=True,
+    )
+    db_session.add(invitee)
     await db_session.commit()
 
     payload = {
@@ -158,14 +174,25 @@ async def test_invite_member_success(client: AsyncClient, db_session) -> None:
         f"/api/v1/team/invite?project_id={project.id}",
         json=payload,
     )
-    # May fail due to FK constraint on inviter UUID mismatch - accept multiple codes
-    assert response.status_code in [200, 400, 500]
-    if response.status_code == 200:
-        data = response.json()
-        assert data["email"] == "newmember@example.com"
-        assert data["role"] == "viewer"
-        assert data["status"] == "pending"
-        assert "token" in data
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "newmember@example.com"
+    assert data["role"] == "viewer"
+    assert data["status"] == "pending"
+    assert "token" in data
+
+    notifications = await db_session.execute(
+        select(Notification).where(
+            Notification.user_id == invitee.id,
+            Notification.notification_type == NotificationType.TEAM_INVITE,
+        )
+    )
+    assert notifications.scalars().first() is not None
+
+    email_logs = await db_session.execute(
+        select(EmailLog).where(EmailLog.recipient_email == "newmember@example.com")
+    )
+    assert email_logs.scalars().first() is not None
 
 
 async def test_invite_member_invalid_email(client: AsyncClient, db_session) -> None:
@@ -214,6 +241,16 @@ async def test_accept_invitation_success(client: AsyncClient, db_session) -> Non
         is_active=True,
     )
     db_session.add(inviter)
+
+    user = User(
+        id=UUID(USER_ID),
+        email="user@example.com",
+        username="user_" + str(uuid4())[:8],
+        full_name="Invited User",
+        hashed_password="hashed",
+        is_active=True,
+    )
+    db_session.add(user)
     await db_session.commit()
     await db_session.refresh(inviter)
     await db_session.refresh(project)
@@ -232,8 +269,7 @@ async def test_accept_invitation_success(client: AsyncClient, db_session) -> Non
     await db_session.commit()
 
     response = await client.post("/api/v1/team/invitations/valid-token-123/accept")
-    # Accept either success or error (depends on user existence in DB)
-    assert response.status_code in [200, 400, 500]
+    assert response.status_code == 200
 
 
 async def test_accept_invitation_invalid_token(client: AsyncClient) -> None:

@@ -66,7 +66,7 @@ class ApprovalWorkflow(BaseModel):
     completed_at = Column(DateTime)
 
     # Relationships
-    project = relationship("Project", backref="workflows")
+    project = relationship("Project", back_populates="approval_workflows")
     created_by = relationship("User", foreign_keys=[created_by_id])
     steps = relationship(
         "ApprovalStep",

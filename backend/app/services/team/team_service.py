@@ -6,8 +6,10 @@ from uuid import UUID
 
 from backend._compat.datetime import utcnow
 
+from app.models.projects import Project
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
-from app.models.users import UserRole
+from app.models.users import User, UserRole
+from app.services.notification import EmailService, NotificationService
 
 # from app.services.base import BaseService # Removed
 from sqlalchemy import select
@@ -19,6 +21,8 @@ class TeamService:
 
     def __init__(self, db_session):
         self.db = db_session
+        self.notifications = NotificationService(db_session)
+        self.emails = EmailService()
 
     async def get_team_members(self, project_id: UUID) -> list[TeamMember]:
         """List all members of a project team."""
@@ -63,8 +67,49 @@ class TeamService:
         await self.db.commit()
         await self.db.refresh(invitation)
 
-        # TODO: Send email
-        # email_service.send_invite(email, token, project_id)
+        project_result = await self.db.execute(
+            select(Project).where(Project.id == project_id)
+        )
+        project = project_result.scalar_one_or_none()
+        inviter_result = await self.db.execute(
+            select(User).where(User.id == invited_by_id)
+        )
+        inviter = inviter_result.scalar_one_or_none()
+
+        inviter_name = inviter.full_name if inviter else "A teammate"
+        project_name = project.project_name if project else "a project"
+
+        # In-app notification (only if the invited email already has a user account).
+        invitee_result = await self.db.execute(select(User).where(User.email == email))
+        invitee = invitee_result.scalar_one_or_none()
+        if invitee and project:
+            await self.notifications.notify_team_invite(
+                user_id=invitee.id,
+                project_name=project_name,
+                inviter_name=inviter_name,
+                project_id=project_id,
+            )
+
+        # Email delivery (no paid services required; disabled by default).
+        subject = f"Invitation to join {project_name}"
+        email_log = await self.notifications.log_email(
+            recipient_email=email,
+            subject=subject,
+            template_name="team_invitation",
+            notification_id=None,
+        )
+        sent = self.emails.send_team_invitation(
+            to_email=email,
+            inviter_name=inviter_name,
+            project_name=project_name,
+            role=str(role.value if hasattr(role, "value") else role),
+            invitation_token=token,
+        )
+        await self.notifications.update_email_log_status(
+            email_log_id=email_log.id,
+            status="sent" if sent else "failed",
+            error_message=None if sent else "Email send failed",
+        )
 
         return invitation
 

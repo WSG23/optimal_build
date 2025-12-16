@@ -9,7 +9,7 @@ from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.async_db import AsyncSessionLocal
+from app.core.database import get_session
 
 Role = Literal["viewer", "developer", "reviewer", "admin"]
 
@@ -91,7 +91,7 @@ async def require_reviewer(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting async database session."""
-    async with AsyncSessionLocal() as session:
+    async for session in get_session():
         yield session
 
 

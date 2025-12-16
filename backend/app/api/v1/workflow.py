@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.api import deps
+from app.models.workflow import WorkflowStatus
 from app.schemas.workflow import (
     ApprovalStepUpdate,
     ApprovalWorkflowCreate,
@@ -12,6 +13,21 @@ from app.schemas.workflow import (
 from app.services.team.workflow_service import WorkflowService
 
 router = APIRouter(prefix="/workflow", tags=["workflow"])
+
+
+@router.get("/", response_model=list[ApprovalWorkflowRead])
+async def list_workflows(
+    project_id: UUID,
+    status: WorkflowStatus | None = None,
+    db=Depends(deps.get_db),
+    identity: deps.RequestIdentity = Depends(deps.require_viewer),
+) -> Any:
+    """
+    List workflows for a project (including steps).
+    """
+    service = WorkflowService(db)
+    workflows = await service.list_workflows(project_id=project_id, status=status)
+    return workflows
 
 
 @router.post("/", response_model=ApprovalWorkflowRead)
@@ -24,14 +40,21 @@ async def create_workflow(
     """
     Create a new approval workflow (e.g. for a design phase).
     """
+    if not identity.user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     service = WorkflowService(db)
     steps_data = [
-        {"name": step.name, "required_role": step.approver_role}
+        {
+            "name": step.name,
+            "required_role": step.required_role,
+            "required_user_id": step.required_user_id,
+        }
         for step in workflow_in.steps
     ]
     workflow = await service.create_workflow(
         project_id=project_id,
-        title=workflow_in.name,
+        title=workflow_in.title,
         workflow_type=workflow_in.workflow_type,
         created_by_id=UUID(identity.user_id),
         steps_data=steps_data,
@@ -67,11 +90,15 @@ async def approve_step(
     Approve (or reject) a specific step in the workflow.
     Validates if the current user has the required role.
     """
+    if not identity.user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     service = WorkflowService(db)
     try:
-        step = await service.approve_step(
+        step = await service.decide_step(
             step_id=step_id,
             user_id=UUID(identity.user_id),
+            approved=approval_in.approved,
             comments=approval_in.comments,
         )
         # Return the updated workflow
@@ -79,5 +106,7 @@ async def approve_step(
         if not workflow:
             raise HTTPException(status_code=400, detail="Unable to approve step")
         return workflow
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

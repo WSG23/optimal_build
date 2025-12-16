@@ -1,51 +1,63 @@
+"""Pydantic schemas for Phase 2E approval workflows."""
+
+from __future__ import annotations
+
 from datetime import datetime
-from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
-from app.models.workflow import WorkflowStatus, StepStatus
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.workflow import StepStatus, WorkflowStatus
 
 
-class ApprovalStepBase(BaseModel):
+class ApprovalStepCreate(BaseModel):
+    """Create a workflow step."""
+
     name: str
-    order: int
-    approver_role: str  # e.g. "architect", "engineer"
+    required_role: str | None = None
+    required_user_id: UUID | None = None
 
 
-class ApprovalStepRead(ApprovalStepBase):
+class ApprovalStepRead(BaseModel):
+    """Read a workflow step."""
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
+    workflow_id: UUID
+    name: str
+    sequence_order: int
+    required_role: str | None = None
+    required_user_id: UUID | None = None
     status: StepStatus
-    approved_by_id: Optional[UUID] = None
-    approved_at: Optional[datetime] = None
-    comments: Optional[str] = None
-
-    class Config:
-        from_attributes = True
+    approved_by_id: UUID | None = None
+    decision_at: datetime | None = None
+    comments: str | None = None
 
 
 class ApprovalStepUpdate(BaseModel):
     approved: bool
-    comments: Optional[str] = None
+    comments: str | None = None
 
 
-class ApprovalWorkflowBase(BaseModel):
-    name: str
-    description: Optional[str] = None
+class ApprovalWorkflowCreate(BaseModel):
+    title: str
+    description: str | None = None
     workflow_type: str
+    steps: list[ApprovalStepCreate] = Field(default_factory=list)
 
 
-class ApprovalWorkflowCreate(ApprovalWorkflowBase):
-    steps: List[ApprovalStepBase]
+class ApprovalWorkflowRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-
-class ApprovalWorkflowRead(ApprovalWorkflowBase):
     id: UUID
     project_id: UUID
+    title: str
+    description: str | None = None
+    workflow_type: str
     status: WorkflowStatus
-    current_step_order: int
+    created_by_id: UUID
     created_at: datetime
     updated_at: datetime
-    steps: List[ApprovalStepRead]
-
-    class Config:
-        from_attributes = True
+    completed_at: datetime | None = None
+    steps: list[ApprovalStepRead]
