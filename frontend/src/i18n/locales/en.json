@@ -11,6 +11,7 @@
       "dash": "—"
     },
     "loading": "Loading…",
+    "total": "Total",
     "errors": {
       "uploadFailed": "Upload failed",
       "pipelineLoad": "Unable to load suggestions",
@@ -270,7 +271,9 @@
       "refreshing": "Recomputing…",
       "exportCsv": "Export CSV",
       "exporting": "Exporting…",
-      "exportSuccess": "Finance CSV downloaded."
+      "exportSuccess": "Finance CSV downloaded.",
+      "exportReport": "Export Report",
+      "saveScenario": "Save Scenario"
     },
     "sections": {
       "scenarios": "Scenarios"
@@ -349,6 +352,13 @@
     },
     "capitalStack": {
       "title": "Capital stack overview",
+      "overview": {
+        "title": "Capital Stack Overview",
+        "subtitle": "Compare funding scenarios, equity requirements, and debt structures across your project."
+      },
+      "selectScenario": "Select Scenario",
+      "preview": "Preview",
+      "baseCase": "Base Case",
       "labels": {
         "equity": "Equity share",
         "debt": "Debt share",
@@ -361,18 +371,20 @@
         "other": "Other"
       },
       "tranches": {
-        "title": "Tranche / facility detail",
+        "title": "Tranche / Facility Detail",
         "headers": {
           "name": "Facility",
+          "facility": "Facility",
           "type": "Type",
           "amount": "Amount",
           "share": "Share",
           "rate": "Rate",
-          "periods": "Periods/year",
+          "periods": "Periods/Yr",
           "capitalised": "Interest handling",
-          "upfront": "Upfront fee",
-          "exit": "Exit fee",
-          "reserve": "Interest reserve (months)",
+          "upfront": "Upfront Fee",
+          "exit": "Exit Fee",
+          "reserve": "Reserve (Mos)",
+          "amort": "Amort (Mos)",
           "amortisation": "Amortisation (months)"
         },
         "tooltips": {
@@ -390,7 +402,8 @@
       }
     },
     "drawdown": {
-      "title": "Drawdown schedule",
+      "title": "Drawdown Schedule",
+      "subtitle": "Manage and forecast deployment of equity and debt across project phases.",
       "caption": "Funding drawdowns by period",
       "headers": {
         "period": "Period",
@@ -403,7 +416,24 @@
         "debt": "Debt deployed",
         "peakDebt": "Peak debt balance"
       },
-      "moreEntries": "{{count}} more periods"
+      "moreEntries": "{{count}} more periods",
+      "stats": {
+        "equityDeployed": "Equity Deployed",
+        "debtDeployed": "Debt Deployed",
+        "peakDebtBalance": "Peak Debt Balance",
+        "sponsorContribution": "Total sponsor contribution",
+        "lenderContribution": "Total lender contribution",
+        "maxExposure": "Max exposure point"
+      },
+      "details": {
+        "title": "Funding Drawdown Details",
+        "periods": "Periods",
+        "viewFull": "View Full Forecast"
+      },
+      "analysis": {
+        "title": "Analysis",
+        "text": "Under <strong>{{scenario}}</strong>, the peak debt exposure hits <strong>{{peakDebt}}</strong> at Period {{peakPeriod}}. Equity is front-loaded in earlier periods, with debt drawdowns accelerating from M2 onwards."
+      }
     },
     "assets": {
       "title": "Asset mix snapshot",
@@ -612,6 +642,28 @@
         "completed": "Completed",
         "failed": "Failed"
       }
+    },
+    "charts": {
+      "noData": "No chart data available",
+      "scenarioComparison": "Scenario Comparison",
+      "capitalStack": "Capital Stack Comparison",
+      "drawdown": "Funding Mix & Debt Exposure",
+      "viewChart": "Chart View",
+      "viewTable": "Table View",
+      "equity": "Equity",
+      "seniorDebt": "Senior Debt",
+      "mezzanine": "Mezzanine",
+      "bridge": "Bridge",
+      "other": "Other",
+      "equityDraw": "Equity Draw",
+      "debtDraw": "Debt Draw",
+      "outstandingDebt": "Outstanding Debt"
+    },
+    "metrics": {
+      "totalCost": "Total Project Cost",
+      "weightedRate": "Weighted Debt Rate",
+      "loanToCost": "Loan-to-Cost (LTC)",
+      "equityShare": "Equity Share"
     }
   },
   "agentsCapture": {

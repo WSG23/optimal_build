@@ -1,30 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 /* styles/index.css
    CSS module aggregator - imports all feature modules in cascade order.
 
    CSS MIGRATION RULES:
-   1. @ob/tokens.css is imported FIRST in main.tsx (not here) for design token variables
-   2. Order matters for CSS specificity - do NOT reorder imports
-   3. core.css must be first (contains resets, @font-face, @keyframes, global vars)
-   4. app-shell.css must come before page-specific modules
-   5. When adding new modules, place them in logical cascade order
-   6. Never split @media queries across files
-   7. Asset paths (url(...)) are relative to each CSS file's location
+   1. ALL @import statements MUST come FIRST (CSS spec requirement)
+   2. @ob/tokens.css is imported FIRST in main.tsx (not here) for design token variables
+   3. Order matters for CSS specificity - do NOT reorder imports
+   4. core.css must be first (contains resets, @font-face, @keyframes, global vars)
+   5. app-shell.css must come before page-specific modules
+   6. When adding new modules, place them in logical cascade order
+   7. Never split @media queries across files
+   8. Asset paths (url(...)) are relative to each CSS file's location
 */
 
-:root {
-    --ob-font-family-sans: 'Inter', sans-serif;
-}
+/* External font (must be first @import) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Core styles and resets (must be first) */
+/* Core styles and resets (must be first local import) */
 @import './core.css';
 
 /* App shell and navigation (layout foundation) */
@@ -46,3 +37,15 @@ body {
 @import './site-acquisition.css';
 @import './visualizations.css';
 @import './phase-management.css';
+
+/* Global CSS variables and base styles (after @imports) */
+:root {
+    --ob-font-family-sans: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--ob-font-family-sans);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

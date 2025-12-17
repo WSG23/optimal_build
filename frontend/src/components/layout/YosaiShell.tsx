@@ -60,64 +60,71 @@ export function AppShell({
           minWidth: 0,
         }}
       >
-        {/* Header */}
-        {!hideHeader && (
-          <Box
-            component="header"
-            sx={{
-              py: 'var(--ob-space-300)',
-              px: 'var(--ob-space-400)',
-              borderBottom: 1,
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              bgcolor: alpha(theme.palette.background.default, 0.8),
-              backdropFilter: 'blur(var(--ob-blur-md))',
-              position: 'sticky',
-              top: inBaseLayout ? topOffset : 0,
-              zIndex: 'var(--ob-z-sticky)',
-              animation: 'slideDownFade 0.5s ease-out forwards',
-              '@keyframes slideDownFade': {
-                from: { opacity: 0, transform: 'translateY(-20px)' },
-                to: { opacity: 1, transform: 'translateY(0)' },
-              },
-            }}
-          >
-            <Box>
-              <Typography variant="h2" sx={{ color: 'text.primary' }}>
-                {title}
-              </Typography>
-              {subtitle && (
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'text.secondary', mt: 'var(--ob-space-050)' }}
-                >
-                  {subtitle}
-                </Typography>
-              )}
-            </Box>
-            <Stack
-              direction="row"
-              spacing="var(--ob-space-200)"
-              alignItems="center"
-            >
-              <HeaderUtilityCluster />
-              {actions}
-            </Stack>
-          </Box>
-        )}
-
-        {/* Content */}
+        {/* Content (scroll container) */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
-            padding: 'var(--ob-space-100)', // 16px - canonical layout padding (matches nav button spacing)
+            padding: 'var(--ob-space-100)',
             overflow: 'auto',
             scrollbarGutter: 'stable',
           }}
         >
+          {/* Page Header (scrolls with content) */}
+          {!hideHeader && (
+            <Box
+              component="header"
+              sx={{
+                py: 'var(--ob-space-200)',
+                px: 'var(--ob-space-300)',
+                borderBottom: 1,
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 'var(--ob-space-150)',
+                bgcolor: alpha(theme.palette.background.default, 0.8),
+                backdropFilter: 'blur(var(--ob-blur-md))',
+                // When the top ribbon is unpinned, it becomes an overlay; give the
+                // content a small breathing room so the header doesn't feel cramped.
+                mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-075)' : 0,
+                mb: 'var(--ob-space-150)',
+                borderRadius: 'var(--ob-radius-sm)',
+                animation: 'slideDownFade 0.4s ease-out forwards',
+                '@keyframes slideDownFade': {
+                  from: {
+                    opacity: 0,
+                    transform: 'translateY(calc(-1 * var(--ob-space-050)))',
+                  },
+                  to: { opacity: 1, transform: 'translateY(0)' },
+                },
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h2" sx={{ color: 'text.primary' }}>
+                  {title}
+                </Typography>
+                {subtitle && (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 'var(--ob-space-050)' }}
+                  >
+                    {subtitle}
+                  </Typography>
+                )}
+              </Box>
+              <Stack
+                direction="row"
+                spacing="var(--ob-space-200)"
+                alignItems="center"
+                sx={{ flexShrink: 0 }}
+              >
+                {!inBaseLayout && <HeaderUtilityCluster />}
+                {actions}
+              </Stack>
+            </Box>
+          )}
+
           {children}
         </Box>
       </Box>

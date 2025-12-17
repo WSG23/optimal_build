@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 
 interface BaseLayoutContextValue {
   inBaseLayout: boolean
-  topOffset: number
+  topOffset: number | string
 }
 
 const BaseLayoutContext = createContext<BaseLayoutContextValue>({

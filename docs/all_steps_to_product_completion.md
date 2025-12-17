@@ -1177,22 +1177,23 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 ---
 
 ### Phase 2E: Comprehensive Team Coordination ⚠️ IN PROGRESS
-**Status:** 85% - Backend + UI scaffolded, polish needed
+**Status:** 90% - Backend notifications + workflow listing complete, UI polish needed
 
 **What's Complete:**
 - ✅ Team member management API (list, invite, remove)
 - ✅ Invitation system with token-based acceptance
-- ✅ Role-based team membership (Architect, Engineer, Consultant, etc.)
+- ✅ Role-based team membership (incl. Architect/Engineer/Consultant)
 - ✅ Approval workflow API (create, update, advance steps)
+- ✅ Workflow list endpoint (`GET /api/v1/workflow/?project_id=...`)
 - ✅ Database models and migrations
 - ✅ All backend tests passing (8/8 team tests)
+- ✅ Notification system (in-app; email optional via logs)
 - ✅ Team Management UI page (`TeamManagementPage.tsx`)
 - ✅ Invitation dialog UI
 - ✅ Workflow Dashboard UI (`WorkflowDashboard.tsx`)
 - ✅ Create Workflow Dialog (`CreateWorkflowDialog.tsx`)
 
 **What's Missing:**
-- ❌ Notification system (email/in-app)
 - ❌ Progress tracking dashboard (cross-team visibility)
 - ⚠️ UI polish and integration testing
 
@@ -1200,7 +1201,7 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ✅ Specialist consultant network (invitations)
 - ✅ Multi-disciplinary approval workflows
 - ⚠️ Progress coordination across teams (partial)
-- ❌ Stakeholder management (notification system)
+- ✅ Stakeholder management (in-app notifications; email optional)
 
 **Queued Enhancements (from Updated Spec v2):**
 - [ ] Sign-Off Workflow documentation (Engineers propose → Architects approve → Developer exports)
@@ -1209,15 +1210,15 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ✅ Invitation system (roles: Architect, Engineer, etc.)
 - ✅ Approval workflow engine
 - ⚠️ Progress tracking dashboards (UI scaffolded)
-- ❌ Communication/notification system
+- ✅ Communication/notification system (in-app; email optional)
 
 **Acceptance Criteria:**
 - ✅ Developer invites consultants by role
 - ✅ Approval workflows route correctly
 - ⚠️ Progress visible across all teams (UI exists, needs data)
-- ❌ Stakeholder updates automated (needs notification system)
+- ✅ Stakeholder updates automated (in-app; email optional)
 
-**Estimated Effort:** 1 week remaining (polish + notifications)
+**Estimated Effort:** 1 week remaining (polish + progress dashboard)
 
 **Note:** This enables Phase 3 (Architects) and Phase 4 (Engineers)
 

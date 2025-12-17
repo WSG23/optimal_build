@@ -383,8 +383,14 @@
     --ob-size-icon-xl: 64px;
     --ob-size-drop-zone: 120px;
     --ob-size-controls-min: 400px;
+    --ob-size-sidebar-width: 280px;
     --ob-max-width-content: 1000px;
     --ob-max-width-page: 1400px;
+
+    /* Height constraints for scrollable containers */
+    --ob-max-height-panel: 400px;
+    --ob-max-height-table: 500px;
+    --ob-max-height-card-group: 600px;
 }
 
 /* =============================================================================

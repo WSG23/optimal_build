@@ -198,6 +198,639 @@ Always prefer canonical components from `src/components/canonical/`:
 
 ---
 
+## Viewport & Layout Standards (MANDATORY)
+
+Pages should fit within a single viewport or use progressive disclosure to prevent excessive scrolling.
+
+### Height Constraints
+
+| Constraint                   | Value           | Use Cases                              |
+| ---------------------------- | --------------- | -------------------------------------- |
+| `--ob-max-height-panel`      | 400px           | Scrollable panels within a page        |
+| `--ob-max-height-table`      | 500px           | Data tables with internal scroll       |
+| `--ob-max-height-card-group` | 600px           | Grouped cards with overflow scroll     |
+| `100vh - header`             | calc(100vh - X) | Full-height layouts minus fixed header |
+
+### Layout Patterns
+
+**DO: Use viewport-aware layouts**
+
+- Use `height: 100%` or `flex: 1` with overflow containers
+- Use tabs, accordions, or collapsible sections for multi-section content
+- Use `maxHeight` with `overflow: auto` for scrollable content areas
+- Use grid layouts that adapt to available space
+
+**DON'T: Create infinitely tall pages**
+
+- Don't stack more than 3-4 major sections vertically without grouping
+- Don't render all content at once if it exceeds ~2 viewport heights
+- Don't use fixed heights that cause content clipping on small screens
+
+### Page Layout Guidelines
+
+1. **Single-purpose pages**: Fit primary content in one viewport; use modals/drawers for secondary actions
+2. **Dashboard pages**: Use grid layouts; each widget should have a max height with internal scroll
+3. **Data-heavy pages**: Use virtualized lists or paginated tables; never render 100+ items at once
+4. **Multi-section pages**: Use tabs, accordions, or a sidebar navigation to switch between sections
+
+### Examples
+
+```tsx
+// ✅ CORRECT - Tabbed interface for multiple sections
+<Tabs value={activeTab}>
+  <Tab label="Overview" />
+  <Tab label="Details" />
+  <Tab label="Analytics" />
+</Tabs>
+<TabPanel value={activeTab} index={0}>
+  <OverviewContent />
+</TabPanel>
+
+// ✅ CORRECT - Scrollable table with max height
+<Box sx={{ maxHeight: 'var(--ob-max-height-table)', overflow: 'auto' }}>
+  <DataTable rows={data} />
+</Box>
+
+// ✅ CORRECT - Viewport-height layout with flex
+<Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+  <Header />
+  <Box sx={{ flex: 1, overflow: 'auto' }}>
+    <MainContent />
+  </Box>
+</Box>
+
+// ❌ WRONG - Stacking many sections vertically
+<Box>
+  <Section1 />  {/* 400px tall */}
+  <Section2 />  {/* 300px tall */}
+  <Section3 />  {/* 500px tall */}
+  <Section4 />  {/* 400px tall */}
+  <Section5 />  {/* 600px tall */}
+  {/* Total: 2200px - requires excessive scrolling */}
+</Box>
+
+// ❌ WRONG - Rendering all items without virtualization
+<Box>
+  {items.map(item => <LargeCard key={item.id} {...item} />)}  {/* 500+ items */}
+</Box>
+```
+
+### Workspace Page Pattern
+
+For complex workspace pages (like Finance, CAD, Feasibility):
+
+1. **Fixed toolbar area**: Pinned actions, project selector
+2. **Tab navigation**: Switch between views (not stacked vertically)
+3. **Active tab content**: Only render current tab; use `minHeight` not fixed height
+4. **Internal scrolling**: Each tab panel scrolls independently if needed
+
+```tsx
+// Recommended workspace layout
+<AppLayout title="Finance" subtitle="Scenario modeling">
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Toolbar - fixed */}
+        <Card sx={{ flexShrink: 0, mb: 2 }}>
+            <Toolbar />
+        </Card>
+
+        {/* Tabs - fixed */}
+        <Tabs value={tab} sx={{ flexShrink: 0 }} />
+
+        {/* Tab content - fills remaining space */}
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <TabPanel>{activeContent}</TabPanel>
+        </Box>
+    </Box>
+</AppLayout>
+```
+
+---
+
+## Master-Detail Layout Pattern
+
+For any page with primary content + selection/control panel, use a 2:1 grid layout. This pattern applies to dashboards, analytics, configuration screens, and any view with a main visualization plus a selector sidebar.
+
+**Use Cases:** Finance scenarios, CAD configurations, project comparisons, analytics dashboards, report builders.
+
+| Column         | Width            | Content                               |
+| -------------- | ---------------- | ------------------------------------- |
+| Left (Master)  | `xs={12} lg={8}` | Chart, visualization, primary content |
+| Right (Detail) | `xs={12} lg={4}` | Scenario selector, controls, filters  |
+
+### Layout Structure
+
+```tsx
+<Grid container spacing="var(--ob-space-150)">
+    {/* Master: Chart/Visualization (2/3 width on lg+) */}
+    <Grid item xs={12} lg={8}>
+        <GlassCard sx={{ p: 'var(--ob-space-100)' }}>
+            <ChartComponent scenarios={scenarios} />
+        </GlassCard>
+    </Grid>
+
+    {/* Detail: Scenario Selector (1/3 width on lg+) */}
+    <Grid item xs={12} lg={4}>
+        <ScenarioCards
+            scenarios={scenarios}
+            activeId={activeId}
+            onSelect={handleSelect}
+        />
+    </Grid>
+</Grid>
+```
+
+### Why This Pattern
+
+1. **Dense single-screen design** - Reduces scrolling by keeping chart and controls visible together
+2. **Progressive disclosure** - Details reveal on selection without page navigation
+3. **Responsive** - Stacks vertically on mobile (xs=12), side-by-side on desktop (lg=8/4)
+
+---
+
+## Selection Card List Pattern
+
+Vertical list of clickable cards for switching between items, options, or configurations. Use this pattern for any sidebar selector where users choose from a list of options.
+
+**Use Cases:** Scenario selectors, configuration profiles, project lists, template pickers, filter presets, saved searches.
+
+### Visual States
+
+| State                | Styling                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| **Default**          | `bgcolor: 'background.paper'`, `border: 1`, `borderColor: 'divider'`                |
+| **Hover**            | `borderColor: 'primary.main'`, `boxShadow: 2`                                       |
+| **Active**           | `bgcolor: alpha(primary, 0.05)`, `borderColor: alpha(primary, 0.3)`, `boxShadow: 1` |
+| **Active Indicator** | `8px` dot (`borderRadius: '50%'`, `bgcolor: 'primary.main'`)                        |
+
+### Component Structure
+
+```tsx
+<Box
+    component="button"
+    onClick={() => onSelect(item.id)}
+    sx={{
+        width: '100%',
+        textAlign: 'left',
+        p: 'var(--ob-space-100)',
+        borderRadius: 'var(--ob-radius-sm)',
+        border: 1,
+        borderColor: isActive
+            ? alpha(theme.palette.primary.main, 0.3)
+            : 'divider',
+        bgcolor: isActive
+            ? alpha(theme.palette.primary.main, 0.05)
+            : 'background.paper',
+        boxShadow: isActive ? 1 : 0,
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        '&:hover': { borderColor: 'primary.main', boxShadow: 2 },
+    }}
+>
+    <Box
+        sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }}
+    >
+        <Typography
+            sx={{
+                fontWeight: 700,
+                color: isActive ? 'primary.dark' : 'text.primary',
+            }}
+        >
+            {item.name}
+        </Typography>
+        {isActive && (
+            <Box
+                sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                }}
+            />
+        )}
+    </Box>
+    <Typography
+        sx={{
+            fontSize: 'var(--ob-font-size-sm)',
+            color: isActive ? 'primary.main' : 'text.secondary',
+        }}
+    >
+        {item.description}
+    </Typography>
+</Box>
+```
+
+---
+
+## Underlined Tab Navigation Pattern
+
+For secondary/tertiary navigation within a page section. Use this instead of MUI Tabs when you need custom styling or simpler behavior.
+
+**Use Cases:** Sub-navigation within panels, switching between related views, filtering content by category, stepping through options.
+
+### Visual Design
+
+| Element        | Styling                                                                    |
+| -------------- | -------------------------------------------------------------------------- |
+| Container      | `borderBottom: 1, borderColor: 'divider'`                                  |
+| Tab (inactive) | `borderBottom: 2`, `borderColor: 'transparent'`, `color: 'text.secondary'` |
+| Tab (active)   | `borderBottom: 2`, `borderColor: 'primary.main'`, `color: 'primary.main'`  |
+| Tab (hover)    | `color: 'text.primary'`, `bgcolor: 'transparent'`                          |
+
+### Component Structure
+
+```tsx
+<Box
+    sx={{ borderBottom: 1, borderColor: 'divider', mb: 'var(--ob-space-150)' }}
+>
+    <Box sx={{ display: 'flex', gap: 'var(--ob-space-200)' }}>
+        {items.map((item) => (
+            <Button
+                key={item.id}
+                onClick={() => onSelect(item.id)}
+                sx={{
+                    py: 'var(--ob-space-100)',
+                    px: 'var(--ob-space-025)',
+                    borderRadius: 0,
+                    borderBottom: 2,
+                    borderColor: isActive ? 'primary.main' : 'transparent',
+                    color: isActive ? 'primary.main' : 'text.secondary',
+                    fontWeight: 500,
+                    fontSize: 'var(--ob-font-size-sm)',
+                    textTransform: 'none',
+                    '&:hover': {
+                        color: 'text.primary',
+                        bgcolor: 'transparent',
+                    },
+                }}
+            >
+                {item.label}
+            </Button>
+        ))}
+    </Box>
+</Box>
+```
+
+---
+
+## Enhanced Data Table Pattern
+
+For professional data tables with type/status badges, styled headers, and summary rows. Use this pattern for any tabular data that needs a polished appearance.
+
+**Use Cases:** Financial tables, inventory lists, user management, audit logs, configuration tables, any data grid requiring status indicators.
+
+### Table Structure
+
+| Element           | Styling                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Card wrapper      | `GlassCard sx={{ overflow: 'hidden' }}`                                                                               |
+| Header row        | `bgcolor: alpha(background.default, 0.5)`, includes title + context info                                              |
+| Column headers    | `textTransform: 'uppercase'`, `letterSpacing: 'var(--ob-letter-spacing-wider)'`, `fontSize: 'var(--ob-font-size-xs)'` |
+| Numeric columns   | `textAlign: 'right'`, `fontFamily: 'var(--ob-font-family-mono)'`                                                      |
+| Status/Type badge | `StatusChip` with appropriate status color                                                                            |
+| Summary/Total row | `bgcolor: alpha(background.default, 0.5)`, `fontWeight: 600`                                                          |
+| Row hover         | `bgcolor: alpha(action.hover, 0.5)`                                                                                   |
+
+### Component Structure
+
+```tsx
+<GlassCard sx={{ overflow: 'hidden' }}>
+    {/* Header */}
+    <Box
+        sx={{
+            px: 'var(--ob-space-150)',
+            py: 'var(--ob-space-125)',
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: alpha(theme.palette.background.default, 0.5),
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }}
+    >
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            {t('table.title')}
+        </Typography>
+        <Typography
+            sx={{ fontSize: 'var(--ob-font-size-sm)', color: 'text.secondary' }}
+        >
+            {contextInfo}
+        </Typography>
+    </Box>
+
+    {/* Table with styled headers and status badges */}
+    <Box
+        component="table"
+        sx={{
+            width: '100%',
+            '& th': {
+                textTransform: 'uppercase',
+                letterSpacing: 'var(--ob-letter-spacing-wider)',
+                fontSize: 'var(--ob-font-size-xs)',
+                fontWeight: 600,
+            },
+            '& th:nth-of-type(n+3), & td:nth-of-type(n+3)': {
+                textAlign: 'right',
+            },
+        }}
+    >
+        {/* ... table content */}
+    </Box>
+</GlassCard>
+```
+
+### Status Badge Guidelines
+
+| Category        | StatusChip Props           | Example Use                             |
+| --------------- | -------------------------- | --------------------------------------- |
+| Positive/Active | `status="success"` (green) | Approved, Active, Complete, Equity      |
+| Informational   | `status="info"` (blue)     | Pending, In Progress, Primary, Debt     |
+| Caution         | `status="warning"` (amber) | Review Needed, Expiring Soon, Mezzanine |
+| Negative/Error  | `status="error"` (red)     | Failed, Rejected, Overdue               |
+| Neutral         | `status="default"` (gray)  | Draft, Archived, N/A                    |
+
+---
+
+## Insight/Callout Box Pattern
+
+For displaying AI-generated insights, analysis summaries, important notices, or contextual information with colored callout styling. Use this pattern to draw attention to key information.
+
+**Use Cases:** AI recommendations, analysis summaries, important notices, validation feedback, contextual tips, warning messages, success confirmations.
+
+### Visual Design
+
+| Variant | Background                  | Border                     | Text Color     | When to Use                      |
+| ------- | --------------------------- | -------------------------- | -------------- | -------------------------------- |
+| Success | `alpha(success.main, 0.08)` | `alpha(success.main, 0.3)` | `success.dark` | Positive insights, confirmations |
+| Info    | `alpha(primary.main, 0.08)` | `alpha(primary.main, 0.3)` | `primary.dark` | Neutral information, tips        |
+| Warning | `alpha(warning.main, 0.08)` | `alpha(warning.main, 0.3)` | `warning.dark` | Caution, attention needed        |
+| Error   | `alpha(error.main, 0.08)`   | `alpha(error.main, 0.3)`   | `error.dark`   | Critical issues, failures        |
+
+### Component Structure
+
+```tsx
+<Box
+    sx={{
+        bgcolor: alpha(theme.palette.success.main, 0.08),
+        border: 2,
+        borderColor: alpha(theme.palette.success.main, 0.3),
+        borderRadius: 'var(--ob-radius-sm)',
+        p: 'var(--ob-space-150)',
+    }}
+>
+    <Typography
+        sx={{
+            fontSize: 'var(--ob-font-size-sm)',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            color: 'success.dark',
+            letterSpacing: 'var(--ob-letter-spacing-wider)',
+            mb: 'var(--ob-space-050)',
+        }}
+    >
+        {t('common.analysis')} {/* "ANALYSIS", "TIP", "NOTE", etc. */}
+    </Typography>
+    <Typography
+        sx={{
+            fontSize: 'var(--ob-font-size-sm)',
+            color: 'success.dark',
+            lineHeight: 1.6,
+        }}
+    >
+        {insightText}
+    </Typography>
+</Box>
+```
+
+### Common Header Labels
+
+| Label    | Use For                                  |
+| -------- | ---------------------------------------- |
+| ANALYSIS | AI-generated insights, data analysis     |
+| TIP      | Helpful suggestions, best practices      |
+| NOTE     | Additional context, clarifications       |
+| WARNING  | Caution messages, potential issues       |
+| SUCCESS  | Confirmation messages, completed actions |
+| ERROR    | Failure messages, validation errors      |
+
+---
+
+## Chart & Data Visualization Standards (MANDATORY)
+
+This project uses **Recharts** for all data visualizations. Charts must follow the same design token principles as other UI elements.
+
+### Chart Library
+
+| Requirement | Standard                                | Rationale                                   |
+| ----------- | --------------------------------------- | ------------------------------------------- |
+| Library     | **Recharts** only                       | Already installed, React-native, responsive |
+| Container   | Wrap in `ResponsiveContainer`           | Ensures responsive behavior                 |
+| Height      | Use `--ob-max-height-panel` (400px) max | Prevents viewport overflow                  |
+| Colors      | Use theme palette via `useTheme()`      | Dark mode compatible                        |
+| Labels      | Use i18n `t()` function                 | Internationalization                        |
+
+### Chart Styling Requirements
+
+| Element         | Standard                               | Token/Value               |
+| --------------- | -------------------------------------- | ------------------------- |
+| Bar corners     | Use radius `4`                         | Matches `--ob-radius-sm`  |
+| Tooltip corners | Use radius `4`                         | Matches `--ob-radius-sm`  |
+| Grid lines      | `vertical={false}`, stroke from theme  | Clean, minimal appearance |
+| Axis lines      | `axisLine={false}`, `tickLine={false}` | Modern, minimal style     |
+| Axis text       | `fontSize: 12`, `fill` from theme      | Use `text.secondary`      |
+| Legend          | `wrapperStyle={{ paddingTop: 20 }}`    | Consistent spacing        |
+
+### Chart Type Guidelines
+
+| Use Case           | Chart Type     | Recharts Component            |
+| ------------------ | -------------- | ----------------------------- |
+| Compare categories | Stacked Bar    | `BarChart` with `stackId`     |
+| Timeline with mix  | Composed       | `ComposedChart` (Bar + Line)  |
+| Part of whole      | Donut/Pie      | `PieChart` with `innerRadius` |
+| Trend over time    | Line           | `LineChart` or `AreaChart`    |
+| Distribution       | Horizontal Bar | `BarChart layout="vertical"`  |
+
+### Examples
+
+```tsx
+// ✅ CORRECT - Recharts bar chart with design tokens
+import { useTheme, alpha } from '@mui/material'
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+} from 'recharts'
+
+function MyChart({ data }) {
+    const theme = useTheme()
+
+    return (
+        <Box sx={{ height: 'var(--ob-max-height-panel)', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} barSize={60}>
+                    <CartesianGrid
+                        stroke={alpha(theme.palette.divider, 0.3)}
+                        vertical={false}
+                    />
+                    <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                            fill: theme.palette.text.secondary,
+                            fontSize: 12,
+                        }}
+                    />
+                    <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                            fill: theme.palette.text.secondary,
+                            fontSize: 12,
+                        }}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            borderRadius: 4, // --ob-radius-sm
+                            border: 'none',
+                            boxShadow: theme.shadows[2],
+                        }}
+                    />
+                    <Bar
+                        dataKey="equity"
+                        stackId="a"
+                        fill={theme.palette.success.main}
+                        radius={[0, 0, 4, 4]} // Bottom corners rounded
+                    />
+                    <Bar
+                        dataKey="debt"
+                        stackId="a"
+                        fill={theme.palette.primary.main}
+                        radius={[4, 4, 0, 0]} // Top corners rounded
+                    />
+                </BarChart>
+            </ResponsiveContainer>
+        </Box>
+    )
+}
+
+// ❌ WRONG - Hardcoded colors and missing responsive container
+;<BarChart data={data} height={400}>
+    <Bar dataKey="value" fill="#3b82f6" /> // Hardcoded hex color!
+</BarChart>
+
+// ❌ WRONG - Using non-Recharts library
+import { Chart } from 'chart.js' // Wrong library!
+```
+
+### Composed Chart Pattern (Bar + Line)
+
+For showing both cumulative and periodic data (like drawdown schedules):
+
+```tsx
+// ✅ CORRECT - ComposedChart with bars and line overlay
+<ComposedChart data={data}>
+    <CartesianGrid
+        stroke={alpha(theme.palette.divider, 0.3)}
+        vertical={false}
+    />
+    <XAxis dataKey="period" axisLine={false} tickLine={false} />
+    <YAxis yAxisId="left" axisLine={false} tickLine={false} />
+    <YAxis
+        yAxisId="right"
+        orientation="right"
+        axisLine={false}
+        tickLine={false}
+    />
+
+    {/* Stacked bars for periodic values */}
+    <Bar
+        yAxisId="left"
+        dataKey="equityDraw"
+        stackId="a"
+        fill={theme.palette.success.main}
+    />
+    <Bar
+        yAxisId="left"
+        dataKey="debtDraw"
+        stackId="a"
+        fill={theme.palette.primary.main}
+    />
+
+    {/* Line for cumulative/running total */}
+    <Line
+        yAxisId="right"
+        type="monotone"
+        dataKey="outstandingDebt"
+        stroke={theme.palette.text.primary}
+        strokeWidth={2}
+        dot={{ r: 3, fill: theme.palette.text.primary }}
+    />
+</ComposedChart>
+```
+
+---
+
+## Metrics Grid Pattern (MANDATORY)
+
+For displaying KPIs, financial metrics, or summary statistics, use a responsive 4-column grid:
+
+```tsx
+// ✅ CORRECT - Metrics grid with GlassCard
+<Grid container spacing="var(--ob-space-100)">
+  <Grid item xs={6} md={3}>
+    <GlassCard sx={{ p: 'var(--ob-space-100)' }}>
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-sm)',
+          color: 'text.secondary',
+          mb: 'var(--ob-space-025)'
+        }}
+      >
+        {t('finance.metrics.totalCost')}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-2xl)',
+          fontWeight: 700,
+          color: 'text.primary'
+        }}
+      >
+        {formatCurrency(value)}
+      </Typography>
+    </GlassCard>
+  </Grid>
+  {/* Repeat for other metrics */}
+</Grid>
+
+// ❌ WRONG - Hardcoded Tailwind classes
+<div className="grid grid-cols-4 gap-4">
+  <div className="bg-white p-4 rounded-xl">
+    <div className="text-sm text-gray-500">Total Cost</div>
+    <div className="text-2xl font-bold">$1,000,000</div>
+  </div>
+</div>
+```
+
+### Metric Card Guidelines
+
+| Element   | Standard                                                        |
+| --------- | --------------------------------------------------------------- |
+| Container | `GlassCard` with `p: 'var(--ob-space-100)'`                     |
+| Label     | `fontSize: 'var(--ob-font-size-sm)'`, `color: 'text.secondary'` |
+| Value     | `fontSize: 'var(--ob-font-size-2xl)'`, `fontWeight: 700`        |
+| Grid      | `xs={6} md={3}` for 2-column mobile, 4-column desktop           |
+| Spacing   | `spacing="var(--ob-space-100)"` between cards                   |
+
+---
+
 ## Pre-Commit Validation
 
 The project includes ESLint rules to catch violations. Run before committing:
@@ -217,6 +850,10 @@ FONT SIZE:  var(--ob-font-size-XXX) where XXX = 2xs|xs|sm-minus|sm|md|base|lg|xl
 ICON SIZE:  var(--ob-size-icon-XXX) where XXX = sm|md|lg|xl
 BLUR:       var(--ob-blur-XXX)      where XXX = sm|xs|md|xl|lg
 Z-INDEX:    var(--ob-z-XXX)         where XXX = base|dropdown|sticky|fixed|modal-backdrop|modal|popover|tooltip
+HEIGHT:     var(--ob-max-height-XXX) where XXX = panel (400px)|table (500px)|card-group (600px)
+
+CHARTS:     Library: Recharts only | Container: ResponsiveContainer | Height: --ob-max-height-panel
+            Bar radius: 4 | Colors: theme.palette.* | Axis: axisLine={false} tickLine={false}
 ```
 
 ---
@@ -224,6 +861,8 @@ Z-INDEX:    var(--ob-z-XXX)         where XXX = base|dropdown|sticky|fixed|modal
 ## AI Agent Checklist
 
 Before submitting UI code changes, verify:
+
+**Token Usage:**
 
 - [ ] No hardcoded pixel values (use `--ob-space-*` or `--ob-size-*`)
 - [ ] No hardcoded spacing (`px`/`rem`); prefer `--ob-space-*` or tokenized MUI spacing numbers
@@ -234,3 +873,40 @@ Before submitting UI code changes, verify:
 - [ ] No hardcoded colors (use theme or tokens)
 - [ ] Using canonical components where available
 - [ ] Font sizes use `--ob-font-size-*` tokens
+
+**Layout & Viewport:**
+
+- [ ] Page fits within ~2 viewport heights maximum (no excessive scrolling)
+- [ ] Multi-section content uses tabs, accordions, or collapsible panels (NOT vertical stacking)
+- [ ] Data tables have `maxHeight` with internal scroll
+- [ ] Workspace pages follow the fixed-toolbar + tabs + scrollable-content pattern
+- [ ] Large lists use virtualization or pagination (never render 100+ items at once)
+- [ ] Tab content only renders when active (lazy loading)
+
+**Charts & Visualizations:**
+
+- [ ] Using Recharts (not other chart libraries)
+- [ ] Chart wrapped in `ResponsiveContainer`
+- [ ] Chart height ≤ `--ob-max-height-panel` (400px)
+- [ ] Bar corners use radius `4` (matches `--ob-radius-sm`)
+- [ ] Colors from theme palette (not hardcoded hex)
+- [ ] Axis lines disabled (`axisLine={false}`, `tickLine={false}`)
+- [ ] Chart labels use i18n `t()` function
+- [ ] Custom tooltips styled with design tokens
+
+**Metrics Grid:**
+
+- [ ] Using `GlassCard` for metric containers
+- [ ] Grid uses `xs={6} md={3}` for responsive 2/4 columns
+- [ ] Label uses `--ob-font-size-sm`, `text.secondary`
+- [ ] Value uses `--ob-font-size-2xl`, `fontWeight: 700`
+
+**Layout Patterns:**
+
+- [ ] Master-Detail layouts use Grid `xs={12} lg={8}` / `xs={12} lg={4}` split
+- [ ] Selection card lists have proper active state styling (alpha bg, dot indicator)
+- [ ] Underlined tabs use border-bottom styling (not MUI Tabs component for simple cases)
+- [ ] Data tables use GlassCard wrapper with header row
+- [ ] Status badges use StatusChip with appropriate status colors
+- [ ] Total/summary rows have gray background (`alpha(background.default, 0.5)`)
+- [ ] Insight/callout boxes use alpha-transparency backgrounds with matching borders

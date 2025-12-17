@@ -1,15 +1,26 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import { BaseLayoutProvider } from './BaseLayoutContext'
 import { YosaiTopNav } from '../../components/layout/YosaiTopNav'
 
 export function BaseLayout({ children }: { children: ReactNode }) {
-  const TOP_NAV_HEIGHT = 56
+  const [isNavPinned, setIsNavPinned] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const value = window.localStorage.getItem('ob_top_nav_pinned')
+    return value !== 'false'
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('ob_top_nav_pinned', String(isNavPinned))
+  }, [isNavPinned])
+
+  const topOffset = isNavPinned
+    ? 'calc(var(--ob-space-250) + var(--ob-space-300))'
+    : 0
 
   return (
-    <BaseLayoutProvider
-      value={{ inBaseLayout: true, topOffset: TOP_NAV_HEIGHT }}
-    >
+    <BaseLayoutProvider value={{ inBaseLayout: true, topOffset }}>
       <Box
         sx={{
           display: 'flex',
@@ -19,7 +30,10 @@ export function BaseLayout({ children }: { children: ReactNode }) {
           color: 'text.primary',
         }}
       >
-        <YosaiTopNav height={TOP_NAV_HEIGHT} />
+        <YosaiTopNav
+          isPinned={isNavPinned}
+          onTogglePinned={() => setIsNavPinned((prev) => !prev)}
+        />
         <Box
           sx={{
             flexGrow: 1,

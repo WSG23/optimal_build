@@ -291,6 +291,7 @@ export interface FinanceScenarioSummary {
   projectId: number | string
   finProjectId: number | null
   scenarioName: string
+  description?: string | null
   currency: string
   escalatedCost: string
   costIndex: CostIndexProvenance
@@ -1490,40 +1491,28 @@ export async function listFinanceScenarios(
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw error
     }
-    if (error instanceof TypeError) {
+    // Use fallback data for network errors (TypeError) or API auth errors (401/403)
+    const isNetworkError = error instanceof TypeError
+    const isAuthError =
+      error instanceof Error &&
+      (error.message.includes('401') ||
+        error.message.includes('403') ||
+        error.message.includes('restricted') ||
+        error.message.includes('owner'))
+    if (isNetworkError || isAuthError) {
       console.warn(
-        '[finance] scenario list request failed, using offline fallback data',
+        `[finance] scenario list request failed (${isNetworkError ? 'network' : 'auth'}), using offline fallback data`,
         error,
       )
-      const fallbackRequest: FinanceFeasibilityRequest = {
-        projectId: params.projectId ?? FINANCE_FALLBACK_SUMMARY.projectId,
-        finProjectId:
-          typeof params.finProjectId === 'number'
-            ? params.finProjectId
-            : typeof FINANCE_FALLBACK_SUMMARY.finProjectId === 'number'
-              ? FINANCE_FALLBACK_SUMMARY.finProjectId
-              : undefined,
-        projectName: 'Offline Project',
-        scenario: {
-          name: 'Offline Feasibility Scenario',
-          currency: FINANCE_FALLBACK_SUMMARY.currency,
-          costEscalation: {
-            amount: FINANCE_FALLBACK_SUMMARY.escalatedCost,
-            basePeriod: FINANCE_FALLBACK_SUMMARY.costIndex.basePeriod,
-            seriesName: FINANCE_FALLBACK_SUMMARY.costIndex.seriesName,
-            jurisdiction: FINANCE_FALLBACK_SUMMARY.costIndex.jurisdiction,
-            provider: FINANCE_FALLBACK_SUMMARY.costIndex.provider ?? null,
-          },
-          cashFlow: {
-            discountRate: '0.08',
-            cashFlows: [],
-          },
-          dscr: undefined,
-          capitalStack: undefined,
-          drawdownSchedule: undefined,
-        },
+      // Use FINANCE_FALLBACK_SUMMARY directly to preserve capitalStack and drawdownSchedule
+      const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+      if (params.projectId !== undefined && params.projectId !== null) {
+        fallback.projectId = params.projectId as typeof fallback.projectId
       }
-      return [createFinanceFallbackSummary(fallbackRequest)]
+      if (typeof params.finProjectId === 'number') {
+        fallback.finProjectId = params.finProjectId
+      }
+      return [fallback]
     }
     throw error
   }

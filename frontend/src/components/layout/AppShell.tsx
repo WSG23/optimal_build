@@ -15,12 +15,13 @@ import { Menu as MenuIcon } from '@mui/icons-material'
 import { AppNavigation } from '../../app/components/AppNavigation'
 import { HeaderUtilityCluster } from './HeaderUtilityCluster'
 import { DeveloperProvider } from '../../contexts/DeveloperContext'
+import { useBaseLayoutContext } from '../../app/layout/BaseLayoutContext'
 import { useRouterController } from '../../router'
 import logoImage from '../../assets/logo_v2.png'
 import type { NavItemKey } from '../../app/navigation'
 
-const DRAWER_WIDTH = 280
-const TOOLBAR_HEIGHT = 72
+const DRAWER_WIDTH = 'var(--ob-size-sidebar-width)'
+const TOOLBAR_HEIGHT = 'calc(var(--ob-space-400) + var(--ob-space-050))'
 
 interface AppShellProps {
   children: ReactNode
@@ -36,13 +37,20 @@ export function AppShell({
   activeItem = 'performance',
   title,
   description,
-  hideSidebar = false,
+  hideSidebar,
   actions,
 }: AppShellProps) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [mobileOpen, setMobileOpen] = useState(false)
   const { path, navigate } = useRouterController()
+  const { inBaseLayout, topOffset } = useBaseLayoutContext()
+
+  // Default to hiding the legacy left sidebar if we're already inside the new BaseLayout.
+  const resolvedHideSidebar =
+    hideSidebar !== undefined ? hideSidebar : inBaseLayout
+  const showLegacyAppBar = !inBaseLayout
+  const stickyTop = inBaseLayout ? topOffset : TOOLBAR_HEIGHT
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -64,63 +72,79 @@ export function AppShell({
           bgcolor: 'background.default',
         }}
       >
-        {/* Header */}
-        <AppBar
-          position="fixed"
-          elevation={0}
-          sx={{
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-            bgcolor: 'background.paper',
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            backdropFilter: 'blur(var(--ob-blur-lg))',
-            background: `linear-gradient(to right, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(
-              theme.palette.background.paper,
-              0.8,
-            )})`,
-          }}
-        >
-          <Toolbar sx={{ height: TOOLBAR_HEIGHT, px: { xs: 2, md: 4 } }}>
-            {!hideSidebar && (
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                edge="start"
-                onClick={handleDrawerToggle}
-                sx={{ mr: 2, display: { md: 'none' }, color: 'text.primary' }}
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-
-            {/* Logo */}
-            <Box
-              sx={{ display: 'flex', alignItems: 'center', flexGrow: 0, mr: 8 }}
+        {/* Legacy Header (hidden inside BaseLayout to avoid double top bars) */}
+        {showLegacyAppBar && (
+          <AppBar
+            position="fixed"
+            elevation={0}
+            sx={{
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+              bgcolor: 'background.paper',
+              borderBottom: 1,
+              borderColor: 'divider',
+              backdropFilter: 'blur(var(--ob-blur-lg))',
+              background: `linear-gradient(to right, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(
+                theme.palette.background.paper,
+                0.8,
+              )})`,
+            }}
+          >
+            <Toolbar
+              sx={{
+                height: TOOLBAR_HEIGHT,
+                px: {
+                  xs: 'var(--ob-space-100)',
+                  md: 'var(--ob-space-200)',
+                },
+              }}
             >
-              <img
-                src={logoImage}
-                alt="Optimal Build"
-                style={{ height: '32px' }}
-              />
-            </Box>
+              {!resolvedHideSidebar && (
+                <IconButton
+                  color="inherit"
+                  aria-label="open drawer"
+                  edge="start"
+                  onClick={handleDrawerToggle}
+                  sx={{
+                    mr: 'var(--ob-space-100)',
+                    display: { md: 'none' },
+                    color: 'text.primary',
+                  }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )}
 
-            {/* Page Title in Header (Optional, if we want it there) */}
-            {/*
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 600 }}>
-                    {title}
-                </Typography>
-            </Box>
-            */}
+              {/* Logo */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexGrow: 0,
+                  mr: 'var(--ob-space-400)',
+                }}
+              >
+                <Box
+                  component="img"
+                  src={logoImage}
+                  alt="Optimal Build"
+                  sx={{
+                    display: 'block',
+                    height: 'var(--ob-size-icon-md)',
+                    width: 'auto',
+                  }}
+                />
+              </Box>
 
-            <Box sx={{ flexGrow: 1 }} />
+              <Box sx={{ flexGrow: 1 }} />
 
-            {/* Utility Cluster */}
-            <HeaderUtilityCluster />
-          </Toolbar>
-        </AppBar>
+              {/* Utility Cluster */}
+              <HeaderUtilityCluster />
+            </Toolbar>
+          </AppBar>
+        )}
 
         {/* Sidebar Navigation */}
-        {!hideSidebar && (
+        {!resolvedHideSidebar && (
           <Box
             component="nav"
             sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
@@ -140,12 +164,13 @@ export function AppShell({
                   boxSizing: 'border-box',
                   width: DRAWER_WIDTH,
                   bgcolor: 'background.paper',
-                  borderRight: `1px solid ${theme.palette.divider}`,
+                  borderRight: 1,
+                  borderColor: 'divider',
                 },
               }}
             >
-              <Toolbar sx={{ height: TOOLBAR_HEIGHT }} />
-              <Box sx={{ overflow: 'auto', p: 3 }}>
+              {showLegacyAppBar && <Toolbar sx={{ height: TOOLBAR_HEIGHT }} />}
+              <Box sx={{ overflow: 'auto', p: 'var(--ob-space-150)' }}>
                 <AppNavigation
                   activeItem={activeItem}
                   onNavigate={handleNavigate}
@@ -163,18 +188,21 @@ export function AppShell({
                   boxSizing: 'border-box',
                   width: DRAWER_WIDTH,
                   bgcolor: 'background.paper',
-                  borderRight: `1px solid ${theme.palette.divider}`,
+                  borderRight: 1,
+                  borderColor: 'divider',
                   height: '100vh',
                 },
               }}
               open
             >
-              <Toolbar sx={{ height: TOOLBAR_HEIGHT }} />
+              {showLegacyAppBar && <Toolbar sx={{ height: TOOLBAR_HEIGHT }} />}
               <Box
                 sx={{
                   overflow: 'auto',
-                  p: 3,
-                  height: `calc(100vh - ${TOOLBAR_HEIGHT}px)`,
+                  p: 'var(--ob-space-150)',
+                  height: showLegacyAppBar
+                    ? `calc(100vh - ${TOOLBAR_HEIGHT})`
+                    : '100vh',
                 }}
               >
                 <AppNavigation
@@ -193,8 +221,10 @@ export function AppShell({
           sx={{
             flexGrow: 1,
             // p: { xs: 2, md: 4 }, // Removing padding here to let inner components handle it or the sub-header
-            width: { md: `calc(100% - ${hideSidebar ? 0 : DRAWER_WIDTH}px)` },
-            mt: `${TOOLBAR_HEIGHT}px`,
+            width: {
+              md: resolvedHideSidebar ? '100%' : `calc(100% - ${DRAWER_WIDTH})`,
+            },
+            mt: showLegacyAppBar ? TOOLBAR_HEIGHT : 0,
             minHeight: '100vh',
             display: 'flex',
             flexDirection: 'column',
@@ -205,8 +235,8 @@ export function AppShell({
             <Box
               component="header"
               sx={{
-                py: 3,
-                px: 4,
+                py: 'var(--ob-space-150)',
+                px: 'var(--ob-space-200)',
                 borderBottom: 1,
                 borderColor: 'divider',
                 display: 'flex',
@@ -215,15 +245,18 @@ export function AppShell({
                 bgcolor: alpha(theme.palette.background.default, 0.8),
                 backdropFilter: 'blur(var(--ob-blur-md))',
                 position: 'sticky',
-                top: 0,
-                zIndex: 10,
+                top: stickyTop,
+                zIndex: 'var(--ob-z-sticky)',
               }}
             >
               <Box>
                 {title && (
                   <Typography
                     variant="h4"
-                    sx={{ color: 'text.primary', fontWeight: 'bold' }}
+                    sx={{
+                      color: 'text.primary',
+                      fontWeight: 'var(--ob-font-weight-bold)',
+                    }}
                   >
                     {title}
                   </Typography>
@@ -231,21 +264,29 @@ export function AppShell({
                 {description && (
                   <Typography
                     variant="body1"
-                    sx={{ color: 'text.secondary', mt: 0.5, maxWidth: '800px' }}
+                    sx={{
+                      color: 'text.secondary',
+                      mt: 'var(--ob-space-025)',
+                      maxWidth: 'var(--ob-max-width-content)',
+                    }}
                   >
                     {description}
                   </Typography>
                 )}
               </Box>
               {actions && (
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing="var(--ob-space-100)"
+                  alignItems="center"
+                >
                   {actions}
                 </Stack>
               )}
             </Box>
           )}
 
-          <Box sx={{ p: 4, flexGrow: 1 }}>{children}</Box>
+          <Box sx={{ p: 'var(--ob-space-200)', flexGrow: 1 }}>{children}</Box>
         </Box>
       </Box>
     </DeveloperProvider>
