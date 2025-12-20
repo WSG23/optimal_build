@@ -386,9 +386,9 @@
     --ob-size-drop-zone: 120px;
     --ob-size-controls-min: 400px;
     --ob-size-finance-summary-panel: 340px;
-    --ob-size-finance-header-controls: 560px;
-    --ob-size-finance-project-select: 280px;
-    --ob-size-finance-export-button: 140px;
+    --ob-size-finance-header-controls: 520px;
+    --ob-size-finance-project-select: 260px;
+    --ob-size-finance-export-button: 160px;
     --ob-size-sidebar-width: 280px;
     --ob-max-width-content: 1000px;
     --ob-max-width-page: 1400px;

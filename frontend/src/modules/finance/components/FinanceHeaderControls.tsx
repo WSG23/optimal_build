@@ -105,17 +105,6 @@ export function FinanceHeaderControls({
     setIsManual(false)
   }
 
-  const divider = (
-    <Box
-      aria-hidden
-      sx={{
-        width: 1,
-        height: '60%',
-        bgcolor: alpha(theme.palette.divider, 0.6),
-      }}
-    />
-  )
-
   if (isManual) {
     return (
       <Box
@@ -163,8 +152,12 @@ export function FinanceHeaderControls({
   return (
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: 'auto minmax(0, 1fr) var(--ob-space-250) var(--ob-size-finance-export-button)',
+          sm: 'auto var(--ob-size-finance-project-select) var(--ob-space-250) var(--ob-size-finance-export-button)',
+        },
+        alignItems: 'stretch',
         height: 'var(--ob-space-250)',
         border: 'var(--ob-border-fine-strong)',
         borderRadius: 'var(--ob-radius-md)',
@@ -177,15 +170,15 @@ export function FinanceHeaderControls({
         flexShrink: 1,
       }}
     >
-      {/* Project selector segment */}
+      {/* Label segment */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 'var(--ob-space-100)',
           px: 'var(--ob-space-150)',
+          borderRight: 1,
+          borderColor: alpha(theme.palette.divider, 0.6),
           minWidth: 0,
-          flexShrink: 1,
         }}
       >
         <Typography
@@ -196,75 +189,79 @@ export function FinanceHeaderControls({
             color: 'text.secondary',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
         >
           {t('finance.projectSelector.projectLabel', {
             defaultValue: 'Project',
           })}
         </Typography>
-
-        <Box sx={{ position: 'relative', minWidth: 0 }}>
-          <Box
-            component="select"
-            value={selectValue}
-            onChange={(event) =>
-              handleOptionChange((event.target as HTMLSelectElement).value)
-            }
-            aria-label={t('finance.projectSelector.title')}
-            sx={{
-              height: 'var(--ob-space-250)',
-              // Keep compact and readable; don't allow this segment to expand
-              // so wide that it pushes Export out of view.
-              width: {
-                xs: '100%',
-                sm: 'var(--ob-size-finance-project-select)',
-              },
-              maxWidth: 'var(--ob-size-finance-project-select)',
-              minWidth: 0,
-              border: 0,
-              outline: 'none',
-              bgcolor: 'transparent',
-              color: 'text.primary',
-              fontSize: 'var(--ob-font-size-sm)',
-              fontWeight: 700,
-              fontFamily: 'var(--ob-font-family-base)',
-              appearance: 'none',
-              pr: 'var(--ob-space-250)',
-              pl: 0,
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              cursor: 'pointer',
-            }}
-          >
-            {selectOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-            <option value="manual">
-              + {t('finance.projectSelector.enterManualId')}
-            </option>
-          </Box>
-          <Box
-            aria-hidden
-            sx={{
-              position: 'absolute',
-              right: 'var(--ob-space-075)',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'text.secondary',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <KeyboardArrowDown fontSize="small" />
-          </Box>
-        </Box>
       </Box>
 
-      {divider}
+      {/* Project selector segment */}
+      <Box
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          px: 'var(--ob-space-150)',
+          borderRight: 1,
+          borderColor: alpha(theme.palette.divider, 0.6),
+          minWidth: 0,
+        }}
+      >
+        <Box
+          component="select"
+          value={selectValue}
+          onChange={(event) =>
+            handleOptionChange((event.target as HTMLSelectElement).value)
+          }
+          aria-label={t('finance.projectSelector.title')}
+          sx={{
+            height: 'var(--ob-space-250)',
+            width: '100%',
+            minWidth: 0,
+            border: 0,
+            outline: 'none',
+            bgcolor: 'transparent',
+            color: 'text.primary',
+            fontSize: 'var(--ob-font-size-sm)',
+            fontWeight: 700,
+            fontFamily: 'var(--ob-font-family-base)',
+            appearance: 'none',
+            pr: 'var(--ob-space-250)',
+            pl: 0,
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            cursor: 'pointer',
+          }}
+        >
+          {selectOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+          <option value="manual">
+            + {t('finance.projectSelector.enterManualId')}
+          </option>
+        </Box>
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            right: 'var(--ob-space-075)',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: 'text.secondary',
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <KeyboardArrowDown fontSize="small" />
+        </Box>
+      </Box>
 
       {/* Refresh */}
       <Button
@@ -276,11 +273,12 @@ export function FinanceHeaderControls({
         disabled={refreshing}
         sx={{
           height: '100%',
-          minWidth: 'var(--ob-space-250)',
-          width: 'var(--ob-space-250)',
+          minWidth: 0,
           px: 0,
           borderRadius: 0,
           flexShrink: 0,
+          borderRight: 1,
+          borderColor: alpha(theme.palette.divider, 0.6),
         }}
       >
         {refreshing ? (
@@ -289,8 +287,6 @@ export function FinanceHeaderControls({
           <Refresh fontSize="small" />
         )}
       </Button>
-
-      {divider}
 
       {/* Export */}
       <Button
@@ -308,8 +304,7 @@ export function FinanceHeaderControls({
           letterSpacing: 'var(--ob-letter-spacing-wider)',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
-          minWidth: 'unset',
-          width: 'var(--ob-size-finance-export-button)',
+          minWidth: 0,
           flexShrink: 0,
           justifyContent: 'center',
         }}
