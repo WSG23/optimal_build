@@ -25,10 +25,7 @@ import { useTranslation } from '../../i18n'
 import { useRouterController } from '../../router'
 import { buildSensitivitySummaries } from './components/sensitivitySummary'
 import { FinanceScenarioDeleteDialog } from './components/FinanceScenarioDeleteDialog'
-import {
-  FinanceProjectSelector,
-  type FinanceProjectOption,
-} from './components/FinanceProjectSelector'
+import { FinanceHeaderControls } from './components/FinanceHeaderControls'
 import {
   FinanceAccessGate,
   FinanceIdentityHelper,
@@ -50,8 +47,6 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  Refresh,
-  Download,
   Warning,
   PushPin as PushPinIcon,
   PushPinOutlined as PushPinOutlinedIcon,
@@ -762,95 +757,55 @@ export function FinanceWorkspace() {
       justifyContent="flex-end"
       sx={{ flexWrap: 'wrap', rowGap: 'var(--ob-space-075)' }}
     >
-      <FinanceProjectSelector
+      <FinanceHeaderControls
         selectedProjectId={effectiveProjectId}
         selectedProjectName={effectiveProjectName ?? null}
         options={capturedProjects}
         onProjectChange={handleProjectChange}
+        onRefresh={() => {
+          refreshCapturedProjects()
+          refresh()
+        }}
+        refreshing={loading}
+        onExportCsv={handleExportCsv}
+        exporting={exportingScenario}
+        exportDisabled={!primaryScenario}
       />
 
-      <Stack direction="row" spacing="var(--ob-space-075)">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            refreshCapturedProjects()
-            refresh()
-          }}
-          disabled={loading}
-          aria-label={t('finance.actions.refresh')}
-          title={t('finance.actions.refresh')}
-          sx={{
-            width: 'var(--ob-size-icon-md)',
-            minWidth: 'var(--ob-size-icon-md)',
-            px: 0,
-          }}
-        >
-          {loading ? (
-            <CircularProgress size={16} sx={{ color: 'inherit' }} />
-          ) : (
-            <Refresh fontSize="small" />
-          )}
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={handleExportCsv}
-          disabled={!primaryScenario || exportingScenario}
-          aria-label={t('finance.actions.exportCsv')}
-          title={
-            exportingScenario
-              ? t('finance.actions.exporting')
-              : t('finance.actions.exportCsv')
-          }
-          sx={{
-            width: 'var(--ob-size-icon-md)',
-            minWidth: 'var(--ob-size-icon-md)',
-            px: 0,
-          }}
-        >
-          {exportingScenario ? (
-            <CircularProgress size={16} sx={{ color: 'inherit' }} />
-          ) : (
-            <Download fontSize="small" />
-          )}
-        </Button>
-
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setIsHeaderPinned((prev) => !prev)}
-          aria-label={
-            isHeaderPinned
-              ? t('finance.header.unpin', {
-                  defaultValue: 'Unpin header (scroll)',
-                })
-              : t('finance.header.pin', {
-                  defaultValue: 'Pin header (sticky)',
-                })
-          }
-          title={
-            isHeaderPinned
-              ? t('finance.header.unpin', {
-                  defaultValue: 'Unpin header (scroll)',
-                })
-              : t('finance.header.pin', {
-                  defaultValue: 'Pin header (sticky)',
-                })
-          }
-          sx={{
-            width: 'var(--ob-size-icon-md)',
-            minWidth: 'var(--ob-size-icon-md)',
-            px: 0,
-          }}
-        >
-          {isHeaderPinned ? (
-            <PushPinIcon fontSize="small" />
-          ) : (
-            <PushPinOutlinedIcon fontSize="small" />
-          )}
-        </Button>
-      </Stack>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => setIsHeaderPinned((prev) => !prev)}
+        aria-label={
+          isHeaderPinned
+            ? t('finance.header.unpin', {
+                defaultValue: 'Unpin header (scroll)',
+              })
+            : t('finance.header.pin', {
+                defaultValue: 'Pin header (sticky)',
+              })
+        }
+        title={
+          isHeaderPinned
+            ? t('finance.header.unpin', {
+                defaultValue: 'Unpin header (scroll)',
+              })
+            : t('finance.header.pin', {
+                defaultValue: 'Pin header (sticky)',
+              })
+        }
+        sx={{
+          width: 'var(--ob-size-icon-md)',
+          minWidth: 'var(--ob-size-icon-md)',
+          px: 0,
+        }}
+      >
+        {isHeaderPinned ? (
+          <PushPinIcon fontSize="small" />
+        ) : (
+          <PushPinOutlinedIcon fontSize="small" />
+        )}
+      </Button>
     </Stack>
   ) : undefined
 
