@@ -7,7 +7,7 @@ import {
   alpha,
   useTheme,
 } from '@mui/material'
-import { Download, KeyboardArrowDown, Refresh } from '@mui/icons-material'
+import { KeyboardArrowDown, Refresh } from '@mui/icons-material'
 
 import { Button } from '../../../components/canonical/Button'
 import { useTranslation } from '../../../i18n'
@@ -158,7 +158,10 @@ export function FinanceHeaderControls({
         bgcolor: alpha(theme.palette.background.paper, 0.75),
         backdropFilter: 'blur(var(--ob-blur-sm))',
         overflow: 'hidden',
+        width: 'fit-content',
         maxWidth: '100%',
+        minWidth: 0,
+        flexShrink: 1,
       }}
     >
       {/* Project selector segment */}
@@ -196,8 +199,15 @@ export function FinanceHeaderControls({
             aria-label={t('finance.projectSelector.title')}
             sx={{
               height: 'var(--ob-space-250)',
-              minWidth: { xs: 'min(52vw, 18rem)', sm: 'min(42vw, 22rem)' },
-              maxWidth: '100%',
+              // Keep compact and readable; don't allow this segment to expand
+              // so wide that it pushes Export out of view.
+              width: {
+                xs: 'min(56vw, 18rem)',
+                sm: 'min(40vw, 19rem)',
+                md: '19rem',
+              },
+              maxWidth: { xs: '18rem', md: '19rem' },
+              minWidth: 0,
               border: 0,
               outline: 'none',
               bgcolor: 'transparent',
@@ -278,13 +288,6 @@ export function FinanceHeaderControls({
         disabled={exportDisabled || exporting}
         aria-label={t('finance.actions.exportCsv')}
         title={t('finance.actions.exportCsv')}
-        startIcon={
-          exporting ? (
-            <CircularProgress size={16} sx={{ color: 'inherit' }} />
-          ) : (
-            <Download fontSize="small" />
-          )
-        }
         sx={{
           height: '100%',
           px: 'var(--ob-space-150)',
@@ -293,9 +296,15 @@ export function FinanceHeaderControls({
           letterSpacing: 'var(--ob-letter-spacing-wider)',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
+          minWidth: 'unset',
+          justifyContent: 'center',
         }}
       >
-        {t('finance.actions.exportCsv')}
+        {exporting ? (
+          <CircularProgress size={16} sx={{ color: 'inherit' }} />
+        ) : (
+          t('finance.actions.exportCsv')
+        )}
       </Button>
     </Box>
   )
