@@ -72,6 +72,19 @@ export function FinanceHeaderControls({
     selectedProjectName ??
     t('finance.projectSelector.defaultLabel', { id: selectedProjectId })
 
+  const selectOptions = useMemo(() => {
+    if (!selectedProjectId) return recentOptions
+    if (recentOptions.some((option) => option.id === selectedProjectId)) {
+      return recentOptions
+    }
+    return [
+      { id: selectedProjectId, label: helperLabel, projectName: helperLabel },
+      ...recentOptions,
+    ]
+  }, [helperLabel, recentOptions, selectedProjectId])
+
+  const selectValue = selectedOptionValue || selectedProjectId
+
   const handleManualSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const trimmed = manualId.trim()
@@ -158,8 +171,8 @@ export function FinanceHeaderControls({
         bgcolor: alpha(theme.palette.background.paper, 0.75),
         backdropFilter: 'blur(var(--ob-blur-sm))',
         overflow: 'hidden',
-        width: 'fit-content',
-        maxWidth: '100%',
+        width: { xs: '100%', sm: 'auto' },
+        maxWidth: { xs: '100%', sm: 'var(--ob-size-finance-header-controls)' },
         minWidth: 0,
         flexShrink: 1,
       }}
@@ -172,6 +185,7 @@ export function FinanceHeaderControls({
           gap: 'var(--ob-space-100)',
           px: 'var(--ob-space-150)',
           minWidth: 0,
+          flexShrink: 1,
         }}
       >
         <Typography
@@ -192,7 +206,7 @@ export function FinanceHeaderControls({
         <Box sx={{ position: 'relative', minWidth: 0 }}>
           <Box
             component="select"
-            value={selectedOptionValue}
+            value={selectValue}
             onChange={(event) =>
               handleOptionChange((event.target as HTMLSelectElement).value)
             }
@@ -202,11 +216,10 @@ export function FinanceHeaderControls({
               // Keep compact and readable; don't allow this segment to expand
               // so wide that it pushes Export out of view.
               width: {
-                xs: 'min(56vw, 18rem)',
-                sm: 'min(40vw, 19rem)',
-                md: '19rem',
+                xs: '100%',
+                sm: 'var(--ob-size-finance-project-select)',
               },
-              maxWidth: { xs: '18rem', md: '19rem' },
+              maxWidth: 'var(--ob-size-finance-project-select)',
               minWidth: 0,
               border: 0,
               outline: 'none',
@@ -224,10 +237,7 @@ export function FinanceHeaderControls({
               cursor: 'pointer',
             }}
           >
-            <option value="" disabled>
-              {helperLabel}
-            </option>
-            {recentOptions.map((option) => (
+            {selectOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
@@ -267,8 +277,10 @@ export function FinanceHeaderControls({
         sx={{
           height: '100%',
           minWidth: 'var(--ob-space-250)',
+          width: 'var(--ob-space-250)',
           px: 0,
           borderRadius: 0,
+          flexShrink: 0,
         }}
       >
         {refreshing ? (
@@ -297,6 +309,8 @@ export function FinanceHeaderControls({
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
           minWidth: 'unset',
+          width: 'var(--ob-size-finance-export-button)',
+          flexShrink: 0,
           justifyContent: 'center',
         }}
       >
