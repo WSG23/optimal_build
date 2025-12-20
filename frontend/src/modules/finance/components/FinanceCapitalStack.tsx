@@ -24,28 +24,48 @@ import { CapitalStackInsightBox } from './CapitalStackInsightBox'
 
 interface FinanceCapitalStackProps {
   scenarios: FinanceScenarioSummary[]
+  onMarkPrimary?: (scenarioId: number) => void
+  updatingScenarioId?: number | null
+  onRequestDelete?: (scenarioId: number, scenarioName: string) => void
+  deletingScenarioId?: number | null
 }
 
-export function FinanceCapitalStack({ scenarios }: FinanceCapitalStackProps) {
+export function FinanceCapitalStack({
+  scenarios,
+  onMarkPrimary,
+  updatingScenarioId = null,
+  onRequestDelete,
+  deletingScenarioId = null,
+}: FinanceCapitalStackProps) {
   const { t } = useTranslation()
 
-  // Filter scenarios that have capital stack data
-  const validScenarios = useMemo(
-    () => scenarios.filter((s) => Boolean(s.capitalStack)),
-    [scenarios],
+  const scenarioList = useMemo(() => {
+    const ordered = [...scenarios]
+    ordered.sort((a, b) => {
+      if (a.isPrimary !== b.isPrimary) {
+        return a.isPrimary ? -1 : 1
+      }
+      return a.scenarioId - b.scenarioId
+    })
+    return ordered
+  }, [scenarios])
+
+  const scenariosWithCapitalStack = useMemo(
+    () => scenarioList.filter((scenario) => Boolean(scenario.capitalStack)),
+    [scenarioList],
   )
 
   // Active scenario selection
   const [activeScenarioId, setActiveScenarioId] = useState<number | null>(
     () => {
       // Default to primary scenario or first one
-      const primary = validScenarios.find((s) => s.isPrimary)
-      return primary?.scenarioId ?? validScenarios[0]?.scenarioId ?? null
+      const primary = scenarioList.find((s) => s.isPrimary)
+      return primary?.scenarioId ?? scenarioList[0]?.scenarioId ?? null
     },
   )
 
   useEffect(() => {
-    if (validScenarios.length === 0) {
+    if (scenarioList.length === 0) {
       if (activeScenarioId !== null) {
         setActiveScenarioId(null)
       }
@@ -53,24 +73,24 @@ export function FinanceCapitalStack({ scenarios }: FinanceCapitalStackProps) {
     }
     if (
       activeScenarioId !== null &&
-      validScenarios.some((s) => s.scenarioId === activeScenarioId)
+      scenarioList.some((s) => s.scenarioId === activeScenarioId)
     ) {
       return
     }
-    const primary = validScenarios.find((s) => s.isPrimary)
-    setActiveScenarioId(primary?.scenarioId ?? validScenarios[0].scenarioId)
-  }, [activeScenarioId, validScenarios])
+    const primary = scenarioList.find((s) => s.isPrimary)
+    setActiveScenarioId(primary?.scenarioId ?? scenarioList[0].scenarioId)
+  }, [activeScenarioId, scenarioList])
 
   const activeScenario = useMemo(() => {
     if (activeScenarioId === null) return null
-    return validScenarios.find((s) => s.scenarioId === activeScenarioId) ?? null
-  }, [validScenarios, activeScenarioId])
+    return scenarioList.find((s) => s.scenarioId === activeScenarioId) ?? null
+  }, [scenarioList, activeScenarioId])
 
   const handleScenarioSelect = (scenarioId: number) => {
     setActiveScenarioId(scenarioId)
   }
 
-  if (validScenarios.length === 0) {
+  if (scenarioList.length === 0) {
     return (
       <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -98,9 +118,13 @@ export function FinanceCapitalStack({ scenarios }: FinanceCapitalStackProps) {
         }}
       >
         <CapitalStackScenarioGrid
-          scenarios={validScenarios}
+          scenarios={scenarioList}
           activeScenarioId={activeScenarioId}
           onSelect={handleScenarioSelect}
+          onMarkPrimary={onMarkPrimary}
+          updatingScenarioId={updatingScenarioId}
+          onRequestDelete={onRequestDelete}
+          deletingScenarioId={deletingScenarioId}
         />
 
         <Box>
@@ -131,14 +155,21 @@ export function FinanceCapitalStack({ scenarios }: FinanceCapitalStackProps) {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
+            // Ensure the facility table can shrink (and scroll internally) so the
+            // comparison panel is always visible.
+            gridTemplateColumns: {
+              xs: '1fr',
+              lg: 'minmax(0, 2fr) minmax(0, 1fr)',
+            },
             gap: 'var(--ob-space-150)',
+            alignItems: 'start',
+            '& > *': { minWidth: 0 },
           }}
         >
-          <Box>
+          <Box sx={{ minWidth: 0 }}>
             <CapitalStackFacilityTable scenario={activeScenario} />
           </Box>
-          <Box>
+          <Box sx={{ minWidth: 0 }}>
             <GlassCard sx={{ p: 'var(--ob-space-100)', height: '100%' }}>
               <Typography
                 variant="h6"
@@ -148,11 +179,11 @@ export function FinanceCapitalStack({ scenarios }: FinanceCapitalStackProps) {
                   defaultValue: 'Scenario Comparison',
                 })}
               </Typography>
-              <CapitalStackChart scenarios={validScenarios} />
+              <CapitalStackChart scenarios={scenariosWithCapitalStack} />
 
               <Box sx={{ mt: 'var(--ob-space-100)' }}>
                 <CapitalStackInsightBox
-                  scenarios={validScenarios}
+                  scenarios={scenariosWithCapitalStack}
                   activeScenarioId={activeScenarioId}
                 />
               </Box>

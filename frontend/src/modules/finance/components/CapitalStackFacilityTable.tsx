@@ -124,7 +124,7 @@ export function CapitalStackFacilityTable({
       </Box>
 
       {/* Table */}
-      <Box sx={{ overflowX: 'auto' }}>
+      <Box sx={{ overflowX: 'auto', maxWidth: '100%' }}>
         <Box
           component="table"
           sx={{

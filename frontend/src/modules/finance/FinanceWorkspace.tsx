@@ -81,11 +81,6 @@ const FinanceScenarioCreator = lazy(() =>
     default: module.FinanceScenarioCreator,
   })),
 )
-const FinanceScenarioTable = lazy(() =>
-  import('./components/FinanceScenarioTable').then((module) => ({
-    default: module.FinanceScenarioTable,
-  })),
-)
 const FinanceFacilityEditor = lazy(() =>
   import('./components/FinanceFacilityEditor').then((module) => ({
     default: module.FinanceFacilityEditor,
@@ -1067,30 +1062,15 @@ export function FinanceWorkspace() {
                     )}
 
                     {scenarios.length > 0 && (
-                      <>
-                        <Card variant="glass" sx={{ p: 'var(--ob-space-150)' }}>
-                          <Typography
-                            variant="h5"
-                            fontWeight={600}
-                            gutterBottom
-                          >
-                            {t('finance.sections.scenarios')}
-                          </Typography>
-                          <Suspense fallback={panelFallback}>
-                            <FinanceScenarioTable
-                              scenarios={scenarios}
-                              onMarkPrimary={handleMarkPrimary}
-                              updatingScenarioId={promotingScenarioId}
-                              onDeleteScenario={handleRequestDeleteScenario}
-                              deletingScenarioId={deletingScenarioId}
-                            />
-                          </Suspense>
-                        </Card>
-
-                        <Suspense fallback={panelFallback}>
-                          <FinanceCapitalStack scenarios={scenarios} />
-                        </Suspense>
-                      </>
+                      <Suspense fallback={panelFallback}>
+                        <FinanceCapitalStack
+                          scenarios={scenarios}
+                          onMarkPrimary={handleMarkPrimary}
+                          updatingScenarioId={promotingScenarioId}
+                          onRequestDelete={handleRequestDeleteScenario}
+                          deletingScenarioId={deletingScenarioId}
+                        />
+                      </Suspense>
                     )}
                   </Stack>
                 )}

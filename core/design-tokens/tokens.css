@@ -30,67 +30,67 @@
 
     /* Neutrals: Charcoal / Dark Slate (World-Class Dark Mode) */
     --ob-neutral-950: #121212; /* Deep Charcoal - Root Background */
-    --ob-neutral-900: #1E293B; /* Dark Slate - Card Background */
+    --ob-neutral-900: #1e293b; /* Dark Slate - Card Background */
     --ob-neutral-800: #334155; /* Surface Elevated */
     --ob-neutral-700: #475569; /* Borders / Dividers */
-    --ob-neutral-600: #64748B; /* Muted Text */
-    --ob-neutral-500: #94A3B8; /* Subtle Text */
-    --ob-neutral-400: #CBD5E1; /* Secondary Text */
-    --ob-neutral-300: #E2E8F0;
-    --ob-neutral-200: #F1F5F9;
-    --ob-neutral-100: #F8FAFC; /* Primary Text */
-    --ob-neutral-50: #FFFFFF;
+    --ob-neutral-600: #64748b; /* Muted Text */
+    --ob-neutral-500: #94a3b8; /* Subtle Text */
+    --ob-neutral-400: #cbd5e1; /* Secondary Text */
+    --ob-neutral-300: #e2e8f0;
+    --ob-neutral-200: #f1f5f9;
+    --ob-neutral-100: #f8fafc; /* Primary Text */
+    --ob-neutral-50: #ffffff;
 
     /* Brand: Electric Blue */
-    --ob-brand-700: #1D4ED8;
-    --ob-brand-600: #2563EB;
-    --ob-brand-500: #3B82F6; /* Primary Action */
-    --ob-brand-400: #60A5FA;
-    --ob-brand-300: #93C5FD;
-    --ob-brand-200: #BFDBFE;
-    --ob-brand-100: #DBEAFE;
+    --ob-brand-700: #1d4ed8;
+    --ob-brand-600: #2563eb;
+    --ob-brand-500: #3b82f6; /* Primary Action */
+    --ob-brand-400: #60a5fa;
+    --ob-brand-300: #93c5fd;
+    --ob-brand-200: #bfdbfe;
+    --ob-brand-100: #dbeafe;
     --ob-brand-glow: rgba(59, 130, 246, 0.5);
 
     /* Accent: Emerald Green (Growth/ROI) & Burnt Orange (Alerts) */
     --ob-accent-600: #059669;
-    --ob-accent-500: #10B981; /* Momentum / Growth */
-    --ob-accent-400: #34D399;
-    --ob-accent-300: #6EE7B7;
-    --ob-accent-200: #D1FAE5;
+    --ob-accent-500: #10b981; /* Momentum / Growth */
+    --ob-accent-400: #34d399;
+    --ob-accent-300: #6ee7b7;
+    --ob-accent-200: #d1fae5;
 
     /* Semantic Status Colors */
 
     /* Success (Emerald Green) */
     --ob-success-700: #047857;
     --ob-success-600: #059669;
-    --ob-success-500: #10B981; /* Primary Success */
-    --ob-success-400: #34D399;
+    --ob-success-500: #10b981; /* Primary Success */
+    --ob-success-400: #34d399;
     --ob-success-bg: rgba(16, 185, 129, 0.15);
-    --ob-success-text: #34D399;
+    --ob-success-text: #34d399;
 
     /* Warning (Burnt Orange) */
-    --ob-warning-700: #B45309;
-    --ob-warning-600: #D97706;
-    --ob-warning-500: #F59E0B; /* Primary Warning */
-    --ob-warning-400: #FBBF24;
+    --ob-warning-700: #b45309;
+    --ob-warning-600: #d97706;
+    --ob-warning-500: #f59e0b; /* Primary Warning */
+    --ob-warning-400: #fbbf24;
     --ob-warning-bg: rgba(245, 158, 11, 0.15);
-    --ob-warning-text: #FBBF24;
+    --ob-warning-text: #fbbf24;
 
     /* Error (Soft Red) */
-    --ob-error-700: #B91C1C;
-    --ob-error-600: #DC2626;
-    --ob-error-500: #EF4444; /* Primary Error */
-    --ob-error-400: #F87171;
+    --ob-error-700: #b91c1c;
+    --ob-error-600: #dc2626;
+    --ob-error-500: #ef4444; /* Primary Error */
+    --ob-error-400: #f87171;
     --ob-error-bg: rgba(239, 68, 68, 0.15);
-    --ob-error-text: #F87171;
+    --ob-error-text: #f87171;
 
     /* Info (Electric Blue) */
-    --ob-info-700: #1D4ED8;
-    --ob-info-600: #2563EB;
-    --ob-info-500: #3B82F6;
-    --ob-info-400: #60A5FA;
+    --ob-info-700: #1d4ed8;
+    --ob-info-600: #2563eb;
+    --ob-info-500: #3b82f6;
+    --ob-info-400: #60a5fa;
     --ob-info-bg: rgba(59, 130, 246, 0.15);
-    --ob-info-text: #60A5FA;
+    --ob-info-text: #60a5fa;
 
     /* ===========================================================================
      2. SEMANTIC COLORS - Surfaces
@@ -103,7 +103,7 @@
     --ob-color-bg-muted: var(--ob-color-bg-surface-elevated);
 
     /* Glass Surfaces (Backdrop Filter required) */
-    --ob-surface-glass-1: rgba(30, 41, 59, 0.7);  /* Dark Slate glass */
+    --ob-surface-glass-1: rgba(30, 41, 59, 0.7); /* Dark Slate glass */
     --ob-surface-glass-2: rgba(51, 65, 85, 0.75);
 
     /* Surface semantic aliases */
@@ -161,7 +161,9 @@
      =========================================================================== */
 
     --ob-color-brand-primary: var(--ob-brand-500); /* Fixed to Electric Blue */
-    --ob-color-brand-primary-emphasis: var(--ob-brand-400); /* Lighter on hover for dark mode */
+    --ob-color-brand-primary-emphasis: var(
+        --ob-brand-400
+    ); /* Lighter on hover for dark mode */
     --ob-color-brand-primary-glow: var(--ob-brand-glow);
     --ob-color-brand-primary-rgb: 37 99 235;
     --ob-color-brand-primary-emphasis-rgb: 59 130 246;
@@ -383,6 +385,7 @@
     --ob-size-icon-xl: 64px;
     --ob-size-drop-zone: 120px;
     --ob-size-controls-min: 400px;
+    --ob-size-finance-summary-panel: 340px;
     --ob-size-sidebar-width: 280px;
     --ob-max-width-content: 1000px;
     --ob-max-width-page: 1400px;

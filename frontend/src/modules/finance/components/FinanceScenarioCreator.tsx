@@ -314,7 +314,7 @@ export function FinanceScenarioCreator({
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
-            lg: 'minmax(0, 1fr) minmax(var(--ob-size-sidebar-width), var(--ob-size-controls-min))',
+            lg: 'minmax(0, 1fr) var(--ob-size-finance-summary-panel)',
           },
           gap: 'var(--ob-space-150)',
         }}

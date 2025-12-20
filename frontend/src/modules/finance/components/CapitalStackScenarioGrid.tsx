@@ -1,4 +1,18 @@
-import { Box, Grid, Typography, alpha, useTheme } from '@mui/material'
+import {
+  Box,
+  CircularProgress,
+  Grid,
+  IconButton,
+  Tooltip,
+  Typography,
+  alpha,
+  useTheme,
+} from '@mui/material'
+import {
+  DeleteOutline as DeleteOutlineIcon,
+  Star as StarIcon,
+  StarBorder as StarBorderIcon,
+} from '@mui/icons-material'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
@@ -45,9 +59,21 @@ interface ScenarioCardProps {
   scenario: FinanceScenarioSummary
   active: boolean
   onSelect: (scenarioId: number) => void
+  onMarkPrimary?: (scenarioId: number) => void
+  updatingScenarioId?: number | null
+  onRequestDelete?: (scenarioId: number, scenarioName: string) => void
+  deletingScenarioId?: number | null
 }
 
-function ScenarioCard({ scenario, active, onSelect }: ScenarioCardProps) {
+function ScenarioCard({
+  scenario,
+  active,
+  onSelect,
+  onMarkPrimary,
+  updatingScenarioId = null,
+  onRequestDelete,
+  deletingScenarioId = null,
+}: ScenarioCardProps) {
   const { t } = useTranslation()
   const theme = useTheme()
 
@@ -59,90 +85,193 @@ function ScenarioCard({ scenario, active, onSelect }: ScenarioCardProps) {
 
   const activeBorder = alpha(theme.palette.primary.main, 0.4)
   const activeBg = alpha(theme.palette.primary.main, 0.06)
+  const canManage = scenario.scenarioId > 0
+  const makingPrimary = updatingScenarioId === scenario.scenarioId
+  const deleting = deletingScenarioId === scenario.scenarioId
 
   return (
-    <Box
-      component="button"
-      type="button"
+    <GlassCard
+      className="capital-stack-scenario-card"
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(scenario.scenarioId)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect(scenario.scenarioId)
+        }
+      }}
       sx={{
-        width: '100%',
         textAlign: 'left',
-        border: 'none',
-        background: 'transparent',
-        padding: 0,
+        width: '100%',
+        border: 1,
+        borderColor: active ? activeBorder : 'divider',
+        bgcolor: active ? activeBg : 'background.paper',
+        p: 'var(--ob-space-150)',
         cursor: 'pointer',
-        '&:focus-visible .capital-stack-scenario-card': {
+        '&:hover': {
+          borderColor: 'primary.main',
+          boxShadow: 2,
+        },
+        '&:focus-visible': {
           outline: `2px solid ${theme.palette.primary.main}`,
           outlineOffset: 2,
         },
       }}
     >
-      <GlassCard
-        className="capital-stack-scenario-card"
+      <Box
         sx={{
-          textAlign: 'left',
-          width: '100%',
-          border: 1,
-          borderColor: active ? activeBorder : 'divider',
-          bgcolor: active ? activeBg : 'background.paper',
-          p: 'var(--ob-space-150)',
-          '&:hover': {
-            borderColor: 'primary.main',
-            boxShadow: 2,
-          },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 'var(--ob-space-100)',
+          mb: 'var(--ob-space-075)',
         }}
       >
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontWeight: 800,
+              fontSize: 'var(--ob-font-size-lg)',
+              color: 'text.primary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {scenario.scenarioName}
+          </Typography>
+          {scenario.isPrimary ? (
+            <Typography
+              sx={{
+                mt: 'var(--ob-space-025)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-050)',
+                fontSize: 'var(--ob-font-size-xs)',
+                fontWeight: 800,
+                letterSpacing: 'var(--ob-letter-spacing-wider)',
+                color: 'primary.main',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t('finance.scenarios.primary', { defaultValue: 'Primary' })}
+            </Typography>
+          ) : (
+            <Typography
+              sx={{
+                mt: 'var(--ob-space-025)',
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+              }}
+            >
+              {scenario.description || t('finance.capitalStack.baseCase')}
+            </Typography>
+          )}
+        </Box>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 'var(--ob-space-100)',
-            mb: 'var(--ob-space-075)',
+            gap: 'var(--ob-space-050)',
           }}
         >
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
-              sx={{
-                fontWeight: 800,
-                fontSize: 'var(--ob-font-size-lg)',
-                color: 'text.primary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
+          {onMarkPrimary ? (
+            <Tooltip
+              title={
+                !canManage
+                  ? t('finance.scenarios.actions.unavailableOffline', {
+                      defaultValue: 'Unavailable offline',
+                    })
+                  : scenario.isPrimary
+                    ? t('finance.scenarios.actions.primary', {
+                        defaultValue: 'Primary scenario',
+                      })
+                    : t('finance.scenarios.actions.makePrimary', {
+                        defaultValue: 'Make primary',
+                      })
+              }
             >
-              {scenario.scenarioName}
-            </Typography>
-            {scenario.isPrimary ? (
-              <Typography
-                sx={{
-                  mt: 'var(--ob-space-025)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 'var(--ob-space-050)',
-                  fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 800,
-                  letterSpacing: 'var(--ob-letter-spacing-wider)',
-                  color: 'primary.main',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {t('finance.scenarios.primary', { defaultValue: 'Primary' })}
-              </Typography>
-            ) : (
-              <Typography
-                sx={{
-                  mt: 'var(--ob-space-025)',
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                }}
-              >
-                {scenario.description || t('finance.capitalStack.baseCase')}
-              </Typography>
-            )}
-          </Box>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    if (!canManage || scenario.isPrimary || !onMarkPrimary)
+                      return
+                    onMarkPrimary(scenario.scenarioId)
+                  }}
+                  disabled={
+                    !canManage ||
+                    scenario.isPrimary ||
+                    makingPrimary ||
+                    deleting
+                  }
+                  aria-label={
+                    scenario.isPrimary
+                      ? t('finance.scenarios.actions.primary', {
+                          defaultValue: 'Primary scenario',
+                        })
+                      : t('finance.scenarios.actions.makePrimary', {
+                          defaultValue: 'Make primary',
+                        })
+                  }
+                  sx={{
+                    borderRadius: 'var(--ob-radius-xs)',
+                    border: 'var(--ob-border-fine)',
+                  }}
+                >
+                  {makingPrimary ? (
+                    <CircularProgress size={14} />
+                  ) : scenario.isPrimary ? (
+                    <StarIcon fontSize="small" />
+                  ) : (
+                    <StarBorderIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : null}
+
+          {onRequestDelete ? (
+            <Tooltip
+              title={
+                !canManage
+                  ? t('finance.scenarios.actions.unavailableOffline', {
+                      defaultValue: 'Unavailable offline',
+                    })
+                  : t('finance.scenarios.actions.delete', {
+                      defaultValue: 'Delete scenario',
+                    })
+              }
+            >
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    if (!canManage || !onRequestDelete) return
+                    onRequestDelete(scenario.scenarioId, scenario.scenarioName)
+                  }}
+                  disabled={!canManage || deleting || makingPrimary}
+                  aria-label={t('finance.scenarios.actions.delete', {
+                    defaultValue: 'Delete scenario',
+                  })}
+                  sx={{
+                    borderRadius: 'var(--ob-radius-xs)',
+                    border: 'var(--ob-border-fine)',
+                  }}
+                >
+                  {deleting ? (
+                    <CircularProgress size={14} />
+                  ) : (
+                    <DeleteOutlineIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : null}
+
           {active ? (
             <Box
               sx={{
@@ -155,100 +284,99 @@ function ScenarioCard({ scenario, active, onSelect }: ScenarioCardProps) {
             />
           ) : null}
         </Box>
+      </Box>
 
-        <Grid container spacing="var(--ob-space-100)">
-          <Grid item xs={6}>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-2xs)',
-                color: 'text.secondary',
-              }}
-            >
-              {t('finance.scenarios.metrics.escalatedCost', {
-                defaultValue: 'Escalated cost',
-              })}
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color: 'text.primary',
-                fontFamily: 'var(--ob-font-family-mono)',
-              }}
-            >
-              {escalatedCost !== null
-                ? formatCurrencyShort(escalatedCost, currency)
-                : t('common.fallback.dash')}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-2xs)',
-                color: 'text.secondary',
-              }}
-            >
-              {t('finance.scenarios.metrics.npv', { defaultValue: 'NPV' })}
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color: 'text.primary',
-                fontFamily: 'var(--ob-font-family-mono)',
-              }}
-            >
-              {npv !== null
-                ? formatCurrencyShort(npv, currency)
-                : t('common.fallback.dash')}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-2xs)',
-                color: 'text.secondary',
-              }}
-            >
-              {t('finance.scenarios.metrics.irr', { defaultValue: 'IRR' })}
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color: 'success.main',
-                fontFamily: 'var(--ob-font-family-mono)',
-              }}
-            >
-              {irr !== null ? formatPercent(irr, 2) : t('common.fallback.dash')}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-2xs)',
-                color: 'text.secondary',
-              }}
-            >
-              {t('finance.scenarios.metrics.dscr', { defaultValue: 'DSCR' })}
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color:
-                  dscr !== null && dscr < 1 ? 'error.main' : 'text.primary',
-                fontFamily: 'var(--ob-font-family-mono)',
-              }}
-            >
-              {dscr !== null ? formatNumber(dscr) : t('common.fallback.dash')}
-            </Typography>
-          </Grid>
+      <Grid container spacing="var(--ob-space-100)">
+        <Grid item xs={6}>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-2xs)',
+              color: 'text.secondary',
+            }}
+          >
+            {t('finance.scenarios.metrics.escalatedCost', {
+              defaultValue: 'Escalated cost',
+            })}
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              fontFamily: 'var(--ob-font-family-mono)',
+            }}
+          >
+            {escalatedCost !== null
+              ? formatCurrencyShort(escalatedCost, currency)
+              : t('common.fallback.dash')}
+          </Typography>
         </Grid>
+        <Grid item xs={6}>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-2xs)',
+              color: 'text.secondary',
+            }}
+          >
+            {t('finance.scenarios.metrics.npv', { defaultValue: 'NPV' })}
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              fontFamily: 'var(--ob-font-family-mono)',
+            }}
+          >
+            {npv !== null
+              ? formatCurrencyShort(npv, currency)
+              : t('common.fallback.dash')}
+          </Typography>
+        </Grid>
+        <Grid item xs={6}>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-2xs)',
+              color: 'text.secondary',
+            }}
+          >
+            {t('finance.scenarios.metrics.irr', { defaultValue: 'IRR' })}
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: 'success.main',
+              fontFamily: 'var(--ob-font-family-mono)',
+            }}
+          >
+            {irr !== null ? formatPercent(irr, 2) : t('common.fallback.dash')}
+          </Typography>
+        </Grid>
+        <Grid item xs={6}>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-2xs)',
+              color: 'text.secondary',
+            }}
+          >
+            {t('finance.scenarios.metrics.dscr', { defaultValue: 'DSCR' })}
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: dscr !== null && dscr < 1 ? 'error.main' : 'text.primary',
+              fontFamily: 'var(--ob-font-family-mono)',
+            }}
+          >
+            {dscr !== null ? formatNumber(dscr) : t('common.fallback.dash')}
+          </Typography>
+        </Grid>
+      </Grid>
 
-        {scenario.capitalStack ? (
-          <Box sx={{ mt: 'var(--ob-space-125)' }}>
-            <CapitalStackMiniBar stack={scenario.capitalStack} />
-          </Box>
-        ) : null}
-      </GlassCard>
-    </Box>
+      {scenario.capitalStack ? (
+        <Box sx={{ mt: 'var(--ob-space-125)' }}>
+          <CapitalStackMiniBar stack={scenario.capitalStack} />
+        </Box>
+      ) : null}
+    </GlassCard>
   )
 }
 
@@ -256,12 +384,20 @@ interface CapitalStackScenarioGridProps {
   scenarios: FinanceScenarioSummary[]
   activeScenarioId: number | null
   onSelect: (scenarioId: number) => void
+  onMarkPrimary?: (scenarioId: number) => void
+  updatingScenarioId?: number | null
+  onRequestDelete?: (scenarioId: number, scenarioName: string) => void
+  deletingScenarioId?: number | null
 }
 
 export function CapitalStackScenarioGrid({
   scenarios,
   activeScenarioId,
   onSelect,
+  onMarkPrimary,
+  updatingScenarioId = null,
+  onRequestDelete,
+  deletingScenarioId = null,
 }: CapitalStackScenarioGridProps) {
   const { t } = useTranslation()
 
@@ -290,6 +426,10 @@ export function CapitalStackScenarioGrid({
               scenario={scenario}
               active={scenario.scenarioId === activeScenarioId}
               onSelect={onSelect}
+              onMarkPrimary={onMarkPrimary}
+              updatingScenarioId={updatingScenarioId}
+              onRequestDelete={onRequestDelete}
+              deletingScenarioId={deletingScenarioId}
             />
           </Grid>
         ))}

@@ -1326,6 +1326,10 @@ function createFinanceFallbackSummary(
   request: FinanceFeasibilityRequest,
 ): FinanceScenarioSummary {
   const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+  // Ensure locally-created fallback scenarios do not collide with the static
+  // offline summary (scenarioId=0) used by listFinanceScenarios fallback.
+  fallback.scenarioId = -Date.now()
+  fallback.isPrimary = true
   if (request.projectId !== undefined && request.projectId !== null) {
     fallback.projectId = request.projectId as typeof fallback.projectId
   }
@@ -1449,6 +1453,137 @@ export interface FinanceScenarioListParams {
   finProjectId?: number
 }
 
+function scaleFixed(
+  value: string | null | undefined,
+  multiplier: number,
+): string {
+  if (typeof value !== 'string') return '0.00'
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return value
+  return (parsed * multiplier).toFixed(2)
+}
+
+function setResultValue(
+  summary: FinanceScenarioSummary,
+  key: string,
+  value: string,
+) {
+  const target = key.trim().toLowerCase()
+  const match = summary.results.find(
+    (result) => result.name.trim().toLowerCase() === target,
+  )
+  if (match) {
+    match.value = value
+    return
+  }
+  summary.results.push({
+    name: key,
+    value,
+    unit: 'currency',
+    metadata: { currency: summary.currency ?? 'SGD' },
+  })
+}
+
+function createFinanceFallbackScenarioList(
+  params: FinanceScenarioListParams,
+): FinanceScenarioSummary[] {
+  const base = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+  if (params.projectId !== undefined && params.projectId !== null) {
+    base.projectId = params.projectId as typeof base.projectId
+  }
+  if (typeof params.finProjectId === 'number') {
+    base.finProjectId = params.finProjectId
+  }
+
+  const scenarioA = cloneFinanceSummary(base)
+  scenarioA.scenarioId = 0
+  scenarioA.scenarioName = 'Scenario A'
+  scenarioA.isPrimary = true
+  scenarioA.escalatedCost = scaleFixed(base.escalatedCost, 1)
+  setResultValue(scenarioA, 'NPV', '375863.00')
+  setResultValue(scenarioA, 'IRR', '0.0688')
+
+  const scenarioB = cloneFinanceSummary(base)
+  scenarioB.scenarioId = -1
+  scenarioB.scenarioName = 'Scenario B'
+  scenarioB.isPrimary = false
+  scenarioB.escalatedCost = scaleFixed(base.escalatedCost, 1.045)
+  setResultValue(scenarioB, 'NPV', '1270733.00')
+  setResultValue(scenarioB, 'IRR', '0.1091')
+
+  const scenarioC = cloneFinanceSummary(base)
+  scenarioC.scenarioId = -2
+  scenarioC.scenarioName = 'Scenario C'
+  scenarioC.isPrimary = false
+  scenarioC.escalatedCost = scaleFixed(base.escalatedCost, 0.955)
+  setResultValue(scenarioC, 'NPV', '4160673.00')
+  setResultValue(scenarioC, 'IRR', '-0.0745')
+
+  const variants = [
+    { scenario: scenarioA, multiplier: 1 },
+    { scenario: scenarioB, multiplier: 1.045 },
+    { scenario: scenarioC, multiplier: 0.955 },
+  ]
+
+  for (const { scenario, multiplier } of variants) {
+    if (scenario.capitalStack) {
+      scenario.capitalStack.total = scaleFixed(
+        scenario.capitalStack.total,
+        multiplier,
+      )
+      scenario.capitalStack.equityTotal = scaleFixed(
+        scenario.capitalStack.equityTotal,
+        multiplier,
+      )
+      scenario.capitalStack.debtTotal = scaleFixed(
+        scenario.capitalStack.debtTotal,
+        multiplier,
+      )
+      scenario.capitalStack.otherTotal = scaleFixed(
+        scenario.capitalStack.otherTotal,
+        multiplier,
+      )
+      scenario.capitalStack.slices = scenario.capitalStack.slices.map(
+        (slice) => ({
+          ...slice,
+          amount: scaleFixed(slice.amount, multiplier),
+        }),
+      )
+    }
+    if (scenario.drawdownSchedule) {
+      scenario.drawdownSchedule.totalEquity = scaleFixed(
+        scenario.drawdownSchedule.totalEquity,
+        multiplier,
+      )
+      scenario.drawdownSchedule.totalDebt = scaleFixed(
+        scenario.drawdownSchedule.totalDebt,
+        multiplier,
+      )
+      scenario.drawdownSchedule.peakDebtBalance = scaleFixed(
+        scenario.drawdownSchedule.peakDebtBalance,
+        multiplier,
+      )
+      scenario.drawdownSchedule.finalDebtBalance = scaleFixed(
+        scenario.drawdownSchedule.finalDebtBalance,
+        multiplier,
+      )
+      scenario.drawdownSchedule.entries = scenario.drawdownSchedule.entries.map(
+        (entry) => ({
+          ...entry,
+          equityDraw: scaleFixed(entry.equityDraw, multiplier),
+          debtDraw: scaleFixed(entry.debtDraw, multiplier),
+          totalDraw: scaleFixed(entry.totalDraw, multiplier),
+          cumulativeEquity: scaleFixed(entry.cumulativeEquity, multiplier),
+          cumulativeDebt: scaleFixed(entry.cumulativeDebt, multiplier),
+          outstandingDebt: scaleFixed(entry.outstandingDebt, multiplier),
+        }),
+      )
+    }
+  }
+
+  return [scenarioA, scenarioB, scenarioC]
+}
+
 export async function listFinanceScenarios(
   params: FinanceScenarioListParams = {},
   options: FinanceFeasibilityOptions = {},
@@ -1516,14 +1651,7 @@ export async function listFinanceScenarios(
           `[finance] scenario list request failed (server ${response.status}), using offline fallback data`,
           message,
         )
-        const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
-        if (params.projectId !== undefined && params.projectId !== null) {
-          fallback.projectId = params.projectId as typeof fallback.projectId
-        }
-        if (typeof params.finProjectId === 'number') {
-          fallback.finProjectId = params.finProjectId
-        }
-        return [fallback]
+        return createFinanceFallbackScenarioList(params)
       }
       throw new Error(
         message ||
@@ -1544,14 +1672,7 @@ export async function listFinanceScenarios(
       console.warn(
         `[finance] scenario list request timed out after ${timeoutMs}ms, using offline fallback data`,
       )
-      const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
-      if (params.projectId !== undefined && params.projectId !== null) {
-        fallback.projectId = params.projectId as typeof fallback.projectId
-      }
-      if (typeof params.finProjectId === 'number') {
-        fallback.finProjectId = params.finProjectId
-      }
-      return [fallback]
+      return createFinanceFallbackScenarioList(params)
     }
     // Use fallback data for network errors (TypeError) or API auth errors (401/403)
     const isNetworkError = error instanceof TypeError
@@ -1566,15 +1687,7 @@ export async function listFinanceScenarios(
         `[finance] scenario list request failed (${isNetworkError ? 'network' : 'auth'}), using offline fallback data`,
         error,
       )
-      // Use FINANCE_FALLBACK_SUMMARY directly to preserve capitalStack and drawdownSchedule
-      const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
-      if (params.projectId !== undefined && params.projectId !== null) {
-        fallback.projectId = params.projectId as typeof fallback.projectId
-      }
-      if (typeof params.finProjectId === 'number') {
-        fallback.finProjectId = params.finProjectId
-      }
-      return [fallback]
+      return createFinanceFallbackScenarioList(params)
     }
     throw error
   } finally {
