@@ -31,7 +31,7 @@ export function CapitalStackHeader({
           fontWeight: 700,
           color: 'text.primary',
           fontSize: 'var(--ob-font-size-3xl)',
-          letterSpacing: '-0.02em',
+          letterSpacing: 'var(--ob-letter-spacing-tighter)',
         }}
       >
         {title ?? t('finance.capitalStack.overview.title')}

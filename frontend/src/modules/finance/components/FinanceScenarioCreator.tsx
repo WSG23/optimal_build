@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react'
-
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, IconButton, useTheme, alpha } from '@mui/material'
+import { ArrowForward, Close } from '@mui/icons-material'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { runFinanceFeasibility } from '../../../api/finance'
 import type {
@@ -8,8 +9,9 @@ import type {
   FinanceFeasibilityRequest,
 } from '../../../api/finance'
 import { Button } from '../../../components/canonical/Button'
+import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Input } from '../../../components/canonical/Input'
 import { useTranslation } from '../../../i18n'
-import { AllocationRing } from './AllocationRing'
 
 type AssetFormRow = {
   id: string
@@ -28,7 +30,7 @@ type AssetFormRow = {
 
 const DEFAULT_ASSET_ROWS: Array<Omit<AssetFormRow, 'id'>> = [
   {
-    assetType: 'office',
+    assetType: 'Office',
     allocationPct: '55',
     niaSqm: '1000',
     rentPsmMonth: '10',
@@ -41,7 +43,7 @@ const DEFAULT_ASSET_ROWS: Array<Omit<AssetFormRow, 'id'>> = [
     notes: 'Office baseline with healthy demand.',
   },
   {
-    assetType: 'retail',
+    assetType: 'Retail',
     allocationPct: '25',
     niaSqm: '500',
     rentPsmMonth: '8',
@@ -139,6 +141,7 @@ export function FinanceScenarioCreator({
   onRefresh,
 }: FinanceScenarioCreatorProps) {
   const { t } = useTranslation()
+  const theme = useTheme()
   const [scenarioName, setScenarioName] = useState('Phase 2C Base Case')
   const [assets, setAssets] = useState<AssetFormRow[]>(() =>
     createDefaultAssetRows(),
@@ -160,8 +163,8 @@ export function FinanceScenarioCreator({
         value: Number(asset.allocationPct),
         color:
           index % 2 === 0
-            ? 'var(--ob-color-brand-primary)'
-            : 'var(--ob-color-brand-primary-emphasis)', // Basic alternation
+            ? theme.palette.primary.main
+            : theme.palette.info.light, // Using theme colors
       }))
 
     const allocated = data.reduce((acc, item) => acc + item.value, 0)
@@ -169,13 +172,13 @@ export function FinanceScenarioCreator({
 
     if (unallocated > 0) {
       data.push({
-        name: 'Unallocated',
+        name: 'Pending',
         value: unallocated,
-        color: 'var(--ob-color-warning-soft)', // Use warning color/soft
+        color: theme.palette.action.disabledBackground,
       })
     }
     return data
-  }, [assets])
+  }, [assets, theme])
 
   const unallocated = Math.max(0, 100 - totalAllocation)
 
@@ -189,14 +192,6 @@ export function FinanceScenarioCreator({
         if (asset.id !== id) return asset
 
         let updated = { ...asset, [key]: value }
-
-        // Auto-calculate revenue if rent/nia changes or if we just want to be smart?
-        // The current logic seems to be manual input for revenue based on the mock,
-        // but a "live math" requirement implies we should try to calc it if possible
-        // or at least sum it up. The instructions say "Total Revenue footer row that automatically sums up".
-        // So we don't necessarily need auto-calc ROW revenue unless requested, but sticking to the plan:
-        // "Users love dragging a slider to see how 'Vacancy' impacts 'Revenue' instantly without typing."
-        // This implies ROW revenue should update.
 
         if (
           key === 'vacancyPct' ||
@@ -213,9 +208,6 @@ export function FinanceScenarioCreator({
             updated.estimatedRevenue = annualRev.toFixed(0)
           }
         }
-        // Inverse: If allocation changes, maybe suggest NIA?
-        // For now, let's keep it simple: Slider updates the value, which updates state.
-
         return updated
       }),
     )
@@ -257,14 +249,24 @@ export function FinanceScenarioCreator({
       return
     }
     if (!scenarioName.trim()) {
-      onError(t('finance.scenarioCreator.errors.nameRequired'))
+      onError(
+        t('finance.scenarioCreator.errors.nameRequired', {
+          defaultValue: 'Enter a scenario name.',
+        }),
+      )
       return
     }
+
     const filteredAssets = assets.filter((asset) => asset.assetType.trim())
     if (filteredAssets.length === 0) {
-      onError(t('finance.scenarioCreator.errors.assetRequired'))
+      onError(
+        t('finance.scenarioCreator.errors.assetRequired', {
+          defaultValue: 'Add at least one asset before running feasibility.',
+        }),
+      )
       return
     }
+
     setSaving(true)
     try {
       const request: FinanceFeasibilityRequest = {
@@ -291,13 +293,14 @@ export function FinanceScenarioCreator({
       const summary = await runFinanceFeasibility(request)
       onCreated(summary)
       onRefresh()
-      setAssets(createDefaultAssetRows())
-      setScenarioName('Phase 2C Base Case')
+      handleReset()
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : t('finance.scenarioCreator.errors.generic')
+          : t('finance.scenarioCreator.errors.generic', {
+              defaultValue: 'Unable to run finance feasibility.',
+            })
       onError(message)
     } finally {
       setSaving(false)
@@ -305,404 +308,435 @@ export function FinanceScenarioCreator({
   }
 
   return (
-    <section className="finance-scenario-creator">
-      <header className="finance-scenario-creator__header">
-        <Box>
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ maxWidth: '600px', mb: 'var(--ob-space-050)' }}
+    <Box component="form" onSubmit={handleSubmit}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            lg: 'minmax(0, 1fr) minmax(var(--ob-size-sidebar-width), var(--ob-size-controls-min))',
+          },
+          gap: 'var(--ob-space-150)',
+        }}
+      >
+        {/* LEFT COLUMN: ASSET MIX INPUTS */}
+        <Box sx={{ minWidth: 0 }}>
+          <GlassCard
+            sx={{ p: 'var(--ob-space-100)', mb: 'var(--ob-space-100)' }}
           >
-            {t('finance.scenarioCreator.description')}
-          </Typography>
-        </Box>
-        <div className="finance-scenario-creator__metrics">
-          <div
-            className="finance-scenario-creator__chart-container"
-            style={{ flexDirection: 'column', alignItems: 'center' }}
-          >
-            <AllocationRing
-              data={chartData}
-              totalAllocation={totalAllocation}
-              size={180}
-            />
-            {/* Legend below ring chart for better integration */}
-            <div
-              className="finance-scenario-creator__chart-legend"
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                gap: 'var(--ob-space-150)',
-                marginTop: 'var(--ob-space-100)',
-              }}
-            >
-              {chartData.map(
-                (item) =>
-                  item.name !== 'Unallocated' && (
-                    <div
-                      key={item.name}
-                      className="finance-scenario-creator__chart-legend-item"
-                    >
-                      <span
-                        className="finance-scenario-creator__legend-color"
-                        style={{ background: item.color }}
-                      />
-                      {item.name}: {item.value.toFixed(1)}%
-                    </div>
-                  ),
-              )}
-              {unallocated > 0 && (
-                <div
-                  className="finance-scenario-creator__chart-legend-item"
-                  style={{ color: 'var(--ob-color-warning-strong)' }}
-                >
-                  <span
-                    className="finance-scenario-creator__legend-color"
-                    style={{ background: 'var(--ob-color-warning-strong)' }}
-                  />
-                  {t('finance.scenarioCreator.unallocated', {
-                    defaultValue: 'Unallocated',
-                  })}{' '}
-                  {unallocated.toFixed(1)}%
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-      <form className="finance-scenario-creator__form" onSubmit={handleSubmit}>
-        <div className="finance-scenario-creator__grid">
-          <label className="finance-scenario-creator__field finance-scenario-creator__field--column">
-            <span className="finance-scenario-creator__field-label">
-              {t('finance.scenarioCreator.fields.name')}
-            </span>
-            <input
-              type="text"
-              className="finance-scenario-creator__main-input"
+            <Input
+              label={t('finance.scenarioCreator.fields.name')}
               value={scenarioName}
               onChange={(event) => setScenarioName(event.target.value)}
               placeholder={t('finance.scenarioCreator.placeholders.name')}
             />
-          </label>
-        </div>
+          </GlassCard>
 
-        <div className="finance-scenario-creator__assets">
-          <table className="finance-scenario-creator__table">
-            <caption>{t('finance.scenarioCreator.assets.caption')}</caption>
-            <thead>
-              <tr>
-                <th>{t('finance.scenarioCreator.assets.headers.assetType')}</th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.fields.allocation')}
-                </th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.assets.headers.nia')}
-                </th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.assets.headers.rent')}
-                </th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.assets.headers.vacancy')}
-                </th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.assets.headers.opex')}
-                </th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.assets.headers.revenue')}
-                </th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.assets.headers.capex')}
-                </th>
-                <th className="numeric">
-                  {t('finance.scenarioCreator.assets.headers.absorption')}
-                </th>
-                <th>{t('finance.scenarioCreator.assets.headers.risk')}</th>
-                <th>{t('finance.scenarioCreator.assets.headers.notes')}</th>
-                <th aria-hidden />
-              </tr>
-            </thead>
-            <tbody>
-              {assets.map((asset) => (
-                <tr key={asset.id} className="finance-scenario-creator__row">
-                  <td>
-                    <input
-                      type="text"
-                      className="finance-scenario-creator__ghost-input"
-                      value={asset.assetType}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'assetType',
-                          event.target.value,
-                        )
-                      }
-                      placeholder="office"
-                    />
-                  </td>
-                  <td className="numeric finance-scenario-creator__cell-slider">
-                    <div className="finance-scenario-creator__dual-input">
-                      <input
-                        type="number"
-                        step="0.1"
-                        className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric"
-                        value={asset.allocationPct}
-                        onChange={(event) =>
-                          handleAssetChange(
-                            asset.id,
-                            'allocationPct',
-                            event.target.value,
-                          )
-                        }
-                      />
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value={Number(asset.allocationPct) || 0}
-                        className="finance-scenario-creator__mini-slider"
-                        onChange={(e) =>
-                          handleAssetChange(
-                            asset.id,
-                            'allocationPct',
-                            e.target.value,
-                          )
-                        }
-                      />
-                    </div>
-                  </td>
-                  <td className="numeric">
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric"
-                      value={asset.niaSqm}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'niaSqm',
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="numeric">
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric"
-                      value={asset.rentPsmMonth}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'rentPsmMonth',
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="numeric finance-scenario-creator__cell-slider">
-                    <div className="finance-scenario-creator__dual-input">
-                      <input
-                        type="number"
-                        step="0.1"
-                        className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric"
-                        value={asset.vacancyPct}
-                        onChange={(event) =>
-                          handleAssetChange(
-                            asset.id,
-                            'vacancyPct',
-                            event.target.value,
-                          )
-                        }
-                      />
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value={Number(asset.vacancyPct) || 0}
-                        className="finance-scenario-creator__mini-slider"
-                        onChange={(e) =>
-                          handleAssetChange(
-                            asset.id,
-                            'vacancyPct',
-                            e.target.value,
-                          )
-                        }
-                        style={
-                          {
-                            '--thumb-color': 'var(--ob-color-neutral-400)',
-                          } as React.CSSProperties
-                        }
-                      />
-                    </div>
-                  </td>
-                  <td className="numeric">
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric"
-                      value={asset.opexPct}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'opexPct',
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="numeric">
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric finance-scenario-creator__ghost-input--highlight"
-                      value={asset.estimatedRevenue}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'estimatedRevenue',
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="numeric">
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric"
-                      value={asset.estimatedCapex}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'estimatedCapex',
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="numeric">
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="finance-scenario-creator__ghost-input finance-scenario-creator__ghost-input--numeric"
-                      value={asset.absorptionMonths}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'absorptionMonths',
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      className="finance-scenario-creator__ghost-input"
-                      value={asset.riskLevel}
-                      onChange={(event) =>
-                        handleAssetChange(
-                          asset.id,
-                          'riskLevel',
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      className="finance-scenario-creator__ghost-input"
-                      value={asset.notes}
-                      onChange={(event) =>
-                        handleAssetChange(asset.id, 'notes', event.target.value)
-                      }
-                    />
-                  </td>
-                  <td>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveAsset(asset.id)}
-                      disabled={assets.length <= 1}
-                    >
-                      {t('finance.scenarioCreator.actions.remove')}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="finance-scenario-creator__footer-row">
-                <td
-                  colSpan={6}
-                  className="finance-scenario-creator__footer-label"
-                >
-                  {t('finance.scenarioCreator.totalAnnualRevenue')}
-                </td>
-                <td className="numeric" style={{ fontWeight: 'bold' }}>
-                  <span className="finance-scenario-creator__live-total">
-                    {new Intl.NumberFormat('en-SG', {
-                      style: 'currency',
-                      currency: 'SGD',
-                      maximumFractionDigits: 0,
-                    }).format(totalRevenue)}
-                  </span>
-                </td>
-                <td colSpan={5}></td>
-              </tr>
-            </tfoot>
-          </table>
-          {/* Action buttons - inline layout */}
-          <div
-            style={{
+          <GlassCard sx={{ overflow: 'hidden' }}>
+            <Box
+              sx={{
+                px: 'var(--ob-space-150)',
+                py: 'var(--ob-space-125)',
+                borderBottom: 1,
+                borderColor: 'divider',
+                bgcolor: alpha(theme.palette.background.default, 0.5),
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {t('finance.scenarioCreator.title')}
+              </Typography>
+              <Button variant="ghost" size="sm" onClick={handleReset}>
+                {t('finance.scenarioCreator.actions.reset')}
+              </Button>
+            </Box>
+
+            <Box sx={{ overflowX: 'auto' }}>
+              <Box
+                component="table"
+                sx={{
+                  width: '100%',
+                  borderCollapse: 'separate',
+                  borderSpacing: 0,
+                  '& th': {
+                    px: 'var(--ob-space-100)',
+                    py: 'var(--ob-space-100)',
+                    textAlign: 'left',
+                    color: 'text.secondary',
+                    fontSize: 'var(--ob-font-size-xs)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: 'var(--ob-letter-spacing-wider)',
+                    whiteSpace: 'nowrap',
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                  },
+                  '& td': {
+                    px: 'var(--ob-space-100)',
+                    py: 'var(--ob-space-100)',
+                    borderBottom: 1,
+                    borderColor: 'divider', // or 'var(--ob-color-border-subtle)'
+                    verticalAlign: 'middle',
+                  },
+                  '& tr:last-child td': {
+                    borderBottom: 'none',
+                  },
+                  '& thead th:first-of-type': {
+                    minWidth: 'var(--ob-size-drop-zone)',
+                  },
+                }}
+              >
+                <thead>
+                  <tr>
+                    <th>
+                      {t('finance.scenarioCreator.assets.headers.assetType')}
+                    </th>
+                    <th>{t('finance.scenarioCreator.fields.allocation')}</th>
+                    <th>{t('finance.scenarioCreator.assets.headers.nia')}</th>
+                    <th>{t('finance.scenarioCreator.assets.headers.rent')}</th>
+                    <th>
+                      {t('finance.scenarioCreator.assets.headers.vacancy')}
+                    </th>
+                    <th>
+                      {t('finance.scenarioCreator.assets.headers.revenue')}
+                    </th>
+                    <th>{t('finance.scenarioCreator.assets.headers.capex')}</th>
+                    <th>{t('finance.scenarioCreator.actions.remove')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assets.map((asset) => (
+                    <tr key={asset.id}>
+                      <td>
+                        <Input
+                          value={asset.assetType}
+                          onChange={(e) =>
+                            handleAssetChange(
+                              asset.id,
+                              'assetType',
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Type"
+                          size="small"
+                          startAdornment={
+                            <Box
+                              sx={{
+                                width: 'var(--ob-space-050)',
+                                height: 'var(--ob-space-050)',
+                                borderRadius: 'var(--ob-radius-pill)',
+                                bgcolor: 'primary.main',
+                              }}
+                            />
+                          }
+                          sx={{
+                            '& .MuiInputBase-root': {
+                              boxShadow: 'none',
+                              border: 'none',
+                              bgcolor: 'transparent',
+                            },
+                            '& fieldset': { border: 'none !important' },
+                          }}
+                          // Using simplified input for cleaner look in table as per screenshot
+                        />
+                      </td>
+                      <td>
+                        <Input
+                          value={asset.allocationPct}
+                          onChange={(e) =>
+                            handleAssetChange(
+                              asset.id,
+                              'allocationPct',
+                              e.target.value,
+                            )
+                          }
+                          type="number"
+                          size="small"
+                          endAdornment="%"
+                        />
+                      </td>
+                      <td>
+                        <Input
+                          value={asset.niaSqm}
+                          onChange={(e) =>
+                            handleAssetChange(
+                              asset.id,
+                              'niaSqm',
+                              e.target.value,
+                            )
+                          }
+                          type="number"
+                          size="small"
+                        />
+                      </td>
+                      <td>
+                        <Input
+                          value={asset.rentPsmMonth}
+                          onChange={(e) =>
+                            handleAssetChange(
+                              asset.id,
+                              'rentPsmMonth',
+                              e.target.value,
+                            )
+                          }
+                          type="number"
+                          size="small"
+                          startAdornment="$"
+                        />
+                      </td>
+                      <td>
+                        <Input
+                          value={asset.vacancyPct}
+                          onChange={(e) =>
+                            handleAssetChange(
+                              asset.id,
+                              'vacancyPct',
+                              e.target.value,
+                            )
+                          }
+                          type="number"
+                          size="small"
+                          endAdornment="%"
+                        />
+                      </td>
+                      <td>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: 'var(--ob-font-family-mono)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          ${Number(asset.estimatedRevenue).toLocaleString()}
+                        </Typography>
+                      </td>
+                      <td>
+                        <Input
+                          value={asset.estimatedCapex}
+                          onChange={(e) =>
+                            handleAssetChange(
+                              asset.id,
+                              'estimatedCapex',
+                              e.target.value,
+                            )
+                          }
+                          type="number"
+                          size="small"
+                          startAdornment="$"
+                        />
+                      </td>
+                      <td>
+                        <IconButton
+                          aria-label={t(
+                            'finance.scenarioCreator.actions.remove',
+                          )}
+                          size="small"
+                          onClick={() => handleRemoveAsset(asset.id)}
+                          disabled={assets.length <= 1}
+                          sx={{
+                            borderRadius: 'var(--ob-radius-xs)',
+                            border: 'var(--ob-border-fine)',
+                          }}
+                        >
+                          <Close fontSize="small" />
+                        </IconButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                p: 'var(--ob-space-100)',
+                borderTop: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Button variant="ghost" size="sm" onClick={handleAddAsset}>
+                {t('finance.scenarioCreator.actions.addAsset')}
+              </Button>
+            </Box>
+          </GlassCard>
+        </Box>
+
+        {/* RIGHT COLUMN: ALLOCATION CHART */}
+        <Box sx={{ minWidth: 0 }}>
+          <GlassCard
+            sx={{
+              p: 'var(--ob-space-150)',
+              height: '100%',
               display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--ob-space-100)',
-              marginTop: 'var(--ob-space-100)',
+              flexDirection: 'column',
             }}
           >
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={handleAddAsset}
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                mb: 'var(--ob-space-150)',
+                textTransform: 'uppercase',
+                letterSpacing: 'var(--ob-letter-spacing-wider)',
+                fontSize: 'var(--ob-font-size-xs)',
+              }}
             >
-              {t('finance.scenarioCreator.actions.addAsset')}
-            </Button>
+              {t('finance.allocation.title', {
+                defaultValue: 'ALLOCATION MIX',
+              })}
+            </Typography>
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+                gap: 'var(--ob-space-200)',
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: 'var(--ob-size-drop-zone)',
+                  height: 'var(--ob-size-drop-zone)',
+                }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      innerRadius={44}
+                      outerRadius={58}
+                      paddingAngle={2}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 'var(--ob-radius-sm)',
+                        border: 'none',
+                        boxShadow: 'var(--ob-shadow-md)',
+                        backgroundColor: theme.palette.background.paper,
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center text for unallocated like screenshot */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      display: 'block',
+                      lineHeight: 1,
+                    }}
+                  >
+                    Pending
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, lineHeight: 1 }}
+                  >
+                    {unallocated}%
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Legend */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--ob-space-050)',
+                }}
+              >
+                {chartData
+                  .filter((d) => d.name !== 'Pending')
+                  .map((entry) => (
+                    <Box
+                      key={entry.name}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--ob-space-050)',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 'var(--ob-space-050)',
+                          height: 'var(--ob-space-050)',
+                          borderRadius: 'var(--ob-radius-pill)',
+                          bgcolor: entry.color,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{ color: 'text.secondary', minWidth: 60 }}
+                      >
+                        {entry.name}
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {entry.value}%
+                      </Typography>
+                    </Box>
+                  ))}
+              </Box>
+            </Box>
+
+            <GlassCard
+              sx={{
+                mt: 'var(--ob-space-200)',
+                p: 'var(--ob-space-100)',
+                bgcolor: 'action.hover',
+                border: 'none',
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  display: 'block',
+                  mb: 'var(--ob-space-025)',
+                }}
+              >
+                {t('finance.scenarioCreator.totalAnnualRevenue')}
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                ${totalRevenue.toLocaleString()}
+              </Typography>
+            </GlassCard>
+
             <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
+              type="submit"
+              fullWidth
+              variant="primary"
+              size="lg"
+              sx={{ mt: 'var(--ob-space-150)' }}
+              endIcon={<ArrowForward fontSize="small" />}
               disabled={saving}
             >
-              {t('finance.scenarioCreator.actions.reset')}
+              {saving
+                ? t('finance.scenarioCreator.actions.saving')
+                : t('finance.scenarioCreator.actions.submit')}
             </Button>
-          </div>
-        </div>
-
-        <div className="finance-scenario-creator__actions">
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            disabled={saving}
-          >
-            {saving
-              ? t('finance.scenarioCreator.actions.saving')
-              : t('finance.scenarioCreator.actions.submit')}
-          </Button>
-        </div>
-      </form>
-    </section>
+          </GlassCard>
+        </Box>
+      </Box>
+    </Box>
   )
 }
-
 export default FinanceScenarioCreator

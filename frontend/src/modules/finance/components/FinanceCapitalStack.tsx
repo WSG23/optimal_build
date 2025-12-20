@@ -1,29 +1,26 @@
 /**
- * FinanceCapitalStack - Capital stack visualization with Gemini-matching layout
+ * FinanceCapitalStack
  *
- * Layout (matching Gemini design):
- * 1. Page header with title/subtitle
- * 2. Split layout: Chart (2/3) | Scenario Cards (1/3)
- * 3. Scenario tabs below chart area
- * 4. Stats cards (4-column metrics grid)
- * 5. Enhanced tranche/facility table
+ * Renders the Capital Stack "detail" portion of the Finance workspace:
+ * - Scenario selection grid
+ * - Overview metrics
+ * - Facility table + comparison chart + insight box
  *
- * Follows UI_STANDARDS.md for design tokens.
+ * Note: The FinanceWorkspace owns the page-level header and top tabs.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import { Box, Grid, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
 import { GlassCard } from '../../../components/canonical/GlassCard'
 import { CapitalStackChart } from './CapitalStackChart'
-import { CapitalStackHeader } from './CapitalStackHeader'
-import { CapitalStackScenarioCards } from './CapitalStackScenarioCards'
-import { CapitalStackScenarioTabs } from './CapitalStackScenarioTabs'
 import { CapitalStackFacilityTable } from './CapitalStackFacilityTable'
 import { FinanceMetricsGrid } from './FinanceMetricsGrid'
+import { CapitalStackScenarioGrid } from './CapitalStackScenarioGrid'
+import { CapitalStackInsightBox } from './CapitalStackInsightBox'
 
 interface FinanceCapitalStackProps {
   scenarios: FinanceScenarioSummary[]
@@ -47,101 +44,122 @@ export function FinanceCapitalStack({ scenarios }: FinanceCapitalStackProps) {
     },
   )
 
+  useEffect(() => {
+    if (validScenarios.length === 0) {
+      if (activeScenarioId !== null) {
+        setActiveScenarioId(null)
+      }
+      return
+    }
+    if (
+      activeScenarioId !== null &&
+      validScenarios.some((s) => s.scenarioId === activeScenarioId)
+    ) {
+      return
+    }
+    const primary = validScenarios.find((s) => s.isPrimary)
+    setActiveScenarioId(primary?.scenarioId ?? validScenarios[0].scenarioId)
+  }, [activeScenarioId, validScenarios])
+
   const activeScenario = useMemo(() => {
     if (activeScenarioId === null) return null
     return validScenarios.find((s) => s.scenarioId === activeScenarioId) ?? null
   }, [validScenarios, activeScenarioId])
 
-  // Show empty state with helpful message if no capital stack data
-  if (validScenarios.length === 0) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 'var(--ob-space-400)',
-          textAlign: 'center',
-        }}
-      >
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 600,
-            color: 'text.primary',
-            mb: 'var(--ob-space-100)',
-          }}
-        >
-          {t('finance.capitalStack.empty.title', {
-            defaultValue: 'No Capital Stack Data',
-          })}
-        </Typography>
-        <Typography
-          sx={{
-            color: 'text.secondary',
-            maxWidth: 400,
-          }}
-        >
-          {t('finance.capitalStack.empty.description', {
-            defaultValue:
-              'Run a feasibility scenario to generate capital stack analysis. The chart and metrics will appear here once data is available.',
-          })}
-        </Typography>
-      </Box>
-    )
-  }
-
   const handleScenarioSelect = (scenarioId: number) => {
     setActiveScenarioId(scenarioId)
   }
 
-  const handlePreview = (scenario: FinanceScenarioSummary) => {
-    // TODO: Implement preview functionality
-    console.log('Preview scenario:', scenario.scenarioId)
+  if (validScenarios.length === 0) {
+    return (
+      <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          {t('finance.capitalStack.empty.title', {
+            defaultValue: 'Capital stack details',
+          })}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {t('finance.capitalStack.empty.subtitle', {
+            defaultValue:
+              'Run a feasibility scenario to see the capital stack breakdown.',
+          })}
+        </Typography>
+      </GlassCard>
+    )
   }
 
   return (
     <section className="finance-capital">
-      {/* Page Header */}
-      <CapitalStackHeader />
-
-      {/* Split Layout: Chart + Scenario Cards */}
-      <Grid
-        container
-        spacing="var(--ob-space-150)"
-        sx={{ mb: 'var(--ob-space-150)' }}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--ob-space-200)',
+        }}
       >
-        {/* Chart (2/3 width on large screens) */}
-        <Grid item xs={12} lg={8}>
-          <GlassCard sx={{ p: 'var(--ob-space-100)' }}>
-            <CapitalStackChart scenarios={validScenarios} />
-          </GlassCard>
-        </Grid>
+        <CapitalStackScenarioGrid
+          scenarios={validScenarios}
+          activeScenarioId={activeScenarioId}
+          onSelect={handleScenarioSelect}
+        />
 
-        {/* Scenario Cards (1/3 width on large screens) */}
-        <Grid item xs={12} lg={4}>
-          <CapitalStackScenarioCards
-            scenarios={validScenarios}
-            activeId={activeScenarioId}
-            onSelect={handleScenarioSelect}
-            onPreview={handlePreview}
-          />
-        </Grid>
-      </Grid>
+        <Box>
+          <Typography
+            variant="h5"
+            sx={{ mb: 'var(--ob-space-100)', fontWeight: 600 }}
+          >
+            {t('finance.capitalStack.title')}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ mb: 'var(--ob-space-100)', color: 'text.secondary' }}
+          >
+            {t('finance.capitalStack.overview.showingFor', {
+              defaultValue: 'Visualizing data for',
+            })}{' '}
+            <Box
+              component="span"
+              sx={{ fontWeight: 700, color: 'text.primary' }}
+            >
+              {activeScenario?.scenarioName}
+            </Box>
+            .
+          </Typography>
+          <FinanceMetricsGrid scenario={activeScenario} />
+        </Box>
 
-      {/* Scenario Tabs */}
-      <CapitalStackScenarioTabs
-        scenarios={validScenarios}
-        activeId={activeScenarioId}
-        onSelect={handleScenarioSelect}
-      />
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
+            gap: 'var(--ob-space-150)',
+          }}
+        >
+          <Box>
+            <CapitalStackFacilityTable scenario={activeScenario} />
+          </Box>
+          <Box>
+            <GlassCard sx={{ p: 'var(--ob-space-100)', height: '100%' }}>
+              <Typography
+                variant="h6"
+                sx={{ mb: 'var(--ob-space-100)', fontWeight: 600 }}
+              >
+                {t('finance.capitalStack.comparison.title', {
+                  defaultValue: 'Scenario Comparison',
+                })}
+              </Typography>
+              <CapitalStackChart scenarios={validScenarios} />
 
-      {/* Stats Cards */}
-      <FinanceMetricsGrid scenario={activeScenario} />
-
-      {/* Tranche/Facility Table */}
-      <CapitalStackFacilityTable scenario={activeScenario} />
+              <Box sx={{ mt: 'var(--ob-space-100)' }}>
+                <CapitalStackInsightBox
+                  scenarios={validScenarios}
+                  activeScenarioId={activeScenarioId}
+                />
+              </Box>
+            </GlassCard>
+          </Box>
+        </Box>
+      </Box>
     </section>
   )
 }

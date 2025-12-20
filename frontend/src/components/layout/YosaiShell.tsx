@@ -42,7 +42,10 @@ export function AppShell({
     <Box
       sx={{
         display: 'flex',
-        minHeight: '100vh',
+        // When embedded in BaseLayout (new shell), avoid forcing a second 100vh
+        // layout which can cause the window to scroll (breaking sticky behavior).
+        minHeight: inBaseLayout ? 0 : '100vh',
+        flexGrow: 1,
         bgcolor: 'background.default',
         color: 'text.primary',
         gap: shouldHideSidebar ? 0 : 'var(--ob-space-200)', // Consistent gap between sidebar and content
@@ -58,6 +61,7 @@ export function AppShell({
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
+          minHeight: 0,
         }}
       >
         {/* Content (scroll container) */}
@@ -68,6 +72,7 @@ export function AppShell({
             padding: 'var(--ob-space-100)',
             overflow: 'auto',
             scrollbarGutter: 'stable',
+            minHeight: 0,
           }}
         >
           {/* Page Header (scrolls with content) */}

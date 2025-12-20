@@ -248,7 +248,7 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
       >
         {t('finance.charts.scenarioComparison')}
       </Typography>
-      <Box sx={{ height: 350, width: '100%' }}>
+      <Box sx={{ height: 'var(--ob-max-height-panel)', width: '100%' }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}

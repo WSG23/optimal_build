@@ -131,10 +131,10 @@ describe('Finance capital stack and drawdown components', () => {
 
     assert.ok(screen.getByText('Capital stack overview'))
     assert.ok(screen.getByText('Scenario A'))
-    assert.ok(screen.getByText('Equity share'))
-    assert.ok(screen.getByText('Tranche / facility detail'))
+    assert.ok(screen.getByText('Equity Share'))
+    assert.ok(screen.getByText('Tranche / Facility Detail'))
     assert.ok(screen.getAllByText('Senior Loan').length > 0)
-    assert.ok(screen.getByText('Interest reserve (months)'))
+    assert.ok(screen.getByText('Reserve (Mos)'))
     assert.ok(screen.getByText('Interest handling'))
   })
 

@@ -9,11 +9,10 @@
  */
 
 import { useMemo } from 'react'
-
-import { Box, Grid, Typography } from '@mui/material'
+import { Box, Grid } from '@mui/material'
 
 import { useTranslation } from '../../../i18n'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { MetricCard } from '../../../components/canonical/MetricCard'
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { formatCurrencyFull, formatPercent } from '../utils/chartTheme'
 
@@ -25,7 +24,7 @@ interface MetricItem {
   key: string
   label: string
   value: string
-  color?: 'primary' | 'success' | 'warning' | 'error' | 'default'
+  trend?: number
 }
 
 function toNumber(value: string | null | undefined): number | null {
@@ -53,7 +52,9 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
     return [
       {
         key: 'totalCost',
-        label: t('finance.metrics.totalCost'),
+        label: t('finance.metrics.totalCost', {
+          defaultValue: 'Total Project Cost',
+        }), // Use explicit default to match screenshot
         value:
           total !== null
             ? formatCurrencyFull(total, currency, locale)
@@ -61,20 +62,22 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
       },
       {
         key: 'weightedRate',
-        label: t('finance.metrics.weightedRate'),
+        label: t('finance.metrics.weightedRate', {
+          defaultValue: 'Weighted Debt Rate',
+        }),
         value: weightedRate !== null ? formatPercent(weightedRate) : fallback,
       },
       {
         key: 'loanToCost',
-        label: t('finance.metrics.loanToCost'),
+        label: t('finance.metrics.loanToCost', { defaultValue: 'LTC' }),
         value: loanToCost !== null ? formatPercent(loanToCost) : fallback,
-        color: 'primary',
       },
       {
         key: 'equityShare',
-        label: t('finance.metrics.equityShare'),
+        label: t('finance.metrics.equityShare', {
+          defaultValue: 'Equity Share',
+        }),
         value: equityRatio !== null ? formatPercent(equityRatio) : fallback,
-        color: 'success',
       },
     ]
   }, [scenario, t, locale, fallback])
@@ -83,56 +86,17 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
     return null
   }
 
-  const getValueColor = (color?: MetricItem['color']) => {
-    switch (color) {
-      case 'primary':
-        return 'primary.main'
-      case 'success':
-        return 'success.main'
-      case 'warning':
-        return 'warning.main'
-      case 'error':
-        return 'error.main'
-      default:
-        return 'text.primary'
-    }
-  }
-
   return (
     <Box sx={{ mb: 'var(--ob-space-150)' }}>
       <Grid container spacing="var(--ob-space-100)">
         {metrics.map((metric) => (
           <Grid item xs={6} md={3} key={metric.key}>
-            <GlassCard
-              sx={{
-                p: 'var(--ob-space-100)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-sm)',
-                  color: 'text.secondary',
-                  mb: 'var(--ob-space-025)',
-                  lineHeight: 1.3,
-                }}
-              >
-                {metric.label}
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-2xl)',
-                  fontWeight: 700,
-                  color: getValueColor(metric.color),
-                  lineHeight: 1.2,
-                }}
-              >
-                {metric.value}
-              </Typography>
-            </GlassCard>
+            <MetricCard
+              label={metric.label}
+              value={metric.value}
+              compact
+              // We could add trends if available in data
+            />
           </Grid>
         ))}
       </Grid>

@@ -25,7 +25,8 @@ export function BaseLayout({ children }: { children: ReactNode }) {
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          minHeight: '100vh',
+          height: '100vh',
+          overflow: 'hidden',
           bgcolor: 'background.default',
           color: 'text.primary',
         }}
@@ -40,6 +41,8 @@ export function BaseLayout({ children }: { children: ReactNode }) {
             minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
           }}
         >
           {children}

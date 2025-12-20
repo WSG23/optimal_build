@@ -1386,6 +1386,11 @@ function createFinanceFallbackSummary(
 
 export interface FinanceFeasibilityOptions {
   signal?: AbortSignal
+  /**
+   * Optional client-side timeout for API calls.
+   * When reached, the request aborts and callers may fall back to offline data.
+   */
+  timeoutMs?: number
 }
 
 export async function runFinanceFeasibility(
@@ -1452,6 +1457,34 @@ export async function listFinanceScenarios(
     'Content-Type': 'application/json',
   })
 
+  const timeoutMs =
+    typeof options.timeoutMs === 'number' && options.timeoutMs > 0
+      ? options.timeoutMs
+      : 2500
+  const timeoutController = new AbortController()
+  const timeoutId = setTimeout(() => {
+    timeoutController.abort()
+  }, timeoutMs)
+
+  let composedSignal: AbortSignal | undefined
+  const incomingSignal = options.signal
+  const timeoutSignal = timeoutController.signal
+  if (incomingSignal) {
+    if (typeof AbortSignal !== 'undefined' && 'any' in AbortSignal) {
+      composedSignal = (
+        AbortSignal as unknown as { any: (s: AbortSignal[]) => AbortSignal }
+      ).any([incomingSignal, timeoutSignal])
+    } else {
+      const bridge = new AbortController()
+      const abortBridge = () => bridge.abort()
+      incomingSignal.addEventListener('abort', abortBridge, { once: true })
+      timeoutSignal.addEventListener('abort', abortBridge, { once: true })
+      composedSignal = bridge.signal
+    }
+  } else {
+    composedSignal = timeoutSignal
+  }
+
   const query = new URLSearchParams()
   if (typeof params.projectId === 'number') {
     query.set('project_id', params.projectId.toString())
@@ -1472,12 +1505,26 @@ export async function listFinanceScenarios(
       {
         method: 'GET',
         headers,
-        signal: options.signal,
+        signal: composedSignal,
       },
     )
 
     if (!response.ok) {
       const message = await response.text()
+      if (response.status >= 500) {
+        console.warn(
+          `[finance] scenario list request failed (server ${response.status}), using offline fallback data`,
+          message,
+        )
+        const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+        if (params.projectId !== undefined && params.projectId !== null) {
+          fallback.projectId = params.projectId as typeof fallback.projectId
+        }
+        if (typeof params.finProjectId === 'number') {
+          fallback.finProjectId = params.finProjectId
+        }
+        return [fallback]
+      }
       throw new Error(
         message ||
           `Finance scenario list request failed with status ${response.status}`,
@@ -1489,7 +1536,22 @@ export async function listFinanceScenarios(
     return Array.isArray(payload) ? payload.map(mapResponse) : []
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw error
+      const timedOut =
+        timeoutController.signal.aborted && !options.signal?.aborted
+      if (!timedOut) {
+        throw error
+      }
+      console.warn(
+        `[finance] scenario list request timed out after ${timeoutMs}ms, using offline fallback data`,
+      )
+      const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+      if (params.projectId !== undefined && params.projectId !== null) {
+        fallback.projectId = params.projectId as typeof fallback.projectId
+      }
+      if (typeof params.finProjectId === 'number') {
+        fallback.finProjectId = params.finProjectId
+      }
+      return [fallback]
     }
     // Use fallback data for network errors (TypeError) or API auth errors (401/403)
     const isNetworkError = error instanceof TypeError
@@ -1515,6 +1577,8 @@ export async function listFinanceScenarios(
       return [fallback]
     }
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
