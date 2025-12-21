@@ -42,6 +42,7 @@ export function TopUtilityMenu() {
   const { i18n } = useTranslation()
   const { mode, toggleMode } = useThemeMode()
   const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
+  const showDeveloperLinks = isDeveloperMode
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null)
@@ -289,6 +290,88 @@ export function TopUtilityMenu() {
             </Typography>
           </ListItemText>
         </MenuItem>
+
+        {showDeveloperLinks && (
+          <>
+            <Divider />
+            <MenuItem disabled>
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Developer workspace</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/app/site-acquisition"
+              onClick={() => setAnchorEl(null)}
+            >
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Site Acquisition</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/app/asset-feasibility"
+              onClick={() => setAnchorEl(null)}
+            >
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Asset Feasibility</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/app/financial-control"
+              onClick={() => setAnchorEl(null)}
+            >
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Financial Control</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/app/phase-management"
+              onClick={() => setAnchorEl(null)}
+            >
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Phase Management</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/app/team-coordination"
+              onClick={() => setAnchorEl(null)}
+            >
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Team Coordination</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/app/regulatory"
+              onClick={() => setAnchorEl(null)}
+            >
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Regulatory Navigation</ListItemText>
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/developer"
+              onClick={() => setAnchorEl(null)}
+            >
+              <ListItemIcon>
+                <CodeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Developer Console</ListItemText>
+            </MenuItem>
+          </>
+        )}
 
         <MenuItem
           onClick={() => {
