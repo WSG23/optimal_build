@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 import {
   Box,
@@ -44,7 +44,6 @@ export function FinanceHeaderControls({
 }: FinanceHeaderControlsProps) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const selectRef = useRef<HTMLSelectElement | null>(null)
 
   const [isManual, setIsManual] = useState(false)
   const [manualId, setManualId] = useState(selectedProjectId)
@@ -85,18 +84,6 @@ export function FinanceHeaderControls({
   }, [helperLabel, recentOptions, selectedProjectId])
 
   const selectValue = selectedOptionValue || selectedProjectId
-
-  const openSelect = () => {
-    const node = selectRef.current
-    if (!node) return
-    const maybeShowPicker = node as unknown as { showPicker?: () => void }
-    if (typeof maybeShowPicker.showPicker === 'function') {
-      maybeShowPicker.showPicker()
-      return
-    }
-    node.focus()
-    node.click()
-  }
 
   const handleManualSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -168,7 +155,7 @@ export function FinanceHeaderControls({
         display: 'grid',
         gridTemplateColumns: {
           xs: 'max-content minmax(0, 1fr) var(--ob-space-250) var(--ob-size-finance-export-button)',
-          sm: 'max-content var(--ob-size-finance-project-select) var(--ob-space-250) var(--ob-size-finance-export-button)',
+          sm: 'max-content fit-content(var(--ob-size-finance-project-select)) var(--ob-space-250) var(--ob-size-finance-export-button)',
         },
         alignItems: 'stretch',
         height: 'var(--ob-space-250)',
@@ -189,7 +176,7 @@ export function FinanceHeaderControls({
           display: 'flex',
           alignItems: 'center',
           px: 'var(--ob-space-150)',
-          pr: 'var(--ob-space-200)',
+          pr: 'var(--ob-space-150)',
           borderRight: 1,
           borderColor: alpha(theme.palette.divider, 0.6),
           minWidth: 0,
@@ -219,7 +206,6 @@ export function FinanceHeaderControls({
           display: 'flex',
           alignItems: 'center',
           px: 'var(--ob-space-150)',
-          pl: 'var(--ob-space-175)',
           borderRight: 1,
           borderColor: alpha(theme.palette.divider, 0.6),
           minWidth: 0,
@@ -227,7 +213,6 @@ export function FinanceHeaderControls({
       >
         <Box
           component="select"
-          ref={selectRef}
           value={selectValue}
           onChange={(event) =>
             handleOptionChange((event.target as HTMLSelectElement).value)
@@ -245,7 +230,7 @@ export function FinanceHeaderControls({
             fontWeight: 700,
             fontFamily: 'var(--ob-font-family-base)',
             appearance: 'none',
-            pr: 'var(--ob-space-250)',
+            pr: 'var(--ob-space-200)',
             pl: 0,
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -263,10 +248,7 @@ export function FinanceHeaderControls({
           </option>
         </Box>
         <Box
-          component="button"
-          type="button"
-          onClick={openSelect}
-          aria-label={t('finance.projectSelector.pickPlaceholder')}
+          aria-hidden
           sx={{
             position: 'absolute',
             right: 'var(--ob-space-075)',
@@ -276,11 +258,8 @@ export function FinanceHeaderControls({
             display: 'flex',
             alignItems: 'center',
             height: 'var(--ob-space-250)',
-            width: 'var(--ob-space-250)',
             justifyContent: 'center',
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
+            pointerEvents: 'none',
           }}
         >
           <KeyboardArrowDown fontSize="small" />
