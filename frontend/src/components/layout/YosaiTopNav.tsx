@@ -18,6 +18,7 @@ import {
 import { Link, useRouterPath } from '../../router'
 import { useTranslation } from '../../i18n'
 import { TopUtilityMenu } from './TopUtilityMenu'
+import { useDeveloperMode } from '../../contexts/DeveloperContext'
 
 type NavGroup = {
   items: Array<{ path: string; label: string }>
@@ -35,14 +36,15 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
   const { t } = useTranslation()
   const path = useRouterPath()
   const theme = useTheme()
+  const { isDeveloperMode } = useDeveloperMode()
 
   const hostLabel = useMemo(() => {
     if (typeof window === 'undefined') return 'localhost'
     return window.location.host || 'localhost'
   }, [])
 
-  const navGroups: NavGroup[] = useMemo(
-    () => [
+  const navGroups: NavGroup[] = useMemo(() => {
+    const groups: NavGroup[] = [
       {
         items: [
           { path: '/cad/upload', label: t('nav.upload') },
@@ -63,9 +65,29 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
       {
         items: [{ path: '/agents/site-capture', label: t('nav.agentCapture') }],
       },
-    ],
-    [t],
-  )
+    ]
+
+    if (isDeveloperMode) {
+      groups.push({
+        items: [
+          { path: '/app/site-acquisition', label: t('nav.siteAcquisition') },
+          {
+            path: '/app/asset-feasibility',
+            label: t('nav.assetFeasibility'),
+          },
+          {
+            path: '/app/financial-control',
+            label: t('nav.financialControl'),
+          },
+          { path: '/app/phase-management', label: t('nav.phaseManagement') },
+          { path: '/app/team-coordination', label: t('nav.teamCoordination') },
+          { path: '/app/regulatory', label: t('nav.regulatoryNavigation') },
+        ],
+      })
+    }
+
+    return groups
+  }, [isDeveloperMode, t])
 
   const navRef = useRef<HTMLDivElement | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)

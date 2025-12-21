@@ -107,7 +107,13 @@
     "finance": "Finance",
     "intelligence": "Advanced intelligence",
     "agentCapture": "Agent GPS capture",
-    "agentPerformance": "Agent performance"
+    "agentPerformance": "Agent performance",
+    "siteAcquisition": "Site acquisition",
+    "assetFeasibility": "Asset feasibility",
+    "financialControl": "Financial control",
+    "phaseManagement": "Phase management",
+    "teamCoordination": "Team coordination",
+    "regulatoryNavigation": "Regulatory"
   },
   "home": {
     "cards": {
