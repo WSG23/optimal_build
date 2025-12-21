@@ -102,8 +102,12 @@ function ScenarioCard({
         }
       }}
       sx={{
+        display: 'flex',
+        flexDirection: 'column',
         textAlign: 'left',
         width: '100%',
+        height: '100%',
+        minHeight: 'var(--ob-size-finance-scenario-card-min)',
         border: 1,
         borderColor: active ? activeBorder : 'divider',
         bgcolor: active ? activeBg : 'background.paper',
@@ -371,11 +375,21 @@ function ScenarioCard({
         </Grid>
       </Grid>
 
-      {scenario.capitalStack ? (
-        <Box sx={{ mt: 'var(--ob-space-125)' }}>
+      <Box sx={{ mt: 'auto', pt: 'var(--ob-space-125)' }}>
+        {scenario.capitalStack ? (
           <CapitalStackMiniBar stack={scenario.capitalStack} />
-        </Box>
-      ) : null}
+        ) : (
+          <Box
+            aria-hidden
+            sx={{
+              height: 'var(--ob-space-050)',
+              width: '100%',
+              borderRadius: 'var(--ob-radius-sm)',
+              opacity: 0,
+            }}
+          />
+        )}
+      </Box>
     </GlassCard>
   )
 }
@@ -421,7 +435,13 @@ export function CapitalStackScenarioGrid({
       </Typography>
       <Grid container spacing="var(--ob-space-150)">
         {scenarios.map((scenario) => (
-          <Grid item xs={12} md={4} key={scenario.scenarioId}>
+          <Grid
+            item
+            xs={12}
+            md={4}
+            key={scenario.scenarioId}
+            sx={{ display: 'flex' }}
+          >
             <ScenarioCard
               scenario={scenario}
               active={scenario.scenarioId === activeScenarioId}

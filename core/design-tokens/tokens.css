@@ -111,6 +111,7 @@
     --ob-color-surface-alt: var(--ob-color-bg-root);
     --ob-color-surface-alt-rgb: 18 18 18;
     --ob-color-surface-subtle: #172033;
+    --ob-color-surface-toolbar: #242b3d;
     --ob-color-surface-strong: var(--ob-neutral-800);
     --ob-color-surface-inverse: var(--ob-neutral-100);
     --ob-color-surface-default-rgb: 30 41 59;
@@ -386,10 +387,11 @@
     --ob-size-drop-zone: 120px;
     --ob-size-controls-min: 400px;
     --ob-size-finance-summary-panel: 340px;
-    --ob-size-finance-header-controls: 520px;
-    --ob-size-finance-project-select: 260px;
-    --ob-size-finance-export-button: 180px;
-    --ob-size-sidebar-width: 280px;
+	    --ob-size-finance-header-controls: 520px;
+	    --ob-size-finance-project-select: 260px;
+	    --ob-size-finance-export-button: 180px;
+	    --ob-size-finance-scenario-card-min: 240px;
+	    --ob-size-sidebar-width: 280px;
     --ob-max-width-content: 1000px;
     --ob-max-width-page: 1400px;
 

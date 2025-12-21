@@ -755,7 +755,11 @@ export function FinanceWorkspace() {
       spacing="var(--ob-space-100)"
       alignItems="center"
       justifyContent="flex-end"
-      sx={{ flexWrap: 'wrap', rowGap: 'var(--ob-space-075)' }}
+      sx={{
+        flexWrap: 'nowrap',
+        minWidth: 0,
+        columnGap: 'var(--ob-space-100)',
+      }}
     >
       <FinanceHeaderControls
         selectedProjectId={effectiveProjectId}

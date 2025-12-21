@@ -3,11 +3,18 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import {
   Box,
   CircularProgress,
+  Menu,
+  MenuItem,
   Typography,
   alpha,
+  useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { KeyboardArrowDown, Refresh } from '@mui/icons-material'
+import {
+  FileDownload as FileDownloadIcon,
+  KeyboardArrowDown,
+  Refresh,
+} from '@mui/icons-material'
 
 import { Button } from '../../../components/canonical/Button'
 import { useTranslation } from '../../../i18n'
@@ -44,9 +51,12 @@ export function FinanceHeaderControls({
 }: FinanceHeaderControlsProps) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const showExportLabel = useMediaQuery(theme.breakpoints.up('md'))
 
   const [isManual, setIsManual] = useState(false)
   const [manualId, setManualId] = useState(selectedProjectId)
+  const [projectMenuAnchor, setProjectMenuAnchor] =
+    useState<HTMLElement | null>(null)
 
   useEffect(() => {
     setManualId(selectedProjectId)
@@ -84,6 +94,9 @@ export function FinanceHeaderControls({
   }, [helperLabel, recentOptions, selectedProjectId])
 
   const selectValue = selectedOptionValue || selectedProjectId
+  const selectedLabel =
+    selectOptions.find((option) => option.id === selectValue)?.label ??
+    helperLabel
 
   const handleManualSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -97,12 +110,14 @@ export function FinanceHeaderControls({
     if (!value) return
     if (value === 'manual') {
       setIsManual(true)
+      setProjectMenuAnchor(null)
       return
     }
     const option = recentOptions.find((item) => item.id === value)
     if (!option) return
     onProjectChange(option.id, option.projectName ?? option.label)
     setIsManual(false)
+    setProjectMenuAnchor(null)
   }
 
   if (isManual) {
@@ -152,11 +167,7 @@ export function FinanceHeaderControls({
   return (
     <Box
       sx={{
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: 'max-content minmax(0, 1fr) var(--ob-space-250) var(--ob-size-finance-export-button)',
-          sm: 'max-content fit-content(var(--ob-size-finance-project-select)) var(--ob-space-250) var(--ob-size-finance-export-button)',
-        },
+        display: 'inline-flex',
         alignItems: 'stretch',
         height: 'var(--ob-space-250)',
         border: 'var(--ob-border-fine-strong)',
@@ -164,8 +175,8 @@ export function FinanceHeaderControls({
         bgcolor: alpha(theme.palette.background.paper, 0.75),
         backdropFilter: 'blur(var(--ob-blur-sm))',
         overflow: 'hidden',
-        width: { xs: '100%', sm: 'auto' },
-        maxWidth: { xs: '100%', sm: 'var(--ob-size-finance-header-controls)' },
+        width: 'fit-content',
+        maxWidth: '100%',
         minWidth: 0,
         flexShrink: 1,
       }}
@@ -176,7 +187,6 @@ export function FinanceHeaderControls({
           display: 'flex',
           alignItems: 'center',
           px: 'var(--ob-space-150)',
-          pr: 'var(--ob-space-150)',
           borderRight: 1,
           borderColor: alpha(theme.palette.divider, 0.6),
           minWidth: 0,
@@ -202,69 +212,90 @@ export function FinanceHeaderControls({
       {/* Project selector segment */}
       <Box
         sx={{
-          position: 'relative',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
+          gap: 'var(--ob-space-075)',
           px: 'var(--ob-space-150)',
           borderRight: 1,
           borderColor: alpha(theme.palette.divider, 0.6),
           minWidth: 0,
+          flex: '0 1 auto',
+          width: 'fit-content',
+          maxWidth: 'var(--ob-size-finance-project-select)',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={t('finance.projectSelector.title')}
+        onClick={(event) => setProjectMenuAnchor(event.currentTarget)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            setProjectMenuAnchor(event.currentTarget as HTMLElement)
+          }
         }}
       >
-        <Box
-          component="select"
-          value={selectValue}
-          onChange={(event) =>
-            handleOptionChange((event.target as HTMLSelectElement).value)
-          }
-          aria-label={t('finance.projectSelector.title')}
+        <Typography
           sx={{
-            height: 'var(--ob-space-250)',
-            width: '100%',
-            minWidth: 0,
-            border: 0,
-            outline: 'none',
-            bgcolor: 'transparent',
             color: 'text.primary',
             fontSize: 'var(--ob-font-size-sm)',
             fontWeight: 700,
             fontFamily: 'var(--ob-font-family-base)',
-            appearance: 'none',
-            pr: 'var(--ob-space-200)',
-            pl: 0,
-            textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            cursor: 'pointer',
+            textOverflow: 'ellipsis',
+            minWidth: 0,
+            maxWidth: '100%',
           }}
         >
-          {selectOptions.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-          <option value="manual">
-            + {t('finance.projectSelector.enterManualId')}
-          </option>
-        </Box>
-        <Box
-          aria-hidden
-          sx={{
-            position: 'absolute',
-            right: 'var(--ob-space-075)',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'text.secondary',
-            display: 'flex',
-            alignItems: 'center',
-            height: 'var(--ob-space-250)',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-          }}
-        >
+          {selectedLabel}
+        </Typography>
+        <Box aria-hidden sx={{ color: 'text.secondary', display: 'flex' }}>
           <KeyboardArrowDown fontSize="small" />
         </Box>
       </Box>
+      <Menu
+        anchorEl={projectMenuAnchor}
+        open={Boolean(projectMenuAnchor)}
+        onClose={() => setProjectMenuAnchor(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 'var(--ob-space-050)',
+              borderRadius: 'var(--ob-radius-md)',
+              border: 'var(--ob-border-fine-strong)',
+              bgcolor: alpha(theme.palette.background.paper, 0.95),
+              backdropFilter: 'blur(var(--ob-blur-sm))',
+            },
+          },
+        }}
+      >
+        {selectOptions.map((option) => (
+          <MenuItem
+            key={option.id}
+            selected={option.id === selectValue}
+            onClick={() => handleOptionChange(option.id)}
+            sx={{
+              fontSize: 'var(--ob-font-size-sm)',
+              fontWeight: option.id === selectValue ? 700 : 500,
+              minWidth: 'var(--ob-size-finance-project-select)',
+            }}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
+        <MenuItem
+          onClick={() => handleOptionChange('manual')}
+          sx={{
+            fontSize: 'var(--ob-font-size-sm)',
+            color: 'text.secondary',
+            minWidth: 'var(--ob-size-finance-project-select)',
+          }}
+        >
+          + {t('finance.projectSelector.enterManualId')}
+        </MenuItem>
+      </Menu>
 
       {/* Refresh */}
       <Button
@@ -315,7 +346,10 @@ export function FinanceHeaderControls({
         {exporting ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />
         ) : (
-          t('finance.actions.exportCsv')
+          <>
+            <FileDownloadIcon fontSize="small" />
+            {showExportLabel ? t('finance.actions.exportCsv') : null}
+          </>
         )}
       </Button>
     </Box>

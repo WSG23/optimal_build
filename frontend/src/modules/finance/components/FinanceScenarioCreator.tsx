@@ -358,6 +358,7 @@ export function FinanceScenarioCreator({
                 component="table"
                 sx={{
                   width: '100%',
+                  minWidth: '1100px',
                   borderCollapse: 'separate',
                   borderSpacing: 0,
                   '& th': {
@@ -383,8 +384,30 @@ export function FinanceScenarioCreator({
                   '& tr:last-child td': {
                     borderBottom: 'none',
                   },
-                  '& thead th:first-of-type': {
-                    minWidth: 'var(--ob-size-drop-zone)',
+                  '& th:nth-of-type(1), & td:nth-of-type(1)': {
+                    minWidth: '180px',
+                  },
+                  '& th:nth-of-type(2), & td:nth-of-type(2)': {
+                    minWidth: '140px',
+                  },
+                  '& th:nth-of-type(3), & td:nth-of-type(3)': {
+                    minWidth: '120px',
+                  },
+                  '& th:nth-of-type(4), & td:nth-of-type(4)': {
+                    minWidth: '140px',
+                  },
+                  '& th:nth-of-type(5), & td:nth-of-type(5)': {
+                    minWidth: '140px',
+                  },
+                  '& th:nth-of-type(6), & td:nth-of-type(6)': {
+                    minWidth: '160px',
+                  },
+                  '& th:nth-of-type(7), & td:nth-of-type(7)': {
+                    minWidth: '160px',
+                  },
+                  '& th:nth-of-type(8), & td:nth-of-type(8)': {
+                    minWidth: '84px',
+                    width: '84px',
                   },
                 }}
               >

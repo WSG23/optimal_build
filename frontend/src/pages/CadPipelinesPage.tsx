@@ -116,10 +116,12 @@ export function CadPipelinesPage() {
     fetchData()
   }, [projectId, fetchData])
 
-  const overlayCodes = useMemo(
-    () => overlaySuggestions.map((item) => item.code),
-    [overlaySuggestions],
-  )
+  const overlayCodes = useMemo(() => {
+    const normalized = overlaySuggestions
+      .map((item) => item.code.trim().toUpperCase())
+      .filter(Boolean)
+    return Array.from(new Set(normalized))
+  }, [overlaySuggestions])
 
   const roiMetrics = useMemo<RoiMetrics>(() => {
     if (!roi) {
@@ -156,22 +158,29 @@ export function CadPipelinesPage() {
         <Paper
           elevation={0}
           sx={{
-            p: 2,
+            p: 'var(--ob-space-150)',
             mb: 4,
-            backgroundColor: 'rgba(30, 30, 30, 0.6)',
-            backdropFilter: 'blur(var(--ob-blur-md))',
-            border: '1px solid rgba(255,255,255,0.05)',
-            borderRadius: '4px',
+            background: 'var(--ob-color-surface-toolbar)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 'calc(var(--ob-radius-lg) + var(--ob-space-050))', // ~12px
+            boxShadow: 'var(--ob-shadow-xl)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 2,
+            flexWrap: { xs: 'wrap', md: 'nowrap' },
+            gap: 'var(--ob-space-150)',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-150)',
+              minWidth: 0,
+            }}
+          >
             <TextField
-              label={t('pipelines.projectLabel')}
+              hiddenLabel
               type="number"
               variant="outlined"
               size="small"
@@ -179,33 +188,43 @@ export function CadPipelinesPage() {
               onChange={(e) => {
                 setProjectId(Number(e.target.value) || DEFAULT_PROJECT_ID)
               }}
+              placeholder={t('pipelines.projectLabel')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
+                    <SearchIcon sx={{ color: 'var(--ob-neutral-500)' }} />
                   </InputAdornment>
                 ),
                 sx: {
-                  color: 'white',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  color: 'var(--ob-neutral-100)',
+                  backgroundColor: 'rgba(51, 65, 85, 0.5)', // slate-700/50
+                  borderRadius: 'var(--ob-radius-md)',
+                  width: '12rem', // matches Gemini (w-48)
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderColor: 'rgba(71, 85, 105, 1)', // slate-600
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(255,255,255,0.3)',
+                    borderColor: 'rgba(148, 163, 184, 0.5)',
                   },
                 },
               }}
-              InputLabelProps={{ sx: { color: 'text.secondary' } }}
             />
             <IconButton
               onClick={handleRetry}
               disabled={loading}
-              color="primary"
-              sx={{ border: '1px solid rgba(255,255,255,0.1)' }}
+              sx={{
+                borderRadius: 'var(--ob-radius-pill)',
+                width: 'var(--ob-size-icon-md)',
+                height: 'var(--ob-size-icon-md)',
+                color: 'var(--ob-neutral-500)',
+                '&:hover': {
+                  color: 'var(--ob-neutral-100)',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                },
+              }}
             >
               {loading ? (
-                <CircularProgress size={24} color="inherit" />
+                <CircularProgress size={18} color="inherit" />
               ) : (
                 <RefreshIcon />
               )}
@@ -213,40 +232,66 @@ export function CadPipelinesPage() {
           </Box>
 
           {overlayCodes.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+                minWidth: 0,
+                flex: '1 1 auto',
+                justifyContent: { xs: 'flex-start', md: 'flex-end' },
+                flexWrap: 'nowrap',
+              }}
+            >
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'text.secondary',
+                  color: 'var(--ob-neutral-500)',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.16em',
+                  fontWeight: 900,
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {t('detection.overlays')}:
               </Typography>
-              {overlayCodes.slice(0, 3).map((code) => (
-                <Box
-                  key={code}
-                  sx={{
-                    px: 1,
-                    py: 0.5,
-                    backgroundColor:
-                      'rgba(var(--ob-color-brand-primary-emphasis-rgb) / 0.1)',
-                    border:
-                      '1px solid rgba(var(--ob-color-brand-primary-emphasis-rgb) / 0.3)',
-                    borderRadius: 'var(--ob-radius-sm)',
-                    color: 'var(--ob-color-brand-primary-emphasis)',
-                    fontSize: 'var(--ob-font-size-xs)',
-                  }}
-                >
-                  {code}
-                </Box>
-              ))}
-              {overlayCodes.length > 3 && (
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  +{overlayCodes.length - 3}
-                </Typography>
-              )}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {overlayCodes.slice(0, 3).map((code) => (
+                  <Box
+                    key={code}
+                    sx={{
+                      px: 'var(--ob-space-125)',
+                      py: 'var(--ob-space-050)',
+                      backgroundColor: 'rgba(51, 65, 85, 0.8)', // slate-700/80
+                      border: '1px solid rgba(71, 85, 105, 1)', // slate-600
+                      borderRadius: 'var(--ob-radius-md)',
+                      color: 'var(--ob-brand-200)',
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      fontWeight: 900,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {code}
+                  </Box>
+                ))}
+                {overlayCodes.length > 3 && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'var(--ob-brand-300)',
+                      fontWeight: 900,
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      letterSpacing: '0.08em',
+                      ml: 1,
+                    }}
+                  >
+                    +{overlayCodes.length - 3}
+                  </Typography>
+                )}
+              </Box>
             </Box>
           )}
         </Paper>
@@ -276,11 +321,7 @@ export function CadPipelinesPage() {
         )}
 
         {/* ROI Snapshot - The "Wow" Deck */}
-        <RoiSummary
-          metrics={roiMetrics}
-          loading={loading}
-          isLive={!loading && !error}
-        />
+        <RoiSummary metrics={roiMetrics} loading={loading} isLive={false} />
 
         {/* Pipeline Suggestions - Visualization for Empty State */}
         <Box sx={{ mb: 6 }}>
