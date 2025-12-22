@@ -247,8 +247,6 @@ export function AppShell({
                 position: 'sticky',
                 top: stickyTop,
                 zIndex: 'var(--ob-z-sticky)',
-                animation:
-                  'ob-header-entrance var(--ob-motion-duration-md) var(--ob-motion-ease-out) both',
               }}
             >
               <Box>

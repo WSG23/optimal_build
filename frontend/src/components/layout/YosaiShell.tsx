@@ -95,8 +95,14 @@ export function AppShell({
                 mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-075)' : 0,
                 mb: 'var(--ob-space-150)',
                 borderRadius: 'var(--ob-radius-sm)',
-                animation:
-                  'ob-header-entrance var(--ob-motion-duration-md) var(--ob-motion-ease-out) both',
+                animation: 'slideDownFade 0.4s ease-out forwards',
+                '@keyframes slideDownFade': {
+                  from: {
+                    opacity: 0,
+                    transform: 'translateY(calc(-1 * var(--ob-space-050)))',
+                  },
+                  to: { opacity: 1, transform: 'translateY(0)' },
+                },
               }}
             >
               <Box sx={{ minWidth: 0 }}>

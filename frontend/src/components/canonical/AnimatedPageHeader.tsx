@@ -18,9 +18,12 @@ export function AnimatedPageHeader({
   return (
     <Box
       sx={{
-        mb: 'var(--ob-space-400)',
-        animation:
-          'ob-header-entrance var(--ob-motion-duration-lg) var(--ob-motion-ease-out) both',
+        mb: 4,
+        animation: 'slideDownFade 0.5s ease-out forwards',
+        '@keyframes slideDownFade': {
+          from: { opacity: 0, transform: 'translateY(-20px)' },
+          to: { opacity: 1, transform: 'translateY(0)' },
+        },
       }}
     >
       {breadcrumbs.length > 0 && (
@@ -62,8 +65,7 @@ export function AnimatedPageHeader({
             sx={{
               fontWeight: 700,
               letterSpacing: '-0.02em',
-              background:
-                'linear-gradient(45deg, var(--ob-color-text-primary), var(--ob-color-text-secondary))',
+              background: 'linear-gradient(45deg, #111827, #4B5563)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               mb: 1,
@@ -75,7 +77,7 @@ export function AnimatedPageHeader({
             <Typography
               variant="body1"
               color="text.secondary"
-              sx={{ maxWidth: 'var(--ob-max-width-content)' }}
+              sx={{ maxWidth: 800 }}
             >
               {subtitle}
             </Typography>

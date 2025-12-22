@@ -9,25 +9,6 @@
 }
 
 /* =============================================================================
-   MOTION: Tokenized animations
-   ============================================================================= */
-
-@keyframes ob-header-entrance {
-    0% {
-        opacity: 0;
-        transform: translateY(calc(-1 * var(--ob-motion-distance-md)));
-    }
-    70% {
-        opacity: 1;
-        transform: translateY(var(--ob-motion-distance-2xs));
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* =============================================================================
    SQUARE CYBER-MINIMALISM: Border Radius Enforcement
    =============================================================================
    Enforces sharp, geometric aesthetic across ALL components.
