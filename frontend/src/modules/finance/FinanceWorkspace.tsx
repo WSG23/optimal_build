@@ -857,14 +857,8 @@ export function FinanceWorkspace() {
                 background: alpha(theme.palette.background.default, 0.8),
                 backdropFilter: 'blur(var(--ob-blur-md))',
                 WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
-                animation: 'slideDownFade 0.4s ease-out forwards',
-                '@keyframes slideDownFade': {
-                  from: {
-                    opacity: 0,
-                    transform: 'translateY(calc(-1 * var(--ob-space-050)))',
-                  },
-                  to: { opacity: 1, transform: 'translateY(0)' },
-                },
+                animation:
+                  'ob-header-entrance var(--ob-motion-duration-md) var(--ob-motion-ease-out) both',
               }}
             >
               <Box
