@@ -247,6 +247,11 @@ export function AppShell({
                 position: 'sticky',
                 top: stickyTop,
                 zIndex: 'var(--ob-z-sticky)',
+                animation:
+                  'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                },
               }}
             >
               <Box>

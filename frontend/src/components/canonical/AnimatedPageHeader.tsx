@@ -19,10 +19,10 @@ export function AnimatedPageHeader({
     <Box
       sx={{
         mb: 4,
-        animation: 'slideDownFade 0.5s ease-out forwards',
-        '@keyframes slideDownFade': {
-          from: { opacity: 0, transform: 'translateY(-20px)' },
-          to: { opacity: 1, transform: 'translateY(0)' },
+        animation:
+          'ob-slide-down-fade var(--ob-motion-header-duration-slow) var(--ob-motion-header-ease) both',
+        '@media (prefers-reduced-motion: reduce)': {
+          animation: 'none',
         },
       }}
     >
@@ -65,7 +65,8 @@ export function AnimatedPageHeader({
             sx={{
               fontWeight: 700,
               letterSpacing: '-0.02em',
-              background: 'linear-gradient(45deg, #111827, #4B5563)',
+              background:
+                'linear-gradient(45deg, var(--ob-color-text-primary), var(--ob-color-text-secondary))',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               mb: 1,

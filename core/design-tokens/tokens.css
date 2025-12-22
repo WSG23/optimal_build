@@ -268,6 +268,16 @@
     --ob-letter-spacing-caps: 0.1em;
 
     /* ===========================================================================
+     7.5 MOTION
+     =========================================================================== */
+
+    /* Header entrance (subtle slide + fade) */
+    --ob-motion-header-duration: 400ms;
+    --ob-motion-header-duration-slow: 500ms;
+    --ob-motion-header-ease: ease-out;
+    --ob-motion-header-distance: var(--ob-space-050);
+
+    /* ===========================================================================
      8. SPACING SCALE
      =========================================================================== */
 
@@ -387,11 +397,11 @@
     --ob-size-drop-zone: 120px;
     --ob-size-controls-min: 400px;
     --ob-size-finance-summary-panel: 340px;
-	    --ob-size-finance-header-controls: 520px;
-	    --ob-size-finance-project-select: 260px;
-	    --ob-size-finance-export-button: 180px;
-	    --ob-size-finance-scenario-card-min: 240px;
-	    --ob-size-sidebar-width: 280px;
+    --ob-size-finance-header-controls: 520px;
+    --ob-size-finance-project-select: 260px;
+    --ob-size-finance-export-button: 180px;
+    --ob-size-finance-scenario-card-min: 240px;
+    --ob-size-sidebar-width: 280px;
     --ob-max-width-content: 1000px;
     --ob-max-width-page: 1400px;
 

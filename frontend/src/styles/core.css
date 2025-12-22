@@ -9,6 +9,21 @@
 }
 
 /* =============================================================================
+   MOTION: Tokenized header entrance
+   ============================================================================= */
+
+@keyframes ob-slide-down-fade {
+    from {
+        opacity: 0;
+        transform: translateY(calc(-1 * var(--ob-motion-header-distance)));
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =============================================================================
    SQUARE CYBER-MINIMALISM: Border Radius Enforcement
    =============================================================================
    Enforces sharp, geometric aesthetic across ALL components.

@@ -95,13 +95,10 @@ export function AppShell({
                 mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-075)' : 0,
                 mb: 'var(--ob-space-150)',
                 borderRadius: 'var(--ob-radius-sm)',
-                animation: 'slideDownFade 0.4s ease-out forwards',
-                '@keyframes slideDownFade': {
-                  from: {
-                    opacity: 0,
-                    transform: 'translateY(calc(-1 * var(--ob-space-050)))',
-                  },
-                  to: { opacity: 1, transform: 'translateY(0)' },
+                animation:
+                  'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
                 },
               }}
             >
