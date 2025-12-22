@@ -32,7 +32,6 @@ import { AnalyticsPanel } from './components/AnalyticsPanel'
 import { RoiPanel } from './components/RoiPanel'
 import { MetricTile } from '../../../components/canonical/MetricTile'
 import { Card } from '../../../components/canonical/Card'
-import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import type {
   AnalyticsMetric,
   BenchmarkEntry,
@@ -364,16 +363,7 @@ export function BusinessPerformancePage() {
   // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
 
   return (
-    <Box className="bp-page" sx={{ p: 'var(--ob-space-300)' }}>
-      <AnimatedPageHeader
-        title="Business Performance"
-        subtitle="Real-time insights into your pipeline, agent activity, and ROI."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/' },
-          { label: 'Business Performance' },
-        ]}
-      />
-
+    <Box className="bp-page">
       <Grid
         container
         spacing="var(--ob-space-300)"
@@ -392,9 +382,8 @@ export function BusinessPerformancePage() {
           <MetricTile
             label="Open Pipeline Value"
             value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
-            unit="SGD"
             icon={<AttachMoney fontSize="small" />}
-            variant="primary"
+            variant="hero"
             trend={!pipelineLoading ? '+12%' : undefined}
           />
         </Grid>

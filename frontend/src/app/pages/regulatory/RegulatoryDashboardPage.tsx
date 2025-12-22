@@ -36,12 +36,10 @@ import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
 import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
 import { useRouterPath } from '../../../router'
 import { Card } from '../../../components/canonical/Card'
-import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import {
   getSectionHeaderSx,
   getTableSx,
   getPrimaryButtonSx,
-  getCardHoverSx,
   getBorderColor,
 } from '../../../utils/themeStyles'
 
@@ -94,7 +92,6 @@ export const RegulatoryDashboardPage: React.FC = () => {
   // Theme-aware styles
   const sectionHeaderSx = getSectionHeaderSx(isDarkMode)
   const tableSx = getTableSx(isDarkMode)
-  const cardHoverSx = getCardHoverSx(isDarkMode)
   const borderColor = getBorderColor(isDarkMode)
 
   const fetchSubmissions = useCallback(
@@ -177,331 +174,321 @@ export const RegulatoryDashboardPage: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'var(--ob-color-bg-root)',
-        p: 'var(--ob-space-300)',
-      }}
-    >
-      <Box sx={{ maxWidth: 1400, margin: '0 auto' }}>
-        <AnimatedPageHeader
-          title="Regulatory Compliance"
-          subtitle="Manage Singapore authority submissions (CORENET 2.0 Integration)"
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Regulatory Compliance' },
-          ]}
-          action={
-            <Box sx={{ display: 'flex', gap: 'var(--ob-space-200)' }}>
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={() => fetchSubmissions(true)}
-                disabled={refreshing || loading}
-              >
-                {refreshing ? 'Updating...' : 'Check Status'}
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setWizardOpen(true)}
-                sx={getPrimaryButtonSx()}
-              >
-                New Submission
-              </Button>
-            </Box>
-          }
-        />
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 'var(--ob-space-300)' }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Quick Actions */}
-        <Grid
-          container
-          spacing="var(--ob-space-200)"
-          sx={{ mb: 'var(--ob-space-300)' }}
+    <Box sx={{ maxWidth: 1400, margin: '0 auto' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 'var(--ob-space-200)',
+          flexWrap: 'wrap',
+          mb: 'var(--ob-space-200)',
+        }}
+      >
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={() => fetchSubmissions(true)}
+          disabled={refreshing || loading}
         >
-          <Grid item xs={12} sm={4}>
-            <Card
-              variant="glass"
-              hover="lift"
-              onClick={() => setChangeOfUseOpen(true)}
-              sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--ob-space-200)',
-                }}
-              >
-                <SwapIcon color="primary" fontSize="large" />
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Change of Use
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Apply for land use conversion
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card
-              variant="glass"
-              hover="lift"
-              onClick={() => setHeritageFormOpen(true)}
-              sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--ob-space-200)',
-                }}
-              >
-                <HeritageIcon color="primary" fontSize="large" />
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Heritage Submission
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    STB conservation application
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card
-              variant="glass"
-              hover="lift"
-              onClick={() => setTabValue(1)}
-              sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--ob-space-200)',
-                }}
-              >
-                <TimelineIcon color="primary" fontSize="large" />
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Compliance Timeline
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    View regulatory path by asset type
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
-          </Grid>
-        </Grid>
+          {refreshing ? 'Updating...' : 'Check Status'}
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setWizardOpen(true)}
+          sx={getPrimaryButtonSx()}
+        >
+          New Submission
+        </Button>
+      </Box>
 
-        {/* Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab
-              label="Submissions"
-              icon={<SubmissionIcon />}
-              iconPosition="start"
-            />
-            <Tab
-              label="Compliance Path"
-              icon={<TimelineIcon />}
-              iconPosition="start"
-            />
-          </Tabs>
-        </Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 'var(--ob-space-300)' }}>
+          {error}
+        </Alert>
+      )}
 
-        {/* Tab 0: Submissions */}
-        <TabPanel value={tabValue} index={0}>
-          {/* Agency Status Cards */}
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ mb: 'var(--ob-space-200)', ...sectionHeaderSx }}
+      {/* Quick Actions */}
+      <Grid
+        container
+        spacing="var(--ob-space-200)"
+        sx={{ mb: 'var(--ob-space-300)' }}
+      >
+        <Grid item xs={12} sm={4}>
+          <Card
+            variant="glass"
+            hover="lift"
+            onClick={() => setChangeOfUseOpen(true)}
+            sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
           >
-            Connected Agencies
-          </Typography>
-          <Grid
-            container
-            spacing="var(--ob-space-200)"
-            sx={{ mb: 'var(--ob-space-400)' }}
-          >
-            {AGENCIES_INFO.map((agency) => (
-              <Grid item xs={12} sm={6} md={3} key={agency.code}>
-                <Card
-                  variant="glass"
-                  sx={{
-                    p: 'var(--ob-space-200)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ob-space-200)',
-                  }}
-                >
-                  <AgencyIcon color="primary" fontSize="large" />
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {agency.code}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {agency.name}
-                    </Typography>
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* Submissions Table */}
-          {loading ? (
             <Box
               sx={{
                 display: 'flex',
-                justifyContent: 'center',
-                p: 'var(--ob-space-800)',
+                alignItems: 'center',
+                gap: 'var(--ob-space-200)',
               }}
             >
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Card variant="glass" sx={{ overflow: 'hidden' }}>
-              <Box
-                sx={{
-                  p: 'var(--ob-space-200)',
-                  borderBottom: `1px solid ${borderColor}`,
-                }}
-              >
-                <Typography variant="h6" sx={sectionHeaderSx}>
-                  Active Submissions
+              <SwapIcon color="primary" fontSize="large" />
+              <Box>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Change of Use
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Apply for land use conversion
                 </Typography>
               </Box>
-              {submissions.length === 0 ? (
-                <Box sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
-                  <Typography color="text.secondary">
-                    No submissions found for this project.
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card
+            variant="glass"
+            hover="lift"
+            onClick={() => setHeritageFormOpen(true)}
+            sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-200)',
+              }}
+            >
+              <HeritageIcon color="primary" fontSize="large" />
+              <Box>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Heritage Submission
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  STB conservation application
+                </Typography>
+              </Box>
+            </Box>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card
+            variant="glass"
+            hover="lift"
+            onClick={() => setTabValue(1)}
+            sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-200)',
+              }}
+            >
+              <TimelineIcon color="primary" fontSize="large" />
+              <Box>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Compliance Timeline
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  View regulatory path by asset type
+                </Typography>
+              </Box>
+            </Box>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={handleTabChange}>
+          <Tab
+            label="Submissions"
+            icon={<SubmissionIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            label="Compliance Path"
+            icon={<TimelineIcon />}
+            iconPosition="start"
+          />
+        </Tabs>
+      </Box>
+
+      {/* Tab 0: Submissions */}
+      <TabPanel value={tabValue} index={0}>
+        {/* Agency Status Cards */}
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ mb: 'var(--ob-space-200)', ...sectionHeaderSx }}
+        >
+          Connected Agencies
+        </Typography>
+        <Grid
+          container
+          spacing="var(--ob-space-200)"
+          sx={{ mb: 'var(--ob-space-400)' }}
+        >
+          {AGENCIES_INFO.map((agency) => (
+            <Grid item xs={12} sm={6} md={3} key={agency.code}>
+              <Card
+                variant="glass"
+                sx={{
+                  p: 'var(--ob-space-200)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-200)',
+                }}
+              >
+                <AgencyIcon color="primary" fontSize="large" />
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {agency.code}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {agency.name}
                   </Typography>
                 </Box>
-              ) : (
-                <Table sx={tableSx}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Reference No.</TableCell>
-                      <TableCell>Title</TableCell>
-                      <TableCell>Agency</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Submitted</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {submissions.map((row) => (
-                      <TableRow key={row.id} hover>
-                        <TableCell sx={{ fontFamily: 'monospace' }}>
-                          {row.submission_no || 'PENDING'}
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 500 }}>
-                          {row.title}
-                          {row.agency_remarks && (
-                            <Typography
-                              variant="caption"
-                              display="block"
-                              color="warning.main"
-                            >
-                              {row.agency_remarks}
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>{row.agency}</TableCell>
-                        <TableCell>{row.submission_type}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={row.status.replace('_', ' ')}
-                            size="small"
-                            color={
-                              getStatusColor(row.status) as
-                                | 'default'
-                                | 'primary'
-                                | 'secondary'
-                                | 'error'
-                                | 'info'
-                                | 'success'
-                                | 'warning'
-                            }
-                            icon={getStatusIcon(row.status)}
-                            variant="outlined"
-                            sx={{ textTransform: 'capitalize' }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(
-                            row.submitted_at || Date.now(),
-                          ).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            onClick={() =>
-                              regulatoryApi
-                                .getSubmissionStatus(row.id)
-                                .then(() => fetchSubmissions(false))
-                            }
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Submissions Table */}
+        {loading ? (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              p: 'var(--ob-space-800)',
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Card variant="glass" sx={{ overflow: 'hidden' }}>
+            <Box
+              sx={{
+                p: 'var(--ob-space-200)',
+                borderBottom: `1px solid ${borderColor}`,
+              }}
+            >
+              <Typography variant="h6" sx={sectionHeaderSx}>
+                Active Submissions
+              </Typography>
+            </Box>
+            {submissions.length === 0 ? (
+              <Box sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
+                <Typography color="text.secondary">
+                  No submissions found for this project.
+                </Typography>
+              </Box>
+            ) : (
+              <Table sx={tableSx}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Reference No.</TableCell>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Agency</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Submitted</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {submissions.map((row) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell sx={{ fontFamily: 'monospace' }}>
+                        {row.submission_no || 'PENDING'}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>
+                        {row.title}
+                        {row.agency_remarks && (
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            color="warning.main"
                           >
-                            Track
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </Card>
-          )}
-        </TabPanel>
+                            {row.agency_remarks}
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>{row.agency}</TableCell>
+                      <TableCell>{row.submission_type}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={row.status.replace('_', ' ')}
+                          size="small"
+                          color={
+                            getStatusColor(row.status) as
+                              | 'default'
+                              | 'primary'
+                              | 'secondary'
+                              | 'error'
+                              | 'info'
+                              | 'success'
+                              | 'warning'
+                          }
+                          icon={getStatusIcon(row.status)}
+                          variant="outlined"
+                          sx={{ textTransform: 'capitalize' }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {new Date(
+                          row.submitted_at || Date.now(),
+                        ).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          onClick={() =>
+                            regulatoryApi
+                              .getSubmissionStatus(row.id)
+                              .then(() => fetchSubmissions(false))
+                          }
+                        >
+                          Track
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        )}
+      </TabPanel>
 
-        {/* Tab 1: Compliance Path */}
-        <TabPanel value={tabValue} index={1}>
-          <CompliancePathTimeline projectId={projectId} />
-        </TabPanel>
+      {/* Tab 1: Compliance Path */}
+      <TabPanel value={tabValue} index={1}>
+        <CompliancePathTimeline projectId={projectId} />
+      </TabPanel>
 
-        {/* Dialogs */}
-        <SubmissionWizard
-          open={wizardOpen}
-          onClose={() => setWizardOpen(false)}
-          projectId={projectId}
-          onSuccess={handleCreateSuccess}
-        />
+      {/* Dialogs */}
+      <SubmissionWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        projectId={projectId}
+        onSuccess={handleCreateSuccess}
+      />
 
-        <ChangeOfUseWizard
-          open={changeOfUseOpen}
-          onClose={() => setChangeOfUseOpen(false)}
-          projectId={projectId}
-          onSuccess={() => {
-            setChangeOfUseOpen(false)
-            fetchSubmissions(true)
-          }}
-        />
+      <ChangeOfUseWizard
+        open={changeOfUseOpen}
+        onClose={() => setChangeOfUseOpen(false)}
+        projectId={projectId}
+        onSuccess={() => {
+          setChangeOfUseOpen(false)
+          fetchSubmissions(true)
+        }}
+      />
 
-        <HeritageSubmissionForm
-          open={heritageFormOpen}
-          onClose={() => setHeritageFormOpen(false)}
-          projectId={projectId}
-          onSuccess={() => {
-            setHeritageFormOpen(false)
-            fetchSubmissions(true)
-          }}
-        />
-      </Box>
+      <HeritageSubmissionForm
+        open={heritageFormOpen}
+        onClose={() => setHeritageFormOpen(false)}
+        projectId={projectId}
+        onSuccess={() => {
+          setHeritageFormOpen(false)
+          fetchSubmissions(true)
+        }}
+      />
     </Box>
   )
 }

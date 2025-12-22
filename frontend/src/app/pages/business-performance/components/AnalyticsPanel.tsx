@@ -65,13 +65,12 @@ export function AnalyticsPanel({
         className="bp-analytics__metrics"
         sx={{ mb: 4 }}
       >
-        {metrics.map((metric, index) => (
+        {metrics.map((metric) => (
           <Grid item xs={12} sm={6} md={4} key={metric.key}>
             <MetricTile
               label={metric.label}
               value={metric.value}
-              variant="glass"
-              delay={index * 50}
+              variant="default"
             />
           </Grid>
         ))}

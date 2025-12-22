@@ -1,3 +1,5 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
+
 import {
   Box,
   CircularProgress,
@@ -95,7 +97,7 @@ function ScenarioCard({
       role="button"
       tabIndex={0}
       onClick={() => onSelect(scenario.scenarioId)}
-      onKeyDown={(event) => {
+      onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           onSelect(scenario.scenarioId)

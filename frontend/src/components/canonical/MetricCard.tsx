@@ -1,6 +1,6 @@
 import { Box, Skeleton, Typography } from '@mui/material'
 import { ReactNode } from 'react'
-import { GlassCard } from './GlassCard'
+import { Card } from './Card'
 
 export interface MetricCardProps {
   label: string
@@ -61,7 +61,7 @@ export function MetricCard({
   }
 
   return (
-    <GlassCard
+    <Card
       variant="glass" // Always use premium glass for metrics
       hover={onClick ? 'lift' : 'subtle'}
       animated={animated && !loading} // Animate entrance unless loading initial skeleton
@@ -173,6 +173,6 @@ export function MetricCard({
           </Box>
         )}
       </Box>
-    </GlassCard>
+    </Card>
   )
 }

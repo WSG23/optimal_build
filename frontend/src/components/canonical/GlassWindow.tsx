@@ -1,4 +1,4 @@
-import { Box, IconButton, Modal, Paper, Typography } from '@mui/material'
+import { Box, IconButton, Modal, Typography } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import { ReactNode } from 'react'
 import { GlassCard } from './GlassCard'
@@ -33,8 +33,9 @@ export function GlassWindow({
 }: GlassWindowProps) {
   const content = (
     <GlassCard
-      variant="glass-heavy"
       className="glass-window animate-entrance"
+      blur={28}
+      opacity={0.9}
       sx={{
         width: '100%',
         maxWidth: maxWidth,

@@ -111,18 +111,20 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         }
       : {}
 
+    const resolvedSx = Array.isArray(sx) ? sx : [sx]
+
     return (
       <Box
         ref={ref}
         className={className}
         onClick={onClick}
-        sx={{
-          ...baseStyles,
-          ...variantStyles[variant],
-          ...hoverStyles[hover],
-          ...animationStyles,
-          ...sx,
-        }}
+        sx={[
+          baseStyles,
+          variantStyles[variant],
+          hoverStyles[hover],
+          animationStyles,
+          ...resolvedSx,
+        ]}
       >
         {children}
       </Box>

@@ -84,9 +84,9 @@ export function CadUploader({
   const detectedUnits = status?.detectedUnits ?? summary?.detectedUnits ?? []
 
   const steps = [
-    t('uploader.steps.uploading', 'Uploading'),
-    t('uploader.steps.processing', 'Processing Layers'),
-    t('uploader.steps.detecting', 'Detecting Units'),
+    t('uploader.steps.uploading', { defaultValue: 'Uploading' }),
+    t('uploader.steps.processing', { defaultValue: 'Processing Layers' }),
+    t('uploader.steps.detecting', { defaultValue: 'Detecting Units' }),
   ]
 
   return (
@@ -166,13 +166,21 @@ export function CadUploader({
                 gutterBottom={false}
               >
                 {isUploading
-                  ? t('uploader.uploadingTitle', 'Uploading...')
-                  : t('uploader.dropTitle', 'Upload CAD File')}
+                  ? t('uploader.uploadingTitle', {
+                      defaultValue: 'Uploading...',
+                    })
+                  : t('uploader.dropTitle', {
+                      defaultValue: 'Upload CAD File',
+                    })}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {isUploading
-                  ? t('uploader.uploadingHint', 'Please wait...')
-                  : t('uploader.dropHint', 'Drag & drop or click to browse')}
+                  ? t('uploader.uploadingHint', {
+                      defaultValue: 'Please wait...',
+                    })
+                  : t('uploader.dropHint', {
+                      defaultValue: 'Drag & drop or click to browse',
+                    })}
               </Typography>
             </Box>
             {!isUploading && (
@@ -184,7 +192,9 @@ export function CadUploader({
                 }}
               >
                 <Typography variant="caption" color="text.disabled">
-                  {t('uploader.supportedFormats', '.dxf, .ifc, .pdf')}
+                  {t('uploader.supportedFormats', {
+                    defaultValue: '.dxf, .ifc, .pdf',
+                  })}
                 </Typography>
               </Box>
             )}

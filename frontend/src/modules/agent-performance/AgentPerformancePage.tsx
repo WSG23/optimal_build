@@ -151,17 +151,17 @@ export default function AgentPerformancePage() {
                           <Card
                             variant="glass"
                             key={deal.id}
-                            hoverEffect
+                            hover="lift"
                             sx={{
                               p: 1.5,
                               cursor: 'pointer',
                               border:
                                 selectedDealId === deal.id
-                                  ? '1px solid #2196f3'
+                                  ? '1px solid var(--ob-color-brand-primary)'
                                   : undefined,
                               background:
                                 selectedDealId === deal.id
-                                  ? 'rgba(33, 150, 243, 0.05)'
+                                  ? 'var(--ob-color-brand-soft)'
                                   : undefined,
                             }}
                             onClick={() => setSelectedDealId(deal.id)}
@@ -266,8 +266,7 @@ export default function AgentPerformancePage() {
                         label={metric.label as string}
                         value={metric.value as string}
                         icon={metric.icon}
-                        variant={metric.variant || 'glass'}
-                        delay={idx * 100}
+                        variant="default"
                       />
                     </Grid>
                   ))}

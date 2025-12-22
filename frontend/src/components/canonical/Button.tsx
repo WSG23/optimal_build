@@ -5,34 +5,40 @@ import {
 } from '@mui/material'
 import { forwardRef } from 'react'
 
-export interface ButtonProps extends Omit<MuiButtonProps, 'variant'> {
+type ObButtonVariant = 'primary' | 'secondary' | 'ghost'
+type ObButtonSize = 'sm' | 'md' | 'lg'
+
+export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   /**
    * Button variant:
    * - 'primary': Gradient background with glow (main CTAs)
    * - 'secondary': Glass surface with border
    * - 'ghost': Transparent with hover effect
    */
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: ObButtonVariant
   /**
    * Button size:
    * - 'sm': 32px height
    * - 'md': 40px height (default)
    * - 'lg': 48px height
    */
-  size?: 'sm' | 'md' | 'lg'
+  size?: ObButtonSize
   /**
    * Disable shimmer animation on primary buttons
    */
   disableShimmer?: boolean
 }
 
+type StyledButtonProps = Omit<MuiButtonProps, 'variant' | 'size'> & {
+  obVariant: ObButtonVariant
+  obSize: ObButtonSize
+  disableShimmer?: boolean
+}
+
 const StyledButton = styled(MuiButton, {
-  shouldForwardProp: (prop) => prop !== 'disableShimmer',
-})<ButtonProps & { disableShimmer?: boolean }>(({
-  variant,
-  size,
-  disableShimmer,
-}) => {
+  shouldForwardProp: (prop) =>
+    prop !== 'disableShimmer' && prop !== 'obVariant' && prop !== 'obSize',
+})<StyledButtonProps>(({ obVariant, obSize, disableShimmer }) => {
   // Height mapping
   const heightMap = {
     sm: '32px',
@@ -42,7 +48,7 @@ const StyledButton = styled(MuiButton, {
 
   // Common base styles - ENFORCED 2px radius
   const common = {
-    height: heightMap[size || 'md'],
+    height: heightMap[obSize],
     borderRadius: 'var(--ob-radius-xs)', // 2px - ENFORCED
     textTransform: 'none' as const,
     fontWeight: 'var(--ob-font-weight-semibold)',
@@ -62,7 +68,7 @@ const StyledButton = styled(MuiButton, {
   }
 
   // Primary variant - gradient with shimmer
-  if (variant === 'primary') {
+  if (obVariant === 'primary') {
     return {
       ...common,
       background:
@@ -99,7 +105,7 @@ const StyledButton = styled(MuiButton, {
   }
 
   // Secondary variant - glass with border
-  if (variant === 'secondary') {
+  if (obVariant === 'secondary') {
     return {
       ...common,
       background: 'var(--ob-surface-glass-1)',
@@ -115,7 +121,7 @@ const StyledButton = styled(MuiButton, {
   }
 
   // Ghost variant - transparent
-  if (variant === 'ghost') {
+  if (obVariant === 'ghost') {
     return {
       ...common,
       background: 'transparent',
@@ -154,8 +160,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <StyledButton
         ref={ref}
-        variant={variant}
-        size={size}
+        obVariant={variant}
+        obSize={size}
         disableShimmer={disableShimmer}
         disableElevation
         disableRipple

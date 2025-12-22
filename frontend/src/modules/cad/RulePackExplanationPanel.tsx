@@ -33,7 +33,7 @@ export function RulePackExplanationPanel({
     return (
       <GlassCard sx={{ p: 'var(--ob-space-300)' }}>
         <Typography variant="h6" sx={{ mb: 'var(--ob-space-300)' }}>
-          {t('panels.rulePackTitle', 'Rule constraints')}
+          {t('panels.rulePackTitle', { defaultValue: 'Rule constraints' })}
         </Typography>
         <Stack sx={{ gap: 'var(--ob-space-200)' }}>
           <Skeleton variant="rectangular" height={40} />
@@ -48,7 +48,9 @@ export function RulePackExplanationPanel({
     return (
       <GlassCard sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
-          {t('panels.rulePackEmpty', 'No active rules for this selection.')}
+          {t('panels.rulePackEmpty', {
+            defaultValue: 'No active rules for this selection.',
+          })}
         </Typography>
       </GlassCard>
     )
@@ -69,7 +71,7 @@ export function RulePackExplanationPanel({
         gutterBottom
         sx={{ mb: 'var(--ob-space-300)' }}
       >
-        {t('panels.rulePackTitle', 'Rule constraints')}
+        {t('panels.rulePackTitle', { defaultValue: 'Rule constraints' })}
       </Typography>
 
       <Grid container spacing={3}>

@@ -1,7 +1,7 @@
 import { Box, Typography, useTheme, alpha } from '@mui/material'
 import { TrendingUp, TrendingDown } from '@mui/icons-material'
 
-interface HeroMetricProps {
+export interface HeroMetricProps {
   label: string
   value: string | number
   unit?: string

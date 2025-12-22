@@ -17,14 +17,12 @@ import LockIcon from '@mui/icons-material/Lock'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import DescriptionIcon from '@mui/icons-material/Description'
 import RadarIcon from '@mui/icons-material/Radar'
-import Tooltip from '@mui/material/Tooltip'
 
 import {
   DEFAULT_SCENARIO_ORDER,
   fetchPropertyMarketIntelligence,
   generateProfessionalPack,
   logPropertyByGpsWithFeatures,
-  type AccuracyBand,
   type DevelopmentScenario,
   type GpsCaptureSummaryWithFeatures,
   type DeveloperFeatureData,
@@ -97,7 +95,6 @@ export function GpsCapturePage() {
 
   // Immersive Experience States
   const [isScanning, setIsScanning] = useState(false)
-  const [showHud, setShowHud] = useState(false)
 
   // Feature preferences hook for optional developer features
   const {
@@ -266,7 +263,6 @@ export function GpsCapturePage() {
         setMarketSummary(null)
         setMarketError(null)
         setDeveloperFeatures(null)
-        setShowHud(false) // Hide HUD momentarily or keep it locked
 
         // Artificial delay for "Scanning" effect (1.5s) if user desires the "Wow" timing
         await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -300,7 +296,6 @@ export function GpsCapturePage() {
           },
           ...prev,
         ])
-        setShowHud(true) // Unlock HUD
 
         setMarketLoading(true)
         try {
@@ -829,22 +824,6 @@ function formatPackLabel(value: ProfessionalPackType) {
 
 function humanizeMetricKey(key: string) {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-}
-
-/**
- * Format accuracy band as display string (e.g., "±8-10%")
- */
-function formatAccuracyBand(band: AccuracyBand): string {
-  const lowAbs = Math.abs(band.low_pct)
-  const highAbs = Math.abs(band.high_pct)
-  // If low and high are same magnitude, show as single value
-  if (lowAbs === highAbs) {
-    return `±${lowAbs}%`
-  }
-  // Show range with min first
-  const minVal = Math.min(lowAbs, highAbs)
-  const maxVal = Math.max(lowAbs, highAbs)
-  return `±${minVal}-${maxVal}%`
 }
 
 function formatMetricValue(

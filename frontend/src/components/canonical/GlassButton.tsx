@@ -1,155 +1,40 @@
-import { Button, type ButtonProps, styled } from '@mui/material'
+import {
+  Button as MuiButton,
+  type ButtonProps as MuiButtonProps,
+  type SxProps,
+  type Theme,
+} from '@mui/material'
 import { forwardRef } from 'react'
 
 type ObVariant = 'primary' | 'secondary' | 'ghost'
-type GlassButtonVariant = ButtonProps['variant'] | ObVariant
+type MuiVariant = NonNullable<MuiButtonProps['variant']>
+type GlassButtonVariant = ObVariant | MuiVariant
 
-export interface GlassButtonProps extends Omit<ButtonProps, 'variant'> {
-  /**
-   * Variant of the button:
-   * - 'primary': Strong gradient background with glass/glow effect
-   * - 'secondary': Glass surface with border
-   * - 'ghost': Transparent with hover effect
-   */
+export interface GlassButtonProps
+  extends Omit<MuiButtonProps, 'variant' | 'size' | 'sx'> {
   variant?: GlassButtonVariant
-  /**
-   * Size of the button
-   * - 'sm': 32px height
-   * - 'md': 40px height (Standard)
-   * - 'lg': 48px height
-   */
   size?: 'small' | 'medium' | 'large'
-  /**
-   * Shape of the button
-   */
   shape?: 'pill' | 'rounded'
+  sx?: SxProps<Theme>
 }
 
-type StyledGlassButtonProps = ButtonProps & {
-  obVariant?: GlassButtonVariant
-  shape?: 'pill' | 'rounded'
-}
+const heightMap = {
+  small: '32px',
+  medium: '40px',
+  large: '48px',
+} as const
 
-const StyledButton = styled(Button, {
-  shouldForwardProp: (prop) => prop !== 'obVariant' && prop !== 'shape',
-})<StyledGlassButtonProps>(({ obVariant, size, shape }) => {
-  // Map custom sizes to fixed heights
-  const heightMap = {
-    small: '32px',
-    medium: '40px',
-    large: '48px',
-  }
+const radiusMap = {
+  pill: 'var(--ob-radius-pill)',
+  rounded: 'var(--ob-radius-xs)',
+} as const
 
-  const radiusMap = {
-    pill: 'var(--ob-radius-pill)',
-    rounded: 'var(--ob-radius-xs)', // 2px - buttons, tags, chips
-  }
-
-  // Common base styles
-  const common = {
-    height: heightMap[size || 'medium'],
-    borderRadius: radiusMap[shape || 'pill'],
-    textTransform: 'none',
-    fontWeight: 'var(--ob-font-weight-semibold)',
-    letterSpacing: 'var(--ob-letter-spacing-wider)',
-    padding: '0 var(--ob-space-150)', // 24px horizontal
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    position: 'relative',
-    overflow: 'hidden',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 'var(--ob-space-050)',
-    whiteSpace: 'nowrap',
-    '&:active': {
-      transform: 'scale(0.98)',
-    },
-  }
-
-  // Variants
-  const variant = obVariant
-  if (variant === 'primary' || variant === 'contained') {
-    return {
-      ...common,
-      background: 'var(--ob-gradient-brand)',
-      color: 'var(--ob-color-text-inverse)',
-      border: 'none',
-      boxShadow: 'var(--ob-shadow-glow-brand)',
-      '&:hover': {
-        background: 'var(--ob-gradient-brand-hover)',
-        boxShadow: 'var(--ob-shadow-glow-brand-strong)',
-        transform: 'translateY(-1px)',
-      },
-      // Shimmer effect overlay
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: '-100%',
-        width: '50%',
-        height: '100%',
-        background:
-          'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-        transform: 'skewX(-20deg)',
-        transition: 'none',
-      },
-      '&:hover::after': {
-        left: '200%',
-        transition: 'left 0.7s ease-in-out',
-      },
-    }
-  }
-
-  if (variant === 'secondary' || variant === 'outlined') {
-    return {
-      ...common,
-      background: 'var(--ob-surface-glass-1)',
-      color: 'var(--ob-color-text-primary)',
-      border: '1px solid var(--ob-border-glass-strong)',
-      backdropFilter: 'blur(var(--ob-blur-xs))',
-      '&:hover': {
-        background: 'var(--ob-surface-glass-2)',
-        borderColor: 'var(--ob-color-text-primary)',
-        transform: 'translateY(-1px)',
-        boxShadow: 'var(--ob-shadow-sm)',
-      },
-    }
-  }
-
-  if (variant === 'ghost' || variant === 'text') {
-    return {
-      ...common,
-      background: 'transparent',
-      color: 'var(--ob-color-text-secondary)',
-      padding: '0 var(--ob-space-100)',
-      '&:hover': {
-        color: 'var(--ob-color-text-primary)',
-        background: 'var(--ob-color-action-hover)',
-      },
-    }
-  }
-
-  return common
-})
-
-/**
- * GlassButton - Standardized Premium Action Component
- *
- * Implements the "Wow" factor with gradients, glows, and glass effects.
- * Enforces strict sizing (40px standard) and shape (pill/rounded).
- */
 export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
   (
-    {
-      variant = 'primary',
-      size = 'medium',
-      shape = 'pill',
-      children,
-      ...props
-    },
+    { variant = 'primary', size = 'medium', shape = 'pill', sx, ...props },
     ref,
   ) => {
-    const muiVariant: ButtonProps['variant'] =
+    const muiVariant: MuiVariant =
       variant === 'primary'
         ? 'contained'
         : variant === 'secondary'
@@ -158,19 +43,96 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
             ? 'text'
             : variant
 
+    const commonSx: SxProps<Theme> = {
+      height: heightMap[size],
+      borderRadius: radiusMap[shape],
+      textTransform: 'none',
+      fontWeight: 'var(--ob-font-weight-semibold)',
+      letterSpacing: 'var(--ob-letter-spacing-wider)',
+      padding: '0 var(--ob-space-150)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      position: 'relative',
+      overflow: 'hidden',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 'var(--ob-space-050)',
+      whiteSpace: 'nowrap',
+      '&:active': {
+        transform: 'scale(0.98)',
+      },
+    }
+
+    const resolvedVariant: GlassButtonVariant = variant
+
+    const variantSx: SxProps<Theme> =
+      resolvedVariant === 'primary' || resolvedVariant === 'contained'
+        ? {
+            background: 'var(--ob-gradient-brand)',
+            color: 'var(--ob-color-text-inverse)',
+            border: 'none',
+            boxShadow: 'var(--ob-shadow-glow-brand)',
+            '&:hover': {
+              background: 'var(--ob-gradient-brand-hover)',
+              boxShadow: 'var(--ob-shadow-glow-brand-strong)',
+              transform: 'translateY(-1px)',
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '-100%',
+              width: '50%',
+              height: '100%',
+              background:
+                'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+              transform: 'skewX(-20deg)',
+              transition: 'none',
+            },
+            '&:hover::after': {
+              left: '200%',
+              transition: 'left 0.7s ease-in-out',
+            },
+          }
+        : resolvedVariant === 'secondary' || resolvedVariant === 'outlined'
+          ? {
+              background: 'var(--ob-surface-glass-1)',
+              color: 'var(--ob-color-text-primary)',
+              border: '1px solid var(--ob-border-glass-strong)',
+              backdropFilter: 'blur(var(--ob-blur-xs))',
+              '&:hover': {
+                background: 'var(--ob-surface-glass-2)',
+                borderColor: 'var(--ob-color-text-primary)',
+                transform: 'translateY(-1px)',
+                boxShadow: 'var(--ob-shadow-sm)',
+              },
+            }
+          : resolvedVariant === 'ghost' || resolvedVariant === 'text'
+            ? {
+                background: 'transparent',
+                color: 'var(--ob-color-text-secondary)',
+                padding: '0 var(--ob-space-100)',
+                '&:hover': {
+                  color: 'var(--ob-color-text-primary)',
+                  background: 'var(--ob-color-action-hover)',
+                },
+              }
+            : {}
+
+    const resolvedSx = Array.isArray(sx) ? sx : sx ? [sx] : []
+
     return (
-      <StyledButton
+      <MuiButton
         ref={ref}
         variant={muiVariant}
-        obVariant={variant}
         size={size}
-        shape={shape}
         disableElevation
-        disableRipple // We handle active state via CSS transform
+        disableRipple
+        sx={[commonSx, variantSx, ...resolvedSx]}
         {...props}
-      >
-        {children}
-      </StyledButton>
+      />
     )
   },
 )
+
+GlassButton.displayName = 'GlassButton'

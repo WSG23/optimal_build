@@ -16,7 +16,6 @@ import {
   exportFinanceScenarioCsv,
   type ConstructionLoanInput,
   type SensitivityBandInput,
-  type FinanceScenarioSummary,
   type FinanceAnalyticsMetadata,
 } from '../../api/finance'
 import { resolveDefaultRole } from '../../api/identity'
@@ -25,7 +24,10 @@ import { useTranslation } from '../../i18n'
 import { useRouterController } from '../../router'
 import { buildSensitivitySummaries } from './components/sensitivitySummary'
 import { FinanceScenarioDeleteDialog } from './components/FinanceScenarioDeleteDialog'
-import { FinanceHeaderControls } from './components/FinanceHeaderControls'
+import {
+  FinanceHeaderControls,
+  type FinanceProjectOption,
+} from './components/FinanceHeaderControls'
 import {
   FinanceAccessGate,
   FinanceIdentityHelper,
@@ -390,8 +392,10 @@ export function FinanceWorkspace() {
   )
   const [runningSensitivity, setRunningSensitivity] = useState(false)
   const [sensitivityError, setSensitivityError] = useState<string | null>(null)
-  const [scenarioPendingDelete, setScenarioPendingDelete] =
-    useState<FinanceScenarioSummary | null>(null)
+  const [scenarioPendingDelete, setScenarioPendingDelete] = useState<{
+    scenarioId: number
+    scenarioName: string
+  } | null>(null)
   const [deletingScenarioId, setDeletingScenarioId] = useState<number | null>(
     null,
   )
@@ -682,8 +686,8 @@ export function FinanceWorkspace() {
   )
 
   const handleRequestDeleteScenario = useCallback(
-    (scenario: FinanceScenarioSummary) => {
-      setScenarioPendingDelete(scenario)
+    (scenarioId: number, scenarioName: string) => {
+      setScenarioPendingDelete({ scenarioId, scenarioName })
       setScenarioMessage(null)
     },
     [],

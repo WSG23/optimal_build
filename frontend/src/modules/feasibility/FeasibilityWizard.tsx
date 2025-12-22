@@ -552,7 +552,6 @@ export function FeasibilityWizard({
             financialInputs={financialInputs}
             financialErrors={financialErrors}
             onFinancialChange={handleFinancialChange}
-            t={t}
           />
 
           <GenerativeDesignPanel
@@ -647,7 +646,7 @@ export function FeasibilityWizard({
         <DialogContent
           sx={{
             minHeight: '400px',
-            background: '#f5f5f7',
+            background: 'var(--ob-color-bg-surface-secondary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -705,15 +704,25 @@ export function FeasibilityWizard({
                 marginTop: 'auto',
                 padding: '1rem',
                 width: '100%',
-                borderTop: '1px solid #eee',
+                borderTop: '1px solid var(--ob-color-border-light)',
                 display: 'flex',
                 justifyContent: 'space-between',
               }}
             >
-              <span style={{ fontSize: '0.7rem', color: '#999' }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 GENERATED: {new Date().toLocaleDateString()}
               </span>
-              <span style={{ fontSize: '0.7rem', color: '#999' }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 PAGE 1/12
               </span>
             </div>
@@ -811,7 +820,8 @@ export function FeasibilityWizard({
               }}
               disabled={status === 'loading'}
               style={{
-                background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', // Cyan to Blue
+                background:
+                  'linear-gradient(135deg, var(--ob-color-brand-primary), var(--ob-color-brand-primary-emphasis))',
                 border: 'none',
                 borderRadius: 'var(--ob-radius-full)',
                 padding: '16px 32px',
@@ -950,7 +960,6 @@ export function FeasibilityWizard({
               financialInputs={financialInputs}
               financialErrors={financialErrors}
               onFinancialChange={handleFinancialChange}
-              t={t}
             />
           </div>
 
@@ -1074,7 +1083,7 @@ export function FeasibilityWizard({
             <DialogContent
               sx={{
                 minHeight: '400px',
-                background: '#f5f5f7',
+                background: 'var(--ob-color-bg-surface-secondary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1132,15 +1141,25 @@ export function FeasibilityWizard({
                     marginTop: 'auto',
                     padding: '1rem',
                     width: '100%',
-                    borderTop: '1px solid #eee',
+                    borderTop: '1px solid var(--ob-color-border-light)',
                     display: 'flex',
                     justifyContent: 'space-between',
                   }}
                 >
-                  <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--ob-color-text-muted)',
+                    }}
+                  >
                     GENERATED: {new Date().toLocaleDateString()}
                   </span>
-                  <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--ob-color-text-muted)',
+                    }}
+                  >
                     PAGE 1/12
                   </span>
                 </div>

@@ -17,7 +17,6 @@ import { FeatureTogglePanel } from '../../components/gps-capture/FeatureTogglePa
 import { useFeaturePreferences } from '../../../hooks/useFeaturePreferences'
 import { useRouterController } from '../../../router'
 import { Card } from '../../../components/canonical/Card'
-import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 
 export function DeveloperControlPanel() {
   const { preferences, toggleFeature, entitlements, unlockFeature } =
@@ -33,11 +32,6 @@ export function DeveloperControlPanel() {
 
   return (
     <Container maxWidth="lg">
-      <AnimatedPageHeader
-        title="Developer Control Panel"
-        subtitle="Manage feature flags, debug tools, and system configurations."
-      />
-
       <Grid container spacing={4} sx={{ mt: 2 }}>
         {/* Feature Flags Section */}
         <Grid item xs={12} md={6}>

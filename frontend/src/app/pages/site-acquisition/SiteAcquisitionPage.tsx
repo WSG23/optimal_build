@@ -63,7 +63,6 @@ import {
   InputLabel,
 } from '@mui/material'
 import { Refresh } from '@mui/icons-material'
-import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import { Card } from '../../../components/canonical/Card'
 
 export function SiteAcquisitionPage() {
@@ -600,17 +599,8 @@ export function SiteAcquisitionPage() {
   )
 
   return (
-    <Box className="page site-acquisition" sx={{ pb: 8 }}>
+    <Box className="page site-acquisition" sx={{ pb: 'var(--ob-space-400)' }}>
       <Box sx={{ p: 3 }}>
-        <AnimatedPageHeader
-          title="Site Acquisition"
-          subtitle="Comprehensive property capture and development feasibility analysis for developers"
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Site Acquisition' },
-          ]}
-        />
-
         <Container maxWidth="xl" sx={{ mt: 3 }}>
           {/* Property Capture Form */}
           <Card variant="glass" sx={{ p: 3, mb: 4 }}>

@@ -130,27 +130,15 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   }
 
   return (
-    <Box sx={{ p: 'var(--ob-space-400)', maxWidth: 1200, margin: '0 auto' }}>
+    <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
-          mb: 'var(--ob-space-400)',
+          justifyContent: 'flex-end',
+          mb: 'var(--ob-space-200)',
           alignItems: 'center',
         }}
       >
-        <Box>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
-          >
-            Team Coordination
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Manage your project team, consultants, and approval workflows.
-          </Typography>
-        </Box>
         {activeTab === 0 && (
           <Button
             variant="contained"

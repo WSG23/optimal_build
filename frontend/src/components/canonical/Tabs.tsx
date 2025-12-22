@@ -1,5 +1,5 @@
 import { Box, SxProps, Theme } from '@mui/material'
-import { ReactNode, useState } from 'react'
+import { ReactNode } from 'react'
 
 export interface TabItem {
   /**
@@ -73,24 +73,27 @@ export function Tabs({
   const height = size === 'sm' ? '36px' : '40px'
   const fontSize =
     size === 'sm' ? 'var(--ob-font-size-xs)' : 'var(--ob-font-size-sm)'
+  const resolvedSx = Array.isArray(sx) ? sx : [sx]
 
   return (
     <Box
       role="tablist"
-      sx={{
-        display: 'flex',
-        gap: variant === 'contained' ? 'var(--ob-space-025)' : 0,
-        borderBottom:
-          variant === 'underline' ? 'var(--ob-divider-strong)' : 'none',
-        background:
-          variant === 'contained'
-            ? 'var(--ob-color-surface-strong)'
-            : 'transparent',
-        padding: variant === 'contained' ? 'var(--ob-space-025)' : 0,
-        borderRadius: variant === 'contained' ? 'var(--ob-radius-sm)' : 0,
-        width: fullWidth ? '100%' : 'auto',
-        ...sx,
-      }}
+      sx={[
+        {
+          display: 'flex',
+          gap: variant === 'contained' ? 'var(--ob-space-025)' : 0,
+          borderBottom:
+            variant === 'underline' ? 'var(--ob-divider-strong)' : 'none',
+          background:
+            variant === 'contained'
+              ? 'var(--ob-color-surface-strong)'
+              : 'transparent',
+          padding: variant === 'contained' ? 'var(--ob-space-025)' : 0,
+          borderRadius: variant === 'contained' ? 'var(--ob-radius-sm)' : 0,
+          width: fullWidth ? '100%' : 'auto',
+        },
+        ...resolvedSx,
+      ]}
     >
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab

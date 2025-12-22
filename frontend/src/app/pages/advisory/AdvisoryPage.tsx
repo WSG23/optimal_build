@@ -32,7 +32,6 @@ import {
 } from '../../../api/advisory'
 
 // Canonical Components
-import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
 import { Card } from '../../../components/canonical/Card'
 import { MetricTile } from '../../../components/canonical/MetricTile'
 
@@ -146,17 +145,8 @@ export function AdvisoryPage() {
   }
 
   return (
-    <Box sx={{ pb: 8 }}>
+    <Box sx={{ pb: 'var(--ob-space-400)' }}>
       <Box sx={{ p: 3 }}>
-        <AnimatedPageHeader
-          title="Advisory Services"
-          subtitle="Development strategy insights and market positioning"
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Advisory' },
-          ]}
-        />
-
         <Container maxWidth="xl" sx={{ mt: 3 }}>
           {/* Search Section */}
           <Card variant="glass" sx={{ p: 3, mb: 4 }}>
@@ -225,7 +215,7 @@ export function AdvisoryPage() {
                       <Card
                         variant="glass"
                         sx={{ height: '100%', p: 3 }}
-                        hoverEffect
+                        hover="lift"
                       >
                         <Stack
                           direction="row"
@@ -334,8 +324,7 @@ export function AdvisoryPage() {
                         summary.absorption_forecast
                           .expected_months_to_stabilize,
                       )}
-                      variant="glass"
-                      delay={100}
+                      variant="compact"
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -344,16 +333,14 @@ export function AdvisoryPage() {
                       value={String(
                         summary.absorption_forecast.monthly_velocity_target,
                       )}
-                      variant="glass"
-                      delay={200}
+                      variant="compact"
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <MetricTile
                       label="Confidence"
                       value={summary.absorption_forecast.confidence}
-                      variant="glass"
-                      delay={300}
+                      variant="compact"
                     />
                   </Grid>
                 </Grid>
@@ -514,21 +501,21 @@ export function AdvisoryPage() {
                               <MetricTile
                                 label="Velocity"
                                 value={`${velocityResult.forecast.velocity_units_per_month ?? '—'} units/mo`}
-                                variant="glass"
+                                variant="compact"
                               />
                             </Grid>
                             <Grid item xs={4}>
                               <MetricTile
                                 label="Absorption"
                                 value={`${velocityResult.forecast.absorption_months ?? '—'} months`}
-                                variant="glass"
+                                variant="compact"
                               />
                             </Grid>
                             <Grid item xs={4}>
                               <MetricTile
                                 label="Confidence"
                                 value={`${(velocityResult.forecast.confidence * 100).toFixed(0)}%`}
-                                variant="glass"
+                                variant="compact"
                               />
                             </Grid>
                           </Grid>

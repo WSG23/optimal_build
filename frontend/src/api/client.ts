@@ -380,6 +380,29 @@ export class ApiClient {
     return { data }
   }
 
+  public async patch<T>(
+    path: string,
+    body?: unknown,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    let finalUrl = this.buildUrl(path)
+    if (config?.params) {
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
+    }
+    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    if (config?.headers) {
+      Object.assign(headers, config.headers)
+    }
+    const data = await this.request<T>(finalUrl, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers,
+    })
+    return { data }
+  }
+
   public async delete<T>(
     path: string,
     config?: RequestInit & { params?: Record<string, string> },
