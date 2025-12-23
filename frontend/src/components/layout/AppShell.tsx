@@ -234,6 +234,7 @@ export function AppShell({
           {(title || description || actions) && (
             <Box
               component="header"
+              key={path}
               sx={{
                 py: 'var(--ob-space-150)',
                 px: 'var(--ob-space-200)',
