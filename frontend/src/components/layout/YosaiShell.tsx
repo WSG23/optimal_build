@@ -3,6 +3,7 @@ import { Box, Typography, Stack, useTheme, alpha } from '@mui/material'
 import { YosaiSidebar } from './YosaiSidebar'
 import { useBaseLayoutContext } from '../../app/layout/BaseLayoutContext'
 import { HeaderUtilityCluster } from './HeaderUtilityCluster'
+import { useRouterController } from '../../router'
 
 export interface AppShellProps {
   title: string
@@ -33,6 +34,7 @@ export function AppShell({
 }: AppShellProps) {
   const theme = useTheme()
   const { inBaseLayout, topOffset } = useBaseLayoutContext()
+  const { path } = useRouterController()
 
   // Default to hiding sidebar if inside BaseLayout, unless explicitly forced.
   const shouldHideSidebar =
@@ -79,6 +81,7 @@ export function AppShell({
           {!hideHeader && (
             <Box
               component="header"
+              key={path}
               sx={{
                 py: 'var(--ob-space-200)',
                 px: 'var(--ob-space-300)',
