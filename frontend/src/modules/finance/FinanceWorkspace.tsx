@@ -850,10 +850,12 @@ export function FinanceWorkspace() {
               mb: 'var(--ob-space-150)',
             }}
           >
-            <Card
-              variant="default"
-              hover="none"
+            <Box
+              component="header"
+              key={path}
               sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
                 background: alpha(theme.palette.background.default, 0.8),
                 backdropFilter: 'blur(var(--ob-blur-md))',
                 WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
@@ -922,7 +924,7 @@ export function FinanceWorkspace() {
                   <Tab label={t('finance.tabs.sensitivity')} />
                 </Tabs>
               </Box>
-            </Card>
+            </Box>
           </Box>
 
           {!hasAccess ? (
