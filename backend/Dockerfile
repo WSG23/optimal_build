@@ -45,6 +45,8 @@ ENV PORT=8080 \
 
 EXPOSE 8080
 
+# Security: Restrict forwarded IPs to trusted proxy networks only
+# This prevents IP spoofing attacks from untrusted sources
 CMD gunicorn app.main:app \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:${PORT} \
@@ -54,4 +56,7 @@ CMD gunicorn app.main:app \
     --keep-alive 5 \
     --access-logfile - \
     --error-logfile - \
-    --forwarded-allow-ips="*"
+    --forwarded-allow-ips="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" \
+    --limit-request-line 8190 \
+    --limit-request-fields 100 \
+    --limit-request-field_size 8190

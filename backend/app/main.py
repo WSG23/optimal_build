@@ -96,29 +96,45 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         log_event(logger, "app_shutdown")
 
 
+# Security: Disable API documentation in production to reduce attack surface
+_is_production = settings.ENVIRONMENT.lower() == "production"
+_docs_url = None if _is_production else "/docs"
+_redoc_url = None if _is_production else "/redoc"
+_openapi_url = None if _is_production else "/openapi.json"
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url,
     lifespan=lifespan,
     openapi_tags=TAGS_METADATA,
 )
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)
-# CORS configuration - restrict headers in production
-_ALLOWED_HEADERS = [
+
+# CORS configuration - restrict headers based on environment
+# Security: Development headers (X-Role, X-User-Id, X-User-Email) are NOT allowed in production
+_PRODUCTION_ALLOWED_HEADERS = [
     "Authorization",
     "Content-Type",
     "Accept",
     "Origin",
     "X-Requested-With",
-    "X-Role",  # Development role header
-    "X-User-Id",  # Development user ID header
-    "X-User-Email",  # Development email header
     "X-Correlation-ID",  # Request tracing
 ]
+
+_DEVELOPMENT_ALLOWED_HEADERS = _PRODUCTION_ALLOWED_HEADERS + [
+    "X-Role",  # Development role header - NEVER in production
+    "X-User-Id",  # Development user ID header - NEVER in production
+    "X-User-Email",  # Development email header - NEVER in production
+]
+
+_ALLOWED_HEADERS = (
+    _PRODUCTION_ALLOWED_HEADERS if _is_production else _DEVELOPMENT_ALLOWED_HEADERS
+)
 
 app.add_middleware(
     CORSMiddleware,
