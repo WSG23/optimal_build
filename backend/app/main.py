@@ -74,6 +74,7 @@ from app.schemas.finance import (
     FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
     FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
 )
+from app.utils.client_ip import get_client_ip
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
 from sqlalchemy import func, select, text
@@ -134,12 +135,16 @@ app.add_middleware(RequestSizeLimitMiddleware, max_size_bytes=10 * 1024 * 1024)
 app.add_middleware(CorrelationIdMiddleware)
 
 
+def _get_client_ip(request: Request) -> str:
+    return get_client_ip(request, get_remote_address)
+
+
 def _build_rate_limiter() -> Limiter:
     """Construct the rate limiter using Redis storage when available."""
 
     try:
         limiter_instance = Limiter(
-            key_func=get_remote_address,
+            key_func=_get_client_ip,
             default_limits=[settings.API_RATE_LIMIT],
             storage_uri=settings.RATE_LIMIT_STORAGE_URI,
         )
@@ -152,7 +157,7 @@ def _build_rate_limiter() -> Limiter:
             error=str(exc),
         )
         return Limiter(
-            key_func=get_remote_address,
+            key_func=_get_client_ip,
             default_limits=[settings.API_RATE_LIMIT],
         )
 
@@ -169,7 +174,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
     log_event(
         logger,
         "rate_limit_exceeded",
-        client_host=request.client.host if request.client else "unknown",
+        client_host=_get_client_ip(request),
         path=request.url.path,
     )
     return JSONResponse(
