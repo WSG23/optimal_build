@@ -58,6 +58,8 @@ allowed_files:
   - docs/development/testing/summary.md
   # Square Cyber-Minimalism design system typography guide
   - docs/development/typography-standards.md
+  # Production security hardening features
+  - docs/development/security-features.md
 
   # Design system - Token inventory and standardization audit
   - docs/design-system/design-token-audit.md

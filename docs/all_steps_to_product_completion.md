@@ -393,7 +393,26 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - **Impact:** Test counts vary depending on execution order. Individual test files work correctly.
 - **Workaround:** Run targeted test subsets rather than full suite. For CI, consider test isolation via `pytest-xdist` workers or database rollback per test.
 
+##### Optional Dependency Test Collection
+- **Documented by:** Claude on 2025-12-26
+- **Symptom:** 19 tests failed to collect with ImportError for optional dependencies (shapely, pyproj, geopandas, reportlab, trimesh, langchain).
+- **Resolution:** Added module-level `pytest.skip()` guards at the top of 17 test files before problematic imports. Pattern:
+  ```python
+  try:
+      from shapely.geometry import GeometryCollection  # noqa: F401
+      HAS_GIS = True
+  except ImportError:
+      HAS_GIS = False
+
+  if not HAS_GIS:
+      pytest.skip("GIS dependencies not available", allow_module_level=True)
+  ```
+- **Files Fixed:** `test_hk_jurisdiction.py`, `test_nz_jurisdiction.py`, `test_seattle_jurisdiction.py`, `test_toronto_jurisdiction.py`, `test_investment_memorandum.py`, `test_marketing_assets.py`, `test_marketing_materials_generator.py`, `test_scenario_builder_helpers.py`, `test_universal_site_pack.py`, `test_ingest_hk_parcels.py`, `test_ingest_hk_zones.py`, `test_ingest_sg_parcels.py`, `test_intelligence.py` (uses `pytest.importorskip`), `test_agents/test_investment_memorandum.py`, `test_agents/test_marketing_materials.py`, `test_agents/test_pdf_generator.py`, `test_agents/test_universal_site_pack.py`.
+- **Test Counts After Fix:** Backend: 5835 collected | Unit tests: 59 collected
+- **Remaining Issue:** Running `backend/tests` and `unit_tests` together from project root causes 4 collection errors due to `app/` wrapper module namespace conflict. **Workaround:** Run tests from `backend/` directory: `cd backend && pytest tests`.
+
 #### Resolved Issues (Historical Reference)
+- **Test Collection Errors Fixed (2025-12-26):** Fixed 19 test collection errors by adding module-level pytest.skip() guards for optional dependencies. Tests now collect properly when run from backend/ directory.
 - **RefSource duplicate __table_args__ (2025-12-26):** Fixed duplicate `__table_args__` definition in `rkp.py` that was overwriting `extend_existing` setting with an Index tuple. Combined into single tuple with dict at end.
 - **Frontend JSDOM runner instability (2025-11-11):** Migrated to Vitest + thread pool (Codex + Claude). `npm --prefix frontend run test` now stable.
 - **Migration audit downgrade guards (2025-10-18):** Verified guards existed, added entries to `.coding-rules-exceptions.yml`.
