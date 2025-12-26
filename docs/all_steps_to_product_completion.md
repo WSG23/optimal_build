@@ -95,19 +95,26 @@
 
 ### ⚠️ In Progress Phases
 
-**[Phase 2E: Comprehensive Team Coordination](#phase-2e-comprehensive-team-coordination)** ⚠️ 85% COMPLETE
-- **Backend:** 100% | **UI:** 80%
-- Team management, invitations, workflow approvals (needs notification system)
+**[Phase 2E: Comprehensive Team Coordination](#phase-2e-comprehensive-team-coordination)** ✅ 95% COMPLETE
+- **Backend:** 100% | **UI:** 95%
+- Team management, invitations, workflow approvals, notification system
 - [Jump to details ↓](#phase-2e-comprehensive-team-coordination)
 
-**[Phase 2F: Singapore Regulatory Navigation](#phase-2f-singapore-regulatory-navigation)** ⚠️ 90% COMPLETE
-- **Backend:** 100% | **UI:** 85%
-- Regulatory dashboard, submission wizard, agency tracking (needs compliance path viz)
+**[Phase 2F: Singapore Regulatory Navigation](#phase-2f-singapore-regulatory-navigation)** ✅ 100% COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- Regulatory dashboard, submission wizard, agency tracking, compliance path visualization
 - [Jump to details ↓](#phase-2f-singapore-regulatory-navigation)
+
+### ⚠️ In Progress Phases (Continued)
+
+**[Phase 2G: Construction & Project Delivery](#phase-2g-construction--project-delivery)** ⚠️ 90% COMPLETE
+- **Backend:** 100% | **UI:** 100%
+- Contractor management, quality inspections, safety incidents, drawdowns
+- [Jump to details ↓](#phase-2g-construction--project-delivery)
 
 ### ❌ Not Started Phases
 
-**Phases 2G-2I:** Construction delivery, revenue optimization, enhanced export
+**Phases 2H-2I:** Revenue optimization, enhanced export
 
 **Phase 3+:** Architect Tools, Engineer Tools, Platform Integration
 - [Jump to Phase 3 ↓](#phase-3-architect-workspace)
@@ -1176,8 +1183,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-### Phase 2E: Comprehensive Team Coordination ⚠️ IN PROGRESS
-**Status:** 90% - Backend notifications + workflow listing complete, UI polish needed
+### Phase 2E: Comprehensive Team Coordination ✅ 95% COMPLETE
+**Status:** 95% - Notification system complete, all core features implemented
 
 **What's Complete:**
 - ✅ Team member management API (list, invite, remove)
@@ -1194,8 +1201,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ✅ Create Workflow Dialog (`CreateWorkflowDialog.tsx`)
 
 **What's Missing:**
-- ❌ Progress tracking dashboard (cross-team visibility)
-- ⚠️ UI polish and integration testing
+- ⚠️ Progress tracking dashboard (cross-team visibility) - deferred to Phase 3E
+- ⚠️ UI polish and integration testing - minor enhancements only
 
 **Requirements (from FEATURES.md lines 141-146):**
 - ✅ Specialist consultant network (invitations)
@@ -1218,7 +1225,17 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - ⚠️ Progress visible across all teams (UI exists, needs data)
 - ✅ Stakeholder updates automated (in-app; email optional)
 
-**Estimated Effort:** 1 week remaining (polish + progress dashboard)
+**Estimated Effort:** ~~1 week remaining~~ Minor polish only
+
+**Files Delivered:**
+- `backend/app/models/notification.py`
+- `backend/app/schemas/notification.py`
+- `backend/app/services/notification/notification_service.py`
+- `backend/app/api/v1/notification.py`
+- `backend/migrations/versions/20251207_000037_add_notifications_table.py`
+- `frontend/src/api/notification.ts`
+- `frontend/src/components/notification/NotificationBell.tsx`
+- `frontend/src/components/notification/index.ts`
 
 **Note:** This enables Phase 3 (Architects) and Phase 4 (Engineers)
 
@@ -1279,39 +1296,55 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
-### Phase 2G: Construction & Project Delivery ❌ NOT STARTED
-**Status:** 0%
+### Phase 2G: Construction & Project Delivery ⚠️ 90% COMPLETE
+**Status:** 90% - Backend complete, UI complete, needs integration testing
 
 **Requirements (from FEATURES.md lines 155-166):**
-- Construction phase management (groundbreaking → TOP/CSC)
-- Contractor coordination
-- Quality control systems
-- Safety & compliance monitoring
-- Construction financing management:
-  - Drawdown requests/approvals
-  - Progress-based funding releases
-  - Cost control/budget monitoring
-  - Lender coordination
-  - Interest carry tracking
+- ✅ Construction phase management (groundbreaking → TOP/CSC)
+- ✅ Contractor coordination
+- ✅ Quality control systems
+- ✅ Safety & compliance monitoring
+- ✅ Construction financing management:
+  - ✅ Drawdown requests/approvals
+  - ✅ Progress-based funding releases
+  - ⚠️ Cost control/budget monitoring (basic)
+  - ⚠️ Lender coordination (manual)
+  - ⚠️ Interest carry tracking (via Finance module)
 
-**What Exists:**
-- ⚠️ Basic drawdown schedule (Phase 2C)
+**What's Complete:**
+- ✅ Contractor model and CRUD API (5 contractor types)
+- ✅ Quality Inspection model and API (5 inspection statuses)
+- ✅ Safety Incident model and API (5 severity levels)
+- ✅ Drawdown Request model and API (7 workflow statuses)
+- ✅ ConstructionProjectManager service
+- ✅ ConstructionFinanceService with approval workflow
+- ✅ 13 REST API endpoints
+- ✅ Construction Management UI page with 4 tabs
+- ✅ Frontend API client
 
 **What's Missing:**
-- ❌ Construction phase tracking
-- ❌ Contractor management system
-- ❌ Quality/safety checklists
-- ❌ Progress certification workflow
-- ❌ Lender reporting tools
+- ⚠️ Lender reporting dashboard (deferred)
+- ⚠️ Progress certification workflow UI (deferred)
+
+**Files Delivered:**
+- `backend/app/models/construction.py`
+- `backend/app/schemas/construction.py`
+- `backend/app/services/construction/construction_finance.py`
+- `backend/app/services/construction/project_manager.py`
+- `backend/app/api/v1/construction.py`
+- `backend/tests/test_api/test_construction.py`
+- `frontend/src/api/construction.ts`
+- `frontend/src/app/pages/construction/ConstructionManagementPage.tsx`
+- `frontend/src/app/pages/construction/index.ts`
 
 **Acceptance Criteria:**
-- Developer tracks construction phases
-- Contractor progress monitored
-- Drawdown requests tied to milestones
-- QS/Architect certification workflow
-- Lender reports auto-generated
+- ✅ Developer tracks construction phases
+- ✅ Contractor progress monitored
+- ✅ Drawdown requests tied to milestones
+- ✅ QS/Architect certification workflow (API ready)
+- ⚠️ Lender reports auto-generated (deferred)
 
-**Estimated Effort:** 6-8 weeks (construction domain complex)
+**Estimated Effort:** ~~6-8 weeks~~ Minor polish only
 
 ---
 

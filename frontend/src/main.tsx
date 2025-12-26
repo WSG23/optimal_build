@@ -51,9 +51,8 @@ const AgentPerformancePage = React.lazy(
   () => import('./pages/AgentPerformancePage'),
 )
 const BusinessPerformancePage = React.lazy(async () => {
-  const module = await import(
-    './app/pages/business-performance/BusinessPerformancePage'
-  )
+  const module =
+    await import('./app/pages/business-performance/BusinessPerformancePage')
   return { default: module.BusinessPerformancePage }
 })
 const GpsCapturePage = React.lazy(async () => {
@@ -73,21 +72,18 @@ const IntegrationsPage = React.lazy(async () => {
   return { default: module.IntegrationsPage }
 })
 const SiteAcquisitionPage = React.lazy(async () => {
-  const module = await import(
-    './app/pages/site-acquisition/SiteAcquisitionPage'
-  )
+  const module =
+    await import('./app/pages/site-acquisition/SiteAcquisitionPage')
   return { default: module.SiteAcquisitionPage }
 })
 const ChecklistTemplateManager = React.lazy(async () => {
-  const module = await import(
-    './app/pages/site-acquisition/ChecklistTemplateManager'
-  )
+  const module =
+    await import('./app/pages/site-acquisition/ChecklistTemplateManager')
   return { default: module.ChecklistTemplateManager }
 })
 const DeveloperPreviewStandalone = React.lazy(async () => {
-  const module = await import(
-    './app/pages/site-acquisition/DeveloperPreviewStandalone'
-  )
+  const module =
+    await import('./app/pages/site-acquisition/DeveloperPreviewStandalone')
   return { default: module.DeveloperPreviewStandalone }
 })
 const PhaseManagementPage = React.lazy(async () => {
@@ -105,6 +101,11 @@ const RegulatoryDashboardPage = React.lazy(async () => {
 const DeveloperControlPanel = React.lazy(async () => {
   const module = await import('./app/pages/developer/DeveloperControlPanel')
   return { default: module.DeveloperControlPanel }
+})
+const ConstructionManagementPage = React.lazy(async () => {
+  const module =
+    await import('./app/pages/construction/ConstructionManagementPage')
+  return { default: module.ConstructionManagementPage }
 })
 
 const businessPerformanceElement = (
@@ -251,6 +252,17 @@ const developerControlPanelElement = (
   </AppShell>
 )
 
+const constructionManagementElement = (
+  <AppShell
+    activeItem="constructionManagement"
+    title="Construction Management"
+    description="Contractor coordination, quality inspections, safety incidents, and drawdowns."
+    hideSidebar
+  >
+    {suspense(<ConstructionManagementPage />)}
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -355,6 +367,18 @@ const router = createBrowserRouter([
   {
     path: '/projects/:projectId/regulatory',
     element: regulatoryNavigationElement,
+  },
+  {
+    path: '/app/construction',
+    element: constructionManagementElement,
+  },
+  {
+    path: '/developers/construction',
+    element: constructionManagementElement,
+  },
+  {
+    path: '/projects/:projectId/construction',
+    element: constructionManagementElement,
   },
   {
     path: '/developer',
