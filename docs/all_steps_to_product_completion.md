@@ -386,7 +386,15 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 - **Key Categories:** SQLAlchemy stub gaps, weakly typed JSON, missing type narrowing, Pydantic validator mismatches, import conflicts, stub override mismatches.
 - **Strategy:** Focus on Tier 1 preventive steps (TypedDicts/Pydantic schemas, pre-commit type checks) and Tier 2 plugin enablement. Do not attempt to fix all errors blindly—target high leverage areas (preview generator, developer checklist service, mypy plugins).
 
+##### Backend: Test Suite State Pollution
+- **Documented by:** Claude on 2025-12-26
+- **Symptom:** Tests pass in isolation but show ERROR status when run with full suite. For example, `pytest backend/tests/test_api/test_construction.py` passes with 16/16, but running the full suite shows ERRORs for the same tests.
+- **Root Cause:** Test session state (database fixtures, SQLAlchemy mapper registry) leaks between test files when run together. Earlier tests modify global state that later tests depend on.
+- **Impact:** Test counts vary depending on execution order. Individual test files work correctly.
+- **Workaround:** Run targeted test subsets rather than full suite. For CI, consider test isolation via `pytest-xdist` workers or database rollback per test.
+
 #### Resolved Issues (Historical Reference)
+- **RefSource duplicate __table_args__ (2025-12-26):** Fixed duplicate `__table_args__` definition in `rkp.py` that was overwriting `extend_existing` setting with an Index tuple. Combined into single tuple with dict at end.
 - **Frontend JSDOM runner instability (2025-11-11):** Migrated to Vitest + thread pool (Codex + Claude). `npm --prefix frontend run test` now stable.
 - **Migration audit downgrade guards (2025-10-18):** Verified guards existed, added entries to `.coding-rules-exceptions.yml`.
 - **Backend API tests skipped on Python 3.9 (2025-10-11):** Upgraded to Python 3.13, added FastAPI dependency overrides; tests now run.
