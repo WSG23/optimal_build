@@ -289,13 +289,13 @@ test-all: ## Run all tests including integration tests
 	$(PYTEST) -q
 
 test-cov: ## Run tests with coverage
-	SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR) JOB_QUEUE_BACKEND=inline $(PYTEST) backend/tests --cov=backend/app --cov-report=html --cov-report=term-missing
+	cd backend && SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR)/backend JOB_QUEUE_BACKEND=inline $(PYTEST) tests --cov=app --cov-report=html --cov-report=term-missing
 	@echo "Coverage report: backend/htmlcov/index.html"
 
 coverage-report: ## Generate and open coverage report
 	@echo "📊 Generating coverage report..."
-	@SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR) $(PYTEST) backend/tests \
-		--cov=backend/app --cov-report=html --cov-report=term-missing
+	@cd backend && SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR)/backend $(PYTEST) tests \
+		--cov=app --cov-report=html --cov-report=term-missing
 	@if [ -f backend/htmlcov/index.html ]; then \
 		echo ""; \
 		echo "Coverage report generated:"; \

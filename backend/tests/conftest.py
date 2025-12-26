@@ -56,8 +56,11 @@ def _find_repo_root(current: Path) -> Path:
 
 _REPO_ROOT = _find_repo_root(Path(__file__).resolve())
 
+_BACKEND_ROOT = _REPO_ROOT / "backend"
+if str(_BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_ROOT))
 if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+    sys.path.insert(1, str(_REPO_ROOT))
 
 try:
     asyncio.get_event_loop()

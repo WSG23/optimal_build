@@ -9,12 +9,24 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _BACKEND_ROOT = _PROJECT_ROOT / "backend"
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 if str(_BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(_BACKEND_ROOT))
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    """Run AnyIO tests on the asyncio backend.
+
+    The local dev environment does not guarantee `trio` is installed.
+    """
+
+    return "asyncio"
 
 
 class AttrDict(dict):
