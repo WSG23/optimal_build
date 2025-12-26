@@ -153,6 +153,9 @@ def users_db_module(monkeypatch):
 
     module = importlib.import_module("app.api.v1.users_db")
     module = importlib.reload(module)
+    # Reset initialization flag and create tables on new engine
+    module._INITIALIZED = False
+    module._ensure_users_db_initialized()
     try:
         yield module
     finally:

@@ -1,11 +1,12 @@
 import logging
+from typing import Any
 
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-from app.core.rag import get_rag_engine
+from app.core.rag import RagEngine, get_rag_engine
 
 logger = logging.getLogger(__name__)
 
@@ -13,11 +14,15 @@ logger = logging.getLogger(__name__)
 class IntelligenceService:
     """Service for Advanced Intelligence operations (RAG)."""
 
-    def __init__(self):
+    rag_engine: RagEngine | None
+    vector_store: Any
+    llm: ChatOpenAI | None
+
+    def __init__(self) -> None:
         try:
             self.rag_engine = get_rag_engine()
             self.vector_store = self.rag_engine.get_vector_store()
-            self.llm = ChatOpenAI(model_name="gpt-4-turbo", temperature=0)
+            self.llm = ChatOpenAI(model="gpt-4-turbo", temperature=0)
         except Exception:
             logger.warning("RAG Engine not initialized (missing API key?)")
             self.rag_engine = None
@@ -53,8 +58,8 @@ class IntelligenceService:
         )
 
         try:
-            response = qa_chain.invoke(query)
-            return response["result"]
+            response = qa_chain.invoke({"query": query})
+            return str(response["result"])
         except Exception as e:
             logger.error(f"RAG Query failed: {e}")
             return "Unable to process query at this time."

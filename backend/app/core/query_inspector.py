@@ -29,6 +29,7 @@ import threading
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+from collections.abc import AsyncIterator
 from typing import Any, Callable, TypeVar
 
 from sqlalchemy import event
@@ -145,7 +146,7 @@ class QueryInspector:
             if cls._listeners_installed:
                 return
 
-            @event.listens_for(engine, "before_cursor_execute")
+            @event.listens_for(engine, "before_cursor_execute")  # type: ignore[untyped-decorator]
             def _before_execute(
                 conn: Any,
                 cursor: Any,
@@ -156,7 +157,7 @@ class QueryInspector:
             ) -> None:
                 context._inspector_start_time = time.perf_counter()
 
-            @event.listens_for(engine, "after_cursor_execute")
+            @event.listens_for(engine, "after_cursor_execute")  # type: ignore[untyped-decorator]
             def _after_execute(
                 conn: Any,
                 cursor: Any,
@@ -275,7 +276,7 @@ class QueryInspector:
 async def inspect_queries(
     n_plus_one_threshold: int = 3,
     slow_query_threshold_ms: float = 100.0,
-):
+) -> AsyncIterator[QueryInspector]:
     """Context manager for query inspection.
 
     Usage:
@@ -342,12 +343,14 @@ class QueryProfiler:
 
     _instance: "QueryProfiler | None" = None
     _lock: threading.Lock = threading.Lock()
+    _stats: dict[str, QueryStats]
+    _request_count: int
 
     def __new__(cls) -> "QueryProfiler":
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
-                cls._instance._stats: dict[str, QueryStats] = {}
+                cls._instance._stats = {}
                 cls._instance._request_count = 0
             return cls._instance
 
