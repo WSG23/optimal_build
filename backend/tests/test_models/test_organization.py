@@ -13,6 +13,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from uuid import uuid4
 
+import pytest
+
+# Mark all tests in this module as not requiring database
+pytestmark = pytest.mark.no_db
+
 
 class TestOrganizationPlan:
     """Tests for OrganizationPlan enum."""

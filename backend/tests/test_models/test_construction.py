@@ -17,6 +17,11 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
+
+# Mark all tests in this module as not requiring database
+pytestmark = pytest.mark.no_db
+
 
 class TestContractorType:
     """Tests for ContractorType enum."""

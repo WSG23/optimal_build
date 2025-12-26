@@ -11,6 +11,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import pytest
+
+# Mark all tests in this module as not requiring database
+pytestmark = pytest.mark.no_db
+
 
 class TestOverlaySourceGeometryModel:
     """Tests for OverlaySourceGeometry model structure."""

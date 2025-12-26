@@ -408,6 +408,11 @@ def pytest_collection_modifyitems(
     config: pytest.Config, items: list[pytest.Item]
 ) -> None:  # pragma: no cover - collection hook
     for item in items:
+        # Skip the skip-pattern check for tests marked with no_db
+        # These are pure Python unit tests that don't require database/ORM features
+        if item.get_closest_marker("no_db"):
+            continue
+
         nodeid = item.nodeid
         path = str(getattr(item, "fspath", ""))
         for pattern, reason in _SKIPPED_TEST_PATTERNS.items():

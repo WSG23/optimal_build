@@ -18,6 +18,11 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
+# Mark all tests in this module as not requiring database
+pytestmark = pytest.mark.no_db
+
 
 class TestPhaseType:
     """Tests for PhaseType enum."""
