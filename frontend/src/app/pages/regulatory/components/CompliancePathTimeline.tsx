@@ -265,7 +265,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
     const fetchPaths = async () => {
       setLoading(true)
       try {
-        const paths = await regulatoryApi.getCompliancePaths(assetType)
+        const paths = await regulatoryApi.getCompliancePathsForAsset(assetType)
         setCompliancePaths(paths)
       } catch {
         // Use mock data for demonstration if API fails

@@ -65,14 +65,19 @@ export const notificationApi = {
   listNotifications: async (
     filters: NotificationFilters = {},
   ): Promise<NotificationList> => {
+    const params: Record<string, string> = {
+      page: String(filters.page || 1),
+      page_size: String(filters.page_size || 20),
+      unread_only: String(filters.unread_only || false),
+    }
+    if (filters.notification_type) {
+      params.notification_type = filters.notification_type
+    }
+    if (filters.project_id) {
+      params.project_id = filters.project_id
+    }
     const { data } = await apiClient.get<NotificationList>('/notifications', {
-      params: {
-        page: filters.page || 1,
-        page_size: filters.page_size || 20,
-        unread_only: filters.unread_only || false,
-        notification_type: filters.notification_type,
-        project_id: filters.project_id,
-      },
+      params,
     })
     return data
   },
