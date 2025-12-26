@@ -6,6 +6,7 @@ import {
   type SiteAcquisitionResult,
   type GeometryDetailLevel,
 } from '../../../api/siteAcquisition'
+import { DEFAULT_LATITUDE_STR, DEFAULT_LONGITUDE_STR } from '@/constants'
 import { Preview3DViewer } from '../../components/site-acquisition/Preview3DViewer'
 import {
   forwardGeocodeAddress,
@@ -67,8 +68,9 @@ import { Card } from '../../../components/canonical/Card'
 
 export function SiteAcquisitionPage() {
   const [jurisdictionCode, setJurisdictionCode] = useState('SG')
-  const [latitude, setLatitude] = useState('1.3000')
-  const [longitude, setLongitude] = useState('103.8500')
+  // Use canonical coordinates from constants (SSoT)
+  const [latitude, setLatitude] = useState(DEFAULT_LATITUDE_STR)
+  const [longitude, setLongitude] = useState(DEFAULT_LONGITUDE_STR)
   const [address, setAddress] = useState('')
   const [geocodeError, setGeocodeError] = useState<string | null>(null)
   const [selectedScenarios, setSelectedScenarios] = useState<

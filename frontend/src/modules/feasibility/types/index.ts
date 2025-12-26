@@ -83,12 +83,21 @@ export interface FinancialSummary {
 
 export const ASSET_MIX_STORAGE_PREFIX = 'developer-asset-mix:'
 
+// Import canonical assumptions from constants (SSoT)
+import { DEFAULT_ASSUMPTIONS as CANONICAL_ASSUMPTIONS } from '@/constants'
+
+/**
+ * Default assumptions for feasibility analysis.
+ * Uses canonical values from @/constants for consistency with backend.
+ */
 export const DEFAULT_ASSUMPTIONS = {
-  typFloorToFloorM: 3.4,
-  efficiencyRatio: 0.8,
+  // Core values from canonical SSoT
+  typFloorToFloorM: CANONICAL_ASSUMPTIONS.TYP_FLOOR_TO_FLOOR_M,
+  efficiencyRatio: CANONICAL_ASSUMPTIONS.EFFICIENCY_RATIO,
+  capRatePercent: CANONICAL_ASSUMPTIONS.CAP_RATE * 100, // Convert to percentage
+  // Module-specific values
   structureType: 'rc',
   mepLoadWpsm: 150,
-  capRatePercent: 4.5,
   interestRatePercent: 3.5,
   targetMarginPercent: 15.0,
 } as const

@@ -7,6 +7,7 @@ import {
   Suspense,
   type FormEvent,
 } from 'react'
+import { DEFAULT_LATITUDE_STR, DEFAULT_LONGITUDE_STR } from '@/constants'
 // Import MUI Icons
 import ConstructionIcon from '@mui/icons-material/Construction'
 import DomainIcon from '@mui/icons-material/Domain'
@@ -78,8 +79,9 @@ export { getScenarioIcon }
 
 export function GpsCapturePage() {
   const role: UserRole = 'agent'
-  const [latitude, setLatitude] = useState<string>('1.3000')
-  const [longitude, setLongitude] = useState<string>('103.8500')
+  // Use canonical coordinates from constants (SSoT)
+  const [latitude, setLatitude] = useState<string>(DEFAULT_LATITUDE_STR)
+  const [longitude, setLongitude] = useState<string>(DEFAULT_LONGITUDE_STR)
   const [address, setAddress] = useState<string>('')
   const [jurisdictionCode, setJurisdictionCode] = useState<string>('SG')
   const [selectedScenarios, setSelectedScenarios] = useState<

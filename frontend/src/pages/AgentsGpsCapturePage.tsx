@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 
 import mapboxgl from 'mapbox-gl'
+import { DEFAULT_LATITUDE_STR, DEFAULT_LONGITUDE_STR } from '@/constants'
 import { colors } from '@ob/tokens'
 
 const isNodeTestEnv =
@@ -38,8 +39,9 @@ if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN
 }
 
-const DEFAULT_LATITUDE = '1.3000'
-const DEFAULT_LONGITUDE = '103.8500'
+// Use canonical coordinates from constants (SSoT)
+const DEFAULT_LATITUDE = DEFAULT_LATITUDE_STR
+const DEFAULT_LONGITUDE = DEFAULT_LONGITUDE_STR
 
 interface ScenarioOption {
   value: DevelopmentScenario

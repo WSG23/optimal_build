@@ -890,6 +890,56 @@ op.create_index('ix_finance_scenarios_project_id', 'finance_scenarios', ['projec
 # Foreign key without index will cause slow queries
 ```
 
+### Single Source of Truth (SSoT) - Constants
+
+**NEVER duplicate constants.** All shared values must be imported from canonical modules.
+
+**Frontend Constants** - Import from `@/constants`:
+
+```typescript
+// ✅ CORRECT - Import from canonical source
+import { DEFAULT_COORDINATES, ENDPOINTS, TIMEOUTS } from '@/constants'
+
+const lat = DEFAULT_COORDINATES.latitude  // 1.3521
+const endpoint = ENDPOINTS.DEVELOPERS.LOG_GPS
+const timeout = TIMEOUTS.DEFAULT  // 30_000
+
+// ❌ WRONG - Hardcoded duplicates
+const lat = 1.3521  // Duplicate!
+const endpoint = '/api/v1/developers/properties/log-gps'  // Duplicate!
+const timeout = 30000  // Duplicate!
+```
+
+**Backend Constants** - Import from `app.constants`:
+
+```python
+# ✅ CORRECT - Import from canonical source
+from app.constants import TYP_FLOOR_TO_FLOOR_M, EFFICIENCY_RATIO, COORDINATES
+
+floor_height = TYP_FLOOR_TO_FLOOR_M  # 3.5
+efficiency = EFFICIENCY_RATIO  # 0.82
+
+# ❌ WRONG - Hardcoded duplicates
+floor_height = 3.5  # Duplicate!
+efficiency = 0.82  # Duplicate!
+```
+
+**Canonical Modules:**
+
+| Location | Module | Contents |
+|----------|--------|----------|
+| Frontend | `frontend/src/constants/api.ts` | API endpoints, timeouts, fetch limits |
+| Frontend | `frontend/src/constants/locations.ts` | Coordinates, jurisdictions, map config |
+| Frontend | `frontend/src/constants/scenarios.ts` | Development types, assumptions |
+| Backend | `backend/app/constants/defaults.py` | Shared defaults (synced with frontend) |
+
+**Before Adding New Constants:**
+
+1. Search for existing: `grep -r "YOUR_VALUE" --include="*.ts" --include="*.py"`
+2. Check if it belongs in an existing canonical module
+3. Add to appropriate module with proper typing
+4. Update tests in `frontend/src/constants/__tests__/constants.test.ts`
+
 ---
 
 ## Testing Requirements

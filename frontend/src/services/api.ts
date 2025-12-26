@@ -1,5 +1,9 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import { API_BASE_URL, TIMEOUTS } from '@/constants'
 
+/**
+ * Resolve API base URL from environment or use canonical default (SSoT)
+ */
 function resolveBaseUrl(): string {
   const candidates = [
     import.meta.env?.VITE_ANALYTICS_API_BASE_URL,
@@ -12,7 +16,8 @@ function resolveBaseUrl(): string {
   const resolved = candidates.find(
     (value) => typeof value === 'string' && value.trim().length > 0,
   )
-  return resolved ? resolved.trim() : 'http://localhost:8000'
+  // Use canonical API_BASE_URL from constants (SSoT)
+  return resolved ? resolved.trim() : API_BASE_URL
 }
 
 class ApiClient {
@@ -21,7 +26,8 @@ class ApiClient {
   constructor() {
     this.client = axios.create({
       baseURL: resolveBaseUrl(),
-      timeout: 30000,
+      // Use canonical timeout from constants (SSoT)
+      timeout: TIMEOUTS.DEFAULT,
       headers: {
         'Content-Type': 'application/json',
       },

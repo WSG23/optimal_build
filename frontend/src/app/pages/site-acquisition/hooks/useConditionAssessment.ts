@@ -33,7 +33,10 @@ import {
 // Constants
 // ============================================================================
 
-const HISTORY_FETCH_LIMIT = 10
+import { FETCH_LIMITS } from '@/constants'
+
+// Use canonical limit from constants (SSoT)
+const HISTORY_FETCH_LIMIT = FETCH_LIMITS.HISTORY_FETCH_LIMIT
 
 // ============================================================================
 // Types

@@ -6,6 +6,9 @@ import sys
 from collections.abc import Iterable
 from urllib.parse import urlparse, urlunparse
 
+# Import canonical constants (SSoT)
+from app.constants import TYP_FLOOR_TO_FLOOR_M, EFFICIENCY_RATIO
+
 _DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:3000",
     "http://localhost:5173",
@@ -314,11 +317,12 @@ class Settings:
         self.SEATTLE_SODA_APP_TOKEN = os.getenv("SEATTLE_SODA_APP_TOKEN", "public")
         self.TORONTO_SODA_APP_TOKEN = os.getenv("TORONTO_SODA_APP_TOKEN", "public")
 
+        # Use canonical defaults from constants module (SSoT)
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
-            "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0
+            "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", TYP_FLOOR_TO_FLOOR_M
         )
         self.BUILDABLE_EFFICIENCY_RATIO = _load_fractional_float(
-            "BUILDABLE_EFFICIENCY_RATIO", 0.82
+            "BUILDABLE_EFFICIENCY_RATIO", EFFICIENCY_RATIO
         )
         self.BUILDABLE_USE_POSTGIS = _load_bool("BUILDABLE_USE_POSTGIS", False)
 

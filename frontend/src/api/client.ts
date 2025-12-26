@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
 import { ensureIdentityHeaders } from './identity'
+import { API_BASE_URL, TIMEOUTS } from '@/constants'
 
 export interface DetectedFloorSummary {
   name: string
@@ -275,7 +276,8 @@ export class ApiClient {
       envBaseUrl,
       fallbackBase,
       typeof window !== 'undefined' ? window.location.origin : undefined,
-      'http://localhost:9400',
+      // Use canonical API_BASE_URL from constants (SSoT)
+      API_BASE_URL,
     ] as Array<string | undefined>
 
     this.baseUrl =
@@ -285,7 +287,7 @@ export class ApiClient {
         }
         const trimmed = value.trim()
         return trimmed.length > 0 && trimmed !== '/'
-      }) ?? 'http://localhost:9400'
+      }) ?? API_BASE_URL
   }
 
   private buildUrl(path: string) {
@@ -295,9 +297,7 @@ export class ApiClient {
     const trimmed = path.startsWith('/') ? path.slice(1) : path
     const root =
       this.baseUrl ||
-      (typeof window !== 'undefined'
-        ? window.location.origin
-        : 'http://localhost:9400')
+      (typeof window !== 'undefined' ? window.location.origin : API_BASE_URL)
     try {
       return new URL(trimmed, root.endsWith('/') ? root : `${root}/`).toString()
     } catch (error) {
@@ -579,7 +579,13 @@ export class ApiClient {
     intervalMs?: number
     timeoutMs?: number
   }) {
-    const { importId, onUpdate, intervalMs = 2000, timeoutMs = 60000 } = options
+    // Use canonical timeouts from constants (SSoT)
+    const {
+      importId,
+      onUpdate,
+      intervalMs = TIMEOUTS.POLL_INTERVAL,
+      timeoutMs = TIMEOUTS.POLL_MAX,
+    } = options
     let cancelled = false
     const startedAt = Date.now()
 

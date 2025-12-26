@@ -219,6 +219,30 @@ _Focus: Financial models, assumptions, deal math_
 -   **Performance Triggers**: Involve Performance Engineer if payloads are large, queries are unbounded, or UI re-renders are frequent.
 -   **Handoffs**: When switching personas, note known risks, decisions, and test gaps to the next role.
 -   **Severity Triggers (Blockers)**: Unvalidated external input; missing authz on new endpoints; PII/secrets in logs; migration without rollback; regression without a failing test; p95 latency regressions without mitigation; alert/runbook gaps for new critical paths.
+-   **Design Token Canonization (UI)**: NEVER use hardcoded pixel values, colors, or border-radius in frontend code. ALL styling must use design tokens from `frontend/UI_STANDARDS.md`. Use `--ob-space-*` for spacing, `--ob-radius-*` for corners, `--ob-font-size-*` for typography. Prefer canonical components from `src/components/canonical/`. This ensures single-source-of-truth for UI changes.
+
+-   **Single Source of Truth (SSoT) - Code Constants**: All shared constants MUST be imported from canonical modules, NEVER duplicated:
+
+    | Category | Frontend Source | Backend Source |
+    |----------|-----------------|----------------|
+    | API endpoints, timeouts, limits | `@/constants` (api.ts) | N/A (frontend owns) |
+    | Coordinates, jurisdictions | `@/constants` (locations.ts) | `app.constants.defaults` |
+    | Development types, assumptions | `@/constants` (scenarios.ts) | `app.constants.defaults` |
+    | Design tokens | `UI_STANDARDS.md` CSS vars | N/A |
+
+    **SSoT Rules:**
+    1. **NEVER** define the same constant in multiple files
+    2. **ALWAYS** import from `@/constants` (frontend) or `app.constants` (backend)
+    3. **SYNC** shared values between frontend/backend (e.g., `TYP_FLOOR_TO_FLOOR_M = 3.5`)
+    4. **TEST** canonical constants with `frontend/src/constants/__tests__/constants.test.ts`
+    5. **SEARCH** before creating: `grep -r "YOUR_VALUE" --include="*.ts" --include="*.py"`
+
+    **Canonical Values (must match):**
+    - `TYP_FLOOR_TO_FLOOR_M`: 3.5 (meters)
+    - `EFFICIENCY_RATIO`: 0.82 (82%)
+    - `DEFAULT_COORDINATES`: Singapore (1.3521, 103.8198)
+    - `API_BASE_URL`: `http://localhost:8000`
+    - `POLL_INTERVAL`: 2000ms
 
 ---
 
@@ -228,6 +252,7 @@ Before acting, orient yourself:
 
 -   **Start Here**: `START_HERE.md` (The map of the territory)
 -   **Rules**: `CODING_RULES.md` (The laws of the land)
+-   **UI Standards**: `frontend/UI_STANDARDS.md` (Design tokens - MANDATORY for UI work)
 -   **Plan**: `docs/all_steps_to_product_completion.md` (The roadmap)
 -   **Current Status**: `docs/handoff_playbook.md` ( The daily briefing)
 -   **Agents**: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` (Persona roster and guidance)

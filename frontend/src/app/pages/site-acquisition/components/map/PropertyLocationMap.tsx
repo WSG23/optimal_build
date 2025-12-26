@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { DEFAULT_COORDINATES } from '@/constants'
 
 // ============================================================================
 // Types
@@ -127,9 +128,9 @@ export function PropertyLocationMap({
 
   const [isMapLoaded, setIsMapLoaded] = useState(false)
 
-  // Parse coordinates
-  const lat = parseFloat(latitude) || 1.3
-  const lon = parseFloat(longitude) || 103.85
+  // Parse coordinates - use canonical defaults as fallback (SSoT)
+  const lat = parseFloat(latitude) || DEFAULT_COORDINATES.latitude
+  const lon = parseFloat(longitude) || DEFAULT_COORDINATES.longitude
 
   // Initialize map
   useEffect(() => {
